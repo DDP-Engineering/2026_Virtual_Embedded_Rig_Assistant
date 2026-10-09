@@ -4,7 +4,7 @@ Date: 2026-10-09
 Status: Accepted
 
 ## Context
-NILO is a networked appliance with users, roles, API tokens and sessions. VERA runs on one engineer's
+A networked lab appliance needs users, roles, API tokens and sessions. VERA runs on one engineer's
 computer under their OS account, opens no listening service (L6) and has no network management.
 
 ## Decision

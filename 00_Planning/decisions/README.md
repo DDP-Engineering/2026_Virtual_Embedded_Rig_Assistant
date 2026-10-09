@@ -7,7 +7,7 @@ files a new ADR and updates this index.
 |---|---|---|
 | [ADR-0001](ADR-0001-desktop-stack.md) | TypeScript on Electron; electron-vite, React, npm workspaces, Vitest | Accepted |
 | [ADR-0002](ADR-0002-model-access-pi-ai.md) | Models through `@earendil-works/pi-ai`, two collections (API key, subscription) | Accepted |
-| [ADR-0003](ADR-0003-agent-loop.md) | Agent loop: start from BenchPilot's loop behind `core/agent/runtime.ts` | Proposed; WP-10 confirms |
+| [ADR-0003](ADR-0003-agent-loop.md) | Agent loop: start from the reference loop behind `core/agent/runtime.ts` | Proposed; WP-10 confirms |
 | [ADR-0004](ADR-0004-workbench-is-a-folder.md) | A workbench is a plain folder; runtime state in `.vera/` | Accepted |
 | [ADR-0005](ADR-0005-sqlite-per-workbench.md) | One SQLite database per workbench through better-sqlite3, FTS5 and trigram | Proposed; WP-05 confirms |
 | [ADR-0006](ADR-0006-local-bundled-embeddings.md) | Embeddings computed locally with a bundled model; no remote model loading | Accepted; model chosen by WP-24 |

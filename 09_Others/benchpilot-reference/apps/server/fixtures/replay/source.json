@@ -1,0 +1,4 @@
+{
+  "kind": "handwritten",
+  "note": "Hand-written in P3 from docs/plan/07-demo-script.md. No real-model take has been promoted yet (P5: no provider configured). When a recorded take replaces these files, set kind to \"recorded\" and fill recordedWith, e.g. \"anthropic/claude-sonnet-5-5\"."
+}

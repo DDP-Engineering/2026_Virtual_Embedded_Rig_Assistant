@@ -46,7 +46,7 @@ Done when:
 
 **Goal:** sessions can leave VERA and be found again.
 **Depends on:** WP-13. **Specs:** 02 §10; 06 §3.
-**Start from:** BenchPilot `apps/server/src/reports/export.ts` (Markdown export).
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/reports/export.ts` (Markdown export).
 
 Scope:
 - Export a session as Markdown (messages, tool summaries, citations, changes) or JSON (events).
@@ -60,7 +60,7 @@ Done when:
 
 **Goal:** a new user learns VERA on a complete example.
 **Depends on:** WP-29. **Specs:** 02; 06 §2.
-**Start from:** BenchPilot `skills/failure-analyzer/SKILL.md` (exemplar shape).
+**Start from:** `09_Others/benchpilot-reference/skills/failure-analyzer/SKILL.md` (exemplar shape).
 
 Scope:
 - The complete VERA-DEMO-01 workbench: generated PDFs, notes, logs, pinout.

@@ -16,8 +16,8 @@ endpoint, never a real model (L11, 08 §3).
 | `replay` | none (test builds only) | none | VERA's `LlmGateway` replay implementation (08 §3) | scripted |
 
 - Two pi-ai collections are needed because the API-key provider and the subscription both use pi-ai's
-  `openai` provider id with different credentials. BenchPilot validated this arrangement; its
-  `llm/providers.ts` is the starting code.
+  `openai` provider id with different credentials. The reference code validated this arrangement;
+  `09_Others/benchpilot-reference/apps/server/src/llm/providers.ts` is the starting code.
 - Several custom endpoints may coexist, for example Ollama and LM Studio.
 - Azure OpenAI (pi-ai's Azure Responses provider) and Anthropic are small additions after 1.0.
 
@@ -57,7 +57,7 @@ Each step reports pass, fail or skipped:
 
 - Port `CredentialStore` (`packages/core/src/ports.ts`), implemented in
   `apps/desktop/src/main/credentials.ts` over `<userData>/credentials.json`; every secret value is
-  encrypted with `safeStorage.encryptString`. BenchPilot's `llm/credentials.ts` is the starting code.
+  encrypted with `safeStorage.encryptString`. `09_Others/benchpilot-reference/apps/server/src/llm/credentials.ts` is the starting code.
 - It satisfies pi-ai's `CredentialStore` contract (`read`, `list`, `modify`, `delete`). `modify` runs
   under a mutex because OAuth refresh writes through it.
 - If `safeStorage.isEncryptionAvailable()` is false, or Linux reports the `basic_text` backend, VERA
@@ -68,7 +68,7 @@ Each step reports pass, fail or skipped:
 
 ## 6. ChatGPT subscription sign-in
 
-Starting code: BenchPilot's `llm/oauth.ts` (in-process sign-in through pi-ai's callback server).
+Starting code: `09_Others/benchpilot-reference/apps/server/src/llm/oauth.ts` (in-process sign-in through pi-ai's callback server).
 
 ```
 providers.chatgpt.login

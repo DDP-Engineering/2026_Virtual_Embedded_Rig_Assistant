@@ -11,7 +11,7 @@ replay scripts and tool parameters. pi-ai and pi-agent-core describe tool parame
 ## Decision
 Every VERA-owned schema is written in zod (v4). Tool parameter schemas are converted to JSON Schema
 with `z.toJSONSchema` and handed to pi as TypeBox `Type.Unsafe` values; tool arguments are validated
-again with the zod schema before execution. BenchPilot used the same conversion.
+again with the zod schema before execution. The reference code uses the same conversion.
 
 ## Alternatives considered
 - TypeBox everywhere: native to pi, but less familiar ergonomics for parsing and refinement.

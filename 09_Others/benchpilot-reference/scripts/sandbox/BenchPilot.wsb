@@ -1,0 +1,21 @@
+<!--
+  Windows Sandbox: clean-machine check of the BenchPilot demo bundle (08 Verify §3, docs/progress/P6.md).
+  No network, no admin tools, nothing installed. dist\ (the built zip) is mapped READ-ONLY to C:\BenchPilot-dist.
+  HostFolder must be absolute: edit it if the repo is not at D:\2026_Beldin.
+-->
+<Configuration>
+  <Networking>Disable</Networking>
+  <vGPU>Disable</vGPU>
+  <ClipboardRedirection>Disable</ClipboardRedirection>
+  <PrinterRedirection>Disable</PrinterRedirection>
+  <AudioInput>Disable</AudioInput>
+  <VideoInput>Disable</VideoInput>
+  <ProtectedClient>Disable</ProtectedClient>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>D:\2026_Beldin\dist</HostFolder>
+      <SandboxFolder>C:\BenchPilot-dist</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+</Configuration>

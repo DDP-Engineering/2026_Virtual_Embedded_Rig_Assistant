@@ -1,4 +1,4 @@
-# ADR-0003: Agent loop — start from BenchPilot's loop
+# ADR-0003: Agent loop — start from the reference loop
 
 Date: 2026-10-09
 Status: Proposed — the runtime spike WP-10 confirms it or switches to pi-agent-core
@@ -7,9 +7,9 @@ Status: Proposed — the runtime spike WP-10 confirms it or switches to pi-agent
 A session turn needs streaming, parallel read tools and sequential write tools, a wait for the
 user's approval before a write, abort, events for the UI, resumption from stored messages, and a
 context budget before every model call, including the first turn. Steering and advanced historical
-compaction follow in M5. Two candidates exist, and reusing BenchPilot's code is permitted:
+compaction follow in M5. Two candidates exist, and the BenchPilot reference code in `09_Others/benchpilot-reference/` may be reused:
 
-- BenchPilot's own loop (`apps/server/src/agent/loop.ts`, 185 lines on pi-ai 1.1.0), together with its
+- The reference loop (`09_Others/benchpilot-reference/apps/server/src/agent/loop.ts`, 185 lines on pi-ai 1.1.0), together with its
   session hub (persisted events folded by the shared reducer), approval gate, replay provider and
   end-to-end replay tests.
 - `@earendil-works/pi-agent-core` 1.1.0: an `Agent` with `beforeToolCall` and `afterToolCall` hooks,
@@ -17,7 +17,7 @@ compaction follow in M5. Two candidates exist, and reusing BenchPilot's code is 
   engine of pi and pi-desktop.
 
 ## Decision
-Start from BenchPilot's loop, moved behind `packages/core/src/agent/runtime.ts` (03 §2). Per-call
+Start from the reference loop, moved behind `packages/core/src/agent/runtime.ts` (03 §2). Per-call
 approvals reuse its approval-gate pattern, with the immutable request, single consumption and
 workbench-wide writer contract of ADR-0012. M1 adds the shared context policy of 03 §2 before every
 model call. Steering (user messages queued before the next call) and advanced historical compaction
@@ -26,7 +26,7 @@ same on pi-agent-core; if pi-agent-core wins, a new ADR records the switch behin
 
 ## Alternatives considered
 - pi-agent-core from the start: ready hooks for steering and compaction, shared with pi; but VERA
-  would rebuild BenchPilot's tested session hub, replay and approval integration around its events.
+  would rebuild the reference code's tested session hub, replay and approval integration around its events.
 - LangGraph.js: far more than one agent loop needs.
 
 ## Consequences

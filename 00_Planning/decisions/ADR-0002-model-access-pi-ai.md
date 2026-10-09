@@ -9,7 +9,7 @@ vLLM, corporate gateways), and ChatGPT-subscription sign-in; streaming with tool
 a pluggable credential store; and a scripted provider for deterministic tests.
 `@earendil-works/pi-ai` 1.1.0 provides all of these: "Sign in with ChatGPT" on its OpenAI
 provider, `createProvider()` with the OpenAI-completions API for custom endpoints, a `CredentialStore`
-contract with locked OAuth refresh, and `fauxProvider()`. BenchPilot used it in production-like code,
+contract with locked OAuth refresh, and `fauxProvider()`. The reference code in `09_Others/benchpilot-reference/` uses it,
 including the in-process ChatGPT sign-in with pi-ai's callback server on 127.0.0.1:1455.
 Its dependency `@earendil-works/pi-telemetry` holds contracts only, with no exporter.
 
@@ -32,5 +32,5 @@ credentials. Session messages are persisted in pi-ai's message shape.
   message migration.
 - The ChatGPT callback port 1455 is shared with the Codex CLI; VERA reports the conflict clearly.
 - Anthropic, Azure OpenAI and other providers are small additions.
-- BenchPilot's `llm/` module (gateway, providers, ChatGPT sign-in, credentials, replay) is the
+- The reference `llm/` module (`09_Others/benchpilot-reference/apps/server/src/llm/`) (gateway, providers, ChatGPT sign-in, credentials, replay) is the
   starting code.

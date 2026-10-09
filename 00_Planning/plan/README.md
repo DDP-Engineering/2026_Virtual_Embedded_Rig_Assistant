@@ -6,7 +6,8 @@ STATE: 2026-10-09 — planned; nothing implemented yet.
 
 ## 1. Decisions taken with the user (2026-10-09)
 
-- BenchPilot code (`D:\2026_Beldin`) may be reused. Every work package names the files it starts
+- Code from the earlier BenchPilot proof of concept is reused; its snapshot is in
+  `09_Others/benchpilot-reference/`. Every work package names the files it starts
   from; the full map is [benchpilot-reuse.md](benchpilot-reuse.md).
 - ChatGPT-subscription sign-in is acceptable for the way VERA will be distributed.
 
@@ -117,11 +118,11 @@ in parallel from WP-01 and must finish before the database (WP-07).
 
 | Direction | Seam already in 1.0 |
 |---|---|
-| Wrapper tools: declared external programs (STM32 and ESP32 flashers, `sigrok-cli`, scripts) with typed parameters, fixed argument templates, policy, timeout, success criteria and process-tree termination | `<workbench>/tools/`; the shape of NILO's `operation.schema.json`; ADR-0007; BenchPilot's `tshark.ts` spawn pattern |
+| Wrapper tools: declared external programs (STM32 and ESP32 flashers, `sigrok-cli`, scripts) with typed parameters, fixed argument templates, policy, timeout, success criteria and process-tree termination | `<workbench>/tools/`; an operation descriptor with input schema, policy, timeout and resources; ADR-0007; the spawn pattern of `09_Others/benchpilot-reference/apps/server/src/tshark.ts` (argument array, no shell, timeout, output cap) |
 | Serial terminal and logging | `serialport`; a `devices` module in core |
 | Camera snapshots and live view | `getUserMedia`; the permission handler of 01 §7 |
 | Voice: local speech-to-text, optional text-to-speech | `SpeechToText` port; the ONNX runtime shipped for embeddings (06 §9) |
-| Test catalog with deterministic evaluators | BenchPilot's catalog, runner and evaluators; VERA's artifacts and references as evidence |
+| Test catalog with deterministic evaluators | test definitions with machine-checked criteria; VERA's artifacts and references as evidence |
 | Anthropic and Azure OpenAI providers | ADR-0002 |
 | `apply_patch` for Codex-trained models; image input | the tool registry |
 | macOS | ADR-0001 |

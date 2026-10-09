@@ -13,7 +13,7 @@ pathological grep patterns can be stopped without blocking IPC.
 **Goal:** users create or open a workbench folder; VERA validates it, prepares `.vera/`, locks it and
 remembers it.
 **Depends on:** WP-04. **Specs:** 02 §1–§3, §6, §8; ADR-0004; 06 §2; 08 §3.
-**Start from:** BenchPilot `apps/server/src/testbench/load.ts`, `content.ts` (YAML plus zod),
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/testbench/load.ts`, `content.ts` (YAML plus zod),
 `apps/web/src/pages/NewTestbenchPage.tsx`, `components/testbench/OverviewTab.tsx`.
 
 Scope:
@@ -46,7 +46,7 @@ Done when:
 
 **Goal:** the per-workbench SQLite database with checksummed migrations, backups and the first repositories.
 **Depends on:** WP-05, WP-06. **Specs:** 02 §9; 07 §6; ADR-0005 and the ADR filed by WP-05.
-**Start from:** BenchPilot `apps/server/src/db/index.ts`, `db/schema.sql`, `db/repos/sessions.ts`.
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/db/index.ts`, `db/schema.sql`, `db/repos/sessions.ts`.
 
 Scope:
 - `storage/db.ts`: open with the driver WP-05 confirmed; `journal_mode=WAL`, `foreign_keys=ON`,
@@ -70,7 +70,7 @@ Done when:
 
 **Goal:** keep API keys safe in the main process and let the user configure the OpenAI API and custom endpoints.
 **Depends on:** WP-04. **Specs:** 04 §1, §2, §5; 01 §1 (L7), §6; ADR-0011.
-**Start from:** BenchPilot `apps/server/src/llm/credentials.ts`; the provider section of
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/credentials.ts`; the provider section of
 `apps/web/src/pages/SettingsPage.tsx`.
 
 Scope:
@@ -98,7 +98,7 @@ Done when:
 **Goal:** one core module through which every model call goes — catalogs, the connection test, error
 mapping — and the scripted replay provider for core and test-build model scenarios (L11).
 **Depends on:** WP-08. **Specs:** 04 §1–§4, §7, §8; 08 §3, §4; ADR-0002.
-**Start from:** BenchPilot `apps/server/src/llm/gateway.ts`, `providers.ts`, `replay.ts`, `llm.spec.ts`.
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/gateway.ts`, `providers.ts`, `replay.ts`, `llm.spec.ts`.
 
 Scope:
 - `@earendil-works/pi-ai` with an exact pin. `llm/`: the **api** and **subscription** collections
@@ -127,14 +127,14 @@ Done when:
 
 ## WP-10 Spike: agent runtime
 
-**Goal:** confirm the runtime that carries VERA's turns — BenchPilot's loop, per ADR-0003 — and measure
+**Goal:** confirm the runtime that carries VERA's turns — the reference loop, per ADR-0003 — and measure
 the alternative, pi-agent-core, before the session engine depends on either.
 **Depends on:** WP-09. **Specs:** 03 §1, §2, §6, §8; ADR-0003, ADR-0010.
-**Start from:** BenchPilot `apps/server/src/agent/loop.ts`, `agent/approval.ts`,
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/loop.ts`, `agent/approval.ts`,
 `agent/replay-e2e.spec.ts`, `agent/guards.spec.ts`.
 
 Scope:
-- `agent/runtime.ts` from BenchPilot's loop, behind the interface of 03 §2.
+- `agent/runtime.ts` from the reference loop, behind the interface of 03 §2.
 - Replay-provider tests with two dummy tools (one read, one write) proving the seven behaviours of 03 §2:
   streaming text and tool calls; parallel reads with ordered writes; approval wait with approve and
   deny; abort during a wait; resume from persisted messages; a throwing tool turned into an error
@@ -160,7 +160,7 @@ Done when:
 **Goal:** the confinement layer every file tool relies on, the tool registry, and `read`, `list`,
 `glob` and `grep`.
 **Depends on:** WP-06. **Specs:** 03 §4, §5, §7; 02 §6, §7; 05 §7 (line references); ADR-0007, ADR-0010.
-**Start from:** BenchPilot `apps/server/src/tools/registry.ts`, `tools/caps.spec.ts`.
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/tools/registry.ts`, `tools/caps.spec.ts`.
 
 Scope:
 - `workbench/path-guard.ts` (03 §5 steps 1–5) and binary detection.
@@ -194,7 +194,7 @@ Done when:
 
 **Goal:** the system prompt of 03 §3 from the workbench, the available skills and the environment.
 **Depends on:** WP-06. **Specs:** 03 §3; 02 §3, §5.
-**Start from:** BenchPilot `apps/server/src/agent/prompt.ts`.
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/prompt.ts`.
 
 Scope:
 - `agent/prompt.ts`: `buildSystemPrompt({ workbench, pinned, skills, env })` in the order of 03 §3.
@@ -212,7 +212,7 @@ Done when:
 **Goal:** sessions that run turns through the runtime, persist messages and events, stream them to
 subscribers and resume after a restart.
 **Depends on:** WP-07, WP-09, WP-10, WP-11, WP-12. **Specs:** 03 §1, §2, §7, §8, §9; 02 §9, §10; 01 §3.
-**Start from:** BenchPilot `apps/server/src/agent/sessions.ts`, `agent/hub.ts`, `agent/citations.ts`,
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/sessions.ts`, `agent/hub.ts`, `agent/citations.ts`,
 `evidence/resolve.ts`; `packages/shared/src/events.ts`, `session.ts`, `session.test.ts`.
 
 Scope:
@@ -251,7 +251,7 @@ Done when:
 **Goal:** the session workspace — session list, streaming transcript with tool rows and citations,
 composer with model choice and Stop — on the IPC bridge and in mock mode.
 **Depends on:** WP-04, WP-13. **Specs:** 06 §1, §3, §6, §7, §8; 03 §8, §9; 01 §3.
-**Start from:** BenchPilot `apps/web/src/pages/SessionWorkspace.tsx`, `components/session/`
+**Start from:** `09_Others/benchpilot-reference/apps/web/src/pages/SessionWorkspace.tsx`, `components/session/`
 (`Transcript`, `ToolCallRow`, `Composer`, `SessionList`, `ContextTab`), `api/useSessionEvents.ts`,
 `components/common/Markdown.tsx`, `components/evidence/EvidenceChip.tsx`.
 
@@ -282,7 +282,7 @@ Done when:
 
 **Goal:** run VERA's core without the GUI, so behaviour can be checked end to end from a terminal.
 **Depends on:** WP-13. **Specs:** 01 §4; 08 §3; 03 §2, §4, §7, §8; ADR-0009, ADR-0012.
-**Start from:** BenchPilot `apps/server/src/cli/chat.ts` (`--script` replay runs), `cli/bench.ts`.
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/cli/chat.ts` (`--script` replay runs), `cli/bench.ts`.
 
 Scope:
 - `apps/cli` with a `vera` bin (`npm run vera -- …`).

@@ -10,7 +10,7 @@ text size and language switch and persist; the packaging spike WP-05 has filed i
 **Goal:** a running Electron app — main, preload and React renderer built with electron-vite — on the
 source layout of 01 §5, hardened per 01 §7, with the first Playwright test.
 **Depends on:** —. **Specs:** 01 §2, §3, §5, §7; 06 §1; 08 §1–§3; ADR-0001, ADR-0009.
-**Start from:** BenchPilot `apps/web` set-up (Vite, Tailwind CSS v4, shadcn/ui) for the renderer.
+**Start from:** `09_Others/benchpilot-reference/apps/web` set-up (Vite, Tailwind CSS v4, shadcn/ui) for the renderer.
 
 Scope:
 - npm workspaces `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli`; TypeScript strict ESM
@@ -39,7 +39,7 @@ Done when:
 **Goal:** the only path between renderer and main — typed channels validated with zod on both sides,
 event subscription, a mock bridge for UI work, and the import-boundary check.
 **Depends on:** WP-01. **Specs:** 01 §1 (L1, L2, L9), §3, §4; 06 §8; ADR-0010.
-**Start from:** BenchPilot `apps/web/src/api/client.ts` and `api/index.ts` (one data boundary with a
+**Start from:** `09_Others/benchpilot-reference/apps/web/src/api/client.ts` and `api/index.ts` (one data boundary with a
 mock switch), `apps/web/src/mocks/`, `packages/shared/src/api.ts`.
 
 Scope:
@@ -68,7 +68,7 @@ Done when:
 **Goal:** where VERA keeps its own data — versioned settings with migrations, portable mode, and
 redacting logs.
 **Depends on:** WP-02. **Specs:** 01 §1 (L7, L10), §6; 07 §4, §6; ADR-0009.
-**Start from:** BenchPilot `apps/server/src/llm/credentials.ts` (write-then-rename with the Windows retry).
+**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/credentials.ts` (write-then-rename with the Windows retry).
 
 Scope:
 - Ports in `packages/core/src/ports.ts`: `PathProvider`, `Clock`, `Logger`, and a file-access port;
@@ -99,7 +99,7 @@ Done when:
 
 **Goal:** the app shell every screen lives in, with appearance and language settings working end to end.
 **Depends on:** WP-03. **Specs:** 06 §1, §2, §4, §6, §7, §8; 01 §1 (L9).
-**Start from:** BenchPilot `apps/web/src/components/shell/`, `hooks/use-theme.ts`, `components/ui/`,
+**Start from:** `09_Others/benchpilot-reference/apps/web/src/components/shell/`, `hooks/use-theme.ts`, `components/ui/`,
 `pages/SettingsPage.tsx` (layout of the settings screen).
 
 Scope:
@@ -127,7 +127,7 @@ Done when:
 **Goal:** prove early that SQLite with FTS5 and trigram, and a bundled ONNX embedding model, work in
 packaged Electron builds on Windows and Linux, offline.
 **Depends on:** WP-01. **Specs:** ADR-0005, ADR-0006; 05 §4, §5; 07 §1, §2; 01 §1 (L5).
-**Start from:** BenchPilot `scripts/package.mjs` (pre-packaging checks), `scripts/sandbox/BenchPilot.wsb`.
+**Start from:** `09_Others/benchpilot-reference/scripts/package.mjs` (pre-packaging checks), `scripts/sandbox/BenchPilot.wsb`.
 
 Scope:
 - A minimal `electron-builder.yml` producing a Windows zip and a Linux AppImage of the shell, with

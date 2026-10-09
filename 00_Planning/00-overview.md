@@ -51,9 +51,9 @@ cameră, voce, comenzi de shell, catalog de teste cu evaluatori, MCP, administra
 
 | Decizie | De ce |
 |---|---|
-| TypeScript + Electron | același stack ca BenchPilot; abonament ChatGPT gata făcut prin `pi-ai`; embeddings locale în același proces; cameră și serial pe Windows și Linux mai târziu |
-| Pornim din codul BenchPilot | logica de agent, sesiunile, conexiunea la modele, login-ul ChatGPT, citatele și componentele de interfață există deja și sunt testate; se schimbă transportul (HTTP → IPC) și domeniul (testbench → workbench) |
-| `pi-ai` pentru modele; bucla agentului din BenchPilot | bucla din BenchPilot e testată cu același `pi-ai`; `pi-agent-core` rămâne alternativa pe care spike-ul WP-10 o măsoară |
+| TypeScript + Electron | același stack ca BenchPilot, al cărui cod de referință e în `09_Others/benchpilot-reference/`; abonament ChatGPT gata făcut prin `pi-ai`; embeddings locale în același proces; cameră și serial pe Windows și Linux mai târziu |
+| Pornim din codul de referință BenchPilot | logica de agent, sesiunile, conexiunea la modele, login-ul ChatGPT, citatele și componentele de interfață există deja și sunt testate; se schimbă transportul (HTTP → IPC) și domeniul (testbench → workbench) |
+| `pi-ai` pentru modele; bucla agentului din codul de referință | bucla de referință e testată cu același `pi-ai`; `pi-agent-core` rămâne alternativa pe care spike-ul WP-10 o măsoară |
 | Abonamentul ChatGPT e acceptat | login direct din aplicație, pe lângă cheie API și endpoint-uri locale |
 | Workbench = folder | se copiază, se versionează în Git, se trimite unui coleg; starea de rulare stă în `.vera/` |
 | Un singur fișier SQLite per workbench | index de text (FTS5), vectori, sesiuni, artefacte, fără server de baze de date |
@@ -95,12 +95,11 @@ flowchart LR
 
 `plan/` împarte lucrul în șase etape și 38 de pachete de lucru (WP-01…WP-38), câte un fișier pe
 etapă. Fiecare pachet are scopul, dependențele, secțiunile de specificație de citit, fișierele
-BenchPilot de la care pornește și lista „gata când”. Două spike-uri confirmă devreme alegerile cu
+din `09_Others/benchpilot-reference/` de la care pornește și lista „gata când”. Două spike-uri confirmă devreme alegerile cu
 risc: WP-05 (modulele native și modelul de embeddings în pachet) și WP-10 (bucla agentului).
 
-## Relația cu NILO și BenchPilot
+## Codul de referință
 
-Din **BenchPilot** VERA preia cod: același stack, deci logica se mută cu adaptări mici. Harta exactă
-e în `plan/benchpilot-reuse.md`. Din **NILO** preia idei, nu cod: aprobarea legată de cererea exactă,
-deadline-uri, artefacte verificate prin digest, un singur job pe dispozitiv și forma descriptorilor
-de operații pentru viitoarele wrapper-e.
+VERA refolosește cod din BenchPilot, un proof of concept anterior pe același stack. Copia fișierelor
+relevante e în `09_Others/benchpilot-reference/`, deci planul nu depinde de nimic din afara repository-ului. Harta exactă
+e în `plan/benchpilot-reuse.md`; un fișier se copiază în `05_Software/` și se adaptează acolo.

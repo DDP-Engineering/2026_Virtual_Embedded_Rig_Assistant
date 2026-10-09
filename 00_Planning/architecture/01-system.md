@@ -41,13 +41,13 @@ Versions are pinned exactly.
 | i18n | i18next, react-i18next | 06 |
 | Schemas | zod, the only schema language | ADR-0010 |
 | Model access | `@earendil-works/pi-ai` | ADR-0002 |
-| Agent loop | BenchPilot's loop, moved into core | ADR-0003, confirmed by WP-10 |
+| Agent loop | the reference loop, moved into core | ADR-0003, confirmed by WP-10 |
 | Storage | SQLite through better-sqlite3, FTS5 | ADR-0005, confirmed by WP-05 |
 | PDF text | pdfjs-dist (Node build) | 05 |
 | Embeddings | `@huggingface/transformers` on onnxruntime-node, bundled model | ADR-0006 |
 | File watching, globbing, ignore rules, diffs | chokidar, tinyglobby, ignore, diff | — |
 | Tests | Vitest; Playwright for Electron | 08 |
-| Starting code | BenchPilot (`D:\2026_Beldin`), same stack | `../plan/benchpilot-reuse.md` |
+| Starting code | `09_Others/benchpilot-reference/` (BenchPilot proof of concept, same stack) | `../plan/benchpilot-reuse.md` |
 
 ## 3. Processes and the IPC boundary
 
@@ -212,6 +212,6 @@ The complete list of outbound destinations. The release-package smoke (WP-33) ch
 
 NOTES:
 - Reserved seams, not built in 1.0: `<workbench>/tools/` for wrapper descriptors that reuse the shape
-  of NILO's `operation.schema.json` (input schema, policy, timeout, resources); a `devices` module for
+  of an operation descriptor (input schema, policy, timeout, resources); a `devices` module for
   serial and camera; a `SpeechToText` port for voice (06 §9).
 - Work packages cite this file as `01 §n`.

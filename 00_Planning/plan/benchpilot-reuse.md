@@ -1,7 +1,7 @@
 # BenchPilot reuse map
 
-PURPOSE: which BenchPilot files each VERA module starts from, and what changes. BenchPilot
-(`D:\2026_Beldin`) uses VERA's stack — TypeScript, pi-ai 1.1.0, React 19, Vite, Tailwind CSS v4,
+PURPOSE: which reference files each VERA module starts from, and what changes. The reference code is
+a snapshot of the BenchPilot proof of concept in `09_Others/benchpilot-reference/` (see its README); it uses VERA's stack — TypeScript, pi-ai 1.1.0, React 19, Vite, Tailwind CSS v4,
 shadcn/ui, TanStack Query, better-sqlite3, zod — so its code moves with small adaptations. Copy a
 file together with its tests, then adapt it.
 
@@ -15,9 +15,9 @@ Rules:
   ingest, reports, plans, triage evaluation and the tshark tools. They are prior art for the test
   catalog and wrapper tools after 1.0.
 
-## Core — BenchPilot `apps/server/src/` → VERA `packages/core/src/`
+## Core — `09_Others/benchpilot-reference/apps/server/src/` → VERA `packages/core/src/`
 
-| BenchPilot | Lines | VERA target | Change |
+| Reference file | Lines | VERA target | Change |
 |---|---|---|---|
 | `llm/gateway.ts` | 60 | `llm/gateway.ts` | keep the `LlmGateway` interface; provider ids gain `custom:<slug>` |
 | `llm/providers.ts` | 223 | `llm/providers.ts` | keep the **api** and **subscription** collections and the custom provider; allow several custom endpoints |
@@ -38,9 +38,9 @@ Rules:
 | `db/index.ts`, `db/schema.sql`, `db/repos/` | 34, 87, — | `storage/` | keep the better-sqlite3 set-up and repository style; schema per 02 §9; add checksummed migrations |
 | `cli/chat.ts`, `cli/bench.ts` | 138, 117 | `apps/cli/` | `chat --script` becomes `vera run` |
 
-## Shared — BenchPilot `packages/shared/src/` → VERA `packages/shared/src/`
+## Shared — `09_Others/benchpilot-reference/packages/shared/src/` → VERA `packages/shared/src/`
 
-| BenchPilot | Lines | VERA target | Change |
+| Reference file | Lines | VERA target | Change |
 |---|---|---|---|
 | `events.ts` | 91 | `events.ts` | keep turn, message and tool events; add the events of 03 §8; drop plan and run events |
 | `session.ts` (+ `session.test.ts`) | 315 | `session-state.ts` | keep `applySessionEvent`; the snapshot stays the fold of the stream |
@@ -48,9 +48,9 @@ Rules:
 | `api.ts`, `domain.ts` | 452, 260 | `ipc.ts`, `workbench.ts`, `settings.ts` | request and response types become zod-defined channels |
 | `markdown.ts` | 20 | `markdown.ts` | as is |
 
-## Renderer — BenchPilot `apps/web/src/` → VERA `apps/desktop/src/renderer/`
+## Renderer — `09_Others/benchpilot-reference/apps/web/src/` → VERA `apps/desktop/src/renderer/`
 
-| BenchPilot | Lines | VERA target | Change |
+| Reference file | Lines | VERA target | Change |
 |---|---|---|---|
 | `api/client.ts`, `api/index.ts` | 118, — | `api/` | keep the single data boundary; add `ipcApi` beside `mockApi`; `httpApi` goes |
 | `api/useSessionEvents.ts` | 92 | `api/useSessionEvents.ts` | keep snapshot, then `sinceSeq`, and the skip-duplicates rule; subscribe through `window.vera.subscribe` |
@@ -65,7 +65,7 @@ Rules:
 
 ## Scripts and tests
 
-| BenchPilot | Lines | VERA target | Change |
+| Reference file | Lines | VERA target | Change |
 |---|---|---|---|
 | `scripts/smoke.mjs` | 123 | e2e helpers | fail on console errors and on requests that leave the app |
 | `scripts/package-smoke.mjs` | 368 | `scripts/smoke-package.mjs` | reuse path/environment checks; add the artifact SHA-256, the scripted loopback session and the egress check (WP-33) |

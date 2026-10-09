@@ -9,7 +9,7 @@ settings intact, and an egress check with no unexpected connection (08 §5).
 
 **Goal:** the four packages of 07 §2, self-contained and within budget.
 **Depends on:** WP-05, WP-26. **Specs:** 07 §1, §2, §4, §7; 01 §1 (L5).
-**Start from:** the `electron-builder.yml` of WP-05; BenchPilot `scripts/package.mjs` checks.
+**Start from:** the `electron-builder.yml` of WP-05; `09_Others/benchpilot-reference/scripts/package.mjs` checks.
 
 Scope:
 - `package` builds release-mode NSIS per-user installer and portable zip (with `vera.portable`) for
@@ -74,7 +74,7 @@ Done when:
 **Goal:** prove on the release package itself that VERA works offline and talks only to its allowed
 destinations.
 **Depends on:** WP-18, WP-28, WP-30, WP-31, WP-32. **Specs:** 08 §3–§5; 01 §8; 07 DONE-WHEN; ADR-0012.
-**Start from:** BenchPilot `scripts/package-smoke.mjs`, `scripts/smoke.mjs`, `scripts/sandbox/BenchPilot.wsb`.
+**Start from:** `09_Others/benchpilot-reference/scripts/package-smoke.mjs`, `scripts/smoke.mjs`, `scripts/sandbox/BenchPilot.wsb`.
 
 Scope:
 - `smoke:package -- --artifact <path>` takes an already-built release artifact. Offline run: install

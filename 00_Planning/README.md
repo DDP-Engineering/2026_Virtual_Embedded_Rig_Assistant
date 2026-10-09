@@ -21,4 +21,4 @@ documents, reads and edits workbench files with the user's approval, and saves s
 | [architecture/08-quality.md](architecture/08-quality.md) | commands, test layers, fixtures, release-package smoke and egress check |
 | [decisions/README.md](decisions/README.md) | architecture decision records |
 | [plan/README.md](plan/README.md) | milestones M0–M5, work packages WP-01…38, dependencies, risks |
-| [plan/benchpilot-reuse.md](plan/benchpilot-reuse.md) | which BenchPilot files each VERA module starts from |
+| [plan/benchpilot-reuse.md](plan/benchpilot-reuse.md) | which reference files in `09_Others/benchpilot-reference/` each VERA module starts from |

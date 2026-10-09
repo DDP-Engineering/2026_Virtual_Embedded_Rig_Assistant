@@ -23,7 +23,7 @@ session.stop → abort: pending approvals resolve "aborted", running tools get t
 
 ## 2. Runtime
 
-ADR-0003. The loop starts from BenchPilot's `apps/server/src/agent/loop.ts` and lives only in
+ADR-0003. The loop starts from `09_Others/benchpilot-reference/apps/server/src/agent/loop.ts` and lives only in
 `core/agent/runtime.ts`, behind this interface, so the session engine never depends on its internals:
 
 ```ts
@@ -40,7 +40,7 @@ interface AgentRuntime {
 The runtime spike (WP-10) proves seven behaviours with replay-provider tests before the session engine
 (WP-13) builds on it:
 
-| Behaviour | BenchPilot's loop | Change for VERA |
+| Behaviour | Reference loop | Change for VERA |
 |---|---|---|
 | Stream text and tool calls | gateway events | — |
 | Read tools in parallel, write tools in order | read-only tools in parallel, execution tools in sequence | per-turn order plus the workbench write queue (§6) |
@@ -203,7 +203,7 @@ panel. Recovery never writes a file.
 
 ## 8. Session events
 
-Defined in `packages/shared/src/events.ts`, extending BenchPilot's union. `seq` increases per session.
+Defined in `packages/shared/src/events.ts`, extending the reference union in `09_Others/benchpilot-reference/packages/shared/src/events.ts`. `seq` increases per session.
 Persisted events go to the `events` table; `message.delta`, `reasoning.delta` and `tool.update` are
 live-only.
 

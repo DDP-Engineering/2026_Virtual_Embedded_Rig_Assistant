@@ -40,7 +40,7 @@ Run from `05_Software/`.
   `WORKBENCH.md`, Markdown notes, a boot log, a CSV pinout and, from M3, PDFs generated from Markdown
   sources by `scripts/make-demo-pdfs.mjs`. Tests copy it to a temporary folder and never change it in place.
 - `fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario, in the format of
-  BenchPilot's `llm/replay.ts` — one line per model step:
+  `09_Others/benchpilot-reference/apps/server/src/llm/replay.ts` — one line per model step:
 
 ```jsonl
 {"match": "(?i)pinout|SDA", "prompt": "On which pin is SDA?", "toolCalls": [{"name": "grep", "args": {"pattern": "SDA", "path": "docs"}}]}

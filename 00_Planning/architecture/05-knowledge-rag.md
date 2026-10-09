@@ -87,7 +87,7 @@ search(query, k = 8, mode = hybrid, pathGlob?)
   line range (text), at most 12 000 characters, with the `ref` of exactly what it returned.
 - The agent writes its own queries (03 §3 asks for English search terms over English documents), so
   an English-only embedding model can still serve a Romanian conversation.
-- Starting code: BenchPilot's `tools/knowledge.ts` (FTS5 search and document reading).
+- Starting code: `09_Others/benchpilot-reference/apps/server/src/tools/knowledge.ts` (FTS5 search and document reading).
 
 ## 7. References
 
@@ -100,7 +100,7 @@ search(query, k = 8, mode = hybrid, pathGlob?)
 | Session artifact | `artifact:<name>` | `artifact:i2c-summary.md` |
 
 - The model cites as `[[docs/stm32g4-ds.pdf#p=45]]`. Parser and formatter: `packages/shared/src/refs.ts`,
-  starting from BenchPilot's `packages/shared/src/evidence.ts`.
+  starting from `09_Others/benchpilot-reference/packages/shared/src/evidence.ts`.
 - A ref is valid when the file exists in the workbench (or the artifact in the session) and the
   locator is within range (page count, heading slug, line count).
 

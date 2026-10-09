@@ -7,7 +7,7 @@ Status: Proposed — WP-05 confirms the driver and the tokenizers in a packaged 
 Each workbench needs full-text search, vectors, sessions, events, approvals, changes and artifact
 metadata, for one user, without a database server, inside a portable folder. better-sqlite3 13.x
 ships prebuilt binaries inside its npm package (`prebuilds/win32-x64.node`,
-`linux-x64.node` and others), so no compiler is needed; BenchPilot verified FTS5 with it on Node 24.
+`linux-x64.node` and others), so no compiler is needed; the reference code verified FTS5 with it on Node 24.
 
 ## Decision
 One `vera.db` per workbench in `.vera/`, opened with better-sqlite3 in WAL mode. Keyword search uses

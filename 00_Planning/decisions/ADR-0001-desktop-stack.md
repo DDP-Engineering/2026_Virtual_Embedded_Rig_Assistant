@@ -28,5 +28,6 @@ Vitest and Playwright test. Node.js 24 LTS runs the tooling. Versions are pinned
 - Packages weigh 150–250 MB because they carry Chromium.
 - Camera (`getUserMedia`) and serial (`serialport`) can later work on both platforms without native rewrites.
 - The pi ecosystem (pi-ai, pi-agent-core) is usable directly as libraries.
-- BenchPilot, built on the same stack, supplies much of the starting code (`../plan/benchpilot-reuse.md`).
+- The BenchPilot proof of concept, built on the same stack, supplies much of the starting code; its
+  snapshot is in `09_Others/benchpilot-reference/` (map: `../plan/benchpilot-reuse.md`).
 - macOS is technically within reach but needs notarisation; it stays outside 1.0.
