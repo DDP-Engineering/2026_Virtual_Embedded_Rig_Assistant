@@ -1,5 +1,15 @@
 # AGENTS.md
 
+## Where AEGIS applies
+
+Use the AEGIS workflow only to implement the product: production code and its tests, built from the
+work packages in `00_Planning/plan/`. Documentation changed as part of such an implementation stays
+in that task.
+
+Do not open AEGIS tasks, journals or requirements for anything else: repository operations (Git,
+remotes, labels, configuration, `02_Tools` setup), planning and architecture documents in
+`00_Planning/`, standalone documentation, brainstorming, research or questions. Do those directly.
+
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 
 ## AEGIS workflow
