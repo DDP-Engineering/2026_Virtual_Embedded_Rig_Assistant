@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VERA — VERA — layout A, settings: providers (dark)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0E7C74}a:hover{color:#0A5C56}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div style="height: 100vh; min-height: 760px; display: flex; flex-direction: column; box-sizing: border-box; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.45; background: #111316; color: #E7E8EA">
+
+<header style="height: 48px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #2B2F35; background: #181B1F">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: 0.08em">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#45C2B5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10h3l2-5 3 10 2-6 2 3h4"></path></svg>
+<span>VERA</span>
+</div>
+<span style="color: #A2A7B0" aria-hidden="true">/</span>
+<span style="font-weight: 500">Settings</span>
+<div style="flex: 1"></div>
+<button type="button" style="height: 32px; padding: 0 12px; border: 1px solid #2B2F35; border-radius: 6px; background: transparent; color: #E7E8EA; font: inherit; cursor: pointer">Back to MC-200 motor controller</button>
+</header>
+
+<div style="flex: 1; min-height: 0; display: flex; flex-wrap: wrap">
+<nav aria-label="Settings sections" style="flex: 0 0 240px; padding: 16px 12px; box-sizing: border-box; border-right: 1px solid #2B2F35; background: #181B1F; display: flex; flex-direction: column; gap: 2px">
+<a href="#providers" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: #12302D; color: #E7E8EA; font-weight: 600; text-decoration: none">Providers</a>
+<a href="#appearance" style="display: block; padding: 10px 12px; border-radius: 8px; color: #E7E8EA; text-decoration: none">Appearance</a>
+<a href="#language" style="display: block; padding: 10px 12px; border-radius: 8px; color: #E7E8EA; text-decoration: none">Language</a>
+<a href="#updates" style="display: block; padding: 10px 12px; border-radius: 8px; color: #E7E8EA; text-decoration: none">Updates</a>
+<a href="#privacy" style="display: block; padding: 10px 12px; border-radius: 8px; color: #E7E8EA; text-decoration: none">Data &amp; privacy</a>
+<a href="#about" style="display: block; padding: 10px 12px; border-radius: 8px; color: #E7E8EA; text-decoration: none">About</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; min-height: 0; overflow: auto; padding: 28px 32px">
+<div style="max-width: 860px; display: flex; flex-direction: column; gap: 18px">
+<div>
+<h1 style="margin: 0 0 4px; font-size: 1.429em; font-weight: 600">Providers</h1>
+<p style="margin: 0; color: #A2A7B0">Where VERA sends conversations. Keys are encrypted on this computer and never shown again.</p>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<label for="p-default" style="font-weight: 500">Default model</label>
+<select id="p-default" style="height: 36px; padding: 0 8px; border: 1px solid #2B2F35; border-radius: 6px; background: #181B1F; color: #E7E8EA; font: inherit"><option>ChatGPT · gpt-5.1</option><option>OpenAI API · gpt-5.1</option><option>Ollama (local) · qwen3-coder</option></select>
+<span style="color: #A2A7B0; font-size: 0.857em">A workbench or a session can choose another.</span>
+</div>
+
+<section aria-label="ChatGPT subscription" style="padding: 16px 18px; border: 1px solid #2B2F35; border-radius: 12px; background: #181B1F; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 320px">
+<h2 style="margin: 0; font-size: 1.071em; font-weight: 600">ChatGPT subscription</h2>
+<div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.929em"><span style="width: 8px; height: 8px; border-radius: 50%; background: #73C47F"></span><span>Signed in · token renews automatically</span></div>
+</div>
+<button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #2B2F35; border-radius: 6px; background: transparent; color: #E7E8EA; font: inherit; cursor: pointer">Test</button>
+<button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #2B2F35; border-radius: 6px; background: transparent; color: #E7E8EA; font: inherit; cursor: pointer">Sign out</button>
+</section>
+
+<section aria-label="OpenAI API" style="padding: 16px 18px; border: 1px solid #2B2F35; border-radius: 12px; background: #181B1F; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 1.071em; font-weight: 600">OpenAI API</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<label class="sr" for="p-key">API key</label>
+<input id="p-key" type="password" placeholder="sk-…a1B2 (saved)" style="flex: 1 1 260px; height: 36px; padding: 0 10px; border: 1px solid #2B2F35; border-radius: 6px; background: #111316; color: #E7E8EA; font: inherit; font-family: 'IBM Plex Mono', monospace">
+<button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #2B2F35; border-radius: 6px; background: transparent; color: #E7E8EA; font: inherit; cursor: pointer">Replace</button>
+<button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #2B2F35; border-radius: 6px; background: transparent; color: #E7E8EA; font: inherit; cursor: pointer">Test</button>
+<button type="button" style="height: 36px; padding: 0 12px; border: 0; background: transparent; color: #F3887A; font: inherit; cursor: pointer">Remove</button>
+</div>
+</section>
+
+<section aria-label="Custom endpoints" style="padding: 16px 18px; border: 1px solid #2B2F35; border-radius: 12px; background: #181B1F; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px">
+<h2 style="flex: 1; margin: 0; font-size: 1.071em; font-weight: 600">Custom endpoints <span style="color: #A2A7B0; font-weight: 400; font-size: 0.867em">OpenAI-compatible, e.g. Ollama, LM Studio, llama.cpp</span></h2>
+<button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #2B2F35; border-radius: 6px; background: transparent; color: #E7E8EA; font: inherit; cursor: pointer">Add endpoint</button>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #2B2F35; font-size: 0.929em">
+<span style="font-weight: 500">Ollama (local)</span><span style="font-family: 'IBM Plex Mono', monospace; color: #A2A7B0">localhost:11434/v1</span><span style="font-family: 'IBM Plex Mono', monospace">qwen3-coder</span><span style="color: #73C47F">tools ✓</span><a href="#edit-ollama">Edit</a>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr) auto; gap: 10px; align-items: center; padding: 10px 0; font-size: 0.929em">
+<span style="font-weight: 500">LM Studio</span><span style="font-family: 'IBM Plex Mono', monospace; color: #A2A7B0">localhost:1234/v1</span><span style="font-family: 'IBM Plex Mono', monospace">phi-4-mini</span><span style="color: #F0B45C">no tools</span><a href="#edit-lms">Edit</a>
+</div>
+
+<div style="padding: 14px; border-radius: 10px; background: #0D0F11; display: flex; flex-direction: column; gap: 8px">
+<div style="font-weight: 600; font-size: 0.929em">Connection test · LM Studio</div>
+<div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; font-size: 0.929em">
+<span style="color: #73C47F; font-weight: 600">Pass</span><span>Reachable — 3 models listed</span>
+<span style="color: #73C47F; font-weight: 600">Pass</span><span>Model answers ("OK")</span>
+<span style="color: #F0B45C; font-weight: 600">Fail</span><span>Tool calling — the model did not call the test tool. It can chat, but cannot read files or documents.</span>
+<span style="color: #73C47F; font-weight: 600">Pass</span><span>Streaming</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>

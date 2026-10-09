@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VERA — VERA — layout A, welcome (light)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0E7C74}a:hover{color:#0A5C56}
+</style>
+</head>
+<body>
+<div style="height: 100vh; min-height: 760px; display: flex; flex-direction: column; box-sizing: border-box; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.45; background: #F4F4F1; color: #1A1C20">
+
+<header style="height: 48px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #DCDDD8; background: #FFFFFF">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: 0.08em">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0E7C74" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10h3l2-5 3 10 2-6 2 3h4"></path></svg>
+<span>VERA</span>
+</div>
+<div style="flex: 1"></div>
+<button type="button" aria-label="Settings" style="width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: #585D66; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"></path><circle cx="5.5" cy="4" r="1.6" fill="#FFFFFF"></circle><circle cx="10.5" cy="8" r="1.6" fill="#FFFFFF"></circle><circle cx="6.5" cy="12" r="1.6" fill="#FFFFFF"></circle></svg>
+</button>
+</header>
+
+<main style="flex: 1; min-height: 0; overflow: auto; padding: 48px 24px">
+<div style="max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+<div>
+<h1 style="margin: 0 0 6px; font-size: 1.714em; font-weight: 600">Open a workbench</h1>
+<p style="margin: 0; color: #585D66">A workbench is a folder with your board's documents, notes and skills. VERA works inside it and never outside it.</p>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section aria-label="Create workbench" style="flex: 1 1 380px; padding: 20px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 1.143em; font-weight: 600">Create a workbench</h2>
+<label for="w-name" style="font-size: 0.929em; font-weight: 500">Name</label>
+<input id="w-name" type="text" value="MC-200 rev C bring-up" style="height: 38px; padding: 0 10px; border: 1px solid #DCDDD8; border-radius: 6px; background: #F4F4F1; color: #1A1C20; font: inherit">
+<label for="w-folder" style="font-size: 0.929em; font-weight: 500">Folder</label>
+<div style="display: flex; gap: 8px">
+<input id="w-folder" type="text" value="D:\Benches\mc200-revC" style="flex: 1; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid #DCDDD8; border-radius: 6px; background: #F4F4F1; color: #1A1C20; font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: 0.929em">
+<button type="button" style="height: 38px; padding: 0 12px; border: 1px solid #DCDDD8; border-radius: 6px; background: transparent; color: #1A1C20; font: inherit; cursor: pointer">Browse…</button>
+</div>
+<p style="margin: 0; color: #585D66; font-size: 0.857em">VERA creates workbench.yaml, WORKBENCH.md, docs/ and skills/. An empty folder or an existing project folder both work.</p>
+<button type="button" style="align-self: flex-start; height: 40px; padding: 0 18px; border: 0; border-radius: 8px; background: #0E7C74; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Create workbench</button>
+</section>
+
+<section aria-label="Open workbench" style="flex: 1 1 300px; padding: 20px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 1.143em; font-weight: 600">Open an existing one</h2>
+<p style="margin: 0; color: #585D66">Pick a folder that already contains workbench.yaml, for example one a colleague shared or one kept in Git.</p>
+<button type="button" style="align-self: flex-start; height: 40px; padding: 0 16px; border: 1px solid #DCDDD8; border-radius: 8px; background: transparent; color: #1A1C20; font: inherit; font-weight: 500; cursor: pointer">Open folder…</button>
+<div style="flex: 1"></div>
+<a href="#demo" style="font-size: 0.929em">Try the demo workbench (VERA-DEMO-01)</a>
+</section>
+</div>
+
+<section aria-label="Recent workbenches" style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: 1em; font-weight: 600">Recent</h2>
+<div style="border: 1px solid #DCDDD8; border-radius: 12px; background: #FFFFFF; overflow: hidden">
+<a href="#mc200" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #DCDDD8; color: #1A1C20; text-decoration: none"><span style="flex: 1"><span style="display: block; font-weight: 500">MC-200 motor controller</span><span style="color: #585D66; font-family: 'IBM Plex Mono', monospace; font-size: 0.857em">D:\Benches\mc200</span></span><span style="color: #585D66; font-size: 0.857em">today</span></a>
+<a href="#esp32" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #DCDDD8; color: #1A1C20; text-decoration: none"><span style="flex: 1"><span style="display: block; font-weight: 500">ESP32 sensor node</span><span style="color: #585D66; font-family: 'IBM Plex Mono', monospace; font-size: 0.857em">D:\Benches\esp32-node</span></span><span style="color: #585D66; font-size: 0.857em">3 days ago</span></a>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px"><span style="flex: 1"><span style="display: block; font-weight: 500; color: #585D66">PSU-12 bench supply</span><span style="color: #94500A; font-size: 0.857em">Folder not found: E:\Benches\psu12</span></span><button type="button" style="height: 32px; padding: 0 10px; border: 1px solid #DCDDD8; border-radius: 6px; background: transparent; color: #1A1C20; font: inherit; font-size: 0.929em; cursor: pointer">Locate…</button><button type="button" style="height: 32px; padding: 0 10px; border: 0; background: transparent; color: #585D66; font: inherit; font-size: 0.929em; cursor: pointer">Remove</button></div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body>
+</html>

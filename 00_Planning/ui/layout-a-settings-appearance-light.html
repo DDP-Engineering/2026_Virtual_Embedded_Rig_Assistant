@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VERA — VERA — layout A, settings: appearance, language, updates (light)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0E7C74}a:hover{color:#0A5C56}
+</style>
+</head>
+<body>
+<div style="height: 100vh; min-height: 760px; display: flex; flex-direction: column; box-sizing: border-box; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.45; background: #F4F4F1; color: #1A1C20">
+
+<header style="height: 48px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #DCDDD8; background: #FFFFFF">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: 0.08em">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0E7C74" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10h3l2-5 3 10 2-6 2 3h4"></path></svg>
+<span>VERA</span>
+</div>
+<span style="color: #585D66" aria-hidden="true">/</span>
+<span style="font-weight: 500">Settings</span>
+<div style="flex: 1"></div>
+<button type="button" style="height: 32px; padding: 0 12px; border: 1px solid #DCDDD8; border-radius: 6px; background: transparent; color: #1A1C20; font: inherit; cursor: pointer">Back to MC-200 motor controller</button>
+</header>
+
+<div style="flex: 1; min-height: 0; display: flex; flex-wrap: wrap">
+<nav aria-label="Settings sections" style="flex: 0 0 240px; padding: 16px 12px; box-sizing: border-box; border-right: 1px solid #DCDDD8; background: #FFFFFF; display: flex; flex-direction: column; gap: 2px">
+<a href="#providers" style="display: block; padding: 10px 12px; border-radius: 8px; color: #1A1C20; text-decoration: none">Providers</a>
+<a href="#appearance" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: #E1F1EF; color: #1A1C20; font-weight: 600; text-decoration: none">Appearance</a>
+<a href="#language" style="display: block; padding: 10px 12px; border-radius: 8px; color: #1A1C20; text-decoration: none">Language</a>
+<a href="#updates" style="display: block; padding: 10px 12px; border-radius: 8px; color: #1A1C20; text-decoration: none">Updates</a>
+<a href="#privacy" style="display: block; padding: 10px 12px; border-radius: 8px; color: #1A1C20; text-decoration: none">Data &amp; privacy</a>
+<a href="#about" style="display: block; padding: 10px 12px; border-radius: 8px; color: #1A1C20; text-decoration: none">About</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; min-height: 0; overflow: auto; padding: 28px 32px">
+<div style="max-width: 860px; display: flex; flex-direction: column; gap: 18px">
+
+<section id="appearance" aria-label="Appearance" style="padding: 18px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 14px">
+<h1 style="margin: 0; font-size: 1.286em; font-weight: 600">Appearance</h1>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0; margin-bottom: 8px; font-weight: 500">Theme</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<label style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 2px solid #0E7C74; border-radius: 10px; cursor: pointer"><span style="height: 64px; border-radius: 6px; border: 1px solid #DCDDD8; background: #F4F4F1; display: flex; gap: 4px; padding: 6px; box-sizing: border-box"><span style="width: 24%; background: #FFFFFF; border-radius: 3px"></span><span style="flex: 1; background: #FFFFFF; border-radius: 3px"></span></span><span><input type="radio" name="theme" checked> Light</span></label>
+<label style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid #DCDDD8; border-radius: 10px; cursor: pointer"><span style="height: 64px; border-radius: 6px; border: 1px solid #2B2F35; background: #111316; display: flex; gap: 4px; padding: 6px; box-sizing: border-box"><span style="width: 24%; background: #181B1F; border-radius: 3px"></span><span style="flex: 1; background: #181B1F; border-radius: 3px"></span></span><span><input type="radio" name="theme"> Dark</span></label>
+<label style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid #DCDDD8; border-radius: 10px; cursor: pointer"><span style="height: 64px; border-radius: 6px; border: 1px solid #DCDDD8; background: linear-gradient(90deg, #F4F4F1 50%, #111316 50%)"></span><span><input type="radio" name="theme"> System</span></label>
+</div>
+</fieldset>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0; margin-bottom: 8px; font-weight: 500">Text size</legend>
+<div role="radiogroup" aria-label="Text size" style="display: flex; flex-wrap: wrap; gap: 0; border: 1px solid #DCDDD8; border-radius: 8px; overflow: hidden; align-self: flex-start">
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 64px; border: 0; border-right: 1px solid #DCDDD8; background: transparent; color: #1A1C20; font: inherit; font-size: 0.875em; cursor: pointer">87.5%</button>
+<button type="button" role="radio" aria-checked="true" style="height: 40px; min-width: 64px; border: 0; border-right: 1px solid #DCDDD8; background: #E1F1EF; color: #1A1C20; font: inherit; font-weight: 600; cursor: pointer">100%</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 64px; border: 0; border-right: 1px solid #DCDDD8; background: transparent; color: #1A1C20; font: inherit; font-size: 1.125em; cursor: pointer">112.5%</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 64px; border: 0; border-right: 1px solid #DCDDD8; background: transparent; color: #1A1C20; font: inherit; font-size: 1.25em; cursor: pointer">125%</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 64px; border: 0; background: transparent; color: #1A1C20; font: inherit; font-size: 1.5em; cursor: pointer">150%</button>
+</div>
+<p style="margin: 0; color: #585D66; font-size: 0.857em">Scales all text and controls. Ctrl + and Ctrl − change it from anywhere.</p>
+</fieldset>
+</section>
+
+<section id="language" aria-label="Language" style="padding: 18px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 1.286em; font-weight: 600">Language</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<label for="s-lang" style="font-weight: 500">Interface language</label>
+<select id="s-lang" style="height: 36px; padding: 0 8px; border: 1px solid #DCDDD8; border-radius: 6px; background: #FFFFFF; color: #1A1C20; font: inherit"><option>System (Română)</option><option>English</option><option>Română</option><option>Deutsch</option></select>
+</div>
+<p style="margin: 0; color: #585D66; font-size: 0.857em">Changes menus and messages. The agent always answers in the language you write in.</p>
+</section>
+
+<section id="updates" aria-label="Updates" style="padding: 18px; border: 1px solid #DCDDD8; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 1.286em; font-weight: 600">Updates</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span>VERA <span style="font-family: 'IBM Plex Mono', monospace">1.0.0</span></span>
+<span style="padding: 2px 10px; border-radius: 999px; background: #E1F1EF; color: #0E7C74; font-size: 0.857em; font-weight: 600">1.0.1 downloaded</span>
+<div style="flex: 1"></div>
+<button type="button" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #0E7C74; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Restart to update</button>
+<button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #DCDDD8; border-radius: 6px; background: transparent; color: #1A1C20; font: inherit; cursor: pointer">Check now</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500">Automatic updates<select style="height: 36px; padding: 0 8px; border: 1px solid #DCDDD8; border-radius: 6px; background: #FFFFFF; color: #1A1C20; font: inherit; font-weight: 400"><option>Notify me</option><option>Download automatically</option><option>Off</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500">Channel<select style="height: 36px; padding: 0 8px; border: 1px solid #DCDDD8; border-radius: 6px; background: #FFFFFF; color: #1A1C20; font: inherit; font-weight: 400"><option>Stable</option><option>Beta</option></select></label>
+</div>
+<div style="padding: 12px; border-radius: 8px; background: #EDEDE9; font-size: 0.929em">
+<div style="font-weight: 600; margin-bottom: 4px">What's new in 1.0.1</div>
+<div style="color: #585D66">[Release notes from the update feed appear here.]</div>
+</div>
+<p style="margin: 0; color: #585D66; font-size: 0.857em">Updates install when VERA restarts, never while a session is running or waiting for your approval.</p>
+</section>
+
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>
