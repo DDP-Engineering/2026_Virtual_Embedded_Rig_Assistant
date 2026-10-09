@@ -1,3 +1,8 @@
+# Repository-local toolchain and caches are reproducible with `python 02_Tools/setup.py`.
+/02_Tools/runtime/
+/02_Tools/cache/
+__pycache__/
+
 # Dependencies are restored by npm and never committed.
 **/node_modules/
 

@@ -5,9 +5,10 @@ schema = 1
 
 [commands]
 # `aegis test` runs `test`; `aegis check --run` runs every entry here.
-test = "npm test"
-test_impacted = "npx vitest run {tests}"  # {tests} = the focused regression set
-lint = "npm run verify"                   # typecheck, tests, boundary and i18n checks
+# npmw.py runs the repository-local Node.js from 02_Tools/runtime (setup: python 02_Tools/setup.py)
+test = "python ../02_Tools/npmw.py npm test"
+test_impacted = "python ../02_Tools/npmw.py npx vitest run {tests}"  # {tests} = the focused regression set
+lint = "python ../02_Tools/npmw.py npm run verify"  # typecheck, tests, boundary and i18n checks
 workdir = "05_Software"                   # npm workspaces root (01-system.md §5)
 # timeout = 0                           # seconds allowed per command; 0 or
 #                                       # absent means no limit at all

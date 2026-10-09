@@ -9,6 +9,9 @@ saves session artifacts.
 
 **Status:** planning; nothing is implemented yet. Start with [00_Planning](00_Planning/README.md).
 
+**Setup** (Windows or Ubuntu, needs Python 3.11+ and Git): `python 02_Tools/setup.py` installs the
+pinned Node.js and the npm packages inside the repository. Details: [02_Tools](02_Tools/README.md).
+
 | Folder | Content |
 |---|---|
 | [00_Planning](00_Planning/README.md) | architecture, decisions and the implementation plan |
