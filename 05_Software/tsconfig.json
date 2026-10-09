@@ -1,0 +1,5 @@
+{
+  "//": "Solution file for `tsc -b`. Each workspace package gets a tsconfig.json extending tsconfig.base.json and a reference here (WP-01).",
+  "files": [],
+  "references": [{ "path": "./tsconfig.tools.json" }]
+}

@@ -6,16 +6,19 @@ DONE-WHEN: the commands of §1 pass on Windows and Ubuntu at the end of every wo
 
 ## 1. Commands
 
-Run from `05_Software/`.
+Run from `05_Software/`, after `python 02_Tools/setup.py` (repository root) has installed the pinned
+Node.js and the npm packages. Without Node on the PATH, prefix a command with `python ../02_Tools/npmw.py`.
 
 | Command | Does | From |
 |---|---|---|
-| `npm run typecheck` | TypeScript across all workspaces | WP-01 |
-| `npm test` | Vitest: shared, core, renderer components | WP-01 |
+| `npm run lint` | Biome: lint, format check and the import boundaries of 01 §4 | in place |
+| `npm run format` | Biome: apply formatting and safe fixes | in place |
+| `npm run typecheck` | `tsc -b` over the solution `tsconfig.json`; each workspace adds a reference | in place; WP-01 adds workspaces |
+| `npm test` | Vitest projects: `packages/*`, `apps/*` and `tests/tooling` | in place; WP-01 adds workspaces |
+| `npm run test:coverage` | the same with V8 coverage, for information only | in place |
+| `npm run verify` | lint, typecheck, test (and `check:i18n` from WP-04); the AEGIS `lint` command | in place |
 | `npm run test:e2e` | Playwright against the built Electron app with the replay provider | WP-01 |
-| `npm run check:boundaries` | import rules of 01 §4 | WP-02 |
 | `npm run check:i18n` | catalog completeness (06 §6) | WP-04 |
-| `npm run verify` | typecheck, tests and both checks | WP-01, extended by WP-02 and WP-04 |
 | `npm run smoke:live -- --provider <id>` | real-provider check, by hand only | WP-09 |
 | `npm run vera -- run …` | the headless core: run a prompt on a workbench, print events | WP-15 |
 | `npm run eval:retrieval` | retrieval recall (05 §8) | WP-26 |

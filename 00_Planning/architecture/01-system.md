@@ -134,7 +134,8 @@ apps/desktop/src/
 apps/cli/src/               # headless `vera` CLI over core: run a prompt, index, search
 ```
 
-Dependency rules, enforced by `npm run check:boundaries` (WP-02):
+Dependency rules, enforced by Biome's `noRestrictedImports` overrides in `05_Software/biome.json` as
+part of `npm run lint`, and covered by `05_Software/tests/tooling/boundaries.test.ts`:
 
 | Package | May import |
 |---|---|
@@ -151,7 +152,11 @@ The software root is `05_Software/`:
 
 ```
 05_Software/
-  package.json  tsconfig.base.json   # npm workspaces
+  package.json  package-lock.json  .npmrc   # npm workspaces, exact pins
+  biome.json                          # lint, format, import boundaries
+  tsconfig.json  tsconfig.base.json   # `tsc -b` solution and shared compiler options
+  tsconfig.tools.json  vitest.config.ts
+  tests/tooling/                      # tests of the repository's own checks
   packages/shared/  packages/core/
   apps/desktop/                       # electron.vite.config.ts, electron-builder.yml, src/{main,preload,renderer}
   apps/cli/
@@ -161,7 +166,7 @@ The software root is `05_Software/`:
     retrieval/                        # retrieval evaluation questions (05 §8)
   e2e/                                # Playwright Electron tests
   resources/models/                   # bundled embedding model (delivery decided by WP-05)
-  scripts/                            # packaging, smoke, boundary and i18n checks
+  scripts/                            # packaging, smoke and i18n checks
 ```
 
 ## 6. Data locations

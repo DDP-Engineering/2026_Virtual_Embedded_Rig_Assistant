@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "emitDeclarationOnly": true,
+    "outDir": "node_modules/.cache/tsc/tools",
+    "tsBuildInfoFile": "node_modules/.cache/tsc/tools.tsbuildinfo"
+  },
+  "include": ["vitest.config.ts", "tests/tooling/**/*.ts"]
+}

@@ -108,7 +108,7 @@ in parallel from WP-01 and must finish before the database (WP-07).
 | R-05 | Datasheet PDFs extract badly (multi-column pages, tables) | page-level citations; `read_doc` page ranges; evaluation on demo PDFs; tables and OCR after 1.0 | WP-23, WP-24 |
 | R-06 | Prompt injection through documents | the defences of 03 §10 | every tool package |
 | R-07 | The package exceeds its size budget | size check; smaller English model as fallback | WP-30 |
-| R-08 | Agent-written code drifts from the architecture | laws of 01 §1, the boundary check, review of every work package | all |
+| R-08 | Agent-written code drifts from the architecture | laws of 01 §1, the import boundaries in `npm run lint`, review of every work package | all |
 | R-09 | A first turn or model switch exceeds context before historical compaction | budget every request from M1, including current-turn tool results; reserve output; explicit limit outcome | WP-09, WP-10, WP-13, WP-34 |
 | R-10 | Concurrent or interrupted edits apply stale or repeated approvals | approval bound to the change's digest and used once; one write queue per workbench; hash check before writing; `pending` changes resolved on restart | WP-16, WP-17, WP-32 |
 | R-11 | A pathological grep blocks the main process or ignores Stop | regex work in a terminable worker; host deadline and abort; responsiveness test | WP-11, WP-14, WP-15 |

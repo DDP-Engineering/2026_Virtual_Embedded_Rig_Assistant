@@ -13,9 +13,9 @@ source layout of 01 §5, hardened per 01 §7, with the first Playwright test.
 **Start from:** `09_Others/benchpilot-reference/apps/web` set-up (Vite, Tailwind CSS v4, shadcn/ui) for the renderer.
 
 Scope:
-- npm workspaces `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli`; TypeScript strict ESM
-  with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; exact dependency pins; Vitest;
-  Playwright for Electron.
+- The tooling is already in `05_Software/` (Biome, TypeScript, Vitest, `verify`; 08 §1). Add the
+  workspaces `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli`, each with a `tsconfig.json`
+  extending `tsconfig.base.json` and referenced from the solution `tsconfig.json`; Playwright for Electron.
 - `apps/desktop` with electron-vite: `src/main`, `src/preload`, `src/renderer` (React 19, Vite,
   Tailwind CSS v4, shadcn/ui, lucide-react).
 - `BrowserWindow` with `contextIsolation`, `sandbox`, `nodeIntegration: false`, `webSecurity`; minimum
@@ -23,8 +23,7 @@ Scope:
 - CSP `default-src 'self'` as a meta tag, and as a response header for production loads; `will-navigate`
   blocked; `setWindowOpenHandler` denies; the permission handler denies every request.
 - Single-instance lock; window size and position persisted.
-- The scripts of 08 §1 that exist at this point (`dev`, `build`, `typecheck`, `test`, `test:e2e`,
-  `verify`); e2e under `xvfb-run` on Linux.
+- Scripts `dev`, `build` and `test:e2e`; e2e under `xvfb-run` on Linux. `npm run verify` stays green.
 - The `VERA_TEST=1` build flag of 08 §3, without switches yet.
 
 Done when:
@@ -37,7 +36,7 @@ Done when:
 ## WP-02 Shared contracts and the typed IPC bridge
 
 **Goal:** the only path between renderer and main — typed channels validated with zod on both sides,
-event subscription, a mock bridge for UI work, and the import-boundary check.
+event subscription and a mock bridge for UI work.
 **Depends on:** WP-01. **Specs:** 01 §1 (L1, L2, L9), §3, §4; 06 §8; ADR-0010.
 **Start from:** `09_Others/benchpilot-reference/apps/web/src/api/client.ts` and `api/index.ts` (one data boundary with a
 mock switch), `apps/web/src/mocks/`, `packages/shared/src/api.ts`.
@@ -54,14 +53,15 @@ Scope:
 - Renderer: the `api/` boundary with `ipcApi` and `mockApi` (`VITE_API=mock`), TanStack Query; script
   `dev:renderer`.
 - First channel `app.info` → `{ name, version, platform, arch, portable, locale }` on a placeholder home screen.
-- `check:boundaries` enforcing 01 §4, part of `verify`.
+- The import boundaries of 01 §4 are already enforced by `npm run lint`; keep the package names
+  (`@vera/shared`, `@vera/core`) that `biome.json` and its test expect.
 
 Done when:
 - [ ] Unit: the router rejects an unknown channel, an invalid request (`INVALID`) and a foreign sender frame.
 - [ ] Unit: a handler result that fails its response schema yields `INTERNAL` and a log entry, not a crash.
 - [ ] e2e: the home screen shows the version from `app.info`.
 - [ ] `VITE_API=mock npm run dev:renderer` shows the same screen in a browser.
-- [ ] `check:boundaries` fails on a fixture violation and passes on the codebase.
+- [ ] `npm run lint` passes on the real packages, and `tests/tooling/boundaries.test.ts` still passes.
 
 ## WP-03 App data locations, settings and logging
 
