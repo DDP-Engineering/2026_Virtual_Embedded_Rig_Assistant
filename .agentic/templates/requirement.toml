@@ -1,0 +1,100 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+# AEGIS:TEMPLATE-BEGIN
+# One requirement = one independently verifiable behavior.
+# Lives at .agentic/requirements/<category>/<id>.toml
+# Required fields: schema, id, title, status, requirement, verification.
+# AEGIS:TEMPLATE-END
+
+schema = 1
+
+# AEGIS:TEMPLATE-BEGIN
+# REQ-<CAT>-<8 hex>. CAT is FUNC, UX, NFR, SEC, DATA, PLAT, REL or TEST,
+# and must match the category folder this file sits in.
+# AEGIS:TEMPLATE-END
+id = "REQ-FUNC-00000000"
+
+title = "One line, imperative, no ticket numbers"
+
+# AEGIS:TEMPLATE-BEGIN
+# draft while being written, active once it is built and tested,
+# retired when the behavior is deliberately removed.
+# AEGIS:TEMPLATE-END
+status = "draft"
+
+# AEGIS:TEMPLATE-BEGIN
+# Self-contained prose: a reader with no other context must be able to
+# understand and check it. No ticket numbers, no run IDs, no references
+# to other requirements.
+# State the positive observable outcome: "The admin page shall display the
+# project logo in its top-right corner." Keep the current rule, not rejected
+# alternatives, removed features, adoption notes, or before/after history.
+# Error handling and security remain explicit condition/response contracts,
+# for example "If access is unauthorized, the service shall return 403."
+# Draft records describe agreed proposed behavior; active records describe the
+# implemented contract. Keep past decisions and findings in the task journal.
+#
+# Recommended shape - EARS. Pick the one pattern that fits; a stated
+# trigger or condition is what the test has to arrange, so surfacing it
+# here is what makes the behavior testable:
+#
+#   ubiquitous  The <system> shall <response>.
+#   event       When <trigger>, the <system> shall <response>.
+#   state       While <state>, the <system> shall <response>.
+#   unwanted    If <condition>, then the <system> shall <response>.
+#   optional    Where <feature is included>, the <system> shall <response>.
+#
+# Two independently verifiable responses need two requirements. Split when
+# either clause can vary, fail, change, or be checked independently; keep an
+# inseparable atomic outcome together. Final prose normally has one "shall".
+# Do not contort prose to fit a pattern - a constraint that reads better
+# plainly is better plainly.
+# AEGIS:TEMPLATE-END
+requirement = """
+State exactly one behavior here.
+"""
+
+# AEGIS:TEMPLATE-BEGIN
+# The observation that settles whether the behavior holds - not a
+# restatement of the requirement. Work out setup, input or trigger, action,
+# observable oracle, and a relevant boundary or failure case before reducing
+# them to concise prose here. Do not introduce conditions absent from the
+# requirement or its linked spec.
+#
+# Some behaviors no test can settle: a look-and-see judgement, an install
+# on clean hardware, a printed page. Start this field with "Manual:" or
+# "Inspection:" and name the method, and `check` records the requirement
+# as verified by hand instead of counting it among the tests still owed.
+# The prefix alone is not enough — it has to say what someone does.
+# AEGIS:TEMPLATE-END
+verification = "How a human or agent confirms this behavior holds."
+
+# AEGIS:TEMPLATE-BEGIN
+# Repo-relative, forward slashes. The source files this behavior lives in.
+# AEGIS:TEMPLATE-END
+affected_paths = []
+
+# AEGIS:TEMPLATE-BEGIN
+# "tests/path/test_file.py::test_name" entries. Kept current during build;
+# these select the impacted regression set.
+# AEGIS:TEMPLATE-END
+linked_tests = []
+
+# AEGIS:TEMPLATE-BEGIN
+# --- optional below this line ---
+# AEGIS:TEMPLATE-END
+
+# AEGIS:TEMPLATE-BEGIN
+# "specs/REQ-FUNC-00000000.md" when the requirement alone is not buildable.
+# AEGIS:TEMPLATE-END
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-01-01
+updated = 2026-01-01

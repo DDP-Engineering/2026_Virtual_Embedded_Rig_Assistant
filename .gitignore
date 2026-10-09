@@ -28,3 +28,7 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+# AEGIS:BEGIN (managed by .agentic/aegis.py init)
+.agentic/tasks/*.anchor.json
+.agentic/tasks/*.evolution.json
+# AEGIS:END

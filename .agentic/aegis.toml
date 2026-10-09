@@ -1,0 +1,102 @@
+# AEGIS configuration. Written once by `aegis init` and yours from
+# then on - upgrades never overwrite this file.
+
+schema = 1
+
+[commands]
+# `aegis test` runs `test`; `aegis check --run` runs every entry here.
+test = "npm test"
+test_impacted = "npx vitest run {tests}"  # {tests} = the focused regression set
+lint = "npm run verify"                   # typecheck, tests, boundary and i18n checks
+workdir = "05_Software"                   # npm workspaces root (01-system.md §5)
+# timeout = 0                           # seconds allowed per command; 0 or
+#                                       # absent means no limit at all
+#
+# Set `workdir` when your application lives below the repository root, and
+# never put a directory change inside a command: paths substituted into
+# `{tests}` are repository-relative, so a command that moves itself would
+# resolve them a second time and find nothing. With `workdir` set, those
+# paths are rewritten to match before the command runs.
+
+[timeouts]
+# Seconds allowed for one named command, overriding [commands] timeout.
+# Nothing here by default: a command is stopped only when you ask for it,
+# because a limit short enough to cut off a healthy suite would report a
+# failure that never happened. A stopped command is reported as proving
+# nothing - never as a failure.
+# test = 5400
+# lint = 120
+
+[layout]
+# Globs used by the traceability heuristics of `aegis check`.
+source = [
+    "05_Software/packages/",
+    "05_Software/apps/",
+    "05_Software/scripts/",
+    "05_Software/fixtures/",
+]
+tests = [
+    "05_Software/e2e/",
+    "05_Software/packages/*/test/",
+    "05_Software/**/*.test.ts",
+    "05_Software/**/*.test.tsx",
+]
+docs = [  # documentation paths; still scanned for secrets, not source
+    "README.md",
+    ".gitignore",
+    ".gitattributes",
+    "05_Software/README.md",
+    "00_Planning/",
+    "01_Documentation/",
+    "02_Tools/",
+    "03_Hardware/",
+    "04_HardwareDocu/",
+    "06_SoftwareDocu/",
+    "07_Delivery/",
+    "09_Others/",
+]
+default_branch = "master"               # the ref every diff is measured from
+#
+# Set this when the branch your work merges into is not the one AEGIS would
+# find on its own. Without it the base is whatever `origin/HEAD` points at,
+# then a local `master`, then a local `main`. It decides what `check`,
+# `impacted`, `anchor` and `evolution` consider changed.
+
+[interaction]
+# false stops at every completed stage and presents the next choices.
+# true flows between stages, but never bypasses publication approval.
+autopilot = false
+
+[review]
+enabled = true
+max_fix_cycles = 5
+
+[records]
+# Anchor and evolution sidecars under .agentic/tasks/ are local evidence.
+# false keeps them out of git through a managed block in .gitignore that
+# init maintains; true removes that block so they are committed with the
+# journal. The journal log line is the durable record either way.
+commit_fingerprints = false
+
+[zones]
+# What each stage may write besides `.agentic/`, which every stage may
+# always write. Values name the globs above: "source", "tests". A stage
+# left out entirely may write anywhere - that is why build, validate, and
+# deliver are not listed. Deliver is publish-only by instruction, but the
+# merge-base diff cannot attribute an edit to one stage without false hits.
+# Advisory like everything else: check reports an edit
+# outside the zone, it never stops one. The defaults are shown; uncomment
+# and change a line to widen or narrow one stage.
+# frame = []
+# specify = []
+# design = []
+# survey = []
+# components = ["tests"]
+# close = []
+
+[check]
+secret_patterns_extra = []
+ignore = []
+strict_promote = []
+# run = ["test", "lint"]   # restrict what `check --run` executes; without
+#                          # this, side-effect-looking names are skipped
