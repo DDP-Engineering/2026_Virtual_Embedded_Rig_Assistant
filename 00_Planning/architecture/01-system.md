@@ -22,7 +22,7 @@ Every work package preserves these. Changing one is an architecture decision, re
 | L8 | Document and file content is data, never instructions. No tool executes content. |
 | L9 | Every user-facing string goes through i18n; `en` is the source catalog. Core returns error codes, not sentences. |
 | L10 | A persisted-format change ships with a migration. VERA refuses data written by a newer version. |
-| L11 | Automated tests never call a real model; the replay provider scripts every agent test (08 §3). |
+| L11 | Automated tests never call a real model. Core and test builds use the replay provider; release-package agent tests use a scripted loopback endpoint through the normal custom-provider path (08 §3, ADR-0012). |
 
 ## 2. Stack
 
@@ -60,7 +60,7 @@ flowchart LR
     IPC["IPC router: sender check + zod"] --> CORE["@vera/core"]
     CORE -- ports --> CRED["Credential store (safeStorage)"]
     UPD["Updater (electron-updater)"]
-    CORE --> WK["Worker threads: PDF text, embeddings, vector search"]
+    CORE --> WK["Worker threads: grep, PDF text, embeddings, vector search"]
   end
   BR -- "invoke / events" --> IPC
   CORE --> DB[("workbench/.vera/vera.db")]
@@ -69,8 +69,10 @@ flowchart LR
   UPD -- HTTPS --> FEED["update feed"]
 ```
 
-- The core runs in the main process (ADR-0009). It is I/O-bound; CPU-heavy work (PDF extraction,
+- The core runs in the main process (ADR-0009). CPU-heavy work (grep regex matching, PDF extraction,
   embeddings, vector search) runs in a worker-thread pool supplied through the `WorkerPool` port.
+  Each worker runs one task at a time; the host enforces deadlines and aborts by terminating the
+  task's worker and replacing it. A stalled worker does not stall IPC or cancel other workers.
 - The preload script exposes one object through `contextBridge`:
 
 ```ts
@@ -80,7 +82,7 @@ interface VeraBridge {
   subscribe(topic: "workbench", id: string, on: (e: WorkbenchEvent) => void): () => void;
   subscribe(topic: "app", on: (e: AppEvent) => void): () => void;
 }
-type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED" | "PROVIDER" | "OFFLINE" | "INTERNAL";
+type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED" | "CONTEXT_LIMIT" | "PROVIDER" | "OFFLINE" | "INTERNAL";
                    messageKey: string; params?: Record<string, string | number> };
 ```
 
@@ -118,12 +120,12 @@ packages/core/src/          # Electron-agnostic (L1)
   workbench/                # create, open, validate, path guard, ignore rules, lock
   storage/                  # SQLite connection, migration runner, repositories
   sessions/                 # session service, event hub, snapshots, resume
-  agent/                    # runtime (the loop), system prompt builder, permission engine, approvals, limits
+  agent/                    # runtime, context policy, system prompt builder, permissions, approvals, limits
   tools/                    # registry and internal tools (03 §4)
   knowledge/                # ingest, extraction, chunking, keyword and vector index, hybrid search, refs
   skills/                   # discovery, frontmatter validation, resolution
   llm/                      # pi-ai collections, providers, replay provider, connection test, secret scrubber
-  artifacts/, changes/      # session artifacts and recorded edits
+  artifacts/, changes/      # session artifacts, workbench write queue and recorded edits
   settings/                 # settings schema migrations over a file port
 apps/desktop/src/
   main/                     # lifecycle, window, IPC router, credential store, updater, worker host, portable mode
@@ -192,7 +194,7 @@ Checked by an automated test (WP-01). Weakening an item is an architecture decis
 
 ## 8. Network egress
 
-The complete list of outbound destinations. The packaged smoke (WP-33) asserts it.
+The complete list of outbound destinations. The release-package smoke (WP-33) checks it (08 §5).
 
 | Destination | When | Source |
 |---|---|---|

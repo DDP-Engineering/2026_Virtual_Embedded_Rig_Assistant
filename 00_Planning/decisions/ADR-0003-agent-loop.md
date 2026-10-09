@@ -5,8 +5,9 @@ Status: Proposed — the runtime spike WP-10 confirms it or switches to pi-agent
 
 ## Context
 A session turn needs streaming, parallel read tools and sequential write tools, a wait for the
-user's approval before a write, abort, events for the UI, resumption from stored messages, and later
-steering and context compaction. Two candidates exist, and reusing BenchPilot's code is permitted:
+user's approval before a write, abort, events for the UI, resumption from stored messages, and a
+context budget before every model call, including the first turn. Steering and advanced historical
+compaction follow in M5. Two candidates exist, and reusing BenchPilot's code is permitted:
 
 - BenchPilot's own loop (`apps/server/src/agent/loop.ts`, 185 lines on pi-ai 1.1.0), together with its
   session hub (persisted events folded by the shared reducer), approval gate, replay provider and
@@ -17,10 +18,11 @@ steering and context compaction. Two candidates exist, and reusing BenchPilot's 
 
 ## Decision
 Start from BenchPilot's loop, moved behind `packages/core/src/agent/runtime.ts` (03 §2). Per-call
-approvals reuse its approval-gate pattern. Steering (user messages queued and given to the model
-before its next call) and compaction (a transform of the message list before each call) are added to
-the loop in M5. WP-10 proves the six behaviours of 03 §2 on this loop and measures the same on
-pi-agent-core; if pi-agent-core wins, a new ADR records the switch behind the same interface.
+approvals reuse its approval-gate pattern, with the immutable request, single consumption and
+workbench-wide writer contract of ADR-0012. M1 adds the shared context policy of 03 §2 before every
+model call. Steering (user messages queued before the next call) and advanced historical compaction
+extend that policy in M5. WP-10 proves the seven behaviours of 03 §2 on this loop and measures the
+same on pi-agent-core; if pi-agent-core wins, a new ADR records the switch behind the same interface.
 
 ## Alternatives considered
 - pi-agent-core from the start: ready hooks for steering and compaction, shared with pi; but VERA
@@ -30,4 +32,6 @@ pi-agent-core; if pi-agent-core wins, a new ADR records the switch behind the sa
 ## Consequences
 - The fastest route to a working M1: tested code moves instead of new code being written.
 - VERA owns about 200 lines of loop code and their tests.
-- Steering and compaction are VERA's own, small additions in M5.
+- Budgeting and current-turn result reduction are required in M1; steering and historical
+  compaction remain M5 additions. The spike measures these requirements rather than assuming the
+  reused loop already meets them.

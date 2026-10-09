@@ -142,6 +142,8 @@ Scope:
 - Model delivery at build time (L5 forbids only run-time downloads): pinned URLs with SHA-256, or
   files kept with the sources; implement the choice.
 - Run each package on a machine or VM without network (Windows Sandbox, an Ubuntu VM).
+- This instrumented spike proves native-module and model packaging feasibility; it does not replace
+  WP-33's smoke on the actual release artifacts (08 §5).
 - Measure package size, unpacked size, and the shares of onnxruntime and of the model.
 
 Done when:

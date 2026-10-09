@@ -60,7 +60,11 @@ cameră, voce, comenzi de shell, catalog de teste cu evaluatori, MCP, administra
 | Embeddings calculate local, cu modelul inclus în pachet | abonamentul ChatGPT nu include embeddings, iar documentele nu pleacă din calculator la indexare |
 | Fără tool de shell în v1 | agentul nu poate rula comenzi; programele externe vin mai târziu ca wrapper-e declarate și aprobate |
 | Agentul nu-și poate rescrie singur instrucțiunile | modificările la `workbench.yaml`, `WORKBENCH.md` și `skills/` cer aprobare chiar și în modul automat |
+| Buget de context din M1 | fiecare apel rezervă loc pentru răspuns și reduce rezultatele tool-urilor, inclusiv în prima tură; compresia istoricului vine în M5 |
+| Aprobare pentru modificarea exactă, o singură dată | toate sesiunile și salvările din interfață trec prin aceeași coadă de scriere a workbench-ului; un fișier schimbat între timp cere o nouă aprobare; restartul nu rescrie fișiere |
+| `grep` într-un worker terminabil | deadline-ul și Stop rămân aplicabile chiar dacă un regex blochează worker-ul |
 | Nimic descărcat la rulare | pachetul pornește offline; rețeaua e folosită doar pentru modele, update și login ChatGPT |
+| Verificare pe pachetul distribuit | build-ul instrumentat rămâne separat; pachetul de release se testează offline și cu un model simulat pe endpoint local; rețeaua se verifică automat cu `strace` pe Ubuntu și manual în Windows Sandbox |
 | Update cu electron-updater dintr-un feed static | orice locație HTTPS statică merge; varianta portabilă doar anunță versiunea nouă |
 
 ## Arhitectura pe scurt
@@ -71,7 +75,7 @@ flowchart LR
   MAIN --> CORE["@vera/core<br/>workbench, sesiuni, agent,<br/>tool-uri, documente, skill-uri"]
   CORE --> DB[("workbench/.vera/vera.db")]
   CORE --> FS["folderul workbench"]
-  CORE --> W["worker threads<br/>PDF, embeddings"]
+  CORE --> W["worker threads<br/>grep, PDF, embeddings, vectori"]
   CORE -- HTTPS --> LLM["OpenAI / endpoint local /<br/>abonament ChatGPT"]
 ```
 
@@ -80,11 +84,11 @@ flowchart LR
 | Etapă | Rezultat |
 |---|---|
 | M0 Fundație | aplicația pornește securizat; teme, limbi, setări; spike: module native în pachet |
-| M1 Agent de citire | deschizi un workbench, întrebi, agentul caută și citește fișiere; sesiunile rămân după restart |
-| M2 Editare și abonament | editări cu aprobare și diff, artefacte, plan; login cu ChatGPT |
+| M1 Agent de citire | deschizi un workbench, întrebi, agentul caută și citește fișiere; buget de context din prima tură, grep cu deadline, sesiuni persistente |
+| M2 Editare și abonament | aprobare legată de diff-ul exact, o coadă de scriere comună sesiunilor, recuperare după restart; artefacte, plan, login cu ChatGPT |
 | M3 Cunoaștere | indexarea documentelor (inclusiv PDF), căutare hibridă, citate verificate, vizualizator, skill-uri |
-| M4 Livrare | installer și arhivă portabilă pentru Windows, AppImage și deb pentru Linux, update automat, test offline |
-| M5 Versiunea 1.0 | context lung, mesaje trimise în timpul rulării, export, workbench demo, accesibilitate, traduceri |
+| M4 Livrare | installer și arhivă portabilă pentru Windows, AppImage și deb pentru Linux, update automat; test pe release offline și cu endpoint local, verificarea rețelei |
+| M5 Versiunea 1.0 | compresia istoricului peste bugetarea din M1, mesaje trimise în timpul rulării, export, workbench demo, accesibilitate, traduceri, reverificarea release-ului final |
 | După 1.0 | wrapper-e de tool-uri (flash), serial, cameră, voce locală, catalog de teste |
 
 ## Cum e organizat planul

@@ -3,7 +3,8 @@
 PURPOSE: specify how VERA reaches models — the OpenAI API, OpenAI-compatible custom endpoints and the
 ChatGPT subscription — plus model selection, connection tests, credentials, errors and usage.
 DONE-WHEN (for the work packages that implement it): each provider passes `providers.test` against
-its real service in a manual smoke run, and the replay provider drives every automated test (L11).
+its real service in a manual smoke run; automated model tests use replay or a scripted loopback
+endpoint, never a real model (L11, 08 §3).
 
 ## 1. Providers in 1.0
 
@@ -39,6 +40,10 @@ Compatibility flags stay conservative: plain `system` role, no `store`, no `reas
 - Precedence: per-session override (composer) → workbench default (`agent.model`) → app default.
 - Switching models mid-session is allowed; pi-ai carries the context across providers.
 - A model without tool support can chat; the UI warns that tools are off for it.
+- The gateway exposes `contextWindow` and the effective output-token limit to the context policy
+  before every request. A model switch recomputes the budget; it never reuses the previous model's
+  window. Custom-provider values are validated positive integers with a non-empty input budget
+  after the output reserve and safety margin of 03 §2.
 
 ## 4. Connection test (`providers.test`)
 
@@ -87,15 +92,20 @@ providers.chatgpt.logout → delete the credential
 | No network, DNS failure, refused connection | `OFFLINE` | "Cannot reach {endpoint}" with Retry |
 | 401 or 403 | `PROVIDER` (`auth`) | link to the provider settings |
 | 429 | `PROVIDER` (`rate_limit`) | the retry-after time when given |
-| Context too long | `PROVIDER` (`context`) | suggests a new session until compaction (M5) |
+| Provider rejects context size despite preflight | `PROVIDER` (`context`) | explains the limit; suggests reducing input or checking the custom model's configured window |
 | Any other provider error | `PROVIDER` | the scrubbed provider message |
 
 A provider error ends the turn with `turn.done { stopReason: "error" }`; the session stays usable.
+Local preflight exhaustion is handled before any provider request: `CONTEXT_LIMIT`, message key
+`context.budget_exceeded`, and `turn.done { stopReason: "limit" }` (03 §2, from M1). It is distinct
+from a provider failure. There is no automatic retry with the same oversized request.
 
 ## 8. Usage
 
 pi-ai reports token usage per response. VERA emits `usage.updated` and shows input, output and
-context tokens in the session footer. Money cost is shown for the `openai` provider only.
+context tokens in the session footer. Before each request, the M1 policy reports its input estimate,
+input budget, reserved output and safety margin (03 §2, §8); estimated counts are labelled and do
+not overwrite actual provider usage. Money cost is shown for the `openai` provider only.
 
 NOTES:
 - Replay scripts and test switches: 08 §3.

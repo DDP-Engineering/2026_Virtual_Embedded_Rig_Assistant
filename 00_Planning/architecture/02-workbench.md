@@ -147,10 +147,14 @@ events(session_id TEXT, seq INTEGER, type TEXT, payload_json TEXT NOT NULL, crea
 tool_calls(id TEXT PRIMARY KEY, session_id TEXT, name TEXT, args_json TEXT, result_json TEXT,
            status TEXT,                                 -- pending | ok | error | denied | aborted
            started_at TEXT, ended_at TEXT);
-approvals(id TEXT PRIMARY KEY, session_id TEXT, tool_call_id TEXT, request_json TEXT,
-          decision TEXT, decided_by TEXT, decided_at TEXT); -- approved | denied | aborted; user | mode
+approvals(id TEXT PRIMARY KEY, session_id TEXT, turn_id TEXT, tool_call_id TEXT,
+          request_sha256 TEXT NOT NULL, request_json TEXT NOT NULL,
+          decision TEXT, decided_by TEXT, decided_at TEXT, consumed_at TEXT);
+          -- decision null while pending, else approved | denied | aborted; user | mode
 changes(id INTEGER PRIMARY KEY, session_id TEXT, tool_call_id TEXT, path TEXT,
-        before_sha256 TEXT, after_sha256 TEXT, diff TEXT, created_at TEXT);
+        before_sha256 TEXT, after_sha256 TEXT, diff TEXT,
+        status TEXT NOT NULL,                           -- pending | applied | conflict (03 §6)
+        created_at TEXT, UNIQUE (tool_call_id));
 artifacts(id TEXT PRIMARY KEY, session_id TEXT, name TEXT, mime TEXT, bytes INTEGER,
           sha256 TEXT, description TEXT, created_at TEXT, UNIQUE (session_id, name));
 todos(session_id TEXT PRIMARY KEY, items_json TEXT NOT NULL, updated_at TEXT);
@@ -175,7 +179,9 @@ chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, ordinal INTEGER, locator_json TEX
 - A session belongs to one workbench. Its title is the first user message cut to 60 characters, with
   no model call; the user can rename it.
 - Statuses: `idle`, `running`, `awaiting_approval`, `error`. Several sessions may run at once; each
-  has at most one running turn.
+  has at most one running turn. File writes go through one queue per workbench (03 §6), the app's
+  own saves included. Restart recovery closes both active statuses and resolves `pending` changes
+  before another turn starts (03 §8).
 - Deleting a session removes its rows and its `artifacts/<session-id>/` folder after a confirmation.
 - Artifacts are text files the agent saves with `artifact_save`. 1.0 stores UTF-8 text up to 5 MB each;
   binary artifacts arrive with device tools after 1.0.

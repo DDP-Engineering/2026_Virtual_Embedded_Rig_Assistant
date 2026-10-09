@@ -15,11 +15,11 @@ STATE: 2026-10-09 — planned; nothing implemented yet.
 | Milestone | Plan | DONE-WHEN |
 |---|---|---|
 | **M0 Foundation** | [M0-foundation.md](M0-foundation.md) | the launch e2e passes on Windows and Ubuntu with the security baseline (01 §7); theme, text size and language switch and persist; the packaging spike WP-05 has filed its ADR |
-| **M1 Read-only agent** | [M1-read-only-agent.md](M1-read-only-agent.md) | in the demo workbench — scripted in tests, and with a real OpenAI key or local endpoint by hand — the agent greps and reads files and answers with a valid citation; the session reloads after a restart; `vera run` prints the same events headless |
-| **M2 Edits, artifacts, ChatGPT** | [M2-edits-artifacts-chatgpt.md](M2-edits-artifacts-chatgpt.md) | in `ask` mode an edit waits for approval with a diff; approve, deny and stop behave per 03 §6; protected paths ask even in `auto-edit`; artifacts, changes and the plan show in their panels; a ChatGPT subscription signs in and runs a session |
+| **M1 Read-only agent** | [M1-read-only-agent.md](M1-read-only-agent.md) | the agent reads and cites files; every request fits its context budget, including a long first turn; grep timeout/abort leaves IPC responsive; sessions survive restart; `vera run` prints the same events headless; real-provider smoke is manual |
+| **M2 Edits, artifacts, ChatGPT** | [M2-edits-artifacts-chatgpt.md](M2-edits-artifacts-chatgpt.md) | approval is bound to one exact change and used once; sessions share one write queue per workbench; restart recovers interrupted approvals and writes; protected paths ask even in `auto-edit`; panels and ChatGPT sign-in work |
 | **M3 Knowledge** | [M3-knowledge.md](M3-knowledge.md) | demo PDFs, Markdown and logs index in the background; hybrid `search_docs` meets the recall threshold; citations open the viewer at the cited page; skills load from workbench and user folders |
-| **M4 Delivery** | [M4-delivery.md](M4-delivery.md) | the DONE-WHEN of 07: offline clean-machine install on both systems, update vN → vN+1 from a test feed, egress audit green |
-| **M5 Version 1.0** | [M5-version-1.md](M5-version-1.md) | long sessions survive context limits; messages can be sent during a turn; sessions export; demo workbench and onboarding ship; translations reviewed |
+| **M4 Delivery** | [M4-delivery.md](M4-delivery.md) | release artifacts install and index offline on both systems; a scripted loopback endpoint drives the normal provider path; the egress check finds no unexpected connection; vN → vN+1 preserves data |
+| **M5 Version 1.0** | [M5-version-1.md](M5-version-1.md) | historical compaction extends the M1 context budget; messages can be sent during a turn; sessions export; demo and onboarding ship; translations reviewed; final 1.0 release smoke passes |
 
 ## 3. Work packages
 
@@ -56,9 +56,9 @@ STATE: 2026-10-09 — planned; nothing implemented yet.
 | WP-29 | Skills | M3 | 12 |
 | WP-30 | Packaging targets | M4 | 05, 26 |
 | WP-31 | Auto-update | M4 | 30 |
-| WP-32 | Upgrade and migration safety | M4 | 30 |
-| WP-33 | Offline packaged smoke and egress audit | M4 | 30 |
-| WP-34 | Context management | M5 | 13 |
+| WP-32 | Upgrade and migration safety | M4 | 17, 30 |
+| WP-33 | Release-package smoke and egress check | M4 | 18, 28, 30, 31, 32 |
+| WP-34 | Advanced context compaction | M5 | 10, 13, 14 |
 | WP-35 | Messages during a running turn | M5 | 13, 14 |
 | WP-36 | Session export and search | M5 | 13 |
 | WP-37 | Demo workbench, sample skills, onboarding | M5 | 29 |
@@ -108,6 +108,10 @@ in parallel from WP-01 and must finish before the database (WP-07).
 | R-06 | Prompt injection through documents | the defences of 03 §10 | every tool package |
 | R-07 | The package exceeds its size budget | size check; smaller English model as fallback | WP-30 |
 | R-08 | Agent-written code drifts from the architecture | laws of 01 §1, the boundary check, review of every work package | all |
+| R-09 | A first turn or model switch exceeds context before historical compaction | budget every request from M1, including current-turn tool results; reserve output; explicit limit outcome | WP-09, WP-10, WP-13, WP-34 |
+| R-10 | Concurrent or interrupted edits apply stale or repeated approvals | approval bound to the change's digest and used once; one write queue per workbench; hash check before writing; `pending` changes resolved on restart | WP-16, WP-17, WP-32 |
+| R-11 | A pathological grep blocks the main process or ignores Stop | regex work in a terminable worker; host deadline and abort; responsiveness test | WP-11, WP-14, WP-15 |
+| R-12 | Instrumented-build results hide a release packaging or egress defect | separate artifacts; smoke on the release artifact by SHA-256; `strace` egress check on Ubuntu, Sandbox check on Windows | WP-30, WP-33 |
 
 ## 6. After 1.0
 

@@ -16,3 +16,4 @@ files a new ADR and updates this index.
 | [ADR-0009](ADR-0009-core-in-main-process.md) | Electron-agnostic core in the main process; CPU work in worker threads | Accepted |
 | [ADR-0010](ADR-0010-zod-single-schema-language.md) | zod is the only schema language; tool schemas converted to JSON Schema | Accepted |
 | [ADR-0011](ADR-0011-single-user-desktop.md) | Single-user desktop app: no accounts, roles or app login | Accepted |
+| [ADR-0012](ADR-0012-bounded-execution-and-release-proof.md) | M1 context budgets and terminable grep; exact one-use approvals, workbench-wide writes and restart reconciliation; proof on actual release artifacts | Accepted; planning contract |

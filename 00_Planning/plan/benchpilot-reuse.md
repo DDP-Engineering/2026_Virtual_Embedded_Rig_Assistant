@@ -24,10 +24,10 @@ Rules:
 | `llm/oauth.ts` | 79 | `llm/chatgpt.ts` | keep the in-process sign-in; open `auth_url` through the `OpenExternal` port; add the manual-code paste flow; `agentName: "VERA"` |
 | `llm/credentials.ts` | 190 | `CredentialStore` port + `apps/desktop/src/main/credentials.ts` | keep write-then-rename with the Windows retry and the pi-ai store view; encrypt every value with `safeStorage` |
 | `llm/replay.ts` | 228 | `llm/replay.ts` | the scripted provider for tests (08 §3); keep placeholders and the stateless step derivation; drop the verdict guards |
-| `agent/loop.ts` | 185 | `agent/runtime.ts` | the starting loop (ADR-0003); per-call approvals, VERA limits, later steering and compaction |
-| `agent/approval.ts` | 45 | `agent/approvals.ts` | from plan approval to per-call approval keyed by approval id |
+| `agent/loop.ts` | 185 | `agent/runtime.ts` | starting loop (ADR-0003); M1 context policy before every call, per-call approvals, limits; M5 steering and historical compaction |
+| `agent/approval.ts` | 45 | `agent/approvals.ts` | gate pattern only; VERA binds each approval to the digest of the exact change and the active turn, used once |
 | `agent/hub.ts` | 76 | `sessions/hub.ts` | keep persist → fold with the shared reducer → fan out; fan-out goes to the IPC emitter |
-| `agent/sessions.ts` | 296 | `sessions/service.ts` | keep one running turn per session, stop and restart recovery; drop plans and runs |
+| `agent/sessions.ts` | 296 | `sessions/service.ts` | keep one turn per session and stop; recover running and awaiting-approval sessions, resolve `pending` changes; drop plans and runs |
 | `agent/prompt.ts` | 46 | `agent/prompt.ts` | sections and rules per 03 §3 |
 | `agent/citations.ts` | 9 | `agent/citations.ts` | swap the resolver for VERA references |
 | `evidence/resolve.ts`, `evidence/context.ts` | 54, 166 | `knowledge/refs.ts` | resolve VERA references; the context rendering feeds the document viewer |
@@ -68,7 +68,7 @@ Rules:
 | BenchPilot | Lines | VERA target | Change |
 |---|---|---|---|
 | `scripts/smoke.mjs` | 123 | e2e helpers | fail on console errors and on requests that leave the app |
-| `scripts/package-smoke.mjs` | 368 | `scripts/smoke-package.mjs` | extract to a path with a space and a non-ASCII character, minimal environment, offline checks (WP-33) |
+| `scripts/package-smoke.mjs` | 368 | `scripts/smoke-package.mjs` | reuse path/environment checks; add the artifact SHA-256, the scripted loopback session and the egress check (WP-33) |
 | `scripts/package.mjs` | 358 | packaging checks | electron-builder replaces it; keep its pre-packaging checks: no secrets, path length, native files complete |
 | `scripts/sandbox/BenchPilot.wsb` | — | `scripts/sandbox/VERA.wsb` | Windows Sandbox for the clean-machine run |
 | `agent/replay-e2e.spec.ts`, `agent/guards.spec.ts`, `tools/caps.spec.ts` | — | `packages/core/test/` | the same kinds of tests for VERA's runtime, approvals and caps |

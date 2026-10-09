@@ -5,6 +5,8 @@ end-to-end slice of VERA.
 DONE-WHEN: in the demo workbench — with the replay script `read-then-answer` in tests, and with a real
 OpenAI key or a local endpoint by hand — the agent greps and reads files and answers with a valid
 citation; the session reloads after a restart; `vera run` prints the same events headless.
+Every model request fits the M1 context budget, including a first turn with many tool results;
+pathological grep patterns can be stopped without blocking IPC.
 
 ## WP-06 Workbench format, create and open, Welcome screen
 
@@ -94,7 +96,7 @@ Done when:
 ## WP-09 LLM gateway, connection test, replay provider
 
 **Goal:** one core module through which every model call goes — catalogs, the connection test, error
-mapping — and the scripted replay provider that drives every automated test.
+mapping — and the scripted replay provider for core and test-build model scenarios (L11).
 **Depends on:** WP-08. **Specs:** 04 §1–§4, §7, §8; 08 §3, §4; ADR-0002.
 **Start from:** BenchPilot `apps/server/src/llm/gateway.ts`, `providers.ts`, `replay.ts`, `llm.spec.ts`.
 
@@ -103,6 +105,8 @@ Scope:
   (subscription empty until WP-21); providers from settings and the credential store; `custom:<slug>`
   providers through `createProvider()` and `openAICompletionsApi()` with the flags of 04 §2.
 - Model references `<providerId>/<modelId>`; the precedence helper (session → workbench → app).
+- Expose model context windows and effective output limits to the runtime; validate custom-provider
+  budget settings. A model switch supplies fresh capabilities for the next request (04 §3).
 - IPC `providers.models` (catalog per provider; `GET /models` for custom endpoints that offer it) and
   `providers.test` (04 §4).
 - Error mapping to `VeraError` per 04 §7, always through `scrub`.
@@ -117,6 +121,8 @@ Done when:
 - [ ] Unit (mock HTTP server on loopback): 401, 429 with retry-after, a refused connection and an
   over-long context map to the codes of 04 §7 with no secret in the message.
 - [ ] Unit: model-reference precedence resolves session over workbench over app.
+- [ ] Unit: model capabilities and output limits are available before streaming; invalid custom
+  windows are rejected, and switching to a smaller model supplies the smaller budget.
 - [ ] Manual: `smoke:live` passes against a real OpenAI key or a local Ollama.
 
 ## WP-10 Spike: agent runtime
@@ -129,16 +135,22 @@ the alternative, pi-agent-core, before the session engine depends on either.
 
 Scope:
 - `agent/runtime.ts` from BenchPilot's loop, behind the interface of 03 §2.
-- Replay-provider tests with two dummy tools (one read, one write) proving the six behaviours of 03 §2:
-  approval wait, denial, abort during a wait, parallel reads with ordered writes, resume from persisted
-  messages, a throwing tool turned into an error result.
-- The same six behaviours tried on `@earendil-works/pi-agent-core` (`beforeToolCall`, `abort()`,
+- Replay-provider tests with two dummy tools (one read, one write) proving the seven behaviours of 03 §2:
+  streaming text and tool calls; parallel reads with ordered writes; approval wait with approve and
+  deny; abort during a wait; resume from persisted messages; a throwing tool turned into an error
+  result; bounded model requests within a long first turn.
+- `agent/context.ts`: the M1 context policy of 03 §2, shared by both candidate runtimes. Document the
+  token-counting strategy, output reserve and safety margin; keep full persisted messages unchanged.
+- The same seven behaviours tried on `@earendil-works/pi-agent-core` (`beforeToolCall`, `abort()`,
   `executionMode`), with the replay provider adapted as its stream function; note the effort and gaps.
 - The mapping from runtime events to `SessionEvent`s, written down.
 - The zod → JSON Schema conversion for tool parameters (ADR-0010).
 
 Done when:
-- [ ] Six passing tests on the chosen runtime, one per behaviour.
+- [ ] Seven passing behaviour groups on the chosen runtime, covering approve, deny and abort separately.
+- [ ] Budget tests: system prompt and tool schemas count; output reserve and safety margin are honoured;
+  several large results in the first turn are reduced before the next call; an irreducible request
+  makes no model call and ends `limit`; reduced requests preserve complete tool-call/result pairs.
 - [ ] The comparison and the event mapping are written down.
 - [ ] A new ADR confirms ADR-0003 or switches to pi-agent-core, and the decisions index is updated;
   either way `runtime.ts` keeps the interface of 03 §2.
@@ -152,6 +164,9 @@ Done when:
 
 Scope:
 - `workbench/path-guard.ts` (03 §5 steps 1–5) and binary detection.
+- The `WorkerPool` port and reusable desktop/CLI worker hosts: one task per worker, host-owned
+  absolute deadlines, termination on timeout/abort, and replacement after termination. `grep` runs
+  discovery, file reads and JavaScript regex matching there; partial matches cross the worker boundary.
 - `packages/shared/src/refs.ts`: line references `<path>#L<a>-L<b>`; other kinds arrive in WP-27.
 - `tools/registry.ts`: `{ name, class, description, params (zod), execute(ctx, args, signal) }`;
   `tools.disabled` filtering; JSON Schema for the model; capping at 32 000 characters with `truncated`.
@@ -166,7 +181,12 @@ Done when:
 - [ ] `read` numbers lines, honours `offset` and `limit`, refuses binaries, points PDFs to `read_doc`,
   records the fingerprint.
 - [ ] `grep` honours `glob`, `ignoreCase`, `context`, `output`; skips binaries and files over 5 MB;
-  stops after 10 s with `truncated`.
+  its host terminates the worker after 10 s with partial results and `truncated`.
+- [ ] A catastrophic-backtracking fixture times out; an abort terminates it; invalid regex syntax
+  returns a tool error. The next grep succeeds with replacement worker capacity.
+- [ ] Desktop-host integration: while a pathological grep runs, `app.info` responds and host abort
+  remains effective; no regex matching falls back to the main thread. Deadline tests use a shorter
+  injected test deadline; WP-14 checks the complete session Stop flow once the chat UI exists.
 - [ ] `list` and `glob` exclude `.vera/`, `.git/`, `node_modules/` and `.veraignore` matches.
 - [ ] Every tool schema converts to JSON Schema and validates a sample call.
 
@@ -201,10 +221,14 @@ Scope:
   folder), statuses, title from the first message.
 - Turn engine on `runtime.ts`: `BUSY` on a second send; persist messages at message end and every
   non-live event with its `seq`; `tool_calls` rows; limits of 03 §7; stop.
+- Apply the M1 context policy before every gateway call; report context estimates through
+  `usage.updated`. A context limit leaves the full transcript and tool results available.
 - A permission-engine interface with an allow-all policy for read tools (completed in WP-17).
 - The citation check of 03 §9 for line references.
 - Subscriptions with `sinceSeq`: replay persisted events, then live ones; deltas coalesced in main.
-- Restart: sessions found `running` become `idle` with the `error` event `session.interrupted`.
+- Restart: sessions found `running` or `awaiting_approval` become `idle` with `session.interrupted`
+  and `turn.done`; complete unanswered tool-call/result pairs before resuming. WP-16 and WP-17 add
+  `pending`-change resolution and approval cleanup to this recovery path (03 §6, §8).
 - IPC `session.list | create | get | rename | delete | send | stop | model.set | mode.set`; topic `session`.
 - `fixtures/llm-scripts/read-then-answer.jsonl`.
 
@@ -216,6 +240,10 @@ Done when:
 - [ ] Integration: a new core instance on the same database returns the same snapshot and continues the
   conversation.
 - [ ] Integration: exceeding the tool-call limit ends the turn with `limit`.
+- [ ] Integration: a single long first turn stays within the configured input budget; an oversized
+  mandatory context ends `limit` without calling the gateway; switching models recalculates the budget.
+- [ ] Integration: restart recovery is idempotent, closes both active statuses and repairs unanswered
+  tool calls; the next turn receives a valid context with the full persisted history retained.
 - [ ] Unit: the reducer builds the same snapshot from persisted events as from the live stream.
 
 ## WP-14 Chat UI
@@ -233,7 +261,8 @@ Scope:
   preview; citation chips, valid and invalid (the viewer arrives in WP-28); errors with Retry.
 - Composer: Enter sends, Shift+Enter adds a line; `@` completion through `workbench.files`; model
   picker over the configured providers; Stop.
-- Footer: token usage from `usage.updated`. Right panel: the Context tab; other tabs as placeholders.
+- Footer: token usage, context budget and output reserve from `usage.updated`; estimated counts
+  labelled; actionable context-limit error. Right panel: Context; other tabs as placeholders.
 - `session.get` snapshot, then `subscribe(sinceSeq)`; a renderer reload re-subscribes without duplicates.
 - Mock fixtures: empty session, streaming answer, tool rows, invalid citation, provider error.
 - Strings in `en`, `ro`, `de`.
@@ -242,13 +271,17 @@ Done when:
 - [ ] e2e (replay `read-then-answer`): two tool rows and an answer with one citation chip.
 - [ ] e2e: after an app restart the transcript is identical.
 - [ ] e2e: Stop during a slowed scripted response ends the turn and re-enables the composer.
+- [ ] e2e: during a pathological grep, `app.info` responds, Stop aborts the worker-backed call and
+  the composer becomes usable; the next grep succeeds.
 - [ ] e2e: reloading the renderer mid-stream shows no duplicated text.
+- [ ] Component tests: the M1 context meter labels estimates, and a context-limit error leaves the
+  composer usable and the full transcript visible.
 - [ ] Component tests cover each mock fixture state; the session list, tool rows and composer work by keyboard alone.
 
 ## WP-15 Headless CLI
 
 **Goal:** run VERA's core without the GUI, so behaviour can be checked end to end from a terminal.
-**Depends on:** WP-13. **Specs:** 01 §4; 08 §3; 03 §8; ADR-0009.
+**Depends on:** WP-13. **Specs:** 01 §4; 08 §3; 03 §2, §4, §7, §8; ADR-0009, ADR-0012.
 **Start from:** BenchPilot `apps/server/src/cli/chat.ts` (`--script` replay runs), `cli/bench.ts`.
 
 Scope:
@@ -258,7 +291,9 @@ Scope:
   worker-thread `WorkerPool`.
 - `vera run --workbench <dir> --prompt <text> [--session <id>] [--provider replay --script <file> |
   --provider openai --model <id> | --provider custom --base-url <url> --model <id>] [--format jsonl | pretty]`.
-- Exit codes: 0 when the turn ends `end`; 1 on `error` or `aborted`; 2 on a usage error.
+- Exit codes: 0 when the turn ends `end`; 1 on `error`, `aborted` or `limit`; 2 on a usage error.
+- Context budgeting and worker deadlines use the same policy as the desktop host; a context-limit
+  stop reports the structured error.
 - Every output line passes through the scrubber.
 
 Done when:
@@ -266,6 +301,9 @@ Done when:
   event types in order and exits 0.
 - [ ] An unknown flag exits 2 with usage text.
 - [ ] A key passed through the environment never appears in the output, even on a forced provider error.
+- [ ] A long first-turn script respects the input budget; an irreducible request reports
+  `CONTEXT_LIMIT` and exits 1 without a gateway call. A pathological grep times out in its worker,
+  and a later grep succeeds after worker replacement.
 
 NOTES:
 - WP-10 gates WP-13: if the spike switches to pi-agent-core, only `runtime.ts` and the replay adapter change.

@@ -6,19 +6,26 @@ DONE-WHEN: long sessions survive context limits; messages can be sent during a t
 the demo workbench and onboarding ship; `ro` and `de` are reviewed; the clean-machine run of WP-33
 passes on the 1.0 build.
 
-## WP-34 Context management
+## WP-34 Advanced context compaction
 
-**Goal:** sessions keep working when the conversation outgrows the model's context window.
-**Depends on:** WP-13. **Specs:** 03 §2 (compaction), §7; 04 §7 (`context` error).
+**Goal:** retain useful historical context in long sessions, extending the budget protection already
+working in M1.
+**Depends on:** WP-10, WP-13, WP-14. **Specs:** 03 §2 (M1 budget and M5 compaction), §7; 04 §7.
 
 Scope:
-- Before each model call: tool results older than the last two turns replaced by their one-line summary.
-- Above 80 % of the context window: a model-written summary of earlier turns replaces them; the full
-  history stays in the database and the transcript.
-- A context meter in the footer.
+- Above 80 % of the input budget, summarise completed historical exchanges while preserving current
+  instructions, decisions, source refs and outstanding work. The full history stays in the database
+  and transcript; summaries are derived context, not replacements for persisted messages.
+- Summary requests themselves pass the M1 context policy and output reserve. Limit compaction to
+  one attempt per normal model request; then recheck the budget. If there is no historical exchange
+  to summarise, use the M1 current-turn reduction and explicit context-limit outcome.
+- Extend the M1 context meter with compaction status and the size of the resulting request view.
 
 Done when:
-- [ ] Integration: a replay session larger than a small test context window completes without a `context` error.
+- [ ] Integration: a multi-turn replay session exceeds a small window and continues with a summary
+  that preserves decisions and refs; every normal and summary request meets its input budget.
+- [ ] Integration: a long first turn, an oversized current instruction, a smaller-model switch and a
+  failed summary retain the M1 budget and limit semantics; no unbounded compaction retry occurs.
 - [ ] The transcript still shows the full history after compaction.
 
 ## WP-35 Messages during a running turn

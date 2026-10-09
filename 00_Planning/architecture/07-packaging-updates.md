@@ -2,9 +2,11 @@
 
 PURPOSE: specify how VERA ships as self-contained packages, how portable mode works, how updates are
 found, downloaded and installed, how persisted data survives upgrades, and how signed builds behave.
-DONE-WHEN (for M4): on clean Windows and Ubuntu machines without Node, Python or internet access, the
-packaged app installs, starts, indexes the demo workbench and runs a replay session; an installed vN
-updates itself to vN+1 from a test feed with sessions and settings intact.
+DONE-WHEN (for M4): the exact release packages install, start and index the demo workbench on clean
+Windows and Ubuntu machines without Node, Python or internet access. A second run proves an agent
+session through a scripted loopback endpoint using the normal custom provider; an installed vN
+updates itself to vN+1 from a test feed with sessions and settings intact. The egress check of 08 §5
+finds no unexpected connection; release builds contain no test switches.
 
 ## 1. Self-containment rules
 
@@ -16,6 +18,9 @@ updates itself to vN+1 from a test feed with sessions and settings intact.
   (`asarUnpack`), because native code cannot read inside it.
 - Size budget: Windows installer ≤ 250 MB. The packaging script fails above it and lists the largest
   contributors.
+- `npm run package` produces release artifacts with test switches compiled out. `package:test`
+  produces separately labelled instrumented artifacts for debugging; they are never delivered.
+  WP-33 tests the already-built release artifacts and records their SHA-256 (08 §5).
 
 ## 2. Targets
 

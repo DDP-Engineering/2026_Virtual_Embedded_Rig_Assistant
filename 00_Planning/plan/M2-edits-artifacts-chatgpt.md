@@ -15,12 +15,17 @@ and recorded diffs.
 
 Scope:
 - `write` and `edit` per 03 §4, both sequential.
+- One write queue per workbench for all sessions and the app's own saves; approval waits hold no
+  place in it (03 §6).
 - Freshness: the last-read fingerprint must match the file's current SHA-256 before an overwrite or an edit.
-- Atomic writes: a temporary file in the same folder, then rename.
+- The output bytes, before/after hashes and the diff are prepared once. When the write's turn comes
+  in the queue, the hash is checked again; a changed file fails with a conflict, never with an edit
+  recalculated on the new content.
+- Atomic writes: a `pending` row in `changes`, a temporary file in the same folder, rename, then
+  `applied`. On restart, `pending` rows are resolved by hash (03 §6).
 - Line endings and BOM: for CRLF files, `edit` converts `oldString` and `newString` from LF before
   matching and keeps CRLF; a UTF-8 BOM is preserved.
-- Unified diff with `diff`; a `changes` repository; `change.recorded` after each change; the
-  fingerprint refreshed after it.
+- Unified diff with `diff`; `change.recorded` after each change; the fingerprint refreshed after it.
 - Both tools are classed `write`; protected paths are marked (03 §6).
 
 Done when:
@@ -29,9 +34,13 @@ Done when:
 - [ ] Unit: `edit` fails on zero or several matches (unless `replaceAll`), succeeds on one, and reports
   `added` and `removed`.
 - [ ] Unit: `edit` fails when the file changed after the session read it.
+- [ ] Integration: two sessions edit the same file from the same version; one write applies, the
+  other fails with a conflict, and no change is lost.
 - [ ] Unit: a CRLF file stays CRLF after an LF-written edit; a BOM survives.
 - [ ] Unit: writes into `.vera/` or outside the root are rejected.
 - [ ] Integration: a script that reads and then edits records a `changes` row and a `change.recorded` event.
+- [ ] Unit: on restart, a `pending` row whose file already has the new content becomes `applied`, and
+  one whose file still has the old content is removed.
 
 ## WP-17 Permission modes and approvals
 
@@ -41,12 +50,18 @@ approval cards with diffs.
 **Start from:** BenchPilot `apps/server/src/agent/approval.ts`, `apps/web/src/components/session/ApprovalCard.tsx`.
 
 Scope:
-- The permission engine: modes `read-only`, `ask`, `auto-edit`; protected paths; `read-only` removes
-  `write` and `edit` from the tools sent to the model.
+- The permission engine: modes `read-only`, `ask`, `auto-edit`; canonical protected paths; `read-only`
+  removes `write` and `edit` from the model catalog and rejects them again at execution.
+- Approval requests of 03 §6 with `request_sha256` over the exact change (path, before/after hashes,
+  diff); a decision must match the digest and the active turn, and an approval is used by one write only.
 - Before a write: an `approvals` row, `approval.requested` (diff or full new content, bytes), then a
   wait that resolves on `session.approval.decide` or as `aborted` on `session.stop`; `decided_by` recorded.
 - "Approve and switch to auto-edit" changes the session mode and emits `session.updated`.
-- IPC `session.approval.decide { approvalId, decision, switchToAutoEdit? }` and `session.mode.set`.
+- IPC `session.approval.decide { sessionId, approvalId, requestSha256, decision, switchToAutoEdit? }`
+  and `session.mode.set`; a mismatched digest or an already decided or ended request returns
+  `CONFLICT`. `read-only` aborts pending writes.
+- Restart recovery per 03 §8: undecided approvals become `aborted`, both active session statuses
+  close, interrupted tool calls get a result.
 - UI: the approval card inline (06 §3) with a unified diff and `A`/`D` keys; the composer disabled
   while an approval waits; the sidebar badge; the mode picker; new sessions take the workbench default.
 - CLI: `--approve all | none` and an interactive prompt on a TTY.
@@ -58,7 +73,14 @@ Done when:
 - [ ] Integration: in `auto-edit` an edit to `docs/notes/bringup.md` applies with `decided_by: mode`,
   while an edit to `WORKBENCH.md` waits for approval.
 - [ ] Integration: in `read-only` the tools sent to the model include neither `write` nor `edit`.
+- [ ] Integration: a fabricated write call in `read-only` is rejected by core; Windows case aliases
+  of protected paths still need approval.
 - [ ] Integration: `stop` during a wait resolves it `aborted` and leaves the file unchanged.
+- [ ] Integration: changing the file while the approval waits makes the write fail with a conflict.
+- [ ] Integration: a second decision on the same approval, or one with a different digest, returns
+  `CONFLICT` and writes nothing.
+- [ ] Integration: after a restart in `awaiting_approval`, the session is `idle` and the old approval
+  can no longer be used.
 - [ ] e2e: Approve applies the change, Deny does not, and the `A` and `D` keys work.
 - [ ] CLI: `--approve none` denies and exits 0 with the turn ending `end`.
 
