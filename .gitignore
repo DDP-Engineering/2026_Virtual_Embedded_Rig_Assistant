@@ -1,0 +1,30 @@
+# Dependencies are restored by npm and never committed.
+**/node_modules/
+
+# Build output: TypeScript and Vite (dist/), electron-vite (out/), electron-builder packages (release/).
+**/dist/
+**/out/
+**/release/
+*.tsbuildinfo
+
+# Test output: Vitest coverage and Playwright runs. A successful run leaves none.
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/blob-report/
+
+# Workbench runtime state (index, sessions, artifacts) that VERA creates when it opens a workbench,
+# the demo fixture included.
+**/.vera/
+
+# Local Vite environment overrides are per-developer. Shared .env.<mode> files stay in Git.
+**/.env.local
+**/.env.*.local
+
+# npm failure logs only: workbench fixtures contain *.log files that belong in Git.
+npm-debug.log*
+
+# Operating-system metadata.
+.DS_Store
+Thumbs.db
+desktop.ini

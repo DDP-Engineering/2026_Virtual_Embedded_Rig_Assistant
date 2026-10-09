@@ -1,0 +1,26 @@
+# Text is stored and checked out with LF on every platform, Windows included.
+* text=auto eol=lf
+
+# Windows command scripts need CRLF to run reliably under cmd.exe.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets: app icons, images, fonts, demo PDFs, ONNX models, SQLite files, native modules, archives.
+*.ico binary
+*.icns binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary
+*.onnx binary
+*.db binary
+*.sqlite binary
+*.node binary
+*.exe binary
+*.dll binary
+*.zip binary
