@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-477c1921"
+title = "Return safe IPC failures"
+status = "active"
+requirement = "When a handler fails or returns an invalid response, the IPC boundary shall reject invoke with a schema-valid VeraError, mapping unknown failures and malformed results to INTERNAL plus a sanitized main log entry."
+verification = "Router/bridge tests assert exact structured error, logging count and no raw exception text; real Electron round trip verifies rejection fields survive isolation and a subsequent call succeeds."
+affected_paths = ["05_Software/apps/desktop/src/main/ipc-router.ts","05_Software/apps/desktop/src/preload/","05_Software/packages/shared/src/ipc.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/renderer/api/ipc.test.ts", "05_Software/e2e/shell.spec.ts"]
+spec = "specs/REQ-FUNC-17dfdd16.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

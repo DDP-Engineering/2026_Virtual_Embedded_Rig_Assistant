@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-f3dfc04e"
+title = "Validate invocation requests"
+status = "active"
+requirement = "When an authorized renderer invokes a channel, the router shall validate its registered request before dispatch, returning NOT_FOUND for an unknown channel or INVALID for a schema mismatch."
+verification = "Observe spy dispatch count and result envelopes for valid {}, unknown channel, polluted prototype name, null and extra-property requests."
+affected_paths = ["05_Software/apps/desktop/src/main/ipc-router.ts","05_Software/packages/shared/src/ipc.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/ipc-router.test.ts"]
+spec = "specs/REQ-FUNC-17dfdd16.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

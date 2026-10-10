@@ -2,7 +2,7 @@
 
 The npm workspaces of VERA — `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli` — with
 end-to-end tests and development scripts. Layout and module boundaries:
-[01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell and source skeleton implement WP-01.
+[01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell displays native metadata through the validated typed IPC bridge.
 
 ## Set-up and commands
 
@@ -16,8 +16,9 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `npm run typecheck` | `tsc -b` |
 | `npm test` | Vitest |
 | `npm run dev` | Electron main, sandboxed preload and React renderer with loopback Vite/HMR |
+| `VITE_API=mock npm run dev:renderer` | Browser renderer using in-memory metadata and app event mocks |
 | `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `apps/desktop/out/` |
-| `npm run test:e2e` | Build, then Playwright Electron acceptance tests; uses `xvfb-run -a` on Linux |
+| `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 
 Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, for example
 `python ../02_Tools/npmw.py npm run verify`. Full command list: [08-quality.md §1](../00_Planning/architecture/08-quality.md).
@@ -32,10 +33,11 @@ Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, 
 
 The four workspaces are `@vera/shared`, `@vera/core`, `@vera/desktop` and `@vera/cli`. Each extends
 the shared TypeScript base and participates in `tsc -b`. The desktop project separates Node, preload,
-DOM renderer and build configuration type environments. Shared/core/CLI expose source entrypoints
-for subsequent work packages.
+DOM renderer and build configuration type environments. Shared publishes typed zod IPC contracts;
+core and CLI expose source skeletons. Desktop Vite and Vitest resolve shared contracts directly from source,
+so build and development work before compiled library output exists.
 
-The desktop shell displays VERA and saves normal window bounds in `<userData>/window-state.json`.
+The desktop shell displays name, version, platform, architecture, portable marker and OS locale from `app.info`, and saves normal window bounds in `<userData>/window-state.json`.
 Production loads bundled assets through the confined `vera://app` protocol, with the same restrictive
 CSP in both the HTML meta and response headers. Development uses `http://127.0.0.1:5173` and permits
 the hashed React refresh preamble, injected development CSS and the exact HMR websocket. Production
@@ -51,3 +53,15 @@ non-loopback connections in Chromium and Node. Screenshots are captured for huma
 `npm ci` runs `install-electron` to install the pinned Electron binary; npm's allowScripts entries
 permit the pinned esbuild install scripts. Ubuntu requires the libraries and Xvfb listed by
 `python3 ../02_Tools/setup.py --check`; keep Linux and Windows `node_modules` separate.
+
+The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
+app.info and app event subscription contract in memory. TanStack Query owns metadata requests;
+English i18next labels and error keys live in `src/renderer/locales/en.json`. Full language settings
+are defined by the UI work package. App subscriptions are invalidation signals; later event domains
+add their own schemas and services. `portable` reports a `vera.portable` marker beside the executable;
+app-data routing is owned by the app data work package.
+
+Before browser acceptance, run `python ../02_Tools/npmw.py npx playwright install chromium` once
+(Ubuntu: python3). In PowerShell, browser mock development uses `$env:VITE_API="mock"`, then
+`python ../02_Tools/npmw.py npm run dev:renderer`; remove the variable with `Remove-Item Env:VITE_API`
+when returning to Electron development. The mock fixture version is taken from the desktop manifest.

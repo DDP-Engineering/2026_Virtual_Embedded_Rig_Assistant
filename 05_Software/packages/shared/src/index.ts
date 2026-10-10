@@ -1,2 +1,4 @@
-// Source entrypoint; product behavior is introduced by subsequent work packages.
-export {};
+// Shared contracts are the renderer/main boundary and depend only on zod.
+
+export * from "./events.js";
+export * from "./ipc.js";

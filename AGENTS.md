@@ -19,6 +19,17 @@ Use a recorded base commit and the complete uncommitted candidate for review and
 the working branch and the configured default branch are both `master`.
 Remote publication still follows the repository's approval requirements.
 
+## Automated implementation cycle
+
+The user has authorized sequential implementation of all work packages in `00_Planning/plan/`.
+The coordinating chat creates one Codex implementation chat per eligible ticket, on `master` in
+autopilot, and may send follow-up instructions for progress and corrections. Keep only one
+implementation chat active in the shared checkout. Implementation chats prepare and validate the
+candidate, then hand it back without committing. The coordinating chat verifies the completed
+candidate and makes the authorized local commit before starting the next eligible ticket.
+Track completion using validated commits and task journals; an open Gitea issue alone does not mean
+the work is unimplemented. The cycle ends after every planned work package and final verification.
+
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 
 ## AEGIS workflow

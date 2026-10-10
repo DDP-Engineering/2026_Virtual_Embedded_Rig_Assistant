@@ -1,6 +1,9 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { app, BrowserWindow, protocol, screen, session } from "electron";
+import { app, BrowserWindow, ipcMain, protocol, screen, session } from "electron";
+import { getAppInfo } from "./app-info.js";
+import { createEventEmitter } from "./events.js";
+import { createInvokeRouter } from "./ipc-router.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 
@@ -15,6 +18,18 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let window: BrowserWindow | undefined;
+let rendererUrl = "vera://app/index.html";
+export const emitAppEvent = createEventEmitter(() => window?.webContents);
+
+ipcMain.handle(
+  "vera:invoke",
+  createInvokeRouter({
+    target: () =>
+      window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
+    handlers: { "app.info": getAppInfo },
+    log: (failure) => console.error("VERA IPC INTERNAL", failure),
+  }),
+);
 
 async function createWindow(): Promise<void> {
   const stateFile = join(app.getPath("userData"), "window-state.json");
@@ -60,9 +75,11 @@ async function createWindow(): Promise<void> {
     if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.port !== "5173") {
       throw new Error("Unexpected renderer development origin");
     }
-    await window.loadURL(url.href);
+    rendererUrl = url.href;
+    await window.loadURL(rendererUrl);
   } else {
-    await window.loadURL("vera://app/index.html");
+    rendererUrl = "vera://app/index.html";
+    await window.loadURL(rendererUrl);
   }
 }
 

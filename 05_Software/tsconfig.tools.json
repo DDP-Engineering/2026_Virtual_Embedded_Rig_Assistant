@@ -7,5 +7,6 @@
     "tsBuildInfoFile": "node_modules/.cache/tsc/tools.tsbuildinfo",
     "lib": ["ES2023", "DOM"]
   },
-  "include": ["vitest.config.ts", "tests/tooling/**/*.ts", "playwright.config.ts", "e2e/**/*.ts"]
+  "include": ["vitest.config.ts", "tests/tooling/**/*.ts", "playwright.config.ts", "e2e/**/*.ts"],
+  "references": [{ "path": "./packages/shared" }]
 }

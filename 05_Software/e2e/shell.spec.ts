@@ -1,10 +1,11 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
+import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../apps/desktop");
@@ -44,6 +45,42 @@ test("built shell enforces the desktop security boundary", async () => {
     page.on("pageerror", (error) => errors.push(error.message));
     await expect(page).toHaveTitle("VERA");
     await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
+    await expect(page.locator('[data-i18n="home.version"]')).toBeVisible({ timeout: 5000 });
+    const metadata = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {}),
+    );
+    const nativeMetadata = await app.evaluate(({ app }) => ({
+      name: app.getName(),
+      version: app.getVersion(),
+      platform: process.platform,
+      arch: process.arch,
+      locale: app.getLocale(),
+      portable: false,
+    }));
+    expect(metadata).toEqual(nativeMetadata);
+    for (const [field, value] of Object.entries(metadata)) {
+      if (field !== "portable")
+        await expect(page.locator(`[data-info="${field}"]`)).toHaveText(String(value));
+    }
+    const labels = JSON.parse(readFileSync(join(desktop, "src/renderer/locales/en.json"), "utf8")).home;
+    await expect(page.locator('[data-info="portable"]')).toHaveText(
+      metadata.portable ? labels.yes : labels.no,
+    );
+    expect(
+      await page.evaluate(() => Object.keys((window as unknown as { vera: VeraBridge }).vera).sort()),
+    ).toEqual(["invoke", "subscribe"]);
+    const rejected = await page.evaluate(async () => {
+      try {
+        await (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", { extra: true } as never);
+      } catch (error) {
+        return error;
+      }
+      return null;
+    });
+    expect(rejected).toEqual({ code: "INVALID", messageKey: "errors.INVALID" });
+    expect(
+      await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {})),
+    ).toEqual(metadata);
     await page.screenshot({ path: test.info().outputPath("shell.png") });
     const info = await app.evaluate(({ BrowserWindow }) => {
       const window = BrowserWindow.getAllWindows()[0];
@@ -165,6 +202,70 @@ test("network guard rejects native and Chromium non-loopback connections", async
       }),
     ).toBe(true);
     expect(await outboundAttempts(app)).toEqual(["node://example.com:443", "https://example.com/"]);
+  } finally {
+    await app?.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("bridge subscriptions clean up and main denies a foreign real renderer", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "vera-bridge-"));
+  let app: ElectronApplication | undefined;
+  try {
+    app = await launch(userData);
+    const page = await app.firstWindow();
+    await expect(page.locator('[data-info="version"]')).toBeVisible();
+    await page.evaluate(() => {
+      const bridge = (window as unknown as { vera: VeraBridge }).vera;
+      const probe = { events: [] as string[], stop: () => {} };
+      probe.stop = bridge.subscribe("app", (event) => probe.events.push(event.type));
+      (window as unknown as { probe: typeof probe }).probe = probe;
+    });
+    const entry = join(desktop, "out/main/index.js");
+    const emit = () =>
+      app?.evaluate(async (_electron, path) => {
+        const { emitAppEvent } = process.getBuiltinModule("node:module").createRequire(path)(path);
+        return emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
+      }, entry);
+    expect(await emit()).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { probe: { events: string[] } }).probe.events))
+      .toEqual(["settings.changed"]);
+    await page.evaluate(() => {
+      const probe = (window as unknown as { probe: { stop: () => void } }).probe;
+      probe.stop();
+      probe.stop();
+    });
+    await emit();
+    // Drain a second invoke round trip after the event send, then observe no additional callback.
+    await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {}));
+    expect(
+      await page.evaluate(() => (window as unknown as { probe: { events: string[] } }).probe.events),
+    ).toEqual(["settings.changed"]);
+    const foreign = await app.evaluate(
+      async ({ BrowserWindow }, preload) => {
+        const extra = new BrowserWindow({
+          show: false,
+          webPreferences: {
+            preload,
+            sandbox: true,
+            contextIsolation: true,
+            nodeIntegration: false,
+          },
+        });
+        try {
+          await extra.loadURL("vera://app/index.html");
+          return await extra.webContents.executeJavaScript(
+            `window.vera.invoke("app.info", {}).then(() => null, error => error)`,
+          );
+        } finally {
+          extra.destroy();
+        }
+      },
+      join(desktop, "out/preload/index.cjs"),
+    );
+    expect(foreign).toEqual({ code: "DENIED", messageKey: "errors.DENIED" });
+    expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app?.close();
     await rm(userData, { recursive: true, force: true });

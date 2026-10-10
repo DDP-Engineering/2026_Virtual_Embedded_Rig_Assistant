@@ -6,12 +6,15 @@
   "main": "out/main/index.js",
   "productName": "VERA",
   "dependencies": {
+    "@tanstack/react-query": "5.104.1",
     "@vera/core": "0.0.0",
     "@vera/shared": "0.0.0",
     "clsx": "2.1.1",
+    "i18next": "26.4.3",
     "lucide-react": "1.55.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-i18next": "17.0.16",
     "tailwind-merge": "3.7.0"
   }
 }

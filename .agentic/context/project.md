@@ -6,7 +6,7 @@ VERA is the Virtual Embedded Rig Assistant desktop product for embedded engineer
 
 ## Product responsibilities
 
-The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol and window geometry; the sandboxed preload asserts isolation and React displays VERA. Shared/core/CLI provide source skeletons for subsequent work packages.
+The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React displays native metadata through the API, TanStack Query and i18next, with browser mock mode. Core/CLI provide source skeletons.
 
 ## Supported operation
 
@@ -21,6 +21,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 [05_Software/README.md](../../05_Software/README.md) routes setup and source layout. [AGENTS.md](../../AGENTS.md) governs master implementation, local commits and AEGIS scope.
 
 [Desktop shell](../knowledge/desktop-shell.md) routes window/security/state changes. [Software tooling](../knowledge/software-tooling.md) routes workspaces, compilation and verification.
+
+[IPC boundary](../knowledge/ipc-boundary.md) routes channels, errors, events, subscriptions and API/mock metadata.
 
 ## Authoritative references
 

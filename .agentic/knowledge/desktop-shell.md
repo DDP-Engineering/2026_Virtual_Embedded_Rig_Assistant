@@ -11,8 +11,8 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 ## Purpose and boundaries
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
-The sandboxed preload checks isolation; the React renderer displays the VERA identity.
-Shared/core/CLI workspace manifests establish the dependency seams for subsequent work packages.
+The sandboxed preload exposes the typed invoke/subscribe bridge; React displays application metadata
+through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.
 
 ## Public interface
 
@@ -40,7 +40,8 @@ specified in [REQ-DATA-6c54a48f](../specs/REQ-DATA-6c54a48f.md).
 | Launch/instance behavior | `src/main/index.ts` | built shell acceptance |
 | Asset/security policy | `src/main/security.ts`, `content-policy.ts` | built security acceptance |
 | Geometry/storage format | `src/main/window-state.ts` | `window-state.test.ts`, geometry acceptance |
-| Renderer scaffold | `src/renderer/App.tsx`, `styles.css` | shell screenshot and development acceptance |
+| Metadata/API/events | [ipc-boundary](ipc-boundary.md) | shell and browser mock acceptance |
+| Renderer styles | `src/renderer/styles.css` | shell screenshot and development acceptance |
 | Dev/preload/build environment | `electron.vite.config.ts`, `src/preload/index.ts` | development acceptance, build-mode test, typecheck |
 
 ## Key behaviors
@@ -68,15 +69,17 @@ flowchart TD
   window --> preload[preload/index.cjs]
   main --> protocol[bundledResponse]
   protocol --> assets[(renderer output + CSP headers)]
-  window --> renderer[React App + Card + CSS]
+  window --> renderer[React App + Query + i18n + CSS]
+  renderer --> api[renderer API / window.vera]
+  api --> router[main IPC router]
   assets --> renderer
   dev([loopback Vite server]) --> renderer
   config[electron.vite.config.ts] --> dev
   config --> mode[build-mode.js]
 ```
 
-This diagram shows current runtime ownership and build outputs. Core/shared manifest
-dependencies are reserved seams; the current empty workspace entrypoints have no runtime call graph.
+This diagram shows shell ownership and build outputs. The IPC boundary page details the shared
+schema, metadata and event call graph. Core and CLI expose workspace skeletons.
 
 ## Files
 
@@ -88,7 +91,7 @@ Paths below are relative to `05_Software/apps/desktop/` unless qualified.
 - `src/main/security.ts`, `content-policy.ts` — confined asset responses and denial handlers.
 - `src/main/window-state.ts`, `window-state.test.ts` — storage and recovery semantics.
 - `src/main/build-mode.ts` — compile-time identity export.
-- `src/preload/index.ts` — sandbox/isolation assertion.
+- `src/preload/index.ts`, `bridge.ts` — sandbox assertion and validated page-world bridge.
 - `src/renderer/index.html`, `main.tsx`, `App.tsx`, `styles.css` — document, React entry, identity and tokens.
 - `src/renderer/components/ui/card.tsx`, `lib/utils.ts` — adapted Card and class merging.
 - `05_Software/e2e/shell.spec.ts`, `network-guard.ts` — real Electron acceptance and egress guard.

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
@@ -8,6 +9,7 @@ import type { Plugin } from "vite";
 import { productionCsp } from "./src/main/content-policy.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
+const shared = resolve(root, "../../packages/shared/src/index.ts");
 const testBuild = process.env.VERA_TEST === "1";
 
 function developmentCsp(): Plugin {
@@ -36,6 +38,7 @@ function developmentCsp(): Plugin {
 
 export default defineConfig(({ command }) => ({
   main: {
+    resolve: { alias: { "@vera/shared": shared } },
     define: { __VERA_TEST__: JSON.stringify(testBuild), __VERA_DEV__: JSON.stringify(command === "serve") },
     build: {
       rollupOptions: {
@@ -48,6 +51,7 @@ export default defineConfig(({ command }) => ({
     },
   },
   preload: {
+    resolve: { alias: { "@vera/shared": shared } },
     build: {
       rollupOptions: {
         input: resolve(root, "src/preload/index.ts"),
@@ -56,8 +60,13 @@ export default defineConfig(({ command }) => ({
     },
   },
   renderer: {
+    define: {
+      __VERA_VERSION__: JSON.stringify(
+        JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version,
+      ),
+    },
     root: resolve(root, "src/renderer"),
-    resolve: { alias: { "@": resolve(root, "src/renderer") } },
+    resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },
     server: { host: "127.0.0.1", port: 5173, strictPort: true },
     plugins: [react(), tailwindcss(), developmentCsp()],
     build: { rollupOptions: { input: resolve(root, "src/renderer/index.html") } },

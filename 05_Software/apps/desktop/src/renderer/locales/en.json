@@ -1,0 +1,25 @@
+{
+  "home": {
+    "title": "VERA",
+    "loading": "Loading application information…",
+    "name": "Application",
+    "version": "Version",
+    "platform": "Platform",
+    "arch": "Architecture",
+    "portable": "Portable",
+    "locale": "System locale",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "errors": {
+    "INVALID": "The request is invalid.",
+    "NOT_FOUND": "The requested operation was not found.",
+    "CONFLICT": "The operation conflicts with the current state.",
+    "BUSY": "The application is busy.",
+    "DENIED": "The operation is not allowed.",
+    "CONTEXT_LIMIT": "The context limit was reached.",
+    "PROVIDER": "The provider could not complete the request.",
+    "OFFLINE": "The application is offline.",
+    "INTERNAL": "Application information could not be loaded."
+  }
+}
