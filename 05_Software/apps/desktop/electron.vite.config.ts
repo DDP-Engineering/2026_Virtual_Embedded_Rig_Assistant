@@ -38,7 +38,9 @@ function developmentCsp(): Plugin {
 
 export default defineConfig(({ command }) => ({
   main: {
-    resolve: { alias: { "@vera/shared": shared } },
+    resolve: {
+      alias: { "@vera/shared": shared, "@vera/core": resolve(root, "../../packages/core/src/index.ts") },
+    },
     define: { __VERA_TEST__: JSON.stringify(testBuild), __VERA_DEV__: JSON.stringify(command === "serve") },
     build: {
       rollupOptions: {

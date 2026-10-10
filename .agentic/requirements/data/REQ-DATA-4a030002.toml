@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-4a030002"
+title = "Migrate settings with a preserved backup"
+status = "active"
+requirement = "When version-0 settings are loaded, VERA shall persist migrated version-1 settings after preserving the original bytes in settings.json.bak-<n>."
+verification = "Load the version-0 fixture; verify preserved preferences, added defaults and identical backup bytes; backup collisions preserve existing backup."
+affected_paths = ["05_Software/packages/core/src/settings/service.ts", "05_Software/packages/core/src/ports.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/shared/src/settings.ts", "05_Software/packages/core/src/settings/service.test.ts", "05_Software/fixtures/settings/version-0.json"]
+linked_tests = ["05_Software/packages/core/src/settings/service.test.ts"]
+spec = "specs/REQ-DATA-4a030001.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

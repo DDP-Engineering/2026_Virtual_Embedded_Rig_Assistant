@@ -31,6 +31,8 @@ export function createIpcApi(bridge: VeraBridge | undefined): VeraApi {
   return {
     invoke,
     getAppInfo: () => invoke("app.info", {}),
+    getSettings: () => invoke("app.settings.get", {}),
+    updateSettings: (patch) => invoke("app.settings.update", patch),
     subscribe(topic, on) {
       if (!bridge) throw veraError("INTERNAL");
       return bridge.subscribe(topic, (event) => {

@@ -34,7 +34,8 @@ Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, 
 The four workspaces are `@vera/shared`, `@vera/core`, `@vera/desktop` and `@vera/cli`. Each extends
 the shared TypeScript base and participates in `tsc -b`. The desktop project separates Node, preload,
 DOM renderer and build configuration type environments. Shared publishes typed zod IPC contracts;
-core and CLI expose source skeletons. Desktop Vite and Vitest resolve shared contracts directly from source,
+core publishes host ports and versioned settings; CLI exposes its source skeleton. Desktop Vite main
+resolves core/shared from source; sandbox preload/renderer resolve shared from source,
 so build and development work before compiled library output exists.
 
 The desktop shell displays name, version, platform, architecture, portable marker and OS locale from `app.info`, and saves normal window bounds in `<userData>/window-state.json`.
@@ -55,11 +56,19 @@ permit the pinned esbuild install scripts. Ubuntu requires the libraries and Xvf
 `python3 ../02_Tools/setup.py --check`; keep Linux and Windows `node_modules` separate.
 
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
-app.info and app event subscription contract in memory. TanStack Query owns metadata requests;
+app.info, app.settings.get/update and app subscriptions in memory. The API exposes
+getSettings/updateSettings returning {settings,readOnly}. TanStack Query owns metadata requests;
 English i18next labels and error keys live in `src/renderer/locales/en.json`. Full language settings
 are defined by the UI work package. App subscriptions are invalidation signals; later event domains
 add their own schemas and services. `portable` reports a `vera.portable` marker beside the executable;
-app-data routing is owned by the app data work package.
+the regular marker selects adjacent data before readiness. Installed mode uses Electron userData,
+with --user-data-dir available for isolated tests. Selected portable/override directories are created
+before Electron setPath and readiness; existing contents persist and creation errors propagate.
+Settings live in settings.json, schema version 1.
+Version 0 migrates after an exclusive bak-n; future schemas expose read-only defaults.
+Accepted partial updates serialize and emit settings.changed after successful atomic saves.
+Host logs retain seven UTC daily JSON-line files under userData/logs and redact registered secrets.
+[Application data](../.agentic/knowledge/app-data.md) routes schemas, migrations and host adapters.
 
 Before browser acceptance, run `python ../02_Tools/npmw.py npx playwright install chromium` once
 (Ubuntu: python3). In PowerShell, browser mock development uses `$env:VITE_API="mock"`, then

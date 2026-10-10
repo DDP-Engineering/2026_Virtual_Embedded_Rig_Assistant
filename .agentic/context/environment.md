@@ -32,6 +32,12 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 Windows and Ubuntu use separate platform Node distributions and npm native dependencies. Share sources and lockfile, use separate node_modules for platform validation.
 
+Executable-adjacent vera.portable selects adjacent data before readiness. Installed launches accept
+--user-data-dir for isolation; selected directories are created before Electron setPath. Portable
+regressions use faithful hosts enforcing directory existence, with temporary markers/executables.
+Settings/log tests use injected ports and temporary directories;
+native acceptance checks settings across restarts and newer-schema protection through shutdown.
+
 ## Authoritative references
 
 - [Tools](../../02_Tools/README.md)

@@ -272,6 +272,84 @@ test("bridge subscriptions clean up and main denies a foreign real renderer", as
   }
 });
 
+test("validated settings update survives an application restart", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "vera-settings-"));
+  let app: ElectronApplication | undefined;
+  try {
+    app = await launch(userData);
+    const page = await app.firstWindow();
+    await expect(page.locator('[data-info="version"]')).toBeVisible();
+    const first = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
+    );
+    expect(first.readOnly).toBe(false);
+    await page.evaluate(() => {
+      const probe = { count: 0 };
+      (window as unknown as { settingsProbe: typeof probe }).settingsProbe = probe;
+      (window as unknown as { vera: VeraBridge }).vera.subscribe("app", () => {
+        probe.count++;
+      });
+    });
+    const updated = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", { theme: "dark" }),
+    );
+    expect(updated.settings.theme).toBe("dark");
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as unknown as { settingsProbe: { count: number } }).settingsProbe.count),
+      )
+      .toBe(1);
+    expect(await outboundAttempts(app)).toEqual([]);
+    await app.close();
+    app = await launch(userData);
+    const restarted = await app.firstWindow();
+    await expect(restarted.locator('[data-info="version"]')).toBeVisible();
+    const stored = await restarted.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
+    );
+    expect(stored).toEqual(updated);
+    expect(stored.settings.installationId).toBe(first.settings.installationId);
+    expect(JSON.parse(readFileSync(join(userData, "settings.json"), "utf8"))).toEqual(updated.settings);
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await app?.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
+test("newer settings stay read-only and byte-identical through native IPC and shutdown", async () => {
+  const userData = await mkdtemp(join(tmpdir(), "vera-newer-settings-"));
+  let app: ElectronApplication | undefined;
+  const raw = '{ "schemaVersion": 99, "future": "preserve exactly" }';
+  try {
+    await import("node:fs/promises").then(({ writeFile }) => writeFile(join(userData, "settings.json"), raw));
+    app = await launch(userData);
+    const page = await app.firstWindow();
+    await expect(page.locator('[data-info="version"]')).toBeVisible();
+    const snapshot = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
+    );
+    expect(snapshot).toMatchObject({ readOnly: true, settings: { schemaVersion: 1, theme: "system" } });
+    expect(
+      await page.evaluate(() =>
+        (window as unknown as { vera: VeraBridge }).vera
+          .invoke("app.settings.update", { theme: "dark" })
+          .then(
+            () => null,
+            (error) => error,
+          ),
+      ),
+    ).toEqual({ code: "DENIED", messageKey: "errors.DENIED" });
+    expect(await outboundAttempts(app)).toEqual([]);
+    await app.close();
+    app = undefined;
+    expect(readFileSync(join(userData, "settings.json"), "utf8")).toBe(raw);
+  } finally {
+    await app?.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
 test("window geometry survives a process restart", async () => {
   const userData = await mkdtemp(join(tmpdir(), "vera-bounds-"));
   let app: ElectronApplication | undefined;

@@ -11,6 +11,7 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 ## Purpose and boundaries
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
+Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
 The sandboxed preload exposes the typed invoke/subscribe bridge; React displays application metadata
 through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.
 
@@ -25,6 +26,9 @@ specified in [REQ-DATA-6c54a48f](../specs/REQ-DATA-6c54a48f.md).
 ## Invariants
 
 - Identity and userData precede the instance lock; the losing process exits before creating a window.
+- Portable/explicit override directories are created before Electron setPath, readiness and the
+  instance lock; real creation failures propagate. Settings load before the renderer. Shutdown drains accepted
+  settings before window close, then flushes JSON logs after close.
 - Window creation keeps context isolation, Chromium sandbox and web security enabled,
   Node integration disabled, and a minimum size of 1024 by 640.
 - Navigation, new windows, webviews and permission requests/checks are denied before content loads.
@@ -79,7 +83,7 @@ flowchart TD
 ```
 
 This diagram shows shell ownership and build outputs. The IPC boundary page details the shared
-schema, metadata and event call graph. Core and CLI expose workspace skeletons.
+schema, metadata and event call graph. The application-data page details core settings and host adapters; CLI exposes its workspace skeleton.
 
 ## Files
 

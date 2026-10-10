@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-4a030004"
+title = "Protect newer settings formats"
+status = "active"
+requirement = "While stored schemaVersion exceeds the supported version, VERA shall expose read-only defaults and preserve the stored file bytes."
+verification = "Load version 99, read readOnly=true, attempt update and assert DENIED with unchanged bytes."
+affected_paths = ["05_Software/packages/core/src/settings/service.ts", "05_Software/packages/core/src/ports.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/shared/src/settings.ts", "05_Software/packages/core/src/settings/service.test.ts"]
+linked_tests = ["05_Software/packages/core/src/settings/service.test.ts"]
+spec = "specs/REQ-DATA-4a030001.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

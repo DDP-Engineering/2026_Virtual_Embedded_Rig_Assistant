@@ -1,4 +1,4 @@
-import type { AppEvent, VeraBridge } from "@vera/shared";
+import { type AppEvent, defaultSettings, type VeraBridge } from "@vera/shared";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
 let createIpcApi: typeof import("./ipc.js").createIpcApi;
@@ -47,4 +47,15 @@ it("filters invalid bridge events and returns its cleanup", () => {
   expect(on).toHaveBeenCalledExactlyOnceWith({ type: "settings.changed" });
   cleanup();
   expect(stop).toHaveBeenCalledTimes(1);
+});
+it("API settings conveniences validate snapshots and partial updates", async () => {
+  const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"), readOnly: false };
+  const invoke = vi.fn(async () => snapshot);
+  const api = createIpcApi({ invoke: invoke as VeraBridge["invoke"], subscribe: vi.fn() });
+  expect(await api.getSettings()).toEqual(snapshot);
+  expect(await api.updateSettings({ theme: "dark" })).toEqual(snapshot);
+  expect(invoke).toHaveBeenLastCalledWith("app.settings.update", { theme: "dark" });
+  invoke.mockResolvedValueOnce({ settings: snapshot.settings } as never);
+  await expect(api.getSettings()).rejects.toMatchObject({ code: "INTERNAL" });
+  await expect(api.updateSettings({ theme: "invalid" } as never)).rejects.toMatchObject({ code: "INVALID" });
 });

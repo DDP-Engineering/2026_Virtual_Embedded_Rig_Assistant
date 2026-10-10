@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { defaultSettings } from "@vera/shared";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const info = {
@@ -24,7 +25,17 @@ describe("validated invoke router", () => {
   const router = () =>
     createInvokeRouter({
       target: () => ({ webContents: contents, url: "vera://app/index.html" }),
-      handlers: { "app.info": handler },
+      handlers: {
+        "app.info": handler,
+        "app.settings.get": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+        "app.settings.update": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+      },
       log,
     });
   beforeEach(() => {
@@ -36,6 +47,36 @@ describe("validated invoke router", () => {
     expect(await router()(event, "app.info", {})).toEqual({ ok: true, value: info });
     expect(handler).toHaveBeenCalledWith({});
     expect(log).not.toHaveBeenCalled();
+  });
+  it("dispatches settings patches only after strict validation and validates the snapshot", async () => {
+    const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"), readOnly: false };
+    const update = vi.fn(async () => ({
+      ...snapshot,
+      settings: { ...snapshot.settings, theme: "dark" as const },
+    }));
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: frame.url }),
+      handlers: { "app.info": handler, "app.settings.get": () => snapshot, "app.settings.update": update },
+      log,
+    });
+    expect(await invoke(event, "app.settings.get", {})).toEqual({ ok: true, value: snapshot });
+    expect(await invoke(event, "app.settings.update", { theme: "dark" })).toMatchObject({
+      ok: true,
+      value: { settings: { theme: "dark" } },
+    });
+    expect(update).toHaveBeenCalledExactlyOnceWith({ theme: "dark" });
+    for (const patch of [{ schemaVersion: 2 }, { providers: { apiKey: "secret" } }, { theme: "unknown" }])
+      expect(await invoke(event, "app.settings.update", patch)).toMatchObject({
+        ok: false,
+        error: { code: "INVALID" },
+      });
+    expect(update).toHaveBeenCalledTimes(1);
+    update.mockResolvedValueOnce({ ...snapshot, readOnly: "bad" } as never);
+    expect(await invoke(event, "app.settings.update", {})).toMatchObject({
+      ok: false,
+      error: { code: "INTERNAL" },
+    });
+    expect(log).toHaveBeenCalledWith({ channel: "app.settings.update", reason: "response" });
   });
   it.each(["missing", "__proto__", "constructor", "toString"])(
     "rejects unknown channel %s",
@@ -70,7 +111,17 @@ describe("validated invoke router", () => {
     const destroyed = { mainFrame: frame, isDestroyed: () => true };
     const deadRouter = createInvokeRouter({
       target: () => ({ webContents: destroyed, url: frame.url }),
-      handlers: { "app.info": handler },
+      handlers: {
+        "app.info": handler,
+        "app.settings.get": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+        "app.settings.update": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+      },
       log,
     });
     expect(await deadRouter({ sender: destroyed, senderFrame: frame }, "app.info", {})).toMatchObject({
@@ -80,12 +131,36 @@ describe("validated invoke router", () => {
     expect(handler).not.toHaveBeenCalled();
   });
   it("denies when no live app window exists and allows the exact dev renderer", async () => {
-    const missing = createInvokeRouter({ target: () => undefined, handlers: { "app.info": handler }, log });
+    const missing = createInvokeRouter({
+      target: () => undefined,
+      handlers: {
+        "app.info": handler,
+        "app.settings.get": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+        "app.settings.update": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+      },
+      log,
+    });
     expect(await missing(event, "app.info", {})).toMatchObject({ ok: false, error: { code: "DENIED" } });
     frame.url = "http://127.0.0.1:5173/";
     const dev = createInvokeRouter({
       target: () => ({ webContents: contents, url: frame.url }),
-      handlers: { "app.info": handler },
+      handlers: {
+        "app.info": handler,
+        "app.settings.get": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+        "app.settings.update": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+      },
       log,
     });
     expect(await dev(event, "app.info", {})).toMatchObject({ ok: true });
@@ -99,7 +174,17 @@ describe("validated invoke router", () => {
     const detachedContents = { mainFrame: detached, isDestroyed: () => false };
     const invoke = createInvokeRouter({
       target: () => ({ webContents: detachedContents, url: "vera://app/index.html" }),
-      handlers: { "app.info": handler },
+      handlers: {
+        "app.info": handler,
+        "app.settings.get": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+        "app.settings.update": () => ({
+          settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          readOnly: false,
+        }),
+      },
       log,
     });
     await expect(

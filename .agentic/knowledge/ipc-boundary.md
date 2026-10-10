@@ -26,7 +26,9 @@ React reads metadata through TanStack Query and translates labels and error keys
 - emitAppEvent sends validated app envelopes on vera:event to the current live window.
 - createDeltaCoalescer takes key/merge/emit functions, batches for 50ms, flushes explicitly before
   terminal events and cancels pending values on dispose.
-- VeraApi adds getAppInfo to VeraBridge; VITE_API=mock selects mockApi during compilation.
+- VeraApi adds getAppInfo/getSettings/updateSettings to VeraBridge; VITE_API=mock selects mockApi during compilation.
+- app.settings.get({}) and app.settings.update(patch) return {settings,readOnly}.
+  [Application data](app-data.md) owns schema defaults, migration and persistence semantics.
 
 ## Invariants
 
@@ -38,7 +40,9 @@ React reads metadata through TanStack Query and translates labels and error keys
 - Events validate topic/id/seq/payload and callbacks receive only event data.
 - Each subscription owns its listener; unsubscribe removes it once.
 - Coalescing preserves first-key insertion order; caller merge policies own text/update semantics.
-- App metadata portable reports the executable-adjacent vera.portable marker.
+- App metadata portable reports the effective executable-adjacent regular vera.portable marker decision.
+- Changed settings saves emit settings.changed after persistence. Future schemas expose read-only
+  defaults and reject updates through the validated error envelope.
 
 ## Change map
 
@@ -70,6 +74,9 @@ flowchart LR
   API --> PRE[window.vera / createBridge]
   PRE --> ROUTER[vera:invoke / createInvokeRouter]
   ROUTER --> INFO[getAppInfo]
+  ROUTER --> SETTINGS[core SettingsService]
+  SETTINGS --> PORTS[main application-data ports]
+  SETTINGS --> EMIT
   INFO --> HOST[Electron app + runtime metadata]
   EMIT[emitAppEvent / createEventEmitter] --> PRE
   PRE --> UI
@@ -84,7 +91,7 @@ createDeltaCoalescer is a separately tested utility whose callers supply merge p
 
 Paths relative to 05_Software.
 
-- packages/shared/src/{index,ipc,events}.ts — shared public exports, invoke/error schemas and app events.
+- packages/shared/src/{index,ipc,events,settings}.ts — shared public exports, invoke/error schemas and app events.
 - apps/desktop/src/main/{ipc-router,events,app-info}.ts — dispatch, event utilities, native metadata.
 - apps/desktop/src/main/{ipc-router,events}.test.ts — request/error/frame/batching regression seams.
 - apps/desktop/src/main/index.ts — installs the one router and exposes the current-window emitter.

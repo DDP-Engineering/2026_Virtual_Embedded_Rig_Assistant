@@ -1,2 +1,2 @@
-// Source entrypoint; product behavior is introduced by subsequent work packages.
-export {};
+export * from "./ports.js";
+export * from "./settings/service.js";

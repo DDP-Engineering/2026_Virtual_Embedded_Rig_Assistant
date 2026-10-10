@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import type { AppEvent, Channel, Request, Response } from "@vera/shared";
+import { type AppEvent, type Channel, defaultSettings, type Request, type Response } from "@vera/shared";
 import { beforeAll, expect, expectTypeOf, it, vi } from "vitest";
 
 let createBridge: typeof import("./bridge.js").createBridge;
@@ -29,12 +29,25 @@ function fixture() {
   return { transport, listeners, bridge: createBridge(transport) };
 }
 it("infers registry types and returns validated metadata", async () => {
-  expectTypeOf<Channel>().toEqualTypeOf<"app.info">();
+  expectTypeOf<Channel>().toEqualTypeOf<"app.info" | "app.settings.get" | "app.settings.update">();
   expectTypeOf<Response<"app.info">>().toEqualTypeOf<typeof info>();
   expectTypeOf<Request<"app.info">>().toEqualTypeOf<Record<string, never>>();
   const { bridge, transport } = fixture();
   expect(await bridge.invoke("app.info", {})).toEqual(info);
   expect(transport.invoke).toHaveBeenCalledWith("vera:invoke", "app.info", {});
+});
+it("transports settings snapshots and rejects secret/immutable patches before IPC", async () => {
+  const { bridge, transport } = fixture();
+  const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"), readOnly: true };
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: snapshot } as never);
+  expect(await bridge.invoke("app.settings.get", {})).toEqual(snapshot);
+  await expect(
+    bridge.invoke("app.settings.update", { installationId: "immutable" } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  await expect(
+    bridge.invoke("app.settings.update", { providers: { apiKey: "secret" } } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(transport.invoke).toHaveBeenCalledTimes(1);
 });
 it("rejects invalid input before transport and preserves a VeraError result", async () => {
   const { bridge, transport } = fixture();

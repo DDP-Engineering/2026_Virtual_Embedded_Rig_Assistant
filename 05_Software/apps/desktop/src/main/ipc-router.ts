@@ -60,6 +60,9 @@ export function createInvokeRouter(options: {
     }
     return { ok: false, error: veraError("INTERNAL") };
   }
+  function dispatch<C extends Channel>(name: C, request: Request<C>): Response<C> | Promise<Response<C>> {
+    return options.handlers[name](request);
+  }
   return async (event: InvokeSender, name: unknown, payload: unknown): Promise<InvokeResult<Channel>> => {
     if (!authorized(event)) {
       return { ok: false, error: veraError("DENIED") };
@@ -69,7 +72,7 @@ export function createInvokeRouter(options: {
     const request = channel.request.safeParse(payload);
     if (!request.success) return { ok: false, error: veraError("INVALID") };
     try {
-      const value = await options.handlers[name](request.data);
+      const value = await dispatch(name, request.data);
       const response = channel.response.safeParse(value);
       if (!response.success) return internal(name, "response");
       return { ok: true, value: response.data };

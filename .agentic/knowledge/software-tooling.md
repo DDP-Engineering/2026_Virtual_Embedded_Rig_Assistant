@@ -10,8 +10,8 @@ to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Too
 ## Purpose and boundaries
 
 The software root supplies four ESM workspaces, strict compilation, Biome boundaries,
-Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC schemas; core/CLI
-expose skeleton entrypoints. Desktop owns the running Electron shell and renderer-only dev mode.
+Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC/settings schemas; core
+publishes host ports and settings services; CLI exposes its skeleton entrypoint. Desktop owns the running Electron shell and renderer-only dev mode.
 
 ## Public interface
 
@@ -22,7 +22,8 @@ See [software README](../../05_Software/README.md) for setup and command details
 ## Invariants
 
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
-- Desktop Vite and Vitest resolve shared contracts from source; generated library output is supplied by TypeScript for library consumers.
+- Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.
+  Core/desktop Vitest resolve their library dependencies from source; TypeScript supplies generated output for library consumers.
 - The tooling TypeScript project references shared before compiling e2e contract consumers.
 - All four workspaces extend the strict base and participate in the root TypeScript solution.
 - Core's Electron prohibition and the existing layer/import rules remain enforced by Biome regression tests.
@@ -70,7 +71,8 @@ flowchart LR
 ```
 
 Dashed arrows describe npm dependency declarations, while solid arrows describe command
-execution and compilation ownership. Core/CLI entrypoints are empty exports; shared publishes IPC types/schemas.
+execution and compilation ownership. Core exports ports/settings; shared publishes IPC/settings types/schemas;
+CLI retains its skeleton entrypoint.
 
 ## Files
 
@@ -80,7 +82,8 @@ All paths are under `05_Software/`.
 - `biome.json`, `tsconfig.base.json`, `tsconfig.json`, `tsconfig.tools.json` — checks and compilation.
 - `vitest.config.ts`, `playwright.config.ts` — test projects and acceptance settings.
 - `tests/tooling/{boundaries,skeleton,build-mode}.test.ts` — boundary, layout and emitted-build regression tests, with compiled shared entry hidden during builds.
-- `packages/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library skeletons.
+- `packages/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library definitions and public exports.
+- packages/core/vitest.config.ts — core Node tests with shared source resolution.
 - `apps/cli/{package.json,tsconfig.json,src/index.ts}` — CLI skeleton.
 - `scripts/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
 - `e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.

@@ -1,9 +1,15 @@
+import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SettingsService } from "@vera/core";
 import { app, BrowserWindow, ipcMain, protocol, screen, session } from "electron";
 import { getAppInfo } from "./app-info.js";
+import { configureDataLocations } from "./data-locations.js";
 import { createEventEmitter } from "./events.js";
+import { createFileAccess } from "./file-access.js";
+import { systemClock } from "./host-ports.js";
 import { createInvokeRouter } from "./ipc-router.js";
+import { createLogger } from "./logger.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 
@@ -11,7 +17,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
 app.setName("VERA");
 const userData = app.commandLine.getSwitchValue("user-data-dir");
-if (userData) app.setPath("userData", userData);
+const dataLocations = configureDataLocations(app, process.execPath, userData);
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "vera", privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -20,14 +26,27 @@ protocol.registerSchemesAsPrivileged([
 let window: BrowserWindow | undefined;
 let rendererUrl = "vera://app/index.html";
 export const emitAppEvent = createEventEmitter(() => window?.webContents);
+const logger = createLogger(dataLocations.paths.logs, systemClock);
+const settings = new SettingsService({
+  files: createFileAccess(systemClock),
+  paths: dataLocations.paths,
+  uuid: randomUUID,
+  changed: () => {
+    emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
+  },
+});
 
 ipcMain.handle(
   "vera:invoke",
   createInvokeRouter({
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
-    handlers: { "app.info": getAppInfo },
-    log: (failure) => console.error("VERA IPC INTERNAL", failure),
+    handlers: {
+      "app.info": () => getAppInfo(dataLocations.portable),
+      "app.settings.get": () => settings.get(),
+      "app.settings.update": (patch) => settings.update(patch),
+    },
+    log: (failure) => logger.log("error", "ipc.internal", failure),
   }),
 );
 
@@ -61,7 +80,7 @@ async function createWindow(): Promise<void> {
     if (closing) return;
     closing = true;
     saveWindowState(stateFile, created.getNormalBounds())
-      .catch((error: unknown) => console.error("VERA window state save failed", error))
+      .catch(() => logger.log("error", "window.state.save.failed"))
       .finally(() => created.destroy());
   });
   window.on("closed", () => {
@@ -86,6 +105,40 @@ async function createWindow(): Promise<void> {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
+  let draining = false;
+  let drained = false;
+  app.on("before-quit", (event) => {
+    if (drained) return;
+    event.preventDefault();
+    if (draining) return;
+    draining = true;
+    void settings
+      .close()
+      .catch(() => {
+        console.error("VERA shutdown persistence failed");
+      })
+      .finally(() => {
+        drained = true;
+        app.quit();
+      });
+  });
+  let logsDraining = false;
+  let logsDrained = false;
+  app.on("will-quit", (event) => {
+    if (logsDrained) return;
+    event.preventDefault();
+    if (logsDraining) return;
+    logsDraining = true;
+    void logger
+      .flush()
+      .catch(() => {
+        console.error("VERA log persistence failed");
+      })
+      .finally(() => {
+        logsDrained = true;
+        app.quit();
+      });
+  });
   app.on("second-instance", () => {
     if (window?.isMinimized()) window.restore();
     window?.show();
@@ -95,12 +148,21 @@ if (!app.requestSingleInstanceLock()) {
   app
     .whenReady()
     .then(async () => {
+      if (draining) return;
+      await settings.load();
+      if (draining) return;
+      logger.log("info", "app.started", { portable: dataLocations.portable });
       secureSession(session.defaultSession);
       protocol.handle("vera", (request) => bundledResponse(join(here, "../renderer"), request));
       await createWindow();
     })
-    .catch((error: unknown) => {
-      console.error("VERA startup failed", error);
+    .catch(async () => {
+      logger.log("error", "app.startup.failed");
+      try {
+        await logger.flush();
+      } catch {
+        console.error("VERA log persistence failed");
+      }
       app.exit(1);
     });
 }

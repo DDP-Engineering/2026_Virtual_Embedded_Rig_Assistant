@@ -7,6 +7,28 @@ beforeAll(async () => {
   expect(Object.keys(files), "in-memory mock boundary exists").toContain("./mockApi.ts");
   ({ createMockApi } = await import("./mockApi.js"));
 });
+it("mock settings use the same validated shape, immutable id and post-update events", async () => {
+  const { api } = createMockApi();
+  const get = () => api.invoke("app.settings.get", {});
+  const initial = await get();
+  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 1, theme: "system" } });
+  const on = vi.fn();
+  const stop = api.subscribe("app", on);
+  await api.invoke("app.settings.update", { theme: "dark" });
+  expect(await get()).toMatchObject({
+    settings: { theme: "dark", installationId: initial.settings.installationId },
+  });
+  expect(on).toHaveBeenCalledExactlyOnceWith({ type: "settings.changed" });
+  await api.invoke("app.settings.update", {});
+  expect(on).toHaveBeenCalledTimes(1);
+  await expect(
+    api.invoke("app.settings.update", { providers: { token: "secret" } } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  const snapshot = await get();
+  snapshot.settings.theme = "light";
+  expect((await get()).settings.theme).toBe("dark");
+  stop();
+});
 it("validates mock invoke and owns independent app subscription lifecycle", async () => {
   const info = {
     name: "VERA",

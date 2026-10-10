@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-4a030007"
+title = "Select portable application data before readiness"
+status = "active"
+requirement = "When vera.portable exists beside the executable, VERA shall select the adjacent data directory before app readiness."
+verification = "A faithful host rejects absent override directories. Test first portable launch creates data before setPath, existing content is preserved, real creation errors propagate without fallback, and marker/default/override/order behavior remains correct."
+affected_paths = ["05_Software/apps/desktop/src/main/data-locations.ts", "05_Software/packages/core/src/ports.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/shared/src/settings.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/app-info.ts", "05_Software/apps/desktop/src/main/data-locations.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/data-locations.test.ts"]
+spec = "specs/REQ-DATA-4a030001.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

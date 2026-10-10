@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
 
 export function defineChannel<const Name extends string, Req extends z.ZodType, Res extends z.ZodType>(
   name: Name,
@@ -36,6 +37,8 @@ export const appInfoSchema = z.strictObject({
 });
 export const channels = {
   "app.info": defineChannel("app.info", z.strictObject({}), appInfoSchema),
+  "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
+  "app.settings.update": defineChannel("app.settings.update", settingsPatchSchema, settingsSnapshotSchema),
 } as const;
 export type Channel = keyof typeof channels;
 export type Request<C extends Channel> = z.input<(typeof channels)[C]["request"]>;
