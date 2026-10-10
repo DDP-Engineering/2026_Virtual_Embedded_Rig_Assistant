@@ -3,7 +3,7 @@
 ## Routing
 
 Select for Electron launch, VERA window, sandbox, CSP, `vera://app`, permissions,
-single instance, window geometry, React identity screen and desktop Vite configuration.
+single instance, window geometry, React foundation shell and desktop Vite configuration.
 Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 `05_Software/e2e/shell.spec.ts`. Workspace/compiler commands belong to
 [software-tooling](software-tooling.md).
@@ -12,7 +12,7 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
 Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
-The sandboxed preload exposes the typed invoke/subscribe bridge; React displays application metadata
+The sandboxed preload exposes the typed invoke/subscribe bridge; React displays Welcome/App Settings and application metadata
 through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.
 
 ## Public interface
@@ -50,7 +50,9 @@ specified in [REQ-DATA-6c54a48f](../specs/REQ-DATA-6c54a48f.md).
 
 ## Key behaviors
 
-- `REQ-UX-6ccae258` — one native window and a VERA identity screen.
+- `REQ-UX-6ccae258` — one native window and visible VERA identity.
+- `REQ-UX-4a040003` — nativeTheme follows initial and confirmed updated settings.
+- [Renderer foundation](renderer-foundation.md) owns UI routes, panels, preferences and translations.
 - `REQ-SEC-bba4d0dd` — page-world Node primitives are inaccessible.
 - `REQ-SEC-11244926` — restrictive production CSP blocks injected inline scripts.
 - `REQ-SEC-1aba9c7c` — attempted renderer navigation retains the app.
@@ -73,7 +75,8 @@ flowchart TD
   window --> preload[preload/index.cjs]
   main --> protocol[bundledResponse]
   protocol --> assets[(renderer output + CSP headers)]
-  window --> renderer[React App + Query + i18n + CSS]
+  window --> renderer[React foundation App + Query + i18n + CSS]
+  main --> nativeTheme[nativeTheme from loaded/updated settings]
   renderer --> api[renderer API / window.vera]
   api --> router[main IPC router]
   assets --> renderer
@@ -96,7 +99,7 @@ Paths below are relative to `05_Software/apps/desktop/` unless qualified.
 - `src/main/window-state.ts`, `window-state.test.ts` — storage and recovery semantics.
 - `src/main/build-mode.ts` — compile-time identity export.
 - `src/preload/index.ts`, `bridge.ts` — sandbox assertion and validated page-world bridge.
-- `src/renderer/index.html`, `main.tsx`, `App.tsx`, `styles.css` — document, React entry, identity and tokens.
+- `src/renderer/index.html`, `main.tsx`, `App.tsx`, `styles.css` — document, React entry and foundation shell; [renderer foundation](renderer-foundation.md) routes view files.
 - `src/renderer/components/ui/card.tsx`, `lib/utils.ts` — adapted Card and class merging.
 - `05_Software/e2e/shell.spec.ts`, `network-guard.ts` — real Electron acceptance and egress guard.
 - `05_Software/tests/tooling/build-mode.test.ts` — emitted identity execution in both build modes.

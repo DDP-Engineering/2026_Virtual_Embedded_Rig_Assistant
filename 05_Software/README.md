@@ -2,7 +2,10 @@
 
 The npm workspaces of VERA — `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli` — with
 end-to-end tests and development scripts. Layout and module boundaries:
-[01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell displays native metadata through the validated typed IPC bridge.
+[01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell provides Welcome and App Settings, responsive panels and persisted appearance/language through the validated typed IPC bridge.
+
+The catalog checker also accepts `npm run check:i18n -- --fixture fixtures/i18n/missing-key.json`
+for its negative CLI regression; this fixture deliberately exits1.
 
 ## Set-up and commands
 
@@ -11,12 +14,13 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 
 | Command | Does |
 |---|---|
-| `npm run verify` | lint, typecheck and tests — run it before every review |
+| `npm run verify` | lint, typecheck, catalog audit and tests |
 | `npm run lint` / `npm run format` | Biome: check / apply formatting and safe fixes |
+| `npm run check:i18n` | English usage plus en/ro/de completeness; rejects missing, unused and translation-only keys |
 | `npm run typecheck` | `tsc -b` |
 | `npm test` | Vitest |
 | `npm run dev` | Electron main, sandboxed preload and React renderer with loopback Vite/HMR |
-| `VITE_API=mock npm run dev:renderer` | Browser renderer using in-memory metadata and app event mocks |
+| `VITE_API=mock npm run dev:renderer` | Full foundation UI using in-memory settings, metadata and app events |
 | `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `apps/desktop/out/` |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 
@@ -39,6 +43,12 @@ resolves core/shared from source; sandbox preload/renderer resolve shared from s
 so build and development work before compiled library output exists.
 
 The desktop shell displays name, version, platform, architecture, portable marker and OS locale from `app.info`, and saves normal window bounds in `<userData>/window-state.json`.
+Welcome and Settings use memory navigation; Ctrl+, opens Settings without changing the authorized URL.
+Appearance selects Light/Dark/System and five text scales from a 14px base; controls and code use rem.
+Main follows the saved preference with nativeTheme.themeSource. Panels resize by pointer or arrow/Home/End keys and collapse; right-panel content overlays below1280px.
+Renderer geometry lives in the separately versioned localStorage key vera.ui.layout; future versions and read-only settings preserve stored bytes.
+The strict application settings schema stays authoritative. Providers, Updates, Data & privacy and About are placeholder sections (About also shows metadata).
+
 Production loads bundled assets through the confined `vera://app` protocol, with the same restrictive
 CSP in both the HTML meta and response headers. Development uses `http://127.0.0.1:5173` and permits
 the hashed React refresh preamble, injected development CSS and the exact HMR websocket. Production
@@ -57,9 +67,8 @@ permit the pinned esbuild install scripts. Ubuntu requires the libraries and Xvf
 
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
 app.info, app.settings.get/update and app subscriptions in memory. The API exposes
-getSettings/updateSettings returning {settings,readOnly}. TanStack Query owns metadata requests;
-English i18next labels and error keys live in `src/renderer/locales/en.json`. Full language settings
-are defined by the UI work package. App subscriptions are invalidation signals; later event domains
+getSettings/updateSettings returning {settings,readOnly}. TanStack Query owns metadata and settings snapshots; mutations apply confirmed preferences and settings.changed invalidates the cache.
+i18next catalogs in `src/renderer/locales/{en,ro,de}.json` cover labels, accessible names and structured error keys/params. System language resolves the OS locale, with English fallback. App subscriptions are invalidation signals; later event domains
 add their own schemas and services. `portable` reports a `vera.portable` marker beside the executable;
 the regular marker selects adjacent data before readiness. Installed mode uses Electron userData,
 with --user-data-dir available for isolated tests. Selected portable/override directories are created

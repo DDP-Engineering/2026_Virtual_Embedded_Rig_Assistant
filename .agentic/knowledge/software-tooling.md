@@ -15,7 +15,7 @@ publishes host ports and settings services; CLI exposes its skeleton entrypoint.
 
 ## Public interface
 
-From `05_Software`, use `npm run verify`, `lint`, `format`, `typecheck`, `build`, `dev`, `dev:renderer`
+From `05_Software`, use `npm run verify`, `check:i18n`, `lint`, `format`, `typecheck`, `build`, `dev`, `dev:renderer`
 and `test:e2e`. The repository-local `python ../02_Tools/npmw.py` wrapper selects pinned Node.
 See [software README](../../05_Software/README.md) for setup and command details.
 
@@ -39,8 +39,11 @@ See [software README](../../05_Software/README.md) for setup and command details
 | Test-build constant | desktop Vite config and `build-mode.ts` | `build-mode.test.ts` |
 | Acceptance execution/isolation | `scripts/`, `e2e/network-guard.ts` | Electron acceptance and guard self-test |
 
+Catalog audit scans renderer TypeScript AST for literal and finite registered translation keys, excluding tests; English defines required catalog keys.
+
 ## Key behaviors
 
+- `REQ-TEST-4a040006` — check:i18n rejects missing, unused and translation-only catalog keys.
 - `REQ-PLAT-6f3e3500` — four strict ESM workspace skeletons respect established boundaries.
 - `REQ-TEST-21b726d6` — development, build and isolated acceptance commands are reproducible.
 - `REQ-TEST-2308561a` — actual builds emit the configured test identity, unaffected by runtime overrides.
@@ -87,3 +90,5 @@ All paths are under `05_Software/`.
 - `apps/cli/{package.json,tsconfig.json,src/index.ts}` — CLI skeleton.
 - `scripts/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
 - `e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.
+
+- scripts/check-i18n.mjs, tests/tooling/i18n.test.ts and fixtures/i18n/missing-key.json — source-catalog usage/completeness audit and actual negative CLI regression.

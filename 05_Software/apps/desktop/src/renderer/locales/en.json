@@ -13,7 +13,7 @@
   },
   "errors": {
     "INVALID": "The request is invalid.",
-    "NOT_FOUND": "The requested operation was not found.",
+    "NOT_FOUND": "The requested operation {{operation}} was not found.",
     "CONFLICT": "The operation conflicts with the current state.",
     "BUSY": "The application is busy.",
     "DENIED": "The operation is not allowed.",
@@ -21,5 +21,70 @@
     "PROVIDER": "The provider could not complete the request.",
     "OFFLINE": "The application is offline.",
     "INTERNAL": "Application information could not be loaded."
+  },
+  "nav": {
+    "settings": "Settings",
+    "welcome": "Welcome",
+    "main": "Main navigation"
+  },
+  "welcome": {
+    "title": "Open a workbench",
+    "description": "A workbench holds your board’s documents, notes and skills. Your workspace starts here.",
+    "workbenches": "Workbenches",
+    "sidebarPlaceholder": "Your workbenches and sessions will appear here.",
+    "create": "Create a workbench",
+    "createPlaceholder": "Workbench creation will be available here.",
+    "open": "Open an existing one",
+    "openPlaceholder": "Folder selection will be available here.",
+    "recent": "Recent",
+    "recentPlaceholder": "Your recent workbenches will appear here.",
+    "application": "Application information"
+  },
+  "settings": {
+    "title": "App settings",
+    "providers": "Providers",
+    "appearance": "Appearance",
+    "language": "Language",
+    "updates": "Updates",
+    "data": "Data & privacy",
+    "about": "About",
+    "placeholder": "This section will be available in a future update.",
+    "readOnly": "These settings were written by a newer version. Preferences are read-only.",
+    "saving": "Saving preferences…",
+    "retry": "Retry"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "textSize": "Text size",
+    "percent": "{{percent}}%",
+    "description": "Scales all text and controls. Changes are saved automatically.",
+    "codePreview": "Code preview: const board = 1;"
+  },
+  "language": {
+    "label": "Interface language",
+    "system": "System",
+    "en": "English",
+    "ro": "Română",
+    "de": "Deutsch",
+    "description": "Changes menus and messages. The agent answers in the language you write in."
+  },
+  "layout": {
+    "toggleSidebar": "Toggle sidebar",
+    "toggleRight": "Toggle right panel",
+    "resizeSidebar": "Resize sidebar",
+    "resizeRight": "Resize right panel"
+  },
+  "panel": {
+    "title": "Right panel",
+    "close": "Close",
+    "context": "Context",
+    "docs": "Docs",
+    "changes": "Changes",
+    "artifacts": "Artifacts",
+    "plan": "Plan",
+    "placeholder": "Panel content will be available here."
   }
 }

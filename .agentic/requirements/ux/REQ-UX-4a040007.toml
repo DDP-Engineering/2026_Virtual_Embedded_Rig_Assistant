@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-4a040007"
+title = "Keep foundation controls accessible"
+status = "active"
+requirement = """VERA shall provide logically ordered keyboard access, visible focus rings and AA text contrast in both themes with reduced motion and no horizontal overflow at 1024x640 at every text scale."""
+verification = """Real Tab traversal/focus screenshots and computed ring; contrast calculation; all themes/scales DOM bounds at minimum viewport; reduced-motion emulation."""
+affected_paths = ["05_Software/apps/desktop/src/renderer/styles.css","05_Software/apps/desktop/src/renderer/styles/themes.css","05_Software/apps/desktop/src/renderer/components/settings.tsx","05_Software/apps/desktop/src/renderer/components/shell.tsx"]
+linked_tests = ["05_Software/e2e/mock.spec.ts"]
+spec = "specs/REQ-UX-4a040001.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

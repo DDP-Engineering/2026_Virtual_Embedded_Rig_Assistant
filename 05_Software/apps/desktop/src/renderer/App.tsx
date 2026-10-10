@@ -1,51 +1,122 @@
 import { useQuery } from "@tanstack/react-query";
-import { veraErrorSchema } from "@vera/shared";
-import { Activity } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
-import { Card } from "./components/ui/card.js";
+import { ErrorMessage } from "./components/error-message.js";
+import { Metadata } from "./components/metadata.js";
+import { Settings, useSettingsSections } from "./components/settings.js";
+import { Shell } from "./components/shell.js";
+import { usePreferences } from "./hooks/use-preferences.js";
 
 export function App() {
   const { t } = useTranslation();
+  const [settings, setSettings] = useState(false);
+  const [section, setSection] = useState("appearance");
+  const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
   const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
-  const error = veraErrorSchema.safeParse(info.error);
+  const { snapshot, mutation } = usePreferences(info.data?.locale ?? "en");
+  const sections = useSettingsSections();
+  function navigate(value: boolean) {
+    setSettings(value);
+  }
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === ",") {
+        event.preventDefault();
+        setSettings(true);
+      }
+    };
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
+  const navigation = settings ? (
+    sections.map(({ id, label }) => (
+      <button
+        key={id}
+        type="button"
+        data-section={id}
+        aria-current={section === id ? "location" : undefined}
+        onClick={() => {
+          setSection(id);
+          const target = document.getElementById(`section-${id}`);
+          target?.scrollIntoView({ block: "start" });
+          target?.querySelector("h2")?.focus();
+        }}
+      >
+        {label}
+      </button>
+    ))
+  ) : (
+    <>
+      <strong>{t("welcome.workbenches")}</strong>
+      <p className="muted">{t("welcome.sidebarPlaceholder")}</p>
+    </>
+  );
   return (
-    <main className="grid min-h-screen place-items-center bg-background p-8 text-foreground">
-      <Card className="w-96 space-y-6 p-8">
-        <div className="flex items-center justify-center gap-4">
-          <Activity className="size-8 text-primary" aria-hidden="true" />
-          <h1 data-i18n="home.title" className="text-2xl font-semibold tracking-wide">
-            {t("home.title")}
-          </h1>
-        </div>
-        {info.isPending && (
+    <Shell
+      settings={settings}
+      navigate={navigate}
+      navigation={navigation}
+      storageReadOnly={!snapshot.data || snapshot.data.readOnly}
+    >
+      <div className="page-content">
+        <h2 className="page-title" key={settings ? "settings" : "welcome"} ref={focusHeading} tabIndex={-1}>
+          {settings ? t("settings.title") : t("welcome.title")}
+        </h2>
+        {(info.isPending || snapshot.isPending) && (
           <p role="status" data-i18n="home.loading">
             {t("home.loading")}
           </p>
         )}
-        {info.isError && (
-          <p role="alert" data-i18n={error.success ? error.data.messageKey : "errors.INTERNAL"}>
-            {t(
-              error.success ? error.data.messageKey : "errors.INTERNAL",
-              error.success ? (error.data.params ?? {}) : {},
+        {(info.isError || snapshot.isError) && (
+          <>
+            <ErrorMessage error={info.error ?? snapshot.error} />
+            <button
+              type="button"
+              onClick={() => {
+                void info.refetch();
+                void snapshot.refetch();
+              }}
+            >
+              {t("settings.retry")}
+            </button>
+          </>
+        )}
+        {settings && snapshot.data && (
+          <Settings
+            snapshot={snapshot.data}
+            info={info.data}
+            saving={mutation.isPending}
+            error={mutation.error}
+            update={(patch) => mutation.mutate(patch)}
+          />
+        )}
+        {!settings && (
+          <>
+            <p className="muted">{t("welcome.description")}</p>
+            <div className="welcome-grid">
+              <section className="surface">
+                <h3>{t("welcome.create")}</h3>
+                <p className="muted">{t("welcome.createPlaceholder")}</p>
+              </section>
+              <section className="surface">
+                <h3>{t("welcome.open")}</h3>
+                <p className="muted">{t("welcome.openPlaceholder")}</p>
+              </section>
+            </div>
+            <section className="surface">
+              <h3>{t("welcome.recent")}</h3>
+              <p className="muted">{t("welcome.recentPlaceholder")}</p>
+            </section>
+            {info.data && (
+              <section className="surface">
+                <h3>{t("welcome.application")}</h3>
+                <Metadata info={info.data} />
+              </section>
             )}
-          </p>
+          </>
         )}
-        {info.data && (
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {(["name", "version", "platform", "arch", "portable", "locale"] as const).map((field) => (
-              <div key={field} className="contents">
-                <dt data-i18n={`home.${field}`} className="text-muted-foreground">
-                  {t(`home.${field}`)}
-                </dt>
-                <dd data-info={field}>
-                  {field === "portable" ? t(info.data.portable ? "home.yes" : "home.no") : info.data[field]}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
-      </Card>
-    </main>
+      </div>
+    </Shell>
   );
 }

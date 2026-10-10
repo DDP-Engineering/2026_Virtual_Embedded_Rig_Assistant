@@ -14,7 +14,7 @@ compiler and acceptance commands belong to [software-tooling](software-tooling.m
 Shared owns schemas and inferred request/response/event types. Main authorizes and dispatches
 calls, reads native app metadata and emits application events. Preload validates the transport
 and exposes invoke/subscribe; renderer api selects ipcApi or in-memory mockApi.
-React reads metadata through TanStack Query and translates labels and error keys through i18next.
+React reads metadata and settings through TanStack Query, applies confirmed preference snapshots, invalidates settings on app events and translates catalog labels and structured errors through i18next.
 
 ## Public interface
 
@@ -52,7 +52,7 @@ React reads metadata through TanStack Query and translates labels and error keys
 | Authorization/errors/dispatch | main/ipc-router.ts | ipc-router.test.ts; foreign renderer acceptance |
 | Event lifecycle/batching | shared events.ts; main/events.ts; preload/bridge.ts | events.test.ts; bridge.test.ts; subscription acceptance |
 | Metadata and mock parity | main/app-info.ts; renderer api/ and mocks/ | Electron shell and browser mock acceptance |
-| UI query/error translations | renderer App.tsx, i18n.ts, locales/en.json | mock.spec.ts |
+| UI query/error translations | renderer hooks/use-preferences.ts, components/error-message.tsx, i18n.ts, locales/ | mock.spec.ts |
 
 ## Key behaviors
 
@@ -98,6 +98,6 @@ Paths relative to 05_Software.
 - apps/desktop/src/preload/{index,bridge}.ts and bridge.test.ts — sandbox bridge and transport tests.
 - apps/desktop/src/renderer/api/{client,index,ipc}.ts and ipc.test.ts — one boundary and validation.
 - apps/desktop/src/renderer/mocks/{fixtures,mockApi}.ts and mockApi.test.ts — in-memory metadata/event fixture.
-- apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and Query home.
+- apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and foundation Query view. [Renderer foundation](renderer-foundation.md) routes the complete UI file set.
 - e2e/{shell,mock}.spec.ts — real Electron and standalone browser acceptance.
 - scripts/dev-renderer.mjs — renderer-only Vite entrypoint, configured by desktop electron.vite.config.ts.

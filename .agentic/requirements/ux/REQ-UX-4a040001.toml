@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-4a040001"
+title = "Render the foundation shell"
+status = "active"
+requirement = """VERA shall provide memory navigation between a Welcome placeholder and App Settings with sidebar, centre and collapsible right-panel placeholder tabs."""
+verification = """Navigate Welcome/Settings and every placeholder section in browser and native shell; assert URL remains authorized."""
+affected_paths = ["05_Software/apps/desktop/src/renderer/App.tsx","05_Software/apps/desktop/src/renderer/components/shell.tsx","05_Software/apps/desktop/src/renderer/components/settings.tsx","05_Software/apps/desktop/src/renderer/components/metadata.tsx"]
+linked_tests = ["05_Software/e2e/shell.spec.ts","05_Software/e2e/mock.spec.ts"]
+spec = "specs/REQ-UX-4a040001.md"
+priority = "normal"
+created = 2026-10-10
+updated = 2026-10-10

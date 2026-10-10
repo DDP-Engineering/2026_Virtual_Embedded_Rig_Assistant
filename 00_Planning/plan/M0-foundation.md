@@ -105,7 +105,7 @@ Done when:
 Scope:
 - The layout of 06 §1: sidebar, centre and right panel; resizable and collapsible; sizes persisted;
   overlay mode below 1280 px.
-- Routing with a hash or memory history (production loads from `file://`): a Welcome placeholder and Settings.
+- Routing with a memory history at the confined production URL `vera://app/index.html`: a Welcome placeholder and Settings.
 - Themes as CSS-variable blocks in `renderer/styles/themes.css`; System follows
   `prefers-color-scheme`; main sets `nativeTheme.themeSource` from the setting.
 - Text size: the five steps of 06 §4 on the root font size; every size in `rem`.

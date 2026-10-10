@@ -30,6 +30,8 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 - Logs contain ISO UTC timestamp, debug/info/warn/error level, message and optional data in
   userData/logs/vera-YYYY-MM-DD.log. registerSecret returns idempotent unregistration.
 
+Renderer preferences consume this snapshot through Query and i18next; [renderer foundation](renderer-foundation.md) owns a separate versioned localStorage geometry record. Main applies nativeTheme after loading and confirmed updates.
+
 ## Invariants
 
 - Selected directories preserve existing contents; creation errors propagate before setPath with

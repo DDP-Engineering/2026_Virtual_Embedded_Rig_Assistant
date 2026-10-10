@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SettingsService } from "@vera/core";
-import { app, BrowserWindow, ipcMain, protocol, screen, session } from "electron";
+import { app, BrowserWindow, ipcMain, nativeTheme, protocol, screen, session } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createEventEmitter } from "./events.js";
@@ -44,7 +44,11 @@ ipcMain.handle(
     handlers: {
       "app.info": () => getAppInfo(dataLocations.portable),
       "app.settings.get": () => settings.get(),
-      "app.settings.update": (patch) => settings.update(patch),
+      "app.settings.update": async (patch) => {
+        const result = await settings.update(patch);
+        nativeTheme.themeSource = result.settings.theme;
+        return result;
+      },
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),
   }),
@@ -150,6 +154,7 @@ if (!app.requestSingleInstanceLock()) {
     .then(async () => {
       if (draining) return;
       await settings.load();
+      nativeTheme.themeSource = settings.get().settings.theme;
       if (draining) return;
       logger.log("info", "app.started", { portable: dataLocations.portable });
       secureSession(session.defaultSession);

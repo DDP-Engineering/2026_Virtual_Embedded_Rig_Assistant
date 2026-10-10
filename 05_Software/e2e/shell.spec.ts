@@ -175,6 +175,117 @@ test("built shell enforces the desktop security boundary", async () => {
   }
 });
 
+test("foundation preferences and panel dimensions survive native restarts", async () => {
+  test.setTimeout(180_000);
+  const userData = await mkdtemp(join(tmpdir(), "vera-ui-"));
+  let app: ElectronApplication | undefined;
+  try {
+    app = await launch(userData);
+    let page = await app.firstWindow();
+    await page.locator('[data-i18n="nav.settings"]').click({ timeout: 2000 });
+    expect(page.url()).toBe("vera://app/index.html");
+    for (const theme of ["light", "dark", "system"] as const) {
+      await page.locator(`[data-theme-option="${theme}"]`).click();
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-theme",
+        theme === "system" ? /light|dark/ : theme,
+      );
+      await expect.poll(() => app?.evaluate(({ nativeTheme }) => nativeTheme.themeSource)).toBe(theme);
+      await expect(page.locator('[data-i18n="settings.saving"]')).toHaveCount(0);
+      await app.close();
+      app = await launch(userData);
+      page = await app.firstWindow();
+      await page.locator('[data-i18n="nav.settings"]').click();
+      await expect(page.locator(`[data-theme-option="${theme}"]`)).toHaveAttribute("aria-pressed", "true");
+      expect(await app.evaluate(({ nativeTheme }) => nativeTheme.themeSource)).toBe(theme);
+    }
+    for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
+      await page.locator(`[data-scale="${scale}"]`).click();
+      await expect
+        .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
+        .toBe(`${14 * scale}px`);
+      await expect(page.locator('[data-i18n="settings.saving"]')).toHaveCount(0);
+      await app.close();
+      app = await launch(userData);
+      page = await app.firstWindow();
+      await expect
+        .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
+        .toBe(`${14 * scale}px`);
+      await page.locator('[data-i18n="nav.settings"]').click();
+      await expect(page.locator(`[data-scale="${scale}"]`)).toHaveAttribute("aria-pressed", "true");
+    }
+    await page.locator('[data-scale="1"]').click();
+    const sidebar = page.locator('[data-panel="sidebar"]');
+    const before = await sidebar.boundingBox();
+    const separator = await page.locator('[data-resize="sidebar"]').boundingBox();
+    if (!separator || !before) throw new Error("Missing sidebar");
+    await page.mouse.move(separator.x + separator.width / 2, separator.y + separator.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(separator.x + 60, separator.y + separator.height / 2);
+    await page.mouse.up();
+    await expect
+      .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
+      .toBeGreaterThan(before.width + 30);
+    const resizedWidth = (await sidebar.boundingBox())?.width;
+    await page.locator('[data-toggle="right"]').click();
+    const rightSeparator = page.locator('[data-resize="right"]');
+    await rightSeparator.focus();
+    await page.keyboard.press("ArrowLeft");
+    const rightBounds = await rightSeparator.boundingBox();
+    if (!rightBounds) throw new Error("Missing right separator");
+    await page.mouse.move(rightBounds.x + rightBounds.width / 2, rightBounds.y + 80);
+    await page.mouse.down();
+    await page.mouse.move(rightBounds.x - 35, rightBounds.y + 80);
+    await page.mouse.up();
+    const resizedRightWidth = (await page.locator('[data-panel="right"]').boundingBox())?.width;
+    const geometry = await page.evaluate(() => localStorage.getItem("vera.ui.layout"));
+    await page.locator('[data-toggle="sidebar"]').click();
+    const collapsed = await page.evaluate(() => localStorage.getItem("vera.ui.layout"));
+    await app.close();
+    app = await launch(userData);
+    page = await app.firstWindow();
+    await expect(page.locator('[data-panel="sidebar"]')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBe(collapsed);
+    await page.locator('[data-toggle="sidebar"]').click();
+    expect(
+      await page.evaluate(() => JSON.parse(localStorage.getItem("vera.ui.layout") ?? "{}")),
+    ).toMatchObject(JSON.parse(geometry ?? "{}"));
+    await expect
+      .poll(async () => (await page.locator('[data-panel="sidebar"]').boundingBox())?.width ?? 0)
+      .toBe(resizedWidth);
+    await expect(page.locator('[data-panel="right"]')).toBeVisible();
+    expect((await page.locator('[data-panel="right"]').boundingBox())?.width).toBe(resizedRightWidth);
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
+        theme: "dark",
+        language: "de",
+      }),
+    );
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(page.locator('[data-i18n="nav.settings"]')).toHaveText("Einstellungen");
+    await app.close();
+    app = await launch(userData);
+    page = await app.firstWindow();
+    await expect(page.locator('[data-i18n="nav.settings"]')).toHaveText("Einstellungen");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    const noOp = await page.evaluate(async () => {
+      const bridge = (window as unknown as { vera: VeraBridge }).vera;
+      let count = 0;
+      const stop = bridge.subscribe("app", () => count++);
+      const before = await bridge.invoke("app.settings.get", {});
+      const after = await bridge.invoke("app.settings.update", { theme: "dark" });
+      await bridge.invoke("app.info", {});
+      stop();
+      return { count, same: JSON.stringify(before) === JSON.stringify(after) };
+    });
+    expect(noOp).toEqual({ count: 0, same: true });
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await app?.close();
+    await rm(userData, { recursive: true, force: true });
+  }
+});
+
 test("network guard rejects native and Chromium non-loopback connections", async () => {
   const userData = await mkdtemp(join(tmpdir(), "vera-egress-"));
   let app: ElectronApplication | undefined;
@@ -330,6 +441,12 @@ test("newer settings stay read-only and byte-identical through native IPC and sh
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
     expect(snapshot).toMatchObject({ readOnly: true, settings: { schemaVersion: 1, theme: "system" } });
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await expect(page.locator('[data-i18n="settings.readOnly"]')).toBeVisible();
+    for (const control of await page.locator("[data-theme-option], [data-scale], #language").all())
+      await expect(control).toBeDisabled();
+    await page.locator('[data-toggle="sidebar"]').click();
+    expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBeNull();
     expect(
       await page.evaluate(() =>
         (window as unknown as { vera: VeraBridge }).vera

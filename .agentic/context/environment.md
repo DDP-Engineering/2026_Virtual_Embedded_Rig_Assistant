@@ -26,7 +26,7 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 [05_Software/README.md](../../05_Software/README.md) and [08-quality](../../00_Planning/architecture/08-quality.md) define verification routes.
 
-`npm run verify` runs Biome, tsc -b and Vitest. `npm run test:e2e` builds then runs Playwright Electron and a standalone Chromium mock browser; Linux uses xvfb-run -a. Install the pinned Playwright Chromium runtime with `npx playwright install chromium` from 05_Software before browser acceptance. Acceptance retains sandboxing, uses temporary userData and blocks non-loopback traffic. Build-mode tests execute emitted code for both compile-time values.
+`npm run verify` runs Biome, tsc -b, the English-source en/ro/de catalog audit and Vitest. `npm run test:e2e` builds then runs Playwright Electron and a standalone Chromium mock browser; Linux uses xvfb-run -a. Install the pinned Playwright Chromium runtime with `npx playwright install chromium` from 05_Software before browser acceptance. Acceptance retains sandboxing, uses temporary userData and blocks non-loopback traffic. Build-mode tests execute emitted code for both compile-time values.
 
 ## Platform details
 
@@ -36,7 +36,7 @@ Executable-adjacent vera.portable selects adjacent data before readiness. Instal
 --user-data-dir for isolation; selected directories are created before Electron setPath. Portable
 regressions use faithful hosts enforcing directory existence, with temporary markers/executables.
 Settings/log tests use injected ports and temporary directories;
-native acceptance checks settings across restarts and newer-schema protection through shutdown.
+native acceptance checks all UI theme/scale preferences and panel geometry across restarts, external event refresh and newer-schema protection through shutdown. Browser acceptance checks the three-language minimum-size matrix, keyboard focus, AA contrast, overlay, storage protection and localized save errors.
 
 ## Authoritative references
 

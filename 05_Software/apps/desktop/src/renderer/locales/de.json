@@ -1,0 +1,90 @@
+{
+  "home": {
+    "title": "VERA",
+    "loading": "Anwendungsinformationen werden geladen…",
+    "name": "Anwendung",
+    "version": "Version",
+    "platform": "Plattform",
+    "arch": "Architektur",
+    "portable": "Portabel",
+    "locale": "Systemsprache",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "errors": {
+    "INVALID": "Die Anfrage ist ungültig.",
+    "NOT_FOUND": "Der angeforderte Vorgang {{operation}} wurde nicht gefunden.",
+    "CONFLICT": "Der Vorgang steht im Konflikt mit dem aktuellen Zustand.",
+    "BUSY": "Die Anwendung ist beschäftigt.",
+    "DENIED": "Der Vorgang ist nicht erlaubt.",
+    "CONTEXT_LIMIT": "Das Kontextlimit wurde erreicht.",
+    "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
+    "OFFLINE": "Die Anwendung ist offline.",
+    "INTERNAL": "Anwendungsinformationen konnten nicht geladen werden."
+  },
+  "nav": {
+    "settings": "Einstellungen",
+    "welcome": "Willkommen",
+    "main": "Hauptnavigation"
+  },
+  "welcome": {
+    "title": "Arbeitsbereich öffnen",
+    "description": "Ein Arbeitsbereich enthält Dokumente, Notizen und Fähigkeiten deiner Platine. Deine Arbeit beginnt hier.",
+    "workbenches": "Arbeitsbereiche",
+    "sidebarPlaceholder": "Deine Arbeitsbereiche und Sitzungen erscheinen hier.",
+    "create": "Arbeitsbereich erstellen",
+    "createPlaceholder": "Das Erstellen von Arbeitsbereichen wird hier verfügbar sein.",
+    "open": "Vorhandenen öffnen",
+    "openPlaceholder": "Die Ordnerauswahl wird hier verfügbar sein.",
+    "recent": "Zuletzt geöffnet",
+    "recentPlaceholder": "Deine zuletzt geöffneten Arbeitsbereiche erscheinen hier.",
+    "application": "Anwendungsinformationen"
+  },
+  "settings": {
+    "title": "Anwendungseinstellungen",
+    "providers": "Anbieter",
+    "appearance": "Darstellung",
+    "language": "Sprache",
+    "updates": "Aktualisierungen",
+    "data": "Daten & Datenschutz",
+    "about": "Über",
+    "placeholder": "Dieser Bereich wird in einer zukünftigen Aktualisierung verfügbar sein.",
+    "readOnly": "Diese Einstellungen wurden von einer neueren Version geschrieben. Einstellungen sind schreibgeschützt.",
+    "saving": "Einstellungen werden gespeichert…",
+    "retry": "Erneut versuchen"
+  },
+  "appearance": {
+    "theme": "Design",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System",
+    "textSize": "Textgröße",
+    "percent": "{{percent}}%",
+    "description": "Skaliert alle Texte und Bedienelemente. Änderungen werden automatisch gespeichert.",
+    "codePreview": "Code-Vorschau: const board = 1;"
+  },
+  "language": {
+    "label": "Sprache der Oberfläche",
+    "system": "System",
+    "en": "English",
+    "ro": "Română",
+    "de": "Deutsch",
+    "description": "Ändert Menüs und Meldungen. Der Agent antwortet in der Sprache, in der du schreibst."
+  },
+  "layout": {
+    "toggleSidebar": "Seitenleiste ein- oder ausblenden",
+    "toggleRight": "Rechten Bereich ein- oder ausblenden",
+    "resizeSidebar": "Größe der Seitenleiste ändern",
+    "resizeRight": "Größe des rechten Bereichs ändern"
+  },
+  "panel": {
+    "title": "Rechter Bereich",
+    "close": "Schließen",
+    "context": "Kontext",
+    "docs": "Dokumente",
+    "changes": "Änderungen",
+    "artifacts": "Artefakte",
+    "plan": "Plan",
+    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein."
+  }
+}

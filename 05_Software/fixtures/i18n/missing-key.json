@@ -1,0 +1,8 @@
+{
+  "catalogs": {
+    "en": { "screen": { "title": "Title" } },
+    "ro": { "screen": { "title": "Titlu" } },
+    "de": { "screen": { "title": "Titel" } }
+  },
+  "sources": ["t(\"screen.title\"); t(\"screen.missing\");"]
+}
