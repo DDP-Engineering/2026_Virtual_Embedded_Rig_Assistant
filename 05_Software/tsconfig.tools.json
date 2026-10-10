@@ -4,7 +4,8 @@
     "types": ["node"],
     "emitDeclarationOnly": true,
     "outDir": "node_modules/.cache/tsc/tools",
-    "tsBuildInfoFile": "node_modules/.cache/tsc/tools.tsbuildinfo"
+    "tsBuildInfoFile": "node_modules/.cache/tsc/tools.tsbuildinfo",
+    "lib": ["ES2023", "DOM"]
   },
-  "include": ["vitest.config.ts", "tests/tooling/**/*.ts"]
+  "include": ["vitest.config.ts", "tests/tooling/**/*.ts", "playwright.config.ts", "e2e/**/*.ts"]
 }

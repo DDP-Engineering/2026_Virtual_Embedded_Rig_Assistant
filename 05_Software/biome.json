@@ -33,6 +33,10 @@
   },
   "overrides": [
     {
+      "includes": ["apps/desktop/src/renderer/**/*.css"],
+      "css": { "parser": { "tailwindDirectives": true } }
+    },
+    {
       "includes": ["packages/core/**"],
       "linter": {
         "rules": {

@@ -31,6 +31,11 @@ workdir = "05_Software"                   # npm workspaces root (01-system.md §
 [layout]
 # Globs used by the traceability heuristics of `aegis check`.
 source = [
+    "05_Software/package.json",
+    "05_Software/package-lock.json",
+    "05_Software/biome.json",
+    "05_Software/tsconfig*.json",
+    "05_Software/playwright.config.ts",
     "05_Software/packages/",
     "05_Software/apps/",
     "05_Software/scripts/",
@@ -66,7 +71,7 @@ default_branch = "master"               # the ref every diff is measured from
 [interaction]
 # false stops at every completed stage and presents the next choices.
 # true flows between stages, but never bypasses publication approval.
-autopilot = false
+autopilot = true
 
 [review]
 enabled = true

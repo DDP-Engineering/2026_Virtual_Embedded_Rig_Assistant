@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-1aba9c7c"
+
+title = "Block renderer navigation"
+
+status = "active"
+
+requirement = """
+When page content attempts navigation, VERA shall prevent the renderer from leaving the application document.
+"""
+
+verification = "Invoke location.assign to https://example.com and observe same URL and live renderer with no outbound request."
+
+affected_paths = ["05_Software/apps/desktop/src/main/security.ts"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-UX-6ccae258"
+
+title = "Desktop launch identity"
+
+status = "active"
+
+requirement = """
+When VERA starts, the desktop shell shall display a React renderer in a window titled VERA with a minimum size of 1024 by 640 pixels.
+"""
+
+verification = "Launch the built app with temporary userData; observe window title, rendered identity and minimum size."
+
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/renderer/"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

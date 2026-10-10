@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-REL-9e5c0e0e"
+
+title = "Single desktop instance"
+
+status = "active"
+
+requirement = """
+When a second VERA process starts with the same userData, VERA shall retain one app instance and restore or focus its existing window while the second process exits.
+"""
+
+verification = "Start two real Electron processes sharing temporary userData; second exits, first still has exactly one window."
+
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

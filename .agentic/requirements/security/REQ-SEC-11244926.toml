@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-11244926"
+
+title = "Bundled content security policy"
+
+status = "active"
+
+requirement = """
+When production renderer resources load, VERA shall apply a default-src self Content Security Policy through both HTML meta and response header, allowing bundled resources and blocking injected inline scripts and remote scripts, styles and fonts.
+"""
+
+verification = "Launch built app; inspect actual response CSP and meta, inject script and observe CSP violation plus absent execution; observe bundled React/CSS load."
+
+affected_paths = ["05_Software/apps/desktop/src/main/content-policy.ts", "05_Software/apps/desktop/src/main/security.ts", "05_Software/apps/desktop/src/renderer/index.html", "05_Software/apps/desktop/electron.vite.config.ts"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

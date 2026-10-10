@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-d6fdde98"
+
+title = "Deny additional windows"
+
+status = "active"
+
+requirement = """
+When renderer content calls window.open, VERA shall deny the new window and return null to the caller.
+"""
+
+verification = "Call window.open to external URL; observe null and unchanged BrowserWindow count."
+
+affected_paths = ["05_Software/apps/desktop/src/main/security.ts"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

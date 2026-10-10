@@ -2,7 +2,7 @@
   "name": "vera",
   "private": true,
   "type": "module",
-  "description": "VERA — Virtual Embedded Rig Assistant",
+  "description": "VERA \u00e2\u20ac\u201d Virtual Embedded Rig Assistant",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -16,13 +16,30 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "verify": "npm run lint && npm run typecheck && npm run test"
+    "verify": "npm run lint && npm run typecheck && npm run test",
+    "dev": "electron-vite apps/desktop",
+    "build": "electron-vite build apps/desktop",
+    "test:e2e": "node scripts/test-e2e.mjs",
+    "postinstall": "install-electron"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@playwright/test": "1.64.0",
+    "@tailwindcss/vite": "4.3.3",
     "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
     "@vitest/coverage-v8": "5.0.3",
+    "electron": "44.7.0",
+    "electron-vite": "5.0.0",
+    "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
+    "vite": "7.3.7",
     "vitest": "5.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
   }
 }

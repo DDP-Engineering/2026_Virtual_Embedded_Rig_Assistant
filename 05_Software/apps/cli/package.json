@@ -1,0 +1,10 @@
+{
+  "name": "@vera/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vera/shared": "0.0.0",
+    "@vera/core": "0.0.0"
+  }
+}

@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-bba4d0dd"
+
+title = "Renderer Node isolation"
+
+status = "active"
+
+requirement = """
+While the desktop renderer is loaded, VERA shall enforce context isolation, process sandboxing, disabled Node integration and enabled web security so require, process and module are undefined in the page world.
+"""
+
+verification = "Launch built app; inspect webPreferences, sandboxed preload load and page-world typeof require/process/module."
+
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/preload/index.ts"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

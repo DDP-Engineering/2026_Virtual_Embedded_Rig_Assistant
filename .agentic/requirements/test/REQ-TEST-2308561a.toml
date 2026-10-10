@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-TEST-2308561a"
+
+title = "Compile-time test build flag"
+
+status = "active"
+
+requirement = """
+When built with VERA_TEST=1, the desktop build shall compile its test-build constant to true, and compile it to false for ordinary builds, with no runtime test switches in either shell.
+"""
+
+verification = "Build both modes; inspect emitted build identity and execute the emitted ESM flag module with Node; runtime VERA_TEST does not change an ordinary build."
+
+affected_paths = ["05_Software/apps/desktop/electron.vite.config.ts", "05_Software/apps/desktop/src/main/build-mode.ts"]
+
+linked_tests = ["05_Software/tests/tooling/build-mode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

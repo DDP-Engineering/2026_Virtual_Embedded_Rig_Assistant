@@ -10,6 +10,15 @@ Do not open AEGIS tasks, journals or requirements for anything else: repository 
 remotes, labels, configuration, `02_Tools` setup), planning and architecture documents in
 `00_Planning/`, standalone documentation, brainstorming, research or questions. Do those directly.
 
+## Implementation branch and commits
+
+Implement work packages directly in the shared checkout on `master`.
+Create one local commit per ticket after its implementation has passed the required validation.
+The user has authorized these local commits; record that authorization in the task journal.
+Use a recorded base commit and the complete uncommitted candidate for review and validation when
+the working branch and the configured default branch are both `master`.
+Remote publication still follows the repository's approval requirements.
+
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 
 ## AEGIS workflow

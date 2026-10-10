@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-PLAT-6f3e3500"
+
+title = "Workspace source skeleton"
+
+status = "active"
+
+requirement = """
+The software solution shall build four strict ESM TypeScript npm workspaces named @vera/shared, @vera/core, @vera/desktop and @vera/cli through tsc -b with the established import boundaries and exactly pinned direct dependencies.
+"""
+
+verification = "Read workspace manifests and solution references, build/typecheck and run boundary tests; reject missing workspaces or forbidden renderer/core imports."
+
+affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "05_Software/tsconfig.json", "05_Software/tsconfig.tools.json", "05_Software/biome.json", "05_Software/packages/", "05_Software/apps/desktop/package.json", "05_Software/apps/desktop/components.json", "05_Software/apps/desktop/vitest.config.ts", "05_Software/apps/cli/", "05_Software/apps/desktop/tsconfig.config.json", "05_Software/apps/desktop/tsconfig.json", "05_Software/apps/desktop/tsconfig.main.json", "05_Software/apps/desktop/tsconfig.preload.json", "05_Software/apps/desktop/tsconfig.renderer.json"]
+
+linked_tests = ["05_Software/tests/tooling/skeleton.test.ts", "05_Software/tests/tooling/boundaries.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10

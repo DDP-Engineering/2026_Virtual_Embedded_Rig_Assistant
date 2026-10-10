@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-DATA-6c54a48f"
+
+title = "Window bounds persistence"
+
+status = "active"
+
+requirement = """
+When the desktop window closes and VERA restarts, the shell shall restore its valid saved size and position, using visible minimum-sized defaults when stored state is missing, malformed or outside connected displays.
+"""
+
+verification = "Resize/move window, close and restart in same temporary userData; observe restored bounds; unit cases cover invalid/off-screen data and write/read recovery."
+
+affected_paths = ["05_Software/apps/desktop/src/main/window-state.test.ts", "05_Software/apps/desktop/src/main/window-state.ts", "05_Software/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/e2e/shell.spec.ts", "05_Software/apps/desktop/src/main/window-state.test.ts"]
+
+
+spec = "specs/REQ-DATA-6c54a48f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-10
+updated = 2026-10-10
