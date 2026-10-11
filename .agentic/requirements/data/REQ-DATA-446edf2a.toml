@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-446edf2a"
+title = "Bound pinned prompt context at a UTF8 boundary"
+status = "active"
+requirement = "When pinned context exceeds16384 UTF8 bytes, the prompt builder shall include the longest complete Unicode-scalar prefix within16384 bytes followed by a truncation note, preserving shorter or exact-limit text verbatim."
+verification = "Compare a20KiB snapshot; assert byte bounds and whole scalars across two/three/four-byte cutoffs, exact-limit text, whitespace, BOM and original content preservation."
+affected_paths = ["05_Software/packages/core/src/agent/prompt.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/agent/prompt.test.ts", "05_Software/packages/core/src/agent/__snapshots__/prompt.test.ts.snap"]
+linked_tests = ["05_Software/packages/core/src/agent/prompt.test.ts"]
+spec = "specs/REQ-FUNC-9441c5d6.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-11

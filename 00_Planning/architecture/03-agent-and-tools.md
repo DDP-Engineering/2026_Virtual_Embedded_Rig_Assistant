@@ -99,6 +99,13 @@ Built by `core/agent/prompt.ts` from a template, in this order, and snapshot-tes
 
 Tool descriptions travel in the tool schemas, not in the prompt.
 
+`buildSystemPrompt({workbench,pinned,skills,env})` returns `{text,characters}` for host/session callers;
+`characters` is the final text's UTF-16 code-unit length. Environment supplies `Clock`, `osFamily`
+(`windows`/`linux`), `veraVersion`, current session `permissionMode` and `indexedDocuments`.
+The date is UTC from `Clock.now()`. Pinned content preserves whitespace and BOM; above16384 UTF-8
+bytes the builder retains the longest complete Unicode-scalar prefix within that budget and adds
+`[WORKBENCH.md truncated at 16 KiB (UTF-8).]`. Resolved skill metadata preserves caller order.
+
 ## 4. Internal tools
 
 | Tool | Class | Parameters | Returns |

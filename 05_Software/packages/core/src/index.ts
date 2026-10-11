@@ -1,4 +1,5 @@
 export * from "./agent/context.js";
+export * from "./agent/prompt.js";
 export * from "./agent/runtime.js";
 export * from "./agent/tool.js";
 export * from "./agent/types.js";

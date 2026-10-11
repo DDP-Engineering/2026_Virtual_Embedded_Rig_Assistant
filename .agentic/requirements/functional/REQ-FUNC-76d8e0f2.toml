@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-76d8e0f2"
+title = "Describe the injected prompt environment"
+status = "active"
+requirement = "When building a system prompt, VERA shall describe the UTC date obtained from the injected Clock, supplied OS family, VERA version, session permission mode and indexed document count."
+verification = "Freeze/move an injected Clock; compare snapshots for read-only/ask/auto-edit and assert supplied Windows/Linux environment and zero/nonzero document counts."
+affected_paths = ["05_Software/packages/core/src/agent/prompt.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/agent/prompt.test.ts", "05_Software/packages/core/src/agent/__snapshots__/prompt.test.ts.snap"]
+linked_tests = ["05_Software/packages/core/src/agent/prompt.test.ts"]
+spec = "specs/REQ-FUNC-9441c5d6.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-11
