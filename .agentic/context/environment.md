@@ -24,6 +24,17 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+`npm run package` / `package:test` build host x64 release/instrumented ZIP or AppImage with
+electron-builder 26.17.0. `prepare:model` materializes the manifest-pinned model; `-- --offline`
+verifies cached assets. Runtime assets never require a model download. Native N-API install scripts
+are explicitly denied in allowScripts; use platform-specific installed prebuilds and keep CPU
+libraries unpacked. See [native packaging](../knowledge/native-packaging.md) for package reports
+and external host harnesses. WP-05 accepts artifact-bound execution on the current connected
+Windows host under explicit human authorization, with clean/offline Windows and VC++ runtime
+independence required before final release WP-30/WP-33. The offline Windows helper requires
+isolation and a machine permitting unsigned executables; a Smart App Control refusal is a failed
+environment probe. Linux feasibility uses actual isolated-VM execution.
+
 [05_Software/README.md](../../05_Software/README.md) and [08-quality](../../00_Planning/architecture/08-quality.md) define verification routes.
 
 `npm run verify` runs Biome, tsc -b, the English-source en/ro/de catalog audit and Vitest. `npm run test:e2e` builds then runs Playwright Electron and a standalone Chromium mock browser; Linux uses xvfb-run -a. Install the pinned Playwright Chromium runtime with `npx playwright install chromium` from 05_Software before browser acceptance. Acceptance retains sandboxing, uses temporary userData and blocks non-loopback traffic. Build-mode tests execute emitted code for both compile-time values.

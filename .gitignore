@@ -10,6 +10,7 @@ __pycache__/
 **/dist/
 **/out/
 **/release/
+/05_Software/resources/models/
 *.tsbuildinfo
 
 # Test output: Vitest coverage and Playwright runs. A successful run leaves none.

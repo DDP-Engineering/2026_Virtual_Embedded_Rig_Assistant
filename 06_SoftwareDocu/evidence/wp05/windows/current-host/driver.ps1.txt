@@ -1,0 +1,49 @@
+param(
+  [Parameter(Mandatory=$true)][string]$Artifact,
+  [Parameter(Mandatory=$true)][string]$EvidenceDirectory,
+  [string]$ExpectedSha256='9b48bb7463b77af901253ff839195ca9a8c32420b0d57bbad72aa3e21b5b6793'
+)
+$ErrorActionPreference='Stop'
+$evidence=[IO.Path]::GetFullPath($EvidenceDirectory)
+New-Item -ItemType Directory -Path $evidence | Out-Null
+$artifactPath=(Resolve-Path -LiteralPath $Artifact).Path
+$destination=Join-Path ([IO.Path]::GetTempPath()) ('VERA current host ZIP '+[Guid]::NewGuid().ToString('N'))
+$result=@{status='failed'; environment='current-connected-Windows'; cleanOfflineWindowsProven=$false; vcRuntimeIndependenceProven=$false; expectedSha256=$ExpectedSha256; artifact=$artifactPath; extractionDirectory=$destination; startedUtc=(Get-Date).ToUniversalTime().ToString('o')}
+try {
+  $before=(Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  @{sha256=$before; bytes=(Get-Item -LiteralPath $artifactPath).Length} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $evidence 'artifact-before.json')
+  if ($before -ne $ExpectedSha256) {throw 'Unexpected ZIP SHA256'}
+  @{environment='current-connected-Windows'; isolationClaim=$false; timestamp=(Get-Date).ToUniversalTime().ToString('o'); os=Get-CimInstance Win32_OperatingSystem | Select-Object Caption,Version,BuildNumber,OSArchitecture; adapters=@(Get-NetAdapter -IncludeHidden | Select-Object Name,Status,InterfaceDescription,InterfaceIndex); interfaces=@(Get-NetIPInterface -IncludeAllCompartments | Select-Object InterfaceAlias,InterfaceIndex,ConnectionState,CompartmentId); routes=@(Get-NetRoute -IncludeAllCompartments | Select-Object DestinationPrefix,NextHop,InterfaceAlias,InterfaceIndex)} | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 (Join-Path $evidence 'host.json')
+  Expand-Archive -LiteralPath $artifactPath -DestinationPath $destination
+  $exe=Join-Path $destination 'VERA.exe'
+  $result.executableSha256=(Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+  $arguments=@('--packaging-probe="'+(Join-Path $evidence 'probe.json')+'"', '--user-data-dir="'+(Join-Path $destination 'user-data')+'"')
+  $result.arguments=$arguments
+  $run=Start-Process -FilePath $exe -ArgumentList $arguments -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $evidence 'stdout.log') -RedirectStandardError (Join-Path $evidence 'stderr.log')
+  # Keep the process handle open so ExitCode is the actual completed child exit.
+  $handle=$run.Handle
+  $result.processId=$run.Id
+  if (-not $run.WaitForExit(600000)) {$run.Kill(); $run.WaitForExit(); throw 'Probe process timeout'}
+  $run.WaitForExit()
+  $result.exitCode=$run.ExitCode
+  if ($run.ExitCode -ne 0) {throw "Probe exited $($run.ExitCode)"}
+  $probe=Get-Content -LiteralPath (Join-Path $evidence 'probe.json') -Raw | ConvertFrom-Json
+  if ($probe.status -ne 'passed' -or -not $probe.packaged -or $probe.platform -ne 'win32' -or $probe.arch -ne 'x64') {throw 'Packaged Windows oracle failed'}
+  foreach ($driver in @($probe.sqlite.primary,$probe.sqlite.fallback)) {
+    if ($driver.status -ne 'passed' -or $driver.wal.journal_mode -ne 'wal' -or -not $driver.walFile -or $driver.persisted.count -ne 1 -or $driver.unicode61.text -notmatch 'I2C1_CR1' -or $driver.trigram.text -notmatch 'I2C1_CR1') {throw 'SQLite driver oracle failed'}
+  }
+  $embedding=$probe.embeddings
+  if ($embedding.status -ne 'passed' -or -not $embedding.worker -or $embedding.backend -ne 'onnxruntime-node' -or $embedding.device -ne 'cpu' -or $embedding.dtype -ne 'q8' -or $embedding.allowRemoteModels -or $embedding.chunks.Count -ne 3) {throw 'Worker oracle failed'}
+  foreach ($chunk in $embedding.chunks) {
+    if ($chunk.dimensions -ne 384 -or [Math]::Abs($chunk.norm-1) -ge 0.0001 -or $chunk.elapsedMs -lt 0 -or $chunk.sha256 -notmatch '^[a-f0-9]{64}$') {throw 'Embedding vector oracle failed'}
+  }
+  $result.status='passed'
+} catch {$result.error=$_.Exception.Message} finally {
+  $after=(Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  @{sha256=$after; bytes=(Get-Item -LiteralPath $artifactPath).Length} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $evidence 'artifact-after.json')
+  if ($after -ne $ExpectedSha256) {$result.status='failed'; $result.error='ZIP hash changed'}
+  $result.finishedUtc=(Get-Date).ToUniversalTime().ToString('o')
+  $result | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 (Join-Path $evidence 'execution.json')
+}
+if ($result.status -ne 'passed') {Write-Error $result.error; exit 1}
+Write-Output ('ZIP probe passed; actual child exit='+$result.exitCode+'; evidence='+$evidence)

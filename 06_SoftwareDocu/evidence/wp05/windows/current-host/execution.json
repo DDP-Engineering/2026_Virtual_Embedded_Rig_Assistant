@@ -1,0 +1,17 @@
+﻿{
+    "artifact":  "D:\\ProjectsDDP\\2026_Virtual_Embedded_Rig_Assistant\\05_Software\\release\\test\\VERA-test-0.0.0-win-x64.zip",
+    "exitCode":  0,
+    "executableSha256":  "53319f41c7ab66f1010d83fa57ba0f212aec13962149c8298981193076655e9e",
+    "arguments":  [
+                      "--packaging-probe=\"D:\\ProjectsDDP\\2026_Virtual_Embedded_Rig_Assistant\\06_SoftwareDocu\\evidence\\wp05\\windows\\current-host\\probe.json\" --user-data-dir=\"C:\\Users\\pasar\\AppData\\Local\\Temp\\VERA current host ZIP e929c503e49f4781a5150c4a576b0449\\user-data\""
+                  ],
+    "cleanOfflineWindowsProven":  false,
+    "extractionDirectory":  "C:\\Users\\pasar\\AppData\\Local\\Temp\\VERA current host ZIP e929c503e49f4781a5150c4a576b0449",
+    "expectedSha256":  "9b48bb7463b77af901253ff839195ca9a8c32420b0d57bbad72aa3e21b5b6793",
+    "status":  "passed",
+    "finishedUtc":  "2026-10-11T07:16:54.1601383Z",
+    "vcRuntimeIndependenceProven":  false,
+    "processId":  14252,
+    "environment":  "current-connected-Windows",
+    "startedUtc":  "2026-10-11T07:16:37.0360363Z"
+}

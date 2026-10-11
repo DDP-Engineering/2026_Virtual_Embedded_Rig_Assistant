@@ -1,0 +1,5 @@
+﻿{
+    "artifactSha256":  "9b48bb7463b77af901253ff839195ca9a8c32420b0d57bbad72aa3e21b5b6793",
+    "status":  "failed",
+    "error":  "Failed to create file \u0027C:\\VERA offline package\\chrome_100_percent.pak\u0027 while expanding the archive file \u0027C:\\VERA-input\\VERA-test-0.0.0-win-x64.zip\u0027 contents as the file \u0027C:\\VERA offline package\\chrome_100_percent.pak\u0027 already exists. Use the -Force parameter if you want to overwrite the existing directory \u0027C:\\VERA offline package\\chrome_100_percent.pak\u0027 contents when expanding the archive file."
+}

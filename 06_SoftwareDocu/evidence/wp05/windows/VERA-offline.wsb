@@ -1,0 +1,13 @@
+<Configuration>
+  <Networking>Disable</Networking>
+  <vGPU>Disable</vGPU>
+  <ClipboardRedirection>Disable</ClipboardRedirection>
+  <PrinterRedirection>Disable</PrinterRedirection>
+  <AudioInput>Disable</AudioInput>
+  <VideoInput>Disable</VideoInput>
+  <MappedFolders>
+    <MappedFolder><HostFolder>D:\ProjectsDDP\2026_Virtual_Embedded_Rig_Assistant\05_Software\release\test</HostFolder><SandboxFolder>C:\VERA-input</SandboxFolder><ReadOnly>true</ReadOnly></MappedFolder>
+    <MappedFolder><HostFolder>D:\ProjectsDDP\2026_Virtual_Embedded_Rig_Assistant\02_Tools\cache\wp05\windows-offline</HostFolder><SandboxFolder>C:\VERA-evidence</SandboxFolder><ReadOnly>false</ReadOnly></MappedFolder>
+  </MappedFolders>
+  <LogonCommand><Command>powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\VERA-evidence\guest-probe.ps1</Command></LogonCommand>
+</Configuration>

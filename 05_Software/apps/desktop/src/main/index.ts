@@ -15,6 +15,7 @@ import { loadWindowState, saveWindowState } from "./window-state.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
+declare const __VERA_TEST__: boolean;
 app.setName("VERA");
 const userData = app.commandLine.getSwitchValue("user-data-dir");
 const dataLocations = configureDataLocations(app, process.execPath, userData);
@@ -159,6 +160,11 @@ if (!app.requestSingleInstanceLock()) {
       logger.log("info", "app.started", { portable: dataLocations.portable });
       secureSession(session.defaultSession);
       protocol.handle("vera", (request) => bundledResponse(join(here, "../renderer"), request));
+      if (__VERA_TEST__ && app.commandLine.hasSwitch("packaging-probe")) {
+        const { runPackagingProbe } = await import("./packaging/probe.js");
+        app.exit(await runPackagingProbe(app.commandLine.getSwitchValue("packaging-probe")));
+        return;
+      }
       await createWindow();
     })
     .catch(async () => {

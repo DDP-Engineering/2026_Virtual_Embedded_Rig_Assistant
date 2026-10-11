@@ -18,6 +18,8 @@ publishes host ports and settings services; CLI exposes its skeleton entrypoint.
 From `05_Software`, use `npm run verify`, `check:i18n`, `lint`, `format`, `typecheck`, `build`, `dev`, `dev:renderer`
 and `test:e2e`. The repository-local `python ../02_Tools/npmw.py` wrapper selects pinned Node.
 See [software README](../../05_Software/README.md) for setup and command details.
+`prepare:model`, `package` and `package:test` route to [native packaging](native-packaging.md),
+which owns verified assets, native staging and artifact measurements.
 
 ## Invariants
 

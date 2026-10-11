@@ -14,7 +14,7 @@ title = "Compile-time test build flag"
 status = "active"
 
 requirement = """
-When built with VERA_TEST=1, the desktop build shall compile its test-build constant to true, and compile it to false for ordinary builds, with no runtime test switches in either shell.
+When built with VERA_TEST=1, the desktop build shall compile its test-build constant to true, and compile it to false for ordinary builds, with its identity fixed independently of runtime environment overrides.
 """
 
 verification = "Build both modes; inspect emitted build identity and execute the emitted ESM flag module with Node; runtime VERA_TEST does not change an ordinary build."
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-10
-updated = 2026-10-10
+updated = 2026-10-11

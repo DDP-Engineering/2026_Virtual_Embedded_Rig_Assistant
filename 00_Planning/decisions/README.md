@@ -9,7 +9,7 @@ files a new ADR and updates this index.
 | [ADR-0002](ADR-0002-model-access-pi-ai.md) | Models through `@earendil-works/pi-ai`, two collections (API key, subscription) | Accepted |
 | [ADR-0003](ADR-0003-agent-loop.md) | Agent loop: start from the reference loop behind `core/agent/runtime.ts` | Proposed; WP-10 confirms |
 | [ADR-0004](ADR-0004-workbench-is-a-folder.md) | A workbench is a plain folder; runtime state in `.vera/` | Accepted |
-| [ADR-0005](ADR-0005-sqlite-per-workbench.md) | One SQLite database per workbench through better-sqlite3, FTS5 and trigram | Proposed; WP-05 confirms |
+| [ADR-0005](ADR-0005-sqlite-per-workbench.md) | One SQLite database per workbench through better-sqlite3, FTS5 and trigram | Confirmed by ADR-0013 for WP-05; clean/offline Windows and VC++ release proof deferred |
 | [ADR-0006](ADR-0006-local-bundled-embeddings.md) | Embeddings computed locally with a bundled model; no remote model loading | Accepted; model chosen by WP-24 |
 | [ADR-0007](ADR-0007-no-shell-confined-tools.md) | No shell tool; file tools confined to the workbench; writes gated by permission mode | Accepted |
 | [ADR-0008](ADR-0008-updates-generic-feed.md) | electron-builder and electron-updater with a generic HTTPS feed | Accepted |
@@ -17,3 +17,4 @@ files a new ADR and updates this index.
 | [ADR-0010](ADR-0010-zod-single-schema-language.md) | zod is the only schema language; tool schemas converted to JSON Schema | Accepted |
 | [ADR-0011](ADR-0011-single-user-desktop.md) | Single-user desktop app: no accounts, roles or app login | Accepted |
 | [ADR-0012](ADR-0012-bounded-execution-and-release-proof.md) | M1 context budgets and terminable grep; exact one-use approvals, workbench-wide writes and restart reconciliation; proof on actual release artifacts | Accepted; planning contract |
+| [ADR-0013](ADR-0013-native-packaging-and-model-delivery.md) | N-API SQLite/ORT packages, verified immutable model delivery and compiled probe exclusion | Accepted for WP-05; Linux offline/current Windows ZIP passed, clean Windows release proof deferred |

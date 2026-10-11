@@ -44,11 +44,15 @@ export default defineConfig(({ command }) => ({
     define: { __VERA_TEST__: JSON.stringify(testBuild), __VERA_DEV__: JSON.stringify(command === "serve") },
     build: {
       rollupOptions: {
+        external: ["better-sqlite3", "@huggingface/transformers", "onnxruntime-node"],
         input: {
           index: resolve(root, "src/main/index.ts"),
           "build-mode": resolve(root, "src/main/build-mode.ts"),
+          ...(testBuild
+            ? { "embedding-worker": resolve(root, "src/main/packaging/embedding-worker.ts") }
+            : {}),
         },
-        output: { format: "es", entryFileNames: "[name].js" },
+        output: { format: "es", entryFileNames: "[name].js", chunkFileNames: "[name].js" },
       },
     },
   },

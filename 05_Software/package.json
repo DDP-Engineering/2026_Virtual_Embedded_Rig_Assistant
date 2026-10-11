@@ -2,7 +2,7 @@
   "name": "vera",
   "private": true,
   "type": "module",
-  "description": "VERA \u00e2\u20ac\u201d Virtual Embedded Rig Assistant",
+  "description": "VERA â€” Virtual Embedded Rig Assistant",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -22,18 +22,24 @@
     "dev:renderer": "node scripts/dev-renderer.mjs",
     "build": "electron-vite build apps/desktop",
     "test:e2e": "node scripts/test-e2e.mjs",
-    "postinstall": "install-electron"
+    "postinstall": "install-electron",
+    "package": "node scripts/package.mjs",
+    "package:test": "node scripts/package.mjs --test",
+    "prepare:model": "node scripts/prepare-model.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@electron/asar": "4.3.1",
     "@playwright/test": "1.64.0",
     "@tailwindcss/vite": "4.3.3",
+    "@types/better-sqlite3": "7.6.13",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "5.2.0",
     "@vitest/coverage-v8": "5.0.3",
     "electron": "44.7.0",
+    "electron-builder": "26.17.0",
     "electron-vite": "5.0.0",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
@@ -42,6 +48,10 @@
   },
   "allowScripts": {
     "esbuild@0.25.12": true,
-    "esbuild@0.28.2": true
+    "esbuild@0.28.2": true,
+    "better-sqlite3@13.0.3": false,
+    "onnxruntime-node@1.30.0": false,
+    "protobufjs@7.6.6": false,
+    "electron-winstaller@5.4.0": false
   }
 }

@@ -22,6 +22,9 @@ emits main ESM, preload CommonJS and renderer assets under `apps/desktop/out/`.
 `--user-data-dir=<path>` selects the isolated Electron userData directory.
 `window-state.json` uses schema version 1 and integer normal bounds; its format is
 specified in [REQ-DATA-6c54a48f](../specs/REQ-DATA-6c54a48f.md).
+Compiled instrumented packages accept `--packaging-probe=<absolute JSON path>` after readiness,
+run [native packaging](native-packaging.md) probes and exit before creating a renderer window.
+Release compilation eliminates this hook and its worker entry.
 
 ## Invariants
 
@@ -77,6 +80,7 @@ flowchart TD
   protocol --> assets[(renderer output + CSP headers)]
   window --> renderer[React foundation App + Query + i18n + CSS]
   main --> nativeTheme[nativeTheme from loaded/updated settings]
+  main -->|compiled test hook| probe[native packaging probe before window]
   renderer --> api[renderer API / window.vera]
   api --> router[main IPC router]
   assets --> renderer

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-7fea1dd0"
+title = "Exclude packaging probes from release output"
+status = "active"
+requirement = "When producing a release build, the build shall emit application code free of packaging probe entries and switches regardless of runtime VERA_TEST, while instrumented packages remain separately labelled."
+verification = "Build both compile-time modes and inspect all emitted and packaged application code for probe switch/worker/SQLite fixture markers; release includes none, test includes the probe; existing built identity assertions still execute with runtime VERA_TEST=1."
+affected_paths = ["05_Software/apps/desktop/electron.vite.config.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/scripts/package.mjs"]
+linked_tests = ["05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-PLAT-e5a51348.md"
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

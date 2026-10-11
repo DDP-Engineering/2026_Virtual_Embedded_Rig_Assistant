@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-d05765be"
+title = "Measure packaged SQLite tokenizers and fallback driver"
+status = "active"
+requirement = "When explicitly requested in an instrumented packaged app, the SQLite probe shall report real better-sqlite3 load timing, WAL and both unicode61 and trigram query results from a temporary database, together with observed node:sqlite availability and equivalent tokenizer results."
+verification = "Run both OS packages; WAL files exist during the insert, unicode61 finds I2C1_CR1 and the quoted trigram fragment C1_C finds that identifier; verify persistence after reopen; node:sqlite failure is reported as an observed fallback limitation; temporary database cleanup happens on success or failure."
+affected_paths = ["05_Software/apps/desktop/src/main/packaging/sqlite-probe.ts", "05_Software/apps/desktop/src/main/packaging/probe.ts", "05_Software/apps/desktop/src/main/packaging/sqlite-probe.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/packaging/sqlite-probe.test.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-PLAT-e5a51348.md"
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

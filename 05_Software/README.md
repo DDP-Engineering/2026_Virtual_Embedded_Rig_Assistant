@@ -22,6 +22,8 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `npm run dev` | Electron main, sandboxed preload and React renderer with loopback Vite/HMR |
 | `VITE_API=mock npm run dev:renderer` | Full foundation UI using in-memory settings, metadata and app events |
 | `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `apps/desktop/out/` |
+| `npm run prepare:model` | Fetch and verify immutable, SHA256-pinned embedding assets; `-- --offline` verifies cached files only |
+| `npm run package` / `npm run package:test` | Build native x64 zip/AppImage with release / compiled test identity, verified model assets and size/hash report |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 
 Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, for example
@@ -57,13 +59,32 @@ does not support ESM preload imports; TypeScript sources and the main process us
 
 Set `VERA_TEST=1` while building to compile the test-build constant to true (PowerShell:
 `$env:VERA_TEST="1"`; then run the build; remove it afterward with `Remove-Item Env:VERA_TEST`).
-This shell introduces no test switches. The ordinary build ignores runtime `VERA_TEST` and renderer
+Instrumented packages accept `--packaging-probe=<absolute JSON path>` for temporary SQLite and worker embedding measurements; release application code excludes this hook and its fixtures. The ordinary build ignores runtime `VERA_TEST` and renderer
 URL overrides. Automated tests use temporary user data, enforce Chromium sandboxing, and reject
 non-loopback connections in Chromium and Node. Screenshots are captured for human inspection.
 
 `npm ci` runs `install-electron` to install the pinned Electron binary; npm's allowScripts entries
 permit the pinned esbuild install scripts. Ubuntu requires the libraries and Xvfb listed by
 `python3 ../02_Tools/setup.py --check`; keep Linux and Windows `node_modules` separate.
+Native dependencies use their pinned N-API prebuilds. Their install scripts are explicitly denied,
+including ONNX optional CUDA downloads; packaging retains host x64 runtime files, filters Linux
+CUDA/TensorRT binaries and uses the CPU execution provider. Windows keeps upstream ORT companion DLLs.
+
+Packaging uses electron-builder 26.17.0, better-sqlite3 13.0.3, transformers 4.3.1 and
+onnxruntime-node 1.30.0. `resources/model-manifest.json` pins all seven q8
+bge-small-en-v1.5 assets to an immutable upstream revision, with bytes and SHA256.
+Downloaded assets under `resources/models/` are ignored and reverified before packaging.
+The runtime uses local files with remote models disabled. This model is the WP-05 feasibility
+fixture; WP-24 owns the final model and recall evaluation.
+
+Generated artifacts and `package-report.json` reside in `release/{test,release}/`.
+The report includes artifact SHA256/bytes, unpacked bytes, ONNX/model contributions and largest files.
+Windows zip builds fail above 250,000,000 bytes. Native libraries, including sharp's shared
+libraries, are unpacked; models are real `extraResources` files.
+[WP-05 measurements and execution procedures](../06_SoftwareDocu/wp05-packaging-measurements.md)
+records current connected Windows ZIP and offline Linux acceptance. Full distribution targets,
+clean/offline Windows and VC++ runtime independence proof, and release smoke remain WP-30/WP-33
+before final release.
 
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
 app.info, app.settings.get/update and app subscriptions in memory. The API exposes

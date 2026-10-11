@@ -28,6 +28,11 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 [Renderer foundation](../knowledge/renderer-foundation.md) routes UI layout, appearance, language and accessibility.
 
+[Native packaging](../knowledge/native-packaging.md) routes x64 ZIP/AppImage, verified bundled
+model delivery, compiled instrumented probes and external artifact-bound host evidence. WP-05
+feasibility is observed on offline Linux and current connected Windows. Clean/offline Windows
+and VC++ independence are required before final release WP-30/WP-33.
+
 ## Authoritative references
 
 - [System architecture](../../00_Planning/architecture/01-system.md)

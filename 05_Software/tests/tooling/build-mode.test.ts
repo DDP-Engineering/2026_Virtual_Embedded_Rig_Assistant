@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, renameSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -27,6 +27,22 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         env: { ...process.env, VERA_TEST: flag },
       });
       expect(build.status, build.stderr).toBe(0);
+      const mainDir = join(root, "apps/desktop/out/main");
+      const code = readdirSync(mainDir, { recursive: true })
+        .filter((name) => String(name).endsWith(".js"))
+        .map((name) => readFileSync(join(mainDir, String(name)), "utf8"))
+        .join("\n");
+      if (flag === "1") {
+        expect(code).toContain("packaging-probe");
+        expect(code).toContain("I2C1_CR1");
+        expect(code).toContain("allowRemoteModels");
+        expect(code).toContain('import("better-sqlite3")');
+        expect(code).not.toContain("Could not dynamically require");
+      } else {
+        for (const marker of ["packaging-probe", "I2C1_CR1", "allowRemoteModels", "embedding-worker"]) {
+          expect(code).not.toContain(marker);
+        }
+      }
       const url = pathToFileURL(join(root, "apps/desktop/out/main/build-mode.js")).href;
       const run = spawnSync(
         process.execPath,
