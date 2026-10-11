@@ -25,6 +25,8 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `npm run prepare:model` | Fetch and verify immutable, SHA256-pinned embedding assets; `-- --offline` verifies cached files only |
 | `npm run package` / `npm run package:test` | Build native x64 zip/AppImage with release / compiled test identity, verified model assets and size/hash report |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
+| `npm run build:cli` | Bundle the headless `vera` bin and isolated grep worker |
+| `npm run vera -- run …` | Build the headless CLI and execute one durable session turn |
 
 Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, for example
 `python ../02_Tools/npmw.py npm run verify`. Full command list: [08-quality.md §1](../00_Planning/architecture/08-quality.md).
@@ -40,7 +42,7 @@ Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, 
 The four workspaces are `@vera/shared`, `@vera/core`, `@vera/desktop` and `@vera/cli`. Each extends
 the shared TypeScript base and participates in `tsc -b`. The desktop project separates Node, preload,
 DOM renderer and build configuration type environments. Shared publishes typed zod IPC contracts;
-core publishes host ports and versioned settings; CLI exposes its source skeleton. Desktop Vite main
+core publishes host ports and versioned settings; CLI composes the durable session service with Node ports. Desktop Vite main
 resolves core/shared from source; sandbox preload/renderer resolve shared from source,
 so build and development work before compiled library output exists.
 
@@ -105,6 +107,20 @@ Before browser acceptance, run `python ../02_Tools/npmw.py npx playwright instal
 `python ../02_Tools/npmw.py npm run dev:renderer`; remove the variable with `Remove-Item Env:VITE_API`
 when returning to Electron development. The mock fixture version is taken from the desktop manifest.
 
+## Headless CLI
+
+Run from this folder on a copy of the demo workbench:
+
+```text
+python ../02_Tools/npmw.py npm run vera -- run --workbench <copied-demo-dir> --prompt "Read the board" --provider replay --script fixtures/llm-scripts/read-then-answer.jsonl
+```
+
+`--provider openai --model <id>` uses `OPENAI_API_KEY`; `--provider custom --base-url <http(s)://host/v1> --model <id>` uses the ordinary custom gateway. A plain UTF-8 `--key-file <file>` overrides the environment key. Credentials remain in memory and all event/log/usage output passes through the shared scrubber. Provider defaults to OpenAI, which requires `--model`; replay explicitly selects only the supplied script.
+
+`--format jsonl` (default) emits `{sessionId,seq?,event}` records; live events omit `seq`. `--format pretty` emits one escaped line per event. `--session <id>` resumes the workbench's persisted session transcript and prints new events using the invocation's selected provider/model. `--data <dir>` preserves settings in that directory; the default data directory is temporary and removed after the run. Sessions remain in `<workbench>/.vera/vera.db`. SIGINT/SIGTERM abort the active turn and drain sessions/workers before releasing the workbench lock. Exit codes are0 for `end`/help,1 for operational errors, `error`, `aborted` or `limit`, and2 with usage text for invalid arguments. Context budgets and the10000ms grep worker deadline use the same core policy as desktop; irreducible input prints structured `CONTEXT_LIMIT` before gateway dispatch.
+
+`npm run build:cli` writes `apps/cli/dist/index.js`; the workspace `vera` bin points there. Headless replay is part of the CLI interface. Desktop replay retains its compiled instrumented-build boundary.
+
 ## Workbenches
 
 Welcome creates a workbench in an existing chosen folder without workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema4 settings; versions0/1/2/3 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the WORKBENCH.md editor; context above16KB warns and saves full content.
@@ -133,3 +149,5 @@ python ../02_Tools/npmw.py npm run smoke:live -- --provider custom:ollama --data
 Use `--provider openai` for the stored OpenAI configuration; omit `--data` to use the installed app store. The command builds release, launches the ordinary main host, prints scrubbed per-step JSON and exits0 only when mandatory steps pass (unsupported listing may be skipped). Linux requires a desktop display or `xvfb-run -a`. Manual smoke may consume API quota; it is separate from automated checks and must be observed before declaring WP09 complete.
 
 The session workspace supports keyboard session CRUD, Enter/Shift+Enter composer, @ path completion, model catalogs, Stop, Markdown/code, tool disclosures, citation chips and usage/context limits. Browser `?mock=chat` adds empty, streaming, tool/citation, invalid citation, provider error and context-limit sessions. Chat component tests live in `apps/desktop/src/renderer/components/session/workspace.test.ts`; native Stop/restart/reload/grep acceptance in `e2e/chat-ui.spec.ts`.
+
+The repository npm configuration keeps CLI stdout as event-only JSONL by suppressing run-script banners. Replay records decode JSON escapes and scrub registered credentials before temporary staging and durable messages.

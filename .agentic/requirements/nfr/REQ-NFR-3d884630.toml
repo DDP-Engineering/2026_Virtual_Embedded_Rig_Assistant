@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-NFR-3d884630"
+title = "Apply shared CLI execution limits"
+status = "active"
+requirement = "Before each CLI gateway dispatch or grep execution, the CLI shall apply the desktop core context policy and worker deadline contract, reporting structured CONTEXT_LIMIT and exit1 for irreducible input with zero dispatch and terminating timed-out workers before subsequent matching."
+verification = "Real long-first-turn loopback/replay requests remain within reported budget; irreducible input has no HTTP request; real pathological grep times out at10000ms and subsequent grep succeeds through a replaced worker."
+affected_paths = ["05_Software/apps/cli/", "05_Software/scripts/build-cli.mjs", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/fixtures/workbenches/demo-board/board.txt", "05_Software/tests/tooling/cli.test.ts", "05_Software/README.md"]
+linked_tests = ["05_Software/tests/tooling/cli.test.ts", "05_Software/apps/cli/src/host-ports.test.ts"]
+spec = "specs/REQ-FUNC-1ed659ec.md"
+created = 2026-10-12
+updated = 2026-10-12

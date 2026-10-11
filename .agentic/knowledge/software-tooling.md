@@ -11,7 +11,7 @@ to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Too
 
 The software root supplies four ESM workspaces, strict compilation, Biome boundaries,
 Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC/settings/workbench schemas; core
-publishes host ports, settings and workbench services; CLI exposes its skeleton entrypoint and bounded file-tool worker adapter. Desktop owns the running Electron shell and renderer-only dev mode.
+publishes host ports, settings and workbench services; [Headless CLI](headless-cli.md) composes durable sessions and bounded workers through Node ports. Desktop owns the running Electron shell and renderer-only dev mode.
 
 ## Public interface
 
@@ -78,7 +78,7 @@ flowchart LR
 
 Dashed arrows describe npm dependency declarations, while solid arrows describe command
 execution and compilation ownership. Core exports ports/settings/workbench/LLM gateway and confined file tools; shared publishes IPC/settings/workbench types/schemas;
-CLI retains its skeleton entrypoint.
+CLI supplies the vera bin and run command over the same core services.
 
 ## Files
 
@@ -90,7 +90,7 @@ All paths are under `05_Software/`.
 - `tests/tooling/{boundaries,skeleton,build-mode}.test.ts` — boundary, layout and emitted-build regression tests, with compiled shared entry hidden during builds.
 - `packages/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library definitions and public exports.
 - packages/core/vitest.config.ts — core Node tests with shared source resolution.
-- `apps/cli/{package.json,tsconfig.json,src/index.ts}` — CLI skeleton.
+- `apps/cli/{package.json,tsconfig.json,src/index.ts}` — headless CLI.
 - `scripts/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
 - `tests/network-{guard,setup}.ts`, `tests/tooling/network-guard.test.ts` — unit-test transport interception and guard regression.
 - `e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.

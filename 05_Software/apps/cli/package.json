@@ -6,5 +6,8 @@
   "dependencies": {
     "@vera/shared": "0.0.0",
     "@vera/core": "0.0.0"
+  },
+  "bin": {
+    "vera": "dist/index.js"
   }
 }

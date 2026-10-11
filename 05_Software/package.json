@@ -26,7 +26,9 @@
     "package": "node scripts/package.mjs",
     "package:test": "node scripts/package.mjs --test",
     "prepare:model": "node scripts/prepare-model.mjs",
-    "smoke:live": "node scripts/smoke-live.mjs"
+    "smoke:live": "node scripts/smoke-live.mjs",
+    "build:cli": "node scripts/build-cli.mjs",
+    "vera": "node scripts/build-cli.mjs && node apps/cli/dist/index.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
