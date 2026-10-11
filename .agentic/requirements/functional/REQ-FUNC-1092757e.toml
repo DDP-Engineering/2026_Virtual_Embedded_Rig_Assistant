@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-1092757e"
+title = "Wait for exact tool approval"
+status = "active"
+requirement = "When a write requires a decision, the runtime shall wait on an injected approval gate bound to that call and validated arguments, execute once after approval, and return a denied error result on denial."
+verification = "Separate approve/deny replay turns; before decision zero writes; single-consumption gate rejects duplicate or mismatched identity/hash decisions."
+affected_paths = ["05_Software/packages/core/src/agent/pi-spike.test.ts", "05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/tool.ts", "05_Software/packages/core/src/agent/types.ts"]
+linked_tests = ["05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts"]
+spec = "specs/REQ-NFR-wp10-context.md"
+priority = "normal"
+rationale = "Architecture 03 runtime contract and M1 spike acceptance."
+created = 2026-10-11
+updated = 2026-10-11

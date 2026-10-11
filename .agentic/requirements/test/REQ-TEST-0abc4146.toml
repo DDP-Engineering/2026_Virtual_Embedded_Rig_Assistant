@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-TEST-0abc4146"
+title = "Measure runtime candidates"
+status = "active"
+requirement = "The runtime spike shall exercise identical seven replay behavior groups with the reference loop and exact-pinned pi-agent-core, recording measured gaps, event mapping and a new runtime selection ADR."
+verification = "Automated common matrix executes both engines; inspection correlates observed results, actual upstream hook APIs, adapter effort, SessionEvent mapping and ADR/index."
+affected_paths = ["05_Software/package-lock.json", "05_Software/packages/core/package.json", "05_Software/packages/core/src/agent/pi-spike.test-support.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts", "05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime-matrix.test-support.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/llm/replay.ts"]
+linked_tests = ["05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts"]
+spec = "specs/REQ-NFR-wp10-context.md"
+priority = "normal"
+rationale = "Architecture 03 runtime contract and M1 spike acceptance."
+created = 2026-10-11
+updated = 2026-10-11

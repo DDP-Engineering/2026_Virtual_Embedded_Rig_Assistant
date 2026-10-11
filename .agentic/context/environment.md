@@ -43,6 +43,8 @@ folders through the native picker seam, edits full pinned text, reopens recents 
 missing recents and preserves live foreign locks in read-only mode. The browser mock seeds
 empty/missing/read-only/warning states. Windows and Ubuntu E2E run serially because Vite owns5173.
 
+Agent runtime tests use the common replay matrix and deterministic injected counters; pi-agent-core is measured through a stream-function adapter with the same context policy. No live model is needed for runtime acceptance.
+
 Node Vitest projects install the non-loopback fetch/socket guard before application modules. `npm run smoke:live -- --provider <openai|custom:slug> [--data <userData>]` builds release and runs a manual real-provider test through the ordinary main credential host. It prints scrubbed four-step results and exits nonzero for incomplete required steps. See [LLM gateway](../knowledge/llm-gateway.md) for configuration and replay fixtures.
 
 ## Platform details

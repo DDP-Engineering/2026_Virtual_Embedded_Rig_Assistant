@@ -24,7 +24,7 @@ which owns verified assets, native staging and artifact measurements.
 ## Invariants
 
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
-  Core pins @earendil-works/pi-ai1.1.0 for the gateway, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules.
+  Core pins @earendil-works/pi-ai1.1.0 for the gateway, zod4.6.5/typebox1.3.27 for tool-schema projection and pi-agent-core1.1.0 as an experiment-only dev dependency, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules.
 - Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.
   Core/desktop Vitest resolve their library dependencies from source; TypeScript supplies generated output for library consumers.
 - The tooling TypeScript project references shared before compiling e2e contract consumers.

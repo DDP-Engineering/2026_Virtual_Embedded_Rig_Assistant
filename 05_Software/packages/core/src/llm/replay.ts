@@ -181,6 +181,15 @@ export class ReplayGateway implements LlmGateway {
         stopReason: selected.toolCalls?.length ? "toolUse" : "stop",
         timestamp: this.options.now(),
       };
+      for (const [index, block] of message.content.entries()) {
+        if (block.type !== "toolCall") continue;
+        const args = JSON.stringify(block.arguments);
+        for (let at = 0; at < args.length; at += 40) {
+          request.signal.throwIfAborted();
+          yield { type: "tool", index, delta: args.slice(at, at + 40) };
+          await this.options.delay?.(request.signal);
+        }
+      }
       yield { type: "done", message };
     } catch (error) {
       yield {

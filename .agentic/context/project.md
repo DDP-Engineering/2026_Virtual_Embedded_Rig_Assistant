@@ -6,7 +6,7 @@ VERA is the Virtual Embedded Rig Assistant desktop product for embedded engineer
 
 ## Product responsibilities
 
-The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React provides Welcome/App Settings and responsive panels through the API and TanStack Query, with persisted theme/text scale, en/ro/de i18next presentation and browser mock mode. Core owns schema4 settings through host ports and the workbench folder lifecycle, YAML/config/pinned saves, locks, recents, ignored-path completion and per-workbench checksummed SQLite migrations/backups with session/message/event storage; main provides portable paths, atomic filesystem, safeStorage credentials and redacting logs. Providers configuration has strict list/save/remove IPC, masked localized forms, per-save weak-storage consent and metadata-only renderer queries. Core also supplies the exact-pinned pi-ai gateway, current model budgets/catalogs, structured scrubbed failures and four-step provider tests. Instrumented builds compose deterministic replay; production omits that seam. CLI provides its source skeleton.
+The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React provides Welcome/App Settings and responsive panels through the API and TanStack Query, with persisted theme/text scale, en/ro/de i18next presentation and browser mock mode. Core owns schema4 settings through host ports and the workbench folder lifecycle, YAML/config/pinned saves, locks, recents, ignored-path completion and per-workbench checksummed SQLite migrations/backups with session/message/event storage; main provides portable paths, atomic filesystem, safeStorage credentials and redacting logs. Providers configuration has strict list/save/remove IPC, masked localized forms, per-save weak-storage consent and metadata-only renderer queries. Core also supplies the exact-pinned pi-ai gateway, current model budgets/catalogs, structured scrubbed failures and four-step provider tests. Instrumented builds compose deterministic replay; production omits that seam. Core ReferenceRuntime supplies M1 turn streaming, ordered/concurrent tools, approval-host waits, abort, verbatim transcript snapshots and mandatory transient context budgets; ADR0014 records the measured runtime choice. CLI provides its source skeleton.
 
 ## Supported operation
 
@@ -39,6 +39,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 model delivery, compiled instrumented probes and external artifact-bound host evidence. WP-05
 feasibility is observed on offline Linux and current connected Windows. Clean/offline Windows
 and VC++ independence are required before final release WP-30/WP-33.
+
+[Agent runtime](../knowledge/agent-runtime.md) routes turn behavior, context policy, tool-schema conversion and event mapping.
 
 ## Authoritative references
 

@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-REL-20be9104"
+title = "Recover from context limit"
+status = "active"
+requirement = "If preserved system, current user, schemas and minimum valid work exceed the input budget, the runtime shall emit CONTEXT_LIMIT/context.budget_exceeded and turn.done limit without dispatching that request, allowing subsequent turns."
+verification = "Oversized mandatory context records zero gateway calls, limit events and complete history; larger model window then a smaller next instruction succeeds; provider context error does not retry unboundedly."
+affected_paths = ["05_Software/packages/core/src/agent/context.test.ts", "05_Software/packages/core/src/agent/context.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts", "05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts"]
+linked_tests = ["05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/context.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts"]
+spec = "specs/REQ-NFR-wp10-context.md"
+priority = "normal"
+rationale = "Architecture 03 runtime contract and M1 spike acceptance."
+created = 2026-10-11
+updated = 2026-10-11

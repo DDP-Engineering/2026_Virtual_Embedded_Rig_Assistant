@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-27cc4ac0"
+title = "Stream runtime messages"
+status = "active"
+requirement = "When a turn receives streamed text and tool calls, the runtime shall emit ordered incremental and complete message/tool events while retaining complete pi-ai messages."
+verification = "Replay multi-chunk text plus calls; observe deltas, final text, call identity and complete transcript; malformed or empty terminal stream ends error."
+affected_paths = ["05_Software/package-lock.json", "05_Software/packages/core/package.json", "05_Software/packages/core/src/agent/pi-spike.test.ts", "05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/tool.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/llm/replay.ts"]
+linked_tests = ["05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts"]
+spec = "specs/REQ-NFR-wp10-context.md"
+priority = "normal"
+rationale = "Architecture 03 runtime contract and M1 spike acceptance."
+created = 2026-10-11
+updated = 2026-10-11

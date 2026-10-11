@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-DATA-ec55014b"
+title = "Resume verbatim transcripts"
+status = "active"
+requirement = "When started with saved pi-ai messages, the runtime shall continue the conversation from complete verbatim history, retaining stored messages unchanged while repairing interrupted pairs only in the transient provider view."
+verification = "JSON round-trip messages into new instance, next request contains history and prior output, original saved bytes unchanged; interrupted call receives transient result."
+affected_paths = ["05_Software/packages/core/src/agent/pi-spike.test.ts", "05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/tool.ts", "05_Software/packages/core/src/agent/types.ts"]
+linked_tests = ["05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts"]
+spec = "specs/REQ-NFR-wp10-context.md"
+priority = "normal"
+rationale = "Architecture 03 runtime contract and M1 spike acceptance."
+created = 2026-10-11
+updated = 2026-10-11

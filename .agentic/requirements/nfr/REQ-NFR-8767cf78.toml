@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-NFR-8767cf78"
+title = "Count whole model request"
+status = "active"
+requirement = "Before every model call, the context policy shall resolve current context/output limits and count system, schemas, framing and full message content against context minus output reserve minus max(1024,ceil(context*0.05))."
+verification = "Injected deterministic counter verifies each component, output reserve/safety; smaller changed limits and model selection before next call; usage retains provider actual counts and labels estimates."
+affected_paths = ["05_Software/packages/core/src/agent/context.test.ts", "05_Software/packages/core/src/agent/context.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts", "05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts"]
+linked_tests = ["05_Software/packages/core/src/agent/runtime-edge.test.ts", "05_Software/packages/core/src/agent/context.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/agent/pi-spike.test.ts"]
+spec = "specs/REQ-NFR-wp10-context.md"
+priority = "normal"
+rationale = "Architecture 03 runtime contract and M1 spike acceptance."
+created = 2026-10-11
+updated = 2026-10-11
