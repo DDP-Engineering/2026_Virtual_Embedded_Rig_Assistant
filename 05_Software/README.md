@@ -49,7 +49,7 @@ Welcome and Settings use memory navigation; Ctrl+, opens Settings without changi
 Appearance selects Light/Dark/System and five text scales from a 14px base; controls and code use rem.
 Main follows the saved preference with nativeTheme.themeSource. Panels resize by pointer or arrow/Home/End keys and collapse; right-panel content overlays below1280px.
 Renderer geometry lives in the separately versioned localStorage key vera.ui.layout; future versions and read-only settings preserve stored bytes.
-The strict application settings schema stays authoritative. Providers, Updates, Data & privacy and About are placeholder sections (About also shows metadata).
+The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Updates, Data & privacy and About are placeholder sections (About also shows metadata).
 
 Production loads bundled assets through the confined `vera://app` protocol, with the same restrictive
 CSP in both the HTML meta and response headers. Development uses `http://127.0.0.1:5173` and permits
@@ -94,7 +94,7 @@ add their own schemas and services. `portable` reports a `vera.portable` marker 
 the regular marker selects adjacent data before readiness. Installed mode uses Electron userData,
 with --user-data-dir available for isolated tests. Selected portable/override directories are created
 before Electron setPath and readiness; existing contents persist and creation errors propagate.
-Settings live in settings.json, schema version 1.
+Settings live in settings.json, schema version 3.
 Version 0 migrates after an exclusive bak-n; future schemas expose read-only defaults.
 Accepted partial updates serialize and emit settings.changed after successful atomic saves.
 Host logs retain seven UTC daily JSON-line files under userData/logs and redact registered secrets.
@@ -107,8 +107,10 @@ when returning to Electron development. The mock fixture version is taken from t
 
 ## Workbenches
 
-Welcome creates a workbench in an existing chosen folder without workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema2 settings; versions0/1 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the WORKBENCH.md editor; context above16KB warns and saves full content.
+Welcome creates a workbench in an existing chosen folder without workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema3 settings; versions0/1/2 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the WORKBENCH.md editor; context above16KB warns and saves full content.
 
 Workbench format1 retains unknown keys and warns. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
 
 For native folder-dialog acceptance, compile instrumented code by setting VERA_TEST=1 before npm run test:e2e. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
+
+Settings → Providers configures OpenAI API keys/models and multiple OpenAI-compatible `/v1` endpoints. Keys are masked and cleared after saving; only bounded hints return from main. Custom defaults are32768 context tokens and4096 output tokens, with a positive input budget after the architectural safety margin. Credential JSON uses safeStorage encryption; unavailable or Linux basic_text storage asks each time whether to keep the key only for this run or persist without secure encryption. Future settings/credential formats preserve bytes. See [.agentic/knowledge/providers.md](../.agentic/knowledge/providers.md) for the API and recovery contract.

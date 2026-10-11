@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  providerListSchema,
+  providerRemoveSchema,
+  providerSaveResultSchema,
+  providerSaveSchema,
+} from "./providers.js";
 import { recentWorkbenchStateSchema, settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
 import {
   configSnapshotSchema,
@@ -43,6 +49,9 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "providers.list": defineChannel("providers.list", z.strictObject({}), providerListSchema),
+  "providers.save": defineChannel("providers.save", providerSaveSchema, providerSaveResultSchema),
+  "providers.remove": defineChannel("providers.remove", providerRemoveSchema, z.strictObject({})),
   "app.info": defineChannel("app.info", z.strictObject({}), appInfoSchema),
   "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
   "app.settings.update": defineChannel("app.settings.update", settingsPatchSchema, settingsSnapshotSchema),

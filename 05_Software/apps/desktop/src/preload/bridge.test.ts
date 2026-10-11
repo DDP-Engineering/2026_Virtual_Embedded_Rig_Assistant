@@ -30,6 +30,9 @@ function fixture() {
 }
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
+    | "providers.list"
+    | "providers.save"
+    | "providers.remove"
     | "app.info"
     | "app.settings.get"
     | "app.settings.update"

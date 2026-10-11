@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-fb4b9424"
+title = "Localized provider settings editor"
+status = "active"
+requirement = "When Settings Providers opens, the UI shall offer masked OpenAI and custom credential editors, bounded configured hints, add/edit/remove configuration, explicit weak-storage choices and localized en/ro/de feedback through accessible responsive controls, clearing submitted secrets after save."
+verification = "Native E2E saves fictitious keys, audits DOM/input/cache and every IPC response, restarts secure/memory stores, edits/removes customs; browser language/minimum-size/keyboard acceptance preserves WP04 and read-only behavior."
+affected_paths = ["05_Software/apps/desktop/src/renderer/components/providers.tsx", "05_Software/apps/desktop/src/renderer/components/settings.tsx", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/styles.css", "05_Software/e2e/mock.spec.ts", "05_Software/e2e/providers.spec.ts", "05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/e2e/providers.spec.ts", "05_Software/e2e/mock.spec.ts"]
+spec = "specs/REQ-SEC-fe4d5c4c.md"
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

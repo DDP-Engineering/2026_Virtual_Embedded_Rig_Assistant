@@ -92,7 +92,7 @@ flowchart LR
   VeraApi --> bridge[shared IPC and preload]
   bridge --> main[main handlers]
   main --> service[core WorkbenchService]
-  service --> settings[SettingsService schema2]
+  service --> settings[SettingsService schema3]
   service --> YAML[workbench.yaml and WORKBENCH.md]
   service --> lock[.vera lock and process-owned IPC guard]
   service --> storage[core storage compatibility and SQLite handle]

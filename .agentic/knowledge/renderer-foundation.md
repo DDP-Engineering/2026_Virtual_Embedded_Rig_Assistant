@@ -22,7 +22,7 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
 - Shell supplies resizable/collapsible sidebar and right panel with five placeholder tabs.
   Below1280px the right panel overlays the centre.
-- Settings edits Light/Dark/System, five scales and System/en/ro/de; other sections describe placeholders.
+- Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates/Data retain placeholders. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - usePreferences loads {settings,readOnly}, applies mutation responses, invalidates on settings.changed
   and cleans up its app subscription. Failure displays localized structured errors and retry.
 - System theme follows prefers-color-scheme; root data-theme is light/dark. Main nativeTheme.themeSource
@@ -44,7 +44,7 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
 - Keyboard controls have visible focus rings and semantic labels; colors meet AA text contrast.
   Reduced-motion styles disable animation/transition. Minimum viewport uses wrapping and vertical scroll.
-- Session/provider/update placeholder seams expose explanatory content for their owning components.
+- Session/update placeholder seams expose explanatory content for their owning components.
 
 ## Change map
 

@@ -7,11 +7,26 @@ beforeAll(async () => {
   expect(Object.keys(files), "in-memory mock boundary exists").toContain("./mockApi.ts");
   ({ createMockApi } = await import("./mockApi.js"));
 });
+it("mock provider metadata hides a full credential equal to the formatted hint", async () => {
+  const { api } = createMockApi();
+  const apiKey = "abc…defg";
+  await api.invoke("providers.save", { provider: "openai", apiKey });
+  await api.invoke("providers.save", {
+    provider: "custom",
+    apiKey,
+    config: { name: "Fixture", baseUrl: "http://localhost:11434/v1", model: "fake" },
+  });
+  const providers = await api.invoke("providers.list", {});
+  expect(providers.openai).toMatchObject({ configured: true, hint: null });
+  expect(providers.custom[0]).toMatchObject({ configured: true, hint: null });
+  expect(JSON.stringify(providers)).not.toContain(apiKey);
+  expect(JSON.stringify(await api.getSettings())).not.toContain(apiKey);
+});
 it("mock settings use the same validated shape, immutable id and post-update events", async () => {
   const { api } = createMockApi();
   const get = () => api.invoke("app.settings.get", {});
   const initial = await get();
-  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 2, theme: "system" } });
+  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 3, theme: "system" } });
   const on = vi.fn();
   const stop = api.subscribe("app", on);
   await api.invoke("app.settings.update", { theme: "dark" });

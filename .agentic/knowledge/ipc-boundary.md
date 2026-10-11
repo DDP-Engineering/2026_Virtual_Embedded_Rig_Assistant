@@ -19,6 +19,7 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 ## Public interface
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
+- providers.list/save/remove use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
 - app.info accepts a strict empty object and returns name/version/platform/arch/portable/locale.
 - vera:invoke returns a validated success/error envelope; window.vera.invoke resolves the value
   or rejects a plain VeraError. Plain error objects retain fields across contextBridge.
@@ -27,7 +28,7 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 - app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/
   pinned.update/files have strict requests/responses; configuration objects retain extensions.
   WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
-- emitAppEvent sends validated app envelopes on vera:event to the current live window.
+- emitAppEvent sends validated app/workbench envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
 - createDeltaCoalescer takes key/merge/emit functions, batches for 50ms, flushes explicitly before
   terminal events and cancels pending values on dispose.
 - VeraApi adds getAppInfo/getSettings/updateSettings to VeraBridge; VITE_API=mock selects mockApi during compilation.

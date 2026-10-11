@@ -1,12 +1,13 @@
 import {
   defaultSettings,
   mergeSettings,
-  type SettingsPatch,
+  type SettingsServicePatch,
   type SettingsSnapshot,
-  settingsPatchSchema,
   settingsSchema,
+  settingsServicePatchSchema,
   settingsV0Schema,
   settingsV1Schema,
+  settingsV2Schema,
   veraError,
 } from "@vera/shared";
 import type { FileAccess, PathProvider } from "../ports.js";
@@ -49,7 +50,7 @@ export class SettingsService {
     const version = (stored as { schemaVersion?: unknown }).schemaVersion;
     if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
       throw veraError("INVALID");
-    if (version > 2) {
+    if (version > 3) {
       this.state = { settings: defaults, readOnly: true };
       return;
     }
@@ -61,7 +62,8 @@ export class SettingsService {
       data = {
         ...defaults,
         ...patch,
-        schemaVersion: 2,
+        schemaVersion: 3,
+        providers: defaults.providers,
         installationId: installationId ?? defaults.installationId,
         updates: { ...defaults.updates, ...patch.updates },
         limits: { ...defaults.limits, ...patch.limits },
@@ -70,11 +72,16 @@ export class SettingsService {
     if (version === 1) {
       const legacy = settingsV1Schema.safeParse(stored);
       if (!legacy.success) throw veraError("INVALID");
-      data = { ...legacy.data, schemaVersion: 2 };
+      data = { ...legacy.data, schemaVersion: 3, providers: defaults.providers };
+    }
+    if (version === 2) {
+      const legacy = settingsV2Schema.safeParse(stored);
+      if (!legacy.success) throw veraError("INVALID");
+      data = { ...legacy.data, schemaVersion: 3, providers: defaults.providers };
     }
     const parsed = settingsSchema.safeParse(data);
     if (!parsed.success) throw veraError("INVALID");
-    if (version < 2) {
+    if (version < 3) {
       let backup = version;
       while (!(await this.host.files.backup(`${this.host.paths.settings}.bak-${backup}`, raw))) backup++;
       await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(parsed.data, null, 2));
@@ -87,9 +94,9 @@ export class SettingsService {
     return structuredClone(this.state);
   }
 
-  async update(patch: SettingsPatch): Promise<SettingsSnapshot> {
+  async update(patch: SettingsServicePatch): Promise<SettingsSnapshot> {
     if (this.closed) throw veraError("DENIED");
-    const parsed = settingsPatchSchema.safeParse(patch);
+    const parsed = settingsServicePatchSchema.safeParse(patch);
     if (!parsed.success) throw veraError("INVALID");
     const run = this.queue.then(async () => {
       await this.load();

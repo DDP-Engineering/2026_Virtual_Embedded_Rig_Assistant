@@ -186,6 +186,38 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       }
     }
     await page.locator("#language").selectOption("en");
+    // Provider editors participate in the localized minimum-size and keyboard contracts.
+    const providerSection = page.locator('[data-settings-section="providers"]');
+    const fakeKey = "fak-browser-only-private-middle-8Zx4";
+    await providerSection.getByLabel("OpenAI API key", { exact: true }).fill(fakeKey);
+    await providerSection
+      .locator('[data-provider="openai"]')
+      .getByRole("button", { name: "Save", exact: true })
+      .click();
+    await expect(providerSection.getByLabel("OpenAI API key", { exact: true })).toHaveValue("");
+    await expect(providerSection.locator("[data-provider-hint]")).toHaveText("fak…8Zx4");
+    expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
+    await providerSection.getByRole("button", { name: "Add endpoint", exact: true }).click();
+    await providerSection.getByLabel("Endpoint name", { exact: true }).fill("Browser fixture");
+    await providerSection.getByLabel("Model", { exact: true }).fill("fake-browser-model");
+    const localizedNames = { en: "Endpoint name", ro: "Nume endpoint", de: "Name des Endpunkts" };
+    for (const language of ["en", "ro", "de"] as const) {
+      await page.locator("#language").selectOption(language);
+      await expect(providerSection.getByLabel(localizedNames[language], { exact: true })).toHaveValue(
+        "Browser fixture",
+      );
+      for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
+        await page.locator(`[data-scale="${scale}"]`).click();
+        expect(
+          await page.evaluate(() =>
+            [...document.querySelectorAll("section,fieldset,input,button")]
+              .filter((e) => e.scrollWidth > e.clientWidth + 1)
+              .map((e) => e.outerHTML.slice(0, 100)),
+          ),
+        ).toEqual([]);
+      }
+    }
+    await page.locator("#language").selectOption("en");
     // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus.
     const controls = await page
       .locator(
@@ -219,6 +251,18 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       visited.add(focus.id);
     }
     expect(visited.size).toBe(controls);
+    await providerSection
+      .locator('[data-provider-editor="custom"]')
+      .getByRole("button", { name: "Save", exact: true })
+      .click();
+    await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toContainText(
+      "fake-browser-model",
+    );
+    await providerSection
+      .locator('[data-provider="custom:browser-fixture"]')
+      .getByRole("button", { name: "Remove", exact: true })
+      .click();
+    await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath("keyboard-focus.png") });
     // Every section is reachable, with future capabilities represented explicitly as placeholders.
     for (const section of ["providers", "updates", "data", "about", "language", "appearance"]) {
@@ -347,7 +391,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await context.route("**/api/index.*", (route) =>
       route.fulfill({
         contentType: "application/javascript",
-        body: `const snapshot = ${JSON.stringify(failedSettings)}; export const api = { getAppInfo: async () => ({ name:"VERA",version:"0.0.0",platform:"linux",arch:"x64",locale:"en",portable:false }), getSettings: async () => snapshot, subscribe: () => () => {}, updateSettings: async () => { throw {code:"NOT_FOUND",messageKey:"errors.NOT_FOUND",params:{operation:"probe"}}; } };`,
+        body: `import { createMockApi } from "/mocks/mockApi.ts"; const base=createMockApi().api; const snapshot = ${JSON.stringify(failedSettings)}; export const api = { ...base, getAppInfo: async () => ({ name:"VERA",version:"0.0.0",platform:"linux",arch:"x64",locale:"en",portable:false }), getSettings: async () => snapshot, subscribe: () => () => {}, updateSettings: async () => { throw {code:"NOT_FOUND",messageKey:"errors.NOT_FOUND",params:{operation:"probe"}}; } };`,
       }),
     );
     await page.reload();

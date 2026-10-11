@@ -34,6 +34,7 @@ export function createInvokeRouter(options: {
   target: () => RendererTarget | undefined;
   handlers: ChannelHandlers;
   log: (failure: IpcFailure) => void;
+  sanitize?: <T>(value: T) => T;
 }) {
   function authorized(event: InvokeSender): boolean {
     // Native frame accessors can throw once a renderer/frame has been detached.
@@ -78,7 +79,18 @@ export function createInvokeRouter(options: {
       return { ok: true, value: response.data };
     } catch (error: unknown) {
       const known = veraErrorSchema.safeParse(error);
-      return known.success ? { ok: false, error: known.data } : internal(name, "handler");
+      if (!known.success) return internal(name, "handler");
+      const messageKey = options.sanitize?.(known.data.messageKey) ?? known.data.messageKey;
+      return {
+        ok: false,
+        error: {
+          ...known.data,
+          messageKey: messageKey === known.data.messageKey ? messageKey : `errors.${known.data.code}`,
+          ...(known.data.params
+            ? { params: options.sanitize?.(known.data.params) ?? known.data.params }
+            : {}),
+        },
+      };
     }
   };
 }

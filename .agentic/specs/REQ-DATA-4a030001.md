@@ -1,9 +1,9 @@
 # Application data and settings contract
 
 ## Data and API
-Schema version 2 holds installationId UUID, language system/en/ro/de, theme system/light/dark,
-textScale 0.875/1/1.125/1.25/1.5, defaultModel null, providers {}, updates {mode:"notify",channel:"latest"},
-recentWorkbenches up to ten {folder,id,name,lastOpened} entries, limits {maxToolCallsPerTurn:50}. The provider/model fields accept their current empty values. Recent folder existence is derived at read time; workbench lifecycle owns order and removal.
+Schema version 3 holds installationId UUID, language system/en/ro/de, theme system/light/dark,
+textScale 0.875/1/1.125/1.25/1.5, defaultModel null, providers {openai:{model?},custom:[non-secret endpoint configurations]}, updates {mode:"notify",channel:"latest"},
+recentWorkbenches up to ten {folder,id,name,lastOpened} entries, limits {maxToolCallsPerTurn:50}. Provider writes use strict providers.save/remove channels and the main credential store; see [provider contract](REQ-SEC-fe4d5c4c.md). The general settings patch excludes providers. defaultModel accepts null. Recent folder existence is derived at read time; workbench lifecycle owns order and removal.
 The defaults are system language/theme, scale 1. Mutable patches omit installationId/schemaVersion.
 limits.maxToolCallsPerTurn accepts positive safe integers. Strict patches reject unknown/immutable fields, including secret-bearing provider keys. Persisted top-level/updates/limits/recent extensions are retained. Nested patches merge, other values replace.
 app.settings.get({}) and app.settings.update(patch) return {settings,readOnly}.
@@ -14,7 +14,7 @@ settings.changed after persistence. Read-only updates reject DENIED; malformed p
 PathProvider provides userData/settings/logs; Clock supplies Date and asynchronous retry delay.
 FileAccess supplies optional UTF-8 read (absence only), atomic write and exclusive backup.
 Version 0 is the same known preference shape with schemaVersion:0 and optional missing fields/id;
-missing fields receive defaults and a missing UUID is generated. Version 1 has complete preferences and empty recents. Both migrate to version 2 with original bytes backed up; valid existing UUID and extension values are preserved.
+missing fields receive defaults and a missing UUID is generated. Version 1 has complete preferences and empty recents. Versions0/1 and complete version2 settings migrate to version 3 with original bytes backed up; valid existing UUID and extension values are preserved.
 Backup suffix starts at the source version and increments to avoid overwriting previous backups.
 Malformed/unsupported old data rejects INVALID, preserving its bytes; host startup safely logs
 the category and exits. Higher integer schema versions bypass parsing and expose read-only defaults.
@@ -39,11 +39,11 @@ newest seven matching vera-YYYY-MM-DD.log files. Other files remain. flush expos
 and the queue recovers for later entries; host error logging cannot crash IPC.
 Registered non-empty secrets are scrubbed from log content (raw and JSON-escaped forms),
 longest first, covering nested keys/values and repeated occurrences. JSON syntax stays intact. Secret registration returns
-an idempotent disposer; future credential integration owns registration lifecycle.
+an idempotent disposer; the main credential store retains registration through process exit.
 
 ## Acceptance
 Unit tests cover defaults/UUIDs, v0 fixture/backup collision, interrupted rename/retry exhaustion,
 future schema/read-only, strict patches, concurrent updates and shutdown, portable selection,
 log rotation/levels and secret redaction. Native Electron update-to-dark survives restart on both
 Windows and Ubuntu; mock settings preserve the same shape and event semantics.
-UI controls, credential storage and provider/update execution belong to later work packages.
+UI and credential/provider configuration are routed through their current component pages. Model requests and update execution have separate implementation seams.

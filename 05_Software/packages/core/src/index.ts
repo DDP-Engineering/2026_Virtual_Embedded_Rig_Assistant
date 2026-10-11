@@ -1,3 +1,4 @@
+export * from "./llm/scrub.js";
 export * from "./ports.js";
 export * from "./settings/service.js";
 export * from "./storage/db.js";

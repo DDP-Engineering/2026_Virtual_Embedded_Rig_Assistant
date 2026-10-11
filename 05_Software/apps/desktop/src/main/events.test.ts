@@ -1,4 +1,6 @@
 import { existsSync } from "node:fs";
+import { scrub } from "@vera/core";
+import { eventEnvelopeSchema, workbenchSchema } from "@vera/shared";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
 
 let createEventEmitter: typeof import("./events.js").createEventEmitter;
@@ -24,6 +26,43 @@ it("emits validated envelopes only to a live target", () => {
   expect(emit(envelope)).toBe(false);
   expect(createEventEmitter(() => undefined)(envelope)).toBe(false);
   expect(() => emit({ ...envelope, seq: -1 })).toThrow();
+});
+it("scrubs event user text while short secrets preserve protocol fields and discriminants", () => {
+  const privateKey = "fake-event-private-WP08";
+  const config = workbenchSchema.parse({
+    format: 1,
+    id: "wb_01J00000000000000000000000",
+    name: `Board ${privateKey}`,
+    description: privateKey,
+    docs: { include: [`docs/${privateKey}/**`] },
+    agent: { permission_mode: "ask", model: "provider/model" },
+    [privateKey]: { detail: privateKey },
+  });
+  for (const short of ["t", "type", "config", "warnings", "name", "/", "ask", "UNKNOWN_KEY"]) {
+    const send = vi.fn();
+    const emit = createEventEmitter(
+      () => ({ isDestroyed: () => false, send }),
+      (text) => scrub(text, [short, privateKey]),
+    );
+    expect(emit({ topic: "app", id: "app", event: { type: "settings.changed" } })).toBe(true);
+    for (const event of [
+      {
+        type: "config.changed" as const,
+        config,
+        warnings: [{ code: "UNKNOWN_KEY" as const, path: privateKey }],
+      },
+      {
+        type: "opened" as const,
+        workbench: { config, folder: `/data/${privateKey}`, readOnly: false, warnings: [] },
+      },
+    ])
+      expect(emit({ topic: "workbench", id: config.id, event })).toBe(true);
+    for (const [, envelope] of send.mock.calls) {
+      expect(eventEnvelopeSchema.safeParse(envelope).success).toBe(true);
+      expect(JSON.stringify(envelope)).not.toContain(privateKey);
+    }
+    expect(send.mock.calls[0]?.[1]).toEqual({ topic: "app", id: "app", event: { type: "settings.changed" } });
+  }
 });
 it("merges keyed deltas at 50ms with first-key order and isolates streams", () => {
   vi.useFakeTimers();

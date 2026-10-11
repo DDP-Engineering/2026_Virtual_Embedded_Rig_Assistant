@@ -11,6 +11,7 @@ import {
   isChannel,
   mergeSettings,
   mergeWorkbench,
+  providerSlug,
   type Request,
   type Response,
   settingsPatchSchema,
@@ -35,6 +36,8 @@ export function createMockApi(
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
   let sequence = 0;
+  // Browser fixtures keep metadata only; production secrets are handled by desktop main.
+  const providerHints = new Map<string, string | null>();
   if (scenario !== "empty") {
     const config = workbenchSchema.parse({
       format: 1,
@@ -99,6 +102,80 @@ export function createMockApi(
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
     switch (channel) {
+      case "providers.list": {
+        const meta = (id: string, keyless = false) => ({
+          configured: keyless || providerHints.has(id),
+          hint: providerHints.get(id) ?? null,
+          storage: providerHints.has(id) ? "memory" : null,
+        });
+        value = {
+          openai: { id: "openai", ...settings.providers.openai, ...meta("openai") },
+          custom: settings.providers.custom.map((c) => ({
+            ...c,
+            id: `custom:${c.slug}`,
+            ...meta(`custom:${c.slug}`, true),
+          })),
+          secureStorage: true,
+          readOnly: false,
+        };
+        break;
+      }
+      case "providers.save": {
+        const request = channels["providers.save"].request.parse(input.data);
+        let id = "openai";
+        const providers = structuredClone(settings.providers);
+        if (request.provider === "openai") {
+          if (request.model === "") delete providers.openai.model;
+          else if (request.model !== undefined)
+            providers.openai = { ...providers.openai, model: request.model };
+        } else {
+          const found = request.id
+            ? providers.custom.findIndex((c) => `custom:${c.slug}` === request.id)
+            : -1;
+          if (request.id && found < 0) throw veraError("NOT_FOUND");
+          const slug = found >= 0 ? providers.custom[found]?.slug : providerSlug(request.config.name);
+          if (!slug) throw veraError("INVALID");
+          if (
+            providers.custom.some(
+              (c, i) =>
+                i !== found &&
+                (c.name.toLowerCase() === request.config.name.toLowerCase() || c.slug === slug),
+            )
+          )
+            throw veraError("CONFLICT");
+          id = `custom:${slug}`;
+          const config = { ...(found >= 0 ? providers.custom[found] : {}), ...request.config, slug };
+          if (found >= 0) providers.custom[found] = config;
+          else providers.custom.push(config);
+        }
+        settings = mergeSettings(settings, { providers });
+        if (request.apiKey !== undefined) {
+          if (request.apiKey) {
+            const characters = [...request.apiKey];
+            const hint =
+              characters.length <= 7
+                ? null
+                : `${characters.slice(0, 3).join("")}…${characters.slice(-4).join("")}`;
+            providerHints.set(id, hint === request.apiKey ? null : hint);
+          } else providerHints.delete(id);
+        }
+        emitAppEvent({ type: "settings.changed" });
+        value = { status: "saved" };
+        break;
+      }
+      case "providers.remove": {
+        const { id } = channels["providers.remove"].request.parse(input.data);
+        const providers = structuredClone(settings.providers);
+        if (id !== "openai") {
+          if (!providers.custom.some((c) => `custom:${c.slug}` === id)) throw veraError("NOT_FOUND");
+          providers.custom = providers.custom.filter((c) => `custom:${c.slug}` !== id);
+        }
+        settings = mergeSettings(settings, { providers });
+        providerHints.delete(id);
+        emitAppEvent({ type: "settings.changed" });
+        value = {};
+        break;
+      }
       case "app.info":
         value = info;
         break;

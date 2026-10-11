@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-0b898261"
+title = "Provider metadata and bounded hints"
+status = "active"
+requirement = "When providers are listed, main shall expose configuration and configured/hint metadata only, showing at most the first3 and last4 characters with at least one hidden character and fully masking keys of length7 or shorter."
+verification = "Main tests compare list/settings/save/remove responses to fake credentials and check every short length, separator collisions reconstructing complete current/replaced keys, main-only values, and malicious secret-bearing metadata rejection; native E2E checks all responses and page values."
+affected_paths = ["05_Software/apps/desktop/src/main/provider-settings.ts", "05_Software/packages/shared/src/providers.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/provider-settings.test.ts", "05_Software/e2e/providers.spec.ts"]
+spec = "specs/REQ-SEC-fe4d5c4c.md"
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

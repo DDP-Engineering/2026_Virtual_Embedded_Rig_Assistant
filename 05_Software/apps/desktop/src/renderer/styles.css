@@ -384,3 +384,47 @@ legend {
 .pinned-dialog::backdrop {
   background: rgb(0 0 0 / 50%);
 }
+.provider-card {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  min-width: 0;
+}
+.provider-fields {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.provider-list {
+  padding: 0;
+  list-style: none;
+}
+.provider-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+  border-block-start: 1px solid var(--border);
+}
+.provider-list li > div {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.provider-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.provider-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.provider-checkbox input {
+  width: auto;
+}

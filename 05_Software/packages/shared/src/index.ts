@@ -2,5 +2,6 @@
 
 export * from "./events.js";
 export * from "./ipc.js";
+export * from "./providers.js";
 export * from "./settings.js";
 export * from "./workbench.js";

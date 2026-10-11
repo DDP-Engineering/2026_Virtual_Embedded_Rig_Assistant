@@ -3,14 +3,26 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SettingsService, WorkbenchService } from "@vera/core";
 import { eventEnvelopeSchema } from "@vera/shared";
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme, protocol, screen, session } from "electron";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  nativeTheme,
+  protocol,
+  safeStorage,
+  screen,
+  session,
+} from "electron";
 import { getAppInfo } from "./app-info.js";
+import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createEventEmitter } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
 import { createInvokeRouter } from "./ipc-router.js";
 import { createLogger } from "./logger.js";
+import { ProviderSettings } from "./provider-settings.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 
@@ -27,8 +39,18 @@ protocol.registerSchemesAsPrivileged([
 
 let window: BrowserWindow | undefined;
 let rendererUrl = "vera://app/index.html";
-export const emitAppEvent = createEventEmitter(() => window?.webContents);
+export const emitAppEvent = createEventEmitter(
+  () => window?.webContents,
+  (text) => credentials.scrub(text),
+);
 const logger = createLogger(dataLocations.paths.logs, systemClock);
+const credentials = new CredentialFile({
+  file: join(dataLocations.paths.userData, "credentials.json"),
+  files: createFileAccess(systemClock),
+  crypto: safeStorage,
+  logger,
+  platform: process.platform,
+});
 const settings = new SettingsService({
   files: createFileAccess(systemClock),
   paths: dataLocations.paths,
@@ -56,6 +78,7 @@ const workbench = new WorkbenchService({
     emitAppEvent(eventEnvelopeSchema.parse(event));
   },
 });
+const providers = new ProviderSettings(settings, credentials);
 
 ipcMain.handle(
   "vera:invoke",
@@ -63,9 +86,17 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "providers.list": () => providers.list(),
+      "providers.save": (request) => providers.save(request),
+      "providers.remove": (request) => providers.remove(request),
       "app.info": () => getAppInfo(dataLocations.portable),
-      "app.settings.get": () => settings.get(),
+      "app.settings.get": () => {
+        const snapshot = settings.get();
+        if (credentials.containsSecret(snapshot)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+        return snapshot;
+      },
       "app.settings.update": async (patch) => {
+        if (credentials.containsSecret(patch)) throw { code: "INVALID", messageKey: "errors.INVALID" };
         const result = await settings.update(patch);
         nativeTheme.themeSource = result.settings.theme;
         return result;
@@ -93,6 +124,7 @@ ipcMain.handle(
       "workbench.files": ({ query }) => workbench.files(query),
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),
+    sanitize: (value) => credentials.sanitize(value),
   }),
 );
 
@@ -160,6 +192,8 @@ if (!app.requestSingleInstanceLock()) {
     draining = true;
     void workbench
       .close()
+      .then(() => providers.close())
+      .then(() => credentials.close())
       .then(() => settings.close())
       .catch(() => {
         console.error("VERA shutdown persistence failed");
@@ -197,6 +231,7 @@ if (!app.requestSingleInstanceLock()) {
     .then(async () => {
       if (draining) return;
       await settings.load();
+      await credentials.load();
       nativeTheme.themeSource = settings.get().settings.theme;
       if (draining) return;
       logger.log("info", "app.started", { portable: dataLocations.portable });

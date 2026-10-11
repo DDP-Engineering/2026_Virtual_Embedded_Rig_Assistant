@@ -53,7 +53,7 @@ and workbench service tests for changes, then the configured strict proof and se
 Executable-adjacent vera.portable selects adjacent data before readiness. Installed launches accept
 --user-data-dir for isolation; selected directories are created before Electron setPath. Portable
 regressions use faithful hosts enforcing directory existence, with temporary markers/executables.
-Settings/log tests use injected ports and temporary directories;
+Credential/provider tests use injected deterministic crypto and temporary atomic files/logs; native Providers acceptance observes all IPC responses and cleared password drafts through reload/restart and explicit weak-storage choices. Settings/log tests use injected ports and temporary directories;
 native acceptance checks all UI theme/scale preferences and panel geometry across restarts, external event refresh and newer-schema protection through shutdown. Browser acceptance checks the three-language minimum-size matrix, keyboard focus, AA contrast, overlay, storage protection and localized save errors.
 
 ## Authoritative references

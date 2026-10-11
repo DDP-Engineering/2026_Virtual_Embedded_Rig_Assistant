@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-fe4d5c4c"
+title = "Encrypted credential persistence"
+status = "active"
+requirement = "When a credential changes, the main-process store shall atomically persist its safeStorage-encrypted base64 value in versioned credentials.json through serialized read-modify-write, returning the original credential on read and preserving existing bytes on invalid, future or failed writes."
+verification = "Temporary files and injected deterministic crypto prove ciphertext-only roundtrip, serialized modify/delete, undefined no-op, unchanged callback rejection identity, detached reads, corruption/future refusal and atomic failure recovery."
+affected_paths = ["05_Software/packages/core/src/ports.ts", "05_Software/apps/desktop/src/main/credentials.ts", "05_Software/apps/desktop/src/main/credentials.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/credentials.test.ts"]
+spec = "specs/REQ-SEC-fe4d5c4c.md"
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

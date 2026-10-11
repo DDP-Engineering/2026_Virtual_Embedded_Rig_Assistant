@@ -1,6 +1,32 @@
 /** Host-owned data locations; core does not resolve Electron paths. */
 import type { EventEnvelope, SettingsPatch, SettingsSnapshot } from "@vera/shared";
 
+/** Structural pi-ai 1.1.0 auth/types contract; no Electron or model runtime dependency. */
+export type Credential =
+  | { type: "api_key"; key?: string; env?: Record<string, string> }
+  | { type: "oauth"; access: string; refresh: string; expires: number; [key: string]: unknown };
+export interface CredentialInfo {
+  providerId: string;
+  type: Credential["type"];
+}
+export interface AuthOperationOptions {
+  signal?: AbortSignal;
+}
+/** Host extension used only for an explicit weak-storage choice. */
+export interface CredentialWriteOptions extends AuthOperationOptions {
+  storageConsent?: boolean;
+}
+export interface CredentialStore {
+  read(providerId: string, options?: AuthOperationOptions): Promise<Credential | undefined>;
+  list(options?: AuthOperationOptions): Promise<readonly CredentialInfo[]>;
+  modify(
+    providerId: string,
+    fn: (current: Credential | undefined) => Promise<Credential | undefined>,
+    options?: CredentialWriteOptions,
+  ): Promise<Credential | undefined>;
+  delete(providerId: string, options?: AuthOperationOptions): Promise<void>;
+}
+
 export interface WorkbenchHost {
   files: FileAccess;
   settings: { get(): SettingsSnapshot; update(patch: SettingsPatch): Promise<SettingsSnapshot> };

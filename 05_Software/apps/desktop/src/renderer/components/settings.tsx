@@ -2,6 +2,7 @@ import type { AppInfo, SettingsPatch, SettingsSnapshot } from "@vera/shared";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "./error-message.js";
 import { Metadata } from "./metadata.js";
+import { Providers } from "./providers.js";
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -49,6 +50,7 @@ export function Settings({
         </p>
       )}
       {Boolean(error) && <ErrorMessage error={error} />}
+      <Providers readOnly={snapshot.readOnly} />
       <section className="surface" id="section-appearance" data-settings-section="appearance">
         <h2 data-i18n="settings.appearance" tabIndex={-1}>
           {t("settings.appearance")}
@@ -111,7 +113,7 @@ export function Settings({
         <p className="muted">{t("language.description")}</p>
       </section>
       {sections
-        .filter(({ id }) => id !== "appearance" && id !== "language")
+        .filter(({ id }) => id !== "providers" && id !== "appearance" && id !== "language")
         .map(({ id, label }) => (
           <section className="surface" key={id} id={`section-${id}`} data-settings-section={id}>
             <h2 tabIndex={-1}>{label}</h2>
