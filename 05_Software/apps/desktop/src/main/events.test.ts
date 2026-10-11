@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { scrub } from "@vera/core";
-import { eventEnvelopeSchema, workbenchSchema } from "@vera/shared";
+import { emptySessionState, eventEnvelopeSchema, workbenchSchema } from "@vera/shared";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
+import * as sessionOutput from "./events.js";
 
 let createEventEmitter: typeof import("./events.js").createEventEmitter;
 let createDeltaCoalescer: typeof import("./events.js").createDeltaCoalescer;
@@ -10,6 +11,61 @@ beforeAll(async () => {
   ({ createEventEmitter, createDeltaCoalescer } = await import("./events.js"));
 });
 afterEach(() => vi.useRealTimers());
+it("scrubs get/list session user fields without altering schema identities", () => {
+  const privateKey = "fake-session-output-private";
+  const redact = (text: string) => scrub(text, [privateKey, "assistant", "ask", "type"]);
+  const state = emptySessionState();
+  state.title = privateKey;
+  state.items.push({
+    kind: "assistant",
+    id: "m",
+    turnId: "t",
+    text: privateKey,
+    streaming: false,
+    citations: [{ ref: `${privateKey}#L1-L1`, valid: false }],
+  });
+  state.items.push({
+    kind: "tool",
+    id: "c",
+    turnId: "t",
+    name: "read",
+    args: { [privateKey]: privateKey },
+    status: "ok",
+    summary: privateKey,
+  });
+  expect(typeof sessionOutput.sanitizeSessionSnapshot).toBe("function");
+  const output = sessionOutput.sanitizeSessionSnapshot(state, redact);
+  expect(JSON.stringify(output)).not.toContain(privateKey);
+  expect(output).toMatchObject({
+    mode: "ask",
+    items: [
+      { kind: "assistant", id: "m" },
+      { kind: "tool", id: "c" },
+    ],
+  });
+  expect(state.title).toBe(privateKey);
+});
+it("keeps session protocol fields and bounded titles when redaction expands short secrets", () => {
+  const send = vi.fn();
+  const emit = createEventEmitter(
+    () => ({ isDestroyed: () => false, send }),
+    (text) => scrub(text, ["x", "type", "ask"]),
+  );
+  expect(
+    emit({
+      topic: "session",
+      id: "ses_00000000000000000000000001",
+      seq: 1,
+      event: { type: "session.updated", title: "x".repeat(60), mode: "ask", status: "idle" },
+    }),
+  ).toBe(true);
+  expect(send.mock.calls[0]?.[1].event).toMatchObject({
+    type: "session.updated",
+    mode: "ask",
+    status: "idle",
+  });
+  expect(send.mock.calls[0]?.[1].event.title.length).toBeLessThanOrEqual(60);
+});
 it("emits validated envelopes only to a live target", () => {
   const send = vi.fn();
   let dead = false;

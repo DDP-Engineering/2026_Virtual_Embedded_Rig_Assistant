@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-FUNC-5e2438d5"
+
+title = "Fold session events consistently"
+
+status = "active"
+
+requirement = """
+The shared reducer shall construct the same terminal session snapshot from persisted events and a live stream, including metadata, transcript, tool states, turns, usage and the reserved approval/change/artifact/todo events.
+"""
+
+verification = "Fold golden events with/without live deltas and compare detached terminal states; unknown references are tolerated."
+
+affected_paths = ["05_Software/packages/shared/src/events.ts", "05_Software/packages/shared/src/session-state.ts", "05_Software/packages/shared/src/session.ts", "05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/session-state.test.ts"]
+
+linked_tests = ["05_Software/packages/shared/src/session-state.test.ts"]
+
+
+spec = "specs/REQ-FUNC-5e2438d5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-11
+updated = 2026-10-11

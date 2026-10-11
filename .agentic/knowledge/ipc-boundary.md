@@ -28,7 +28,9 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 - app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/
   pinned.update/files have strict requests/responses; configuration objects retain extensions.
   WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
-- emitAppEvent sends validated app/workbench envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
+- emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
+- session.list/create/get/rename/delete/send/stop/model.set/mode.set use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
+- Session list/get and mutation summaries redact user fields while preserving schema identities and enums. Titles remain bounded after redaction; known-secret text/title/model requests are refused. Mock sessions bind delayed responses to their originating workbench and drain aborted turns before switches/close.
 - createDeltaCoalescer takes key/merge/emit functions, batches for 50ms, flushes explicitly before
   terminal events and cancels pending values on dispose.
 - VeraApi adds getAppInfo/getSettings/updateSettings to VeraBridge; VITE_API=mock selects mockApi during compilation.
@@ -83,6 +85,9 @@ flowchart LR
   ROUTER --> GATEWAY[main ProviderGateway]
   GATEWAY --> LLM[core LlmGateway / ConnectionTest]
   ROUTER --> WORKBENCH[core WorkbenchService]
+  ROUTER --> SESSIONS[SessionsHost + core SessionService]
+  SESSIONS --> COALESCE[per-subscription 50ms transport]
+  COALESCE --> EMIT
   WORKBENCH --> EMIT
   SETTINGS --> PORTS[main application-data ports]
   SETTINGS --> EMIT
@@ -102,11 +107,13 @@ Paths relative to 05_Software.
 
 - packages/shared/src/{index,ipc,errors,events,settings,workbench,providers}.ts — shared public exports, invoke/error schemas and app events.
 - apps/desktop/src/main/{ipc-router,events,app-info}.ts — dispatch, event utilities, native metadata.
+- apps/desktop/src/main/{sessions,session-events}.ts and their tests — session host, authorized subscription control and delta transport.
 - apps/desktop/src/main/{ipc-router,events}.test.ts — request/error/frame/batching regression seams.
 - apps/desktop/src/main/index.ts — installs the one router and exposes the current-window emitter.
 - apps/desktop/src/preload/{index,bridge}.ts and bridge.test.ts — sandbox bridge and transport tests.
 - apps/desktop/src/renderer/api/{client,index,ipc,subscriptions}.ts and ipc.test.ts — one boundary and validation.
 - apps/desktop/src/renderer/mocks/{fixtures,mockApi}.ts and mockApi.test.ts — in-memory metadata/event fixture.
+- apps/desktop/src/renderer/mocks/sessions.ts and sessions.test.ts — session contract and lifecycle fixtures.
 - apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and foundation Query view. [Renderer foundation](renderer-foundation.md) routes the complete UI file set.
 - e2e/{shell,mock,workbench}.spec.ts — real Electron and standalone browser acceptance.
 - scripts/dev-renderer.mjs — renderer-only Vite entrypoint, configured by desktop electron.vite.config.ts.

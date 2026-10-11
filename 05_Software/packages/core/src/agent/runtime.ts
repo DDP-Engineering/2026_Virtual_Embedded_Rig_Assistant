@@ -72,6 +72,11 @@ export class ReferenceRuntime implements AgentRuntime {
   start(init: RuntimeInit): void {
     if (this.controller) throw veraError("BUSY");
     toolSpecs(init.tools); // Fail unsupported schemas before accepting state.
+    if (
+      init.maxToolCallsPerTurn !== undefined &&
+      (!Number.isSafeInteger(init.maxToolCallsPerTurn) || init.maxToolCallsPerTurn <= 0)
+    )
+      throw veraError("INVALID");
     this.init = { ...init, tools: [...init.tools] };
     this.transcript = structuredClone(init.messages);
   }
@@ -258,13 +263,17 @@ export class ReferenceRuntime implements AgentRuntime {
           failed = true;
           output = signal.aborted ? "Aborted." : error instanceof Error ? error.message : "Tool failed.";
         }
-        results.set(call.id, toolResult(call, output, failed, this.host.now()));
+        if (output.length > 32000) output = `${output.slice(0, 31960)}\n[truncated: tool result limit]`;
+        const result = toolResult(call, output, failed, this.host.now());
+        results.set(call.id, result);
         this.emit({
           type: "tool.done",
           callId: call.id,
           ok: !failed,
           summary: output,
           durationMs: Math.max(0, this.host.now() - started),
+          message: result,
+          ...(signal.aborted ? { aborted: true } : {}),
         });
       };
       let batch: ToolCall[] = [];
@@ -273,7 +282,7 @@ export class ReferenceRuntime implements AgentRuntime {
         batch = [];
       };
       for (const call of calls) {
-        if (callsUsed >= 50 || signal.aborted) break;
+        if (callsUsed >= (init.maxToolCallsPerTurn ?? 50) || signal.aborted) break;
         callsUsed++;
         if (init.tools.find((t) => t.name === call.name)?.class === "read") batch.push(call);
         else {
@@ -293,7 +302,7 @@ export class ReferenceRuntime implements AgentRuntime {
             ),
         );
       if (signal.aborted) return "aborted";
-      if (callsUsed >= 50) return "limit";
+      if (callsUsed >= (init.maxToolCallsPerTurn ?? 50)) return "limit";
     }
   }
 }

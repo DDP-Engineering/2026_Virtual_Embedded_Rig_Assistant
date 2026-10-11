@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-FUNC-2b462360"
+
+title = "Expose typed session IPC"
+
+status = "active"
+
+requirement = """
+The sandbox bridge shall expose validated session.list/create/get/rename/delete/send/stop/model.set/mode.set and topic session with sinceSeq through the authorized current main frame.
+"""
+
+verification = "Bridge/router/session native acceptance tests verify malformed/foreign requests, replay/live and CRUD; preserve Electron baseline."
+
+affected_paths = ["05_Software/packages/shared/src/ipc.ts", "05_Software/packages/shared/src/events.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/sessions.ts", "05_Software/apps/desktop/src/main/ipc-router.ts", "05_Software/apps/desktop/src/main/events.ts", "05_Software/apps/desktop/src/preload/bridge.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/apps/desktop/src/renderer/api/ipc.ts", "05_Software/apps/desktop/src/renderer/api/subscriptions.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/main/events.test.ts", "05_Software/apps/desktop/src/main/sessions.test.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/e2e/sessions.spec.ts"]
+
+linked_tests = ["05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/main/events.test.ts", "05_Software/apps/desktop/src/main/sessions.test.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/e2e/sessions.spec.ts"]
+
+
+spec = "specs/REQ-FUNC-5e2438d5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-11
+updated = 2026-10-11

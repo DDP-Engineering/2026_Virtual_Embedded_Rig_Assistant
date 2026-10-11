@@ -33,10 +33,16 @@ export function createIpcApi(bridge: VeraBridge | undefined): VeraApi {
     getAppInfo: () => invoke("app.info", {}),
     getSettings: () => invoke("app.settings.get", {}),
     updateSettings: (patch) => invoke("app.settings.update", patch),
-    subscribe: createSubscriptions((topic, id, on) => {
-      if (!bridge) throw veraError("INTERNAL");
-      return topic === "app" ? bridge.subscribe("app", on) : bridge.subscribe("workbench", id ?? "", on);
-    }),
+    subscribe: createSubscriptions(
+      (topic, id, on) => {
+        if (!bridge) throw veraError("INTERNAL");
+        return topic === "app" ? bridge.subscribe("app", on) : bridge.subscribe("workbench", id ?? "", on);
+      },
+      (id, sinceSeq, on) => {
+        if (!bridge) throw veraError("INTERNAL");
+        return bridge.subscribe("session", id, sinceSeq, on);
+      },
+    ),
   };
 }
 

@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-DATA-24394d5f"
+
+title = "Persist completed turn messages and events"
+
+status = "active"
+
+requirement = """
+When a runtime message ends, the session engine shall retain the complete verbatim message and tool results, record tool_calls and sequence every non-live event while sending message.delta, reasoning.delta and tool.update only live.
+"""
+
+verification = "Read-then-answer integration observes two tool pairs, final cited answer/end; compare transcript rows, event sequences and live-only absence."
+
+affected_paths = ["05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/hub.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/llm/replay.ts", "05_Software/fixtures/llm-scripts/read-then-answer.jsonl", "05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/llm/replay.test.ts", "05_Software/e2e/sessions.spec.ts"]
+
+linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/llm/replay.test.ts", "05_Software/e2e/sessions.spec.ts"]
+
+
+spec = "specs/REQ-FUNC-5e2438d5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-11
+updated = 2026-10-11

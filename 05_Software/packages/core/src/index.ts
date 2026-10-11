@@ -1,4 +1,6 @@
+export * from "./agent/citations.js";
 export * from "./agent/context.js";
+export * from "./agent/permissions.js";
 export * from "./agent/prompt.js";
 export * from "./agent/runtime.js";
 export * from "./agent/tool.js";
@@ -8,6 +10,8 @@ export * from "./llm/gateway.js";
 export * from "./llm/providers.js";
 export * from "./llm/scrub.js";
 export * from "./ports.js";
+export * from "./sessions/hub.js";
+export * from "./sessions/service.js";
 export * from "./settings/service.js";
 export * from "./storage/db.js";
 export * from "./storage/migrate.js";

@@ -1,0 +1,3 @@
+{"match":"(?i)read.*board","toolCalls":[{"name":"list","args":{}}]}
+{"toolCalls":[{"name":"read","args":{"path":"board.txt","offset":1,"limit":2}}]}
+{"text":"The board uses 3.3 V [[{{ref}}]]."}

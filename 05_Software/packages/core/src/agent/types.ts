@@ -1,4 +1,4 @@
-import type { AssistantMessage, Message, ToolCall } from "@earendil-works/pi-ai";
+import type { AssistantMessage, Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import type { VeraError } from "@vera/shared";
 import type { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
@@ -18,6 +18,7 @@ export interface RuntimeInit {
   tools: ToolDef[];
   messages: Message[];
   contextPolicy: ContextPolicy;
+  maxToolCallsPerTurn?: number;
 }
 export interface RuntimeHost {
   gateway: LlmGateway;
@@ -33,7 +34,15 @@ export type RuntimeEvent =
   | { type: "tool.delta"; messageId: string; index: number; text: string }
   | { type: "message.done"; messageId: string; text: string; message: AssistantMessage }
   | { type: "tool.started"; callId: string; name: string; args: unknown }
-  | { type: "tool.done"; callId: string; ok: boolean; summary: string; durationMs: number }
+  | {
+      type: "tool.done";
+      callId: string;
+      ok: boolean;
+      summary: string;
+      durationMs: number;
+      message?: ToolResultMessage;
+      aborted?: boolean;
+    }
   | { type: "approval.requested"; call: ToolCall }
   | { type: "approval.decided"; callId: string; decision: "approved" | "denied" | "aborted" }
   | ({ type: "usage.updated"; inputTokens: number; outputTokens: number } & Partial<

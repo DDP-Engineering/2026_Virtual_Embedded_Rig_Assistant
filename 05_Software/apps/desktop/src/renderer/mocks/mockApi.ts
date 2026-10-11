@@ -24,6 +24,7 @@ import {
 import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
 import { mockAppInfo } from "./fixtures.js";
+import { MockSessions } from "./sessions.js";
 
 const openAiFixture = {
   id: "mock-openai",
@@ -89,6 +90,15 @@ export function createMockApi(
     if (!value) throw veraError("NOT_FOUND");
     return value;
   }
+  const sessions = new MockSessions(() => {
+    const snapshot = current().snapshot;
+    return {
+      id: snapshot.config.id,
+      readOnly: snapshot.readOnly,
+      model: snapshot.config.agent.model,
+      mode: snapshot.config.agent.permission_mode,
+    };
+  });
   function pinned(content: string) {
     return { content, oversized: new TextEncoder().encode(content).byteLength > 16384 };
   }
@@ -112,6 +122,8 @@ export function createMockApi(
     const input = channels[channel].request.safeParse(request);
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
+    if (channel.startsWith("session."))
+      return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
       case "providers.models": {
         const { id } = input.data as Request<"providers.models">;
@@ -283,6 +295,7 @@ export function createMockApi(
           snapshot,
           pinned: workbenchTemplate(name),
         });
+        await sessions.close();
         active = folder;
         remember(snapshot);
         emit({ topic: "workbench", id: config.id, event: { type: "opened", workbench: snapshot } });
@@ -293,6 +306,7 @@ export function createMockApi(
         const { folder } = channels["workbench.open"].request.parse(input.data);
         const bench = benches.get(folder);
         if (!bench) throw veraError("NOT_FOUND");
+        await sessions.close();
         active = folder;
         remember(bench.snapshot);
         value = bench.snapshot;
@@ -306,6 +320,7 @@ export function createMockApi(
       case "workbench.close": {
         if (active) {
           const config = current().snapshot.config;
+          await sessions.close();
           active = undefined;
           emit({ topic: "workbench", id: config.id, event: { type: "closed" } });
         }
@@ -368,13 +383,16 @@ export function createMockApi(
       getAppInfo: () => invoke("app.info", {}),
       getSettings: () => invoke("app.settings.get", {}),
       updateSettings: (patch) => invoke("app.settings.update", patch),
-      subscribe: createSubscriptions((topic, id, on) => {
-        const subscriber = { topic, id, on };
-        subscribers.add(subscriber);
-        return () => {
-          subscribers.delete(subscriber);
-        };
-      }),
+      subscribe: createSubscriptions(
+        (topic, id, on) => {
+          const subscriber = { topic, id, on };
+          subscribers.add(subscriber);
+          return () => {
+            subscribers.delete(subscriber);
+          };
+        },
+        (id, sinceSeq, on) => sessions.subscribe(id, sinceSeq, on),
+      ),
     },
     emitAppEvent,
   };

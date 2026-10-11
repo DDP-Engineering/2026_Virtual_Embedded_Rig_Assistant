@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-5a7ef5e4"
+
+title = "Permit read tools through permission seam"
+
+status = "active"
+
+requirement = """
+Before executing a tool, the session engine shall consult its permission-engine interface whose M1 implementation permits only read tools and returns an error result for denied classes.
+"""
+
+verification = "Inject denied policy and verify no execution; default read succeeds, write/session are denied."
+
+affected_paths = ["05_Software/packages/core/src/agent/permissions.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+
+linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts"]
+
+
+spec = "specs/REQ-FUNC-5e2438d5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-11
+updated = 2026-10-11

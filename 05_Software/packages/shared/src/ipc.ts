@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  modelReferenceSchema,
   providerCatalogSchema,
   providerListSchema,
   providerModelsRequestSchema,
@@ -10,6 +11,8 @@ import {
   providerTestRequestSchema,
   providerTestResultSchema,
 } from "./providers.js";
+import { permissionModeSchema, sessionIdSchema, sessionSummarySchema } from "./session.js";
+import { sessionStateSchema } from "./session-state.js";
 import { recentWorkbenchStateSchema, settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
 import {
   configSnapshotSchema,
@@ -36,6 +39,56 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "session.list": defineChannel("session.list", z.strictObject({}), z.array(sessionSummarySchema)),
+  "session.create": defineChannel(
+    "session.create",
+    z.strictObject({
+      modelRef: modelReferenceSchema.nullable().optional(),
+      mode: permissionModeSchema.optional(),
+    }),
+    sessionSummarySchema,
+  ),
+  "session.get": defineChannel(
+    "session.get",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({
+      snapshot: sessionStateSchema,
+      seq: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    }),
+  ),
+  "session.rename": defineChannel(
+    "session.rename",
+    z.strictObject({ sessionId: sessionIdSchema, title: z.string().trim().min(1).max(60) }),
+    sessionSummarySchema,
+  ),
+  "session.delete": defineChannel(
+    "session.delete",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({}),
+  ),
+  "session.send": defineChannel(
+    "session.send",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      text: z.string().refine((value) => value.trim().length > 0),
+    }),
+    z.strictObject({ turnId: z.string().min(1), messageId: z.string().min(1) }),
+  ),
+  "session.stop": defineChannel(
+    "session.stop",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({ stopped: z.boolean() }),
+  ),
+  "session.model.set": defineChannel(
+    "session.model.set",
+    z.strictObject({ sessionId: sessionIdSchema, modelRef: modelReferenceSchema.nullable() }),
+    sessionSummarySchema,
+  ),
+  "session.mode.set": defineChannel(
+    "session.mode.set",
+    z.strictObject({ sessionId: sessionIdSchema, mode: permissionModeSchema }),
+    sessionSummarySchema,
+  ),
   "providers.models": defineChannel("providers.models", providerModelsRequestSchema, providerCatalogSchema),
   "providers.test": defineChannel("providers.test", providerTestRequestSchema, providerTestResultSchema),
   "providers.list": defineChannel("providers.list", z.strictObject({}), providerListSchema),

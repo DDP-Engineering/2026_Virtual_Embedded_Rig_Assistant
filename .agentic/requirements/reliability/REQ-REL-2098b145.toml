@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-REL-2098b145"
+
+title = "Recover interrupted sessions idempotently"
+
+status = "active"
+
+requirement = """
+On startup, the session service shall idempotently close running and awaiting_approval sessions to idle with session.interrupted and aborted turn.done, persist interrupted results for unanswered tool calls before resume and preserve original history.
+"""
+
+verification = "Seed both active statuses and completed/partial tool pairs; instantiate twice, compare unchanged original rows and valid next provider context."
+
+affected_paths = ["05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+
+linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts"]
+
+
+spec = "specs/REQ-FUNC-5e2438d5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-11
+updated = 2026-10-11

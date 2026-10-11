@@ -29,7 +29,7 @@ ADR-0003. The loop starts from `09_Others/benchpilot-reference/apps/server/src/a
 ```ts
 interface AgentRuntime {
   start(init: { systemPrompt: string; model: ModelRef; tools: ToolDef[]; messages: Message[];
-                contextPolicy: ContextPolicy }): void;
+                contextPolicy: ContextPolicy; maxToolCallsPerTurn?: number }): void;
   send(text: string): Promise<{ stopReason: StopReason }>;   // runs one turn
   abort(): void;
   onEvent(listener: (e: RuntimeEvent) => void): () => void;
@@ -216,7 +216,7 @@ live-only.
 
 ```ts
 type SessionEvent =
-  | { type: "session.updated"; title?: string; status?: SessionStatus; modelRef?: string; mode?: PermissionMode }
+  | { type: "session.updated"; title?: string; status?: SessionStatus; modelRef?: string | null; mode?: PermissionMode }
   | { type: "session.interrupted"; turnId: string }
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: "end" | "aborted" | "error" | "limit" }
@@ -236,6 +236,7 @@ type SessionEvent =
   | { type: "error"; code: string; messageKey: string; retryable: boolean };
 ```
 
+- `SessionService` persists complete user/assistant messages at completion and source-order tool results as their executions complete, with native provider IDs in `tool_calls`. Gateway/tool host barriers complete ordered persistence and citation projection before dispatch/execution; durability failure aborts and prevents external work. Live events have no persisted seq. The shared reducer uses terminal message text/citations as authoritative and removes unfinalized live-only text at terminal boundaries. Main subscription control registers replay/live listeners per token under the same frame authorization as invokes; its50ms transport flushes before persisted records.
 - `session.get` returns `{ snapshot, seq }` where `snapshot` is the persisted events folded with
   `applySessionEvent`; the renderer applies later events with the same reducer.
 - In `usage.updated`, `inputTokens` and `outputTokens` retain provider-reported usage (zero before
@@ -249,7 +250,7 @@ type SessionEvent =
 
 ## 9. Citations
 
-- Refs come only from tool results (`ref` fields); formats in 05 §7.
+- Refs come only from successful tool results (`ref` fields); formats in 05 §7. M1 line refs resolve through the common path guard and stable text-line reader; invented, missing, ignored, binary, escaping and out-of-range refs are invalid.
 - After each assistant message, `core/agent/citations.ts` extracts every `[[…]]`, resolves it and
   emits `message.done.citations` with `valid` per ref. The UI shows invalid refs as warning chips.
 

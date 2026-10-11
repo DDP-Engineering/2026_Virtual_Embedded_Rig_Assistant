@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { lstat, mkdir, open, readdir, realpath, unlink } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import {
@@ -257,6 +257,32 @@ export class WorkbenchService {
     this.current();
     if (!this.database) throw veraError("NOT_FOUND");
     return this.database.db;
+  }
+  getSnapshot(): WorkbenchSnapshot {
+    return structuredClone(this.current());
+  }
+  /** Sessions recheck ownership immediately before synchronous SQLite mutations. */
+  assertSessionWritable(): void {
+    const state = this.current();
+    if (state.readOnly || !this.owned) throw veraError("DENIED");
+    try {
+      const directory = lstatSync(join(state.folder, ".vera"));
+      const file = lstatSync(join(state.folder, ".vera/lock"));
+      if (directory.isSymbolicLink() || !directory.isDirectory() || file.isSymbolicLink() || !file.isFile())
+        throw veraError("DENIED");
+      const lock: unknown = JSON.parse(readFileSync(join(state.folder, ".vera/lock"), "utf8"));
+      if (
+        !lock ||
+        typeof lock !== "object" ||
+        !("token" in lock) ||
+        lock.token !== this.owned.token ||
+        !("pid" in lock) ||
+        lock.pid !== this.host.pid
+      )
+        throw veraError("DENIED");
+    } catch {
+      throw veraError("DENIED");
+    }
   }
   private async writable(): Promise<WorkbenchSnapshot> {
     const state = this.current();

@@ -24,6 +24,7 @@ mode offers empty, missing, read-only and warning fixtures.
 - WorkbenchService.create(existingAbsoluteFolder,name), open(folder), close(). Snapshots contain
   canonical folder/config/readOnly/warnings; invalid YAML reports line/column, invalid configuration
   reports path/line, newer format returns WORKBENCH_TOO_NEW before runtime writes.
+- Core-only getSnapshot supplies a detached current snapshot and assertSessionWritable immediately checks ordinary lock paths plus the owned pid/token before session database changes. Main session lifecycle drains active turns before switches/close.
 - Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open checks
   database compatibility before lock/recents writes; failed replacement preparation closes its handle
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.

@@ -17,7 +17,7 @@ import {
 import { getAppInfo } from "./app-info.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
-import { createEventEmitter } from "./events.js";
+import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
 import { createInvokeRouter } from "./ipc-router.js";
@@ -25,6 +25,7 @@ import { createLogger } from "./logger.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
+import { SessionsHost } from "./sessions.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
@@ -84,6 +85,21 @@ const workbench = new WorkbenchService({
 });
 const providers = new ProviderSettings(settings, credentials);
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
+const sessions = new SessionsHost({
+  workbench,
+  settings,
+  gateway: () => modelGateway,
+  credentials,
+  clock: systemClock,
+  workers: fileWorkers,
+  version: app.getVersion(),
+  target: () =>
+    window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
+  emit: emitAppEvent,
+});
+ipcMain.handle("vera:subscription", (event, action, payload) =>
+  sessions.subscription(event, action, payload),
+);
 
 ipcMain.handle(
   "vera:invoke",
@@ -91,6 +107,48 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "session.list": () =>
+        sessions.run((s) =>
+          s.list().map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
+        ),
+      "session.create": ({ modelRef, mode }) =>
+        sessions.run((s) => {
+          if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+          return sanitizeSessionSummary(s.create(modelRef, mode), (text) => credentials.scrub(text));
+        }),
+      "session.get": ({ sessionId }) =>
+        sessions.run((s) => {
+          const value = s.get(sessionId);
+          return {
+            ...value,
+            snapshot: sanitizeSessionSnapshot(value.snapshot, (text) => credentials.scrub(text)),
+          };
+        }),
+      "session.rename": ({ sessionId, title }) =>
+        sessions.run((s) => {
+          if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+          return sanitizeSessionSummary(s.rename(sessionId, title), (text) => credentials.scrub(text));
+        }),
+      "session.delete": ({ sessionId }) =>
+        sessions.run(async (s) => {
+          await s.delete(sessionId);
+          return {};
+        }),
+      "session.send": ({ sessionId, text }) =>
+        sessions.run((s) => {
+          if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+          return s.send(sessionId, text);
+        }),
+      "session.stop": ({ sessionId }) => sessions.run((s) => ({ stopped: s.stop(sessionId) })),
+      "session.model.set": ({ sessionId, modelRef }) =>
+        sessions.run((s) => {
+          if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), (text) => credentials.scrub(text));
+        }),
+      "session.mode.set": ({ sessionId, mode }) =>
+        sessions.run((s) =>
+          sanitizeSessionSummary(s.setMode(sessionId, mode), (text) => credentials.scrub(text)),
+        ),
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),
@@ -117,10 +175,10 @@ ipcMain.handle(
         });
         return { folder: result.canceled ? null : (result.filePaths[0] ?? null) };
       },
-      "workbench.create": ({ folder, name }) => workbench.create(folder, name),
-      "workbench.open": ({ folder }) => workbench.open(folder),
+      "workbench.create": ({ folder, name }) => sessions.lifecycle(() => workbench.create(folder, name)),
+      "workbench.open": ({ folder }) => sessions.lifecycle(() => workbench.open(folder)),
       "workbench.close": async () => {
-        await workbench.close();
+        await sessions.lifecycle(() => workbench.close());
         return {};
       },
       "workbench.recent": ({ remove }) => workbench.recent(remove),
@@ -158,6 +216,9 @@ async function createWindow(): Promise<void> {
   });
   secureWindow(window);
   const created = window;
+  created.webContents.on("did-start-navigation", (_event, _url, _isInPlace, isMainFrame) => {
+    if (isMainFrame) sessions.clearSubscriptions();
+  });
   let closing = false;
   created.on("close", (event) => {
     if (state.readOnly) return;
@@ -169,6 +230,7 @@ async function createWindow(): Promise<void> {
       .finally(() => created.destroy());
   });
   window.on("closed", () => {
+    sessions.clearSubscriptions();
     window = undefined;
   });
   window.once("ready-to-show", () => window?.show());
@@ -197,8 +259,9 @@ if (!app.requestSingleInstanceLock()) {
     event.preventDefault();
     if (draining) return;
     draining = true;
-    void workbench
+    void sessions
       .close()
+      .then(() => workbench.close())
       .then(() => fileWorkers.dispose())
       .then(() => closeFileProbe?.())
       .then(() => modelGateway.close())

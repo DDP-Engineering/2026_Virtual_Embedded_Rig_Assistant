@@ -165,7 +165,7 @@ export class ReplayGateway implements LlmGateway {
           ...(response ? [{ type: "text" as const, text: response }] : []),
           ...(selected.toolCalls ?? []).map((call, i) => ({
             type: "toolCall" as const,
-            id: `replay_${user?.timestamp ?? 0}_${at}_${stepNo}_${i}`,
+            id: `replay_${request.sessionId ? `${request.sessionId}_` : ""}${user?.timestamp ?? 0}_${at}_${stepNo}_${i}`,
             name: call.name,
             arguments: call.args,
           })),

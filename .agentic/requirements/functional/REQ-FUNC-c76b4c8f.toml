@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-FUNC-c76b4c8f"
+
+title = "Manage workbench sessions"
+
+status = "active"
+
+requirement = """
+The session service shall create, list, get snapshot plus seq, rename and delete workbench sessions with ses_ ULIDs, UTC timestamps, first-user-message titles of at most60 characters, model/mode metadata and removal of child rows and the confined artifacts folder.
+"""
+
+verification = "Create/rename/send/reopen/delete real SQLite sessions; verify metadata, cascades, artifact bytes and missing/BUSY/read-only refusals."
+
+affected_paths = ["05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/shared/src/session.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+
+linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts"]
+
+
+spec = "specs/REQ-FUNC-5e2438d5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-11
+updated = 2026-10-11

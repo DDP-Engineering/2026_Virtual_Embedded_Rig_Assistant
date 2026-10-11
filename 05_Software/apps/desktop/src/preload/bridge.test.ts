@@ -18,7 +18,7 @@ const info = {
 function fixture() {
   const listeners = new Set<(event: unknown, payload: unknown) => void>();
   const transport = {
-    invoke: vi.fn(async () => ({ ok: true, value: info })),
+    invoke: vi.fn(async (_channel: string, _name: string, _request: unknown) => ({ ok: true, value: info })),
     on: vi.fn((_channel: string, listener: (event: unknown, payload: unknown) => void) => {
       listeners.add(listener);
     }),
@@ -28,8 +28,55 @@ function fixture() {
   };
   return { transport, listeners, bridge: createBridge(transport) };
 }
+it("registers a session replay subscription before dispatch and filters its token with idempotent cleanup", async () => {
+  const { bridge, transport, listeners } = fixture();
+  transport.invoke.mockResolvedValue({ ok: true, value: {} } as never);
+  const seen = vi.fn();
+  const id = "ses_01J00000000000000000000000";
+  const off = bridge.subscribe("session", id, 7, seen);
+  expect(listeners.size).toBe(1);
+  expect(transport.invoke).toHaveBeenCalledWith(
+    "vera:subscription",
+    "subscribe",
+    expect.objectContaining({ sessionId: id, sinceSeq: 7 }),
+  );
+  const payload = transport.invoke.mock.calls[0]![2] as { subscriptionId: string };
+  for (const listener of listeners) {
+    listener(
+      {},
+      { topic: "session", id, seq: 8, subscriptionId: "wrong", event: { type: "turn.started", turnId: "t" } },
+    );
+    listener(
+      {},
+      {
+        topic: "session",
+        id,
+        seq: 8,
+        subscriptionId: payload.subscriptionId,
+        event: { type: "turn.started", turnId: "t" },
+      },
+    );
+  }
+  expect(seen).toHaveBeenCalledExactlyOnceWith({ type: "turn.started", turnId: "t" });
+  off();
+  off();
+  await Promise.resolve();
+  expect(transport.removeListener).toHaveBeenCalledTimes(1);
+  expect(transport.invoke).toHaveBeenLastCalledWith("vera:subscription", "unsubscribe", {
+    subscriptionId: payload.subscriptionId,
+  });
+});
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
+    | "session.list"
+    | "session.create"
+    | "session.get"
+    | "session.rename"
+    | "session.delete"
+    | "session.send"
+    | "session.stop"
+    | "session.model.set"
+    | "session.mode.set"
     | "providers.models"
     | "providers.test"
     | "providers.list"

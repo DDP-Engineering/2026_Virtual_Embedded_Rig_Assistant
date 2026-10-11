@@ -6,7 +6,7 @@ Select for vera.db, schema_version, checksummed SQL migrations, backup files and
 
 ## Purpose and boundaries
 
-Core owns the better-sqlite3 connection, initial schema, migration catalogue and three storage repositories. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; session behavior belongs to its runtime component.
+Core owns the better-sqlite3 connection, initial schema, migration catalogue and three storage repositories. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; [session behavior](sessions.md) owns runtime integration, native provider-ID tool rows, recovery and event projection.
 
 ## Public interface
 

@@ -24,6 +24,20 @@ export interface RendererTarget {
   webContents: Contents;
   url: string;
 }
+export function authorizedSender(event: InvokeSender, target: RendererTarget | undefined): boolean {
+  try {
+    return (
+      !!target &&
+      !target.webContents.isDestroyed() &&
+      event.sender === target.webContents &&
+      !!event.senderFrame &&
+      event.senderFrame === target.webContents.mainFrame &&
+      event.senderFrame.url === target.url
+    );
+  } catch {
+    return false;
+  }
+}
 export type ChannelHandlers = { [C in Channel]: (request: Request<C>) => Response<C> | Promise<Response<C>> };
 export interface IpcFailure {
   channel: Channel;
@@ -39,15 +53,7 @@ export function createInvokeRouter(options: {
   function authorized(event: InvokeSender): boolean {
     // Native frame accessors can throw once a renderer/frame has been detached.
     try {
-      const target = options.target();
-      return (
-        !!target &&
-        !target.webContents.isDestroyed() &&
-        event.sender === target.webContents &&
-        !!event.senderFrame &&
-        event.senderFrame === target.webContents.mainFrame &&
-        event.senderFrame.url === target.url
-      );
+      return authorizedSender(event, options.target());
     } catch {
       return false;
     }
