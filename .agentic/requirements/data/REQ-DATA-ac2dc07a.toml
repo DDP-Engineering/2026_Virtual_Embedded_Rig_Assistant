@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-ac2dc07a"
+title = "Back up before each migration"
+status = "active"
+requirement = "Before each pending workbench database migration, core shall preserve the complete previous database in .vera/backups/vera.db.v<n>.bak, where n is its previous schema version."
+verification = "Real WAL data survives backup; failing migration leaves backup and prior schema; existing backup retained and blocks migration."
+affected_paths = ["05_Software/packages/core/src/storage/", "05_Software/packages/core/package.json", "05_Software/package-lock.json", "05_Software/packages/core/src/index.ts"]
+linked_tests = ["05_Software/packages/core/src/storage/db.test.ts"]
+spec = "specs/REQ-PLAT-f0d13546.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-11

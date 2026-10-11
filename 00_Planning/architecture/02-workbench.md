@@ -180,9 +180,19 @@ chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, ordinal INTEGER, locator_json TEX
 - IDs: sessions `ses_` + ULID, artifacts `art_` + ULID, approvals `apv_` + ULID; tool-call IDs come
   from the provider.
 - Timestamps are ISO 8601 UTC strings.
-- Migrations: ordered SQL files embedded in core, each with a SHA-256 recorded in `meta`; a changed
+- Migrations: ordered TypeScript modules exporting SQL embedded in core, each with a SHA-256 recorded in `meta`; a changed
   applied migration is an error; a backup precedes every migration; a database with a higher
   `schema_version` than the app knows opens nothing and shows "created by a newer VERA" (L10).
+- Core uses better-sqlite3 13.0.3 with WAL, foreign_keys ON, busy_timeout5000 and synchronous NORMAL.
+  Compatibility is inspected on a private db/WAL snapshot before lock or writable database activity;
+  foreign-owner read-only handles retain private snapshots. An unstable concurrent capture returns BUSY.
+  Each pending step backs up the committed SQLite view exclusively to the prior-version filename,
+  then commits SQL, checksum and version atomically. An existing backup returns CONFLICT and is preserved.
+  Initial metadata includes workbench_id and created_by. Sessions/messages/events repositories expose
+  row CRUD with verbatim JSON and ascending message/event seq; session child foreign keys cascade.
+  Sequences are nonnegative safe integers. Writable handles retain an auxiliary read-only connection;
+  owned release checkpoints under the token guard before unlink, while disposal after ownership loss
+  uses writer-first/read-only-last close to preserve runtime bytes. Failed unlink leaves storage usable.
 
 ## 10. Sessions and artifacts
 

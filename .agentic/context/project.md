@@ -6,7 +6,7 @@ VERA is the Virtual Embedded Rig Assistant desktop product for embedded engineer
 
 ## Product responsibilities
 
-The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React provides Welcome/App Settings and responsive panels through the API and TanStack Query, with persisted theme/text scale, en/ro/de i18next presentation and browser mock mode. Core owns schema2 settings through host ports and the workbench folder lifecycle, YAML/config/pinned saves, locks, recents and ignored-path completion; main provides portable paths, atomic filesystem and redacting logs. CLI provides its source skeleton.
+The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React provides Welcome/App Settings and responsive panels through the API and TanStack Query, with persisted theme/text scale, en/ro/de i18next presentation and browser mock mode. Core owns schema2 settings through host ports and the workbench folder lifecycle, YAML/config/pinned saves, locks, recents, ignored-path completion and per-workbench checksummed SQLite migrations/backups with session/message/event storage; main provides portable paths, atomic filesystem and redacting logs. CLI provides its source skeleton.
 
 ## Supported operation
 
@@ -29,6 +29,7 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 [Renderer foundation](../knowledge/renderer-foundation.md) routes UI layout, appearance, language and accessibility.
 
 [Workbench](../knowledge/workbench.md) routes format1, creation/open/close, ownership, completion, recents and the Welcome/pinned UI.
+[Workbench storage](../knowledge/workbench-storage.md) routes per-folder SQLite, compatibility checks, exclusive backups, checksummed migrations and session/message/event rows.
 
 [Native packaging](../knowledge/native-packaging.md) routes x64 ZIP/AppImage, verified bundled
 model delivery, compiled instrumented probes and external artifact-bound host evidence. WP-05

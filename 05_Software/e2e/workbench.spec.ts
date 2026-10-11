@@ -40,6 +40,8 @@ test("Welcome creates, restarts, reopens recent, edits pinned and closes with va
     await page.locator('[data-action="create-workbench"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     expect(existsSync(join(folder, ".vera/lock"))).toBe(true);
+    expect(existsSync(join(folder, ".vera/vera.db"))).toBe(true);
+    expect(existsSync(join(folder, ".vera/backups/vera.db.v0.bak"))).toBe(true);
     await page.locator('[data-action="edit-pinned"]').click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.locator("#pinned-content").fill("# VERA-DEMO-01\nFictional board context");
@@ -132,6 +134,7 @@ test("Welcome opens copied demo with a live lock read-only and preserves owner b
     await page.keyboard.press("Escape");
     await page.locator('[data-action="close-workbench"]').click();
     expect(await readFile(join(folder, ".vera/lock"), "utf8")).toBe(lock);
+    expect(existsSync(join(folder, ".vera/vera.db"))).toBe(false);
     expect(await outboundAttempts(app)).toEqual([]);
     await page.screenshot({ path: test.info().outputPath("demo-readonly.png") });
   } finally {

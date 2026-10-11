@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-ee009054"
+title = "Persist ordered event rows"
+status = "active"
+requirement = "Core event repository shall create, read, list and delete JSON events by session and ascending seq."
+verification = "Out-of-order inserts, sinceSeq, duplicate key, independent session, read/delete and persistence."
+affected_paths = ["05_Software/packages/core/src/storage/", "05_Software/packages/core/package.json", "05_Software/package-lock.json", "05_Software/packages/core/src/index.ts"]
+linked_tests = ["05_Software/packages/core/src/storage/repositories.test.ts"]
+spec = "specs/REQ-PLAT-f0d13546.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-11

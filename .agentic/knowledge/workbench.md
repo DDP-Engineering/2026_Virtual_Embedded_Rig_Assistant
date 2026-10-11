@@ -9,6 +9,7 @@ Focused tests: core workbench/service.test.ts and shared workbench.test.ts. Nati
 e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) owns settings migration;
 [IPC boundary](ipc-boundary.md) owns authorization/transport; [renderer foundation](renderer-foundation.md)
 owns the shell, appearance, language and layout.
+Database migrations, compatibility, backups and row repositories route to [Workbench storage](workbench-storage.md).
 
 ## Purpose and boundaries
 
@@ -22,6 +23,11 @@ mode offers empty, missing, read-only and warning fixtures.
 - WorkbenchService.create(existingAbsoluteFolder,name), open(folder), close(). Snapshots contain
   canonical folder/config/readOnly/warnings; invalid YAML reports line/column, invalid configuration
   reports path/line, newer format returns WORKBENCH_TOO_NEW before runtime writes.
+- Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open checks
+  database compatibility before lock/recents writes; failed replacement preparation closes its handle
+  and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
+  Owned release checkpoints under the token guard before unlink; failed unlink retains usable storage.
+  Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.
 - Config get/update deep-merges known mutable fields with current disk data, retains unknown keys,
   and fixes id/format. Pinned get/update saves full UTF8 text; oversized counts bytes above16384.
 - Recent retrieval/removal uses up to ten settings entries; folder existence derives missing state.
@@ -89,6 +95,7 @@ flowchart LR
   service --> settings[SettingsService schema2]
   service --> YAML[workbench.yaml and WORKBENCH.md]
   service --> lock[.vera lock and process-owned IPC guard]
+  service --> storage[core storage compatibility and SQLite handle]
   service --> ignore[createIgnoreRules and completion]
   service --> events[WorkbenchEvent]
   events --> bridge

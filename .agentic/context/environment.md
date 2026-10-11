@@ -46,6 +46,9 @@ empty/missing/read-only/warning states. Windows and Ubuntu E2E run serially beca
 ## Platform details
 
 Windows and Ubuntu use separate platform Node distributions and npm native dependencies. Share sources and lockfile, use separate node_modules for platform validation.
+Core storage tests execute the pinned real better-sqlite3 addon against temporary databases, including
+WAL data, pre-step backups, compatibility refusal and repository rows. Use the focused db/repositories
+and workbench service tests for changes, then the configured strict proof and serial native E2E.
 
 Executable-adjacent vera.portable selects adjacent data before readiness. Installed launches accept
 --user-data-dir for isolation; selected directories are created before Electron setPath. Portable

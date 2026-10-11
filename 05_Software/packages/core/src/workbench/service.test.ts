@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it } from "vitest";
 import { SettingsService } from "../settings/service.js";
 import { acquireGuard } from "./guard.js";
@@ -78,6 +79,143 @@ it("create/open roundtrip writes validating YAML/template/runtime and preserves 
   expect(opened.readOnly).toBe(false);
   await h.service.close();
   expect(await readFile(join(h.folder, "existing.txt"), "utf8")).toBe("user data");
+});
+
+it("database lifetime follows owned open, same-folder reopen, close and failed replacement", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  expect(existsSync(join(h.folder, ".vera/vera.db"))).toBe(true);
+  const first = h.service.getDatabase();
+  first.exec("CREATE TABLE retained(x); INSERT INTO retained VALUES (1)");
+  await h.service.open(h.folder);
+  expect(h.service.getDatabase()).toBe(first);
+  const second = join(h.root, "second");
+  await mkdir(second);
+  await writeFile(join(second, "workbench.yaml"), await readFile(join(h.folder, "workbench.yaml")));
+  h.host.settings.update = async () => {
+    throw new Error("recent failed");
+  };
+  await expect(h.service.open(second)).rejects.toThrow("recent failed");
+  expect(existsSync(join(second, ".vera/lock"))).toBe(false);
+  expect(h.service.getDatabase()).toBe(first);
+  expect(first.prepare("SELECT x FROM retained").pluck().get()).toBe(1);
+  const replacement = new Database(join(second, ".vera/vera.db"));
+  replacement.pragma("locking_mode=EXCLUSIVE");
+  replacement.exec("BEGIN EXCLUSIVE; COMMIT;");
+  replacement.close();
+  await h.service.close();
+  expect(first.open).toBe(false);
+});
+it("newer database is refused before lock/recents changes and failed storage switch retains previous", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  const first = h.service.getDatabase();
+  const second = join(h.root, "second");
+  await mkdir(join(second, ".vera"), { recursive: true });
+  await writeFile(join(second, "workbench.yaml"), await readFile(join(h.folder, "workbench.yaml")));
+  const file = join(second, ".vera/vera.db");
+  const db = new Database(file);
+  db.exec(
+    "CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL); INSERT INTO meta VALUES ('schema_version','99')",
+  );
+  db.close();
+  await writeFile(
+    join(second, ".vera/lock"),
+    JSON.stringify({ pid: 999999, app: "newer", since: "now", token: "untouched" }),
+  );
+  const original = await readFile(file);
+  const lock = await readFile(join(second, ".vera/lock"));
+  const settings = await readFile(h.paths.settings);
+  await expect(h.service.open(second)).rejects.toMatchObject({ code: "WORKBENCH_TOO_NEW" });
+  expect(await readFile(file)).toEqual(original);
+  expect(await readFile(join(second, ".vera/lock"))).toEqual(lock);
+  expect(await readFile(h.paths.settings)).toEqual(settings);
+  expect(h.service.getDatabase()).toBe(first);
+  await h.service.close();
+});
+it("failed database preparation releases the new token and retains the previous database", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  const first = h.service.getDatabase();
+  const second = join(h.root, "second");
+  await mkdir(join(second, ".vera/backups"), { recursive: true });
+  await writeFile(join(second, "workbench.yaml"), await readFile(join(h.folder, "workbench.yaml")));
+  await writeFile(join(second, ".vera/backups/vera.db.v0.bak"), "existing recovery data");
+  await expect(h.service.open(second)).rejects.toMatchObject({ code: "CONFLICT" });
+  expect(existsSync(join(second, ".vera/lock"))).toBe(false);
+  expect(await readFile(join(second, ".vera/backups/vera.db.v0.bak"), "utf8")).toBe("existing recovery data");
+  expect(h.service.getDatabase()).toBe(first);
+  expect(first.open).toBe(true);
+  await h.service.close();
+});
+it("lost token reopen and close preserve every live-owner runtime byte while disposing prior storage", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  const first = h.service.getDatabase();
+  first.exec("CREATE TABLE retained(x); INSERT INTO retained VALUES(123)");
+  await writeFile(
+    join(h.folder, ".vera/lock"),
+    JSON.stringify({ pid: process.pid, app: "other", since: "now", token: "replacement" }),
+  );
+  const files = ["vera.db", "vera.db-wal", "vera.db-shm", "lock"];
+  const before = await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))));
+  expect((await h.service.open(h.folder)).readOnly).toBe(true);
+  expect(first.open).toBe(false);
+  expect(h.service.getDatabase().prepare("SELECT x FROM retained").pluck().get()).toBe(123);
+  expect(await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))))).toEqual(before);
+  await h.service.close();
+  expect(await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))))).toEqual(before);
+});
+it("failed prior-lock unlink leaves prior storage usable and releases replacement storage/token", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  const first = h.service.getDatabase();
+  const second = join(h.root, "second");
+  await mkdir(second);
+  await writeFile(join(second, "workbench.yaml"), await readFile(join(h.folder, "workbench.yaml")));
+  const lockPath = join(h.folder, ".vera/lock");
+  const original = await readFile(lockPath, "utf8");
+  const read = h.host.files.read;
+  h.host.files.read = async (path) => {
+    const result = await read(path);
+    if (path === lockPath) {
+      await rm(lockPath);
+      await mkdir(lockPath);
+      h.host.files.read = read;
+    }
+    return result;
+  };
+  await expect(h.service.open(second)).rejects.toThrow();
+  expect(h.service.getDatabase()).toBe(first);
+  expect(first.open).toBe(true);
+  expect(first.prepare("SELECT value FROM meta WHERE key='schema_version'").pluck().get()).toBe("1");
+  expect(existsSync(join(second, ".vera/lock"))).toBe(false);
+  await rm(lockPath, { recursive: true });
+  await writeFile(lockPath, original);
+  await h.service.close();
+});
+it("live owner opens a WAL snapshot readonly and leaves source bytes intact, absent DB creates nothing", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  h.service.getDatabase().exec("CREATE TABLE data(x); INSERT INTO data VALUES (123)");
+  const files = ["vera.db", "vera.db-wal", "vera.db-shm", "lock"];
+  const before = await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))));
+  const reader = new WorkbenchService({ ...h.host, pid: process.pid + 1 });
+  expect((await reader.open(h.folder)).readOnly).toBe(true);
+  expect(reader.getDatabase().prepare("SELECT x FROM data").pluck().get()).toBe(123);
+  expect(() => reader.getDatabase().exec("INSERT INTO data VALUES (1)")).toThrow();
+  await reader.close();
+  expect(await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))))).toEqual(before);
+  await h.service.close();
+  await rm(join(h.folder, ".vera/vera.db"));
+  await writeFile(
+    join(h.folder, ".vera/lock"),
+    JSON.stringify({ pid: process.pid, app: "owner", since: "now" }),
+  );
+  expect((await reader.open(h.folder)).readOnly).toBe(true);
+  expect(existsSync(join(h.folder, ".vera/vera.db"))).toBe(false);
+  expect(() => reader.getDatabase()).toThrow();
+  await reader.close();
 });
 it("creates the specified English template and rejects malformed YAML with line and newer format before writes", async () => {
   const h = await harness();
@@ -401,6 +539,9 @@ it("refuses external format/identity changes during pinned saves and closing red
   await writeFile(yaml, raw);
   const before = await readFile(join(h.folder, "WORKBENCH.md"), "utf8");
   const { rename } = await import("node:fs/promises");
+  // Release the Windows storage handles so the redirection fixture can be constructed.
+  // Keep service state and the owned token live: close must still reject the redirected path.
+  (h.service as unknown as { database: { close(): void } }).database.close();
   await rename(join(h.folder, ".vera"), join(h.root, "owned-runtime"));
   const outside = join(h.root, "external");
   await mkdir(outside);

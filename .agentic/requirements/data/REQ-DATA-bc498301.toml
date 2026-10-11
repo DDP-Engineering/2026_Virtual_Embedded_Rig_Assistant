@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-bc498301"
+title = "Persist session rows"
+status = "active"
+requirement = "Core session repository shall create, read, deterministically list and delete session rows with their associated database rows."
+verification = "Real driver roundtrip, missing ID, foreign keys, deletion cascades across session tables."
+affected_paths = ["05_Software/packages/core/src/storage/", "05_Software/packages/core/package.json", "05_Software/package-lock.json", "05_Software/packages/core/src/index.ts"]
+linked_tests = ["05_Software/packages/core/src/storage/repositories.test.ts"]
+spec = "specs/REQ-PLAT-f0d13546.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-11

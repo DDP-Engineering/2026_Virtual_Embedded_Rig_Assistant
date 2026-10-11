@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { lstat, mkdir, open, readdir, realpath, unlink } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import {
@@ -14,9 +15,11 @@ import {
   workbenchSchema,
   workbenchTemplate,
 } from "@vera/shared";
+import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
 import type { WorkbenchHost } from "../ports.js";
+import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
 
@@ -108,6 +111,7 @@ async function exclusive(path: string, text: string): Promise<void> {
 export class WorkbenchService {
   private state: WorkbenchSnapshot | undefined;
   private owned: { folder: string; token: string } | undefined;
+  private database: WorkbenchDatabase | undefined;
   private queue: Promise<void> = Promise.resolve();
   constructor(private readonly host: WorkbenchHost) {}
   private run<T>(operation: () => Promise<T>): Promise<T> {
@@ -181,10 +185,20 @@ export class WorkbenchService {
     const warnings: WorkbenchWarning[] = configWarnings(config, this.host.catalogs);
     if (isNetworkShare(input)) warnings.push({ code: "NETWORK_SHARE_UNSUPPORTED" });
     const same = this.state?.folder === folder;
+    const databasePath = join(folder, ".vera/vera.db");
+    const storageOptions = { workbenchId: config.id, appVersion: this.host.appVersion };
+    await inspectDatabase(databasePath, storageOptions);
     const acquired = await this.acquire(folder, warnings);
     const newlyOwned = acquired.owned !== undefined && acquired.owned !== this.owned;
     const next = { folder, config, warnings, readOnly: acquired.readOnly };
+    let database: WorkbenchDatabase | undefined;
     try {
+      database =
+        same && acquired.owned === this.owned && this.database?.db.open && !acquired.readOnly
+          ? this.database
+          : !acquired.readOnly || existsSync(databasePath)
+            ? await openDb(databasePath, { ...storageOptions, readOnly: acquired.readOnly })
+            : undefined;
       const snapshot = this.host.settings.get();
       if (!snapshot.readOnly) {
         const previous = snapshot.settings.recentWorkbenches.find((entry) => entry.folder === folder);
@@ -203,18 +217,24 @@ export class WorkbenchService {
         });
       }
     } catch (error) {
+      if (database !== this.database) database?.close();
       if (newlyOwned && acquired.owned) await this.release(acquired.owned);
       throw error;
     }
     if (!same && this.owned) {
       try {
-        await this.release(this.owned);
+        await this.release(this.owned, () => {
+          if (this.database?.db.open) this.database.db.pragma("wal_checkpoint(TRUNCATE)");
+        });
       } catch (error) {
+        if (database !== this.database) database?.close();
         if (acquired.owned) await this.release(acquired.owned);
         throw error;
       }
     }
     const preceding = this.state;
+    if (database !== this.database) this.database?.close(true);
+    this.database = database;
     this.state = next;
     this.owned = acquired.owned;
     if (!same && preceding) this.emit(preceding.config.id, { type: "closed" });
@@ -231,6 +251,12 @@ export class WorkbenchService {
   private current(): WorkbenchSnapshot {
     if (!this.state) throw veraError("NOT_FOUND");
     return this.state;
+  }
+  /** Core-only storage access; a foreign owner supplies a read-only snapshot. */
+  getDatabase(): Database.Database {
+    this.current();
+    if (!this.database) throw veraError("NOT_FOUND");
+    return this.database.db;
   }
   private async writable(): Promise<WorkbenchSnapshot> {
     const state = this.current();
@@ -401,21 +427,28 @@ export class WorkbenchService {
       await release();
     }
   }
-  private async release(owned: { folder: string; token: string }): Promise<void> {
+  private async release(owned: { folder: string; token: string }, beforeRelease?: () => void): Promise<void> {
     if (!(await ordinary(owned.folder, true)) || !(await ordinary(join(owned.folder, ".vera"), true))) return;
     const release = await acquireGuard(owned.folder);
     if (!release) throw veraError("BUSY");
     try {
       const lock = await this.lock(owned.folder);
-      if (lock?.token === owned.token && lock.pid === this.host.pid)
+      if (lock?.token === owned.token && lock.pid === this.host.pid) {
+        beforeRelease?.();
         await unlink(join(owned.folder, ".vera/lock"));
+      }
     } finally {
       await release();
     }
   }
   close(): Promise<void> {
     return this.run(async () => {
-      if (this.owned) await this.release(this.owned);
+      if (this.owned)
+        await this.release(this.owned, () => {
+          if (this.database?.db.open) this.database.db.pragma("wal_checkpoint(TRUNCATE)");
+        });
+      this.database?.close(true);
+      this.database = undefined;
       const id = this.state?.config.id;
       this.state = undefined;
       this.owned = undefined;
