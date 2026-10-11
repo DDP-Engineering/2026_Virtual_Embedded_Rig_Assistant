@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./replay": {
+      "types": "./dist/llm/replay.d.ts",
+      "import": "./dist/llm/replay.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
   "dependencies": {
+    "@earendil-works/pi-ai": "1.1.0",
     "@vera/shared": "0.0.0",
     "better-sqlite3": "13.0.3",
     "ignore": "7.0.12",

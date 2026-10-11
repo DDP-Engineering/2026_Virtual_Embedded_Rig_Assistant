@@ -19,7 +19,7 @@
     "DENIED": "Der Vorgang ist nicht erlaubt.",
     "CONTEXT_LIMIT": "Das Kontextlimit wurde erreicht.",
     "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
-    "OFFLINE": "Die Anwendung ist offline.",
+    "OFFLINE": "{{endpoint}} ist nicht erreichbar. Erneut versuchen.",
     "INTERNAL": "Anwendungsinformationen konnten nicht geladen werden.",
     "WORKBENCH_TOO_NEW": "Diese Workbench wurde mit einer neueren VERA-Version erstellt.",
     "YAML_INVALID": "Ungültiges YAML in Zeile {{line}}, Spalte {{column}}.",
@@ -137,6 +137,26 @@
     "consentTitle": "Sichere Speicherung der Zugangsdaten nicht verfügbar",
     "consentWarning": "Dieser Computer kann den Schlüssel nicht sicher verschlüsseln. Wer die Datei lesen kann, könnte auf den gespeicherten Schlüssel zugreifen. Wähle die Nutzung nur für diesen Lauf oder die Speicherung ohne sichere Verschlüsselung.",
     "memoryChoice": "Nur für diesen Lauf verwenden",
-    "diskChoice": "Ohne sichere Verschlüsselung speichern"
+    "diskChoice": "Ohne sichere Verschlüsselung speichern",
+    "test": "Testen",
+    "testing": "Anbieter wird getestet…",
+    "testComplete": "Test abgeschlossen",
+    "steps": {
+      "reachability": "Erreichbarkeit",
+      "authentication": "Authentifizierung und Modell",
+      "tools": "Werkzeugaufrufe",
+      "streaming": "Streaming"
+    },
+    "results": {
+      "pass": "Bestanden",
+      "fail": "Fehlgeschlagen",
+      "skipped": "Übersprungen"
+    }
+  },
+  "provider": {
+    "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
+    "rateLimit": "Anbieterlimit erreicht. Erneut versuchen nach: {{retryAfter}}.",
+    "context": "Der Anbieter hat die Kontextgröße abgelehnt. Eingabe reduzieren oder das konfigurierte Fenster prüfen.",
+    "failure": "Anbieterfehler: {{message}}"
   }
 }

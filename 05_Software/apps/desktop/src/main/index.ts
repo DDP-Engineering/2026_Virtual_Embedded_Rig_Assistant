@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SettingsService, WorkbenchService } from "@vera/core";
+import { type LlmGateway, SettingsService, splitModelReference, WorkbenchService } from "@vera/core";
 import { eventEnvelopeSchema } from "@vera/shared";
 import {
   app,
@@ -22,6 +22,7 @@ import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
 import { createInvokeRouter } from "./ipc-router.js";
 import { createLogger } from "./logger.js";
+import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
@@ -79,6 +80,7 @@ const workbench = new WorkbenchService({
   },
 });
 const providers = new ProviderSettings(settings, credentials);
+let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
 
 ipcMain.handle(
   "vera:invoke",
@@ -86,6 +88,8 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "providers.models": ({ id }) => modelGateway.models(id),
+      "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),
       "providers.save": (request) => providers.save(request),
       "providers.remove": (request) => providers.remove(request),
@@ -192,6 +196,7 @@ if (!app.requestSingleInstanceLock()) {
     draining = true;
     void workbench
       .close()
+      .then(() => modelGateway.close())
       .then(() => providers.close())
       .then(() => credentials.close())
       .then(() => settings.close())
@@ -232,6 +237,51 @@ if (!app.requestSingleInstanceLock()) {
       if (draining) return;
       await settings.load();
       await credentials.load();
+      if (app.commandLine.hasSwitch("vera-smoke-provider")) {
+        let exitCode = 1;
+        try {
+          const result = await modelGateway.test(app.commandLine.getSwitchValue("vera-smoke-provider"));
+          console.log(JSON.stringify(result));
+          exitCode = result.steps.every(
+            (step) => step.status === "pass" || (step.step === "reachability" && step.status === "skipped"),
+          )
+            ? 0
+            : 1;
+        } catch {
+          console.log(JSON.stringify({ code: "INVALID", messageKey: "errors.INVALID" }));
+        }
+        await modelGateway.close();
+        await providers.close();
+        await credentials.close();
+        await settings.close();
+        await logger.flush();
+        app.exit(exitCode);
+        return;
+      }
+      if (__VERA_TEST__ && process.env.VERA_REPLAY_DIR) {
+        const { ReplayGateway } = await import("@vera/core/replay");
+        const replay = new ReplayGateway({
+          dir: process.env.VERA_REPLAY_DIR,
+          now: () => systemClock.now().getTime(),
+        });
+        const api = modelGateway.api;
+        const select = (id: string) => (id === "replay" ? replay : api);
+        const gateway: LlmGateway = {
+          selectedModel: (id) => select(id).selectedModel(id),
+          capabilities: (ref, output) => select(splitModelReference(ref).provider).capabilities(ref, output),
+          models: (id, signal, probe) => select(id).models(id, signal, probe),
+          stream: (request) => select(splitModelReference(request.model).provider).stream(request),
+        };
+        await modelGateway.close();
+        modelGateway = new ProviderGateway(
+          settings,
+          credentials,
+          providers,
+          systemClock,
+          gateway,
+          () => `replay/${replay.selectedModel("replay")}`,
+        );
+      }
       nativeTheme.themeSource = settings.get().settings.theme;
       if (draining) return;
       logger.log("info", "app.started", { portable: dataLocations.portable });

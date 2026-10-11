@@ -258,6 +258,21 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toContainText(
       "fake-browser-model",
     );
+    const testedProvider = providerSection.locator('[data-provider="custom:browser-fixture"]');
+    for (const language of ["en", "ro", "de"] as const) {
+      await page.locator("#language").selectOption(language);
+      const control = testedProvider.locator('[data-provider-test="custom:browser-fixture"]');
+      await expect(control).toHaveText(
+        language === "ro" ? "Testează" : language === "de" ? "Testen" : "Test",
+      );
+      await control.focus();
+      await page.keyboard.press("Enter");
+      await expect(testedProvider.locator('[data-i18n="providers.testComplete"]')).toBeVisible();
+      await expect(testedProvider.locator("[data-test-step]")).toHaveCount(4);
+      await expect(testedProvider.locator('[data-test-status="pass"]')).toHaveCount(4);
+      expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
+    }
+    await page.locator("#language").selectOption("en");
     await providerSection
       .locator('[data-provider="custom:browser-fixture"]')
       .getByRole("button", { name: "Remove", exact: true })

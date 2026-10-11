@@ -8,6 +8,7 @@ import {
   settingsV0Schema,
   settingsV1Schema,
   settingsV2Schema,
+  settingsV3Schema,
   veraError,
 } from "@vera/shared";
 import type { FileAccess, PathProvider } from "../ports.js";
@@ -50,7 +51,7 @@ export class SettingsService {
     const version = (stored as { schemaVersion?: unknown }).schemaVersion;
     if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
       throw veraError("INVALID");
-    if (version > 3) {
+    if (version > 4) {
       this.state = { settings: defaults, readOnly: true };
       return;
     }
@@ -62,7 +63,7 @@ export class SettingsService {
       data = {
         ...defaults,
         ...patch,
-        schemaVersion: 3,
+        schemaVersion: 4,
         providers: defaults.providers,
         installationId: installationId ?? defaults.installationId,
         updates: { ...defaults.updates, ...patch.updates },
@@ -72,16 +73,21 @@ export class SettingsService {
     if (version === 1) {
       const legacy = settingsV1Schema.safeParse(stored);
       if (!legacy.success) throw veraError("INVALID");
-      data = { ...legacy.data, schemaVersion: 3, providers: defaults.providers };
+      data = { ...legacy.data, schemaVersion: 4, providers: defaults.providers };
     }
     if (version === 2) {
       const legacy = settingsV2Schema.safeParse(stored);
       if (!legacy.success) throw veraError("INVALID");
-      data = { ...legacy.data, schemaVersion: 3, providers: defaults.providers };
+      data = { ...legacy.data, schemaVersion: 4, providers: defaults.providers };
+    }
+    if (version === 3) {
+      const legacy = settingsV3Schema.safeParse(stored);
+      if (!legacy.success) throw veraError("INVALID");
+      data = { ...legacy.data, schemaVersion: 4 };
     }
     const parsed = settingsSchema.safeParse(data);
     if (!parsed.success) throw veraError("INVALID");
-    if (version < 3) {
+    if (version < 4) {
       let backup = version;
       while (!(await this.host.files.backup(`${this.host.paths.settings}.bak-${backup}`, raw))) backup++;
       await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(parsed.data, null, 2));

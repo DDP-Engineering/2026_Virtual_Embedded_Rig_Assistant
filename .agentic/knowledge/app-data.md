@@ -17,7 +17,7 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 ## Public interface
 
 - SettingsService.load/get/update/close; get/update return detached {settings,readOnly}.
-- Schema 3 persists a stable installation UUID, language/theme/textScale and current non-secret
+- Schema 4 persists a stable installation UUID, language/theme/textScale and current non-secret
   model/provider/update/recent/limit defaults. Exact contract:
   [data spec](../specs/REQ-DATA-4a030001.md).
 - app.settings.get({}) and app.settings.update(patch) use validated schemas.
@@ -38,8 +38,8 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
   the previous host path intact. Installed defaults are resolved without eager creation.
 - installationId/schemaVersion are immutable through strict nested patches. Persisted top-level,
   update/limit/recent extensions survive migration and updates; providers reject credentials.
-- Versions 0, 1 and 2 validate preferences, fill schema3 defaults, preserve UUID and extensions,
-  and create an exclusive byte-identical bak-n before atomic migration. [Providers](providers.md) owns strict provider writes, schema3 non-secret configurations and credential persistence.
+- Versions 0, 1, 2 and 3 validate preferences, fill schema4 defaults, preserve UUID and extensions,
+  and create an exclusive byte-identical bak-n before atomic migration. [Providers](providers.md) owns strict provider writes, schema4 non-secret configurations and credential persistence.
 - Newer schema loads read-only defaults; DENIED updates preserve bytes. Invalid current/old data
   returns INVALID; startup exits with a category log and preserves source bytes.
 - Saves use exclusive temporary files, flush/close and same-directory rename. Windows transient
@@ -63,7 +63,7 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 ## Key behaviors
 
 - REQ-DATA-4a030001 — first-run defaults and stable unique identity.
-- REQ-DATA-4a030002 — validated version-0/1 migration to3 with backup; REQ-DATA-87619ef8 covers version2.
+- REQ-DATA-4a030002 — validated version-0/1 migration to4 with backup; REQ-DATA-87619ef8 covers version2; REQ-DATA-f69eaef6 covers version3 and validated model references.
 - REQ-DATA-dfbfac7c — ten typed recents; [workbench](workbench.md) owns lifecycle and missing state.
 - REQ-REL-4a030003 — interrupted saves preserve valid settings.
 - REQ-DATA-4a030004 — future schemas remain read-only and unchanged.

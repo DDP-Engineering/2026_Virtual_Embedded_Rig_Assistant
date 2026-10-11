@@ -6,7 +6,7 @@ VERA is the Virtual Embedded Rig Assistant desktop product for embedded engineer
 
 ## Product responsibilities
 
-The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React provides Welcome/App Settings and responsive panels through the API and TanStack Query, with persisted theme/text scale, en/ro/de i18next presentation and browser mock mode. Core owns schema3 settings through host ports and the workbench folder lifecycle, YAML/config/pinned saves, locks, recents, ignored-path completion and per-workbench checksummed SQLite migrations/backups with session/message/event storage; main provides portable paths, atomic filesystem, safeStorage credentials and redacting logs. Providers configuration has strict list/save/remove IPC, masked localized forms, per-save weak-storage consent and metadata-only renderer queries. CLI provides its source skeleton.
+The software root contains four ESM workspaces and strict TypeScript tooling with import-boundary regression tests. Desktop main owns the hardened Electron shell, confined local asset protocol, window geometry and validated IPC dispatch. Shared supplies zod channel/error/event schemas; sandboxed preload exposes window.vera invoke/subscribe. React provides Welcome/App Settings and responsive panels through the API and TanStack Query, with persisted theme/text scale, en/ro/de i18next presentation and browser mock mode. Core owns schema4 settings through host ports and the workbench folder lifecycle, YAML/config/pinned saves, locks, recents, ignored-path completion and per-workbench checksummed SQLite migrations/backups with session/message/event storage; main provides portable paths, atomic filesystem, safeStorage credentials and redacting logs. Providers configuration has strict list/save/remove IPC, masked localized forms, per-save weak-storage consent and metadata-only renderer queries. Core also supplies the exact-pinned pi-ai gateway, current model budgets/catalogs, structured scrubbed failures and four-step provider tests. Instrumented builds compose deterministic replay; production omits that seam. CLI provides its source skeleton.
 
 ## Supported operation
 
@@ -25,6 +25,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 [IPC boundary](../knowledge/ipc-boundary.md) routes channels, errors, events, subscriptions and API/mock metadata.
 
 [Providers](../knowledge/providers.md) routes credential encryption, consent, redaction, endpoint configuration and masked forms.
+
+[LLM gateway](../knowledge/llm-gateway.md) routes model selection/capabilities/catalogs, connection tests, replay and manual smoke.
 
 [Application data](../knowledge/app-data.md) routes settings, migrations, portable locations, atomic saves and redacting logs.
 

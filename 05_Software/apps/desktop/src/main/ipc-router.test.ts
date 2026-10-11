@@ -15,6 +15,8 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "providers.models": unused,
+  "providers.test": unused,
   "providers.list": unused,
   "providers.save": unused,
   "providers.remove": unused,

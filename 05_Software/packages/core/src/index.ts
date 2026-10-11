@@ -1,3 +1,6 @@
+export * from "./llm/connection.js";
+export * from "./llm/gateway.js";
+export * from "./llm/providers.js";
 export * from "./llm/scrub.js";
 export * from "./ports.js";
 export * from "./settings/service.js";

@@ -2,6 +2,57 @@ import type { Request } from "@vera/shared";
 import { beforeAll, expect, it, vi } from "vitest";
 
 let createMockApi: typeof import("./mockApi.js").createMockApi;
+it("mock OpenAI catalog is offline before auth and honors explicit model selection", async () => {
+  const fixtureCredential = "fake-mock-key-private-123";
+  const { api } = createMockApi();
+  const before = await api.invoke("providers.models", { id: "openai" });
+  expect(before.reachability).toBe("skipped");
+  expect(before.models.length).toBeGreaterThan(0);
+  const model = before.models[0]?.id;
+  if (!model) throw Error("fixture model");
+  await api.invoke("providers.save", { provider: "openai", apiKey: fixtureCredential });
+  expect(await api.invoke("providers.models", { id: "openai" })).toEqual(before);
+  const known = await api.invoke("providers.test", { id: "openai", model });
+  expect(known.steps.map((s) => s.status)).toEqual(["pass", "pass", "pass", "pass"]);
+  const missing = await api.invoke("providers.test", { id: "openai", model: "unknown-fixture" });
+  expect(missing.steps.map((s) => s.status)).toEqual(["pass", "fail", "skipped", "skipped"]);
+  expect(missing.steps[1]?.error?.code).toBe("NOT_FOUND");
+});
+it("mock custom override validates references and does not persist capability on another model", async () => {
+  const { api } = createMockApi();
+  await api.invoke("providers.save", {
+    provider: "custom",
+    config: { name: "Fixture", baseUrl: "http://localhost:11434/v1", model: "configured" },
+  });
+  const on = vi.fn();
+  api.subscribe("app", on);
+  await api.invoke("providers.test", { id: "custom:fixture", model: "alternate" });
+  expect(on).not.toHaveBeenCalled();
+  expect((await api.invoke("providers.list", {})).custom[0]?.supportsTools).toBeUndefined();
+  const invalid = await api.invoke("providers.test", { id: "custom:fixture", model: "bad model" });
+  expect(invalid.steps[1]).toMatchObject({ status: "fail", error: { code: "INVALID" } });
+});
+it("mock catalogs and connection results preserve four-step contract including failed tools", async () => {
+  const { api } = createMockApi();
+  await api.invoke("providers.save", {
+    provider: "custom",
+    config: {
+      name: "No tools",
+      baseUrl: "http://127.0.0.1:11434/v1",
+      model: "mock/model",
+      supportsTools: false,
+    },
+  });
+  const catalog = await api.invoke("providers.models", { id: "custom:no-tools" });
+  expect(catalog.models[0]).toMatchObject({ reference: "custom:no-tools/mock/model", contextWindow: 32768 });
+  const test = await api.invoke("providers.test", { id: "custom:no-tools" });
+  expect(test.steps.map((s) => s.status)).toEqual(["pass", "pass", "fail", "pass"]);
+  await expect(api.invoke("providers.models", { id: "custom:missing" })).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  const failed = await api.invoke("providers.test", { id: "openai" });
+  expect(failed.steps.map((s) => s.status)).toEqual(["fail", "fail", "skipped", "skipped"]);
+});
 beforeAll(async () => {
   const files = import.meta.glob("./mockApi.ts");
   expect(Object.keys(files), "in-memory mock boundary exists").toContain("./mockApi.ts");
@@ -26,7 +77,7 @@ it("mock settings use the same validated shape, immutable id and post-update eve
   const { api } = createMockApi();
   const get = () => api.invoke("app.settings.get", {});
   const initial = await get();
-  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 3, theme: "system" } });
+  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 4, theme: "system" } });
   const on = vi.fn();
   const stop = api.subscribe("app", on);
   await api.invoke("app.settings.update", { theme: "dark" });

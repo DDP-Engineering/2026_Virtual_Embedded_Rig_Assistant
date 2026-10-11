@@ -19,7 +19,7 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 ## Public interface
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
-- providers.list/save/remove use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
+- providers.list/save/remove/models/test use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
 - app.info accepts a strict empty object and returns name/version/platform/arch/portable/locale.
 - vera:invoke returns a validated success/error envelope; window.vera.invoke resolves the value
   or rejects a plain VeraError. Plain error objects retain fields across contextBridge.
@@ -80,6 +80,8 @@ flowchart LR
   PRE --> ROUTER[vera:invoke / createInvokeRouter]
   ROUTER --> INFO[getAppInfo]
   ROUTER --> SETTINGS[core SettingsService]
+  ROUTER --> GATEWAY[main ProviderGateway]
+  GATEWAY --> LLM[core LlmGateway / ConnectionTest]
   ROUTER --> WORKBENCH[core WorkbenchService]
   WORKBENCH --> EMIT
   SETTINGS --> PORTS[main application-data ports]
@@ -98,7 +100,7 @@ createDeltaCoalescer is a separately tested utility whose callers supply merge p
 
 Paths relative to 05_Software.
 
-- packages/shared/src/{index,ipc,events,settings,workbench}.ts — shared public exports, invoke/error schemas and app events.
+- packages/shared/src/{index,ipc,errors,events,settings,workbench,providers}.ts — shared public exports, invoke/error schemas and app events.
 - apps/desktop/src/main/{ipc-router,events,app-info}.ts — dispatch, event utilities, native metadata.
 - apps/desktop/src/main/{ipc-router,events}.test.ts — request/error/frame/batching regression seams.
 - apps/desktop/src/main/index.ts — installs the one router and exposes the current-window emitter.

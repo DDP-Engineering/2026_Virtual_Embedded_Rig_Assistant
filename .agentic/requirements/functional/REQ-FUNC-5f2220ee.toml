@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-5f2220ee"
+title = "Expose fresh model budgets"
+status = "active"
+requirement = "Before a model request, the gateway shall expose current context, output reserve, safety margin and input budget for the selected model with valid positive custom limits."
+verification = "Inspect capabilities before any stream; switch from larger to smaller custom model and observe smaller budget; invalid or exhausted custom windows fail before network."
+affected_paths = ["05_Software/packages/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/packages/core/src/llm/gateway.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-647da472"
+title = "Scrub mapped provider failures"
+status = "active"
+requirement = "If a provider request fails, the gateway shall return a scrubbed VeraError mapping offline, auth, rate_limit with retry-after, context rejection and other provider errors."
+verification = "Loopback HTTP 401/403/429/context/500 and refused connection assert codes/reasons and absence of known credentials throughout result JSON; retained replaced secrets and hostile metadata are scrubbed."
+affected_paths = ["05_Software/packages/core/src/llm/errors.ts", "05_Software/packages/core/src/llm/stream-scrub.ts", "05_Software/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/packages/core/src/llm/gateway.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

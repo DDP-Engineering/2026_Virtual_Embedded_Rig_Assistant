@@ -7,7 +7,14 @@ export default defineConfig({
     projects: [
       "packages/*",
       "apps/*",
-      { test: { name: "tooling", include: ["tests/tooling/**/*.test.ts"], environment: "node" } },
+      {
+        test: {
+          name: "tooling",
+          setupFiles: ["tests/network-setup.ts"],
+          include: ["tests/tooling/**/*.test.ts"],
+          environment: "node",
+        },
+      },
     ],
     coverage: {
       provider: "v8",

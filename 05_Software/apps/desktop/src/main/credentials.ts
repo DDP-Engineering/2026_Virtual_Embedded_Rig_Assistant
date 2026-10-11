@@ -83,6 +83,10 @@ export class CredentialFile implements CredentialStore {
   scrub(text: string): string {
     return scrub(text, this.secrets);
   }
+  /** Main-process redaction boundary only; never included in public provider metadata. */
+  knownSecrets(): readonly string[] {
+    return [...this.secrets];
+  }
   /** Compare public data values, not protocol/schema field names. Low-entropy keys match whole values. */
   containsSecret(value: unknown): boolean {
     if (typeof value === "string")

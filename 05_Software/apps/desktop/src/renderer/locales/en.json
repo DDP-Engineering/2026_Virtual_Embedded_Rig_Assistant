@@ -19,7 +19,7 @@
     "DENIED": "The operation is not allowed.",
     "CONTEXT_LIMIT": "The context limit was reached.",
     "PROVIDER": "The provider could not complete the request.",
-    "OFFLINE": "The application is offline.",
+    "OFFLINE": "Cannot reach {{endpoint}}. Retry.",
     "INTERNAL": "Application information could not be loaded.",
     "WORKBENCH_TOO_NEW": "This workbench was created by a newer VERA version.",
     "YAML_INVALID": "Invalid YAML at line {{line}}, column {{column}}.",
@@ -137,6 +137,26 @@
     "consentTitle": "Secure credential storage unavailable",
     "consentWarning": "This computer cannot protect this key with secure encryption. Saving it on disk may expose it to anyone who can read the file. Choose whether to use it only for this run or store it without secure encryption.",
     "memoryChoice": "Use only for this run",
-    "diskChoice": "Store without secure encryption"
+    "diskChoice": "Store without secure encryption",
+    "test": "Test",
+    "testing": "Testing provider…",
+    "testComplete": "Test complete",
+    "steps": {
+      "reachability": "Reachability",
+      "authentication": "Authentication and model",
+      "tools": "Tool calling",
+      "streaming": "Streaming"
+    },
+    "results": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "skipped": "Skipped"
+    }
+  },
+  "provider": {
+    "auth": "Authentication failed. Check the saved credential in Providers settings.",
+    "rateLimit": "Provider rate limit. Retry after: {{retryAfter}}.",
+    "context": "The provider rejected the context size. Reduce input or check the configured window.",
+    "failure": "Provider error: {{message}}"
   }
 }

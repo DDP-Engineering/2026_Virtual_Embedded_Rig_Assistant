@@ -1,10 +1,53 @@
 import { z } from "zod";
+import { veraErrorSchema } from "./errors.js";
 
 export const customProviderIdSchema = z
   .string()
   .regex(/^custom:[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .max(87);
 export const providerIdSchema = z.union([z.literal("openai"), customProviderIdSchema]);
+export const modelReferenceSchema = z
+  .string()
+  .min(3)
+  .max(288)
+  .regex(/^(?:openai|chatgpt|replay|custom:[a-z0-9]+(?:-[a-z0-9]+)*)\/[^\s]+$/);
+export const modelCapabilitiesSchema = z.strictObject({
+  contextWindow: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  maxOutputTokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  safetyMargin: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  inputBudget: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  supportsTools: z.boolean().optional(),
+});
+export const gatewayProviderIdSchema = z.union([providerIdSchema, z.literal("replay")]);
+export const providerModelsRequestSchema = z.strictObject({ id: gatewayProviderIdSchema });
+export const providerTestRequestSchema = z.strictObject({
+  id: gatewayProviderIdSchema,
+  model: z.string().trim().min(1).max(200).optional(),
+});
+export const providerCatalogSchema = z.strictObject({
+  reachability: z.enum(["pass", "skipped"]),
+  models: z
+    .array(
+      modelCapabilitiesSchema.extend({
+        id: z.string().min(1).max(200),
+        name: z.string().min(1),
+        reference: modelReferenceSchema,
+      }),
+    )
+    .max(10001),
+});
+export const providerTestStepSchema = z.strictObject({
+  step: z.enum(["reachability", "authentication", "tools", "streaming"]),
+  status: z.enum(["pass", "fail", "skipped"]),
+  error: veraErrorSchema.optional(),
+});
+export const providerTestResultSchema = z
+  .strictObject({ steps: z.array(providerTestStepSchema).length(4) })
+  .refine((v) => v.steps.map((s) => s.step).join(",") === "reachability,authentication,tools,streaming");
+export type ModelCapabilities = z.infer<typeof modelCapabilitiesSchema>;
+export type ProviderCatalog = z.infer<typeof providerCatalogSchema>;
+export type ProviderTestStep = z.infer<typeof providerTestStepSchema>;
+export type ProviderTestResult = z.infer<typeof providerTestResultSchema>;
 const name = z.string().trim().min(1).max(80);
 const model = z.string().trim().min(1).max(200);
 const positive = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);

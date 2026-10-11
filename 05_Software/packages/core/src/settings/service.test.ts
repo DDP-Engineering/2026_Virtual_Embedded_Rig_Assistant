@@ -35,7 +35,28 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
-  it("migrates schema2 provider defaults to schema3 with original-byte backup and retained extensions", async () => {
+  it("migrates schema3 model references to4 with exact backup, provider/identity/extensions and newer protection", async () => {
+    const defaults = (await import("@vera/shared")).defaultSettings("00000000-0000-4000-8000-000000000001");
+    const raw = JSON.stringify({ ...defaults, schemaVersion: 3, extension: { kept: true } });
+    const h = harness(raw);
+    await h.service.load();
+    expect(h.service.get().settings.schemaVersion).toBe(4);
+    expect(h.files.get("/data/settings.json.bak-3")).toBe(raw);
+    expect(h.service.get().settings).toMatchObject({
+      installationId: defaults.installationId,
+      extension: { kept: true },
+      providers: defaults.providers,
+    });
+    await h.service.update({ defaultModel: "custom:local/org/model" });
+    expect(h.service.get().settings.defaultModel).toBe("custom:local/org/model");
+    await expect(h.service.update({ defaultModel: "invalid" })).rejects.toMatchObject({ code: "INVALID" });
+    const future = JSON.stringify({ ...defaults, schemaVersion: 5 });
+    const next = harness(future);
+    await next.service.load();
+    expect(next.service.get().readOnly).toBe(true);
+    expect(next.files.get("/data/settings.json")).toBe(future);
+  });
+  it("migrates schema2 provider defaults to schema4 with original-byte backup and retained extensions", async () => {
     const raw = JSON.stringify({
       schemaVersion: 2,
       installationId: "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
@@ -52,7 +73,7 @@ describe("application settings persistence", () => {
     const h = harness(raw);
     await h.service.load();
     expect(h.service.get().settings).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       providers: { openai: {}, custom: [] },
       extension: { kept: true },
       updates: { future: 9 },
@@ -71,7 +92,7 @@ describe("application settings persistence", () => {
     const h = harness(raw);
     await h.service.load();
     expect(h.service.get().settings).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       installationId: "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
       extension: { enabled: true },
       updates: { future: 9 },
@@ -79,7 +100,7 @@ describe("application settings persistence", () => {
     expect(h.files.get("/data/settings.json.bak-1")).toBe(raw);
     await h.service.update({ theme: "dark" });
     expect(JSON.parse(h.files.get("/data/settings.json") ?? "")).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       extension: { enabled: true },
       updates: { future: 9 },
     });
@@ -94,7 +115,7 @@ describe("application settings persistence", () => {
     const first = a.service.get();
     expect(first.readOnly).toBe(false);
     expect(first.settings).toEqual({
-      schemaVersion: 3,
+      schemaVersion: 4,
       installationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       language: "system",
       theme: "system",
@@ -125,7 +146,7 @@ describe("application settings persistence", () => {
     expect(h.files.get("/data/settings.json.bak-0")).toBe("previous backup");
     expect(h.files.get("/data/settings.json.bak-1")).toBe(raw);
     expect(h.service.get().settings).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       installationId: "a70d0929-51ad-4b56-a846-b290818c6fce",
       theme: "dark",
       language: "ro",
@@ -142,7 +163,7 @@ describe("application settings persistence", () => {
     await h.service.load();
     expect(h.service.get()).toMatchObject({
       readOnly: true,
-      settings: { theme: "system", schemaVersion: 3 },
+      settings: { theme: "system", schemaVersion: 4 },
     });
     await expect(h.service.update({ theme: "dark" })).rejects.toMatchObject({ code: "DENIED" });
     expect(h.files.get("/data/settings.json")).toBe(raw);

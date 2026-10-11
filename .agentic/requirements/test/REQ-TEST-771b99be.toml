@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-TEST-771b99be"
+title = "Compile replay registration only into test builds"
+status = "active"
+requirement = "Where a test build includes VERA_REPLAY_DIR, main shall register and select replay from that directory while release emission omits the registration seam."
+verification = "Build both actual modes and inspect all emitted main JavaScript; instrumented native IPC uses replay and release contains neither environment marker nor replay module code."
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

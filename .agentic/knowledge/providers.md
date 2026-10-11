@@ -3,11 +3,11 @@
 ## Routing
 
 Select for credentials.json, CredentialStore, safeStorage, weak-storage consent, known-secret scrub,
-providers.list/save/remove and Settings Providers. Start with main credentials.ts and
+providers.list/save/remove and Settings Providers. Connection tests route to [LLM gateway](llm-gateway.md). Start with main credentials.ts and
 provider-settings.ts under05_Software/apps/desktop/src. Configuration schemas live in shared providers.ts.
 [Application data](app-data.md) owns settings migration/atomic ports; [IPC boundary](ipc-boundary.md)
 owns sender/schema transport; [renderer foundation](renderer-foundation.md) owns shell/accessibility.
-Gateway, model requests and OAuth orchestration have their own later implementation seams.
+[LLM gateway](llm-gateway.md) owns model requests, capabilities and connection tests. OAuth orchestration has its own seam.
 
 ## Purpose and boundaries
 
@@ -22,7 +22,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - CredentialFile load/read/list/modify/delete/checkpoint/close supplies schema1 encrypted base64 records and
   registered logging/scrub. storage returns encrypted/unprotected/memory/null; secureStorage identifies
   an available non-basic_text backend. Explicit storageConsent controls weak writes. Main-only checkpoint returns an undo operation that restores the exact encoded entry, value and location without crypto or new consent.
-- ProviderSettings list/save/remove/close serializes provider edits and supplies configured/hint metadata.
+- ProviderSettings list/save/remove/recordToolSupport/close serializes provider edits and supplies configured/hint metadata.
 - providers.list({}) returns OpenAI/custom configurations, secureStorage and readOnly. Public schemas
   select known non-secret fields. providers.save returns saved or consent-required; remove returns{}.
 - OpenAI model omission retains it, empty string clears it; credential omission retains, empty clears.
@@ -44,7 +44,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
   text is rejected; low-entropy known keys match whole text values for this guard.
 - Strict provider writes validate unique names/slugs, HTTP(S)/v1 URLs without credentials/query/fragment,
   positive safe integer budgets with max(1024,ceil(context*0.05)) safety margin, and secret-free fields.
-- Settings schema3 migrations preserve identity/extensions with original-byte backups. Future settings
+- Settings schema4 migrations preserve identity/extensions with original-byte backups. Future settings
   are read-only. Settings failure restores the exact encoded entry and prior credential/location, retaining the previous disk/memory decision across crypto availability changes. Two-file crash atomicity is not claimed.
 - UI saves avoid Query mutation caches for key-bearing requests and clear password drafts on success/cancel.
   Native modal consent offers memory, weak disk or cancel; controls use en/ro/de and WP04 layouts/focus.
@@ -66,7 +66,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - REQ-SEC-47e726a7 — explicit weak-storage decision and memory-only refusal.
 - REQ-SEC-cf3aa5a4 — retained known-secret log/scrub registration.
 - REQ-FUNC-f19cac5e — validated configuration CRUD/defaults and rollback.
-- REQ-DATA-87619ef8 — schema2 provider migration to3.
+- REQ-DATA-87619ef8 — schema2 provider migration to4.
 - REQ-SEC-0b898261 — public metadata and bounded/short hints.
 - REQ-FUNC-6c666347 — validated provider IPC boundary.
 - REQ-UX-fb4b9424 — masked localized and accessible provider editor.
@@ -78,7 +78,7 @@ flowchart LR
  UI[Providers form] --> API[typed invoke + metadata Query]
  API --> IPC[shared strict schemas + authorized router]
  IPC --> Main[ProviderSettings]
- Main --> Settings[core SettingsService schema3]
+ Main --> Settings[core SettingsService schema4]
  Main --> Store[main CredentialFile mutex]
  Store --> Crypto[safeStorage]
  Store --> Files[atomic credentials.json]

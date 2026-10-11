@@ -166,4 +166,21 @@ export class ProviderSettings {
     this.closed = true;
     await this.queue;
   }
+  recordToolSupport(
+    config:
+      | ProviderList["custom"][number]
+      | ReturnType<SettingsService["get"]>["settings"]["providers"]["custom"][number],
+    supportsTools: boolean,
+  ): Promise<void> {
+    return this.enqueue(async () => {
+      const state = this.settings.get();
+      if (state.readOnly) return;
+      const current = state.settings.providers.custom.find((c) => c.slug === config.slug);
+      if (!current || JSON.stringify(current) !== JSON.stringify(config)) return;
+      const custom = state.settings.providers.custom.map((c) =>
+        c.slug === config.slug ? { ...c, supportsTools } : c,
+      );
+      await this.settings.update({ providers: { ...state.settings.providers, custom } });
+    });
+  }
 }

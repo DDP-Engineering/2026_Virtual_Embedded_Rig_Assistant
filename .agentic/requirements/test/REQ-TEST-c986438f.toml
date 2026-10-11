@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-TEST-c986438f"
+title = "Reject automated outbound network"
+status = "active"
+requirement = "During automated tests, the network guard shall fail any non-loopback model HTTP or socket connection while permitting scripted loopback endpoints."
+verification = "Core guard self-test rejects fetch/socket to example.invalid before traffic and permits temporary loopback server; E2E asserts no outbound attempts."
+affected_paths = ["05_Software/tests/network-guard.ts"]
+linked_tests = ["05_Software/tests/tooling/network-guard.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-53628854"
+title = "Display localized provider test results"
+status = "active"
+requirement = "When the engineer presses Test in Settings Providers, the UI shall display accessible en/ro/de per-step results through strict provider IPC with equivalent renderer mock behavior."
+verification = "Native replay and browser mock acceptance use translated controls, live status and four result rows, keyboard operation and failed tool result; response observation contains no key."
+affected_paths = ["05_Software/apps/desktop/src/renderer/components/provider-test.tsx"]
+linked_tests = ["05_Software/e2e/provider-test.spec.ts", "05_Software/e2e/mock.spec.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

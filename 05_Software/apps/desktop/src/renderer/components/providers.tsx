@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { ProviderTest } from "./provider-test.js";
 
 type Custom = ProviderList["custom"][number];
 type Save = (request: ProviderSave, done: () => void) => Promise<void>;
@@ -117,6 +118,17 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
                   >
                     {t("providers.remove")}
                   </button>
+                  <ProviderTest
+                    id={provider.id as `custom:${string}`}
+                    version={JSON.stringify([
+                      provider.id,
+                      provider.baseUrl,
+                      provider.model,
+                      provider.contextWindow,
+                      provider.maxOutputTokens,
+                    ])}
+                    disabled={pending || editing !== undefined}
+                  />
                 </div>
               </li>
             ))}
@@ -223,6 +235,11 @@ function OpenAI({
           </div>
         </fieldset>
       </form>
+      <ProviderTest
+        id="openai"
+        version={JSON.stringify([provider.configured, provider.model, provider.hint])}
+        disabled={disabled || !provider.configured || !provider.model}
+      />
     </div>
   );
 }

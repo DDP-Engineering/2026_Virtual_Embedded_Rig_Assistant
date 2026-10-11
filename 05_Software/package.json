@@ -25,7 +25,8 @@
     "postinstall": "install-electron",
     "package": "node scripts/package.mjs",
     "package:test": "node scripts/package.mjs --test",
-    "prepare:model": "node scripts/prepare-model.mjs"
+    "prepare:model": "node scripts/prepare-model.mjs",
+    "smoke:live": "node scripts/smoke-live.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

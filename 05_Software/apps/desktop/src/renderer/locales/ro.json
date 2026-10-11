@@ -19,7 +19,7 @@
     "DENIED": "Operația nu este permisă.",
     "CONTEXT_LIMIT": "Limita contextului a fost atinsă.",
     "PROVIDER": "Furnizorul nu a putut finaliza cererea.",
-    "OFFLINE": "Aplicația este offline.",
+    "OFFLINE": "Nu se poate accesa {{endpoint}}. Reîncearcă.",
     "INTERNAL": "Informațiile aplicației nu au putut fi încărcate.",
     "WORKBENCH_TOO_NEW": "Workbench-ul a fost creat de o versiune VERA mai nouă.",
     "YAML_INVALID": "YAML invalid la linia {{line}}, coloana {{column}}.",
@@ -137,6 +137,26 @@
     "consentTitle": "Stocarea sigură a credențialelor nu este disponibilă",
     "consentWarning": "Acest calculator nu poate proteja cheia prin criptare sigură. Salvarea pe disc o poate expune oricui poate citi fișierul. Alege dacă o folosești doar pentru această rulare sau o salvezi fără criptare sigură.",
     "memoryChoice": "Folosește doar pentru această rulare",
-    "diskChoice": "Salvează fără criptare sigură"
+    "diskChoice": "Salvează fără criptare sigură",
+    "test": "Testează",
+    "testing": "Se testează furnizorul…",
+    "testComplete": "Test încheiat",
+    "steps": {
+      "reachability": "Accesibilitate",
+      "authentication": "Autentificare și model",
+      "tools": "Apelare instrumente",
+      "streaming": "Streaming"
+    },
+    "results": {
+      "pass": "Reușit",
+      "fail": "Eșuat",
+      "skipped": "Omise"
+    }
+  },
+  "provider": {
+    "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
+    "rateLimit": "Limita furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
+    "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
+    "failure": "Eroare furnizor: {{message}}"
   }
 }

@@ -440,7 +440,7 @@ test("newer settings stay read-only and byte-identical through native IPC and sh
     const snapshot = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
-    expect(snapshot).toMatchObject({ readOnly: true, settings: { schemaVersion: 3, theme: "system" } });
+    expect(snapshot).toMatchObject({ readOnly: true, settings: { schemaVersion: 4, theme: "system" } });
     await page.locator('[data-i18n="nav.settings"]').click();
     await expect(page.locator('[data-i18n="settings.readOnly"]')).toBeVisible();
     for (const control of await page.locator("[data-theme-option], [data-scale], #language").all())

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { providerSettingsSchema } from "./providers.js";
+import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 export const recentWorkbenchSchema = z.looseObject({
@@ -16,7 +16,7 @@ const mutable = {
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
   textScale: z.union([z.literal(0.875), z.literal(1), z.literal(1.125), z.literal(1.25), z.literal(1.5)]),
-  defaultModel: z.null(),
+  defaultModel: modelReferenceSchema.nullable(),
   providers: providerSettingsSchema,
   updates: z.looseObject({ mode: z.literal("notify"), channel: z.literal("latest") }),
   recentWorkbenches: z.array(recentWorkbenchSchema).max(10),
@@ -24,7 +24,7 @@ const mutable = {
 };
 
 export const settingsSchema = z.looseObject({
-  schemaVersion: z.literal(3),
+  schemaVersion: z.literal(4),
   installationId: z.uuid(),
   ...mutable,
 });
@@ -45,18 +45,25 @@ export const settingsPatchSchema = z.strictObject({
     .optional(),
 });
 export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema, readOnly: z.boolean() });
+export const settingsV3Schema = settingsSchema.extend({
+  schemaVersion: z.literal(3),
+  defaultModel: z.null(),
+});
 export const settingsV1Schema = settingsSchema.extend({
   schemaVersion: z.literal(1),
+  defaultModel: z.null(),
   providers: z.strictObject({}),
   recentWorkbenches: z.array(z.never()),
 });
 export const settingsV2Schema = settingsSchema.extend({
   schemaVersion: z.literal(2),
+  defaultModel: z.null(),
   providers: z.strictObject({}),
 });
 export const settingsV0Schema = z.looseObject({
   ...settingsPatchSchema.shape,
   schemaVersion: z.literal(0),
+  defaultModel: z.null().optional(),
   providers: z.strictObject({}).optional(),
   installationId: z.uuid().optional(),
   recentWorkbenches: z.array(z.never()).optional(),
@@ -83,7 +90,7 @@ export function mergeSettings(current: Settings, patch: SettingsServicePatch): S
 }
 export function defaultSettings(installationId: string): Settings {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     installationId,
     language: "system",
     theme: "system",

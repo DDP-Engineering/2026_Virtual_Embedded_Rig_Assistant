@@ -1,0 +1,372 @@
+import { once } from "node:events";
+import { existsSync } from "node:fs";
+import { createServer, type RequestListener, type Server } from "node:http";
+import { defaultSettings } from "@vera/shared";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { CredentialStore } from "../ports.js";
+import type { LlmEvent, LlmGateway } from "./gateway.js";
+import { scrub } from "./scrub.js";
+
+let createPiAiGateway: typeof import("./providers.js")["createPiAiGateway"];
+let resolveModelReference: typeof import("./gateway.js")["resolveModelReference"];
+let testConnection: typeof import("./connection.js")["testConnection"];
+beforeAll(async () => {
+  expect(existsSync(new URL("./providers.ts", import.meta.url)), "configured model gateway exists").toBe(
+    true,
+  );
+  ({ createPiAiGateway } = await import("./providers.js"));
+  ({ resolveModelReference } = await import("./gateway.js"));
+  ({ testConnection } = await import("./connection.js"));
+});
+const secret = "fictional-credential-private-123456";
+const credentials: CredentialStore = {
+  read: async () => ({ type: "api_key", key: secret }),
+  list: async () => [],
+  modify: async (_id, fn) => fn(undefined),
+  delete: async () => {},
+};
+let servers: Server[] = [];
+afterEach(async () => {
+  for (const server of servers) {
+    server.closeAllConnections();
+    await new Promise<void>((r) => server.close(() => r()));
+  }
+  servers = [];
+});
+async function endpoint(handler: RequestListener) {
+  const server = createServer(handler);
+  servers.push(server);
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  if (!address || typeof address === "string") throw Error("address");
+  return { server, url: `http://127.0.0.1:${address.port}/v1` };
+}
+function setup(url: string) {
+  const settings = defaultSettings("00000000-0000-4000-8000-000000000001");
+  settings.providers.custom = [
+    {
+      slug: "local",
+      name: "Local",
+      baseUrl: url,
+      model: "org/model",
+      contextWindow: 32768,
+      maxOutputTokens: 4096,
+    },
+  ];
+  const gateway = createPiAiGateway({
+    settings: () => settings,
+    credentials,
+    scrub: (s) => scrub(s, [secret]),
+    now: () => 0,
+  });
+  return { settings, gateway };
+}
+async function events(gateway: LlmGateway, output?: number) {
+  const results: LlmEvent[] = [];
+  for await (const event of gateway.stream({
+    model: "custom:local/org/model",
+    system: "system",
+    messages: [{ role: "user", content: "hi", timestamp: 0 }],
+    tools: [],
+    signal: new AbortController().signal,
+    ...(output ? { maxOutputTokens: output } : {}),
+  }))
+    results.push(event);
+  return results;
+}
+describe("model gateway", () => {
+  it.each(["stop", secret])("scrubs all assistant metadata on terminal reason %s", async (finish) => {
+    const retained = "fictional-retained-key-do-not-return";
+    const { url } = await endpoint((_req, res) => {
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.write(
+        `data: ${JSON.stringify({ id: secret, model: retained, choices: [{ index: 0, delta: { content: "OK", reasoning_details: [{ type: "reasoning.encrypted", data: retained, id: secret }] }, finish_reason: finish }] })}\n\n`,
+      );
+      res.end("data: [DONE]\n\n");
+    });
+    const { settings } = setup(url);
+    const gateway = createPiAiGateway({
+      settings: () => settings,
+      credentials,
+      now: () => 0,
+      knownSecrets: () => [secret, retained],
+      scrub: (s) => scrub(s, [secret, retained]),
+    });
+    const out = await events(gateway);
+    expect(JSON.stringify(out)).not.toContain(secret);
+    expect(JSON.stringify(out)).not.toContain(retained);
+    const last = out.at(-1);
+    expect(last?.type).toBe(finish === "stop" ? "done" : "error");
+    if (last?.type === "done" || last?.type === "error") {
+      const message = last.type === "done" ? last.message : last.partial;
+      expect(message).toMatchObject({
+        role: "assistant",
+        responseId: "[REDACTED]",
+        responseModel: "[REDACTED]",
+      });
+      expect(message?.content.find((c) => c.type === "thinking")).toHaveProperty("thinkingSignature");
+    }
+  });
+  it.each([200, 500])("uses host Clock for terminal assistant messages on HTTP %i", async (status) => {
+    const { url } = await endpoint((_req, res) => {
+      if (status === 500)
+        return void res
+          .writeHead(500, { "content-type": "application/json" })
+          .end(JSON.stringify({ error: { message: "unavailable" } }));
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.write(
+        `data: ${JSON.stringify({ id: "clock", choices: [{ index: 0, delta: { content: "OK" }, finish_reason: "stop" }] })}\n\n`,
+      );
+      res.end("data: [DONE]\n\n");
+    });
+    const last = (await events(setup(url).gateway)).at(-1);
+    if (last?.type !== "done" && last?.type !== "error") throw Error("terminal response");
+    expect(last.type === "done" ? last.message.timestamp : last.partial?.timestamp).toBe(0);
+  });
+  it("scrubs host and injected gateway failures in connection results", async () => {
+    const { gateway } = setup("http://127.0.0.1:1/v1");
+    const failing: LlmGateway = {
+      ...gateway,
+      models: async () => {
+        throw new Error(secret);
+      },
+      capabilities: () => {
+        throw new Error(secret);
+      },
+    };
+    const result = await testConnection(
+      failing,
+      "custom:local",
+      undefined,
+      undefined,
+      () => 0,
+      (s) => scrub(s, [secret]),
+    );
+    expect(JSON.stringify(result)).not.toContain(secret);
+    expect(result.steps).toHaveLength(4);
+  });
+  it("lists the static OpenAI catalog before auth without network and ignores ambient keys", async () => {
+    const { gateway } = setup("http://127.0.0.1:1/v1");
+    expect((await gateway.models("openai")).models.length).toBeGreaterThan(0);
+    const cols = gateway.collections;
+    expect(cols.api.getModels("openai").length).toBeGreaterThan(0);
+  });
+  it("scrubs secrets spanning text deltas and preserves final usage", async () => {
+    const { url } = await endpoint((_req, res) => {
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      for (const text of [secret.slice(0, 12), secret.slice(12), " safe"])
+        res.write(
+          `data: ${JSON.stringify({ id: "x", object: "chat.completion.chunk", created: 0, model: "org/model", choices: [{ index: 0, delta: { content: text }, finish_reason: null }] })}\n\n`,
+        );
+      res.write(
+        `data: ${JSON.stringify({ id: "x", object: "chat.completion.chunk", created: 0, model: "org/model", choices: [{ index: 0, delta: {}, finish_reason: "stop" }], usage: { prompt_tokens: 5, completion_tokens: 6, total_tokens: 11 } })}\n\n`,
+      );
+      res.end("data: [DONE]\n\n");
+    });
+    const out = await events(setup(url).gateway);
+    const text = out
+      .filter((e) => e.type === "text")
+      .map((e) => (e.type === "text" ? e.delta : ""))
+      .join("");
+    expect(text).not.toContain(secret);
+    expect(text).toContain("[REDACTED]");
+    expect(out.at(-1)).toMatchObject({ type: "done", message: { usage: { input: 5, output: 6 } } });
+  });
+  it("resolves exact session then workbench then app references, keeping model slashes", () => {
+    expect(resolveModelReference("custom:a/org/model", "openai/b", "openai/c")).toBe("custom:a/org/model");
+    expect(resolveModelReference(null, "openai/b", "openai/c")).toBe("openai/b");
+    expect(resolveModelReference(undefined, null, "openai/c")).toBe("openai/c");
+    expect(() => resolveModelReference(null, null, null)).toThrow();
+    expect(() => resolveModelReference("invalid", null, "openai/c")).toThrow();
+  });
+  it("keeps subscription empty and exposes fresh bounded capabilities before streaming", () => {
+    const { settings, gateway } = setup("http://127.0.0.1:1/v1");
+    expect(gateway.collections.subscription.getProviders()).toEqual([]);
+    expect(gateway.collections.api.getProviders().map((p) => p.id)).toEqual(["openai", "custom:local"]);
+    expect(gateway.capabilities("custom:local/org/model")).toMatchObject({
+      contextWindow: 32768,
+      maxOutputTokens: 4096,
+      inputBudget: 27033,
+      safetyMargin: 1639,
+    });
+    expect(gateway.capabilities("custom:local/org/model", 99999).maxOutputTokens).toBe(4096);
+    const custom = settings.providers.custom[0];
+    if (!custom) throw Error("custom configuration");
+    custom.contextWindow = 8192;
+    custom.maxOutputTokens = 2048;
+    expect(gateway.capabilities("custom:local/org/model")).toMatchObject({
+      contextWindow: 8192,
+      inputBudget: 5120,
+    });
+    custom.contextWindow = 1000;
+    expect(() => gateway.capabilities("custom:local/org/model")).toThrow();
+  });
+  it("lists actual custom IDs with configured budgets and retains configured model", async () => {
+    const { url } = await endpoint((_req, res) =>
+      res
+        .writeHead(200, { "content-type": "application/json" })
+        .end(JSON.stringify({ data: [{ id: "found" }] })),
+    );
+    const { gateway } = setup(url);
+    const catalog = await gateway.models("custom:local");
+    expect(catalog.reachability).toBe("pass");
+    expect(catalog.models.map((m) => m.id)).toEqual(["org/model", "found"]);
+    expect(catalog.models[1]).toMatchObject({ contextWindow: 32768, maxOutputTokens: 4096 });
+  });
+  it.each(["bad model", "bad\nmodel"])(
+    "rejects malformed discovered ID %j at the core catalog boundary",
+    async (id) => {
+      const { url } = await endpoint((req, res) => {
+        if (req.url?.endsWith("/models"))
+          return void res
+            .writeHead(200, { "content-type": "application/json" })
+            .end(JSON.stringify({ data: [{ id }] }));
+        res
+          .writeHead(401, { "content-type": "application/json" })
+          .end(JSON.stringify({ error: { message: "denied" } }));
+      });
+      const { gateway } = setup(url);
+      await expect(gateway.models("custom:local")).rejects.toMatchObject({ code: "PROVIDER" });
+      const result = await testConnection(gateway, "custom:local");
+      expect(result.steps).toHaveLength(4);
+      expect(result.steps[0]).toMatchObject({
+        step: "reachability",
+        status: "fail",
+        error: { code: "PROVIDER" },
+      });
+    },
+  );
+  it("skips unsupported listing and runs conservative scripted tool/stream requests through pi-ai", async () => {
+    const payloads: Record<string, unknown>[] = [];
+    const { url } = await endpoint((req, res) => {
+      if (req.url?.endsWith("/models")) return void res.writeHead(404).end();
+      let data = "";
+      req.on("data", (b) => (data += b));
+      req.on("end", () => {
+        const body = JSON.parse(data);
+        payloads.push(body);
+        res.writeHead(200, { "content-type": "text/event-stream" });
+        const send = (delta: unknown, finish: unknown = null) =>
+          res.write(
+            `data: ${JSON.stringify({ id: "script", object: "chat.completion.chunk", created: 0, model: "org/model", choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`,
+          );
+        if (body.tools) {
+          send({
+            tool_calls: [
+              {
+                index: 0,
+                id: "call_echo",
+                type: "function",
+                function: { name: "echo", arguments: '{"text":"OK"}' },
+              },
+            ],
+          });
+          send({}, "tool_calls");
+        } else {
+          send({ content: "O" });
+          send({ content: "K" });
+          send({}, "stop");
+        }
+        res.end("data: [DONE]\n\n");
+      });
+    });
+    const { gateway } = setup(url);
+    const result = await testConnection(gateway, "custom:local");
+    expect(result.steps.map((s) => [s.step, s.status])).toEqual([
+      ["reachability", "skipped"],
+      ["authentication", "pass"],
+      ["tools", "pass"],
+      ["streaming", "pass"],
+    ]);
+    expect(payloads.length).toBe(3);
+    for (const body of payloads) {
+      expect(body).not.toHaveProperty("store");
+      expect(body).not.toHaveProperty("reasoning_effort");
+      expect(JSON.stringify(body)).not.toContain('"developer"');
+    }
+  });
+  it.each([true, false])(
+    "probes streaming beyond a single-token OK and still rejects coalesced text (chunked=%s)",
+    async (chunked) => {
+      const { url } = await endpoint((req, res) => {
+        if (req.method === "GET")
+          return void res
+            .writeHead(200, { "content-type": "application/json" })
+            .end(JSON.stringify({ data: [{ id: "org/model" }] }));
+        let data = "";
+        req.on("data", (part) => {
+          data += part;
+        });
+        req.on("end", () => {
+          const body = JSON.parse(data);
+          res.writeHead(200, { "content-type": "text/event-stream" });
+          const send = (delta: unknown, finish: string | null = null) =>
+            res.write(
+              `data: ${JSON.stringify({ id: "short-ok", choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`,
+            );
+          if (body.tools) {
+            send({
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "echo",
+                  type: "function",
+                  function: { name: "echo", arguments: '{"text":"OK"}' },
+                },
+              ],
+            });
+            send({}, "tool_calls");
+          } else {
+            const short = body.messages.at(-1)?.content === "Reply with OK.";
+            const words = short
+              ? ["OK"]
+              : ["This ", "connection ", "supports ", "incremental ", "streaming."];
+            for (const content of chunked ? words : [words.join("")]) send({ content });
+            send({}, "stop");
+          }
+          res.end("data: [DONE]\n\n");
+        });
+      });
+      const result = await testConnection(setup(url).gateway, "custom:local");
+      expect(result.steps.map((s) => s.status)).toEqual(["pass", "pass", "pass", chunked ? "pass" : "fail"]);
+    },
+  );
+  it.each([
+    [401, "auth"],
+    [403, "auth"],
+    [429, "rate_limit"],
+    [400, "context"],
+    [500, "provider"],
+  ])("maps HTTP %i safely with retry-after and no automatic retry", async (status, reason) => {
+    let calls = 0;
+    const { url } = await endpoint((_req, res) => {
+      calls++;
+      res.writeHead(status, { "content-type": "application/json", "retry-after": "7" }).end(
+        JSON.stringify({
+          error: {
+            message: `${status === 400 ? "maximum context length exceeded" : "rejected"} ${secret}`,
+          },
+        }),
+      );
+    });
+    const result = await events(setup(url).gateway);
+    const last = result.at(-1);
+    expect(last).toMatchObject({ type: "error", error: { code: "PROVIDER", params: { reason } } });
+    if (status === 429) expect(last).toMatchObject({ error: { params: { retryAfter: "7" } } });
+    expect(JSON.stringify(result)).not.toContain(secret);
+    expect(calls).toBe(1);
+  });
+  it("maps refused connection OFFLINE and rejects unknown providers/models without network", async () => {
+    const { url, server } = await endpoint((_req, res) => res.end());
+    await new Promise<void>((r) => server.close(() => r()));
+    servers = [];
+    expect((await events(setup(url).gateway)).at(-1)).toMatchObject({
+      type: "error",
+      error: { code: "OFFLINE" },
+    });
+    const gateway = setup(url).gateway;
+    expect(() => gateway.capabilities("chatgpt/model")).toThrow();
+    expect(() => gateway.capabilities("openai/invented-model")).toThrow();
+  });
+});

@@ -36,6 +36,7 @@ source = [
     "05_Software/biome.json",
     "05_Software/tsconfig*.json",
     "05_Software/playwright.config.ts",
+    "05_Software/vitest.config.ts",
     "05_Software/packages/",
     "05_Software/apps/",
     "05_Software/scripts/",
@@ -43,6 +44,7 @@ source = [
 ]
 tests = [
     "05_Software/e2e/",
+    "05_Software/tests/",
     "05_Software/packages/*/test/",
     "05_Software/**/*.test.ts",
     "05_Software/**/*.test.tsx",

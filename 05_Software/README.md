@@ -87,15 +87,15 @@ clean/offline Windows and VC++ runtime independence proof, and release smoke rem
 before final release.
 
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
-app.info, app.settings.get/update and app subscriptions in memory. The API exposes
+app.info, app.settings.get/update and app subscriptions in memory. The OpenAI browser fixture catalog contains mock-openai and is available offline before auth; mock Test honors explicit model overrides and separate authentication. The API exposes
 getSettings/updateSettings returning {settings,readOnly}. TanStack Query owns metadata and settings snapshots; mutations apply confirmed preferences and settings.changed invalidates the cache.
 i18next catalogs in `src/renderer/locales/{en,ro,de}.json` cover labels, accessible names and structured error keys/params. System language resolves the OS locale, with English fallback. App subscriptions are invalidation signals; later event domains
 add their own schemas and services. `portable` reports a `vera.portable` marker beside the executable;
 the regular marker selects adjacent data before readiness. Installed mode uses Electron userData,
 with --user-data-dir available for isolated tests. Selected portable/override directories are created
 before Electron setPath and readiness; existing contents persist and creation errors propagate.
-Settings live in settings.json, schema version 3.
-Version 0 migrates after an exclusive bak-n; future schemas expose read-only defaults.
+Settings live in settings.json, schema version 4; defaultModel is a nullable validated provider/model reference.
+Versions0/1/2/3 migrate after an exclusive original-byte bak-n; future schemas expose read-only defaults.
 Accepted partial updates serialize and emit settings.changed after successful atomic saves.
 Host logs retain seven UTC daily JSON-line files under userData/logs and redact registered secrets.
 [Application data](../.agentic/knowledge/app-data.md) routes schemas, migrations and host adapters.
@@ -107,10 +107,27 @@ when returning to Electron development. The mock fixture version is taken from t
 
 ## Workbenches
 
-Welcome creates a workbench in an existing chosen folder without workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema3 settings; versions0/1/2 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the WORKBENCH.md editor; context above16KB warns and saves full content.
+Welcome creates a workbench in an existing chosen folder without workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema4 settings; versions0/1/2/3 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the WORKBENCH.md editor; context above16KB warns and saves full content.
 
 Workbench format1 retains unknown keys and warns. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
 
 For native folder-dialog acceptance, compile instrumented code by setting VERA_TEST=1 before npm run test:e2e. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
 
 Settings → Providers configures OpenAI API keys/models and multiple OpenAI-compatible `/v1` endpoints. Keys are masked and cleared after saving; only bounded hints return from main. Custom defaults are32768 context tokens and4096 output tokens, with a positive input budget after the architectural safety margin. Credential JSON uses safeStorage encryption; unavailable or Linux basic_text storage asks each time whether to keep the key only for this run or persist without secure encryption. Future settings/credential formats preserve bytes. See [.agentic/knowledge/providers.md](../.agentic/knowledge/providers.md) for the API and recovery contract.
+
+
+## Model gateway and provider tests
+
+Settings → Providers → Test reports reachability, authentication, tools and streaming separately in en/ro/de. Unsupported `/models` listing is skipped; authentication, echo-tool completion and multiple streamed text chunks are measured. A tested custom provider records `supportsTools` only if its configuration is still current and writable. Public catalogs/results contain no credential values.
+
+Core pins `@earendil-works/pi-ai`1.1.0. Model references use `providerId/modelId` and preserve slashes in model IDs. Selection is session, workbench, then app default. Fresh capabilities expose context/output limits, safety margin and input budget before dispatch. OpenAI uses its pinned static catalog; custom endpoints discover `/models` and attach configured limits to IDs. API authentication uses the main credential store; subscription collection remains empty. Malformed discovered IDs fail at the core boundary. Errors distinguish offline, authentication, rate limit and context failure. Streams scrub retained credentials across text/tool chunk boundaries and recursively scrub assistant metadata/signatures, preserve numeric usage and use the host Clock for terminal timestamps.
+
+Automated model tests use deterministic replay or loopback scripted servers. Unit tests and native/browser acceptance reject non-loopback requests. A build made with `VERA_TEST=1` can select a JSONL fixture directory through `VERA_REPLAY_DIR`; release emits neither replay implementation nor registration. Scripts use one object per line with `text`, `toolCalls:[{name,args}]` and optional first-line `match`; `replay/<filename>` selects explicitly and `replay/auto` matches the latest user text. The step is the assistant count since that user; successful tool-result JSON string fields and `{name,ref}` artifact bindings replace `{{field}}` and `{{artifact:name}}`. Core's explicit `@vera/core/replay` subpath is for tests.
+
+Run real-provider smoke manually from this folder after configuring a real OpenAI API key/model or a local OpenAI-compatible model such as Ollama in VERA:
+
+```text
+python ../02_Tools/npmw.py npm run smoke:live -- --provider custom:ollama --data <absolute VERA userData>
+```
+
+Use `--provider openai` for the stored OpenAI configuration; omit `--data` to use the installed app store. The command builds release, launches the ordinary main host, prints scrubbed per-step JSON and exits0 only when mandatory steps pass (unsupported listing may be skipped). Linux requires a desktop display or `xvfb-run -a`. Manual smoke may consume API quota; it is separate from automated checks and must be observed before declaring WP09 complete.

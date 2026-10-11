@@ -11,6 +11,7 @@ import {
   isChannel,
   mergeSettings,
   mergeWorkbench,
+  modelReferenceSchema,
   providerSlug,
   type Request,
   type Response,
@@ -23,6 +24,16 @@ import {
 import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
 import { mockAppInfo } from "./fixtures.js";
+
+const openAiFixture = {
+  id: "mock-openai",
+  name: "Mock OpenAI model",
+  reference: "openai/mock-openai",
+  contextWindow: 32768,
+  maxOutputTokens: 4096,
+  safetyMargin: 1639,
+  inputBudget: 27033,
+};
 
 export function createMockApi(
   info: AppInfo = mockAppInfo,
@@ -102,6 +113,70 @@ export function createMockApi(
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
     switch (channel) {
+      case "providers.models": {
+        const { id } = input.data as Request<"providers.models">;
+        if (id === "openai") {
+          value = { reachability: "skipped", models: [openAiFixture] };
+        } else {
+          const config = settings.providers.custom.find((c) => `custom:${c.slug}` === id);
+          if (!config) throw veraError("NOT_FOUND");
+          const safetyMargin = Math.max(1024, Math.ceil(config.contextWindow * 0.05));
+          value = {
+            reachability: "pass",
+            models: [
+              {
+                id: config.model,
+                name: config.model,
+                reference: `${id}/${config.model}`,
+                contextWindow: config.contextWindow,
+                maxOutputTokens: config.maxOutputTokens,
+                safetyMargin,
+                inputBudget: config.contextWindow - config.maxOutputTokens - safetyMargin,
+                ...(config.supportsTools === undefined ? {} : { supportsTools: config.supportsTools }),
+              },
+            ],
+          };
+        }
+        break;
+      }
+      case "providers.test": {
+        const { id, model } = input.data as Request<"providers.test">;
+        const custom = settings.providers.custom.find((c) => `custom:${c.slug}` === id);
+        if (id !== "openai" && !custom) throw veraError("NOT_FOUND");
+        const selected = model ?? (id === "openai" ? settings.providers.openai.model : custom?.model);
+        const valid = modelReferenceSchema.safeParse(`${id}/${selected ?? ""}`).success;
+        const supported = id !== "openai" || selected === openAiFixture.id;
+        const hasAuth = id !== "openai" || providerHints.has(id);
+        const authenticated = valid && supported && hasAuth;
+        const authError = { code: "PROVIDER", messageKey: "provider.auth", params: { reason: "auth" } };
+        const error = !valid ? veraError("INVALID") : !supported ? veraError("NOT_FOUND") : authError;
+        const tools = custom?.supportsTools !== false;
+        value = {
+          steps: [
+            {
+              step: "reachability",
+              status: hasAuth ? "pass" : "fail",
+              ...(hasAuth ? {} : { error: authError }),
+            },
+            {
+              step: "authentication",
+              status: authenticated ? "pass" : "fail",
+              ...(authenticated ? {} : { error }),
+            },
+            {
+              step: "tools",
+              status: authenticated ? (tools ? "pass" : "fail") : "skipped",
+              ...(authenticated && !tools ? { error: veraError("PROVIDER") } : {}),
+            },
+            { step: "streaming", status: authenticated ? "pass" : "skipped" },
+          ],
+        };
+        if (custom && authenticated && (!model || model === custom.model)) {
+          custom.supportsTools = tools;
+          emitAppEvent({ type: "settings.changed" });
+        }
+        break;
+      }
       case "providers.list": {
         const meta = (id: string, keyless = false) => ({
           configured: keyless || providerHints.has(id),

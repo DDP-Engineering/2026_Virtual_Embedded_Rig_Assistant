@@ -1,9 +1,14 @@
 import { z } from "zod";
+import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  providerCatalogSchema,
   providerListSchema,
+  providerModelsRequestSchema,
   providerRemoveSchema,
   providerSaveResultSchema,
   providerSaveSchema,
+  providerTestRequestSchema,
+  providerTestResultSchema,
 } from "./providers.js";
 import { recentWorkbenchStateSchema, settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
 import {
@@ -21,25 +26,7 @@ export function defineChannel<const Name extends string, Req extends z.ZodType, 
   return { name, request, response } as const;
 }
 
-export const veraErrorSchema = z.strictObject({
-  code: z.enum([
-    "INVALID",
-    "NOT_FOUND",
-    "CONFLICT",
-    "BUSY",
-    "DENIED",
-    "CONTEXT_LIMIT",
-    "PROVIDER",
-    "OFFLINE",
-    "INTERNAL",
-    "WORKBENCH_TOO_NEW",
-  ]),
-  messageKey: z.string().min(1),
-  params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
-});
-export type VeraError = z.infer<typeof veraErrorSchema>;
-export const veraError = (code: VeraError["code"]): VeraError => ({ code, messageKey: `errors.${code}` });
-
+export { type VeraError, veraError, veraErrorSchema } from "./errors.js";
 export const appInfoSchema = z.strictObject({
   name: z.string().min(1),
   version: z.string().min(1),
@@ -49,6 +36,8 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "providers.models": defineChannel("providers.models", providerModelsRequestSchema, providerCatalogSchema),
+  "providers.test": defineChannel("providers.test", providerTestRequestSchema, providerTestResultSchema),
   "providers.list": defineChannel("providers.list", z.strictObject({}), providerListSchema),
   "providers.save": defineChannel("providers.save", providerSaveSchema, providerSaveResultSchema),
   "providers.remove": defineChannel("providers.remove", providerRemoveSchema, z.strictObject({})),

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-f69eaef6"
+title = "Migrate model-reference settings"
+status = "active"
+requirement = "When application settings version3 is loaded, the settings service shall migrate it to version4 with a nullable provider/model default reference and an original-byte backup while preserving identity/providers/extensions and refusing newer versions read-only."
+verification = "Temporary version3 with provider/extensions migrates with exact backup; valid model reference persists; malformed reference rejects and future bytes stay unchanged."
+affected_paths = ["05_Software/packages/shared/src/settings.ts"]
+linked_tests = ["05_Software/packages/core/src/settings/service.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

@@ -402,7 +402,7 @@ legend {
   padding: 0;
   list-style: none;
 }
-.provider-list li {
+.provider-list > li {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -410,7 +410,7 @@ legend {
   padding-block: 1rem;
   border-block-start: 1px solid var(--border);
 }
-.provider-list li > div {
+.provider-list > li > div {
   min-width: 0;
   max-width: 100%;
   overflow-wrap: anywhere;
@@ -427,4 +427,18 @@ legend {
 }
 .provider-checkbox input {
   width: auto;
+}
+.provider-test {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+.provider-test-results {
+  padding-inline-start: 1.4rem;
+}
+.provider-test-results li {
+  margin-block: 0.5rem;
 }

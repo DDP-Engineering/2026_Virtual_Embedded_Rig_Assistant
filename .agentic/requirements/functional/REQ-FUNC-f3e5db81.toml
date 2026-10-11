@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-f3e5db81"
+title = "Resolve model selection precedence"
+status = "active"
+requirement = "When a model is selected, the gateway shall resolve a valid provider/model reference from session override, then workbench default, then app default."
+verification = "Supply all three references, omit each in turn, and assert the chosen exact reference; invalid or missing selection is INVALID."
+affected_paths = ["05_Software/packages/core/src/llm/gateway.ts"]
+linked_tests = ["05_Software/packages/core/src/llm/gateway.test.ts"]
+spec = "specs/REQ-FUNC-05ee1ae5.md"
+created = 2026-10-11
+updated = 2026-10-11

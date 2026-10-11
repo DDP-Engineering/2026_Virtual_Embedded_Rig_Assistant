@@ -3,7 +3,7 @@
 ## Routing
 
 Select for npm workspaces, exact dependency pins, TypeScript references, import boundaries,
-verification commands and Electron test launchers. Start at `05_Software/package.json`
+verification commands and Electron test launchers, the Node fetch/socket network guard and smoke:live. Start at `05_Software/package.json`
 and `tsconfig.json`; focused tests are `tests/tooling/`. Desktop runtime behavior belongs
 to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Tools/`.
 
@@ -24,7 +24,7 @@ which owns verified assets, native staging and artifact measurements.
 ## Invariants
 
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
-  Core pins yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules.
+  Core pins @earendil-works/pi-ai1.1.0 for the gateway, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules.
 - Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.
   Core/desktop Vitest resolve their library dependencies from source; TypeScript supplies generated output for library consumers.
 - The tooling TypeScript project references shared before compiling e2e contract consumers.
@@ -77,7 +77,7 @@ flowchart LR
 ```
 
 Dashed arrows describe npm dependency declarations, while solid arrows describe command
-execution and compilation ownership. Core exports ports/settings/workbench; shared publishes IPC/settings/workbench types/schemas;
+execution and compilation ownership. Core exports ports/settings/workbench/LLM gateway; shared publishes IPC/settings/workbench types/schemas;
 CLI retains its skeleton entrypoint.
 
 ## Files
@@ -92,6 +92,7 @@ All paths are under `05_Software/`.
 - packages/core/vitest.config.ts — core Node tests with shared source resolution.
 - `apps/cli/{package.json,tsconfig.json,src/index.ts}` — CLI skeleton.
 - `scripts/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
+- `tests/network-{guard,setup}.ts`, `tests/tooling/network-guard.test.ts` — unit-test transport interception and guard regression.
 - `e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.
 
 - scripts/check-i18n.mjs, tests/tooling/i18n.test.ts and fixtures/i18n/missing-key.json — source-catalog usage/completeness audit and actual negative CLI regression.
