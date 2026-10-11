@@ -10,8 +10,8 @@ to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Too
 ## Purpose and boundaries
 
 The software root supplies four ESM workspaces, strict compilation, Biome boundaries,
-Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC/settings schemas; core
-publishes host ports and settings services; CLI exposes its skeleton entrypoint. Desktop owns the running Electron shell and renderer-only dev mode.
+Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC/settings/workbench schemas; core
+publishes host ports, settings and workbench services; CLI exposes its skeleton entrypoint. Desktop owns the running Electron shell and renderer-only dev mode.
 
 ## Public interface
 
@@ -24,6 +24,7 @@ which owns verified assets, native staging and artifact measurements.
 ## Invariants
 
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
+  Core pins yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules.
 - Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.
   Core/desktop Vitest resolve their library dependencies from source; TypeScript supplies generated output for library consumers.
 - The tooling TypeScript project references shared before compiling e2e contract consumers.
@@ -76,7 +77,7 @@ flowchart LR
 ```
 
 Dashed arrows describe npm dependency declarations, while solid arrows describe command
-execution and compilation ownership. Core exports ports/settings; shared publishes IPC/settings types/schemas;
+execution and compilation ownership. Core exports ports/settings/workbench; shared publishes IPC/settings/workbench types/schemas;
 CLI retains its skeleton entrypoint.
 
 ## Files

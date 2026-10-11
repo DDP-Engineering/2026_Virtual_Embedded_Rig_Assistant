@@ -33,13 +33,20 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         .map((name) => readFileSync(join(mainDir, String(name)), "utf8"))
         .join("\n");
       if (flag === "1") {
+        expect(code.includes("VERA_TEST_DIALOG_PATH"), "instrumented folder override emitted").toBe(true);
         expect(code).toContain("packaging-probe");
         expect(code).toContain("I2C1_CR1");
         expect(code).toContain("allowRemoteModels");
         expect(code).toContain('import("better-sqlite3")');
         expect(code).not.toContain("Could not dynamically require");
       } else {
-        for (const marker of ["packaging-probe", "I2C1_CR1", "allowRemoteModels", "embedding-worker"]) {
+        for (const marker of [
+          "packaging-probe",
+          "I2C1_CR1",
+          "allowRemoteModels",
+          "embedding-worker",
+          "VERA_TEST_DIALOG_PATH",
+        ]) {
           expect(code).not.toContain(marker);
         }
       }

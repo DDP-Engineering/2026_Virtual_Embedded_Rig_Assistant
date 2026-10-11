@@ -1,0 +1,8 @@
+signal,pin,description
+VDD,3V3,Supply
+GND,GND,Ground
+SWDIO,PA13,Debug data
+SWCLK,PA14,Debug clock
+UART_TX,PA9,Boot output
+SCL,PB6,I2C clock
+SDA,PB7,I2C data

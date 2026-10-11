@@ -122,7 +122,7 @@ part of a workbench.
 ```
 .vera/
   .gitignore            # "*"
-  lock                  # {"pid": 1234, "app": "1.0.0", "since": "…"}; a live lock opens the workbench read-only
+  lock                  # {"pid": 1234, "app": "1.0.0", "since": "…", "token": "…"}; live pid opens read-only
   vera.db               # SQLite (§9)
   artifacts/<session-id>/<name>
   cache/extract/<sha256>.json   # extracted document text, keyed by content hash
@@ -131,6 +131,16 @@ part of a workbench.
 
 Deleting `.vera/` loses sessions and artifacts; VERA recreates the folder and reindexes documents.
 The UI warns before any action that does this.
+
+The WP-06 service serializes operations and rechecks token ownership before saves/close. Each open
+reassesses live/dead ownership, including same-folder reopen. Dead pid locks are taken over under a
+short process-owned local IPC guard (Windows named pipe/Linux abstract Unix socket); the OS releases
+it on crash. Only EADDRINUSE contention opens read-only with LOCK_GUARD_BUSY. Live owners retain
+their bytes. Completion skips symlink/junction entries,
+applies the case-insensitive permanent ignored directories and `.veraignore`, and returns at most50 relative paths.
+Config extension values must be JSON-compatible for IPC; invalid/non-finite/circular values are
+refused without changing the source. Settings schema2 stores ten typed recents, migrating0/1 with
+original backups and stable UUID/extensions; recent-entry extensions survive reopening. The workbench format remains1.
 
 ## 9. Data model (`vera.db`)
 

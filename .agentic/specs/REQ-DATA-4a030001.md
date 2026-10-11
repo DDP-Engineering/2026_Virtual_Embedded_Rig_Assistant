@@ -1,13 +1,11 @@
 # Application data and settings contract
 
 ## Data and API
-Schema version 1 holds installationId UUID, language system/en/ro/de, theme system/light/dark,
+Schema version 2 holds installationId UUID, language system/en/ro/de, theme system/light/dark,
 textScale 0.875/1/1.125/1.25/1.5, defaultModel null, providers {}, updates {mode:"notify",channel:"latest"},
-recentWorkbenches [], limits {maxToolCallsPerTurn:50}. The reserved provider/model/recent fields
-accept their current empty values; future work packages define their populated formats with migrations.
+recentWorkbenches up to ten {folder,id,name,lastOpened} entries, limits {maxToolCallsPerTurn:50}. The provider/model fields accept their current empty values. Recent folder existence is derived at read time; workbench lifecycle owns order and removal.
 The defaults are system language/theme, scale 1. Mutable patches omit installationId/schemaVersion.
-limits.maxToolCallsPerTurn accepts positive safe integers. Strict zod validation rejects unknown keys
-at each object boundary, including secret-bearing provider keys. Nested patches merge, other values replace.
+limits.maxToolCallsPerTurn accepts positive safe integers. Strict patches reject unknown/immutable fields, including secret-bearing provider keys. Persisted top-level/updates/limits/recent extensions are retained. Nested patches merge, other values replace.
 app.settings.get({}) and app.settings.update(patch) return {settings,readOnly}.
 No-op patches return the snapshot without writing or emitting. Successful changed saves emit
 settings.changed after persistence. Read-only updates reject DENIED; malformed patches reject INVALID.
@@ -16,7 +14,7 @@ settings.changed after persistence. Read-only updates reject DENIED; malformed p
 PathProvider provides userData/settings/logs; Clock supplies Date and asynchronous retry delay.
 FileAccess supplies optional UTF-8 read (absence only), atomic write and exclusive backup.
 Version 0 is the same known preference shape with schemaVersion:0 and optional missing fields/id;
-missing fields receive defaults and a missing UUID is generated. Valid existing UUID is preserved.
+missing fields receive defaults and a missing UUID is generated. Version 1 has complete preferences and empty recents. Both migrate to version 2 with original bytes backed up; valid existing UUID and extension values are preserved.
 Backup suffix starts at the source version and increments to avoid overwriting previous backups.
 Malformed/unsupported old data rejects INVALID, preserving its bytes; host startup safely logs
 the category and exits. Higher integer schema versions bypass parsing and expose read-only defaults.

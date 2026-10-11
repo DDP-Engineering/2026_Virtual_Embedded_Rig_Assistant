@@ -29,7 +29,21 @@ function fixture() {
   return { transport, listeners, bridge: createBridge(transport) };
 }
 it("infers registry types and returns validated metadata", async () => {
-  expectTypeOf<Channel>().toEqualTypeOf<"app.info" | "app.settings.get" | "app.settings.update">();
+  expectTypeOf<Channel>().toEqualTypeOf<
+    | "app.info"
+    | "app.settings.get"
+    | "app.settings.update"
+    | "app.chooseFolder"
+    | "workbench.create"
+    | "workbench.open"
+    | "workbench.close"
+    | "workbench.recent"
+    | "workbench.config.get"
+    | "workbench.config.update"
+    | "workbench.pinned.get"
+    | "workbench.pinned.update"
+    | "workbench.files"
+  >();
   expectTypeOf<Response<"app.info">>().toEqualTypeOf<typeof info>();
   expectTypeOf<Request<"app.info">>().toEqualTypeOf<Record<string, never>>();
   const { bridge, transport } = fixture();
@@ -104,4 +118,26 @@ it("delivers only app event data, validates envelopes and cleans independent sub
   expect(transport.removeListener).toHaveBeenCalledTimes(1);
   stopSecond();
   expect(listeners.size).toBe(0);
+});
+it("workbench subscriptions filter id/schema and validate config/pinned/completion channel boundaries", async () => {
+  const { bridge, transport, listeners } = fixture();
+  const id = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const on = vi.fn();
+  const stop = bridge.subscribe("workbench", id, on);
+  for (const payload of [
+    { topic: "workbench", id, event: { type: "closed" } },
+    { topic: "workbench", id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0D", event: { type: "closed" } },
+    { topic: "workbench", id, event: { type: "bad" } },
+  ])
+    for (const listener of listeners) listener({}, payload);
+  expect(on).toHaveBeenCalledExactlyOnceWith({ type: "closed" });
+  stop();
+  expect(listeners.size).toBe(0);
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: { folder: "/bench" } } as never);
+  expect(await bridge.invoke("app.chooseFolder", {})).toEqual({ folder: "/bench" });
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: ["docs/pinout.csv"] } as never);
+  expect(await bridge.invoke("workbench.files", { query: "pin" })).toEqual(["docs/pinout.csv"]);
+  await expect(
+    bridge.invoke("workbench.config.update", { patch: { id: "bad" } } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
 });

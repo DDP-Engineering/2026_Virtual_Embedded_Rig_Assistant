@@ -1,0 +1,14 @@
+format: 1
+id: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C
+name: VERA-DEMO-01
+description: Fictional embedded board bring-up workbench
+docs:
+  include: ["docs/**"]
+  exclude: []
+skills:
+  disabled: []
+tools:
+  disabled: []
+agent:
+  permission_mode: ask
+  model: null

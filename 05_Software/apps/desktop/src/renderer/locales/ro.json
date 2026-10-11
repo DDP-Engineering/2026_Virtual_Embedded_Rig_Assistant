@@ -20,7 +20,10 @@
     "CONTEXT_LIMIT": "Limita contextului a fost atinsă.",
     "PROVIDER": "Furnizorul nu a putut finaliza cererea.",
     "OFFLINE": "Aplicația este offline.",
-    "INTERNAL": "Informațiile aplicației nu au putut fi încărcate."
+    "INTERNAL": "Informațiile aplicației nu au putut fi încărcate.",
+    "WORKBENCH_TOO_NEW": "Workbench-ul a fost creat de o versiune VERA mai nouă.",
+    "YAML_INVALID": "YAML invalid la linia {{line}}, coloana {{column}}.",
+    "CONFIG_INVALID": "Configurație workbench invalidă la {{path}}, linia {{line}}."
   },
   "nav": {
     "settings": "Setări",
@@ -33,11 +36,8 @@
     "workbenches": "Spații de lucru",
     "sidebarPlaceholder": "Spațiile de lucru și sesiunile tale vor apărea aici.",
     "create": "Creează un spațiu de lucru",
-    "createPlaceholder": "Crearea spațiilor de lucru va fi disponibilă aici.",
     "open": "Deschide unul existent",
-    "openPlaceholder": "Selectarea folderului va fi disponibilă aici.",
     "recent": "Recente",
-    "recentPlaceholder": "Spațiile de lucru recente vor apărea aici.",
     "application": "Informații despre aplicație"
   },
   "settings": {
@@ -86,5 +86,28 @@
     "artifacts": "Artefacte",
     "plan": "Plan",
     "placeholder": "Conținutul panoului va fi disponibil aici."
+  },
+  "workbench": {
+    "name": "Numele workbench-ului",
+    "chooseFolder": "Alege folderul",
+    "openFolder": "Deschide folderul",
+    "openDescription": "Alege un folder care conține workbench.yaml.",
+    "noRecent": "Nu există workbench-uri recente.",
+    "missing": "Folder lipsă",
+    "openRecent": "Deschide",
+    "remove": "Elimină din recente",
+    "removeNamed": "Elimină {{name}} din recente",
+    "close": "Închide workbench-ul",
+    "editPinned": "Editează WORKBENCH.md",
+    "pinnedTitle": "Contextul WORKBENCH.md",
+    "pinnedOversized": "Contextul depășește 16 KB. Agentul va folosi primii 16 KB. Textul complet este salvat.",
+    "readOnly": "Workbench-ul este deschis doar pentru citire deoarece alt proces sau lock îl deține.",
+    "working": "Se procesează…",
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "unknownKey": "Cheie de configurare necunoscută păstrată:",
+    "unknownName": "Nume dezactivat neidentificat:",
+    "networkShare": "Folderul de rețea nu este suportat. Folosește un workbench pe discul local.",
+    "lockGuard": "Coordonarea lock-ului este ocupată. Workbench-ul poate fi doar citit."
   }
 }

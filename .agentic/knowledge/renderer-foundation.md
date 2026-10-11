@@ -11,13 +11,15 @@ focused acceptance is e2e/mock.spec.ts and the foundation test in e2e/shell.spec
 
 ## Purpose and boundaries
 
-React supplies the responsive shell and Welcome/Settings placeholder seams. Appearance and Language
+React supplies the responsive shell, Welcome workbench management and Settings seams. Appearance and Language
 edit the existing typed settings API through TanStack Query. Main sets nativeTheme from confirmed
 settings. Renderer owns separate UI geometry storage and i18next presentation.
 
 ## Public interface
 
 - App switches two memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact.
+- Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
+  read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
 - Shell supplies resizable/collapsible sidebar and right panel with five placeholder tabs.
   Below1280px the right panel overlays the centre.
 - Settings edits Light/Dark/System, five scales and System/en/ro/de; other sections describe placeholders.
@@ -42,8 +44,7 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
 - Keyboard controls have visible focus rings and semantic labels; colors meet AA text contrast.
   Reduced-motion styles disable animation/transition. Minimum viewport uses wrapping and vertical scroll.
-- Placeholder seams expose explanatory content; backend workbench/session/provider/update actions
-  are supplied by their owning components when implemented.
+- Session/provider/update placeholder seams expose explanatory content for their owning components.
 
 ## Change map
 
@@ -72,6 +73,8 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 flowchart LR
   App --> Shell
   App --> Settings
+  App --> Workbench[Welcome and PinnedEditor]
+  Workbench --> API
   App --> usePreferences
   usePreferences --> Query
   Query --> API[typed VeraApi]
@@ -90,7 +93,7 @@ The view consumes confirmed settings. Native theme and renderer geometry have di
 Paths relative to 05_Software/apps/desktop/src/renderer except qualified paths.
 
 - App.tsx — memory routes, metadata/query status and Ctrl+,.
-- components/{shell,settings,metadata,error-message}.tsx — panels, editors, labels and safe error text.
+- components/{shell,settings,metadata,error-message,workbench}.tsx — panels, editors, labels and safe error text.
 - hooks/use-preferences.ts — Query lifecycle and theme/scale/language application.
 - lib/{layout,language}.ts and lib/preferences.test.ts — geometry storage and locale resolution.
 - i18n.ts, locales/{en,ro,de}.json — catalog initialization and translated strings.

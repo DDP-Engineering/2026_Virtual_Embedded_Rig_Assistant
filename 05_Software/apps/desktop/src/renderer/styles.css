@@ -320,3 +320,67 @@ legend {
     scroll-behavior: auto;
   }
 }
+
+.workbench-form {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.workbench-form input,
+.workbench-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  color: var(--foreground);
+  background: var(--background);
+}
+.workbench-form textarea {
+  font-family: monospace;
+  font-size: 1rem;
+  resize: vertical;
+}
+.path-text {
+  overflow-wrap: anywhere;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+.workbench-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.recent-workbenches {
+  list-style: none;
+  padding: 0;
+}
+.recent-workbenches li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding-block: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+.recent-workbenches li > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.workbench-warnings {
+  overflow-wrap: anywhere;
+}
+.pinned-dialog {
+  width: min(48rem, calc(100vw - 3rem));
+  max-height: calc(100vh - 3rem);
+  overflow: auto;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  color: var(--foreground);
+  background: var(--background);
+}
+.pinned-dialog::backdrop {
+  background: rgb(0 0 0 / 50%);
+}

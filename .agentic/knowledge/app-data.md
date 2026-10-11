@@ -17,7 +17,7 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 ## Public interface
 
 - SettingsService.load/get/update/close; get/update return detached {settings,readOnly}.
-- Schema 1 persists a stable installation UUID, language/theme/textScale and current non-secret
+- Schema 2 persists a stable installation UUID, language/theme/textScale and current non-secret
   model/provider/update/recent/limit defaults. Exact contract:
   [data spec](../specs/REQ-DATA-4a030001.md).
 - app.settings.get({}) and app.settings.update(patch) use validated schemas.
@@ -36,10 +36,10 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 
 - Selected directories preserve existing contents; creation errors propagate before setPath with
   the previous host path intact. Installed defaults are resolved without eager creation.
-- installationId/schemaVersion are immutable through patches; strict nested validation rejects
-  unknown fields, including provider credentials.
-- Version 0 validates known optional preferences, fills missing defaults, preserves its UUID,
-  and creates an exclusive byte-identical bak-n before atomic migration.
+- installationId/schemaVersion are immutable through strict nested patches. Persisted top-level,
+  update/limit/recent extensions survive migration and updates; providers reject credentials.
+- Versions 0 and 1 validate preferences, fill schema2 defaults, preserve UUID and extensions,
+  and create an exclusive byte-identical bak-n before atomic migration.
 - Newer schema loads read-only defaults; DENIED updates preserve bytes. Invalid current/old data
   returns INVALID; startup exits with a category log and preserves source bytes.
 - Saves use exclusive temporary files, flush/close and same-directory rename. Windows transient
@@ -63,7 +63,8 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 ## Key behaviors
 
 - REQ-DATA-4a030001 — first-run defaults and stable unique identity.
-- REQ-DATA-4a030002 — validated version-0 migration with backup.
+- REQ-DATA-4a030002 — validated version-0/1 migration to2 with backup.
+- REQ-DATA-dfbfac7c — ten typed recents; [workbench](workbench.md) owns lifecycle and missing state.
 - REQ-REL-4a030003 — interrupted saves preserve valid settings.
 - REQ-DATA-4a030004 — future schemas remain read-only and unchanged.
 - REQ-FUNC-4a030005 — strict serial partial updates and post-save events.
@@ -100,7 +101,7 @@ Paths below are relative to 05_Software.
 - packages/core/src/{index,ports}.ts — exports and host contracts.
 - packages/core/src/settings/service.ts and service.test.ts — load/migrate/serial state/lifecycle.
 - packages/core/vitest.config.ts — Node test project and shared source resolution.
-- fixtures/settings/version-0.json — legacy preferences with stable UUID.
+- fixtures/settings/version-0.json and version-1.json — legacy preferences, UUID and extensions.
 - apps/desktop/src/main/{data-locations,file-access,host-ports,logger}.ts — host adapters.
 - apps/desktop/src/main/{data-locations,file-access,logger}.test.ts — storage/log regression seams.
 - apps/desktop/src/main/index.ts — handlers, initialization and shutdown drains.

@@ -1,5 +1,4 @@
 import {
-  appEventSchema,
   type Channel,
   channels,
   isChannel,
@@ -10,6 +9,7 @@ import {
   veraErrorSchema,
 } from "@vera/shared";
 import type { VeraApi } from "./client.js";
+import { createSubscriptions } from "./subscriptions.js";
 
 export function createIpcApi(bridge: VeraBridge | undefined): VeraApi {
   async function invoke<C extends Channel>(channel: C, request: Request<C>): Promise<Response<C>> {
@@ -33,13 +33,10 @@ export function createIpcApi(bridge: VeraBridge | undefined): VeraApi {
     getAppInfo: () => invoke("app.info", {}),
     getSettings: () => invoke("app.settings.get", {}),
     updateSettings: (patch) => invoke("app.settings.update", patch),
-    subscribe(topic, on) {
+    subscribe: createSubscriptions((topic, id, on) => {
       if (!bridge) throw veraError("INTERNAL");
-      return bridge.subscribe(topic, (event) => {
-        const parsed = appEventSchema.safeParse(event);
-        if (parsed.success) on(parsed.data);
-      });
-    },
+      return topic === "app" ? bridge.subscribe("app", on) : bridge.subscribe("workbench", id ?? "", on);
+    }),
   };
 }
 

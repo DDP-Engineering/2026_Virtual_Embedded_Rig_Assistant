@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "installationId": "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
+  "language": "system",
+  "theme": "dark",
+  "textScale": 1,
+  "defaultModel": null,
+  "providers": {},
+  "updates": { "mode": "notify", "channel": "latest", "future": 9 },
+  "recentWorkbenches": [],
+  "limits": { "maxToolCallsPerTurn": 50 },
+  "extension": { "enabled": true }
+}

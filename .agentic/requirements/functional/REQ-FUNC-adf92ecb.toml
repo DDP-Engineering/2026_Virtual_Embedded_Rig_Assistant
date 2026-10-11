@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-adf92ecb"
+title = "Create workbench without overwriting content"
+status = "active"
+requirement = "When creating in an existing folder without workbench.yaml, VERA shall create a valid wb_ ULID configuration and missing template/docs/skills/runtime ignore files while preserving existing user files and rejecting an existing workbench."
+verification = "Create then open a temporary folder; parse YAML and template; seed existing files and assert bytes preserved; duplicate create conflicts."
+affected_paths = ["05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/shared/src/workbench.ts", "05_Software/fixtures/workbenches/demo-board/"]
+linked_tests = ["05_Software/packages/core/src/workbench/service.test.ts"]
+spec = "specs/REQ-DATA-85139c56.md"
+priority = "normal"
+rationale = "Workbench folder lifecycle (architecture02,06,08)"
+created = 2026-10-11
+updated = 2026-10-11

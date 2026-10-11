@@ -20,7 +20,10 @@
     "CONTEXT_LIMIT": "The context limit was reached.",
     "PROVIDER": "The provider could not complete the request.",
     "OFFLINE": "The application is offline.",
-    "INTERNAL": "Application information could not be loaded."
+    "INTERNAL": "Application information could not be loaded.",
+    "WORKBENCH_TOO_NEW": "This workbench was created by a newer VERA version.",
+    "YAML_INVALID": "Invalid YAML at line {{line}}, column {{column}}.",
+    "CONFIG_INVALID": "Invalid workbench configuration at {{path}}, line {{line}}."
   },
   "nav": {
     "settings": "Settings",
@@ -33,11 +36,8 @@
     "workbenches": "Workbenches",
     "sidebarPlaceholder": "Your workbenches and sessions will appear here.",
     "create": "Create a workbench",
-    "createPlaceholder": "Workbench creation will be available here.",
     "open": "Open an existing one",
-    "openPlaceholder": "Folder selection will be available here.",
     "recent": "Recent",
-    "recentPlaceholder": "Your recent workbenches will appear here.",
     "application": "Application information"
   },
   "settings": {
@@ -86,5 +86,28 @@
     "artifacts": "Artifacts",
     "plan": "Plan",
     "placeholder": "Panel content will be available here."
+  },
+  "workbench": {
+    "name": "Workbench name",
+    "chooseFolder": "Choose folder",
+    "openFolder": "Open folder",
+    "openDescription": "Choose a folder containing workbench.yaml.",
+    "noRecent": "No recent workbenches yet.",
+    "missing": "Folder missing",
+    "openRecent": "Open",
+    "remove": "Remove from recent",
+    "removeNamed": "Remove {{name}} from recent",
+    "close": "Close workbench",
+    "editPinned": "Edit WORKBENCH.md",
+    "pinnedTitle": "WORKBENCH.md context",
+    "pinnedOversized": "Context exceeds 16 KB. The agent will use the first 16 KB. Your full text is saved.",
+    "readOnly": "This workbench is open read-only because another process or lock owns it.",
+    "working": "Working…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "unknownKey": "Unknown configuration key preserved:",
+    "unknownName": "Unresolved disabled name:",
+    "networkShare": "Network share unsupported. Use a local disk workbench.",
+    "lockGuard": "Lock coordination is busy. This workbench is read-only."
   }
 }

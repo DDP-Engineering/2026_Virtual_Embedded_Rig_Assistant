@@ -23,6 +23,10 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 - vera:invoke returns a validated success/error envelope; window.vera.invoke resolves the value
   or rejects a plain VeraError. Plain error objects retain fields across contextBridge.
 - subscribe('app', on) receives AppEvent settings.changed and returns idempotent unsubscribe.
+- subscribe('workbench', wbId, on) filters validated opened/closed/config.changed events by id.
+- app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/
+  pinned.update/files have strict requests/responses; configuration objects retain extensions.
+  WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
 - emitAppEvent sends validated app envelopes on vera:event to the current live window.
 - createDeltaCoalescer takes key/merge/emit functions, batches for 50ms, flushes explicitly before
   terminal events and cancels pending values on dispose.
@@ -75,6 +79,8 @@ flowchart LR
   PRE --> ROUTER[vera:invoke / createInvokeRouter]
   ROUTER --> INFO[getAppInfo]
   ROUTER --> SETTINGS[core SettingsService]
+  ROUTER --> WORKBENCH[core WorkbenchService]
+  WORKBENCH --> EMIT
   SETTINGS --> PORTS[main application-data ports]
   SETTINGS --> EMIT
   INFO --> HOST[Electron app + runtime metadata]
@@ -91,13 +97,13 @@ createDeltaCoalescer is a separately tested utility whose callers supply merge p
 
 Paths relative to 05_Software.
 
-- packages/shared/src/{index,ipc,events,settings}.ts — shared public exports, invoke/error schemas and app events.
+- packages/shared/src/{index,ipc,events,settings,workbench}.ts — shared public exports, invoke/error schemas and app events.
 - apps/desktop/src/main/{ipc-router,events,app-info}.ts — dispatch, event utilities, native metadata.
 - apps/desktop/src/main/{ipc-router,events}.test.ts — request/error/frame/batching regression seams.
 - apps/desktop/src/main/index.ts — installs the one router and exposes the current-window emitter.
 - apps/desktop/src/preload/{index,bridge}.ts and bridge.test.ts — sandbox bridge and transport tests.
-- apps/desktop/src/renderer/api/{client,index,ipc}.ts and ipc.test.ts — one boundary and validation.
+- apps/desktop/src/renderer/api/{client,index,ipc,subscriptions}.ts and ipc.test.ts — one boundary and validation.
 - apps/desktop/src/renderer/mocks/{fixtures,mockApi}.ts and mockApi.test.ts — in-memory metadata/event fixture.
 - apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and foundation Query view. [Renderer foundation](renderer-foundation.md) routes the complete UI file set.
-- e2e/{shell,mock}.spec.ts — real Electron and standalone browser acceptance.
+- e2e/{shell,mock,workbench}.spec.ts — real Electron and standalone browser acceptance.
 - scripts/dev-renderer.mjs — renderer-only Vite entrypoint, configured by desktop electron.vite.config.ts.

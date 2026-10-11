@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SettingsService } from "@vera/core";
-import { app, BrowserWindow, ipcMain, nativeTheme, protocol, screen, session } from "electron";
+import { SettingsService, WorkbenchService } from "@vera/core";
+import { eventEnvelopeSchema } from "@vera/shared";
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, protocol, screen, session } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createEventEmitter } from "./events.js";
@@ -36,6 +37,25 @@ const settings = new SettingsService({
     emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
   },
 });
+const workbench = new WorkbenchService({
+  files: createFileAccess(systemClock),
+  settings,
+  pid: process.pid,
+  appVersion: app.getVersion(),
+  now: () => systemClock.now(),
+  token: randomUUID,
+  isProcessAlive: (pid) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error) {
+      return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
+    }
+  },
+  changed: (event) => {
+    emitAppEvent(eventEnvelopeSchema.parse(event));
+  },
+});
 
 ipcMain.handle(
   "vera:invoke",
@@ -50,6 +70,27 @@ ipcMain.handle(
         nativeTheme.themeSource = result.settings.theme;
         return result;
       },
+      "app.chooseFolder": async () => {
+        if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
+          return { folder: process.env.VERA_TEST_DIALOG_PATH };
+        if (!window || window.isDestroyed()) return { folder: null };
+        const result = await dialog.showOpenDialog(window, {
+          properties: ["openDirectory", "createDirectory"],
+        });
+        return { folder: result.canceled ? null : (result.filePaths[0] ?? null) };
+      },
+      "workbench.create": ({ folder, name }) => workbench.create(folder, name),
+      "workbench.open": ({ folder }) => workbench.open(folder),
+      "workbench.close": async () => {
+        await workbench.close();
+        return {};
+      },
+      "workbench.recent": ({ remove }) => workbench.recent(remove),
+      "workbench.config.get": () => workbench.getConfig(),
+      "workbench.config.update": ({ patch }) => workbench.updateConfig(patch),
+      "workbench.pinned.get": () => workbench.getPinned(),
+      "workbench.pinned.update": ({ content }) => workbench.updatePinned(content),
+      "workbench.files": ({ query }) => workbench.files(query),
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),
   }),
@@ -117,8 +158,9 @@ if (!app.requestSingleInstanceLock()) {
     event.preventDefault();
     if (draining) return;
     draining = true;
-    void settings
+    void workbench
       .close()
+      .then(() => settings.close())
       .catch(() => {
         console.error("VERA shutdown persistence failed");
       })

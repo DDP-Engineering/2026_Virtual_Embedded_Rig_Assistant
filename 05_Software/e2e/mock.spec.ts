@@ -187,7 +187,11 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     }
     await page.locator("#language").selectOption("en");
     // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus.
-    const controls = await page.locator("button:enabled, select:enabled, [data-resize]").count();
+    const controls = await page
+      .locator(
+        "button:enabled:visible, select:enabled:visible, input:enabled:visible, textarea:enabled:visible, [data-resize]:visible",
+      )
+      .count();
     await page.evaluate(() => {
       document.body.tabIndex = -1;
       document.body.focus();
@@ -232,6 +236,93 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await page.locator('[data-toggle="sidebar"]').click();
     await page.locator('[data-toggle="right"]').click();
     expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBe(futureLayout);
+    await page.locator('[data-action="choose-create"]').click();
+    await page.locator("#workbench-name").fill("Browser board");
+    await page.locator('[data-action="create-workbench"]').click();
+    await expect(page.locator('[data-workbench="active"]')).toContainText("Browser board");
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await expect(page.locator('[data-workbench="active"]')).toContainText("Browser board");
+    await page.locator('[data-action="edit-pinned"]').click();
+    await expect(page.locator("#pinned-content")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.locator('[data-action="edit-pinned"]')).toBeFocused();
+    await page.locator('[data-action="edit-pinned"]').click();
+    await page.locator("#pinned-content").fill("ă".repeat(9000));
+    await expect(page.getByRole("dialog").getByRole("status")).toBeVisible();
+    await page.locator('[data-action="save-pinned"]').click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await page.locator('[data-action="close-workbench"]').click();
+    // Control the second load to expose stale cached editor data and draft replacement.
+    await context.route("**/api/index.*", (route) =>
+      route.fulfill({
+        contentType: "application/javascript",
+        body: `import { createMockApi } from "/mocks/mockApi.ts";
+          const base = createMockApi(undefined, "warnings").api;
+          window.pinnedReads = 0;
+          export const api = { ...base, invoke: async (channel, request) => {
+            if (channel === "workbench.pinned.get") {
+              window.pinnedReads++;
+              if (window.pinnedReads > 1) await new Promise(resolve => { window.releasePinned = resolve; });
+            }
+            return base.invoke(channel, request);
+          }};`,
+      }),
+    );
+    await page.reload();
+    await page.locator('[data-action="open-recent"]').click();
+    await page.locator('[data-action="edit-pinned"]').click();
+    await expect(page.locator("#pinned-content")).toHaveValue("ă".repeat(9000));
+    await page.locator("#pinned-content").fill("saved current context");
+    await page.locator('[data-action="save-pinned"]').click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await page.locator('[data-action="edit-pinned"]').click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads))
+      .toBe(2);
+    await expect(page.locator("#pinned-content")).toBeDisabled();
+    await page.evaluate(() => (window as unknown as { releasePinned: () => void }).releasePinned());
+    await expect(page.locator("#pinned-content")).toHaveValue("saved current context");
+    await page.locator("#pinned-content").fill("unsaved draft");
+    await page.evaluate(async () => {
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+      document.dispatchEvent(new Event("visibilitychange"));
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
+      document.dispatchEvent(new Event("visibilitychange"));
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+    });
+    expect(await page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads)).toBe(2);
+    await expect(page.locator("#pinned-content")).toHaveValue("unsaved draft");
+    await page.keyboard.press("Escape");
+    await context.unroute("**/api/index.*");
+    // Seed mock-only fixture states at the established browser module seam.
+    await context.route("**/api/index.*", (route) =>
+      route.fulfill({
+        contentType: "application/javascript",
+        body: 'import { createMockApi } from "/mocks/mockApi.ts"; export const api = createMockApi(undefined, "read-only").api;',
+      }),
+    );
+    await page.reload();
+    await page.locator('[data-action="open-recent"]').click();
+    await page.locator('[data-action="edit-pinned"]').click();
+    await expect(page.locator("#pinned-content")).toHaveAttribute("readonly", "");
+    await expect(page.locator('[data-action="save-pinned"]')).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await context.unroute("**/api/index.*");
+    await context.route("**/api/index.*", (route) =>
+      route.fulfill({
+        contentType: "application/javascript",
+        body: 'import { createMockApi } from "/mocks/mockApi.ts"; export const api = createMockApi(undefined, "missing").api;',
+      }),
+    );
+    await page.reload();
+    await expect(page.locator('[data-recent="missing"]')).toBeVisible();
+    await page.locator('[data-action="remove-recent"]').click();
+    await expect(page.locator('[data-recent="missing"]')).toHaveCount(0);
+    await context.unroute("**/api/index.*");
     // Replace the API module at the browser network seam; UI must translate a structured failure.
     await context.route("**/api/index.*", (route) =>
       route.fulfill({

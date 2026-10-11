@@ -36,7 +36,7 @@ it("filters invalid bridge events and returns its cleanup", () => {
       throw new Error("unused");
     },
     subscribe: (_topic, on) => {
-      callback = on;
+      if (typeof on === "function") callback = on;
       return stop;
     },
   };

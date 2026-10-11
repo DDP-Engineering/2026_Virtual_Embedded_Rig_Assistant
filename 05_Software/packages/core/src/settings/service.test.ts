@@ -35,6 +35,30 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it("migrates schema1 to typed recent schema2 with backup, stable UUID and retained unknown settings", async () => {
+    const raw = readFileSync(
+      new URL("../../../../fixtures/settings/version-1.json", import.meta.url),
+      "utf8",
+    );
+    const h = harness(raw);
+    await h.service.load();
+    expect(h.service.get().settings).toMatchObject({
+      schemaVersion: 2,
+      installationId: "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
+      extension: { enabled: true },
+      updates: { future: 9 },
+    });
+    expect(h.files.get("/data/settings.json.bak-1")).toBe(raw);
+    await h.service.update({ theme: "dark" });
+    expect(JSON.parse(h.files.get("/data/settings.json") ?? "")).toMatchObject({
+      schemaVersion: 2,
+      extension: { enabled: true },
+      updates: { future: 9 },
+    });
+    const reload = harness(h.files.get("/data/settings.json"));
+    await reload.service.load();
+    expect(reload.service.get()).toEqual(h.service.get());
+  });
   it("first run creates full defaults and a new installation UUID", async () => {
     const a = harness();
     const b = harness();
@@ -42,7 +66,7 @@ describe("application settings persistence", () => {
     const first = a.service.get();
     expect(first.readOnly).toBe(false);
     expect(first.settings).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       installationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       language: "system",
       theme: "system",
@@ -73,7 +97,7 @@ describe("application settings persistence", () => {
     expect(h.files.get("/data/settings.json.bak-0")).toBe("previous backup");
     expect(h.files.get("/data/settings.json.bak-1")).toBe(raw);
     expect(h.service.get().settings).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       installationId: "a70d0929-51ad-4b56-a846-b290818c6fce",
       theme: "dark",
       language: "ro",
@@ -90,7 +114,7 @@ describe("application settings persistence", () => {
     await h.service.load();
     expect(h.service.get()).toMatchObject({
       readOnly: true,
-      settings: { theme: "system", schemaVersion: 1 },
+      settings: { theme: "system", schemaVersion: 2 },
     });
     await expect(h.service.update({ theme: "dark" })).rejects.toMatchObject({ code: "DENIED" });
     expect(h.files.get("/data/settings.json")).toBe(raw);

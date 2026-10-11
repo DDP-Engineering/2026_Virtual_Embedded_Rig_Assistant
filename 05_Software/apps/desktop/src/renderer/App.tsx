@@ -6,6 +6,7 @@ import { ErrorMessage } from "./components/error-message.js";
 import { Metadata } from "./components/metadata.js";
 import { Settings, useSettingsSections } from "./components/settings.js";
 import { Shell } from "./components/shell.js";
+import { Workbench } from "./components/workbench.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 
 export function App() {
@@ -91,31 +92,16 @@ export function App() {
             update={(patch) => mutation.mutate(patch)}
           />
         )}
-        {!settings && (
-          <>
-            <p className="muted">{t("welcome.description")}</p>
-            <div className="welcome-grid">
-              <section className="surface">
-                <h3>{t("welcome.create")}</h3>
-                <p className="muted">{t("welcome.createPlaceholder")}</p>
-              </section>
-              <section className="surface">
-                <h3>{t("welcome.open")}</h3>
-                <p className="muted">{t("welcome.openPlaceholder")}</p>
-              </section>
-            </div>
+        <div hidden={settings}>
+          <p className="muted">{t("welcome.description")}</p>
+          {info.data && snapshot.data && <Workbench settingsReadOnly={snapshot.data.readOnly} />}
+          {info.data && (
             <section className="surface">
-              <h3>{t("welcome.recent")}</h3>
-              <p className="muted">{t("welcome.recentPlaceholder")}</p>
+              <h3>{t("welcome.application")}</h3>
+              <Metadata info={info.data} />
             </section>
-            {info.data && (
-              <section className="surface">
-                <h3>{t("welcome.application")}</h3>
-                <Metadata info={info.data} />
-              </section>
-            )}
-          </>
-        )}
+          )}
+        </div>
       </div>
     </Shell>
   );

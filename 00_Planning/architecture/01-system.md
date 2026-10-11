@@ -82,7 +82,7 @@ interface VeraBridge {
   subscribe(topic: "workbench", id: string, on: (e: WorkbenchEvent) => void): () => void;
   subscribe(topic: "app", on: (e: AppEvent) => void): () => void;
 }
-type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED" | "CONTEXT_LIMIT" | "PROVIDER" | "OFFLINE" | "INTERNAL";
+type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED" | "CONTEXT_LIMIT" | "PROVIDER" | "OFFLINE" | "INTERNAL" | "WORKBENCH_TOO_NEW";
                    messageKey: string; params?: Record<string, string | number> };
 ```
 

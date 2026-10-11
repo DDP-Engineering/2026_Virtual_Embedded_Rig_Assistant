@@ -11,7 +11,7 @@ it("mock settings use the same validated shape, immutable id and post-update eve
   const { api } = createMockApi();
   const get = () => api.invoke("app.settings.get", {});
   const initial = await get();
-  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 1, theme: "system" } });
+  expect(initial).toMatchObject({ readOnly: false, settings: { schemaVersion: 2, theme: "system" } });
   const on = vi.fn();
   const stop = api.subscribe("app", on);
   await api.invoke("app.settings.update", { theme: "dark" });
@@ -54,4 +54,54 @@ it("validates mock invoke and owns independent app subscription lifecycle", asyn
   expect(on).toHaveBeenCalledTimes(1);
   const invalidFixture = createMockApi({ ...info, version: "" });
   await expect(invalidFixture.api.getAppInfo()).rejects.toMatchObject({ code: "INTERNAL" });
+});
+it("mock workbench create/config/pinned/recents use validated contracts and scoped events", async () => {
+  const { api } = createMockApi();
+  expect(await api.invoke("app.chooseFolder", {})).toEqual({ folder: "/mock/new-board" });
+  const snapshot = await api.invoke("workbench.create", { folder: "/mock/new-board", name: "Board" });
+  const on = vi.fn();
+  const stop = api.subscribe("workbench", snapshot.config.id, on);
+  await api.invoke("workbench.config.update", { patch: { name: "Renamed" } });
+  expect(on).toHaveBeenCalledWith(expect.objectContaining({ type: "config.changed" }));
+  expect(await api.invoke("workbench.pinned.update", { content: "Context" })).toEqual({
+    content: "Context",
+    oversized: false,
+  });
+  await api.invoke("workbench.close", {});
+  expect(on).toHaveBeenCalledWith({ type: "closed" });
+  stop();
+  expect(await api.invoke("workbench.recent", {})).toEqual([
+    expect.objectContaining({ folder: "/mock/new-board", missing: false }),
+  ]);
+  await api.invoke("workbench.open", { folder: "/mock/new-board" });
+  expect((await api.invoke("workbench.config.get", {})).config.name).toBe("Renamed");
+  const settings = await api.getSettings();
+  const entry = settings.settings.recentWorkbenches[0];
+  if (!entry) throw new Error("Created workbench must be remembered");
+  await api.updateSettings({
+    recentWorkbenches: [{ ...entry, vendor: { flag: true } }],
+  });
+  await api.invoke("workbench.open", { folder: "/mock/new-board" });
+  expect((await api.getSettings()).settings.recentWorkbenches[0]?.vendor).toEqual({ flag: true });
+  expect(await api.invoke("workbench.recent", { remove: "/mock/new-board" })).toEqual([]);
+});
+it("mock read-only/missing/warnings fixtures expose UI states and deny saves", async () => {
+  const { api } = createMockApi(undefined, "read-only");
+  const recent = await api.invoke("workbench.recent", {});
+  expect(recent[0]?.missing).toBe(false);
+  const snapshot = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  expect(snapshot.readOnly).toBe(true);
+  await expect(api.invoke("workbench.pinned.update", { content: "bad" })).rejects.toMatchObject({
+    code: "DENIED",
+  });
+  await expect(api.invoke("workbench.config.update", { patch: { name: "bad" } })).rejects.toMatchObject({
+    code: "DENIED",
+  });
+  expect((await createMockApi(undefined, "missing").api.invoke("workbench.recent", {}))[0]?.missing).toBe(
+    true,
+  );
+  const warnings = await createMockApi(undefined, "warnings").api.invoke("workbench.open", {
+    folder: "/mock/demo-board",
+  });
+  expect(warnings.warnings).toContainEqual({ code: "NETWORK_SHARE_UNSUPPORTED" });
 });

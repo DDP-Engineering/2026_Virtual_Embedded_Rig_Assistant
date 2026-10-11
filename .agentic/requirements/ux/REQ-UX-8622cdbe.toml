@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-UX-8622cdbe"
+title = "Welcome workbench lifecycle and pinned editor"
+status = "active"
+requirement = "When using Welcome, the engineer shall be able to create, open, close and reopen recent workbench folders through the validated native folder picker and lifecycle IPC with localized status, errors and configuration warnings."
+verification = "Native Electron create/restart/reopen and deleted-recent removal; IPC config/pinned lifecycle; browser mock screens and keyboard editor with all locale catalogs."
+affected_paths = ["05_Software/apps/desktop/src/renderer/components/workbench.tsx", "05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/preload/bridge.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/packages/shared/src/events.ts", "05_Software/apps/desktop/src/renderer/api/", "05_Software/apps/desktop/src/renderer/mocks/", "05_Software/apps/desktop/src/renderer/locales/", "05_Software/apps/desktop/src/renderer/styles.css", "05_Software/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/e2e/workbench.spec.ts", "05_Software/e2e/mock.spec.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/apps/desktop/src/renderer/api/ipc.test.ts"]
+spec = "specs/REQ-DATA-85139c56.md"
+priority = "normal"
+rationale = "Workbench folder lifecycle (architecture02,06,08)"
+created = 2026-10-11
+updated = 2026-10-11

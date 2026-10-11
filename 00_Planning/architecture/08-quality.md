@@ -42,6 +42,10 @@ Node.js and the npm packages. Without Node on the PATH, prefix a command with `p
 - `fixtures/workbenches/demo-board/`: a fictional board, "VERA-DEMO-01", with `workbench.yaml`,
   `WORKBENCH.md`, Markdown notes, a boot log, a CSV pinout and, from M3, PDFs generated from Markdown
   sources by `scripts/make-demo-pdfs.mjs`. Tests copy it to a temporary folder and never change it in place.
+- WP-06 adds native create/restart/recent, deleted-folder removal and live-lock read-only acceptance,
+  plus browser pinned focus/full-text/mock-state checks. Build-mode regression inspects both actual
+  emissions for the picker override. Windows and Ubuntu E2E run serially on the shared Vite port.
+- `fixtures/settings/version-1.json` verifies schema2 migration retaining UUID/preferences/extensions.
 - `fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario, in the format of
   `09_Others/benchpilot-reference/apps/server/src/llm/replay.ts` — one line per model step:
 

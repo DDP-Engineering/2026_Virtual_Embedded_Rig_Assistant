@@ -1,4 +1,17 @@
 /** Host-owned data locations; core does not resolve Electron paths. */
+import type { EventEnvelope, SettingsPatch, SettingsSnapshot } from "@vera/shared";
+
+export interface WorkbenchHost {
+  files: FileAccess;
+  settings: { get(): SettingsSnapshot; update(patch: SettingsPatch): Promise<SettingsSnapshot> };
+  pid: number;
+  appVersion: string;
+  now(): Date;
+  isProcessAlive(pid: number): boolean;
+  token(): string;
+  catalogs?: { skills: readonly string[]; tools: readonly string[] };
+  changed(event: Extract<EventEnvelope, { topic: "workbench" }>): void;
+}
 export interface PathProvider {
   readonly userData: string;
   readonly settings: string;

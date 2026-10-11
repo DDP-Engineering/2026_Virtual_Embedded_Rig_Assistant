@@ -11,6 +11,21 @@ const info = {
   locale: "en-US",
 };
 let createInvokeRouter: typeof import("./ipc-router.js").createInvokeRouter;
+const unused = () => {
+  throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
+};
+const workbenchHandlers = {
+  "app.chooseFolder": unused,
+  "workbench.create": unused,
+  "workbench.open": unused,
+  "workbench.close": unused,
+  "workbench.recent": unused,
+  "workbench.config.get": unused,
+  "workbench.config.update": unused,
+  "workbench.pinned.get": unused,
+  "workbench.pinned.update": unused,
+  "workbench.files": unused,
+};
 beforeAll(async () => {
   expect(existsSync(new URL("./ipc-router.ts", import.meta.url)), "validated IPC router exists").toBe(true);
   ({ createInvokeRouter } = await import("./ipc-router.js"));
@@ -26,6 +41,7 @@ describe("validated invoke router", () => {
     createInvokeRouter({
       target: () => ({ webContents: contents, url: "vera://app/index.html" }),
       handlers: {
+        ...workbenchHandlers,
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
@@ -56,7 +72,12 @@ describe("validated invoke router", () => {
     }));
     const invoke = createInvokeRouter({
       target: () => ({ webContents: contents, url: frame.url }),
-      handlers: { "app.info": handler, "app.settings.get": () => snapshot, "app.settings.update": update },
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": () => snapshot,
+        "app.settings.update": update,
+      },
       log,
     });
     expect(await invoke(event, "app.settings.get", {})).toEqual({ ok: true, value: snapshot });
@@ -112,6 +133,7 @@ describe("validated invoke router", () => {
     const deadRouter = createInvokeRouter({
       target: () => ({ webContents: destroyed, url: frame.url }),
       handlers: {
+        ...workbenchHandlers,
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
@@ -134,6 +156,7 @@ describe("validated invoke router", () => {
     const missing = createInvokeRouter({
       target: () => undefined,
       handlers: {
+        ...workbenchHandlers,
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
@@ -151,6 +174,7 @@ describe("validated invoke router", () => {
     const dev = createInvokeRouter({
       target: () => ({ webContents: contents, url: frame.url }),
       handlers: {
+        ...workbenchHandlers,
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
@@ -175,6 +199,7 @@ describe("validated invoke router", () => {
     const invoke = createInvokeRouter({
       target: () => ({ webContents: detachedContents, url: "vera://app/index.html" }),
       handlers: {
+        ...workbenchHandlers,
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),

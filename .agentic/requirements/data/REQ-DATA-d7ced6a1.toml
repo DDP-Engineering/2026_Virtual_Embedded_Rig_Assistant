@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-DATA-d7ced6a1"
+title = "Preserve workbench extensions on update"
+status = "active"
+requirement = "When the user saves configuration or pinned context, VERA shall serialize atomic writes in the owned workbench, retain unknown configuration keys and stable id/format, and publish config.changed after confirmed configuration saves."
+verification = "Save nested extensions, assert YAML unchanged extensions/id and event; denied read-only saves and simulated write failure retain previous bytes/state."
+affected_paths = ["05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/shared/src/workbench.ts"]
+linked_tests = ["05_Software/packages/core/src/workbench/service.test.ts"]
+spec = "specs/REQ-DATA-85139c56.md"
+priority = "normal"
+rationale = "Workbench folder lifecycle (architecture02,06,08)"
+created = 2026-10-11
+updated = 2026-10-11

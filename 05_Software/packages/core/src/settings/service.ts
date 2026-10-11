@@ -6,6 +6,7 @@ import {
   settingsPatchSchema,
   settingsSchema,
   settingsV0Schema,
+  settingsV1Schema,
   veraError,
 } from "@vera/shared";
 import type { FileAccess, PathProvider } from "../ports.js";
@@ -48,7 +49,7 @@ export class SettingsService {
     const version = (stored as { schemaVersion?: unknown }).schemaVersion;
     if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
       throw veraError("INVALID");
-    if (version > 1) {
+    if (version > 2) {
       this.state = { settings: defaults, readOnly: true };
       return;
     }
@@ -57,11 +58,23 @@ export class SettingsService {
       const legacy = settingsV0Schema.safeParse(stored);
       if (!legacy.success) throw veraError("INVALID");
       const { schemaVersion: _version, installationId, ...patch } = legacy.data;
-      data = mergeSettings({ ...defaults, installationId: installationId ?? defaults.installationId }, patch);
+      data = {
+        ...defaults,
+        ...patch,
+        schemaVersion: 2,
+        installationId: installationId ?? defaults.installationId,
+        updates: { ...defaults.updates, ...patch.updates },
+        limits: { ...defaults.limits, ...patch.limits },
+      };
+    }
+    if (version === 1) {
+      const legacy = settingsV1Schema.safeParse(stored);
+      if (!legacy.success) throw veraError("INVALID");
+      data = { ...legacy.data, schemaVersion: 2 };
     }
     const parsed = settingsSchema.safeParse(data);
     if (!parsed.success) throw veraError("INVALID");
-    if (version === 0) {
+    if (version < 2) {
       let backup = version;
       while (!(await this.host.files.backup(`${this.host.paths.settings}.bak-${backup}`, raw))) backup++;
       await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(parsed.data, null, 2));

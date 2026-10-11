@@ -20,7 +20,10 @@
     "CONTEXT_LIMIT": "Das Kontextlimit wurde erreicht.",
     "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
     "OFFLINE": "Die Anwendung ist offline.",
-    "INTERNAL": "Anwendungsinformationen konnten nicht geladen werden."
+    "INTERNAL": "Anwendungsinformationen konnten nicht geladen werden.",
+    "WORKBENCH_TOO_NEW": "Diese Workbench wurde mit einer neueren VERA-Version erstellt.",
+    "YAML_INVALID": "Ungültiges YAML in Zeile {{line}}, Spalte {{column}}.",
+    "CONFIG_INVALID": "Ungültige Workbench-Konfiguration bei {{path}}, Zeile {{line}}."
   },
   "nav": {
     "settings": "Einstellungen",
@@ -33,11 +36,8 @@
     "workbenches": "Arbeitsbereiche",
     "sidebarPlaceholder": "Deine Arbeitsbereiche und Sitzungen erscheinen hier.",
     "create": "Arbeitsbereich erstellen",
-    "createPlaceholder": "Das Erstellen von Arbeitsbereichen wird hier verfügbar sein.",
     "open": "Vorhandenen öffnen",
-    "openPlaceholder": "Die Ordnerauswahl wird hier verfügbar sein.",
     "recent": "Zuletzt geöffnet",
-    "recentPlaceholder": "Deine zuletzt geöffneten Arbeitsbereiche erscheinen hier.",
     "application": "Anwendungsinformationen"
   },
   "settings": {
@@ -86,5 +86,28 @@
     "artifacts": "Artefakte",
     "plan": "Plan",
     "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein."
+  },
+  "workbench": {
+    "name": "Workbench-Name",
+    "chooseFolder": "Ordner auswählen",
+    "openFolder": "Ordner öffnen",
+    "openDescription": "Wähle einen Ordner mit workbench.yaml.",
+    "noRecent": "Noch keine zuletzt verwendeten Workbenches.",
+    "missing": "Ordner fehlt",
+    "openRecent": "Öffnen",
+    "remove": "Aus Verlauf entfernen",
+    "removeNamed": "{{name}} aus Verlauf entfernen",
+    "close": "Workbench schließen",
+    "editPinned": "WORKBENCH.md bearbeiten",
+    "pinnedTitle": "WORKBENCH.md-Kontext",
+    "pinnedOversized": "Der Kontext überschreitet 16 KB. Der Agent verwendet die ersten 16 KB. Der vollständige Text wird gespeichert.",
+    "readOnly": "Diese Workbench ist schreibgeschützt, da ein anderer Prozess oder eine Sperre sie besitzt.",
+    "working": "Wird verarbeitet…",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "unknownKey": "Unbekannter Konfigurationsschlüssel erhalten:",
+    "unknownName": "Unbekannter deaktivierter Name:",
+    "networkShare": "Netzwerkfreigaben werden nicht unterstützt. Verwende eine Workbench auf einem lokalen Datenträger.",
+    "lockGuard": "Die Sperrkoordination ist belegt. Diese Workbench ist schreibgeschützt."
   }
 }

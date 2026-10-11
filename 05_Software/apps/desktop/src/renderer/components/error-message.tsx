@@ -16,6 +16,9 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.PROVIDER": t("errors.PROVIDER", options),
     "errors.OFFLINE": t("errors.OFFLINE", options),
     "errors.INTERNAL": t("errors.INTERNAL", options),
+    "errors.WORKBENCH_TOO_NEW": t("errors.WORKBENCH_TOO_NEW", options),
+    "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
+    "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
   };
   return (
     <p role="alert" data-i18n={Object.hasOwn(messages, key) ? key : "errors.INTERNAL"}>

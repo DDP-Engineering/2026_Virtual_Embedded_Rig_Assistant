@@ -12,6 +12,7 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
 Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
+Main supplies the [workbench](workbench.md) lifecycle host and native folder picker.
 The sandboxed preload exposes the typed invoke/subscribe bridge; React displays Welcome/App Settings and application metadata
 through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.
 
@@ -25,13 +26,15 @@ specified in [REQ-DATA-6c54a48f](../specs/REQ-DATA-6c54a48f.md).
 Compiled instrumented packages accept `--packaging-probe=<absolute JSON path>` after readiness,
 run [native packaging](native-packaging.md) probes and exit before creating a renderer window.
 Release compilation eliminates this hook and its worker entry.
+Instrumented folder selection accepts VERA_TEST_DIALOG_PATH; release emission eliminates the
+override and uses Electron dialog. Shutdown releases owned workbench locks before settings/log drain.
 
 ## Invariants
 
 - Identity and userData precede the instance lock; the losing process exits before creating a window.
 - Portable/explicit override directories are created before Electron setPath, readiness and the
   instance lock; real creation failures propagate. Settings load before the renderer. Shutdown drains accepted
-  settings before window close, then flushes JSON logs after close.
+  workbench ownership and settings before window close, then flushes JSON logs after close.
 - Window creation keeps context isolation, Chromium sandbox and web security enabled,
   Node integration disabled, and a minimum size of 1024 by 640.
 - Navigation, new windows, webviews and permission requests/checks are denied before content loads.
@@ -83,6 +86,8 @@ flowchart TD
   main -->|compiled test hook| probe[native packaging probe before window]
   renderer --> api[renderer API / window.vera]
   api --> router[main IPC router]
+  router --> workbench[core WorkbenchService]
+  router --> picker[Electron folder dialog]
   assets --> renderer
   dev([loopback Vite server]) --> renderer
   config[electron.vite.config.ts] --> dev

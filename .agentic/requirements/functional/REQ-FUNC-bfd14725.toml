@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-bfd14725"
+title = "Confined workbench path completion"
+status = "active"
+requirement = "When requesting workbench file completion, VERA shall return at most 50 matching relative slash-separated file paths within the workbench, applying permanent exclusions and root .veraignore gitignore rules."
+verification = "Seed files and ignored roots, negated patterns and outside symlinks; assert sorted query matches/cap and no escaping paths; UNC warning separately verified with host path detector."
+affected_paths = ["05_Software/packages/core/src/workbench/ignore.ts", "05_Software/packages/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/packages/core/src/workbench/service.test.ts"]
+spec = "specs/REQ-DATA-85139c56.md"
+priority = "normal"
+rationale = "Workbench folder lifecycle (architecture02,06,08)"
+created = 2026-10-11
+updated = 2026-10-11
