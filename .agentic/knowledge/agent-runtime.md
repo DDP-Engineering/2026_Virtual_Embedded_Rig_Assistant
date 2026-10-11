@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for AgentRuntime, turn orchestration, read/write batch ordering, approval-host waits, abort, transcript resume, context budgets, tool-schema conversion and runtime events. Start at core/src/agent/{runtime,context,types,tool}.ts under05_Software; focused tests are runtime.test.ts,context.test.ts,runtime-edge.test.ts,pi-spike.test.ts. [LLM gateway](llm-gateway.md) owns model metadata/transport/replay, [workbench storage](workbench-storage.md) owns durable rows and future session engine owns their integration. Production tool/permissions/write queue implementations have their own planning seams.
+Select for AgentRuntime, turn orchestration, read/write batch ordering, approval-host waits, abort, transcript resume, context budgets, tool-schema conversion and runtime events. Start at core/src/agent/{runtime,context,types,tool}.ts under05_Software; focused tests are runtime.test.ts,context.test.ts,runtime-edge.test.ts,pi-spike.test.ts. [LLM gateway](llm-gateway.md) owns model metadata/transport/replay, [workbench storage](workbench-storage.md) owns durable rows and future session engine owns their integration. [File tools](file-tools.md) owns the production read registry/context adapter and worker hosts; permissions/write queue have their own planning seams.
 
 ## Purpose and boundaries
 

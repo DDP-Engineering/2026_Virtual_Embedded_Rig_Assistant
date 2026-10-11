@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-86bf3083"
+title = "List bounded ignored directories"
+status = "active"
+requirement = "When list receives an optional relative directory and depth1 to3, it shall return entries with name, type and bytes, defaulting to root/depth1 and excluding permanent ignored directories and root .veraignore matches."
+verification = "Tree fixtures check default and recursive depth boundaries, ignored children and external links."
+affected_paths = ["05_Software/packages/core/src/tools/discovery.test.ts", "05_Software/packages/core/src/tools/discovery.ts", "05_Software/packages/core/src/tools/list.ts"]
+linked_tests = ["05_Software/packages/core/src/tools/discovery.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

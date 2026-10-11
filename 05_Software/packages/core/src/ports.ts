@@ -1,6 +1,29 @@
 /** Host-owned data locations; core does not resolve Electron paths. */
 import type { EventEnvelope, SettingsPatch, SettingsSnapshot } from "@vera/shared";
 
+/** Host-owned task isolation; grep discovery, reads and matching execute only in a worker. */
+export interface GrepMatch {
+  path: string;
+  line: number;
+  text: string;
+  ref: string;
+  context?: { line: number; text: string }[];
+}
+export interface WorkerResult {
+  matches: GrepMatch[];
+  truncated: boolean;
+  reason?: "timeout" | "aborted";
+  error?: string;
+}
+export interface WorkerPool {
+  run(
+    task: { root: string; args: unknown },
+    signal: AbortSignal,
+    onPartial?: (match: GrepMatch) => void,
+  ): Promise<WorkerResult>;
+  dispose(): Promise<void>;
+}
+
 /** Structural pi-ai 1.1.0 auth/types contract; no Electron or model runtime dependency. */
 export type Credential =
   | { type: "api_key"; key?: string; env?: Record<string, string> }

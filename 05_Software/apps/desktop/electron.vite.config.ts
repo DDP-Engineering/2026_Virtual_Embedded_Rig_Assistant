@@ -41,6 +41,7 @@ export default defineConfig(({ command }) => ({
     resolve: {
       alias: {
         "@vera/shared": shared,
+        "@vera/core/grep-worker": resolve(root, "../../packages/core/src/tools/grep-worker.ts"),
         "@vera/core/replay": resolve(root, "../../packages/core/src/llm/replay.ts"),
         "@vera/core": resolve(root, "../../packages/core/src/index.ts"),
       },
@@ -52,6 +53,7 @@ export default defineConfig(({ command }) => ({
         input: {
           index: resolve(root, "src/main/index.ts"),
           "build-mode": resolve(root, "src/main/build-mode.ts"),
+          "grep-worker": resolve(root, "src/main/grep-worker.ts"),
           ...(testBuild
             ? { "embedding-worker": resolve(root, "src/main/packaging/embedding-worker.ts") }
             : {}),

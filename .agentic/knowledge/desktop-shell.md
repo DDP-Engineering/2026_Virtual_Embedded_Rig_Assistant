@@ -13,6 +13,7 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 Main owns the native window, instance lock, local asset protocol and window-state file.
 Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
 Main supplies the [workbench](workbench.md) lifecycle host and native folder picker.
+Main composes [file-tool](file-tools.md) worker capacity and drains it during shutdown; grep-worker is a separate production entry.
 The sandboxed preload exposes the typed invoke/subscribe bridge; React displays Welcome/App Settings and application metadata
 through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.
 
@@ -27,7 +28,7 @@ Compiled instrumented packages accept `--packaging-probe=<absolute JSON path>` a
 run [native packaging](native-packaging.md) probes and exit before creating a renderer window.
 Release compilation eliminates this hook and its worker entry.
 Instrumented folder selection accepts VERA_TEST_DIALOG_PATH; release emission eliminates the
-override and uses Electron dialog. Shutdown releases owned workbench locks before settings/log drain.
+override and uses Electron dialog. Shutdown releases owned workbench locks and terminates file workers before settings/log drain. Instrumented file-tool acceptance exposes a probe for host abort/responsiveness; release compilation eliminates the probe.
 
 ## Invariants
 

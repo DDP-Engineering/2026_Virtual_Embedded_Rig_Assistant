@@ -34,6 +34,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         .join("\n");
       if (flag === "1") {
         expect(code).toContain("VERA_REPLAY_DIR");
+        expect(code).toContain("veraTestFileTools");
         expect(code).toContain("replay_");
         expect(code.includes("VERA_TEST_DIALOG_PATH"), "instrumented folder override emitted").toBe(true);
         expect(code).toContain("packaging-probe");
@@ -51,6 +52,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
           "VERA_REPLAY_DIR",
           "replay_",
           "registerReplay",
+          "veraTestFileTools",
         ]) {
           expect(code).not.toContain(marker);
         }

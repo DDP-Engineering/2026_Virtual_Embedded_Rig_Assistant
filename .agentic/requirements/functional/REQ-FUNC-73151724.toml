@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-73151724"
+title = "Format and parse line references"
+status = "active"
+requirement = "For a line reference, shared shall format and parse <path>#L<a>-L<b> with positive ordered safe integer bounds and retain the relative source path."
+verification = "Round trip single/ranged Unicode paths; invalid ranges/path and unsupported ref kinds are refused."
+affected_paths = ["05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/refs.test.ts", "05_Software/packages/shared/src/refs.ts"]
+linked_tests = ["05_Software/packages/shared/src/refs.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

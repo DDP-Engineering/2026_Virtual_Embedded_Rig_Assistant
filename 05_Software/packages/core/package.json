@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./grep-worker": {
+      "types": "./dist/tools/grep-worker.d.ts",
+      "import": "./dist/tools/grep-worker.js"
+    },
     "./replay": {
       "types": "./dist/llm/replay.d.ts",
       "import": "./dist/llm/replay.js"
@@ -18,6 +22,7 @@
     "@vera/shared": "0.0.0",
     "better-sqlite3": "13.0.3",
     "ignore": "7.0.12",
+    "tinyglobby": "0.2.17",
     "typebox": "1.3.27",
     "ulid": "3.0.2",
     "yaml": "2.9.1",

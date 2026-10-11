@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-PLAT-2b27ef1d"
+title = "Keep desktop responsive during grep"
+status = "active"
+requirement = "While a pathological grep task runs, the desktop shall respond to app.info IPC and remain able to abort that worker."
+verification = "Native Electron acceptance starts real pathological grep via test harness, invokes actual sandboxed renderer app.info, aborts, checks terminated outcome and replacement successful grep; release omits harness."
+affected_paths = ["05_Software/apps/desktop/electron.vite.config.ts", "05_Software/apps/desktop/src/main/file-tool-probe.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/worker-pool.ts", "05_Software/e2e/file-tools.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+linked_tests = ["05_Software/e2e/file-tools.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

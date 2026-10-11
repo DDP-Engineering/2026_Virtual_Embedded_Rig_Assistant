@@ -26,6 +26,7 @@ import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
+import { createDesktopWorkerPool } from "./worker-pool.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
@@ -39,6 +40,8 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let window: BrowserWindow | undefined;
+const fileWorkers = createDesktopWorkerPool();
+let closeFileProbe: (() => Promise<void>) | undefined;
 let rendererUrl = "vera://app/index.html";
 export const emitAppEvent = createEventEmitter(
   () => window?.webContents,
@@ -196,6 +199,8 @@ if (!app.requestSingleInstanceLock()) {
     draining = true;
     void workbench
       .close()
+      .then(() => fileWorkers.dispose())
+      .then(() => closeFileProbe?.())
       .then(() => modelGateway.close())
       .then(() => providers.close())
       .then(() => credentials.close())
@@ -237,6 +242,12 @@ if (!app.requestSingleInstanceLock()) {
       if (draining) return;
       await settings.load();
       await credentials.load();
+      if (__VERA_TEST__) {
+        const { createFileToolProbe } = await import("./file-tool-probe.js");
+        const probe = createFileToolProbe();
+        Object.assign(globalThis, { veraTestFileTools: probe });
+        closeFileProbe = () => probe.dispose();
+      }
       if (app.commandLine.hasSwitch("vera-smoke-provider")) {
         let exitCode = 1;
         try {

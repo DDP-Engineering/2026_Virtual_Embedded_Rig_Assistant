@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-f558632e"
+title = "Detect binary samples"
+status = "active"
+requirement = "When examining a file sample, binary detection shall classify its first8192 bytes as binary when they contain NUL or their UTF8 decoding contains more than10 percent replacement characters."
+verification = "Boundary samples cover exact threshold, invalid UTF8, NUL before/after sample and valid Unicode."
+affected_paths = ["05_Software/packages/core/src/tools/binary.test.ts", "05_Software/packages/core/src/tools/binary.ts"]
+linked_tests = ["05_Software/packages/core/src/tools/binary.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

@@ -9,6 +9,7 @@ Focused tests: core workbench/service.test.ts and shared workbench.test.ts. Nati
 e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) owns settings migration;
 [IPC boundary](ipc-boundary.md) owns authorization/transport; [renderer foundation](renderer-foundation.md)
 owns the shell, appearance, language and layout.
+Tool path confinement, read/list/glob/grep and worker deadlines route to [File tools](file-tools.md).
 Database migrations, compatibility, backups and row repositories route to [Workbench storage](workbench-storage.md).
 
 ## Purpose and boundaries

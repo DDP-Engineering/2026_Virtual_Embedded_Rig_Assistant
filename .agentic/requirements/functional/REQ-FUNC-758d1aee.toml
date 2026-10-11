@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-758d1aee"
+title = "Search file content in workers"
+status = "active"
+requirement = "When grep is called, its dedicated WorkerPool task shall perform discovery, file reads and JavaScript regex matching with glob, ignoreCase, context0 to5, content/files/count output and maxResults up to500, skipping binary and files over5MiB."
+verification = "Real-worker fixture checks all output/options, line refs, ignored/binary/oversized files and observable partial messages; long match/context previews retain later-file matches for content/files/count and only clipped content reports preview truncation; invalid regex yields tool error."
+affected_paths = ["05_Software/apps/cli/src/grep-worker.ts", "05_Software/apps/cli/src/worker-pool.ts", "05_Software/apps/desktop/src/main/grep-worker.ts", "05_Software/apps/desktop/src/main/worker-pool.ts", "05_Software/e2e/file-tools.spec.ts", "05_Software/packages/core/src/ports.ts", "05_Software/packages/core/src/tools/discovery.ts", "05_Software/packages/core/src/tools/files.ts", "05_Software/packages/core/src/tools/grep-worker.ts", "05_Software/packages/core/src/tools/grep.test.ts", "05_Software/packages/core/src/tools/grep.ts", "05_Software/packages/core/src/workers/worker.test-support.ts", "05_Software/tests/tooling/worker-hosts.test.ts"]
+linked_tests = ["05_Software/e2e/file-tools.spec.ts", "05_Software/packages/core/src/tools/grep.test.ts", "05_Software/tests/tooling/worker-hosts.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

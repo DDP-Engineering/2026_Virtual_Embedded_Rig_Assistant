@@ -65,3 +65,5 @@ native acceptance checks all UI theme/scale preferences and panel geometry acros
 - [Tools](../../02_Tools/README.md)
 - [Toolchain](../../02_Tools/toolchain.json)
 - [AEGIS commands/layout](../aegis.toml)
+
+File-tool proof uses real worker-thread bundles and injected shorter deadlines for catastrophic regex/abort/replacement; native Electron file-tools acceptance invokes sandboxed app.info while matching stalls. Dedicated grep-worker entries ship in desktop and CLI; instrumented file-tool probe is compiled out of release.

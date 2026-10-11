@@ -11,7 +11,7 @@ to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Too
 
 The software root supplies four ESM workspaces, strict compilation, Biome boundaries,
 Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC/settings/workbench schemas; core
-publishes host ports, settings and workbench services; CLI exposes its skeleton entrypoint. Desktop owns the running Electron shell and renderer-only dev mode.
+publishes host ports, settings and workbench services; CLI exposes its skeleton entrypoint and bounded file-tool worker adapter. Desktop owns the running Electron shell and renderer-only dev mode.
 
 ## Public interface
 
@@ -24,10 +24,10 @@ which owns verified assets, native staging and artifact measurements.
 ## Invariants
 
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
-  Core pins @earendil-works/pi-ai1.1.0 for the gateway, zod4.6.5/typebox1.3.27 for tool-schema projection and pi-agent-core1.1.0 as an experiment-only dev dependency, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules.
+  Core pins @earendil-works/pi-ai1.1.0 for the gateway, zod4.6.5/typebox1.3.27 for tool-schema projection and pi-agent-core1.1.0 as an experiment-only dev dependency, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules; tinyglobby0.2.17 for file discovery. Tooling pins esbuild0.25.12 for isolated worker bundles.
 - Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.
   Core/desktop Vitest resolve their library dependencies from source; TypeScript supplies generated output for library consumers.
-- The tooling TypeScript project references shared before compiling e2e contract consumers.
+- The tooling TypeScript project references shared/core before compiling e2e contracts and worker-host test consumers.
 - All four workspaces extend the strict base and participate in the root TypeScript solution.
 - Core's Electron prohibition and the existing layer/import rules remain enforced by Biome regression tests.
 - E2e uses temporary userData and explicit Chromium sandboxing; non-loopback Node and Chromium requests are blocked.
@@ -77,7 +77,7 @@ flowchart LR
 ```
 
 Dashed arrows describe npm dependency declarations, while solid arrows describe command
-execution and compilation ownership. Core exports ports/settings/workbench/LLM gateway; shared publishes IPC/settings/workbench types/schemas;
+execution and compilation ownership. Core exports ports/settings/workbench/LLM gateway and confined file tools; shared publishes IPC/settings/workbench types/schemas;
 CLI retains its skeleton entrypoint.
 
 ## Files

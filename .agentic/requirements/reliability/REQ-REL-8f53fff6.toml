@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-8f53fff6"
+title = "Terminate timed out grep tasks"
+status = "active"
+requirement = "When a grep task reaches its host-owned absolute10 second deadline, the host shall terminate that worker and return received partial results with truncated true and reason timeout."
+verification = "Injected shorter host deadline executes catastrophic-backtracking fixture, asserts partial results and worker termination, then subsequent successful grep replacement."
+affected_paths = ["05_Software/apps/cli/src/grep-worker.ts", "05_Software/apps/cli/src/worker-pool.ts", "05_Software/apps/desktop/src/main/grep-worker.ts", "05_Software/apps/desktop/src/main/worker-pool.ts", "05_Software/e2e/file-tools.spec.ts", "05_Software/packages/core/src/ports.ts", "05_Software/packages/core/src/workers/node-host.test.ts", "05_Software/packages/core/src/workers/node-host.ts", "05_Software/tests/tooling/worker-hosts.test.ts"]
+linked_tests = ["05_Software/e2e/file-tools.spec.ts", "05_Software/packages/core/src/workers/node-host.test.ts", "05_Software/tests/tooling/worker-hosts.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

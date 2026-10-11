@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-6e0a50db"
+title = "Remember session read fingerprints"
+status = "active"
+requirement = "After a successful read, the caller session shall retain the canonical file SHA256 and mtime as its last-read fingerprint independently from other sessions."
+verification = "Two contexts read then change the same file; hashes/mtime update only for the reading context, failed read records nothing."
+affected_paths = ["05_Software/packages/core/src/tools/context.ts", "05_Software/packages/core/src/tools/read-window.ts", "05_Software/packages/core/src/tools/read.test.ts", "05_Software/packages/core/src/tools/read.ts"]
+linked_tests = ["05_Software/packages/core/src/tools/read.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11

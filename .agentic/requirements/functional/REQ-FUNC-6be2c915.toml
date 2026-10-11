@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-6be2c915"
+title = "Glob sorted confined files"
+status = "active"
+requirement = "When glob receives a pattern and optional relative base, it shall return at most500 allowed file paths sorted newest modification first through tinyglobby and the common ignore policy."
+verification = "Controlled mtimes and501 files show ordering/cap, relative base, ignored patterns and escaping pattern refusal."
+affected_paths = ["05_Software/packages/core/src/tools/discovery.test.ts", "05_Software/packages/core/src/tools/discovery.ts", "05_Software/packages/core/src/tools/glob.ts"]
+linked_tests = ["05_Software/packages/core/src/tools/discovery.test.ts"]
+priority = "high"
+created = 2026-10-11
+updated = 2026-10-11
