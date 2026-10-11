@@ -118,7 +118,11 @@ export const channels = {
     z.strictObject({ remove: z.string().min(1).optional() }),
     z.array(recentWorkbenchStateSchema).max(10),
   ),
-  "workbench.config.get": defineChannel("workbench.config.get", z.strictObject({}), configSnapshotSchema),
+  "workbench.config.get": defineChannel(
+    "workbench.config.get",
+    z.strictObject({}),
+    configSnapshotSchema.extend({ readOnly: z.boolean().optional(), folder: z.string().min(1).optional() }),
+  ),
   "workbench.config.update": defineChannel(
     "workbench.config.update",
     z.strictObject({ patch: workbenchPatchSchema }),

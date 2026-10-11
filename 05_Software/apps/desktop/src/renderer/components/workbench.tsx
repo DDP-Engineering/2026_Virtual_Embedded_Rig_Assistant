@@ -5,12 +5,19 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 
-export function Workbench({ settingsReadOnly }: { settingsReadOnly: boolean }) {
+export function Workbench({
+  settingsReadOnly,
+  active,
+  changed,
+}: {
+  settingsReadOnly: boolean;
+  active: WorkbenchSnapshot | undefined;
+  changed: (active?: WorkbenchSnapshot, configOnly?: boolean) => void;
+}) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const [folder, setFolder] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [active, setActive] = useState<WorkbenchSnapshot>();
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -29,13 +36,23 @@ export function Workbench({ settingsReadOnly }: { settingsReadOnly: boolean }) {
   );
   useEffect(() => {
     if (!activeId) return;
-    return api.subscribe("workbench", activeId, (event) => {
-      if (event.type === "closed") setActive(undefined);
-      else if (event.type === "config.changed")
-        setActive((current) =>
-          current ? { ...current, config: event.config, warnings: event.warnings } : current,
-        );
+    let cancelled = false;
+    const off = api.subscribe("workbench", activeId, (event) => {
+      if (cancelled) return;
+      if (event.type === "closed") {
+        changed();
+      } else if (event.type === "config.changed") {
+        changed({ ...active, config: event.config, warnings: event.warnings }, true);
+      }
     });
+    return () => {
+      cancelled = true;
+      off();
+    };
+  }, [activeId, active, changed]);
+  useEffect(() => {
+    void activeId; // A workbench switch closes the preceding editor draft.
+    setEditing(false);
   }, [activeId]);
   async function perform(action: () => Promise<void>) {
     setPending(true);
@@ -49,7 +66,8 @@ export function Workbench({ settingsReadOnly }: { settingsReadOnly: boolean }) {
     }
   }
   async function open(path: string) {
-    setActive(await api.invoke("workbench.open", { folder: path }));
+    const snapshot = await api.invoke("workbench.open", { folder: path });
+    changed(snapshot);
     await recent.refetch();
   }
   const warningLabels = {
@@ -88,7 +106,7 @@ export function Workbench({ settingsReadOnly }: { settingsReadOnly: boolean }) {
               onClick={() =>
                 void perform(async () => {
                   await api.invoke("workbench.close", {});
-                  setActive(undefined);
+                  changed();
                 })
               }
             >
@@ -115,7 +133,8 @@ export function Workbench({ settingsReadOnly }: { settingsReadOnly: boolean }) {
                 event.preventDefault();
                 if (folder)
                   void perform(async () => {
-                    setActive(await api.invoke("workbench.create", { folder, name }));
+                    const snapshot = await api.invoke("workbench.create", { folder, name });
+                    changed(snapshot);
                     await recent.refetch();
                   });
               }}

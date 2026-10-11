@@ -2,6 +2,8 @@
 
 ## Routing
 
+[Chat UI](chat-ui.md) owns renderer transcript/composer/navigation and native UI acceptance.
+
 Select for SessionService, session CRUD/model/mode, persisted snapshots, turn/tool rows, replay/live subscriptions, citations and restart recovery. Start under05_Software at core/src/sessions/{service,hub,timed-gateway}.ts. Focused tests are sessions/service.test.ts, shared/session-state.test.ts, agent/citations.test.ts and desktop main/session-events.test.ts,sessions.test.ts,preload/bridge.test.ts. [Agent runtime](agent-runtime.md) owns model/tool execution and M1 policy; [workbench storage](workbench-storage.md) owns schema/driver; [workbench](workbench.md) owns lifetime/lock; [IPC](ipc-boundary.md) owns validated transport; [file tools](file-tools.md) owns confinement/worker execution.
 
 ## Purpose and boundaries

@@ -20,6 +20,9 @@
 body {
   margin: 0;
 }
+.app-shell [hidden] {
+  display: none;
+}
 
 * {
   box-sizing: border-box;
@@ -153,6 +156,232 @@ main {
 }
 .page-title {
   font-size: 1.6rem;
+}
+.session-workspace {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1rem;
+  gap: 0.75rem;
+}
+.transcript {
+  flex: 1;
+  min-height: 10rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.transcript-item {
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.transcript-item.user {
+  background: var(--accent);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  align-self: end;
+  max-width: 90%;
+}
+.transcript-item[data-search-match="true"] {
+  outline: 0.15rem solid var(--ring);
+  outline-offset: 0.2rem;
+}
+.markdown {
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+  line-height: 1.6;
+}
+.markdown pre,
+.transcript pre {
+  max-width: 100%;
+  overflow: auto;
+  border: 0.0714286rem solid var(--border);
+  background: var(--card);
+  padding: 0.75rem;
+  font:
+    0.95rem / 1.5 ui-monospace,
+    monospace;
+}
+.transcript details pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.disclosure-toggle {
+  cursor: pointer;
+  padding: 0.5rem;
+  border: 0.0714286rem solid var(--border);
+  border-radius: 0.4rem;
+  overflow-wrap: anywhere;
+  width: 100%;
+  text-align: left;
+}
+.markdown ul,
+.markdown ol {
+  padding-left: 1.5rem;
+}
+.markdown-table {
+  overflow: auto;
+  max-width: 100%;
+}
+.markdown th,
+.markdown td {
+  border: 0.0714286rem solid var(--border);
+  padding: 0.4rem;
+}
+.markdown blockquote {
+  border-left: 0.2rem solid var(--border);
+  padding-left: 1rem;
+}
+.markdown-link {
+  text-decoration: underline;
+}
+.citation {
+  display: inline-block;
+  font:
+    0.85rem ui-monospace,
+    monospace;
+  padding: 0.2rem 0.4rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  vertical-align: baseline;
+}
+.citation.invalid {
+  border: 0.0714286rem solid var(--border);
+  background: var(--accent);
+  border-radius: 0.4rem;
+}
+.citation-note {
+  display: block;
+  padding: 0.5rem;
+}
+.composer {
+  flex-shrink: 0;
+  min-width: 0;
+}
+.composer form {
+  display: grid;
+  gap: 0.5rem;
+}
+.composer textarea {
+  font: inherit;
+  color: inherit;
+  background: var(--card);
+  border: 0.0714286rem solid var(--input);
+  border-radius: 0.4rem;
+  padding: 0.6rem;
+  width: 100%;
+  min-height: 4rem;
+  max-height: 12rem;
+  resize: vertical;
+}
+.composer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+.composer-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.composer select {
+  min-width: 0;
+  max-width: 100%;
+}
+.composer-hint,
+.usage-meter {
+  font-size: 0.85rem;
+}
+.usage-meter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+.session-list,
+.session-entry,
+.context-tab {
+  display: grid;
+  min-width: 0;
+  gap: 0.5rem;
+}
+.session-entry > button {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.25rem;
+}
+.session-entry form,
+.session-entry label {
+  display: grid;
+  gap: 0.25rem;
+}
+.session-entry input {
+  min-width: 0;
+  width: 100%;
+}
+.session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.session-actions button {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.5rem;
+}
+.path-completions {
+  margin: 0;
+  list-style: none;
+  padding: 0.3rem;
+  max-height: 10rem;
+  overflow: auto;
+  border: 0.0714286rem solid var(--border);
+}
+.path-completions button {
+  width: 100%;
+  text-align: left;
+}
+.path-completions [aria-selected="true"] {
+  outline: 0.15rem solid var(--ring);
+}
+.transcript-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sr-only {
+  position: absolute;
+  width: 0.0714286rem;
+  height: 0.0714286rem;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.hljs-keyword,
+.hljs-selector-tag {
+  color: var(--primary);
+  font-weight: 600;
+}
+.hljs-string,
+.hljs-number {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.hljs-comment {
+  color: var(--muted-foreground);
+  font-style: italic;
 }
 .surface {
   border: 0.0714286rem solid var(--border);

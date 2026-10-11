@@ -1,0 +1,2 @@
+{"match":"Normal grep","toolCalls":[{"name":"grep","args":{"pattern":"ok","glob":"00*"}}]}
+{"text":"Grep recovered."}

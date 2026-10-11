@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-4bea0008"
+title = "Browser session fixtures"
+status = "active"
+requirement = """Mock mode shall expose empty, streaming answer, tool rows, invalid citation and provider error session states in English, Romanian and German through the ordinary bridge."""
+verification = """Component tests render every fixture and exercise session list, tool rows and composer with keyboard; catalog audit; native/mocks minimum viewport baseline."""
+affected_paths = ["05_Software/apps/desktop/src/renderer/", "05_Software/apps/desktop/package.json", "05_Software/package-lock.json", "05_Software/apps/desktop/src/main/index.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/fixtures/llm-scripts/"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts", "05_Software/e2e/mock.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-UX-4bea0001.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-12

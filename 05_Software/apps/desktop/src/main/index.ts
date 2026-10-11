@@ -182,7 +182,11 @@ ipcMain.handle(
         return {};
       },
       "workbench.recent": ({ remove }) => workbench.recent(remove),
-      "workbench.config.get": () => workbench.getConfig(),
+      "workbench.config.get": async () => ({
+        ...(await workbench.getConfig()),
+        readOnly: workbench.getSnapshot().readOnly,
+        folder: workbench.getSnapshot().folder,
+      }),
       "workbench.config.update": ({ patch }) => workbench.updateConfig(patch),
       "workbench.pinned.get": () => workbench.getPinned(),
       "workbench.pinned.update": ({ content }) => workbench.updatePinned(content),
@@ -334,9 +338,14 @@ if (!app.requestSingleInstanceLock()) {
       }
       if (__VERA_TEST__ && process.env.VERA_REPLAY_DIR) {
         const { ReplayGateway } = await import("@vera/core/replay");
+        const { setTimeout: replayWait } = await import("node:timers/promises");
+        const replayDelay = Math.max(0, Math.min(1000, Number(process.env.VERA_REPLAY_DELAY_MS) || 0));
         const replay = new ReplayGateway({
           dir: process.env.VERA_REPLAY_DIR,
           now: () => systemClock.now().getTime(),
+          delay: async (signal) => {
+            if (replayDelay) await replayWait(replayDelay, undefined, { signal });
+          },
         });
         const api = modelGateway.api;
         const select = (id: string) => (id === "replay" ? replay : api);

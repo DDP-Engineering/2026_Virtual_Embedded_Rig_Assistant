@@ -27,7 +27,7 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 - subscribe('workbench', wbId, on) filters validated opened/closed/config.changed events by id.
 - app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/
   pinned.update/files have strict requests/responses; configuration objects retain extensions.
-  WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
+  config.get includes optional folder/readOnly metadata for renderer reload. WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
 - emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
 - Session list/get and mutation summaries redact user fields while preserving schema identities and enums. Titles remain bounded after redaction; known-secret text/title/model requests are refused. Mock sessions bind delayed responses to their originating workbench and drain aborted turns before switches/close.

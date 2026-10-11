@@ -16,7 +16,7 @@ Database migrations, compatibility, backups and row repositories route to [Workb
 
 Core owns the folder lifecycle, identity, YAML validation, runtime lock, pinned context and common
 ignore/completion policy. Main supplies process liveness, version, clock, token, settings and atomic
-file/event ports. Renderer displays Welcome and the pinned editor through validated IPC; mock
+file/event ports. Renderer displays Welcome, pinned editor and session workbench switching through validated IPC; config.get adds optional folder/readOnly metadata for reload. Mock
 mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface

@@ -38,7 +38,7 @@ const openAiFixture = {
 
 export function createMockApi(
   info: AppInfo = mockAppInfo,
-  scenario: "empty" | "missing" | "read-only" | "warnings" = "empty",
+  scenario: "empty" | "missing" | "read-only" | "warnings" | "chat" = "empty",
 ): {
   api: VeraApi;
   emitAppEvent: (event: AppEvent) => void;
@@ -122,6 +122,7 @@ export function createMockApi(
     const input = channels[channel].request.safeParse(request);
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
+    if (channel === "session.list" && scenario === "chat") sessions.seedFixtures();
     if (channel.startsWith("session."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
@@ -339,7 +340,12 @@ export function createMockApi(
         break;
       }
       case "workbench.config.get":
-        value = { config: current().snapshot.config, warnings: current().snapshot.warnings };
+        value = {
+          config: current().snapshot.config,
+          warnings: current().snapshot.warnings,
+          readOnly: current().snapshot.readOnly,
+          folder: current().snapshot.folder,
+        };
         break;
       case "workbench.config.update": {
         const { patch } = channels["workbench.config.update"].request.parse(input.data);
@@ -397,4 +403,9 @@ export function createMockApi(
     emitAppEvent,
   };
 }
-export const mockApi = createMockApi().api;
+export const mockApi = createMockApi(
+  undefined,
+  typeof location !== "undefined" && new URLSearchParams(location.search).get("mock") === "chat"
+    ? "chat"
+    : "empty",
+).api;

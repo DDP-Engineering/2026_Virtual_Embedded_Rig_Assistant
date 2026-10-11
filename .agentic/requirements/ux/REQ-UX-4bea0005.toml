@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-4bea0005"
+title = "Context usage meter"
+status = "active"
+requirement = """When usage.updated or CONTEXT_LIMIT arrives, the renderer shall display provider usage and context input budget/output reserve with labelled estimates and actionable limit guidance while retaining the complete transcript and usable composer."""
+verification = """Component fixture checks estimated/context/budget/reserve; limit then new send succeeds and prior long history remains visible."""
+affected_paths = ["05_Software/apps/desktop/src/renderer/", "05_Software/apps/desktop/package.json", "05_Software/package-lock.json", "05_Software/apps/desktop/src/main/index.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/fixtures/llm-scripts/"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts", "05_Software/e2e/mock.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-UX-4bea0001.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-12

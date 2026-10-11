@@ -17,10 +17,10 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 
 ## Public interface
 
-- App switches two memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact.
+- App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact.
 - Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
-- Shell supplies resizable/collapsible sidebar and right panel with five placeholder tabs.
+- Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, while Docs/Changes/Artifacts/Plan retain placeholders.
   Below1280px the right panel overlays the centre.
 - Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates/Data retain placeholders. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - usePreferences loads {settings,readOnly}, applies mutation responses, invalidates on settings.changed
@@ -44,7 +44,7 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
 - Keyboard controls have visible focus rings and semantic labels; colors meet AA text contrast.
   Reduced-motion styles disable animation/transition. Minimum viewport uses wrapping and vertical scroll.
-- Session/update placeholder seams expose explanatory content for their owning components.
+- [Chat UI](chat-ui.md) owns session navigation, transcript, composer, usage and session Context.
 
 ## Change map
 

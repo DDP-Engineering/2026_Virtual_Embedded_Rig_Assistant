@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-4bea0007"
+title = "Workspace context panel"
+status = "active"
+requirement = """When a workbench is open, the Context tab shall display current WORKBENCH.md and available-skill state, alongside placeholder tabs for Docs, Changes, Artifacts and Plan."""
+verification = """Component/mock Context preview and empty skills, remaining tabs show localized placeholder; API failure Retry."""
+affected_paths = ["05_Software/apps/desktop/src/renderer/", "05_Software/apps/desktop/package.json", "05_Software/package-lock.json", "05_Software/apps/desktop/src/main/index.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/fixtures/llm-scripts/"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts", "05_Software/e2e/mock.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-UX-4bea0001.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-12

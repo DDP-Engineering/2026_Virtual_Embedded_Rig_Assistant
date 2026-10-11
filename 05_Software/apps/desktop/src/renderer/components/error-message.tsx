@@ -29,6 +29,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "provider.rateLimit": t("provider.rateLimit", options),
     "provider.context": t("provider.context", options),
     "provider.failure": t("provider.failure", options),
+    "context.budget_exceeded": t("context.budget_exceeded", options),
   };
   return (
     <p role="alert" data-i18n={Object.hasOwn(messages, key) ? key : "errors.INTERNAL"}>

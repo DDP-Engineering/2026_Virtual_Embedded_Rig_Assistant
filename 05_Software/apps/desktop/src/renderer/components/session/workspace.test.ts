@@ -1,0 +1,419 @@
+// @vitest-environment jsdom
+// REQ-UX-4bea0001 REQ-UX-4bea0002 REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-4bea0005 REQ-REL-4bea0006 REQ-UX-4bea0007 REQ-TEST-4bea0008
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
+import { act, createElement, type ReactElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, expect, test, vi } from "vitest";
+import { App } from "../../App.js";
+import { api } from "../../api/index.js";
+import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { Markdown } from "./markdown.js";
+import "../../i18n.js";
+
+vi.mock("../../api/index.js", async () => {
+  const { createMockApi } = await import("../../mocks/mockApi.js");
+  return { api: createMockApi(undefined, "chat").api, usingMocks: true };
+});
+let root: Root;
+let container: HTMLDivElement;
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+HTMLDialogElement.prototype.showModal = function () {
+  this.setAttribute("open", "");
+  this.querySelector<HTMLElement>("[autofocus]")?.focus();
+};
+HTMLDialogElement.prototype.close = function () {
+  this.removeAttribute("open");
+};
+async function settle() {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  });
+}
+function button(text: string) {
+  const node = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
+    (b) => b.textContent === text,
+  );
+  expect(node, text).toBeTruthy();
+  return node as HTMLButtonElement;
+}
+async function mount(child: ReactElement = createElement(App)) {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root.render(
+      createElement(
+        QueryClientProvider,
+        { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
+        child,
+      ),
+    ),
+  );
+  await settle();
+}
+afterEach(async () => {
+  vi.restoreAllMocks();
+  if (root) await act(async () => root.unmount());
+  container?.remove();
+  await api.invoke("workbench.close", {});
+  localStorage.clear();
+});
+test("renderer reload of a read-only workbench disables session mutations", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const config = await api.invoke("workbench.config.get", {});
+  vi.spyOn(api, "invoke").mockResolvedValueOnce({ ...config, readOnly: true });
+  await mount();
+  expect(button("New session").disabled).toBe(true);
+});
+test("Welcome restores the active workbench and follows sidebar switches through editor and close", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/switch-a", name: "Switch A" });
+  await api.invoke("workbench.create", { folder: "/mock/switch-b", name: "Switch B" });
+  await api.invoke("workbench.pinned.update", { content: "Context B" });
+  await api.invoke("workbench.open", { folder: "/mock/switch-a" });
+  await mount();
+  await act(async () => button("Welcome").click());
+  expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Switch A");
+  expect(container.querySelector('[data-action="close-workbench"]')).toBeTruthy();
+  const picker = container.querySelector<HTMLSelectElement>(
+    'select[aria-label="Workbench"]',
+  ) as HTMLSelectElement;
+  await act(async () => userEvent.setup().selectOptions(picker, "/mock/switch-b"));
+  await settle();
+  await act(async () => button("Welcome").click());
+  expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Switch B");
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="edit-pinned"]')?.click());
+  await settle();
+  expect(container.querySelector<HTMLTextAreaElement>("dialog textarea")?.value).toBe("Context B");
+  await act(async () => container.querySelector<HTMLButtonElement>("dialog button")?.click());
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="close-workbench"]')?.click(),
+  );
+  await settle();
+  expect(container.querySelector('[data-workbench="active"]')).toBeNull();
+  expect(container.querySelector('[data-action="new-session"]')).toBeNull();
+});
+test("obsolete snapshots and detached session callbacks cannot replace the selected session", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const [a, b] = await api.invoke("session.list", {});
+  if (!a || !b) throw new Error("Two fixtures required");
+  const first = await api.invoke("session.get", { sessionId: a.id });
+  const second = await api.invoke("session.get", { sessionId: b.id });
+  let release: (value: typeof first) => void = () => {};
+  const delayed = new Promise<typeof first>((resolve) => {
+    release = resolve;
+  });
+  const invoke = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((channel, request) =>
+    channel === "session.get" && "sessionId" in request && request.sessionId === a.id
+      ? (delayed as ReturnType<typeof api.invoke>)
+      : invoke(channel, request),
+  );
+  const off = vi.fn();
+  const subscription = vi.spyOn(api, "subscribe").mockReturnValue(off);
+  const changed = () => {};
+  function Projection({ id }: { id: string }) {
+    const { view } = useSessionEvents(id, changed);
+    return createElement("output", {}, view?.id);
+  }
+  await mount(createElement(Projection, { id: a.id }));
+  await act(async () => root.render(createElement(Projection, { id: b.id })));
+  await settle();
+  expect(container.textContent).toBe(b.id);
+  expect(subscription).toHaveBeenCalledWith("session", b.id, second.seq, expect.any(Function));
+  await act(async () => release(first));
+  expect(container.textContent).toBe(b.id);
+  expect(subscription).toHaveBeenCalledTimes(1);
+  const detached = subscription.mock.calls[0]?.[3];
+  if (typeof detached !== "function") throw new Error("Session callback required");
+  await act(async () => root.render(createElement(Projection, { id: a.id })));
+  await settle();
+  expect(off).toHaveBeenCalledTimes(1);
+  expect(container.textContent).toBe(a.id);
+  await act(async () => detached({ type: "message.delta", messageId: "obsolete", text: "stale" }));
+  expect(container.textContent).toBe(a.id);
+});
+async function typeText(node: HTMLTextAreaElement | HTMLInputElement, value: string) {
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(
+      node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(node, value);
+    node.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+function key(node: HTMLElement, value: string, shiftKey = false) {
+  const event = new KeyboardEvent("keydown", { key: value, shiftKey, bubbles: true, cancelable: true });
+  node.dispatchEvent(event);
+  return event;
+}
+test("an open workbench offers keyboard New session and a usable composer", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/chat-board", name: "Chat Board" });
+  await mount();
+  await act(async () => button("New session").click());
+  await settle();
+  expect(container.querySelector('textarea[aria-label="Message"]')).toBeTruthy();
+  expect(container.querySelector('textarea[aria-label="Message"]')?.hasAttribute("disabled")).toBe(false);
+});
+test("chat fixtures render tool arguments, invalid citations, provider Retry and estimated usage", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const list = await api.invoke("session.list", {});
+  expect(list.map((s) => s.title)).toEqual(
+    expect.arrayContaining([
+      "Empty session",
+      "Streaming answer",
+      "Tool rows",
+      "Invalid citation",
+      "Provider error",
+      "Context limit",
+    ]),
+  );
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(`[data-session="${list.find((s) => s.title === "Tool rows")?.id}"]`)
+      ?.click(),
+  );
+  await settle();
+  expect(container.querySelectorAll("[data-tool-row]")).toHaveLength(2);
+  expect(container.querySelectorAll("[data-citation]")).toHaveLength(1);
+  await act(async () => container.querySelector<HTMLElement>("[data-tool-row] button")?.click());
+  expect(container.textContent).toContain('"path": "board.txt"');
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        `[data-session="${list.find((s) => s.title === "Invalid citation")?.id}"]`,
+      )
+      ?.click(),
+  );
+  await settle();
+  expect(container.querySelector('[data-citation="invalid"]')).toBeTruthy();
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        `[data-session="${list.find((s) => s.title === "Provider error")?.id}"]`,
+      )
+      ?.click(),
+  );
+  await settle();
+  expect(button("Retry").disabled).toBe(false);
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain("Providers");
+  await act(async () => button("Retry").click());
+  await settle();
+  expect(container.querySelectorAll('[data-message-kind="user"]')).toHaveLength(2);
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        `[data-session="${list.find((s) => s.title === "Context limit")?.id}"]`,
+      )
+      ?.click(),
+  );
+  await settle();
+  expect(container.textContent).toContain("Estimated");
+  expect(container.textContent).toContain("27033");
+  expect(container.textContent).toContain("4096");
+  expect(container.textContent).toContain("FULL HISTORY");
+  expect(container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.disabled).toBe(
+    false,
+  );
+});
+test("composer completes paths with keyboard, preserves Shift+Enter and Stop restores usability", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const sessions = await api.invoke("session.list", {});
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        `[data-session="${sessions.find((s) => s.title === "Empty session")?.id}"]`,
+      )
+      ?.click(),
+  );
+  await settle();
+  const input = container.querySelector<HTMLTextAreaElement>(
+    'textarea[aria-label="Message"]',
+  ) as HTMLTextAreaElement;
+  input.focus();
+  await typeText(input, "Read @WORK");
+  await settle();
+  expect(container.querySelector('[role="listbox"]')).toBeTruthy();
+  await act(async () => {
+    key(input, "ArrowDown");
+    key(input, "Enter");
+  });
+  expect(input.value).toContain("WORKBENCH.md");
+  expect(key(input, "Enter", true).defaultPrevented).toBe(false);
+  await act(async () => userEvent.setup().keyboard("{Shift>}{Enter}{/Shift}"));
+  expect(input.value).toContain("\n");
+  await act(async () => key(input, "Enter"));
+  await settle();
+  expect(container.querySelectorAll('[data-message-kind="user"]')).toHaveLength(1);
+  expect(container.querySelector('select[aria-label="Model"]')).toBeTruthy();
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(
+        `[data-session="${sessions.find((s) => s.title === "Streaming answer")?.id}"]`,
+      )
+      ?.click(),
+  );
+  await settle();
+  expect(container.textContent).toContain("Streaming mock answer");
+  expect(container.querySelector(".reasoning button")).toBeTruthy();
+  expect(button("Stop").disabled).toBe(false);
+  const user = userEvent.setup();
+  const reasoning = container.querySelector<HTMLButtonElement>(".reasoning button") as HTMLButtonElement;
+  reasoning.focus();
+  await act(async () => user.keyboard(" "));
+  expect(reasoning.getAttribute("aria-expanded")).toBe("true");
+  button("Stop").focus();
+  await act(async () => user.keyboard("{Escape}"));
+  expect(container.querySelector("dialog[open]")).toBeTruthy();
+  await act(async () => user.keyboard("{Enter}")); // Cancel
+  expect(button("Stop")).toBe(document.activeElement);
+  await act(async () => user.keyboard("{Escape}"));
+  await act(async () => user.tab());
+  await act(async () => user.keyboard("{Enter}")); // confirmed Stop
+  await settle();
+  expect(container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.disabled).toBe(
+    false,
+  );
+});
+test("session list creation, rename, confirmed delete and tool details work by keyboard alone", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const user = userEvent.setup();
+  button("New session").focus();
+  await act(async () => user.keyboard("{Enter}"));
+  await settle();
+  expect(container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.disabled).toBe(
+    false,
+  );
+  const id = container.querySelector('[data-session][aria-current="page"]')?.getAttribute("data-session");
+  const row = container.querySelector(`[data-session="${id}"]`)?.parentElement as HTMLElement;
+  row.querySelector<HTMLButtonElement>('[aria-label^="Rename"]')?.focus();
+  await act(async () => user.keyboard("{Enter}"));
+  expect(document.activeElement?.tagName).toBe("INPUT");
+  await act(async () => user.keyboard("Keyboard Session{Enter}"));
+  await settle();
+  expect((await api.invoke("session.list", {})).find((s) => s.id === id)?.title).toBe("Keyboard Session");
+  const deletion = row.querySelector<HTMLButtonElement>('[aria-label^="Delete"]') as HTMLButtonElement;
+  deletion.focus();
+  await act(async () => user.keyboard("{Enter}"));
+  expect(container.querySelector("dialog[open]")).toBeTruthy();
+  await act(async () => user.keyboard("{Enter}")); // initially focused Cancel
+  expect((await api.invoke("session.list", {})).some((s) => s.id === id)).toBe(true);
+  expect(document.activeElement).toBe(deletion);
+  await act(async () => user.keyboard("{Enter}"));
+  await act(async () => user.tab());
+  expect(document.activeElement?.getAttribute("data-action")).toBe("confirm-delete");
+  await act(async () => user.keyboard("{Enter}"));
+  await settle();
+  expect((await api.invoke("session.list", {})).some((s) => s.id === id)).toBe(false);
+  const toolsId = (await api.invoke("session.list", {})).find((s) => s.title === "Tool rows")?.id;
+  container.querySelector<HTMLButtonElement>(`[data-session="${toolsId}"]`)?.focus();
+  await act(async () => user.keyboard("{Enter}"));
+  await settle();
+  const summary = container.querySelector<HTMLElement>("[data-tool-row] button") as HTMLElement;
+  summary.focus();
+  await act(async () => user.keyboard(" "));
+  expect(summary.getAttribute("aria-expanded") === "true").toBe(true);
+  expect(summary.parentElement?.textContent).toContain("Source line");
+});
+test("context-limit retains full history and accepts another instruction; Context and Markdown are safe", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const list = await api.invoke("session.list", {}),
+    id = list.find((s) => s.title === "Context limit")?.id as string;
+  container.querySelector<HTMLButtonElement>(`[data-session="${id}"]`)?.focus();
+  const user = userEvent.setup();
+  await act(async () => user.keyboard("{Enter}"));
+  await settle();
+  const full = (await api.invoke("session.get", { sessionId: id })).snapshot.items.find(
+    (i) => i.kind === "user",
+  ) as { text: string };
+  expect(container.querySelector('[data-message-kind="user"] .markdown')?.textContent).toBe(
+    full.text.trimEnd(),
+  );
+  const input = container.querySelector<HTMLTextAreaElement>(
+    'textarea[aria-label="Message"]',
+  ) as HTMLTextAreaElement;
+  input.focus();
+  await act(async () => user.keyboard("Short instruction{Enter}"));
+  await settle();
+  expect(
+    (await api.invoke("session.get", { sessionId: id })).snapshot.items
+      .filter((i) => i.kind === "user")
+      .at(-1),
+  ).toMatchObject({ text: "Short instruction" });
+  expect(container.querySelector('[data-message-kind="user"] .markdown')?.textContent).toBe(
+    full.text.trimEnd(),
+  );
+  if (!container.querySelector(".context-tab")) {
+    await act(async () => container.querySelector<HTMLButtonElement>('[data-toggle="right"]')?.click());
+    await settle();
+  }
+  expect(container.querySelector(".context-tab")?.textContent).toContain("WORKBENCH.md");
+  expect(container.querySelector(".context-tab")?.textContent).toContain("No skills are available");
+  const code = container.querySelector("code.language-c .hljs-type");
+  expect(code?.textContent).toBe("int");
+});
+test("model picker uses configured catalogs and confirms the session model", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await api.invoke("providers.save", {
+    provider: "custom",
+    config: {
+      name: "Bench model",
+      baseUrl: "http://127.0.0.1:8000/v1",
+      model: "bench-chat",
+      contextWindow: 32768,
+      maxOutputTokens: 4096,
+    },
+  });
+  await mount();
+  await act(async () => button("New session").click());
+  await settle();
+  const picker = container.querySelector<HTMLSelectElement>(
+    'select[aria-label="Model"]',
+  ) as HTMLSelectElement;
+  expect([...picker.options].map((o) => o.value)).toContain("custom:bench-model/bench-chat");
+  const user = userEvent.setup();
+  await act(async () => user.selectOptions(picker, "custom:bench-model/bench-chat"));
+  await settle();
+  const id = container
+    .querySelector('[data-session][aria-current="page"]')
+    ?.getAttribute("data-session") as string;
+  expect((await api.invoke("session.get", { sessionId: id })).snapshot.modelRef).toBe(
+    "custom:bench-model/bench-chat",
+  );
+  expect(picker.value).toBe("custom:bench-model/bench-chat");
+  const invoke = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((channel, request) =>
+    channel === "session.model.set" || channel === "session.send"
+      ? Promise.reject({ code: "BUSY" })
+      : invoke(channel, request),
+  );
+  await act(async () => user.selectOptions(picker, ""));
+  await settle();
+  expect(picker.value).toBe("custom:bench-model/bench-chat");
+  const input = container.querySelector<HTMLTextAreaElement>(
+    'textarea[aria-label="Message"]',
+  ) as HTMLTextAreaElement;
+  input.focus();
+  await act(async () => user.keyboard("Preserved draft{Enter}"));
+  await settle();
+  expect(input.value).toBe("Preserved draft");
+  expect(container.querySelectorAll('[data-message-kind="user"]')).toHaveLength(0);
+});
+test("Markdown keeps remote content inert and citation syntax in code unmodified", async () => {
+  await mount(
+    createElement(Markdown, {
+      text: "**Grounded** [[board.txt#L1-L2]]\n\n```text\n[[inside-code]]\n```\n\n[Remote](https://example.com/) ![External image](https://example.com/image.png) <script>attack()</script>",
+      citations: [{ ref: "board.txt#L1-L2", valid: true }],
+    }),
+  );
+  expect(container.querySelectorAll("[data-citation]")).toHaveLength(1);
+  expect(container.querySelector("code")?.textContent).toContain("[[inside-code]]");
+  expect(container.querySelector("strong")?.textContent).toBe("Grounded");
+  expect(container.querySelector("script,img,a[href]")).toBeNull();
+});

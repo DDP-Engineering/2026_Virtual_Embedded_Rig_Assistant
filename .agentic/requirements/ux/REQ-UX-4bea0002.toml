@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-4bea0002"
+title = "Streamed transcript"
+status = "active"
+requirement = """The renderer shall show the complete ordered session transcript with Markdown and highlighted code, collapsible transient reasoning, expandable tool arguments/previews, verified and warning citation chips, and localized errors with Retry."""
+verification = """Render all fixture states; expand tools/reasoning by keyboard; code/citations and provider error Retry; full transcript retained."""
+affected_paths = ["05_Software/apps/desktop/src/renderer/", "05_Software/apps/desktop/package.json", "05_Software/package-lock.json", "05_Software/apps/desktop/src/main/index.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/fixtures/llm-scripts/"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts", "05_Software/e2e/mock.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-UX-4bea0001.md"
+priority = "normal"
+created = 2026-10-11
+updated = 2026-10-12

@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import { defaultSettings } from "@vera/shared";
 
 test("browser mock displays the same metadata screen through dev:renderer", async ({ page, context }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
   const manifest = JSON.parse(readFileSync("package.json", "utf8"));
   expect(manifest.scripts["dev:renderer"], "renderer-only dev entrypoint").toBe(
     "node scripts/dev-renderer.mjs",
@@ -417,6 +417,42 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect(page.locator('[data-theme-option="light"]')).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator('[data-theme-option="dark"]')).toBeEnabled();
     expect(errors).toEqual([]);
+    // Chat fixtures use the ordinary browser bridge, across localized minimum-size presentation.
+    await context.unroute("**/api/index.*");
+    for (const language of ["en", "ro", "de"] as const) {
+      for (const theme of ["light", "dark"] as const) {
+        const settings = {
+          ...defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+          language,
+          theme,
+          textScale: 1.5 as const,
+        };
+        await context.route("**/api/index.*", (route) =>
+          route.fulfill({
+            contentType: "application/javascript",
+            body: `import { createMockApi } from "/mocks/mockApi.ts"; const base=createMockApi(undefined,"chat").api; export const api={...base,getSettings:async()=>({settings:${JSON.stringify(settings)},readOnly:false})};`,
+          }),
+        );
+        await page.reload();
+        await page.setViewportSize({ width: 1024, height: 640 });
+        await page.locator('[data-action="open-recent"]').click();
+        await page.locator("[data-session]").filter({ hasText: "Tool rows" }).focus();
+        await page.keyboard.press("Enter");
+        await expect(page.locator("[data-tool-row]")).toHaveCount(2);
+        await expect(page.locator('[data-citation="valid"]')).toHaveCount(1);
+        await expect(page.locator("html")).toHaveAttribute("lang", language);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        const detail = page.locator("[data-tool-row]").first();
+        await detail.locator("button").focus();
+        await page.keyboard.press("Space");
+        await expect(detail.locator("button")).toHaveAttribute("aria-expanded", "true");
+        await expect(detail.locator("pre").last()).toContainText("Source line");
+        await page.screenshot({ path: `test-results/chat-${language}-${theme}.png` });
+        await context.unroute("**/api/index.*");
+      }
+    }
+    expect(errors).toEqual([]);
+    expect(outbound).toEqual([]);
   } finally {
     server.kill();
     await new Promise<void>((resolve) => {

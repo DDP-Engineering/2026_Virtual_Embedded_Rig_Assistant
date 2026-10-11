@@ -1,0 +1,2 @@
+{"match":"Pathological grep","toolCalls":[{"name":"grep","args":{"pattern":"ok|(a+)+$","glob":"*.txt"}}]}
+{"text":"Pathological grep completed."}

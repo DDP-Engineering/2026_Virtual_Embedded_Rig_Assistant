@@ -34,6 +34,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         .join("\n");
       if (flag === "1") {
         expect(code).toContain("VERA_REPLAY_DIR");
+        expect(code).toContain("VERA_REPLAY_DELAY_MS");
         expect(code).toContain("veraTestFileTools");
         expect(code).toContain("replay_");
         expect(code.includes("VERA_TEST_DIALOG_PATH"), "instrumented folder override emitted").toBe(true);
@@ -50,6 +51,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
           "embedding-worker",
           "VERA_TEST_DIALOG_PATH",
           "VERA_REPLAY_DIR",
+          "VERA_REPLAY_DELAY_MS",
           "replay_",
           "registerReplay",
           "veraTestFileTools",

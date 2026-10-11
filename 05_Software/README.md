@@ -131,3 +131,5 @@ python ../02_Tools/npmw.py npm run smoke:live -- --provider custom:ollama --data
 ```
 
 Use `--provider openai` for the stored OpenAI configuration; omit `--data` to use the installed app store. The command builds release, launches the ordinary main host, prints scrubbed per-step JSON and exits0 only when mandatory steps pass (unsupported listing may be skipped). Linux requires a desktop display or `xvfb-run -a`. Manual smoke may consume API quota; it is separate from automated checks and must be observed before declaring WP09 complete.
+
+The session workspace supports keyboard session CRUD, Enter/Shift+Enter composer, @ path completion, model catalogs, Stop, Markdown/code, tool disclosures, citation chips and usage/context limits. Browser `?mock=chat` adds empty, streaming, tool/citation, invalid citation, provider error and context-limit sessions. Chat component tests live in `apps/desktop/src/renderer/components/session/workspace.test.ts`; native Stop/restart/reload/grep acceptance in `e2e/chat-ui.spec.ts`.

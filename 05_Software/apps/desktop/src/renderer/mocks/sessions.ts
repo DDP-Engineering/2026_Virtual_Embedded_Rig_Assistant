@@ -6,12 +6,20 @@ import {
   type SessionSummary,
   veraError,
 } from "@vera/shared";
+import { sessionFixtures } from "./session-fixtures.js";
 
 export class MockSessions {
   private number = 0;
   private readonly sessions = new Map<
     string,
-    { summary: SessionSummary; events: SessionEvent[]; active: boolean; stop: boolean; done?: Promise<void> }
+    {
+      summary: SessionSummary;
+      events: SessionEvent[];
+      live?: SessionEvent[];
+      active: boolean;
+      stop: boolean;
+      done?: Promise<void>;
+    }
   >();
   private readonly listeners = new Map<string, Set<(event: SessionEvent) => void>>();
   constructor(
@@ -22,6 +30,19 @@ export class MockSessions {
       mode: SessionSummary["mode"];
     },
   ) {}
+  seedFixtures() {
+    if ([...this.sessions.keys()].some((key) => key.startsWith(`${this.current().id}/`))) return;
+    for (const fixture of sessionFixtures) {
+      const summary = this.invoke("session.create", {}) as SessionSummary;
+      const row = this.row(summary.id);
+      for (const event of fixture.events) this.emit(summary.id, event);
+      row.summary.title = fixture.title;
+      row.summary.status = fixture.live ? "running" : fixture.title === "Provider error" ? "error" : "idle";
+      row.active = !!fixture.live;
+      if (fixture.live) row.live = fixture.live;
+      this.emit(summary.id, { type: "session.updated", title: fixture.title, status: row.summary.status });
+    }
+  }
   private key(id: string) {
     return `${this.current().id}/${id}`;
   }
@@ -95,6 +116,13 @@ export class MockSessions {
     if (channel === "session.stop") {
       this.writable();
       row.stop = true;
+      if (row.active && row.live) {
+        row.active = false;
+        delete row.live;
+        row.summary.status = "idle";
+        this.emit(id, { type: "turn.done", turnId: "stream-turn", stopReason: "aborted" });
+        return { stopped: true };
+      }
       return { stopped: row.active };
     }
     this.idle(id);
@@ -161,6 +189,7 @@ export class MockSessions {
     listeners.add(forward);
     this.listeners.set(key, listeners);
     for (const e of row.events.slice(sinceSeq)) on(structuredClone(e));
+    for (const e of row.live ?? []) on(structuredClone(e));
     replay = false;
     for (const e of queued) on(e);
     return () => listeners.delete(forward);
