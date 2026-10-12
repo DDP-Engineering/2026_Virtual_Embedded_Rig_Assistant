@@ -2,6 +2,19 @@ import type { Request } from "@vera/shared";
 import { beforeAll, expect, it, vi } from "vitest";
 
 let createMockApi: typeof import("./mockApi.js").createMockApi;
+it("mock reindex obeys active-workbench ownership and strict empty request", async () => {
+  const { api } = createMockApi();
+  await expect(api.invoke("docs.reindex", {})).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await api.invoke("workbench.create", { folder: "C:/mock/ingest", name: "Ingest" });
+  expect(await api.invoke("docs.reindex", {})).toEqual({});
+  await expect(api.invoke("docs.reindex", { path: "bad" } as never)).rejects.toMatchObject({
+    code: "INVALID",
+  });
+  const readOnly = createMockApi(undefined, "read-only").api;
+  const recent = await readOnly.invoke("workbench.recent", {});
+  await readOnly.invoke("workbench.open", { folder: recent[0]?.folder ?? "" });
+  await expect(readOnly.invoke("docs.reindex", {})).rejects.toMatchObject({ code: "DENIED" });
+});
 it("mock OpenAI catalog is offline before auth and honors explicit model selection", async () => {
   const fixtureCredential = "fake-mock-key-private-123";
   const { api } = createMockApi();

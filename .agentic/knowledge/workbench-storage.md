@@ -10,6 +10,10 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
 
 ## Public interface
 
+- DocumentsRepository projects typed metadata from schema1 documents and clears
+  document-derived chunks plus associated existing FTS/embedding rows before
+  source removal. [Knowledge ingest](knowledge-ingest.md) owns queue and states.
+
 - openDb(path, StorageOptions) returns WorkbenchDatabase with db and idempotent close(preserveSource?). Options supply workbenchId/appVersion, readOnly and an optional ordered migration catalogue for fixture upgrades.
 - inspectDatabase checks metadata on a temporary db/WAL copy before writable opening or lock acquisition. Missing source is permitted; an absent live-owner source stays absent.
 - checkDatabase verifies schema_version, applied SHA256 and workbench_id. Newer versions return WORKBENCH_TOO_NEW; invalid version/catalogue/checksum returns INVALID with reason; identity mismatch and occupied backup path return CONFLICT.

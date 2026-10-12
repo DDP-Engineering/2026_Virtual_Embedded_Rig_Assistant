@@ -11,6 +11,39 @@ beforeAll(async () => {
   ({ createEventEmitter, createDeltaCoalescer } = await import("./events.js"));
 });
 afterEach(() => vi.useRealTimers());
+it("transports ingest progress and redacts document paths while preserving status/hash/reason", () => {
+  const send = vi.fn();
+  const emit = createEventEmitter(
+    () => ({ isDestroyed: () => false, send }),
+    (text) => text.replaceAll("secret", "[REDACTED]"),
+  );
+  const document = {
+    id: 1,
+    path: "docs/secret.pdf",
+    kind: "pdf" as const,
+    sha256: "a".repeat(64),
+    bytes: 5,
+    mtime: "2026-10-12T00:00:00.000Z",
+    pages: null,
+    status: "unsupported" as const,
+    error: "SIZE_LIMIT" as const,
+    indexedAt: null,
+  };
+  emit({
+    topic: "workbench",
+    id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    event: { type: "index.document", path: document.path, document },
+  });
+  emit({
+    topic: "workbench",
+    id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    event: { type: "index.progress", pending: 0, done: 1, failed: 0 },
+  });
+  expect(send.mock.calls[0]?.[1].event.document).toEqual({ ...document, path: "docs/[REDACTED].pdf" });
+  expect(send.mock.calls[0]?.[1].event.path).toBe("docs/[REDACTED].pdf");
+  expect(send.mock.calls[1]?.[1].event).toEqual({ type: "index.progress", pending: 0, done: 1, failed: 0 });
+  for (const call of send.mock.calls) expect(eventEnvelopeSchema.safeParse(call[1]).success).toBe(true);
+});
 // REQ-FUNC-2e8a54c7 REQ-DATA-d968385c
 it("keeps Plan snapshot and replay schemas valid when late redaction expands 200-character text", () => {
   const state = emptySessionState();

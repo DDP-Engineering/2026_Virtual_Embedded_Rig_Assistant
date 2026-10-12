@@ -125,6 +125,10 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "docs.reindex": async () => {
+        await workbench.reindexDocuments();
+        return {};
+      },
       "app.openExternal": (request) => openExternal(request, (url) => shell.openExternal(url)),
       "providers.chatgpt.login": (request) => chatgpt.login(request),
       "providers.chatgpt.cancel": () => chatgpt.cancel(),

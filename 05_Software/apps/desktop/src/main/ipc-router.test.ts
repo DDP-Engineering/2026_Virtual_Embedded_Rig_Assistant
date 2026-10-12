@@ -15,6 +15,7 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "docs.reindex": unused,
   "app.openExternal": unused,
   "providers.chatgpt.login": unused,
   "providers.chatgpt.status": unused,

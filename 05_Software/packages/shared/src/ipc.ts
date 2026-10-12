@@ -42,6 +42,7 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "docs.reindex": defineChannel("docs.reindex", z.strictObject({}), z.strictObject({})),
   "app.openExternal": defineChannel(
     "app.openExternal",
     z.strictObject({ url: z.url({ protocol: /^https?$/ }).max(16384), confirmed: z.literal(true) }),

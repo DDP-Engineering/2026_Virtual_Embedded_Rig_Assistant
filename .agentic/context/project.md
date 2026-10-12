@@ -18,6 +18,10 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
+[Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document
+selection/hash/limits/status events, reindex and derived-row invalidation through
+the workbench-owned queue shared by desktop and CLI composition.
+
 [05_Software/README.md](../../05_Software/README.md) routes setup and source layout. [AGENTS.md](../../AGENTS.md) governs master implementation, local commits and AEGIS scope.
 
 [Desktop shell](../knowledge/desktop-shell.md) routes window/security/state changes. [Software tooling](../knowledge/software-tooling.md) routes workspaces, compilation and verification.

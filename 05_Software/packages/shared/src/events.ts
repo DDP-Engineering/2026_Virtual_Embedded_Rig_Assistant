@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { documentSchema } from "./documents.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import {
   permissionModeSchema,
@@ -19,6 +20,17 @@ export const appEventSchema = z.discriminatedUnion("type", [
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 export const workbenchEventSchema = z.discriminatedUnion("type", [
+  z.strictObject({
+    type: z.literal("index.document"),
+    path: z.string().min(1),
+    document: documentSchema.nullable(),
+  }),
+  z.strictObject({
+    type: z.literal("index.progress"),
+    pending: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    done: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    failed: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  }),
   z.strictObject({ type: z.literal("opened"), workbench: workbenchSnapshotSchema }),
   z.strictObject({ type: z.literal("closed") }),
   z.strictObject({

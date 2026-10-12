@@ -118,6 +118,16 @@ function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => string)
   }
   if (envelope.topic === "app" || envelope.event.type === "closed") return envelope;
   const event = envelope.event;
+  if (event.type === "index.progress") return envelope;
+  if (event.type === "index.document")
+    return {
+      ...envelope,
+      event: {
+        ...event,
+        path: scrub(event.path),
+        document: event.document ? { ...event.document, path: scrub(event.document.path) } : null,
+      },
+    };
   return {
     ...envelope,
     event:

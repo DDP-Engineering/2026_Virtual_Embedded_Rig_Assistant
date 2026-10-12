@@ -18,6 +18,7 @@ import {
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
+import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import type { WorkbenchHost } from "../ports.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { acquireGuard } from "./guard.js";
@@ -113,13 +114,42 @@ export class WorkbenchService {
   private state: WorkbenchSnapshot | undefined;
   private owned: { folder: string; token: string } | undefined;
   private database: WorkbenchDatabase | undefined;
+  private ingest: Ingester | undefined;
   private queue: Promise<void> = Promise.resolve();
   private readonly writes = new WriteQueue();
   getWriteQueue(): WriteQueue {
     this.current();
     return this.writes;
   }
-  constructor(private readonly host: WorkbenchHost) {}
+  constructor(
+    private readonly host: WorkbenchHost,
+    private readonly processDocument?: DocumentProcessor,
+  ) {}
+  private startIngest(): void {
+    if (!this.state || this.state.readOnly || !this.database || this.ingest) return;
+    const state = this.state;
+    this.ingest = new Ingester({
+      root: state.folder,
+      db: this.database.db,
+      config: () => this.current().config,
+      assertWritable: () => this.assertSessionWritable(),
+      now: () => this.host.now(),
+      emit: (event) => this.emit(state.config.id, event),
+      ...(this.processDocument ? { process: this.processDocument } : {}),
+    });
+  }
+  private async stopIngest(): Promise<void> {
+    await this.ingest?.close();
+    this.ingest = undefined;
+  }
+  reindexDocuments(): Promise<void> {
+    // Admit on the lifecycle queue, then wait outside it so close/switch can abort processing.
+    return this.run(async () => {
+      this.assertSessionWritable();
+      if (!this.ingest) throw veraError("NOT_FOUND");
+      return { completion: this.ingest.reindex() };
+    }).then(({ completion }) => completion);
+  }
   private run<T>(operation: () => Promise<T>): Promise<T> {
     const result = this.queue.then(operation);
     this.queue = result.then(
@@ -228,6 +258,7 @@ export class WorkbenchService {
       if (newlyOwned && acquired.owned) await this.release(acquired.owned);
       throw error;
     }
+    await this.stopIngest();
     if (!same && this.owned) {
       try {
         await this.release(this.owned, () => {
@@ -236,6 +267,7 @@ export class WorkbenchService {
       } catch (error) {
         if (database !== this.database) database?.close();
         if (acquired.owned) await this.release(acquired.owned);
+        this.startIngest();
         throw error;
       }
     }
@@ -246,6 +278,7 @@ export class WorkbenchService {
     this.owned = acquired.owned;
     if (!same && preceding) this.emit(preceding.config.id, { type: "closed" });
     if (!same) this.emit(config.id, { type: "opened", workbench: next });
+    this.startIngest();
     return structuredClone(this.state);
   }
   private emit(id: string, event: WorkbenchEvent): void {
@@ -323,6 +356,7 @@ export class WorkbenchService {
           await this.host.files.writeAtomic(join(state.folder, "workbench.yaml"), stringify(config));
           this.state = { ...state, config, warnings };
           this.emit(config.id, { type: "config.changed", config, warnings });
+          this.ingest?.request();
         }
         return { config: structuredClone(config), warnings };
       }),
@@ -481,10 +515,16 @@ export class WorkbenchService {
   close(): Promise<void> {
     return this.run(async () => {
       await this.writes.drain();
-      if (this.owned)
-        await this.release(this.owned, () => {
-          if (this.database?.db.open) this.database.db.pragma("wal_checkpoint(TRUNCATE)");
-        });
+      await this.stopIngest();
+      try {
+        if (this.owned)
+          await this.release(this.owned, () => {
+            if (this.database?.db.open) this.database.db.pragma("wal_checkpoint(TRUNCATE)");
+          });
+      } catch (error) {
+        this.startIngest();
+        throw error;
+      }
       this.database?.close(true);
       this.database = undefined;
       const id = this.state?.config.id;

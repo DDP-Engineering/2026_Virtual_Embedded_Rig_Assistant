@@ -24,6 +24,12 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Ingest acceptance uses real watcher/SQLite core knowledge/ingest.test.ts, shared
+documents-ipc.test.ts and immediate workbench/transport/mock/boundary checks.
+Targeted native e2e/ingest.spec.ts exercises workbench/reindex IPC and index events
+through actual sandboxed Electron, including close/reopen reconciliation. Linux
+uses a short TMPDIR for Electron singleton sockets and an owned electron package.
+
 Subscription ticket proof uses main chatgpt-auth/open-external tests, core llm/subscription and gateway tests, strict shared chatgpt IPC, renderer chatgpt controls and e2e/chatgpt.spec.ts. Scripted OAuth and actual loopback callback cancellation require no model/network; instrumented VERA_TEST_CHATGPT composition is omitted from release. Real subscription sign-in/session/restart/session/signout remains a separate human acceptance flow.
 
 [Verification policy](../../02_Tools/verification-policy.md) defines targeted per-ticket tests and full milestone gates. Static strict checks remain separate from test results. Changes acceptance uses core sessions/changes.test.ts, shared changes-ipc.test.ts, main reveal-path.test.ts, renderer changes-tab.test.ts and e2e/changes.spec.ts on Windows/native Ubuntu; the native test uses the real ask gate and proves counts/diff after restart.

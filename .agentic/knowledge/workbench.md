@@ -21,6 +21,11 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
+- WorkbenchService owns one writable background Ingester and reindexDocuments;
+  close/replacement stops and drains ingest before lock/storage release. Read-only
+  snapshots run no ingest. [Knowledge ingest](knowledge-ingest.md) owns selection,
+  hashing, metadata/status events and derived invalidation.
+
 - WorkbenchService.create(existingAbsoluteFolder,name), open(folder), close(). Snapshots contain
   canonical folder/config/readOnly/warnings; invalid YAML reports line/column, invalid configuration
   reports path/line, newer format returns WORKBENCH_TOO_NEW before runtime writes.

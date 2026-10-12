@@ -129,6 +129,11 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "docs.reindex": {
+        if (current().snapshot.readOnly) throw veraError("DENIED");
+        value = {};
+        break;
+      }
       case "app.openExternal":
         value = {};
         break;
