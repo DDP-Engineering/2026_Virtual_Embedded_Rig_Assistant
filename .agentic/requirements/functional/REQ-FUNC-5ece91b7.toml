@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-5ece91b7"
+title = "Reveal session artifacts"
+status = "active"
+requirement = "When the user reveals an artifact, main shall pass its freshly verified confined ordinary-file path to the native shell."
+verification = "Injected shell receives only verified path; missing/symlink/closed storage fails; native IPC succeeds for saved summary."
+affected_paths = ["05_Software/apps/desktop/src/main/artifacts.test.ts", "05_Software/apps/desktop/src/main/artifacts.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/e2e/artifacts.spec.ts", "05_Software/packages/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/artifacts.test.ts", "05_Software/e2e/artifacts.spec.ts"]
+spec = "specs/REQ-FUNC-bf809842.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

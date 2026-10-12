@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-997412a4"
+title = "Resolve session artifact citations"
+status = "active"
+requirement = "When an assistant cites an artifact reference, core shall mark it valid only when the same session issued that reference from a successful tool result and its current confined stored artifact exists."
+verification = "Replay save-artifact.jsonl saves summary.md: summary citation true, missing false; fabricated, foreign-session, removed and symlink artifact refs false; parser roundtrip and invalid names."
+affected_paths = ["05_Software/fixtures/llm-scripts/save-artifact.jsonl", "05_Software/packages/core/src/agent/citations.ts", "05_Software/packages/core/src/sessions/artifacts.test.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/shared/src/artifacts-ipc.test.ts", "05_Software/packages/shared/src/refs.test.ts", "05_Software/packages/shared/src/refs.ts", "05_Software/tests/tooling/cli.test.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/artifacts.test.ts", "05_Software/packages/shared/src/refs.test.ts", "05_Software/tests/tooling/cli.test.ts"]
+spec = "specs/REQ-FUNC-bf809842.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

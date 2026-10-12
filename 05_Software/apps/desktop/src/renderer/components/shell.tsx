@@ -19,6 +19,7 @@ export function Shell({
   storageReadOnly,
   context,
   changes,
+  artifacts,
 }: {
   children: ReactNode;
   navigation: ReactNode;
@@ -27,6 +28,7 @@ export function Shell({
   storageReadOnly: boolean;
   context?: ReactNode;
   changes?: ReactNode;
+  artifacts?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [initial] = useState(initialLayout);
@@ -197,6 +199,8 @@ export function Shell({
                 context
               ) : tab === "changes" && changes ? (
                 changes
+              ) : tab === "artifacts" && artifacts ? (
+                artifacts
               ) : (
                 <p className="muted">{t("panel.placeholder")}</p>
               )}

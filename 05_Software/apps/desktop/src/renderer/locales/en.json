@@ -234,5 +234,14 @@
     "empty": "No changes in this session.",
     "history": "Change history",
     "reveal": "Reveal in folder"
+  },
+  "artifacts": {
+    "empty": "No artifacts in this session.",
+    "history": "Session artifacts",
+    "bytes": "{{count}} B",
+    "viewer": "Artifact viewer",
+    "export": "Export",
+    "reveal": "Reveal in folder",
+    "exported": "Artifact exported."
   }
 }

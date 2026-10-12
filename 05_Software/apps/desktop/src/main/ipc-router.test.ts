@@ -15,6 +15,10 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "artifacts.list": unused,
+  "artifacts.open": unused,
+  "artifacts.reveal": unused,
+  "artifacts.export": unused,
   "changes.list": unused,
   "changes.get": unused,
   "app.revealPath": unused,

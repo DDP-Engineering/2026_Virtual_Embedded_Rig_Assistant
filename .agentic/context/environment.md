@@ -39,6 +39,8 @@ environment probe. Linux feasibility uses actual isolated-VM execution.
 
 [05_Software/README.md](../../05_Software/README.md) and [08-quality](../../00_Planning/architecture/08-quality.md) define verification routes.
 
+Artifact acceptance uses core sessions/artifacts.test.ts, shared artifacts-ipc.test.ts, main artifacts.test.ts, renderer artifacts-tab.test.ts and e2e/artifacts.spec.ts plus the headless CLI process case. Native acceptance proves save/view/export/restart/delete; browser covers en/ro/de, both themes and all text scales at1024×640. Windows proves junction/hardlink boundaries; POSIX file symlinks run on native Ubuntu because this Windows host requires unavailable symlink privilege.
+
 `npm run verify` runs Biome, tsc -b, the English-source en/ro/de catalog audit and Vitest. `npm run test:e2e` builds then runs Playwright Electron and a standalone Chromium mock browser; Linux uses xvfb-run -a. Install the pinned Playwright Chromium runtime with `npx playwright install chromium` from 05_Software before browser acceptance. Acceptance retains sandboxing, uses temporary userData and blocks non-loopback traffic. Build-mode tests execute emitted code for both compile-time values, including instrumented
 VERA_TEST_DIALOG_PATH/VERA_REPLAY_DIR presence and release absence, including replay registration code. Workbench acceptance creates spaced/Unicode
 folders through the native picker seam, edits full pinned text, reopens recents after restart, removes

@@ -234,5 +234,14 @@
     "empty": "Nu există modificări în această sesiune.",
     "history": "Istoricul modificărilor",
     "reveal": "Arată în folder"
+  },
+  "artifacts": {
+    "empty": "Nu există artefacte în această sesiune.",
+    "history": "Artefactele sesiunii",
+    "bytes": "{{count}} B",
+    "viewer": "Vizualizator de artefacte",
+    "export": "Exportă",
+    "reveal": "Arată în folder",
+    "exported": "Artefact exportat."
   }
 }

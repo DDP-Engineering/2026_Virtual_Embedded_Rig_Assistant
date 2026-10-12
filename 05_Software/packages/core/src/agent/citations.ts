@@ -1,5 +1,5 @@
 import type { Message } from "@earendil-works/pi-ai";
-import { parseLineRef } from "@vera/shared";
+import { parseArtifactRef, parseLineRef } from "@vera/shared";
 import { readWindow } from "../tools/read-window.js";
 import { PathGuard } from "../workbench/path-guard.js";
 
@@ -11,7 +11,12 @@ function refs(value: unknown, out: Set<string>): void {
       refs(child, out);
     }
 }
-export async function validateCitations(root: string, text: string, messages: readonly Message[]) {
+export async function validateCitations(
+  root: string,
+  text: string,
+  messages: readonly Message[],
+  artifactExists?: (name: string) => boolean,
+) {
   const issued = new Set<string>();
   for (const message of messages)
     if (message.role === "toolResult" && !message.isError)
@@ -32,6 +37,8 @@ export async function validateCitations(root: string, text: string, messages: re
   }
   return Promise.all(
     found.map(async (ref) => {
+      const artifact = parseArtifactRef(ref);
+      if (artifact) return { ref, valid: issued.has(ref) && !!artifactExists?.(artifact.name) };
       const parsed = parseLineRef(ref);
       let valid = false;
       if (parsed && issued.has(ref))

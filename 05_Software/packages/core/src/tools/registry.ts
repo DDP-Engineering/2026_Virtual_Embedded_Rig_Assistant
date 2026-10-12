@@ -1,5 +1,6 @@
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
+import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
@@ -63,7 +64,15 @@ export interface ToolOutcome {
 export class ToolRegistry {
   private readonly definitions: readonly ToolDefinition[];
   constructor(
-    definitions: readonly ToolDefinition[] = [readTool, listTool, globTool, grepTool, writeTool, editTool],
+    definitions: readonly ToolDefinition[] = [
+      readTool,
+      listTool,
+      globTool,
+      grepTool,
+      writeTool,
+      editTool,
+      artifactSaveTool,
+    ],
   ) {
     const names = definitions.map((tool) => tool.name);
     if (new Set(names).size !== names.length) throw Error("Duplicate tool name.");

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-8c00fdea"
+title = "Export session artifacts"
+status = "active"
+requirement = "When the user exports an artifact and accepts a native save destination, main shall write the verified artifact UTF8 bytes to that destination, leaving files unchanged when the dialog is cancelled."
+verification = "Injected dialog/write tests cover cancellation, UTF8 bytes, absent/redirected source and lifecycle held; native export uses compiled VERA_TEST_DIALOG_PATH and production compile test omits the switch."
+affected_paths = ["05_Software/apps/desktop/src/main/artifacts.test.ts", "05_Software/apps/desktop/src/main/artifacts.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/e2e/artifacts.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/artifacts.test.ts", "05_Software/e2e/artifacts.spec.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-FUNC-bf809842.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

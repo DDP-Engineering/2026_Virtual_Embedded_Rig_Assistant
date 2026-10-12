@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-da260a86"
+title = "Refresh and isolate artifact views"
+status = "active"
+requirement = "When artifact.saved or session/workbench navigation changes the artifact view, the renderer shall refresh from durable state and keep late asynchronous results scoped to their originating selection."
+verification = "Component tests keep mounted list live across save/overwrite/replay, switch sessions with pending reads/actions, handle errors/retry and unsubscribe; native restart retains list/content."
+affected_paths = ["05_Software/apps/desktop/src/renderer/components/session/artifacts-tab.test.ts", "05_Software/apps/desktop/src/renderer/components/session/artifacts-tab.tsx", "05_Software/e2e/artifacts.spec.ts"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/artifacts-tab.test.ts", "05_Software/e2e/artifacts.spec.ts"]
+spec = "specs/REQ-FUNC-bf809842.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

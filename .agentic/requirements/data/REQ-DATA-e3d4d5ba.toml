@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-e3d4d5ba"
+title = "Persist artifact metadata and saved events"
+status = "active"
+requirement = "When a session artifact is saved, core shall persist its art_ULID metadata with session/name/MIME/UTF8 byte count/SHA256/description/UTC time and emit a durable artifact.saved event after the metadata commit."
+verification = "Real SQLite repository rows and replay events survive service restart; overwrite preserves identity and replaces bytes/hash/description/time, session isolation and cascade checked."
+affected_paths = ["05_Software/packages/core/src/artifacts/store.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/sessions/artifacts.test.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/storage/repos/artifacts.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/artifacts.test.ts", "05_Software/tests/tooling/cli.test.ts"]
+spec = "specs/REQ-FUNC-bf809842.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

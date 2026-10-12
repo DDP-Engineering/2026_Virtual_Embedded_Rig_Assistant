@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b3d37df6"
+title = "Expose validated artifact reads"
+status = "active"
+requirement = "When the authorized renderer requests artifact list or open, main shall return strict session-scoped metadata or bounded verified UTF8 content through shared IPC schemas."
+verification = "Strict schemas reject extra keys and malformed IDs; service lists ordered own rows, opens matching files, missing/closed lifetime fail and secret responses scrub."
+affected_paths = ["05_Software/apps/desktop/src/main/artifacts.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/packages/core/src/sessions/artifacts.test.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/shared/src/artifacts-ipc.test.ts", "05_Software/packages/shared/src/artifacts.ts", "05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/ipc.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/artifacts.test.ts", "05_Software/packages/shared/src/artifacts-ipc.test.ts"]
+spec = "specs/REQ-FUNC-bf809842.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

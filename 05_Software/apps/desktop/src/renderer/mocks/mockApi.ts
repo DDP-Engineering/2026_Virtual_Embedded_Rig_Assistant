@@ -123,7 +123,7 @@ export function createMockApi(
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
     if (channel === "session.list" && scenario === "chat") sessions.seedFixtures();
-    if (channel.startsWith("session.") || channel.startsWith("changes."))
+    if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
       case "app.revealPath": {

@@ -1,0 +1,2 @@
+{"match":"(?i)save.*(?:artifact|summary)","toolCalls":[{"name":"artifact_save","args":{"name":"summary.md","content":"# Session summary\n\nBoard uses 3.3 V.\n","description":"Board summary"}}]}
+{"text":"Saved [[artifact:summary.md]]. Missing [[artifact:missing.md]]."}

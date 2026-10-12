@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type { ArtifactHost } from "../artifacts/store.js";
 import type { WorkerPool } from "../ports.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
 
@@ -11,6 +12,7 @@ export interface ToolContext {
   workers?: WorkerPool;
   lastReads: Map<string, ReadFingerprint>;
   change?: ChangeHost;
+  artifacts?: ArtifactHost;
 }
 export interface ToolDefinition {
   name: string;

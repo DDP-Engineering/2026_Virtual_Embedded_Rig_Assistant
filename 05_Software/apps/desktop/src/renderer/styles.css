@@ -716,3 +716,43 @@ legend {
 .changes-tab h3 {
   overflow-wrap: anywhere;
 }
+
+.artifacts-tab {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.artifacts-list {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+.artifacts-list button {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.artifacts-list button[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+.artifacts-list time {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.artifact-viewer {
+  min-width: 0;
+  max-height: 28rem;
+  overflow: auto;
+}
+.artifacts-tab .artifact-viewer pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.artifact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

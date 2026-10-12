@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
@@ -40,6 +41,26 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "artifacts.list": defineChannel(
+    "artifacts.list",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.array(artifactSummarySchema),
+  ),
+  "artifacts.open": defineChannel(
+    "artifacts.open",
+    z.strictObject({ artifactId: artifactIdSchema }),
+    artifactContentSchema,
+  ),
+  "artifacts.reveal": defineChannel(
+    "artifacts.reveal",
+    z.strictObject({ artifactId: artifactIdSchema }),
+    z.strictObject({}),
+  ),
+  "artifacts.export": defineChannel(
+    "artifacts.export",
+    z.strictObject({ artifactId: artifactIdSchema }),
+    z.strictObject({ exported: z.boolean() }),
+  ),
   "changes.list": defineChannel(
     "changes.list",
     z.strictObject({ sessionId: sessionIdSchema }),

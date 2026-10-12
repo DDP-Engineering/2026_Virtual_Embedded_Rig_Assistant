@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { Metadata } from "./components/metadata.js";
+import { ArtifactsTab } from "./components/session/artifacts-tab.js";
 import { ChangesTab } from "./components/session/changes-tab.js";
 import { ContextTab } from "./components/session/context-tab.js";
 import { SessionList } from "./components/session/session-list.js";
@@ -224,6 +225,11 @@ export function App() {
       changes={
         benchId && activeSession && chat && !settings ? (
           <ChangesTab workbenchId={benchId} sessionId={activeSession} />
+        ) : undefined
+      }
+      artifacts={
+        benchId && activeSession && chat && !settings ? (
+          <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
         ) : undefined
       }
     >

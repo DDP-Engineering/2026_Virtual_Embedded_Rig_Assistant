@@ -234,5 +234,14 @@
     "empty": "Keine Änderungen in dieser Sitzung.",
     "history": "Änderungsverlauf",
     "reveal": "Im Ordner anzeigen"
+  },
+  "artifacts": {
+    "empty": "Keine Artefakte in dieser Sitzung.",
+    "history": "Sitzungsartefakte",
+    "bytes": "{{count}} B",
+    "viewer": "Artefaktanzeige",
+    "export": "Exportieren",
+    "reveal": "Im Ordner anzeigen",
+    "exported": "Artefakt exportiert."
   }
 }

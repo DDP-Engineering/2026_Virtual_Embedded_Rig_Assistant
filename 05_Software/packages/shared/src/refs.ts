@@ -25,3 +25,22 @@ export function parseLineRef(text: string): LineRef | undefined {
   const value = { path: match[1] ?? "", start: Number(match[2]), end: Number(match[3]) };
   return valid(value) ? value : undefined;
 }
+
+/** Portable ordinary file name for the application-managed artifact namespace. */
+export function validArtifactName(name: string): boolean {
+  return (
+    /^[A-Za-z0-9._-]{1,100}$/.test(name) &&
+    name !== "." &&
+    name !== ".." &&
+    !name.endsWith(".") &&
+    !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)
+  );
+}
+export function formatArtifactRef(name: string): string {
+  if (!validArtifactName(name)) throw Error("Invalid artifact name.");
+  return `artifact:${name}`;
+}
+export function parseArtifactRef(text: string): { name: string } | undefined {
+  const name = text.startsWith("artifact:") ? text.slice(9) : "";
+  return validArtifactName(name) ? { name } : undefined;
+}

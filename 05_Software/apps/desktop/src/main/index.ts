@@ -16,6 +16,7 @@ import {
   shell,
 } from "electron";
 import { getAppInfo } from "./app-info.js";
+import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
@@ -112,6 +113,31 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "artifacts.list": ({ sessionId }) =>
+        sessions.run((s) =>
+          s.listArtifacts(sessionId).map((a) => publicArtifact(a, (text) => credentials.scrub(text))),
+        ),
+      "artifacts.open": ({ artifactId }) =>
+        sessions.run(async (s) =>
+          publicArtifact(await s.openArtifact(artifactId), (text) => credentials.scrub(text)),
+        ),
+      "artifacts.reveal": ({ artifactId }) =>
+        sessions.run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
+      "artifacts.export": ({ artifactId }) =>
+        sessions.run((s) =>
+          exportArtifact(s, artifactId, {
+            root: workbench.getSnapshot().folder,
+            choose: async (name) => {
+              if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
+                return process.env.VERA_TEST_DIALOG_PATH;
+              if (!window || window.isDestroyed()) return null;
+              const result = await dialog.showSaveDialog(window, { defaultPath: name });
+              return result.canceled ? null : (result.filePath ?? null);
+            },
+            write: (path, content) => createFileAccess(systemClock).writeAtomic(path, content),
+            scrub: (text) => credentials.scrub(text),
+          }),
+        ),
       "changes.list": ({ sessionId }) =>
         sessions.run((s) => s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) }))),
       "changes.get": ({ changeId }) =>

@@ -1,5 +1,3 @@
-import { lstat, rm } from "node:fs/promises";
-import { join } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
   type ChangeDetail,
@@ -22,6 +20,7 @@ import { ContextPolicy } from "../agent/context.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
+import { ArtifactStore } from "../artifacts/store.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
@@ -81,8 +80,10 @@ export class SessionService {
   private readonly writeQueue: WriteQueue;
   private readonly ready: Promise<void>;
   private readonly approvals: ApprovalGate;
+  private readonly artifacts: ArtifactStore;
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
+    this.artifacts = new ArtifactStore(host.root, host.db);
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
     this.approvals = new ApprovalGate({
@@ -269,26 +270,30 @@ export class SessionService {
   decideApproval(input: ApprovalDecision): void {
     this.approvals.decide(input);
   }
+  listArtifacts(id: string) {
+    this.row(id);
+    return this.artifacts.list(id);
+  }
+  async openArtifact(id: string) {
+    return this.verifiedArtifact(id).artifact;
+  }
+  verifiedArtifact(id: string) {
+    if (this.closed) throw veraError("CONFLICT");
+    const result = this.artifacts.verified(id);
+    this.row(result.artifact.sessionId);
+    if (this.deleting.has(result.artifact.sessionId)) throw veraError("BUSY");
+    return result;
+  }
   async delete(id: string): Promise<void> {
     this.idle(id);
     this.deleting.add(id);
     try {
-      for (const path of [
-        join(this.host.root, ".vera"),
-        join(this.host.root, ".vera/artifacts"),
-        join(this.host.root, ".vera/artifacts", id),
-      ]) {
-        try {
-          const stat = await lstat(path);
-          if (stat.isSymbolicLink() || !stat.isDirectory()) throw veraError("DENIED");
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-        }
-      }
-      this.writable();
-      await rm(join(this.host.root, ".vera/artifacts", id), { recursive: true, force: true });
-      this.writable();
-      this.sessions.delete(id);
+      await this.writeQueue.run(async () => {
+        this.writable();
+        this.artifacts.removeSession(id);
+        this.writable();
+        this.sessions.delete(id);
+      });
       this.hub.clear(id);
       this.contexts.delete(id);
       this.last.delete(id);
@@ -357,14 +362,28 @@ export class SessionService {
     this.host.gateway.capabilities(model);
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
+    ctx.artifacts = {
+      store: this.artifacts,
+      sessionId: id,
+      queue: this.writeQueue,
+      now: () => this.now(),
+      assertWritable: () => {
+        this.row(id);
+        this.writable();
+        if (this.deleting.has(id)) throw veraError("BUSY");
+      },
+      record: (event) => {
+        const value = this.hub.record(id, event);
+        return () => this.hub.publish(id, value);
+      },
+      ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
+    };
     const registry = this.host.registry ?? new ToolRegistry();
     const permissions = this.host.permissions;
     const prepared = new Map<string, PreparedChange>();
     const tools = registry
       .bind(ctx, this.host.disabledTools)
-      .filter(
-        (tool) => tool.class === "read" || (tool.class === "write" && row.permission_mode !== "read-only"),
-      )
+      .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
       .map((tool) => ({
         ...tool,
         execute: async (args: unknown, signal: AbortSignal) => {
@@ -560,7 +579,9 @@ export class SessionService {
         type: "message.done",
         messageId: event.messageId,
         text: event.text,
-        citations: await validateCitations(this.host.root, event.text, transcript),
+        citations: await validateCitations(this.host.root, event.text, transcript, (name) =>
+          this.artifacts.exists(id, name),
+        ),
       };
     } else if (event.type === "tool.done") {
       publicEvent = {

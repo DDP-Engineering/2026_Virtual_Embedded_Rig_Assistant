@@ -155,3 +155,10 @@ The session workspace supports keyboard session CRUD, Enter/Shift+Enter composer
 The composer permission picker sets the current session to read-only, ask or auto-edit and stays available during an active turn. Ask and protected auto-edit changes show inline cards with the prepared patch, byte count, Approve/Deny and Approve-and-switch actions. Focus the card for A/D. Stop or selecting read-only aborts waiting changes; mismatched/stale decisions conflict. New sessions inherit the workbench mode. Known credential-bearing patches are refused before approval persistence and require a human edit. Approval cards persist across reload/restart with their final decision; the sidebar marks waiting sessions. Focused approval tests: core sessions/approvals.test.ts, workspace.test.ts, CLI prompt/process tests and e2e/approvals.spec.ts.
 
 The repository npm configuration keeps CLI stdout as event-only JSONL by suppressing run-script banners. Replay records decode JSON escapes and scrub registered credentials before temporary staging and durable messages.
+
+
+## Session artifacts
+
+The agent saves UTF8 outputs with `artifact_save` (session class, sequential, no approval), up to5MiB under `.vera/artifacts/<session-id>/<name>`. Use portable ASCII names of at most100 characters and `overwrite:true` to replace an existing artifact. Metadata and `artifact.saved` persist with the session; successful `artifact:<name>` refs validate against that session’s current verified file. Read-only workbenches preserve their files.
+
+The Artifacts tab lists names, bytes and times, opens Markdown/plain text, and offers native Reveal and Export. Export uses a save dialog; cancelling writes nothing. Deleting a session removes its artifact folder. See [artifact contracts](../.agentic/knowledge/artifacts.md) for confinement, crash-mismatch handling and tests. `fixtures/llm-scripts/save-artifact.jsonl` runs in desktop test replay or the ordinary headless replay CLI.

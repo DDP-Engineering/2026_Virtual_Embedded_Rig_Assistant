@@ -1,4 +1,5 @@
 import {
+  type ArtifactContent,
   applySessionEvent,
   type ChangeDetail,
   emptySessionState,
@@ -18,6 +19,7 @@ export class MockSessions {
       summary: SessionSummary;
       events: SessionEvent[];
       changes: ChangeDetail[];
+      artifacts: ArtifactContent[];
       live?: SessionEvent[];
       active: boolean;
       stop: boolean;
@@ -117,7 +119,14 @@ export class MockSessions {
         status: "idle",
         archived: false,
       };
-      this.sessions.set(this.key(id), { summary, events: [], changes: [], active: false, stop: false });
+      this.sessions.set(this.key(id), {
+        summary,
+        events: [],
+        changes: [],
+        artifacts: [],
+        active: false,
+        stop: false,
+      });
       this.emit(id, {
         type: "session.updated",
         title: "",
@@ -136,8 +145,24 @@ export class MockSessions {
         }
       throw veraError("NOT_FOUND");
     }
+    if (channel === "artifacts.open" || channel === "artifacts.reveal" || channel === "artifacts.export") {
+      const artifactId = (raw as { artifactId: string }).artifactId;
+      for (const [key, row] of this.sessions)
+        if (key.startsWith(`${this.current().id}/`)) {
+          const a = row.artifacts.find((a) => a.artifactId === artifactId);
+          if (a)
+            return channel === "artifacts.open"
+              ? structuredClone(a)
+              : channel === "artifacts.export"
+                ? { exported: true }
+                : {};
+        }
+      throw veraError("NOT_FOUND");
+    }
     const id = request.sessionId;
     const row = this.row(id);
+    if (channel === "artifacts.list")
+      return row.artifacts.map(({ content: _, ...summary }) => structuredClone(summary));
     if (channel === "changes.list")
       return row.changes.map(({ diff: _, ...summary }) => structuredClone(summary));
     if (channel === "session.get")
@@ -287,6 +312,30 @@ export class MockSessions {
             );
           }
           if (!row.stop) {
+            if (/artifact/i.test(request.text)) {
+              const artifact: ArtifactContent = {
+                artifactId: `art_${String(++this.number).padStart(26, "0")}`,
+                sessionId: id,
+                name: "summary.md",
+                mime: "text/markdown",
+                bytes: 16,
+                sha256: "a".repeat(64),
+                description: "Mock summary",
+                createdAt: new Date().toISOString(),
+                content: "# Mock artifact\n",
+              };
+              row.artifacts.push(artifact);
+              this.emit(
+                id,
+                {
+                  type: "artifact.saved",
+                  artifactId: artifact.artifactId,
+                  name: artifact.name,
+                  bytes: artifact.bytes,
+                },
+                key,
+              );
+            }
             const messageId = `message_${++this.number}`;
             this.emit(id, { type: "message.delta", messageId, text: "Mock response." }, key);
             this.emit(id, { type: "message.done", messageId, text: "Mock response.", citations: [] }, key);

@@ -13,12 +13,13 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 ## Public interface
 
 - SessionService(host) recovers writable state before accepting work. host supplies SQLite/root/gateway/Clock/model/prompt and optional workers/registry/permissions/policy/runtime/limits/scrubbing/ownership check. Read-only services expose reads/subscriptions.
+- listArtifacts/openArtifact/verifiedArtifact expose current managed session content; [Artifacts](artifacts.md) owns bounded storage, refs and native actions. Session class tools stay available in all session permission modes; workbench read-only still denies mutation.
 - listChanges(sessionId) and getChange(changeId) project applied SQLite rows, ascending creation time/id and stored-patch hunk counts/details. [Changes](changes.md) owns the read protocol and renderer/native reveal.
 - create(modelRef?,mode?) returns camelCase metadata with ses_ULID,UTC dates,empty title and idle status. list, get(id)->{snapshot,seq}, rename,delete,setModel,setMode own metadata and errors. Default mode comes from host; model resolution applies session/workbench/app precedence. First user text sets an empty title to60 UTF16 units; explicit nonempty rename survives.
 - send returns turnId/messageId promptly, waitIdle is core completion, stop propagates abort, close aborts/drains all turns. Active sends, model/title and deletion mutations return BUSY. setMode remains available during active turns; read-only aborts pending approvals. Many sessions may run together.
 - subscribe(id,sinceSeq,listener(seq|undefined,event)) replays persisted rows then live events. Non-live seq starts1 and increases per session; message.delta/reasoning.delta/tool.update have no persisted row or seq. Detached callbacks cannot alter persistence or fail execution.
 - Shared SessionEvent/schema, SessionState/schema, emptySessionState and applySessionEvent form the common projection. message.done text/citations replace deltas even when deltas were missed; unfinalized live-only messages disappear at a terminal boundary. Transient reasoning/tool updates have no durable projection; usage preflight fields preserve actual provider token totals.
-- validateCitations checks unique extracted refs against successful tool ref fields and current confined text line bounds. Unsupported, invented, removed, ignored, binary and escaping refs are invalid.
+- validateCitations checks session artifact refs against successful tool refs and current verified artifacts, and checks unique extracted line refs against successful tool ref fields and current confined text line bounds. Unsupported, invented, removed, ignored, binary and escaping refs are invalid.
 - decideApproval({sessionId,approvalId,requestSha256,decision,switchToAutoEdit?}) accepts one active exact request or returns CONFLICT. The optional switch applies auto-edit atomically with the user decision. Known credential-bearing patches are refused before approval persistence. Default ApprovalGate records requested/decided status and SHA256 over recursively sorted request JSON, waits outside write admission and consumes each grant once. Automatic grants require current auto-edit on queued checks; protected changes require user decisions.
 - readPermissions allows read classes for explicitly injected hosts. Session wrapper consults the injected PermissionEngine and scrubs tool output and write-preparation errors through its host. An injected engine receives prepared ChangeRequest before the write is admitted; read-only mode filters write tools and rejects them at approval/execution. Prepared records retain provider call IDs and active turn identity; per-turn sequential runtime execution consumes each prepared closure once.
 - waitReady resolves guarded pending-change recovery; desktop/CLI await it before exposing snapshots or starting turns. Core execution also gates gateway/tool dispatch on readiness. host.writeQueue shares admission with all sessions/app saves; standalone SessionService owns one queue. close drains turns/readiness/write admission before storage closes.
@@ -61,6 +62,8 @@ flowchart LR
  service --> hub[SessionHub]
  hub --> events[(SQLite events)]
  service --> messages[(messages/tool_calls)]
+ service --> ArtifactStore
+ ArtifactStore --> artifacts[(artifacts metadata and managed files)]
  service --> completedChanges[(applied changes read projection)]
  service --> runtime[AgentRuntime]
  runtime --> policy[ContextPolicy]

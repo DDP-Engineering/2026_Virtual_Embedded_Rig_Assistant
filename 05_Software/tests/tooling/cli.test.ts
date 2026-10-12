@@ -213,6 +213,27 @@ const replay = (workbench: string, script = join(root, "fixtures/llm-scripts/rea
   "--script",
   script,
 ];
+// REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
+it("CLI saves a session artifact without approval and emits valid/missing references", async () => {
+  const { workbench } = await fixture();
+  const result = await launch([
+    ...replay(workbench, join(root, "fixtures/llm-scripts/save-artifact.jsonl")),
+    "--approve",
+    "none",
+  ]).result;
+  expect(result.code).toBe(0);
+  const records = events(result.stdout);
+  const saved = records.find((r) => r.event.type === "artifact.saved");
+  expect(saved?.event).toMatchObject({ name: "summary.md", bytes: 37 });
+  expect(records.some((r) => r.event.type === "approval.requested")).toBe(false);
+  expect(await readFile(join(workbench, ".vera/artifacts", saved.sessionId, "summary.md"), "utf8")).toBe(
+    "# Session summary\n\nBoard uses 3.3 V.\n",
+  );
+  expect(records.filter((r) => r.event.type === "message.done").at(-1)?.event.citations).toEqual([
+    { ref: "artifact:summary.md", valid: true },
+    { ref: "artifact:missing.md", valid: false },
+  ]);
+});
 it.each(["all", "none"])("CLI --approve %s decides ask edits and ends zero", async (policy) => {
   const { dir, workbench } = await fixture();
   const script = join(dir, "edit.jsonl");

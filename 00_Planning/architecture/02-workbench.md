@@ -198,7 +198,7 @@ chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, ordinal INTEGER, locator_json TEX
 
 - A session belongs to one workbench. Its title is the first user message cut to 60 characters, with
   no model call; the user can rename it.
-- The core session service stores full runtime transcripts independently of transient M1 request budgets, projects snapshots through shared events, and validates line citations against issued tool refs and current confined files. Main drains turns before workbench close/switch and rechecks owned lock pid/token before session mutations.
+- The core session service stores full runtime transcripts independently of transient M1 request budgets, projects snapshots through shared events, and validates line and session-artifact citations against issued tool refs and current confined files. Main drains turns before workbench close/switch and rechecks owned lock pid/token before session mutations.
 - Statuses: `idle`, `running`, `awaiting_approval`, `error`. Several sessions may run at once; each
   has at most one running turn. File writes go through one queue per workbench (03 §6), the app's
   own saves included. Restart recovery closes both active statuses and resolves `pending` changes
