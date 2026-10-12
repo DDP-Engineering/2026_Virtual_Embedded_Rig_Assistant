@@ -21,6 +21,7 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 [Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document
 selection/hash/limits/status events, reindex and derived-row invalidation through
 the workbench-owned queue shared by desktop and CLI composition.
+[Retrieval evaluation](../knowledge/retrieval-evaluation.md) supplies the isolated native CPU comparison over frozen demo questions; ADR0015 selects the bundled BGE descriptor and hybrid recall gate.
 [Document extraction](../knowledge/document-extraction.md) supplies cached PDF/text/heading
 extraction, precise chunks/OCR and dedicated PDF worker composition.
 

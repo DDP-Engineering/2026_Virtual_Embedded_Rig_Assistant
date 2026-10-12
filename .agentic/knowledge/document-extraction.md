@@ -7,7 +7,7 @@ heading/page chunk locators, extraction cache and demo PDFs. Start at core
 knowledge/processor.ts; pure extraction/chunk tests are extraction.test.ts,
 real worker/cache/ingest tests processor.test.ts. Queue/discovery/ownership route
 to [knowledge ingest](knowledge-ingest.md); SQLite to
-[workbench storage](workbench-storage.md). Model/retrieval scope is in architecture05.
+[workbench storage](workbench-storage.md). Model/retrieval comparison routes to [retrieval evaluation](retrieval-evaluation.md). ADR0015 selects the existing BGE tokenizer, with an empty passage prefix; query instructions live in the model descriptor.
 
 ## Purpose and boundaries
 
@@ -43,8 +43,9 @@ fictional board documents for document and future retrieval tests.
 - Each chunk is at most1400 UTF16 characters and below512 tokens including
   special tokens, measured with the existing packaged BGE tokenizer snapshot.
   Full heading prefixes and verbatim CSV headers count toward both budgets;
-  overflowing prefixes fail processing. Model selection owns any later tokenizer
-  replacement and corresponding rechunking before embedding intake.
+  overflowing prefixes fail processing. The selected BGE descriptor has an empty passage prefix, so this budget
+  includes the complete embedding passage input. Any future tokenizer/passage
+  prefix change requires corresponding rechunking before embedding intake.
 - Sources and cache ancestors refuse links/junctions; cache files also refuse
   hardlinks. Reads are bounded; cache JSON is version/kind/hash/schema validated.
   Malformed/incompatible entries regenerate from verified bytes.

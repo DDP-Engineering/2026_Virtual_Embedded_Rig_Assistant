@@ -180,3 +180,17 @@ regenerate the three fictional VERA-DEMO-01 PDFs from
 `fixtures/workbenches/demo-board/sources/`. Background desktop/CLI ingest extracts
 PDF pages in a dedicated worker, caches extraction by SHA256 and persists
 page/heading/line chunks. Scanned PDFs report `needs_ocr`.
+
+## Embedding comparison
+
+From 05_Software, run the pinned local CPU comparison:
+
+```powershell
+python ../02_Tools/npmw.py node scripts/compare-embeddings.mjs --prepare --scratch ../02_Tools/cache/wp24-TASK-fd4046b2/windows/build --models ../02_Tools/cache/wp24-TASK-fd4046b2/models --output ../02_Tools/cache/wp24-TASK-fd4046b2/windows/comparison.json
+```
+
+Omit --prepare for verified-cache-only execution; inference always disables remote
+model loading. On Ubuntu use python3 and a linux/build scratch child. The report
+retains exact corpus/fixture/manifest hashes, timings and keyword/semantic/hybrid
+recall by EN/RO. See [measurements](../06_SoftwareDocu/wp24-embedding-measurements.md)
+and [ADR0015](../00_Planning/decisions/ADR-0015-embedding-model-selection.md).

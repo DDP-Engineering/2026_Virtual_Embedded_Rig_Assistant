@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-91b404ff"
+title = "Reproducible local embedding comparison"
+status = "active"
+requirement = "When the comparison is run over the frozen demo retrieval fixture, the harness shall report real local CPU BGE and multilingual E5 package size, chunk timing and exact-locator recall@5 for keyword, semantic and hybrid modes overall and by English/Romanian questions, with reproducible asset/corpus provenance and rejection of invalid fixtures, corrupt assets or oversized model inputs."
+verification = "Unit: deterministic ranking and exact-locator accounting reject wrong pages/top6 and invalid fixtures; native Windows/Ubuntu: run both verified q8 models over identical chunks, inspect per-query rankings, timing samples and immutable hashes."
+affected_paths = ["05_Software/scripts/retrieval/","05_Software/scripts/compare-embeddings.mjs","05_Software/fixtures/retrieval/"]
+linked_tests = ["05_Software/tests/tooling/retrieval.test.ts"]
+spec = "specs/REQ-TEST-91b404ff.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

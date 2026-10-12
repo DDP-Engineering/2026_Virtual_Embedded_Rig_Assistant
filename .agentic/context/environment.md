@@ -24,6 +24,8 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Retrieval comparison uses pinned Node scripts/compare-embeddings.mjs with owned scratch, local models and output paths. Explicit --prepare downloads verified assets; default inference is local/offline. Focused retrieval/packaging/extraction/boundary tests and native Windows/Ubuntu measurements accompany ADR0015; see [retrieval evaluation](../knowledge/retrieval-evaluation.md).
+
 Extraction acceptance uses core knowledge/{extraction,processor}.test.ts, compiled
 CLI/desktop document-hosts.test.ts, deterministic demo-documents.test.ts and
 focused native e2e/ingest.spec.ts for worker/chunks/cache/OCR.

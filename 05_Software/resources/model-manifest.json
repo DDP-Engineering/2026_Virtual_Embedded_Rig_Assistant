@@ -48,5 +48,13 @@
       "sha256": "ce711ead2cb11725c9c6de69779d918c500ab12c74c5c2437ff0c448ed1566a5",
       "bytes": 3134
     }
-  ]
+  ],
+  "embedding": {
+    "dimensions": 384,
+    "maxTokens": 512,
+    "pooling": "cls",
+    "normalize": true,
+    "queryPrefix": "Represent this sentence for searching relevant passages: ",
+    "passagePrefix": ""
+  }
 }

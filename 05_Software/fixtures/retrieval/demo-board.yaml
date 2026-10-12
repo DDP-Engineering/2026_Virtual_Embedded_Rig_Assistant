@@ -1,0 +1,171 @@
+# Frozen before model inference; English documents, paired EN/RO questions.
+schema: 1
+questions:
+  - id: supply-en
+    language: en
+    query: "What is the allowed regulated supply voltage range?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 1
+  - id: supply-ro
+    language: ro
+    query: "În ce interval trebuie menținută tensiunea de alimentare?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 1
+  - id: debug-en
+    language: en
+    query: "Which pins and baud rate are used for UART debug?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 1
+  - id: debug-ro
+    language: ro
+    query: "Ce pini și ce viteză folosește portul serial pentru depanare?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 1
+  - id: sensor-address-en
+    language: en
+    query: "What seven-bit address and ID value does the external sensor use?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 2
+  - id: sensor-address-ro
+    language: ro
+    query: "Ce adresă și ce valoare de identificare are senzorul extern?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 2
+  - id: temperature-en
+    language: en
+    query: "What operating temperature range is specified?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 2
+  - id: temperature-ro
+    language: ro
+    query: "Care este intervalul temperaturii de funcționare?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 2
+  - id: oscillator-en
+    language: en
+    query: "What is the default internal oscillator and peripheral clock frequency?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 2
+  - id: oscillator-ro
+    language: ro
+    query: "La ce frecvență pornesc oscilatorul intern și ceasul periferic?"
+    expected:
+      path: docs/vera-demo-01-datasheet.pdf
+      page: 2
+  - id: enable-en
+    language: en
+    query: "Which I2C1_CR1 bit enables the peripheral?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 1
+  - id: enable-ro
+    language: ro
+    query: "Care bit al registrului de control activează perifericul?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 1
+  - id: timing-en
+    language: en
+    query: "Which I2C1_TIMINGR values configure 100 kHz and 400 kHz?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 1
+  - id: timing-ro
+    language: ro
+    query: "Ce valori ale registrului de temporizare aleg vitezele lentă și rapidă?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 1
+  - id: read-direction-en
+    language: en
+    query: "Which I2C1_CR2 bit selects read direction?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 2
+  - id: read-direction-ro
+    language: ro
+    query: "Care bit selectează direcția de citire într-un transfer?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 2
+  - id: flags-en
+    language: en
+    query: "Which I2C1_ISR bits report NACKF and BUSY?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 2
+  - id: flags-ro
+    language: ro
+    query: "Ce biți de stare indică lipsa confirmării și magistrala ocupată?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 2
+  - id: watchdog-en
+    language: en
+    query: "What WDG_KR value refreshes the watchdog and how often?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 2
+  - id: watchdog-ro
+    language: ro
+    query: "Cu ce valoare și la ce interval se reîmprospătează temporizatorul de supraveghere?"
+    expected:
+      path: docs/vera-demo-01-reference-manual.pdf
+      page: 2
+  - id: power-up-en
+    language: en
+    query: "What current limit should the lab supply use for first power-up?"
+    expected:
+      path: docs/vera-demo-01-application-note.pdf
+      page: 1
+  - id: power-up-ro
+    language: ro
+    query: "Ce limită de curent trebuie setată la sursă la prima pornire?"
+    expected:
+      path: docs/vera-demo-01-application-note.pdf
+      page: 1
+  - id: sensor-check-en
+    language: en
+    query: "What should PB6 and PB7 idle levels be during the sensor check?"
+    expected:
+      path: docs/vera-demo-01-application-note.pdf
+      page: 1
+  - id: sensor-check-ro
+    language: ro
+    query: "La ce tensiune trebuie să stea liniile senzorului când nu comunică?"
+    expected:
+      path: docs/vera-demo-01-application-note.pdf
+      page: 1
+  - id: acceptance-en
+    language: en
+    query: "What LED toggle interval is required for acceptance?"
+    expected:
+      path: docs/vera-demo-01-application-note.pdf
+      page: 2
+  - id: acceptance-ro
+    language: ro
+    query: "La ce interval trebuie să clipească indicatorul luminos pentru acceptanță?"
+    expected:
+      path: docs/vera-demo-01-application-note.pdf
+      page: 2
+  - id: measured-en
+    language: en
+    query: "What supply voltage was actually measured in the bring-up notes?"
+    expected:
+      path: docs/notes/bringup.md
+      heading: bring-up-notes
+  - id: measured-ro
+    language: ro
+    query: "Ce tensiune de alimentare a fost măsurată efectiv în notele de pornire?"
+    expected:
+      path: docs/notes/bringup.md
+      heading: bring-up-notes
