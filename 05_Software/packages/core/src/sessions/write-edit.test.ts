@@ -111,10 +111,10 @@ it("holds no queue position while two session approvals wait and conflicts the s
   expect(outcomes.map((x) => x.status).sort()).toEqual(["error", "ok"]);
   expect(outcomes.find((x) => x.status === "error")?.result_json).toMatch(/Conflict/);
 });
-it("keeps the default read-only catalog and hard rejects read-only mode with an injected policy", async () => {
+it("hard rejects read-only mode with default and injected policies", async () => {
   for (const permissions of [undefined, { allow: () => true }]) {
     const { service, root, handle } = await setup(permissions);
-    const s = service.create(null, permissions ? "read-only" : "ask");
+    const s = service.create(null, "read-only");
     service.send(s.id, "edit");
     await service.waitIdle(s.id);
     expect(await readFile(join(root, "file.txt"), "utf8")).toBe("old\n");

@@ -211,5 +211,23 @@
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."
+  },
+  "approval": {
+    "card": "Änderung bestätigen",
+    "bytes": "{{count}} Bytes",
+    "diff": "Vereinheitlichte Differenz",
+    "approved": "Genehmigt",
+    "denied": "Abgelehnt",
+    "aborted": "Abgebrochen",
+    "byMode": "automatischer Modus",
+    "byUser": "Benutzer",
+    "approve": "Genehmigen",
+    "deny": "Ablehnen",
+    "switch": "Genehmigen und zu Auto-Edit wechseln",
+    "keys": "Bei fokussierter Karte: A genehmigt, D lehnt ab.",
+    "mode": "Berechtigungsmodus",
+    "readOnly": "Nur lesen",
+    "ask": "Nachfragen",
+    "autoEdit": "Auto-Edit"
   }
 }

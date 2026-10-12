@@ -2,6 +2,7 @@
 // REQ-UX-4bea0001 REQ-UX-4bea0002 REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-4bea0005 REQ-REL-4bea0006 REQ-UX-4bea0007 REQ-TEST-4bea0008
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
+import { emptySessionState } from "@vera/shared";
 import { act, createElement, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -9,6 +10,7 @@ import { App } from "../../App.js";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
 import { Markdown } from "./markdown.js";
+import { Transcript } from "./transcript.js";
 import "../../i18n.js";
 
 vi.mock("../../api/index.js", async () => {
@@ -417,3 +419,83 @@ test("Markdown keeps remote content inert and citation syntax in code unmodified
   expect(container.querySelector("strong")?.textContent).toBe("Grounded");
   expect(container.querySelector("script,img,a[href]")).toBeNull();
 });
+test("permission picker confirms mode and new sessions inherit the workbench default", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await api.invoke("workbench.config.update", { patch: { agent: { permission_mode: "auto-edit" } } });
+  await mount();
+  await act(async () => button("New session").click());
+  await settle();
+  const picker = container.querySelector<HTMLSelectElement>('select[aria-label="Permission mode"]');
+  expect(picker, container.innerHTML).toBeTruthy();
+  if (!picker) throw Error("Permission picker is missing.");
+  expect(picker?.value).toBe("auto-edit");
+  await act(async () => userEvent.setup().selectOptions(picker, "read-only"));
+  await settle();
+  expect(picker?.value).toBe("read-only");
+});
+test("approval card renders exact inline diff, byte count and keyboard controls", async () => {
+  const state = emptySessionState();
+  state.activeTurnId = "turn";
+  state.status = "awaiting_approval";
+  state.items.push({ kind: "tool", id: "call", turnId: "turn", name: "edit", args: {}, status: "running" });
+  state.approvals.push({
+    approvalId: `apv_${"0".repeat(26)}`,
+    callId: "call",
+    requestSha256: "a".repeat(64),
+    tool: "edit",
+    path: "f.txt",
+    diff: "--- f.txt\n+++ f.txt\n@@ -1 +1 @@\n-old\n+new",
+    bytes: 4,
+    decision: null,
+  });
+  await mount(createElement(Transcript, { state, reasoning: {}, updates: {}, retry: () => {}, search: "" }));
+  expect(container.querySelector("[data-approval-card]")).toBeTruthy();
+  expect(container.querySelector(".diff-added")?.textContent).toBe("+new\n");
+  expect(button("Approve")).toBeTruthy();
+  expect(button("Deny")).toBeTruthy();
+  expect(container.textContent).toContain("4 bytes");
+});
+test.each(["a", "d"])(
+  "focused approval %s locks composer, records digest and updates sidebar",
+  async (key) => {
+    await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+    await api.invoke("workbench.config.update", { patch: { agent: { permission_mode: "ask" } } });
+    await mount();
+    await act(async () => button("New session").click());
+    await settle();
+    const input = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]');
+    expect(input).toBeTruthy();
+    if (!input) throw Error("Message input is missing.");
+    const user = userEvent.setup();
+    input.focus();
+    await act(async () => user.keyboard("Edit notes{Enter}"));
+    await settle();
+    const card = container.querySelector<HTMLElement>("[data-approval-card]");
+    expect(card).toBeTruthy();
+    if (!card) throw Error("Approval card is missing.");
+    expect(input.disabled).toBe(true);
+    expect(
+      container.querySelector('[aria-current="page"] [data-session-status="awaiting_approval"]'),
+    ).toBeTruthy();
+    const id = container.querySelector('[data-session][aria-current="page"]')?.getAttribute("data-session");
+    if (!id) throw Error("Session identity is missing.");
+    const expected = (await api.invoke("session.get", { sessionId: id })).snapshot.approvals.at(-1);
+    expect(expected).toBeDefined();
+    if (!expected) throw Error("Approval identity is missing.");
+    const invoke = api.invoke.bind(api),
+      spy = vi.spyOn(api, "invoke").mockImplementation(invoke);
+    card.focus();
+    await act(async () => user.keyboard(key));
+    await settle();
+    expect(spy).toHaveBeenCalledWith("session.approval.decide", {
+      sessionId: id,
+      approvalId: expected.approvalId,
+      requestSha256: expected.requestSha256,
+      decision: key === "a" ? "approved" : "denied",
+    });
+    expect((await api.invoke("session.get", { sessionId: id })).snapshot.approvals.at(-1)?.decision).toBe(
+      key === "a" ? "approved" : "denied",
+    );
+    expect(input.disabled).toBe(false);
+  },
+);

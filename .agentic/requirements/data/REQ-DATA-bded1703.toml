@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-bded1703"
+title = "Bind approval to immutable request"
+status = "active"
+requirement = "Core shall persist approvals and their requested events with SHA256 over sorted-key deterministic JSON of the exact immutable prepared change including identity, path, arguments, before/after hashes, diff and bytes."
+verification = "Known credential-bearing requests are refused before persistence; Compare stored JSON and event digest with prepared metadata; nested key order hashes identically, differing bytes/hash/path changes digest."
+affected_paths = ["05_Software/packages/core/src/agent/approvals.ts", "05_Software/packages/core/src/sessions/approvals.test.ts", "05_Software/packages/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/approvals.test.ts"]
+spec = "specs/REQ-FUNC-bded1702.md"
+created = 2026-10-12
+updated = 2026-10-12

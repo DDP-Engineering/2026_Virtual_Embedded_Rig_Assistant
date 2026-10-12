@@ -12,16 +12,17 @@ import {
 } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
+import { type ApprovalDecision, ApprovalGate } from "../agent/approvals.js";
 import { validateCitations } from "../agent/citations.js";
 import { ContextPolicy } from "../agent/context.js";
-import { type PermissionEngine, readPermissions } from "../agent/permissions.js";
+import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
-import { type PreparedChange, recoverChanges } from "../tools/changes.js";
+import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
 import { WriteQueue } from "../workbench/write-queue.js";
@@ -68,10 +69,34 @@ export class SessionService {
   private closed = false;
   private readonly writeQueue: WriteQueue;
   private readonly ready: Promise<void>;
+  private readonly approvals: ApprovalGate;
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
+    this.approvals = new ApprovalGate({
+      db: host.db,
+      now: () => this.now(),
+      assertWritable: () => this.writable(),
+      active: (id, turn) => this.active.get(id)?.turnId === turn && !this.active.get(id)?.failed,
+      mode: (id) => this.row(id).permission_mode,
+      record: (id, event) => {
+        const row = this.row(id);
+        const status =
+          event.type === "approval.requested"
+            ? "awaiting_approval"
+            : event.type === "approval.decided"
+              ? "running"
+              : row.status;
+        const mode =
+          event.type === "session.updated" ? (event.mode ?? row.permission_mode) : row.permission_mode;
+        host.db
+          .prepare("UPDATE sessions SET status=?,permission_mode=?,updated_at=? WHERE id=?")
+          .run(status, mode, this.now(), id);
+        const value = this.hub.record(id, event);
+        return () => this.hub.publish(id, value);
+      },
+    });
     this.writeQueue = host.writeQueue ?? new WriteQueue();
     this.ready = host.readOnly
       ? Promise.resolve()
@@ -190,10 +215,16 @@ export class SessionService {
     return this.summary(this.row(id));
   }
   setMode(id: string, mode: PermissionMode): SessionSummary {
-    this.idle(id);
+    this.row(id);
+    this.writable();
+    if (this.deleting.has(id)) throw veraError("BUSY");
     if (!permissionModeSchema.safeParse(mode).success) throw veraError("INVALID");
     this.update(id, { type: "session.updated", mode });
+    if (mode === "read-only") this.approvals.abort(id, "mode");
     return this.summary(this.row(id));
+  }
+  decideApproval(input: ApprovalDecision): void {
+    this.approvals.decide(input);
   }
   async delete(id: string): Promise<void> {
     this.idle(id);
@@ -284,24 +315,24 @@ export class SessionService {
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
     const registry = this.host.registry ?? new ToolRegistry();
-    const permissions = this.host.permissions ?? readPermissions;
+    const permissions = this.host.permissions;
     const prepared = new Map<string, PreparedChange>();
     const tools = registry
       .bind(ctx, this.host.disabledTools)
       .filter(
-        (tool) =>
-          tool.class === "read" ||
-          (tool.class === "write" && !!this.host.permissions && row.permission_mode !== "read-only"),
+        (tool) => tool.class === "read" || (tool.class === "write" && row.permission_mode !== "read-only"),
       )
       .map((tool) => ({
         ...tool,
         execute: async (args: unknown, signal: AbortSignal) => {
           await durable();
           if (tool.class === "write") {
+            if (this.row(id).permission_mode === "read-only") throw Error("Tool permission denied.");
             const change = prepared.get(tool.name);
             prepared.delete(tool.name);
             if (!change) throw Error("Prepared change permission is missing.");
             try {
+              if (!permissions) this.approvals.consume(change.request);
               const result = await change.apply(signal);
               const text = JSON.stringify(result);
               return this.host.scrub?.(text) ?? text;
@@ -312,7 +343,13 @@ export class SessionService {
               );
             }
           }
-          if (!(await permissions.allow({ sessionId: id, mode: row.permission_mode, tool, args }, signal)))
+          if (
+            permissions &&
+            !(await permissions.allow(
+              { sessionId: id, mode: this.row(id).permission_mode, tool, args },
+              signal,
+            ))
+          )
             throw Error("Tool permission denied.");
           this.writable();
           try {
@@ -327,13 +364,22 @@ export class SessionService {
         },
       }));
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
+    const self = this;
     const runtimeHost: RuntimeHost = {
       gateway: {
         ...gateway,
         stream: async function* (request) {
           await durable();
           request.signal.throwIfAborted();
-          yield* gateway.stream({ ...request, sessionId: id });
+          yield* gateway.stream({
+            ...request,
+            sessionId: id,
+            tools: request.tools.filter(
+              (tool) =>
+                self.row(id).permission_mode !== "read-only" ||
+                (tool.name !== "write" && tool.name !== "edit"),
+            ),
+          });
         },
       },
       now: () => this.host.clock.now().getTime(),
@@ -343,6 +389,7 @@ export class SessionService {
           await durable();
           const tool = tools.find((candidate) => candidate.name === call.name);
           if (tool?.class !== "write" || this.row(id).permission_mode === "read-only") return "denied";
+          let grantedRequest: ChangeRequest | undefined;
           const change = await registry.prepare(
             {
               ...ctx,
@@ -357,6 +404,7 @@ export class SessionService {
                   this.writable();
                   if (this.row(id).permission_mode === "read-only") throw Error("Tool permission denied.");
                   if (this.host.disabledTools?.includes(call.name)) throw Error("Tool is unavailable.");
+                  if (!permissions && grantedRequest) this.approvals.assertGranted(grantedRequest);
                 },
                 recorded: (event) => {
                   this.writable();
@@ -370,18 +418,26 @@ export class SessionService {
             signal,
             this.host.disabledTools,
           );
-          const allowed = await permissions.allow(
-            {
-              sessionId: id,
-              mode: this.row(id).permission_mode,
-              tool,
-              args: call.arguments,
-              prepared: change.request,
-            },
-            signal,
-          );
+          const exact = JSON.stringify(change.request);
+          if (this.host.scrub && this.host.scrub(exact) !== exact)
+            throw Error("This change contains protected credential data.");
+          const decision = permissions
+            ? (await permissions.allow(
+                {
+                  sessionId: id,
+                  mode: this.row(id).permission_mode,
+                  tool,
+                  args: call.arguments,
+                  prepared: change.request,
+                },
+                signal,
+              ))
+              ? "approved"
+              : "denied"
+            : await this.approvals.request(change.request, signal);
           signal.throwIfAborted();
-          if (!allowed) return "denied";
+          if (decision !== "approved") return decision;
+          grantedRequest = change.request;
           prepared.set(tool.name, change);
           return "approved";
         } catch (error) {
@@ -493,7 +549,13 @@ export class SessionService {
           .prepare("UPDATE tool_calls SET result_json=?,status=?,ended_at=? WHERE id=? AND session_id=?")
           .run(
             JSON.stringify(event.message ?? { summary: event.summary }),
-            event.ok ? "ok" : event.aborted ? "aborted" : "error",
+            event.ok
+              ? "ok"
+              : event.aborted
+                ? "aborted"
+                : event.summary === "The user denied this change."
+                  ? "denied"
+                  : "error",
             this.now(),
             event.callId,
             id,
@@ -541,6 +603,22 @@ export class SessionService {
   private recover(): void {
     for (const row of this.sessions.list()) {
       this.host.db.transaction(() => {
+        const undecided = this.host.db
+          .prepare("SELECT id FROM approvals WHERE session_id=? AND decision IS NULL")
+          .all(row.id) as { id: string }[];
+        for (const approval of undecided) {
+          this.host.db
+            .prepare(
+              "UPDATE approvals SET decision='aborted',decided_by='mode',decided_at=? WHERE id=? AND decision IS NULL",
+            )
+            .run(this.now(), approval.id);
+          this.hub.record(row.id, {
+            type: "approval.decided",
+            approvalId: approval.id,
+            decision: "aborted",
+            by: "mode",
+          });
+        }
         const rows = this.messages.list(row.id);
         const repaired: { raw: string; role: string; created: string | null }[] = [];
         let changed = false;

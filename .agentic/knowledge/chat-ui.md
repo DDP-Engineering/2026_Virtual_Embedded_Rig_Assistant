@@ -12,7 +12,7 @@ owns geometry/preferences; [workbench](workbench.md) owns folder lifecycle/pinne
 ## Purpose and boundaries
 
 React presents durable session state through the shared API/reducer. Main/core own persistence,
-tools, models, budgets and abort. The browser mock seeds six selectable states through the same API.
+tools, models, budgets and abort. The browser mock seeds six selectable states and an edit approval scenario through the same API.
 
 ## Public interface
 
@@ -22,6 +22,8 @@ tools, models, budgets and abort. The browser mock seeds six selectable states t
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Failed sends retain draft.
+- ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
+- Composer exposes the confirmed session mode during active turns; text/model controls lock while running or awaiting approval. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab queries WORKBENCH.md and shows empty available skills; other panel tabs are placeholders.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
 
@@ -44,6 +46,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states t
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
 | Markdown/citations/tools | markdown, transcript, disclosure | workspace.test.ts; mock.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
+| Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; e2e/approvals.spec.ts |
 | Usage/Context | usage-meter, context-tab | workspace.test.ts |
 
 ## Key behaviors
@@ -71,11 +74,13 @@ flowchart LR
   Shell --> ContextTab
   useSessionEvents --> API[shared VeraApi boundary]
   useSessionEvents --> SharedReducer
+  Transcript --> ApprovalCard
+  ApprovalCard --> API
   Composer --> API
   ContextTab --> API
 ```
 
-The diagram matches the task proposal and adds the composed usage footer. Durable state comes from
+Durable state comes from
 the backend; reasoning and live tool-update presentation are transient renderer state.
 
 ## Files
@@ -84,12 +89,12 @@ Paths relative to05_Software.
 
 - apps/desktop/src/renderer/App.tsx — routes and workbench/session selection.
 - apps/desktop/src/renderer/hooks/use-session-events.ts — guarded snapshot/subscription.
-- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,transcript,markdown,disclosure,usage-meter,context-tab}.tsx — session presentation.
+- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab}.tsx — session presentation.
 - apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
 - apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
 - apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.
 - apps/desktop/src/main/index.ts; packages/shared/src/ipc.ts — config readOnly metadata and instrumented replay delay composition.
 - fixtures/llm-scripts/ui-{slow,grep-bad,grep-good}.jsonl — deterministic native acceptance.
-- e2e/{chat-ui,mock}.spec.ts — real native lifecycle/abort and browser matrix.
+- e2e/{approvals,chat-ui,mock}.spec.ts — real native lifecycle/abort and browser matrix.
 - tests/tooling/build-mode.test.ts — release omission of replay delay seam.
 - apps/desktop/package.json; package-lock.json — pinned Markdown/component-test dependencies.

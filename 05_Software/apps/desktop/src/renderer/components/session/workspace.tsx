@@ -117,6 +117,8 @@ export function SessionWorkspace({
             if (last?.kind === "user") void send(last.text);
           }}
           search={search}
+          sessionId={id}
+          disabled={readOnly}
         />
       )}
       {failure !== undefined && <ErrorMessage error={failure} />}
@@ -126,6 +128,18 @@ export function SessionWorkspace({
           disabled={readOnly || pending}
           send={send}
           stop={() => void stop()}
+          setMode={async (mode) => {
+            setPending(true);
+            setFailure(undefined);
+            try {
+              await api.invoke("session.mode.set", { sessionId: id, mode });
+              changed();
+            } catch (e) {
+              setFailure(e);
+            } finally {
+              setPending(false);
+            }
+          }}
           setModel={async (modelRef) => {
             setPending(true);
             setFailure(undefined);

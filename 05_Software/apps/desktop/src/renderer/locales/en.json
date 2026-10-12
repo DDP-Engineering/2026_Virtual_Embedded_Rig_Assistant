@@ -211,5 +211,23 @@
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."
+  },
+  "approval": {
+    "card": "Change approval",
+    "bytes": "{{count}} bytes",
+    "diff": "Unified diff",
+    "approved": "Approved",
+    "denied": "Denied",
+    "aborted": "Aborted",
+    "byMode": "automatic mode",
+    "byUser": "user",
+    "approve": "Approve",
+    "deny": "Deny",
+    "switch": "Approve and switch to auto-edit",
+    "keys": "Focus this card: A approves, D denies.",
+    "mode": "Permission mode",
+    "readOnly": "Read-only",
+    "ask": "Ask",
+    "autoEdit": "Auto-edit"
   }
 }

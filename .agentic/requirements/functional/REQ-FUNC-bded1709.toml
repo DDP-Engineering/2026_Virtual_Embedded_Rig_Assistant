@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-bded1709"
+title = "Expose strict approval IPC"
+status = "active"
+requirement = "The session IPC boundary shall validate session.approval.decide identity/digest/decision/optional switch and session.mode.set through shared strict schemas and authorized main handlers."
+verification = "Router/bridge tests reject invalid values; real Electron calls accept pending decisions and conflict invalid/duplicates."
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/e2e/approvals.spec.ts", "05_Software/packages/shared/src/approval-ipc.test.ts", "05_Software/packages/shared/src/ipc.ts"]
+linked_tests = ["05_Software/packages/shared/src/approval-ipc.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/e2e/approvals.spec.ts"]
+spec = "specs/REQ-FUNC-bded1702.md"
+created = 2026-10-12
+updated = 2026-10-12

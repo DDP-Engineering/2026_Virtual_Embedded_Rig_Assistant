@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-bded1707"
+title = "Switch mode with approval"
+status = "active"
+requirement = "When an active matching approval is approved with switchToAutoEdit, core shall record the user decision and change that session to auto-edit with session.updated."
+verification = "Approve switch and assert session mode plus persisted event; invalid denied switch has no mutation."
+affected_paths = ["05_Software/packages/core/src/agent/approvals.ts", "05_Software/packages/core/src/sessions/approvals.test.ts", "05_Software/packages/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/approvals.test.ts"]
+spec = "specs/REQ-FUNC-bded1702.md"
+created = 2026-10-12
+updated = 2026-10-12

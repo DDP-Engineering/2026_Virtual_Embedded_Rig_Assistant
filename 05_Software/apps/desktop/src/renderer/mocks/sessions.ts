@@ -19,6 +19,12 @@ export class MockSessions {
       active: boolean;
       stop: boolean;
       done?: Promise<void>;
+      approval?: {
+        id: string;
+        digest: string;
+        turnId: string;
+        resolve: (decision: "approved" | "denied" | "aborted") => void;
+      };
     }
   >();
   private readonly listeners = new Map<string, Set<(event: SessionEvent) => void>>();
@@ -78,6 +84,10 @@ export class MockSessions {
       title: string;
       modelRef: string | null;
       mode: SessionSummary["mode"];
+      approvalId: string;
+      requestSha256: string;
+      decision: "approved" | "denied";
+      switchToAutoEdit?: boolean;
     };
     if (channel === "session.list") {
       this.current();
@@ -116,6 +126,7 @@ export class MockSessions {
     if (channel === "session.stop") {
       this.writable();
       row.stop = true;
+      if (row.approval) this.decide(id, "aborted", "user");
       if (row.active && row.live) {
         row.active = false;
         delete row.live;
@@ -124,6 +135,30 @@ export class MockSessions {
         return { stopped: true };
       }
       return { stopped: row.active };
+    }
+    if (channel === "session.approval.decide") {
+      this.writable();
+      if (
+        !row.active ||
+        !row.approval ||
+        row.approval.id !== request.approvalId ||
+        row.approval.digest !== request.requestSha256
+      )
+        throw veraError("CONFLICT");
+      if (request.switchToAutoEdit && request.decision !== "approved") throw veraError("INVALID");
+      this.decide(id, request.decision, "user");
+      if (request.switchToAutoEdit) {
+        row.summary.mode = "auto-edit";
+        this.emit(id, { type: "session.updated", mode: "auto-edit" });
+      }
+      return {};
+    }
+    if (channel === "session.mode.set") {
+      this.writable();
+      row.summary.mode = request.mode;
+      this.emit(id, { type: "session.updated", mode: request.mode });
+      if (request.mode === "read-only" && row.approval) this.decide(id, "aborted", "mode");
+      return row.summary;
     }
     this.idle(id);
     row.summary.updatedAt = new Date().toISOString();
@@ -142,11 +177,6 @@ export class MockSessions {
       this.emit(id, { type: "session.updated", modelRef: request.modelRef });
       return row.summary;
     }
-    if (channel === "session.mode.set") {
-      row.summary.mode = request.mode;
-      this.emit(id, { type: "session.updated", mode: request.mode });
-      return row.summary;
-    }
     if (channel === "session.send") {
       const key = this.key(id);
       row.active = true;
@@ -162,7 +192,58 @@ export class MockSessions {
       this.emit(id, { type: "turn.started", turnId });
       row.done = Promise.resolve()
         .then(() => Promise.resolve())
-        .then(() => {
+        .then(async () => {
+          if (/edit/i.test(request.text) && row.summary.mode !== "read-only" && !row.stop) {
+            const callId = `edit_${++this.number}`;
+            this.emit(
+              id,
+              {
+                type: "tool.started",
+                callId,
+                name: "edit",
+                args: { path: "docs/notes/bringup.md", oldString: "old", newString: "new" },
+              },
+              key,
+            );
+            const approvalId = `apv_${String(++this.number).padStart(26, "0")}`,
+              digest = "a".repeat(64);
+            const decision = new Promise<"approved" | "denied" | "aborted">((resolve) => {
+              row.approval = { id: approvalId, digest, turnId, resolve };
+            });
+            row.summary.status = "awaiting_approval";
+            this.emit(
+              id,
+              {
+                type: "approval.requested",
+                approvalId,
+                callId,
+                requestSha256: digest,
+                tool: "edit",
+                path: "docs/notes/bringup.md",
+                diff: "--- docs/notes/bringup.md\n+++ docs/notes/bringup.md\n@@ -1 +1 @@\n-old\n+new\n",
+                bytes: 4,
+              },
+              key,
+            );
+            if (row.summary.mode === "auto-edit" && row.approval) this.decide(id, "approved", "mode");
+            const outcome = await decision;
+            this.emit(
+              id,
+              {
+                type: "tool.done",
+                callId,
+                ok: outcome === "approved",
+                summary:
+                  outcome === "approved"
+                    ? "Mock change applied."
+                    : outcome === "denied"
+                      ? "The user denied this change."
+                      : "Aborted.",
+                durationMs: 0,
+              },
+              key,
+            );
+          }
           if (!row.stop) {
             const messageId = `message_${++this.number}`;
             this.emit(id, { type: "message.delta", messageId, text: "Mock response." }, key);
@@ -175,6 +256,15 @@ export class MockSessions {
       return { turnId, messageId };
     }
     throw veraError("NOT_FOUND");
+  }
+  private decide(id: string, decision: "approved" | "denied" | "aborted", by: "user" | "mode") {
+    const row = this.row(id),
+      pending = row.approval;
+    if (!pending) throw veraError("CONFLICT");
+    delete row.approval;
+    row.summary.status = "running";
+    this.emit(id, { type: "approval.decided", approvalId: pending.id, decision, by });
+    pending.resolve(decision);
   }
   subscribe(id: string, sinceSeq: number, on: (event: SessionEvent) => void) {
     const row = this.row(id);
@@ -197,9 +287,24 @@ export class MockSessions {
   async close(): Promise<void> {
     this.listeners.clear();
     const pending: Promise<void>[] = [];
-    for (const row of this.sessions.values())
+    for (const [key, row] of this.sessions)
       if (row.active) {
         row.stop = true;
+        if (row.approval) {
+          const pending = row.approval;
+          delete row.approval;
+          this.emit(
+            row.summary.id,
+            {
+              type: "approval.decided",
+              approvalId: pending.id,
+              decision: "aborted",
+              by: "user",
+            },
+            key,
+          );
+          pending.resolve("aborted");
+        }
         if (row.done) pending.push(row.done);
       }
     await Promise.all(pending);

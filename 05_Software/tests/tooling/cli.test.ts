@@ -18,6 +18,7 @@ let invocation = 0;
 const cleanup: string[] = [];
 const servers: Server[] = [];
 beforeAll(async () => {
+  await mkdir(join(root, "node_modules/.cache"), { recursive: true });
   compiled = await mkdtemp(join(root, "node_modules/.cache/vera-cli-test-"));
   cleanup.push(compiled);
   buildSync({
@@ -73,7 +74,11 @@ async function fixture() {
   await writeFile(join(workbench, "board.txt"), "Board uses 3.3 V.\nSecond source line.\n");
   return { dir, workbench };
 }
-function launch(args: string[], env: Record<string, string> = {}, mode: "compiled" | "npm" = "compiled") {
+function launch(
+  args: string[],
+  env: Record<string, string> = {},
+  mode: "compiled" | "npm" | "pty" = "compiled",
+) {
   const environment = { ...process.env, ...env };
   delete environment.VERA_TEST;
   delete environment.OPENAI_API_KEY;
@@ -94,15 +99,26 @@ function launch(args: string[], env: Record<string, string> = {}, mode: "compile
     "--import",
     pathToFileURL(join(compiled, "guard.mjs")).href,
     ...(env.VERA_CLI_SIGNAL_TEST ? ["--import", pathToFileURL(join(compiled, "signal.mjs")).href] : []),
-    ...(mode === "compiled"
-      ? [join(compiled, "index.js"), ...args]
-      : [npm ?? "", "run", "vera", "--", ...args]),
+    ...(mode !== "npm" ? [join(compiled, "index.js"), ...args] : [npm ?? "", "run", "vera", "--", ...args]),
   ];
-  const child = spawn(process.execPath, argv, {
+  const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+  const executable = mode === "pty" ? "script" : process.execPath;
+  const executedArgv =
+    mode === "pty"
+      ? [
+          "-q",
+          "-e",
+          "-c",
+          `stty -echo; exec ${[process.execPath, ...argv].map(quote).join(" ")}`,
+          "/dev/null",
+        ]
+      : argv;
+  const child = spawn(executable, executedArgv, {
     cwd: root,
     env: environment,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["pipe", "pipe", "pipe"],
   });
+  if (mode !== "pty") child.stdin.end();
   let stdout = "",
     stderr = "";
   const outBytes: Buffer[] = [],
@@ -139,7 +155,8 @@ function launch(args: string[], env: Record<string, string> = {}, mode: "compile
             join(folder, `${name}.json`),
             JSON.stringify(
               {
-                argv: [process.execPath, ...argv],
+                argv: [executable, ...executedArgv],
+                nodeArgv: [process.execPath, ...argv],
                 cwd: root,
                 startUTC: start,
                 endUTC: new Date().toISOString(),
@@ -196,6 +213,72 @@ const replay = (workbench: string, script = join(root, "fixtures/llm-scripts/rea
   "--script",
   script,
 ];
+it.each(["all", "none"])("CLI --approve %s decides ask edits and ends zero", async (policy) => {
+  const { dir, workbench } = await fixture();
+  const script = join(dir, "edit.jsonl");
+  await writeFile(
+    script,
+    [
+      { match: "Read", toolCalls: [{ name: "read", args: { path: "board.txt" } }] },
+      { toolCalls: [{ name: "edit", args: { path: "board.txt", oldString: "3.3 V", newString: "5 V" } }] },
+      { text: "Done" },
+    ]
+      .map((line) => JSON.stringify(line))
+      .join("\n"),
+  );
+  const result = await launch([...replay(workbench, script), "--approve", policy]).result;
+  expect(result.code).toBe(0);
+  const records = events(result.stdout);
+  expect(records.at(-1).event).toMatchObject({ type: "turn.done", stopReason: "end" });
+  expect(records.find((r) => r.event.type === "approval.decided")?.event).toMatchObject({
+    decision: policy === "all" ? "approved" : "denied",
+    by: "user",
+  });
+  expect(await readFile(join(workbench, "board.txt"), "utf8")).toBe(
+    policy === "all" ? "Board uses 5 V.\nSecond source line.\n" : "Board uses 3.3 V.\nSecond source line.\n",
+  );
+  if (policy === "none") expect(result.stdout).toContain("The user denied this change.");
+});
+
+it("denies an unflagged non-TTY approval without blocking or changing bytes", async () => {
+  const { workbench } = await fixture();
+  const result = await launch(replay(workbench, join(root, "fixtures/llm-scripts/edit-deny.jsonl"))).result;
+  expect(result.code).toBe(0);
+  expect(result.stderr).not.toContain("Choose A");
+  expect(events(result.stdout).find((r) => r.event.type === "approval.decided")?.event).toMatchObject({
+    decision: "denied",
+    by: "user",
+  });
+  expect(await readFile(join(workbench, "board.txt"), "utf8")).toContain("3.3 V");
+});
+
+it.skipIf(process.platform !== "linux").each(["a", "d", "interrupt"])(
+  "real Linux PTY approval accepts %s and drains the CLI",
+  async (choice) => {
+    const { workbench } = await fixture();
+    const launched = launch(
+      replay(workbench, join(root, "fixtures/llm-scripts/edit-approve.jsonl")),
+      {},
+      "pty",
+    );
+    let answered = false;
+    launched.child.stdout.on("data", () => {
+      if (!answered && launched.output().includes("Choose A to approve or D to deny: ")) {
+        answered = true;
+        launched.child.stdin?.write(choice === "interrupt" ? "\u0003" : `${choice}\n`);
+      }
+    });
+    const result = await launched.result;
+    expect(answered, "the real process must observe both stdin and stderr as TTY").toBe(true);
+    expect(result.code).toBe(choice === "interrupt" ? 1 : 0);
+    expect(result.stdout).toContain(
+      `"decision":"${choice === "a" ? "approved" : choice === "d" ? "denied" : "aborted"}"`,
+    );
+    expect(result.stdout).toContain(`"stopReason":"${choice === "interrupt" ? "aborted" : "end"}"`);
+    expect(await readFile(join(workbench, "board.txt"), "utf8")).toContain(choice === "a" ? "5 V" : "3.3 V");
+    await expect(readFile(join(workbench, ".vera/lock"))).rejects.toMatchObject({ code: "ENOENT" });
+  },
+);
 
 it("runs ordered read/list/cited events and resumes a durable session in a new process", async () => {
   const { workbench, dir } = await fixture();

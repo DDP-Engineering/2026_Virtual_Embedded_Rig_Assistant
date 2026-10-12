@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for PathGuard, binary detection, read/list/glob/grep/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and read permissions.
+Select for PathGuard, binary detection, read/list/glob/grep/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
 
 ## Purpose and boundaries
 
@@ -70,7 +70,7 @@ flowchart LR
  Registry --> Guard[PathGuard + common ignore]
  Registry --> Read[readWindow streaming metadata]
  Registry --> Prepared[PreparedChange private bytes + frozen request]
- Prepared --> Permission[SessionService injected PermissionEngine]
+ Prepared --> Permission[SessionService ApprovalGate / host policy]
  Permission --> Queue[WorkbenchService WriteQueue]
  AppSaves[config/pinned saves] --> Queue
  Queue --> Pending[changes pending]

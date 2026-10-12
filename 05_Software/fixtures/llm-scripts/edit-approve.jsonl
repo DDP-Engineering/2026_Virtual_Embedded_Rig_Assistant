@@ -1,0 +1,3 @@
+{"match":"(?i)edit.*board","toolCalls":[{"name":"read","args":{"path":"board.txt"}}]}
+{"toolCalls":[{"name":"edit","args":{"path":"board.txt","oldString":"3.3 V","newString":"5 V"}}]}
+{"text":"The change decision has been processed."}

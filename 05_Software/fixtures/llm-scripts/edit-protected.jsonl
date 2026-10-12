@@ -1,0 +1,3 @@
+{"match":"(?i)edit.*board","toolCalls":[{"name":"read","args":{"path":"WORKBENCH.md"}}]}
+{"toolCalls":[{"name":"edit","args":{"path":"WORKBENCH.md","oldString":"Device under test","newString":"Device under test (reviewed)"}}]}
+{"text":"The protected change decision has been processed."}

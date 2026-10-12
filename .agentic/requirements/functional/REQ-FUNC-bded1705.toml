@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-bded1705"
+title = "Continue after denial"
+status = "active"
+requirement = "When the user denies a prepared change, core shall leave file bytes unchanged and return The user denied this change. to the model while the turn can finish end."
+verification = "Deny real replay edit; assert unchanged file, denied tool result, approvals row/user event and terminal end."
+affected_paths = ["05_Software/packages/core/src/agent/approvals.ts", "05_Software/packages/core/src/sessions/approvals.test.ts", "05_Software/packages/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/approvals.test.ts"]
+spec = "specs/REQ-FUNC-bded1702.md"
+created = 2026-10-12
+updated = 2026-10-12

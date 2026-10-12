@@ -70,6 +70,8 @@ Prepared-write focused proof uses tools/write-edit.test.ts, sessions/write-edit.
 
 File-tool proof uses real worker-thread bundles and injected shorter deadlines for catastrophic regex/abort/replacement; native Electron file-tools acceptance invokes sandboxed app.info while matching stalls. Dedicated grep-worker entries ship in desktop and CLI; instrumented file-tool probe is compiled out of release.
 
+Permission approval focused proof uses core sessions/approvals.test.ts, shared/approval-ipc.test.ts, workspace.test.ts and CLI prompt/process tests. e2e/approvals.spec.ts exercises the production gate in compiled native Electron, without permission injection, and minimum-size browser keyboard decisions. Linux CLI process tests use the real script PTY for A/D and Ctrl+C; those Linux-only cases skip on Windows.
+
 Chat UI acceptance uses `e2e/chat-ui.spec.ts` with real native replay and worker calls; `?mock=chat` seeds six selectable session states in browser mock mode. Component tests use jsdom, React act and user-event. Instrumented VERA_REPLAY_DELAY_MS slows replay streams; release builds omit this seam.
 
 Headless `npm run vera -- run …` builds the CLI and dedicated grep worker with pinned esbuild; `build:cli` prepares the workspace vera bin. CLI process acceptance is tests/tooling/cli.test.ts; Node port checks are apps/cli/src/host-ports.test.ts. Explicit replay is a headless interface; desktop keeps its compiled instrumented boundary. See [headless CLI](../knowledge/headless-cli.md) and the software README for provider/data/output/resume behavior.

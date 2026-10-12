@@ -143,6 +143,11 @@ ipcMain.handle(
           return s.send(sessionId, text);
         }),
       "session.stop": ({ sessionId }) => sessions.run((s) => ({ stopped: s.stop(sessionId) })),
+      "session.approval.decide": (request) =>
+        sessions.run((s) => {
+          s.decideApproval(request);
+          return {};
+        }),
       "session.model.set": ({ sessionId, modelRef }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };

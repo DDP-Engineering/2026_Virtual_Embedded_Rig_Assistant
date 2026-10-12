@@ -39,6 +39,19 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "session.approval.decide": defineChannel(
+    "session.approval.decide",
+    z
+      .strictObject({
+        sessionId: sessionIdSchema,
+        approvalId: z.string().regex(/^apv_[0-9A-HJKMNP-TV-Z]{26}$/),
+        requestSha256: z.string().regex(/^[0-9a-f]{64}$/),
+        decision: z.enum(["approved", "denied"]),
+        switchToAutoEdit: z.boolean().optional(),
+      })
+      .refine((v) => !v.switchToAutoEdit || v.decision === "approved"),
+    z.strictObject({}),
+  ),
   "session.list": defineChannel("session.list", z.strictObject({}), z.array(sessionSummarySchema)),
   "session.create": defineChannel(
     "session.create",

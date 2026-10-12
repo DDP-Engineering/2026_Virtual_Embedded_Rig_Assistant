@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-bded1701"
+title = "Enforce read-only mode"
+status = "active"
+requirement = "While a session is read-only, core shall omit write and edit from every model catalog and reject their execution even for fabricated calls."
+verification = "Capture gateway tools and fabricate calls with a permissive injected host; neither file nor changes rows change."
+affected_paths = ["05_Software/packages/core/src/agent/approvals.ts", "05_Software/packages/core/src/sessions/approvals.test.ts", "05_Software/packages/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/approvals.test.ts"]
+spec = "specs/REQ-FUNC-bded1702.md"
+created = 2026-10-12
+updated = 2026-10-12

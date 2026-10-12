@@ -47,7 +47,9 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
             if (
               event.type === "turn.started" ||
               event.type === "turn.done" ||
-              event.type === "session.updated"
+              event.type === "session.updated" ||
+              event.type === "approval.requested" ||
+              event.type === "approval.decided"
             )
               changed();
           });

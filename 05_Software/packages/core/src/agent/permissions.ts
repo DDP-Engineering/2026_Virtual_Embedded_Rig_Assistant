@@ -14,5 +14,5 @@ export interface PermissionEngine {
     signal: AbortSignal,
   ): boolean | Promise<boolean>;
 }
-/** M1 executes read tools. Prepared writes and their approval lifecycle are supplied by WP17. */
+/** Explicit host policy for read-only embeddings; the session default owns durable approvals. */
 export const readPermissions: PermissionEngine = { allow: ({ tool }) => tool.class === "read" };

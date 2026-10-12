@@ -211,5 +211,23 @@
   },
   "context": {
     "budget_exceeded": "Textul depășește bugetul de context al modelului."
+  },
+  "approval": {
+    "card": "Aprobarea modificării",
+    "bytes": "{{count}} bytes",
+    "diff": "Diferențe unificate",
+    "approved": "Aprobat",
+    "denied": "Refuzat",
+    "aborted": "Anulat",
+    "byMode": "mod automat",
+    "byUser": "utilizator",
+    "approve": "Aprobă",
+    "deny": "Refuză",
+    "switch": "Aprobă și treci la editare automată",
+    "keys": "Cu acest card focalizat: A aprobă, D refuză.",
+    "mode": "Mod de permisiuni",
+    "readOnly": "Doar citire",
+    "ask": "Întreabă",
+    "autoEdit": "Editare automată"
   }
 }

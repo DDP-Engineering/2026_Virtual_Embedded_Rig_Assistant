@@ -1,6 +1,6 @@
 // REQ-UX-4bea0003 REQ-REL-4bea0004
 import { useQuery } from "@tanstack/react-query";
-import type { SessionState } from "@vera/shared";
+import { permissionModeSchema, type SessionState } from "@vera/shared";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -12,12 +12,14 @@ export function Composer({
   send,
   stop,
   setModel,
+  setMode,
 }: {
   state: SessionState;
   disabled: boolean;
   send: (text: string) => Promise<boolean>;
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
+  setMode: (mode: SessionState["mode"]) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
@@ -189,6 +191,19 @@ export function Composer({
               {t("chat.send")}
             </button>
           )}
+          <label>
+            {t("approval.mode")}
+            <select
+              aria-label={t("approval.mode")}
+              value={state.mode}
+              disabled={disabled}
+              onChange={(e) => void setMode(permissionModeSchema.parse(e.target.value))}
+            >
+              <option value="read-only">{t("approval.readOnly")}</option>
+              <option value="ask">{t("approval.ask")}</option>
+              <option value="auto-edit">{t("approval.autoEdit")}</option>
+            </select>
+          </label>
         </div>
       </form>
       {(providers.isError || catalog.isError) && (

@@ -1,0 +1,201 @@
+import { createHash } from "node:crypto";
+import { type PermissionMode, type SessionEvent, veraError } from "@vera/shared";
+import type Database from "better-sqlite3";
+import { ulid } from "ulid";
+import type { ChangeRequest } from "../tools/changes.js";
+
+/** Exact request serialization: object keys sorted recursively, array order preserved. */
+export function requestJson(value: unknown): string {
+  const ordered = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(ordered);
+    if (input !== null && typeof input === "object")
+      return Object.fromEntries(
+        Object.entries(input)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([key, v]) => [key, ordered(v)]),
+      );
+    return input;
+  };
+  return JSON.stringify(ordered(value));
+}
+export function requestSha256(request: ChangeRequest): string {
+  return createHash("sha256").update(requestJson(request), "utf8").digest("hex");
+}
+type Decision = "approved" | "denied" | "aborted";
+export interface ApprovalDecision {
+  sessionId: string;
+  approvalId: string;
+  requestSha256: string;
+  decision: "approved" | "denied";
+  switchToAutoEdit?: boolean | undefined;
+}
+interface Pending {
+  request: ChangeRequest;
+  digest: string;
+  signal: AbortSignal;
+  resolve(value: Decision): void;
+  reject(error: unknown): void;
+  cleanup(): void;
+}
+export interface ApprovalHost {
+  db: Database.Database;
+  now(): string;
+  active(sessionId: string, turnId: string): boolean;
+  mode(sessionId: string): PermissionMode;
+  assertWritable(): void;
+  /** Called inside the gate's transaction. Returns publication after commit. */
+  record(sessionId: string, event: SessionEvent): () => void;
+}
+export class ApprovalGate {
+  private readonly pending = new Map<string, Pending>();
+  constructor(private readonly host: ApprovalHost) {}
+  async request(request: ChangeRequest, signal: AbortSignal): Promise<Decision> {
+    signal.throwIfAborted();
+    this.host.assertWritable();
+    if (!this.host.active(request.sessionId, request.turnId)) throw veraError("CONFLICT");
+    const mode = this.host.mode(request.sessionId);
+    if (mode === "read-only") return "aborted";
+    const id = `apv_${ulid()}`,
+      digest = requestSha256(request);
+    let resolve!: (decision: Decision) => void;
+    let reject!: (error: unknown) => void;
+    const result = new Promise<Decision>((done, failed) => {
+      resolve = done;
+      reject = failed;
+    });
+    // AbortSignal dispatch must never throw outside the runtime's promise boundary.
+    const abort = () => this.cancel(id, "user", false);
+    const entry: Pending = {
+      request,
+      digest,
+      signal,
+      resolve,
+      reject,
+      cleanup: () => signal.removeEventListener("abort", abort),
+    };
+    // Register before observers see the request: a synchronous decision is valid.
+    this.pending.set(id, entry);
+    try {
+      const publish = this.host.db.transaction(() => {
+        this.host.db
+          .prepare(
+            "INSERT INTO approvals(id,session_id,turn_id,tool_call_id,request_sha256,request_json) VALUES (?,?,?,?,?,?)",
+          )
+          .run(id, request.sessionId, request.turnId, request.callId, digest, requestJson(request));
+        return this.host.record(request.sessionId, {
+          type: "approval.requested",
+          approvalId: id,
+          callId: request.callId,
+          requestSha256: digest,
+          tool: request.tool,
+          path: request.path,
+          diff: request.diff,
+          bytes: request.bytes,
+        });
+      })();
+      signal.addEventListener("abort", abort, { once: true });
+      publish();
+      if (signal.aborted) abort();
+      else if (mode === "auto-edit" && !request.protected && this.pending.has(id))
+        this.finish(id, "approved", "mode");
+      return await result;
+    } catch (error) {
+      entry.cleanup();
+      this.pending.delete(id);
+      throw error;
+    }
+  }
+  decide(input: ApprovalDecision): void {
+    const entry = this.pending.get(input.approvalId);
+    this.host.assertWritable();
+    if (
+      !entry ||
+      entry.signal.aborted ||
+      entry.request.sessionId !== input.sessionId ||
+      entry.digest !== input.requestSha256 ||
+      !this.host.active(input.sessionId, entry.request.turnId)
+    )
+      throw veraError("CONFLICT");
+    if (input.decision !== "approved" && input.decision !== "denied") throw veraError("INVALID");
+    if (input.switchToAutoEdit && input.decision !== "approved") throw veraError("INVALID");
+    if (this.host.mode(input.sessionId) === "read-only") throw veraError("CONFLICT");
+    this.finish(input.approvalId, input.decision, "user", input.switchToAutoEdit);
+  }
+  private finish(id: string, decision: Decision, by: "user" | "mode", switchMode = false): void {
+    const entry = this.pending.get(id);
+    if (!entry) return;
+    this.host.assertWritable();
+    const publications = this.host.db.transaction(() => {
+      const changed = this.host.db
+        .prepare("UPDATE approvals SET decision=?,decided_by=?,decided_at=? WHERE id=? AND decision IS NULL")
+        .run(decision, by, this.host.now(), id).changes;
+      if (changed !== 1) throw veraError("CONFLICT");
+      const publish = [
+        this.host.record(entry.request.sessionId, { type: "approval.decided", approvalId: id, decision, by }),
+      ];
+      if (switchMode)
+        publish.push(
+          this.host.record(entry.request.sessionId, { type: "session.updated", mode: "auto-edit" }),
+        );
+      return publish;
+    })();
+    this.pending.delete(id);
+    entry.cleanup();
+    for (const publish of publications) publish();
+    entry.resolve(decision);
+  }
+  abort(sessionId: string, by: "user" | "mode"): void {
+    for (const [id, entry] of this.pending)
+      if (entry.request.sessionId === sessionId) this.cancel(id, by, true);
+  }
+  private cancel(id: string, by: "user" | "mode", propagate: boolean): void {
+    const entry = this.pending.get(id);
+    if (!entry) return;
+    try {
+      this.finish(id, "aborted", by);
+    } catch (error) {
+      // Release the waiter without unauthorized SQL/event writes. Writable startup
+      // recovery repairs the durable undecided row after authority is restored.
+      this.pending.delete(id);
+      entry.cleanup();
+      entry.reject(error);
+      if (propagate) throw error;
+    }
+  }
+  consume(request: ChangeRequest): void {
+    this.assertGranted(request);
+    const changed = this.host.db
+      .prepare(
+        "UPDATE approvals SET consumed_at=? WHERE session_id=? AND turn_id=? AND tool_call_id=? AND request_sha256=? AND decision='approved' AND consumed_at IS NULL",
+      )
+      .run(
+        this.host.now(),
+        request.sessionId,
+        request.turnId,
+        request.callId,
+        requestSha256(request),
+      ).changes;
+    if (changed !== 1) throw veraError("CONFLICT");
+  }
+  assertGranted(request: ChangeRequest): void {
+    this.host.assertWritable();
+    if (
+      !this.host.active(request.sessionId, request.turnId) ||
+      this.host.mode(request.sessionId) === "read-only"
+    )
+      throw veraError("CONFLICT");
+    const row = this.host.db
+      .prepare(
+        "SELECT decided_by FROM approvals WHERE session_id=? AND turn_id=? AND tool_call_id=? AND request_sha256=? AND decision='approved'",
+      )
+      .get(request.sessionId, request.turnId, request.callId, requestSha256(request)) as
+      | { decided_by: string }
+      | undefined;
+    if (
+      !row ||
+      (request.protected && row.decided_by !== "user") ||
+      (row.decided_by === "mode" && this.host.mode(request.sessionId) !== "auto-edit")
+    )
+      throw veraError("CONFLICT");
+  }
+}

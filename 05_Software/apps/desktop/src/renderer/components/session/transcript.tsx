@@ -3,6 +3,7 @@ import type { SessionState } from "@vera/shared";
 import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
+import { ApprovalCard } from "./approval-card.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 
@@ -12,12 +13,16 @@ export function Transcript({
   updates,
   retry,
   search,
+  sessionId,
+  disabled = false,
 }: {
   state: SessionState;
   reasoning: Record<string, string>;
   updates: Record<string, string>;
   retry: () => void;
   search: string;
+  sessionId?: string | undefined;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const scroll = useRef<HTMLDivElement>(null);
@@ -73,29 +78,41 @@ export function Transcript({
             </>
           )}
           {item.kind === "tool" && (
-            <Disclosure
-              tool={item.name}
-              title={
-                <>
-                  <span aria-hidden="true">⌕ </span>
-                  <strong>{item.name}</strong>{" "}
-                  <span>
-                    {item.status === "running"
-                      ? t("chat.running")
-                      : item.status === "ok"
-                        ? t("chat.toolOk")
-                        : t("chat.error")}
-                  </span>{" "}
-                  {(item.summary || JSON.stringify(item.args)).slice(0, 100)}{" "}
-                  {item.durationMs !== undefined && `${item.durationMs} ms`}
-                </>
-              }
-            >
-              <h4>{t("chat.arguments")}</h4>
-              <pre>{JSON.stringify(item.args, null, 2)}</pre>
-              <h4>{t("chat.preview")}</h4>
-              <pre>{item.preview ?? updates[item.id] ?? item.summary ?? t("chat.noPreview")}</pre>
-            </Disclosure>
+            <>
+              <Disclosure
+                tool={item.name}
+                title={
+                  <>
+                    <span aria-hidden="true">⌕ </span>
+                    <strong>{item.name}</strong>{" "}
+                    <span>
+                      {item.status === "running"
+                        ? t("chat.running")
+                        : item.status === "ok"
+                          ? t("chat.toolOk")
+                          : t("chat.error")}
+                    </span>{" "}
+                    {(item.summary || JSON.stringify(item.args)).slice(0, 100)}{" "}
+                    {item.durationMs !== undefined && `${item.durationMs} ms`}
+                  </>
+                }
+              >
+                <h4>{t("chat.arguments")}</h4>
+                <pre>{JSON.stringify(item.args, null, 2)}</pre>
+                <h4>{t("chat.preview")}</h4>
+                <pre>{item.preview ?? updates[item.id] ?? item.summary ?? t("chat.noPreview")}</pre>
+              </Disclosure>
+              {state.approvals
+                .filter((a) => a.callId === item.id)
+                .map((approval) => (
+                  <ApprovalCard
+                    key={approval.approvalId}
+                    approval={approval}
+                    sessionId={sessionId}
+                    disabled={disabled}
+                  />
+                ))}
+            </>
           )}
           {item.kind === "error" && (
             <>

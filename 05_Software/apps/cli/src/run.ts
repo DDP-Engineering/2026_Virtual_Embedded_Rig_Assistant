@@ -11,6 +11,7 @@ import {
 } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
 import { customSettingsSchema, veraError, veraErrorSchema } from "@vera/shared";
+import { promptApproval } from "./approval-prompt.js";
 import type { RunOptions } from "./args.js";
 import {
   type ConsoleLogger,
@@ -162,6 +163,39 @@ export async function runTurn(
       const line =
         options.format === "jsonl" ? JSON.stringify(record) : `${id} ${event.type} ${JSON.stringify(record)}`;
       process.stdout.write(`${logger.scrub(line)}\n`);
+      if (event.type === "approval.requested")
+        void Promise.resolve()
+          .then(async () => {
+            // Automatic mode may have decided synchronously after emitting requested.
+            if (
+              service.get(id).snapshot.approvals.find((a) => a.approvalId === event.approvalId)?.decision !==
+              null
+            )
+              return;
+            const decision =
+              options.approve === "all"
+                ? "approved"
+                : options.approve === "none"
+                  ? "denied"
+                  : process.stdin.isTTY && process.stderr.isTTY
+                    ? await promptApproval(event, signal, process.stdin, process.stderr, (text) =>
+                        logger.scrub(text),
+                      )
+                    : "denied";
+            if (decision !== "aborted")
+              service.decideApproval({
+                sessionId: id,
+                approvalId: event.approvalId,
+                requestSha256: event.requestSha256,
+                decision,
+              });
+          })
+          .catch((error) => {
+            if (veraErrorSchema.safeParse(error).data?.code !== "CONFLICT") {
+              failure ??= error;
+              service.stop(id);
+            }
+          });
     });
     const stop = () => {
       try {

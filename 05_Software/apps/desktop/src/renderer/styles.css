@@ -1,6 +1,29 @@
 @import "tailwindcss";
 @import "./styles/themes.css";
 
+.approval-card {
+  border: 0.125rem solid var(--primary);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  min-width: 0;
+}
+.approval-card h4 {
+  overflow-wrap: anywhere;
+}
+.approval-diff {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 24rem;
+  overflow: auto;
+}
+.diff-added {
+  color: var(--primary);
+}
+.diff-removed {
+  color: var(--destructive);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

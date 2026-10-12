@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-bded1712"
+title = "Decide CLI approvals"
+status = "active"
+requirement = "The CLI shall decide ask/protected requests according to --approve all or none and prompt for a decision on an interactive TTY when the flag is absent."
+verification = "Real CLI processes all/none (denial end exit0), nonTTY default safe denial, invalid flag usage2; Native Linux PTY subprocess observes A/D and Ctrl+C cleanup; Windows skips the Linux-only PTY selector while prompt stream tests run on both platforms."
+affected_paths = ["05_Software/apps/cli/src/approval-prompt.test.ts", "05_Software/apps/cli/src/approval-prompt.ts", "05_Software/apps/cli/src/args.ts", "05_Software/apps/cli/src/run.ts", "05_Software/tests/tooling/cli.test.ts"]
+linked_tests = ["05_Software/tests/tooling/cli.test.ts", "05_Software/apps/cli/src/approval-prompt.test.ts"]
+spec = "specs/REQ-FUNC-bded1702.md"
+created = 2026-10-12
+updated = 2026-10-12

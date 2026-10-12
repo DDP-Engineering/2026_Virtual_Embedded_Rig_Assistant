@@ -4,6 +4,7 @@ import { customConfigSchema, modelReferenceSchema, sessionIdSchema } from "@vera
 
 export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   [--session <id>] [--data <dir>] [--key-file <file>] [--format jsonl|pretty]
+  [--approve all|none] (otherwise prompt on TTY; non-TTY denies)
   --provider replay --script <file>
   --provider openai --model <id>
   --provider custom --base-url <url> --model <id>
@@ -23,6 +24,7 @@ export interface RunOptions {
   keyFile?: string;
   script?: string;
   baseUrl?: string;
+  approve?: "all" | "none";
 }
 export function parseCommand(argv: string[]): RunOptions | undefined {
   if (argv.length === 1 && ["help", "--help", "-h"].includes(argv[0] ?? "")) return;
@@ -45,6 +47,7 @@ export function parseCommand(argv: string[]): RunOptions | undefined {
           "model",
           "base-url",
           "format",
+          "approve",
         ].map((key) => [key, { type: "string" as const }]),
       ),
     });
@@ -73,6 +76,9 @@ export function parseCommand(argv: string[]): RunOptions | undefined {
       session = text("session"),
       data = text("data"),
       keyFile = text("key-file");
+    const approve = text("approve");
+    if (approve !== undefined && approve !== "all" && approve !== "none")
+      throw new UsageError("Invalid --approve.");
     if (session && !sessionIdSchema.safeParse(session).success) throw new UsageError("Invalid --session.");
     if (
       provider === "replay"
@@ -98,6 +104,7 @@ export function parseCommand(argv: string[]): RunOptions | undefined {
       ...(session ? { session } : {}),
       ...(data ? { data: resolve(data) } : {}),
       ...(keyFile ? { keyFile: resolve(keyFile) } : {}),
+      ...(approve ? { approve } : {}),
     };
   } catch (error) {
     if (error instanceof UsageError) throw error;
