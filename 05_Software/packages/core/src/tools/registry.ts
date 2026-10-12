@@ -2,6 +2,7 @@ import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
+import { readDocTool, searchDocsTool } from "./documents.js";
 import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
 import { grepTool } from "./grep.js";
@@ -74,6 +75,8 @@ export class ToolRegistry {
       editTool,
       artifactSaveTool,
       todoTool,
+      searchDocsTool,
+      readDocTool,
     ],
   ) {
     const names = definitions.map((tool) => tool.name);

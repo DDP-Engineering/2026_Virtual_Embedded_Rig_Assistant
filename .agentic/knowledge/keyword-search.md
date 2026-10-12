@@ -16,7 +16,7 @@ The workbench owns database lifetime; the processor/ingester owns chunk content.
 
 ## Public interface
 
-KeywordSearch(db).search(query) returns up to50 KeywordCandidate rows: id, docId,
+KeywordSearch(db).search(query, acceptsPath?) filters before candidate limits and returns up to50 KeywordCandidate rows: id, docId,
 ordinal, path, typed locator, full text, best available raw bm25 and one-based rank.
 Empty/punctuation queries and unupgraded read-only schema1 return [].
 

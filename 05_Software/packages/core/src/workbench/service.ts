@@ -141,6 +141,7 @@ export class WorkbenchService {
   private async stopIngest(): Promise<void> {
     await this.ingest?.close();
     this.ingest = undefined;
+    if (this.state) await this.processDocument?.release?.(this.state.folder);
   }
   reindexDocuments(): Promise<void> {
     // Admit on the lifecycle queue, then wait outside it so close/switch can abort processing.

@@ -8,7 +8,8 @@ import { prepareBundledModel } from "./prepare-model.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-export const probeMarkers = ["packaging-probe", "I2C1_CR1", "allowRemoteModels", "embedding-worker"];
+export const probeMarkers = ["packaging-probe", "I2C1_CR1"];
+export const documentWorkerMarkers = ["allowRemoteModels", "document-embedding-worker"];
 
 export async function measureDirectory(directory) {
   const files = [];
@@ -36,6 +37,8 @@ export function verifyAppCode(code, testBuild) {
   for (const marker of probeMarkers) {
     if (testBuild !== code.includes(marker)) throw new Error(`Build boundary failed for ${marker}`);
   }
+  for (const marker of documentWorkerMarkers)
+    if (!code.includes(marker)) throw new Error(`Document worker missing: ${marker}`);
 }
 
 export async function inspectAppArchive(archive, testBuild) {

@@ -14,6 +14,7 @@ import type Database from "better-sqlite3";
 import { type FSWatcher, watch } from "chokidar";
 import picomatch from "picomatch";
 import { glob } from "tinyglobby";
+import type { DocumentDerived } from "../storage/repos/documents.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { isBinary } from "../tools/binary.js";
 import { validateGlob } from "../tools/discovery.js";
@@ -37,8 +38,12 @@ export interface DocumentResult {
   pages?: number;
   reason?: DocumentReason;
   chunks?: Chunk[];
+  derived?: DocumentDerived;
 }
-export type DocumentProcessor = (input: DocumentInput) => Promise<DocumentResult>;
+export type DocumentProcessor = ((input: DocumentInput) => Promise<DocumentResult>) & {
+  modelId?: string;
+  release?(root: string): Promise<void>;
+};
 export interface IngestOptions {
   root: string;
   db: Database.Database;
@@ -293,12 +298,17 @@ export class Ingester {
       progress();
     }
   }
-  private publish(record: Omit<DocumentRecord, "id">, invalidate = false, chunks?: Chunk[]): DocumentRecord {
+  private publish(
+    record: Omit<DocumentRecord, "id">,
+    invalidate = false,
+    chunks?: Chunk[],
+    derived?: DocumentDerived,
+  ): DocumentRecord {
     const row = this.mutation(() => {
       const old = this.rows.get(record.path);
       if (invalidate && old) this.rows.clearDerived(old.id);
       const saved = this.rows.save(record);
-      if (chunks) this.rows.replaceChunks(saved.id, chunks);
+      if (chunks) this.rows.replaceChunks(saved.id, chunks, derived);
       return saved;
     });
     this.emit({ type: "index.document", path: row.path, document: row });
@@ -385,7 +395,18 @@ export class Ingester {
         old?.sha256 === record.sha256 &&
         old.kind === kind &&
         old.status !== "failed" &&
-        !(old.status === "pending" && this.options.process)
+        !(old.status === "pending" && this.options.process) &&
+        !(
+          old.status === "indexed" &&
+          this.options.process?.modelId &&
+          this.options.db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(old.id) !==
+            this.options.db
+              .prepare(
+                "SELECT count(*) FROM embeddings e JOIN chunks c ON c.id=e.chunk_id WHERE c.doc_id=? AND e.model_id=?",
+              )
+              .pluck()
+              .get(old.id, this.options.process.modelId)
+        )
       )
         return old.status;
       if (kind === "other") {
@@ -437,6 +458,7 @@ export class Ingester {
         },
         false,
         result.status === "indexed" ? result.chunks : [],
+        result.status === "indexed" ? result.derived : undefined,
       );
       return result.status;
     } catch (error) {

@@ -74,7 +74,7 @@ it("measures package contributions and rejects Windows artifacts over the size b
 });
 
 it("inspects real ASAR app code through native file separators in both build modes", async () => {
-  const { inspectAppArchive, probeMarkers } = await import(
+  const { inspectAppArchive, probeMarkers, documentWorkerMarkers } = await import(
     pathToFileURL(join(root, "scripts/package.mjs")).href
   );
   const dir = await mkdtemp(join(tmpdir(), "vera-asar-test-"));
@@ -82,11 +82,11 @@ it("inspects real ASAR app code through native file separators in both build mod
   const archive = join(dir, "app.asar");
   try {
     await mkdir(join(source, "out/main"), { recursive: true });
-    await writeFile(join(source, "out/main/index.js"), probeMarkers.join(";"));
+    await writeFile(join(source, "out/main/index.js"), [...probeMarkers, ...documentWorkerMarkers].join(";"));
     await createPackage(source, archive);
     expect((await inspectAppArchive(archive, true)).entries).toContain("/out/main/index.js");
     await expect(inspectAppArchive(archive, false)).rejects.toThrow(/Build boundary/);
-    await writeFile(join(source, "out/main/index.js"), "export const testBuild = false;");
+    await writeFile(join(source, "out/main/index.js"), documentWorkerMarkers.join(";"));
     await createPackage(source, archive);
     await expect(inspectAppArchive(archive, false)).resolves.toBeDefined();
     await expect(inspectAppArchive(archive, true)).rejects.toThrow(/Build boundary/);

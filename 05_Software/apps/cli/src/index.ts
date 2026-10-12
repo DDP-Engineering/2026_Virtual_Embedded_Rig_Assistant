@@ -2,6 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { parseCommand, USAGE, UsageError } from "./args.js";
+import { runDocuments } from "./documents.js";
 import { ConsoleLogger } from "./host-ports.js";
 import { reportError, runTurn } from "./run.js";
 
@@ -33,6 +34,8 @@ try {
   }
   const options = parseCommand(argv);
   if (!options) process.stdout.write(`${logger.scrub(USAGE)}\n`);
+  else if (options.kind === "index" || options.kind === "search")
+    process.exitCode = await runDocuments(options, logger, controller.signal);
   else {
     const credential = options.keyFile ? loaded.get(options.keyFile) : undefined;
     if (credential?.error) throw credential.error;

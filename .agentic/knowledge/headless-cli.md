@@ -2,13 +2,15 @@
 
 ## Routing
 
-Select for `vera run`, arguments, event/usage formatting, Node host ports and lifecycle. Start at05_Software/apps/cli/src/{index,args,run,host-ports,replay-output}.ts and scripts/build-cli.mjs. Focused tests are tests/tooling/cli.test.ts and apps/cli/src/host-ports.test.ts. [Sessions](sessions.md) owns durable transcript/events/recovery; [agent runtime](agent-runtime.md) owns context policy; [LLM gateway](llm-gateway.md) owns providers/replay; [file tools](file-tools.md) owns confinement and worker deadlines; [software tooling](software-tooling.md) owns npm/TypeScript/verification.
+Select for `vera run`, `vera index`, `vera search`, arguments, event/usage formatting, Node host ports and lifecycle. Start at05_Software/apps/cli/src/{index,args,run,host-ports,replay-output}.ts and scripts/build-cli.mjs. Focused tests are tests/tooling/cli.test.ts and apps/cli/src/host-ports.test.ts. [Sessions](sessions.md) owns durable transcript/events/recovery; [agent runtime](agent-runtime.md) owns context policy; [LLM gateway](llm-gateway.md) owns providers/replay; [file tools](file-tools.md) owns confinement and worker deadlines; [software tooling](software-tooling.md) owns npm/TypeScript/verification.
 
 ## Purpose and boundaries
 
 CLI runs one durable SessionService turn over core/shared with Node-only host adapters. WorkbenchService owns locking and SQLite lifetime. Explicit headless ReplayGateway selects an isolated supplied script; desktop composition owns its separate compiled test boundary.
 
 ## Public interface
+
+- `vera index --workbench <dir>` rebuilds documents through owned local extraction/embedding and reports statuses; `vera search --workbench <dir> --query <text>` supplies hybrid/k8 with mode/k/path-glob options. Search uses the current protected snapshot; index requires writable ownership. Both close all owned resources on exits. [Document search](document-search.md) owns retrieval/read contracts and the eval gate.
 
 - `npm run vera -- run --workbench <dir> --prompt <text>` with explicit provider options. OpenAI(default) requires model; custom requires base-url/model; replay requires script. Optional --approve all|none supplies explicit user decisions for ask/protected requests. Without it, stdin+stderr TTY opens an abortable A/D prompt on stderr; non-TTY denies safely. Ordinary auto-edit uses mode decisions. Optional session/data/key-file/format follow the [CLI spec](../specs/REQ-FUNC-1ed659ec.md). Unknown/duplicate/missing/incompatible flags return usage and2.
 - artifact_save uses the shared session-class tool, emits artifact.saved without approval and stores verified UTF8 session files; tooling/cli.test.ts covers saved summary and valid/missing citations in the real process. [Artifacts](artifacts.md) owns the storage contract.

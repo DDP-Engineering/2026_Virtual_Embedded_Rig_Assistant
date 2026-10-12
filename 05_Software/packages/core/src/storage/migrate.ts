@@ -5,12 +5,13 @@ import { veraError } from "@vera/shared";
 import type Database from "better-sqlite3";
 import * as initial from "./migrations/0001_initial.js";
 import * as keyword from "./migrations/0002_keyword.js";
+import * as embeddings from "./migrations/0003_embeddings.js";
 
 export interface Migration {
   readonly version: number;
   readonly sql: string;
 }
-export const migrations: readonly Migration[] = [initial, keyword];
+export const migrations: readonly Migration[] = [initial, keyword, embeddings];
 export interface StorageOptions {
   workbenchId: string;
   appVersion: string;

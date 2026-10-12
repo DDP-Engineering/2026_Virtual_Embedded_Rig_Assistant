@@ -1,6 +1,7 @@
 import {
   buildSystemPrompt,
   type Clock,
+  type EmbeddingPort,
   type PermissionEngine,
   SessionService,
   type SettingsService,
@@ -35,6 +36,7 @@ export class SessionsHost {
       credentials: CredentialFile;
       clock: Clock;
       workers: WorkerPool;
+      embeddings?: EmbeddingPort;
       version: string;
       target: () => RendererTarget | undefined;
       emit: (event: EventEnvelope) => unknown;
@@ -69,6 +71,7 @@ export class SessionsHost {
           gateway: options.gateway().api,
           clock: options.clock,
           workers: options.workers,
+          ...(options.embeddings ? { embeddings: options.embeddings } : {}),
           writeQueue: options.workbench.getWriteQueue(),
           ...(options.permissions ? { permissions: options.permissions } : {}),
           get maxToolCallsPerTurn() {

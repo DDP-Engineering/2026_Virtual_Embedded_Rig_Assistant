@@ -10,6 +10,8 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 ## Public interface
 
+- Registry includes read-class search_docs/read_doc, bound through a workbench DocumentKnowledge context. [Document search](document-search.md) owns validated schemas, guarded full extraction and bounded precise refs.
+
 - ToolContext carries absolute root, optional WorkerPool, per-session lastReads Map and optional ChangeHost (SQLite, shared queue, session/turn/call identity, ownership check and transactional recorded-event callback). Product ToolDefinition execute(ctx,args,signal) returns JSON; ToolRegistry.bind supplies established runtime ToolDef execute(args,signal), propagating error outcomes through runtime's error-result handling.
 - Registry.available/specs/bind/execute apply disabled names, validate zod args, use toolSpecs JSON projection and cap valid JSON at32000 characters with truncated. Failures have isError and actionable text; malformed serialized outputs are contained.
 - PathGuard.create(root)/resolve(relative) return absolute/canonical relative/key. Root is realpath; Windows keys and ignore-metadata identity fold case. Deepest existing ancestors support new paths. Guard applies common ignore policy to lexical and canonical targets and refuses redirected ignore metadata.

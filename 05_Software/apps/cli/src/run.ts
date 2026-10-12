@@ -13,7 +13,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { customSettingsSchema, veraError, veraErrorSchema } from "@vera/shared";
 import { promptApproval } from "./approval-prompt.js";
 import type { RunOptions } from "./args.js";
-import { processDocument } from "./document-processor.js";
+import { createDocumentServices } from "./document-processor.js";
 import {
   type ConsoleLogger,
   createNodeFiles,
@@ -102,6 +102,8 @@ export async function runTurn(
     signal.throwIfAborted();
     const workers = createCliWorkerPool();
     resources.push(() => workers.dispose());
+    const documents = createDocumentServices();
+    resources.push(() => documents.embeddings.dispose());
     const workbench = new WorkbenchService(
       {
         files,
@@ -120,7 +122,7 @@ export async function runTurn(
         },
         changed: () => {},
       },
-      processDocument,
+      documents.processDocument,
     );
     resources.push(() => workbench.close());
     const snapshot = await workbench.open(options.workbench);
@@ -134,6 +136,7 @@ export async function runTurn(
       gateway,
       clock: nodeClock,
       workers,
+      embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
       disabledTools: snapshot.config.tools.disabled,

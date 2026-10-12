@@ -16,6 +16,7 @@ export async function validateCitations(
   text: string,
   messages: readonly Message[],
   artifactExists?: (name: string) => boolean,
+  validPdfRef?: (ref: string) => Promise<boolean>,
 ) {
   const issued = new Set<string>();
   for (const message of messages)
@@ -39,6 +40,7 @@ export async function validateCitations(
     found.map(async (ref) => {
       const artifact = parseArtifactRef(ref);
       if (artifact) return { ref, valid: issued.has(ref) && !!artifactExists?.(artifact.name) };
+      if (/\.pdf#p=/i.test(ref)) return { ref, valid: issued.has(ref) && !!(await validPdfRef?.(ref)) };
       const parsed = parseLineRef(ref);
       let valid = false;
       if (parsed && issued.has(ref))

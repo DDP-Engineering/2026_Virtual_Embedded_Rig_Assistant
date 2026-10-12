@@ -29,7 +29,8 @@
     "smoke:live": "node scripts/smoke-live.mjs",
     "build:cli": "node scripts/build-cli.mjs",
     "make:demo-pdfs": "node scripts/make-demo-pdfs.mjs",
-    "vera": "node scripts/build-cli.mjs && node apps/cli/dist/index.js"
+    "vera": "node scripts/build-cli.mjs && node apps/cli/dist/index.js",
+    "eval:retrieval": "node scripts/eval-retrieval.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

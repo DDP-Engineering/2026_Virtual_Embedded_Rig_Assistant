@@ -21,7 +21,7 @@ import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
-import { processDocument } from "./document-processor.js";
+import { createDocumentServices } from "./document-processor.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
@@ -51,6 +51,9 @@ protocol.registerSchemesAsPrivileged([
 
 let window: BrowserWindow | undefined;
 const fileWorkers = createDesktopWorkerPool();
+const documents = createDocumentServices(
+  app.isPackaged ? process.resourcesPath : join(here, "../../../../resources"),
+);
 let closeFileProbe: (() => Promise<void>) | undefined;
 let rendererUrl = "vera://app/index.html";
 export const emitAppEvent = createEventEmitter(
@@ -93,7 +96,7 @@ const workbench = new WorkbenchService(
       emitAppEvent(eventEnvelopeSchema.parse(event));
     },
   },
-  processDocument,
+  documents.processDocument,
 );
 const providers = new ProviderSettings(settings, credentials);
 let chatgpt = new ChatgptAuth({
@@ -111,6 +114,7 @@ const sessions = new SessionsHost({
   credentials,
   clock: systemClock,
   workers: fileWorkers,
+  embeddings: documents.embeddings,
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
@@ -339,6 +343,7 @@ if (!app.requestSingleInstanceLock()) {
       .close()
       .then(() => workbench.close())
       .then(() => fileWorkers.dispose())
+      .then(() => documents.embeddings.dispose())
       .then(() => closeFileProbe?.())
       .then(() => modelGateway.close())
       .then(() => chatgpt.close())

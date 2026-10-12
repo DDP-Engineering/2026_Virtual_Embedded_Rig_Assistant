@@ -21,6 +21,8 @@ import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
 import { ArtifactStore } from "../artifacts/store.js";
+import type { EmbeddingPort } from "../knowledge/embedding.js";
+import { DocumentKnowledge } from "../knowledge/search.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
@@ -45,6 +47,7 @@ export interface SessionHost {
   maxToolCallsPerTurn?: number;
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
+  embeddings?: EmbeddingPort;
   registry?: ToolRegistry;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
@@ -82,9 +85,11 @@ export class SessionService {
   private readonly ready: Promise<void>;
   private readonly approvals: ApprovalGate;
   private readonly artifacts: ArtifactStore;
+  private readonly knowledge: DocumentKnowledge;
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
     this.artifacts = new ArtifactStore(host.root, host.db);
+    this.knowledge = new DocumentKnowledge(host.root, host.db, host.embeddings);
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
     this.approvals = new ApprovalGate({
@@ -363,6 +368,7 @@ export class SessionService {
     this.host.gateway.capabilities(model);
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
+    ctx.knowledge = this.knowledge;
     ctx.todos = {
       db: this.host.db,
       repository: new TodosRepository(this.host.db),
@@ -596,8 +602,12 @@ export class SessionService {
         type: "message.done",
         messageId: event.messageId,
         text: event.text,
-        citations: await validateCitations(this.host.root, event.text, transcript, (name) =>
-          this.artifacts.exists(id, name),
+        citations: await validateCitations(
+          this.host.root,
+          event.text,
+          transcript,
+          (name) => this.artifacts.exists(id, name),
+          (ref) => this.knowledge.validPdfRef(ref),
         ),
       };
     } else if (event.type === "tool.done") {

@@ -217,7 +217,7 @@ it("failed prior-lock unlink leaves prior storage usable and releases replacemen
   await expect(h.service.open(second)).rejects.toThrow();
   expect(h.service.getDatabase()).toBe(first);
   expect(first.open).toBe(true);
-  expect(first.prepare("SELECT value FROM meta WHERE key='schema_version'").pluck().get()).toBe("2");
+  expect(first.prepare("SELECT value FROM meta WHERE key='schema_version'").pluck().get()).toBe("3");
   expect(existsSync(join(second, ".vera/lock"))).toBe(false);
   await rm(lockPath, { recursive: true });
   await writeFile(lockPath, original);

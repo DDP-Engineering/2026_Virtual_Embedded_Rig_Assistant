@@ -21,7 +21,7 @@ const quote = (term: string) => `"${term.replaceAll('"', '""')}"`;
 export class KeywordSearch {
   constructor(private readonly db: Database.Database) {}
 
-  search(query: string): KeywordCandidate[] {
+  search(query: string, acceptsPath?: (path: string) => boolean): KeywordCandidate[] {
     const terms = [...new Set(query.match(/[\p{L}\p{N}_][\p{L}\p{N}\p{M}_]*/gu) ?? [])];
     if (!terms.length) return [];
     // Protected legacy workbenches can be read before a writable migration is possible.
@@ -29,12 +29,16 @@ export class KeywordSearch {
       return [];
     const select = (table: "chunks_fts" | "chunks_tri", tokens: string[]): Row[] =>
       tokens.length
-        ? (this.db
-            .prepare(`SELECT c.id,c.doc_id AS docId,c.ordinal,d.path,c.locator_json AS locatorJson,
+        ? (
+            this.db
+              .prepare(`SELECT c.id,c.doc_id AS docId,c.ordinal,d.path,c.locator_json AS locatorJson,
               c.text,bm25(${table}) AS bm25 FROM ${table}
               JOIN chunks c ON c.id=${table}.rowid JOIN documents d ON d.id=c.doc_id
-              WHERE ${table} MATCH ? ORDER BY bm25(${table}),c.id LIMIT 50`)
-            .all(tokens.map(quote).join(" OR ")) as Row[])
+              WHERE ${table} MATCH ? ORDER BY bm25(${table}),c.id ${acceptsPath ? "" : "LIMIT 50"}`)
+              .all(tokens.map(quote).join(" OR ")) as Row[]
+          )
+            .filter((r) => !acceptsPath || acceptsPath(r.path))
+            .slice(0, 50)
         : [];
     const words = select("chunks_fts", terms);
     const fragments = select(

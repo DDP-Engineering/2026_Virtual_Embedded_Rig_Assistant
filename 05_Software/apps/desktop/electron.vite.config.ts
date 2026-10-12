@@ -43,6 +43,7 @@ export default defineConfig(({ command }) => ({
         "@vera/shared": shared,
         "@vera/core/grep-worker": resolve(root, "../../packages/core/src/tools/grep-worker.ts"),
         "@vera/core/pdf-worker": resolve(root, "../../packages/core/src/knowledge/pdf-worker.ts"),
+        "@vera/core/embedding-worker": resolve(root, "../../packages/core/src/knowledge/embedding-worker.ts"),
         "@vera/core/replay": resolve(root, "../../packages/core/src/llm/replay.ts"),
         "@vera/core": resolve(root, "../../packages/core/src/index.ts"),
       },
@@ -61,6 +62,7 @@ export default defineConfig(({ command }) => ({
           "build-mode": resolve(root, "src/main/build-mode.ts"),
           "grep-worker": resolve(root, "src/main/grep-worker.ts"),
           "pdf-worker": resolve(root, "src/main/pdf-worker.ts"),
+          "document-embedding-worker": resolve(root, "src/main/document-embedding-worker.ts"),
           ...(testBuild
             ? { "embedding-worker": resolve(root, "src/main/packaging/embedding-worker.ts") }
             : {}),

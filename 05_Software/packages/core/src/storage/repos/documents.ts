@@ -1,6 +1,13 @@
 import { type DocumentRecord, documentSchema } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { type Chunk, chunkSchema } from "../../knowledge/chunk.js";
+import { type Extraction, extractionSchema } from "../../knowledge/extraction.js";
+
+export interface DocumentDerived {
+  extraction: Extraction;
+  modelId?: string;
+  vectors?: Float32Array[];
+}
 
 /** Chunk triggers maintain keyword indexes; embeddings are optional. */
 export class DocumentsRepository {
@@ -31,16 +38,43 @@ export class DocumentsRepository {
     return this.get(record.path) as DocumentRecord;
   }
   /** Chunk replacement and its trigger-maintained indexes commit together. */
-  replaceChunks(id: number, chunks: Chunk[]): void {
+  replaceChunks(id: number, chunks: Chunk[], derived?: DocumentDerived): void {
     const parsed = chunks.map((chunk) => chunkSchema.parse(chunk));
+    const extraction = derived ? extractionSchema.parse(derived.extraction) : undefined;
+    if (derived?.vectors) {
+      if (
+        !derived.modelId ||
+        derived.vectors.length !== parsed.length ||
+        derived.vectors.some(
+          (v) =>
+            v.length !== 384 ||
+            !Array.from(v).every(Number.isFinite) ||
+            Math.abs(Math.hypot(...v) - 1) > 0.0001,
+        )
+      )
+        throw Error("Invalid normalized embeddings.");
+    }
     this.db.transaction(() => {
       this.clearDerived(id);
       const insert = this.db.prepare(
         "INSERT INTO chunks(doc_id,ordinal,locator_json,text,chars) VALUES(?,?,?,?,?)",
       );
       parsed.forEach((chunk, ordinal) => {
-        insert.run(id, ordinal, JSON.stringify(chunk.locator), chunk.text, chunk.text.length);
+        const result = insert.run(id, ordinal, JSON.stringify(chunk.locator), chunk.text, chunk.text.length);
+        const vector = derived?.vectors?.[ordinal];
+        if (vector)
+          this.db
+            .prepare("INSERT INTO embeddings(chunk_id,model_id,dim,vector) VALUES(?,?,384,?)")
+            .run(
+              result.lastInsertRowid,
+              derived?.modelId,
+              Buffer.from(vector.buffer, vector.byteOffset, vector.byteLength),
+            );
       });
+      if (extraction)
+        this.db
+          .prepare("INSERT INTO document_extractions(doc_id,extraction_json) VALUES(?,?)")
+          .run(id, JSON.stringify(extraction));
     })();
   }
 
@@ -52,6 +86,8 @@ export class DocumentsRepository {
           .prepare("DELETE FROM embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)")
           .run(id);
       this.db.prepare("DELETE FROM chunks WHERE doc_id=?").run(id);
+      if (this.db.prepare("SELECT 1 FROM sqlite_master WHERE name='document_extractions'").get())
+        this.db.prepare("DELETE FROM document_extractions WHERE doc_id=?").run(id);
     })();
   }
   remove(path: string): void {

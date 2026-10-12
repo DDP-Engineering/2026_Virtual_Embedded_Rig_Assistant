@@ -109,6 +109,17 @@ when returning to Electron development. The mock fixture version is taken from t
 
 ## Headless CLI
 
+Index and search local workbench documents with `npm run vera -- index --workbench <dir>`
+and `npm run vera -- search --workbench <dir> --query "I2C1_CR1"`. Search defaults to
+hybrid/k8; use `--mode keyword|semantic|hybrid`, `--k 1..20` and `--path-glob` to narrow
+results. Index uses the bundled local CPU model and reports per-document statuses;
+a protected read-only workbench permits search and rejects index. Agent `search_docs`
+returns precise references/snippets; `read_doc` returns complete extracted pages,
+heading sections or lines with an exact reference and a12000-character limit.
+`npm run eval:retrieval` checks the frozen demo hybrid recall floors and reports
+keyword/semantic separately. Optional `-- --scratch <dir> --output <new.json>` retains
+the report; each run cleans its own temporary worker bundle.
+
 Run from this folder on a copy of the demo workbench:
 
 ```text

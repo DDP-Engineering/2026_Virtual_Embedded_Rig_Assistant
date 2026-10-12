@@ -24,6 +24,11 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Local document retrieval uses embedding/search/migration/lifecycle units plus
+compiled document-hosts/document-cli, issued PDF session replay and native ingest
+E2E. eval:retrieval executes the frozen corpus with real local CPU product worker,
+persisted search and ADR0015 floors; see [document search](../knowledge/document-search.md).
+
 Keyword proof uses core knowledge/keyword.test.ts, storage/keyword-migration.test.ts
 and real processor/watcher/SQLite ingest.test.ts; immediate database/repository,
 workbench and import-boundary checks cover migration and lifecycle consumers.

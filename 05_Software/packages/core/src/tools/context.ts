@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
+import type { DocumentKnowledge } from "../knowledge/search.js";
 import type { WorkerPool } from "../ports.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
 import type { TodoHost } from "./todo.js";
@@ -15,6 +16,7 @@ export interface ToolContext {
   change?: ChangeHost;
   artifacts?: ArtifactHost;
   todos?: TodoHost;
+  knowledge?: DocumentKnowledge;
 }
 export interface ToolDefinition {
   name: string;

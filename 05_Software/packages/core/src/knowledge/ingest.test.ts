@@ -179,12 +179,11 @@ it("enforces inclusive PDF/text limits and records unsupported type/binary reaso
 }, 15000);
 
 function derived(h: Awaited<ReturnType<typeof harness>>) {
-  h.db.exec("CREATE TABLE embeddings(chunk_id INTEGER PRIMARY KEY,model_id TEXT,dim INTEGER,vector BLOB);");
   const doc = new DocumentsRepository(h.db).get("docs/board.md");
   const id = h.db
     .prepare("INSERT INTO chunks(doc_id,ordinal,text,chars) VALUES(?,0,'uniquetoken',11)")
     .run(doc?.id).lastInsertRowid;
-  h.db.prepare("INSERT INTO embeddings VALUES(?,'test',1,?)").run(id, Buffer.alloc(4));
+  h.db.prepare("INSERT INTO embeddings VALUES(?,'test',384,?)").run(id, Buffer.alloc(1536));
 }
 it("searches real extracted watcher chunks through change, hash skip, reindex and deletion", async () => {
   const h = await harness(

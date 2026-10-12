@@ -109,6 +109,19 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
         true,
       );
       expect(chunks.every((c) => c.chars === c.text.length && c.chars <= 1400)).toBe(true);
+      const embeddings = db
+        .prepare(`SELECT e.dim,e.vector,e.model_id FROM embeddings e
+        JOIN chunks c ON c.id=e.chunk_id JOIN documents d ON d.id=c.doc_id WHERE d.path='docs/pages.pdf'`)
+        .all() as { dim: number; vector: Buffer; model_id: string }[];
+      expect(embeddings).toHaveLength(chunks.length);
+      for (const embedding of embeddings) {
+        expect(embedding.dim).toBe(384);
+        expect(embedding.model_id).toContain("ea104dacec62c0de699686887e3f920caeb4f3e3");
+        expect(
+          Math.abs(Math.hypot(...new Float32Array(new Uint8Array(embedding.vector).buffer)) - 1),
+        ).toBeLessThan(0.0001);
+      }
+      expect(db.prepare("SELECT count(*) FROM document_extractions").pluck().get()).toBe(2);
       const documents = db.prepare("SELECT sha256 FROM documents").all() as { sha256: string }[];
       for (const document of documents) {
         const cache = JSON.parse(
@@ -143,6 +156,12 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
       const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
       const main = await readFile(join(desktop, "out/main/index.js"));
       await writeFile(join(evidence, "main.js"), main);
+      const workerHashes: Record<string, string> = {};
+      for (const name of ["pdf-worker.js", "document-embedding-worker.js"]) {
+        const bytes = await readFile(join(desktop, "out/main", name));
+        await writeFile(join(evidence, name), bytes);
+        workerHashes[name] = hash(bytes);
+      }
       await writeFile(join(evidence, "stdout.log"), Buffer.concat(stdout));
       await writeFile(join(evidence, "stderr.log"), Buffer.concat(stderr));
       await writeFile(
@@ -156,6 +175,7 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
             exitCode: processHandle.exitCode,
             signalCode: processHandle.signalCode,
             mainSha256: hash(main),
+            workerHashes,
             executableSha256: hash(await readFile(executable)),
           },
           null,

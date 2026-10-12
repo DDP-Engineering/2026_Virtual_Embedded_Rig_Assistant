@@ -11,7 +11,7 @@ import { DocumentsRepository } from "./repos/documents.js";
 
 const roots: string[] = [];
 const handles: WorkbenchDatabase[] = [];
-const options = { workbenchId: "keyword-test", appVersion: "0.0.0" };
+const options = { workbenchId: "keyword-test", appVersion: "0.0.0", migrations: migrations.slice(0, 2) };
 afterEach(async () => {
   for (const h of handles.splice(0)) h.close();
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });

@@ -53,8 +53,6 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         for (const marker of [
           "packaging-probe",
           "I2C1_CR1",
-          "allowRemoteModels",
-          "embedding-worker",
           "VERA_TEST_DIALOG_PATH",
           "VERA_REPLAY_DIR",
           "VERA_REPLAY_DELAY_MS",
@@ -68,6 +66,8 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
           expect(code).not.toContain(marker);
         }
       }
+      expect(code).toContain("allowRemoteModels");
+      expect(existsSync(join(mainDir, "document-embedding-worker.js"))).toBe(true);
       const url = pathToFileURL(join(root, "apps/desktop/out/main/build-mode.js")).href;
       const run = spawnSync(
         process.execPath,

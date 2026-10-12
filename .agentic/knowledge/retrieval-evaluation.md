@@ -7,6 +7,8 @@ baselines and measured model/threshold choice. Start at
 scripts/compare-embeddings.mjs and fixtures/retrieval/demo-board.yaml.
 Extraction/chunks route to [document extraction](document-extraction.md);
 package asset verification to [native packaging](native-packaging.md).
+Production eval:retrieval routes to [document search](document-search.md); it uses
+the same ordered corpus, unchanged fixture and raw questions through product search.
 
 ## Purpose and boundaries
 

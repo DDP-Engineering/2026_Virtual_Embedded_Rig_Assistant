@@ -88,8 +88,11 @@ flowchart LR
   Rows --> SQLite[documents / chunks]
 ```
 
-The processor returns data; Ingester checks source identity and ownership then
-commits metadata and ordered chunks in one transaction before events.
+The processor returns full extraction/chunks and optional local model vectors;
+Ingester checks source identity and ownership then commits metadata, chunks, full
+extraction and vectors in one transaction before events. Host composition supplies
+[local embeddings](document-search.md); direct processors can supply their own
+embedding port. Guarded read-only source verification is shared by read_doc.
 
 ## Files
 

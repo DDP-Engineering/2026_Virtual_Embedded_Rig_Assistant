@@ -54,8 +54,10 @@ for extraction, cache and chunks; bare core composition can supply its own proce
 - Ownership is checked before synchronous SQLite mutations. Read-only workbenches
   keep private snapshots and run no watcher. Close/switch aborts and drains ingest
   before lock release/storage close; failed release restores observation.
-- Schema1 migration SQL remains immutable; migration2 supplies keyword indexes;
-  the embedding table is optional.
+- Schema1/2 migration SQL remains immutable; migration3 supplies embeddings and
+  full extraction storage. Current-model vector coverage controls unchanged-file
+  reprocessing; atomic publication includes validated derived data. See
+  [document search](document-search.md) for model/worker/ranking contracts.
 - Manual reindex admits work on the lifecycle queue and waits for completion
   outside that queue so close/switch can abort active processing.
 

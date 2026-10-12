@@ -15,7 +15,10 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
   source removal; replaceChunks validates locators/text budgets and atomically
   replaces ordered chunk rows with locator_json/chars. Migration2 triggers own
   both external-content keyword indexes, including SQL updates and FK cascades;
-  standalone clearDerived/remove are atomic. [Knowledge ingest](knowledge-ingest.md)
+  standalone clearDerived/remove are atomic. Migration3 adds FK-cascaded
+  embeddings/full extraction and trigger-maintained vector epochs; replacement
+  validates and commits derived vectors/extraction with ordered chunks.
+  [Document search](document-search.md) owns the current model/cache contract. [Knowledge ingest](knowledge-ingest.md)
   owns queue and states; [keyword search](keyword-search.md) owns lexical candidates.
 
 - openDb(path, StorageOptions) returns WorkbenchDatabase with db and idempotent close(preserveSource?). Options supply workbenchId/appVersion, readOnly and an optional ordered migration catalogue for fixture upgrades.

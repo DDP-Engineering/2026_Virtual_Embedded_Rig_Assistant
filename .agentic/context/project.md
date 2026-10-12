@@ -26,7 +26,9 @@ the workbench-owned queue shared by desktop and CLI composition.
 extraction, precise chunks/OCR and dedicated PDF worker composition.
 [Keyword search](../knowledge/keyword-search.md) supplies persisted word/identifier
 fragment candidates with locators; migration2 backfills and synchronizes indexes
-through chunk triggers.
+through chunk triggers. [Document search](../knowledge/document-search.md) supplies
+local worker embeddings, atomic extraction/vector publication, deterministic
+hybrid search, guarded document tools and CLI index/search with a real eval gate.
 
 [05_Software/README.md](../../05_Software/README.md) routes setup and source layout. [AGENTS.md](../../AGENTS.md) governs master implementation, local commits and AEGIS scope.
 

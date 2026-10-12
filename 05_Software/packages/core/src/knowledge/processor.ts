@@ -15,6 +15,7 @@ import { extname, join } from "node:path";
 import { z } from "zod";
 import { PathGuard } from "../workbench/path-guard.js";
 import { chunkDocument, needsOcr } from "./chunk.js";
+import type { EmbeddingPort } from "./embedding.js";
 import {
   type Extraction,
   extractHtml,
@@ -148,7 +149,7 @@ function saveCache(input: DocumentInput, extraction: Extraction) {
     }
   }
 }
-async function source(input: DocumentInput): Promise<Uint8Array> {
+export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8Array> {
   allowed(input);
   const guard = await PathGuard.create(input.root);
   const target = await guard.resolve(input.path);
@@ -203,10 +204,10 @@ async function source(input: DocumentInput): Promise<Uint8Array> {
     await handle.close();
   }
 }
-export function createDocumentProcessor(pdf: PdfExtractor): DocumentProcessor {
-  return async (input) => {
+export function createDocumentProcessor(pdf: PdfExtractor, embeddings?: EmbeddingPort): DocumentProcessor {
+  const processor: DocumentProcessor = async (input) => {
     if (!/^[a-f0-9]{64}$/.test(input.sha256)) throw Error("Invalid extraction key.");
-    const bytes = await source(input);
+    const bytes = await verifyDocumentSource(input);
     let extraction = await readCache(input);
     if (!extraction) {
       if (input.kind === "pdf") extraction = await pdf(bytes, input.signal);
@@ -225,12 +226,30 @@ export function createDocumentProcessor(pdf: PdfExtractor): DocumentProcessor {
     }
     allowed(input);
     const pages = extraction.kind === "pdf" ? { pages: extraction.pages.length } : {};
+    const chunks = needsOcr(extraction)
+      ? []
+      : chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv");
+    const vectors =
+      embeddings && chunks.length
+        ? await embeddings.embed(
+            input.root,
+            chunks.map((c) => c.text),
+            input.signal,
+          )
+        : undefined;
+    allowed(input);
     return needsOcr(extraction)
       ? { status: "needs_ocr", reason: "NEEDS_OCR", ...pages, chunks: [] }
       : {
           status: "indexed",
           ...pages,
-          chunks: chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv"),
+          chunks,
+          derived: { extraction, ...(vectors && embeddings ? { vectors, modelId: embeddings.modelId } : {}) },
         };
   };
+  if (embeddings) {
+    processor.modelId = embeddings.modelId;
+    processor.release = (root) => embeddings.release(root);
+  }
+  return processor;
 }
