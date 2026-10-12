@@ -42,3 +42,65 @@ it("validates issued confined line refs and rejects fabricated, absent, binary a
     await rm(root, { recursive: true, force: true });
   }
 });
+
+it("contains resolver errors and validates only parsed successful ref fields", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-citations-"));
+  try {
+    const issued = [
+      "docs/a.pdf#p=1-2",
+      "docs/a.md#h=power",
+      "docs/a.html#h=reset",
+      "docs/a.pdf#p=0",
+      "artifact:summary.md",
+    ];
+    const messages: Message[] = [
+      {
+        role: "toolResult",
+        toolName: "read_doc",
+        toolCallId: "c",
+        isError: false,
+        timestamp: 0,
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ results: issued.map((ref) => ({ ref })), text: "docs/a.md#h=unissued" }),
+          },
+        ],
+      },
+    ];
+    const text = [...issued, "docs/a.md#h=unissued", "docs/a.md#h=invented"]
+      .map((ref) => `[[${ref}]]`)
+      .join(" ");
+    const calls: string[] = [];
+    expect(
+      await validateCitations(
+        root,
+        text,
+        messages,
+        () => true,
+        async (ref) => {
+          calls.push(ref);
+          return true;
+        },
+      ),
+    ).toEqual([
+      ...issued.map((ref, n) => ({ ref, valid: n !== 3 })),
+      { ref: "docs/a.md#h=unissued", valid: false },
+      { ref: "docs/a.md#h=invented", valid: false },
+    ]);
+    expect(calls).toEqual(issued.slice(0, 3));
+    expect(
+      await validateCitations(
+        root,
+        "[[docs/a.md#h=power]] [[docs/a.md#h=power]]",
+        messages,
+        undefined,
+        async () => {
+          throw Error("index closed");
+        },
+      ),
+    ).toEqual([{ ref: "docs/a.md#h=power", valid: false }]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

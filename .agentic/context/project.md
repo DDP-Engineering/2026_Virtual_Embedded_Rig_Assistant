@@ -24,6 +24,9 @@ the workbench-owned queue shared by desktop and CLI composition.
 [Retrieval evaluation](../knowledge/retrieval-evaluation.md) supplies the isolated native CPU comparison over frozen demo questions; ADR0015 selects the bundled BGE descriptor and hybrid recall gate.
 [Document extraction](../knowledge/document-extraction.md) supplies cached PDF/text/heading
 extraction, precise chunks/OCR and dedicated PDF worker composition.
+[Citations](../knowledge/sessions.md) use shared page/range/heading/line/artifact
+syntax, successful tool provenance and current source/session bounds; the
+[transcript](../knowledge/chat-ui.md) presents compact per-kind verified/warning chips.
 [Keyword search](../knowledge/keyword-search.md) supplies persisted word/identifier
 fragment candidates with locators; migration2 backfills and synchronizes indexes
 through chunk triggers. [Document search](../knowledge/document-search.md) supplies

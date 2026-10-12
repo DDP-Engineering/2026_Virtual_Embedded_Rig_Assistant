@@ -24,6 +24,12 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Citation acceptance uses shared refs.test.ts, core agent/citations.test.ts and
+knowledge/search.test.ts, renderer session/markdown.test.ts and immediate
+session/artifact/registry/state/workspace/import-boundary consumers. Focused native
+e2e/citations.spec.ts exercises real PDF/Markdown/HTML/text/artifact tool refs,
+verified/warning chip presentation and restart persistence on Windows/Ubuntu.
+
 Local document retrieval uses embedding/search/migration/lifecycle units plus
 compiled document-hosts/document-cli, issued PDF session replay and native ingest
 E2E. eval:retrieval executes the frozen corpus with real local CPU product worker,

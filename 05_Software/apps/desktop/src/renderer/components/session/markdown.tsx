@@ -1,4 +1,7 @@
 // REQ-UX-4bea0002
+
+import { parseRef, type Reference, referenceLabel } from "@vera/shared";
+import { File, Files, Hash, List, Package, TriangleAlert } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -37,17 +40,20 @@ function remarkCitations() {
 function CitationChip({ reference, valid }: { reference: string; valid: boolean }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  if (!valid)
+  const parsed = parseRef(reference);
+  const label = referenceLabel(reference);
+  if (!valid || !parsed)
     return (
       <button
         type="button"
         aria-disabled="true"
         data-citation="invalid"
+        data-citation-kind={parsed?.kind ?? "unknown"}
         className="citation invalid"
-        title={t("chat.invalidCitation")}
+        title={`${reference}: ${t("chat.invalidCitation")}`}
         aria-label={`${reference}: ${t("chat.invalidCitation")}`}
       >
-        ⚠ {reference}
+        <TriangleAlert width="1em" height="1em" aria-hidden="true" /> {label}
       </button>
     );
   return (
@@ -56,11 +62,13 @@ function CitationChip({ reference, valid }: { reference: string; valid: boolean 
         type="button"
         className="citation"
         data-citation="valid"
+        data-citation-kind={parsed.kind}
         title={reference}
+        aria-label={reference}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
-        {reference}
+        <CitationIcon kind={parsed.kind} /> {label}
       </button>
       {open && (
         <span role="status" className="citation-note">
@@ -69,6 +77,10 @@ function CitationChip({ reference, valid }: { reference: string; valid: boolean 
       )}
     </>
   );
+}
+function CitationIcon({ kind }: { kind: Reference["kind"] }) {
+  const Icon = { page: File, "page-range": Files, heading: Hash, lines: List, artifact: Package }[kind];
+  return <Icon width="1em" height="1em" aria-hidden="true" />;
 }
 export function Markdown({
   text,

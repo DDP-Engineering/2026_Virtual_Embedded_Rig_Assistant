@@ -1,4 +1,5 @@
 import { lstat } from "node:fs/promises";
+import { formatRef, parseRef } from "@vera/shared";
 import type Database from "better-sqlite3";
 import picomatch from "picomatch";
 import { z } from "zod";
@@ -45,12 +46,13 @@ interface Row {
   locatorJson: string;
 }
 export function documentRef(path: string, locator: Chunk["locator"]): string {
-  if (locator.type === "page") return `${path}#p=${locator.page}`;
-  if (locator.type === "lines") return `${path}#L${locator.start}-L${locator.end}`;
+  if (locator.type === "page") return formatRef({ kind: "page", path, page: locator.page });
+  if (locator.type === "lines")
+    return formatRef({ kind: "lines", path, start: locator.start, end: locator.end });
   return locator.slug
-    ? `${path}#h=${locator.slug}`
+    ? formatRef({ kind: "heading", path, slug: locator.slug })
     : locator.start && locator.end
-      ? `${path}#L${locator.start}-L${locator.end}`
+      ? formatRef({ kind: "lines", path, start: locator.start, end: locator.end })
       : path;
 }
 export function fuseRanks(lists: readonly (readonly number[])[]): { id: number; score: number }[] {
@@ -227,7 +229,11 @@ export class DocumentKnowledge {
         path,
         text: result.text,
         truncated: result.truncated,
-        ref: `${path}#p=${start}${actualEnd === start ? "" : `-${actualEnd}`}`,
+        ref: formatRef(
+          actualEnd === start
+            ? { kind: "page", path, page: start }
+            : { kind: "page-range", path, start, end: actualEnd },
+        ),
       };
     }
     if (extraction.kind === "text") {
@@ -241,7 +247,7 @@ export class DocumentKnowledge {
         path,
         text: result.text,
         truncated: result.truncated,
-        ref: `${path}#L${start}-L${start + result.count - 1}`,
+        ref: formatRef({ kind: "lines", path, start, end: start + result.count - 1 }),
       };
     }
     if (pages || lines) throw Error("Markdown/HTML reads require a heading slug.");
@@ -257,40 +263,60 @@ export class DocumentKnowledge {
       text: section.text,
       truncated: false,
       ref: section.slug
-        ? `${path}#h=${section.slug}`
+        ? formatRef({ kind: "heading", path, slug: section.slug })
         : extraction.kind === "markdown"
-          ? `${path}#L${section.start}-L${section.end}`
+          ? formatRef({ kind: "lines", path, start: section.start, end: section.end })
           : path,
     };
   }
   async validPdfRef(ref: string): Promise<boolean> {
-    const matched = /^(.+\.pdf)#p=([1-9]\d*)(?:-([1-9]\d*))?$/i.exec(ref);
-    if (!matched) return false;
+    const parsed = parseRef(ref);
+    return !!parsed && (parsed.kind === "page" || parsed.kind === "page-range") && this.validDocumentRef(ref);
+  }
+  /** Issuance is checked by citations; validate current source and extraction bounds without output caps. */
+  async validDocumentRef(ref: string): Promise<boolean> {
+    const parsed = parseRef(ref);
+    if (!parsed || parsed.kind === "artifact" || parsed.kind === "lines") return false;
     try {
-      const target = await (await PathGuard.create(this.root)).resolve(matched[1] ?? "");
+      const target = await (await PathGuard.create(this.root)).resolve(parsed.path);
       const doc = new DocumentsRepository(this.db).get(target.relative);
-      const start = Number(matched[2]),
-        end = Number(matched[3] ?? matched[2]);
-      if (
-        doc?.kind !== "pdf" ||
-        doc.status !== "indexed" ||
-        !doc.sha256 ||
-        !doc.pages ||
-        !Number.isSafeInteger(start) ||
-        !Number.isSafeInteger(end) ||
-        start > end ||
-        end > doc.pages
-      )
+      if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other") return false;
+      if (parsed.kind === "heading" ? doc.kind !== "markdown" && doc.kind !== "html" : doc.kind !== "pdf")
         return false;
       await verifyDocumentSource({
         root: this.root,
-        path: target.relative,
-        kind: "pdf",
+        path: parsed.path,
+        kind: doc.kind,
         sha256: doc.sha256,
         signal: new AbortController().signal,
         assertWritable: () => {},
       });
-      return true;
+      const current = new DocumentsRepository(this.db).get(target.relative);
+      if (
+        current?.id !== doc.id ||
+        current.sha256 !== doc.sha256 ||
+        current.kind !== doc.kind ||
+        current.status !== "indexed"
+      )
+        return false;
+      const stored = this.db
+        .prepare("SELECT extraction_json FROM document_extractions WHERE doc_id=?")
+        .pluck()
+        .get(doc.id);
+      if (typeof stored !== "string") return false;
+      const extraction = extractionSchema.parse(JSON.parse(stored));
+      if (extraction.kind !== current.kind) return false;
+      if (parsed.kind === "heading")
+        return (
+          (extraction.kind === "markdown" || extraction.kind === "html") &&
+          extraction.sections.some((s) => s.slug === parsed.slug)
+        );
+      const end = parsed.kind === "page" ? parsed.page : parsed.end;
+      return (
+        extraction.kind === "pdf" &&
+        current.pages === extraction.pages.length &&
+        end <= extraction.pages.length
+      );
     } catch {
       return false;
     }

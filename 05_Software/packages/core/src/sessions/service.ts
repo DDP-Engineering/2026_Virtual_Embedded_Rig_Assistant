@@ -607,7 +607,7 @@ export class SessionService {
           event.text,
           transcript,
           (name) => this.artifacts.exists(id, name),
-          (ref) => this.knowledge.validPdfRef(ref),
+          (ref) => this.knowledge.validDocumentRef(ref),
         ),
       };
     } else if (event.type === "tool.done") {

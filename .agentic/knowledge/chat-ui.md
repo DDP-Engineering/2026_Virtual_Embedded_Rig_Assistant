@@ -26,6 +26,10 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 - Composer exposes the confirmed session mode during active turns; text/model controls lock while running or awaiting approval. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab queries WORKBENCH.md and shows empty available skills; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs retains its placeholder. [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
+- CitationChip uses shared refs.ts parsing/compact labels and per-kind page, range,
+  heading, line and artifact icons. Full refs remain in tooltip/accessible labels.
+  Unverified and malformed refs render inert warning chips; verified chips retain
+  the localized pending-viewer disclosure.
 
 ## Invariants
 
@@ -44,7 +48,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 |---|---|---|
 | Navigation/CRUD/read-only | App, session-list | workspace.test.ts |
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
-| Markdown/citations/tools | markdown, transcript, disclosure | workspace.test.ts; mock.spec.ts |
+| Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; e2e/citations.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; e2e/approvals.spec.ts |
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;e2e/plan.spec.ts |
@@ -54,6 +58,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 
 - REQ-UX-4bea0001 — keyboard navigation and session mutations.
 - REQ-UX-4bea0002 — complete Markdown, tools, reasoning, citations and errors.
+- REQ-UX-34535128 — compact per-kind verified/warning citation chips with full-ref accessibility.
 - REQ-UX-4bea0003 — keyboard composer, paths and configured models.
 - REQ-REL-4bea0004 — runtime/worker Stop and recovery.
 - REQ-UX-4bea0005 — usage/estimates/context-limit guidance with complete history.
@@ -107,5 +112,8 @@ Paths relative to05_Software.
 - apps/desktop/src/main/index.ts; packages/shared/src/ipc.ts — config readOnly metadata and instrumented replay delay composition.
 - fixtures/llm-scripts/ui-{slow,grep-bad,grep-good}.jsonl — deterministic native acceptance.
 - e2e/{approvals,chat-ui,mock}.spec.ts — real native lifecycle/abort and browser matrix.
+- components/session/markdown.test.ts and e2e/citations.spec.ts — all reference kinds,
+  warning presentation, inert controls and native restart citation projection;
+  fixtures/llm-scripts/citations-all.jsonl supplies deterministic tool-issued refs.
 - tests/tooling/build-mode.test.ts — release omission of replay delay seam.
 - apps/desktop/package.json; package-lock.json — pinned Markdown/component-test dependencies.

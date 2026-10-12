@@ -1,5 +1,5 @@
 import type { Message } from "@earendil-works/pi-ai";
-import { parseArtifactRef, parseLineRef } from "@vera/shared";
+import { parseRef } from "@vera/shared";
 import { readWindow } from "../tools/read-window.js";
 import { PathGuard } from "../workbench/path-guard.js";
 
@@ -16,7 +16,7 @@ export async function validateCitations(
   text: string,
   messages: readonly Message[],
   artifactExists?: (name: string) => boolean,
-  validPdfRef?: (ref: string) => Promise<boolean>,
+  validDocumentRef?: (ref: string) => Promise<boolean>,
 ) {
   const issued = new Set<string>();
   for (const message of messages)
@@ -38,15 +38,21 @@ export async function validateCitations(
   }
   return Promise.all(
     found.map(async (ref) => {
-      const artifact = parseArtifactRef(ref);
-      if (artifact) return { ref, valid: issued.has(ref) && !!artifactExists?.(artifact.name) };
-      if (/\.pdf#p=/i.test(ref)) return { ref, valid: issued.has(ref) && !!(await validPdfRef?.(ref)) };
-      const parsed = parseLineRef(ref);
+      const parsed = parseRef(ref);
       let valid = false;
       if (parsed && issued.has(ref))
         try {
-          const window = await readWindow(guard, parsed.path, parsed.start, 1, new AbortController().signal);
-          valid = parsed.end <= window.totalLines;
+          if (parsed.kind === "artifact") valid = !!artifactExists?.(parsed.name);
+          else if (parsed.kind === "lines") {
+            const window = await readWindow(
+              guard,
+              parsed.path,
+              parsed.start,
+              1,
+              new AbortController().signal,
+            );
+            valid = parsed.end <= window.totalLines;
+          } else valid = !!(await validDocumentRef?.(ref));
         } catch {
           /* removed/ignored/binary/outside source is unresolved */
         }

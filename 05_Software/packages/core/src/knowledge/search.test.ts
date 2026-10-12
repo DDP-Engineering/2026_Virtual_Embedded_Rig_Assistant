@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
+import { validateCitations } from "../agent/citations.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { SessionService } from "../sessions/service.js";
 import { migrations } from "../storage/migrate.js";
@@ -70,6 +71,108 @@ async function harness() {
   };
   return { root, db, port, vectors, rows, knowledge, signal, add, close };
 }
+// REQ-FUNC-51165496
+it("preserves prior opening-bracket paths in precise read and search refs", async () => {
+  const h = await harness();
+  try {
+    await h.add("docs/board[revA.md", "# Power\nBracketproof1234\n");
+    const ref = "docs/board[revA.md#h=power";
+    expect(await h.knowledge.read({ path: "docs/board[revA.md", heading: "power" }, h.signal)).toMatchObject({
+      ref,
+    });
+    expect(
+      (await h.knowledge.search({ query: "Bracketproof1234", mode: "keyword" }, h.signal)).results,
+    ).toMatchObject([{ ref }]);
+    expect(await h.knowledge.validDocumentRef(ref)).toBe(true);
+  } finally {
+    await h.close();
+  }
+});
+it("validates all issued document kinds against current extraction bounds independent of output budgets", async () => {
+  const h = await harness();
+  try {
+    expect(h.knowledge.validDocumentRef).toBeTypeOf("function");
+    await h.add("docs/a.pdf", "fixture PDF source", ["first page ".repeat(1400), "second page content"]);
+    await h.add("docs/a.md", "# Alimentare ă\n3.3 V\n# Alimentare ă\n" + "large section ".repeat(1100));
+    await h.add("docs/a.html", "<h1>Reset</h1><p>Assert.</p><h1>Reset</h1><p>Release.</p>");
+    await h.add("docs/a.log", "first\r\nsecond\r\n");
+    const valid = [
+      "docs/a.pdf#p=1",
+      "docs/a.pdf#p=1-2",
+      "docs/a.pdf#p=2-2",
+      "docs/a.md#h=alimentare-ă",
+      "docs/a.md#h=alimentare-ă-1",
+      "docs/a.html#h=reset",
+      "docs/a.html#h=reset-1",
+      "docs/a.log#L1-L2",
+    ];
+    const invalid = [
+      "docs/a.pdf#p=3",
+      "docs/a.pdf#p=1-3",
+      "docs/a.pdf#p=2-1",
+      "docs/a.md#h=absent",
+      "docs/a.html#h=reset-2",
+      "docs/a.log#L1-L3",
+      "docs/a.md#p=1",
+      "docs/a.pdf#h=reset",
+      "docs/a.log#h=first",
+      "../docs/a.pdf#p=1",
+      "missing.pdf#p=1",
+      "docs/a.pdf#p=9007199254740992",
+    ];
+    const issued = [...valid, ...invalid];
+    const messages = [
+      {
+        role: "toolResult" as const,
+        toolName: "search_docs",
+        toolCallId: "c",
+        isError: false,
+        timestamp: 0,
+        content: [
+          { type: "text" as const, text: JSON.stringify({ results: issued.map((ref) => ({ ref })) }) },
+        ],
+      },
+    ];
+    const check = (refs: string[]) =>
+      validateCitations(h.root, refs.map((ref) => `[[${ref}]]`).join(" "), messages, undefined, (ref) =>
+        h.knowledge.validDocumentRef(ref),
+      );
+    expect(await check(issued)).toEqual([
+      ...valid.map((ref) => ({ ref, valid: true })),
+      ...invalid.map((ref) => ({ ref, valid: false })),
+    ]);
+    expect(await check(["docs/a.pdf#p=2", "docs/a.md#h=reset"])).toEqual([
+      { ref: "docs/a.pdf#p=2", valid: false },
+      { ref: "docs/a.md#h=reset", valid: false },
+    ]);
+    messages[0]!.isError = true;
+    expect((await check(valid)).every((c) => !c.valid)).toBe(true);
+    messages[0]!.isError = false;
+    await writeFile(join(h.root, ".veraignore"), "docs/a.html\n");
+    expect((await check(["docs/a.html#h=reset"]))[0]?.valid).toBe(false);
+    await writeFile(join(h.root, ".veraignore"), "");
+    await symlink(
+      join(h.root, "docs"),
+      join(h.root, "redirect"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    expect(await h.knowledge.validDocumentRef("redirect/a.pdf#p=1")).toBe(false);
+    expect(await h.knowledge.validDocumentRef("redirect/a.md#h=alimentare-ă")).toBe(false);
+    await writeFile(join(h.root, "docs/a.md"), "# Alimentare ă\nchanged");
+    expect((await check(["docs/a.md#h=alimentare-ă"]))[0]?.valid).toBe(false);
+    await rm(join(h.root, "docs/a.pdf"));
+    expect((await check(["docs/a.pdf#p=1"]))[0]?.valid).toBe(false);
+    h.db
+      .prepare("DELETE FROM document_extractions WHERE doc_id=(SELECT id FROM documents WHERE path=?)")
+      .run("docs/a.html");
+    expect(await h.knowledge.validDocumentRef("docs/a.html#h=reset")).toBe(false);
+    await h.add("docs/a.html", "<h1>Reset</h1><p>Assert.</p>");
+    h.db.prepare("UPDATE documents SET status='pending' WHERE path=?").run("docs/a.html");
+    expect(await h.knowledge.validDocumentRef("docs/a.html#h=reset")).toBe(false);
+  } finally {
+    await h.close();
+  }
+});
 it("pins one-based fusion ties/dedup, modes, pre-top50 glob filtering and bounded snippets", async () => {
   expect(
     fuseRanks([
@@ -199,6 +302,54 @@ it("replays search/read PDF and persists a valid issued page citation while reje
       "docs/vera-demo-01-reference-manual.pdf#p=1",
     );
     expect(JSON.stringify(snapshot)).toContain('"valid":false');
+  } finally {
+    await service?.close();
+    await h.close();
+  }
+});
+
+it("SessionService persists every issued citation kind and invalid chips through session replay", async () => {
+  const h = await harness();
+  let service: SessionService | undefined;
+  try {
+    await h.add("docs/a.pdf", "PDF source", [
+      "A valid first page with enough characters.",
+      "A valid second page with enough characters.",
+    ]);
+    await h.add("docs/a.md", "# Power\n3.3V\n");
+    await h.add("docs/a.html", "<h1>Reset</h1><p>Assert.</p>");
+    await h.add("docs/a.log", "first\nsecond\n");
+    await mkdir(join(h.root, "scripts"));
+    await writeFile(
+      join(h.root, "scripts/citations-all.jsonl"),
+      await readFile(join(software, "fixtures/llm-scripts/citations-all.jsonl")),
+    );
+    service = new SessionService({
+      db: h.db,
+      root: h.root,
+      gateway: new ReplayGateway({ dir: join(h.root, "scripts"), now: () => Date.now() }),
+      clock: { now: () => new Date(), sleep: async () => {} },
+      model: () => "replay/citations-all",
+      prompt: () => "system",
+    });
+    await service.waitReady();
+    const session = service.create();
+    service.send(session.id, "Citation kinds");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const snapshot = service.get(session.id).snapshot;
+    const answer = snapshot.items.filter((i) => i.kind === "assistant").at(-1);
+    expect(answer?.kind).toBe("assistant");
+    if (answer?.kind !== "assistant") throw Error("Missing answer");
+    expect(answer.citations).toHaveLength(13);
+    expect(answer.citations.filter((c) => c.valid)).toHaveLength(6);
+    expect(answer.citations.filter((c) => !c.valid)).toHaveLength(7);
+    expect(answer.citations.slice(0, 6).every((c) => c.valid)).toBe(true);
+    const replayed: unknown[] = [];
+    const unsubscribe = service.subscribe(session.id, 0, (_seq, event) => replayed.push(event));
+    unsubscribe();
+    expect(replayed).toContainEqual(
+      expect.objectContaining({ type: "message.done", citations: answer.citations, text: answer.text }),
+    );
   } finally {
     await service?.close();
     await h.close();

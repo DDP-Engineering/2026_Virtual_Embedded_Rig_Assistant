@@ -33,9 +33,12 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   Families and bounds are checked; complete ranges shrink to the actual returned
   ref within12000 characters and JSON budget. Oversized single units fail actionably.
 - Registry offers both as read-class tools and respects disabled names/permissions.
-  SessionService binds the workbench knowledge port. Issued PDF page/range refs
-  validate through current guarded source hashes and stored page bounds; shared general ref-parser/chips/viewer
-  remain adjacent responsibilities.
+  SessionService binds the workbench knowledge port. validDocumentRef resolves PDF
+  pages/ranges and Markdown/HTML heading slugs through current guarded source SHA256,
+  indexed metadata and matching persisted extraction bounds independently of output
+  caps. validPdfRef retains the page-only compatibility entrypoint. Shared refs.ts
+  owns syntax/format/labels; sessions owns successful-tool provenance and current
+  text-line/session-artifact validation; transcript chips own presentation.
 - CLI index reindexes a writable workbench and returns document statuses; search
   reads current owned/protected snapshots in three modes. Both drain workbench/
   worker/settings/temp resources on all exits. eval:retrieval uses production
@@ -93,12 +96,14 @@ flowchart LR
 | atomic lifecycle/migration | migration3, DocumentsRepository, processor/ingest | embedding-migration, embedding-ingest, ingest tests |
 | modes/RRF/glob/snippets/read bounds | search.ts, keyword.ts | search.test.ts, keyword.test.ts |
 | registry/replay/citations | tools/documents.ts, SessionService | registry/search replay and document-cli tests |
+| citation page/heading bounds and current source | search.ts validDocumentRef; shared refs.ts | search.test.ts; agent/citations.test.ts; e2e/citations.spec.ts |
 | host/CLI/bundles | document-processor, entrypoints/builds | document-hosts/document-cli, build-mode/packaging and native ingest |
 
 ## Key behaviors
 
 REQ-DATA-154fb0af atomic embedding lifecycle; REQ-FUNC-0e93fa45 deterministic
 bounded retrieval; REQ-FUNC-cc209d7e guarded document tools and owned CLI.
+REQ-FUNC-51165496 verifies issued document bounds against current source/extraction.
 
 ## Files
 
