@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import { type LlmGateway, SettingsService, splitModelReference, WorkbenchService } from "@vera/core";
 import { eventEnvelopeSchema } from "@vera/shared";
 import {
@@ -17,6 +18,7 @@ import {
 } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
+import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
@@ -24,6 +26,7 @@ import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
 import { createInvokeRouter } from "./ipc-router.js";
 import { createLogger } from "./logger.js";
+import { openExternal } from "./open-external.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { revealPath } from "./reveal-path.js";
@@ -36,6 +39,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
 declare const __VERA_TEST__: boolean;
 app.setName("VERA");
+// pi-ai's public standalone entrypoint makes its variable OAuth imports available in bundles.
+registerBunOAuthFlows();
 const userData = app.commandLine.getSwitchValue("user-data-dir");
 const dataLocations = configureDataLocations(app, process.execPath, userData);
 
@@ -87,6 +92,13 @@ const workbench = new WorkbenchService({
   },
 });
 const providers = new ProviderSettings(settings, credentials);
+let chatgpt = new ChatgptAuth({
+  settings,
+  credentials,
+  openExternal: async (url) => {
+    await openExternal({ url, confirmed: true }, (url) => shell.openExternal(url), true);
+  },
+});
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
 const sessions = new SessionsHost({
   workbench,
@@ -113,6 +125,11 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "app.openExternal": (request) => openExternal(request, (url) => shell.openExternal(url)),
+      "providers.chatgpt.login": (request) => chatgpt.login(request),
+      "providers.chatgpt.cancel": () => chatgpt.cancel(),
+      "providers.chatgpt.status": () => chatgpt.status(),
+      "providers.chatgpt.logout": () => chatgpt.logout(),
       "artifacts.list": ({ sessionId }) =>
         sessions.run((s) =>
           s.listArtifacts(sessionId).map((a) => publicArtifact(a, (text) => credentials.scrub(text))),
@@ -316,6 +333,7 @@ if (!app.requestSingleInstanceLock()) {
       .then(() => fileWorkers.dispose())
       .then(() => closeFileProbe?.())
       .then(() => modelGateway.close())
+      .then(() => chatgpt.close())
       .then(() => providers.close())
       .then(() => credentials.close())
       .then(() => settings.close())
@@ -356,6 +374,17 @@ if (!app.requestSingleInstanceLock()) {
       if (draining) return;
       await settings.load();
       await credentials.load();
+      if (__VERA_TEST__ && ["1", "startup"].includes(process.env.VERA_TEST_CHATGPT ?? "")) {
+        const { scriptedSubscription } = await import("./chatgpt-probe.js");
+        chatgpt = new ChatgptAuth({
+          settings,
+          credentials,
+          ...(process.env.VERA_TEST_CHATGPT === "1" ? { createCollection: scriptedSubscription } : {}),
+          openExternal: async (url) => {
+            await openExternal({ url, confirmed: true }, async () => {}, true);
+          },
+        });
+      }
       if (__VERA_TEST__) {
         const { createFileToolProbe } = await import("./file-tool-probe.js");
         const probe = createFileToolProbe();

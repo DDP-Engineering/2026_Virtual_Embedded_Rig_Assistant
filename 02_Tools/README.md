@@ -22,11 +22,15 @@ The setup script:
 
 ## Running npm with the local Node.js
 
+From `05_Software`, select the changed test files:
+
 ```
-python 02_Tools/npmw.py npm run verify     # from 05_Software
-python 02_Tools/npmw.py npx vitest run
-python 02_Tools/npmw.py node --version
+python ../02_Tools/npmw.py npx vitest run <test-files>
+python ../02_Tools/npmw.py node --version
 ```
+
+Full `npm run verify` belongs to a milestone gate, owned once by the last ticket
+or coordinator. See [verification and handover policy](verification-policy.md).
 
 The AEGIS commands in `.agentic/aegis.toml` use the same wrapper, so they do not depend on the
 Node.js installed on the system, if any.

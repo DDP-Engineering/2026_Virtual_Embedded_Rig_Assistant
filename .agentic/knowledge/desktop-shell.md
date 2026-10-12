@@ -12,6 +12,8 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
 Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
+Main composes [ChatGPT authentication](providers.md), confirmed system-browser opening and the
+subscription credential host; shutdown drains OAuth cancellation before closing the credential store.
 Main supplies the [workbench](workbench.md) lifecycle host and native folder picker.
 Main composes [file-tool](file-tools.md) worker capacity and drains it during shutdown; grep-worker is a separate production entry.
 The sandboxed preload exposes the typed invoke/subscribe bridge; React displays Welcome/App Settings and application metadata
@@ -113,3 +115,5 @@ Paths below are relative to `05_Software/apps/desktop/` unless qualified.
 - `src/renderer/components/ui/card.tsx`, `lib/utils.ts` — adapted Card and class merging.
 - `05_Software/e2e/shell.spec.ts`, `network-guard.ts` — real Electron acceptance and egress guard.
 - `05_Software/tests/tooling/build-mode.test.ts` — emitted identity execution in both build modes.
+
+Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.

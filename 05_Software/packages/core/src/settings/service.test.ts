@@ -35,6 +35,24 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it("conditionally updates the app model against the serialized current state", async () => {
+    const h = harness();
+    await h.service.load();
+    const other = h.service.update({ defaultModel: "openai/kept" });
+    const subscription = h.service.update(
+      { defaultModel: "chatgpt/new" },
+      (current) => current.settings.defaultModel === null,
+    );
+    await Promise.all([other, subscription]);
+    expect(h.service.get().settings.defaultModel).toBe("openai/kept");
+    const changed = h.service.update({ defaultModel: "openai/changed" });
+    const signout = h.service.update(
+      { defaultModel: null },
+      (current) => !!current.settings.defaultModel?.startsWith("chatgpt/"),
+    );
+    await Promise.all([changed, signout]);
+    expect(h.service.get().settings.defaultModel).toBe("openai/changed");
+  });
   it("migrates schema3 model references to4 with exact backup, provider/identity/extensions and newer protection", async () => {
     const defaults = (await import("@vera/shared")).defaultSettings("00000000-0000-4000-8000-000000000001");
     const raw = JSON.stringify({ ...defaults, schemaVersion: 3, extension: { kept: true } });

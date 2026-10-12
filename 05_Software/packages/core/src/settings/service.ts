@@ -100,7 +100,10 @@ export class SettingsService {
     return structuredClone(this.state);
   }
 
-  async update(patch: SettingsServicePatch): Promise<SettingsSnapshot> {
+  async update(
+    patch: SettingsServicePatch,
+    when?: (current: SettingsSnapshot) => boolean,
+  ): Promise<SettingsSnapshot> {
     if (this.closed) throw veraError("DENIED");
     const parsed = settingsServicePatchSchema.safeParse(patch);
     if (!parsed.success) throw veraError("INVALID");
@@ -108,6 +111,7 @@ export class SettingsService {
       await this.load();
       const current = this.get();
       if (current.readOnly) throw veraError("DENIED");
+      if (when && !when(current)) return current;
       const next = mergeSettings(current.settings, parsed.data);
       if (JSON.stringify(next) !== JSON.stringify(current.settings)) {
         await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(next, null, 2));

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-790a052e"
+title = "Run models on ChatGPT subscription credentials"
+status = "active"
+requirement = "When ChatGPT is selected, VERA shall list and run the subscription collection OpenAI models using only the chatgpt OAuth credential and its serialized refresh."
+verification = "Collections tests prove distinct API/chatgpt slots, store-only subscription auth, catalog/reference/budget and scripted OAuth stream with refresh."
+affected_paths = ["05_Software/apps/desktop/src/main/chatgpt-auth.test.ts", "05_Software/apps/desktop/src/main/provider-gateway.ts", "05_Software/apps/desktop/src/main/subscription-store.ts", "05_Software/apps/desktop/src/renderer/components/chatgpt.test.ts", "05_Software/e2e/chatgpt.spec.ts", "05_Software/packages/core/src/llm/gateway.test.ts", "05_Software/packages/core/src/llm/providers.ts", "05_Software/packages/core/src/llm/subscription.test.ts", "05_Software/packages/shared/src/providers.ts"]
+linked_tests = ["05_Software/packages/core/src/llm/subscription.test.ts", "05_Software/packages/core/src/llm/gateway.test.ts", "05_Software/apps/desktop/src/main/chatgpt-auth.test.ts", "05_Software/apps/desktop/src/renderer/components/chatgpt.test.ts", "05_Software/e2e/chatgpt.spec.ts"]
+spec = "specs/REQ-FUNC-2d36afc2.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

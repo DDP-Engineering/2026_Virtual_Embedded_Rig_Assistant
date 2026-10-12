@@ -3,6 +3,8 @@ import type { ProviderList, ProviderSave } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { Chatgpt } from "./chatgpt.js";
+import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import { ProviderTest } from "./provider-test.js";
 
@@ -85,6 +87,7 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
         </button>
       )}
       {pending && <p role="status">{t("providers.saving")}</p>}
+      <Chatgpt disabled={disabled} />
       {list.data && (
         <>
           <OpenAI
@@ -376,48 +379,5 @@ function CustomEditor({
         </div>
       </fieldset>
     </form>
-  );
-}
-function ConsentDialog({
-  pending,
-  choice,
-  cancel,
-}: {
-  pending: boolean;
-  choice: (consent: boolean) => Promise<void>;
-  cancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const ref = useRef<HTMLDialogElement>(null);
-  const title = useId();
-  const text = useId();
-  useEffect(() => {
-    ref.current?.showModal();
-  }, []);
-  return (
-    <dialog
-      ref={ref}
-      className="pinned-dialog"
-      aria-labelledby={title}
-      aria-describedby={text}
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!pending) cancel();
-      }}
-    >
-      <h3 id={title}>{t("providers.consentTitle")}</h3>
-      <p id={text}>{t("providers.consentWarning")}</p>
-      <div className="workbench-actions">
-        <button type="button" disabled={pending} onClick={() => void choice(false)}>
-          {t("providers.memoryChoice")}
-        </button>
-        <button type="button" disabled={pending} onClick={() => void choice(true)}>
-          {t("providers.diskChoice")}
-        </button>
-        <button type="button" disabled={pending} onClick={cancel}>
-          {t("providers.cancel")}
-        </button>
-      </div>
-    </dialog>
   );
 }

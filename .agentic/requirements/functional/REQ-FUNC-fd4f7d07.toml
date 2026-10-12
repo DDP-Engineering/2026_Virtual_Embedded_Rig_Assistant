@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-fd4f7d07"
+title = "Verify real subscription across restart"
+status = "active"
+requirement = "VERA shall support a real ChatGPT subscription sign-in followed by a short session, application restart, another session and sign-out."
+verification = "Manual: user signs in with their own subscription in VERA, runs a short session, restarts and runs again, signs out; record observed results, not fake proof."
+affected_paths = ["05_Software/apps/desktop/src/main/chatgpt-auth.ts", "05_Software/packages/core/src/llm/providers.ts", "05_Software/apps/desktop/src/renderer/components/chatgpt.tsx", "05_Software/apps/desktop/src/renderer/components/session/composer.tsx"]
+linked_tests = []
+spec = "specs/REQ-FUNC-2d36afc2.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

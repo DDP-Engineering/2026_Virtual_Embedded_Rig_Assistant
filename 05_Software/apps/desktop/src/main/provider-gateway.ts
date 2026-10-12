@@ -9,6 +9,7 @@ import {
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
 import type { ProviderSettings } from "./provider-settings.js";
+import { subscriptionStore } from "./subscription-store.js";
 
 /** Main owns gateway lifetime, current settings, credentials, and retained-secret scrubbing. */
 export class ProviderGateway {
@@ -28,6 +29,7 @@ export class ProviderGateway {
       createPiAiGateway({
         settings: () => settings.get().settings,
         credentials,
+        subscriptionCredentials: subscriptionStore(credentials),
         scrub: (text) => credentials.scrub(text),
         knownSecrets: () => credentials.knownSecrets(),
         now: () => clock.now().getTime(),

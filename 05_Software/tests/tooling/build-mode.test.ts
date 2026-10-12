@@ -32,10 +32,15 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         .filter((name) => String(name).endsWith(".js"))
         .map((name) => readFileSync(join(mainDir, String(name)), "utf8"))
         .join("\n");
+      expect(code, "pinned OAuth flow is statically available in desktop bundles").toContain(
+        "ext_agent_host_id",
+      );
       if (flag === "1") {
         expect(code).toContain("VERA_REPLAY_DIR");
         expect(code).toContain("VERA_REPLAY_DELAY_MS");
         expect(code).toContain("VERA_TEST_ALLOW_WRITES");
+        expect(code).toContain("VERA_TEST_CHATGPT");
+        expect(code).toContain("fictional-native-access-WP21");
         expect(code).toContain("veraTestFileTools");
         expect(code).toContain("replay_");
         expect(code.includes("VERA_TEST_DIALOG_PATH"), "instrumented folder override emitted").toBe(true);
@@ -54,6 +59,8 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
           "VERA_REPLAY_DIR",
           "VERA_REPLAY_DELAY_MS",
           "VERA_TEST_ALLOW_WRITES",
+          "VERA_TEST_CHATGPT",
+          "fictional-native-access-WP21",
           "replay_",
           "registerReplay",
           "veraTestFileTools",

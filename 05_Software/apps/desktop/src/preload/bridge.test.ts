@@ -68,6 +68,11 @@ it("registers a session replay subscription before dispatch and filters its toke
 });
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
+    | "app.openExternal"
+    | "providers.chatgpt.login"
+    | "providers.chatgpt.status"
+    | "providers.chatgpt.cancel"
+    | "providers.chatgpt.logout"
     | "artifacts.list"
     | "artifacts.open"
     | "artifacts.reveal"

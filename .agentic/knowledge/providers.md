@@ -7,7 +7,7 @@ providers.list/save/remove and Settings Providers. Connection tests route to [LL
 provider-settings.ts under05_Software/apps/desktop/src. Configuration schemas live in shared providers.ts.
 [Application data](app-data.md) owns settings migration/atomic ports; [IPC boundary](ipc-boundary.md)
 owns sender/schema transport; [renderer foundation](renderer-foundation.md) owns shell/accessibility.
-[LLM gateway](llm-gateway.md) owns model requests, capabilities and connection tests. OAuth orchestration has its own seam.
+[LLM gateway](llm-gateway.md) owns model requests, capabilities and connection tests. ChatgptAuth owns OAuth lifecycle; subscription-store preserves its storage choice through refresh.
 
 ## Purpose and boundaries
 
@@ -16,6 +16,10 @@ the structural pi-ai1.1.0 port and pure scrub(text,secrets). Shared owns non-sec
 strict public projections. Renderer holds a password draft until save/cancel and reads metadata through Query.
 
 ## Public interface
+
+- ChatgptAuth login/cancel/status/logout owns one ten-minute OAuth attempt, prompt identity and callback/manual cleanup. Login uses VERA and the installationId; success selects a subscription only when the serialized current app default is null. Cancellation drains the underlying OAuth method and releases its callback port before another attempt. Stale browser failures/prompts are ignored. Logout drains pending login, removes chatgpt and clears only subscription defaults.
+- providers.chatgpt.login accepts start/storageConsent or manualCode/promptId; status projects connected, ISO expiry, idle/pending/manual/error/consent-required and stable localized errors. Busy1455 names the Codex CLI. The Sign in click authorizes the pinned OpenAI auth page through validated app.openExternal; the auth URL stays in main.
+- Weak-storage login requests an explicit memory/disk choice before OAuth. subscription-store retains that choice for serialized token refresh. Renderer uses imperative invoke for redirect drafts and clears them on submission, cancellation, callback and unmount; Query holds metadata only.
 
 - CredentialStore read/list/modify/delete accepts optional AbortSignal. modify callback undefined
   preserves the credential and callback rejection propagates unchanged; mutations and delete share a global store mutex.
@@ -58,9 +62,15 @@ strict public projections. Renderer holds a password draft until save/cancel and
 | Configuration/IPC shape | shared providers.ts/ipc.ts | provider-settings and bridge/router tests |
 | Settings format | shared settings.ts; core settings/service.ts | service.test.ts |
 | Error/event redaction | core llm/scrub.ts; main store/router/events | scrub/credentials/provider/events tests |
+| Subscription lifecycle/consent/refresh | main chatgpt-auth/subscription-store; renderer chatgpt | chatgpt-auth.test.ts; chatgpt.test.ts; e2e/chatgpt.spec.ts |
 | Masked/localized forms | renderer components/providers.tsx | e2e/providers.spec.ts and mock.spec.ts |
 
 ## Key behaviors
+
+- REQ-FUNC-2d36afc2/46e99b33/7da240db — login lifecycle, guarded manual redirect and sign-out.
+- REQ-SEC-2361cc1e — OAuth retained scrubbing, log/IPC/event redaction and weak-storage consent.
+- REQ-UX-a5037b51 — localized subscription controls and composer models.
+- REQ-FUNC-fd4f7d07 — ordinary release subscription sessions across application restart and sign-out.
 
 - REQ-SEC-fe4d5c4c — atomic encrypted persistence and pi-ai structural contract.
 - REQ-SEC-47e726a7 — explicit weak-storage decision and memory-only refusal.
@@ -75,8 +85,13 @@ strict public projections. Renderer holds a password draft until save/cancel and
 
 ```mermaid
 flowchart LR
- UI[Providers form] --> API[typed invoke + metadata Query]
+ UI[Providers form + Chatgpt] --> API[typed invoke + metadata Query]
  API --> IPC[shared strict schemas + authorized router]
+ IPC --> Auth[ChatgptAuth]
+ Auth --> Subscription[core subscription Models]
+ Subscription --> View[subscription-store / chatgpt slot]
+ View --> Store
+ Auth --> External[validated app.openExternal / system browser]
  IPC --> Main[ProviderSettings]
  Main --> Settings[core SettingsService schema4]
  Main --> Store[main CredentialFile mutex]
@@ -92,6 +107,8 @@ Paths relative to05_Software.
 
 - packages/core/src/ports.ts and llm/scrub.ts — structural store contract and pure redaction.
 - packages/shared/src/{providers,settings,ipc,index}.ts — config formats, migration shapes and transport.
+- apps/desktop/src/main/{chatgpt-auth,subscription-store,open-external}.ts and tests — main-owned OAuth, explicit refresh consent and confirmed external opening.
+- packages/shared/src/chatgpt.ts; renderer components/{chatgpt,consent-dialog}.tsx and chatgpt.test.ts; e2e/chatgpt.spec.ts — strict metadata and native/browser controls.
 - apps/desktop/src/main/{credentials,provider-settings}.ts — crypto persistence and coordinated operations.
 - apps/desktop/src/main/{index,ipc-router,events}.ts — startup/drain, handlers, known-secret response guards.
 - apps/desktop/src/renderer/components/{providers,settings}.tsx — masked forms and consent modal.
@@ -99,3 +116,5 @@ Paths relative to05_Software.
 - apps/desktop/src/renderer/locales/{en,ro,de}.json and styles.css — translations and rem/layout.
 - Main credentials/provider-settings tests, core scrub/settings tests, bridge/router/mock regressions,
   e2e/{providers,mock,shell}.spec.ts — deterministic fictional secrets and native/browser regressions.
+
+Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.

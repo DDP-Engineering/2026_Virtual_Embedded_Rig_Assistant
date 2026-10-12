@@ -166,3 +166,9 @@ The Artifacts tab lists names, bytes and times, opens Markdown/plain text, and o
 ### Session Plan
 
 The `todo` session tool replaces the entire ordered Plan list using `{items:[{id?,text,status}]}` with at most50items, at most200UTF16code units per text and pending/in_progress/done statuses. An empty list clears it. The current SQLite row and `todo.updated` event commit together; Plan consumes session snapshots/live events and restores the final list after restart. Session modes allow the tool; workbench read-only denies mutation. The Plan tab presents localized status icons and labels. `fixtures/llm-scripts/plan-updates.jsonl` drives deterministic acceptance; the browser mock accepts “Update the plan”.
+
+## ChatGPT subscription
+
+In Settings → Providers, choose Sign in with ChatGPT. VERA opens the system browser and uses only the temporary loopback callback on127.0.0.1:1455. If the callback does not complete, paste the full final redirect URL into the manual input. Cancel frees the callback; sign-in times out after ten minutes. A busy1455 error names unfinished Codex CLI sign-in. If secure storage is unavailable, choose memory for this process or explicit unprotected storage. The subscription becomes the app default only when no model is selected. Connected subscription models appear as chatgpt/<model> in the composer; Sign out removes credentials and a subscription app default.
+
+Real acceptance: sign in with your own subscription, run a short session, close and restart VERA with the same user data, run again, then sign out. Fake OAuth tests do not replace this observation.

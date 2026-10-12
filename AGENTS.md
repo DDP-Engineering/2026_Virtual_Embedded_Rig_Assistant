@@ -30,16 +30,15 @@ candidate and makes the authorized local commit before starting the next eligibl
 Track completion using validated commits and task journals; an open Gitea issue alone does not mean
 the work is unimplemented. The cycle ends after every planned work package and final verification.
 
-## Validation policy from WP-18
+## Validation and handover
 
-The user approved targeted tests per ticket and full suites at milestone gates on
-2026-10-12. Follow `02_Tools/verification-policy.md`; this project policy overrides
-the generic managed AEGIS full-suite-per-ticket default from WP-18 onwards.
-WP-17 retains its already-started full validation. Keep strict checks, static
-checks, all Done criteria, relevant Windows/native Ubuntu proof and both independent
-reviews. Run full suites at M2/WP-21, M3/WP-29, M4/WP-33, M5/WP-38 and final release;
-require broader testing earlier when the impact is broad or uncertain. Record
-selected tests and evidence accurately; a static check is not a test-suite result.
+Follow `02_Tools/verification-policy.md`, the project policy overriding generic
+AEGIS full-suite-per-ticket rules. Per ticket use focused checks, explicit Done
+criteria, static/strict checks and both independent reviews. Full testing runs only
+at milestone gates, once, owned by the last ticket OR the coordinator. Reuse valid
+proof; no routine handover retesting or historical-cache audits. Keep handover
+concise and clean owned scratch data. Prioritize implementation; defer unrelated
+refactoring and polish. Final release checks and publication authority still apply.
 
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 

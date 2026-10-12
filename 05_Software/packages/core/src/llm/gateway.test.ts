@@ -180,9 +180,10 @@ describe("model gateway", () => {
     expect(() => resolveModelReference(null, null, null)).toThrow();
     expect(() => resolveModelReference("invalid", null, "openai/c")).toThrow();
   });
-  it("keeps subscription empty and exposes fresh bounded capabilities before streaming", () => {
+  it("keeps subscription OAuth-only and exposes fresh bounded capabilities before streaming", () => {
     const { settings, gateway } = setup("http://127.0.0.1:1/v1");
-    expect(gateway.collections.subscription.getProviders()).toEqual([]);
+    expect(gateway.collections.subscription.getProviders().map((p) => p.id)).toEqual(["openai"]);
+    expect(Object.keys(gateway.collections.subscription.getProviders()[0]?.auth ?? {})).toEqual(["oauth"]);
     expect(gateway.collections.api.getProviders().map((p) => p.id)).toEqual(["openai", "custom:local"]);
     expect(gateway.capabilities("custom:local/org/model")).toMatchObject({
       contextWindow: 32768,

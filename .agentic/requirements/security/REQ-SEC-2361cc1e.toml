@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-2361cc1e"
+title = "Keep OAuth secrets in the main credential host"
+status = "active"
+requirement = "VERA shall register OAuth access and refresh secrets with retained scrubbing and logging redaction before persistence or error projection, exposing only validated authentication metadata through events and IPC and requiring an explicit weak-storage choice."
+verification = "Fake credentials plus actual CredentialFile and logger capture assert no secret in status, IPC, events or log; weak storage requires choice and memory/refresh/restart behavior is inspected."
+affected_paths = ["05_Software/apps/desktop/src/main/chatgpt-auth.test.ts", "05_Software/apps/desktop/src/main/chatgpt-auth.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/main/subscription-store.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/renderer/components/chatgpt.test.ts", "05_Software/apps/desktop/src/renderer/components/chatgpt.tsx", "05_Software/e2e/chatgpt.spec.ts", "05_Software/packages/core/src/llm/providers.ts", "05_Software/packages/core/src/llm/subscription.test.ts", "05_Software/packages/shared/src/chatgpt.test.ts", "05_Software/packages/shared/src/chatgpt.ts", "05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/ipc.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/chatgpt-auth.test.ts", "05_Software/packages/core/src/llm/subscription.test.ts", "05_Software/packages/shared/src/chatgpt.test.ts", "05_Software/apps/desktop/src/renderer/components/chatgpt.test.ts", "05_Software/e2e/chatgpt.spec.ts"]
+spec = "specs/REQ-FUNC-2d36afc2.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

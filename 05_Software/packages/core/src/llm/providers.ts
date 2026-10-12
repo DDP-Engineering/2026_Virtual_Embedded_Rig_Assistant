@@ -14,6 +14,9 @@ import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { createStreamScrubber } from "./stream-scrub.js";
 
+export type { AuthInteraction, Models } from "@earendil-works/pi-ai";
+export type { MutableModels } from "@earendil-works/pi-ai/models";
+
 export interface GatewayHost {
   settings(): Settings;
   credentials: CredentialStore;
@@ -21,6 +24,7 @@ export interface GatewayHost {
   now(): number;
   fetch?: typeof fetch;
   knownSecrets?: () => readonly string[];
+  subscriptionCredentials?: CredentialStore;
 }
 type Custom = Settings["providers"]["custom"][number];
 function customModel(config: Custom, provider: string, id = config.model): Model<"openai-completions"> {
@@ -82,7 +86,10 @@ function limits(model: Model<string>, supportsTools?: boolean, output?: number):
     ...(supportsTools !== undefined ? { supportsTools } : {}),
   };
 }
-export function createCollections(credentials: CredentialStore): {
+export function createCollections(
+  credentials: CredentialStore,
+  subscriptionCredentials = credentials,
+): {
   api: MutableModels;
   subscription: MutableModels;
 } {
@@ -101,7 +108,20 @@ export function createCollections(credentials: CredentialStore): {
       },
     },
   });
-  return { api, subscription: createModels({ credentials }) };
+  const subscription = createModels({
+    credentials: {
+      read: (_id, o) => subscriptionCredentials.read("chatgpt", o),
+      list: async (o) =>
+        (await subscriptionCredentials.list(o))
+          .filter((c) => c.providerId === "chatgpt")
+          .map((c) => ({ ...c, providerId: "openai" })),
+      modify: (_id, fn, o) => subscriptionCredentials.modify("chatgpt", fn, o),
+      delete: (_id, o) => subscriptionCredentials.delete("chatgpt", o),
+    },
+  });
+  if (!builtIn.auth.oauth) throw veraError("INTERNAL");
+  subscription.setProvider({ ...builtIn, auth: { oauth: builtIn.auth.oauth } });
+  return { api, subscription };
 }
 function safeMessage(
   message: AssistantMessage,
@@ -146,7 +166,7 @@ function safeMessage(
 export function createPiAiGateway(
   host: GatewayHost,
 ): LlmGateway & { collections: ReturnType<typeof createCollections> } {
-  const collections = createCollections(host.credentials);
+  const collections = createCollections(host.credentials, host.subscriptionCredentials);
   const config = (provider: string): Custom => {
     const found = host.settings().providers.custom.find((c) => `custom:${c.slug}` === provider);
     if (!found) throw veraError("NOT_FOUND");
@@ -156,20 +176,21 @@ export function createPiAiGateway(
   };
   const target = (reference: string) => {
     const { provider, model: id } = splitModelReference(reference);
-    if (provider === "openai") {
-      const model = collections.api.getModel(provider, id);
+    if (provider === "openai" || provider === "chatgpt") {
+      const models = provider === "chatgpt" ? collections.subscription : collections.api;
+      const model = models.getModel("openai", id);
       if (!model) throw veraError("NOT_FOUND");
-      return { models: collections.api, model, endpoint: model.baseUrl, supportsTools: undefined };
+      return { models, model, endpoint: model.baseUrl, supportsTools: undefined, slot: provider };
     }
     const custom = config(provider);
     const model = customModel(custom, provider, id);
     const models = createModels({ credentials: host.credentials });
     models.setProvider(customProvider(custom, provider, model));
-    return { models, model, endpoint: custom.baseUrl, supportsTools: custom.supportsTools };
+    return { models, model, endpoint: custom.baseUrl, supportsTools: custom.supportsTools, slot: provider };
   };
   const gateway: LlmGateway & { collections: typeof collections } = {
     get collections() {
-      const snapshot = createCollections(host.credentials);
+      const snapshot = createCollections(host.credentials, host.subscriptionCredentials);
       for (const custom of host.settings().providers.custom) {
         const parsed = customSettingsSchema.parse(custom);
         snapshot.api.setProvider(customProvider(parsed, `custom:${parsed.slug}`));
@@ -177,6 +198,12 @@ export function createPiAiGateway(
       return snapshot;
     },
     selectedModel(provider) {
+      if (provider === "chatgpt") {
+        const current = host.settings().defaultModel;
+        return current?.startsWith("chatgpt/")
+          ? splitModelReference(current).model
+          : (collections.subscription.getModels("openai")[0]?.id ?? "");
+      }
       const model = provider === "openai" ? host.settings().providers.openai.model : config(provider).model;
       if (!model) throw veraError("INVALID");
       return model;
@@ -188,12 +215,18 @@ export function createPiAiGateway(
     async models(provider, signal, probe = false) {
       let endpoint = "";
       try {
-        if (provider === "openai") {
+        if (provider === "openai" || provider === "chatgpt") {
           endpoint = "https://api.openai.com/v1";
-          const listed = probe ? await list(endpoint, provider, signal) : null;
+          const models = provider === "chatgpt" ? collections.subscription : collections.api;
+          if (
+            provider === "chatgpt" &&
+            (await host.credentials.read("chatgpt", signal ? { signal } : {}))?.type !== "oauth"
+          )
+            throw mapProviderError("", host.scrub, endpoint, { status: 401 });
+          const listed = probe && provider === "openai" ? await list(endpoint, provider, signal) : null;
           return {
             reachability: listed === null ? "skipped" : "pass",
-            models: collections.api.getModels(provider).map((m) => ({
+            models: models.getModels("openai").map((m) => ({
               id: host.scrub(m.id),
               name: host.scrub(m.name),
               reference: host.scrub(`${provider}/${m.id}`),
@@ -225,8 +258,11 @@ export function createPiAiGateway(
         const resolved = target(request.model);
         endpoint = resolved.endpoint;
         const capabilities = limits(resolved.model, resolved.supportsTools, request.maxOutputTokens);
-        const key = await host.credentials.read(resolved.model.provider, { signal: request.signal });
-        if (resolved.model.provider === "openai" && (key?.type !== "api_key" || !key.key)) {
+        const key = await host.credentials.read(resolved.slot, { signal: request.signal });
+        if (
+          (resolved.slot === "openai" && (key?.type !== "api_key" || !key.key)) ||
+          (resolved.slot === "chatgpt" && key?.type !== "oauth")
+        ) {
           yield {
             type: "error",
             error: mapProviderError("", host.scrub, endpoint, { status: 401 }),
@@ -274,6 +310,7 @@ export function createPiAiGateway(
         const secrets = () => [
           ...(host.knownSecrets?.() ?? []),
           ...(key?.type === "api_key" && key.key ? [key.key] : []),
+          ...(key?.type === "oauth" ? [key.access, key.refresh] : []),
         ];
         const textScrubber = createStreamScrubber(secrets, host.scrub);
         let sourceDeltas = 0;

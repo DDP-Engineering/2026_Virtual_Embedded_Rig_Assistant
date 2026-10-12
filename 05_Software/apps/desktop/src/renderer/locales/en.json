@@ -249,5 +249,21 @@
     "pending": "Pending",
     "inProgress": "In progress",
     "done": "Done"
+  },
+  "chatgpt": {
+    "title": "ChatGPT subscription",
+    "description": "Sign in in your system browser. The callback uses local port 1455.",
+    "signIn": "Sign in with ChatGPT",
+    "signOut": "Sign out",
+    "connected": "Signed in with ChatGPT",
+    "disconnected": "Not signed in",
+    "waiting": "Waiting for sign-in in your browser…",
+    "expires": "Token expires at {{time}}; it renews automatically.",
+    "manual": "Paste the final redirect URL if sign-in does not complete",
+    "submit": "Complete sign-in",
+    "timeout": "Sign-in timed out after 10 minutes. Try again.",
+    "portBusy": "Port 1455 is busy, often because a sign-in in the Codex CLI is unfinished. Cancel that sign-in and try again.",
+    "loginFailed": "ChatGPT sign-in failed. Try again.",
+    "browserFailed": "Cannot open the sign-in page. Try again."
   }
 }

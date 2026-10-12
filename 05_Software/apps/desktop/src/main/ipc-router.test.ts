@@ -15,6 +15,12 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "app.openExternal": unused,
+  "providers.chatgpt.login": unused,
+  "providers.chatgpt.status": unused,
+  "providers.chatgpt.cancel": unused,
+  "providers.chatgpt.logout": unused,
+
   "artifacts.list": unused,
   "artifacts.open": unused,
   "artifacts.reveal": unused,

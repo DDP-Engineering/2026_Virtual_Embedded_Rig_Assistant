@@ -34,6 +34,16 @@ export function Composer({
     queryKey: ["providers.list"],
     queryFn: () => api.invoke("providers.list", {}),
   });
+  const subscription = useQuery({
+    queryKey: ["chatgpt.status"],
+    queryFn: () => api.invoke("providers.chatgpt.status", {}),
+    refetchInterval: 1000,
+  });
+  const subscriptionModels = useQuery({
+    queryKey: ["chatgpt.models"],
+    enabled: subscription.data?.connected === true,
+    queryFn: () => api.invoke("providers.models", { id: "chatgpt" }),
+  });
   const catalog = useQuery({
     queryKey: ["chat.models", providers.data],
     enabled: !!providers.data,
@@ -172,14 +182,23 @@ export function Composer({
               onChange={(e) => void setModel(e.target.value || null)}
             >
               <option value="">{t("chat.defaultModel")}</option>
-              {state.modelRef && !catalog.data?.some((m) => m.reference === state.modelRef) && (
-                <option value={state.modelRef}>{state.modelRef}</option>
-              )}
+              {state.modelRef &&
+                !catalog.data?.some((m) => m.reference === state.modelRef) &&
+                !(
+                  subscription.data?.connected &&
+                  subscriptionModels.data?.models.some((m) => m.reference === state.modelRef)
+                ) && <option value={state.modelRef}>{state.modelRef}</option>}
               {catalog.data?.map((m) => (
                 <option key={m.reference} value={m.reference}>
                   {m.reference}
                 </option>
               ))}
+              {subscription.data?.connected &&
+                subscriptionModels.data?.models.map((m) => (
+                  <option key={m.reference} value={m.reference}>
+                    {m.reference}
+                  </option>
+                ))}
             </select>
           </label>
           {running ? (

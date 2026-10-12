@@ -249,5 +249,21 @@
     "pending": "Ausstehend",
     "inProgress": "In Bearbeitung",
     "done": "Erledigt"
+  },
+  "chatgpt": {
+    "title": "ChatGPT-Abonnement",
+    "description": "Im Systembrowser anmelden. Die Rückleitung verwendet den lokalen Port 1455.",
+    "signIn": "Mit ChatGPT anmelden",
+    "signOut": "Abmelden",
+    "connected": "Mit ChatGPT angemeldet",
+    "disconnected": "Nicht angemeldet",
+    "waiting": "Auf die Anmeldung im Browser warten…",
+    "expires": "Token läuft am {{time}} ab; es wird automatisch erneuert.",
+    "manual": "Die endgültige Weiterleitungs-URL einfügen, falls die Anmeldung nicht abgeschlossen wird",
+    "submit": "Anmeldung abschließen",
+    "timeout": "Die Anmeldung wurde nach 10 Minuten beendet. Erneut versuchen.",
+    "portBusy": "Port 1455 ist belegt, häufig durch eine unvollständige Anmeldung in der Codex CLI. Diese Anmeldung abbrechen und erneut versuchen.",
+    "loginFailed": "ChatGPT-Anmeldung fehlgeschlagen. Erneut versuchen.",
+    "browserFailed": "Die Anmeldeseite kann nicht geöffnet werden. Erneut versuchen."
   }
 }

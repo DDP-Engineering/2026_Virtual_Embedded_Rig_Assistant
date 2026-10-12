@@ -13,6 +13,11 @@ export function ErrorMessage({ error }: { error: unknown }) {
     ...(parsed.success ? (parsed.data.params ?? {}) : {}),
   };
   const messages: Record<string, string> = {
+    "chatgpt.timeout": t("chatgpt.timeout"),
+    "chatgpt.portBusy": t("chatgpt.portBusy"),
+    "chatgpt.loginFailed": t("chatgpt.loginFailed"),
+    "chatgpt.browserFailed": t("chatgpt.browserFailed"),
+
     "errors.INVALID": t("errors.INVALID", options),
     "errors.NOT_FOUND": t("errors.NOT_FOUND", options),
     "errors.CONFLICT": t("errors.CONFLICT", options),

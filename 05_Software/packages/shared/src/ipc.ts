@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
+import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
   modelReferenceSchema,
@@ -41,6 +42,31 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "app.openExternal": defineChannel(
+    "app.openExternal",
+    z.strictObject({ url: z.url({ protocol: /^https?$/ }).max(16384), confirmed: z.literal(true) }),
+    z.strictObject({}),
+  ),
+  "providers.chatgpt.login": defineChannel(
+    "providers.chatgpt.login",
+    chatgptLoginSchema,
+    chatgptStatusSchema,
+  ),
+  "providers.chatgpt.status": defineChannel(
+    "providers.chatgpt.status",
+    z.strictObject({}),
+    chatgptStatusSchema,
+  ),
+  "providers.chatgpt.cancel": defineChannel(
+    "providers.chatgpt.cancel",
+    z.strictObject({}),
+    z.strictObject({}),
+  ),
+  "providers.chatgpt.logout": defineChannel(
+    "providers.chatgpt.logout",
+    z.strictObject({}),
+    z.strictObject({}),
+  ),
   "artifacts.list": defineChannel(
     "artifacts.list",
     z.strictObject({ sessionId: sessionIdSchema }),

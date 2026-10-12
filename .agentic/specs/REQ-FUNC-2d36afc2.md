@@ -1,0 +1,17 @@
+# ChatGPT subscription authentication
+
+Requirements: REQ-FUNC-2d36afc2, REQ-FUNC-46e99b33, REQ-FUNC-7da240db, REQ-FUNC-790a052e, REQ-SEC-2361cc1e, REQ-UX-a5037b51, REQ-FUNC-fd4f7d07.
+
+`providers.chatgpt.login {storageConsent?: boolean}` starts one flow and promptly returns validated metadata. Weak crypto returns consent-required before OAuth. `{manualCode: string, promptId: string}` resolves only the current manual prompt; the two variants are strict and mutually exclusive. `cancel/status/logout {}` return auth metadata or empty completion. Metadata contains connected, optional ISO expiresAt, state idle/pending/manual/error/consent-required, optional promptId and VeraError. No upstream auth URL/message/token appears in metadata.
+
+The Sign in click authorizes the system-browser OpenAI auth page through the same main app.openExternal host operation. Generic app.openExternal requires confirmed:true and HTTP(S) URL; OAuth additionally permits only auth.openai.com/api/accounts/authorize without userinfo. The authorization URL stays in main. notify progress/info is ignored. manual_code creates a guarded pending resolver and paste box. Pi-ai prompt signal cancellation clears it when callback wins. Timeout is ten minutes; cancel/logout drain the flow and free the callback port before subsequent login.
+
+Subscription `Models` registers `openaiProvider` with OAuth-only auth and a CredentialStore view mapping openai to chatgpt. API collection stays API-only. Login options agentName VERA/getDeviceId current installationId. Successful login selects first catalog model as chatgpt/<id> only when settings.defaultModel null. Logout clears chatgpt defaults. Weak-storage consent chosen at login and preserved by refresh through the mapped main store; no ambient credential lookup.
+
+All raw access/refresh values register through CredentialFile and Logger before write/transport; status errors use localized stable keys (timeout/busy1455/login failure) rather than untrusted upstream strings. Gateway errors/stream metadata use retained scrubbing. Renderer keeps redirect drafts outside Query caches and clears on submit/cancel/callback/unmount. Invalid/stale prompt submissions fail INVALID/CONFLICT. Future settings are read-only; start/logout denied before mutation.
+
+Verification labels: ticket = new auth cases, subscription gateway, immediate shared/renderer/native consumers, lint/typecheck/i18n/import-boundaries/strict, Windows/native Ubuntu. milestone = general full regressions after all M2 commits (coordinator). release = packaging/offlineWindows/VC++ later. Real user subscription sign-in/session/restart/session/logout is verified separately from scripted acceptance.
+
+Cancellation drains both Models.login and its underlying OAuth method before admitting a later attempt. Stale browser failures and prompt calls cannot affect a newer attempt. Main settings default changes use predicates evaluated inside the settings queue.
+
+Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.

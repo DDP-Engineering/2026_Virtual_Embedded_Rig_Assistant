@@ -249,5 +249,21 @@
     "pending": "În așteptare",
     "inProgress": "În curs",
     "done": "Finalizat"
+  },
+  "chatgpt": {
+    "title": "Abonament ChatGPT",
+    "description": "Autentifică-te în browserul sistemului. Revenirea folosește portul local 1455.",
+    "signIn": "Autentificare cu ChatGPT",
+    "signOut": "Deconectare",
+    "connected": "Autentificat cu ChatGPT",
+    "disconnected": "Neautentificat",
+    "waiting": "Se așteaptă autentificarea în browser…",
+    "expires": "Tokenul expiră la {{time}}; se reînnoiește automat.",
+    "manual": "Lipește URL-ul final de redirecționare dacă autentificarea nu se încheie",
+    "submit": "Finalizează autentificarea",
+    "timeout": "Autentificarea a expirat după 10 minute. Încearcă din nou.",
+    "portBusy": "Portul 1455 este ocupat, adesea de o autentificare neterminată în Codex CLI. Anuleaz-o și încearcă din nou.",
+    "loginFailed": "Autentificarea ChatGPT a eșuat. Încearcă din nou.",
+    "browserFailed": "Pagina de autentificare nu se poate deschide. Încearcă din nou."
   }
 }

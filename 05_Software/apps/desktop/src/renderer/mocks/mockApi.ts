@@ -3,6 +3,7 @@ import {
   type AppInfo,
   appEventSchema,
   type Channel,
+  type ChatgptStatus,
   channels,
   configWarnings,
   defaultSettings,
@@ -44,6 +45,8 @@ export function createMockApi(
   emitAppEvent: (event: AppEvent) => void;
 } {
   const subscribers = new Set<{ topic: string; id: string | undefined; on: (event: unknown) => void }>();
+  let chatgpt: ChatgptStatus = { connected: false, state: "idle" };
+  let authSequence = 0;
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
@@ -126,6 +129,41 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "app.openExternal":
+        value = {};
+        break;
+      case "providers.chatgpt.status":
+        value = chatgpt;
+        break;
+      case "providers.chatgpt.login": {
+        const request = channels["providers.chatgpt.login"].request.parse(input.data);
+        if ("manualCode" in request) {
+          if (chatgpt.state !== "manual" || chatgpt.promptId !== request.promptId)
+            throw veraError("CONFLICT");
+          chatgpt = { connected: true, state: "idle", expiresAt: "2033-05-18T03:33:20.000Z" };
+          if (settings.defaultModel === null)
+            settings = mergeSettings(settings, { defaultModel: "chatgpt/mock-subscription" });
+          emitAppEvent({ type: "settings.changed" });
+        } else {
+          if (chatgpt.state === "manual") throw veraError("BUSY");
+          chatgpt = { ...chatgpt, state: "manual", promptId: String(++authSequence) };
+        }
+        value = chatgpt;
+        break;
+      }
+      case "providers.chatgpt.cancel":
+        chatgpt = { ...chatgpt, state: "idle", promptId: undefined };
+        value = {};
+        break;
+      case "providers.chatgpt.logout": {
+        chatgpt = { connected: false, state: "idle" };
+        if (settings.defaultModel?.startsWith("chatgpt/"))
+          settings = mergeSettings(settings, { defaultModel: null });
+        emitAppEvent({ type: "settings.changed" });
+        value = {};
+        break;
+      }
+
       case "app.revealPath": {
         current();
         const { path } = input.data as Request<"app.revealPath">;
@@ -141,7 +179,20 @@ export function createMockApi(
       }
       case "providers.models": {
         const { id } = input.data as Request<"providers.models">;
-        if (id === "openai") {
+        if (id === "chatgpt") {
+          if (!chatgpt.connected) throw veraError("PROVIDER");
+          value = {
+            reachability: "skipped",
+            models: [
+              {
+                ...openAiFixture,
+                id: "mock-subscription",
+                name: "Mock subscription model",
+                reference: "chatgpt/mock-subscription",
+              },
+            ],
+          };
+        } else if (id === "openai") {
           value = { reachability: "skipped", models: [openAiFixture] };
         } else {
           const config = settings.providers.custom.find((c) => `custom:${c.slug}` === id);

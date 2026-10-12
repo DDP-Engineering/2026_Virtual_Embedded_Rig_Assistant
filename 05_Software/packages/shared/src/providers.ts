@@ -18,7 +18,7 @@ export const modelCapabilitiesSchema = z.strictObject({
   inputBudget: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   supportsTools: z.boolean().optional(),
 });
-export const gatewayProviderIdSchema = z.union([providerIdSchema, z.literal("replay")]);
+export const gatewayProviderIdSchema = z.union([providerIdSchema, z.literal("chatgpt"), z.literal("replay")]);
 export const providerModelsRequestSchema = z.strictObject({ id: gatewayProviderIdSchema });
 export const providerTestRequestSchema = z.strictObject({
   id: gatewayProviderIdSchema,
