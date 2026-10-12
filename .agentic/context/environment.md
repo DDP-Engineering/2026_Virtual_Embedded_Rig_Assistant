@@ -24,6 +24,11 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Extraction acceptance uses core knowledge/{extraction,processor}.test.ts, compiled
+CLI/desktop document-hosts.test.ts, deterministic demo-documents.test.ts and
+focused native e2e/ingest.spec.ts for worker/chunks/cache/OCR.
+`npm run make:demo-pdfs` regenerates the fictional board PDFs from demo Markdown.
+
 Ingest acceptance uses real watcher/SQLite core knowledge/ingest.test.ts, shared
 documents-ipc.test.ts and immediate workbench/transport/mock/boundary checks.
 Targeted native e2e/ingest.spec.ts exercises workbench/reindex IPC and index events

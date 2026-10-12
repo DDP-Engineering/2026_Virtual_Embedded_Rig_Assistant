@@ -14,8 +14,8 @@ and locks route to [Workbench](workbench.md), database compatibility to
 WorkbenchService owns one Ingester while storage is writable. Ingester observes
 the filesystem, reconciles configured selection and persists document metadata;
 DocumentsRepository invalidates derived rows. Desktop and CLI share the core
-composition. A supplied DocumentProcessor completes processing; the default
-composition retains supported documents pending.
+composition. Desktop/CLI composition supplies the [document processor](document-extraction.md)
+for extraction, cache and chunks; bare core composition can supply its own processor.
 
 ## Public interface
 
@@ -23,13 +23,14 @@ composition retains supported documents pending.
   docs.reindex IPC invokes it through desktop main; the mock enforces ownership.
 - Ingester.request coalesces changes with trailing1000ms debounce; reindex clears
   and reconciles in the same queue; close stops/aborts/drains before disposal.
-- DocumentProcessor receives root/path/kind/hash/AbortSignal and returns
-  indexed/failed/unsupported/needs_ocr with optional pages/stable reason. The
-  processor must settle on abort; publication checks file identity and ownership.
+- DocumentProcessor receives root/path/kind/hash/AbortSignal/ownership callback and returns
+  indexed/failed/unsupported/needs_ocr with optional pages/stable reason and ordered chunks. The
+  processor must settle on abort; publication checks file identity and ownership,
+  then atomically persists status and validated chunks before emitting events.
 - index.document carries path and a typed record, null for removal;
   index.progress carries pending/done/failed counters for the reconciliation
   batch, including skipped paths. Main redacts paths and preserves protocol fields.
-- DocumentsRepository list/get/save/remove/clearDerived uses existing schema1.
+- DocumentsRepository list/get/save/remove/clearDerived/replaceChunks uses existing schema1.
   Invalidation clears existing external-content chunks_fts/chunks_tri entries,
   associated embeddings and chunks before source deletion or replacement.
 
@@ -78,7 +79,7 @@ flowchart LR
   WorkbenchService --> Ingester
   Ingester --> Chokidar
   Ingester --> DocumentsRepository
-  Ingester --> Processor[optional DocumentProcessor]
+  Ingester --> Processor[DocumentProcessor with extraction/cache/chunks]
   Ingester --> WorkbenchEvent
   DocumentsRepository --> SQLite
 ```

@@ -172,3 +172,11 @@ The `todo` session tool replaces the entire ordered Plan list using `{items:[{id
 In Settings → Providers, choose Sign in with ChatGPT. VERA opens the system browser and uses only the temporary loopback callback on127.0.0.1:1455. If the callback does not complete, paste the full final redirect URL into the manual input. Cancel frees the callback; sign-in times out after ten minutes. A busy1455 error names unfinished Codex CLI sign-in. If secure storage is unavailable, choose memory for this process or explicit unprotected storage. The subscription becomes the app default only when no model is selected. Connected subscription models appear as chatgpt/<model> in the composer; Sign out removes credentials and a subscription app default.
 
 Real acceptance: sign in with your own subscription, run a short session, close and restart VERA with the same user data, run again, then sign out. Fake OAuth tests do not replace this observation.
+
+## Demo document fixtures
+
+Run `python ../02_Tools/npmw.py npm run make:demo-pdfs` from05_Software to
+regenerate the three fictional VERA-DEMO-01 PDFs from
+`fixtures/workbenches/demo-board/sources/`. Background desktop/CLI ingest extracts
+PDF pages in a dedicated worker, caches extraction by SHA256 and persists
+page/heading/line chunks. Scanned PDFs report `needs_ocr`.

@@ -6,7 +6,7 @@
     "tsBuildInfoFile": "../../node_modules/.cache/tsc/packages-core.tsbuildinfo",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.json"],
   "references": [
     {
       "path": "../../packages/shared"

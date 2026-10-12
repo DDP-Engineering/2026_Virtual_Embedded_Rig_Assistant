@@ -71,7 +71,7 @@ async function stageRuntime(mode) {
   await cp(join(root, "apps/desktop/out"), join(stage, "out"), { recursive: true });
   await cp(join(root, "resources"), join(stage, "resources"), { recursive: true });
   const desktop = JSON.parse(await readFile(join(root, "apps/desktop/package.json"), "utf8"));
-  const runtimeNames = ["better-sqlite3", "@huggingface/transformers", "onnxruntime-node"];
+  const runtimeNames = ["better-sqlite3", "@huggingface/transformers", "onnxruntime-node", "pdfjs-dist"];
   const seen = new Set();
   const packages = [];
   async function copyDependency(name, parent, optional = false) {

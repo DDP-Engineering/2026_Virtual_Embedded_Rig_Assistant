@@ -20,6 +20,7 @@ import { validateGlob } from "../tools/discovery.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import type { Chunk } from "./chunk.js";
 
 export const PDF_LIMIT = 100 * 1024 * 1024;
 export const TEXT_LIMIT = 20 * 1024 * 1024;
@@ -29,11 +30,13 @@ export interface DocumentInput {
   kind: Exclude<DocumentKind, "other">;
   sha256: string;
   signal: AbortSignal;
+  assertWritable: () => void;
 }
 export interface DocumentResult {
   status: "indexed" | "failed" | "unsupported" | "needs_ocr";
   pages?: number;
   reason?: DocumentReason;
+  chunks?: Chunk[];
 }
 export type DocumentProcessor = (input: DocumentInput) => Promise<DocumentResult>;
 export interface IngestOptions {
@@ -290,11 +293,13 @@ export class Ingester {
       progress();
     }
   }
-  private publish(record: Omit<DocumentRecord, "id">, invalidate = false): DocumentRecord {
+  private publish(record: Omit<DocumentRecord, "id">, invalidate = false, chunks?: Chunk[]): DocumentRecord {
     const row = this.mutation(() => {
       const old = this.rows.get(record.path);
       if (invalidate && old) this.rows.clearDerived(old.id);
-      return this.rows.save(record);
+      const saved = this.rows.save(record);
+      if (chunks) this.rows.replaceChunks(saved.id, chunks);
+      return saved;
     });
     this.emit({ type: "index.document", path: row.path, document: row });
     return row;
@@ -399,6 +404,10 @@ export class Ingester {
         kind,
         sha256: record.sha256,
         signal: this.abort.signal,
+        assertWritable: () => {
+          if (this.closed) throw veraError("DENIED");
+          this.options.assertWritable();
+        },
       });
       if (this.closed) return "pending";
       const current = await lstat((await this.ordinary(guard, path)).absolute);
@@ -416,15 +425,19 @@ export class Ingester {
         this.request();
         return "pending";
       }
-      this.publish({
-        ...record,
-        status: result.status,
-        pages: result.pages ?? null,
-        error:
-          result.reason ??
-          (result.status === "needs_ocr" ? "NEEDS_OCR" : result.status === "failed" ? "PROCESSING" : null),
-        indexedAt: result.status === "indexed" ? this.options.now().toISOString() : null,
-      });
+      this.publish(
+        {
+          ...record,
+          status: result.status,
+          pages: result.pages ?? null,
+          error:
+            result.reason ??
+            (result.status === "needs_ocr" ? "NEEDS_OCR" : result.status === "failed" ? "PROCESSING" : null),
+          indexedAt: result.status === "indexed" ? this.options.now().toISOString() : null,
+        },
+        false,
+        result.status === "indexed" ? result.chunks : [],
+      );
       return result.status;
     } catch (error) {
       if (this.closed) return "pending";

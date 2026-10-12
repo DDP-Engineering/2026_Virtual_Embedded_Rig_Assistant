@@ -21,6 +21,7 @@ import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
+import { processDocument } from "./document-processor.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
@@ -72,25 +73,28 @@ const settings = new SettingsService({
     emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
   },
 });
-const workbench = new WorkbenchService({
-  files: createFileAccess(systemClock),
-  settings,
-  pid: process.pid,
-  appVersion: app.getVersion(),
-  now: () => systemClock.now(),
-  token: randomUUID,
-  isProcessAlive: (pid) => {
-    try {
-      process.kill(pid, 0);
-      return true;
-    } catch (error) {
-      return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
-    }
+const workbench = new WorkbenchService(
+  {
+    files: createFileAccess(systemClock),
+    settings,
+    pid: process.pid,
+    appVersion: app.getVersion(),
+    now: () => systemClock.now(),
+    token: randomUUID,
+    isProcessAlive: (pid) => {
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch (error) {
+        return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
+      }
+    },
+    changed: (event) => {
+      emitAppEvent(eventEnvelopeSchema.parse(event));
+    },
   },
-  changed: (event) => {
-    emitAppEvent(eventEnvelopeSchema.parse(event));
-  },
-});
+  processDocument,
+);
 const providers = new ProviderSettings(settings, credentials);
 let chatgpt = new ChatgptAuth({
   settings,

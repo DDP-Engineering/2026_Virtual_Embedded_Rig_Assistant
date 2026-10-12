@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge, WorkbenchEvent } from "@vera/shared";
+import Database from "better-sqlite3";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../apps/desktop");
@@ -54,24 +55,71 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
     const records = () =>
       page.evaluate(() =>
         (window as unknown as Window & { indexEvents: WorkbenchEvent[] }).indexEvents.filter(
-          (e) => e.type === "index.document" && e.document,
+          (e) =>
+            e.type === "index.document" && e.path === "docs/board.md" && e.document?.status === "indexed",
         ),
       );
     await expect.poll(records).toHaveLength(1);
     const first = (await records())[0];
-    expect(first).toMatchObject({ path: "docs/board.md", document: { status: "pending", kind: "markdown" } });
+    expect(first).toMatchObject({ path: "docs/board.md", document: { status: "indexed", kind: "markdown" } });
     const firstHash = first?.type === "index.document" ? first.document?.sha256 : null;
     await writeFile(join(folder, "docs/board.md"), "board two");
     await expect.poll(records).toHaveLength(2);
     const second = (await records())[1];
     expect(second?.type === "index.document" ? second.document?.sha256 : null).not.toBe(firstHash);
+    const fixtures = join(desktop, "../../fixtures/documents");
+    await writeFile(join(folder, "docs/pages.pdf"), await readFile(join(fixtures, "pages.pdf")));
+    await writeFile(join(folder, "docs/scanned.pdf"), await readFile(join(fixtures, "scanned.pdf")));
     await page.evaluate(async () => {
       await (window as unknown as Window & { vera: VeraBridge }).vera.invoke("docs.reindex", {});
     });
     await expect.poll(records).toHaveLength(3);
+    const pdfEvents = await page.evaluate(
+      () => (window as unknown as Window & { indexEvents: WorkbenchEvent[] }).indexEvents,
+    );
+    expect(
+      pdfEvents.some(
+        (e) =>
+          e.type === "index.document" &&
+          e.path === "docs/pages.pdf" &&
+          e.document?.status === "indexed" &&
+          e.document.pages === 2,
+      ),
+    ).toBe(true);
+    expect(
+      pdfEvents.some(
+        (e) =>
+          e.type === "index.document" && e.path === "docs/scanned.pdf" && e.document?.status === "needs_ocr",
+      ),
+    ).toBe(true);
     await page.evaluate(async () => {
       await (window as unknown as Window & { vera: VeraBridge }).vera.invoke("workbench.close", {});
     });
+    const db = new Database(join(folder, ".vera/vera.db"), { readonly: true });
+    try {
+      const chunks = db
+        .prepare(
+          "SELECT locator_json,text,chars FROM chunks JOIN documents ON chunks.doc_id=documents.id WHERE documents.path='docs/pages.pdf' ORDER BY ordinal",
+        )
+        .all() as { locator_json: string; text: string; chars: number }[];
+      expect(chunks.some((c) => JSON.parse(c.locator_json).page === 1 && c.text.includes("I2C1_CR1"))).toBe(
+        true,
+      );
+      expect(chunks.some((c) => JSON.parse(c.locator_json).page === 2 && c.text.includes("WDG_KR"))).toBe(
+        true,
+      );
+      expect(chunks.every((c) => c.chars === c.text.length && c.chars <= 1400)).toBe(true);
+      const documents = db.prepare("SELECT sha256 FROM documents").all() as { sha256: string }[];
+      for (const document of documents) {
+        const cache = JSON.parse(
+          await readFile(join(folder, `.vera/cache/extract/${document.sha256}.json`), "utf8"),
+        );
+        expect(cache.version).toBe(1);
+        expect(cache.sha256).toBe(document.sha256);
+      }
+    } finally {
+      db.close();
+    }
     await rm(join(folder, "docs/board.md"));
     await page.evaluate(async (folder) => {
       await (window as unknown as Window & { vera: VeraBridge }).vera.invoke("workbench.open", { folder });

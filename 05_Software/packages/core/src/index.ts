@@ -8,6 +8,8 @@ export * from "./agent/tool.js";
 export * from "./agent/types.js";
 export * from "./artifacts/store.js";
 export * from "./knowledge/ingest.js";
+export * from "./knowledge/processor.js";
+export * from "./knowledge/worker-host.js";
 export * from "./llm/connection.js";
 export * from "./llm/gateway.js";
 export * from "./llm/providers.js";

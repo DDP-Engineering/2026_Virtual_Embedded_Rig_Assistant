@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-FUNC-e78b18ad"
+
+title = "Document extraction and precise chunks"
+
+status = "active"
+
+requirement = """
+While supported documents enter owned ingest, the processor shall extract PDF page text in a dedicated worker and UTF8 Markdown, HTML and plain text into ordered chunks with precise page, full heading-path or physical-line locators and a1400-character/below512-token budget including prefixes and special tokens measured by the existing packaged tokenizer, paragraph splitting and60-line windows overlapping10 lines with CSV header repetition, and classify PDFs averaging fewer than20 text characters per page as needs_ocr.
+"""
+
+verification = "Fixture extraction/chunk tests inspect heading trees, decoded HTML, UTF8 lines, long paragraphs and exact locators/window overlap; real PDF worker exercises multiple pages, raster-only OCR and malformed PDF."
+
+affected_paths = ["05_Software/packages/core/src/knowledge/", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/tsconfig.json", "05_Software/packages/core/src/storage/repos/documents.ts", "05_Software/apps/desktop/", "05_Software/apps/cli/", "05_Software/scripts/", "05_Software/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/packages/core/package.json"]
+
+linked_tests = ["05_Software/packages/core/src/knowledge/extraction.test.ts", "05_Software/packages/core/src/knowledge/processor.test.ts", "05_Software/packages/core/src/knowledge/ingest.test.ts", "05_Software/tests/tooling/document-hosts.test.ts", "05_Software/tests/tooling/demo-documents.test.ts", "05_Software/e2e/ingest.spec.ts"]
+
+
+spec = "specs/REQ-FUNC-e78b18ad.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-12
+updated = 2026-10-12

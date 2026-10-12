@@ -1,5 +1,6 @@
 import { type DocumentRecord, documentSchema } from "@vera/shared";
 import type Database from "better-sqlite3";
+import { type Chunk, chunkSchema } from "../../knowledge/chunk.js";
 
 /** Uses the existing documents/chunks schema; downstream tables are optional. */
 export class DocumentsRepository {
@@ -29,6 +30,20 @@ export class DocumentsRepository {
       .run(record);
     return this.get(record.path) as DocumentRecord;
   }
+  /** External-content FTS deletion needs original text, before the chunks disappear. */
+  replaceChunks(id: number, chunks: Chunk[]): void {
+    const parsed = chunks.map((chunk) => chunkSchema.parse(chunk));
+    this.db.transaction(() => {
+      this.clearDerived(id);
+      const insert = this.db.prepare(
+        "INSERT INTO chunks(doc_id,ordinal,locator_json,text,chars) VALUES(?,?,?,?,?)",
+      );
+      parsed.forEach((chunk, ordinal) => {
+        insert.run(id, ordinal, JSON.stringify(chunk.locator), chunk.text, chunk.text.length);
+      });
+    })();
+  }
+
   /** External-content FTS deletion needs original text, before the chunks disappear. */
   clearDerived(id: number): void {
     const exists = (name: string) =>

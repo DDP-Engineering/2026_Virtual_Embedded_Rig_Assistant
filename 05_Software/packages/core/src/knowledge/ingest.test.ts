@@ -66,6 +66,42 @@ async function harness(processDocument?: DocumentProcessor) {
   return { root, folder, service, db, events, row };
 }
 
+it("publishes processor chunks and locators atomically with indexed status", async () => {
+  const h = await harness(async () => ({
+    status: "indexed",
+    chunks: [
+      {
+        text: "Board > Power\n3.3 V supply",
+        locator: { type: "heading", path: ["Board", "Power"], slug: "power", start: 2, end: 3 },
+      },
+      {
+        text: "second paragraph",
+        locator: { type: "heading", path: ["Board", "Power"], slug: "power", start: 4, end: 4 },
+      },
+    ],
+  }));
+  await writeFile(join(h.folder, "docs/board.md"), "# Board\n## Power\n3.3 V supply\nsecond paragraph");
+  await h.service.reindexDocuments();
+  expect(h.row()).toMatchObject({ status: "indexed" });
+  const chunks = h.db.prepare("SELECT ordinal,text,locator_json,chars FROM chunks ORDER BY ordinal").all();
+  expect(chunks).toHaveLength(2);
+  expect(chunks[0]).toEqual({
+    ordinal: 0,
+    text: "Board > Power\n3.3 V supply",
+    chars: 26,
+    locator_json: JSON.stringify({
+      type: "heading",
+      path: ["Board", "Power"],
+      slug: "power",
+      start: 2,
+      end: 3,
+    }),
+  });
+  await rm(join(h.folder, "docs/board.md"));
+  await h.service.reindexDocuments();
+  expect(h.db.prepare("SELECT * FROM chunks").all()).toEqual([]);
+});
+
 it("synchronizes real watcher add/change/unlink with document rows and events", async () => {
   const h = await harness();
   await writeFile(join(h.folder, "docs/board.md"), "board one");

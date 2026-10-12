@@ -13,6 +13,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { customSettingsSchema, veraError, veraErrorSchema } from "@vera/shared";
 import { promptApproval } from "./approval-prompt.js";
 import type { RunOptions } from "./args.js";
+import { processDocument } from "./document-processor.js";
 import {
   type ConsoleLogger,
   createNodeFiles,
@@ -101,23 +102,26 @@ export async function runTurn(
     signal.throwIfAborted();
     const workers = createCliWorkerPool();
     resources.push(() => workers.dispose());
-    const workbench = new WorkbenchService({
-      files,
-      settings,
-      pid: process.pid,
-      appVersion: "0.0.0",
-      now: () => nodeClock.now(),
-      token: randomUUID,
-      isProcessAlive: (pid) => {
-        try {
-          process.kill(pid, 0);
-          return true;
-        } catch (error) {
-          return (error as NodeJS.ErrnoException).code !== "ESRCH";
-        }
+    const workbench = new WorkbenchService(
+      {
+        files,
+        settings,
+        pid: process.pid,
+        appVersion: "0.0.0",
+        now: () => nodeClock.now(),
+        token: randomUUID,
+        isProcessAlive: (pid) => {
+          try {
+            process.kill(pid, 0);
+            return true;
+          } catch (error) {
+            return (error as NodeJS.ErrnoException).code !== "ESRCH";
+          }
+        },
+        changed: () => {},
       },
-      changed: () => {},
-    });
+      processDocument,
+    );
     resources.push(() => workbench.close());
     const snapshot = await workbench.open(options.workbench);
     signal.throwIfAborted();

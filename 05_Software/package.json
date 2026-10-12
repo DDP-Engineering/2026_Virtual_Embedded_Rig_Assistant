@@ -28,6 +28,7 @@
     "prepare:model": "node scripts/prepare-model.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
     "build:cli": "node scripts/build-cli.mjs",
+    "make:demo-pdfs": "node scripts/make-demo-pdfs.mjs",
     "vera": "node scripts/build-cli.mjs && node apps/cli/dist/index.js"
   },
   "devDependencies": {
@@ -45,6 +46,7 @@
     "electron-builder": "26.17.0",
     "electron-vite": "5.0.0",
     "esbuild": "0.25.12",
+    "pdfkit": "0.20.2",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
     "vite": "7.3.7",

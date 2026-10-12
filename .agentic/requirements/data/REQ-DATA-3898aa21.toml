@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-DATA-3898aa21"
+
+title = "Owned extraction cache and chunk publication"
+
+status = "active"
+
+requirement = """
+When an owned document completes extraction, ingest shall atomically publish current-source chunks and status using the immutable existing schema and a versioned confined SHA256 extraction cache, with abort/ownership/source identity checks and derived-row invalidation on source change, deletion and reindex.
+"""
+
+verification = "Real FS/SQLite pipeline tests inspect ordered chunks/cache reuse and corrupted cache recovery, mutation/delete/reindex invalidation and failure/abort/owner/link refusal without stale publication."
+
+affected_paths = ["05_Software/packages/core/src/knowledge/", "05_Software/packages/core/src/storage/repos/documents.ts", "05_Software/apps/desktop/", "05_Software/apps/cli/", "05_Software/scripts/", "05_Software/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/packages/core/package.json"]
+
+linked_tests = ["05_Software/packages/core/src/knowledge/extraction.test.ts", "05_Software/packages/core/src/knowledge/processor.test.ts", "05_Software/packages/core/src/knowledge/ingest.test.ts", "05_Software/tests/tooling/document-hosts.test.ts", "05_Software/tests/tooling/demo-documents.test.ts", "05_Software/e2e/ingest.spec.ts"]
+
+
+spec = "specs/REQ-FUNC-e78b18ad.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-12
+updated = 2026-10-12
