@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { WorkerPool } from "../ports.js";
+import type { ChangeHost, PreparedChange } from "./changes.js";
 
 export interface ReadFingerprint {
   sha256: string;
@@ -9,12 +10,14 @@ export interface ToolContext {
   root: string;
   workers?: WorkerPool;
   lastReads: Map<string, ReadFingerprint>;
+  change?: ChangeHost;
 }
 export interface ToolDefinition {
   name: string;
   class: "read" | "write" | "session";
   description: string;
   params: z.ZodType;
+  prepare?(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<PreparedChange>;
   execute(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<Record<string, unknown>>;
 }
 export function createToolContext(root: string, workers?: WorkerPool): ToolContext {

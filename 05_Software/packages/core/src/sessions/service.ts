@@ -21,8 +21,10 @@ import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
+import { type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
+import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { timedGateway } from "./timed-gateway.js";
 
@@ -46,6 +48,7 @@ export interface SessionHost {
   assertWritable?: () => void;
   scrub?: (text: string) => string;
   disabledTools?: readonly string[];
+  writeQueue?: WriteQueue;
 }
 interface ActiveTurn {
   runtime: AgentRuntime;
@@ -63,10 +66,27 @@ export class SessionService {
   private readonly contexts = new Map<string, ToolContext>();
   private readonly deleting = new Set<string>();
   private closed = false;
+  private readonly writeQueue: WriteQueue;
+  private readonly ready: Promise<void>;
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
+    this.writeQueue = host.writeQueue ?? new WriteQueue();
+    this.ready = host.readOnly
+      ? Promise.resolve()
+      : this.writeQueue.run(async () => {
+          this.writable();
+          await recoverChanges(host.root, host.db, new AbortController().signal, {
+            assertWritable: () => this.writable(),
+            recorded: (id, event) => {
+              const value = this.hub.record(id, event);
+              return () => this.hub.publish(id, value);
+            },
+          });
+        });
+    // Retain rejection for execution/close while avoiding an unhandled startup promise.
+    void this.ready.catch(() => {});
     if (!host.readOnly) {
       this.writable();
       this.recover();
@@ -74,6 +94,10 @@ export class SessionService {
   }
   private now(): string {
     return this.host.clock.now().toISOString();
+  }
+  /** Hosts await initialization before exposing snapshots or accepting a new turn. */
+  async waitReady(): Promise<void> {
+    await this.ready;
   }
   private row(id: string): SessionRow {
     if (!sessionIdSchema.safeParse(id).success) throw veraError("INVALID");
@@ -250,6 +274,7 @@ export class SessionService {
     let processing = Promise.resolve();
     let failed = false;
     const durable = async () => {
+      await this.ready;
       await processing;
       if (failed) throw veraError("INTERNAL");
       this.writable();
@@ -260,13 +285,33 @@ export class SessionService {
     this.contexts.set(id, ctx);
     const registry = this.host.registry ?? new ToolRegistry();
     const permissions = this.host.permissions ?? readPermissions;
+    const prepared = new Map<string, PreparedChange>();
     const tools = registry
       .bind(ctx, this.host.disabledTools)
-      .filter((tool) => tool.class === "read")
+      .filter(
+        (tool) =>
+          tool.class === "read" ||
+          (tool.class === "write" && !!this.host.permissions && row.permission_mode !== "read-only"),
+      )
       .map((tool) => ({
         ...tool,
         execute: async (args: unknown, signal: AbortSignal) => {
           await durable();
+          if (tool.class === "write") {
+            const change = prepared.get(tool.name);
+            prepared.delete(tool.name);
+            if (!change) throw Error("Prepared change permission is missing.");
+            try {
+              const result = await change.apply(signal);
+              const text = JSON.stringify(result);
+              return this.host.scrub?.(text) ?? text;
+            } catch (error) {
+              throw Error(
+                this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
+                  (error instanceof Error ? error.message : "Tool failed."),
+              );
+            }
+          }
           if (!(await permissions.allow({ sessionId: id, mode: row.permission_mode, tool, args }, signal)))
             throw Error("Tool permission denied.");
           this.writable();
@@ -293,7 +338,59 @@ export class SessionService {
       },
       now: () => this.host.clock.now().getTime(),
       nextId: () => ulid(),
-      approve: async () => "denied",
+      approve: async (call, signal) => {
+        try {
+          await durable();
+          const tool = tools.find((candidate) => candidate.name === call.name);
+          if (tool?.class !== "write" || this.row(id).permission_mode === "read-only") return "denied";
+          const change = await registry.prepare(
+            {
+              ...ctx,
+              change: {
+                db: this.host.db,
+                queue: this.writeQueue,
+                sessionId: id,
+                turnId: this.active.get(id)?.turnId ?? "",
+                callId: call.id,
+                now: () => this.now(),
+                assertWritable: () => {
+                  this.writable();
+                  if (this.row(id).permission_mode === "read-only") throw Error("Tool permission denied.");
+                  if (this.host.disabledTools?.includes(call.name)) throw Error("Tool is unavailable.");
+                },
+                recorded: (event) => {
+                  this.writable();
+                  const value = this.hub.record(id, event);
+                  return () => this.hub.publish(id, value);
+                },
+              },
+            },
+            call.name,
+            call.arguments,
+            signal,
+            this.host.disabledTools,
+          );
+          const allowed = await permissions.allow(
+            {
+              sessionId: id,
+              mode: this.row(id).permission_mode,
+              tool,
+              args: call.arguments,
+              prepared: change.request,
+            },
+            signal,
+          );
+          signal.throwIfAborted();
+          if (!allowed) return "denied";
+          prepared.set(tool.name, change);
+          return "approved";
+        } catch (error) {
+          throw Error(
+            this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
+              (error instanceof Error ? error.message : "Tool failed."),
+          );
+        }
+      },
     };
     const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
     runtime.start({
@@ -435,6 +532,8 @@ export class SessionService {
     if (this.closed) return;
     for (const turn of this.active.values()) turn.runtime.abort();
     await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
+    await this.ready;
+    await this.writeQueue.drain();
     this.closed = true;
     this.hub.clear();
     this.contexts.clear();

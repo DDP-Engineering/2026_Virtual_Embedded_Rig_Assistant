@@ -96,6 +96,9 @@ const sessions = new SessionsHost({
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
   emit: emitAppEvent,
+  ...(__VERA_TEST__ && process.env.VERA_TEST_ALLOW_WRITES === "1"
+    ? { permissions: { allow: () => true } }
+    : {}),
 });
 ipcMain.handle("vera:subscription", (event, action, payload) =>
   sessions.subscription(event, action, payload),

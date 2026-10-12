@@ -1,6 +1,7 @@
 import {
   buildSystemPrompt,
   type Clock,
+  type PermissionEngine,
   SessionService,
   type SettingsService,
   type WorkbenchService,
@@ -37,6 +38,7 @@ export class SessionsHost {
       version: string;
       target: () => RendererTarget | undefined;
       emit: (event: EventEnvelope) => unknown;
+      permissions?: PermissionEngine;
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
@@ -67,6 +69,8 @@ export class SessionsHost {
           gateway: options.gateway().api,
           clock: options.clock,
           workers: options.workers,
+          writeQueue: options.workbench.getWriteQueue(),
+          ...(options.permissions ? { permissions: options.permissions } : {}),
           get maxToolCallsPerTurn() {
             return options.settings.get().settings.limits.maxToolCallsPerTurn;
           },
@@ -97,6 +101,7 @@ export class SessionsHost {
         this.db = db;
       }
       if (!this.service) throw veraError("INTERNAL");
+      await this.service.waitReady();
       return operation(this.service);
     });
   }

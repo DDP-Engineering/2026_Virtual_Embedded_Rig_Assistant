@@ -66,6 +66,8 @@ native acceptance checks all UI theme/scale preferences and panel geometry acros
 - [Toolchain](../../02_Tools/toolchain.json)
 - [AEGIS commands/layout](../aegis.toml)
 
+Prepared-write focused proof uses tools/write-edit.test.ts, sessions/write-edit.test.ts, workbench/service.test.ts and desktop main/sessions.test.ts with real temporary FS/SQLite. e2e/write-edit.spec.ts uses instrumented replay plus a compiled test-only permission injection; release build regression confirms VERA_TEST_ALLOW_WRITES is omitted.
+
 File-tool proof uses real worker-thread bundles and injected shorter deadlines for catastrophic regex/abort/replacement; native Electron file-tools acceptance invokes sandboxed app.info while matching stalls. Dedicated grep-worker entries ship in desktop and CLI; instrumented file-tool probe is compiled out of release.
 
 Chat UI acceptance uses `e2e/chat-ui.spec.ts` with real native replay and worker calls; `?mock=chat` seeds six selectable session states in browser mock mode. Component tests use jsdom, React act and user-event. Instrumented VERA_REPLAY_DELAY_MS slows replay streams; release builds omit this seam.

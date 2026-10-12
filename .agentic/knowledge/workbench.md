@@ -25,6 +25,7 @@ mode offers empty, missing, read-only and warning fixtures.
   canonical folder/config/readOnly/warnings; invalid YAML reports line/column, invalid configuration
   reports path/line, newer format returns WORKBENCH_TOO_NEW before runtime writes.
 - Core-only getSnapshot supplies a detached current snapshot and assertSessionWritable immediately checks ordinary lock paths plus the owned pid/token before session database changes. Main session lifecycle drains active turns before switches/close.
+- Core-only getWriteQueue supplies the shared queue for application config/pinned saves and every session write. File saves validate ownership/current state inside their queue callback; close and replacement drain admitted writes before storage disposal.
 - Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open checks
   database compatibility before lock/recents writes; failed replacement preparation closes its handle
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
@@ -95,7 +96,10 @@ flowchart LR
   bridge --> main[main handlers]
   main --> service[core WorkbenchService]
   service --> settings[SettingsService schema3]
-  service --> YAML[workbench.yaml and WORKBENCH.md]
+  service --> writes[WriteQueue]
+  Sessions[SessionService prepared writes] --> writes
+  writes --> YAML[workbench.yaml and WORKBENCH.md]
+  writes --> Files[confined workbench files]
   service --> lock[.vera lock and process-owned IPC guard]
   service --> storage[core storage compatibility and SQLite handle]
   service --> ignore[createIgnoreRules and completion]

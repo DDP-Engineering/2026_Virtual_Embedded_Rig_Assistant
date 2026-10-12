@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-d5b5be90"
+title = "Replace exact text with line counts"
+status = "active"
+requirement = "When edit is requested, the tool shall replace exactly one nonempty oldString match, or all non-overlapping matches with replaceAll, reporting replacements and unified-diff added/removed line counts; zero or ambiguous matches return actionable errors."
+verification = "Read text; exercise zero/one/multiple/all matches and count resulting diff lines."
+affected_paths = ["05_Software/apps/cli/src/run.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/sessions.test.ts", "05_Software/apps/desktop/src/main/sessions.ts", "05_Software/e2e/write-edit.spec.ts", "05_Software/fixtures/llm-scripts/read-then-edit.jsonl", "05_Software/package-lock.json", "05_Software/packages/core/package.json", "05_Software/packages/core/src/agent/permissions.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/write-edit.test.ts", "05_Software/packages/core/src/tools/changes.ts", "05_Software/packages/core/src/tools/context.ts", "05_Software/packages/core/src/tools/edit.ts", "05_Software/packages/core/src/tools/registry.test.ts", "05_Software/packages/core/src/tools/registry.ts", "05_Software/packages/core/src/tools/write-edit.test.ts", "05_Software/packages/core/src/tools/write.ts", "05_Software/packages/core/src/workbench/service.test.ts", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/core/src/workbench/write-queue.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/sessions.test.ts", "05_Software/e2e/write-edit.spec.ts", "05_Software/packages/core/src/sessions/write-edit.test.ts", "05_Software/packages/core/src/tools/registry.test.ts", "05_Software/packages/core/src/tools/write-edit.test.ts", "05_Software/packages/core/src/workbench/service.test.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+spec = "specs/REQ-FUNC-9aa789af.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

@@ -1,10 +1,12 @@
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
+import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
 import { grepTool } from "./grep.js";
 import { listTool } from "./list.js";
 import { readTool } from "./read.js";
+import { writeTool } from "./write.js";
 
 export const TOOL_RESULT_CAP = 32000;
 export function capToolResult(value: Record<string, unknown>) {
@@ -60,7 +62,9 @@ export interface ToolOutcome {
 }
 export class ToolRegistry {
   private readonly definitions: readonly ToolDefinition[];
-  constructor(definitions: readonly ToolDefinition[] = [readTool, listTool, globTool, grepTool]) {
+  constructor(
+    definitions: readonly ToolDefinition[] = [readTool, listTool, globTool, grepTool, writeTool, editTool],
+  ) {
     const names = definitions.map((tool) => tool.name);
     if (new Set(names).size !== names.length) throw Error("Duplicate tool name.");
     this.definitions = [...definitions];
@@ -70,6 +74,18 @@ export class ToolRegistry {
   }
   specs(disabled: readonly string[] = []) {
     return toolSpecs(this.available(disabled).map((tool) => ({ ...tool, execute: async () => "" })));
+  }
+  async prepare(
+    ctx: ToolContext,
+    name: string,
+    raw: unknown,
+    signal: AbortSignal,
+    disabled: readonly string[] = [],
+  ) {
+    signal.throwIfAborted();
+    const tool = this.available(disabled).find((definition) => definition.name === name);
+    if (!tool?.prepare) throw Error("Prepared write tool is unavailable.");
+    return tool.prepare(ctx, tool.params.parse(raw), signal);
   }
   async execute(
     ctx: ToolContext,

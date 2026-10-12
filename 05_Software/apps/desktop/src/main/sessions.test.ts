@@ -1,5 +1,67 @@
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { openDb, SessionService, WriteQueue } from "@vera/core";
+import { workbenchSchema } from "@vera/shared";
 import { expect, it } from "vitest";
 import { SessionsHost } from "./sessions.js";
+
+it("awaits pending-change recovery before returning a session snapshot from a reopened host", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-host-recovery-"));
+  await mkdir(join(root, ".vera"));
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const clock = { now: () => new Date(), sleep: async () => {} };
+  const core = new SessionService({
+    root,
+    db: storage.db,
+    gateway,
+    clock,
+    model: () => "replay/test",
+    prompt: () => "test",
+  } as never);
+  const session = core.create();
+  await core.close();
+  await writeFile(join(root, "file.txt"), "after\n");
+  const hash = (s: string) => createHash("sha256").update(s).digest("hex");
+  storage.db
+    .prepare(
+      "INSERT INTO changes(session_id,tool_call_id,path,before_sha256,after_sha256,diff,status) VALUES (?,?,?, ?,?,?,'pending')",
+    )
+    .run(
+      session.id,
+      "call",
+      "file.txt",
+      hash("before\n"),
+      hash("after\n"),
+      "--- file.txt\n+++ file.txt\n@@ -1 +1 @@\n-before\n+after\n",
+    );
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getConfig: async () => ({ config }),
+      getPinned: async () => ({ content: "" }),
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    gateway: () => ({ api: gateway }),
+    clock,
+    credentials: { scrub: (s: string) => s },
+  } as never);
+  try {
+    const snapshot = await host.run((service) => service.get(session.id));
+    expect(snapshot.snapshot.changes).toEqual([{ changeId: 1, path: "file.txt", added: 1, removed: 1 }]);
+    expect(storage.db.prepare("SELECT status FROM changes").get()).toEqual({ status: "applied" });
+  } finally {
+    await host.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("denies foreign and detached subscription frames and malformed requests before core setup", async () => {
   const frame = { url: "vera://app/index.html" };

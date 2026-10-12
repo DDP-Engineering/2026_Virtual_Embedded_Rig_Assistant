@@ -81,6 +81,35 @@ it("create/open roundtrip writes validating YAML/template/runtime and preserves 
   expect(await readFile(join(h.folder, "existing.txt"), "utf8")).toBe("user data");
 });
 
+it("serializes pinned and config application saves through the exposed workbench write queue", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Board");
+  const queue = h.service.getWriteQueue();
+  let release: () => void = () => {};
+  let held = false;
+  const first = queue.run(async () => {
+    held = true;
+    await new Promise<void>((done) => {
+      release = done;
+    });
+  });
+  await expect.poll(() => held).toBe(true);
+  let saved = false;
+  const pinned = h.service.updatePinned("queued pinned").then(() => {
+    saved = true;
+  });
+  const config = h.service.updateConfig({ name: "Queued board" });
+  await new Promise<void>((done) => setTimeout(done, 20));
+  expect(saved).toBe(false);
+  expect(await readFile(join(h.folder, "WORKBENCH.md"), "utf8")).not.toBe("queued pinned");
+  release();
+  await Promise.all([first, pinned, config]);
+  expect(h.service.getWriteQueue()).toBe(queue);
+  expect(await readFile(join(h.folder, "WORKBENCH.md"), "utf8")).toBe("queued pinned");
+  expect(parseConfig(await readFile(join(h.folder, "workbench.yaml"), "utf8")).name).toBe("Queued board");
+  await h.service.close();
+});
+
 it("database lifetime follows owned open, same-folder reopen, close and failed replacement", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Board");

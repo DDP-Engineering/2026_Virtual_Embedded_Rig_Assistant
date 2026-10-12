@@ -8,7 +8,7 @@ Select for SessionService, session CRUD/model/mode, persisted snapshots, turn/to
 
 ## Purpose and boundaries
 
-Core SessionService owns one workbench's durable sessions over injected AgentRuntime, gateway, registry, permission port and Clock. SessionHub stores schema-validated events and folds shared snapshots. Main SessionsHost binds current workbench/config/pinned/environment/settings and credentials, owns subscription transport and drains turns before workbench lifecycle changes. M1 permission policy executes read tools; prepared writes/approvals and changes are supplied by their owning components.
+Core SessionService owns one workbench's durable sessions over injected AgentRuntime, gateway, registry, permission port and Clock. SessionHub stores schema-validated events and folds shared snapshots. Main SessionsHost binds current workbench/config/pinned/environment/settings and credentials, owns subscription transport and drains turns before workbench lifecycle changes. The default permission policy executes read tools. Injected PermissionEngine hosts receive prepared immutable write metadata; SessionService applies authorized changes through the workbench queue. The permission decision UI/lifecycle belongs to its permission host.
 
 ## Public interface
 
@@ -18,7 +18,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 - subscribe(id,sinceSeq,listener(seq|undefined,event)) replays persisted rows then live events. Non-live seq starts1 and increases per session; message.delta/reasoning.delta/tool.update have no persisted row or seq. Detached callbacks cannot alter persistence or fail execution.
 - Shared SessionEvent/schema, SessionState/schema, emptySessionState and applySessionEvent form the common projection. message.done text/citations replace deltas even when deltas were missed; unfinalized live-only messages disappear at a terminal boundary. Transient reasoning/tool updates have no durable projection; usage preflight fields preserve actual provider token totals.
 - validateCitations checks unique extracted refs against successful tool ref fields and current confined text line bounds. Unsupported, invented, removed, ignored, binary and escaping refs are invalid.
-- permission readPermissions allows read classes. Session wrapper consults the injected PermissionEngine before execution and scrubs tool output through its host; runtime receives enabled read tools only.
+- readPermissions allows read classes. Session wrapper consults the injected PermissionEngine and scrubs tool output and write-preparation errors through its host. An injected engine receives prepared ChangeRequest before the write is admitted; read-only mode filters write tools and rejects them at approval/execution. Prepared records retain provider call IDs and active turn identity; per-turn sequential runtime execution consumes each prepared closure once.
+- waitReady resolves guarded pending-change recovery; desktop/CLI await it before exposing snapshots or starting turns. Core execution also gates gateway/tool dispatch on readiness. host.writeQueue shares admission with all sessions/app saves; standalone SessionService owns one queue. close drains turns/readiness/write admission before storage closes.
 
 ## Invariants
 
@@ -33,6 +34,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 | Change | Start | Focused proof |
 |---|---|---|
+| Prepared writes/startup barrier | tools/changes.ts,SessionService,desktop SessionsHost | sessions/write-edit.test.ts,main/sessions.test.ts,e2e/write-edit.spec.ts |
 | Lifecycle/persistence/recovery/budgets/permission | core sessions/service.ts | service.test.ts |
 | Replay/live ordering | sessions/hub.ts | service.test.ts replay/reentrancy |
 | Terminal projection | shared session-state.ts/events.ts | session-state.test.ts |
@@ -59,8 +61,10 @@ flowchart LR
  service --> runtime[AgentRuntime]
  runtime --> policy[ContextPolicy]
  policy --> gateway[timedGateway / LlmGateway]
- runtime --> permission[PermissionEngine]
- permission --> registry[ToolRegistry]
+ runtime --> permission[PermissionEngine prepared metadata]
+ permission --> queue[shared WorkbenchService WriteQueue]
+ queue --> changes[changes + SessionHub event transaction]
+ service --> registry[ToolRegistry.prepare/bind]
  hub --> transport[createSessionTransport 50ms coalescer]
  transport --> bridge
  host --> prompt[buildSystemPrompt + Clock]

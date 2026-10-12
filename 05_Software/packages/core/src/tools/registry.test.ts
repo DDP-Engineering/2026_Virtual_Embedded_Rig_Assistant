@@ -10,6 +10,8 @@ it("converts every tool schema and validates samples while filtering disabled na
     list: {},
     glob: { pattern: "**/*.md" },
     grep: { pattern: "hello" },
+    write: { path: "notes.txt", content: "hello" },
+    edit: { path: "notes.txt", oldString: "hello", newString: "world" },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -19,7 +21,13 @@ it("converts every tool schema and validates samples while filtering disabled na
       additionalProperties: false,
     });
   }
-  expect(registry.specs(["read"]).map((tool) => tool.name)).toEqual(["list", "glob", "grep"]);
+  expect(registry.specs(["read"]).map((tool) => tool.name)).toEqual([
+    "list",
+    "glob",
+    "grep",
+    "write",
+    "edit",
+  ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });
 it("validates calls, returns actionable errors and preserves the runtime error outcome", async () => {

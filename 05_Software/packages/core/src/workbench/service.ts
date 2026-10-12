@@ -22,6 +22,7 @@ import type { WorkbenchHost } from "../ports.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
+import { WriteQueue } from "./write-queue.js";
 
 function requireJson(value: unknown, ancestors = new Set<object>()): void {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
@@ -113,6 +114,11 @@ export class WorkbenchService {
   private owned: { folder: string; token: string } | undefined;
   private database: WorkbenchDatabase | undefined;
   private queue: Promise<void> = Promise.resolve();
+  private readonly writes = new WriteQueue();
+  getWriteQueue(): WriteQueue {
+    this.current();
+    return this.writes;
+  }
   constructor(private readonly host: WorkbenchHost) {}
   private run<T>(operation: () => Promise<T>): Promise<T> {
     const result = this.queue.then(operation);
@@ -180,6 +186,7 @@ export class WorkbenchService {
     return this.run(async () => this.openFolder(await this.folder(input), input));
   }
   private async openFolder(folder: string, input: string): Promise<WorkbenchSnapshot> {
+    await this.writes.drain();
     const config = await this.config(folder);
     await this.layout(folder);
     const warnings: WorkbenchWarning[] = configWarnings(config, this.host.catalogs);
@@ -303,21 +310,23 @@ export class WorkbenchService {
     });
   }
   updateConfig(patch: WorkbenchPatch): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
-    return this.run(async () => {
-      const parsed = workbenchPatchSchema.safeParse(patch);
-      if (!parsed.success) throw veraError("INVALID");
-      const state = await this.writable();
-      const current = await this.config(state.folder);
-      if (current.id !== state.config.id) throw veraError("CONFLICT");
-      const config = mergeWorkbench(current, parsed.data);
-      const warnings = configWarnings(config, this.host.catalogs);
-      if (JSON.stringify(config) !== JSON.stringify(current)) {
-        await this.host.files.writeAtomic(join(state.folder, "workbench.yaml"), stringify(config));
-        this.state = { ...state, config, warnings };
-        this.emit(config.id, { type: "config.changed", config, warnings });
-      }
-      return { config: structuredClone(config), warnings };
-    });
+    return this.run(() =>
+      this.writes.run(async () => {
+        const parsed = workbenchPatchSchema.safeParse(patch);
+        if (!parsed.success) throw veraError("INVALID");
+        const state = await this.writable();
+        const current = await this.config(state.folder);
+        if (current.id !== state.config.id) throw veraError("CONFLICT");
+        const config = mergeWorkbench(current, parsed.data);
+        const warnings = configWarnings(config, this.host.catalogs);
+        if (JSON.stringify(config) !== JSON.stringify(current)) {
+          await this.host.files.writeAtomic(join(state.folder, "workbench.yaml"), stringify(config));
+          this.state = { ...state, config, warnings };
+          this.emit(config.id, { type: "config.changed", config, warnings });
+        }
+        return { config: structuredClone(config), warnings };
+      }),
+    );
   }
   private async pinned(folder: string): Promise<{ content: string; oversized: boolean }> {
     if (!(await ordinary(folder, true))) throw veraError("NOT_FOUND");
@@ -378,12 +387,14 @@ export class WorkbenchService {
     });
   }
   updatePinned(content: string): Promise<{ content: string; oversized: boolean }> {
-    return this.run(async () => {
-      if (typeof content !== "string") throw veraError("INVALID");
-      const state = await this.writable();
-      await this.host.files.writeAtomic(join(state.folder, "WORKBENCH.md"), content);
-      return { content, oversized: Buffer.byteLength(content, "utf8") > 16384 };
-    });
+    return this.run(() =>
+      this.writes.run(async () => {
+        if (typeof content !== "string") throw veraError("INVALID");
+        const state = await this.writable();
+        await this.host.files.writeAtomic(join(state.folder, "WORKBENCH.md"), content);
+        return { content, oversized: Buffer.byteLength(content, "utf8") > 16384 };
+      }),
+    );
   }
   private async lock(folder: string): Promise<{ pid: number; token: string | undefined } | undefined> {
     const path = join(folder, ".vera/lock");
@@ -469,6 +480,7 @@ export class WorkbenchService {
   }
   close(): Promise<void> {
     return this.run(async () => {
+      await this.writes.drain();
       if (this.owned)
         await this.release(this.owned, () => {
           if (this.database?.db.open) this.database.db.pragma("wal_checkpoint(TRUNCATE)");

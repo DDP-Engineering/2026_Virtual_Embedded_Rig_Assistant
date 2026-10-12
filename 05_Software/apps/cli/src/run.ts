@@ -129,6 +129,7 @@ export async function runTurn(
       gateway,
       clock: nodeClock,
       workers,
+      writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
       disabledTools: snapshot.config.tools.disabled,
       maxToolCallsPerTurn: config.limits.maxToolCallsPerTurn,
@@ -152,6 +153,7 @@ export async function runTurn(
         }).text,
     });
     resources.push(() => service.close());
+    await service.waitReady();
     const id = options.session ?? service.create(model).id;
     const since = options.session ? service.get(id).seq : 0;
     if (options.session) service.setModel(id, model);
