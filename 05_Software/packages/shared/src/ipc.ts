@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
   modelReferenceSchema,
@@ -39,6 +40,21 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "changes.list": defineChannel(
+    "changes.list",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.array(changeSummarySchema),
+  ),
+  "changes.get": defineChannel(
+    "changes.get",
+    z.strictObject({ changeId: changeIdSchema }),
+    changeDetailSchema,
+  ),
+  "app.revealPath": defineChannel(
+    "app.revealPath",
+    z.strictObject({ path: z.string().min(1) }),
+    z.strictObject({}),
+  ),
   "session.approval.decide": defineChannel(
     "session.approval.decide",
     z

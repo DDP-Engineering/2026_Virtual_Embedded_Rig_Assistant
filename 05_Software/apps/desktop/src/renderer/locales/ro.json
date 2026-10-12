@@ -229,5 +229,10 @@
     "readOnly": "Doar citire",
     "ask": "Întreabă",
     "autoEdit": "Editare automată"
+  },
+  "changes": {
+    "empty": "Nu există modificări în această sesiune.",
+    "history": "Istoricul modificărilor",
+    "reveal": "Arată în folder"
   }
 }

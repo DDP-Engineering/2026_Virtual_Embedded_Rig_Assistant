@@ -2,6 +2,9 @@ import { lstat, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
+  type ChangeDetail,
+  type ChangeSummary,
+  changeIdSchema,
   isLiveSessionEvent,
   type PermissionMode,
   permissionModeSchema,
@@ -11,6 +14,7 @@ import {
   veraError,
 } from "@vera/shared";
 import type Database from "better-sqlite3";
+import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate } from "../agent/approvals.js";
 import { validateCitations } from "../agent/citations.js";
@@ -57,6 +61,13 @@ interface ActiveTurn {
   turnId: string;
   messageId: string;
   failed?: boolean;
+}
+interface RecordedChange {
+  id: number;
+  session_id: string;
+  path: string;
+  created_at: string;
+  diff: string;
 }
 export class SessionService {
   private readonly sessions: SessionsRepository;
@@ -183,6 +194,38 @@ export class SessionService {
   get(id: string) {
     this.row(id);
     return this.hub.get(id);
+  }
+  /** Read stored patches independently of subsequent file edits. */
+  listChanges(id: string): ChangeSummary[] {
+    this.row(id);
+    return (
+      this.host.db
+        .prepare(
+          "SELECT id,session_id,path,created_at,diff FROM changes WHERE session_id=? AND status='applied' ORDER BY created_at ASC,id ASC",
+        )
+        .all(id) as RecordedChange[]
+    ).map((row) => this.changeSummary(row));
+  }
+  getChange(id: number): ChangeDetail {
+    if (!changeIdSchema.safeParse(id).success) throw veraError("INVALID");
+    if (this.closed) throw veraError("CONFLICT");
+    const row = this.host.db
+      .prepare("SELECT id,session_id,path,created_at,diff FROM changes WHERE id=? AND status='applied'")
+      .get(id) as RecordedChange | undefined;
+    if (!row) throw veraError("NOT_FOUND");
+    this.row(row.session_id);
+    return { ...this.changeSummary(row), diff: row.diff };
+  }
+  private changeSummary(row: RecordedChange): ChangeSummary {
+    const lines = parsePatch(row.diff).flatMap((patch) => patch.hunks.flatMap((hunk) => hunk.lines));
+    return {
+      changeId: row.id,
+      sessionId: row.session_id,
+      path: row.path,
+      createdAt: row.created_at,
+      added: lines.filter((line) => line.startsWith("+")).length,
+      removed: lines.filter((line) => line.startsWith("-")).length,
+    };
   }
   private update(id: string, event: Extract<SessionEvent, { type: "session.updated" }>): void {
     this.writable();

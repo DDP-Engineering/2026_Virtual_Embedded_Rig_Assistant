@@ -4,11 +4,14 @@
 schema = 1
 
 [commands]
-# `aegis test` runs `test`; `aegis check --run` runs every entry here.
+# `aegis test` runs `test`; `check --run` uses the explicit [check] run list.
 # npmw.py runs the repository-local Node.js from 02_Tools/runtime (setup: python 02_Tools/setup.py)
 test = "python ../02_Tools/npmw.py npm test"
 test_impacted = "python ../02_Tools/npmw.py npx vitest run {tests}"  # {tests} = the focused regression set
-lint = "python ../02_Tools/npmw.py npm run verify"  # typecheck, tests, boundary and i18n checks
+# Static checks are independent of targeted/full test selection (WP-18 policy).
+lint = "python ../02_Tools/npmw.py npm run lint"
+typecheck = "python ../02_Tools/npmw.py npm run typecheck"
+i18n = "python ../02_Tools/npmw.py npm run check:i18n"
 workdir = "05_Software"                   # npm workspaces root (01-system.md §5)
 # timeout = 0                           # seconds allowed per command; 0 or
 #                                       # absent means no limit at all
@@ -106,5 +109,5 @@ commit_fingerprints = false
 secret_patterns_extra = []
 ignore = []
 strict_promote = []
-# run = ["test", "lint"]   # restrict what `check --run` executes; without
-#                          # this, side-effect-looking names are skipped
+# Targeted tests run separately; see 02_Tools/verification-policy.md.
+run = ["lint", "typecheck", "i18n"]

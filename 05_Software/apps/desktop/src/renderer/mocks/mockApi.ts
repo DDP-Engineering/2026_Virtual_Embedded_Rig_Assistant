@@ -123,9 +123,22 @@ export function createMockApi(
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
     if (channel === "session.list" && scenario === "chat") sessions.seedFixtures();
-    if (channel.startsWith("session."))
+    if (channel.startsWith("session.") || channel.startsWith("changes."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "app.revealPath": {
+        current();
+        const { path } = input.data as Request<"app.revealPath">;
+        if (
+          path.startsWith("/") ||
+          /[\\:\0]/.test(path) ||
+          path.split("/").includes("..") ||
+          path.startsWith(".vera/")
+        )
+          throw veraError("DENIED");
+        value = sessions.reveal(path);
+        break;
+      }
       case "providers.models": {
         const { id } = input.data as Request<"providers.models">;
         if (id === "openai") {

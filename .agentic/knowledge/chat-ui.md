@@ -24,7 +24,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
   caret-local @ paths with arrows/Enter/Tab/Escape. Failed sends retain draft.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Composer exposes the confirmed session mode during active turns; text/model controls lock while running or awaiting approval. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
-- ContextTab queries WORKBENCH.md and shows empty available skills; other panel tabs are placeholders.
+- ContextTab queries WORKBENCH.md and shows empty available skills; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; Docs/Artifacts/Plan are placeholders. [Changes](changes.md) routes these contracts.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
 
 ## Invariants
@@ -72,6 +72,11 @@ flowchart LR
   SessionWorkspace --> Composer
   SessionWorkspace --> UsageMeter
   Shell --> ContextTab
+  Shell --> ChangesTab
+  ChangesTab --> API
+  ChangesTab --> useSessionEvents
+  ChangesTab --> DiffViewer
+  ApprovalCard --> DiffViewer
   useSessionEvents --> API[shared VeraApi boundary]
   useSessionEvents --> SharedReducer
   Transcript --> ApprovalCard
@@ -89,7 +94,7 @@ Paths relative to05_Software.
 
 - apps/desktop/src/renderer/App.tsx — routes and workbench/session selection.
 - apps/desktop/src/renderer/hooks/use-session-events.ts — guarded snapshot/subscription.
-- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab}.tsx — session presentation.
+- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer}.tsx — session presentation.
 - apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
 - apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
 - apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.

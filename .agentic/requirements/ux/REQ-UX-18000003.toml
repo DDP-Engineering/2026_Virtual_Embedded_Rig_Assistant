@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-18000003"
+title = "Present selectable change history"
+status = "active"
+requirement = "While a session is selected, the Changes tab shall display its completed changes with relative paths and added/removed counts in time order and the selected change diff using the shared coloured patch viewer, with an empty state when the list is empty."
+verification = "Mount the actual tab with empty and multiple rows, select through keyboard/click and observe counts and chosen +/- patch lines; native approved edit and restart retain counts/diff."
+affected_paths = ["05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/renderer/components/shell.tsx", "05_Software/apps/desktop/src/renderer/components/session/changes-tab.tsx", "05_Software/apps/desktop/src/renderer/components/session/diff-viewer.tsx", "05_Software/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/apps/desktop/src/renderer/styles.css", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/apps/desktop/src/renderer/components/session/changes-tab.test.ts", "05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/changes-tab.test.ts", "05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/changes.spec.ts"]
+spec = "specs/REQ-FUNC-18000001.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

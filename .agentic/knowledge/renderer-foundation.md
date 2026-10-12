@@ -20,7 +20,7 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact.
 - Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
-- Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, while Docs/Changes/Artifacts/Plan retain placeholders.
+- Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs/Artifacts/Plan retain placeholders.
   Below1280px the right panel overlays the centre.
 - Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates/Data retain placeholders. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - usePreferences loads {settings,readOnly}, applies mutation responses, invalidates on settings.changed
@@ -82,6 +82,8 @@ flowchart LR
   service --> event[settings.changed]
   event --> Query
   usePreferences --> root[theme / font / language]
+  Shell --> ChangesTab
+  ChangesTab --> API
   Shell --> layout[(versioned localStorage geometry)]
   main[main settings handler] --> nativeTheme
 ```

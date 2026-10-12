@@ -24,6 +24,8 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+[Verification policy](../../02_Tools/verification-policy.md) defines targeted per-ticket tests and full milestone gates. Static strict checks remain separate from test results. Changes acceptance uses core sessions/changes.test.ts, shared changes-ipc.test.ts, main reveal-path.test.ts, renderer changes-tab.test.ts and e2e/changes.spec.ts on Windows/native Ubuntu; the native test uses the real ask gate and proves counts/diff after restart.
+
 `npm run package` / `package:test` build host x64 release/instrumented ZIP or AppImage with
 electron-builder 26.17.0. `prepare:model` materializes the manifest-pinned model; `-- --offline`
 verifies cached assets. Runtime assets never require a model download. Native N-API install scripts

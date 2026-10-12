@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
+import { DiffViewer } from "./diff-viewer.js";
 
 export function ApprovalCard({
   approval,
@@ -64,24 +65,7 @@ export function ApprovalCard({
       </h4>
       <p>{t("approval.bytes", { count: approval.bytes })}</p>
       <p className="sr-only">{t("approval.diff")}</p>
-      <pre className="approval-diff">
-        {approval.diff.split("\n").map((line, index) => (
-          <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: An immutable patch has fixed line positions; repeated context lines require the position in their identity.
-            key={`${approval.approvalId}/${index}/${line}`}
-            className={
-              line.startsWith("+") && !line.startsWith("+++")
-                ? "diff-added"
-                : line.startsWith("-") && !line.startsWith("---")
-                  ? "diff-removed"
-                  : "diff-context"
-            }
-          >
-            {line}
-            {"\n"}
-          </span>
-        ))}
-      </pre>
+      <DiffViewer diff={approval.diff} identity={approval.approvalId} />
       {error !== undefined && <ErrorMessage error={error} />}
       {approval.decision ? (
         <p role="status">

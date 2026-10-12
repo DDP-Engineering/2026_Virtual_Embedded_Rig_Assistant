@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-18000005"
+title = "Reveal confined workbench files"
+status = "active"
+requirement = "When Reveal in folder invokes app.revealPath with a current workbench-relative file path, main shall reveal an existing ordinary confined file through the native host after PathGuard validation, returning DENIED for escaping, ignored or redirected targets and NOT_FOUND for a missing file."
+verification = "Use temporary native roots/files and a spy native host; valid Unicode file reaches host once, missing/outside/ignored/link-to-outside values do not; redirect a parent outside immediately after ordinary-file lstat and assert DENIED without host launch. Check shared request rejects malformed payload and main-frame authorization remains enforced."
+affected_paths = ["05_Software/apps/desktop/src/main/reveal-path.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/renderer/components/session/changes-tab.tsx", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/apps/desktop/src/main/reveal-path.test.ts", "05_Software/apps/desktop/src/renderer/components/session/changes-tab.test.ts", "05_Software/packages/shared/src/changes-ipc.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/reveal-path.test.ts", "05_Software/apps/desktop/src/renderer/components/session/changes-tab.test.ts", "05_Software/packages/shared/src/changes-ipc.test.ts", "05_Software/e2e/changes.spec.ts"]
+spec = "specs/REQ-FUNC-18000001.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

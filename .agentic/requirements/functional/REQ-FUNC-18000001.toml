@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-18000001"
+title = "List completed session changes"
+status = "active"
+requirement = "When a caller lists changes for an existing session in the active workbench, the service shall return every applied change with its identity, relative path, UTC creation time and added/removed line counts, ordered by creation time ascending then identity."
+verification = "Create real SQLite rows for two sessions, reverse times/equal times and pending/conflict rows; list each session and observe ordered applied-only counts, empty existing session and NOT_FOUND for missing session."
+affected_paths = ["05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/changes.test.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/changes.test.ts", "05_Software/e2e/changes.spec.ts"]
+spec = "specs/REQ-FUNC-18000001.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

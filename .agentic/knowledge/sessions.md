@@ -13,6 +13,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 ## Public interface
 
 - SessionService(host) recovers writable state before accepting work. host supplies SQLite/root/gateway/Clock/model/prompt and optional workers/registry/permissions/policy/runtime/limits/scrubbing/ownership check. Read-only services expose reads/subscriptions.
+- listChanges(sessionId) and getChange(changeId) project applied SQLite rows, ascending creation time/id and stored-patch hunk counts/details. [Changes](changes.md) owns the read protocol and renderer/native reveal.
 - create(modelRef?,mode?) returns camelCase metadata with ses_ULID,UTC dates,empty title and idle status. list, get(id)->{snapshot,seq}, rename,delete,setModel,setMode own metadata and errors. Default mode comes from host; model resolution applies session/workbench/app precedence. First user text sets an empty title to60 UTF16 units; explicit nonempty rename survives.
 - send returns turnId/messageId promptly, waitIdle is core completion, stop propagates abort, close aborts/drains all turns. Active sends, model/title and deletion mutations return BUSY. setMode remains available during active turns; read-only aborts pending approvals. Many sessions may run together.
 - subscribe(id,sinceSeq,listener(seq|undefined,event)) replays persisted rows then live events. Non-live seq starts1 and increases per session; message.delta/reasoning.delta/tool.update have no persisted row or seq. Detached callbacks cannot alter persistence or fail execution.
@@ -60,6 +61,7 @@ flowchart LR
  service --> hub[SessionHub]
  hub --> events[(SQLite events)]
  service --> messages[(messages/tool_calls)]
+ service --> completedChanges[(applied changes read projection)]
  service --> runtime[AgentRuntime]
  runtime --> policy[ContextPolicy]
  policy --> gateway[timedGateway / LlmGateway]

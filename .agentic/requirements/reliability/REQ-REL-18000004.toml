@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-18000004"
+title = "Refresh recorded changes live"
+status = "active"
+requirement = "When change.recorded arrives for the selected session, the Changes tab shall refresh its completed history from storage using snapshot-before-subscribe sequence replay so an edit recorded during initial loading is visible."
+verification = "Hold the initial list response while recording a change, replay from snapshot sequence and observe refetched list; emit a later change and retain existing selection."
+affected_paths = ["05_Software/apps/desktop/src/renderer/components/session/changes-tab.tsx", "05_Software/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/apps/desktop/src/renderer/components/session/changes-tab.test.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/changes-tab.test.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.test.ts", "05_Software/e2e/changes.spec.ts"]
+spec = "specs/REQ-FUNC-18000001.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

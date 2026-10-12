@@ -68,6 +68,9 @@ it("registers a session replay subscription before dispatch and filters its toke
 });
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
+    | "changes.list"
+    | "changes.get"
+    | "app.revealPath"
     | "session.approval.decide"
     | "session.list"
     | "session.create"

@@ -15,6 +15,9 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "changes.list": unused,
+  "changes.get": unused,
+  "app.revealPath": unused,
   "session.approval.decide": unused,
   "session.list": unused,
   "session.create": unused,

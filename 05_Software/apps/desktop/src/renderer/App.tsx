@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { Metadata } from "./components/metadata.js";
+import { ChangesTab } from "./components/session/changes-tab.js";
 import { ContextTab } from "./components/session/context-tab.js";
 import { SessionList } from "./components/session/session-list.js";
 import { SessionWorkspace } from "./components/session/workspace.js";
@@ -220,6 +221,11 @@ export function App() {
       navigation={navigation}
       storageReadOnly={!snapshot.data || snapshot.data.readOnly}
       context={benchId && chat && !settings ? <ContextTab workbenchId={benchId} /> : undefined}
+      changes={
+        benchId && activeSession && chat && !settings ? (
+          <ChangesTab workbenchId={benchId} sessionId={activeSession} />
+        ) : undefined
+      }
     >
       <div className="page-content" hidden={chat && !settings}>
         <h2 className="page-title" key={settings ? "settings" : "welcome"} ref={focusHeading} tabIndex={-1}>

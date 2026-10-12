@@ -13,6 +13,7 @@ import {
   safeStorage,
   screen,
   session,
+  shell,
 } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { CredentialFile } from "./credentials.js";
@@ -24,6 +25,7 @@ import { createInvokeRouter } from "./ipc-router.js";
 import { createLogger } from "./logger.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
+import { revealPath } from "./reveal-path.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { SessionsHost } from "./sessions.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
@@ -110,6 +112,17 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "changes.list": ({ sessionId }) =>
+        sessions.run((s) => s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) }))),
+      "changes.get": ({ changeId }) =>
+        sessions.run((s) => {
+          const c = s.getChange(changeId);
+          return { ...c, path: credentials.scrub(c.path), diff: credentials.scrub(c.diff) };
+        }),
+      "app.revealPath": ({ path }) =>
+        sessions.run(() =>
+          revealPath(workbench.getSnapshot().folder, path, (absolute) => shell.showItemInFolder(absolute)),
+        ),
       "session.list": () =>
         sessions.run((s) =>
           s.list().map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),

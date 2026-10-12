@@ -6,7 +6,7 @@ Select for vera.db, schema_version, checksummed SQL migrations, backup files and
 
 ## Purpose and boundaries
 
-Core owns the better-sqlite3 connection, initial schema, migration catalogue and three storage repositories. Prepared file tools own changes-table transitions, with applied status/change-event recording in one transaction and guarded hash recovery; [file tools](file-tools.md) routes that behavior. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; [session behavior](sessions.md) owns runtime integration, native provider-ID tool rows, recovery and event projection.
+Core owns the better-sqlite3 connection, initial schema, migration catalogue and three storage repositories. [Changes](changes.md) owns the applied-row read projection and recorded patch/count presentation. Prepared file tools own changes-table transitions, with applied status/change-event recording in one transaction and guarded hash recovery; [file tools](file-tools.md) routes that behavior. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; [session behavior](sessions.md) owns runtime integration, native provider-ID tool rows, recovery and event projection.
 
 ## Public interface
 

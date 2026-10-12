@@ -18,6 +18,7 @@ export function Shell({
   navigate,
   storageReadOnly,
   context,
+  changes,
 }: {
   children: ReactNode;
   navigation: ReactNode;
@@ -25,6 +26,7 @@ export function Shell({
   navigate: (settings: boolean) => void;
   storageReadOnly: boolean;
   context?: ReactNode;
+  changes?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [initial] = useState(initialLayout);
@@ -191,7 +193,13 @@ export function Shell({
               ))}
             </div>
             <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-              {tab === "context" && context ? context : <p className="muted">{t("panel.placeholder")}</p>}
+              {tab === "context" && context ? (
+                context
+              ) : tab === "changes" && changes ? (
+                changes
+              ) : (
+                <p className="muted">{t("panel.placeholder")}</p>
+              )}
             </div>
           </aside>
         )}

@@ -1,5 +1,53 @@
+import type { ChangeDetail, ChangeSummary, SessionState } from "@vera/shared";
 import { expect, it, vi } from "vitest";
 import { MockSessions } from "./sessions.js";
+
+it("records approved mock changes with strict list/get parity and workbench isolation", async () => {
+  let workbench = "one";
+  const sessions = new MockSessions(() => ({ id: workbench, readOnly: false, model: null, mode: "ask" }));
+  const s = sessions.invoke("session.create", {}) as { id: string };
+  expect(sessions.invoke("changes.list", { sessionId: s.id })).toEqual([]);
+  const approve = async (decision: "approved" | "denied") => {
+    sessions.invoke("session.send", { sessionId: s.id, text: "edit notes" });
+    await expect
+      .poll(
+        () =>
+          (sessions.invoke("session.get", { sessionId: s.id }) as { snapshot: SessionState }).snapshot.status,
+      )
+      .toBe("awaiting_approval");
+    const approval = (
+      sessions.invoke("session.get", { sessionId: s.id }) as { snapshot: SessionState }
+    ).snapshot.approvals.at(-1);
+    if (!approval) throw Error("approval missing");
+    sessions.invoke("session.approval.decide", {
+      sessionId: s.id,
+      approvalId: approval.approvalId,
+      requestSha256: approval.requestSha256,
+      decision,
+    });
+    await expect
+      .poll(
+        () =>
+          (sessions.invoke("session.get", { sessionId: s.id }) as { snapshot: SessionState }).snapshot.status,
+      )
+      .toBe("idle");
+  };
+  await approve("denied");
+  expect(sessions.invoke("changes.list", { sessionId: s.id })).toEqual([]);
+  await approve("approved");
+  const list = sessions.invoke("changes.list", { sessionId: s.id }) as ChangeSummary[];
+  expect(list).toHaveLength(1);
+  expect(list[0]).toMatchObject({ sessionId: s.id, added: 1, removed: 1 });
+  const detail = sessions.invoke("changes.get", { changeId: list[0]?.changeId }) as ChangeDetail;
+  expect(detail.diff).toContain("-old\n+new");
+  expect(
+    (sessions.invoke("session.get", { sessionId: s.id }) as { snapshot: SessionState }).snapshot.changes[0],
+  ).toMatchObject({ changeId: detail.changeId, added: 1, removed: 1 });
+  workbench = "two";
+  expect(() => sessions.invoke("changes.get", { changeId: detail.changeId })).toThrow();
+  workbench = "one";
+  expect(sessions.invoke("changes.get", { changeId: detail.changeId })).toEqual(detail);
+});
 
 it("binds scheduled responses to their original workbench even after a switch", async () => {
   let id = "one";

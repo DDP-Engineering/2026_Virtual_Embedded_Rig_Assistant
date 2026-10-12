@@ -1,5 +1,6 @@
 import {
   applySessionEvent,
+  type ChangeDetail,
   emptySessionState,
   isLiveSessionEvent,
   type SessionEvent,
@@ -10,11 +11,13 @@ import { sessionFixtures } from "./session-fixtures.js";
 
 export class MockSessions {
   private number = 0;
+  private changeNumber = 0;
   private readonly sessions = new Map<
     string,
     {
       summary: SessionSummary;
       events: SessionEvent[];
+      changes: ChangeDetail[];
       live?: SessionEvent[];
       active: boolean;
       stop: boolean;
@@ -48,6 +51,11 @@ export class MockSessions {
       if (fixture.live) row.live = fixture.live;
       this.emit(summary.id, { type: "session.updated", title: fixture.title, status: row.summary.status });
     }
+  }
+  reveal(path: string): Record<string, never> {
+    for (const [key, row] of this.sessions)
+      if (key.startsWith(`${this.current().id}/`) && row.changes.some((c) => c.path === path)) return {};
+    throw veraError("NOT_FOUND");
   }
   private key(id: string) {
     return `${this.current().id}/${id}`;
@@ -109,7 +117,7 @@ export class MockSessions {
         status: "idle",
         archived: false,
       };
-      this.sessions.set(this.key(id), { summary, events: [], active: false, stop: false });
+      this.sessions.set(this.key(id), { summary, events: [], changes: [], active: false, stop: false });
       this.emit(id, {
         type: "session.updated",
         title: "",
@@ -119,8 +127,19 @@ export class MockSessions {
       });
       return summary;
     }
+    if (channel === "changes.get") {
+      const changeId = (raw as { changeId: number }).changeId;
+      for (const [key, row] of this.sessions)
+        if (key.startsWith(`${this.current().id}/`)) {
+          const value = row.changes.find((c) => c.changeId === changeId);
+          if (value) return structuredClone(value);
+        }
+      throw veraError("NOT_FOUND");
+    }
     const id = request.sessionId;
     const row = this.row(id);
+    if (channel === "changes.list")
+      return row.changes.map(({ diff: _, ...summary }) => structuredClone(summary));
     if (channel === "session.get")
       return { snapshot: row.events.reduce(applySessionEvent, emptySessionState()), seq: row.events.length };
     if (channel === "session.stop") {
@@ -227,6 +246,29 @@ export class MockSessions {
             );
             if (row.summary.mode === "auto-edit" && row.approval) this.decide(id, "approved", "mode");
             const outcome = await decision;
+            if (outcome === "approved") {
+              const change: ChangeDetail = {
+                changeId: ++this.changeNumber,
+                sessionId: id,
+                path: "docs/notes/bringup.md",
+                createdAt: new Date().toISOString(),
+                added: 1,
+                removed: 1,
+                diff: "--- docs/notes/bringup.md\n+++ docs/notes/bringup.md\n@@ -1 +1 @@\n-old\n+new\n",
+              };
+              row.changes.push(change);
+              this.emit(
+                id,
+                {
+                  type: "change.recorded",
+                  changeId: change.changeId,
+                  path: change.path,
+                  added: change.added,
+                  removed: change.removed,
+                },
+                key,
+              );
+            }
             this.emit(
               id,
               {

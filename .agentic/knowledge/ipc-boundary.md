@@ -29,6 +29,7 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
   pinned.update/files have strict requests/responses; configuration objects retain extensions.
   config.get includes optional folder/readOnly metadata for renderer reload. WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
 - emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
+- changes.list/get use strict summary/detail schemas and current SessionsHost recovery/lifetime. Main scrubs path/diff while preserving IDs/dates/counts. app.revealPath accepts a workbench-relative path, validates canonical confinement/ordinary existence and calls native shell; [Changes](changes.md) owns behavior and proof.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
 - session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and e2e/approvals.spec.ts cover strict values and real exact decisions.
 - Session list/get and mutation summaries redact user fields while preserving schema identities and enums. Titles remain bounded after redaction; known-secret text/title/model requests are refused. Mock sessions bind delayed responses to their originating workbench and drain aborted turns before switches/close.
@@ -87,6 +88,9 @@ flowchart LR
   GATEWAY --> LLM[core LlmGateway / ConnectionTest]
   ROUTER --> WORKBENCH[core WorkbenchService]
   ROUTER --> SESSIONS[SessionsHost + core SessionService]
+  ROUTER --> RevealPath
+  RevealPath --> PathGuard
+  RevealPath --> NativeShell
   SESSIONS --> COALESCE[per-subscription 50ms transport]
   COALESCE --> EMIT
   WORKBENCH --> EMIT
