@@ -24,6 +24,7 @@ import {
 } from "@vera/shared";
 import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
+import { mockDocument, mockDocuments } from "./documents.js";
 import { mockAppInfo } from "./fixtures.js";
 import { MockSessions } from "./sessions.js";
 
@@ -131,7 +132,61 @@ export function createMockApi(
     switch (channel) {
       case "docs.reindex": {
         if (current().snapshot.readOnly) throw veraError("DENIED");
+        const { workbenchId } = channels["docs.reindex"].request.parse(input.data);
+        if (workbenchId && workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        emit({
+          topic: "workbench",
+          id: current().snapshot.config.id,
+          event: { type: "index.progress", pending: 2, done: 0, failed: 0 },
+        });
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        emit({
+          topic: "workbench",
+          id: current().snapshot.config.id,
+          event: { type: "index.progress", pending: 0, done: 8, failed: 1 },
+        });
         value = {};
+        break;
+      }
+      case "docs.list": {
+        const { workbenchId } = channels["docs.list"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        value = { workbenchId, documents: scenario === "empty" ? [] : mockDocuments };
+        break;
+      }
+      case "docs.search": {
+        const { workbenchId, query } = channels["docs.search"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        value = {
+          workbenchId,
+          results: /power|3\.3|reset/i.test(query)
+            ? [{ path: "docs/a.md", ref: "docs/a.md#h=power", snippet: "3.3 V supply", score: 1 }]
+            : [],
+        };
+        break;
+      }
+      case "docs.open": {
+        const request = channels["docs.open"].request.parse(input.data);
+        if (request.workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if ("sessionId" in request) {
+          const snapshot = channels["session.get"].response.parse(
+            sessions.invoke("session.get", request),
+          ).snapshot;
+          if (
+            !snapshot.items.some(
+              (i) =>
+                i.kind === "assistant" &&
+                i.id === request.messageId &&
+                !i.streaming &&
+                i.citations.some((c) => c.ref === request.ref && c.valid),
+            )
+          )
+            throw veraError("NOT_FOUND");
+        }
+        value = {
+          workbenchId: request.workbenchId,
+          content: mockDocument("path" in request ? request.path : request.ref, "path" in request),
+        };
         break;
       }
       case "app.openExternal":

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
@@ -29,9 +29,41 @@ function developmentCsp(): Plugin {
         const policy = productionCsp
           .replace("script-src 'self'", `script-src 'self' ${hashes.join(" ")}`)
           .replace("style-src 'self'", "style-src 'self' 'unsafe-inline'")
-          .replace("connect-src 'none'", "connect-src 'self' ws://127.0.0.1:5173");
+          .replace("connect-src 'self'", "connect-src 'self' ws://127.0.0.1:5173");
         return html.replace(productionCsp, policy);
       },
+    },
+  };
+}
+
+/** Pinned offline pdf.js resources: identical asset names in dev and production. */
+function pdfResources(): Plugin {
+  const base = resolve(root, "../../node_modules/pdfjs-dist");
+  const assets = ["cmaps", "standard_fonts", "wasm"].flatMap((directory) =>
+    readdirSync(resolve(base, directory))
+      .filter((file) => !file.startsWith("LICENSE"))
+      .map((file) => ({
+        name: `pdfjs/${directory}/${file}`,
+        source: readFileSync(resolve(base, directory, file)),
+      })),
+  );
+  return {
+    name: "vera-pdf-resources",
+    generateBundle() {
+      for (const asset of assets)
+        this.emitFile({ type: "asset", fileName: asset.name, source: asset.source });
+    },
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split("?")[0]?.slice(1);
+        const asset = assets.find((a) => a.name === path);
+        if (!asset) return next();
+        response.setHeader(
+          "Content-Type",
+          asset.name.endsWith(".wasm") ? "application/wasm" : "application/octet-stream",
+        );
+        response.end(asset.source);
+      });
     },
   };
 }
@@ -89,7 +121,7 @@ export default defineConfig(({ command }) => ({
     root: resolve(root, "src/renderer"),
     resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },
     server: { host: "127.0.0.1", port: 5173, strictPort: true },
-    plugins: [react(), tailwindcss(), developmentCsp()],
+    plugins: [react(), tailwindcss(), developmentCsp(), pdfResources()],
     build: { rollupOptions: { input: resolve(root, "src/renderer/index.html") } },
   },
 }));

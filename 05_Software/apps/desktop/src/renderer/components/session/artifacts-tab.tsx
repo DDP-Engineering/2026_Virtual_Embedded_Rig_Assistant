@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { ArtifactBody } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
-import { Markdown } from "./markdown.js";
 
 function unchanged() {}
 export function ArtifactsTab(props: { workbenchId: string; sessionId: string }) {
@@ -108,11 +108,7 @@ function ArtifactsView({ workbenchId, sessionId }: { workbenchId: string; sessio
               <h3>{detail.data.name}</h3>
               {detail.data.description && <p>{detail.data.description}</p>}
               <section className="artifact-viewer" aria-label={t("artifacts.viewer")}>
-                {detail.data.mime === "text/markdown" ? (
-                  <Markdown text={detail.data.content} />
-                ) : (
-                  <pre>{detail.data.content}</pre>
-                )}
+                <ArtifactBody content={detail.data.content} mime={detail.data.mime} />
               </section>
               <div className="artifact-actions">
                 <button type="button" disabled={!!action} onClick={() => void perform("artifacts.export")}>

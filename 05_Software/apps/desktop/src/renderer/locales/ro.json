@@ -180,7 +180,6 @@
     "message": "Mesaj",
     "send": "Trimite",
     "invalidCitation": "Citarea nu a putut fi verificată",
-    "viewerPending": "Vizualizatorul va fi disponibil într-o actualizare ulterioară.",
     "transcript": "Transcript",
     "empty": "Începe prin a trimite un mesaj.",
     "reasoning": "Raționament",
@@ -265,5 +264,42 @@
     "portBusy": "Portul 1455 este ocupat, adesea de o autentificare neterminată în Codex CLI. Anuleaz-o și încearcă din nou.",
     "loginFailed": "Autentificarea ChatGPT a eșuat. Încearcă din nou.",
     "browserFailed": "Pagina de autentificare nu se poate deschide. Încearcă din nou."
+  },
+  "documents": {
+    "viewer": "Vizualizare document",
+    "search": "Caută documente",
+    "reindex": "Reindexează",
+    "open": "Deschide",
+    "progress": "Index: {{done}} finalizate, {{pending}} în așteptare, {{failed}} eșuate",
+    "readOnly": "Workbench doar pentru citire",
+    "empty": "Nu există documente în index.",
+    "noResults": "Niciun document găsit.",
+    "pdfError": "PDF-ul nu a putut fi afișat. Închide și redeschide pentru a reîncerca.",
+    "previous": "Pagina anterioară",
+    "next": "Pagina următoare",
+    "page": "Pagină",
+    "pageCount": "din {{count}}",
+    "zoom": "Zoom",
+    "find": "Caută text",
+    "matches": "{{count}} pagini găsite",
+    "nextMatch": "Următorul rezultat",
+    "citedPages": "Pagini citate {{start}}–{{end}}",
+    "status": {
+      "pending": "În așteptare",
+      "indexed": "Indexat",
+      "failed": "Eșuat",
+      "unsupported": "Nesuportat",
+      "needs_ocr": "Necesită OCR"
+    },
+    "reason": {
+      "SIZE_LIMIT": "Limită de dimensiune depășită",
+      "TYPE_UNSUPPORTED": "Tip nesuportat",
+      "BINARY": "Fișier binar",
+      "IO": "Sursă indisponibilă",
+      "PROCESSING": "Procesare eșuată",
+      "NEEDS_OCR": "Fără text căutabil; necesită OCR"
+    },
+    "line": "Linie",
+    "lineCount": "Linii {{start}}–{{end}} din {{count}}"
   }
 }

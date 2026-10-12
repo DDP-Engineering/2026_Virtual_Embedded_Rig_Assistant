@@ -1,0 +1,2 @@
+{"match":"(?i)viewer anchors","toolCalls":[{"name":"read_doc","args":{"path":"docs/a.pdf","page":2}},{"name":"read_doc","args":{"path":"docs/anchors.md","heading":"power-1"}},{"name":"read","args":{"path":"docs/boot.log","offset":60,"limit":3}}]}
+{"text":"Viewer anchors: [[docs/a.pdf#p=2]] [[docs/anchors.md#h=power-1]] [[docs/boot.log#L60-L62]]."}

@@ -22,6 +22,7 @@ import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createDocumentServices } from "./document-processor.js";
+import { publicDocument, publicDocumentHit, publicViewer } from "./document-viewer.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
@@ -133,8 +134,39 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
-      "docs.reindex": async () => {
-        await workbench.reindexDocuments();
+      "docs.list": async ({ workbenchId }) => ({
+        workbenchId,
+        documents: (await workbench.listDocuments(workbenchId))
+          .map((doc) => publicDocument(doc, (text) => credentials.scrub(text)))
+          .filter((doc) => doc !== undefined),
+      }),
+      "docs.search": async ({ workbenchId, query }) => ({
+        workbenchId,
+        results: (await workbench.searchDocuments(workbenchId, query))
+          .map((hit) => publicDocumentHit(hit, (text) => credentials.scrub(text)))
+          .filter((hit) => hit !== undefined),
+      }),
+      "docs.open": async (request) => {
+        const content =
+          "sessionId" in request
+            ? await sessions.run((service) =>
+                workbench.readDocuments(request.workbenchId, () =>
+                  service.openCitation(request.sessionId, request.messageId, request.ref),
+                ),
+              )
+            : await workbench.openDocument(
+                request.workbenchId,
+                "path" in request ? request.path : request.ref,
+                "path" in request,
+              );
+        // Match existing session/artifact disclosure scrubbing, while keeping PDF bytes intact.
+        return {
+          workbenchId: request.workbenchId,
+          content: publicViewer(content, (text) => credentials.scrub(text)),
+        };
+      },
+      "docs.reindex": async ({ workbenchId }) => {
+        await workbench.reindexDocuments(workbenchId);
         return {};
       },
       "app.openExternal": (request) => openExternal(request, (url) => shell.openExternal(url)),

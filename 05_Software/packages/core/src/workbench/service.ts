@@ -4,6 +4,7 @@ import { isAbsolute, join } from "node:path";
 import {
   configWarnings,
   mergeWorkbench,
+  parseRef,
   type RecentWorkbenchState,
   veraError,
   type WorkbenchConfig,
@@ -19,8 +20,11 @@ import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
 import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
+import { DocumentKnowledge } from "../knowledge/search.js";
+import { DocumentViewer } from "../knowledge/viewer.js";
 import type { WorkbenchHost } from "../ports.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
+import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
 import { WriteQueue } from "./write-queue.js";
@@ -143,13 +147,66 @@ export class WorkbenchService {
     this.ingest = undefined;
     if (this.state) await this.processDocument?.release?.(this.state.folder);
   }
-  reindexDocuments(): Promise<void> {
+  reindexDocuments(workbenchId?: string): Promise<void> {
     // Admit on the lifecycle queue, then wait outside it so close/switch can abort processing.
     return this.run(async () => {
+      if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
       this.assertSessionWritable();
       if (!this.ingest) throw veraError("NOT_FOUND");
       return { completion: this.ingest.reindex() };
     }).then(({ completion }) => completion);
+  }
+  /** Serialize reads against workbench close/switch, rechecking identity and current ownership. */
+  readDocuments<T>(id: string, read: (root: string, db: Database.Database) => Promise<T>): Promise<T> {
+    return this.run(async () => {
+      const state = this.current();
+      if (state.config.id !== id) throw veraError("CONFLICT");
+      if (!state.readOnly) this.assertSessionWritable();
+      const value = await read(state.folder, this.getDatabase());
+      if (!state.readOnly) this.assertSessionWritable();
+      return value;
+    });
+  }
+  listDocuments(id: string) {
+    return this.readDocuments(id, async (_root, db) => new DocumentsRepository(db).list());
+  }
+  searchDocuments(id: string, query: string) {
+    return this.readDocuments(id, async (root, db) => {
+      try {
+        const epoch = () => db.prepare("SELECT value FROM meta WHERE key='embedding_epoch'").pluck().get();
+        const initialEpoch = epoch();
+        const result = await new DocumentKnowledge(root, db).search(
+          { query, mode: "keyword", k: 20 },
+          new AbortController().signal,
+        );
+        const viewer = new DocumentViewer(root, db);
+        const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
+        const current = [];
+        for (const hit of result.results) {
+          const ref = parseRef(hit.ref);
+          if (!ref || ref.kind === "artifact" || ref.path !== hit.path) continue;
+          if (!checked.has(hit.path)) checked.set(hit.path, await viewer.currentBounds(hit.path));
+          const bounds = checked.get(hit.path);
+          if (!bounds) continue;
+          const valid =
+            ref.kind === "lines"
+              ? bounds.kind !== "pdf" && ref.end <= bounds.lines
+              : ref.kind === "heading"
+                ? (bounds.kind === "markdown" || bounds.kind === "html") && bounds.slugs.has(ref.slug)
+                : bounds.kind === "pdf" && (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages;
+          if (valid) current.push({ ref: hit.ref, path: hit.path, snippet: hit.snippet, score: hit.score });
+        }
+        if (epoch() !== initialEpoch) throw Error("Document index changed during search.");
+        return current;
+      } catch {
+        throw veraError("NOT_FOUND");
+      }
+    });
+  }
+  openDocument(id: string, target: string, byPath: boolean) {
+    return this.readDocuments(id, (root, db) =>
+      byPath ? new DocumentViewer(root, db).openPath(target) : new DocumentViewer(root, db).open(target),
+    );
   }
   private run<T>(operation: () => Promise<T>): Promise<T> {
     const result = this.queue.then(operation);

@@ -16,6 +16,20 @@ const document = {
   indexedAt: null,
 };
 const envelope = (event: unknown) => ({ topic: "workbench", id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", event });
+// REQ-FUNC-28ad0001
+it("requires exact workbench identity and typed viewer requests without client snippets", () => {
+  const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  expect(channels["docs.list"].request.parse({ workbenchId })).toEqual({ workbenchId });
+  expect(channels["docs.open"].request.safeParse({ workbenchId, path: "docs/a.pdf" }).success).toBe(true);
+  for (const value of [
+    { path: "docs/a.pdf" },
+    { workbenchId, path: "../secret" },
+    { workbenchId, path: "docs/a.pdf", snippet: "invented" },
+    { workbenchId, ref: "artifact:a.md" },
+  ])
+    expect(channels["docs.open"].request.safeParse(value).success).toBe(false);
+  expect(channels["docs.search"].request.safeParse({ workbenchId, query: " " }).success).toBe(false);
+});
 it("validates strict reindex requests/responses and truthful document/progress/removal events", () => {
   expect(channels["docs.reindex"].request.parse({})).toEqual({});
   expect(channels["docs.reindex"].response.parse({})).toEqual({});

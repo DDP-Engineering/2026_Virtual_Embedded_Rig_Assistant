@@ -1,13 +1,15 @@
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it } from "vitest";
+import { createDocumentProcessor } from "../knowledge/processor.js";
 import { SettingsService } from "../settings/service.js";
+import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
 
@@ -79,6 +81,93 @@ it("create/open roundtrip writes validating YAML/template/runtime and preserves 
   expect(opened.readOnly).toBe(false);
   await h.service.close();
   expect(await readFile(join(h.folder, "existing.txt"), "utf8")).toBe("user data");
+});
+// REQ-FUNC-28ad0001 REQ-UX-28ad0003
+it("scopes document reads and reindex to identity/current ownership and serializes close", async () => {
+  const h = await harness();
+  try {
+    const opened = await h.service.create(h.folder, "Docs");
+    expect(await h.service.listDocuments(opened.config.id)).toEqual([]);
+    await expect(h.service.listDocuments("wb_00000000000000000000000000")).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await expect(h.service.reindexDocuments("wb_00000000000000000000000000")).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    let release: () => void = () => {};
+    const read = h.service.readDocuments(
+      opened.config.id,
+      async () =>
+        new Promise((done) => {
+          release = () => done("source");
+        }),
+    );
+    await expect.poll(() => release.toString().includes('done("source")')).toBe(true);
+    let closed = false;
+    const closing = h.service.close().then(() => {
+      closed = true;
+    });
+    await Promise.resolve();
+    expect(closed).toBe(false);
+    release();
+    expect(await read).toBe("source");
+    await closing;
+    await expect(h.service.listDocuments(opened.config.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  } finally {
+    await h.service.close();
+  }
+});
+it("Docs search verifies current source hash/status/kind/locator and rejects edited, replaced or binary text", async () => {
+  const h = await harness();
+  try {
+    const opened = await h.service.create(h.folder, "Current docs"),
+      path = "docs/current.md";
+    const text = "# Supply\nCURRENT_DOC_TOKEN123 3.3 V\n# Reset\nCURRENT_DOC_TOKEN123 assert reset\n";
+    await writeFile(join(h.folder, path), text);
+    const sha256 = createHash("sha256").update(text).digest("hex");
+    const result = await createDocumentProcessor(async () => {
+      throw Error("No PDF expected");
+    })({
+      root: h.folder,
+      path,
+      kind: "markdown",
+      sha256,
+      signal: new AbortController().signal,
+      assertWritable: () => {},
+    });
+    const rows = new DocumentsRepository(h.service.getDatabase());
+    const doc = rows.save({
+      path,
+      kind: "markdown",
+      sha256,
+      bytes: Buffer.byteLength(text),
+      mtime: new Date().toISOString(),
+      pages: null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
+    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toHaveLength(2);
+    await writeFile(join(h.folder, path), "# Supply\nChanged source\n");
+    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    await writeFile(join(h.folder, "replacement.md"), "# Replacement\nDifferent bytes\n");
+    await rename(join(h.folder, "replacement.md"), join(h.folder, path));
+    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    await writeFile(join(h.folder, path), text);
+    rows.save({ ...doc, status: "pending" });
+    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    const binary = Buffer.from([0, 1, 2, 3]);
+    await writeFile(join(h.folder, path), binary);
+    rows.save({ ...doc, sha256: createHash("sha256").update(binary).digest("hex"), bytes: binary.length });
+    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    await writeFile(join(h.folder, path), text);
+    rows.save(doc);
+    await writeFile(join(h.folder, ".veraignore"), `${path}\n`);
+    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+  } finally {
+    await h.service.close();
+  }
 });
 
 it("serializes pinned and config application saves through the exposed workbench write queue", async () => {

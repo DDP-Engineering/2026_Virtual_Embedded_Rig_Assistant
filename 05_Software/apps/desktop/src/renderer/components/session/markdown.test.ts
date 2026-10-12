@@ -2,7 +2,7 @@
 // REQ-UX-34535128
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { Markdown } from "./markdown.js";
 import "../../i18n.js";
 
@@ -19,6 +19,7 @@ it("shows kind icons/compact labels/full refs and keeps invalid or malformed chi
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
+  const onCitation = vi.fn();
   try {
     await act(async () =>
       root.render(
@@ -29,6 +30,7 @@ it("shows kind icons/compact labels/full refs and keeps invalid or malformed chi
             "[[malformed]]",
             "`[[docs/a.pdf#p=2]]`",
           ].join(" "),
+          onCitation,
           citations: [
             ...cases.map(([ref]) => ({ ref: ref!, valid: true })),
             { ref: "malformed", valid: true },
@@ -56,7 +58,7 @@ it("shows kind icons/compact labels/full refs and keeps invalid or malformed chi
       expect(container.querySelector('[role="status"]')).toBeNull();
     }
     await act(async () => chips[0]?.click());
-    expect(container.querySelector('[role="status"]')?.textContent).toContain(cases[0]![0]);
+    expect(onCitation).toHaveBeenCalledExactlyOnceWith(cases[0]![0]);
     expect(container.querySelector("code")?.textContent).toBe("[[docs/a.pdf#p=2]]");
   } finally {
     await act(async () => root.unmount());

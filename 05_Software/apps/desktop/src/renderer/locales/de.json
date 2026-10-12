@@ -180,7 +180,6 @@
     "message": "Nachricht",
     "send": "Senden",
     "invalidCitation": "Zitat konnte nicht überprüft werden",
-    "viewerPending": "Die Dokumentansicht wird mit einem späteren Update verfügbar.",
     "transcript": "Transkript",
     "empty": "Senden Sie eine Nachricht.",
     "reasoning": "Überlegungen",
@@ -265,5 +264,42 @@
     "portBusy": "Port 1455 ist belegt, häufig durch eine unvollständige Anmeldung in der Codex CLI. Diese Anmeldung abbrechen und erneut versuchen.",
     "loginFailed": "ChatGPT-Anmeldung fehlgeschlagen. Erneut versuchen.",
     "browserFailed": "Die Anmeldeseite kann nicht geöffnet werden. Erneut versuchen."
+  },
+  "documents": {
+    "viewer": "Dokumentanzeige",
+    "search": "Dokumente suchen",
+    "reindex": "Neu indizieren",
+    "open": "Öffnen",
+    "progress": "Index: {{done}} fertig, {{pending}} ausstehend, {{failed}} fehlgeschlagen",
+    "readOnly": "Schreibgeschütztes Workbench",
+    "empty": "Keine Dokumente im Index.",
+    "noResults": "Keine passenden Dokumente.",
+    "pdfError": "Das PDF konnte nicht angezeigt werden. Zum Wiederholen schließen und erneut öffnen.",
+    "previous": "Vorherige Seite",
+    "next": "Nächste Seite",
+    "page": "Seite",
+    "pageCount": "von {{count}}",
+    "zoom": "Zoom",
+    "find": "Text suchen",
+    "matches": "{{count}} passende Seiten",
+    "nextMatch": "Nächster Treffer",
+    "citedPages": "Zitierte Seiten {{start}}–{{end}}",
+    "status": {
+      "pending": "Ausstehend",
+      "indexed": "Indiziert",
+      "failed": "Fehlgeschlagen",
+      "unsupported": "Nicht unterstützt",
+      "needs_ocr": "OCR erforderlich"
+    },
+    "reason": {
+      "SIZE_LIMIT": "Größenlimit überschritten",
+      "TYPE_UNSUPPORTED": "Nicht unterstützter Typ",
+      "BINARY": "Binärdatei",
+      "IO": "Quelle nicht verfügbar",
+      "PROCESSING": "Verarbeitung fehlgeschlagen",
+      "NEEDS_OCR": "Kein durchsuchbarer Text; OCR erforderlich"
+    },
+    "line": "Zeile",
+    "lineCount": "Zeilen {{start}}–{{end}} von {{count}}"
   }
 }

@@ -12,6 +12,7 @@ export * from "./knowledge/ingest.js";
 export * from "./knowledge/keyword.js";
 export * from "./knowledge/processor.js";
 export * from "./knowledge/search.js";
+export * from "./knowledge/viewer.js";
 export * from "./knowledge/worker-host.js";
 export * from "./llm/connection.js";
 export * from "./llm/gateway.js";

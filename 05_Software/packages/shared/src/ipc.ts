@@ -2,6 +2,13 @@ import { z } from "zod";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
+import {
+  docsScopeSchema,
+  documentOpenSchema,
+  documentSchema,
+  documentSearchHitSchema,
+  viewerContentSchema,
+} from "./documents.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
   modelReferenceSchema,
@@ -42,7 +49,22 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
-  "docs.reindex": defineChannel("docs.reindex", z.strictObject({}), z.strictObject({})),
+  "docs.list": defineChannel(
+    "docs.list",
+    docsScopeSchema,
+    docsScopeSchema.extend({ documents: z.array(documentSchema) }),
+  ),
+  "docs.search": defineChannel(
+    "docs.search",
+    docsScopeSchema.extend({ query: z.string().trim().min(1).max(1000) }),
+    docsScopeSchema.extend({ results: z.array(documentSearchHitSchema).max(20) }),
+  ),
+  "docs.open": defineChannel(
+    "docs.open",
+    documentOpenSchema,
+    docsScopeSchema.extend({ content: viewerContentSchema }),
+  ),
+  "docs.reindex": defineChannel("docs.reindex", docsScopeSchema.partial(), z.strictObject({})),
   "app.openExternal": defineChannel(
     "app.openExternal",
     z.strictObject({ url: z.url({ protocol: /^https?$/ }).max(16384), confirmed: z.literal(true) }),

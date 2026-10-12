@@ -49,6 +49,10 @@ mode offers empty, missing, read-only and warning fixtures.
   Release emission eliminates the override. All lifecycle/config/pinned/recent/files channels are strict.
 - WorkbenchEvent opened/closed/config.changed envelopes filter by wb_ id and clean up independently.
 
+- readDocuments/listDocuments/searchDocuments/openDocument serialize scoped reads against close/switch, check exact active identity and current writable ownership, and expose protected read-only snapshots. Docs keyword hits verify current source/extraction bounds once per path and reject changed index epochs. Optional reindexDocuments(workbenchId) rejects foreign identity before admitting ingest. [Document viewer](document-viewer.md) owns content resolution.
+
+- readDocuments/listDocuments/searchDocuments/openDocument serialize scoped reads against close/switch, check exact active identity and current writable ownership, and expose protected read-only snapshots. Docs keyword hits verify current source/extraction bounds once per path and reject changed index epochs. Optional reindexDocuments(workbenchId) rejects foreign identity before ingest admission. [Document viewer](document-viewer.md) owns content resolution.
+
 ## Invariants
 
 - Core remains Electron-agnostic; renderer uses shared IPC only. Management paths and traversed

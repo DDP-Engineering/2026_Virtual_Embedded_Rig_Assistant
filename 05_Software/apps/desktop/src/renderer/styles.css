@@ -788,3 +788,188 @@ legend {
   font-size: 0.875rem;
   color: var(--muted-foreground);
 }
+/* Document modal contains page scrolling even at minimum geometry and 150% type. */
+.document-dialog {
+  width: min(68rem, 94vw);
+  max-width: 94vw;
+  height: 90vh;
+  max-height: 90vh;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.document-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.document-dialog::backdrop {
+  background: color-mix(in srgb, var(--background) 75%, transparent);
+}
+.document-dialog header {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.document-dialog h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+.document-path {
+  overflow-wrap: anywhere;
+  margin: 0;
+  flex: 0 1 auto;
+  max-height: 4rem;
+  overflow: auto;
+}
+.document-body,
+.pdf-scroll {
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+}
+.document-body {
+  padding: 0.5rem;
+}
+.document-body section {
+  scroll-margin-top: 0.5rem;
+}
+.document-body [aria-current="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  outline: 1px solid var(--primary);
+}
+.document-body pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.document-lines {
+  font-family: monospace;
+  font-size: 0.92rem;
+}
+.document-lines > div {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: 0.6rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.line-number {
+  text-align: right;
+  color: var(--muted-foreground);
+  user-select: none;
+}
+.document-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+.document-toolbar label {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  min-width: 0;
+}
+.document-toolbar input[type="number"] {
+  width: 4rem;
+}
+.document-toolbar input:not([type="number"]) {
+  width: 10rem;
+  max-width: 100%;
+}
+.pdf-viewer,
+.text-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.pdf-scroll {
+  border: 1px solid var(--border);
+  background: var(--muted);
+}
+.pdf-sheet {
+  position: relative;
+  background: white;
+  color-scheme: light;
+}
+.pdf-sheet canvas {
+  display: block;
+}
+/* Geometry matches the pinned pdf.js TextLayer contract (Apache-2.0 Mozilla). */
+.pdf-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  transform-origin: 0 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.pdf-text-layer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0 0;
+  user-select: text;
+}
+.pdf-text-layer > :not(.markedContent),
+.pdf-text-layer .markedContent span:not(.markedContent) {
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.pdf-text-layer .markedContent {
+  display: contents;
+}
+.pdf-text-layer mark {
+  color: transparent;
+  background: #f5d75a99;
+}
+.pdf-text-layer mark[data-search-match] {
+  background: #65c8f299;
+}
+.docs-tab {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.docs-tab > label {
+  display: grid;
+  gap: 0.4rem;
+}
+.docs-tab input {
+  width: 100%;
+  min-width: 0;
+}
+.documents-list {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+.documents-list li {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  min-width: 0;
+}
+.documents-list p {
+  overflow-wrap: anywhere;
+  margin: 0.3rem 0;
+}

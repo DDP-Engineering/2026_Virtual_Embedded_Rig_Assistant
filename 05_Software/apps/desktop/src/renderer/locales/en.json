@@ -180,7 +180,6 @@
     "message": "Message",
     "send": "Send",
     "invalidCitation": "Citation could not be verified",
-    "viewerPending": "The document viewer will be available in a later update.",
     "transcript": "Transcript",
     "empty": "Start by sending a message.",
     "reasoning": "Reasoning",
@@ -265,5 +264,42 @@
     "portBusy": "Port 1455 is busy, often because a sign-in in the Codex CLI is unfinished. Cancel that sign-in and try again.",
     "loginFailed": "ChatGPT sign-in failed. Try again.",
     "browserFailed": "Cannot open the sign-in page. Try again."
+  },
+  "documents": {
+    "viewer": "Document viewer",
+    "search": "Search documents",
+    "reindex": "Reindex",
+    "open": "Open",
+    "progress": "Index: {{done}} done, {{pending}} pending, {{failed}} failed",
+    "readOnly": "Read-only workbench",
+    "empty": "No documents in the index.",
+    "noResults": "No matching documents.",
+    "pdfError": "The PDF could not be rendered. Close and reopen to retry.",
+    "previous": "Previous page",
+    "next": "Next page",
+    "page": "Page",
+    "pageCount": "of {{count}}",
+    "zoom": "Zoom",
+    "find": "Find text",
+    "matches": "{{count}} matching pages",
+    "nextMatch": "Next match",
+    "citedPages": "Cited pages {{start}}–{{end}}",
+    "status": {
+      "pending": "Pending",
+      "indexed": "Indexed",
+      "failed": "Failed",
+      "unsupported": "Unsupported",
+      "needs_ocr": "Needs OCR"
+    },
+    "reason": {
+      "SIZE_LIMIT": "Size limit exceeded",
+      "TYPE_UNSUPPORTED": "Unsupported type",
+      "BINARY": "Binary file",
+      "IO": "Source unavailable",
+      "PROCESSING": "Processing failed",
+      "NEEDS_OCR": "No searchable text; OCR required"
+    },
+    "line": "Line",
+    "lineCount": "Lines {{start}}–{{end}} of {{count}}"
   }
 }

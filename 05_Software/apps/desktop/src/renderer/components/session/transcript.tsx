@@ -2,6 +2,7 @@
 import type { SessionState } from "@vera/shared";
 import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useDocumentViewer } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { ApprovalCard } from "./approval-card.js";
 import { Disclosure } from "./disclosure.js";
@@ -25,6 +26,7 @@ export function Transcript({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const openDocument = useDocumentViewer();
   const scroll = useRef<HTMLDivElement>(null);
   const following = useRef(true);
   useLayoutEffect(() => {
@@ -73,7 +75,13 @@ export function Transcript({
           {item.kind === "assistant" && (
             <>
               <strong>VERA</strong>
-              <Markdown text={item.text} citations={item.citations} />
+              <Markdown
+                text={item.text}
+                citations={item.citations}
+                onCitation={
+                  sessionId ? (ref) => openDocument?.({ sessionId, messageId: item.id, ref }) : undefined
+                }
+              />
               {item.streaming && <span role="status">{t("chat.streaming")}</span>}
             </>
           )}

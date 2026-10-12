@@ -7,6 +7,12 @@ import { productionCsp } from "./content-policy.js";
 const mime: Record<string, string> = {
   html: "text/html; charset=utf-8",
   js: "text/javascript; charset=utf-8",
+  mjs: "text/javascript; charset=utf-8",
+  bcmap: "application/octet-stream",
+  pfb: "application/octet-stream",
+  ttf: "font/ttf",
+  otf: "font/otf",
+  wasm: "application/wasm",
   css: "text/css; charset=utf-8",
   svg: "image/svg+xml",
   png: "image/png",

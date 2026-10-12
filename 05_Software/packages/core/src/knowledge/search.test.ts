@@ -344,12 +344,49 @@ it("SessionService persists every issued citation kind and invalid chips through
     expect(answer.citations.filter((c) => c.valid)).toHaveLength(6);
     expect(answer.citations.filter((c) => !c.valid)).toHaveLength(7);
     expect(answer.citations.slice(0, 6).every((c) => c.valid)).toBe(true);
+    // REQ-FUNC-28ad0001: real session provenance, locator and snippet; no client content.
+    expect(await service.openCitation(session.id, answer.id, "docs/a.pdf#p=1")).toMatchObject({
+      kind: "pdf",
+      page: 1,
+      snippet: "A valid first page with enough characters.",
+    });
+    expect(await service.openCitation(session.id, answer.id, "docs/a.pdf#p=1-2")).toMatchObject({
+      kind: "pdf",
+      page: 1,
+      pageEnd: 2,
+    });
+    expect(await service.openCitation(session.id, answer.id, "docs/a.md#h=power")).toMatchObject({
+      kind: "markdown",
+      anchor: "power",
+    });
+    expect(await service.openCitation(session.id, answer.id, "docs/a.log#L1-L2")).toMatchObject({
+      kind: "text",
+      start: 1,
+      end: 2,
+    });
+    expect(await service.openCitation(session.id, answer.id, "artifact:summary.md")).toMatchObject({
+      kind: "artifact",
+      path: "summary.md",
+    });
+    await expect(service.openCitation(session.id, answer.id, "docs/a.pdf#p=3")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    await expect(service.openCitation(session.id, "foreign-message", "docs/a.pdf#p=1")).rejects.toMatchObject(
+      { code: "NOT_FOUND" },
+    );
+    await expect(
+      service.openCitation(service.create().id, answer.id, "artifact:summary.md"),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
     const replayed: unknown[] = [];
     const unsubscribe = service.subscribe(session.id, 0, (_seq, event) => replayed.push(event));
     unsubscribe();
     expect(replayed).toContainEqual(
       expect.objectContaining({ type: "message.done", citations: answer.citations, text: answer.text }),
     );
+    await writeFile(join(h.root, "docs/a.pdf"), "Changed PDF source");
+    await expect(service.openCitation(session.id, answer.id, "docs/a.pdf#p=1")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   } finally {
     await service?.close();
     await h.close();

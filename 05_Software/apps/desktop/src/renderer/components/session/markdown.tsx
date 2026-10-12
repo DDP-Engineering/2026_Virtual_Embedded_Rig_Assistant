@@ -2,7 +2,7 @@
 
 import { parseRef, type Reference, referenceLabel } from "@vera/shared";
 import { File, Files, Hash, List, Package, TriangleAlert } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -37,9 +37,16 @@ function remarkCitations() {
   }
   return walk;
 }
-function CitationChip({ reference, valid }: { reference: string; valid: boolean }) {
+function CitationChip({
+  reference,
+  valid,
+  onOpen,
+}: {
+  reference: string;
+  valid: boolean;
+  onOpen?: ((ref: string) => void) | undefined;
+}) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
   const parsed = parseRef(reference);
   const label = referenceLabel(reference);
   if (!valid || !parsed)
@@ -57,25 +64,18 @@ function CitationChip({ reference, valid }: { reference: string; valid: boolean 
       </button>
     );
   return (
-    <>
-      <button
-        type="button"
-        className="citation"
-        data-citation="valid"
-        data-citation-kind={parsed.kind}
-        title={reference}
-        aria-label={reference}
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-      >
-        <CitationIcon kind={parsed.kind} /> {label}
-      </button>
-      {open && (
-        <span role="status" className="citation-note">
-          {t("chat.viewerPending")} {reference}
-        </span>
-      )}
-    </>
+    <button
+      type="button"
+      className="citation"
+      data-citation="valid"
+      data-citation-kind={parsed.kind}
+      title={reference}
+      aria-label={reference}
+      onClick={() => onOpen?.(reference)}
+      aria-haspopup="dialog"
+    >
+      <CitationIcon kind={parsed.kind} /> {label}
+    </button>
   );
 }
 function CitationIcon({ kind }: { kind: Reference["kind"] }) {
@@ -85,18 +85,30 @@ function CitationIcon({ kind }: { kind: Reference["kind"] }) {
 export function Markdown({
   text,
   citations = [],
+  onCitation,
 }: {
   text: string;
   citations?: { ref: string; valid: boolean }[];
+  onCitation?: ((ref: string) => void) | undefined;
 }) {
-  const custom: Record<string, (props: Record<string, unknown>) => ReactNode> = {
-    "vera-citation": (props) => {
-      const reference = String(props["data-ref"] ?? "");
-      return (
-        <CitationChip reference={reference} valid={citations.some((c) => c.ref === reference && c.valid)} />
-      );
-    },
-  };
+  const options = useRef({ citations, onCitation });
+  options.current = { citations, onCitation };
+  // Keep chip DOM identity and keyboard focus through transcript refresh and modal updates.
+  const custom = useMemo<Record<string, (props: Record<string, unknown>) => ReactNode>>(
+    () => ({
+      "vera-citation": (props) => {
+        const reference = String(props["data-ref"] ?? "");
+        return (
+          <CitationChip
+            reference={reference}
+            valid={options.current.citations.some((c) => c.ref === reference && c.valid)}
+            onOpen={options.current.onCitation}
+          />
+        );
+      },
+    }),
+    [],
+  );
   return (
     <div className="markdown">
       <ReactMarkdown

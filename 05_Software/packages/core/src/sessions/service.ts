@@ -5,10 +5,12 @@ import {
   changeIdSchema,
   isLiveSessionEvent,
   type PermissionMode,
+  parseRef,
   permissionModeSchema,
   type SessionEvent,
   type SessionSummary,
   sessionIdSchema,
+  type ViewerContent,
   veraError,
 } from "@vera/shared";
 import type Database from "better-sqlite3";
@@ -23,6 +25,7 @@ import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../age
 import { ArtifactStore } from "../artifacts/store.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
+import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
@@ -201,6 +204,70 @@ export class SessionService {
   get(id: string) {
     this.row(id);
     return this.hub.get(id);
+  }
+  /** Revalidate a completed assistant citation; snippet comes only from successful issued results. */
+  async openCitation(id: string, messageId: string, ref: string): Promise<ViewerContent> {
+    this.row(id);
+    const items = this.hub.get(id).snapshot.items;
+    const at = items.findIndex((i) => i.kind === "assistant" && i.id === messageId);
+    const item = items[at];
+    if (item?.kind !== "assistant" || item.streaming || !item.citations.some((c) => c.ref === ref && c.valid))
+      throw veraError("NOT_FOUND");
+    const calls = new Set(
+      items
+        .slice(0, at)
+        .filter((i) => i.kind === "tool" && i.status === "ok")
+        .map((i) => i.id),
+    );
+    const messages = this.transcript(id).filter(
+      (m) => m.role === "toolResult" && !m.isError && calls.has(m.toolCallId),
+    );
+    const valid = await validateCitations(
+      this.host.root,
+      `[[${ref}]]`,
+      messages,
+      (name) => this.artifacts.exists(id, name),
+      (r) => this.knowledge.validDocumentRef(r),
+    );
+    if (!valid[0]?.valid) throw veraError("NOT_FOUND");
+    let snippet = "";
+    const visit = (value: unknown) => {
+      if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === "object") {
+        const row = value as Record<string, unknown>;
+        if (row.ref === ref && typeof (row.snippet ?? row.text) === "string")
+          snippet = String(row.snippet ?? row.text).slice(0, 12000);
+        Object.values(row).forEach(visit);
+      }
+    };
+    for (const message of messages)
+      if (message.role === "toolResult")
+        for (const block of message.content)
+          if (block.type === "text") {
+            try {
+              visit(JSON.parse(block.text));
+            } catch {
+              /* plain tool text has no issued structured snippet */
+            }
+          }
+    const parsed = parseRef(ref);
+    if (parsed?.kind === "artifact") {
+      const summary = this.listArtifacts(id).find((a) => a.name === parsed.name);
+      if (!summary) throw veraError("NOT_FOUND");
+      const artifact = await this.openArtifact(summary.artifactId);
+      this.row(id);
+      return {
+        kind: "artifact",
+        path: artifact.name,
+        ref,
+        snippet,
+        content: artifact.content,
+        mime: artifact.mime,
+      };
+    }
+    const content = await new DocumentViewer(this.host.root, this.host.db).open(ref, snippet);
+    this.row(id);
+    return content;
   }
   /** Read stored patches independently of subsequent file edits. */
   listChanges(id: string): ChangeSummary[] {

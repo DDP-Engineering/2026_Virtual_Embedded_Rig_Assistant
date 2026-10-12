@@ -1,4 +1,4 @@
-// REQ-FUNC-51165496 REQ-UX-34535128
+// REQ-FUNC-51165496 REQ-UX-34535128 REQ-FUNC-28ad0001 REQ-UX-28ad0002 REQ-UX-28ad0003
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -9,8 +9,8 @@ import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../apps/desktop");
-test("native citation kinds show verified and warning chips and persist after restart", async () => {
-  test.setTimeout(60000);
+test("native citations open offline PDF snippets, heading/line anchors and session artifacts, with Docs and restart", async () => {
+  test.setTimeout(90000);
   const root = await mkdtemp(join(tmpdir(), "vera-citations-native-"));
   const folder = join(root, "bench");
   await mkdir(folder);
@@ -36,6 +36,7 @@ test("native citation kinds show verified and warning chips and persist after re
     const output = {
       stdout: [] as string[],
       stderr: [] as string[],
+      renderer: [] as string[],
       loaded: await app.evaluate(() => ({
         execPath: process.execPath,
         electron: process.versions.electron,
@@ -47,6 +48,11 @@ test("native citation kinds show verified and warning chips and persist after re
     outputs.push(output);
     expect(output.loaded.electron).toBe("44.7.0");
     await installNetworkGuard(app);
+    const currentPage = await app.firstWindow();
+    currentPage.on("console", (msg) => {
+      if (msg.type() === "error" || msg.type() === "warning") output.renderer.push(msg.text());
+    });
+    currentPage.on("pageerror", (error) => output.renderer.push(error.message));
     return app;
   };
   let app: ElectronApplication | undefined;
@@ -100,6 +106,68 @@ test("native citation kinds show verified and warning chips and persist after re
     await warning.focus();
     await page.keyboard.press("Enter");
     await expect(page.locator(".citation-note")).toHaveCount(0);
+    let dialog = page.locator(".document-dialog");
+    const openChip = async (n: number) => {
+      await page.locator('[data-citation="valid"]').nth(n).focus();
+      await page.keyboard.press("Enter");
+      await expect(dialog).toBeVisible();
+    };
+    const closeViewer = async () => {
+      await page.keyboard.press("Escape");
+      await expect(dialog).toHaveCount(0);
+    };
+    await openChip(0);
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "1");
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
+    await expect(dialog.locator("[data-cited]")).not.toHaveCount(0);
+    expect(await dialog.locator("[data-cited]").allTextContents()).toEqual(
+      expect.arrayContaining([expect.stringMatching(/power|First|page/)]),
+    );
+    await dialog.getByLabel("Zoom", { exact: true }).selectOption("1.5");
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
+    await dialog.getByLabel("Find text", { exact: true }).fill("page two");
+    await dialog.getByLabel("Find text", { exact: true }).press("Enter");
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "2");
+    await expect(dialog.locator("[data-search-match]")).not.toHaveCount(0);
+    await closeViewer();
+    await expect(page.locator('[data-citation="valid"]').first()).toBeFocused();
+    await openChip(1);
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "1");
+    await expect(dialog.locator("[data-cited]")).not.toHaveCount(0);
+    await dialog.getByRole("button", { name: "Next page", exact: true }).click();
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "2");
+    await expect(dialog.locator("[data-cited]")).not.toHaveCount(0);
+    await closeViewer();
+    await openChip(2);
+    await expect(dialog.locator('[data-heading="power"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator('[data-heading="power"]')).toBeFocused();
+    await closeViewer();
+    await openChip(3);
+    await expect(dialog.locator('[data-heading="reset"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator('[data-heading="reset"]')).toContainText("Assert.");
+    await expect(dialog.locator("script,iframe,img")).toHaveCount(0);
+    await closeViewer();
+    await openChip(4);
+    await expect(dialog.locator('[data-line="1"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator('[data-line="2"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator(".document-lines")).toContainText("second");
+    await closeViewer();
+    await openChip(5);
+    await expect(dialog.locator(".document-body")).toContainText("Summary");
+    await closeViewer();
+    await page.locator('[data-toggle="right"]').click();
+    await page.getByRole("tab", { name: "Docs", exact: true }).click();
+    const docs = page.locator("#panel-docs");
+    await expect(docs.locator("[data-document]")).toHaveCount(4);
+    await docs.getByRole("button", { name: "Reindex", exact: true }).click();
+    await expect(docs.getByRole("button", { name: "Reindex", exact: true })).toBeEnabled();
+    await expect(docs.getByRole("status")).toContainText("0 pending");
+    await docs.getByLabel("Search documents", { exact: true }).fill("power");
+    await expect(docs.locator(".documents-list li")).not.toHaveCount(0);
+    await docs.getByRole("button", { name: "Open", exact: true }).first().click();
+    await expect(dialog).toBeVisible();
+    await closeViewer();
+    await page.locator('[data-toggle="right"]').click();
     const before = await page.evaluate(
       async (id) =>
         (await (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id! }))
@@ -113,6 +181,7 @@ test("native citation kinds show verified and warning chips and persist after re
     await app.close();
     app = await launch();
     page = await app.firstWindow();
+    dialog = page.locator(".document-dialog");
     await page.locator('[data-action="open-recent"]').click();
     await expect(page.locator('[data-citation="valid"]')).toHaveCount(6);
     await expect(page.locator('[data-citation="invalid"]')).toHaveCount(7);
@@ -124,6 +193,39 @@ test("native citation kinds show verified and warning chips and persist after re
       id,
     );
     expect(after).toEqual(before);
+    await writeFile(
+      join(folder, "docs/anchors.md"),
+      `# Power\n${"Preamble.\n\n".repeat(80)}# Power\nTarget heading.\n`,
+    );
+    await writeFile(
+      join(folder, "docs/boot.log"),
+      Array.from({ length: 80 }, (_, i) => `boot line ${i + 1}`).join("\n"),
+    );
+    await page.evaluate(async (id) => {
+      const bridge = (window as unknown as { vera: VeraBridge }).vera;
+      await bridge.invoke("docs.reindex", {});
+      await bridge.invoke("session.model.set", { sessionId: id!, modelRef: "replay/document-viewer" });
+    }, id);
+    await page.getByRole("textbox", { name: "Message", exact: true }).fill("Viewer anchors");
+    await page.getByRole("textbox", { name: "Message", exact: true }).press("Enter");
+    await expect(page.locator('[data-citation="valid"]')).toHaveCount(9);
+    await page.locator('[data-citation="valid"]').nth(6).click();
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "2");
+    await expect(dialog.locator("[data-cited]")).not.toHaveCount(0);
+    await closeViewer();
+    await page.locator('[data-citation="valid"]').nth(7).click();
+    await expect(dialog.locator('[data-heading="power-1"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator('[data-heading="power-1"]')).toBeFocused();
+    expect(await dialog.locator(".document-body").evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    await closeViewer();
+    await page.locator('[data-citation="valid"]').nth(8).click();
+    await expect(dialog.locator('[data-line="60"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator('[data-line="62"]')).toHaveAttribute("aria-current", "true");
+    await expect(dialog.locator('[data-line="59"]')).not.toHaveAttribute("aria-current", "true");
+    expect(await dialog.locator(".document-body").evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    if (process.env.VERA_E2E_EVIDENCE_DIR)
+      await page.screenshot({ path: join(process.env.VERA_E2E_EVIDENCE_DIR, "viewer-lines.png") });
+    await closeViewer();
     expect(await outboundAttempts(app)).toEqual([]);
     if (process.env.VERA_E2E_EVIDENCE_DIR) {
       await page.screenshot({ path: join(process.env.VERA_E2E_EVIDENCE_DIR, "citations-after.png") });

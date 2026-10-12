@@ -69,6 +69,20 @@ test("renderer reload of a read-only workbench disables session mutations", asyn
   await mount();
   expect(button("New session").disabled).toBe(true);
 });
+test("Welcome creation draft survives Settings navigation while viewer scope changes", async () => {
+  await mount();
+  const user = userEvent.setup();
+  const name = container.querySelector<HTMLInputElement>("#workbench-name");
+  if (!name) throw Error("Missing workbench form");
+  await act(async () => user.type(name, "Unsaved board draft"));
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await act(async () => button("Settings").click());
+  await act(async () => button("Welcome").click());
+  expect(container.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("Unsaved board draft");
+  expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(
+    false,
+  );
+});
 test("Welcome restores the active workbench and follows sidebar switches through editor and close", async () => {
   await api.invoke("workbench.create", { folder: "/mock/switch-a", name: "Switch A" });
   await api.invoke("workbench.create", { folder: "/mock/switch-b", name: "Switch B" });

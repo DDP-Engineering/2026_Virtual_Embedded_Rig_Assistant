@@ -21,6 +21,7 @@ export function Shell({
   changes,
   artifacts,
   plan,
+  docs,
 }: {
   children: ReactNode;
   navigation: ReactNode;
@@ -31,6 +32,7 @@ export function Shell({
   changes?: ReactNode;
   artifacts?: ReactNode;
   plan?: ReactNode;
+  docs?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [initial] = useState(initialLayout);
@@ -199,6 +201,8 @@ export function Shell({
             <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
               {tab === "context" && context ? (
                 context
+              ) : tab === "docs" && docs ? (
+                docs
               ) : tab === "changes" && changes ? (
                 changes
               ) : tab === "artifacts" && artifacts ? (

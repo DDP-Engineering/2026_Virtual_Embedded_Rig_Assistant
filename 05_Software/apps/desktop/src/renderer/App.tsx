@@ -3,6 +3,8 @@ import type { SessionSummary, WorkbenchSnapshot } from "@vera/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
+import { DocsTab } from "./components/documents/docs-tab.js";
+import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { Metadata } from "./components/metadata.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
@@ -217,85 +219,92 @@ export function App() {
     </>
   );
   return (
-    <Shell
-      settings={settings}
-      navigate={navigate}
-      navigation={navigation}
-      storageReadOnly={!snapshot.data || snapshot.data.readOnly}
-      context={benchId && chat && !settings ? <ContextTab workbenchId={benchId} /> : undefined}
-      changes={
-        benchId && activeSession && chat && !settings ? (
-          <ChangesTab workbenchId={benchId} sessionId={activeSession} />
-        ) : undefined
-      }
-      artifacts={
-        benchId && activeSession && chat && !settings ? (
-          <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
-        ) : undefined
-      }
-      plan={
-        benchId && activeSession && chat && !settings ? (
-          <PlanTab workbenchId={benchId} sessionId={activeSession} />
-        ) : undefined
-      }
-    >
-      <div className="page-content" hidden={chat && !settings}>
-        <h2 className="page-title" key={settings ? "settings" : "welcome"} ref={focusHeading} tabIndex={-1}>
-          {settings ? t("settings.title") : t("welcome.title")}
-        </h2>
-        {(info.isPending || snapshot.isPending) && (
-          <p role="status" data-i18n="home.loading">
-            {t("home.loading")}
-          </p>
-        )}
-        {(info.isError || snapshot.isError) && (
-          <>
-            <ErrorMessage error={info.error ?? snapshot.error} />
-            <button
-              type="button"
-              onClick={() => {
-                void info.refetch();
-                void snapshot.refetch();
-              }}
-            >
-              {t("settings.retry")}
-            </button>
-          </>
-        )}
-        {settings && snapshot.data && (
-          <Settings
-            snapshot={snapshot.data}
-            info={info.data}
-            saving={mutation.isPending}
-            error={mutation.error}
-            update={(patch) => mutation.mutate(patch)}
-          />
-        )}
-        <div hidden={settings}>
-          <p className="muted">{t("welcome.description")}</p>
-          {info.data && snapshot.data && (
-            <Workbench
-              settingsReadOnly={snapshot.data.readOnly}
-              active={activeWorkbench}
-              changed={benchChanged}
+    <DocumentViewerProvider scope={`${benchId}/${activeSession}/${settings}`} workbenchId={benchId ?? ""}>
+      <Shell
+        settings={settings}
+        navigate={navigate}
+        navigation={navigation}
+        storageReadOnly={!snapshot.data || snapshot.data.readOnly}
+        context={benchId && chat && !settings ? <ContextTab workbenchId={benchId} /> : undefined}
+        docs={
+          benchId && !settings ? (
+            <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
+          ) : undefined
+        }
+        changes={
+          benchId && activeSession && chat && !settings ? (
+            <ChangesTab workbenchId={benchId} sessionId={activeSession} />
+          ) : undefined
+        }
+        artifacts={
+          benchId && activeSession && chat && !settings ? (
+            <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
+          ) : undefined
+        }
+        plan={
+          benchId && activeSession && chat && !settings ? (
+            <PlanTab workbenchId={benchId} sessionId={activeSession} />
+          ) : undefined
+        }
+      >
+        <div className="page-content" hidden={chat && !settings}>
+          <h2 className="page-title" key={settings ? "settings" : "welcome"} ref={focusHeading} tabIndex={-1}>
+            {settings ? t("settings.title") : t("welcome.title")}
+          </h2>
+          {(info.isPending || snapshot.isPending) && (
+            <p role="status" data-i18n="home.loading">
+              {t("home.loading")}
+            </p>
+          )}
+          {(info.isError || snapshot.isError) && (
+            <>
+              <ErrorMessage error={info.error ?? snapshot.error} />
+              <button
+                type="button"
+                onClick={() => {
+                  void info.refetch();
+                  void snapshot.refetch();
+                }}
+              >
+                {t("settings.retry")}
+              </button>
+            </>
+          )}
+          {settings && snapshot.data && (
+            <Settings
+              snapshot={snapshot.data}
+              info={info.data}
+              saving={mutation.isPending}
+              error={mutation.error}
+              update={(patch) => mutation.mutate(patch)}
             />
           )}
-          {info.data && (
-            <section className="surface">
-              <h3>{t("welcome.application")}</h3>
-              <Metadata info={info.data} />
-            </section>
-          )}
+          <div hidden={settings}>
+            <p className="muted">{t("welcome.description")}</p>
+            {info.data && snapshot.data && (
+              <Workbench
+                settingsReadOnly={snapshot.data.readOnly}
+                active={activeWorkbench}
+                changed={benchChanged}
+              />
+            )}
+            {info.data && (
+              <section className="surface">
+                <h3>{t("welcome.application")}</h3>
+                <Metadata info={info.data} />
+              </section>
+            )}
+          </div>
         </div>
-      </div>
-      {chat && !settings && benchId && (
-        <SessionWorkspace
-          key={`${benchId}/${activeSession}`}
-          id={activeSession}
-          changed={changed}
-          readOnly={readOnly}
-        />
-      )}
-    </Shell>
+        {chat && !settings && benchId && (
+          <SessionWorkspace
+            key={`${benchId}/${activeSession}`}
+            id={activeSession}
+            changed={changed}
+            readOnly={readOnly}
+          />
+        )}
+      </Shell>
+    </DocumentViewerProvider>
   );
 }
