@@ -24,6 +24,9 @@ the workbench-owned queue shared by desktop and CLI composition.
 [Retrieval evaluation](../knowledge/retrieval-evaluation.md) supplies the isolated native CPU comparison over frozen demo questions; ADR0015 selects the bundled BGE descriptor and hybrid recall gate.
 [Document extraction](../knowledge/document-extraction.md) supplies cached PDF/text/heading
 extraction, precise chunks/OCR and dedicated PDF worker composition.
+[Keyword search](../knowledge/keyword-search.md) supplies persisted word/identifier
+fragment candidates with locators; migration2 backfills and synchronizes indexes
+through chunk triggers.
 
 [05_Software/README.md](../../05_Software/README.md) routes setup and source layout. [AGENTS.md](../../AGENTS.md) governs master implementation, local commits and AEGIS scope.
 

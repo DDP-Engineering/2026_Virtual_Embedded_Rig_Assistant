@@ -17,7 +17,7 @@ requirement = """
 When an indexed source is deleted, deselected, changed, or docs.reindex is requested by the owning workbench, the ingest service shall atomically invalidate its derived chunks, associated external-content index rows and embeddings before deletion or rebuilding pending document records in the same serialized workbench queue.
 """
 
-verification = "Real temporary SQLite integration seeds documents/chunks and synthetic external-content FTS/embeddings, deletes or reindexes via WorkbenchService and observes all affected rows/index matches removed, rebuilt pending selection and removal/progress events; config/ignore deselection and read-only reindex denial are covered."
+verification = "Real temporary SQLite integration seeds documents/chunks and migration-created external-content FTS and synthetic embeddings, deletes or reindexes via WorkbenchService and observes all affected rows/index matches removed, rebuilt pending selection and removal/progress events; config/ignore deselection and read-only reindex denial are covered."
 
 affected_paths = ["05_Software/packages/core/src/storage/repos/documents.ts", "05_Software/packages/core/src/knowledge/", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
 

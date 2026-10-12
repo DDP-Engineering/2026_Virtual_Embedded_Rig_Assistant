@@ -8,6 +8,8 @@ import { SettingsService } from "../settings/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { WorkbenchService } from "../workbench/service.js";
 import { type DocumentProcessor, PDF_LIMIT, TEXT_LIMIT } from "./ingest.js";
+import { KeywordSearch } from "./keyword.js";
+import { createDocumentProcessor } from "./processor.js";
 
 const cleanup: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
@@ -177,17 +179,50 @@ it("enforces inclusive PDF/text limits and records unsupported type/binary reaso
 }, 15000);
 
 function derived(h: Awaited<ReturnType<typeof harness>>) {
-  h.db.exec(`CREATE VIRTUAL TABLE chunks_fts USING fts5(text,content='chunks',content_rowid='id');
-    CREATE VIRTUAL TABLE chunks_tri USING fts5(text,content='chunks',content_rowid='id',tokenize='trigram');
-    CREATE TABLE embeddings(chunk_id INTEGER PRIMARY KEY,model_id TEXT,dim INTEGER,vector BLOB);`);
+  h.db.exec("CREATE TABLE embeddings(chunk_id INTEGER PRIMARY KEY,model_id TEXT,dim INTEGER,vector BLOB);");
   const doc = new DocumentsRepository(h.db).get("docs/board.md");
   const id = h.db
     .prepare("INSERT INTO chunks(doc_id,ordinal,text,chars) VALUES(?,0,'uniquetoken',11)")
     .run(doc?.id).lastInsertRowid;
-  for (const table of ["chunks_fts", "chunks_tri"])
-    h.db.prepare(`INSERT INTO ${table}(rowid,text) VALUES(?,'uniquetoken')`).run(id);
   h.db.prepare("INSERT INTO embeddings VALUES(?,'test',1,?)").run(id, Buffer.alloc(4));
 }
+it("searches real extracted watcher chunks through change, hash skip, reindex and deletion", async () => {
+  const h = await harness(
+    createDocumentProcessor(async () => {
+      throw Error("PDF unused");
+    }),
+  );
+  const search = new KeywordSearch(h.db);
+  const path = join(h.folder, "docs/board.md");
+  await writeFile(path, "# Registers\n## Control\nI2C1_CR1 defines enable bits.");
+  await expect.poll(() => search.search("C1_CR"), { timeout: 7000 }).toHaveLength(1);
+  expect(search.search("I2C1_CR1")[0]).toMatchObject({
+    path: "docs/board.md",
+    locator: { type: "heading", slug: "control", start: 2, end: 3 },
+  });
+  const original = search.search("I2C1_CR1");
+  const marker = h.events.length;
+  await writeFile(path, "# Registers\n## Control\nI2C1_CR1 defines enable bits.");
+  await expect
+    .poll(
+      () =>
+        h.events
+          .slice(marker)
+          .some((e) => e.topic === "workbench" && e.event.type === "index.progress" && e.event.pending === 0),
+      { timeout: 7000 },
+    )
+    .toBe(true);
+  expect(search.search("I2C1_CR1")).toEqual(original);
+  await writeFile(path, "# Registers\n## Status\nSPI2_SR defines status flags.");
+  await expect.poll(() => search.search("PI2_SR"), { timeout: 7000 }).toHaveLength(1);
+  expect(search.search("I2C1_CR1")).toEqual([]);
+  await h.service.reindexDocuments();
+  expect(search.search("SPI2_SR")).toHaveLength(1);
+  await rm(path);
+  await expect.poll(() => search.search("SPI2_SR"), { timeout: 7000 }).toEqual([]);
+  for (const table of ["chunks_fts", "chunks_tri"])
+    h.db.prepare(`INSERT INTO ${table}(${table},rank) VALUES('integrity-check',1)`).run();
+}, 25000);
 function expectDerivedEmpty(h: Awaited<ReturnType<typeof harness>>) {
   for (const table of ["chunks", "embeddings"])
     expect(h.db.prepare(`SELECT * FROM ${table}`).all()).toEqual([]);

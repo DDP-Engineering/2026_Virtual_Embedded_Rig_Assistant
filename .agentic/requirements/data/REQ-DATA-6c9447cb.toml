@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-DATA-6c9447cb"
+title = "Persist synchronized keyword indexes"
+status = "active"
+requirement = """
+When a writable workbench is opened or its chunks change, storage shall maintain external-content unicode61 underscore/diacritic and trigram indexes consistent with persisted chunks through atomic migration backfill and atomic insert, update, replacement and deletion, preserving the existing migration backup, checksum, rollback and read-only compatibility contract.
+"""
+verification = "Real schema1 database with existing chunks upgrades and matches in both indexes; read-only opening leaves source bytes unchanged; forced migration failure rolls back index/backfill/meta and retains backup; replacement, repeated cleanup, FK cascade, SQL updates and transaction rollback preserve FTS integrity."
+affected_paths = ["05_Software/packages/core/src/storage/migrations/0002_keyword.ts", "05_Software/packages/core/src/storage/migrate.ts", "05_Software/packages/core/src/storage/repos/documents.ts", "05_Software/packages/core/src/storage/keyword-migration.test.ts", "05_Software/packages/core/src/storage/db.test.ts", "05_Software/packages/core/src/workbench/service.test.ts", "05_Software/packages/core/src/knowledge/ingest.test.ts"]
+linked_tests = ["05_Software/packages/core/src/storage/keyword-migration.test.ts", "05_Software/packages/core/src/knowledge/ingest.test.ts"]
+spec = "specs/REQ-FUNC-463b6c91.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

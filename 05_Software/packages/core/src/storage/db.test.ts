@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it } from "vitest";
+import * as initial from "./migrations/0001_initial.js";
 
 let openDb: typeof import("./db.js").openDb;
 let inspectDatabase: typeof import("./db.js").inspectDatabase;
@@ -12,7 +13,9 @@ let migrations: typeof import("./migrate.js").migrations;
 beforeAll(async () => {
   expect(existsSync(new URL("./db.ts", import.meta.url)), "storage implementation exists").toBe(true);
   ({ openDb, inspectDatabase } = await import("./db.js"));
-  ({ migrations } = await import("./migrate.js"));
+  // Runner tests intentionally use the immutable schema1 fixture catalogue.
+  // Production keyword upgrades are exercised by keyword-migration.test.ts.
+  migrations = [initial];
 });
 const roots: string[] = [];
 const handles: { close(): void }[] = [];
@@ -26,7 +29,7 @@ async function path() {
   await mkdir(join(root, ".vera"));
   return join(root, ".vera", "vera.db");
 }
-const options = { workbenchId: "wb_test", appVersion: "0.0.0" };
+const options = { workbenchId: "wb_test", appVersion: "0.0.0", migrations: [initial] };
 async function opened(file: string, extra = {}) {
   const handle = await openDb(file, { ...options, ...extra });
   handles.push(handle);

@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-FUNC-463b6c91"
+title = "Search persisted chunks by words and identifier fragments"
+status = "active"
+requirement = """
+When given a keyword query, core shall return up to 50 deterministic ranked persisted chunk candidates with their document paths, text and validated locators using bm25 word matches and qualifying identifier fragments according to the keyword search contract; empty or punctuation-only queries return an empty list.
+"""
+verification = "Real SQLite fixtures find I2C1_CR1 with word and C1_CR fragment queries and rank the defining page first; tests assert short/nonidentifier fragment exclusion, diacritics, literal syntax, duplicates, top50 and stable ties, all locator kinds, read-only querying and schema1 empty compatibility."
+affected_paths = ["05_Software/packages/core/src/knowledge/keyword.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/knowledge/keyword.test.ts"]
+linked_tests = ["05_Software/packages/core/src/knowledge/keyword.test.ts"]
+spec = "specs/REQ-FUNC-463b6c91.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

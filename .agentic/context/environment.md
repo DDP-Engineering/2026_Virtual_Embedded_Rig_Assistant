@@ -24,6 +24,11 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Keyword proof uses core knowledge/keyword.test.ts, storage/keyword-migration.test.ts
+and real processor/watcher/SQLite ingest.test.ts; immediate database/repository,
+workbench and import-boundary checks cover migration and lifecycle consumers.
+The configured strict run retains static checks under the verification policy.
+
 Retrieval comparison uses pinned Node scripts/compare-embeddings.mjs with owned scratch, local models and output paths. Explicit --prepare downloads verified assets; default inference is local/offline. Focused retrieval/packaging/extraction/boundary tests and native Windows/Ubuntu measurements accompany ADR0015; see [retrieval evaluation](../knowledge/retrieval-evaluation.md).
 
 Extraction acceptance uses core knowledge/{extraction,processor}.test.ts, compiled

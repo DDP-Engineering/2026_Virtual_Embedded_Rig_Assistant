@@ -2,7 +2,7 @@ import { type DocumentRecord, documentSchema } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { type Chunk, chunkSchema } from "../../knowledge/chunk.js";
 
-/** Uses the existing documents/chunks schema; downstream tables are optional. */
+/** Chunk triggers maintain keyword indexes; embeddings are optional. */
 export class DocumentsRepository {
   constructor(private readonly db: Database.Database) {}
   list(): DocumentRecord[] {
@@ -30,7 +30,7 @@ export class DocumentsRepository {
       .run(record);
     return this.get(record.path) as DocumentRecord;
   }
-  /** External-content FTS deletion needs original text, before the chunks disappear. */
+  /** Chunk replacement and its trigger-maintained indexes commit together. */
   replaceChunks(id: number, chunks: Chunk[]): void {
     const parsed = chunks.map((chunk) => chunkSchema.parse(chunk));
     this.db.transaction(() => {
@@ -44,28 +44,22 @@ export class DocumentsRepository {
     })();
   }
 
-  /** External-content FTS deletion needs original text, before the chunks disappear. */
+  /** Delete chunks once: migration2 triggers remove their external-content entries. */
   clearDerived(id: number): void {
-    const exists = (name: string) =>
-      !!this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name);
-    for (const table of ["chunks_fts", "chunks_tri"] as const) {
-      if (exists(table))
+    this.db.transaction(() => {
+      if (this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='embeddings'").get())
         this.db
-          .prepare(
-            `INSERT INTO ${table}(${table},rowid,text) SELECT 'delete',id,text FROM chunks WHERE doc_id=?`,
-          )
+          .prepare("DELETE FROM embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)")
           .run(id);
-    }
-    if (exists("embeddings"))
-      this.db
-        .prepare("DELETE FROM embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)")
-        .run(id);
-    this.db.prepare("DELETE FROM chunks WHERE doc_id=?").run(id);
+      this.db.prepare("DELETE FROM chunks WHERE doc_id=?").run(id);
+    })();
   }
   remove(path: string): void {
     const row = this.get(path);
     if (!row) return;
-    this.clearDerived(row.id);
-    this.db.prepare("DELETE FROM documents WHERE id=?").run(row.id);
+    this.db.transaction(() => {
+      this.clearDerived(row.id);
+      this.db.prepare("DELETE FROM documents WHERE id=?").run(row.id);
+    })();
   }
 }

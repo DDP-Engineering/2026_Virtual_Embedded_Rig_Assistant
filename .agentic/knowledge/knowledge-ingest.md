@@ -31,8 +31,9 @@ for extraction, cache and chunks; bare core composition can supply its own proce
   index.progress carries pending/done/failed counters for the reconciliation
   batch, including skipped paths. Main redacts paths and preserves protocol fields.
 - DocumentsRepository list/get/save/remove/clearDerived/replaceChunks uses existing schema1.
-  Invalidation clears existing external-content chunks_fts/chunks_tri entries,
-  associated embeddings and chunks before source deletion or replacement.
+  Invalidation clears associated embeddings and chunks before source deletion
+  or replacement. Migration2 chunk triggers atomically maintain chunks_fts/chunks_tri;
+  [keyword search](keyword-search.md) reads persisted candidates and locators.
 
 ## Invariants
 
@@ -53,7 +54,8 @@ for extraction, cache and chunks; bare core composition can supply its own proce
 - Ownership is checked before synchronous SQLite mutations. Read-only workbenches
   keep private snapshots and run no watcher. Close/switch aborts and drains ingest
   before lock release/storage close; failed release restores observation.
-- Schema1 migration SQL remains immutable; downstream tables are optional.
+- Schema1 migration SQL remains immutable; migration2 supplies keyword indexes;
+  the embedding table is optional.
 - Manual reindex admits work on the lifecycle queue and waits for completion
   outside that queue so close/switch can abort active processing.
 
@@ -62,7 +64,7 @@ for extraction, cache and chunks; bare core composition can supply its own proce
 | Change | Start | Focused verification |
 |---|---|---|
 | Selection/hash/limits/status/processing | Ingester | ingest.test.ts |
-| Invalidation | DocumentsRepository | synthetic FTS/embedding cases |
+| Invalidation/publication/indexes | DocumentsRepository | real migration FTS/synthetic embedding cases and processor/watcher/search integration |
 | Lifecycle | WorkbenchService | ingest and workbench service tests |
 | IPC/event shape/redaction | shared contracts, main/events | documents-ipc and main events tests; native ingest |
 

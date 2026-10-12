@@ -11,9 +11,12 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
 ## Public interface
 
 - DocumentsRepository projects typed metadata from schema1 documents and clears
-  document-derived chunks plus associated existing FTS/embedding rows before
+  document-derived chunks plus associated keyword/embedding rows before
   source removal; replaceChunks validates locators/text budgets and atomically
-  replaces ordered chunk rows with locator_json/chars using schema1. [Knowledge ingest](knowledge-ingest.md) owns queue and states.
+  replaces ordered chunk rows with locator_json/chars. Migration2 triggers own
+  both external-content keyword indexes, including SQL updates and FK cascades;
+  standalone clearDerived/remove are atomic. [Knowledge ingest](knowledge-ingest.md)
+  owns queue and states; [keyword search](keyword-search.md) owns lexical candidates.
 
 - openDb(path, StorageOptions) returns WorkbenchDatabase with db and idempotent close(preserveSource?). Options supply workbenchId/appVersion, readOnly and an optional ordered migration catalogue for fixture upgrades.
 - inspectDatabase checks metadata on a temporary db/WAL copy before writable opening or lock acquisition. Missing source is permitted; an absent live-owner source stays absent.
@@ -35,6 +38,8 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
   close reverses that order for normal SQLite checkpoint/sidecar cleanup. Message/event seq is a nonnegative
   safe integer, checked by repositories and SQL constraints.
 - Initial schema contains meta plus sessions/messages/events/tool_calls/approvals/changes/artifacts/todos/documents/chunks. Session foreign keys cascade; document chunks cascade with their document. Requested session, seq, document/status indexes exist.
+- Migration2 adds unicode61 underscore/diacritic and trigram external-content
+  indexes, backfills chunks and synchronizes through insert/update/delete triggers.
 
 ## Change map
 
@@ -42,6 +47,7 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
 |---|---|---|
 | Connection/protected reads | db.ts | db.test.ts readonly/newer/WAL/links |
 | Migration/schema/backup | migrate.ts, migrations/0001_initial.ts | db.test.ts ordered upgrades/rollback/checksum/schema |
+| Keyword index/backfill/triggers | migrations/0002_keyword.ts | keyword-migration.test.ts, ingest.test.ts |
 | Row repository | repos/{sessions,messages,events}.ts | repositories.test.ts CRUD/order/persistence/cascades |
 | Handle lifetime/lock | workbench/service.ts | service.test.ts database/live-owner/failed-switch plus WP06 |
 
@@ -49,6 +55,7 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
 
 - REQ-PLAT-f0d13546 — pinned SQLite pragmas.
 - REQ-DATA-9dbda56e — ordered atomic migration application.
+- REQ-DATA-6c9447cb — synchronized keyword indexes and backfill.
 - REQ-DATA-d137ab0e — changed/missing applied checksum refusal.
 - REQ-DATA-ac2dc07a — complete pre-step exclusive backup.
 - REQ-DATA-73e0309d — newer database source preservation.
@@ -71,6 +78,8 @@ flowchart LR
   migrate --> backups[(exclusive backup files)]
   migrate --> db[(vera.db and WAL)]
   repositories[sessions/messages/events/artifacts/todos] --> db
+  chunks[(chunks)] --> triggers[insert/update/delete triggers]
+  triggers --> keyword[(chunks_fts / chunks_tri)]
 ```
 
 SQLite backup reads the committed WAL view. SQL and meta updates commit together per step; workbench ownership serializes application operations.
