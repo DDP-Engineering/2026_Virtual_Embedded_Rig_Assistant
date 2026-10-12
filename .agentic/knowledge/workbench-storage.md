@@ -6,13 +6,14 @@ Select for vera.db, schema_version, checksummed SQL migrations, backup files and
 
 ## Purpose and boundaries
 
-Core owns the better-sqlite3 connection, initial schema, migration catalogue and session/message/event/artifact storage repositories. [Changes](changes.md) owns the applied-row read projection and recorded patch/count presentation. Prepared file tools own changes-table transitions, with applied status/change-event recording in one transaction and guarded hash recovery; [file tools](file-tools.md) routes that behavior. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; [session behavior](sessions.md) owns runtime integration, native provider-ID tool rows, recovery and event projection.
+Core owns the better-sqlite3 connection, initial schema, migration catalogue and session/message/event/artifact/todo storage repositories. [Changes](changes.md) owns the applied-row read projection and recorded patch/count presentation. Prepared file tools own changes-table transitions, with applied status/change-event recording in one transaction and guarded hash recovery; [file tools](file-tools.md) routes that behavior. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; [session behavior](sessions.md) owns runtime integration, native provider-ID tool rows, recovery and event projection.
 
 ## Public interface
 
 - openDb(path, StorageOptions) returns WorkbenchDatabase with db and idempotent close(preserveSource?). Options supply workbenchId/appVersion, readOnly and an optional ordered migration catalogue for fixture upgrades.
 - inspectDatabase checks metadata on a temporary db/WAL copy before writable opening or lock acquisition. Missing source is permitted; an absent live-owner source stays absent.
 - checkDatabase verifies schema_version, applied SHA256 and workbench_id. Newer versions return WORKBENCH_TOO_NEW; invalid version/catalogue/checksum returns INVALID with reason; identity mismatch and occupied backup path return CONFLICT.
+- TodosRepository reads and validates whole ordered replacements in existing schema1; [Plan](plan.md) owns atomic event integration and list presentation.
 - ArtifactsRepository owns existing schema1 artifact metadata with session/name uniqueness, stable overwrite identity and time/id ordering; [Artifacts](artifacts.md) owns managed files and saved events.
 - SessionsRepository creates/gets/lists/deletes raw rows. List order is created_at DESC,id DESC; deletion cascades session child rows.
 - MessagesRepository and EventsRepository create/get/list/delete by (session_id,seq). JSON strings remain verbatim. Lists order seq ascending; event afterSeq defaults to -1. Missing get is undefined, delete returns boolean; SQLite rejects duplicate/FK violations.
@@ -64,7 +65,7 @@ flowchart LR
   migrate --> catalogue[TypeScript SQL modules]
   migrate --> backups[(exclusive backup files)]
   migrate --> db[(vera.db and WAL)]
-  repositories[sessions/messages/events/artifacts] --> db
+  repositories[sessions/messages/events/artifacts/todos] --> db
 ```
 
 SQLite backup reads the committed WAL view. SQL and meta updates commit together per step; workbench ownership serializes application operations.

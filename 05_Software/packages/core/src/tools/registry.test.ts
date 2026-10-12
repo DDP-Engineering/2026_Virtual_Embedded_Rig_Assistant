@@ -13,6 +13,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     write: { path: "notes.txt", content: "hello" },
     edit: { path: "notes.txt", oldString: "hello", newString: "world" },
     artifact_save: { name: "summary.md", content: "hello" },
+    todo: { items: [{ text: "Verify", status: "pending" }] },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -29,6 +30,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "write",
     "edit",
     "artifact_save",
+    "todo",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

@@ -2,6 +2,7 @@ import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
 import type { WorkerPool } from "../ports.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
+import type { TodoHost } from "./todo.js";
 
 export interface ReadFingerprint {
   sha256: string;
@@ -13,6 +14,7 @@ export interface ToolContext {
   lastReads: Map<string, ReadFingerprint>;
   change?: ChangeHost;
   artifacts?: ArtifactHost;
+  todos?: TodoHost;
 }
 export interface ToolDefinition {
   name: string;

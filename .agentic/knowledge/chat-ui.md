@@ -24,7 +24,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
   caret-local @ paths with arrows/Enter/Tab/Escape. Failed sends retain draft.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Composer exposes the confirmed session mode during active turns; text/model controls lock while running or awaiting approval. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
-- ContextTab queries WORKBENCH.md and shows empty available skills; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; Docs/Plan are placeholders. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
+- ContextTab queries WORKBENCH.md and shows empty available skills; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs retains its placeholder. [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
 
 ## Invariants
@@ -47,6 +47,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 | Markdown/citations/tools | markdown, transcript, disclosure | workspace.test.ts; mock.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; e2e/approvals.spec.ts |
+| Plan task list | plan-tab;mock sessions | plan-tab.test.ts;e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | workspace.test.ts |
 
 ## Key behaviors
@@ -71,6 +72,8 @@ flowchart LR
   SessionWorkspace --> Transcript
   SessionWorkspace --> Composer
   SessionWorkspace --> UsageMeter
+  Shell --> PlanTab
+  PlanTab --> useSessionEvents
   Shell --> ContextTab
   Shell --> ArtifactsTab
   ArtifactsTab --> API
@@ -97,7 +100,7 @@ Paths relative to05_Software.
 
 - apps/desktop/src/renderer/App.tsx — routes and workbench/session selection.
 - apps/desktop/src/renderer/hooks/use-session-events.ts — guarded snapshot/subscription.
-- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer}.tsx — session presentation.
+- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer,plan-tab}.tsx — session presentation.
 - apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
 - apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
 - apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.

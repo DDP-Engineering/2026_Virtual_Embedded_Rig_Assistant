@@ -142,7 +142,7 @@ Contracts the tests pin down:
   this session last read it; stores the full unified diff in `changes`.
 - `artifact_save` takes a file name (`[A-Za-z0-9._-]`, ≤ 100 characters); an existing name fails
   unless `overwrite`; content is UTF-8 text ≤ 5 MB.
-- `todo` replaces the whole list and emits `todo.updated`.
+- `todo` replaces the whole ordered list (≤50items, text≤200UTF16code units, optional string IDs) and emits `todo.updated` atomically with the current todos row; invalid arguments preserve the previous list.
 - Every result is capped at 32 000 characters and then carries `truncated: true`.
 - A tool failure returns `isError: true` with a short message the model can act on; it never throws
   out of the loop.

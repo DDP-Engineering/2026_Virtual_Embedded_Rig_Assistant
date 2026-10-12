@@ -243,5 +243,11 @@
     "export": "Exportă",
     "reveal": "Arată în folder",
     "exported": "Artefact exportat."
+  },
+  "plan": {
+    "empty": "Nicio sarcină în această sesiune.",
+    "pending": "În așteptare",
+    "inProgress": "În curs",
+    "done": "Finalizat"
   }
 }

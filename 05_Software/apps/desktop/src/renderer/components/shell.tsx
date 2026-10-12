@@ -20,6 +20,7 @@ export function Shell({
   context,
   changes,
   artifacts,
+  plan,
 }: {
   children: ReactNode;
   navigation: ReactNode;
@@ -29,6 +30,7 @@ export function Shell({
   context?: ReactNode;
   changes?: ReactNode;
   artifacts?: ReactNode;
+  plan?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [initial] = useState(initialLayout);
@@ -201,6 +203,8 @@ export function Shell({
                 changes
               ) : tab === "artifacts" && artifacts ? (
                 artifacts
+              ) : tab === "plan" && plan ? (
+                plan
               ) : (
                 <p className="muted">{t("panel.placeholder")}</p>
               )}

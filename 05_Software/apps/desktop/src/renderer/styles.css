@@ -756,3 +756,35 @@ legend {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.plan-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.plan-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.plan-list svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.plan-list li > div {
+  min-width: 0;
+}
+.plan-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.plan-status {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}

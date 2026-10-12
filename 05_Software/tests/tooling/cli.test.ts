@@ -234,6 +234,31 @@ it("CLI saves a session artifact without approval and emits valid/missing refere
     { ref: "artifact:missing.md", valid: false },
   ]);
 });
+// REQ-FUNC-2e8a54c7 REQ-DATA-d968385c
+it("CLI emits each whole Plan replacement without approvals", async () => {
+  const { workbench } = await fixture();
+  const result = await launch([
+    ...replay(workbench, join(root, "fixtures/llm-scripts/plan-updates.jsonl")),
+    "--approve",
+    "none",
+  ]).result;
+  expect(result.code).toBe(0);
+  const records = events(result.stdout);
+  const updates = records.filter((r) => r.event.type === "todo.updated");
+  expect(updates.map((r) => r.event.items)).toEqual([
+    [
+      { id: "inspect", text: "Inspect the board", status: "in_progress" },
+      { text: "Verify the pins", status: "pending" },
+    ],
+    [
+      { text: "Verify the pins", status: "in_progress" },
+      { id: "inspect", text: "Inspect the board", status: "done" },
+    ],
+    [{ id: "summary", text: "Board verification complete", status: "done" }],
+  ]);
+  expect(records.some((r) => r.event.type === "approval.requested")).toBe(false);
+  expect(records.filter((r) => r.event.type === "tool.done").every((r) => r.event.ok)).toBe(true);
+});
 it.each(["all", "none"])("CLI --approve %s decides ask edits and ends zero", async (policy) => {
   const { dir, workbench } = await fixture();
   const script = join(dir, "edit.jsonl");

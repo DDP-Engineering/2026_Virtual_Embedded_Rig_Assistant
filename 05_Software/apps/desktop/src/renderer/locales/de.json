@@ -243,5 +243,11 @@
     "export": "Exportieren",
     "reveal": "Im Ordner anzeigen",
     "exported": "Artefakt exportiert."
+  },
+  "plan": {
+    "empty": "Keine Aufgaben in dieser Sitzung.",
+    "pending": "Ausstehend",
+    "inProgress": "In Bearbeitung",
+    "done": "Erledigt"
   }
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type SessionEvent, usageEventSchema } from "./events.js";
-import { permissionModeSchema, sessionStatusSchema, stopReasonSchema, todoItemSchema } from "./session.js";
+import { permissionModeSchema, sessionStatusSchema, stopReasonSchema, todoItemsSchema } from "./session.js";
 
 const assistant = z.strictObject({
   kind: z.literal("assistant"),
@@ -62,7 +62,7 @@ export const sessionStateSchema = z.strictObject({
     z.strictObject({ changeId: z.number(), path: z.string(), added: z.number(), removed: z.number() }),
   ),
   artifacts: z.array(z.strictObject({ artifactId: z.string(), name: z.string(), bytes: z.number() })),
-  todos: z.array(todoItemSchema),
+  todos: todoItemsSchema,
   usage: usageEventSchema.omit({ type: true }),
 });
 export type SessionState = z.infer<typeof sessionStateSchema>;

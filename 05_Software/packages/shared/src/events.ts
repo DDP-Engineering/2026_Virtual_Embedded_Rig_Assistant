@@ -5,7 +5,7 @@ import {
   sessionIdSchema,
   sessionStatusSchema,
   stopReasonSchema,
-  todoItemSchema,
+  todoItemsSchema,
 } from "./session.js";
 import {
   workbenchIdSchema,
@@ -104,7 +104,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     name: z.string(),
     bytes: count,
   }),
-  z.strictObject({ type: z.literal("todo.updated"), items: z.array(todoItemSchema) }),
+  z.strictObject({ type: z.literal("todo.updated"), items: todoItemsSchema }),
   usageEventSchema,
   z.strictObject({
     type: z.literal("error"),

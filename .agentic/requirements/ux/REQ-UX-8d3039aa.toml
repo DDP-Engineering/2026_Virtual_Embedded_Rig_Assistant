@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-8d3039aa"
+title = "Present the live session Plan with accessible statuses"
+status = "active"
+requirement = "While a session is selected, the Plan tab shall show its current ordered task list with distinct status icons and localized accessible pending, in progress and done labels, following each todo.updated replacement live and restoring the final list after restart while isolating session navigation and exposing empty/loading/retry states."
+verification = "Component and native/browser E2E assert every scripted replacement/status label, actual native restart restoration, empty/error/late-snapshot isolation and en/ro/de light/dark five text scales at1024x640 without horizontal overflow."
+affected_paths = ["05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/renderer/components/session/plan-tab.test.ts", "05_Software/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/apps/desktop/src/renderer/components/shell.tsx", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/plan-tab.test.ts", "05_Software/e2e/plan.spec.ts"]
+spec = "specs/REQ-FUNC-2e8a54c7.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

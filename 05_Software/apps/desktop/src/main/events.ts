@@ -4,6 +4,7 @@ import {
   modelReferenceSchema,
   type SessionState,
   type SessionSummary,
+  type TodoItem,
   type WorkbenchConfig,
   type WorkbenchWarning,
 } from "@vera/shared";
@@ -32,6 +33,13 @@ export function sanitizeSessionSummary(
     modelRef: scrubModel(summary.modelRef, scrub),
   };
 }
+function sanitizeTodos(items: TodoItem[], scrub: (text: string) => string): TodoItem[] {
+  return items.map((item) => ({
+    ...item,
+    text: scrub(item.text).slice(0, 200),
+    ...(item.id === undefined ? {} : { id: scrub(item.id) }),
+  }));
+}
 export function sanitizeSessionSnapshot(
   snapshot: SessionState,
   scrub: (text: string) => string,
@@ -52,7 +60,7 @@ export function sanitizeSessionSnapshot(
   state.approvals = state.approvals.map((a) => ({ ...a, path: scrub(a.path), diff: scrub(a.diff) }));
   state.changes = state.changes.map((c) => ({ ...c, path: scrub(c.path) }));
   state.artifacts = state.artifacts.map((a) => ({ ...a, name: scrub(a.name) }));
-  state.todos = state.todos.map((t) => ({ ...t, text: scrub(t.text) }));
+  state.todos = sanitizeTodos(state.todos, scrub);
   return state;
 }
 
@@ -105,12 +113,7 @@ function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => string)
         "citations",
         event.citations.map((c) => ({ ...c, ref: scrub(c.ref) })),
       );
-    if (event.type === "todo.updated")
-      Reflect.set(
-        result,
-        "items",
-        event.items.map((i) => ({ ...i, text: scrub(i.text) })),
-      );
+    if (event.type === "todo.updated") Reflect.set(result, "items", sanitizeTodos(event.items, scrub));
     return { ...envelope, event: result };
   }
   if (envelope.topic === "app" || envelope.event.type === "closed") return envelope;

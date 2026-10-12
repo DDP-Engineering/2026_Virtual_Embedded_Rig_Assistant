@@ -7,6 +7,7 @@ import { globTool } from "./glob.js";
 import { grepTool } from "./grep.js";
 import { listTool } from "./list.js";
 import { readTool } from "./read.js";
+import { todoTool } from "./todo.js";
 import { writeTool } from "./write.js";
 
 export const TOOL_RESULT_CAP = 32000;
@@ -72,6 +73,7 @@ export class ToolRegistry {
       writeTool,
       editTool,
       artifactSaveTool,
+      todoTool,
     ],
   ) {
     const names = definitions.map((tool) => tool.name);

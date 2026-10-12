@@ -1,0 +1,4 @@
+{"match":"(?i)^update the plan(?:\\s|$)","toolCalls":[{"name":"todo","args":{"items":[{"id":"inspect","text":"Inspect the board","status":"in_progress"},{"text":"Verify the pins","status":"pending"}]}}]}
+{"toolCalls":[{"name":"todo","args":{"items":[{"text":"Verify the pins","status":"in_progress"},{"id":"inspect","text":"Inspect the board","status":"done"}]}}]}
+{"toolCalls":[{"name":"todo","args":{"items":[{"id":"summary","text":"Board verification complete","status":"done"}]}}]}
+{"text":"Plan complete."}

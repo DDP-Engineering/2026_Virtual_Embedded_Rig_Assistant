@@ -13,6 +13,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 ## Public interface
 
 - SessionService(host) recovers writable state before accepting work. host supplies SQLite/root/gateway/Clock/model/prompt and optional workers/registry/permissions/policy/runtime/limits/scrubbing/ownership check. Read-only services expose reads/subscriptions.
+- TodoHost binds synchronous validated whole-list upserts and durable todo.updated recording/publication for sequential session tools; [Plan](plan.md) owns bounds and renderer status presentation.
 - listArtifacts/openArtifact/verifiedArtifact expose current managed session content; [Artifacts](artifacts.md) owns bounded storage, refs and native actions. Session class tools stay available in all session permission modes; workbench read-only still denies mutation.
 - listChanges(sessionId) and getChange(changeId) project applied SQLite rows, ascending creation time/id and stored-patch hunk counts/details. [Changes](changes.md) owns the read protocol and renderer/native reveal.
 - create(modelRef?,mode?) returns camelCase metadata with ses_ULID,UTC dates,empty title and idle status. list, get(id)->{snapshot,seq}, rename,delete,setModel,setMode own metadata and errors. Default mode comes from host; model resolution applies session/workbench/app precedence. First user text sets an empty title to60 UTF16 units; explicit nonempty rename survives.
@@ -62,6 +63,7 @@ flowchart LR
  service --> hub[SessionHub]
  hub --> events[(SQLite events)]
  service --> messages[(messages/tool_calls)]
+ service --> TodoHost --> TodosRepository --> SQLite
  service --> ArtifactStore
  ArtifactStore --> artifacts[(artifacts metadata and managed files)]
  service --> completedChanges[(applied changes read projection)]

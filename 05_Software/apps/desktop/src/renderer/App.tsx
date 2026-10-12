@@ -8,6 +8,7 @@ import { Metadata } from "./components/metadata.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
 import { ChangesTab } from "./components/session/changes-tab.js";
 import { ContextTab } from "./components/session/context-tab.js";
+import { PlanTab } from "./components/session/plan-tab.js";
 import { SessionList } from "./components/session/session-list.js";
 import { SessionWorkspace } from "./components/session/workspace.js";
 import { Settings, useSettingsSections } from "./components/settings.js";
@@ -230,6 +231,11 @@ export function App() {
       artifacts={
         benchId && activeSession && chat && !settings ? (
           <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
+        ) : undefined
+      }
+      plan={
+        benchId && activeSession && chat && !settings ? (
+          <PlanTab workbenchId={benchId} sessionId={activeSession} />
         ) : undefined
       }
     >

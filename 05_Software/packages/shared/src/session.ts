@@ -7,9 +7,10 @@ export const sessionStatusSchema = z.enum(["idle", "running", "awaiting_approval
 export const stopReasonSchema = z.enum(["end", "aborted", "error", "limit"]);
 export const todoItemSchema = z.strictObject({
   id: z.string().optional(),
-  text: z.string(),
+  text: z.string().max(200),
   status: z.enum(["pending", "in_progress", "done"]),
 });
+export const todoItemsSchema = z.array(todoItemSchema).max(50);
 export const sessionSummarySchema = z.strictObject({
   id: sessionIdSchema,
   title: z.string().max(60),

@@ -1,0 +1,12 @@
+# Session Plan contract
+
+Status: active
+Requirements: REQ-FUNC-2e8a54c7, REQ-DATA-d968385c, REQ-UX-8d3039aa
+
+todo is a session-class tool with strict {items:[{id?:string,text:string,status:pending|in_progress|done}]} input. The shared list schema bounds count at50 and text.length at200 UTF16 code units, matching existing string constraints. Empty text/list, duplicates and optional ID strings follow the existing contract; IDs are preserved without generation. Output is {items: stored list}. Failed validation has actionable bounded JSON isError through ToolRegistry and never touches SQLite.
+
+TodosRepository reads/writes existing schema1 todos(session_id,items_json,updated_at). Replacement validates independently, stores exact ordered parsed list using parameterized upsert, and returns detached data. Session host binds identity/time/writability and transactional record/publish closure. Tool execution waits the existing durability barrier, checks abort/ownership, replaces and records one todo.updated within synchronous SQLite transaction, then publishes. No new migration or IPC channel. Session snapshots fold durable events using existing reducer. Main snapshot and replay outputs scrub current known secrets in todo text and optional user ID; expanded presentation text is bounded at200 before shared response/event validation, while status/system identities stay intact. Stored history remains unchanged when credentials are registered later. Session deletion cascades todos; workbench read-only denies mutation while session read-only permits session-class tools.
+
+PlanTab keys workbench/session identity and uses useSessionEvents snapshot-before-subscribe, rendering its state.todos directly. No duplicate list query or editable UI. List order is authoritative; status icon is visually distinct with localized accessible label and visible status text. Empty/loading/retry states reuse translations/conventions. Fixture plan-updates.jsonl emits three complete replacements in separate model steps, with removed/reordered items to prove replacement, not merge. Browser mock offers the same Plan scenario.
+
+Verification: registered tool boundaries; real SQLite row/event atomicity and restart, authority/abort/rollback/isolation; component asynchronous navigation/replay/error; native Electron each update plus restart; translated minimum-size browser matrix. Preserve baseline confinement, redaction and compile-time instrumented replay boundary.

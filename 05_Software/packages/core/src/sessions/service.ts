@@ -25,6 +25,7 @@ import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
+import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
@@ -362,6 +363,22 @@ export class SessionService {
     this.host.gateway.capabilities(model);
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
+    ctx.todos = {
+      db: this.host.db,
+      repository: new TodosRepository(this.host.db),
+      sessionId: id,
+      now: () => this.now(),
+      assertWritable: () => {
+        this.row(id);
+        this.writable();
+        if (this.deleting.has(id)) throw veraError("BUSY");
+      },
+      record: (event) => {
+        const value = this.hub.record(id, event);
+        return () => this.hub.publish(id, value);
+      },
+      ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
+    };
     ctx.artifacts = {
       store: this.artifacts,
       sessionId: id,

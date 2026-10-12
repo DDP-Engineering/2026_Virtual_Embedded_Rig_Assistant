@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-d968385c"
+title = "Persist todo replacements and events atomically"
+status = "active"
+requirement = "When a todo replacement is accepted for an owned writable workbench session, VERA shall store the whole list and timestamp in its todos repository atomically with one durable todo.updated event, publishing after commit and restoring the final list through session snapshots/replay after restart; abort, authority failure and transaction failure preserve the prior list/event."
+verification = "Real temporary SQLite/session fixture asserts sequential replacement results, row/event equality, observer committed visibility, isolation/cascade, rollback and authority/abort failures; restart core/native Electron and compare final ordered list."
+affected_paths = ["05_Software/packages/core/src/index.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/todos.test.ts", "05_Software/packages/core/src/storage/repos/todos.ts", "05_Software/packages/core/src/tools/todo.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/todos.test.ts", "05_Software/e2e/plan.spec.ts", "05_Software/tests/tooling/cli.test.ts"]
+spec = "specs/REQ-FUNC-2e8a54c7.md"
+priority = "normal"
+created = 2026-10-12
+updated = 2026-10-12

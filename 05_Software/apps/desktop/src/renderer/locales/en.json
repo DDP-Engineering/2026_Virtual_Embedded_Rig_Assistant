@@ -243,5 +243,11 @@
     "export": "Export",
     "reveal": "Reveal in folder",
     "exported": "Artifact exported."
+  },
+  "plan": {
+    "empty": "No tasks in this session.",
+    "pending": "Pending",
+    "inProgress": "In progress",
+    "done": "Done"
   }
 }

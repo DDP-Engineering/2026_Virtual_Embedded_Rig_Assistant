@@ -311,6 +311,23 @@ export class MockSessions {
               key,
             );
           }
+          if (/^update the plan(?:\s|$)/i.test(request.text)) {
+            for (const items of [
+              [
+                { id: "inspect", text: "Inspect the board", status: "in_progress" as const },
+                { text: "Verify the pins", status: "pending" as const },
+              ],
+              [
+                { text: "Verify the pins", status: "in_progress" as const },
+                { id: "inspect", text: "Inspect the board", status: "done" as const },
+              ],
+              [{ id: "summary", text: "Board verification complete", status: "done" as const }],
+            ]) {
+              if (row.stop) break;
+              this.emit(id, { type: "todo.updated", items }, key);
+              await new Promise((done) => setTimeout(done, 300));
+            }
+          }
           if (!row.stop) {
             if (/artifact/i.test(request.text)) {
               const artifact: ArtifactContent = {

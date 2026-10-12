@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { scrub } from "@vera/core";
-import { emptySessionState, eventEnvelopeSchema, workbenchSchema } from "@vera/shared";
+import { emptySessionState, eventEnvelopeSchema, sessionStateSchema, workbenchSchema } from "@vera/shared";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import * as sessionOutput from "./events.js";
 
@@ -11,6 +11,62 @@ beforeAll(async () => {
   ({ createEventEmitter, createDeltaCoalescer } = await import("./events.js"));
 });
 afterEach(() => vi.useRealTimers());
+// REQ-FUNC-2e8a54c7 REQ-DATA-d968385c
+it("keeps Plan snapshot and replay schemas valid when late redaction expands 200-character text", () => {
+  const state = emptySessionState();
+  state.todos = [{ text: "x".repeat(200), status: "done" }];
+  const redact = (text: string) => scrub(text, ["x"]);
+  const output = sessionOutput.sanitizeSessionSnapshot(state, redact);
+  expect(output.todos[0]?.text.length).toBeLessThanOrEqual(200);
+  expect(sessionStateSchema.safeParse(output).success).toBe(true);
+  const send = vi.fn();
+  const emit = createEventEmitter(() => ({ isDestroyed: () => false, send }), redact);
+  expect(() =>
+    emit({
+      topic: "session",
+      id: "ses_00000000000000000000000001",
+      seq: 5,
+      event: { type: "todo.updated", items: state.todos },
+    }),
+  ).not.toThrow();
+  expect(send.mock.calls[0]?.[1].event.items).toEqual(output.todos);
+});
+// REQ-FUNC-2e8a54c7 REQ-DATA-d968385c
+it("redacts todo IDs and bounds snapshot/replay text when a secret becomes known after persistence", () => {
+  const state = emptySessionState();
+  state.todos = [{ id: "later-private-key", text: "x".repeat(200), status: "pending" }];
+  const original = structuredClone(state.todos);
+  const secrets: string[] = [];
+  const redact = (text: string) => scrub(text, secrets);
+  expect(sessionOutput.sanitizeSessionSnapshot(state, redact).todos).toEqual(original);
+  // Stored fields can precede credential registration; both output boundaries must use current secrets.
+  secrets.push("later-private-key", "x", "pending");
+  const output = sessionOutput.sanitizeSessionSnapshot(state, redact);
+  expect(JSON.stringify(output.todos)).not.toContain("later-private-key");
+  expect(output.todos[0]?.text).not.toContain("x");
+  expect(output.todos[0]?.text.length).toBeLessThanOrEqual(200);
+  expect(sessionStateSchema.safeParse(output).success).toBe(true);
+  const send = vi.fn();
+  const emit = createEventEmitter(() => ({ isDestroyed: () => false, send }), redact);
+  expect(
+    emit({
+      topic: "session",
+      id: "ses_00000000000000000000000001",
+      seq: 4,
+      event: { type: "todo.updated", items: original },
+    }),
+  ).toBe(true);
+  const envelope = send.mock.calls[0]?.[1];
+  expect(eventEnvelopeSchema.safeParse(envelope).success).toBe(true);
+  expect(envelope.event.items).toEqual(output.todos);
+  expect(envelope).toMatchObject({
+    topic: "session",
+    id: "ses_00000000000000000000000001",
+    seq: 4,
+    event: { type: "todo.updated", items: [{ id: "[REDACTED]", status: "pending" }] },
+  });
+  expect(state.todos).toEqual(original);
+});
 it("scrubs get/list session user fields without altering schema identities", () => {
   const privateKey = "fake-session-output-private";
   const redact = (text: string) => scrub(text, [privateKey, "assistant", "ask", "type"]);
