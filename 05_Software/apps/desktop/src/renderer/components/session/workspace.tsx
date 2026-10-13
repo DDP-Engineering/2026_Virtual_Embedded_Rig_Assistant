@@ -12,10 +12,14 @@ export function SessionWorkspace({
   id,
   changed,
   readOnly,
+  initialDraft,
+  consumeDraft,
 }: {
   id?: string | undefined;
   changed: () => void;
   readOnly: boolean;
+  initialDraft?: string | undefined;
+  consumeDraft?: (() => void) | undefined;
 }) {
   const { t } = useTranslation();
   const { view, error, retry } = useSessionEvents(id, changed);
@@ -153,6 +157,8 @@ export function SessionWorkspace({
       {view && (
         <Composer
           state={view.state}
+          initialDraft={initialDraft}
+          consumeDraft={consumeDraft}
           disabled={readOnly || pending}
           send={send}
           stop={() => void stop()}

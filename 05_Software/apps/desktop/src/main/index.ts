@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import { type LlmGateway, SettingsService, splitModelReference, WorkbenchService } from "@vera/core";
-import { eventEnvelopeSchema } from "@vera/shared";
+import { eventEnvelopeSchema, veraError } from "@vera/shared";
 import {
   app,
   BrowserWindow,
@@ -21,6 +21,7 @@ import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
+import { prepareDemoWorkbench } from "./demo-workbench.js";
 import { createDocumentServices } from "./document-processor.js";
 import { publicDocument, publicDocumentHit, publicViewer } from "./document-viewer.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
@@ -342,6 +343,19 @@ ipcMain.handle(
       },
       "workbench.create": ({ folder, name }) => sessions.lifecycle(() => workbench.create(folder, name)),
       "workbench.open": ({ folder }) => sessions.lifecycle(() => workbench.open(folder)),
+      "workbench.demo.open": () =>
+        sessions.lifecycle(async () => {
+          await settings.load();
+          if (settings.get().readOnly) throw veraError("DENIED");
+          return workbench.open(
+            await prepareDemoWorkbench(
+              dataLocations.paths.userData,
+              app.isPackaged
+                ? join(process.resourcesPath, "demo-board")
+                : join(here, "../../../../fixtures/workbenches/demo-board"),
+            ),
+          );
+        }),
       "workbench.close": async () => {
         await sessions.lifecycle(() => workbench.close());
         return {};

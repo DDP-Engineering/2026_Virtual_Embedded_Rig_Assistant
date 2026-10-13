@@ -22,6 +22,10 @@ asarUnpack:
   - resources/models/**
 # Models are already real files here, outside ASAR.
 extraResources:
+  - from: resources/demo-board
+    to: demo-board
+    filter:
+      - '**/*'
   - from: resources/models
     to: models
     filter:

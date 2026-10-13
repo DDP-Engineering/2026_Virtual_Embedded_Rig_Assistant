@@ -373,5 +373,24 @@
     "confirmText": "This opens the update feed link in your system browser.",
     "confirm": "Open in browser",
     "cancel": "Cancel"
+  },
+  "demo": {
+    "offerTitle": "Learn with the demo",
+    "offerDescription": "Explore VERA-DEMO-01: a fictional board with PDFs, notes, a pinout, a boot log and three sample skills. Your own copy keeps your edits and sessions.",
+    "open": "Open demo workbench",
+    "guideTitle": "Try three guided prompts",
+    "fictional": "VERA-DEMO-01 is fictional. Its values and measurements are demonstration data; no hardware is required.",
+    "configureStep": "Configure a provider or connect your subscription in App Settings.",
+    "configure": "Open provider settings",
+    "promptStep": "Choose a prompt below to open a new session with an editable draft. Select a model, review the text and press Send.",
+    "citationStep": "Open citations to inspect the evidence. The Docs tab shows indexing progress; the skills can use the matching English text while PDFs finish indexing.",
+    "returnStep": "Use the workbench name in the sidebar to return here and try another prompt. Inspect the sample procedures in Skills.",
+    "datasheetTitle": "Read a datasheet",
+    "datasheetPrompt": "Use the datasheet-reader skill. Which pins carry SDA and SCL on revision A, what pull-ups and supply limits apply, and how does the pinout agree with the datasheet? Cite the sources.",
+    "logTitle": "Analyze a boot log",
+    "logPrompt": "Use the log-analyst skill to analyze logs/boot-0412.log. What does the I2C warning show, what happened afterward, and what remains unverified? Cite the log and relevant notes.",
+    "checklistTitle": "Plan bring-up",
+    "checklistPrompt": "Use the bringup-checklist skill. Draft a first-power-up checklist from the application note, pinout, notes and boot log. Separate recorded evidence from checks still to measure and cite each source. Answer in chat.",
+    "usePrompt": "Try: {{title}}"
   }
 }

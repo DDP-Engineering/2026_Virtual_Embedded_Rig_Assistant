@@ -64,6 +64,7 @@ const workbenchHandlers = {
   "app.chooseFolder": unused,
   "workbench.create": unused,
   "workbench.open": unused,
+  "workbench.demo.open": unused,
   "workbench.close": unused,
   "workbench.recent": unused,
   "workbench.config.get": unused,

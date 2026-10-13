@@ -7,6 +7,7 @@ import {
   channels,
   configWarnings,
   defaultSettings,
+  demoWorkbench,
   type EventEnvelope,
   eventEnvelopeSchema,
   isChannel,
@@ -570,6 +571,30 @@ export function createMockApi(
         const { folder } = channels["workbench.open"].request.parse(input.data);
         const bench = benches.get(folder);
         if (!bench) throw veraError("NOT_FOUND");
+        await sessions.close();
+        active = folder;
+        remember(bench.snapshot);
+        value = bench.snapshot;
+        emit({
+          topic: "workbench",
+          id: bench.snapshot.config.id,
+          event: { type: "opened", workbench: bench.snapshot },
+        });
+        break;
+      }
+      case "workbench.demo.open": {
+        const folder = "/mock/demo-workbenches/VERA-DEMO-01";
+        let bench = benches.get(folder);
+        if (!bench) {
+          const config = workbenchSchema.parse({ format: 1, id: demoWorkbench.id, name: demoWorkbench.name });
+          bench = {
+            snapshot: { folder, config, readOnly: false, warnings: [] },
+            pinned: workbenchTemplate(demoWorkbench.name),
+          };
+          benches.set(folder, bench);
+          for (const name of ["datasheet-reader", "log-analyst", "bringup-checklist"])
+            skillFiles.set(`${config.id}:${name}`, skillTemplate(name));
+        }
         await sessions.close();
         active = folder;
         remember(bench.snapshot);

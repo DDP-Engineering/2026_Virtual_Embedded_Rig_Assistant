@@ -8,6 +8,8 @@ focused tests are `tests/tooling/{packaging,build-mode}.test.ts` and
 `apps/desktop/src/main/packaging/sqlite-probe.test.ts`. General workspace/compiler behavior belongs
 to [software-tooling](software-tooling.md); window/security lifecycle belongs to [desktop-shell](desktop-shell.md).
 
+[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+
 ## Purpose and boundaries
 
 The package pipeline emits host Windows/Linux x64 artifacts with the pinned runtime closure,

@@ -373,5 +373,24 @@
     "confirmText": "Der Link des Update-Feeds wird im Systembrowser geöffnet.",
     "confirm": "Im Browser öffnen",
     "cancel": "Abbrechen"
+  },
+  "demo": {
+    "offerTitle": "Mit dem Demo lernen",
+    "offerDescription": "Entdecke VERA-DEMO-01: eine fiktive Platine mit PDFs, Notizen, Pinbelegung, Boot-Log und drei Beispiel-Skills. Deine eigene Kopie bewahrt Änderungen und Sitzungen.",
+    "open": "Demo-Workbench öffnen",
+    "guideTitle": "Drei geführte Prompts ausprobieren",
+    "fictional": "VERA-DEMO-01 ist fiktiv. Werte und Messungen sind Beispieldaten; Hardware ist nicht erforderlich.",
+    "configureStep": "Konfiguriere einen Anbieter oder verbinde dein Abonnement in den App-Einstellungen.",
+    "configure": "Anbietereinstellungen öffnen",
+    "promptStep": "Wähle unten einen Prompt, um eine neue Sitzung mit einem bearbeitbaren Entwurf zu öffnen. Wähle ein Modell, prüfe den Text und klicke auf Senden.",
+    "citationStep": "Öffne die Quellenverweise, um die Belege zu prüfen. Der Dokumente-Tab zeigt den Indexierungsfortschritt; die Skills können den entsprechenden englischen Text verwenden, während die PDFs indexiert werden.",
+    "returnStep": "Klicke auf den Workbench-Namen in der Seitenleiste, um hierher zurückzukehren und einen anderen Prompt auszuprobieren. Die Beispielverfahren findest du unter Skills.",
+    "datasheetTitle": "Ein Datenblatt lesen",
+    "datasheetPrompt": "Nutze den Skill datasheet-reader. Welche Pins führen SDA und SCL bei Revision A, welche Pull-ups und Versorgungsspannungsgrenzen gelten, und wie stimmt die Pinbelegung mit dem Datenblatt überein? Belege die Antwort mit Quellen.",
+    "logTitle": "Ein Boot-Log analysieren",
+    "logPrompt": "Nutze den Skill log-analyst, um logs/boot-0412.log zu analysieren. Was zeigt die I2C-Warnung, was geschah danach, und was bleibt ungeprüft? Belege die Antwort mit dem Log und relevanten Notizen.",
+    "checklistTitle": "Die Inbetriebnahme planen",
+    "checklistPrompt": "Nutze den Skill bringup-checklist. Erstelle eine Checkliste für das erste Einschalten aus Anwendungshinweis, Pinbelegung, Notizen und Boot-Log. Trenne aufgezeichnete Belege von noch ausstehenden Messungen und gib jede Quelle an. Antworte im Chat.",
+    "usePrompt": "Ausprobieren: {{title}}"
   }
 }

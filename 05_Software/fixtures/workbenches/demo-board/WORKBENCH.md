@@ -11,3 +11,9 @@ Bring-up notes live in docs/notes. Boot captures live in logs. Pin mappings are 
 
 ## Known issues
 Revision A sometimes delays I2C initialization. Check the boot log before changing pull-up values.
+
+## Learning exercises
+GETTING-STARTED.md describes the three example prompts. Use datasheet-reader for electrical limits,
+log-analyst for boot evidence and bringup-checklist for a cited plan. Generated PDFs in docs/ have
+matching English Markdown in sources/ for use while indexing finishes. The boot capture reports a
+20 ms I2C delay followed by ready; sensor ID and LED acceptance still need evidence.

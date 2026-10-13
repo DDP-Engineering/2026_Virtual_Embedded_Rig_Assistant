@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkbenchSnapshot } from "@vera/shared";
+import { demoWorkbench, type WorkbenchSnapshot } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { DemoGuide } from "./demo-guide.js";
 import { ErrorMessage } from "./error-message.js";
 import { SkillSettings } from "./skills.js";
 
@@ -10,10 +11,16 @@ export function Workbench({
   settingsReadOnly,
   active,
   changed,
+  startPrompt,
+  configure,
+  sessionPending = false,
 }: {
   settingsReadOnly: boolean;
   active: WorkbenchSnapshot | undefined;
   changed: (active?: WorkbenchSnapshot, configOnly?: boolean) => void;
+  startPrompt?: (text: string) => void;
+  configure?: () => void;
+  sessionPending?: boolean;
 }) {
   const { t } = useTranslation();
   const client = useQueryClient();
@@ -56,6 +63,7 @@ export function Workbench({
     setEditing(false);
   }, [activeId]);
   async function perform(action: () => Promise<void>) {
+    if (pending || sessionPending) return;
     setPending(true);
     setError(undefined);
     try {
@@ -81,6 +89,25 @@ export function Workbench({
     <>
       {error !== undefined && <ErrorMessage error={error} />}
       {pending && <p role="status">{t("workbench.working")}</p>}
+      {!active && (
+        <section className="surface" data-demo-offer>
+          <h3>{t("demo.offerTitle")}</h3>
+          <p>{t("demo.offerDescription")}</p>
+          <button
+            type="button"
+            data-action="open-demo"
+            disabled={pending || sessionPending || settingsReadOnly}
+            onClick={() =>
+              void perform(async () => {
+                changed(await api.invoke("workbench.demo.open", {}));
+                await recent.refetch();
+              })
+            }
+          >
+            {t("demo.open")}
+          </button>
+        </section>
+      )}
       {active ? (
         <section className="surface" data-workbench="active">
           <h3>{active.config.name}</h3>
@@ -195,6 +222,13 @@ export function Workbench({
             </button>
           </section>
         </div>
+      )}
+      {active?.config.id === demoWorkbench.id && startPrompt && configure && (
+        <DemoGuide
+          disabled={pending || sessionPending || active.readOnly}
+          choose={startPrompt}
+          configure={configure}
+        />
       )}
       <section className="surface">
         <h3>{t("welcome.recent")}</h3>

@@ -28,6 +28,8 @@ export function App() {
   const [activeSession, setActiveSession] = useState<string>();
   const [sessionPending, setSessionPending] = useState(false);
   const [sessionError, setSessionError] = useState<unknown>();
+  const [draft, setDraft] = useState<{ sessionId: string; text: string }>();
+  const consumeDraft = useCallback(() => setDraft(undefined), []);
   const [searchState, setSearchState] = useState<{ benchId: string | undefined; query: string }>({
     benchId: undefined,
     query: "",
@@ -129,6 +131,18 @@ export function App() {
     }).catch(() => {});
   }, [benchId, readOnly, sessionPending, select, operation, client]);
   const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
+  const startPrompt = useCallback(
+    (text: string) => {
+      if (!benchId || readOnly || sessionPending) return;
+      void operation(async () => {
+        const session = await api.invoke("session.create", {});
+        client.setQueryData<SessionSummary[]>(["session.list", benchId], (old) => [session, ...(old ?? [])]);
+        setDraft({ sessionId: session.id, text });
+        select(session.id);
+      });
+    },
+    [benchId, readOnly, sessionPending, operation, client, select],
+  );
   const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
   const { snapshot, mutation } = usePreferences(info.data?.locale ?? "en");
   const sections = useSettingsSections();
@@ -308,6 +322,12 @@ export function App() {
                 settingsReadOnly={snapshot.data.readOnly}
                 active={activeWorkbench}
                 changed={benchChanged}
+                sessionPending={sessionPending}
+                startPrompt={startPrompt}
+                configure={() => {
+                  setSection("providers");
+                  setSettings(true);
+                }}
               />
             )}
             {info.data && (
@@ -324,6 +344,8 @@ export function App() {
             id={activeSession}
             changed={changed}
             readOnly={readOnly}
+            initialDraft={draft && draft.sessionId === activeSession ? draft.text : undefined}
+            consumeDraft={consumeDraft}
           />
         )}
       </Shell>

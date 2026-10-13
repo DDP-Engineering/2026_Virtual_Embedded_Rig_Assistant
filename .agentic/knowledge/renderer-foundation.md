@@ -9,6 +9,8 @@ focused acceptance is e2e/mock.spec.ts and the foundation test in e2e/shell.spec
 [desktop shell](desktop-shell.md) owns native window/security;
 [software tooling](software-tooling.md) owns verification commands.
 
+[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+
 ## Purpose and boundaries
 
 React supplies the responsive shell, Welcome workbench management and Settings seams. Appearance and Language

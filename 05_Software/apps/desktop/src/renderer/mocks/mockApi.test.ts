@@ -2,6 +2,22 @@ import type { Request } from "@vera/shared";
 import { beforeAll, expect, it, vi } from "vitest";
 
 let createMockApi: typeof import("./mockApi.js").createMockApi;
+// REQ-UX-194ecc98: authored for future execution, deferred by user policy.
+it("offers a demo with three skills and preserves edited context on reopening", async () => {
+  const { api } = createMockApi();
+  const demo = await api.invoke("workbench.demo.open", {});
+  expect(demo.config.name).toBe("VERA-DEMO-01");
+  expect(
+    (await api.invoke("skills.list", { workbenchId: demo.config.id })).map((s) => s.name).sort(),
+  ).toEqual(["bringup-checklist", "datasheet-reader", "log-analyst"]);
+  await api.invoke("workbench.pinned.update", { content: "my demo notes" });
+  await api.invoke("workbench.close", {});
+  await api.invoke("workbench.demo.open", {});
+  expect((await api.invoke("workbench.pinned.get", {})).content).toBe("my demo notes");
+  await expect(api.invoke("workbench.demo.open", { folder: "/outside" } as never)).rejects.toMatchObject({
+    code: "INVALID",
+  });
+});
 it("mock skills create/edit/toggle isolate workbenches and reject stale or read-only mutations", async () => {
   const { api } = createMockApi();
   const wb = await api.invoke("workbench.create", { folder: "C:/mock/skills", name: "Skills" });

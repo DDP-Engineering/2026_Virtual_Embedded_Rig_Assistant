@@ -12,6 +12,8 @@ owns the shell, appearance, language and layout.
 Tool path confinement, read/list/glob/grep and worker deadlines route to [File tools](file-tools.md).
 Database migrations, compatibility, backups and row repositories route to [Workbench storage](workbench-storage.md).
 
+[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+
 ## Purpose and boundaries
 
 Core owns the folder lifecycle, identity, YAML validation, runtime lock, pinned context and common

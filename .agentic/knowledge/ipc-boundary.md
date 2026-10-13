@@ -9,6 +9,8 @@ Focused tests are ipc-router.test.ts, preload/bridge.test.ts and main/events.tes
 Native window/security/state belongs to [desktop-shell](desktop-shell.md);
 compiler and acceptance commands belong to [software-tooling](software-tooling.md).
 
+[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+
 ## Purpose and boundaries
 
 Shared owns schemas and inferred request/response/event types. Main authorizes and dispatches

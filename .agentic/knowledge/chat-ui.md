@@ -9,6 +9,8 @@ Focused tests: components/session/workspace.test.ts; e2e/chat-ui.spec.ts and moc
 [Sessions](sessions.md) owns persistence/runtime; [renderer foundation](renderer-foundation.md)
 owns geometry/preferences; [workbench](workbench.md) owns folder lifecycle/pinned edits.
 
+[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+
 ## Purpose and boundaries
 
 React presents durable session state through the shared API/reducer. Main/core own persistence,

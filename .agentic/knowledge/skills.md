@@ -9,6 +9,8 @@ core workbench/service.ts, desktop main/sessions.ts and renderer/components/skil
 owns registry/result limits; [Sessions](sessions.md) owns turns and persistence;
 [IPC boundary](ipc-boundary.md) owns exact frame authorization and typed channels.
 
+[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+
 ## Purpose and boundaries
 
 SkillCatalog discovers workbench/skills and separately host-authorized userData/skills.

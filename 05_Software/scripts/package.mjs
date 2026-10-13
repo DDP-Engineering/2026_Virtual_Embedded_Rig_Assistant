@@ -158,6 +158,14 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release")) 
     filter: (source) =>
       process.platform === "win32" || !source.startsWith(join(root, "resources/windows-runtime")),
   });
+  const demo = JSON.parse(await readFile(join(root, "packages/shared/src/demo.json"), "utf8"));
+  for (const path of demo.files) {
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(path) || path.split("/").includes(".."))
+      throw new Error("Unsafe demo asset path");
+    const target = join(stage, "resources/demo-board", path);
+    await mkdir(dirname(target), { recursive: true });
+    await cp(join(root, "fixtures/workbenches/demo-board", path), target);
+  }
   const desktop = JSON.parse(await readFile(join(root, "apps/desktop/package.json"), "utf8"));
   const runtimeNames = [
     "better-sqlite3",
@@ -250,6 +258,7 @@ async function packageApp() {
     "package-lock.json",
     "resources/model-manifest.json",
     "resources/windows-runtime-manifest.json",
+    "packages/shared/src/demo.json",
   ];
   const fingerprintInputs = () =>
     Promise.all(

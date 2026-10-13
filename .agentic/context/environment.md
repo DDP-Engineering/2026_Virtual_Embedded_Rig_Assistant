@@ -24,6 +24,8 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Demo acceptance uses future main/demo-workbench.test.ts, shared/demo.test.ts and renderer workspace/mock scenarios, plus fresh isolated userData and all three suggested prompts with a real model by hand. The bundled inventory lives in shared/src/demo.json; generated PDFs are reused from the demo fixture, and package staging delivers the same allowlisted corpus.
+
 Release acceptance uses `smoke:package -- --artifact <already-built native release>`;
 see [release smoke](../knowledge/release-smoke.md) for native strace calibration,
 normal custom-provider approval/restart and pending manual Windows capture.

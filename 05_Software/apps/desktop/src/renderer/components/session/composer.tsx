@@ -13,6 +13,8 @@ export function Composer({
   stop,
   setModel,
   setMode,
+  initialDraft,
+  consumeDraft,
 }: {
   state: SessionState;
   disabled: boolean;
@@ -20,14 +22,22 @@ export function Composer({
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
   setMode: (mode: SessionState["mode"]) => Promise<void>;
+  initialDraft?: string | undefined;
+  consumeDraft?: (() => void) | undefined;
 }) {
   const { t } = useTranslation();
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialDraft ?? "");
   const [token, setToken] = useState<{ start: number; end: number; query: string }>();
   const [matches, setMatches] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (initialDraft !== undefined) {
+      input.current?.focus();
+      consumeDraft?.();
+    }
+  }, [initialDraft, consumeDraft]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
   const locked = disabled || state.status === "awaiting_approval";

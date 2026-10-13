@@ -44,6 +44,7 @@ export * from "./tools/read.js";
 export * from "./tools/registry.js";
 export * from "./tools/todo.js";
 export * from "./tools/write.js";
+export { acquireGuard as acquireWorkbenchGuard } from "./workbench/guard.js";
 export * from "./workbench/ignore.js";
 export * from "./workbench/path-guard.js";
 export * from "./workbench/service.js";

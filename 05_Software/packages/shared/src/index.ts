@@ -3,6 +3,7 @@
 export * from "./artifacts.js";
 export * from "./changes.js";
 export * from "./chatgpt.js";
+export * from "./demo.js";
 export * from "./documents.js";
 export * from "./events.js";
 export * from "./ipc.js";

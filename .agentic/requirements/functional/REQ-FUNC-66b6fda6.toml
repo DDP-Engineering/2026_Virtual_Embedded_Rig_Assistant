@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-FUNC-66b6fda6"
+
+title = "Deliver the fictional demo workbench"
+
+status = "active"
+
+requirement = """
+When a user opens the bundled demo, VERA shall open a private fictional demo workbench containing the generated fictional PDFs, notes, boot log, pinout and datasheet-reader, log-analyst and bringup-checklist skills, preserving an existing copy and refusing redirected or conflicting destination paths.
+"""
+
+verification = "Inspect the shipped file inventory and skills against the fictional sources; future focused demo-copy and strict IPC scenarios cover creation, reopen preservation, interrupted copy and redirected/conflicting destinations. Runtime execution deferred by direct user policy."
+
+affected_paths = ["05_Software/fixtures/workbenches/demo-board/", "05_Software/packages/shared/src/demo.ts", "05_Software/packages/shared/src/demo.json", "05_Software/packages/shared/tsconfig.json", "05_Software/packages/core/src/index.ts", "05_Software/apps/desktop/src/main/demo-workbench.test.ts", "05_Software/packages/shared/src/demo.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/packages/shared/src/index.ts", "05_Software/apps/desktop/src/main/demo-workbench.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/electron-builder.yml", "05_Software/scripts/package.mjs"]
+
+linked_tests = ["05_Software/apps/desktop/src/main/demo-workbench.test.ts", "05_Software/packages/shared/src/demo.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts"]
+
+
+spec = "specs/REQ-FUNC-66b6fda6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

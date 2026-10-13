@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-UX-194ecc98"
+
+title = "Offer the demo and three guided prompts"
+
+status = "active"
+
+requirement = """
+When Welcome has no active workbench, VERA shall offer the demo and, while that demo is open, provide a first-run guide with three localized suggested prompts that create editable drafts in ordinary sessions with explicit model selection and sending.
+"""
+
+verification = "Manual: on fresh isolated userData, open the offered demo, select each of the three prompts, configure/select a real model and send by hand; inspect grounded responses and source references. This acceptance is deferred and has no PASS under current user policy. Future renderer scenarios cover draft selection and readonly/loading errors."
+
+affected_paths = ["05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/renderer/components/workbench.tsx", "05_Software/apps/desktop/src/renderer/components/demo-guide.tsx", "05_Software/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/locales/", "05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = "specs/REQ-FUNC-66b6fda6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

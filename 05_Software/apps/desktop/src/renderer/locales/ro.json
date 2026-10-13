@@ -373,5 +373,24 @@
     "confirmText": "Linkul feed-ului se va deschide în browserul sistemului.",
     "confirm": "Deschide în browser",
     "cancel": "Anulează"
+  },
+  "demo": {
+    "offerTitle": "Învață cu exemplul demo",
+    "offerDescription": "Explorează VERA-DEMO-01: o placă fictivă cu PDF-uri, note, pinout, log de pornire și trei skills demonstrative. Copia ta păstrează modificările și sesiunile.",
+    "open": "Deschide workbench-ul demo",
+    "guideTitle": "Încearcă trei prompturi ghidate",
+    "fictional": "VERA-DEMO-01 este fictivă. Valorile și măsurătorile sunt date demonstrative; nu ai nevoie de hardware.",
+    "configureStep": "Configurează un furnizor sau conectează abonamentul în setările aplicației.",
+    "configure": "Deschide setările furnizorilor",
+    "promptStep": "Alege un prompt pentru a deschide o sesiune nouă cu un mesaj editabil. Selectează un model, verifică textul și apasă Trimite.",
+    "citationStep": "Deschide citările pentru a verifica dovezile. Fila Documente arată progresul indexării; skills pot folosi textul englezesc corespunzător până la indexarea PDF-urilor.",
+    "returnStep": "Folosește numele workbench-ului din bara laterală pentru a reveni aici și a încerca alt prompt. Consultă procedurile demonstrative în Skills.",
+    "datasheetTitle": "Citește o fișă tehnică",
+    "datasheetPrompt": "Folosește skill-ul datasheet-reader. Ce pini sunt SDA și SCL pe revizia A, ce rezistențe pull-up și limite de alimentare se aplică și cum corespunde pinout-ul cu fișa tehnică? Citează sursele.",
+    "logTitle": "Analizează un log de pornire",
+    "logPrompt": "Folosește skill-ul log-analyst pentru a analiza logs/boot-0412.log. Ce arată avertismentul I2C, ce s-a întâmplat ulterior și ce rămâne neverificat? Citează logul și notele relevante.",
+    "checklistTitle": "Planifică pornirea inițială",
+    "checklistPrompt": "Folosește skill-ul bringup-checklist. Creează o listă pentru prima alimentare din nota de aplicație, pinout, note și logul de pornire. Separă dovezile înregistrate de verificările încă de măsurat și citează fiecare sursă. Răspunde în chat.",
+    "usePrompt": "Încearcă: {{title}}"
   }
 }

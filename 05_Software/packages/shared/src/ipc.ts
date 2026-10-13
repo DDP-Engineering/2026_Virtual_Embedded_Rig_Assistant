@@ -266,6 +266,7 @@ export const channels = {
     z.strictObject({ folder: z.string().min(1) }),
     workbenchSnapshotSchema,
   ),
+  "workbench.demo.open": defineChannel("workbench.demo.open", z.strictObject({}), workbenchSnapshotSchema),
   "workbench.close": defineChannel("workbench.close", z.strictObject({}), z.strictObject({})),
   "workbench.recent": defineChannel(
     "workbench.recent",

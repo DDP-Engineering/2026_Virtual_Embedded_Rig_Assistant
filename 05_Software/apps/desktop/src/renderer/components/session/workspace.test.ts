@@ -9,6 +9,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { App } from "../../App.js";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { DemoGuide } from "../demo-guide.js";
 import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
 import { Transcript } from "./transcript.js";
@@ -62,6 +63,66 @@ afterEach(async () => {
   container?.remove();
   await api.invoke("workbench.close", {});
   localStorage.clear();
+});
+
+// REQ-UX-194ecc98: future scenarios; execution deferred by user policy.
+test("three guide buttons choose source-backed drafts and respect read-only state", async () => {
+  const choose = vi.fn();
+  await mount(createElement(DemoGuide, { choose, configure: vi.fn(), disabled: false }));
+  const buttons = [...container.querySelectorAll<HTMLButtonElement>("[data-demo-prompt]")];
+  expect(buttons).toHaveLength(3);
+  for (const button of buttons) await act(async () => button.click());
+  expect(choose.mock.calls.map(([text]) => text)).toEqual([
+    expect.stringContaining("datasheet-reader"),
+    expect.stringContaining("log-analyst"),
+    expect.stringContaining("bringup-checklist"),
+  ]);
+  await act(async () =>
+    root.render(createElement(DemoGuide, { choose, configure: vi.fn(), disabled: true })),
+  );
+  expect(
+    [...container.querySelectorAll<HTMLButtonElement>("[data-demo-prompt]")].every((b) => b.disabled),
+  ).toBe(true);
+});
+
+test("a guided composer draft is editable and consumed once without sending automatically", async () => {
+  const send = vi.fn(async () => true);
+  const consumeDraft = vi.fn();
+  await mount(
+    createElement(Composer, {
+      state: emptySessionState(),
+      disabled: false,
+      send,
+      stop: vi.fn(),
+      setModel: vi.fn(),
+      setMode: vi.fn(),
+      initialDraft: "Use the datasheet-reader skill.",
+      consumeDraft,
+    }),
+  );
+  const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
+  expect(input.value).toBe("Use the datasheet-reader skill.");
+  expect(consumeDraft).toHaveBeenCalledTimes(1);
+  expect(send).not.toHaveBeenCalled();
+  await typeText(input, "Edited prompt");
+  expect(input.value).toBe("Edited prompt");
+});
+
+test("Welcome demo selection opens the guide and a new ordinary session draft", async () => {
+  await mount();
+  const observed = vi.spyOn(api, "invoke");
+  const open = container.querySelector<HTMLButtonElement>('[data-action="open-demo"]');
+  expect(open).toBeTruthy();
+  await act(async () => open?.click());
+  await settle();
+  expect(container.querySelector("[data-demo-guide]")).toBeTruthy();
+  const before = await api.invoke("session.list", {});
+  const prompt = container.querySelector<HTMLButtonElement>('[data-demo-prompt="datasheet-reader"]');
+  await act(async () => prompt?.click());
+  await settle();
+  expect(container.querySelector<HTMLTextAreaElement>("#chat-message")?.value).toContain("datasheet-reader");
+  expect((await api.invoke("session.list", {})).length).toBe(before.length + 1);
+  expect(observed.mock.calls.some(([channel]) => channel === "session.send")).toBe(false);
 });
 
 // REQ-UX-8b320385 REQ-UX-3001bd00: authored; execution deferred.

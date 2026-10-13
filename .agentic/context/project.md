@@ -18,6 +18,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
+[Demo and onboarding](../knowledge/demo-onboarding.md) routes the complete bundled fictional board, private userData copy, three sample skills and localized Welcome guide/session drafts.
+
 [Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
 normal loopback tools/approval/citation/restart and external process-tree egress.
 

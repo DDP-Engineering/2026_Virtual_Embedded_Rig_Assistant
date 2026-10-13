@@ -119,6 +119,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "app.chooseFolder"
     | "workbench.create"
     | "workbench.open"
+    | "workbench.demo.open"
     | "workbench.close"
     | "workbench.recent"
     | "workbench.config.get"
