@@ -98,6 +98,8 @@ it("infers registry types and returns validated metadata", async () => {
     | "app.revealPath"
     | "session.approval.decide"
     | "session.list"
+    | "session.search"
+    | "session.export"
     | "session.create"
     | "session.get"
     | "session.rename"

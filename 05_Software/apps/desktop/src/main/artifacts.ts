@@ -23,7 +23,7 @@ export function revealArtifact(
   show(path);
   return {};
 }
-function destination(root: string, path: string): string {
+export function exportDestination(root: string, path: string): string {
   if (!isAbsolute(path)) throw veraError("INVALID");
   let existing = resolve(path);
   const suffix: string[] = [];
@@ -62,6 +62,6 @@ export async function exportArtifact(
   const path = await options.choose(name);
   if (path === null) return { exported: false };
   const { artifact } = service.verifiedArtifact(id);
-  await options.write(destination(options.root, path), options.scrub(artifact.content));
+  await options.write(exportDestination(options.root, path), options.scrub(artifact.content));
   return { exported: true };
 }

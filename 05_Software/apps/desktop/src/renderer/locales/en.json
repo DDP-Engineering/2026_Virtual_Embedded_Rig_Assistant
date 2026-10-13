@@ -221,7 +221,13 @@
       "completed": "History summarized",
       "unavailable": "History cannot be summarized",
       "failed": "History summary failed"
-    }
+    },
+    "searchSessions": "Search sessions",
+    "noSessions": "No matching sessions",
+    "exportMarkdown": "Export Markdown",
+    "exportJson": "Export JSON",
+    "exported": "Session exported.",
+    "exportCanceled": "Export canceled."
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."

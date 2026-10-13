@@ -30,6 +30,15 @@ export class EventsRepository {
       .prepare("SELECT * FROM events WHERE session_id=? AND seq>? ORDER BY seq")
       .all(sessionId, afterSeq) as EventRow[];
   }
+  messageTexts(sessionId: string): string[] {
+    return (
+      this.db
+        .prepare(
+          "SELECT payload_json FROM events WHERE session_id=? AND type IN ('message.user','message.queued','message.done') ORDER BY seq",
+        )
+        .all(sessionId) as { payload_json: string }[]
+    ).map((row) => (JSON.parse(row.payload_json) as { text: string }).text);
+  }
   delete(sessionId: string, seq: number): boolean {
     return this.db.prepare("DELETE FROM events WHERE session_id=? AND seq=?").run(sessionId, seq).changes > 0;
   }

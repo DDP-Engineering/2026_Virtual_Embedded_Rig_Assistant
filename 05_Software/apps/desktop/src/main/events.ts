@@ -65,7 +65,7 @@ export function sanitizeSessionSnapshot(
 }
 
 /** Preserve schema fields/identities; redact user text and arbitrary extension keys/values. */
-function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => string): EventEnvelope {
+export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => string): EventEnvelope {
   const extra = (value: unknown): unknown => scrubExtra(value, scrub);
   const warnings = (items: WorkbenchWarning[]) =>
     items.map(({ code, path }) => ({ code, ...(path === undefined ? {} : { path: scrub(path) }) }));

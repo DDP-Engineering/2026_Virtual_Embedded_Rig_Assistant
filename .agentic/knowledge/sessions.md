@@ -14,6 +14,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 - SessionService(host) recovers writable state before accepting work. host supplies SQLite/root/gateway/Clock/model/prompt and optional workers/registry/permissions/policy/runtime/limits/scrubbing/ownership check and [skill catalog](skills.md). Desktop refreshes catalog metadata before each turn and binds its owned loader to the tool context. Read-only services expose reads/subscriptions.
 - TodoHost binds synchronous validated whole-list upserts and durable todo.updated recording/publication for sequential session tools; [Plan](plan.md) owns bounds and renderer status presentation.
+- search(query) matches scrubbed titles and durable message.user/message.queued/message.done text using case-insensitive literal substrings; bounded queries read existing per-session events, including full historical and pending messages. exportSession(id) returns strict schemaVersion1 metadata and ordered durable event records; main scrubs fields and uses the pure core buildSessionMarkdown formatter with applied stored diffs or JSON serialization. [Session export](session-export.md) owns formats/native disclosure and acceptance seams.
 - listArtifacts/openArtifact/verifiedArtifact expose current managed session content; [Artifacts](artifacts.md) owns bounded storage, refs and native actions. Session class tools stay available in all session permission modes; workbench read-only still denies mutation.
 - listChanges(sessionId) and getChange(changeId) project applied SQLite rows, ascending creation time/id and stored-patch hunk counts/details. [Changes](changes.md) owns the read protocol and renderer/native reveal.
 - create(modelRef?,mode?) returns camelCase metadata with ses_ULID,UTC dates,empty title and idle status. list, get(id)->{snapshot,seq}, rename,delete,setModel,setMode own metadata and errors. Default mode comes from host; model resolution applies session/workbench/app precedence. First user text sets an empty title to60 UTF16 units; explicit nonempty rename survives.
@@ -65,6 +66,9 @@ flowchart LR
  invokes --> host[SessionsHost]
  control --> host
  host --> service[SessionService]
+ service --> export[SessionExport schema + Markdown formatter]
+ service --> search[messageTexts literal search]
+ search --> events
  service --> hub[SessionHub]
  hub --> events[(SQLite events)]
  service --> messages[(messages/tool_calls)]

@@ -11,6 +11,30 @@ import * as core from "../index.js";
 import { ReplayGateway } from "../llm/replay.js";
 
 const cleanup: (() => Promise<void>)[] = [];
+// REQ-FUNC-1b882a4b REQ-FUNC-70479d66; runtime execution deferred by user.
+it("searches full persisted and pending messages literally and exports their ordered events", async () => {
+  const { service, handle } = await setup();
+  const s = service.create();
+  service.rename(s.id, "Renamed");
+  const other = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  hub.emit(s.id, { type: "message.user", messageId: "historical", text: "Ă reset %_" });
+  hub.emit(s.id, { type: "message.done", messageId: "a", text: "Oscillator", citations: [] });
+  hub.emit(s.id, { type: "message.queued", messageId: "q", text: "Pending steering", timestamp: 1 });
+  hub.emit(other.id, { type: "tool.started", callId: "c", name: "Oscillator", args: {} });
+  for (const query of ["renamed", "ă RESET", "%_", "OSCILLATOR", "steering"])
+    expect(service.search(query).map((r) => r.id)).toEqual([s.id]);
+  expect(service.search("not present")).toEqual([]);
+  expect(() => service.search(" ")).toThrow(expect.objectContaining({ code: "INVALID" }));
+  const exported = service.exportSession(s.id);
+  expect(exported.events.map((r) => r.seq)).toEqual([1, 2, 3, 4, 5]);
+  expect(exported.events.at(-1)?.event).toMatchObject({ type: "message.queued", text: "Pending steering" });
+  expect(
+    exported.events.some((r) => "text" in r.event && r.event.text.includes("Derived historical context")),
+  ).toBe(false);
+  hub.emit(s.id, { type: "message.delivered", messageIds: ["q"] });
+  expect(service.exportSession(s.id).events.at(-1)?.event.type).toBe("message.delivered");
+});
 afterEach(async () => {
   vi.restoreAllMocks();
   for (const close of cleanup.splice(0).reverse()) await close();

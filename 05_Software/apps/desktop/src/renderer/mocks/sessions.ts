@@ -101,11 +101,22 @@ export class MockSessions {
       requestSha256: string;
       decision: "approved" | "denied";
       switchToAutoEdit?: boolean;
+      query: string;
     };
-    if (channel === "session.list") {
+    if (channel === "session.list" || channel === "session.search") {
       this.current();
       return [...this.sessions.entries()]
         .filter(([key]) => key.startsWith(`${this.current().id}/`))
+        .filter(
+          ([, row]) =>
+            channel !== "session.search" ||
+            row.summary.title.toLowerCase().includes(request.query.toLowerCase()) ||
+            row.events.some(
+              (e) =>
+                (e.type === "message.user" || e.type === "message.queued" || e.type === "message.done") &&
+                e.text.toLowerCase().includes(request.query.toLowerCase()),
+            ),
+        )
         .map(([, row]) => row.summary);
     }
     if (channel === "session.create") {
@@ -164,6 +175,7 @@ export class MockSessions {
     }
     const id = request.sessionId;
     const row = this.row(id);
+    if (channel === "session.export") return { exported: true };
     if (channel === "artifacts.list")
       return row.artifacts.map(({ content: _, ...summary }) => structuredClone(summary));
     if (channel === "changes.list")

@@ -28,6 +28,10 @@ export function App() {
   const [activeSession, setActiveSession] = useState<string>();
   const [sessionPending, setSessionPending] = useState(false);
   const [sessionError, setSessionError] = useState<unknown>();
+  const [searchState, setSearchState] = useState<{ benchId: string | undefined; query: string }>({
+    benchId: undefined,
+    query: "",
+  });
   const bench = useQuery({
     queryKey: ["workbench.active"],
     queryFn: () => api.invoke("workbench.config.get", {}),
@@ -41,8 +45,17 @@ export function App() {
     enabled: !!benchId,
     refetchInterval: 2000,
   });
+  const sessionSearch = searchState.benchId === benchId ? searchState.query : "";
+  const searchQuery = sessionSearch.trim();
+  const searchResults = useQuery({
+    queryKey: ["session.search", benchId, searchQuery],
+    queryFn: () => api.invoke("session.search", { query: searchQuery }),
+    enabled: !!benchId && !!searchQuery,
+    refetchInterval: 2000,
+  });
   const changed = useCallback(() => {
     void client.invalidateQueries({ queryKey: ["session.list"] });
+    void client.invalidateQueries({ queryKey: ["session.search"] });
   }, [client]);
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
@@ -185,7 +198,12 @@ export function App() {
       </button>
       {benchId && (
         <SessionList
-          sessions={sessions.data ?? []}
+          key={benchId}
+          sessions={(searchQuery ? searchResults.data : sessions.data) ?? []}
+          search={sessionSearch}
+          searchChanged={(query) => setSearchState({ benchId, query })}
+          searching={!!searchQuery && searchResults.isFetching}
+          searchError={searchQuery ? searchResults.error : null}
           active={activeSession}
           select={select}
           create={create}

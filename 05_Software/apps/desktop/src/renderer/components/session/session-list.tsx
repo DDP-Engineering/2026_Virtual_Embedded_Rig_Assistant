@@ -2,6 +2,7 @@
 import type { SessionSummary } from "@vera/shared";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ErrorMessage } from "../error-message.js";
 
 export function SessionList({
   sessions,
@@ -11,6 +12,10 @@ export function SessionList({
   rename,
   remove,
   disabled,
+  search = "",
+  searchChanged,
+  searching = false,
+  searchError,
 }: {
   sessions: SessionSummary[];
   active?: string | undefined;
@@ -19,6 +24,10 @@ export function SessionList({
   rename: (id: string, title: string) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
   disabled: boolean;
+  search?: string;
+  searchChanged?: (query: string) => void;
+  searching?: boolean;
+  searchError?: unknown;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<SessionSummary>();
@@ -51,6 +60,22 @@ export function SessionList({
       <button type="button" data-action="new-session" disabled={disabled} onClick={create}>
         {t("chat.new")}
       </button>
+      {searchChanged && (
+        <label>
+          {t("chat.searchSessions")}
+          <input
+            type="search"
+            value={search}
+            maxLength={1000}
+            onChange={(e) => searchChanged(e.target.value)}
+          />
+        </label>
+      )}
+      {searching && <p role="status">{t("home.loading")}</p>}
+      {searchError != null && <ErrorMessage error={searchError} />}
+      {!!search.trim() && !searching && searchError == null && sessions.length === 0 && (
+        <p role="status">{t("chat.noSessions")}</p>
+      )}
       {sessions.map((s) => (
         <div key={s.id} className="session-entry">
           <button

@@ -221,7 +221,13 @@
       "completed": "Istoric rezumat",
       "unavailable": "Istoricul nu poate fi rezumat",
       "failed": "Rezumarea istoricului a eșuat"
-    }
+    },
+    "searchSessions": "Caută sesiuni",
+    "noSessions": "Nicio sesiune găsită",
+    "exportMarkdown": "Exportă Markdown",
+    "exportJson": "Exportă JSON",
+    "exported": "Sesiunea a fost exportată.",
+    "exportCanceled": "Export anulat."
   },
   "context": {
     "budget_exceeded": "Textul depășește bugetul de context al modelului."

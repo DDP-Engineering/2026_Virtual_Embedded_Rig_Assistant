@@ -19,6 +19,7 @@ export * from "./llm/gateway.js";
 export * from "./llm/providers.js";
 export * from "./llm/scrub.js";
 export * from "./ports.js";
+export * from "./sessions/export.js";
 export * from "./sessions/hub.js";
 export * from "./sessions/service.js";
 export * from "./settings/service.js";

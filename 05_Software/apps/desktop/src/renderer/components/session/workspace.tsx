@@ -23,6 +23,22 @@ export function SessionWorkspace({
   const [pending, setPending] = useState(false);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<boolean>();
+  async function exportTranscript(format: "md" | "json") {
+    if (!id || exporting) return;
+    setExporting(true);
+    setExportResult(undefined);
+    setFailure(undefined);
+    try {
+      const result = await api.invoke("session.export", { sessionId: id, format });
+      setExportResult(result.exported);
+    } catch (error) {
+      setFailure(error);
+    } finally {
+      setExporting(false);
+    }
+  }
   const searchInput = useRef<HTMLInputElement>(null);
   const stopDialog = useRef<HTMLDialogElement>(null);
   const stopOrigin = useRef<HTMLElement | null>(null);
@@ -82,6 +98,17 @@ export function SessionWorkspace({
   if (!id) return <p>{t("chat.select")}</p>;
   return (
     <section className="session-workspace" aria-label={t("chat.conversation")}>
+      <div className="workbench-actions">
+        <button type="button" disabled={!view || exporting} onClick={() => void exportTranscript("md")}>
+          {t("chat.exportMarkdown")}
+        </button>
+        <button type="button" disabled={!view || exporting} onClick={() => void exportTranscript("json")}>
+          {t("chat.exportJson")}
+        </button>
+      </div>
+      {exportResult !== undefined && (
+        <p role="status">{exportResult ? t("chat.exported") : t("chat.exportCanceled")}</p>
+      )}
       {error !== undefined && (
         <>
           <ErrorMessage error={error} />

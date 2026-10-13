@@ -9,7 +9,10 @@ import {
   permissionModeSchema,
   type SessionEvent,
   type SessionSummary,
+  sessionEventSchema,
+  sessionExportSchema,
   sessionIdSchema,
+  sessionSearchQuerySchema,
   type ViewerContent,
   veraError,
 } from "@vera/shared";
@@ -30,6 +33,7 @@ import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
+import { EventsRepository } from "../storage/repos/events.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
 import { TodosRepository } from "../storage/repos/todos.js";
@@ -186,6 +190,30 @@ export class SessionService {
   list(): SessionSummary[] {
     if (this.closed) throw veraError("CONFLICT");
     return this.sessions.list().map((row) => this.summary(row));
+  }
+  /** Full durable message search; never uses the derived model request view. */
+  search(query: string): SessionSummary[] {
+    const parsed = sessionSearchQuerySchema.safeParse(query);
+    if (!parsed.success) throw veraError("INVALID");
+    const needle = parsed.data.toLowerCase();
+    const matches = (text: string) => (this.host.scrub?.(text) ?? text).toLowerCase().includes(needle);
+    const events = new EventsRepository(this.host.db);
+    return this.list().filter(
+      (session) => matches(session.title) || events.messageTexts(session.id).some(matches),
+    );
+  }
+  /** Synchronous read of one workbench-owned durable archival view. */
+  exportSession(id: string) {
+    const session = this.summary(this.row(id));
+    return sessionExportSchema.parse({
+      schemaVersion: 1,
+      session,
+      events: new EventsRepository(this.host.db).list(id).map((row) => ({
+        seq: row.seq,
+        createdAt: row.created_at,
+        event: sessionEventSchema.parse(JSON.parse(row.payload_json)),
+      })),
+    });
   }
   create(modelRef: string | null = null, mode: PermissionMode = this.host.mode ?? "ask"): SessionSummary {
     this.writable();

@@ -33,6 +33,7 @@ import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { revealPath } from "./reveal-path.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
+import { exportSession } from "./session-export.js";
 import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
@@ -247,6 +248,28 @@ ipcMain.handle(
       "session.list": () =>
         sessions.run((s) =>
           s.list().map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
+        ),
+      "session.search": ({ query }) =>
+        sessions.run((s) =>
+          s.search(query).map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
+        ),
+      "session.export": ({ sessionId, format }) =>
+        sessions.run((s) =>
+          exportSession(s, sessionId, format, {
+            root: workbench.getSnapshot().folder,
+            choose: async (name) => {
+              if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
+                return process.env.VERA_TEST_DIALOG_PATH;
+              if (!window || window.isDestroyed()) return null;
+              const result = await dialog.showSaveDialog(window, {
+                defaultPath: name,
+                filters: [{ name: format === "md" ? "Markdown" : "JSON", extensions: [format] }],
+              });
+              return result.canceled ? null : (result.filePath ?? null);
+            },
+            write: (path, content) => createFileAccess(systemClock).writeAtomic(path, content),
+            scrub: (text) => credentials.scrub(text),
+          }),
         ),
       "session.create": ({ modelRef, mode }) =>
         sessions.run((s) => {

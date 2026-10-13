@@ -17,8 +17,8 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 ## Public interface
 
 - App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage.
-- SessionList offers New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
-- SessionWorkspace composes transcript/composer/meter and Ctrl+F search; Escape confirms Stop.
+- SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
+- SessionWorkspace offers native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches, and composes transcript/composer/meter and Ctrl+F search; Escape confirms Stop.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
@@ -80,6 +80,10 @@ flowchart LR
   App --> SessionList
   App --> SessionWorkspace
   SessionWorkspace --> useSessionEvents
+  App --> SessionSearch[workbench query cache]
+  SessionSearch --> API
+  SessionWorkspace --> Export[session.export]
+  Export --> API
   SessionWorkspace --> Transcript
   SessionWorkspace --> Composer
   SessionWorkspace --> UsageMeter

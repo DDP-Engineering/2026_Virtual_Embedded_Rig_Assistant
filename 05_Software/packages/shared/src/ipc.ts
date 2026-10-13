@@ -22,6 +22,7 @@ import {
   providerTestResultSchema,
 } from "./providers.js";
 import { permissionModeSchema, sessionIdSchema, sessionSummarySchema } from "./session.js";
+import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
 import { sessionStateSchema } from "./session-state.js";
 import { recentWorkbenchStateSchema, settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
 import {
@@ -183,6 +184,16 @@ export const channels = {
     z.strictObject({}),
   ),
   "session.list": defineChannel("session.list", z.strictObject({}), z.array(sessionSummarySchema)),
+  "session.search": defineChannel(
+    "session.search",
+    z.strictObject({ query: sessionSearchQuerySchema }),
+    z.array(sessionSummarySchema),
+  ),
+  "session.export": defineChannel(
+    "session.export",
+    z.strictObject({ sessionId: sessionIdSchema, format: sessionExportFormatSchema }),
+    z.strictObject({ exported: z.boolean() }),
+  ),
   "session.create": defineChannel(
     "session.create",
     z.strictObject({

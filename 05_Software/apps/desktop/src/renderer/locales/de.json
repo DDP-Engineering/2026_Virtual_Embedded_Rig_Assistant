@@ -221,7 +221,13 @@
       "completed": "Verlauf zusammengefasst",
       "unavailable": "Verlauf kann nicht zusammengefasst werden",
       "failed": "Zusammenfassung fehlgeschlagen"
-    }
+    },
+    "searchSessions": "Sitzungen suchen",
+    "noSessions": "Keine passenden Sitzungen",
+    "exportMarkdown": "Markdown exportieren",
+    "exportJson": "JSON exportieren",
+    "exported": "Sitzung exportiert.",
+    "exportCanceled": "Export abgebrochen."
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."

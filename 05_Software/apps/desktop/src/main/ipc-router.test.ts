@@ -46,6 +46,8 @@ const workbenchHandlers = {
   "app.revealPath": unused,
   "session.approval.decide": unused,
   "session.list": unused,
+  "session.search": unused,
+  "session.export": unused,
   "session.create": unused,
   "session.get": unused,
   "session.rename": unused,
