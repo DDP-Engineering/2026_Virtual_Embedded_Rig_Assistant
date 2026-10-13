@@ -15,6 +15,7 @@ import { SessionList } from "./components/session/session-list.js";
 import { SessionWorkspace } from "./components/session/workspace.js";
 import { Settings, useSettingsSections } from "./components/settings.js";
 import { Shell } from "./components/shell.js";
+import { UpdateBanner } from "./components/updates.js";
 import { Workbench } from "./components/workbench.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 
@@ -249,6 +250,7 @@ export function App() {
           ) : undefined
         }
       >
+        <UpdateBanner />
         <div className="page-content" hidden={chat && !settings}>
           <h2 className="page-title" key={settings ? "settings" : "welcome"} ref={focusHeading} tabIndex={-1}>
             {settings ? t("settings.title") : t("welcome.title")}

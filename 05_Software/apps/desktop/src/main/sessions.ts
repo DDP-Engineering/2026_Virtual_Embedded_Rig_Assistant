@@ -31,6 +31,8 @@ export class SessionsHost {
   private skillMetadata: { name: string; description: string }[] = [];
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
+  private pending = 0;
+  private shutdown = false;
   constructor(
     private readonly options: {
       workbench: WorkbenchService;
@@ -55,6 +57,8 @@ export class SessionsHost {
     return next;
   }
   run<T>(operation: (service: SessionService) => T | Promise<T>): Promise<T> {
+    if (this.shutdown) return Promise.reject(veraError("BUSY"));
+    this.pending++;
     return this.serial(async () => {
       const snapshot = this.options.workbench.getSnapshot();
       const db = this.options.workbench.getDatabase();
@@ -114,13 +118,25 @@ export class SessionsHost {
       if (!this.service) throw veraError("INTERNAL");
       await this.service.waitReady();
       return operation(this.service);
+    }).finally(() => {
+      this.pending--;
     });
   }
   async lifecycle<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.shutdown) throw veraError("BUSY");
+    this.pending++;
     return this.serial(async () => {
       await this.drain();
       return operation();
+    }).finally(() => {
+      this.pending--;
     });
+  }
+  /** Synchronous check-and-lock: accepted queued sends cannot race a safe update quit. */
+  beginShutdown(): boolean {
+    if (this.pending || this.service?.hasActiveWork()) return false;
+    this.shutdown = true;
+    return true;
   }
   private async drain(): Promise<void> {
     this.clearSubscriptions();

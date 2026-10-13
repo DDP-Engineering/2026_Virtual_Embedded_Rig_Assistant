@@ -32,6 +32,7 @@ import {
   skillsScopeSchema,
   skillTargetSchema,
 } from "./skills.js";
+import { updateSnapshotSchema } from "./updates.js";
 import {
   configSnapshotSchema,
   pinnedSchema,
@@ -59,6 +60,19 @@ export const appInfoSchema = z.strictObject({
   signing: z.enum(["signed", "unsigned", "not-applicable"]),
 });
 export const channels = {
+  "update.get": defineChannel("update.get", z.strictObject({}), updateSnapshotSchema),
+  "update.check": defineChannel("update.check", z.strictObject({}), updateSnapshotSchema),
+  "update.download": defineChannel(
+    "update.download",
+    z.strictObject({ confirmed: z.literal(true) }),
+    updateSnapshotSchema,
+  ),
+  "update.restart": defineChannel("update.restart", z.strictObject({}), updateSnapshotSchema),
+  "update.openRelease": defineChannel(
+    "update.openRelease",
+    z.strictObject({ confirmed: z.literal(true), version: z.string().min(1).max(128) }),
+    updateSnapshotSchema,
+  ),
   "skills.list": defineChannel("skills.list", skillsScopeSchema, z.array(skillSummarySchema).max(2048)),
   "skills.open": defineChannel("skills.open", skillTargetSchema, skillContentSchema),
   "skills.create": defineChannel(

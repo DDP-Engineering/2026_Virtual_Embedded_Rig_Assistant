@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "./error-message.js";
 import { Metadata } from "./metadata.js";
 import { Providers } from "./providers.js";
+import { UpdatesPanel } from "./updates.js";
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -112,8 +113,11 @@ export function Settings({
         </div>
         <p className="muted">{t("language.description")}</p>
       </section>
+      <UpdatesPanel preferences={snapshot.settings.updates} disabled={disabled} update={update} />
       {sections
-        .filter(({ id }) => id !== "providers" && id !== "appearance" && id !== "language")
+        .filter(
+          ({ id }) => id !== "providers" && id !== "appearance" && id !== "language" && id !== "updates",
+        )
         .map(({ id, label }) => (
           <section className="surface" key={id} id={`section-${id}`} data-settings-section={id}>
             <h2 tabIndex={-1}>{label}</h2>

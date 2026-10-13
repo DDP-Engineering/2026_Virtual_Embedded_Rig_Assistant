@@ -752,6 +752,13 @@ export class SessionService {
     this.row(id);
     return this.active.get(id)?.done ?? this.last.get(id) ?? null;
   }
+  /** Shutdown barriers inspect promises, including final persistence, without UI subscriptions. */
+  hasActiveWork(): boolean {
+    return (
+      this.active.size > 0 ||
+      !!this.host.db.prepare("SELECT 1 FROM approvals WHERE decision IS NULL LIMIT 1").get()
+    );
+  }
   async close(): Promise<void> {
     if (this.closed) return;
     for (const turn of this.active.values()) turn.runtime.abort();

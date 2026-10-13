@@ -18,6 +18,7 @@ import {
   type Response,
   settingsPatchSchema,
   skillTemplate,
+  type UpdateSnapshot,
   veraError,
   type WorkbenchSnapshot,
   workbenchSchema,
@@ -49,6 +50,14 @@ export function createMockApi(
   const subscribers = new Set<{ topic: string; id: string | undefined; on: (event: unknown) => void }>();
   let chatgpt: ChatgptStatus = { connected: false, state: "idle" };
   let authSequence = 0;
+  let updateState: UpdateSnapshot = {
+    configured: true,
+    distribution: info.portable ? "portable" : "installed",
+    phase: "idle",
+    offer: null,
+    progress: null,
+    errorCode: null,
+  };
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
@@ -141,6 +150,49 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "update.get":
+        value = updateState;
+        break;
+      case "update.check":
+        updateState = {
+          ...updateState,
+          phase: "available",
+          errorCode: null,
+          offer: {
+            version: "0.0.1",
+            notes: "Update release notes",
+            link: "https://updates.example.test/VERA.exe",
+          },
+        };
+        emitAppEvent({
+          type: "update.available",
+          version: updateState.offer?.version ?? "",
+          notes: updateState.offer?.notes ?? "",
+        });
+        emitAppEvent({ type: "update.changed", snapshot: updateState });
+        value = updateState;
+        break;
+      case "update.download":
+        if (updateState.distribution !== "installed") throw veraError("DENIED");
+        if (updateState.phase !== "available") throw veraError("CONFLICT");
+        updateState = { ...updateState, phase: "ready", progress: 100 };
+        emitAppEvent({ type: "update.changed", snapshot: updateState });
+        value = updateState;
+        break;
+      case "update.restart":
+        if (updateState.distribution !== "installed") throw veraError("DENIED");
+        if (updateState.phase !== "ready") throw veraError("CONFLICT");
+        value = updateState;
+        break;
+      case "update.openRelease":
+        if (
+          updateState.distribution !== "portable" ||
+          !updateState.offer ||
+          channels["update.openRelease"].request.parse(input.data).version !== updateState.offer.version
+        )
+          throw veraError("DENIED");
+        value = updateState;
+        break;
       case "skills.list": {
         const { workbenchId } = channels["skills.list"].request.parse(input.data);
         const wb = current().snapshot;

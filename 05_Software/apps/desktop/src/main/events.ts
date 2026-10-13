@@ -116,7 +116,26 @@ function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => string)
     if (event.type === "todo.updated") Reflect.set(result, "items", sanitizeTodos(event.items, scrub));
     return { ...envelope, event: result };
   }
-  if (envelope.topic === "app" || envelope.event.type === "closed") return envelope;
+  if (envelope.topic === "app") {
+    const event = envelope.event;
+    if (event.type === "update.available")
+      return { ...envelope, event: { ...event, notes: scrub(event.notes) } };
+    if (event.type === "update.changed")
+      return {
+        ...envelope,
+        event: {
+          ...event,
+          snapshot: {
+            ...event.snapshot,
+            offer: event.snapshot.offer
+              ? { ...event.snapshot.offer, notes: scrub(event.snapshot.offer.notes) }
+              : null,
+          },
+        },
+      };
+    return envelope;
+  }
+  if (envelope.event.type === "closed") return envelope;
   const event = envelope.event;
   if (event.type === "index.progress") return envelope;
   if (event.type === "index.document")

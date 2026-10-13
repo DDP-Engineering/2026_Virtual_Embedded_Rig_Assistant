@@ -18,6 +18,9 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 
 ## Public interface
 
+Strict update.get/check/download/restart/openRelease channels and update.available/update.changed
+AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capability gates.
+
 - skills.list/open/create/save/toggle use strict workbenchId/source/name contracts;
   save requires original content SHA256. Main authorizes the existing exact frame
   before WorkbenchService lifecycle/ownership checks. [Skills](skills.md) owns content.

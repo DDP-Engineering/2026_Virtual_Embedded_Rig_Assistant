@@ -24,6 +24,12 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Update ticket acceptance uses shared/main/backend/core-approval/UI tests and immediate transports,
+e2e/updates.spec.ts browser geometry/languages, and scripts/probe-upgrade.mjs with explicit owned scratch.
+The latter builds separately identified local instrumented artifacts and records real installed
+vN->vN+1, turn/approval deferral and packaged portable metadata-only results; it publishes nothing.
+VERA_UPDATE_URL is a fixed build setting. Full M4 gate follows the verification policy owner.
+
 Skills acceptance uses catalog/schema/workbench/registry/session replay and immediate
 host/IPC/mock/boundary consumers. e2e/skills.spec.ts observes a UI-created skill in the
 next turn's actual loopback provider system request, then disabled/edited metadata;

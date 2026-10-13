@@ -28,6 +28,10 @@ test user in a dedicated VM. Measurements/status live in `06_SoftwareDocu/wp05-p
 
 The prepack and final ASAR checks compare every non-license CMap/font/WASM resource against the exact-pinned pdfjs-dist source bytes. Certificate SHA1 and subject selectors are preserved together when both are configured.
 
+VERA_UPDATE_URL configures generic update metadata and the compiled main feed. The staged
+runtime closure includes electron-updater and its pinned transitive dependencies.
+[Updates](updates.md) owns channels, mode controls, distribution capabilities and safe installation.
+
 ## Invariants
 
 - Packaging compiles its own fixed test identity; runtime environment cannot enable release probes.

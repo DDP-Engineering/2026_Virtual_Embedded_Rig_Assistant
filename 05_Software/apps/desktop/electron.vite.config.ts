@@ -6,11 +6,14 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
 import type { Plugin } from "vite";
+// @ts-expect-error build helper is a Node ESM module.
+import { updateFeed } from "../../scripts/update-config.mjs";
 import { productionCsp } from "./src/main/content-policy.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const shared = resolve(root, "../../packages/shared/src/index.ts");
 const testBuild = process.env.VERA_TEST === "1";
+const updateUrl = updateFeed(process.env.VERA_UPDATE_URL, testBuild);
 
 function developmentCsp(): Plugin {
   return {
@@ -84,6 +87,7 @@ export default defineConfig(({ command }) => ({
       __VERA_TEST__: JSON.stringify(testBuild),
       __VERA_DEV__: JSON.stringify(command === "serve"),
       __VERA_SIGNED__: JSON.stringify(process.env.VERA_SIGNED_BUILD === "1"),
+      __VERA_UPDATE_URL__: JSON.stringify(updateUrl),
     },
     build: {
       rollupOptions: {
@@ -92,6 +96,7 @@ export default defineConfig(({ command }) => ({
           "@huggingface/transformers",
           "onnxruntime-node",
           "pdfjs-dist/legacy/build/pdf.mjs",
+          "electron-updater",
         ],
         input: {
           index: resolve(root, "src/main/index.ts"),

@@ -34,12 +34,16 @@ import { ProviderSettings } from "./provider-settings.js";
 import { revealPath } from "./reveal-path.js";
 import { bundledResponse, secureSession, secureWindow } from "./security.js";
 import { SessionsHost } from "./sessions.js";
+import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
+import { Updates } from "./updates.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
 declare const __VERA_TEST__: boolean;
+declare const __VERA_UPDATE_URL__: string;
+declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
 // pi-ai's public standalone entrypoint makes its variable OAuth imports available in bundles.
 registerBunOAuthFlows();
@@ -57,6 +61,7 @@ const documents = createDocumentServices(
 );
 let closeFileProbe: (() => Promise<void>) | undefined;
 let rendererUrl = "vera://app/index.html";
+let updates: Updates | undefined;
 export const emitAppEvent = createEventEmitter(
   () => window?.webContents,
   (text) => credentials.scrub(text),
@@ -75,6 +80,7 @@ const settings = new SettingsService({
   uuid: randomUUID,
   changed: () => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
+    updates?.settingsChanged();
   },
 });
 const workbench = new WorkbenchService(
@@ -135,6 +141,26 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "update.get": () => {
+        if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
+        return updates.get();
+      },
+      "update.check": () => {
+        if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
+        return updates.check();
+      },
+      "update.download": () => {
+        if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
+        return updates.download();
+      },
+      "update.restart": () => {
+        if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
+        return updates.requestRestart();
+      },
+      "update.openRelease": ({ version }) => {
+        if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
+        return updates.openRelease(version);
+      },
       "skills.list": ({ workbenchId }) => workbench.listSkills(workbenchId),
       "skills.open": ({ workbenchId, source, name }) => workbench.openSkill(workbenchId, source, name),
       "skills.create": ({ workbenchId, source, name }) => workbench.saveSkill(workbenchId, source, name),
@@ -340,6 +366,11 @@ async function createWindow(): Promise<void> {
   });
   let closing = false;
   created.on("close", (event) => {
+    if (updates?.hasDownloaded && !updates.shuttingDown) {
+      event.preventDefault();
+      updates.requestQuit();
+      return;
+    }
     if (state.readOnly) return;
     event.preventDefault();
     if (closing) return;
@@ -376,6 +407,10 @@ if (!app.requestSingleInstanceLock()) {
   app.on("before-quit", (event) => {
     if (drained) return;
     event.preventDefault();
+    if (updates?.hasDownloaded && !updates.shuttingDown) {
+      updates.requestQuit();
+      return;
+    }
     if (draining) return;
     draining = true;
     void sessions
@@ -389,10 +424,18 @@ if (!app.requestSingleInstanceLock()) {
       .then(() => providers.close())
       .then(() => credentials.close())
       .then(() => settings.close())
+      .then(() => logger.flush())
+      .then(() => {
+        drained = true;
+        if (!updates?.finishShutdown()) {
+          updates?.close();
+          app.quit();
+        }
+      })
       .catch(() => {
         console.error("VERA shutdown persistence failed");
-      })
-      .finally(() => {
+        // A failed drain must never start the installer.
+        updates?.close();
         drained = true;
         app.quit();
       });
@@ -426,6 +469,25 @@ if (!app.requestSingleInstanceLock()) {
       if (draining) return;
       await settings.load();
       await credentials.load();
+      updates = new Updates({
+        distribution: updateDistribution(dataLocations.portable),
+        configured: Boolean(__VERA_UPDATE_URL__),
+        backend: __VERA_UPDATE_URL__
+          ? desktopUpdateBackend(
+              __VERA_UPDATE_URL__,
+              dataLocations.portable,
+              __VERA_SIGNED__,
+              (kind, event) => logger.log(kind, event),
+            )
+          : { check: async () => null, download: async () => {}, install: () => {} },
+        preferences: () => settings.get().settings.updates,
+        emit: (event) => emitAppEvent({ topic: "app", id: "app", event }),
+        beginShutdown: () => sessions.beginShutdown(),
+        quit: () => app.quit(),
+        openExternal: async (url) => {
+          await openExternal({ url, confirmed: true }, (link) => shell.openExternal(link));
+        },
+      });
       if (__VERA_TEST__ && ["1", "startup"].includes(process.env.VERA_TEST_CHATGPT ?? "")) {
         const { scriptedSubscription } = await import("./chatgpt-probe.js");
         chatgpt = new ChatgptAuth({
@@ -504,6 +566,7 @@ if (!app.requestSingleInstanceLock()) {
         return;
       }
       await createWindow();
+      updates.start();
     })
     .catch(async () => {
       logger.log("error", "app.startup.failed");

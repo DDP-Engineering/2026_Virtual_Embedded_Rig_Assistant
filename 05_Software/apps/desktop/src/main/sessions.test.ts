@@ -7,6 +7,22 @@ import { workbenchSchema } from "@vera/shared";
 import { expect, it } from "vitest";
 import { SessionsHost } from "./sessions.js";
 
+it("locks update shutdown admission only after already accepted host work completes", async () => {
+  const host = new SessionsHost({} as never);
+  let release: () => void = () => {};
+  const held = new Promise<void>((accept) => {
+    release = accept;
+  });
+  const pending = host.lifecycle(() => held);
+  expect(host.beginShutdown()).toBe(false);
+  release();
+  await pending;
+  expect(host.beginShutdown()).toBe(true);
+  await expect(host.run(() => undefined)).rejects.toMatchObject({ code: "BUSY" });
+  await expect(host.lifecycle(async () => undefined)).rejects.toMatchObject({ code: "BUSY" });
+  await host.close();
+});
+
 it("awaits pending-change recovery before returning a session snapshot from a reopened host", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-host-recovery-"));
   await mkdir(join(root, ".vera"));

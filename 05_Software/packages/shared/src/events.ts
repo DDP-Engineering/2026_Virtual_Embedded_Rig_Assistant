@@ -8,6 +8,7 @@ import {
   stopReasonSchema,
   todoItemsSchema,
 } from "./session.js";
+import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
 import {
   workbenchIdSchema,
   workbenchSchema,
@@ -17,6 +18,11 @@ import {
 
 export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("settings.changed") }),
+  z.strictObject({
+    type: z.literal("update.available"),
+    ...updateOfferSchema.pick({ version: true, notes: true }).shape,
+  }),
+  z.strictObject({ type: z.literal("update.changed"), snapshot: updateSnapshotSchema }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 export const workbenchEventSchema = z.discriminatedUnion("type", [

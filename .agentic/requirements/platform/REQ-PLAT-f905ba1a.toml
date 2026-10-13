@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-f905ba1a"
+title = "Announce portable and managed updates"
+status = "active"
+requirement = "For portable and deb distributions, VERA shall announce a newer version and release notes while restricting portable to a user-confirmed feed link and deb to package-manager instructions, with download and install denied."
+verification = "Local feed records metadata-only requests for packaged portable even in automatic mode; download/restart actions denied, external link needs confirmation and matches discovered offer; deb never invokes installer."
+affected_paths = ["05_Software/apps/desktop/src/main/update-backend.test.ts", "05_Software/apps/desktop/src/main/update-backend.ts", "05_Software/apps/desktop/src/main/updates.test.ts", "05_Software/apps/desktop/src/main/updates.ts", "05_Software/apps/desktop/src/renderer/components/updates.test.ts", "05_Software/apps/desktop/src/renderer/components/updates.tsx", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/e2e/updates.spec.ts", "05_Software/packages/shared/src/updates.test.ts", "05_Software/packages/shared/src/updates.ts", "05_Software/scripts/probe-upgrade.mjs", "05_Software/tests/tooling/updates.test.ts"]
+linked_tests = ["05_Software/apps/desktop/src/main/updates.test.ts", "05_Software/apps/desktop/src/main/update-backend.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+spec = "specs/REQ-FUNC-a16121c6.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

@@ -24,7 +24,11 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
       const build = spawnSync(process.execPath, [vite, "build", "apps/desktop"], {
         cwd: root,
         encoding: "utf8",
-        env: { ...process.env, VERA_TEST: flag },
+        env: {
+          ...process.env,
+          VERA_TEST: flag,
+          VERA_UPDATE_URL: "https://updates.example.test/fixed-build/",
+        },
       });
       expect(build.status, build.stderr).toBe(0);
       const mainDir = join(root, "apps/desktop/out/main");
@@ -34,6 +38,10 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         .join("\n");
       expect(code, "pinned OAuth flow is statically available in desktop bundles").toContain(
         "ext_agent_host_id",
+      );
+      expect(code, "fixed build feed is emitted").toContain("https://updates.example.test/fixed-build/");
+      expect(code, "runtime environment cannot replace the fixed update feed").not.toContain(
+        "VERA_UPDATE_URL",
       );
       if (flag === "1") {
         expect(code).toContain("VERA Test");

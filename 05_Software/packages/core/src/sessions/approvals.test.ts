@@ -95,6 +95,21 @@ function decide(
     ...(switchToAutoEdit ? { switchToAutoEdit } : {}),
   });
 }
+it("reports actual work for updater safety independently of UI subscriptions", async () => {
+  const { service } = await setup();
+  const activity = service as core.SessionService & { hasActiveWork(): boolean };
+  expect(typeof activity.hasActiveWork).toBe("function");
+  const s = service.create();
+  expect(activity.hasActiveWork()).toBe(false);
+  service.send(s.id, "edit");
+  expect(activity.hasActiveWork()).toBe(true);
+  const a = await waiting(service, s.id);
+  expect(activity.hasActiveWork()).toBe(true);
+  decide(service, s.id, a, "approved");
+  expect(activity.hasActiveWork()).toBe(true);
+  await service.waitIdle(s.id);
+  expect(activity.hasActiveWork()).toBe(false);
+});
 it.each(["approved", "denied"] as const)("ask %s binds exact request and continues end", async (decision) => {
   const { service, root, path, handle } = await setup();
   const s = service.create();

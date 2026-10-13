@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
+import { updateChannelSchema, updateModeSchema } from "./updates.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 export const recentWorkbenchSchema = z.looseObject({
@@ -18,7 +19,7 @@ const mutable = {
   textScale: z.union([z.literal(0.875), z.literal(1), z.literal(1.125), z.literal(1.25), z.literal(1.5)]),
   defaultModel: modelReferenceSchema.nullable(),
   providers: providerSettingsSchema,
-  updates: z.looseObject({ mode: z.literal("notify"), channel: z.literal("latest") }),
+  updates: z.looseObject({ mode: updateModeSchema, channel: updateChannelSchema }),
   recentWorkbenches: z.array(recentWorkbenchSchema).max(10),
   limits: z.looseObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
 };

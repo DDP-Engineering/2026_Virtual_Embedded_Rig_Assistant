@@ -995,3 +995,26 @@ legend {
 .skills-dialog {
   overflow-y: auto;
 }
+/* Updates remain readable at large text sizes and in the minimum window. */
+.update-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+}
+.update-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  max-height: 18rem;
+  overflow: auto;
+}
+.update-link {
+  overflow-wrap: anywhere;
+}
+#section-updates > label {
+  display: block;
+  margin-top: 0.5rem;
+}

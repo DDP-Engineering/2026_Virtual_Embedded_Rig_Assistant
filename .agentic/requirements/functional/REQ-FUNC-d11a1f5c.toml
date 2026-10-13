@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-d11a1f5c"
+title = "Download verified updates by mode or consent"
+status = "active"
+requirement = "When an installable update is available, VERA shall download it only after explicit consent or in Download automatically mode, using electron-updater SHA512 verification and Windows publisher verification for signed builds, exposing progress and recoverable failure."
+verification = "Assert Notify/Off make no artifact requests until consent, automatic mode downloads, digest mismatch and publisher failure remain errors without ready state; real local feed proves downloaded installer integrity."
+affected_paths = ["05_Software/apps/desktop/package.json", "05_Software/apps/desktop/src/main/update-backend.test.ts", "05_Software/apps/desktop/src/main/update-backend.ts", "05_Software/apps/desktop/src/main/updates.ts", "05_Software/package-lock.json", "05_Software/packages/shared/src/updates.ts", "05_Software/scripts/package.mjs"]
+linked_tests = ["05_Software/apps/desktop/src/main/updates.test.ts", "05_Software/apps/desktop/src/main/update-backend.test.ts", "05_Software/tests/tooling/updates.test.ts"]
+spec = "specs/REQ-FUNC-a16121c6.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

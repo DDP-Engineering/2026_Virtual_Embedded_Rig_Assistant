@@ -228,3 +228,19 @@ model loading. On Ubuntu use python3 and a linux/build scratch child. The report
 retains exact corpus/fixture/manifest hashes, timings and keyword/semantic/hybrid
 recall by EN/RO. See [measurements](../06_SoftwareDocu/wp24-embedding-measurements.md)
 and [ADR0015](../00_Planning/decisions/ADR-0015-embedding-model-selection.md).
+# Updates
+
+Set VERA_UPDATE_URL to the fixed generic HTTPS feed when building the app/packages.
+An unconfigured build reports that state without network requests. Latest is stable;
+beta receives newer beta and stable releases. Off, Notify (default), and Download
+automatically are persisted in Updates. Check now works in Off. Downloaded updates
+install on restart/next quit after active turns and approvals finish.
+Portable announces notes and offers a confirmed browser link; deb uses its package manager.
+
+The local acceptance command is `node scripts/probe-upgrade.mjs <absolute-owned-scratch>`.
+It builds distinct instrumented0.31.0/0.31.1 artifacts with a compile-time loopback feed
+and records actual SHA512 refusal, installed upgrade, real approval/turn deferral and
+Windows portable metadata-only results. Its NSIS/AppImage launch fixtures retain an
+explicit isolated userData directory across restart. These are test artifacts and
+connected-host evidence; release smoke, clean/offline Windows/CRT and separate Linux
+kernel acceptance remain required under the release policy. The command publishes nothing.

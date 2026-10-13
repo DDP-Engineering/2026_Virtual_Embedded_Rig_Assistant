@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-a809496e"
+title = "Present update controls and restart state"
+status = "active"
+requirement = "VERA shall present persisted Off, Notify (default), Download automatically and latest/beta controls, Check now, release notes and a Restart to update banner with deferred-work feedback through strict update IPC and AppEvents, localized in English, Romanian and German."
+verification = "Strict schema tests reject extra keys/invalid actions; mounted controls preserve settings, Check now in Off, display feed notes as text and localized state/banner, confirm portable link; native/browser acceptance checks controls and persistence."
+affected_paths = ["05_Software/apps/desktop/src/main/events.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/renderer/components/settings.tsx", "05_Software/apps/desktop/src/renderer/components/updates.test.ts", "05_Software/apps/desktop/src/renderer/components/updates.tsx", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/styles.css", "05_Software/e2e/updates.spec.ts", "05_Software/packages/shared/src/events.ts", "05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/packages/shared/src/settings.ts", "05_Software/packages/shared/src/updates.test.ts", "05_Software/packages/shared/src/updates.ts"]
+linked_tests = ["05_Software/packages/shared/src/updates.test.ts", "05_Software/apps/desktop/src/renderer/components/updates.test.ts", "05_Software/e2e/updates.spec.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/main/events.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts"]
+spec = "specs/REQ-FUNC-a16121c6.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

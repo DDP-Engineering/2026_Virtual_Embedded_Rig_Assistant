@@ -14,6 +14,7 @@ import {
 } from "./package-checks.mjs";
 import { prepareBundledModel } from "./prepare-model.mjs";
 import { prepareBundledWindowsRuntime } from "./prepare-windows-runtime.mjs";
+import { updatePublish } from "./update-config.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -30,6 +31,8 @@ export function distributionConfig(platform, testBuild, env) {
     executableName: testBuild ? "vera-test" : "vera",
     artifactName: `VERA${testBuild ? "-test" : ""}-\${version}-\${os}-\${arch}.\${ext}`,
     forceCodeSigning: signed,
+    publish: updatePublish(env.VERA_UPDATE_URL, testBuild),
+    generateUpdatesFilesForAllChannels: true,
     win: {
       target: [
         { target: "nsis", arch: ["x64"] },
@@ -143,10 +146,10 @@ function signatureStatus(file) {
   return result.status === 0 ? result.stdout.trim() : "unavailable";
 }
 
-async function stageRuntime(mode) {
-  const stage = resolve(root, "release", `staging-${process.platform}-${mode}`);
+export async function stageRuntime(mode, outputRoot = resolve(root, "release")) {
+  const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
-  if (!stage.startsWith(`${resolve(root, "release")}${sep}`)) throw new Error("Unsafe staging path");
+  if (!stage.startsWith(`${resolve(outputRoot)}${sep}`)) throw new Error("Unsafe staging path");
   await rm(stage, { recursive: true, force: true });
   await mkdir(stage, { recursive: true });
   await cp(join(root, "apps/desktop/out"), join(stage, "out"), { recursive: true });
@@ -156,7 +159,13 @@ async function stageRuntime(mode) {
       process.platform === "win32" || !source.startsWith(join(root, "resources/windows-runtime")),
   });
   const desktop = JSON.parse(await readFile(join(root, "apps/desktop/package.json"), "utf8"));
-  const runtimeNames = ["better-sqlite3", "@huggingface/transformers", "onnxruntime-node", "pdfjs-dist"];
+  const runtimeNames = [
+    "better-sqlite3",
+    "@huggingface/transformers",
+    "onnxruntime-node",
+    "pdfjs-dist",
+    "electron-updater",
+  ];
   const seen = new Set();
   const packages = [];
   async function copyDependency(name, parent, optional = false) {
@@ -235,6 +244,7 @@ async function packageApp() {
     "scripts/package.mjs",
     "scripts/package-checks.mjs",
     "scripts/prepare-windows-runtime.mjs",
+    "scripts/update-config.mjs",
     "apps/desktop/electron-builder.yml",
     "apps/desktop/electron.vite.config.ts",
     "package-lock.json",

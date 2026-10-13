@@ -17,6 +17,8 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 ## Public interface
 
 - SettingsService.load/get/update/close; get/update return detached {settings,readOnly}.
+- Update preferences accept off/notify/download and latest/beta within schema4; notify/latest
+  are defaults. [Updates](updates.md) owns their scheduling and artifact behavior.
 - Main-owned conditional updates may supply an internal predicate evaluated against the latest
   state inside the serialized queue. ChatGPT default selection and logout use it to retain
   concurrently selected models from another provider; IPC patches cannot supply predicates.

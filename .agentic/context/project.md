@@ -62,6 +62,8 @@ required before final release; current-host import/loaded-path evidence suppleme
 
 ## Authoritative references
 
+- [Updates](../knowledge/updates.md) routes fixed generic feed, modes/channels and safe restart installation.
+
 - [System architecture](../../00_Planning/architecture/01-system.md)
 - [Foundation packages](../../00_Planning/plan/M0-foundation.md)
 - [Quality](../../00_Planning/architecture/08-quality.md)

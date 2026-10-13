@@ -12,6 +12,8 @@ Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
 Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
+Main composes [updates](updates.md), defers downloaded-update close/quit while turns or approvals
+remain active, then drains persistence before explicit installation.
 Main composes [ChatGPT authentication](providers.md), confirmed system-browser opening and the
 subscription credential host; shutdown drains OAuth cancellation before closing the credential store.
 Main supplies the [workbench](workbench.md) lifecycle host and native folder picker.
