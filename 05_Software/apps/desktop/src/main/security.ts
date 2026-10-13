@@ -57,8 +57,19 @@ export async function bundledResponse(root: string, request: Request): Promise<R
 }
 
 export function secureSession(session: Session): void {
+  // Chromium can initialize dictionaries even when spelling is disabled. Route
+  // that downloader to local application resources before it schedules work.
+  session.setSpellCheckerDictionaryDownloadURL("vera://app/dictionaries/");
+  session.setSpellCheckerEnabled(false);
   session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   session.setPermissionCheckHandler(() => false);
+}
+
+/** Protect sessions at creation, before asynchronous startup or window access. */
+export function installSessionPolicy(app: {
+  on(event: "session-created", listener: (session: Session) => void): unknown;
+}): void {
+  app.on("session-created", secureSession);
 }
 
 export function secureWindow(window: BrowserWindow): void {

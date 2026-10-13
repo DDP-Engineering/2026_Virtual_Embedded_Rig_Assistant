@@ -65,8 +65,16 @@ afterEach(async () => {
 test("renderer reload of a read-only workbench disables session mutations", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const config = await api.invoke("workbench.config.get", {});
-  vi.spyOn(api, "invoke").mockResolvedValueOnce({ ...config, readOnly: true });
+  const invoke = api.invoke.bind(api);
+  const observed = vi
+    .spyOn(api, "invoke")
+    .mockImplementation((channel, request) =>
+      channel === "workbench.config.get"
+        ? Promise.resolve({ ...config, readOnly: true })
+        : invoke(channel, request),
+    );
   await mount();
+  expect(observed).toHaveBeenCalledWith("workbench.config.get", {});
   expect(button("New session").disabled).toBe(true);
 });
 test("Welcome creation draft survives Settings navigation while viewer scope changes", async () => {

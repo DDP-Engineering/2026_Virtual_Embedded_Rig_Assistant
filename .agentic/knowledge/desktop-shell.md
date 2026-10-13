@@ -42,6 +42,7 @@ override and uses Electron dialog. Shutdown releases owned workbench locks and t
   workbench ownership and settings before window close, then flushes JSON logs after close.
 - Window creation keeps context isolation, Chromium sandbox and web security enabled,
   Node integration disabled, and a minimum size of 1024 by 640.
+- Session-created protection routes dictionary initialization to local vera://app resources and disables automatic spellchecking synchronously; default-session protection precedes startup awaits and window spellcheck=false prevents renderer use of remote Hunspell dictionaries.
 - Navigation, new windows, webviews and permission requests/checks are denied before content loads.
 - Production CSP is identical in meta and response headers; protocol assets stay inside the real renderer root.
 - Development origin is exactly `http://127.0.0.1:5173`; its inline-script allowances are content hashes.

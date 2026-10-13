@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-TEST-8928f10f"
+
+title = "Exercise exact release artifacts offline and scripted"
+
+status = "active"
+
+requirement = """
+When given an already-built native release artifact, the package smoke shall execute isolated offline demo indexing and viewing and a normal loopback custom-provider tool, citation, approval and restart scenario while rejecting instrumented identity or unexpected actual userData before application mutations.
+"""
+
+verification = "Run package smoke on NSIS/ZIP/AppImage/deb and inspect runtime, SQLite/index/search/PDF canvas/session receipts; test identity or foreign userData must fail before writes."
+
+affected_paths = ["05_Software/package.json", "05_Software/scripts/smoke-package.mjs", "05_Software/scripts/smoke-server.mjs", "05_Software/scripts/smoke-runtime.mjs"]
+
+linked_tests = ["05_Software/tests/tooling/package-smoke.test.ts"]
+
+
+spec = "specs/REQ-TEST-8928f10f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

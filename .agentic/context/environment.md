@@ -24,6 +24,11 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Release acceptance uses `smoke:package -- --artifact <already-built native release>`;
+see [release smoke](../knowledge/release-smoke.md) for native strace calibration,
+normal custom-provider approval/restart and pending manual Windows capture.
+Release and instrumented calibration builds are separate; M4 gate is coordinator-owned.
+
 Upgrade safety acceptance uses frozen settings0/1/2/3, credentials schema1 and
 workbench format1, plus previous SQLite0/1/2 fixtures in storage/upgrade-safety.test.ts.
 `scripts/probe-upgrade.mjs <owned-scratch> --migration-safety` observes actual NSIS/AppImage

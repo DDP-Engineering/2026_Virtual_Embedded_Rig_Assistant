@@ -18,6 +18,8 @@ The package delivers the BGE q8 assets selected in [ADR0015](../../00_Planning/d
 
 ## Public interface
 
+Already-built artifact functional/egress acceptance belongs to [release smoke](release-smoke.md).
+
 From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only),
 `npm run package` (compiled release) and `npm run package:test` (compiled instrumented).
 Outputs are `release/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.

@@ -18,6 +18,9 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
+[Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
+normal loopback tools/approval/citation/restart and external process-tree egress.
+
 [Upgrade safety](../knowledge/upgrade-safety.md) routes frozen previous-version migration,
 interrupted recovery and newer-data preservation fixtures with actual installed acceptance.
 

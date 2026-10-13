@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-TEST-f84d343e"
+
+title = "Reject unexpected process-tree network destinations"
+
+status = "active"
+
+requirement = """
+On Ubuntu, the release smoke shall reject every inet or inet6 destination outside the run allowed exact address and port using strace over the complete process tree, including failed attempts and a separate test-build deliberate renderer calibration that fails the same oracle.
+"""
+
+verification = "Focused parser cases cover Unix, IPv4/IPv6, failed/interleaved/truncated calls; native release traces allow none offline and exact ephemeral loopback scripted; separate instrumented renderer request to another port is observed and rejected."
+
+affected_paths = ["05_Software/scripts/smoke-egress.mjs", "05_Software/scripts/smoke-runtime.mjs", "05_Software/scripts/smoke-calibration.mjs"]
+
+linked_tests = ["05_Software/tests/tooling/package-smoke.test.ts"]
+
+
+spec = "specs/REQ-TEST-8928f10f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

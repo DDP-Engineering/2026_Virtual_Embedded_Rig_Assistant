@@ -72,6 +72,9 @@ export class EmbeddingHost implements EmbeddingPort {
       )
     )
       throw Error("Invalid local model path.");
+    // ORT 1.30's native uploader starts at initialization, before its API can opt out.
+    // Set the real parent process environment before any inference worker is created.
+    process.env.ORT_DISABLE_TELEMETRY = "1";
     this.modelId = `${this.model.modelId}@${this.model.revision}:${createHash("sha256")
       .update(
         JSON.stringify({ dtype: this.model.dtype, embedding: this.model.embedding, files: this.model.files }),

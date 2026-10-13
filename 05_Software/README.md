@@ -1,5 +1,9 @@
 # VERA software
 
+For already-built release acceptance, use `npm run smoke:package -- --artifact <path>`;
+see [release smoke](../06_SoftwareDocu/release-package-smoke.md) for external egress,
+separate test-renderer calibration, original upgrade report bindings and pending manual Windows capture.
+
 The npm workspaces of VERA — `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli` — with
 end-to-end tests and development scripts. Layout and module boundaries:
 [01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell provides Welcome and App Settings, responsive panels and persisted appearance/language through the validated typed IPC bridge.

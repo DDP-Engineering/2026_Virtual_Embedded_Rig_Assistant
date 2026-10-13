@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-b4170ade"
+
+title = "Disable native inference telemetry before initialization"
+
+status = "active"
+
+requirement = """
+When creating a local inference host, VERA shall disable ONNX Runtime native telemetry in the real parent process environment before any inference worker can initialize the native runtime.
+"""
+
+verification = "Focused parent/worker startup regression and actual release process-tree traces with local CPU inference; ambient enabled telemetry cannot retain an uploader."
+
+affected_paths = ["05_Software/packages/core/src/knowledge/embedding.ts", "05_Software/packages/core/src/knowledge/embedding.test.ts"]
+
+linked_tests = ["05_Software/packages/core/src/knowledge/embedding.test.ts", "05_Software/tests/tooling/package-smoke.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

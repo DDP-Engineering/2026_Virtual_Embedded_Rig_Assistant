@@ -13,6 +13,29 @@ import { DocumentKnowledge } from "./search.js";
 
 const software = fileURLToPath(new URL("../../../../", import.meta.url));
 const manifest = JSON.parse(await readFile(join(software, "resources/model-manifest.json"), "utf8"));
+it("disables native telemetry in the parent before a worker initializes", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-privacy-"));
+  const entry = join(temporary, "worker.mjs");
+  const prior = process.env.ORT_DISABLE_TELEMETRY;
+  process.env.ORT_DISABLE_TELEMETRY = "0";
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest);
+  try {
+    expect(process.env.ORT_DISABLE_TELEMETRY).toBe("1");
+    await writeFile(
+      entry,
+      `import {parentPort} from 'node:worker_threads';
+      const disabledAtStartup = process.env.ORT_DISABLE_TELEMETRY === '1';
+      parentPort.on('message', () => parentPort.postMessage({ok:disabledAtStartup,
+        result:[Array.from({length:384},(_,i)=>Number(i===0))]}));`,
+    );
+    expect(await host.embed(temporary, ["local"], new AbortController().signal)).toHaveLength(1);
+  } finally {
+    await host.dispose();
+    if (prior === undefined) delete process.env.ORT_DISABLE_TELEMETRY;
+    else process.env.ORT_DISABLE_TELEMETRY = prior;
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
 it("runs local CPU batches32, enforces full query budget and caches deterministic normalized cosine", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-"));
   const entry = join(temporary, "worker.mjs");

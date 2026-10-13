@@ -1,0 +1,19 @@
+<Configuration>
+  <Networking>Disable</Networking>
+  <ClipboardRedirection>Disable</ClipboardRedirection>
+  <MappedFolders>
+    <!-- Replace this host path with the directory containing the exact release artifact,
+         exported smoke report and a copy of the fictional demo workbench. -->
+    <MappedFolder>
+      <HostFolder>D:\VERA-release-input</HostFolder>
+      <SandboxFolder>C:\VERA-input</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <!-- Use a newly created evidence directory owned by this manual run. -->
+    <MappedFolder>
+      <HostFolder>D:\VERA-release-evidence</HostFolder>
+      <SandboxFolder>C:\VERA-evidence</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+</Configuration>

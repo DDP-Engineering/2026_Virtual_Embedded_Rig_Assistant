@@ -46,6 +46,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 
 ## Invariants
 
+- EmbeddingHost disables native ONNX telemetry in the real parent before Worker
+  initialization, covering desktop and CLI local inference.
 - Manifest identity includes model/revision/dtype/descriptor/assets. Local assets
   are hash/length verified in the worker; Transformers disables remote loading,
   caches and inference fetch. Pinned q8 CPU ORT uses one thread, CLS/L2 float32

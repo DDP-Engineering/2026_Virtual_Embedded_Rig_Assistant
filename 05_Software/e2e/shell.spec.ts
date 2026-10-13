@@ -57,15 +57,22 @@ test("built shell enforces the desktop security boundary", async () => {
       locale: app.getLocale(),
       portable: false,
     }));
-    expect(metadata).toEqual(nativeMetadata);
-    for (const [field, value] of Object.entries(metadata)) {
-      if (field !== "portable")
-        await expect(page.locator(`[data-info="${field}"]`)).toHaveText(String(value));
-    }
+    expect(metadata).toEqual({
+      ...nativeMetadata,
+      testBuild: true,
+      signing: process.platform === "win32" ? "unsigned" : "not-applicable",
+    });
     const labels = JSON.parse(readFileSync(join(desktop, "src/renderer/locales/en.json"), "utf8")).home;
-    await expect(page.locator('[data-info="portable"]')).toHaveText(
-      metadata.portable ? labels.yes : labels.no,
-    );
+    const displayedMetadata = {
+      ...nativeMetadata,
+      portable: labels.no,
+      build: labels.testBuild,
+      ...(process.platform === "win32" ? { signing: labels.unsignedBuild } : {}),
+    };
+    for (const [field, value] of Object.entries(displayedMetadata)) {
+      await expect(page.locator(`[data-info="${field}"]`)).toHaveText(String(value));
+    }
+    await expect(page.locator(".metadata [data-info]")).toHaveCount(Object.keys(displayedMetadata).length);
     expect(
       await page.evaluate(() => Object.keys((window as unknown as { vera: VeraBridge }).vera).sort()),
     ).toEqual(["invoke", "subscribe"]);

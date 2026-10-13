@@ -1,0 +1,33 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-SEC-d0da9a4e"
+
+title = "Keep desktop spellchecking from downloading dictionaries"
+
+status = "active"
+
+requirement = """
+Before asynchronous desktop startup and renderer access, VERA shall route dictionary initialization to local application resources and disable automatic remote spellchecker dictionary downloads for newly created sessions and keep its windows spellchecking disabled.
+"""
+
+verification = "Test synchronous session-created protection; observe real packaged session isSpellCheckerEnabled=false and no dictionary egress during fresh-profile offline/scripted runs; preserve all sandbox/CSP/Node boundaries."
+
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/security.ts", "05_Software/apps/desktop/src/main/security-policy.test.ts"]
+
+linked_tests = ["05_Software/apps/desktop/src/main/security-policy.test.ts", "05_Software/tests/tooling/package-smoke.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

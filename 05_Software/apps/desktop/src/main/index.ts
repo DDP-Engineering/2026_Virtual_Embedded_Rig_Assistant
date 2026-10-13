@@ -32,7 +32,7 @@ import { openExternal } from "./open-external.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { revealPath } from "./reveal-path.js";
-import { bundledResponse, secureSession, secureWindow } from "./security.js";
+import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
 import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
@@ -45,6 +45,7 @@ declare const __VERA_TEST__: boolean;
 declare const __VERA_UPDATE_URL__: string;
 declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
+installSessionPolicy(app);
 // pi-ai's public standalone entrypoint makes its variable OAuth imports available in bundles.
 registerBunOAuthFlows();
 const userData = app.commandLine.getSwitchValue("user-data-dir");
@@ -357,6 +358,8 @@ async function createWindow(): Promise<void> {
       nodeIntegration: false,
       webSecurity: true,
       webviewTag: false,
+      // Chromium otherwise downloads Hunspell dictionaries from an external CDN.
+      spellcheck: false,
     },
   });
   secureWindow(window);
@@ -467,6 +470,7 @@ if (!app.requestSingleInstanceLock()) {
     .whenReady()
     .then(async () => {
       if (draining) return;
+      secureSession(session.defaultSession);
       await settings.load();
       await credentials.load();
       updates = new Updates({
@@ -558,7 +562,6 @@ if (!app.requestSingleInstanceLock()) {
       nativeTheme.themeSource = settings.get().settings.theme;
       if (draining) return;
       logger.log("info", "app.started", { portable: dataLocations.portable });
-      secureSession(session.defaultSession);
       protocol.handle("vera", (request) => bundledResponse(join(here, "../renderer"), request));
       if (__VERA_TEST__ && app.commandLine.hasSwitch("packaging-probe")) {
         const { runPackagingProbe } = await import("./packaging/probe.js");

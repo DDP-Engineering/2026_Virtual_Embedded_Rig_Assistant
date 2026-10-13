@@ -28,6 +28,7 @@
     "prepare:model": "node scripts/prepare-model.mjs",
     "prepare:windows-runtime": "node scripts/prepare-windows-runtime.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
+    "smoke:package": "node scripts/smoke-package.mjs",
     "build:cli": "node scripts/build-cli.mjs",
     "make:demo-pdfs": "node scripts/make-demo-pdfs.mjs",
     "vera": "node scripts/build-cli.mjs && node apps/cli/dist/index.js",
