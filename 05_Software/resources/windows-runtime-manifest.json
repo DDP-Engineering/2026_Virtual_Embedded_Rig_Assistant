@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "version": "14.44.35211.0",
+  "architecture": "x64",
+  "provenance": "Microsoft Visual C++ x64 Runtime; source bytes verified via Microsoft Windows catalog signature on Windows host; compatible DLL names listed in Visual Studio 2022 REDIST list",
+  "redistribution": "https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution",
+  "license": "https://aka.ms/VCRedistLicense",
+  "files": [
+    {
+      "path": "msvcp140.dll",
+      "bytes": 557728,
+      "sha256": "0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9"
+    },
+    {
+      "path": "msvcp140_1.dll",
+      "bytes": 35952,
+      "sha256": "bfad5aef4c63a669e3c140655cdfdf395b6c979b400a447bd5dcb65ed8826c3d"
+    },
+    {
+      "path": "msvcp140_atomic_wait.dll",
+      "bytes": 50304,
+      "sha256": "640b2aefced484d0368eea5bdd06addd0658a3a70a49256e560d6923b404a479"
+    },
+    {
+      "path": "vcruntime140.dll",
+      "bytes": 124544,
+      "sha256": "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066"
+    },
+    {
+      "path": "vcruntime140_1.dll",
+      "bytes": 49792,
+      "sha256": "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f"
+    }
+  ]
+}

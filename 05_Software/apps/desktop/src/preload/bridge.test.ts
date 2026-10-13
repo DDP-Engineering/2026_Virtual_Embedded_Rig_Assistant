@@ -7,12 +7,14 @@ beforeAll(async () => {
   expect(existsSync(new URL("./bridge.ts", import.meta.url)), "typed preload bridge exists").toBe(true);
   ({ createBridge } = await import("./bridge.js"));
 });
-const info = {
+const info: Response<"app.info"> = {
   name: "VERA",
   version: "1.2.3",
   platform: "linux",
   arch: "x64",
   portable: false,
+  testBuild: false,
+  signing: "unsigned" as const,
   locale: "en",
 };
 function fixture() {

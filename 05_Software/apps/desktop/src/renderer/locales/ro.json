@@ -9,7 +9,13 @@
     "portable": "Portabilă",
     "locale": "Limba sistemului",
     "yes": "Da",
-    "no": "Nu"
+    "no": "Nu",
+    "build": "Versiune",
+    "releaseBuild": "Versiune de distribuție",
+    "testBuild": "Versiune de test instrumentată",
+    "signing": "Semnătură",
+    "unsignedBuild": "Versiune nesemnată",
+    "signedBuild": "Versiune semnată"
   },
   "errors": {
     "INVALID": "Cererea nu este validă.",

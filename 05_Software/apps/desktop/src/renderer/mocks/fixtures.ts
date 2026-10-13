@@ -8,4 +8,6 @@ export const mockAppInfo: AppInfo = {
   arch: "x64",
   portable: false,
   locale: "en",
+  testBuild: false,
+  signing: "not-applicable",
 };

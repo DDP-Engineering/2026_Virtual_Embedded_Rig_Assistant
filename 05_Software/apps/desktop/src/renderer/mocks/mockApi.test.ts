@@ -143,6 +143,8 @@ it("validates mock invoke and owns independent app subscription lifecycle", asyn
     platform: "linux",
     arch: "x64",
     portable: false,
+    testBuild: false,
+    signing: "unsigned" as const,
     locale: "en",
   };
   const { api, emitAppEvent } = createMockApi(info);

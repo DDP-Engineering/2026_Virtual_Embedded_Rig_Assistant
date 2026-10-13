@@ -36,6 +36,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         "ext_agent_host_id",
       );
       if (flag === "1") {
+        expect(code).toContain("VERA Test");
         expect(code).toContain("VERA_REPLAY_DIR");
         expect(code).toContain("VERA_REPLAY_DELAY_MS");
         expect(code).toContain("VERA_TEST_ALLOW_WRITES");
@@ -50,6 +51,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         expect(code).toContain('import("better-sqlite3")');
         expect(code).not.toContain("Could not dynamically require");
       } else {
+        expect(code).not.toContain("VERA Test");
         for (const marker of [
           "packaging-probe",
           "I2C1_CR1",
@@ -62,6 +64,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
           "replay_",
           "registerReplay",
           "veraTestFileTools",
+          "VERA_NETWORK_AUDIT",
         ]) {
           expect(code).not.toContain(marker);
         }

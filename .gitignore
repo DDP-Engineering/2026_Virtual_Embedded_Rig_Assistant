@@ -11,6 +11,7 @@ __pycache__/
 **/out/
 **/release/
 /05_Software/resources/models/
+/05_Software/resources/windows-runtime/
 *.tsbuildinfo
 
 # Test output: Vitest coverage and Playwright runs. A successful run leaves none.

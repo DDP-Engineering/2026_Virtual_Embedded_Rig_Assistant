@@ -26,6 +26,7 @@
     "package": "node scripts/package.mjs",
     "package:test": "node scripts/package.mjs --test",
     "prepare:model": "node scripts/prepare-model.mjs",
+    "prepare:windows-runtime": "node scripts/prepare-windows-runtime.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
     "build:cli": "node scripts/build-cli.mjs",
     "make:demo-pdfs": "node scripts/make-demo-pdfs.mjs",

@@ -23,7 +23,7 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `VITE_API=mock npm run dev:renderer` | Full foundation UI using in-memory settings, metadata and app events |
 | `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `apps/desktop/out/` |
 | `npm run prepare:model` | Fetch and verify immutable, SHA256-pinned embedding assets; `-- --offline` verifies cached files only |
-| `npm run package` / `npm run package:test` | Build native x64 zip/AppImage with release / compiled test identity, verified model assets and size/hash report |
+| `npm run package` / `npm run package:test` | Build native x64 NSIS + portable ZIP (Windows) or AppImage + deb (Linux), release / labelled test identity, pinned assets and SHA256/budget report |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 | `npm run build:cli` | Bundle the headless `vera` bin and isolated grep worker |
 | `npm run vera -- run …` | Build the headless CLI and execute one durable session turn |
@@ -82,17 +82,32 @@ Packaging uses electron-builder 26.17.0, better-sqlite3 13.0.3, transformers 4.3
 onnxruntime-node 1.30.0. `resources/model-manifest.json` pins all seven q8
 bge-small-en-v1.5 assets to an immutable upstream revision, with bytes and SHA256.
 Downloaded assets under `resources/models/` are ignored and reverified before packaging.
-The runtime uses local files with remote models disabled. This model is the WP-05 feasibility
-fixture; WP-24 owns the final model and recall evaluation.
+The runtime uses local files with remote models disabled. ADR0015 selects this BGE model after
+the retrieval evaluation; packaging preserves its descriptor and fingerprints.
 
 Generated artifacts and `package-report.json` reside in `release/{test,release}/`.
-The report includes artifact SHA256/bytes, unpacked bytes, ONNX/model contributions and largest files.
-Windows zip builds fail above 250,000,000 bytes. Native libraries, including sharp's shared
-libraries, are unpacked; models are real `extraResources` files.
+The schema2 report includes each artifact's SHA256/bytes, source/config hashes, per-target ASAR and
+executable hashes, prepack outcomes, unpacked/native/model contributions and largest files.
+The NSIS per-user installer fails above250000000bytes after persisting its FAIL report; ZIP size is
+measured. ZIP alone ships `vera.portable`. Native libraries are unpacked; models are real
+`extraResources` files. Local pdfjs CMaps/standard fonts/WASM ship with the renderer.
+
+Windows also ships five app-local Microsoft VC++14.44.35211.0 DLLs pinned by
+`resources/windows-runtime-manifest.json`. `npm run prepare:windows-runtime` verifies the cache or
+materializes the exact bytes from Microsoft-signed source files. `VERA_VC_REDIST_DIR` selects an
+approved redistributable folder; the default is System32. Different bytes fail rather than updating
+pins. Preparation is build-time only. Generated DLL caches are ignored by Git.
+
+`CSC_LINK`/`WIN_CSC_LINK` and corresponding passwords enable required Authenticode signing;
+certificate-store selectors `VERA_CERTIFICATE_SHA1` or `VERA_CERTIFICATE_SUBJECT` are also supported.
+Requested signing must verify successfully. Without credentials, unsigned builds are permitted and
+About displays localized unsigned identity. Instrumented distributions use VERA Test, a separate
+appId/executable/package name and labelled filenames; release excludes all test hooks.
 [WP-05 measurements and execution procedures](../06_SoftwareDocu/wp05-packaging-measurements.md)
-records current connected Windows ZIP and offline Linux acceptance. Full distribution targets,
-clean/offline Windows and VC++ runtime independence proof, and release smoke remain WP-30/WP-33
-before final release.
+records the foundation's current connected Windows and offline Linux observations. Actual
+clean/offline Windows and VC++ self-containment on that environment remain pending before final
+release; static import closure or current-host loaded modules supplement this requirement.
+Full scripted session, update and external egress acceptance belongs to WP31–33.
 
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
 app.info, app.settings.get/update and app subscriptions in memory. The OpenAI browser fixture catalog contains mock-openai and is available offline before auth; mock Test honors explicit model overrides and separate authentication. The API exposes
@@ -112,6 +127,8 @@ Before browser acceptance, run `python ../02_Tools/npmw.py npx playwright instal
 (Ubuntu: python3). In PowerShell, browser mock development uses `$env:VITE_API="mock"`, then
 `python ../02_Tools/npmw.py npm run dev:renderer`; remove the variable with `Remove-Item Env:VITE_API`
 when returning to Electron development. The mock fixture version is taken from the desktop manifest.
+
+Packaging checks every offline PDF CMap/font/WASM resource against the pinned pdfjs-dist source bytes in staging and final ASAR. When both Windows certificate SHA1 and subject selectors are supplied, both constrain certificate selection.
 
 ## Headless CLI
 

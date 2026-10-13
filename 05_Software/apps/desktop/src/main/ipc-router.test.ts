@@ -8,6 +8,8 @@ const info = {
   platform: "win32",
   arch: "x64",
   portable: false,
+  testBuild: false,
+  signing: "unsigned" as const,
   locale: "en-US",
 };
 let createInvokeRouter: typeof import("./ipc-router.js").createInvokeRouter;

@@ -13,6 +13,8 @@ const info = {
   platform: "linux",
   arch: "x64",
   portable: false,
+  testBuild: false,
+  signing: "unsigned" as const,
   locale: "en",
 };
 it("validates an injected bridge response and translates transport failure to a safe error", async () => {

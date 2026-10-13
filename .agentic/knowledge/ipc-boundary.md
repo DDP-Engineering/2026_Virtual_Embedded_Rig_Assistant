@@ -30,7 +30,9 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
 - providers.list/save/remove/models/test use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
 - providers.chatgpt.login/cancel/status/logout use strict metadata and guarded manualCode/promptId requests. app.openExternal requires confirmed:true and HTTP(S); main further confines OAuth to the pinned auth page. [Providers](providers.md) owns secret isolation and lifecycle.
-- app.info accepts a strict empty object and returns name/version/platform/arch/portable/locale.
+- app.info accepts a strict empty object and returns name/version/platform/arch/portable/locale,
+  compiled testBuild and signing (signed/unsigned/not-applicable). [Native packaging](native-packaging.md)
+  owns the immutable identity and signature acceptance; transport/preload/mock retain the strict schema.
 - vera:invoke returns a validated success/error envelope; window.vera.invoke resolves the value
   or rejects a plain VeraError. Plain error objects retain fields across contextBridge.
 - subscribe('app', on) receives AppEvent settings.changed and returns idempotent unsubscribe.

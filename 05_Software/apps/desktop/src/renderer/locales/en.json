@@ -9,7 +9,13 @@
     "portable": "Portable",
     "locale": "System locale",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "build": "Build",
+    "releaseBuild": "Release build",
+    "testBuild": "Instrumented test build",
+    "signing": "Signing",
+    "unsignedBuild": "Unsigned build",
+    "signedBuild": "Signed build"
   },
   "errors": {
     "INVALID": "The request is invalid.",

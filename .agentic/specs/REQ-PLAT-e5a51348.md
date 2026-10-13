@@ -2,7 +2,7 @@
 
 ## Behavior
 
-The build produces Windows x64 zip and Linux x64 AppImage only for this foundation spike. Build-time download of pinned assets is permitted; runtime model loading uses the real resources/models directory with allowRemoteModels=false and local_files_only=true. bge-small-en-v1.5 quantized ONNX (q8) at Xenova revision ea104dacec62c0de699686887e3f920caeb4f3e3 is the feasibility fixture. Final model choice and recall remain WP-24.
+The build delivers pinned native CPU SQLite/ORT libraries and offline document assets for Windows/Linux x64. Distribution target/layout/hash/budget contracts are in [Desktop distribution contract](REQ-PLAT-03f3a066.md). Build-time preparation is permitted; runtime model loading uses real resources/models with allowRemoteModels=false and local_files_only=true. BGE-small-en-v1.5 q8 at Xenova revision ea104dacec62c0de699686887e3f920caeb4f3e3 is selected by ADR0015.
 
 ## Interface and lifecycle
 
@@ -20,8 +20,8 @@ A source manifest contains repository, immutable revision, model id, license att
 
 ## Acceptance
 
-Package and unpacked byte counts and ONNX/model contributions are recorded per OS. Windows package fails above 250,000,000 bytes and lists largest contributors. Only target OS/x64 native runtimes ship. Linux CUDA/TensorRT binaries are excluded; Windows retains the upstream ORT DirectML/dxcompiler/dxil companions for loader compatibility. The embedding worker explicitly selects CPU execution. WP-05 acceptance executes a fresh extraction of the exact final Windows ZIP on the current connected Windows host and the exact Linux AppImage in an actually isolated Ubuntu VM. External evidence records OS, host connectivity, matching expected artifact hashes before/after, actual process exit and packaged runtime results. The connected Windows proof demonstrates runtime feasibility on that host; it makes no clean/offline or VC++ independence claim. Linux evidence includes disabled adapters/routes and restoration. Release output and packaged app code exclude probe entries/switches/fixtures.
+Package/unpacked bytes and native/model contributions are recorded per OS. The Windows installer limit is250000000bytes with persisted contributors; ZIP size is measured. Only target OS/x64 native runtimes ship. Linux CUDA/TensorRT binaries are excluded; Windows retains upstream ORT DirectML/dxcompiler/dxil companions and pinned app-local VC++ DLLs for loader compatibility. The worker selects CPU execution. External evidence binds OS/isolation, matching artifact hashes and actual process results. Current connected Windows execution demonstrates feasibility and loaded DLL paths; real clean/offlineWindows and VC++ self-containment acceptance remain pending until final release. Release app code excludes probes/switches/fixtures.
 
 ## Release verification obligation
 
-The authorized WP-05 Windows verification scope is recorded in TASK-b862091d RULING-004. Clean/offline Windows execution and VC++ runtime independence remain unproven and must be settled before final release in WP-30/WP-33, including verified app-local redistribution if the clean supported OS lacks the imported runtime DLLs. NSIS/deb and full release package smoke also stay with WP-30/WP-33. Runtime remote model loading remains disabled on both platforms.
+The authorized current-host Windows scope remains in force under verification-policy.md. Clean/offlineWindows and actual VC++ self-containment on that environment must be settled before final release. App-local import closure and current-host loaded paths supplement this obligation. Full release package session/egress/upgrade checks remain WP31–33. Runtime remote model loading is disabled on both platforms.

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-a68b2d5b"
+title = "Sign configured Windows distributions and expose build identity"
+status = "active"
+requirement = "When Windows signing credentials are supplied, the packaging pipeline shall require Authenticode signing of the executable and NSIS distribution, while builds without credentials remain permitted and expose localized unsigned identity in About; instrumented identity is visibly labelled in product name and About."
+verification = "Assert signing configuration and compiled identity; inspect actual unsigned executable/installer when credentials absent and localized About through ordinary app.info/UI. A requested signing failure aborts; supplied-credential acceptance verifies actual Authenticode status."
+affected_paths = ["05_Software/scripts/package.mjs", "05_Software/apps/desktop/electron.vite.config.ts", "05_Software/apps/desktop/src/main/app-info.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/apps/desktop/src/renderer/components/metadata.tsx", "05_Software/apps/desktop/src/renderer/components/metadata.test.ts", "05_Software/apps/desktop/src/renderer/locales/", "05_Software/apps/desktop/src/renderer/mocks/", "05_Software/apps/desktop/src/renderer/api/ipc.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/tests/tooling/packaging.test.ts", "05_Software/tests/tooling/build-mode.test.ts", "05_Software/apps/desktop/src/renderer/components/metadata.test.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/renderer/api/ipc.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+spec = "specs/REQ-PLAT-03f3a066.md"
+priority = "high"
+created = 2026-10-13
+updated = 2026-10-13

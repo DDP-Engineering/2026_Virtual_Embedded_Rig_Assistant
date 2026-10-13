@@ -55,6 +55,8 @@ export const appInfoSchema = z.strictObject({
   arch: z.string().min(1),
   portable: z.boolean(),
   locale: z.string().min(1),
+  testBuild: z.boolean(),
+  signing: z.enum(["signed", "unsigned", "not-applicable"]),
 });
 export const channels = {
   "skills.list": defineChannel("skills.list", skillsScopeSchema, z.array(skillSummarySchema).max(2048)),

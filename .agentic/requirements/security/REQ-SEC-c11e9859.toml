@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-c11e9859"
+title = "Reject unsafe or incomplete package payloads"
+status = "active"
+requirement = "Before constructing distribution artifacts, the packaging pipeline shall reject staged payloads containing secret material, relative paths longer than 160 characters, or missing required native/model/pdf/font files, with diagnostics limited to category and path."
+verification = "Mutate isolated payload fixtures with credential files, high-confidence key material, excessive paths and missing native assets; assert sanitized failure. Inspect final real ASAR/unpacked local CPU/model/assets and target architecture."
+affected_paths = ["05_Software/scripts/package.mjs", "05_Software/scripts/package-checks.mjs", "05_Software/apps/desktop/electron-builder.yml", "05_Software/scripts/prepare-windows-runtime.mjs", "05_Software/resources/windows-runtime-manifest.json"]
+linked_tests = ["05_Software/tests/tooling/packaging.test.ts"]
+spec = "specs/REQ-PLAT-03f3a066.md"
+priority = "high"
+created = 2026-10-13
+updated = 2026-10-13

@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for package/test-package commands, model asset delivery, ASAR native paths, ZIP/AppImage
+Select for package/test-package commands, model asset delivery, ASAR native paths, NSIS/portable ZIP/AppImage/deb
 budgets and packaged SQLite/embedding probes. Start at `05_Software/scripts/package.mjs`;
 focused tests are `tests/tooling/{packaging,build-mode}.test.ts` and
 `apps/desktop/src/main/packaging/sqlite-probe.test.ts`. General workspace/compiler behavior belongs
@@ -20,20 +20,26 @@ The package delivers the BGE q8 assets selected in [ADR0015](../../00_Planning/d
 
 From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only),
 `npm run package` (compiled release) and `npm run package:test` (compiled instrumented).
-Outputs are `release/{test,release}/` artifacts and schema-1 `package-report.json`.
+Outputs are `release/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.
 The instrumented packaged app accepts `--packaging-probe=<absolute JSON path>` and exits 0/1
 after writing schema-1 SQLite/embedding results. `probe-windows-offline.ps1` takes ZIP, expected
 SHA256 and evidence directory; `probe-linux-offline.sh` takes AppImage, evidence directory and
 test user in a dedicated VM. Measurements/status live in `06_SoftwareDocu/wp05-packaging-measurements.md`.
 
+The prepack and final ASAR checks compare every non-license CMap/font/WASM resource against the exact-pinned pdfjs-dist source bytes. Certificate SHA1 and subject selectors are preserved together when both are configured.
+
 ## Invariants
 
 - Packaging compiles its own fixed test identity; runtime environment cannot enable release probes.
-- Release application code excludes all probe/worker/fixture markers; emitted output and ASAR are inspected.
+- Release app code excludes instrumented probe/worker/fixture markers and test hooks;
+  production document workers remain bundled. Emissions and final ASAR are inspected.
 - Model URLs contain the immutable revision; every cached/downloaded asset must match bytes and SHA256.
   Corruption fails; downloads occur only in explicit preparation/build commands.
 - Native CPU libraries and models are real files outside ASAR. Foreign native OS/architecture fails inspection.
-- Windows artifact budget is 250,000,000 bytes; overflow lists largest contributors and fails.
+- Windows NSIS budget is250000000bytes; overflow persists a FAIL report with contributors before throwing. ZIP size is recorded.
+- Prepack rejects secret files/material, relative paths longer than160, and missing native/model/pdf assets, with sanitized diagnostics.
+- Microsoft VC++14.44.35211.0 source/catalog signatures and committed SHA256/byte pins materialize five unmodified app-local DLLs; caches and each packaged target are verified. Linux excludes Windows resources.
+- Explicit signing credentials/selectors force Windows signing and valid Authenticode verification; missing credentials permit localized unsigned About. app.info exposes immutable test/signing identity.
 - Probes require packaged app and absolute output, use temporary SQLite with cleanup, and keep renderer
   sandbox/CSP/origin/IPC contracts. Worker deadline is five minutes with termination/disposal.
 - Host evidence is independent of application results. Windows helper enumerates hidden adapters and all IP compartments and checks loopback-only routes without changing
@@ -51,15 +57,17 @@ test user in a dedicated VM. Measurements/status live in `06_SoftwareDocu/wp05-p
 
 ## Key behaviors
 
-- `REQ-PLAT-e5a51348` — native host packages, sizes and artifact hashes; current connected Windows and offline Linux runtime acceptance.
+- `REQ-PLAT-e5a51348` — pinned local native CPU/model/PDF closure.
+- `REQ-PLAT-03f3a066` — distribution targets, portable layout, exact hashes and installer budget.
+- `REQ-SEC-c11e9859` — safe complete prepack payload and sanitized failures.
+- `REQ-PLAT-a68b2d5b` — conditional signing and immutable localized identity.
+- `REQ-TEST-0b2884f2` — complete release hook exclusion and actual hostile-env launch boundary.
 - `REQ-PLAT-96cd589b` — immutable verified model delivery.
 - `REQ-TEST-d05765be` — WAL/unicode61/trigram/reopen and observed node:sqlite fallback.
 - `REQ-TEST-ec62ad71` — real CPU worker model load and three normalized 384-vector timings.
 - `REQ-TEST-7fea1dd0` — complete release app-code exclusion of probes.
 
-The five requirements are active after real packaged acceptance on current connected Windows
-and offline Linux. Clean/offline Windows and VC++ runtime independence remain required before
-final release WP-30/WP-33; current-host execution cannot prove them.
+Native acceptance exercises real SQLite, local CPU indexing/search and PDF through ordinary release IPC. External launch evidence names artifact/executable hashes, processes, vera://app and real native dialog pass-through with hostile test env. Clean/offline Windows and actual VC++ self-containment remain required before final release; static app-local closure/current-host loaded paths supplement that manual criterion.
 
 ## Architecture
 
@@ -73,8 +81,12 @@ flowchart LR
   build --> output[(desktop/out)]
   output --> stage[stageRuntime locked closure]
   models --> stage
+  crtManifest[(windows-runtime-manifest.json)] --> crtPrepare[Microsoft source signature + pin verification]
+  crtPrepare --> crtCache[(Windows runtime cache)]
+  crtCache --> crtNative[VC++ beside ORT addon, Windows only]
+  crtNative --> stage
   stage --> builder[electron-builder.yml]
-  builder --> artifact[(zip / AppImage)]
+  builder --> artifact[(NSIS / portableZIP / AppImage / deb)]
   package --> inspection[ASAR / native / size inspection]
   artifact --> host([external VM harness])
   host --> probe[test main packaging probe]
@@ -88,7 +100,9 @@ builds omit the probe branch and worker entry while retaining bundled runtime/mo
 
 ## Files
 
-- `05_Software/scripts/{package,prepare-model}.mjs` — collection, verification, inspection and reports.
+- `05_Software/scripts/{package,package-checks,prepare-model,prepare-windows-runtime}.mjs` — collection, source/cache integrity, sanitized prepack, target isolation and reports.
+- `05_Software/resources/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
+- `main/app-info.ts`, shared ipc.ts, renderer Metadata/locales — immutable build/signature identity in About.
 - `05_Software/resources/model-manifest.json` — immutable model provenance/pins.
 - `05_Software/apps/desktop/electron-builder.yml` — targets, unpacking and real resource delivery.
 - `05_Software/apps/desktop/electron.vite.config.ts`, `src/main/index.ts` — compiled boundary and test hook.

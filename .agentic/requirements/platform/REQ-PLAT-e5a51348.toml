@@ -1,12 +1,12 @@
 schema = 1
 id = "REQ-PLAT-e5a51348"
-title = "Build native desktop packages with bundled runtime and model assets"
+title = "Deliver pinned native libraries and local model assets"
 status = "active"
-requirement = "When packaging on Windows x64 or Linux x64, the build shall produce a shell zip or AppImage with bundled real-file native libraries and models, target-specific native binaries, measured size contributions and a Windows package limit of 250 MB."
-verification = "Build each OS package, unpack it and inspect native/model locations and target architecture; record SHA256 and sizes; execute a fresh extraction of the final Windows ZIP on the current connected Windows host and the Linux AppImage in an offline Ubuntu VM, bind probe results to identical before/after hashes and actual process exit codes; an oversized Windows package fails. Clean/offline Windows and VC++ runtime independence are deferred to WP-30/WP-33 before final release under RULING-004, not proven by this spike."
+requirement = "When constructing a Windows x64 or Linux x64 desktop distribution, the pipeline shall deliver the pinned native CPU SQLite and ORT libraries, model and offline PDF assets as target-specific local files, with native and model libraries accessible outside ASAR."
+verification = "Inspect each current target for the correct unpacked SQLite/ORT native paths and immutable model assets; exercise real native SQLite, PDF and local CPU indexing/search through ordinary packaged IPC and bind actual executable/process results to before/after artifact hashes. Observe app-local VC++ import/loaded paths on Windows. Manual: real clean/offlineWindows and VC++ independence remain pending before final release under the standing user authorization; record the exact cleanLinux environment and any separate-machine limitation."
 affected_paths = ["05_Software/apps/desktop/electron-builder.yml", "05_Software/scripts/package.mjs", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/apps/desktop/package.json", "05_Software/scripts/probe-linux-offline.sh", "05_Software/scripts/probe-windows-sandbox.ps1", "05_Software/scripts/probe-windows-offline.ps1"]
 linked_tests = ["05_Software/tests/tooling/packaging.test.ts", "05_Software/tests/tooling/build-mode.test.ts"]
 spec = "specs/REQ-PLAT-e5a51348.md"
 priority = "high"
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-10-13

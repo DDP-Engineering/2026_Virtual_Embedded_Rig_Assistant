@@ -53,10 +53,10 @@ hybrid search, guarded document tools and CLI index/search with a real eval gate
 [Workbench](../knowledge/workbench.md) routes format1, creation/open/close, ownership, completion, recents and the Welcome/pinned UI.
 [Workbench storage](../knowledge/workbench-storage.md) routes per-folder SQLite, compatibility checks, exclusive backups, checksummed migrations and session/message/event rows.
 
-[Native packaging](../knowledge/native-packaging.md) routes x64 ZIP/AppImage, verified bundled
-model delivery, compiled instrumented probes and external artifact-bound host evidence. WP-05
-feasibility is observed on offline Linux and current connected Windows. Clean/offline Windows
-and VC++ independence are required before final release WP-30/WP-33.
+[Native packaging](../knowledge/native-packaging.md) routes host x64 NSIS/portableZIP and AppImage/deb,
+verified BGE/Microsoft runtime delivery, compiled build/signature identity and external artifact-bound
+host evidence. Real clean/offlineWindows and VC++ self-containment on that environment remain
+required before final release; current-host import/loaded-path evidence supplements that criterion.
 
 [Agent runtime](../knowledge/agent-runtime.md) routes turn behavior, context policy, tool-schema conversion and event mapping. [Sessions](../knowledge/sessions.md) routes durable lifecycle, event snapshots/subscriptions, recovery, citations and host integration.
 

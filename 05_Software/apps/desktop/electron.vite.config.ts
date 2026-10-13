@@ -80,7 +80,11 @@ export default defineConfig(({ command }) => ({
         "@vera/core": resolve(root, "../../packages/core/src/index.ts"),
       },
     },
-    define: { __VERA_TEST__: JSON.stringify(testBuild), __VERA_DEV__: JSON.stringify(command === "serve") },
+    define: {
+      __VERA_TEST__: JSON.stringify(testBuild),
+      __VERA_DEV__: JSON.stringify(command === "serve"),
+      __VERA_SIGNED__: JSON.stringify(process.env.VERA_SIGNED_BUILD === "1"),
+    },
     build: {
       rollupOptions: {
         external: [

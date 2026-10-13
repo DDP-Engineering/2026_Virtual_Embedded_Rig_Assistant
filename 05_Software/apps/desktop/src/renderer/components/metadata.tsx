@@ -10,6 +10,20 @@ export function Metadata({ info }: { info: AppInfo }) {
     { field: "arch", label: t("home.arch"), value: info.arch },
     { field: "portable", label: t("home.portable"), value: info.portable ? t("home.yes") : t("home.no") },
     { field: "locale", label: t("home.locale"), value: info.locale },
+    {
+      field: "build",
+      label: t("home.build"),
+      value: info.testBuild ? t("home.testBuild") : t("home.releaseBuild"),
+    },
+    ...(info.signing !== "not-applicable"
+      ? [
+          {
+            field: "signing",
+            label: t("home.signing"),
+            value: info.signing === "signed" ? t("home.signedBuild") : t("home.unsignedBuild"),
+          },
+        ]
+      : []),
   ];
   return (
     <dl className="metadata">

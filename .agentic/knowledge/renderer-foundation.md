@@ -23,6 +23,9 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index and viewer; Artifacts opens/reveals/exports session content; Plan displays current session todos.
   Below1280px the right panel overlays the centre.
 - Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates/Data retain placeholders. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
+- About and Welcome metadata localize release/instrumented build identity and Windows signed/unsigned
+  status from strict app.info, with English/Romanian/German catalogs. [Native packaging](native-packaging.md)
+  owns compiled identity and actual signature verification; Metadata tests cover all three languages.
 - usePreferences loads {settings,readOnly}, applies mutation responses, invalidates on settings.changed
   and cleans up its app subscription. Failure displays localized structured errors and retry.
 - System theme follows prefers-color-scheme; root data-theme is light/dark. Main nativeTheme.themeSource

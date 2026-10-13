@@ -9,7 +9,13 @@
     "portable": "Portabel",
     "locale": "Systemsprache",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "build": "Build",
+    "releaseBuild": "Release-Build",
+    "testBuild": "Instrumentierter Test-Build",
+    "signing": "Signatur",
+    "unsignedBuild": "Nicht signierter Build",
+    "signedBuild": "Signierter Build"
   },
   "errors": {
     "INVALID": "Die Anfrage ist ungültig.",

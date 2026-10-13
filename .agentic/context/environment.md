@@ -62,14 +62,16 @@ Subscription ticket proof uses main chatgpt-auth/open-external tests, core llm/s
 
 [Verification policy](../../02_Tools/verification-policy.md) defines targeted per-ticket tests and full milestone gates. Static strict checks remain separate from test results. Changes acceptance uses core sessions/changes.test.ts, shared changes-ipc.test.ts, main reveal-path.test.ts, renderer changes-tab.test.ts and e2e/changes.spec.ts on Windows/native Ubuntu; the native test uses the real ask gate and proves counts/diff after restart.
 
-`npm run package` / `package:test` build host x64 release/instrumented ZIP or AppImage with
+`npm run package` / `package:test` build host x64 release/instrumented NSIS + portable ZIP or AppImage + deb with
 electron-builder 26.17.0. `prepare:model` materializes the manifest-pinned model; `-- --offline`
 verifies cached assets. Runtime assets never require a model download. Native N-API install scripts
 are explicitly denied in allowScripts; use platform-specific installed prebuilds and keep CPU
 libraries unpacked. See [native packaging](../knowledge/native-packaging.md) for package reports
 and external host harnesses. WP-05 accepts artifact-bound execution on the current connected
-Windows host under explicit human authorization, with clean/offline Windows and VC++ runtime
-independence required before final release WP-30/WP-33. The offline Windows helper requires
+Windows host under explicit human authorization, with clean/offline Windows and real VC++ self-containment
+required before final release. App-local Microsoft runtime bytes/signatures are pinned; actual loaded
+module paths supplement the clean/offline criterion. `prepare:windows-runtime` uses the verified
+cache or exact Microsoft-signed source DLLs from VERA_VC_REDIST_DIR/System32. The offline Windows helper requires
 isolation and a machine permitting unsigned executables; a Smart App Control refusal is a failed
 environment probe. Linux feasibility uses actual isolated-VM execution.
 

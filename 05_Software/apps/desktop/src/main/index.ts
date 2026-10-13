@@ -40,7 +40,7 @@ import { createDesktopWorkerPool } from "./worker-pool.js";
 const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
 declare const __VERA_TEST__: boolean;
-app.setName("VERA");
+app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
 // pi-ai's public standalone entrypoint makes its variable OAuth imports available in bundles.
 registerBunOAuthFlows();
 const userData = app.commandLine.getSwitchValue("user-data-dir");

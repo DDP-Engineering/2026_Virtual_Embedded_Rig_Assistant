@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-03f3a066"
+title = "Build release desktop distribution targets"
+status = "active"
+requirement = "When packaging on native Windows x64 or Linux x64, VERA shall construct the host release targets (per-user NSIS and portable ZIP with executable-adjacent vera.portable, or AppImage and deb), separately labelled instrumented targets, and a report identifying each artifact by SHA256 and its size, failing a Windows installer above 250000000 bytes with the largest contributors recorded."
+verification = "Run target/layout/budget tests and build both modes on each host; inspect exact hashes and payloads, execute every release artifact with fresh data, inspect NSIS per-user and ZIP portable behavior. Manual: clean/offline Windows and VC++ self-containment remain pending until final release under existing user deferral; actual clean Linux launch required independently of development host."
+affected_paths = ["05_Software/scripts/package.mjs", "05_Software/apps/desktop/electron-builder.yml", "05_Software/package.json", ".gitignore"]
+linked_tests = ["05_Software/tests/tooling/packaging.test.ts"]
+spec = "specs/REQ-PLAT-03f3a066.md"
+priority = "high"
+created = 2026-10-13
+updated = 2026-10-13
