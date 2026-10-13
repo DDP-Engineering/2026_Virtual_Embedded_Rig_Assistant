@@ -25,6 +25,14 @@ import { permissionModeSchema, sessionIdSchema, sessionSummarySchema } from "./s
 import { sessionStateSchema } from "./session-state.js";
 import { recentWorkbenchStateSchema, settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
 import {
+  SKILL_BYTES,
+  skillContentSchema,
+  skillNameSchema,
+  skillSummarySchema,
+  skillsScopeSchema,
+  skillTargetSchema,
+} from "./skills.js";
+import {
   configSnapshotSchema,
   pinnedSchema,
   workbenchPatchSchema,
@@ -49,6 +57,26 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
 });
 export const channels = {
+  "skills.list": defineChannel("skills.list", skillsScopeSchema, z.array(skillSummarySchema).max(2048)),
+  "skills.open": defineChannel("skills.open", skillTargetSchema, skillContentSchema),
+  "skills.create": defineChannel(
+    "skills.create",
+    skillTargetSchema.extend({ name: skillNameSchema }),
+    skillContentSchema,
+  ),
+  "skills.save": defineChannel(
+    "skills.save",
+    skillTargetSchema.extend({
+      content: z.string().max(SKILL_BYTES),
+      sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    }),
+    skillContentSchema,
+  ),
+  "skills.toggle": defineChannel(
+    "skills.toggle",
+    skillsScopeSchema.extend({ name: z.string().min(1).max(255), enabled: z.boolean() }),
+    z.strictObject({}),
+  ),
   "docs.list": defineChannel(
     "docs.list",
     docsScopeSchema,

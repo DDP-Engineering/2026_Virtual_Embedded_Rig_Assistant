@@ -1,0 +1,87 @@
+# Skills
+
+## Routing
+
+Select for workbench/user skills, YAML validation, metadata prompt index, load_skill,
+and Skills settings. Start at05_Software/packages/core/src/skills/catalog.ts,
+core workbench/service.ts, desktop main/sessions.ts and renderer/components/skills.tsx.
+[Workbench](workbench.md) owns lock/lifecycle/write queues; [File tools](file-tools.md)
+owns registry/result limits; [Sessions](sessions.md) owns turns and persistence;
+[IPC boundary](ipc-boundary.md) owns exact frame authorization and typed channels.
+
+## Purpose and boundaries
+
+SkillCatalog discovers workbench/skills and separately host-authorized userData/skills.
+Workbench folders shadow matching user folders including invalid ones. Discovery
+returns validated metadata and localized diagnostic codes; bodies reach the agent
+through load_skill. Main composes fresh metadata before session operations/turns;
+CLI composes the same catalog. Renderer uses strict named/source/scoped IPC only.
+
+## Public interface
+
+- SkillCatalog.list/metadata/load/read/path use current roots and admission callback.
+- load_skill {name,file?} is read-class and uses existing32000-character result cap.
+- skills.list/open/create/save/toggle carry workbenchId; target uses workbench/user
+  source and folder name, never an arbitrary root. save requires original SHA256.
+- WorkbenchService admits reads on lifecycle queue and writes on shared write queue.
+  create writes a template exclusively; save prepares same-folder bytes and rechecks
+  ownership/path/hash before rename. User skills respect current workbench admission.
+- Skills settings provides diagnostics, enable/disable, open/edit, source selection,
+  template creation, loading/retry/read-only states and isolated drafts. Context lists
+  enabled valid metadata. en/ro/de labels use root-scaled rem/theme styles and modal
+  keyboard focus restoration. Browser mock supplies the same routes in memory.
+
+## Invariants
+
+- Name is lowercase letters/digits/hyphens1..64 and equals folder; description1..1024.
+  YAML duplicate keys/aliases fail. Markdown has no reference-only body-line restriction.
+- Invalid names/content/path appear with diagnostics and are omitted from metadata.
+  Disabled names are omitted from metadata and denied by the loader.
+- File reads cap256KiB, require ordinary single-link UTF8 text, stable descriptor/path
+  identity and reject redirects, escaping/ambiguous/device/absolute paths. Extra paths
+  stay under the selected skill folder. Each root caps1024folders/4096entries.
+- Agent content applies permanent .git/.vera/node_modules exclusions to both roots
+  and workbench .veraignore rules with negations through the common PathGuard.
+  Ignored primary skills show unavailable diagnostics and stay out of the prompt;
+  explicit UI inspection/editing keeps its separate current ownership admission.
+- Current ownership and abort checks surround async reads; content/version and source
+  are revalidated before disclosure. Workbench ID/folder/ownership guard settings saves.
+- Exclusive creation and stale-edit conflicts preserve existing user bytes. Workbench
+  and user roots come from host composition; renderer imports no Node filesystem.
+
+## Change map
+
+| Behavior | Source | Focused proof |
+|---|---|---|
+| Discovery/validation/precedence/disabled/bounds | core skills/catalog.ts | skills/catalog.test.ts |
+| Body/extra/runtime limits | core tools/load-skill.ts,registry.ts | sessions/skills.test.ts,tools/registry.test.ts |
+| Ownership/create/edit/toggle | workbench/service.ts | workbench/service.test.ts |
+| Scoped IPC | shared/skills.ts,ipc.ts; main/index.ts | shared/skills-ipc.test.ts,ipc-router/preload/transport tests |
+| Fresh prompt/settings/accessibility | main/sessions.ts,renderer/components/skills.tsx | e2e/skills.spec.ts; mockApi.test.ts |
+
+## Key behaviors
+
+REQ-FUNC-e728c8bf metadata/discovery; REQ-FUNC-f06e9051 content admission;
+REQ-UX-a285bfa2 skills management. Native acceptance captures loopback model requests
+before creation and after creation, disabling and editing in the same session.
+
+## Architecture
+
+```mermaid
+flowchart LR
+ Roots[Workbench / host userData] --> Catalog[SkillCatalog]
+ Catalog --> Metadata[Validated enabled metadata]
+ Metadata --> Prompt[buildSystemPrompt]
+ Catalog --> Loader[load_skill]
+ Loader --> Registry[ToolRegistry / existing result cap]
+ UI[Skills dialog / Context] --> IPC[Typed authorized IPC]
+ IPC --> Workbench[Lifecycle + write admission]
+ Workbench --> Catalog
+```
+
+## Files
+
+Core skills/catalog.ts; tools/load-skill.ts; workbench/service.ts; sessions/service.ts.
+Shared skills.ts/ipc.ts. Desktop main/index.ts/sessions.ts; renderer components/skills.tsx,
+session/context-tab.tsx,workbench.tsx,mocks/mockApi.ts,locales. CLI run.ts.
+Acceptance e2e/skills.spec.ts and focused tests in Change map.

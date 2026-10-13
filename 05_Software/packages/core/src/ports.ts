@@ -51,6 +51,7 @@ export interface CredentialStore {
 }
 
 export interface WorkbenchHost {
+  userData?: string;
   files: FileAccess;
   settings: { get(): SettingsSnapshot; update(patch: SettingsPatch): Promise<SettingsSnapshot> };
   pid: number;

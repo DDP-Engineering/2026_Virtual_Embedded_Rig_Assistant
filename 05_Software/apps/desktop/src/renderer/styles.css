@@ -973,3 +973,25 @@ legend {
   overflow-wrap: anywhere;
   margin: 0.3rem 0;
 }
+/* Skills lists and editor use the current theme and root text scale. */
+.skills-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.skills-list li {
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.skills-list label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 0.75rem;
+}
+.skills-dialog {
+  overflow-y: auto;
+}

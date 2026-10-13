@@ -68,6 +68,11 @@ it("registers a session replay subscription before dispatch and filters its toke
 });
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
+    | "skills.list"
+    | "skills.open"
+    | "skills.create"
+    | "skills.save"
+    | "skills.toggle"
     | "docs.list"
     | "docs.search"
     | "docs.open"

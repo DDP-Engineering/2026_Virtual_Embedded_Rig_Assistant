@@ -49,6 +49,7 @@ async function harness() {
   const settings = new SettingsService({ files, paths, uuid: randomUUID, changed: () => {} });
   await settings.load();
   const host = {
+    userData: root,
     files,
     settings,
     appVersion: "0.0.0",
@@ -62,6 +63,61 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+it("manages skills exclusively with stale hash, ownership and current workbench admission", async () => {
+  const h = await harness();
+  try {
+    const wb = await h.service.create(h.folder, "Skills");
+    const created = await h.service.saveSkill(wb.config.id, "workbench", "reader");
+    expect(created.content).toContain("name: reader");
+    await expect(h.service.saveSkill(wb.config.id, "workbench", "reader")).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    const edited = await h.service.saveSkill(
+      wb.config.id,
+      "workbench",
+      "reader",
+      created.content.replace("Describe", "Read"),
+      created.sha256,
+    );
+    await expect(
+      h.service.saveSkill(wb.config.id, "workbench", "reader", "lost", created.sha256),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(await h.service.openSkill(wb.config.id, "workbench", "reader")).toEqual(edited);
+    await h.service.saveSkill(wb.config.id, "user", "personal");
+    expect((await h.service.listSkills(wb.config.id)).map((s) => s.source)).toEqual(["user", "workbench"]);
+    await h.service.toggleSkill(wb.config.id, "reader", false);
+    expect((await h.service.getConfig()).warnings).not.toContainEqual({
+      code: "UNKNOWN_NAME",
+      path: "skills.disabled.reader",
+    });
+    expect((await h.service.skillCatalog(wb.config.id).metadata()).map((s) => s.name)).toEqual(["personal"]);
+    const external = await readFile(join(h.folder, "workbench.yaml"), "utf8");
+    await writeFile(join(h.folder, "workbench.yaml"), external.replace("- reader", "- personal"));
+    expect((await h.service.skillCatalog(wb.config.id).metadata()).map((s) => s.name)).toEqual(["reader"]);
+    await expect(h.service.listSkills("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C")).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    const lockPath = join(h.folder, ".vera/lock"),
+      original = await readFile(lockPath, "utf8");
+    try {
+      await writeFile(
+        lockPath,
+        JSON.stringify({ pid: process.pid, token: "foreign", app: "0", since: "2026-10-13" }),
+      );
+      await expect(h.service.saveSkill(wb.config.id, "user", "denied")).rejects.toMatchObject({
+        code: "DENIED",
+      });
+    } finally {
+      await writeFile(lockPath, original);
+    }
+    const oldCatalog = h.service.skillCatalog(wb.config.id);
+    await h.service.close();
+    await h.service.open(h.folder);
+    await expect(oldCatalog.metadata()).rejects.toMatchObject({ code: "CONFLICT" });
+  } finally {
+    await h.service.close();
+  }
+});
 it("create/open roundtrip writes validating YAML/template/runtime and preserves existing content", async () => {
   const h = await harness();
   await writeFile(join(h.folder, "WORKBENCH.md"), "my pinned content");

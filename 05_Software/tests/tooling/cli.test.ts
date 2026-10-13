@@ -213,6 +213,41 @@ const replay = (workbench: string, script = join(root, "fixtures/llm-scripts/rea
   "--script",
   script,
 ];
+it("CLI loads a separately authorized user skill and extra file", async () => {
+  const { workbench } = await fixture();
+  const data = join(workbench, "user-data"),
+    dir = join(data, "skills", "reader"),
+    script = join(workbench, "skill-replay.jsonl");
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    join(dir, "SKILL.md"),
+    "---\nname: reader\ndescription: Use for CLI board review.\n---\nCLI BODY\n",
+  );
+  await writeFile(join(dir, "extra.md"), "CLI EXTRA");
+  await writeFile(
+    script,
+    [
+      { toolCalls: [{ name: "load_skill", args: { name: "reader" } }] },
+      { text: "{{text}}", toolCalls: [{ name: "load_skill", args: { name: "reader", file: "extra.md" } }] },
+      { text: "{{text}}" },
+    ]
+      .map((s) => JSON.stringify(s))
+      .join("\n"),
+  );
+  const result = await launch([...replay(workbench, script), "--data", data]).result;
+  expect(result.code).toBe(0);
+  const records = events(result.stdout);
+  const tool = records.filter((r) => r.event.type === "tool.done");
+  expect(tool).toHaveLength(2);
+  expect(tool.every((r) => r.event.ok)).toBe(true);
+  expect(
+    records
+      .filter((r) => r.event.type === "message.done")
+      .map((r) => r.event.text)
+      .join("\n"),
+  ).toContain("CLI BODY");
+  expect(records.filter((r) => r.event.type === "message.done").at(-1)?.event.text).toBe("CLI EXTRA");
+});
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {
   const { workbench } = await fixture();

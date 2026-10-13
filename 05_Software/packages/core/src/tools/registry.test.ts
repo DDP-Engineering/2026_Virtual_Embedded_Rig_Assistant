@@ -16,6 +16,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     todo: { items: [{ text: "Verify", status: "pending" }] },
     search_docs: { query: "I2C1_CR1" },
     read_doc: { path: "docs/a.pdf", page: 1 },
+    load_skill: { name: "reader" },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -35,6 +36,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "todo",
     "search_docs",
     "read_doc",
+    "load_skill",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

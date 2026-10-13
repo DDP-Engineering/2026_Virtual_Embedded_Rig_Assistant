@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-e728c8bf"
+title = "Discover validated skill metadata"
+status = "active"
+requirement = """When a turn starts, VERA shall provide freshly discovered valid enabled skill metadata from workbench and authorized user folders, with workbench precedence and visible invalid-skill diagnostics."""
+verification = "Discover both roots including clashes, invalid and disabled names; observe metadata-only prompt refreshed for next turn."
+affected_paths = ["05_Software/packages/core/src/skills/catalog.ts", "05_Software/packages/core/src/skills/catalog.test.ts", "05_Software/packages/core/src/ports.ts", "05_Software/packages/core/src/index.ts", "05_Software/apps/cli/src/run.ts", "05_Software/apps/desktop/src/main/sessions.ts", "05_Software/apps/desktop/src/main/sessions.test.ts", "05_Software/README.md"]
+linked_tests = ["05_Software/packages/core/src/skills/catalog.test.ts", "05_Software/packages/core/src/agent/prompt.test.ts", "05_Software/e2e/skills.spec.ts"]
+spec = "specs/REQ-FUNC-e728c8bf.md"
+created = 2026-10-13
+updated = 2026-10-13

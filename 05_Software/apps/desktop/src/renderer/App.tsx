@@ -225,7 +225,9 @@ export function App() {
         navigate={navigate}
         navigation={navigation}
         storageReadOnly={!snapshot.data || snapshot.data.readOnly}
-        context={benchId && chat && !settings ? <ContextTab workbenchId={benchId} /> : undefined}
+        context={
+          benchId && chat && !settings ? <ContextTab workbenchId={benchId} readOnly={readOnly} /> : undefined
+        }
         docs={
           benchId && !settings ? (
             <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />

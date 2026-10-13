@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { SkillSettings } from "./skills.js";
 
 export function Workbench({
   settingsReadOnly,
@@ -96,6 +97,7 @@ export function Workbench({
             </ul>
           )}
           <div className="workbench-actions">
+            <SkillSettings workbenchId={active.config.id} readOnly={active.readOnly} />
             <button ref={editButton} type="button" data-action="edit-pinned" onClick={() => setEditing(true)}>
               {t("workbench.editPinned")}
             </button>

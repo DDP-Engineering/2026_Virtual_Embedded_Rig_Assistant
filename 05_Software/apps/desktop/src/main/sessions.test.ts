@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openDb, SessionService, WriteQueue } from "@vera/core";
+import { openDb, SessionService, SkillCatalog, WriteQueue } from "@vera/core";
 import { workbenchSchema } from "@vera/shared";
 import { expect, it } from "vitest";
 import { SessionsHost } from "./sessions.js";
@@ -44,6 +44,7 @@ it("awaits pending-change recovery before returning a session snapshot from a re
       getDatabase: () => storage.db,
       getConfig: async () => ({ config }),
       getPinned: async () => ({ content: "" }),
+      skillCatalog: () => new SkillCatalog({ root, disabled: () => [] }),
       getWriteQueue: () => new WriteQueue(),
       assertSessionWritable: () => {},
     },

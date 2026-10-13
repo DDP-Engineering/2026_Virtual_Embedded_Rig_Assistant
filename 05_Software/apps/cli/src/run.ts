@@ -106,6 +106,7 @@ export async function runTurn(
     resources.push(() => documents.embeddings.dispose());
     const workbench = new WorkbenchService(
       {
+        userData: location.paths.userData,
         files,
         settings,
         pid: process.pid,
@@ -129,6 +130,8 @@ export async function runTurn(
     signal.throwIfAborted();
     const db = workbench.getDatabase(),
       pinned = (await workbench.getPinned()).content;
+    const skills = workbench.skillCatalog(snapshot.config.id);
+    const skillMetadata = await skills.metadata();
     const service = new SessionService({
       db,
       root: snapshot.folder,
@@ -136,6 +139,7 @@ export async function runTurn(
       gateway,
       clock: nodeClock,
       workers,
+      skills,
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
@@ -148,7 +152,7 @@ export async function runTurn(
         buildSystemPrompt({
           workbench: snapshot.config,
           pinned,
-          skills: [],
+          skills: skillMetadata,
           env: {
             clock: nodeClock,
             osFamily: process.platform === "win32" ? "windows" : "linux",

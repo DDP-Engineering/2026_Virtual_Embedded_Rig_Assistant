@@ -172,8 +172,20 @@ test("artifact appears live, opens/exports, survives restart and deletion remove
     await expect(panel.locator("[data-artifact]")).toHaveCount(1);
     await expect(panel).toContainText("37 B");
     await expect(panel.locator(".artifact-viewer h1")).toHaveText("Session summary");
-    await expect(page.locator('[data-citation="valid"]')).toHaveText("artifact:summary.md");
-    await expect(page.locator('[data-citation="invalid"]')).toContainText("artifact:missing.md");
+    const validCitation = page.locator('[data-citation="valid"]');
+    await expect(validCitation).toHaveText("summary.md");
+    await expect(validCitation).toHaveAttribute("title", "artifact:summary.md");
+    await expect(validCitation).toHaveAttribute("aria-label", "artifact:summary.md");
+    const invalidCitation = page.locator('[data-citation="invalid"]');
+    await expect(invalidCitation).toHaveText("missing.md");
+    await expect(invalidCitation).toHaveAttribute("title", /^artifact:missing\.md: /);
+    await expect(invalidCitation).toHaveAttribute("aria-label", /^artifact:missing\.md: /);
+    await expect(invalidCitation).toHaveAttribute("aria-disabled", "true");
+    await expect(invalidCitation).toHaveClass(/\binvalid\b/);
+    await invalidCitation.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".document-dialog")).toHaveCount(0);
+    await expect(panel.locator(".artifact-viewer h1")).toHaveText("Session summary");
     await expect(page.locator("[data-approval-card]")).toHaveCount(0);
     const exportPath = join(root, "export ă.md");
     await rig.app.evaluate((_electron, path) => {

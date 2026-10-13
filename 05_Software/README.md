@@ -53,6 +53,12 @@ Main follows the saved preference with nativeTheme.themeSource. Panels resize by
 Renderer geometry lives in the separately versioned localStorage key vera.ui.layout; future versions and read-only settings preserve stored bytes.
 The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Updates, Data & privacy and About are placeholder sections (About also shows metadata).
 
+Skills settings opens from the active workbench or session Context. Skills live at
+`<workbench>/skills/<name>/SKILL.md` or `<userData>/skills/<name>/SKILL.md`; workbench
+folders take precedence. Create supplies an editable template; invalid skills show
+diagnostics, and disabled/invalid skills stay outside the next-turn prompt index.
+The agent loads enabled instructions and confined extra files with `load_skill`.
+
 Production loads bundled assets through the confined `vera://app` protocol, with the same restrictive
 CSP in both the HTML meta and response headers. Development uses `http://127.0.0.1:5173` and permits
 the hashed React refresh preamble, injected development CSS and the exact HMR websocket. Production

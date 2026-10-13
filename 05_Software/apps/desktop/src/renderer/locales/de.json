@@ -301,5 +301,22 @@
     },
     "line": "Zeile",
     "lineCount": "Zeilen {{start}}–{{end}} von {{count}}"
+  },
+  "skills": {
+    "settings": "Skills-Einstellungen",
+    "enabled": "Aktiviert",
+    "open": "Öffnen / bearbeiten",
+    "name": "Skill-Name (Kleinbuchstaben, Ziffern, Bindestriche)",
+    "source": "Speicherort",
+    "workbench": "Workbench",
+    "user": "Benutzer",
+    "create": "Vorlage erstellen",
+    "content": "SKILL.md-Inhalt",
+    "errors": {
+      "name": "Der Name muss dem Ordner entsprechen und Kleinbuchstaben, Ziffern und Bindestriche verwenden (1–64 Zeichen).",
+      "description": "Die Beschreibung muss 1–1024 Zeichen enthalten.",
+      "frontmatter": "Ungültiger YAML-Kopf.",
+      "unavailable": "Skill kann nicht sicher gelesen werden; Pfad, Format und Größe prüfen."
+    }
   }
 }

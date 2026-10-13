@@ -10,6 +10,10 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 ## Public interface
 
+- Registry includes read-class load_skill {name,file?} through a separately
+  authorized optional SkillCatalog context; [Skills](skills.md) owns validation,
+  root selection and bounded body/extra loading. Existing result limits apply.
+
 - Registry includes read-class search_docs/read_doc, bound through a workbench DocumentKnowledge context. [Document search](document-search.md) owns validated schemas, guarded full extraction and bounded precise refs.
 
 - ToolContext carries absolute root, optional WorkerPool, per-session lastReads Map and optional ChangeHost (SQLite, shared queue, session/turn/call identity, ownership check and transactional recorded-event callback). Product ToolDefinition execute(ctx,args,signal) returns JSON; ToolRegistry.bind supplies established runtime ToolDef execute(args,signal), propagating error outcomes through runtime's error-result handling.

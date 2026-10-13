@@ -1,11 +1,16 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
-import { lstat, mkdir, open, readdir, realpath, unlink } from "node:fs/promises";
-import { isAbsolute, join } from "node:path";
+import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
+import { dirname, isAbsolute, join } from "node:path";
 import {
   configWarnings,
   mergeWorkbench,
   parseRef,
   type RecentWorkbenchState,
+  SKILL_BYTES,
+  type SkillSource,
+  skillNameSchema,
+  skillTemplate,
   veraError,
   type WorkbenchConfig,
   type WorkbenchEvent,
@@ -23,6 +28,7 @@ import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import type { WorkbenchHost } from "../ports.js";
+import { SkillCatalog } from "../skills/catalog.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
@@ -124,6 +130,138 @@ export class WorkbenchService {
   getWriteQueue(): WriteQueue {
     this.current();
     return this.writes;
+  }
+  skillCatalog(id: string): SkillCatalog {
+    const state = this.current();
+    const token = this.owned?.token,
+      database = this.database;
+    if (id !== state.config.id) throw veraError("CONFLICT");
+    return new SkillCatalog({
+      root: state.folder,
+      ...(this.host.userData ? { userData: this.host.userData } : {}),
+      disabled: () => this.current().config.skills.disabled,
+      refresh: async () => {
+        const config = await this.config(state.folder);
+        if (
+          config.id !== id ||
+          this.current().folder !== state.folder ||
+          this.owned?.token !== token ||
+          this.database !== database
+        )
+          throw veraError("CONFLICT");
+        this.state = { ...this.current(), config };
+      },
+      assertCurrent: () => {
+        if (
+          this.current().config.id !== id ||
+          this.current().folder !== state.folder ||
+          this.owned?.token !== token ||
+          this.database !== database
+        )
+          throw veraError("CONFLICT");
+        if (!state.readOnly) this.assertSessionWritable();
+      },
+    });
+  }
+  listSkills(id: string) {
+    return this.run(() => this.skillCatalog(id).list());
+  }
+  private async warnings(config: WorkbenchConfig, root: string) {
+    const skills = await new SkillCatalog({
+      root,
+      ...(this.host.userData ? { userData: this.host.userData } : {}),
+      disabled: () => config.skills.disabled,
+    }).names();
+    return configWarnings(config, {
+      skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
+      tools: this.host.catalogs?.tools ?? [],
+    });
+  }
+  toggleSkill(id: string, name: string, enabled: boolean) {
+    return this.run(() =>
+      this.writes.run(async () => {
+        const state = await this.writable();
+        if (state.config.id !== id) throw veraError("CONFLICT");
+        const current = await this.config(state.folder);
+        if (current.id !== id) throw veraError("CONFLICT");
+        const disabled = current.skills.disabled.filter((item) => item !== name);
+        if (!enabled) disabled.push(name);
+        const config = mergeWorkbench(current, { skills: { disabled } });
+        this.assertSessionWritable();
+        await this.host.files.writeAtomic(join(state.folder, "workbench.yaml"), stringify(config));
+        this.assertSessionWritable();
+        const warnings = await this.warnings(config, state.folder);
+        this.state = { ...state, config, warnings };
+        this.emit(id, { type: "config.changed", config, warnings });
+        return {};
+      }),
+    );
+  }
+  openSkill(id: string, source: SkillSource, name: string) {
+    return this.run(() => this.skillCatalog(id).read(source, name));
+  }
+  saveSkill(id: string, source: SkillSource, name: string, content?: string, sha256?: string) {
+    return this.run(() =>
+      this.writes.run(async () => {
+        const catalog = this.skillCatalog(id);
+        const state = await this.writable();
+        catalog.check();
+        if (state.config.id !== id) throw veraError("CONFLICT");
+        const creating = content === undefined;
+        if (creating) skillNameSchema.parse(name);
+        const text = content ?? skillTemplate(name);
+        if (Buffer.byteLength(text, "utf8") > SKILL_BYTES) throw veraError("INVALID");
+        let target = await catalog.path(source, name);
+        if (creating) {
+          await mkdir(dirname(target), { recursive: true });
+          catalog.check();
+          target = await catalog.path(source, name);
+          catalog.check();
+        } else {
+          const current = await catalog.read(source, name);
+          if (current.sha256 !== sha256) throw veraError("CONFLICT");
+          catalog.check();
+          target = await catalog.path(source, name);
+          catalog.check();
+        }
+        // Prepare bytes first, then repeat ownership/path/hash admission at publication.
+        const temporaryName = `.skill-${randomUUID()}.tmp`;
+        const temporary = await catalog.path(source, name, temporaryName);
+        let prepared = false;
+        try {
+          const handle = await open(temporary, "wx", 0o600);
+          prepared = true;
+          try {
+            await handle.writeFile(text, "utf8");
+            if (!creating) await handle.chmod((await lstat(target)).mode & 0o777);
+            await handle.sync();
+          } finally {
+            await handle.close();
+          }
+          catalog.check();
+          target = await catalog.path(source, name);
+          if (!creating && (await catalog.read(source, name)).sha256 !== sha256) throw veraError("CONFLICT");
+          if ((await catalog.path(source, name, temporaryName)) !== temporary) throw veraError("DENIED");
+          catalog.check();
+          if (creating) {
+            try {
+              await link(temporary, target);
+            } catch (error) {
+              if (code(error) === "EEXIST") throw veraError("CONFLICT");
+              throw error;
+            }
+          } else await rename(temporary, target);
+        } finally {
+          if (prepared) {
+            await unlink(temporary).catch((error) =>
+              code(error) === "ENOENT" ? undefined : Promise.reject(error),
+            );
+          }
+        }
+        catalog.check();
+        return catalog.read(source, name);
+      }),
+    );
   }
   constructor(
     private readonly host: WorkbenchHost,
@@ -277,7 +415,7 @@ export class WorkbenchService {
     await this.writes.drain();
     const config = await this.config(folder);
     await this.layout(folder);
-    const warnings: WorkbenchWarning[] = configWarnings(config, this.host.catalogs);
+    const warnings: WorkbenchWarning[] = await this.warnings(config, folder);
     if (isNetworkShare(input)) warnings.push({ code: "NETWORK_SHARE_UNSUPPORTED" });
     const same = this.state?.folder === folder;
     const databasePath = join(folder, ".vera/vera.db");
@@ -397,7 +535,8 @@ export class WorkbenchService {
       const state = this.current();
       const config = await this.config(state.folder);
       if (config.id !== state.config.id) throw veraError("CONFLICT");
-      return { config, warnings: configWarnings(config, this.host.catalogs) };
+      this.state = { ...state, config };
+      return { config, warnings: await this.warnings(config, state.folder) };
     });
   }
   updateConfig(patch: WorkbenchPatch): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
@@ -409,7 +548,7 @@ export class WorkbenchService {
         const current = await this.config(state.folder);
         if (current.id !== state.config.id) throw veraError("CONFLICT");
         const config = mergeWorkbench(current, parsed.data);
-        const warnings = configWarnings(config, this.host.catalogs);
+        const warnings = await this.warnings(config, state.folder);
         if (JSON.stringify(config) !== JSON.stringify(current)) {
           await this.host.files.writeAtomic(join(state.folder, "workbench.yaml"), stringify(config));
           this.state = { ...state, config, warnings };

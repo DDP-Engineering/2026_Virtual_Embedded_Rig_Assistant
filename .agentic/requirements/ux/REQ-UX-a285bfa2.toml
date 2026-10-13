@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-a285bfa2"
+title = "Manage workbench and user skills"
+status = "active"
+requirement = """While a workbench is open, VERA shall offer localized keyboard-accessible skill listing, diagnostics, enable-disable, open, template creation and editing with current ownership admission, exclusive creation and stale-edit protection."""
+verification = "Native UI creates and edits template, toggles visibility for next turn; unit rejects stale/read-only ownership; browser language/theme/size matrix and focus."
+affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/renderer/components/session/context-tab.tsx", "05_Software/apps/desktop/src/renderer/components/skills.tsx", "05_Software/apps/desktop/src/renderer/components/workbench.tsx", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/styles.css", "05_Software/e2e/skills.spec.ts", "05_Software/packages/core/src/workbench/service.test.ts", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/packages/shared/src/skills-ipc.test.ts", "05_Software/packages/shared/src/skills.ts"]
+linked_tests = ["05_Software/packages/core/src/workbench/service.test.ts", "05_Software/packages/shared/src/skills-ipc.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/e2e/skills.spec.ts"]
+spec = "specs/REQ-FUNC-e728c8bf.md"
+created = 2026-10-13
+updated = 2026-10-13

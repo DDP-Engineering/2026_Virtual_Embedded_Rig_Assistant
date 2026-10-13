@@ -17,6 +17,7 @@ import {
   type Request,
   type Response,
   settingsPatchSchema,
+  skillTemplate,
   veraError,
   type WorkbenchSnapshot,
   workbenchSchema,
@@ -51,6 +52,16 @@ export function createMockApi(
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
+  const skillFiles = new Map<string, string>();
+  async function skillHash(content: string) {
+    return Array.from(
+      new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(content))),
+      (b) => b.toString(16).padStart(2, "0"),
+    ).join("");
+  }
+  function skillKey(source: string, name: string) {
+    return `${source === "user" ? "user" : current().snapshot.config.id}:${name}`;
+  }
   let sequence = 0;
   // Browser fixtures keep metadata only; production secrets are handled by desktop main.
   const providerHints = new Map<string, string | null>();
@@ -130,6 +141,82 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "skills.list": {
+        const { workbenchId } = channels["skills.list"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (workbenchId !== wb.config.id) throw veraError("CONFLICT");
+        const names = new Map<string, { content: string; source: "user" | "workbench" }>();
+        for (const prefix of ["user", wb.config.id])
+          for (const [key, content] of skillFiles)
+            if (key.startsWith(`${prefix}:`))
+              names.set(key.slice(prefix.length + 1), {
+                content,
+                source: prefix === "user" ? "user" : "workbench",
+              });
+        value = [...names]
+          .map(([name, { content, source }]) => {
+            const match = /^---\nname: ([^\n]+)\ndescription: ([^\n]+)\n---/.exec(content);
+            const error = !match
+              ? "frontmatter"
+              : match[1] !== name || !/^[a-z0-9-]{1,64}$/.test(name)
+                ? "name"
+                : !match[2]?.trim() || match[2].length > 1024
+                  ? "description"
+                  : undefined;
+            return {
+              name,
+              source,
+              description: error ? "" : (match?.[2] ?? ""),
+              enabled: !wb.config.skills.disabled.includes(name),
+              ...(error ? { error } : {}),
+            };
+          })
+          .sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      }
+      case "skills.open":
+      case "skills.create":
+      case "skills.save": {
+        const request = channels["skills.open"].request.parse({
+          workbenchId: (input.data as Request<"skills.open">).workbenchId,
+          name: (input.data as Request<"skills.open">).name,
+          source: (input.data as Request<"skills.open">).source,
+        });
+        if (request.workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if (channel !== "skills.open" && current().snapshot.readOnly) throw veraError("DENIED");
+        const key = skillKey(request.source, request.name);
+        let content = skillFiles.get(key);
+        if (channel === "skills.create") {
+          if (content !== undefined) throw veraError("CONFLICT");
+          content = skillTemplate(request.name);
+          skillFiles.set(key, content);
+        }
+        if (content === undefined) throw veraError("NOT_FOUND");
+        if (channel === "skills.save") {
+          const edit = channels["skills.save"].request.parse(input.data);
+          if (edit.sha256 !== (await skillHash(content))) throw veraError("CONFLICT");
+          content = edit.content;
+          skillFiles.set(key, content);
+        }
+        value = { content, sha256: await skillHash(content) };
+        break;
+      }
+      case "skills.toggle": {
+        const request = channels["skills.toggle"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id) throw veraError("CONFLICT");
+        if (wb.readOnly) throw veraError("DENIED");
+        const disabled = wb.config.skills.disabled.filter((name) => name !== request.name);
+        if (!request.enabled) disabled.push(request.name);
+        wb.config = mergeWorkbench(wb.config, { skills: { disabled } });
+        emit({
+          topic: "workbench",
+          id: wb.config.id,
+          event: { type: "config.changed", config: wb.config, warnings: wb.warnings },
+        });
+        value = {};
+        break;
+      }
       case "docs.reindex": {
         if (current().snapshot.readOnly) throw veraError("DENIED");
         const { workbenchId } = channels["docs.reindex"].request.parse(input.data);

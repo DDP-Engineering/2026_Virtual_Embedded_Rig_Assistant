@@ -28,6 +28,7 @@ import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { Clock, WorkerPool } from "../ports.js";
+import type { SkillCatalog } from "../skills/catalog.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
 import { TodosRepository } from "../storage/repos/todos.js";
@@ -51,6 +52,7 @@ export interface SessionHost {
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
   embeddings?: EmbeddingPort;
+  skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
@@ -436,6 +438,8 @@ export class SessionService {
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
     ctx.knowledge = this.knowledge;
+    if (this.host.skills) ctx.skills = this.host.skills;
+    else delete ctx.skills;
     ctx.todos = {
       db: this.host.db,
       repository: new TodosRepository(this.host.db),

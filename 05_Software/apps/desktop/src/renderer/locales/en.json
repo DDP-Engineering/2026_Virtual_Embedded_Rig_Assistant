@@ -301,5 +301,22 @@
     },
     "line": "Line",
     "lineCount": "Lines {{start}}–{{end}} of {{count}}"
+  },
+  "skills": {
+    "settings": "Skills settings",
+    "enabled": "Enabled",
+    "open": "Open / edit",
+    "name": "Skill name (lowercase letters, digits, hyphens)",
+    "source": "Location",
+    "workbench": "Workbench",
+    "user": "User",
+    "create": "Create template",
+    "content": "SKILL.md content",
+    "errors": {
+      "name": "Name must match its folder and use lowercase letters, digits and hyphens (1–64 characters).",
+      "description": "Description must contain 1–1024 characters.",
+      "frontmatter": "Invalid YAML frontmatter.",
+      "unavailable": "Skill cannot be read safely; check its path, format and size."
+    }
   }
 }

@@ -18,6 +18,10 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 
 ## Public interface
 
+- skills.list/open/create/save/toggle use strict workbenchId/source/name contracts;
+  save requires original content SHA256. Main authorizes the existing exact frame
+  before WorkbenchService lifecycle/ownership checks. [Skills](skills.md) owns content.
+
 - docs.reindex accepts an optional workbenchId and an empty response with workbench ownership checks. docs.list/search/open require exact workbenchId and return scoped typed records/results/content. Open accepts an indexed path, document ref, or session/message citation; host provenance and current guarded source checks precede disclosure. [Document viewer](document-viewer.md) owns these reads.
   Workbench index.progress/index.document transport batch counters and typed
   records/removals; main redacts paths while retaining enums/hashes/counts.

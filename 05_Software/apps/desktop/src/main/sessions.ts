@@ -5,6 +5,7 @@ import {
   type PermissionEngine,
   SessionService,
   type SettingsService,
+  type SkillCatalog,
   type WorkbenchService,
   type WorkerPool,
 } from "@vera/core";
@@ -26,6 +27,8 @@ export class SessionsHost {
   private db: ReturnType<WorkbenchService["getDatabase"]> | undefined;
   private config: WorkbenchConfig | undefined;
   private pinned = "";
+  private skills: SkillCatalog | undefined;
+  private skillMetadata: { name: string; description: string }[] = [];
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
   constructor(
@@ -57,6 +60,8 @@ export class SessionsHost {
       const db = this.options.workbench.getDatabase();
       this.config = (await this.options.workbench.getConfig()).config;
       this.pinned = (await this.options.workbench.getPinned()).content;
+      this.skills = this.options.workbench.skillCatalog(snapshot.config.id);
+      this.skillMetadata = await this.skills.metadata();
       if (this.db !== db) {
         await this.drain();
         const options = this.options;
@@ -71,6 +76,9 @@ export class SessionsHost {
           gateway: options.gateway().api,
           clock: options.clock,
           workers: options.workers,
+          get skills() {
+            return self.skills;
+          },
           ...(options.embeddings ? { embeddings: options.embeddings } : {}),
           writeQueue: options.workbench.getWriteQueue(),
           ...(options.permissions ? { permissions: options.permissions } : {}),
@@ -85,7 +93,7 @@ export class SessionsHost {
             buildSystemPrompt({
               workbench: this.config ?? snapshot.config,
               pinned: this.pinned,
-              skills: [],
+              skills: this.skillMetadata,
               env: {
                 clock: options.clock,
                 osFamily: process.platform === "win32" ? "windows" : "linux",

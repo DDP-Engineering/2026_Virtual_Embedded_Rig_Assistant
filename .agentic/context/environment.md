@@ -24,6 +24,11 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Skills acceptance uses catalog/schema/workbench/registry/session replay and immediate
+host/IPC/mock/boundary consumers. e2e/skills.spec.ts observes a UI-created skill in the
+next turn's actual loopback provider system request, then disabled/edited metadata;
+the browser checks en/ro/de, both themes, five text scales and modal keyboard focus.
+
 Citation acceptance uses shared refs.test.ts, core agent/citations.test.ts and
 knowledge/search.test.ts, renderer session/markdown.test.ts and immediate
 session/artifact/registry/state/workspace/import-boundary consumers. Focused native

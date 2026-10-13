@@ -301,5 +301,22 @@
     },
     "line": "Linie",
     "lineCount": "Linii {{start}}–{{end}} din {{count}}"
+  },
+  "skills": {
+    "settings": "Setări Skills",
+    "enabled": "Activ",
+    "open": "Deschide / editează",
+    "name": "Nume skill (litere mici, cifre, cratime)",
+    "source": "Locație",
+    "workbench": "Workbench",
+    "user": "Utilizator",
+    "create": "Creează șablon",
+    "content": "Conținut SKILL.md",
+    "errors": {
+      "name": "Numele trebuie să coincidă cu folderul și să folosească litere mici, cifre și cratime (1–64 caractere).",
+      "description": "Descrierea trebuie să conțină 1–1024 caractere.",
+      "frontmatter": "Antet YAML invalid.",
+      "unavailable": "Skill-ul nu poate fi citit în siguranță; verifică locația, formatul și dimensiunea."
+    }
   }
 }

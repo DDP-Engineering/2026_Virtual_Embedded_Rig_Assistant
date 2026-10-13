@@ -21,6 +21,11 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
+- skillCatalog/listSkills/openSkill/saveSkill/toggleSkill admit [skills](skills.md)
+  operations against current workbench ID, folder, database lifetime and token. Source
+  selects the workbench or host userData root. Reads serialize with lifecycle; writes
+  use shared admission, exclusive creation and original SHA256 before publication.
+
 - WorkbenchService owns one writable background Ingester and reindexDocuments;
   close/replacement stops and drains ingest before lock/storage release. Read-only
   snapshots run no ingest. [Knowledge ingest](knowledge-ingest.md) owns selection,

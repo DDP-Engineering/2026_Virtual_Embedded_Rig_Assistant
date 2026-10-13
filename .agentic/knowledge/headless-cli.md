@@ -10,6 +10,10 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 
 ## Public interface
 
+- run composes [skills](skills.md) from the selected workbench and authorized CLI
+  userData (`--data` or its owned temporary data root), includes fresh enabled
+  metadata in the prompt and binds load_skill through the production registry.
+
 - `vera index --workbench <dir>` rebuilds documents through owned local extraction/embedding and reports statuses; `vera search --workbench <dir> --query <text>` supplies hybrid/k8 with mode/k/path-glob options. Search uses the current protected snapshot; index requires writable ownership. Both close all owned resources on exits. [Document search](document-search.md) owns retrieval/read contracts and the eval gate.
 
 - `npm run vera -- run --workbench <dir> --prompt <text>` with explicit provider options. OpenAI(default) requires model; custom requires base-url/model; replay requires script. Optional --approve all|none supplies explicit user decisions for ask/protected requests. Without it, stdin+stderr TTY opens an abortable A/D prompt on stderr; non-TTY denies safely. Ordinary auto-edit uses mode decisions. Optional session/data/key-file/format follow the [CLI spec](../specs/REQ-FUNC-1ed659ec.md). Unknown/duplicate/missing/incompatible flags return usage and2.

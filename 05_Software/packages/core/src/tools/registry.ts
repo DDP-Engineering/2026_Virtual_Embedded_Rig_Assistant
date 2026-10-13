@@ -7,6 +7,7 @@ import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
 import { grepTool } from "./grep.js";
 import { listTool } from "./list.js";
+import { loadSkillTool } from "./load-skill.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
 import { writeTool } from "./write.js";
@@ -77,6 +78,7 @@ export class ToolRegistry {
       todoTool,
       searchDocsTool,
       readDocTool,
+      loadSkillTool,
     ],
   ) {
     const names = definitions.map((tool) => tool.name);

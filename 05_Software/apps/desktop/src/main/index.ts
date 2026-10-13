@@ -79,6 +79,7 @@ const settings = new SettingsService({
 });
 const workbench = new WorkbenchService(
   {
+    userData: dataLocations.paths.userData,
     files: createFileAccess(systemClock),
     settings,
     pid: process.pid,
@@ -134,6 +135,12 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "skills.list": ({ workbenchId }) => workbench.listSkills(workbenchId),
+      "skills.open": ({ workbenchId, source, name }) => workbench.openSkill(workbenchId, source, name),
+      "skills.create": ({ workbenchId, source, name }) => workbench.saveSkill(workbenchId, source, name),
+      "skills.save": ({ workbenchId, source, name, content, sha256 }) =>
+        workbench.saveSkill(workbenchId, source, name, content, sha256),
+      "skills.toggle": ({ workbenchId, name, enabled }) => workbench.toggleSkill(workbenchId, name, enabled),
       "docs.list": async ({ workbenchId }) => ({
         workbenchId,
         documents: (await workbench.listDocuments(workbenchId))
