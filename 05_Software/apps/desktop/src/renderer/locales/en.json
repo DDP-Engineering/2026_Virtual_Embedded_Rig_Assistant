@@ -26,7 +26,7 @@
     "CONTEXT_LIMIT": "The context limit was reached.",
     "PROVIDER": "The provider could not complete the request.",
     "OFFLINE": "Cannot reach {{endpoint}}. Retry.",
-    "INTERNAL": "Application information could not be loaded.",
+    "INTERNAL": "An internal application error occurred. Retry.",
     "WORKBENCH_TOO_NEW": "This workbench was created by a newer VERA version.",
     "YAML_INVALID": "Invalid YAML at line {{line}}, column {{column}}.",
     "CONFIG_INVALID": "Invalid workbench configuration at {{path}}, line {{line}}."
@@ -34,7 +34,8 @@
   "nav": {
     "settings": "Settings",
     "welcome": "Welcome",
-    "main": "Main navigation"
+    "main": "Main navigation",
+    "skipToContent": "Skip to main content"
   },
   "welcome": {
     "title": "Open a workbench",
@@ -114,7 +115,8 @@
     "unknownKey": "Unknown configuration key preserved:",
     "unknownName": "Unresolved disabled name:",
     "networkShare": "Network share unsupported. Use a local disk workbench.",
-    "lockGuard": "Lock coordination is busy. This workbench is read-only."
+    "lockGuard": "Lock coordination is busy. This workbench is read-only.",
+    "openNamed": "Open {{name}}"
   },
   "providers": {
     "description": "Configure the OpenAI API and OpenAI-compatible endpoints. Keys stay in the desktop credential store.",
@@ -157,7 +159,10 @@
       "pass": "Pass",
       "fail": "Fail",
       "skipped": "Skipped"
-    }
+    },
+    "editNamed": "Edit {{name}}",
+    "removeNamed": "Remove {{name}}",
+    "testNamed": "Test {{name}}"
   },
   "provider": {
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
@@ -227,7 +232,10 @@
     "exportMarkdown": "Export Markdown",
     "exportJson": "Export JSON",
     "exported": "Session exported.",
-    "exportCanceled": "Export canceled."
+    "exportCanceled": "Export canceled.",
+    "searchMatches": "Matching messages: {{count}}",
+    "searchHint": "Enter text to find matching messages.",
+    "searchMatch": "Search match"
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."
@@ -321,7 +329,11 @@
       "NEEDS_OCR": "No searchable text; OCR required"
     },
     "line": "Line",
-    "lineCount": "Lines {{start}}–{{end}} of {{count}}"
+    "lineCount": "Lines {{start}}–{{end}} of {{count}}",
+    "openNamed": "Open {{path}}",
+    "previousLines": "Previous lines",
+    "nextLines": "Next lines",
+    "pageText": "Text of page {{page}}"
   },
   "skills": {
     "settings": "Skills settings",
@@ -338,7 +350,9 @@
       "description": "Description must contain 1–1024 characters.",
       "frontmatter": "Invalid YAML frontmatter.",
       "unavailable": "Skill cannot be read safely; check its path, format and size."
-    }
+    },
+    "enabledNamed": "Enabled: {{name}}",
+    "openNamed": "Open / edit {{name}}"
   },
   "updates": {
     "mode": "Update mode",

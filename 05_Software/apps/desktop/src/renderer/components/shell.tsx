@@ -116,6 +116,13 @@ export function Shell({
   } as CSSProperties;
   return (
     <div className="app-shell" style={style}>
+      <button
+        type="button"
+        className="skip-content"
+        onClick={() => document.getElementById("main-content")?.focus()}
+      >
+        {t("nav.skipToContent")}
+      </button>
       <header className="topbar">
         <Activity aria-hidden="true" />
         <h1 data-i18n="home.title">{t("home.title")}</h1>
@@ -167,7 +174,9 @@ export function Shell({
             {separator("sidebar")}
           </aside>
         )}
-        <main>{children}</main>
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
         {!layout.rightCollapsed && (
           <aside id="right-panel" data-panel="right" className="right-panel">
             {separator("right")}
@@ -191,28 +200,57 @@ export function Shell({
                   id={`tab-${id}`}
                   aria-controls={`panel-${id}`}
                   aria-selected={tab === id}
+                  tabIndex={tab === id ? 0 : -1}
                   key={id}
                   onClick={() => setTab(id)}
+                  onKeyDown={(event) => {
+                    if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing)
+                      return;
+                    const index = tabs.findIndex((entry) => entry.id === id);
+                    const next =
+                      event.key === "Home"
+                        ? 0
+                        : event.key === "End"
+                          ? tabs.length - 1
+                          : event.key === "ArrowRight"
+                            ? (index + 1) % tabs.length
+                            : event.key === "ArrowLeft"
+                              ? (index + tabs.length - 1) % tabs.length
+                              : undefined;
+                    const target = next === undefined ? undefined : tabs[next];
+                    if (target) {
+                      event.preventDefault();
+                      setTab(target.id);
+                      document.getElementById(`tab-${target.id}`)?.focus();
+                    }
+                  }}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-              {tab === "context" && context ? (
-                context
-              ) : tab === "docs" && docs ? (
-                docs
-              ) : tab === "changes" && changes ? (
-                changes
-              ) : tab === "artifacts" && artifacts ? (
-                artifacts
-              ) : tab === "plan" && plan ? (
-                plan
-              ) : (
-                <p className="muted">{t("panel.placeholder")}</p>
-              )}
-            </div>
+            {tabs.map(({ id }) => (
+              <div
+                key={id}
+                role="tabpanel"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: Panel focus makes static tab content reachable.
+                tabIndex={0}
+                hidden={tab !== id}
+                id={`panel-${id}`}
+                aria-labelledby={`tab-${id}`}
+              >
+                {tab === id &&
+                  ((id === "context"
+                    ? context
+                    : id === "docs"
+                      ? docs
+                      : id === "changes"
+                        ? changes
+                        : id === "artifacts"
+                          ? artifacts
+                          : plan) ?? <p className="muted">{t("panel.placeholder")}</p>)}
+              </div>
+            ))}
           </aside>
         )}
       </div>

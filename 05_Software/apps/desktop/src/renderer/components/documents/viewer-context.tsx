@@ -141,7 +141,8 @@ export function DocumentViewerProvider({
 }
 
 export function DocumentBody({ content }: { content: ViewerContent }) {
-  const node = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+  const node = useRef<HTMLElement>(null);
   useEffect(() => {
     if (content.kind === "text")
       node.current?.querySelector(`[data-line="${content.start}"]`)?.scrollIntoView?.({ block: "center" });
@@ -156,7 +157,8 @@ export function DocumentBody({ content }: { content: ViewerContent }) {
   if (content.kind === "pdf") return <PdfViewer content={content} />;
   if (content.kind === "text") return <TextViewer content={content} />;
   return (
-    <div ref={node} className="document-body">
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: Named document region supports keyboard scrolling.
+    <section ref={node} className="document-body" aria-label={t("documents.viewer")} tabIndex={0}>
       {content.kind === "artifact" ? (
         <ArtifactBody content={content.content} mime={content.mime} />
       ) : (
@@ -172,13 +174,13 @@ export function DocumentBody({ content }: { content: ViewerContent }) {
           </section>
         ))
       )}
-    </div>
+    </section>
   );
 }
 function TextViewer({ content }: { content: Extract<ViewerContent, { kind: "text" }> }) {
   const { t } = useTranslation();
   const [offset, setOffset] = useState(Math.max(1, content.start - 20));
-  const node = useRef<HTMLDivElement>(null);
+  const node = useRef<HTMLElement>(null);
   const visible = content.lines
     .slice(offset - 1, offset + 249)
     .map((text, i) => ({ text, line: offset + i }));
@@ -193,7 +195,7 @@ function TextViewer({ content }: { content: Extract<ViewerContent, { kind: "text
     <div className="text-viewer">
       <div className="document-toolbar">
         <button type="button" disabled={offset === 1} onClick={() => setOffset(Math.max(1, offset - 250))}>
-          {t("documents.previous")}
+          {t("documents.previousLines")}
         </button>
         <label>
           {t("documents.line")}
@@ -221,10 +223,11 @@ function TextViewer({ content }: { content: Extract<ViewerContent, { kind: "text
           disabled={offset + 249 >= content.lines.length}
           onClick={() => setOffset(offset + 250)}
         >
-          {t("documents.next")}
+          {t("documents.nextLines")}
         </button>
       </div>
-      <div ref={node} className="document-body">
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Named text region supports keyboard scrolling. */}
+      <section ref={node} className="document-body" aria-label={t("documents.viewer")} tabIndex={0}>
         <div className="document-lines">
           {visible.map(({ text, line }) => (
             <div
@@ -237,7 +240,7 @@ function TextViewer({ content }: { content: Extract<ViewerContent, { kind: "text
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

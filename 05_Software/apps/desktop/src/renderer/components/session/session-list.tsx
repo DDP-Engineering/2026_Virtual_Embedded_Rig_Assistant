@@ -35,6 +35,13 @@ export function SessionList({
   const [deleting, setDeleting] = useState<SessionSummary>();
   const dialog = useRef<HTMLDialogElement>(null);
   const origin = useRef<HTMLElement | null>(null);
+  const editOrigin = useRef<HTMLButtonElement | null>(null);
+  const newButton = useRef<HTMLButtonElement>(null);
+  function finishEdit() {
+    setEditing(undefined);
+    if (editOrigin.current?.isConnected) editOrigin.current.focus();
+    else newButton.current?.focus();
+  }
   const editInput = useRef<HTMLInputElement>(null);
   const status = {
     idle: t("chat.idle"),
@@ -52,12 +59,14 @@ export function SessionList({
     if (editing) editInput.current?.focus();
   }, [editing]);
   function cancel() {
+    dialog.current?.close();
     setDeleting(undefined);
-    origin.current?.focus();
+    if (origin.current?.isConnected) origin.current.focus();
+    else newButton.current?.focus();
   }
   return (
     <section className="session-list" aria-label={t("chat.sessions")}>
-      <button type="button" data-action="new-session" disabled={disabled} onClick={create}>
+      <button ref={newButton} type="button" data-action="new-session" disabled={disabled} onClick={create}>
         {t("chat.new")}
       </button>
       {searchChanged && (
@@ -92,7 +101,8 @@ export function SessionList({
               type="button"
               aria-label={t("chat.renameNamed", { title: s.title || t("chat.untitled") })}
               disabled={disabled || s.status === "running" || s.status === "awaiting_approval"}
-              onClick={() => {
+              onClick={(event) => {
+                editOrigin.current = event.currentTarget;
                 setEditing(s);
                 setTitle(s.title);
               }}
@@ -116,7 +126,7 @@ export function SessionList({
               onSubmit={(e) => {
                 e.preventDefault();
                 void rename(s.id, title).then((ok) => {
-                  if (ok) setEditing(undefined);
+                  if (ok) finishEdit();
                 });
               }}
             >
@@ -133,7 +143,7 @@ export function SessionList({
               <button type="submit" disabled={disabled || !title.trim()}>
                 {t("workbench.save")}
               </button>
-              <button type="button" onClick={() => setEditing(undefined)}>
+              <button type="button" onClick={finishEdit}>
                 {t("workbench.cancel")}
               </button>
             </form>

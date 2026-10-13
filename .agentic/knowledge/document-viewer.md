@@ -32,7 +32,8 @@ The sandboxed renderer renders typed data through authorized IPC.
 - DocumentViewerProvider opens an isolated modal from Transcript or DocsTab,
   restores opener focus, handles load/error/retry and intercepts PDF Ctrl+F/Escape.
 - PDF renders one page via the pinned bundled module worker, supports page/range,
-  zoom50..200%, all-page extracted-text find and cross-run snippet/search marks.
+  zoom50..200%, all-page extracted-text find and cross-run snippet/search marks. A native disclosure presents the host-scrubbed text of the selected page for reading alongside the canvas.
+- Named document/text and PDF regions support keyboard scrolling; text windows use labelled previous/next-lines actions. Docs Open actions include path/ref identity in accessible names.
 - Docs subscribes to index events, displays status/reasons/progress, searches,
   opens sources/results and disables Reindex on read-only snapshots.
 

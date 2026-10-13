@@ -26,19 +26,20 @@
     "CONTEXT_LIMIT": "Das Kontextlimit wurde erreicht.",
     "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
     "OFFLINE": "{{endpoint}} ist nicht erreichbar. Erneut versuchen.",
-    "INTERNAL": "Anwendungsinformationen konnten nicht geladen werden.",
-    "WORKBENCH_TOO_NEW": "Diese Workbench wurde mit einer neueren VERA-Version erstellt.",
+    "INTERNAL": "Ein interner Anwendungsfehler ist aufgetreten. Erneut versuchen.",
+    "WORKBENCH_TOO_NEW": "Dieser Arbeitsbereich wurde mit einer neueren VERA-Version erstellt.",
     "YAML_INVALID": "Ungültiges YAML in Zeile {{line}}, Spalte {{column}}.",
-    "CONFIG_INVALID": "Ungültige Workbench-Konfiguration bei {{path}}, Zeile {{line}}."
+    "CONFIG_INVALID": "Ungültige Arbeitsbereichskonfiguration bei {{path}}, Zeile {{line}}."
   },
   "nav": {
     "settings": "Einstellungen",
     "welcome": "Willkommen",
-    "main": "Hauptnavigation"
+    "main": "Hauptnavigation",
+    "skipToContent": "Zum Hauptinhalt springen"
   },
   "welcome": {
     "title": "Arbeitsbereich öffnen",
-    "description": "Ein Arbeitsbereich enthält Dokumente, Notizen und Fähigkeiten deiner Platine. Deine Arbeit beginnt hier.",
+    "description": "Ein Arbeitsbereich enthält Dokumente, Notizen und Skills deiner Platine. Deine Arbeit beginnt hier.",
     "workbenches": "Arbeitsbereiche",
     "sidebarPlaceholder": "Deine Arbeitsbereiche und Sitzungen erscheinen hier.",
     "create": "Arbeitsbereich erstellen",
@@ -94,27 +95,28 @@
     "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein."
   },
   "workbench": {
-    "name": "Workbench-Name",
+    "name": "Name des Arbeitsbereichs",
     "chooseFolder": "Ordner auswählen",
     "openFolder": "Ordner öffnen",
     "openDescription": "Wähle einen Ordner mit workbench.yaml.",
-    "noRecent": "Noch keine zuletzt verwendeten Workbenches.",
+    "noRecent": "Noch keine zuletzt verwendeten Arbeitsbereiche.",
     "missing": "Ordner fehlt",
     "openRecent": "Öffnen",
     "remove": "Aus Verlauf entfernen",
     "removeNamed": "{{name}} aus Verlauf entfernen",
-    "close": "Workbench schließen",
+    "close": "Arbeitsbereich schließen",
     "editPinned": "WORKBENCH.md bearbeiten",
     "pinnedTitle": "WORKBENCH.md-Kontext",
     "pinnedOversized": "Der Kontext überschreitet 16 KB. Der Agent verwendet die ersten 16 KB. Der vollständige Text wird gespeichert.",
-    "readOnly": "Diese Workbench ist schreibgeschützt, da ein anderer Prozess oder eine Sperre sie besitzt.",
+    "readOnly": "Dieser Arbeitsbereich ist schreibgeschützt, da ein anderer Prozess oder eine Sperre ihn besitzt.",
     "working": "Wird verarbeitet…",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "unknownKey": "Unbekannter Konfigurationsschlüssel erhalten:",
     "unknownName": "Unbekannter deaktivierter Name:",
-    "networkShare": "Netzwerkfreigaben werden nicht unterstützt. Verwende eine Workbench auf einem lokalen Datenträger.",
-    "lockGuard": "Die Sperrkoordination ist belegt. Diese Workbench ist schreibgeschützt."
+    "networkShare": "Netzwerkfreigaben werden nicht unterstützt. Verwende einen Arbeitsbereich auf einem lokalen Datenträger.",
+    "lockGuard": "Die Sperrkoordination ist belegt. Dieser Arbeitsbereich ist schreibgeschützt.",
+    "openNamed": "{{name}} öffnen"
   },
   "providers": {
     "description": "Konfiguriere die OpenAI-API und OpenAI-kompatible Endpunkte. Schlüssel bleiben im Zugangsdaten-Speicher der Desktop-App.",
@@ -157,7 +159,10 @@
       "pass": "Bestanden",
       "fail": "Fehlgeschlagen",
       "skipped": "Übersprungen"
-    }
+    },
+    "editNamed": "{{name}} bearbeiten",
+    "removeNamed": "{{name}} entfernen",
+    "testNamed": "{{name}} testen"
   },
   "provider": {
     "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
@@ -166,8 +171,8 @@
     "failure": "Anbieterfehler: {{message}}"
   },
   "chat": {
-    "workbench": "Workbench",
-    "chooseWorkbench": "Workbench auswählen",
+    "workbench": "Arbeitsbereich",
+    "chooseWorkbench": "Arbeitsbereich auswählen",
     "sessions": "Sitzungen",
     "new": "Neue Sitzung",
     "untitled": "Unbenannte Sitzung",
@@ -185,18 +190,18 @@
     "conversation": "Unterhaltung",
     "message": "Nachricht",
     "send": "Senden",
-    "invalidCitation": "Zitat konnte nicht überprüft werden",
+    "invalidCitation": "Quellenverweis konnte nicht überprüft werden",
     "transcript": "Transkript",
-    "empty": "Senden Sie eine Nachricht.",
+    "empty": "Sende zuerst eine Nachricht.",
     "reasoning": "Überlegungen",
     "pending": "Zustellung ausstehend",
-    "you": "Sie",
+    "you": "Du",
     "streaming": "Übertragung…",
     "toolOk": "Abgeschlossen",
     "arguments": "Argumente",
     "preview": "Vorschau",
     "noPreview": "Keine Vorschau verfügbar.",
-    "contextAdvice": "Eingabe kürzen oder das Kontextfenster des Modells in den Anbietereinstellungen anpassen. Das vollständige Transkript bleibt erhalten.",
+    "contextAdvice": "Eingabe kürzen oder das Kontextfenster des benutzerdefinierten Modells in den Anbietereinstellungen anpassen. Das vollständige Transkript bleibt erhalten.",
     "tokens": "Eingabe- / Ausgabetoken",
     "estimated": "Geschätzte Kontexttoken",
     "counted": "Gezählte Kontexttoken",
@@ -204,10 +209,10 @@
     "outputReserve": "Ausgabereserve",
     "window": "Kontextfenster",
     "margin": "Sicherheitsmarge",
-    "defaultModel": "Standardmodell von Workbench / App",
+    "defaultModel": "Standardmodell des Arbeitsbereichs / der App",
     "skills": "Verfügbare Skills",
     "noSkills": "Noch keine Skills verfügbar.",
-    "paths": "Workbench-Pfade",
+    "paths": "Pfade im Arbeitsbereich",
     "model": "Modell",
     "stop": "Stoppen",
     "working": "VERA arbeitet. Stoppen beendet den Durchlauf.",
@@ -227,15 +232,18 @@
     "exportMarkdown": "Markdown exportieren",
     "exportJson": "JSON exportieren",
     "exported": "Sitzung exportiert.",
-    "exportCanceled": "Export abgebrochen."
+    "exportCanceled": "Export abgebrochen.",
+    "searchMatches": "Passende Nachrichten: {{count}}",
+    "searchHint": "Text eingeben, um passende Nachrichten zu finden.",
+    "searchMatch": "Suchtreffer"
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."
   },
   "approval": {
-    "card": "Änderung bestätigen",
+    "card": "Freigabe einer Änderung",
     "bytes": "{{count}} Bytes",
-    "diff": "Vereinheitlichte Differenz",
+    "diff": "Unified Diff",
     "approved": "Genehmigt",
     "denied": "Abgelehnt",
     "aborted": "Abgebrochen",
@@ -278,7 +286,7 @@
     "connected": "Mit ChatGPT angemeldet",
     "disconnected": "Nicht angemeldet",
     "waiting": "Auf die Anmeldung im Browser warten…",
-    "expires": "Token läuft am {{time}} ab; es wird automatisch erneuert.",
+    "expires": "Das Token läuft am {{time}} ab und wird automatisch erneuert.",
     "manual": "Die endgültige Weiterleitungs-URL einfügen, falls die Anmeldung nicht abgeschlossen wird",
     "submit": "Anmeldung abschließen",
     "timeout": "Die Anmeldung wurde nach 10 Minuten beendet. Erneut versuchen.",
@@ -292,7 +300,7 @@
     "reindex": "Neu indizieren",
     "open": "Öffnen",
     "progress": "Index: {{done}} fertig, {{pending}} ausstehend, {{failed}} fehlgeschlagen",
-    "readOnly": "Schreibgeschütztes Workbench",
+    "readOnly": "Schreibgeschützter Arbeitsbereich",
     "empty": "Keine Dokumente im Index.",
     "noResults": "Keine passenden Dokumente.",
     "pdfError": "Das PDF konnte nicht angezeigt werden. Zum Wiederholen schließen und erneut öffnen.",
@@ -321,7 +329,11 @@
       "NEEDS_OCR": "Kein durchsuchbarer Text; OCR erforderlich"
     },
     "line": "Zeile",
-    "lineCount": "Zeilen {{start}}–{{end}} von {{count}}"
+    "lineCount": "Zeilen {{start}}–{{end}} von {{count}}",
+    "openNamed": "{{path}} öffnen",
+    "previousLines": "Vorherige Zeilen",
+    "nextLines": "Nächste Zeilen",
+    "pageText": "Text von Seite {{page}}"
   },
   "skills": {
     "settings": "Skills-Einstellungen",
@@ -329,7 +341,7 @@
     "open": "Öffnen / bearbeiten",
     "name": "Skill-Name (Kleinbuchstaben, Ziffern, Bindestriche)",
     "source": "Speicherort",
-    "workbench": "Workbench",
+    "workbench": "Arbeitsbereich",
     "user": "Benutzer",
     "create": "Vorlage erstellen",
     "content": "SKILL.md-Inhalt",
@@ -338,7 +350,9 @@
       "description": "Die Beschreibung muss 1–1024 Zeichen enthalten.",
       "frontmatter": "Ungültiger YAML-Kopf.",
       "unavailable": "Skill kann nicht sicher gelesen werden; Pfad, Format und Größe prüfen."
-    }
+    },
+    "enabledNamed": "Aktiviert: {{name}}",
+    "openNamed": "{{name}} öffnen / bearbeiten"
   },
   "updates": {
     "mode": "Aktualisierungsmodus",
@@ -375,16 +389,16 @@
     "cancel": "Abbrechen"
   },
   "demo": {
-    "offerTitle": "Mit dem Demo lernen",
+    "offerTitle": "Mit der Demo lernen",
     "offerDescription": "Entdecke VERA-DEMO-01: eine fiktive Platine mit PDFs, Notizen, Pinbelegung, Boot-Log und drei Beispiel-Skills. Deine eigene Kopie bewahrt Änderungen und Sitzungen.",
-    "open": "Demo-Workbench öffnen",
+    "open": "Demo-Arbeitsbereich öffnen",
     "guideTitle": "Drei geführte Prompts ausprobieren",
     "fictional": "VERA-DEMO-01 ist fiktiv. Werte und Messungen sind Beispieldaten; Hardware ist nicht erforderlich.",
     "configureStep": "Konfiguriere einen Anbieter oder verbinde dein Abonnement in den App-Einstellungen.",
     "configure": "Anbietereinstellungen öffnen",
     "promptStep": "Wähle unten einen Prompt, um eine neue Sitzung mit einem bearbeitbaren Entwurf zu öffnen. Wähle ein Modell, prüfe den Text und klicke auf Senden.",
     "citationStep": "Öffne die Quellenverweise, um die Belege zu prüfen. Der Dokumente-Tab zeigt den Indexierungsfortschritt; die Skills können den entsprechenden englischen Text verwenden, während die PDFs indexiert werden.",
-    "returnStep": "Klicke auf den Workbench-Namen in der Seitenleiste, um hierher zurückzukehren und einen anderen Prompt auszuprobieren. Die Beispielverfahren findest du unter Skills.",
+    "returnStep": "Klicke auf den Namen des Arbeitsbereichs in der Seitenleiste, um hierher zurückzukehren und einen anderen Prompt auszuprobieren. Die Beispielverfahren findest du unter Skills.",
     "datasheetTitle": "Ein Datenblatt lesen",
     "datasheetPrompt": "Nutze den Skill datasheet-reader. Welche Pins führen SDA und SCL bei Revision A, welche Pull-ups und Versorgungsspannungsgrenzen gelten, und wie stimmt die Pinbelegung mit dem Datenblatt überein? Belege die Antwort mit Quellen.",
     "logTitle": "Ein Boot-Log analysieren",

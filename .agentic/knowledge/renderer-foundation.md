@@ -19,12 +19,12 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 
 ## Public interface
 
-- App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact.
+- App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact. Global actions yield to modal/handled/repeated/composing keys; the skip-content control focuses main without URL changes.
 - Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
 - Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index and viewer; Artifacts opens/reveals/exports session content; Plan displays current session todos.
-  Below1280px the right panel overlays the centre.
-- Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates/Data retain placeholders. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
+  Below1280px the right panel overlays the centre. Tabs expose stable linked panels and a single Tab stop with Left/Right/Home/End activation.
+- Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates presents distribution-specific state/actions; Data retains its placeholder. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - About and Welcome metadata localize release/instrumented build identity and Windows signed/unsigned
   status from strict app.info, with English/Romanian/German catalogs. [Native packaging](native-packaging.md)
   owns compiled identity and actual signature verification; Metadata tests cover all three languages.
@@ -47,7 +47,7 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - Local geometry uses a strict separate versioned record; future data retains bytes, failed storage
   stays transient, and application readOnly suppresses geometry writes.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
-- Keyboard controls have visible focus rings and semantic labels; colors meet AA text contrast.
+- Keyboard controls use visible focus-ring CSS and semantic labels; opaque theme-token text pairs meet calculated AA contrast. Actual visual/AT acceptance follows the renderer accessibility contract. Selected buttons expose semantic state and heavier type.
   Reduced-motion styles disable animation/transition. Minimum viewport uses wrapping and vertical scroll.
 - [Chat UI](chat-ui.md) owns session navigation, transcript, composer, usage and session Context.
 
@@ -70,6 +70,8 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - REQ-UX-4a040005 — UI language and structured error translations.
 - REQ-TEST-4a040006 — English usage and translation catalog completeness.
 - REQ-UX-4a040007 — keyboard/focus/contrast/reduced-motion/minimum-size accessibility.
+- REQ-UX-52f83eb7 — modal-aware shortcuts and accessible transcript search.
+- REQ-UX-b7eabce7 — source-consistent Romanian/German catalog semantics.
 - REQ-UX-4a040008 — confirmed snapshots and read-only behavior.
 
 ## Architecture
@@ -103,6 +105,7 @@ Paths relative to 05_Software/apps/desktop/src/renderer except qualified paths.
 - components/{shell,settings,metadata,error-message,workbench}.tsx — panels, editors, labels and safe error text.
 - hooks/use-preferences.ts — Query lifecycle and theme/scale/language application.
 - lib/{layout,language}.ts and lib/preferences.test.ts — geometry storage and locale resolution.
+- lib/shortcuts.ts — modal/composition/modifier/repeat guard for global keyboard actions.
 - i18n.ts, locales/{en,ro,de}.json — catalog initialization and translated strings.
 - styles.css, styles/themes.css — responsive rem geometry, focus and theme token blocks.
 - 05_Software/apps/desktop/src/main/index.ts — initial and updated nativeTheme.

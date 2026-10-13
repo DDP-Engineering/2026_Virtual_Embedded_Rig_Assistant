@@ -125,7 +125,11 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
               <li key={hit.ref}>
                 <p>{hit.ref}</p>
                 <p>{hit.snippet}</p>
-                <button type="button" onClick={() => open?.({ ref: hit.ref })}>
+                <button
+                  type="button"
+                  aria-label={t("documents.openNamed", { path: hit.ref })}
+                  onClick={() => open?.({ ref: hit.ref })}
+                >
                   {t("documents.open")}
                 </button>
               </li>
@@ -145,6 +149,7 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
                 </p>
                 <button
                   type="button"
+                  aria-label={t("documents.openNamed", { path: doc.path })}
                   disabled={doc.status !== "indexed" && doc.status !== "needs_ocr"}
                   onClick={() => open?.({ path: doc.path })}
                 >

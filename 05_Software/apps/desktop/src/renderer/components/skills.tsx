@@ -115,6 +115,7 @@ function SkillsDialog({
             <label>
               <input
                 type="checkbox"
+                aria-label={t("skills.enabledNamed", { name: skill.name })}
                 checked={skill.enabled}
                 disabled={busy || readOnly}
                 onChange={(event) =>
@@ -133,6 +134,7 @@ function SkillsDialog({
               type="button"
               disabled={busy}
               data-action="open-skill"
+              aria-label={t("skills.openNamed", { name: skill.name })}
               onClick={(event) => {
                 editorTrigger.current = event.currentTarget;
                 setEditing(skill);

@@ -80,6 +80,7 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
     <section className="surface" id="section-providers" data-settings-section="providers">
       <h2 tabIndex={-1}>{t("settings.providers")}</h2>
       <p className="muted">{t("providers.description")}</p>
+      {list.isPending && <p role="status">{t("home.loading")}</p>}
       {(error !== undefined || list.isError) && <ErrorMessage error={error ?? list.error} />}
       {list.isError && (
         <button type="button" onClick={() => void list.refetch()}>
@@ -109,6 +110,7 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
                 <div className="workbench-actions">
                   <button
                     type="button"
+                    aria-label={t("providers.editNamed", { name: provider.name })}
                     disabled={disabled || editing !== undefined}
                     onClick={() => setEditing(provider)}
                   >
@@ -116,12 +118,14 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
                   </button>
                   <button
                     type="button"
+                    aria-label={t("providers.removeNamed", { name: provider.name })}
                     disabled={disabled || editing !== undefined}
                     onClick={() => void remove(provider.id as `custom:${string}`)}
                   >
                     {t("providers.remove")}
                   </button>
                   <ProviderTest
+                    name={provider.name}
                     id={provider.id as `custom:${string}`}
                     version={JSON.stringify([
                       provider.id,
@@ -239,6 +243,7 @@ function OpenAI({
         </fieldset>
       </form>
       <ProviderTest
+        name={t("providers.openai")}
         id="openai"
         version={JSON.stringify([provider.configured, provider.model, provider.hint])}
         disabled={disabled || !provider.configured || !provider.model}

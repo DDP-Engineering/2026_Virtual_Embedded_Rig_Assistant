@@ -40,7 +40,7 @@ export function ApprovalCard({
     <fieldset
       className="approval-card"
       data-approval-card={approval.approvalId}
-      aria-label={t("approval.card")}
+      aria-label={`${t("approval.card")}: ${approval.tool} · ${approval.path}`}
       // biome-ignore lint/a11y/noNoninteractiveTabindex: The whole approval group receives the documented A/D shortcuts with visible focus.
       tabIndex={0}
       onKeyDown={(event) => {

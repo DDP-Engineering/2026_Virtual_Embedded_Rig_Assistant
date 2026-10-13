@@ -51,7 +51,9 @@ body {
   box-sizing: border-box;
 }
 button,
-select {
+select,
+input,
+textarea {
   font: inherit;
   color: inherit;
   background: var(--card);
@@ -79,6 +81,15 @@ select:disabled {
 :focus-visible {
   outline: 0.2142857rem solid var(--ring);
   outline-offset: 0.142857rem;
+}
+.skip-content {
+  position: fixed;
+  inset: 0.5rem auto auto 0.5rem;
+  transform: translateY(-200%);
+  z-index: 10;
+}
+.skip-content:focus-visible {
+  transform: none;
 }
 svg {
   width: 1.3rem;
@@ -230,6 +241,26 @@ main {
   font:
     0.95rem / 1.5 ui-monospace,
     monospace;
+}
+.approval-diff > pre {
+  white-space: inherit;
+  overflow-wrap: anywhere;
+  overflow: visible;
+}
+.pdf-page-text {
+  flex-shrink: 0;
+}
+.pdf-page-text summary {
+  cursor: pointer;
+}
+.pdf-page-text-content {
+  max-height: 12rem;
+  overflow: auto;
+}
+.pdf-page-text pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
 }
 .transcript details pre {
   white-space: pre-wrap;
@@ -587,6 +618,10 @@ legend {
   border-radius: 0.4rem;
   color: var(--foreground);
   background: var(--background);
+}
+.workbench-form input,
+.workbench-form textarea {
+  border-color: var(--input);
 }
 .workbench-form textarea {
   font-family: monospace;

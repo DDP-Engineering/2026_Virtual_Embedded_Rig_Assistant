@@ -12,7 +12,7 @@ owns preferences and [sessions](sessions.md) owns actual session work.
 Main owns scheduling/capabilities and payload lifecycle. ElectronUpdateBackend delegates
 metadata, downloads, SHA512/publisher verification and installation to electron-updater.
 SessionsHost closes admission atomically at core quiescence. Main drains persistence before
-installation. Renderer presents strict snapshots, plain text notes and portable confirmation.
+installation. Renderer presents strict snapshots, plain text notes and portable confirmation. The native confirmation closes on disposal and restores its connected opener.
 
 ## Public interface
 

@@ -20,7 +20,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 
 - App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
-- SessionWorkspace offers native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches, and composes transcript/composer/meter and Ctrl+F search; Escape confirms Stop.
+- SessionWorkspace offers native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches, and composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
@@ -44,7 +44,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
-- Dialog Cancel restores focus; keyboard controls and wrapping rem layout use en/ro/de catalogs.
+- Dialog closure restores connected opener focus with fallback after removed session actions; rename save/cancel restores its action. Named diff/artifact regions support keyboard scrolling; keyboard controls and wrapping rem layout use en/ro/de catalogs.
 
 ## Change map
 
@@ -60,6 +60,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 
 ## Key behaviors
 
+- REQ-UX-52f83eb7 — contextual global shortcuts and accessible search feedback.
 - REQ-UX-4bea0001 — keyboard navigation and session mutations.
 - REQ-UX-4bea0002 — complete Markdown, tools, reasoning, citations and errors.
 - REQ-UX-34535128 — compact per-kind verified/warning citation chips with full-ref accessibility.

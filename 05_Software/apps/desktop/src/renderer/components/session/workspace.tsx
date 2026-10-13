@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { globalShortcutBlocked } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
 import { Composer } from "./composer.js";
 import { Transcript } from "./transcript.js";
@@ -44,6 +45,12 @@ export function SessionWorkspace({
     }
   }
   const searchInput = useRef<HTMLInputElement>(null);
+  const workspace = useRef<HTMLElement>(null);
+  function closeSearch() {
+    setSearching(false);
+    setSearch("");
+    workspace.current?.querySelector<HTMLElement>("[data-transcript]")?.focus();
+  }
   const stopDialog = useRef<HTMLDialogElement>(null);
   const stopOrigin = useRef<HTMLElement | null>(null);
   async function send(text: string) {
@@ -77,13 +84,18 @@ export function SessionWorkspace({
   }
   useEffect(() => {
     function key(event: KeyboardEvent) {
+      if (globalShortcutBlocked(event)) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
         event.preventDefault();
         setSearching(true);
+        searchInput.current?.focus();
       }
       if (
         event.key === "Escape" &&
-        !event.defaultPrevented &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !readOnly &&
+        !pending &&
         view?.state.activeTurnId &&
         !stopDialog.current?.open
       ) {
@@ -95,13 +107,14 @@ export function SessionWorkspace({
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [view?.state.activeTurnId]);
+  }, [view?.state.activeTurnId, readOnly, pending]);
   useEffect(() => {
     if (searching) searchInput.current?.focus();
   }, [searching]);
   if (!id) return <p>{t("chat.select")}</p>;
   return (
-    <section className="session-workspace" aria-label={t("chat.conversation")}>
+    <section ref={workspace} className="session-workspace" aria-label={t("chat.conversation")}>
+      {readOnly && <p role="status">{t("documents.readOnly")}</p>}
       <div className="workbench-actions">
         <button type="button" disabled={!view || exporting} onClick={() => void exportTranscript("md")}>
           {t("chat.exportMarkdown")}
@@ -126,15 +139,34 @@ export function SessionWorkspace({
         <div className="transcript-search">
           <label>
             {t("chat.search")}
-            <input ref={searchInput} value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input
+              ref={searchInput}
+              type="search"
+              aria-describedby="transcript-search-status"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  closeSearch();
+                }
+              }}
+            />
           </label>
-          <button
-            type="button"
-            onClick={() => {
-              setSearching(false);
-              setSearch("");
-            }}
-          >
+          <p id="transcript-search-status" role="status">
+            {search
+              ? t("chat.searchMatches", {
+                  count:
+                    view?.state.items.filter(
+                      (item) =>
+                        (item.kind === "user" || item.kind === "assistant") &&
+                        item.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+                    ).length ?? 0,
+                })
+              : t("chat.searchHint")}
+          </p>
+          <button type="button" onClick={closeSearch}>
             {t("panel.close")}
           </button>
         </div>
@@ -193,7 +225,10 @@ export function SessionWorkspace({
         ref={stopDialog}
         className="pinned-dialog"
         aria-labelledby="stop-title"
-        onCancel={() => stopOrigin.current?.focus()}
+        onClose={() => {
+          if (stopOrigin.current?.isConnected) stopOrigin.current.focus();
+          else workspace.current?.querySelector<HTMLElement>("[data-transcript]")?.focus();
+        }}
       >
         <h3 id="stop-title">{t("chat.stopConfirm")}</h3>
         <div className="workbench-actions">
@@ -201,7 +236,6 @@ export function SessionWorkspace({
             type="button"
             onClick={() => {
               stopDialog.current?.close();
-              stopOrigin.current?.focus();
             }}
           >
             {t("workbench.cancel")}

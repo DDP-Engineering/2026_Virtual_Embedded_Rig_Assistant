@@ -51,7 +51,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - Settings schema4 migrations preserve identity/extensions with original-byte backups. Future settings
   are read-only. Settings failure restores the exact encoded entry and prior credential/location, retaining the previous disk/memory decision across crypto availability changes. Two-file crash atomicity is not claimed.
 - UI saves avoid Query mutation caches for key-bearing requests and clear password drafts on success/cancel.
-  Native modal consent offers memory, weak disk or cancel; controls use en/ro/de and WP04 layouts/focus.
+  Native modal consent offers memory, weak disk or cancel, closes on disposal and restores a connected opener. Per-endpoint edit/remove/test accessible names include endpoint identity; loading and result states are textual. Controls use en/ro/de and WP04 layouts/focus.
 
 ## Change map
 

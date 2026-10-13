@@ -238,15 +238,24 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
           </>
         )}
       </div>
-      {content.pageEnd > content.page && (
-        <p>{t("documents.citedPages", { start: content.page, end: content.pageEnd })}</p>
-      )}
+      <p>{t("documents.citedPages", { start: content.page, end: content.pageEnd })}</p>
+      <details className="pdf-page-text">
+        <summary>{t("documents.pageText", { page })}</summary>
+        <section
+          className="pdf-page-text-content"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: Extracted page text has its own keyboard scroll region.
+          tabIndex={0}
+          aria-label={t("documents.pageText", { page })}
+        >
+          <pre>{content.pages[page - 1] || t("documents.reason.NEEDS_OCR")}</pre>
+        </section>
+      </details>
       {!ready && <p role="status">{t("home.loading")}</p>}
       {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable PDF page accepts keyboard scrolling. */}
       <section className="pdf-scroll" tabIndex={0} aria-label={t("documents.page")}>
         <div ref={sheet} className="pdf-sheet" style={{ "--total-scale-factor": zoom } as CSSProperties}>
           <canvas ref={canvas} aria-label={t("documents.page")} />
-          <div ref={text} className="pdf-text-layer" />
+          <div ref={text} className="pdf-text-layer" aria-hidden="true" />
         </div>
       </section>
     </div>

@@ -31,7 +31,7 @@ CLI composes the same catalog. Renderer uses strict named/source/scoped IPC only
 - Skills settings provides diagnostics, enable/disable, open/edit, source selection,
   template creation, loading/retry/read-only states and isolated drafts. Context lists
   enabled valid metadata. en/ro/de labels use root-scaled rem/theme styles and modal
-  keyboard focus restoration. Browser mock supplies the same routes in memory.
+  keyboard focus restoration. Repeated Enabled/Open accessible names include each skill name. Browser mock supplies the same routes in memory.
 
 ## Invariants
 

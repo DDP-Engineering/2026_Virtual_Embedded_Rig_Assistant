@@ -14,7 +14,13 @@ export function ConsentDialog({
   const title = useId();
   const text = useId();
   useEffect(() => {
-    ref.current?.showModal();
+    const origin = document.activeElement as HTMLElement | null;
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (origin?.isConnected) origin.focus();
+    };
   }, []);
   return (
     <dialog

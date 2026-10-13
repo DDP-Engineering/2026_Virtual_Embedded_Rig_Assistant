@@ -8,10 +8,12 @@ export function ProviderTest({
   id,
   version,
   disabled,
+  name,
 }: {
   id: "openai" | `custom:${string}`;
   version: string;
   disabled: boolean;
+  name?: string;
 }) {
   const { t } = useTranslation();
   const label = useId();
@@ -62,6 +64,7 @@ export function ProviderTest({
         type="button"
         id={label}
         data-provider-test={id}
+        aria-label={t("providers.testNamed", { name: name ?? id })}
         data-i18n="providers.test"
         disabled={disabled || pending}
         onClick={() => void run()}

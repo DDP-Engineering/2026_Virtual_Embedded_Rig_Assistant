@@ -254,6 +254,7 @@ export function Workbench({
                 <button
                   type="button"
                   data-action="open-recent"
+                  aria-label={t("workbench.openNamed", { name: entry.name })}
                   disabled={pending || entry.missing}
                   onClick={() => void perform(() => open(entry.folder))}
                 >

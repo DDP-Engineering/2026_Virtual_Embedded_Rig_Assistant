@@ -107,7 +107,8 @@ function ArtifactsView({ workbenchId, sessionId }: { workbenchId: string; sessio
             <>
               <h3>{detail.data.name}</h3>
               {detail.data.description && <p>{detail.data.description}</p>}
-              <section className="artifact-viewer" aria-label={t("artifacts.viewer")}>
+              {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable artifact content receives keyboard scrolling. */}
+              <section className="artifact-viewer" tabIndex={0} aria-label={t("artifacts.viewer")}>
                 <ArtifactBody content={detail.data.content} mime={detail.data.mime} />
               </section>
               <div className="artifact-actions">

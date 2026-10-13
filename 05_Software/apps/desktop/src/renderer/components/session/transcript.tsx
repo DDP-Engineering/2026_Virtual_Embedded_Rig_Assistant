@@ -66,6 +66,11 @@ export function Transcript({
               : undefined
           }
         >
+          {search &&
+            (item.kind === "user" || item.kind === "assistant") &&
+            item.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()) && (
+              <span className="sr-only">{t("chat.searchMatch")}</span>
+            )}
           {item.kind === "user" && (
             <>
               <strong>{t("chat.you")}</strong>

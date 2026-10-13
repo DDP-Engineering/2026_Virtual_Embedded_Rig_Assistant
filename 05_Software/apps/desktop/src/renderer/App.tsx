@@ -18,6 +18,7 @@ import { Shell } from "./components/shell.js";
 import { UpdateBanner } from "./components/updates.js";
 import { Workbench } from "./components/workbench.js";
 import { usePreferences } from "./hooks/use-preferences.js";
+import { globalShortcutBlocked } from "./lib/shortcuts.js";
 
 export function App() {
   const { t } = useTranslation();
@@ -152,6 +153,7 @@ export function App() {
   }
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
+      if (globalShortcutBlocked(event)) return;
       if ((event.ctrlKey || event.metaKey) && event.key === ",") {
         event.preventDefault();
         setSettings(true);
