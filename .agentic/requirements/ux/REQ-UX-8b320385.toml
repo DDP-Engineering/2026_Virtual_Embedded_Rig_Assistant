@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-8b320385"
+title = "Keep the running composer available outside approval waits"
+status = "active"
+requirement = "While a writable session turn runs outside an approval wait, the composer shall accept and submit messages through Enter or Send with Stop available, while model selection remains locked."
+verification = "Render a running session and send with Enter and Send; verify Stop and disabled model, approval/read-only/pending locks and failed-send draft retention."
+affected_paths = ["05_Software/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts"]
+linked_tests = ["05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts"]
+spec = "specs/REQ-FUNC-63733e2c.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

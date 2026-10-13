@@ -14,10 +14,10 @@ title = "Serialize and stop session turns"
 status = "active"
 
 requirement = """
-While a session turn is active, the service shall reject a second send with BUSY and propagate stop to runtime and tools with one terminal aborted event.
+When a user stops an active session turn, the service shall propagate abort to runtime and tools with one terminal aborted event, preserving the one-turn-per-session lifecycle.
 """
 
-verification = "Hold replay response, issue concurrent send then stop; assert BUSY and one aborted completion; another session remains independent."
+verification = "Hold replay response, queue a concurrent message then stop; assert BUSY for sends after stop and one aborted completion; another session remains independent."
 
 affected_paths = ["05_Software/packages/core/src/sessions/service.ts", "05_Software/apps/desktop/src/main/sessions.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/packages/core/src/sessions/service.test.ts", "05_Software/apps/desktop/src/renderer/mocks/sessions.test.ts"]
 
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-10-13

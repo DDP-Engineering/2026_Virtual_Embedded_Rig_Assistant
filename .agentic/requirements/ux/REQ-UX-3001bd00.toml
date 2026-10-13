@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-3001bd00"
+title = "Show queued user messages as pending until delivery"
+status = "active"
+requirement = "When a session message is queued, the transcript shall show its localized pending marker until a durable delivery event clears it, with the same projection after replay or restart."
+verification = "Apply queued/delivered events to old and current snapshots; observe one pending user row during a slowed native turn and its marker removal on delivery, including retained pending after abort/restart."
+affected_paths = ["05_Software/packages/shared/src/events.ts", "05_Software/packages/shared/src/session-state.ts", "05_Software/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/packages/shared/src/session-state.test.ts", "05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts"]
+linked_tests = ["05_Software/packages/shared/src/session-state.test.ts", "05_Software/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/e2e/chat-ui.spec.ts"]
+spec = "specs/REQ-FUNC-63733e2c.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

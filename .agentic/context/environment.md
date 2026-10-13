@@ -103,6 +103,8 @@ folders through the native picker seam, edits full pinned text, reopens recents 
 missing recents and preserves live foreign locks in read-only mode. The browser mock seeds
 empty/missing/read-only/warning states. Windows and Ubuntu E2E run serially because Vite owns5173.
 
+Steering regression routes are agent/steering.test.ts, sessions/service.test.ts, shared/session-state.test.ts, renderer session/workspace.test.ts and native e2e/chat-ui.spec.ts; they inspect ordered tool-boundary delivery, summary-time admission, budgets, pending/recovery and running/approval composer behavior.
+
 Compaction regression routes are agent/compaction.test.ts, sessions/service.test.ts, shared/session-state.test.ts and renderer session/usage-meter.test.ts; they inspect bounded summary/normal requests and complete transcript/restart.
 
 Agent runtime tests use the common replay matrix and deterministic injected counters; pi-agent-core is measured through a stream-function adapter with the same context policy. No live model is needed for runtime acceptance. Session acceptance uses read-then-answer JSONL, real temporary SQLite and a new core instance plus native Electron restart; focused routes are documented in [sessions](../knowledge/sessions.md).

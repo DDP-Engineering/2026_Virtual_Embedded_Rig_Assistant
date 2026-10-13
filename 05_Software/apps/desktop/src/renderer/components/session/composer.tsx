@@ -29,7 +29,8 @@ export function Composer({
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
   const running = !!state.activeTurnId;
-  const locked = disabled || running || state.status === "awaiting_approval";
+  const submitting = useRef(false);
+  const locked = disabled || state.status === "awaiting_approval";
   const providers = useQuery({
     queryKey: ["providers.list"],
     queryFn: () => api.invoke("providers.list", {}),
@@ -93,10 +94,17 @@ export function Composer({
     });
   }
   async function submit() {
-    if (!locked && text.trim() && (await send(text))) {
-      setText("");
-      setToken(undefined);
-      input.current?.focus();
+    if (locked || !text.trim() || submitting.current) return;
+    submitting.current = true;
+    const draft = text;
+    try {
+      if (await send(draft)) {
+        setText((current) => (current === draft ? "" : current));
+        setToken(undefined);
+        input.current?.focus();
+      }
+    } finally {
+      submitting.current = false;
     }
   }
   return (
@@ -177,7 +185,7 @@ export function Composer({
             {t("chat.model")}
             <select
               aria-label={t("chat.model")}
-              disabled={locked}
+              disabled={locked || running}
               value={state.modelRef ?? ""}
               onChange={(e) => void setModel(e.target.value || null)}
             >
@@ -201,13 +209,12 @@ export function Composer({
                 ))}
             </select>
           </label>
-          {running ? (
+          <button type="submit" data-action="send-message" disabled={locked || !text.trim()}>
+            {t("chat.send")}
+          </button>
+          {running && (
             <button type="button" data-action="stop-session" disabled={disabled} onClick={stop}>
               {t("chat.stop")}
-            </button>
-          ) : (
-            <button type="submit" data-action="send-message" disabled={locked || !text.trim()}>
-              {t("chat.send")}
             </button>
           )}
           <label>

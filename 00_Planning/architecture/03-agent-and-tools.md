@@ -10,7 +10,8 @@ reads a file, edits it after approval, saves an artifact and cites a document pr
 
 ```
 session.send(text)
-  → BUSY if the session already has a running turn
+  → during an accepting turn: persist message.queued; deliver before the next normal model call
+  → BUSY while approval waits or the active turn is stopping, finishing or failed
   → persist the user message; emit message.user, turn.started; status running
   → runtime loop (§2) until the model stops or a limit is hit:
        model output   → message.delta … message.done (citations checked, §9)
@@ -72,7 +73,7 @@ runtime. Before every model call, including calls within the same turn and after
   view, and emits `usage.updated` with the context window, request input estimate, input budget,
   output reserve, safety margin and `estimated` flag.
 
-Added in M5: steering — user messages queued during a turn and given to the model before its next call
+Added in M5: steering — user messages queued durably during a turn and given to the model before its next normal call; delivered batches clear pending transcript markers after the mandatory budget check. Undelivered messages survive interruption for the next turn. Current-turn instructions and steering share the original history boundary and stay outside historical summaries
 (WP-35); model-written historical compaction (WP-34), followed by the same mandatory budget check.
 `@earendil-works/pi-agent-core` offers both (`steer()`, `transformContext`); WP-10 measures a switch
 to it, which would be a new ADR behind the same interface.
@@ -221,6 +222,8 @@ type SessionEvent =
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: "end" | "aborted" | "error" | "limit" }
   | { type: "message.user"; messageId: string; text: string }
+  | { type: "message.queued"; messageId: string; text: string; timestamp: number }
+  | { type: "message.delivered"; messageIds: string[] }
   | { type: "message.delta"; messageId: string; text: string }                      // live only
   | { type: "message.done"; messageId: string; text: string; citations: { ref: string; valid: boolean }[] }
   | { type: "reasoning.delta"; messageId: string; text: string }                    // live only

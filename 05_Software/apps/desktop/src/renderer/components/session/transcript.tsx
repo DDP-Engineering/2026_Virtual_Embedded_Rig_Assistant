@@ -69,6 +69,11 @@ export function Transcript({
           {item.kind === "user" && (
             <>
               <strong>{t("chat.you")}</strong>
+              {item.pending && (
+                <span role="status" data-message-pending>
+                  {t("chat.pending")}
+                </span>
+              )}
               <Markdown text={item.text} />
             </>
           )}

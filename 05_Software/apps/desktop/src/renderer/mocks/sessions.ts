@@ -23,6 +23,7 @@ export class MockSessions {
       live?: SessionEvent[];
       active: boolean;
       stop: boolean;
+      turnId?: string;
       done?: Promise<void>;
       approval?: {
         id: string;
@@ -50,6 +51,8 @@ export class MockSessions {
       row.summary.title = fixture.title;
       row.summary.status = fixture.live ? "running" : fixture.title === "Provider error" ? "error" : "idle";
       row.active = !!fixture.live;
+      const started = fixture.events.findLast((event) => event.type === "turn.started");
+      if (started) row.turnId = started.turnId;
       if (fixture.live) row.live = fixture.live;
       this.emit(summary.id, { type: "session.updated", title: fixture.title, status: row.summary.status });
     }
@@ -204,6 +207,14 @@ export class MockSessions {
       if (request.mode === "read-only" && row.approval) this.decide(id, "aborted", "mode");
       return row.summary;
     }
+    if (channel === "session.send" && row.active) {
+      this.writable();
+      if (row.stop || row.approval || !row.turnId) throw veraError("BUSY");
+      if (!request.text.trim()) throw veraError("INVALID");
+      const messageId = `message_${++this.number}`;
+      this.emit(id, { type: "message.queued", messageId, text: request.text, timestamp: Date.now() });
+      return { turnId: row.turnId, messageId };
+    }
     this.idle(id);
     row.summary.updatedAt = new Date().toISOString();
     if (channel === "session.delete") {
@@ -227,6 +238,7 @@ export class MockSessions {
       row.stop = false;
       const turnId = `turn_${++this.number}`,
         messageId = `message_${++this.number}`;
+      row.turnId = turnId;
       if (!row.summary.title) {
         row.summary.title = request.text.slice(0, 60);
         this.emit(id, { type: "session.updated", title: row.summary.title });
@@ -329,6 +341,11 @@ export class MockSessions {
             }
           }
           if (!row.stop) {
+            const pending = row.events
+              .reduce(applySessionEvent, emptySessionState())
+              .items.filter((item) => item.kind === "user" && item.pending);
+            if (pending.length)
+              this.emit(id, { type: "message.delivered", messageIds: pending.map((item) => item.id) }, key);
             if (/artifact/i.test(request.text)) {
               const artifact: ArtifactContent = {
                 artifactId: `art_${String(++this.number).padStart(26, "0")}`,

@@ -23,7 +23,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
-- Composer exposes the confirmed session mode during active turns; text/model controls lock while running or awaiting approval. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
+- Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab queries WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
 - UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Full transcript items remain visible after historical compaction.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
@@ -31,12 +31,14 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
   heading, line and artifact icons. Full refs remain in tooltip/accessible labels.
   Unverified and malformed refs render inert warning chips; verified chips open the scoped document viewer through session/message-bound host revalidation.
 
+- Queued user rows show a localized pending status until message.delivered clears the marker; the event-backed projection retains pending rows after interruption and restart.
+
 ## Invariants
 
 - Exact renderer origin, sandbox and shared IPC authority apply. Renderer imports no native modules.
 - Backend terminal text replaces transient deltas; full transcript remains visible after context limits.
 - Late snapshot/event results cannot replace another session. Main replay starts after snapshot seq.
-- Workbench readOnly, pending operations and active/approval turns disable relevant mutations;
+- Workbench readOnly and pending operations disable sends; approval waits lock text/sending, active turns lock model changes;
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
@@ -66,6 +68,8 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 - REQ-UX-4bea0007 — pinned context and available skills state.
 - REQ-TEST-4bea0008 — browser fixture and translated keyboard acceptance.
 
+- REQ-UX-8b320385 — running composer steering outside approval waits.
+- REQ-UX-3001bd00 — localized pending delivery markers.
 - REQ-UX-d1b480e0 — optional compaction status and derived request-view size.
 
 ## Architecture

@@ -17,7 +17,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 - listArtifacts/openArtifact/verifiedArtifact expose current managed session content; [Artifacts](artifacts.md) owns bounded storage, refs and native actions. Session class tools stay available in all session permission modes; workbench read-only still denies mutation.
 - listChanges(sessionId) and getChange(changeId) project applied SQLite rows, ascending creation time/id and stored-patch hunk counts/details. [Changes](changes.md) owns the read protocol and renderer/native reveal.
 - create(modelRef?,mode?) returns camelCase metadata with ses_ULID,UTC dates,empty title and idle status. list, get(id)->{snapshot,seq}, rename,delete,setModel,setMode own metadata and errors. Default mode comes from host; model resolution applies session/workbench/app precedence. First user text sets an empty title to60 UTF16 units; explicit nonempty rename survives.
-- send returns turnId/messageId promptly, waitIdle is core completion, stop propagates abort, close aborts/drains all turns. Active sends, model/title and deletion mutations return BUSY. setMode remains available during active turns; read-only aborts pending approvals. Many sessions may run together.
+- send returns turnId/messageId promptly, waitIdle is core completion, stop propagates abort, close aborts/drains all turns. Active sends durably queue message.queued and return the active turnId/new messageId; stopping/finishing/failed turns and approval waits return BUSY. Model/title and deletion mutations remain idle-only. setMode remains available during active turns; read-only aborts pending approvals. Many sessions may run together.
 - subscribe(id,sinceSeq,listener(seq|undefined,event)) replays persisted rows then live events. Non-live seq starts1 and increases per session; message.delta/reasoning.delta/tool.update have no persisted row or seq. Detached callbacks cannot alter persistence or fail execution.
 - Shared SessionEvent/schema, SessionState/schema, emptySessionState and applySessionEvent form the common projection. message.done text/citations replace deltas even when deltas were missed; unfinalized live-only messages disappear at a terminal boundary. Transient reasoning/tool updates have no durable projection; usage preflight fields preserve actual provider token totals.
 - validateCitations checks unique extracted references against successful structured tool ref fields. Shared parseRef recognizes pages, explicit page ranges, heading slugs, lines and artifacts. Current confined text line bounds verify line refs; DocumentKnowledge.validDocumentRef verifies indexed current SHA256/extraction page/heading bounds; ArtifactStore verifies current-session artifact content. Malformed, invented, failed-tool-only, stale, removed, ignored, binary, escaping and out-of-range refs are invalid. Resolver errors produce invalid citations without failing the turn.
@@ -37,6 +37,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 - SessionService supplies one ephemeral ContextCompactor per session across recreated runtimes, clearing it on delete/close. Full SQLite message rows and transcript snapshots remain verbatim; restart regenerates derived historical summaries. Summary calls share the durable dispatch barrier, timeout/abort and scrubbed gateway. Optional usage compactionStatus/requestViewTokens replay through the shared reducer.
 
+- Pending queue lives in durable message.queued events with user timestamp/text/ID. Optional user pending/timestamp fields replay through shared state; message.delivered atomically persists the admitted transcript batch and clears its markers before gateway dispatch. Stop/limits/recovery retain unapplied pending messages for the next request. Closing refuses new sends while draining accepted work.
+
 ## Change map
 
 | Change | Start | Focused proof |
@@ -52,7 +54,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Key behaviors
 
-REQ-FUNC-5e2438d5 reducer; FUNC-c76b4c8f CRUD; DATA-24394d5f durable transcript/events; REL-384b6464 BUSY/stop; NFR-83ac0a94 limits; FUNC-2e1261c2 citations; FUNC-eca9b9a1 replay/coalescing; REL-2098b145 recovery; FUNC-2b462360 IPC; SEC-5a7ef5e4 permission seam.
+REQ-FUNC-63733e2c durable queued steering; REQ-UX-3001bd00 pending/delivery replay; REQ-FUNC-5e2438d5 reducer; FUNC-c76b4c8f CRUD; DATA-24394d5f durable transcript/events; REL-384b6464 BUSY/stop; NFR-83ac0a94 limits; FUNC-2e1261c2 citations; FUNC-eca9b9a1 replay/coalescing; REL-2098b145 recovery; FUNC-2b462360 IPC; SEC-5a7ef5e4 permission seam.
 
 ## Architecture
 

@@ -1,0 +1,15 @@
+# Steering during a session turn
+
+STATED: M5 WP35 and architecture03 section2 require queued text in the next model call and a pending transcript marker; UI06 section3 blocks composer text during approval. Direct user instructions defer runtime proof while retaining static checks and two independent read-only reviews.
+
+Contract: Existing session.send returns the active turnId and a new messageId for a durable message.queued {messageId,text,timestamp} event. Admission rejects blank text as INVALID; read-only workbench as DENIED; stopping/finishing/failed/deleting/closing turns and pending approval as BUSY. Model changes remain idle-only. Queue events are durable before publication; provider messages remain separate until admission.
+
+INFERRED recovery: Undelivered messages stay pending in event-backed transcript after abort, error, context limit or process restart, and join the next normal request. Recovered instructions precede the newly submitted idle instruction in the provider view. Accepted event records and full stored pi messages remain intact; no automatic new turn is started at stop/limit.
+
+Request boundary: Runtime snapshots the durable FIFO queue at the next normal request, after all source-order tool results exist. It captures the original turn history boundary; all current instructions and steering stay outside historical compaction. Messages arriving while the single historical-summary attempt awaits are appended to the prospective normal view, then pass the mandatory current model capabilities/output reserve/safety margin check. No second summary attempt occurs. If the final view cannot fit, no normal dispatch or delivered transition occurs and queued messages remain pending.
+
+For a fitting request, runtime appends admitted user messages to its full transcript and emits one message.delivered {messageIds} batch. SessionService atomically synchronizes full messages and records that delivery before host gateway dispatch can pass its persistence barrier. This marks admission to the bounded request; it does not promise provider success. Messages arriving after request preparation remain queued for the following request. Normal assistant completion continues the same turn if messages arrived while streaming; abort and limits preserve their existing terminal outcomes.
+
+Projection: Optional pending/timestamp user fields accept historical snapshots. message.queued adds one user item; message.delivered clears pending idempotently on listed IDs. Terminal events and recovery retain undelivered markers. en/ro/de localize the visible status. Existing strict IPC/session subscription transport and authorization carry the new event variants without a new channel or migration.
+
+Verification: Authored integration/tool-order, runtime summary/budget/recovery, shared projection, renderer and native E2E scenarios. All runtime execution and both planned Done observations remain NEEXECUTATE/deferred in this development stage; static checks are separate evidence.

@@ -72,6 +72,13 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.done"), turnId: z.string(), stopReason: stopReasonSchema }),
   z.strictObject({ type: z.literal("message.user"), messageId: z.string(), text: z.string() }),
+  z.strictObject({
+    type: z.literal("message.queued"),
+    messageId: z.string(),
+    text: z.string(),
+    timestamp: count,
+  }),
+  z.strictObject({ type: z.literal("message.delivered"), messageIds: z.array(z.string()).min(1) }),
   z.strictObject({ type: z.literal("message.delta"), messageId: z.string(), text: z.string() }),
   z.strictObject({ type: z.literal("reasoning.delta"), messageId: z.string(), text: z.string() }),
   z.strictObject({

@@ -189,6 +189,7 @@
     "transcript": "Transcript",
     "empty": "Start by sending a message.",
     "reasoning": "Reasoning",
+    "pending": "Pending delivery",
     "you": "You",
     "streaming": "Streaming…",
     "toolOk": "Completed",

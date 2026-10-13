@@ -245,7 +245,7 @@ it("read-then-answer persists two tool pairs, valid citation and same live/durab
   expect(restarted.get(session.id).snapshot.items.filter((i) => i.kind === "user")).toHaveLength(2);
   await restarted.close();
 });
-it("BUSY protects active turns and stop emits one aborted completion", async () => {
+it("queues active sends, protects stopped turns and emits one aborted completion", async () => {
   let release: (() => void) | undefined;
   const { service, gateway } = await setup();
   const stream = gateway.stream.bind(gateway);
@@ -258,12 +258,243 @@ it("BUSY protects active turns and stop emits one aborted completion", async () 
   };
   const s = service.create();
   service.send(s.id, "Read");
-  expect(() => service.send(s.id, "Second")).toThrow(expect.objectContaining({ code: "BUSY" }));
+  const queued = service.send(s.id, "Second");
+  expect(service.get(s.id).snapshot.items).toContainEqual(
+    expect.objectContaining({
+      kind: "user",
+      id: queued.messageId,
+      text: "Second",
+      pending: true,
+    }),
+  );
   service.stop(s.id);
+  expect(() => service.send(s.id, "After stop")).toThrow(expect.objectContaining({ code: "BUSY" }));
   release?.();
   expect(await service.waitIdle(s.id)).toEqual({ stopReason: "aborted" });
   expect(service.get(s.id).snapshot.turns).toHaveLength(1);
 });
+
+// REQ-FUNC-63733e2c: authored integration Done scenario; execution deferred.
+it("delivers steering sent between ordered tools once before the next model dispatch", async () => {
+  let release: () => void = () => {};
+  let enter: () => void = () => {};
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const tools: string[] = [];
+  const registry = new core.ToolRegistry([
+    {
+      name: "step",
+      class: "session",
+      description: "Ordered step",
+      params: z.strictObject({ step: z.string() }),
+      execute: async (_ctx, args) => {
+        const step = (args as { step: string }).step;
+        tools.push(step);
+        if (step === "first") {
+          enter();
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+        return { step };
+      },
+    },
+  ]);
+  const { service, gateway, handle, host } = await setup({ registry });
+  const requests: core.LlmRequest[] = [];
+  const session = service.create();
+  gateway.stream = async function* (request) {
+    requests.push(request);
+    if (requests.length === 2) {
+      expect(tools).toEqual(["first", "second"]);
+      expect(service.get(session.id).snapshot.items.filter((i) => i.kind === "user" && i.pending)).toEqual(
+        [],
+      );
+      const rows = new core.MessagesRepository(handle.db).list(session.id);
+      expect(rows.map((r) => r.role)).toEqual([
+        "user",
+        "assistant",
+        "toolResult",
+        "toolResult",
+        "user",
+        "user",
+      ]);
+    }
+    yield {
+      type: "done",
+      message: {
+        role: "assistant",
+        api: "replay",
+        provider: "replay",
+        model: "steering",
+        timestamp: 1,
+        usage: zeroUsage(),
+        stopReason: requests.length === 1 ? "toolUse" : "stop",
+        content:
+          requests.length === 1
+            ? [
+                { type: "toolCall", id: "first", name: "step", arguments: { step: "first" } },
+                { type: "toolCall", id: "second", name: "step", arguments: { step: "second" } },
+              ]
+            : [{ type: "text", text: "Done" }],
+      },
+    };
+  };
+  const first = service.send(session.id, "Start");
+  await entered;
+  const one = service.send(session.id, "Use 3.3V");
+  const two = service.send(session.id, "Measure reset");
+  expect(one.turnId).toBe(first.turnId);
+  expect(one.messageId).not.toBe(two.messageId);
+  expect(service.get(session.id).snapshot.items.filter((i) => i.kind === "user" && i.pending)).toHaveLength(
+    2,
+  );
+  release();
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(requests).toHaveLength(2);
+  expect(requests[1]?.messages.filter((m) => m.role === "user").map((m) => m.content)).toEqual([
+    "Start",
+    "Use 3.3V",
+    "Measure reset",
+  ]);
+  const before = service.get(session.id);
+  await service.close();
+  const restarted = new core.SessionService(host);
+  try {
+    expect(restarted.get(session.id)).toEqual(before);
+  } finally {
+    await restarted.close();
+  }
+});
+
+it("retains undelivered queue through stop and restart and refuses undecided approval admission", async () => {
+  const { service, gateway, handle, host } = await setup({ registry: new core.ToolRegistry([]) });
+  const session = service.create();
+  let enter: () => void = () => {};
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  gateway.stream = async function* (request) {
+    enter();
+    await new Promise<void>((resolve) =>
+      request.signal.addEventListener("abort", () => resolve(), { once: true }),
+    );
+  };
+  service.send(session.id, "Start");
+  await entered;
+  handle.db.prepare("UPDATE sessions SET status='awaiting_approval' WHERE id=?").run(session.id);
+  expect(() => service.send(session.id, "Blocked")).toThrow(expect.objectContaining({ code: "BUSY" }));
+  handle.db.prepare("UPDATE sessions SET status='running' WHERE id=?").run(session.id);
+  const queued = service.send(session.id, "Use old steering");
+  service.stop(session.id);
+  await service.waitIdle(session.id);
+  await service.close();
+  const restarted = new core.SessionService(host);
+  try {
+    expect(restarted.get(session.id).snapshot.items).toContainEqual(
+      expect.objectContaining({ id: queued.messageId, pending: true }),
+    );
+    const requests: core.LlmRequest[] = [];
+    gateway.stream = async function* (request) {
+      requests.push(request);
+      yield {
+        type: "done",
+        message: {
+          role: "assistant",
+          api: "replay",
+          provider: "replay",
+          model: "steering",
+          timestamp: 2,
+          usage: zeroUsage(),
+          stopReason: "stop",
+          content: [{ type: "text", text: "Done" }],
+        },
+      };
+    };
+    restarted.send(session.id, "New instruction");
+    expect(await restarted.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    expect(requests[0]?.messages.filter((m) => m.role === "user").map((m) => m.content)).toEqual([
+      "Start",
+      "Use old steering",
+      "New instruction",
+    ]);
+    expect(restarted.get(session.id).snapshot.items.filter((i) => i.kind === "user" && i.pending)).toEqual(
+      [],
+    );
+  } finally {
+    await restarted.close();
+  }
+});
+// REQ-FUNC-63733e2c: rejected preparation settles only its matching gate; execution deferred.
+it("accepts steering after failed write preparation while the same turn continues", async () => {
+  const registry = new core.ToolRegistry([
+    {
+      name: "write",
+      class: "write",
+      description: "Fail preparation",
+      params: z.strictObject({ path: z.string(), content: z.string() }),
+      prepare: async () => {
+        throw Error("Preparation refused.");
+      },
+      execute: async () => ({}),
+    },
+  ]);
+  const { service, gateway } = await setup({ registry });
+  const session = service.create();
+  let enter: () => void = () => {};
+  let release: () => void = () => {};
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const requests: core.LlmRequest[] = [];
+  gateway.stream = async function* (request) {
+    requests.push(request);
+    if (requests.length === 2) {
+      enter();
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    }
+    yield {
+      type: "done",
+      message: {
+        role: "assistant",
+        api: "replay",
+        provider: "replay",
+        model: "steering",
+        timestamp: 1,
+        usage: zeroUsage(),
+        stopReason: requests.length === 1 ? "toolUse" : "stop",
+        content:
+          requests.length === 1
+            ? [
+                {
+                  type: "toolCall",
+                  id: "failed-write",
+                  name: "write",
+                  arguments: { path: "bad", content: "new" },
+                },
+              ]
+            : [{ type: "text", text: "Done" }],
+      },
+    };
+  };
+  service.send(session.id, "Start");
+  await entered;
+  try {
+    expect(service.get(session.id).snapshot.status).toBe("running");
+    expect(service.get(session.id).snapshot.approvals).toEqual([]);
+    expect(() => service.send(session.id, "Continue after failed preparation")).not.toThrow();
+  } finally {
+    release();
+  }
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(requests).toHaveLength(3);
+  expect(JSON.stringify(requests[2]?.messages)).toContain("Continue after failed preparation");
+  expect(service.get(session.id).snapshot.items.filter((i) => i.kind === "user" && i.pending)).toEqual([]);
+});
+
 it("configured tool-call cap ends limit with valid retained call/result pairs", async () => {
   const { service, handle } = await setup({ maxToolCallsPerTurn: 1 });
   const s = service.create();

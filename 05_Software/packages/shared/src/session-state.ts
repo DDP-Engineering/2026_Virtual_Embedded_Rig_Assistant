@@ -30,7 +30,13 @@ export const sessionStateSchema = z.strictObject({
   interrupted: z.array(z.string()),
   items: z.array(
     z.discriminatedUnion("kind", [
-      z.strictObject({ kind: z.literal("user"), id: z.string(), text: z.string() }),
+      z.strictObject({
+        kind: z.literal("user"),
+        id: z.string(),
+        text: z.string(),
+        pending: z.boolean().optional(),
+        timestamp: z.number().int().nonnegative().optional(),
+      }),
       assistant,
       tool,
       z.strictObject({
@@ -118,6 +124,20 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
     case "message.user":
       if (!s.items.some((i) => i.id === event.messageId))
         s.items.push({ kind: "user", id: event.messageId, text: event.text });
+      break;
+    case "message.queued":
+      if (!s.items.some((i) => i.id === event.messageId))
+        s.items.push({
+          kind: "user",
+          id: event.messageId,
+          text: event.text,
+          pending: true,
+          timestamp: event.timestamp,
+        });
+      break;
+    case "message.delivered":
+      for (const item of s.items)
+        if (item.kind === "user" && event.messageIds.includes(item.id)) delete item.pending;
       break;
     case "reasoning.delta":
       break; // ephemeral reasoning has no durable projection

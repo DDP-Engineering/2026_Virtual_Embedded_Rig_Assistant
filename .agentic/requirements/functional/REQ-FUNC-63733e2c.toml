@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-63733e2c"
+title = "Deliver queued steering at the next model request"
+status = "active"
+requirement = "When a user sends nonblank text during an accepting session turn outside an approval wait, the session shall durably queue it in FIFO order for the next normal model request under the current context budget, preserving undelivered messages across stop, limit and restart."
+verification = "Hold the first of two ordered tools, send steering, release it and inspect the next gateway request and durable events/messages for one ordered delivery; exercise summary-time arrival, context limits, abort/restart, approval and failed-persistence refusal."
+affected_paths = ["05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/agent/compaction.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/steering.test.ts"]
+linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/steering.test.ts"]
+spec = "specs/REQ-FUNC-63733e2c.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

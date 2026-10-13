@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for AgentRuntime, system prompt composition, turn orchestration, read/write batch ordering, approval-host waits, abort, transcript resume, context budgets, tool-schema conversion and runtime events. Start at core/src/agent/{runtime,prompt,context,compaction,types,tool}.ts under05_Software; focused tests are runtime.test.ts,prompt.test.ts,context.test.ts,compaction.test.ts,runtime-edge.test.ts,pi-spike.test.ts. [LLM gateway](llm-gateway.md) owns model metadata/transport/replay, [workbench storage](workbench-storage.md) owns durable rows and [sessions](sessions.md) owns their integration. [File tools](file-tools.md) owns the production read registry/context adapter and worker hosts; [Sessions](sessions.md) supplies prepared permission-host calls; [file tools](file-tools.md) owns immutable changes and workbench write admission.
+Select for AgentRuntime, system prompt composition, turn orchestration, read/write batch ordering, approval-host waits, abort, transcript resume, context budgets, tool-schema conversion and runtime events. Start at core/src/agent/{runtime,prompt,context,compaction,types,tool}.ts under05_Software; focused tests are runtime.test.ts,prompt.test.ts,context.test.ts,compaction.test.ts,runtime-edge.test.ts,steering.test.ts,pi-spike.test.ts. [LLM gateway](llm-gateway.md) owns model metadata/transport/replay, [workbench storage](workbench-storage.md) owns durable rows and [sessions](sessions.md) owns their integration. [File tools](file-tools.md) owns the production read registry/context adapter and worker hosts; [Sessions](sessions.md) supplies prepared permission-host calls; [file tools](file-tools.md) owns immutable changes and workbench write admission.
 
 ## Purpose and boundaries
 
@@ -13,8 +13,8 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 ## Public interface
 
 - start accepts systemPrompt,model string,ToolDef[],Message[],ContextPolicy and optional maxToolCallsPerTurn (default50); send runs one turn and returns end/aborted/error/limit; abort propagates the turn signal; onEvent returns unsubscribe; messages returns full detached pi Message[]. Busy start/send return BUSY.
-- RuntimeHost owns gateway,now,nextId,approve(validated cloned call,signal). ToolDef owns name,class(read/write/session),description,params(zod),execute(args,signal). Approval host binds decisions to the prepared change.
-- RuntimeInit optionally accepts a session-owned ContextCompactor; default runtime instances retain it across sends and reset it at start. ContextCompactor.prepare asynchronously creates derived history views using one bounded summary callback.
+- RuntimeHost owns gateway,now,nextId,approve(validated cloned call,signal) and optional steering(), a detached durable FIFO queue snapshot. ToolDef owns name,class(read/write/session),description,params(zod),execute(args,signal). Approval host binds decisions to the prepared change.
+- RuntimeInit optionally accepts a session-owned ContextCompactor; default runtime instances retain it across sends and reset it at start. ContextCompactor.prepare asynchronously creates derived history views using one bounded summary callback and an optional original-turn history boundary.
 - ContextPolicy.prepare resolves a counted view from current capabilities. TokenCounter counts a whole system/tools/messages request and labels estimates. toolSpecs converts pure JSON Schema through Type.Unsafe; original zod validates execution arguments.
 - buildSystemPrompt({workbench,pinned,skills,env}) returns {text,characters}; characters counts UTF16 code units of the final text. PromptEnvironment supplies Clock, windows/linux OS family, veraVersion, session permissionMode and indexedDocuments. Skill metadata preserves caller order.
 
@@ -30,10 +30,13 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 - Above80% of raw input budget, ContextCompactor summarizes only completed historical exchanges using the same policy/output reserve/safety margin, no tools and one attempt per normal request. It validates structured summary/decisions/outstanding work, unions exact refs from full history, preserves current/incomplete exchanges and adopts only shorter views. Cache fingerprints guard reuse; invalid/failed/unavailable compaction falls back to M1 and explicit context limits. Full transcript and citation provenance remain authoritative.
 - Optional usage compactionStatus/requestViewTokens settle cancellation status and report summary progress and final normal input count, separately from accumulated actual provider usage.
 
+- Runtime admits queued steering after source-order tool batches, rechecks arrivals after a historical summary, budgets the final normal request and emits one message.delivered batch before gateway dispatch. It protects every current instruction using the original turn boundary, continues a normally completed turn for queued arrivals and leaves undelivered queue durable on stop/error/limit. Recovered queue precedes the new idle instruction in provider views; full messages keep their arrival records.
+
 ## Change map
 
 | Change | Start | Focused verification |
 |---|---|---|
+| Steering/admission/current-turn protection | runtime.ts/types.ts/compaction.ts | steering.test.ts; sessions/service.test.ts |
 | Stream/events/abort/resume/order/limits | runtime.ts/types.ts | runtime.test.ts/runtime-edge.test.ts |
 | Counting/reduction/tokenizer seam | context.ts | context.test.ts and long-first-turn matrix |
 | Historical summaries/cache/failure/budget/refs | compaction.ts/runtime.ts | compaction.test.ts; sessions/service.test.ts |
@@ -47,7 +50,7 @@ REQ-FUNC-27cc4ac0 streaming; FUNC-fa7348bd ordering; FUNC-1092757e approval; FUN
 
 REQ-FUNC-9441c5d6 canonical prompt; DATA-446edf2a UTF8 pinned boundary; FUNC-2faac04b skills metadata; FUNC-76d8e0f2 injected environment; UX-6e2e647a final character size.
 
-REQ-FUNC-e5b6a1c9 bounded derived historical compaction; REQ-UX-d1b480e0 optional status and request-view count.
+REQ-FUNC-63733e2c queued steering admission; REQ-FUNC-e5b6a1c9 bounded derived historical compaction; REQ-UX-d1b480e0 optional status and request-view count.
 
 ## Architecture
 
@@ -70,4 +73,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software/packages/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,runtime-edge,pi-spike}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts and pi-spike.test-support.ts; package.json/src/index.ts. Root package-lock pins the experiment. core/src/llm/replay.ts emits argument deltas. Current runtime contract and mapping live in06_SoftwareDocu/agent-runtime-spike.md and ADR0014.
+Under05_Software/packages/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,steering,runtime-edge,pi-spike}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts and pi-spike.test-support.ts; package.json/src/index.ts. Root package-lock pins the experiment. core/src/llm/replay.ts emits argument deltas. Current runtime contract and mapping live in06_SoftwareDocu/agent-runtime-spike.md and ADR0014.

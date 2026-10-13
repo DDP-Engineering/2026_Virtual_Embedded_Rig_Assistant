@@ -1,6 +1,29 @@
 import { expect, it } from "vitest";
 import * as shared from "./index.js";
 
+// REQ-UX-3001bd00: execution deferred by explicit user policy.
+it("replays queued and delivered markers without duplicating users or clearing undelivered messages", () => {
+  let state = shared.emptySessionState();
+  const queued = shared.sessionEventSchema.parse({
+    type: "message.queued",
+    messageId: "q",
+    text: "Steer",
+    timestamp: 1,
+  });
+  state = shared.applySessionEvent(state, queued);
+  state = shared.applySessionEvent(state, queued);
+  state = shared.applySessionEvent(state, { type: "turn.done", turnId: "t", stopReason: "aborted" });
+  expect(shared.sessionStateSchema.parse(state).items).toEqual([
+    { kind: "user", id: "q", text: "Steer", timestamp: 1, pending: true },
+  ]);
+  state = shared.applySessionEvent(state, { type: "message.delivered", messageIds: ["q"] });
+  state = shared.applySessionEvent(state, { type: "message.delivered", messageIds: ["q"] });
+  expect(state.items).toEqual([{ kind: "user", id: "q", text: "Steer", timestamp: 1 }]);
+  expect(
+    shared.sessionStateSchema.parse({ ...state, items: [{ kind: "user", id: "old", text: "Old" }] }).items,
+  ).toHaveLength(1);
+});
+
 // REQ-UX-d1b480e0. Execution deferred; optional fields support historical events.
 it("projects compaction status and request view size while retaining actual provider usage", () => {
   let state = shared.emptySessionState();

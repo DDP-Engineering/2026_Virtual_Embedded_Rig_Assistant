@@ -70,6 +70,8 @@ interface ActiveTurn {
   turnId: string;
   messageId: string;
   failed?: boolean;
+  accepting: boolean;
+  approvalWait?: string;
 }
 interface RecordedChange {
   id: number;
@@ -88,6 +90,7 @@ export class SessionService {
   private readonly compactors = new Map<string, ContextCompactor>();
   private readonly deleting = new Set<string>();
   private closed = false;
+  private closing = false;
   private readonly writeQueue: WriteQueue;
   private readonly ready: Promise<void>;
   private readonly approvals: ApprovalGate;
@@ -426,6 +429,36 @@ export class SessionService {
     }
   }
   send(id: string, text: string): { turnId: string; messageId: string } {
+    const current = this.row(id);
+    this.writable();
+    if (!text.trim()) throw veraError("INVALID");
+    if (this.closing || this.deleting.has(id)) throw veraError("BUSY");
+    const active = this.active.get(id);
+    if (active) {
+      if (
+        !active.accepting ||
+        active.failed ||
+        active.approvalWait ||
+        !active.turnId ||
+        current.status === "awaiting_approval" ||
+        this.host.db
+          .prepare("SELECT 1 FROM approvals WHERE session_id=? AND decision IS NULL LIMIT 1")
+          .get(id)
+      )
+        throw veraError("BUSY");
+      const messageId = ulid();
+      const value = this.host.db.transaction(() => {
+        this.host.db.prepare("UPDATE sessions SET updated_at=? WHERE id=?").run(this.now(), id);
+        return this.hub.record(id, {
+          type: "message.queued",
+          messageId,
+          text,
+          timestamp: this.host.clock.now().getTime(),
+        });
+      })();
+      this.hub.publish(id, value);
+      return { turnId: active.turnId, messageId };
+    }
     const row = this.idle(id);
     if (!text.trim()) throw veraError("INVALID");
     let processing = Promise.resolve();
@@ -525,6 +558,14 @@ export class SessionService {
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
     const self = this;
     const runtimeHost: RuntimeHost = {
+      steering: () =>
+        this.hub
+          .get(id)
+          .snapshot.items.flatMap((item) =>
+            item.kind === "user" && item.pending
+              ? [{ messageId: item.id, text: item.text, timestamp: item.timestamp ?? 0 }]
+              : [],
+          ),
       gateway: {
         ...gateway,
         stream: async function* (request) {
@@ -624,11 +665,19 @@ export class SessionService {
       done: Promise.resolve({ stopReason: "error" }),
       turnId: "",
       messageId: "",
+      accepting: true,
     };
     this.active.set(id, turn);
     const off = runtime.onEvent((event) => {
       if (event.type === "turn.started") turn.turnId = event.turnId;
       if (event.type === "message.user") turn.messageId = event.messageId;
+      if (event.type === "turn.done") turn.accepting = false;
+      if (event.type === "approval.requested") turn.approvalWait = event.call.id;
+      if (
+        (event.type === "approval.decided" || event.type === "tool.done") &&
+        turn.approvalWait === event.callId
+      )
+        delete turn.approvalWait;
       const transcript = runtime.messages();
       const next =
         event.type === "message.user"
@@ -701,6 +750,7 @@ export class SessionService {
       return;
     }
     const value = this.host.db.transaction(() => {
+      if (event.type === "message.delivered") this.sync(id, transcript);
       if (event.type === "message.user") {
         this.sync(id, transcript);
         if (!this.row(id).title)
@@ -751,6 +801,7 @@ export class SessionService {
     this.row(id);
     this.writable();
     const turn = this.active.get(id);
+    if (turn) turn.accepting = false;
     turn?.runtime.abort();
     return !!turn;
   }
@@ -767,6 +818,8 @@ export class SessionService {
   }
   async close(): Promise<void> {
     if (this.closed) return;
+    this.closing = true;
+    for (const turn of this.active.values()) turn.accepting = false;
     for (const turn of this.active.values()) turn.runtime.abort();
     await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
     await this.ready;

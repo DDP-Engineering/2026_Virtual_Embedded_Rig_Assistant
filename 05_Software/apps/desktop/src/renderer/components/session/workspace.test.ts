@@ -2,13 +2,14 @@
 // REQ-UX-4bea0001 REQ-UX-4bea0002 REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-4bea0005 REQ-REL-4bea0006 REQ-UX-4bea0007 REQ-TEST-4bea0008
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { emptySessionState } from "@vera/shared";
+import { applySessionEvent, emptySessionState } from "@vera/shared";
 import { act, createElement, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { App } from "../../App.js";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
 import { Transcript } from "./transcript.js";
 import "../../i18n.js";
@@ -61,6 +62,72 @@ afterEach(async () => {
   container?.remove();
   await api.invoke("workbench.close", {});
   localStorage.clear();
+});
+
+// REQ-UX-8b320385 REQ-UX-3001bd00: authored; execution deferred.
+test("running composer accepts Enter and Send while retaining Stop and locking the model", async () => {
+  const state = emptySessionState();
+  state.activeTurnId = "turn";
+  state.status = "running";
+  const send = vi.fn(async () => true);
+  await mount(
+    createElement(Composer, {
+      state,
+      disabled: false,
+      send,
+      stop: vi.fn(),
+      setModel: vi.fn(),
+      setMode: vi.fn(),
+    }),
+  );
+  const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
+  expect(input.disabled).toBe(false);
+  expect(container.querySelector<HTMLSelectElement>('select[aria-label="Model"]')?.disabled).toBe(true);
+  expect(button("Stop").disabled).toBe(false);
+  await typeText(input, "Steer with Enter");
+  await act(async () => key(input, "Enter"));
+  await settle();
+  await typeText(input, "Steer with Send");
+  await act(async () => button("Send").click());
+  await settle();
+  expect(send.mock.calls).toEqual([["Steer with Enter"], ["Steer with Send"]]);
+  expect(input.value).toBe("");
+});
+
+test("approval waits lock the running composer and delivery removes only the pending marker", async () => {
+  const state = emptySessionState();
+  state.activeTurnId = "turn";
+  state.status = "awaiting_approval";
+  await mount(
+    createElement(Composer, {
+      state,
+      disabled: false,
+      send: vi.fn(),
+      stop: vi.fn(),
+      setModel: vi.fn(),
+      setMode: vi.fn(),
+    }),
+  );
+  expect(container.querySelector<HTMLTextAreaElement>("textarea")?.disabled).toBe(true);
+  expect(button("Send").disabled).toBe(true);
+  expect(button("Stop").disabled).toBe(false);
+  const queued = applySessionEvent(state, {
+    type: "message.queued",
+    messageId: "q",
+    text: "Use 3.3V",
+    timestamp: 1,
+  });
+  const render = (state: typeof queued) =>
+    createElement(Transcript, { state, reasoning: {}, updates: {}, retry: vi.fn(), search: "" });
+  await act(async () => root.render(render(queued)));
+  expect(container.querySelectorAll("[data-message-pending]")).toHaveLength(1);
+  expect(container.textContent).toContain("Pending delivery");
+  await act(async () =>
+    root.render(render(applySessionEvent(queued, { type: "message.delivered", messageIds: ["q"] }))),
+  );
+  expect(container.querySelectorAll("[data-message-pending]")).toHaveLength(0);
+  expect(container.querySelectorAll('[data-message-kind="user"]')).toHaveLength(1);
+  expect(container.textContent).toContain("Use 3.3V");
 });
 test("renderer reload of a read-only workbench disables session mutations", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });

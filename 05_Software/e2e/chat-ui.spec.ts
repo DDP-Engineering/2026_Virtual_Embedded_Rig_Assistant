@@ -65,6 +65,33 @@ async function snapshot(page: Page, id: string): Promise<SessionState> {
     id,
   );
 }
+// REQ-UX-8b320385 REQ-UX-3001bd00: authored Done scenario; execution deferred.
+test("queued steering shows pending during a real running turn and clears on delivery", async () => {
+  const host = await rig(80),
+    app = await host.launch();
+  try {
+    const page = await app.firstWindow(),
+      id = await create(page, "replay/ui-slow");
+    const input = page.getByRole("textbox", { name: "Message", exact: true });
+    await input.fill("Slow answer");
+    await input.press("Enter");
+    await expect(page.locator('[data-message-kind="assistant"]')).toContainText("SLOW START");
+    await expect(input).toBeEnabled();
+    await expect(page.getByRole("combobox", { name: "Model", exact: true })).toBeDisabled();
+    await input.fill("Steer the running turn");
+    await page.locator('[data-action="send-message"]').click();
+    const pending = page.locator('[data-message-kind="user"]').filter({ hasText: "Steer the running turn" });
+    await expect(pending.locator("[data-message-pending]")).toHaveText("Pending delivery");
+    expect((await snapshot(page, id)).items.filter((i) => i.kind === "user" && i.pending)).toHaveLength(1);
+    await expect(pending.locator("[data-message-pending]")).toHaveCount(0, { timeout: 15000 });
+    await expect(pending).toHaveCount(1);
+    await expect.poll(async () => (await snapshot(page, id)).activeTurnId, { timeout: 20000 }).toBeNull();
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await app.close();
+    await rm(host.root, { recursive: true, force: true });
+  }
+});
 test("chat UI read-then-answer renders two tool rows and one cited answer, identical after native restart", async () => {
   const host = await rig();
   let app = await host.launch();

@@ -27,7 +27,8 @@ export function SessionWorkspace({
   const stopDialog = useRef<HTMLDialogElement>(null);
   const stopOrigin = useRef<HTMLElement | null>(null);
   async function send(text: string) {
-    if (!id || !text.trim() || pending || readOnly || view?.state.activeTurnId) return false;
+    if (!id || !text.trim() || pending || readOnly || view?.state.status === "awaiting_approval")
+      return false;
     setPending(true);
     setFailure(undefined);
     try {

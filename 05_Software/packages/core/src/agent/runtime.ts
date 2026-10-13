@@ -31,12 +31,12 @@ export function toolResult(
   };
 }
 /** Interrupted calls are repaired only in the request view; persisted messages remain verbatim. */
-export function buildContext(stored: Message[], _now: number): Message[] {
+export function buildContext(stored: Message[], _now: number, currentStart = stored.length): Message[] {
   const out: Message[] = [];
   for (let i = 0; i < stored.length; i++) {
     const m = stored[i];
     if (!m) continue;
-    if (m.role === "user" && out.at(-1)?.role === "toolResult") {
+    if (i < currentStart && m.role === "user" && out.at(-1)?.role === "toolResult") {
       const last = out.findLast((x): x is AssistantMessage => x.role === "assistant");
       out.push({
         role: "assistant",
@@ -111,12 +111,14 @@ export class ReferenceRuntime implements AgentRuntime {
     this.controller = controller;
     const turnId = this.host.nextId();
     const messageId = this.host.nextId();
+    const currentStart = this.transcript.length;
+    const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
     this.transcript.push({ role: "user", content: text, timestamp: this.host.now() });
     this.emit({ type: "message.user", messageId, text });
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
     try {
-      stopReason = await this.run(init, controller.signal);
+      stopReason = await this.run(init, controller.signal, currentStart, recovered);
     } catch (error) {
       stopReason = controller.signal.aborted ? "aborted" : "error";
       if (stopReason === "error")
@@ -128,16 +130,46 @@ export class ReferenceRuntime implements AgentRuntime {
     }
     return { stopReason };
   }
-  private async run(init: RuntimeInit, signal: AbortSignal): Promise<StopReason> {
+  private async run(
+    init: RuntimeInit,
+    signal: AbortSignal,
+    currentStart: number,
+    recovered: Set<string>,
+  ): Promise<StopReason> {
     let callsUsed = 0;
     let inputTokens = 0;
     let outputTokens = 0;
+    const delivered = new Set<string>();
+    const recoveredPositions = new Set<number>();
+    const pending = () =>
+      (this.host.steering?.() ?? []).filter((message) => !delivered.has(message.messageId));
+    const userMessage = (message: { text: string; timestamp: number }): Message => ({
+      role: "user",
+      content: message.text,
+      timestamp: message.timestamp,
+    });
     for (;;) {
       if (signal.aborted) return "aborted";
       const tools = toolSpecs(init.tools);
       const capabilities = this.host.gateway.capabilities(init.model);
+      let queued = pending();
+      // Recovered queue precedes the new instruction in the provider view. The full
+      // durable transcript retains its original event/message arrival records.
+      const prior = queued.filter((message) => recovered.has(message.messageId));
+      const requestMessages = [
+        ...this.transcript.slice(0, currentStart),
+        ...this.transcript.filter((_, index) => recoveredPositions.has(index)),
+        ...prior.map(userMessage),
+        ...this.transcript.filter((_, index) => index >= currentStart && !recoveredPositions.has(index)),
+        ...queued.filter((message) => !recovered.has(message.messageId)).map(userMessage),
+      ];
+      const historicalEnd = buildContext(this.transcript.slice(0, currentStart), this.host.now()).length;
       const compacted = await this.compactor.prepare(
-        { system: init.systemPrompt, tools, messages: buildContext(this.transcript, this.host.now()) },
+        {
+          system: init.systemPrompt,
+          tools,
+          messages: buildContext(requestMessages, this.host.now(), currentStart),
+        },
         capabilities,
         init.contextPolicy,
         async (input, summaryView) => {
@@ -169,11 +201,21 @@ export class ReferenceRuntime implements AgentRuntime {
           }
           return summary;
         },
+        historicalEnd,
       );
+      // Messages admitted during an awaited historical summary join the next normal
+      // request too. Recheck M1 once, without another compaction attempt.
+      const included = new Set(queued.map((message) => message.messageId));
+      const arrivals = pending().filter((message) => !included.has(message.messageId));
+      queued = [...queued, ...arrivals];
       // The summary is itself a model dispatch; resolve capabilities again for the normal call.
       const view = {
         ...init.contextPolicy.prepare(
-          { system: init.systemPrompt, tools, messages: compacted.messages },
+          {
+            system: init.systemPrompt,
+            tools,
+            messages: [...compacted.messages, ...arrivals.map(userMessage)],
+          },
           this.host.gateway.capabilities(init.model),
         ),
         compactionStatus: compacted.compactionStatus,
@@ -191,6 +233,14 @@ export class ReferenceRuntime implements AgentRuntime {
           retryable: false,
         });
         return "limit";
+      }
+      if (queued.length) {
+        for (const [index, message] of queued.entries())
+          if (recovered.has(message.messageId)) recoveredPositions.add(this.transcript.length + index);
+        this.transcript.push(...queued.map(userMessage));
+        for (const message of queued) delivered.add(message.messageId);
+        // One durable transition persists the entire admitted batch and its markers.
+        this.emit({ type: "message.delivered", messageIds: queued.map((message) => message.messageId) });
       }
       const messageId = this.host.nextId();
       let final: AssistantMessage | undefined;
@@ -277,7 +327,10 @@ export class ReferenceRuntime implements AgentRuntime {
           );
         return final.stopReason === "length" ? "limit" : final.stopReason;
       }
-      if (!calls.length) return "end";
+      if (!calls.length) {
+        if (pending().length) continue;
+        return "end";
+      }
       const results = new Map<string, ToolResultMessage>();
       const runOne = async (call: ToolCall) => {
         if (signal.aborted) return;

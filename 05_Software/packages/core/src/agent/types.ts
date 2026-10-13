@@ -27,11 +27,14 @@ export interface RuntimeHost {
   now(): number;
   nextId(): string;
   approve(call: Readonly<ToolCall>, signal: AbortSignal): Promise<"approved" | "denied" | "aborted">;
+  /** Durable, undelivered user messages; detached FIFO snapshot, without consuming them. */
+  steering?(): { messageId: string; text: string; timestamp: number }[];
 }
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: StopReason }
   | { type: "message.user"; messageId: string; text: string }
+  | { type: "message.delivered"; messageIds: string[] }
   | { type: "message.delta"; messageId: string; text: string }
   | { type: "tool.delta"; messageId: string; index: number; text: string }
   | { type: "message.done"; messageId: string; text: string; message: AssistantMessage }

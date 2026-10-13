@@ -14,8 +14,7 @@ const fingerprint = (messages: Message[]) =>
   createHash("sha256").update(JSON.stringify(messages)).digest("hex");
 
 /** Only whole successful exchanges before the current user instruction are eligible. */
-function completedExchanges(messages: Message[]): { start: number; end: number }[] {
-  const current = messages.findLastIndex((m) => m.role === "user");
+function completedExchanges(messages: Message[], current: number): { start: number; end: number }[] {
   const exchanges: { start: number; end: number }[] = [];
   let start = messages.findIndex((m) => m.role === "user");
   if (start < 0) return exchanges;
@@ -74,6 +73,7 @@ export class ContextCompactor {
     capabilities: ModelCapabilities,
     policy: ContextPolicy,
     summarize: SummarizeHistory,
+    currentStart = input.messages.findLastIndex((message) => message.role === "user"),
   ): Promise<CompactionView> {
     let cached = this.cached;
     if (cached && fingerprint(input.messages.slice(0, cached.covered)) !== cached.fingerprint) {
@@ -90,7 +90,7 @@ export class ContextCompactor {
       return { ...view, compactionStatus: status, requestViewTokens: view.contextTokens };
     };
     if (raw.contextTokens <= raw.inputBudgetTokens * 0.8) return finish(base, cached ? "completed" : "none");
-    const current = input.messages.findLastIndex((message) => message.role === "user");
+    const current = currentStart;
     if (
       !policy.prepare({ ...input, messages: input.messages.slice(Math.max(0, current)) }, capabilities).fits
     )
@@ -102,7 +102,7 @@ export class ContextCompactor {
     const history: Message[] = [];
     const keep: Message[] = [...retained];
     let cursor = covered;
-    for (const { start, end } of completedExchanges(input.messages)) {
+    for (const { start, end } of completedExchanges(input.messages, current)) {
       if (start < covered) continue;
       keep.push(...input.messages.slice(cursor, start));
       history.push(...input.messages.slice(start, end));
