@@ -25,6 +25,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Composer exposes the confirmed session mode during active turns; text/model controls lock while running or awaiting approval. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab queries WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
+- UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Full transcript items remain visible after historical compaction.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
 - CitationChip uses shared refs.ts parsing/compact labels and per-kind page, range,
   heading, line and artifact icons. Full refs remain in tooltip/accessible labels.
@@ -51,7 +52,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 | Composer/models/paths | composer | workspace.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; e2e/approvals.spec.ts |
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;e2e/plan.spec.ts |
-| Usage/Context | usage-meter, context-tab | workspace.test.ts |
+| Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 
 ## Key behaviors
 
@@ -64,6 +65,8 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 - REQ-REL-4bea0006 — snapshot/subscription resume and identical terminal text.
 - REQ-UX-4bea0007 — pinned context and available skills state.
 - REQ-TEST-4bea0008 — browser fixture and translated keyboard acceptance.
+
+- REQ-UX-d1b480e0 — optional compaction status and derived request-view size.
 
 ## Architecture
 

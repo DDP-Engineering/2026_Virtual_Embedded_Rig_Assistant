@@ -18,6 +18,7 @@ import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate } from "../agent/approvals.js";
 import { validateCitations } from "../agent/citations.js";
+import { ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
@@ -84,6 +85,7 @@ export class SessionService {
   private readonly active = new Map<string, ActiveTurn>();
   private readonly last = new Map<string, { stopReason: StopReason }>();
   private readonly contexts = new Map<string, ToolContext>();
+  private readonly compactors = new Map<string, ContextCompactor>();
   private readonly deleting = new Set<string>();
   private closed = false;
   private readonly writeQueue: WriteQueue;
@@ -371,6 +373,7 @@ export class SessionService {
       });
       this.hub.clear(id);
       this.contexts.delete(id);
+      this.compactors.delete(id);
       this.last.delete(id);
     } finally {
       this.deleting.delete(id);
@@ -605,12 +608,15 @@ export class SessionService {
       },
     };
     const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
+    const contextCompactor = this.compactors.get(id) ?? new ContextCompactor();
+    this.compactors.set(id, contextCompactor);
     runtime.start({
       systemPrompt: this.host.prompt(row.permission_mode),
       model,
       tools,
       messages: this.transcript(id),
       contextPolicy: this.host.contextPolicy ?? new ContextPolicy(),
+      contextCompactor,
       maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? 50,
     });
     const turn: ActiveTurn = {
@@ -768,6 +774,7 @@ export class SessionService {
     this.closed = true;
     this.hub.clear();
     this.contexts.clear();
+    this.compactors.clear();
   }
   private recover(): void {
     for (const row of this.sessions.list()) {

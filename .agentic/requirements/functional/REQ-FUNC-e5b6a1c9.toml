@@ -1,0 +1,31 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-FUNC-e5b6a1c9"
+
+title = "Bounded completed-exchange compaction"
+
+status = "active"
+
+requirement = "Above80% of the input budget, the runtime shall attempt at most one model summary of budget-fitting whole completed historical exchanges per normal request, preserving decisions, outstanding work, exact source refs and current instructions in a derived view while retaining the full durable transcript; both requests use current context/output limits and safety margin, and unavailable or failed summaries fall back to M1 reduction and explicit context-limit semantics."
+
+verification = "Replay multiple completed turns in a small window and inspect every normal/summary request budget, preserved decisions/refs/current input and full transcript; first-turn, oversized input, smaller model, invalid/failed summary and abort verify the one-attempt bound and M1 outcomes. Execution deferred by direct user instruction; authored scenarios are not proof."
+
+affected_paths = ["05_Software/packages/core/src/agent/compaction.ts", "05_Software/packages/core/src/agent/context.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/agent/compaction.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+
+linked_tests = ["05_Software/packages/core/src/agent/compaction.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+
+
+spec = "specs/REQ-FUNC-e5b6a1c9.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

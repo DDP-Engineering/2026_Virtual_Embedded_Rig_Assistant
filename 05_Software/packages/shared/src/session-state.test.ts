@@ -1,6 +1,31 @@
 import { expect, it } from "vitest";
 import * as shared from "./index.js";
 
+// REQ-UX-d1b480e0. Execution deferred; optional fields support historical events.
+it("projects compaction status and request view size while retaining actual provider usage", () => {
+  let state = shared.emptySessionState();
+  for (const compactionStatus of ["none", "running", "completed", "unavailable", "failed"] as const) {
+    const event = shared.sessionEventSchema.parse({
+      type: "usage.updated",
+      inputTokens: 17,
+      outputTokens: 3,
+      contextTokens: 1200,
+      requestViewTokens: 1200,
+      compactionStatus,
+      estimated: true,
+    });
+    state = shared.applySessionEvent(state, event);
+    expect(state.usage).toMatchObject({ compactionStatus, requestViewTokens: 1200, inputTokens: 17 });
+  }
+  state = shared.applySessionEvent(state, { type: "usage.updated", inputTokens: 34, outputTokens: 6 });
+  expect(shared.sessionStateSchema.parse(state).usage).toMatchObject({
+    inputTokens: 34,
+    outputTokens: 6,
+    compactionStatus: "failed",
+    requestViewTokens: 1200,
+  });
+});
+
 it("folds terminal events identically with or without live deltas", () => {
   expect(typeof shared.applySessionEvent).toBe("function");
   const events: shared.SessionEvent[] = [

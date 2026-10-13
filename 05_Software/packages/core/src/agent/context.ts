@@ -17,6 +17,8 @@ export interface ContextView {
   reservedOutputTokens: number;
   safetyMarginTokens: number;
   estimated: boolean;
+  compactionStatus?: "none" | "running" | "completed" | "unavailable" | "failed";
+  requestViewTokens?: number;
 }
 /** Conservative UTF-8 byte estimate plus explicit framing; replace with a whole-request tokenizer when available. */
 export const conservativeCounter: TokenCounter = (input) => ({
@@ -28,7 +30,7 @@ export const conservativeCounter: TokenCounter = (input) => ({
     input.messages.reduce((n, m) => n + 16 + (Array.isArray(m.content) ? m.content.length * 8 : 8), 0),
   estimated: true,
 });
-function sourceRefs(value: unknown, refs = new Set<string>()): Set<string> {
+export function sourceRefs(value: unknown, refs = new Set<string>()): Set<string> {
   if (typeof value === "string") {
     for (const match of value.matchAll(/\[\[([^\]]+)\]\]/g)) if (match[1]) refs.add(match[1]);
   } else if (Array.isArray(value)) for (const item of value) sourceRefs(item, refs);
@@ -71,7 +73,7 @@ function minimumResult(result: ToolResultMessage): ToolResultMessage {
 }
 export class ContextPolicy {
   constructor(private readonly count: TokenCounter = conservativeCounter) {}
-  prepare(input: ContextInput, capabilities: ModelCapabilities): ContextView {
+  prepare(input: ContextInput, capabilities: ModelCapabilities, reduce = true): ContextView {
     const messages = structuredClone(input.messages);
     const safetyMarginTokens = Math.max(1024, Math.ceil(capabilities.contextWindow * 0.05));
     const inputBudgetTokens = capabilities.contextWindow - capabilities.maxOutputTokens - safetyMarginTokens;
@@ -85,7 +87,7 @@ export class ContextPolicy {
     const calls = new Set<string>();
     for (const m of messages)
       if (m.role === "assistant") for (const c of m.content) if (c.type === "toolCall") calls.add(c.id);
-    for (let i = 0; measured.tokens > inputBudgetTokens && i < messages.length; i++) {
+    for (let i = 0; reduce && measured.tokens > inputBudgetTokens && i < messages.length; i++) {
       const result = messages[i];
       if (result?.role !== "toolResult" || !calls.has(result.toolCallId)) continue;
       const reduced = minimumResult(result);

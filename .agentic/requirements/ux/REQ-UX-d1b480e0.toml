@@ -1,0 +1,31 @@
+# Copyright (c) 2026 DDP Engineering
+# This software is licensed under the PolyForm Noncommercial License 1.0.0.
+# Commercial use requires a separate commercial license.
+# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
+
+
+schema = 1
+
+id = "REQ-UX-d1b480e0"
+
+title = "Compaction context meter"
+
+status = "active"
+
+requirement = "When usage is reported, the context meter shall present optional localized compaction status and counted or estimated request-view token size alongside M1 budgets and actual provider usage."
+
+verification = "Project live and replayed usage events into the meter in en/ro/de; old events remain valid and summary actual usage does not replace estimates. Execution deferred by direct user instruction."
+
+affected_paths = ["05_Software/packages/shared/src/events.ts", "05_Software/apps/desktop/src/renderer/components/session/usage-meter.tsx", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/packages/shared/src/session-state.test.ts", "05_Software/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
+
+linked_tests = ["05_Software/packages/shared/src/session-state.test.ts", "05_Software/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-13
+updated = 2026-10-13

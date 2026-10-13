@@ -212,7 +212,15 @@
     "working": "VERA lucrează. Stop încheie execuția.",
     "enterHint": "Enter trimite · Shift+Enter adaugă o linie · @ completează căi",
     "search": "Caută în transcript",
-    "stopConfirm": "Oprești execuția curentă?"
+    "stopConfirm": "Oprești execuția curentă?",
+    "requestView": "Tokenuri în cerere",
+    "compaction": {
+      "none": "Compactarea contextului: nu este necesară",
+      "running": "Se rezumă istoricul…",
+      "completed": "Istoric rezumat",
+      "unavailable": "Istoricul nu poate fi rezumat",
+      "failed": "Rezumarea istoricului a eșuat"
+    }
   },
   "context": {
     "budget_exceeded": "Textul depășește bugetul de context al modelului."

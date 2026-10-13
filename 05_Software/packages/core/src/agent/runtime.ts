@@ -1,6 +1,7 @@
 // Derived from BenchPilot's gateway loop: contiguous parallel reads, ordered writes and source-order results.
 import type { AssistantMessage, Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import { veraError } from "@vera/shared";
+import { ContextCompactor } from "./compaction.js";
 import { toolSpecs } from "./tool.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, RuntimeInit, StopReason } from "./types.js";
 
@@ -30,7 +31,7 @@ export function toolResult(
   };
 }
 /** Interrupted calls are repaired only in the request view; persisted messages remain verbatim. */
-export function buildContext(stored: Message[], now: number): Message[] {
+export function buildContext(stored: Message[], _now: number): Message[] {
   const out: Message[] = [];
   for (let i = 0; i < stored.length; i++) {
     const m = stored[i];
@@ -59,7 +60,8 @@ export function buildContext(stored: Message[], now: number): Message[] {
     }
     for (const call of calls)
       if (!answered.has(call.id))
-        out.push(toolResult(call, "Interrupted: call outcome unresolved.", true, now));
+        // Stable derived repairs keep unchanged history reusable by the compaction cache.
+        out.push(toolResult(call, "Interrupted: call outcome unresolved.", true, m.timestamp));
   }
   return out;
 }
@@ -67,6 +69,7 @@ export class ReferenceRuntime implements AgentRuntime {
   private init: RuntimeInit | undefined;
   private transcript: Message[] = [];
   private controller: AbortController | undefined;
+  private compactor = new ContextCompactor();
   private readonly listeners = new Set<(event: RuntimeEvent) => void>();
   constructor(private readonly host: RuntimeHost) {}
   start(init: RuntimeInit): void {
@@ -78,6 +81,7 @@ export class ReferenceRuntime implements AgentRuntime {
     )
       throw veraError("INVALID");
     this.init = { ...init, tools: [...init.tools] };
+    this.compactor = init.contextCompactor ?? new ContextCompactor();
     this.transcript = structuredClone(init.messages);
   }
   messages(): Message[] {
@@ -132,12 +136,53 @@ export class ReferenceRuntime implements AgentRuntime {
       if (signal.aborted) return "aborted";
       const tools = toolSpecs(init.tools);
       const capabilities = this.host.gateway.capabilities(init.model);
-      const view = init.contextPolicy.prepare(
+      const compacted = await this.compactor.prepare(
         { system: init.systemPrompt, tools, messages: buildContext(this.transcript, this.host.now()) },
         capabilities,
+        init.contextPolicy,
+        async (input, summaryView) => {
+          const { messages: summaryMessages, fits: _, ...summaryBudget } = summaryView;
+          this.emit({
+            type: "usage.updated",
+            inputTokens,
+            outputTokens,
+            ...summaryBudget,
+            compactionStatus: "running",
+            requestViewTokens: summaryView.contextTokens,
+          });
+          signal.throwIfAborted();
+          let summary: AssistantMessage | undefined;
+          for await (const event of this.host.gateway.stream({
+            model: init.model,
+            system: input.system,
+            tools: input.tools,
+            messages: summaryMessages,
+            signal,
+            maxOutputTokens: summaryView.reservedOutputTokens,
+          })) {
+            if (event.type === "error") return undefined;
+            if (event.type === "done") summary = event.message;
+          }
+          if (summary) {
+            inputTokens += summary.usage.input;
+            outputTokens += summary.usage.output;
+          }
+          return summary;
+        },
       );
+      // The summary is itself a model dispatch; resolve capabilities again for the normal call.
+      const view = {
+        ...init.contextPolicy.prepare(
+          { system: init.systemPrompt, tools, messages: compacted.messages },
+          this.host.gateway.capabilities(init.model),
+        ),
+        compactionStatus: compacted.compactionStatus,
+        requestViewTokens: 0,
+      };
+      view.requestViewTokens = view.contextTokens;
       const { messages, fits, ...budget } = view;
       this.emit({ type: "usage.updated", inputTokens, outputTokens, ...budget });
+      if (signal.aborted) return "aborted";
       if (!fits) {
         this.emit({
           type: "error",

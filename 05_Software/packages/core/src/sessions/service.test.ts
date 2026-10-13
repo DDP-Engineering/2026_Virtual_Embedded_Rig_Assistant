@@ -6,6 +6,7 @@ import { applySessionEvent, emptySessionState, type SessionEvent } from "@vera/s
 import { afterEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import * as citations from "../agent/citations.js";
+import { zeroUsage } from "../agent/runtime.js";
 import * as core from "../index.js";
 import { ReplayGateway } from "../llm/replay.js";
 
@@ -13,6 +14,72 @@ const cleanup: (() => Promise<void>)[] = [];
 afterEach(async () => {
   vi.restoreAllMocks();
   for (const close of cleanup.splice(0).reverse()) await close();
+});
+
+// REQ-FUNC-e5b6a1c9: authored for deferred runtime verification.
+it("keeps full durable history and restart transcript while compacting only provider views", async () => {
+  const { service, gateway, handle, host } = await setup({ registry: new core.ToolRegistry([]) });
+  const caps = {
+    contextWindow: 6000,
+    maxOutputTokens: 1000,
+    inputBudget: 3976,
+    safetyMargin: 1024,
+    supportsTools: true,
+  };
+  gateway.capabilities = () => caps;
+  const requests: core.LlmRequest[] = [];
+  gateway.stream = async function* (request) {
+    requests.push(request);
+    const summarizing = request.system.includes("Return only JSON:");
+    yield {
+      type: "done",
+      message: {
+        role: "assistant",
+        content: [
+          {
+            type: "text",
+            text: summarizing
+              ? JSON.stringify({
+                  summary: "Board",
+                  decisions: ["Use 3.3V"],
+                  outstandingWork: ["Measure reset"],
+                })
+              : `Use 3.3V; measure reset [[board.txt#L1-L2]]. ${"a".repeat(850)}`,
+          },
+        ],
+        api: "replay",
+        provider: "replay",
+        model: "read-then-answer",
+        timestamp: 123,
+        usage: zeroUsage(),
+        stopReason: "stop",
+      },
+    };
+  };
+  const session = service.create();
+  for (let turn = 0; turn < 5; turn++) {
+    service.send(session.id, `Use 3.3V; measure reset ${"u".repeat(850)}`);
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  }
+  expect(requests.some((r) => r.system.includes("Return only JSON:"))).toBe(true);
+  for (const request of requests)
+    expect(new core.ContextPolicy().prepare(request, caps, false).fits).toBe(true);
+  const rows = new core.MessagesRepository(handle.db).list(session.id);
+  expect(rows).toHaveLength(10);
+  expect(rows.map((r) => r.content_json).join("\n")).not.toContain("Derived historical context");
+  const before = service.get(session.id);
+  expect(before.snapshot.items.filter((i) => i.kind === "user")).toHaveLength(5);
+  expect(before.snapshot.items.filter((i) => i.kind === "assistant")).toHaveLength(5);
+  await service.close();
+  const restarted = new core.SessionService(host);
+  try {
+    expect(restarted.get(session.id)).toEqual(before);
+    restarted.send(session.id, "Continue using 3.3V");
+    expect(await restarted.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    expect(restarted.get(session.id).snapshot.items.filter((i) => i.kind === "user")).toHaveLength(6);
+  } finally {
+    await restarted.close();
+  }
 });
 
 it("persists user/start before dispatch and assistant/tool-start before execution, even with held citations", async () => {

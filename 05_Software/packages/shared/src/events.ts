@@ -57,6 +57,8 @@ export const usageEventSchema = z.strictObject({
   reservedOutputTokens: count.optional(),
   safetyMarginTokens: count.optional(),
   estimated: z.boolean().optional(),
+  compactionStatus: z.enum(["none", "running", "completed", "unavailable", "failed"]).optional(),
+  requestViewTokens: count.optional(),
 });
 export const sessionEventSchema = z.discriminatedUnion("type", [
   z.strictObject({

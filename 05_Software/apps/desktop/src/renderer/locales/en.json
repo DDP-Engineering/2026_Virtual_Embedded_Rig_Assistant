@@ -212,7 +212,15 @@
     "working": "VERA is working. Stop ends the turn.",
     "enterHint": "Enter sends · Shift+Enter adds a line · @ completes paths",
     "search": "Search transcript",
-    "stopConfirm": "Stop the running turn?"
+    "stopConfirm": "Stop the running turn?",
+    "requestView": "Request view tokens",
+    "compaction": {
+      "none": "Context compaction: not needed",
+      "running": "Summarizing history…",
+      "completed": "History summarized",
+      "unavailable": "History cannot be summarized",
+      "failed": "History summary failed"
+    }
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."

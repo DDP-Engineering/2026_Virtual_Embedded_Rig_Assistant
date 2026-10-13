@@ -2,6 +2,7 @@ import type { AssistantMessage, Message, ToolCall, ToolResultMessage } from "@ea
 import type { VeraError } from "@vera/shared";
 import type { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
+import type { ContextCompactor } from "./compaction.js";
 import type { ContextPolicy, ContextView } from "./context.js";
 
 export type StopReason = "end" | "aborted" | "error" | "limit";
@@ -18,6 +19,7 @@ export interface RuntimeInit {
   tools: ToolDef[];
   messages: Message[];
   contextPolicy: ContextPolicy;
+  contextCompactor?: ContextCompactor;
   maxToolCallsPerTurn?: number;
 }
 export interface RuntimeHost {

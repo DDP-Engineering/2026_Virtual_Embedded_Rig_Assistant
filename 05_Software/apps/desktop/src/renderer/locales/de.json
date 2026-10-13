@@ -212,7 +212,15 @@
     "working": "VERA arbeitet. Stoppen beendet den Durchlauf.",
     "enterHint": "Enter sendet · Shift+Enter fügt eine Zeile ein · @ ergänzt Pfade",
     "search": "Transkript durchsuchen",
-    "stopConfirm": "Laufenden Durchlauf stoppen?"
+    "stopConfirm": "Laufenden Durchlauf stoppen?",
+    "requestView": "Tokens der Anfrage",
+    "compaction": {
+      "none": "Kontextkomprimierung: nicht erforderlich",
+      "running": "Verlauf wird zusammengefasst…",
+      "completed": "Verlauf zusammengefasst",
+      "unavailable": "Verlauf kann nicht zusammengefasst werden",
+      "failed": "Zusammenfassung fehlgeschlagen"
+    }
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."

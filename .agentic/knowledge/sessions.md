@@ -35,6 +35,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 - Session IDs validate before artifact removal; ordinary .vera/artifacts ancestors and target are required. SQLite cascades all child rows. Host checks lock token/pid before mutations; lifecycle drains prevent closed-DB writes.
 - Core remains Electron-independent. Main uses existing exact renderer-frame authorization for invokes and subscription control; sandbox/CSP/vera://app baseline remains. Known-secret text/title/model requests are rejected, gateway and tool outputs are scrubbed, event transport and snapshot/summary responses preserve protocol discriminants/IDs while redacting user fields and bounding titles.
 
+- SessionService supplies one ephemeral ContextCompactor per session across recreated runtimes, clearing it on delete/close. Full SQLite message rows and transcript snapshots remain verbatim; restart regenerates derived historical summaries. Summary calls share the durable dispatch barrier, timeout/abort and scrubbed gateway. Optional usage compactionStatus/requestViewTokens replay through the shared reducer.
+
 ## Change map
 
 | Change | Start | Focused proof |
@@ -68,7 +70,9 @@ flowchart LR
  service --> ArtifactStore
  ArtifactStore --> artifacts[(artifacts metadata and managed files)]
  service --> completedChanges[(applied changes read projection)]
+ service --> compactor[ContextCompactor per session]
  service --> runtime[AgentRuntime]
+ runtime --> compactor
  runtime --> policy[ContextPolicy]
  policy --> gateway[timedGateway / LlmGateway]
  runtime --> permission[ApprovalGate or injected PermissionEngine]
