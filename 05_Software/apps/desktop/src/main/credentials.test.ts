@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -42,6 +42,53 @@ function harness(secure = true, backend = "gnome_libsecret", platform = "linux")
   };
 }
 describe("main encrypted credential store", () => {
+  it("opens the frozen schema1 synthetic encrypted fixture without rewriting it and scrubs its credentials", async () => {
+    const raw = readFileSync(
+      new URL("../../../../fixtures/upgrade/credentials-v1.json", import.meta.url),
+      "utf8",
+    );
+    const h = harness();
+    h.disk.set("/data/credentials.json", raw);
+    expect(await h.store.list()).toEqual([
+      { providerId: "openai", type: "api_key" },
+      { providerId: "chatgpt", type: "oauth" },
+    ]);
+    expect(await h.store.read("openai")).toEqual({ type: "api_key", key: "synthetic-WP32-key-only" });
+    expect(await h.store.read("chatgpt")).toMatchObject({ type: "oauth", expires: 1900000000000 });
+    expect(
+      h.store.sanitize({ error: "synthetic-WP32-key-only synthetic-WP32-access synthetic-WP32-refresh" }),
+    ).toEqual({ error: "[REDACTED] [REDACTED] [REDACTED]" });
+    expect(h.disk.get("/data/credentials.json")).toBe(raw);
+    expect(h.files.writeAtomic).not.toHaveBeenCalled();
+    expect(h.files.backup).not.toHaveBeenCalled();
+    await h.store.modify("openai", async () => ({ type: "api_key", key: "synthetic-WP32-replacement" }));
+    expect(JSON.parse(h.disk.get("/data/credentials.json")!).extension).toEqual({ retained: true });
+    expect(await h.reload().read("chatgpt")).toMatchObject({
+      type: "oauth",
+      access: "synthetic-WP32-access",
+    });
+    expect(h.logger.log).not.toHaveBeenCalled();
+  });
+  it("refuses the newer credentials fixture before decryption and all mutations without leaking future contents", async () => {
+    const raw = readFileSync(
+      new URL("../../../../fixtures/upgrade/credentials-newer.json", import.meta.url),
+      "utf8",
+    );
+    const h = harness();
+    h.disk.set("/data/credentials.json", raw);
+    for (const operation of [
+      () => h.store.list(),
+      () => h.store.read("openai"),
+      () => h.store.delete("openai"),
+      () => h.store.modify("openai", async () => ({ type: "api_key", key: secret })),
+    ])
+      await expect(operation()).rejects.toEqual({ code: "DENIED", messageKey: "errors.DENIED" });
+    expect(h.disk.get("/data/credentials.json")).toBe(raw);
+    expect(h.crypto.decryptString).not.toHaveBeenCalled();
+    expect(h.files.writeAtomic).not.toHaveBeenCalled();
+    expect(h.files.backup).not.toHaveBeenCalled();
+    expect(h.logger.log).not.toHaveBeenCalled();
+  });
   it("persists ciphertext only and roundtrips detached API and OAuth credentials", async () => {
     const h = harness();
     await h.store.modify("openai", async () => ({ type: "api_key", key: secret }));

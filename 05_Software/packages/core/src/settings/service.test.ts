@@ -35,6 +35,59 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it.each([0, 1, 2, 3])(
+    "upgrades frozen settings v%i with exact exclusive backup, preserved preferences and repeatable reload",
+    async (version) => {
+      const raw = readFileSync(
+        new URL(`../../../../fixtures/settings/version-${version}.json`, import.meta.url),
+        "utf8",
+      );
+      const previous = JSON.parse(raw);
+      const h = harness(raw);
+      h.files.set(`/data/settings.json.bak-${version}`, "existing recovery copy");
+      await h.service.load();
+      expect(h.files.get(`/data/settings.json.bak-${version}`)).toBe("existing recovery copy");
+      expect(h.files.get(`/data/settings.json.bak-${version + 1}`)).toBe(raw);
+      expect(h.fileAccess.backup.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        h.fileAccess.writeAtomic.mock.invocationCallOrder[0]!,
+      );
+      expect(h.service.get().settings).toMatchObject({
+        schemaVersion: 4,
+        installationId: previous.installationId,
+        language: previous.language,
+        theme: previous.theme,
+        textScale: previous.textScale,
+      });
+      if (version >= 2)
+        expect(h.service.get().settings.recentWorkbenches).toEqual(previous.recentWorkbenches);
+      if (version === 3) expect(h.service.get().settings.providers).toEqual(previous.providers);
+      const reload = harness(h.files.get("/data/settings.json"));
+      await reload.service.load();
+      expect(reload.service.get()).toEqual(h.service.get());
+      expect(reload.fileAccess.writeAtomic).not.toHaveBeenCalled();
+      expect(reload.fileAccess.backup).not.toHaveBeenCalled();
+    },
+  );
+  it.each([0, 1, 2, 3])(
+    "preserves frozen settings v%i when migration backup or save fails",
+    async (version) => {
+      const raw = readFileSync(
+        new URL(`../../../../fixtures/settings/version-${version}.json`, import.meta.url),
+        "utf8",
+      );
+      const backupFailure = harness(raw);
+      backupFailure.fileAccess.backup.mockRejectedValueOnce(new Error("backup failure"));
+      await expect(backupFailure.service.load()).rejects.toThrow("backup failure");
+      expect(backupFailure.files.get("/data/settings.json")).toBe(raw);
+      expect(backupFailure.fileAccess.writeAtomic).not.toHaveBeenCalled();
+      const saveFailure = harness(raw);
+      saveFailure.fileAccess.writeAtomic.mockRejectedValueOnce(new Error("save failure"));
+      await expect(saveFailure.service.load()).rejects.toThrow("save failure");
+      expect(saveFailure.files.get("/data/settings.json")).toBe(raw);
+      expect(saveFailure.files.get(`/data/settings.json.bak-${version}`)).toBe(raw);
+      expect(() => saveFailure.service.get()).toThrow();
+    },
+  );
   it("conditionally updates the app model against the serialized current state", async () => {
     const h = harness();
     await h.service.load();

@@ -50,6 +50,7 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
 |---|---|---|
 | Connection/protected reads | db.ts | db.test.ts readonly/newer/WAL/links |
 | Migration/schema/backup | migrate.ts, migrations/0001_initial.ts | db.test.ts ordered upgrades/rollback/checksum/schema |
+| Previous-version upgrade/recovery | fixtures/upgrade, storage/upgrade-safety.test.ts | frozen0/1/2, intact pre-step backups/rows, interrupted recovery before next turn |
 | Keyword index/backfill/triggers | migrations/0002_keyword.ts | keyword-migration.test.ts, ingest.test.ts |
 | Row repository | repos/{sessions,messages,events}.ts | repositories.test.ts CRUD/order/persistence/cascades |
 | Handle lifetime/lock | workbench/service.ts | service.test.ts database/live-owner/failed-switch plus WP06 |

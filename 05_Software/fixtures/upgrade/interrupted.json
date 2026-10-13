@@ -1,0 +1,107 @@
+{
+  "createdAt": "2026-10-12T00:00:00.000Z",
+  "sessions": [
+    {
+      "id": "ses_01K00000000000000000000000",
+      "title": "Previous running",
+      "status": "running",
+      "turnId": "previous-turn-0",
+      "callId": "previous-call-0",
+      "approvalId": null,
+      "requestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "messageJson": "{\"role\":\"assistant\",\"api\":\"replay\",\"provider\":\"replay\",\"model\":\"read-then-answer\",\"content\":[{\"type\":\"toolCall\",\"id\":\"previous-call-0\",\"name\":\"edit\",\"arguments\":{\"path\":\"docs/after.txt\",\"oldString\":\"before\",\"newString\":\"after\"}}],\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791763200000}",
+      "events": [
+        {
+          "type": "session.updated",
+          "title": "Previous running",
+          "status": "running",
+          "mode": "ask",
+          "modelRef": "replay/read-then-answer"
+        },
+        {
+          "type": "turn.started",
+          "turnId": "previous-turn-0"
+        },
+        {
+          "type": "tool.started",
+          "callId": "previous-call-0",
+          "name": "edit",
+          "args": {
+            "path": "docs/after.txt",
+            "oldString": "before",
+            "newString": "after"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ses_01K00000000000000000000001",
+      "title": "Previous awaiting_approval",
+      "status": "awaiting_approval",
+      "turnId": "previous-turn-1",
+      "callId": "previous-call-1",
+      "approvalId": "apv_01K00000000000000000000001",
+      "requestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "messageJson": "{\"role\":\"assistant\",\"api\":\"replay\",\"provider\":\"replay\",\"model\":\"read-then-answer\",\"content\":[{\"type\":\"toolCall\",\"id\":\"previous-call-1\",\"name\":\"edit\",\"arguments\":{\"path\":\"docs/after.txt\",\"oldString\":\"before\",\"newString\":\"after\"}}],\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791763200000}",
+      "events": [
+        {
+          "type": "session.updated",
+          "title": "Previous awaiting_approval",
+          "status": "awaiting_approval",
+          "mode": "ask",
+          "modelRef": "replay/read-then-answer"
+        },
+        {
+          "type": "turn.started",
+          "turnId": "previous-turn-1"
+        },
+        {
+          "type": "tool.started",
+          "callId": "previous-call-1",
+          "name": "edit",
+          "args": {
+            "path": "docs/after.txt",
+            "oldString": "before",
+            "newString": "after"
+          }
+        },
+        {
+          "type": "approval.requested",
+          "approvalId": "apv_01K00000000000000000000001",
+          "callId": "previous-call-1",
+          "requestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "tool": "edit",
+          "path": "docs/after.txt",
+          "diff": "--- a/docs/after.txt\n+++ b/docs/after.txt\n@@ -1 +1 @@\n-before\n+after\n",
+          "bytes": 6
+        }
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "path": "docs/after.txt",
+      "current": "after\n",
+      "beforeSha256": "9160d4be34c8695bd172a76c7c7966587ea5a4d991ad22c87b2b91af54aa9ebb",
+      "afterSha256": "7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919",
+      "diff": "--- a/docs/after.txt\n+++ b/docs/after.txt\n@@ -1 +1 @@\n-before\n+after\n",
+      "callId": "change-after"
+    },
+    {
+      "path": "docs/before.txt",
+      "current": "before\n",
+      "beforeSha256": "9160d4be34c8695bd172a76c7c7966587ea5a4d991ad22c87b2b91af54aa9ebb",
+      "afterSha256": "7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919",
+      "diff": "--- a/docs/before.txt\n+++ b/docs/before.txt\n@@ -1 +1 @@\n-before\n+after\n",
+      "callId": "change-before"
+    },
+    {
+      "path": "docs/conflict.txt",
+      "current": "other\n",
+      "beforeSha256": "9160d4be34c8695bd172a76c7c7966587ea5a4d991ad22c87b2b91af54aa9ebb",
+      "afterSha256": "7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919",
+      "diff": "--- a/docs/conflict.txt\n+++ b/docs/conflict.txt\n@@ -1 +1 @@\n-before\n+after\n",
+      "callId": "change-conflict"
+    }
+  ]
+}

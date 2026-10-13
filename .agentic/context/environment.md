@@ -24,6 +24,13 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Upgrade safety acceptance uses frozen settings0/1/2/3, credentials schema1 and
+workbench format1, plus previous SQLite0/1/2 fixtures in storage/upgrade-safety.test.ts.
+`scripts/probe-upgrade.mjs <owned-scratch> --migration-safety` observes actual NSIS/AppImage
+upgrade, prior settings/history and interrupted recovery before the next turn.
+e2e/upgrade-safety.spec.ts checks native newer-data refusal/read-only UI and original
+file hashes/metadata including WAL/SHM/locks/backups. See [Upgrade safety](../knowledge/upgrade-safety.md).
+
 Update ticket acceptance uses shared/main/backend/core-approval/UI tests and immediate transports,
 e2e/updates.spec.ts browser geometry/languages, and scripts/probe-upgrade.mjs with explicit owned scratch.
 The latter builds separately identified local instrumented artifacts and records real installed

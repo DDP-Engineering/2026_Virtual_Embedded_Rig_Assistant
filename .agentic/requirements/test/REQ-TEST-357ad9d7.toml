@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-357ad9d7"
+title = "Newer data refusal UI preserves original files"
+status = "active"
+requirement = "The native compatibility acceptance suite shall show read-only defaults with a settings banner and the created-by-newer-VERA refusal for newer YAML and SQLite while preserving original data and relevant sidecars, locks and backups."
+verification = "Native Electron tests compare settings and workbench bytes/SHA256/size/mtime/mode/inventory through IPC/UI/shutdown, including a WAL-resident newer DB inspected only through the private snapshot."
+affected_paths = ["05_Software/e2e/upgrade-safety.spec.ts"]
+linked_tests = ["05_Software/e2e/upgrade-safety.spec.ts"]
+spec = "specs/REQ-TEST-449732e2.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

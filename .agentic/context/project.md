@@ -18,6 +18,9 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
+[Upgrade safety](../knowledge/upgrade-safety.md) routes frozen previous-version migration,
+interrupted recovery and newer-data preservation fixtures with actual installed acceptance.
+
 [Skills](../knowledge/skills.md) routes workbench/user discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
 

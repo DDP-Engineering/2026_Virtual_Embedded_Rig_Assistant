@@ -10,7 +10,13 @@ import { parse, stringify } from "yaml";
 import { distributionConfig, enforceBudget, stageRuntime } from "./package.mjs";
 import { checkStagedPayload } from "./package-checks.mjs";
 import { startUpdateFeed } from "./update-feed.mjs";
+import { seedInterrupted, verifyRecovered } from "./upgrade-fixture.mjs";
 
+const migrationSafety = process.argv.includes("--migration-safety");
+const ticket = migrationSafety ? "WP32" : "WP31";
+const oldVersion = migrationSafety ? "0.32.0" : "0.31.0";
+const newVersion = migrationSafety ? "0.32.1" : "0.31.1";
+const executableName = migrationSafety ? "vera-wp32-test" : "vera-wp31-test";
 const software = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scratch = resolve(process.argv[2] ?? "");
 assert(
@@ -18,7 +24,7 @@ assert(
   "Explicit owned scratch required",
 );
 const require = createRequire(join(software, "package.json"));
-const { _electron } = require("playwright");
+const { _electron, chromium } = require("playwright");
 const builder = require("electron-builder");
 const asar = require("@electron/asar");
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -34,14 +40,27 @@ const report = {
   schema: 1,
   started: new Date().toISOString(),
   platform: process.platform,
-  base: "d2544a568d0d2b21128a77e5a43e4674460b1ef0",
+  base: migrationSafety
+    ? "01f92da87609f433cd93c9e7c0a0727974d5a173"
+    : "d2544a568d0d2b21128a77e5a43e4674460b1ef0",
   feed: feed.url,
   artifacts: [],
   launches: [],
   checks: [],
   driverSha256: sha(await readFile(fileURLToPath(import.meta.url))),
-  purpose: "Instrumented local WP31 acceptance; connected host, no clean/offline release claim",
+  purpose: `Instrumented local ${ticket} acceptance; connected host, no clean/offline release claim`,
 };
+const inputFiles = spawnSync("git", ["ls-files", "-co", "--exclude-standard", "-z", "05_Software"], {
+  cwd: resolve(software, ".."),
+  encoding: "utf8",
+});
+assert.equal(inputFiles.status, 0);
+report.inputs = await Promise.all(
+  [...new Set(inputFiles.stdout.split("\0").filter(Boolean))]
+    .sort()
+    .map(async (path) => ({ path, sha256: sha(await readFile(resolve(software, "..", path))) })),
+);
+let migrationContext;
 let app;
 let saveCurrent;
 const processes = [];
@@ -224,16 +243,16 @@ async function observeOwnedRelaunch() {
   assert.equal(resolve(runtime.data).toLowerCase(), resolve(installedData).toLowerCase());
   if (process.platform === "win32") assert(resolve(runtime.executable).startsWith(scratch));
   else {
-    assert.equal(resolve(runtime.image), join(scratch, "Install é/VERA-WP31-test.AppImage"));
+    assert.equal(resolve(runtime.image), join(scratch, `Install é/VERA-${ticket}-test.AppImage`));
     assert.equal(
       (await artifact(runtime.image)).sha256,
-      report.artifacts.find((item) => item.version === "0.31.1").sha256,
+      report.artifacts.find((item) => item.version === newVersion).sha256,
     );
-    assert.equal(await versionAt(runtime.resources), "0.31.1");
+    assert.equal(await versionAt(runtime.resources), newVersion);
     // AppImage's own extract-and-run runtime owns the temporary executable path.
     assert.equal((await artifact(runtime.executable)).sha256, report.launches[0].executable.sha256);
   }
-  assert.equal(runtime.version, "0.31.1");
+  assert.equal(runtime.version, newVersion);
   assert(runtime.packaged);
   report.checks.push({
     name: "updater-real-relaunch-isolated",
@@ -241,6 +260,44 @@ async function observeOwnedRelaunch() {
     expectedUserData: installedData,
     result: "PASS",
   });
+  if (migrationSafety) {
+    await until(async () => {
+      try {
+        return (await fetch(`http://127.0.0.1:${browserPort}/json/version`)).ok;
+      } catch {
+        return false;
+      }
+    }, "isolated relaunch renderer observation endpoint");
+    const browser = await chromium.connectOverCDP(`http://127.0.0.1:${browserPort}`);
+    try {
+      const page = browser.contexts()[0].pages()[0];
+      await page.waitForFunction(() => !!window.vera);
+      const invoke = (channel, request = {}) =>
+        page.evaluate(
+          async ({ channel, request }) => {
+            try {
+              return await window.vera.invoke(channel, request);
+            } catch (error) {
+              throw Error(JSON.stringify(error));
+            }
+          },
+          { channel, request },
+        );
+      await invoke("workbench.open", { folder: migrationContext.root });
+      report.checks.push({
+        name: "actual-updater-relaunch-recovery-before-next-turn",
+        ...(await verifyRecovered(
+          invoke,
+          migrationContext.root,
+          migrationContext.sessionIds,
+          migrationContext.content,
+        )),
+      });
+      await invoke("workbench.close");
+    } finally {
+      await browser.close();
+    }
+  }
   // Normal app quit after ownership/userData observation; no process-tree killing.
   await evaluate(`${getApp}.quit(); true`);
   socket.close();
@@ -262,13 +319,15 @@ try {
     const manifest = JSON.parse(await readFile(join(software, "resources/model-manifest.json"), "utf8"));
     report.prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
     const distribution = distributionConfig(process.platform, true, env);
-    distribution.appId = "engineering.ddp.vera.wp31.task4be77adc";
-    distribution.productName = "VERA WP31 Test";
-    distribution.executableName = "vera-wp31-test";
-    distribution.artifactName = `VERA-WP31-test-\${version}-\${os}-\${arch}.\${ext}`;
+    distribution.appId = migrationSafety
+      ? "engineering.ddp.vera.wp32.taskc5c04167"
+      : "engineering.ddp.vera.wp31.task4be77adc";
+    distribution.productName = `VERA ${ticket} Test`;
+    distribution.executableName = executableName;
+    distribution.artifactName = `VERA-${ticket}-test-\${version}-\${os}-\${arch}.\${ext}`;
     const packagePath = join(staged.stage, "package.json");
     const packageJson = JSON.parse(await readFile(packagePath, "utf8"));
-    packageJson.name = "vera-wp31-task4be77adc-test";
+    packageJson.name = migrationSafety ? "vera-wp32-taskc5c04167-test" : "vera-wp31-task4be77adc-test";
     await writeFile(packagePath, JSON.stringify(packageJson, null, 2));
     const nsisIsolation = join(scratch, "isolated-relaunch.nsh");
     await writeFile(
@@ -291,7 +350,7 @@ try {
       purpose:
         "Instrumented launch isolation/observation only; updater and actual NSIS/AppImage installation stay real.",
     };
-    for (const version of ["0.31.0", "0.31.1"]) {
+    for (const version of [oldVersion, newVersion]) {
       const output = join(scratch, version);
       const target = process.platform === "win32" ? "nsis" : "AppImage";
       const config = {
@@ -302,11 +361,11 @@ try {
         electronVersion: "44.7.0",
         extraMetadata: {
           version,
-          description: "WP31 local update test",
+          description: `${ticket} local update test`,
           author: "DDP Engineering",
           homepage: "http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant",
         },
-        releaseInfo: { releaseNotes: `WP31 local update release ${version}` },
+        releaseInfo: { releaseNotes: `${ticket} local update release ${version}` },
         nsis: { ...distribution.nsis, include: nsisIsolation },
         win: { ...distribution.win, target: [{ target, arch: ["x64"] }] },
         linux: { ...distribution.linux, target: [{ target, arch: ["x64"] }] },
@@ -315,14 +374,14 @@ try {
       const buildConfig = structuredClone(config);
       if (process.platform === "linux") {
         buildConfig.afterPack = async ({ appOutDir }) => {
-          const binary = join(appOutDir, "vera-wp31-test");
+          const binary = join(appOutDir, executableName);
           await rename(binary, `${binary}.bin`);
           await writeFile(
             binary,
             [
               "#!/bin/sh",
               'here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)',
-              `exec "$here/vera-wp31-test.bin" "--user-data-dir=${installedData}" "--inspect=${inspectorPort}" "--remote-debugging-port=${browserPort}" "$@"`,
+              `exec "$here/${executableName}.bin" "--user-data-dir=${installedData}" "--inspect=${inspectorPort}" "--remote-debugging-port=${browserPort}" "$@"`,
               "",
             ].join("\n"),
           );
@@ -350,7 +409,7 @@ try {
       for (const name of await readdir(output))
         if (name.endsWith(".blockmap") || name.endsWith(".yml"))
           await cp(join(output, name), join(feedRoot, name));
-      if (process.platform === "win32" && version === "0.31.0") {
+      if (!migrationSafety && process.platform === "win32" && version === oldVersion) {
         // Actual portable package layout, generated independently of the NSIS installation.
         const zipOutput = join(scratch, "portable");
         await builder.build({
@@ -369,6 +428,22 @@ try {
       }
     }
   } else {
+    assert(previous.inputs, "Reused artifacts require original complete candidate inputs");
+    const buildInputs = (inputs) =>
+      inputs.filter(
+        ({ path }) =>
+          !path.includes(".test.") &&
+          !path.startsWith("05_Software/e2e/") &&
+          !path.startsWith("05_Software/tests/") &&
+          !path.startsWith("05_Software/fixtures/") &&
+          path !== "05_Software/scripts/probe-upgrade.mjs" &&
+          path !== "05_Software/scripts/upgrade-fixture.mjs",
+      );
+    assert.deepEqual(
+      buildInputs(report.inputs),
+      buildInputs(previous.inputs),
+      "Compiled product/configuration must match original artifact inputs",
+    );
     for (const item of previous.artifacts) {
       assert.equal(
         (await artifact(item.path)).sha256,
@@ -383,13 +458,14 @@ try {
     report.reusedBuild = {
       priorDriverSha256: previous.driverSha256,
       priorResult: previous.result,
+      originalInputs: previous.inputs,
       reason: "Native artifacts/source unchanged; only external probe environment or diagnostics corrected.",
     };
   }
-  if (process.platform === "linux" && !process.argv.includes("--portable-only")) {
+  if (!migrationSafety && process.platform === "linux" && !process.argv.includes("--portable-only")) {
     const before = feed.requests.length;
     const managed = await launch(
-      join(outputs["0.31.0"].output, "linux-unpacked/vera-wp31-test.bin"),
+      join(outputs[oldVersion].output, `linux-unpacked/${executableName}.bin`),
       "managed",
       { APPIMAGE: null },
     );
@@ -405,7 +481,7 @@ try {
     const snapshot = await managed.invoke("update.check");
     assert.equal(snapshot.distribution, "managed");
     assert.equal(snapshot.phase, "available");
-    assert.equal(snapshot.offer.version, "0.31.1");
+    assert.equal(snapshot.offer.version, newVersion);
     let denied = false;
     try {
       await managed.invoke("update.download", { confirmed: true });
@@ -427,11 +503,11 @@ try {
   }
   const metaName = process.platform === "win32" ? "latest.yml" : "latest-linux.yml";
   const meta = parse(await readFile(join(feedRoot, metaName), "utf8"));
-  assert.equal(meta.version, "0.31.1");
+  assert.equal(meta.version, newVersion);
   assert(meta.files.every((f) => f.sha512));
   await writeFile(
     join(feedRoot, process.platform === "win32" ? "beta.yml" : "beta-linux.yml"),
-    stringify({ ...meta, version: "0.31.1-beta.1", releaseNotes: "Beta metadata; stable is newer" }),
+    stringify({ ...meta, version: `${newVersion}-beta.1`, releaseNotes: "Beta metadata; stable is newer" }),
   );
   report.feedMetadata = await artifact(join(feedRoot, metaName));
   if (!process.argv.includes("--portable-only")) {
@@ -439,7 +515,7 @@ try {
     await mkdir(install, { recursive: true });
     let executable;
     if (process.platform === "win32") {
-      const child = spawn(outputs["0.31.0"].path, ["/S", `/D=${install}`], { env, windowsHide: true });
+      const child = spawn(outputs[oldVersion].path, ["/S", `/D=${install}`], { env, windowsHide: true });
       const code = await new Promise((accept) => child.once("exit", (code) => accept(code)));
       report.checks.push({
         name: "NSIS-vN-install",
@@ -449,12 +525,12 @@ try {
         destination: install,
       });
       assert.equal(code, 0);
-      executable = join(install, "vera-wp31-test.exe");
+      executable = join(install, `${executableName}.exe`);
     } else {
-      const appImage = join(install, "VERA-WP31-test.AppImage");
-      await cp(outputs["0.31.0"].path, appImage);
+      const appImage = join(install, `VERA-${ticket}-test.AppImage`);
+      await cp(outputs[oldVersion].path, appImage);
       await run([appImage, "--appimage-extract"], install, env, "extract-vN");
-      executable = join(install, "squashfs-root/vera-wp31-test.bin");
+      executable = join(install, `squashfs-root/${executableName}.bin`);
       outputs.installedAppImage = appImage;
     }
     const replay = join(scratch, "replay");
@@ -479,136 +555,267 @@ try {
         : {}),
     };
     const old = await launch(executable, "installed", extra);
-    assert.equal(old.runtime.version, "0.31.0");
-    await old.invoke("app.settings.update", { updates: { mode: "off", channel: "beta" }, theme: "dark" });
-    const checked = await old.invoke("update.check");
-    assert.equal(checked.offer.version, "0.31.1");
-    assert.equal(checked.phase, "available");
-    await old.invoke("app.settings.update", { updates: { channel: "latest" } });
-    const sha2Only = structuredClone(meta);
-    for (const file of sha2Only.files) {
-      delete file.sha512;
-      file.sha2 = "a".repeat(64);
-    }
-    delete sha2Only.sha512;
-    sha2Only.sha2 = "a".repeat(64);
-    await writeFile(join(feedRoot, metaName), stringify(sha2Only));
-    const beforeSha2 = feed.requests.length;
-    const sha2Refused = await old.invoke("update.check");
-    assert.equal(sha2Refused.phase, "error");
-    assert.equal(sha2Refused.errorCode, "INTEGRITY");
-    assert(feed.requests.slice(beforeSha2).every((request) => request.path.endsWith(".yml")));
-    report.checks.push({ name: "real-SHA512-required", snapshot: sha2Refused, artifactRequests: 0 });
-    await writeFile(join(feedRoot, metaName), stringify(meta));
-    await old.invoke("app.settings.update", { updates: { channel: "beta" } });
-    // Actual updater rejection, before the valid artifact download.
-    const corrupt = structuredClone(meta);
-    for (const file of corrupt.files) file.sha512 = Buffer.alloc(64).toString("base64");
-    corrupt.sha512 = Buffer.alloc(64).toString("base64");
-    await writeFile(join(feedRoot, metaName), stringify(corrupt));
-    await old.invoke("update.check");
-    const refused = await old.invoke("update.download", { confirmed: true });
-    assert.equal(refused.phase, "error");
-    assert.equal(refused.errorCode, "INTEGRITY");
-    assert.equal(await versionAt(old.runtime.resources), "0.31.0");
-    report.checks.push({ name: "real-SHA512-rejection", snapshot: refused, installedVersion: "0.31.0" });
-    await writeFile(join(feedRoot, metaName), stringify(meta));
-    await old.invoke("update.check");
-    const downloaded = await old.invoke("update.download", { confirmed: true });
-    assert.equal(downloaded.phase, "ready");
-    const downloads = feed.requests.filter((r) =>
-      r.path.endsWith(process.platform === "win32" ? ".exe" : ".AppImage"),
-    );
-    assert(downloads.length > 0);
-    report.checks.push({
-      name: "installed-discovery-download",
-      version: checked.offer.version,
-      metadata: checked,
-      downloaded,
-      downloadedArtifactSha256: report.artifacts.find((a) => a.version === "0.31.1").sha256,
-    });
-    await old.page.locator("[data-update-banner]").waitFor();
-    const benchRoot = join(scratch, "bench é");
-    await mkdir(benchRoot, { recursive: true });
-    if ((await readdir(benchRoot)).includes("workbench.yaml"))
-      await old.invoke("workbench.open", { folder: benchRoot });
-    else await old.invoke("workbench.create", { folder: benchRoot, name: "WP31 upgrade board" });
-    await writeFile(join(benchRoot, "docs/note.md"), "old\n");
-    const session = await old.invoke("session.create");
-    await old.invoke("session.send", { sessionId: session.id, text: "edit" });
-    const pending = await until(async () => {
-      const state = await old.invoke("session.get", { sessionId: session.id });
-      return state.snapshot.approvals.find((a) => !a.decision);
-    }, "real approval");
-    const deferred = await old.invoke("update.restart");
-    assert.equal(deferred.phase, "deferred");
-    await sleep(500);
-    assert.equal(await versionAt(old.runtime.resources), "0.31.0");
-    assert.equal(
-      (await old.invoke("session.get", { sessionId: session.id })).snapshot.status,
-      "awaiting_approval",
-    );
-    report.checks.push({
-      name: "real-turn-approval-deferral",
-      sessionId: session.id,
-      approvalId: pending.approvalId,
-      pidStillRunning: old.runtime.pid,
-      observedInstalledVersion: "0.31.0",
-      snapshot: deferred,
-    });
-    await old.page.screenshot({ path: join(scratch, "deferred.png") });
-    await old.invoke("session.approval.decide", {
-      sessionId: session.id,
-      approvalId: pending.approvalId,
-      requestSha256: pending.requestSha256,
-      decision: "approved",
-    });
-    await until(() => Promise.resolve(app.process().exitCode !== null), "old app clean exit");
-    await old.save();
-    assert.equal(old.receipt.exit.code, 0);
-    app = undefined;
-    assert.equal(await readFile(join(benchRoot, "docs/note.md"), "utf8"), "new\n");
-    if (process.platform === "win32") {
-      await until(
-        async () => (await versionAt(old.runtime.resources)) === "0.31.1",
-        "NSIS real installed upgrade",
+    assert.equal(old.runtime.version, oldVersion);
+    if (migrationSafety) {
+      const preferences = await old.invoke("app.settings.update", {
+        updates: { mode: "off", channel: "latest" },
+        theme: "dark",
+        language: "ro",
+        textScale: 1.125,
+      });
+      const benchRoot = join(scratch, "bench é");
+      await mkdir(benchRoot, { recursive: true });
+      if ((await readdir(benchRoot)).includes("workbench.yaml"))
+        await old.invoke("workbench.open", { folder: benchRoot });
+      else await old.invoke("workbench.create", { folder: benchRoot, name: "WP32 upgrade board" });
+      await mkdir(join(benchRoot, "docs"), { recursive: true });
+      await writeFile(join(benchRoot, "docs/note.md"), "old\n");
+      await writeFile(join(benchRoot, "board.txt"), "Board uses 3.3 V.\nSecond source line.\n");
+      const sessions = [await old.invoke("session.create"), await old.invoke("session.create")];
+      // Durable history is created by vN itself, before the interrupted fixture is added.
+      const completed = await old.invoke("session.create");
+      await old.invoke("session.send", { sessionId: completed.id, text: "edit" });
+      const approval = await until(
+        async () =>
+          (await old.invoke("session.get", { sessionId: completed.id })).snapshot.approvals.find(
+            (a) => !a.decision,
+          ),
+        "vN completed history approval",
       );
+      await old.invoke("session.approval.decide", {
+        sessionId: completed.id,
+        approvalId: approval.approvalId,
+        requestSha256: approval.requestSha256,
+        decision: "denied",
+      });
+      await until(
+        async () => (await old.invoke("session.get", { sessionId: completed.id })).snapshot.status === "idle",
+        "vN completed history",
+      );
+      const completedBefore = await old.invoke("session.get", { sessionId: completed.id });
+      await old.invoke("workbench.close");
+      const seeded = await seedInterrupted(
+        benchRoot,
+        sessions.map((s) => s.id),
+      );
+      migrationContext = { root: benchRoot, sessionIds: sessions.map((s) => s.id), content: seeded.content };
+      report.checks.push({
+        name: "vN-created-settings-sessions-and-closed-interruption-fixture",
+        preferences,
+        completedId: completed.id,
+        completedBefore,
+        ...seeded,
+      });
+      const checked = await old.invoke("update.check");
+      assert.equal(checked.offer.version, newVersion);
+      const downloaded = await old.invoke("update.download", { confirmed: true });
+      assert.equal(downloaded.phase, "ready");
+      report.checks.push({
+        name: "installed-discovery-download",
+        version: checked.offer.version,
+        downloadedArtifactSha256: report.artifacts.find((a) => a.version === newVersion).sha256,
+        snapshot: downloaded,
+      });
+      await old.invoke("update.restart");
+      await until(() => Promise.resolve(app.process().exitCode !== null), "old installed app exits");
+      await old.save();
+      assert.equal(old.receipt.exit.code, 0);
+      app = undefined;
+      if (process.platform === "win32")
+        await until(async () => (await versionAt(old.runtime.resources)) === newVersion, "NSIS real upgrade");
+      else
+        await until(
+          async () =>
+            sha(await readFile(outputs.installedAppImage)) ===
+            report.artifacts.find((a) => a.version === newVersion).sha256,
+          "AppImage real replacement",
+        );
       await observeOwnedRelaunch();
+      if (process.platform === "linux")
+        await run([outputs.installedAppImage, "--appimage-extract"], install, env, "extract-vN+1");
+      const newer = await launch(executable, "installed-vN+1", extra);
+      assert.equal(newer.runtime.version, newVersion);
+      const restoredSettings = await newer.invoke("app.settings.get");
+      for (const key of [
+        "installationId",
+        "theme",
+        "language",
+        "textScale",
+        "updates",
+        "providers",
+        "limits",
+      ])
+        assert.deepEqual(restoredSettings.settings[key], preferences.settings[key]);
+      await newer.invoke("workbench.open", { folder: benchRoot });
+      assert.deepEqual(await newer.invoke("session.get", { sessionId: completed.id }), completedBefore);
+      const recovered = await verifyRecovered(
+        newer.invoke,
+        benchRoot,
+        migrationContext.sessionIds,
+        seeded.content,
+      );
+      report.checks.push({
+        name: "real-installed-vN+1-persistence-recovery",
+        version: newer.runtime.version,
+        settings: restoredSettings,
+        completedHistoryIdentical: true,
+        ...recovered,
+      });
+      await newer.invoke("session.model.set", { sessionId: sessions[0].id, modelRef: "replay/edit" });
+      await newer.invoke("session.send", { sessionId: sessions[0].id, text: "edit" });
+      const nextApproval = await until(
+        async () =>
+          (await newer.invoke("session.get", { sessionId: sessions[0].id })).snapshot.approvals.find(
+            (a) => !a.decision,
+          ),
+        "new turn admitted only after recovered state",
+      );
+      await newer.invoke("session.approval.decide", {
+        sessionId: sessions[0].id,
+        approvalId: nextApproval.approvalId,
+        requestSha256: nextApproval.requestSha256,
+        decision: "denied",
+      });
+      await until(
+        async () =>
+          (await newer.invoke("session.get", { sessionId: sessions[0].id })).snapshot.status === "idle",
+        "next turn completes",
+      );
+      report.checks.push({ name: "next-turn-after-recovery", sessionId: sessions[0].id, completed: true });
+      await app.close();
+      await newer.save();
+      app = undefined;
     } else {
-      const expected = report.artifacts.find((a) => a.version === "0.31.1").sha256;
-      await until(
-        async () => sha(await readFile(outputs.installedAppImage)) === expected,
-        "AppImage replaced bytes",
+      await old.invoke("app.settings.update", { updates: { mode: "off", channel: "beta" }, theme: "dark" });
+      const checked = await old.invoke("update.check");
+      assert.equal(checked.offer.version, newVersion);
+      assert.equal(checked.phase, "available");
+      await old.invoke("app.settings.update", { updates: { channel: "latest" } });
+      const sha2Only = structuredClone(meta);
+      for (const file of sha2Only.files) {
+        delete file.sha512;
+        file.sha2 = "a".repeat(64);
+      }
+      delete sha2Only.sha512;
+      sha2Only.sha2 = "a".repeat(64);
+      await writeFile(join(feedRoot, metaName), stringify(sha2Only));
+      const beforeSha2 = feed.requests.length;
+      const sha2Refused = await old.invoke("update.check");
+      assert.equal(sha2Refused.phase, "error");
+      assert.equal(sha2Refused.errorCode, "INTEGRITY");
+      assert(feed.requests.slice(beforeSha2).every((request) => request.path.endsWith(".yml")));
+      report.checks.push({ name: "real-SHA512-required", snapshot: sha2Refused, artifactRequests: 0 });
+      await writeFile(join(feedRoot, metaName), stringify(meta));
+      await old.invoke("app.settings.update", { updates: { channel: "beta" } });
+      // Actual updater rejection, before the valid artifact download.
+      const corrupt = structuredClone(meta);
+      for (const file of corrupt.files) file.sha512 = Buffer.alloc(64).toString("base64");
+      corrupt.sha512 = Buffer.alloc(64).toString("base64");
+      await writeFile(join(feedRoot, metaName), stringify(corrupt));
+      await old.invoke("update.check");
+      const refused = await old.invoke("update.download", { confirmed: true });
+      assert.equal(refused.phase, "error");
+      assert.equal(refused.errorCode, "INTEGRITY");
+      assert.equal(await versionAt(old.runtime.resources), oldVersion);
+      report.checks.push({ name: "real-SHA512-rejection", snapshot: refused, installedVersion: oldVersion });
+      await writeFile(join(feedRoot, metaName), stringify(meta));
+      await old.invoke("update.check");
+      const downloaded = await old.invoke("update.download", { confirmed: true });
+      assert.equal(downloaded.phase, "ready");
+      const downloads = feed.requests.filter((r) =>
+        r.path.endsWith(process.platform === "win32" ? ".exe" : ".AppImage"),
       );
-      await observeOwnedRelaunch();
-      await run([outputs.installedAppImage, "--appimage-extract"], install, env, "extract-vN+1");
+      assert(downloads.length > 0);
+      report.checks.push({
+        name: "installed-discovery-download",
+        version: checked.offer.version,
+        metadata: checked,
+        downloaded,
+        downloadedArtifactSha256: report.artifacts.find((a) => a.version === newVersion).sha256,
+      });
+      await old.page.locator("[data-update-banner]").waitFor();
+      const benchRoot = join(scratch, "bench é");
+      await mkdir(benchRoot, { recursive: true });
+      if ((await readdir(benchRoot)).includes("workbench.yaml"))
+        await old.invoke("workbench.open", { folder: benchRoot });
+      else await old.invoke("workbench.create", { folder: benchRoot, name: "WP31 upgrade board" });
+      await writeFile(join(benchRoot, "docs/note.md"), "old\n");
+      const session = await old.invoke("session.create");
+      await old.invoke("session.send", { sessionId: session.id, text: "edit" });
+      const pending = await until(async () => {
+        const state = await old.invoke("session.get", { sessionId: session.id });
+        return state.snapshot.approvals.find((a) => !a.decision);
+      }, "real approval");
+      const deferred = await old.invoke("update.restart");
+      assert.equal(deferred.phase, "deferred");
+      await sleep(500);
+      assert.equal(await versionAt(old.runtime.resources), oldVersion);
+      assert.equal(
+        (await old.invoke("session.get", { sessionId: session.id })).snapshot.status,
+        "awaiting_approval",
+      );
+      report.checks.push({
+        name: "real-turn-approval-deferral",
+        sessionId: session.id,
+        approvalId: pending.approvalId,
+        pidStillRunning: old.runtime.pid,
+        observedInstalledVersion: oldVersion,
+        snapshot: deferred,
+      });
+      await old.page.screenshot({ path: join(scratch, "deferred.png") });
+      await old.invoke("session.approval.decide", {
+        sessionId: session.id,
+        approvalId: pending.approvalId,
+        requestSha256: pending.requestSha256,
+        decision: "approved",
+      });
+      await until(() => Promise.resolve(app.process().exitCode !== null), "old app clean exit");
+      await old.save();
+      assert.equal(old.receipt.exit.code, 0);
+      app = undefined;
+      assert.equal(await readFile(join(benchRoot, "docs/note.md"), "utf8"), "new\n");
+      if (process.platform === "win32") {
+        await until(
+          async () => (await versionAt(old.runtime.resources)) === newVersion,
+          "NSIS real installed upgrade",
+        );
+        await observeOwnedRelaunch();
+      } else {
+        const expected = report.artifacts.find((a) => a.version === newVersion).sha256;
+        await until(
+          async () => sha(await readFile(outputs.installedAppImage)) === expected,
+          "AppImage replaced bytes",
+        );
+        await observeOwnedRelaunch();
+        await run([outputs.installedAppImage, "--appimage-extract"], install, env, "extract-vN+1");
+      }
+      const newer = await launch(executable, "installed-vN+1", extra);
+      assert.equal(newer.runtime.version, newVersion);
+      assert.equal((await newer.invoke("app.settings.get")).settings.theme, "dark");
+      await newer.invoke("workbench.open", { folder: benchRoot });
+      const restored = await newer.invoke("session.get", { sessionId: session.id });
+      assert.equal(restored.snapshot.status, "idle");
+      report.checks.push({
+        name: "real-installed-vN+1",
+        version: newer.runtime.version,
+        sessionId: session.id,
+        restoredStatus: restored.snapshot.status,
+        theme: "dark",
+        asarSha256: newer.receipt.asar.sha256,
+      });
+      await app.close();
+      await newer.save();
+      app = undefined;
     }
-    const newer = await launch(executable, "installed-vN+1", extra);
-    assert.equal(newer.runtime.version, "0.31.1");
-    assert.equal((await newer.invoke("app.settings.get")).settings.theme, "dark");
-    await newer.invoke("workbench.open", { folder: benchRoot });
-    const restored = await newer.invoke("session.get", { sessionId: session.id });
-    assert.equal(restored.snapshot.status, "idle");
-    report.checks.push({
-      name: "real-installed-vN+1",
-      version: newer.runtime.version,
-      sessionId: session.id,
-      restoredStatus: restored.snapshot.status,
-      theme: "dark",
-      asarSha256: newer.receipt.asar.sha256,
-    });
-    await app.close();
-    await newer.save();
-    app = undefined;
   }
-  if (process.platform === "win32") {
-    const portableExe = join(scratch, "portable/win-unpacked/vera-wp31-test.exe");
+  if (!migrationSafety && process.platform === "win32") {
+    const portableExe = join(scratch, `portable/win-unpacked/${executableName}.exe`);
     const portable = await launch(portableExe, "portable");
     assert.equal(portable.receipt.info.portable, true);
     await portable.invoke("app.settings.update", { updates: { mode: "download", channel: "latest" } });
     const before = feed.requests.length;
     const available = await portable.invoke("update.check");
-    assert.equal(available.offer.version, "0.31.1");
+    assert.equal(available.offer.version, newVersion);
     assert.equal(available.phase, "available");
     await sleep(500);
     assert(feed.requests.slice(before).every((r) => r.path.endsWith(".yml")));

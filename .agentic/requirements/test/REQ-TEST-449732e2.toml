@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-449732e2"
+title = "Previous-version migration and recovery fixtures"
+status = "active"
+requirement = "The migration safety regression suite shall exercise every existing settings and SQLite migration from a frozen previous-version fixture with pre-step backup and noncorruption oracles, and cover credentials schema1/workbench format1 compatibility and newer refusal without invented migrations."
+verification = "Native fixture tests assert exact backups, integrity/foreign keys, retained identity/extensions/history, pending hash branches, aborted stale approvals, interrupted results/events and idle recovery before a new turn."
+affected_paths = ["05_Software/packages/core/src/storage/upgrade-safety.test.ts", "05_Software/packages/core/src/settings/service.test.ts", "05_Software/packages/core/src/workbench/service.test.ts", "05_Software/apps/desktop/src/main/credentials.test.ts", "05_Software/fixtures/upgrade/", "05_Software/fixtures/settings/"]
+linked_tests = ["05_Software/packages/core/src/storage/upgrade-safety.test.ts", "05_Software/packages/core/src/settings/service.test.ts", "05_Software/packages/core/src/workbench/service.test.ts", "05_Software/apps/desktop/src/main/credentials.test.ts"]
+spec = "specs/REQ-TEST-449732e2.md"
+priority = "normal"
+created = 2026-10-13
+updated = 2026-10-13

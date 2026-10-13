@@ -106,7 +106,8 @@ Paths below are relative to 05_Software.
 - packages/core/src/{index,ports}.ts — exports and host contracts.
 - packages/core/src/settings/service.ts and service.test.ts — load/migrate/serial state/lifecycle.
 - packages/core/vitest.config.ts — Node test project and shared source resolution.
-- fixtures/settings/version-0.json and version-1.json — legacy preferences, UUID and extensions.
+- fixtures/settings/version-{0,1,2,3}.json — previous preferences, UUID, recents and extensions;
+  [Upgrade safety](upgrade-safety.md) supplies per-version backup/failure acceptance.
 - apps/desktop/src/main/{data-locations,file-access,host-ports,logger}.ts — host adapters.
 - apps/desktop/src/main/{data-locations,file-access,logger}.test.ts — storage/log regression seams.
 - apps/desktop/src/main/index.ts — handlers, initialization and shutdown drains.

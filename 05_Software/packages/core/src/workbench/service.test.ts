@@ -4,7 +4,7 @@ import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it } from "vitest";
 import { createDocumentProcessor } from "../knowledge/processor.js";
@@ -63,6 +63,23 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+it("opens frozen workbench format1 unchanged and refuses format2 without runtime or recent writes", async () => {
+  const h = await harness();
+  const file = join(h.folder, "workbench.yaml");
+  const previous = await readFile(resolve("fixtures/upgrade/workbench-v1.yaml"), "utf8");
+  await writeFile(file, previous);
+  const opened = await h.service.open(h.folder);
+  expect(opened.config).toMatchObject({ format: 1, extension: "kept" });
+  await h.service.close();
+  expect(await readFile(file, "utf8")).toBe(previous);
+  const future = await readFile(resolve("fixtures/upgrade/workbench-newer.yaml"), "utf8");
+  await writeFile(file, future);
+  const beforeSettings = await readFile(h.paths.settings, "utf8");
+  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "WORKBENCH_TOO_NEW" });
+  expect(await readFile(file, "utf8")).toBe(future);
+  expect(await readFile(h.paths.settings, "utf8")).toBe(beforeSettings);
+  expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
+});
 it("manages skills exclusively with stale hash, ownership and current workbench admission", async () => {
   const h = await harness();
   try {
