@@ -1,6 +1,0 @@
-﻿{
-    "artifactSha256":  "9b48bb7463b77af901253ff839195ca9a8c32420b0d57bbad72aa3e21b5b6793",
-    "status":  "failed",
-    "error":  "This command cannot be run due to the error: An Application Control policy has blocked this file.",
-    "stage":  "application-launch"
-}

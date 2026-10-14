@@ -1,2 +1,0 @@
-{"model":"Xenova/bge-small-en-v1.5","packageBytes":34961638,"warmMs":46.97490419999995,"recall":{"hits":25,"total":28,"recallAt5":0.8928571428571429}}
-{"model":"Xenova/multilingual-e5-small","packageBytes":140462311,"warmMs":52.722993966666735,"recall":{"hits":26,"total":28,"recallAt5":0.9285714285714286}}

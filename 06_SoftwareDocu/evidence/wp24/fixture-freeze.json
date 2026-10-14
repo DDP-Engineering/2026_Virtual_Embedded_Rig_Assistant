@@ -1,7 +1,0 @@
-{
-  "sha256": "5f02d03d7f75a2b56f12ab299272ab4c27b5baab084852763fee1d2686b8c69b",
-  "questions": 28,
-  "en": 14,
-  "ro": 14,
-  "phase": "before any model inference"
-}

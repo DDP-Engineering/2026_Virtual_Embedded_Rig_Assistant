@@ -107,8 +107,7 @@ certificate-store selectors `VERA_CERTIFICATE_SHA1` or `VERA_CERTIFICATE_SUBJECT
 Requested signing must verify successfully. Without credentials, unsigned builds are permitted and
 About displays localized unsigned identity. Instrumented distributions use VERA Test, a separate
 appId/executable/package name and labelled filenames; release excludes all test hooks.
-[WP-05 measurements and execution procedures](../06_SoftwareDocu/wp05-packaging-measurements.md)
-records the foundation's current connected Windows and offline Linux observations. Actual
+[Native packaging](../.agentic/knowledge/native-packaging.md) documents the build pipeline. Actual
 clean/offline Windows and VC++ self-containment on that environment remain pending before final
 release; static import closure or current-host loaded modules supplement this requirement.
 Full scripted session, update and external egress acceptance belongs to WP31–33.
@@ -230,7 +229,7 @@ python ../02_Tools/npmw.py node scripts/compare-embeddings.mjs --prepare --scrat
 Omit --prepare for verified-cache-only execution; inference always disables remote
 model loading. On Ubuntu use python3 and a linux/build scratch child. The report
 retains exact corpus/fixture/manifest hashes, timings and keyword/semantic/hybrid
-recall by EN/RO. See [measurements](../06_SoftwareDocu/wp24-embedding-measurements.md)
+recall by EN/RO. See [retrieval evaluation](../.agentic/knowledge/retrieval-evaluation.md)
 and [ADR0015](../00_Planning/decisions/ADR-0015-embedding-model-selection.md).
 # Updates
 
