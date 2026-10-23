@@ -37,6 +37,8 @@ explicit user actions in the ordinary UI.
   format/lock/storage/ingest/recents behavior and SessionsHost drains turns on replacement.
 - Package staging and development use the same fixture inventory; runtime .vera/credentials
   and unrelated fixture/host files stay outside the shipped demo inventory.
+- The shared inventory declares its JSON module type so the compiled ESM export loads
+  directly in Node.js as well as through application bundlers.
 - All board data is fictional. Log-analysis/checklist skills distinguish recorded events from
   expected checks: I2C delay then ready does not establish sensor-ID or LED acceptance.
 
