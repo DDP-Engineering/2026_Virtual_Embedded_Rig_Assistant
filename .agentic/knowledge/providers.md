@@ -4,7 +4,7 @@
 
 Select for credentials.json, CredentialStore, safeStorage, weak-storage consent, known-secret scrub,
 providers.list/save/remove and Settings Providers. Connection tests route to [LLM gateway](llm-gateway.md). Start with main credentials.ts and
-provider-settings.ts under05_Software/apps/desktop/src. Configuration schemas live in shared providers.ts.
+provider-settings.ts under05_Software/src/apps/desktop/src. Configuration schemas live in shared providers.ts.
 [Application data](app-data.md) owns settings migration/atomic ports; [IPC boundary](ipc-boundary.md)
 owns sender/schema transport; [renderer foundation](renderer-foundation.md) owns shell/accessibility.
 [LLM gateway](llm-gateway.md) owns model requests, capabilities and connection tests. ChatgptAuth owns OAuth lifecycle; subscription-store preserves its storage choice through refresh.
@@ -62,8 +62,8 @@ strict public projections. Renderer holds a password draft until save/cancel and
 | Configuration/IPC shape | shared providers.ts/ipc.ts | provider-settings and bridge/router tests |
 | Settings format | shared settings.ts; core settings/service.ts | service.test.ts |
 | Error/event redaction | core llm/scrub.ts; main store/router/events | scrub/credentials/provider/events tests |
-| Subscription lifecycle/consent/refresh | main chatgpt-auth/subscription-store; renderer chatgpt | chatgpt-auth.test.ts; chatgpt.test.ts; e2e/chatgpt.spec.ts |
-| Masked/localized forms | renderer components/providers.tsx | e2e/providers.spec.ts and mock.spec.ts |
+| Subscription lifecycle/consent/refresh | main chatgpt-auth/subscription-store; renderer chatgpt | chatgpt-auth.test.ts; chatgpt.test.ts; tests/e2e/chatgpt.spec.ts |
+| Masked/localized forms | renderer components/providers.tsx | tests/e2e/providers.spec.ts and mock.spec.ts |
 
 ## Key behaviors
 
@@ -105,16 +105,16 @@ flowchart LR
 
 Paths relative to05_Software.
 
-- packages/core/src/ports.ts and llm/scrub.ts — structural store contract and pure redaction.
-- packages/shared/src/{providers,settings,ipc,index}.ts — config formats, migration shapes and transport.
-- apps/desktop/src/main/{chatgpt-auth,subscription-store,open-external}.ts and tests — main-owned OAuth, explicit refresh consent and confirmed external opening.
-- packages/shared/src/chatgpt.ts; renderer components/{chatgpt,consent-dialog}.tsx and chatgpt.test.ts; e2e/chatgpt.spec.ts — strict metadata and native/browser controls.
-- apps/desktop/src/main/{credentials,provider-settings}.ts — crypto persistence and coordinated operations.
-- apps/desktop/src/main/{index,ipc-router,events}.ts — startup/drain, handlers, known-secret response guards.
-- apps/desktop/src/renderer/components/{providers,settings}.tsx — masked forms and consent modal.
-- apps/desktop/src/renderer/mocks/mockApi.ts — metadata-only provider fixtures.
-- apps/desktop/src/renderer/locales/{en,ro,de}.json and styles.css — translations and rem/layout.
+- src/libraries/core/src/ports.ts and llm/scrub.ts — structural store contract and pure redaction.
+- src/libraries/shared/src/{providers,settings,ipc,index}.ts — config formats, migration shapes and transport.
+- src/apps/desktop/src/main/{chatgpt-auth,subscription-store,open-external}.ts and tests — main-owned OAuth, explicit refresh consent and confirmed external opening.
+- src/libraries/shared/src/chatgpt.ts; renderer components/{chatgpt,consent-dialog}.tsx and chatgpt.test.ts; tests/e2e/chatgpt.spec.ts — strict metadata and native/browser controls.
+- src/apps/desktop/src/main/{credentials,provider-settings}.ts — crypto persistence and coordinated operations.
+- src/apps/desktop/src/main/{index,ipc-router,events}.ts — startup/drain, handlers, known-secret response guards.
+- src/apps/desktop/src/renderer/components/{providers,settings}.tsx — masked forms and consent modal.
+- src/apps/desktop/src/renderer/mocks/mockApi.ts — metadata-only provider fixtures.
+- src/apps/desktop/src/renderer/locales/{en,ro,de}.json and styles.css — translations and rem/layout.
 - Main credentials/provider-settings tests, core scrub/settings tests, bridge/router/mock regressions,
-  e2e/{providers,mock,shell}.spec.ts — deterministic fictional secrets and native/browser regressions.
+  tests/e2e/{providers,mock,shell}.spec.ts — deterministic fictional secrets and native/browser regressions.
 
 Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.

@@ -40,15 +40,17 @@ source = [
     "05_Software/tsconfig*.json",
     "05_Software/playwright.config.ts",
     "05_Software/vitest.config.ts",
-    "05_Software/packages/",
-    "05_Software/apps/",
+    "05_Software/src/libraries/",
+    "05_Software/src/apps/",
     "05_Software/scripts/",
-    "05_Software/fixtures/",
+    "05_Software/src/models/",
+    "05_Software/src/windows_runtime/",
+    "05_Software/tests/fixtures/",
 ]
 tests = [
-    "05_Software/e2e/",
+    "05_Software/tests/e2e/",
     "05_Software/tests/",
-    "05_Software/packages/*/test/",
+    "05_Software/src/libraries/*/test/",
     "05_Software/**/*.test.ts",
     "05_Software/**/*.test.tsx",
 ]

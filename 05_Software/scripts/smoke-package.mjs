@@ -205,7 +205,7 @@ export async function smokePackage(options) {
     assert(done.items.some((i) => i.kind === "tool" && i.name === "write" && i.status === "ok"));
     assert(
       done.items.some(
-        (i) => i.kind === "assistant" && i.citations.some((c) => c.valid && c.ref === "WORKBENCH.md#L1-L4"),
+        (i) => i.kind === "assistant" && i.citations.some((c) => c.valid && c.ref === "board.txt#L1-L2"),
       ),
     );
     assert.equal(done.approvals.at(-1).decision, "approved");

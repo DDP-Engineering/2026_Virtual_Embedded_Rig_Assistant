@@ -1,0 +1,3 @@
+{"match":"(?i)edit.*board","toolCalls":[{"name":"read","args":{"path":"board-notes.md"}}]}
+{"toolCalls":[{"name":"edit","args":{"path":"board-notes.md","oldString":"Device under test","newString":"Device under test (reviewed)"}}]}
+{"text":"The change decision has been processed."}

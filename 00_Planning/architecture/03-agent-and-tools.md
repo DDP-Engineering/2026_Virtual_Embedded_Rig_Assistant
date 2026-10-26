@@ -24,7 +24,7 @@ session.stop → abort: pending approvals resolve "aborted", running tools get t
 
 ## 2. Runtime
 
-ADR-0003. The loop starts from `09_Others/benchpilot-reference/apps/server/src/agent/loop.ts` and lives only in
+ADR-0003. The loop starts from `09_Others/benchpilot-reference/src/apps/server/src/agent/loop.ts` and lives only in
 `core/agent/runtime.ts`, behind this interface, so the session engine never depends on its internals:
 
 ```ts
@@ -94,7 +94,7 @@ Built by `core/agent/prompt.ts` from a template, in this order, and snapshot-tes
    - Load a skill with `load_skill` before doing work it covers.
    - When documents are in English, search in English even if the conversation is not.
    - Answer in the user's language.
-3. `<workbench>` the content of `WORKBENCH.md` (02 §3) `</workbench>`
+3. `<workbench>` the content of `.vera/WORKBENCH.md` (02 §3) `</workbench>`
 4. `<skills>` one line per available skill, `- {name}: {description}` `</skills>`; omitted when there are none.
 5. Environment: date, OS family, VERA version, permission mode, number of indexed documents.
 
@@ -105,7 +105,7 @@ Tool descriptions travel in the tool schemas, not in the prompt.
 (`windows`/`linux`), `veraVersion`, current session `permissionMode` and `indexedDocuments`.
 The date is UTC from `Clock.now()`. Pinned content preserves whitespace and BOM; above16384 UTF-8
 bytes the builder retains the longest complete Unicode-scalar prefix within that budget and adds
-`[WORKBENCH.md truncated at 16 KiB (UTF-8).]`. Resolved skill metadata preserves caller order.
+`[.vera/WORKBENCH.md truncated at 16 KiB (UTF-8).]`. Resolved skill metadata preserves caller order.
 
 ## 4. Internal tools
 
@@ -170,8 +170,8 @@ than 10 % replacement characters.
 | `ask` (default) | every call waits for approval | allowed |
 | `auto-edit` | allowed, except protected paths, which wait for approval | allowed |
 
-- Protected paths always need an approval: `workbench.yaml`, `WORKBENCH.md`, `skills/**`,
-  `.veraignore`. The agent cannot silently rewrite its own instructions.
+- General file tools exclude `.vera`, including configuration, pinned instructions and skills.
+  Application APIs manage metadata; the bounded load_skill tool supplies enabled skill content.
 - Preparation produces an immutable request: workbench, session, turn and call IDs; tool; canonical
   path; validated arguments; expected existence and `beforeSha256` (null for a new file);
   `afterSha256`; full unified diff (or whole new content); byte size. Its SHA-256 is calculated over
@@ -186,7 +186,7 @@ than 10 % replacement characters.
 - Every decision is stored in `approvals` with `decided_by` `user` or `mode`.
 
 **Write queue (WP-16, WP-17).** One queue per workbench serialises file writes from every session
-and from the app's own saves (`workbench.yaml`, `WORKBENCH.md`, `.veraignore`, skills). Approval
+and from the app's own saves (`.vera/workbench.yaml`, `.vera/WORKBENCH.md`, `.vera/.veraignore`, skills). Approval
 waits hold no place in it. When a write's turn comes, it rechecks the path guard, the permission mode
 and the file's current hash against `beforeSha256`. If the file changed, the call fails with a
 conflict: the agent must read the file again and ask for a new approval; an approval never covers an
@@ -211,7 +211,7 @@ panel. Recovery never writes a file.
 
 ## 8. Session events
 
-Defined in `packages/shared/src/events.ts`, extending the reference union in `09_Others/benchpilot-reference/packages/shared/src/events.ts`. `seq` increases per session.
+Defined in `src/libraries/shared/src/events.ts`, extending the reference union in `09_Others/benchpilot-reference/src/libraries/shared/src/events.ts`. `seq` increases per session.
 Persisted events go to the `events` table; `message.delta`, `reasoning.delta` and `tool.update` are
 live-only.
 

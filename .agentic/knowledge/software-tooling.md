@@ -4,7 +4,7 @@
 
 Select for npm workspaces, exact dependency pins, TypeScript references, import boundaries,
 verification commands and Electron test launchers, the Node fetch/socket network guard and smoke:live. Start at `05_Software/package.json`
-and `tsconfig.json`; focused tests are `tests/tooling/`. Desktop runtime behavior belongs
+and `tsconfig.json`; configuration/build tests are `tests/tooling/`, cross-component tests are `tests/integration/`, and distribution tests are `tests/packaging/`. Desktop runtime behavior belongs
 to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Tools/`.
 
 ## Purpose and boundaries
@@ -40,7 +40,7 @@ which owns verified assets, native staging and artifact measurements.
 | Workspace/pin/reference layout | manifests and `tsconfig*.json` | `skeleton.test.ts`, typecheck |
 | Layer boundaries | `biome.json` | `boundaries.test.ts` |
 | Test-build constant | desktop Vite config and `build-mode.ts` | `build-mode.test.ts` |
-| Acceptance execution/isolation | `scripts/`, `e2e/network-guard.ts` | Electron acceptance and guard self-test |
+| Acceptance execution/isolation | `scripts/`, `tests/e2e/network-guard.ts` | Electron acceptance and guard self-test |
 
 Catalog audit scans renderer TypeScript AST for literal and finite registered translation keys, excluding tests; English defines required catalog keys.
 
@@ -58,10 +58,10 @@ flowchart LR
   setup([02_Tools/npmw.py]) --> npm[package.json scripts]
   npm --> biome[Biome boundaries + formatting]
   npm --> tsc[tsc -b root solution]
-  tsc --> shared[packages/shared]
-  tsc --> core[packages/core]
-  tsc --> cli[apps/cli]
-  tsc --> desktop[apps/desktop process configs]
+  tsc --> shared[src/libraries/shared]
+  tsc --> core[src/libraries/core]
+  tsc --> cli[src/apps/cli]
+  tsc --> desktop[src/apps/desktop process configs]
   core -. manifest dependency .-> shared
   cli -. manifest dependency .-> core
   cli -. manifest dependency .-> shared
@@ -88,11 +88,11 @@ All paths are under `05_Software/`.
 - `biome.json`, `tsconfig.base.json`, `tsconfig.json`, `tsconfig.tools.json` — checks and compilation.
 - `vitest.config.ts`, `playwright.config.ts` — test projects and acceptance settings.
 - `tests/tooling/{boundaries,skeleton,build-mode}.test.ts` — boundary, layout and emitted-build regression tests, with compiled shared entry hidden during builds.
-- `packages/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library definitions and public exports.
-- packages/core/vitest.config.ts — core Node tests with shared source resolution.
-- `apps/cli/{package.json,tsconfig.json,src/index.ts}` — headless CLI.
+- `src/libraries/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library definitions and public exports.
+- src/libraries/core/vitest.config.ts — core Node tests with shared source resolution.
+- `src/apps/cli/{package.json,tsconfig.json,src/index.ts}` — headless CLI.
 - `scripts/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
 - `tests/network-{guard,setup}.ts`, `tests/tooling/network-guard.test.ts` — unit-test transport interception and guard regression.
-- `e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.
+- `tests/e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.
 
-- scripts/check-i18n.mjs, tests/tooling/i18n.test.ts and fixtures/i18n/missing-key.json — source-catalog usage/completeness audit and actual negative CLI regression.
+- scripts/check-i18n.mjs, tests/tooling/i18n.test.ts and tests/fixtures/i18n/missing-key.json — source-catalog usage/completeness audit and actual negative CLI regression.

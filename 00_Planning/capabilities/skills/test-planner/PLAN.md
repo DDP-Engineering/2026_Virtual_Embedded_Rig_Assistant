@@ -17,17 +17,17 @@ artifact. No new approval system, runner or catalog is introduced.
 
 ## Task 1: Skill, plan template and collection worksheet
 
-Create these assets under `fixtures/workbenches/demo-board/skills/test-planner/`:
+Create these assets under `tests/fixtures/workbenches/demo-board/skills/test-planner/`:
 
 - `SKILL.md`: frontmatter name/description, source-backed procedure, readiness and execution boundaries.
 - `templates/test-plan.md`: seven output sections and TP-01…TP-05 case fields.
 - `references/results-to-collect.md`: RunRecord-compatible collection worksheet and capture guidance.
 
-Create `packages/core/test/skills/test-planner-assets.test.ts`. Reuse WP-29's loader and the shared
+Create `src/libraries/core/test/skills/test-planner-assets.test.ts`. Reuse WP-29's loader and the shared
 RunRecord field definitions; a pre-capture worksheet intentionally lacks required evidence and hashes.
 
 - [ ] Write failing tests for discovery, extra files and required section/case fields.
-- [ ] Run `npm test -- --run packages/core/test/skills/test-planner-assets.test.ts`.
+- [ ] Run `npm test -- --run src/libraries/core/test/skills/test-planner-assets.test.ts`.
 - [ ] Author assets using load_skill, list, glob, read, grep, search_docs, read_doc, decode_register,
   todo and artifact_save; parse_log is optional for inspecting supplied logs. Do not list nonexistent
   catalog or execution tools. Show blocked cases and proposed repeat counts in examples.
@@ -38,8 +38,8 @@ RunRecord field definitions; a pre-capture worksheet intentionally lacks require
 
 ## Task 2: Replay, todo/artifact persistence and standalone planning
 
-Create `fixtures/llm-scripts/plan-boot-check.jsonl`, `packages/core/test/skills/test-planner.test.ts`,
-`apps/cli/src/test-planner.test.ts` and `e2e/test-planner.test.ts`. Use temporary demo copies and
+Create `tests/fixtures/llm-scripts/plan-boot-check.jsonl`, `src/libraries/core/test/skills/test-planner.test.ts`,
+`src/apps/cli/src/test-planner.test.ts` and `tests/e2e/test-planner.test.ts`. Use temporary demo copies and
 existing session/CLI helpers. The success script loads assets, reads the target, setup, candidate
 log, criterion and release note, adds preparation todo items, then saves the manual plan.
 
@@ -53,19 +53,19 @@ expect(executionToolCalls).toHaveLength(0);
 expect(collection.outcome.status).toBe("not_evaluated");
 ```
 
-- [ ] Run `npm test -- --run packages/core/test/skills/test-planner.test.ts apps/cli/src/test-planner.test.ts`.
+- [ ] Run `npm test -- --run src/libraries/core/test/skills/test-planner.test.ts src/apps/cli/src/test-planner.test.ts`.
 - [ ] Implement assets/scripts, using existing todo and artifact persistence. CLI launches vera run
   on a copy; no comparison artifact is required for the standalone success case.
 - [ ] Add scenarios reading an exported comparison in an ordinary workbench path, missing criterion
   evidence and a repeated artifact name. The .vera/ retrieval attempt is rejected by the path guard;
   no overwrite or endless save retry is introduced. Scripted wording proves no semantic reasoning.
-- [ ] Rerun focused tests and `npm run test:e2e -- e2e/test-planner.test.ts`. Verify the artifact/todo
+- [ ] Rerun focused tests and `npm run test:e2e -- tests/e2e/test-planner.test.ts`. Verify the artifact/todo
   list survives restart, its citations open correctly once WP-28 exists, and no completed test result
   is synthesized. Preparation todo completion never marks an equipment test passed.
 
 ## Task 3: Real-model rubric and delivery
 
-Create `fixtures/skills/test-planner/cases.json` and `rubric.md`. For each case specify the prompt,
+Create `tests/fixtures/skills/test-planner/cases.json` and `rubric.md`. For each case specify the prompt,
 source mutation, mandatory questions/blockers, permitted planning choices and prohibited claims.
 
 | Case | Must demonstrate |

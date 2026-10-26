@@ -6,7 +6,7 @@ requirement = """
 While a workbench is open, the Docs panel shall show each document's status and reason, a search box with current keyword snippet results and Open actions, writable Reindex with index progress, and localized empty/loading/error/retry states, isolating responses and events to the active workbench and disabling Reindex for read-only workbenches.
 """
 verification = "Host, renderer and native/browser tests exercise list, keyword results, Open, reindex progress, empty/errors, read-only and workbench change isolation."
-affected_paths = ["05_Software/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/apps/desktop/src/renderer/App.tsx", "05_Software/apps/desktop/src/renderer/components/shell.tsx", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/packages/core/src/workbench/service.ts", "05_Software/apps/desktop/src/renderer/mocks/documents.ts"]
-linked_tests = ["05_Software/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/e2e/citations.spec.ts", "05_Software/e2e/documents.spec.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/renderer/mocks/documents.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/tests/e2e/citations.spec.ts", "05_Software/tests/e2e/documents.spec.ts"]
 created = 2026-10-13
 updated = 2026-10-13

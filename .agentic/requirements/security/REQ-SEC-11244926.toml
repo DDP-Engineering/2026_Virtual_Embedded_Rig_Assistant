@@ -19,9 +19,9 @@ When production renderer resources load, VERA shall apply a default-src self Con
 
 verification = "Launch built app; inspect actual response CSP and meta, inject script and observe CSP violation plus absent execution; observe bundled React/CSS load."
 
-affected_paths = ["05_Software/apps/desktop/src/main/content-policy.ts", "05_Software/apps/desktop/src/main/security.ts", "05_Software/apps/desktop/src/renderer/index.html", "05_Software/apps/desktop/electron.vite.config.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/content-policy.ts", "05_Software/src/apps/desktop/src/main/security.ts", "05_Software/src/apps/desktop/src/renderer/index.html", "05_Software/src/apps/desktop/electron.vite.config.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
 
 
 spec = ""

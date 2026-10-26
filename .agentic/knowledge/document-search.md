@@ -98,7 +98,7 @@ flowchart LR
 | atomic lifecycle/migration | migration3, DocumentsRepository, processor/ingest | embedding-migration, embedding-ingest, ingest tests |
 | modes/RRF/glob/snippets/read bounds | search.ts, keyword.ts | search.test.ts, keyword.test.ts |
 | registry/replay/citations | tools/documents.ts, SessionService | registry/search replay and document-cli tests |
-| citation page/heading bounds and current source | search.ts validDocumentRef; shared refs.ts | search.test.ts; agent/citations.test.ts; e2e/citations.spec.ts |
+| citation page/heading bounds and current source | search.ts validDocumentRef; shared refs.ts | search.test.ts; agent/citations.test.ts; tests/e2e/citations.spec.ts |
 | host/CLI/bundles | document-processor, entrypoints/builds | document-hosts/document-cli, build-mode/packaging and native ingest |
 
 ## Key behaviors

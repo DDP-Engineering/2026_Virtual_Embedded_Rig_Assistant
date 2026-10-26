@@ -10,16 +10,18 @@
   "include": [
     "vitest.config.ts",
     "tests/tooling/**/*.ts",
+    "tests/integration/**/*.ts",
+    "tests/packaging/**/*.ts",
     "playwright.config.ts",
-    "e2e/**/*.ts",
+    "tests/e2e/**/*.ts",
     "tests/network*.ts"
   ],
   "references": [
     {
-      "path": "./packages/core"
+      "path": "./src/libraries/core"
     },
     {
-      "path": "./packages/shared"
+      "path": "./src/libraries/shared"
     }
   ]
 }

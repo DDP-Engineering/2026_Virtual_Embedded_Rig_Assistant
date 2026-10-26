@@ -7,16 +7,16 @@ import { loadCorpus } from "./corpus.mjs";
 import { summarize, validateFixture } from "./evaluation.mjs";
 
 export async function evaluate(software, scratch) {
-  const workbench = join(software, "fixtures/workbenches/demo-board");
+  const workbench = join(software, "tests/fixtures/workbenches/demo-board");
   const corpus = await loadCorpus(workbench, pathToFileURL(join(scratch, "pdf-worker.mjs")));
   const fixture = validateFixture(
-    await readFile(join(software, "fixtures/retrieval/demo-board.yaml"), "utf8"),
+    await readFile(join(software, "tests/fixtures/retrieval/demo-board.yaml"), "utf8"),
     corpus.chunks,
   );
-  const model = JSON.parse(await readFile(join(software, "resources/model-manifest.json"), "utf8"));
+  const model = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
   const host = new EmbeddingHost(
     pathToFileURL(join(scratch, "embedding-worker.mjs")),
-    join(software, "resources/models"),
+    join(software, "src/models"),
     model,
   );
   const db = new Database(":memory:");

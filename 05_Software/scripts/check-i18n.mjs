@@ -79,7 +79,7 @@ async function sourcesAt(directory) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const renderer = resolve("apps/desktop/src/renderer");
+  const renderer = resolve("src/apps/desktop/src/renderer");
   let catalogs = {};
   let sources;
   if (process.argv[2] === "--fixture" && process.argv[3]) {

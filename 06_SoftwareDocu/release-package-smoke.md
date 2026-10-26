@@ -39,7 +39,7 @@ proof remains pending. This option does not execute an upgrade.
 
 For native Ubuntu calibration, explicitly build a separate instrumented app with
 `VERA_TEST=1 npm run build`, then run
-`node scripts/smoke-calibration.mjs <built apps/desktop directory> <new owned root>`.
+`node scripts/smoke-calibration.mjs <built src/apps/desktop directory> <new owned root>`.
 This uses the pinned development Electron and a dedicated sandboxed fixture
 renderer in the instrumented app, with a fixture CSP admitting only its deliberate
 endpoint. The production vera://app window and its CSP remain unchanged. A real

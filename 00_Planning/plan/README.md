@@ -20,7 +20,7 @@ STATE: 2026-10-09 — planned; nothing implemented yet.
 | **M2 Edits, artifacts, ChatGPT** | [M2-edits-artifacts-chatgpt.md](M2-edits-artifacts-chatgpt.md) | approval is bound to one exact change and used once; sessions share one write queue per workbench; restart recovers interrupted approvals and writes; protected paths ask even in `auto-edit`; panels and ChatGPT sign-in work |
 | **M3 Knowledge** | [M3-knowledge.md](M3-knowledge.md) | demo PDFs, Markdown and logs index in the background; hybrid `search_docs` meets the recall threshold; citations open the viewer at the cited page; skills load from workbench and user folders |
 | **M4 Delivery** | [M4-delivery.md](M4-delivery.md) | release artifacts install and index offline on both systems; a scripted loopback endpoint drives the normal provider path; the egress check finds no unexpected connection; vN → vN+1 preserves data |
-| **M5 Version 1.0** | [M5-version-1.md](M5-version-1.md) | historical compaction extends the M1 context budget; messages can be sent during a turn; sessions export; demo and onboarding ship; translations reviewed; final 1.0 release smoke passes |
+| **M5 Version 1.0** | [M5-version-1.md](M5-version-1.md) | historical compaction extends the M1 context budget; messages can be sent during a turn; sessions export; fictional fixtures support verification; translations reviewed; final 1.0 release smoke passes |
 
 ## 3. Work packages
 
@@ -118,7 +118,7 @@ in parallel from WP-01 and must finish before the database (WP-07).
 
 | Direction | Seam already in 1.0 |
 |---|---|
-| Wrapper tools: declared external programs (STM32 and ESP32 flashers, `sigrok-cli`, scripts) with typed parameters, fixed argument templates, policy, timeout, success criteria and process-tree termination | `<workbench>/tools/`; an operation descriptor with input schema, policy, timeout and resources; ADR-0007; the spawn pattern of `09_Others/benchpilot-reference/apps/server/src/tshark.ts` (argument array, no shell, timeout, output cap) |
+| Wrapper tools: declared external programs (STM32 and ESP32 flashers, `sigrok-cli`, scripts) with typed parameters, fixed argument templates, policy, timeout, success criteria and process-tree termination | `<workbench>/tools/`; an operation descriptor with input schema, policy, timeout and resources; ADR-0007; the spawn pattern of `09_Others/benchpilot-reference/src/apps/server/src/tshark.ts` (argument array, no shell, timeout, output cap) |
 | Serial terminal and logging | `serialport`; a `devices` module in core |
 | Camera snapshots and live view | `getUserMedia`; the permission handler of 01 §7 |
 | Voice: local speech-to-text, optional text-to-speech | `SpeechToText` port; the ONNX runtime shipped for embeddings (06 §9) |

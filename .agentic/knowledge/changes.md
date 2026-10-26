@@ -52,7 +52,7 @@ session history through the shared API; application/edit approval persistence re
 | Reveal confinement | main reveal-path.ts/index.ts | reveal-path.test.ts,path-guard.test.ts |
 | Empty/history/diff/live/isolation | ChangesTab,useSessionEvents,DiffViewer | changes-tab.test.ts,workspace.test.ts |
 | Mock lifecycle/projections | mocks/sessions.ts,mockApi.ts | sessions.test.ts,mockApi.test.ts |
-| Native persistence | e2e/changes.spec.ts | ask approval -> live counts/diff -> restart |
+| Native persistence | tests/e2e/changes.spec.ts | ask approval -> live counts/diff -> restart |
 
 ## Key behaviors
 
@@ -85,9 +85,9 @@ Reads project the existing workbench-owned records; file tools own every write t
 
 ## Files
 
-Under05_Software: packages/shared/src/{changes,ipc,index}.ts and changes-ipc.test.ts;
-packages/core/src/sessions/{service,changes.test}.ts; apps/desktop/src/main/{index,reveal-path,reveal-path.test}.ts;
+Under05_Software: src/libraries/shared/src/{changes,ipc,index}.ts and changes-ipc.test.ts;
+src/libraries/core/src/sessions/{service,changes.test}.ts; src/apps/desktop/src/main/{index,reveal-path,reveal-path.test}.ts;
 renderer App.tsx,components/shell.tsx,components/session/{changes-tab,diff-viewer,approval-card}.tsx,
 changes-tab.test.ts,styles.css,locales/{en,ro,de}.json and mocks/{mockApi,sessions,sessions.test}.ts;
-e2e/changes.spec.ts provides actual executable/main/preload-bound native approval/restart evidence
+tests/e2e/changes.spec.ts provides actual executable/main/preload-bound native approval/restart evidence
 and minimum-size standalone browser acceptance.

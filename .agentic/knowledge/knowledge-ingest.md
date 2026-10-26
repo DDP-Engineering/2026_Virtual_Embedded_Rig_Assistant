@@ -5,7 +5,7 @@
 Select for document discovery, watcher/hash/size states, index events, reindex
 and source invalidation. Start at core knowledge/ingest.ts and
 storage/repos/documents.ts under05_Software. Focused proof is ingest.test.ts,
-shared documents-ipc.test.ts and native e2e/ingest.spec.ts. Workbench lifecycle
+shared documents-ipc.test.ts and native tests/e2e/ingest.spec.ts. Workbench lifecycle
 and locks route to [Workbench](workbench.md), database compatibility to
 [Storage](workbench-storage.md), transport/redaction to [IPC](ipc-boundary.md).
 
@@ -35,6 +35,10 @@ for extraction, cache and chunks; bare core composition can supply its own proce
   or replacement. Migration2 chunk triggers atomically maintain chunks_fts/chunks_tri;
   [keyword search](keyword-search.md) reads persisted candidates and locators.
 
+Policy reads .vera/.veraignore with ordinary-parent checks. The watcher admits events
+for .vera/workbench.yaml and .vera/.veraignore (Windows case aliases included),
+while .vera content stays permanently excluded from indexed documents.
+
 ## Invariants
 
 - Chokidar5.0.0 and picomatch4.0.7 are exactly pinned. File-event admission uses
@@ -44,7 +48,7 @@ for extraction, cache and chunks; bare core composition can supply its own proce
   Tinyglobby resolves include minus exclude;
   PathGuard/shared ignore policies and ordinary ancestor checks confine input.
   Permanent .vera/.git/node_modules segments and symlink/junction aliases are
-  excluded. Root .veraignore edits and saved configuration trigger reconciliation.
+  excluded. Root .vera/.veraignore edits and saved configuration trigger reconciliation.
 - Bounded asynchronous SHA-256 reads cap input at100MiB PDF/20MiB text. Exact
   limits are allowed. Unknown extensions, binary text and oversized files carry
   TYPE_UNSUPPORTED/BINARY/SIZE_LIMIT. Raw errors become IO/PROCESSING codes.
@@ -82,6 +86,8 @@ flowchart LR
   Hosts[desktop and CLI] --> WorkbenchService
   WorkbenchService --> Ingester
   Ingester --> Chokidar
+  Chokidar --> Policy[.vera configuration and ignore events]
+  Policy --> Ingester
   Ingester --> DocumentsRepository
   Ingester --> Processor[DocumentProcessor with extraction/cache/chunks]
   Ingester --> WorkbenchEvent
@@ -93,10 +99,10 @@ the serialized ingest queue.
 
 ## Files
 
-- packages/core/src/knowledge/{ingest.ts,ingest.test.ts} — queue and integration.
-- packages/core/src/storage/repos/documents.ts — metadata and derived cleanup.
-- packages/core/src/workbench/service.ts — ownership/lifecycle/reindex.
-- packages/shared/src/{documents.ts,documents-ipc.test.ts,events.ts,ipc.ts} — contracts.
-- apps/desktop/src/main/{index.ts,events.ts,events.test.ts} — IPC and scrubbed events.
-- apps/desktop/src/renderer/mocks/{mockApi.ts,mockApi.test.ts} — mock reindex.
-- e2e/ingest.spec.ts — native sandboxed host acceptance.
+- src/libraries/core/src/knowledge/{ingest.ts,ingest.test.ts} — queue and integration.
+- src/libraries/core/src/storage/repos/documents.ts — metadata and derived cleanup.
+- src/libraries/core/src/workbench/service.ts — ownership/lifecycle/reindex.
+- src/libraries/shared/src/{documents.ts,documents-ipc.test.ts,events.ts,ipc.ts} — contracts.
+- src/apps/desktop/src/main/{index.ts,events.ts,events.test.ts} — IPC and scrubbed events.
+- src/apps/desktop/src/renderer/mocks/{mockApi.ts,mockApi.test.ts} — mock reindex.
+- tests/e2e/ingest.spec.ts — native sandboxed host acceptance.

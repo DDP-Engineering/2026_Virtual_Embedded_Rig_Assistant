@@ -8,7 +8,7 @@ threshold of WP-24; citations open the viewer at the cited page; skills load fro
 
 **Goal:** documents enter the index in the background and stay in step with the folder.
 **Depends on:** WP-07. **Specs:** 05 §1; 02 §2 (`docs.include`, `docs.exclude`), §6.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/testbench/load.ts` (document loading and FTS indexing).
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/testbench/load.ts` (document loading and FTS indexing).
 
 Scope:
 - chokidar on `docs.include` minus `docs.exclude` and ignore rules; 1 s debounce; SHA-256 per file;
@@ -44,7 +44,7 @@ Done when:
 **Depends on:** WP-05, WP-23. **Specs:** 05 §4, §8; ADR-0006.
 
 Scope:
-- `fixtures/retrieval/demo-board.yaml`: 20–30 questions with the expected path and page or heading.
+- `tests/fixtures/retrieval/demo-board.yaml`: 20–30 questions with the expected path and page or heading.
 - Compare `bge-small-en-v1.5` and `multilingual-e5-small`: package size, CPU time per chunk, recall@5
   in `keyword`, `semantic` and `hybrid` modes, and on Romanian questions over English documents.
 
@@ -55,7 +55,7 @@ Done when:
 
 **Goal:** word and fragment search over chunks.
 **Depends on:** WP-23. **Specs:** 05 §5, §6 (keyword).
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/db/schema.sql` (`docs_fts`), `tools/knowledge.ts` (bm25 search).
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/db/schema.sql` (`docs_fts`), `tools/knowledge.ts` (bm25 search).
 
 Scope:
 - A migration adding `chunks_fts` (`unicode61`, `tokenchars '_'`) and `chunks_tri` (`trigram`).
@@ -70,7 +70,7 @@ Done when:
 
 **Goal:** semantic and hybrid search, and the two document tools the agent uses.
 **Depends on:** WP-24, WP-25. **Specs:** 05 §4–§6, §8; 03 §4 (`search_docs`, `read_doc`).
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/tools/knowledge.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/tools/knowledge.ts`.
 
 Scope:
 - Embedding worker (batches of 32), the `embeddings` table, re-embedding on a model change.
@@ -87,8 +87,8 @@ Done when:
 
 **Goal:** every reference format of 05 §7 is parsed, validated and shown.
 **Depends on:** WP-26. **Specs:** 05 §7; 03 §9.
-**Start from:** `09_Others/benchpilot-reference/packages/shared/src/evidence.ts`, `apps/server/src/evidence/resolve.ts`,
-`agent/citations.ts`, `apps/web/src/components/evidence/EvidenceChip.tsx`.
+**Start from:** `09_Others/benchpilot-reference/src/libraries/shared/src/evidence.ts`, `src/apps/server/src/evidence/resolve.ts`,
+`agent/citations.ts`, `src/apps/web/src/components/evidence/EvidenceChip.tsx`.
 
 Scope:
 - `refs.ts` for pages, page ranges, headings, line ranges and artifacts; range checks against page
@@ -103,7 +103,7 @@ Done when:
 
 **Goal:** a citation opens the document at the cited place; the Docs tab shows the index.
 **Depends on:** WP-27. **Specs:** 06 §2, §3, §5; 05 §9.
-**Start from:** `09_Others/benchpilot-reference/apps/web/src/components/evidence/EvidenceViewer.tsx`, `EvidenceDrawer.tsx`,
+**Start from:** `09_Others/benchpilot-reference/src/apps/web/src/components/evidence/EvidenceViewer.tsx`, `EvidenceDrawer.tsx`,
 `components/testbench/DocumentsTab.tsx`.
 
 Scope:
@@ -119,8 +119,8 @@ Done when:
 
 **Goal:** workbench and user skills reach the agent through the prompt index and `load_skill`.
 **Depends on:** WP-12. **Specs:** 02 §5; 03 §3, §4 (`load_skill`); 06 §2.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/skills/load.ts`, `content.ts`,
-`apps/web/src/components/testbench/SkillsTab.tsx`; its seven `skills/*/SKILL.md` as format examples.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/skills/load.ts`, `content.ts`,
+`src/apps/web/src/components/testbench/SkillsTab.tsx`; its seven `skills/*/SKILL.md` as format examples.
 
 Scope:
 - Discovery in `<workbench>/skills/` and `<userData>/skills/`; the workbench wins on a clash;

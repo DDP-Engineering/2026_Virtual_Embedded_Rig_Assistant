@@ -35,24 +35,32 @@ function lint(path: string, source: string): string {
 
 describe("import boundaries (01-system.md §4)", () => {
   it.each([
-    ["packages/core/src/x.ts", 'import { app } from "electron";\nexport const a = app;\n'],
-    ["packages/core/src/x.ts", 'import { useState } from "react";\nexport const s = useState;\n'],
-    ["packages/shared/src/x.ts", 'import { readFile } from "node:fs";\nexport const r = readFile;\n'],
+    ["src/libraries/core/src/x.ts", 'import { app } from "electron";\nexport const a = app;\n'],
+    ["src/libraries/core/src/x.ts", 'import { useState } from "react";\nexport const s = useState;\n'],
     [
-      "apps/desktop/src/renderer/x.ts",
+      "src/libraries/core/src/x.ts",
+      'import { app } from "../../../apps/desktop/src/main/index.js";\nexport const a = app;\n',
+    ],
+    ["src/libraries/shared/src/x.ts", 'import { readFile } from "node:fs";\nexport const r = readFile;\n'],
+    [
+      "src/apps/desktop/src/renderer/x.ts",
       'import { ipcRenderer } from "electron";\nexport const i = ipcRenderer;\n',
     ],
-    ["apps/desktop/src/renderer/x.ts", 'import { core } from "@vera/core";\nexport const c = core;\n'],
-    ["apps/desktop/src/preload/x.ts", 'import { core } from "@vera/core";\nexport const c = core;\n'],
+    ["src/apps/desktop/src/renderer/x.ts", 'import { core } from "@vera/core";\nexport const c = core;\n'],
+    ["src/apps/desktop/src/preload/x.ts", 'import { core } from "@vera/core";\nexport const c = core;\n'],
+    ...["renderer", "preload"].map((layer) => [
+      `src/apps/desktop/src/${layer}/x.ts`,
+      'import { SessionService } from "../../../../libraries/core/src/index.js";\nexport const s = SessionService;\n',
+    ]),
   ])("rejects a forbidden import in %s", (path, source) => {
     expect(lint(path, source)).toContain("noRestrictedImports");
   });
 
   it.each([
-    ["packages/core/src/x.ts", 'import { z } from "zod";\nexport const s = z.string();\n'],
-    ["apps/desktop/src/main/x.ts", 'import { app } from "electron";\nexport const a = app;\n'],
+    ["src/libraries/core/src/x.ts", 'import { z } from "zod";\nexport const s = z.string();\n'],
+    ["src/apps/desktop/src/main/x.ts", 'import { app } from "electron";\nexport const a = app;\n'],
     [
-      "apps/desktop/src/preload/x.ts",
+      "src/apps/desktop/src/preload/x.ts",
       'import { contextBridge } from "electron";\nexport const b = contextBridge;\n',
     ],
   ])("allows a permitted import in %s", (path, source) => {

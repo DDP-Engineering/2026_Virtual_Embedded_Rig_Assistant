@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 const require = createRequire(import.meta.url);
 const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js");
 const playwright = require.resolve("@playwright/test/cli");
-const build = spawnSync(process.execPath, [vite, "build", "apps/desktop"], { stdio: "inherit" });
+const build = spawnSync(process.execPath, [vite, "build", "src/apps/desktop"], { stdio: "inherit" });
 if (build.error) throw build.error;
 if (build.status !== 0) process.exit(build.status ?? 1);
 const args = [process.execPath, playwright, "test", ...process.argv.slice(2)];

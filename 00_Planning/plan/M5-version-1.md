@@ -1,9 +1,9 @@
 # M5 — Version 1.0
 
 PURPOSE: the finish that makes VERA usable every day — long sessions, interaction during a turn,
-export, a demo to learn from, accessibility and reviewed translations.
+export, fictional verification fixtures, accessibility and reviewed translations.
 DONE-WHEN: long sessions survive context limits; messages can be sent during a turn; sessions export;
-the demo workbench and onboarding ship; `ro` and `de` are reviewed; the clean-machine run of WP-33
+the fictional workbench remains a verification fixture; `ro` and `de` are reviewed; the clean-machine run of WP-33
 passes on the 1.0 build.
 
 ## WP-34 Advanced context compaction
@@ -46,7 +46,7 @@ Done when:
 
 **Goal:** sessions can leave VERA and be found again.
 **Depends on:** WP-13. **Specs:** 02 §10; 06 §3.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/reports/export.ts` (Markdown export).
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/reports/export.ts` (Markdown export).
 
 Scope:
 - Export a session as Markdown (messages, tool summaries, citations, changes) or JSON (events).
@@ -56,19 +56,19 @@ Done when:
 - [ ] Unit: the Markdown export of a fixture session matches its snapshot; the JSON export round-trips.
 - [ ] e2e: search finds a session by a word from its messages.
 
-## WP-37 Demo workbench, sample skills, onboarding
+## WP-37 Fictional verification fixtures
 
-**Goal:** a new user learns VERA on a complete example.
+**Goal:** verification uses a complete fictional workbench while users create or open their own projects.
 **Depends on:** WP-29. **Specs:** 02; 06 §2.
-**Start from:** `09_Others/benchpilot-reference/skills/failure-analyzer/SKILL.md` (exemplar shape).
 
 Scope:
-- The complete VERA-DEMO-01 workbench: generated PDFs, notes, logs, pinout.
-- Sample skills `datasheet-reader`, `log-analyst`, `bringup-checklist`.
-- A first-run guide that opens the demo workbench and suggests three prompts.
+- Keep VERA-DEMO-01 documents, logs and pinout only under `tests/fixtures/workbenches/`.
+- Welcome provides normal create/open/recent project flows and sessions use explicit user input.
+- Runtime IPC, compiled UI and package resources contain no example-opening or guided-prompt facility.
 
 Done when:
-- [ ] On a fresh `userData`, the first run offers the demo; its three suggested prompts work with a real model by hand.
+- [ ] Fresh userData exposes only ordinary project entry and explicit session composition.
+- [ ] Fixtures remain usable by verification and are excluded from the distributed application.
 
 ## WP-38 Accessibility and translation pass
 

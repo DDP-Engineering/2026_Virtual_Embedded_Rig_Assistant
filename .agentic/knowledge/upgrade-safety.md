@@ -29,7 +29,7 @@ real updater installation, durable state and recovery before the next turn.
 | settings.json | 0/1/2/3 directly to4 | exact exclusive bak-n before write; UUID/preferences/extensions retained; failure preserves source |
 | credentials.json | schema1; no migration | synthetic encrypted API/OAuth values, extensions, redaction and read without rewrite; newer refusal before crypto/write |
 | vera.db | 1 initial, 2 keyword, 3 embeddings | frozen empty0/schema1/schema2 SQL; each pre-step committed backup, integrity/FK checks and verbatim rows |
-| workbench.yaml | format1; no migration | unchanged supported YAML; format2 refusal before runtime/recents writes |
+| .vera/workbench.yaml | format1; no migration | unchanged supported YAML; format2 refusal before runtime/recents writes |
 
 - Interrupted running/awaiting_approval sessions become idle, old approvals aborted
   and unusable, unanswered calls receive interrupted results and terminal events.
@@ -46,10 +46,10 @@ real updater installation, durable state and recovery before the next turn.
 
 | Change | Start | Focused proof |
 |---|---|---|
-| migration inventory | fixtures/settings and fixtures/upgrade | settings/service, credentials, storage/upgrade-safety tests |
+| migration inventory | tests/fixtures/settings and tests/fixtures/upgrade | settings/service, credentials, storage/upgrade-safety tests |
 | interrupted recovery | frozen interrupted.json | storage/upgrade-safety.test.ts plus sessions/service.test.ts |
 | installed persistence | probe-upgrade/upgrade-fixture.mjs | actual NSIS/AppImage reports |
-| future-data UI | e2e/upgrade-safety.spec.ts | native Electron and recursive original-file comparison |
+| future-data UI | tests/e2e/upgrade-safety.spec.ts | native Electron and recursive original-file comparison |
 
 ## Key behaviors
 
@@ -72,8 +72,8 @@ flowchart LR
 
 ## Files
 
-Paths relative to05_Software: fixtures/settings/version-{0,1,2,3}.json;
-fixtures/upgrade/{database-v0,database-v1,database-v2}.sql, interrupted.json,
+Paths relative to05_Software: tests/fixtures/settings/version-{0,1,2,3}.json;
+tests/fixtures/upgrade/{database-v0,database-v1,database-v2}.sql, interrupted.json,
 credentials-{v1,newer}.json, workbench-{v1,newer}.yaml; core storage/upgrade-safety.test.ts,
 settings/service.test.ts, workbench/service.test.ts; desktop main/credentials.test.ts;
-e2e/upgrade-safety.spec.ts; scripts/{probe-upgrade,upgrade-fixture}.mjs.
+tests/e2e/upgrade-safety.spec.ts; scripts/{probe-upgrade,upgrade-fixture}.mjs.

@@ -37,7 +37,7 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
 | IPC/schema/migration | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |
-| Localized Test presentation/mock | renderer provider-test/providers/mockApi/locales/styles | mockApi.test.ts; e2e/{provider-test,mock}.spec.ts |
+| Localized Test presentation/mock | renderer provider-test/providers/mockApi/locales/styles | mockApi.test.ts; tests/e2e/{provider-test,mock}.spec.ts |
 | Guarded automation/manual smoke | tests/network-guard/network-setup; scripts/smoke-live | tooling/network-guard.test.ts; manual real-provider observation |
 
 ## Key behaviors
@@ -78,10 +78,10 @@ The host accepts generic gateway injection. Replay composition exists in the com
 
 All paths are under05_Software.
 
-- packages/core/src/llm/{gateway,providers,connection,errors,stream-scrub,replay}.ts and {gateway,subscription,replay}.test.ts.
-- packages/core/{package.json,src/index.ts}; packages/shared/src/{providers,ipc,errors,settings}.ts — dependency/export and strict contracts.
-- apps/desktop/src/main/{provider-gateway,provider-settings,credentials,index}.ts — current-config host, capability persistence, secret registry and test composition.
-- apps/desktop/electron.vite.config.ts — explicit replay source alias and compile-time test flag.
-- apps/desktop/src/renderer/components/{provider-test,providers,error-message}.tsx; locales/{en,ro,de}.json; styles.css; mocks/mockApi.ts and mockApi.test.ts.
-- tests/network-{guard,setup}.ts; tests/tooling/{network-guard,build-mode}.test.ts; e2e/{provider-test,mock}.spec.ts.
+- src/libraries/core/src/llm/{gateway,providers,connection,errors,stream-scrub,replay}.ts and {gateway,subscription,replay}.test.ts.
+- src/libraries/core/{package.json,src/index.ts}; src/libraries/shared/src/{providers,ipc,errors,settings}.ts — dependency/export and strict contracts.
+- src/apps/desktop/src/main/{provider-gateway,provider-settings,credentials,index}.ts — current-config host, capability persistence, secret registry and test composition.
+- src/apps/desktop/electron.vite.config.ts — explicit replay source alias and compile-time test flag.
+- src/apps/desktop/src/renderer/components/{provider-test,providers,error-message}.tsx; locales/{en,ro,de}.json; styles.css; mocks/mockApi.ts and mockApi.test.ts.
+- tests/network-{guard,setup}.ts; tests/tooling/{network-guard,build-mode}.test.ts; tests/e2e/{provider-test,mock}.spec.ts.
 - scripts/smoke-live.mjs; package.json/lockfile; core/desktop/root Vitest configs and tooling tsconfig — command, pinned dependency and guarded test wiring.

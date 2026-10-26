@@ -4,8 +4,8 @@
   "type": "module",
   "description": "VERA â€” Virtual Embedded Rig Assistant",
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "src/libraries/*",
+    "src/apps/*"
   ],
   "engines": {
     "node": ">=24 <25"
@@ -18,9 +18,9 @@
     "test:coverage": "vitest run --coverage",
     "verify": "npm run lint && npm run typecheck && npm run check:i18n && npm run test",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "dev": "electron-vite apps/desktop",
+    "dev": "electron-vite src/apps/desktop --entry src/apps/desktop",
     "dev:renderer": "node scripts/dev-renderer.mjs",
-    "build": "electron-vite build apps/desktop",
+    "build": "electron-vite build src/apps/desktop",
     "test:e2e": "node scripts/test-e2e.mjs",
     "postinstall": "install-electron",
     "package": "node scripts/package.mjs",
@@ -31,7 +31,7 @@
     "smoke:package": "node scripts/smoke-package.mjs",
     "build:cli": "node scripts/build-cli.mjs",
     "make:demo-pdfs": "node scripts/make-demo-pdfs.mjs",
-    "vera": "node scripts/build-cli.mjs && node apps/cli/dist/index.js",
+    "vera": "node scripts/build-cli.mjs && node src/apps/cli/dist/index.js",
     "eval:retrieval": "node scripts/eval-retrieval.mjs"
   },
   "devDependencies": {

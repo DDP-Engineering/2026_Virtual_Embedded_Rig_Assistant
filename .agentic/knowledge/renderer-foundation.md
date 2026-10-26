@@ -3,13 +3,13 @@
 ## Routing
 
 Select for Welcome/App Settings, memory routes, panels, theme, text scale, UI language,
-keyboard/contrast and catalog auditing. Start at 05_Software/apps/desktop/src/renderer/App.tsx;
-focused acceptance is e2e/mock.spec.ts and the foundation test in e2e/shell.spec.ts.
+keyboard/contrast and catalog auditing. Start at 05_Software/src/apps/desktop/src/renderer/App.tsx;
+focused acceptance is tests/e2e/mock.spec.ts and the foundation test in tests/e2e/shell.spec.ts.
 [Application data](app-data.md) owns the settings schema/service;
 [desktop shell](desktop-shell.md) owns native window/security;
 [software tooling](software-tooling.md) owns verification commands.
 
-[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+[Verification fixtures](demo-onboarding.md) routes the fictional board corpus and PDF sources under tests/fixtures, used by isolated tests and evaluation/smoke harnesses.
 
 ## Purpose and boundaries
 
@@ -99,7 +99,7 @@ The view consumes confirmed settings. Native theme and renderer geometry have di
 
 ## Files
 
-Paths relative to 05_Software/apps/desktop/src/renderer except qualified paths.
+Paths relative to 05_Software/src/apps/desktop/src/renderer except qualified paths.
 
 - App.tsx — memory routes, metadata/query status and Ctrl+,.
 - components/{shell,settings,metadata,error-message,workbench}.tsx — panels, editors, labels and safe error text.
@@ -108,6 +108,6 @@ Paths relative to 05_Software/apps/desktop/src/renderer except qualified paths.
 - lib/shortcuts.ts — modal/composition/modifier/repeat guard for global keyboard actions.
 - i18n.ts, locales/{en,ro,de}.json — catalog initialization and translated strings.
 - styles.css, styles/themes.css — responsive rem geometry, focus and theme token blocks.
-- 05_Software/apps/desktop/src/main/index.ts — initial and updated nativeTheme.
+- 05_Software/src/apps/desktop/src/main/index.ts — initial and updated nativeTheme.
 - 05_Software/scripts/check-i18n.mjs, tests/tooling/i18n.test.ts — AST catalog auditing/fixtures.
-- 05_Software/e2e/{mock,shell}.spec.ts — browser and native UI acceptance.
+- 05_Software/tests/e2e/{mock,shell}.spec.ts — browser and native UI acceptance.

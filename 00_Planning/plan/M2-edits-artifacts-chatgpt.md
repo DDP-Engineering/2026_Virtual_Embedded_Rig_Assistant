@@ -47,7 +47,7 @@ Done when:
 **Goal:** the user decides what the agent may change — three permission modes, protected paths, and
 approval cards with diffs.
 **Depends on:** WP-14, WP-16. **Specs:** 03 §1, §6, §8; 06 §3, §7; 02 §2 (`agent.permission_mode`); ADR-0007.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/approval.ts`, `apps/web/src/components/session/ApprovalCard.tsx`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/agent/approval.ts`, `src/apps/web/src/components/session/ApprovalCard.tsx`.
 
 Scope:
 - The permission engine: modes `read-only`, `ask`, `auto-edit`; canonical protected paths; `read-only`
@@ -104,7 +104,7 @@ Done when:
 **Goal:** the agent saves outputs — summaries, extracted tables, reports — as session artifacts the user
 can open, reveal and export.
 **Depends on:** WP-14. **Specs:** 03 §4 (`artifact_save`); 02 §8–§10; 05 §7 (`artifact:` references); 06 §3.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/tools/reporting.ts` (outputs stored per session and
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/tools/reporting.ts` (outputs stored per session and
 rendered from tool arguments).
 
 Scope:
@@ -143,8 +143,8 @@ Done when:
 
 **Goal:** users with a ChatGPT subscription sign in from VERA and run sessions on it.
 **Depends on:** WP-09. **Specs:** 04 §1, §5, §6, §7; 01 §1 (L6, L7), §8; ADR-0002.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/oauth.ts`, `llm/providers.ts` (subscription
-collection), the ChatGPT section of `apps/web/src/pages/SettingsPage.tsx`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/llm/oauth.ts`, `llm/providers.ts` (subscription
+collection), the ChatGPT section of `src/apps/web/src/pages/SettingsPage.tsx`.
 
 Scope:
 - The **subscription** collection with `openaiProvider()` and the OAuth credential in slot `chatgpt`.

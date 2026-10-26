@@ -3,7 +3,7 @@ import { build, createServer } from "vite";
 
 // Test harness: builds dev entrypoints and starts Vite without launching an extra Electron.
 process.env.NODE_ENV_ELECTRON_VITE = "development";
-const resolved = await resolveConfig({ root: "apps/desktop" }, "serve", "development");
+const resolved = await resolveConfig({ root: "src/apps/desktop" }, "serve", "development");
 if (!resolved.config?.main || !resolved.config.preload || !resolved.config.renderer) {
   throw new Error("Incomplete desktop development config");
 }

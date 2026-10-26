@@ -9,7 +9,7 @@ Focused tests are ipc-router.test.ts, preload/bridge.test.ts and main/events.tes
 Native window/security/state belongs to [desktop-shell](desktop-shell.md);
 compiler and acceptance commands belong to [software-tooling](software-tooling.md).
 
-[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+[Verification fixtures](demo-onboarding.md) routes the fictional board corpus and PDF sources under tests/fixtures, used by isolated tests and evaluation/smoke harnesses.
 
 ## Purpose and boundaries
 
@@ -51,7 +51,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - todo.updated and session snapshot todos use shared bounded list validation; current known secrets redact optional todo IDs and text, with presentation text bounded at200 after redaction; Plan consumes the existing snapshot/subscription channels. [Plan](plan.md) owns whole replacement and icons.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
 - Durable session events include message.queued {messageId,text,timestamp} and message.delivered {messageIds}; user snapshot pending/timestamp fields are optional for historical replay. Existing sanitizer preserves IDs/numeric timestamps and scrubs queued user text.
-- session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and e2e/approvals.spec.ts cover strict values and real exact decisions.
+- session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and tests/e2e/approvals.spec.ts cover strict values and real exact decisions.
 - Session list/get and mutation summaries redact user fields while preserving schema identities and enums. Titles remain bounded after redaction; known-secret text/title/model requests are refused. Mock sessions bind delayed responses to their originating workbench and drain aborted turns before switches/close.
 - session.search validates trimmed1..1000 character query; session.export validates session ID and md/json enum, returns exported boolean. Both dispatch through existing exact-frame authorization and serial SessionsHost; renderer supplies no filesystem path. Main shares schema-preserving session sanitizers and the existing native export destination guard.
 - createDeltaCoalescer takes key/merge/emit functions, batches for 50ms, flushes explicitly before
@@ -135,15 +135,15 @@ createDeltaCoalescer is a separately tested utility whose callers supply merge p
 
 Paths relative to 05_Software.
 
-- packages/shared/src/{index,ipc,errors,events,settings,workbench,providers}.ts — shared public exports, invoke/error schemas and app events.
-- apps/desktop/src/main/{ipc-router,events,app-info}.ts — dispatch, event utilities, native metadata.
-- apps/desktop/src/main/{sessions,session-events}.ts and their tests — session host, authorized subscription control and delta transport.
-- apps/desktop/src/main/{ipc-router,events}.test.ts — request/error/frame/batching regression seams.
-- apps/desktop/src/main/index.ts — installs the one router and exposes the current-window emitter.
-- apps/desktop/src/preload/{index,bridge}.ts and bridge.test.ts — sandbox bridge and transport tests.
-- apps/desktop/src/renderer/api/{client,index,ipc,subscriptions}.ts and ipc.test.ts — one boundary and validation.
-- apps/desktop/src/renderer/mocks/{fixtures,mockApi}.ts and mockApi.test.ts — in-memory metadata/event fixture.
-- apps/desktop/src/renderer/mocks/sessions.ts and sessions.test.ts — session contract and lifecycle fixtures.
-- apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and foundation Query view. [Renderer foundation](renderer-foundation.md) routes the complete UI file set.
-- e2e/{shell,mock,workbench}.spec.ts — real Electron and standalone browser acceptance.
+- src/libraries/shared/src/{index,ipc,errors,events,settings,workbench,providers}.ts — shared public exports, invoke/error schemas and app events.
+- src/apps/desktop/src/main/{ipc-router,events,app-info}.ts — dispatch, event utilities, native metadata.
+- src/apps/desktop/src/main/{sessions,session-events}.ts and their tests — session host, authorized subscription control and delta transport.
+- src/apps/desktop/src/main/{ipc-router,events}.test.ts — request/error/frame/batching regression seams.
+- src/apps/desktop/src/main/index.ts — installs the one router and exposes the current-window emitter.
+- src/apps/desktop/src/preload/{index,bridge}.ts and bridge.test.ts — sandbox bridge and transport tests.
+- src/apps/desktop/src/renderer/api/{client,index,ipc,subscriptions}.ts and ipc.test.ts — one boundary and validation.
+- src/apps/desktop/src/renderer/mocks/{fixtures,mockApi}.ts and mockApi.test.ts — in-memory metadata/event fixture.
+- src/apps/desktop/src/renderer/mocks/sessions.ts and sessions.test.ts — session contract and lifecycle fixtures.
+- src/apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and foundation Query view. [Renderer foundation](renderer-foundation.md) routes the complete UI file set.
+- tests/e2e/{shell,mock,workbench}.spec.ts — real Electron and standalone browser acceptance.
 - scripts/dev-renderer.mjs — renderer-only Vite entrypoint, configured by desktop electron.vite.config.ts.

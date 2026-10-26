@@ -19,8 +19,8 @@ try {
   await build({
     entryPoints: {
       runtime: join(software, "scripts/retrieval/product-eval.mjs"),
-      "pdf-worker": join(software, "packages/core/src/knowledge/pdf-worker.ts"),
-      "embedding-worker": join(software, "packages/core/src/knowledge/embedding-worker.ts"),
+      "pdf-worker": join(software, "src/libraries/core/src/knowledge/pdf-worker.ts"),
+      "embedding-worker": join(software, "src/libraries/core/src/knowledge/embedding-worker.ts"),
     },
     outdir: scratch,
     bundle: true,
@@ -30,14 +30,14 @@ try {
     target: "node24",
     outExtension: { ".js": ".mjs" },
     alias: {
-      "@vera/core": join(software, "packages/core/src/index.ts"),
-      "@vera/shared": join(software, "packages/shared/src/index.ts"),
+      "@vera/core": join(software, "src/libraries/core/src/index.ts"),
+      "@vera/shared": join(software, "src/libraries/shared/src/index.ts"),
     },
   });
   const { evaluate } = await import(pathToFileURL(join(scratch, "runtime.mjs")).href);
   const result = await evaluate(software, scratch);
   result.fixtureSha256 = createHash("sha256")
-    .update(await readFile(join(software, "fixtures/retrieval/demo-board.yaml")))
+    .update(await readFile(join(software, "tests/fixtures/retrieval/demo-board.yaml")))
     .digest("hex");
   if (values.output)
     await writeFile(resolve(values.output), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });

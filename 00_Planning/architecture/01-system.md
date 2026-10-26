@@ -12,10 +12,10 @@ Every work package preserves these. Changing one is an architecture decision, re
 
 | # | Law |
 |---|---|
-| L1 | `packages/core` never imports `electron`. Host services reach it through the ports in `packages/core/src/ports.ts`. |
-| L2 | The renderer has no Node access. It reaches the main process only through the typed IPC contract in `packages/shared/src/ipc.ts`, validated with zod on both sides. |
+| L1 | `src/libraries/core` never imports `electron`. Host services reach it through the ports in `src/libraries/core/src/ports.ts`. |
+| L2 | The renderer has no Node access. It reaches the main process only through the typed IPC contract in `src/libraries/shared/src/ipc.ts`, validated with zod on both sides. |
 | L3 | Agent tools act only inside the open workbench root. `.vera/` is never writable by a tool. There is no shell tool. |
-| L4 | Only `write` and `edit` change workbench files, and only as the session's permission mode allows. `workbench.yaml`, `WORKBENCH.md` and `skills/**` always need an explicit approval. |
+| L4 | Only `write` and `edit` change workbench files, and only as the session's permission mode allows. Project metadata under `.vera` is managed through application APIs; general file tools cannot access it. |
 | L5 | Nothing is downloaded at run time: models, fonts and assets ship in the package. |
 | L6 | Outbound network goes only to the destinations in §8. VERA listens on no port, except pi-ai's OAuth callback on `127.0.0.1:1455` during a ChatGPT sign-in. No telemetry. |
 | L7 | Secrets exist only in the main-process credential store (04 §5). They never reach the renderer, logs, events, the database or error text. |
@@ -86,7 +86,7 @@ type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED
                    messageKey: string; params?: Record<string, string | number> };
 ```
 
-- Every channel has a zod request and response schema in `packages/shared/src/ipc.ts`. The router
+- Every channel has a zod request and response schema in `src/libraries/shared/src/ipc.ts`. The router
   rejects a message whose sender frame is not the app's own renderer, or whose payload fails the schema.
 - Events travel on one `vera:event` channel as `{ topic, id, seq?, event }`. `message.delta` and
   `tool.update` are coalesced every 50 ms. A subscriber passes `sinceSeq`; the core first replays the
@@ -109,13 +109,13 @@ Channel catalogue (namespace `.` method):
 ## 4. Module map
 
 ```
-packages/shared/src/        # no runtime dependencies besides zod; imported by every other package
+src/libraries/shared/src/        # no runtime dependencies besides zod; imported by every other package
   ipc.ts                    # channel names, request/response schemas, VeraError
   events.ts                 # SessionEvent, WorkbenchEvent, AppEvent unions
   session-state.ts          # pure reducer applySessionEvent(state, event) used by core snapshots and the renderer
   refs.ts                   # citation reference parser and formatter (05 §7)
   workbench.ts, settings.ts # file-format schemas
-packages/core/src/          # Electron-agnostic (L1)
+src/libraries/core/src/          # Electron-agnostic (L1)
   ports.ts                  # CredentialStore, WorkerPool, PathProvider, Clock, Logger, OpenExternal
   workbench/                # create, open, validate, path guard, ignore rules, lock
   storage/                  # SQLite connection, migration runner, repositories
@@ -127,11 +127,11 @@ packages/core/src/          # Electron-agnostic (L1)
   llm/                      # pi-ai collections, providers, replay provider, connection test, secret scrubber
   artifacts/, changes/      # session artifacts, workbench write queue and recorded edits
   settings/                 # settings schema migrations over a file port
-apps/desktop/src/
+src/apps/desktop/src/
   main/                     # lifecycle, window, IPC router, credential store, updater, worker host, portable mode
   preload/                  # contextBridge: window.vera
   renderer/                 # React app (06)
-apps/cli/src/               # headless `vera` CLI over core: run a prompt, index, search
+src/apps/cli/src/               # headless `vera` CLI over core: run a prompt, index, search
 ```
 
 Dependency rules, enforced by Biome's `noRestrictedImports` overrides in `05_Software/biome.json` as
@@ -140,7 +140,7 @@ part of `npm run lint`, and covered by `05_Software/tests/tooling/boundaries.tes
 | Package | May import |
 |---|---|
 | `shared` | zod |
-| `core` | `shared`, its own dependencies; never `electron`, `react` or `apps/*` |
+| `core` | `shared`, its own dependencies; never `electron`, `react` or `src/apps/*` |
 | `desktop/main` | `core`, `shared`, `electron` |
 | `desktop/preload` | `shared`, `electron` (contextBridge, ipcRenderer only) |
 | `desktop/renderer` | `shared`, UI libraries; never `core`, `electron` or Node built-ins |
@@ -153,20 +153,24 @@ The software root is `05_Software/`:
 ```
 05_Software/
   package.json  package-lock.json  .npmrc   # npm workspaces, exact pins
-  biome.json                          # lint, format, import boundaries
-  tsconfig.json  tsconfig.base.json   # `tsc -b` solution and shared compiler options
-  tsconfig.tools.json  vitest.config.ts
-  tests/tooling/                      # tests of the repository's own checks
-  packages/shared/  packages/core/
-  apps/desktop/                       # electron.vite.config.ts, electron-builder.yml, src/{main,preload,renderer}
-  apps/cli/
-  fixtures/
-    workbenches/demo-board/           # small fictional workbench used by tests and the demo
-    llm-scripts/*.jsonl               # replay scripts for agent tests (08 §3)
-    retrieval/                        # retrieval evaluation questions (05 §8)
-  e2e/                                # Playwright Electron tests
-  resources/models/                   # bundled embedding model (delivery decided by WP-05)
-  scripts/                            # packaging, smoke and i18n checks
+  biome.json                              # lint, format, import boundaries
+  tsconfig*.json  vitest.config.ts  playwright.config.ts
+  src/
+    apps/desktop/                         # Electron main/preload/renderer
+    apps/cli/                             # headless application
+    libraries/shared/                     # validated contracts and data types
+    libraries/core/                       # shared product logic
+    models/                               # manifest and local BGE model assets
+    windows_runtime/                      # manifest and app-local Microsoft runtime DLLs
+  tests/
+    tooling/                              # configuration, build and test infrastructure
+    integration/                          # CLI, documents, workers and retrieval
+    packaging/                            # distribution, smoke tooling and updates
+    e2e/                                  # Playwright Electron/browser acceptance
+    fixtures/                             # test-only documents, scenarios and replay
+  scripts/                                # development, packaging, smoke and i18n checks
+  release_tmp/                            # ignored packaging workspace
+  node_modules/                           # ignored installed dependencies
 ```
 
 ## 6. Data locations

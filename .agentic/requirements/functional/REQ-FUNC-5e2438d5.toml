@@ -19,9 +19,9 @@ The shared reducer shall construct the same terminal session snapshot from persi
 
 verification = "Fold golden events with/without live deltas and compare detached terminal states; unknown references are tolerated."
 
-affected_paths = ["05_Software/packages/shared/src/events.ts", "05_Software/packages/shared/src/session-state.ts", "05_Software/packages/shared/src/session.ts", "05_Software/packages/shared/src/index.ts", "05_Software/packages/shared/src/session-state.test.ts"]
+affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/shared/src/session.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/session-state.test.ts"]
 
-linked_tests = ["05_Software/packages/shared/src/session-state.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/session-state.test.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"

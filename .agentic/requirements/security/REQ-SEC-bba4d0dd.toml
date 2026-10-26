@@ -19,9 +19,9 @@ While the desktop renderer is loaded, VERA shall enforce context isolation, proc
 
 verification = "Launch built app; inspect webPreferences, sandboxed preload load and page-world typeof require/process/module."
 
-affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/preload/index.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/preload/index.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
 
 
 spec = ""

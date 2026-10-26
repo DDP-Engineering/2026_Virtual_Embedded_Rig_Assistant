@@ -21,7 +21,7 @@ verification = "Inspect artifact/report/log hashes and original upgrade projecti
 
 affected_paths = ["05_Software/scripts/smoke-report.mjs", "05_Software/scripts/smoke-package.mjs", "05_Software/scripts/sandbox/VERA.wsb"]
 
-linked_tests = ["05_Software/tests/tooling/package-smoke.test.ts"]
+linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts"]
 
 
 spec = "specs/REQ-TEST-8928f10f.md"

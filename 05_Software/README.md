@@ -4,12 +4,44 @@ For already-built release acceptance, use `npm run smoke:package -- --artifact <
 see [release smoke](../06_SoftwareDocu/release-package-smoke.md) for external egress,
 separate test-renderer calibration, original upgrade report bindings and pending manual Windows capture.
 
-The npm workspaces of VERA — `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli` — with
+The npm workspaces of VERA — `src/libraries/shared`, `src/libraries/core`, `src/apps/desktop`, `src/apps/cli` — with
 end-to-end tests and development scripts. Layout and module boundaries:
 [01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell provides Welcome and App Settings, responsive panels and persisted appearance/language through the validated typed IPC bridge.
 
-The catalog checker also accepts `npm run check:i18n -- --fixture fixtures/i18n/missing-key.json`
+The catalog checker also accepts `npm run check:i18n -- --fixture tests/fixtures/i18n/missing-key.json`
 for its negative CLI regression; this fixture deliberately exits1.
+
+## Directory layout
+
+```text
+src/
+  apps/desktop/       Electron application and React interface
+  apps/cli/           Command-line application
+  libraries/core/     Shared product logic
+  libraries/shared/   Validated contracts and data types
+  models/             BGE manifest and local model assets
+  windows_runtime/    Microsoft runtime manifest and local DLLs
+tests/
+  e2e/                Playwright Electron and browser acceptance
+  tooling/            Build, configuration and verification infrastructure tests
+  integration/        CLI, documents, workers and retrieval tests
+  packaging/          Distribution, smoke tooling and update tests
+  fixtures/           Test-only documents, replay scripts and scenarios
+scripts/              Development, build, packaging and diagnostic commands
+release_tmp/          Ignored packaging workspace
+node_modules/         Ignored installed dependencies
+```
+
+Unit and component tests remain beside the implementation in `src/`.
+The fictional corpus in `tests/fixtures/workbenches/demo-board/` is copied only into isolated verification workbenches. The application opens user-selected projects and packages real model/runtime resources.
+Configuration and npm workspace manifests remain at the software root.
+
+Model/DLL binaries in `src/models/` and `src/windows_runtime/` are ignored by Git;
+their manifests remain versioned beside them. Packaging maps these source locations
+to the installed application resource layout (`models/` and app-local native DLLs).
+
+The [scripts catalog](scripts/README.md) describes every helper, its invocation,
+outputs and platform requirements, with separate guides for retrieval and Sandbox.
 
 ## Set-up and commands
 
@@ -25,12 +57,16 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `npm test` | Vitest |
 | `npm run dev` | Electron main, sandboxed preload and React renderer with loopback Vite/HMR |
 | `VITE_API=mock npm run dev:renderer` | Full foundation UI using in-memory settings, metadata and app events |
-| `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `apps/desktop/out/` |
+| `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `src/apps/desktop/out/` |
 | `npm run prepare:model` | Fetch and verify immutable, SHA256-pinned embedding assets; `-- --offline` verifies cached files only |
 | `npm run package` / `npm run package:test` | Build native x64 NSIS + portable ZIP (Windows) or AppImage + deb (Linux), release / labelled test identity, pinned assets and SHA256/budget report |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 | `npm run build:cli` | Bundle the headless `vera` bin and isolated grep worker |
 | `npm run vera -- run …` | Build the headless CLI and execute one durable session turn |
+
+E2E results are printed in the terminal. Screenshots, videos and traces are disabled;
+Playwright uses an isolated system temporary directory and removes it after each normal run,
+including failed tests. No `test-results/` directory is retained in the repository.
 
 Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, for example
 `python ../02_Tools/npmw.py npm run verify`. Full command list: [08-quality.md §1](../00_Planning/architecture/08-quality.md).
@@ -41,7 +77,12 @@ Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, 
 | `biome.json` | lint and format rules; the import boundaries of 01 §4 |
 | `tsconfig.base.json`, `tsconfig.json`, `tsconfig.tools.json` | compiler options, `tsc -b` solution, tooling project |
 | `vitest.config.ts` | test projects |
-| `tests/tooling/` | tests of the repository's own checks |
+| `tests/tooling/` | tests of configuration, build and verification infrastructure |
+| `tests/integration/` | cross-component CLI, document, worker and retrieval tests |
+| `tests/packaging/` | distribution, smoke tooling and update tests |
+
+The [test inventory](tests/README.md) describes the categories and commands for
+running one Vitest project or a selected file.
 
 The four workspaces are `@vera/shared`, `@vera/core`, `@vera/desktop` and `@vera/cli`. Each extends
 the shared TypeScript base and participates in `tsc -b`. The desktop project separates Node, preload,
@@ -58,7 +99,7 @@ Renderer geometry lives in the separately versioned localStorage key vera.ui.lay
 The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Updates, Data & privacy and About are placeholder sections (About also shows metadata).
 
 Skills settings opens from the active workbench or session Context. Skills live at
-`<workbench>/skills/<name>/SKILL.md` or `<userData>/skills/<name>/SKILL.md`; workbench
+`<workbench>/.vera/skills/<name>/SKILL.md` or `<userData>/skills/<name>/SKILL.md`; workbench
 folders take precedence. Create supplies an editable template; invalid skills show
 diagnostics, and disabled/invalid skills stay outside the next-turn prompt index.
 The agent loads enabled instructions and confined extra files with `load_skill`.
@@ -73,7 +114,7 @@ Set `VERA_TEST=1` while building to compile the test-build constant to true (Pow
 `$env:VERA_TEST="1"`; then run the build; remove it afterward with `Remove-Item Env:VERA_TEST`).
 Instrumented packages accept `--packaging-probe=<absolute JSON path>` for temporary SQLite and worker embedding measurements; release application code excludes this hook and its fixtures. The ordinary build ignores runtime `VERA_TEST` and renderer
 URL overrides. Automated tests use temporary user data, enforce Chromium sandboxing, and reject
-non-loopback connections in Chromium and Node. Screenshots are captured for human inspection.
+non-loopback connections in Chromium and Node. Automated E2E runs retain no screenshots or traces.
 
 `npm ci` runs `install-electron` to install the pinned Electron binary; npm's allowScripts entries
 permit the pinned esbuild install scripts. Ubuntu requires the libraries and Xvfb listed by
@@ -83,13 +124,15 @@ including ONNX optional CUDA downloads; packaging retains host x64 runtime files
 CUDA/TensorRT binaries and uses the CPU execution provider. Windows keeps upstream ORT companion DLLs.
 
 Packaging uses electron-builder 26.17.0, better-sqlite3 13.0.3, transformers 4.3.1 and
-onnxruntime-node 1.30.0. `resources/model-manifest.json` pins all seven q8
+onnxruntime-node 1.30.0. `src/models/model-manifest.json` pins all seven q8
 bge-small-en-v1.5 assets to an immutable upstream revision, with bytes and SHA256.
-Downloaded assets under `resources/models/` are ignored and reverified before packaging.
+Downloaded assets under `src/models/` are ignored and reverified before packaging.
 The runtime uses local files with remote models disabled. ADR0015 selects this BGE model after
 the retrieval evaluation; packaging preserves its descriptor and fingerprints.
 
-Generated artifacts and `package-report.json` reside in `release/{test,release}/`.
+Generated artifacts and `package-report.json` reside in `release_tmp/{test,release}/`.
+`release_tmp/` is an ignored, rebuildable packaging workspace, including staging directories;
+selected validated deliverables belong in `../07_Delivery/`.
 The schema2 report includes each artifact's SHA256/bytes, source/config hashes, per-target ASAR and
 executable hashes, prepack outcomes, unpacked/native/model contributions and largest files.
 The NSIS per-user installer fails above250000000bytes after persisting its FAIL report; ZIP size is
@@ -97,7 +140,7 @@ measured. ZIP alone ships `vera.portable`. Native libraries are unpacked; models
 `extraResources` files. Local pdfjs CMaps/standard fonts/WASM ship with the renderer.
 
 Windows also ships five app-local Microsoft VC++14.44.35211.0 DLLs pinned by
-`resources/windows-runtime-manifest.json`. `npm run prepare:windows-runtime` verifies the cache or
+`src/windows_runtime/windows-runtime-manifest.json`. `npm run prepare:windows-runtime` verifies the cache or
 materializes the exact bytes from Microsoft-signed source files. `VERA_VC_REDIST_DIR` selects an
 approved redistributable folder; the default is System32. Different bytes fail rather than updating
 pins. Preparation is build-time only. Generated DLL caches are ignored by Git.
@@ -149,7 +192,7 @@ the report; each run cleans its own temporary worker bundle.
 Run from this folder on a copy of the demo workbench:
 
 ```text
-python ../02_Tools/npmw.py npm run vera -- run --workbench <copied-demo-dir> --prompt "Read the board" --provider replay --script fixtures/llm-scripts/read-then-answer.jsonl
+python ../02_Tools/npmw.py npm run vera -- run --workbench <copied-demo-dir> --prompt "Read the board" --provider replay --script tests/fixtures/llm-scripts/read-then-answer.jsonl
 ```
 
 `--provider openai --model <id>` uses `OPENAI_API_KEY`; `--provider custom --base-url <http(s)://host/v1> --model <id>` uses the ordinary custom gateway. A plain UTF-8 `--key-file <file>` overrides the environment key. Credentials remain in memory and all event/log/usage output passes through the shared scrubber. Provider defaults to OpenAI, which requires `--model`; replay explicitly selects only the supplied script.
@@ -158,15 +201,25 @@ python ../02_Tools/npmw.py npm run vera -- run --workbench <copied-demo-dir> --p
 
 `--approve all` approves pending ask/protected changes; `--approve none` denies them. With no flag, an interactive stdin+stderr terminal shows the exact patch and accepts A/D on stderr; noninteractive invocation safely denies. A denied tool can still conclude with exit0. `read-only` always rejects writes, and ordinary `auto-edit` requests are decided by mode.
 
-`npm run build:cli` writes `apps/cli/dist/index.js`; the workspace `vera` bin points there. Headless replay is part of the CLI interface. Desktop replay retains its compiled instrumented-build boundary.
+`npm run build:cli` writes `src/apps/cli/dist/index.js`; the workspace `vera` bin points there. Headless replay is part of the CLI interface. Desktop replay retains its compiled instrumented-build boundary.
 
 ## Workbenches
 
-Welcome creates a workbench in an existing chosen folder without workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema4 settings; versions0/1/2/3 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the WORKBENCH.md editor; context above16KB warns and saves full content.
+Project metadata lives in `<project>/.vera/`: `workbench.yaml` (configuration),
+`WORKBENCH.md` (pinned engineering context), optional `.veraignore` (project-relative
+ignore patterns), and `skills/<name>/SKILL.md` (project skills). SQLite, locks,
+backups and session artifacts use the same `.vera` folder. User documents and
+sources remain relative to the selected project root. Ordinary file tools and
+document indexing exclude `.vera`; skills use the dedicated bounded loader.
+The current layout is authoritative: opening requires `.vera/workbench.yaml`.
+Root-level files are ordinary project content and are never detected or migrated.
+Global application settings, credentials and user skills remain in userData.
+
+Welcome creates a workbench in an existing chosen folder without .vera/workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema4 settings; versions0/1/2/3 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the .vera/WORKBENCH.md editor; context above16KB warns and saves full content.
 
 Workbench format1 retains unknown keys and warns. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
 
-For native folder-dialog acceptance, compile instrumented code by setting VERA_TEST=1 before npm run test:e2e. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
+For native folder-dialog acceptance, compile instrumented code by setting VERA_TEST=1 before npm run test:e2e. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from tests/fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
 
 Settings → Providers configures OpenAI API keys/models and multiple OpenAI-compatible `/v1` endpoints. Keys are masked and cleared after saving; only bounded hints return from main. Custom defaults are32768 context tokens and4096 output tokens, with a positive input budget after the architectural safety margin. Credential JSON uses safeStorage encryption; unavailable or Linux basic_text storage asks each time whether to keep the key only for this run or persist without secure encryption. Future settings/credential formats preserve bytes. See [.agentic/knowledge/providers.md](../.agentic/knowledge/providers.md) for the API and recovery contract.
 
@@ -187,9 +240,9 @@ python ../02_Tools/npmw.py npm run smoke:live -- --provider custom:ollama --data
 
 Use `--provider openai` for the stored OpenAI configuration; omit `--data` to use the installed app store. The command builds release, launches the ordinary main host, prints scrubbed per-step JSON and exits0 only when mandatory steps pass (unsupported listing may be skipped). Linux requires a desktop display or `xvfb-run -a`. Manual smoke may consume API quota; it is separate from automated checks and must be observed before declaring WP09 complete.
 
-The session workspace supports keyboard session CRUD, Enter/Shift+Enter composer, @ path completion, model catalogs, Stop, Markdown/code, tool disclosures, citation chips and usage/context limits. Browser `?mock=chat` adds empty, streaming, tool/citation, invalid citation, provider error and context-limit sessions. Chat component tests live in `apps/desktop/src/renderer/components/session/workspace.test.ts`; native Stop/restart/reload/grep acceptance in `e2e/chat-ui.spec.ts`.
+The session workspace supports keyboard session CRUD, Enter/Shift+Enter composer, @ path completion, model catalogs, Stop, Markdown/code, tool disclosures, citation chips and usage/context limits. Browser `?mock=chat` adds empty, streaming, tool/citation, invalid citation, provider error and context-limit sessions. Chat component tests live in `src/apps/desktop/src/renderer/components/session/workspace.test.ts`; native Stop/restart/reload/grep acceptance in `tests/e2e/chat-ui.spec.ts`.
 
-The composer permission picker sets the current session to read-only, ask or auto-edit and stays available during an active turn. Ask and protected auto-edit changes show inline cards with the prepared patch, byte count, Approve/Deny and Approve-and-switch actions. Focus the card for A/D. Stop or selecting read-only aborts waiting changes; mismatched/stale decisions conflict. New sessions inherit the workbench mode. Known credential-bearing patches are refused before approval persistence and require a human edit. Approval cards persist across reload/restart with their final decision; the sidebar marks waiting sessions. Focused approval tests: core sessions/approvals.test.ts, workspace.test.ts, CLI prompt/process tests and e2e/approvals.spec.ts.
+The composer permission picker sets the current session to read-only, ask or auto-edit and stays available during an active turn. Ask and protected auto-edit changes show inline cards with the prepared patch, byte count, Approve/Deny and Approve-and-switch actions. Focus the card for A/D. Stop or selecting read-only aborts waiting changes; mismatched/stale decisions conflict. New sessions inherit the workbench mode. Known credential-bearing patches are refused before approval persistence and require a human edit. Approval cards persist across reload/restart with their final decision; the sidebar marks waiting sessions. Focused approval tests: core sessions/approvals.test.ts, workspace.test.ts, CLI prompt/process tests and tests/e2e/approvals.spec.ts.
 
 The repository npm configuration keeps CLI stdout as event-only JSONL by suppressing run-script banners. Replay records decode JSON escapes and scrub registered credentials before temporary staging and durable messages.
 
@@ -198,11 +251,11 @@ The repository npm configuration keeps CLI stdout as event-only JSONL by suppres
 
 The agent saves UTF8 outputs with `artifact_save` (session class, sequential, no approval), up to5MiB under `.vera/artifacts/<session-id>/<name>`. Use portable ASCII names of at most100 characters and `overwrite:true` to replace an existing artifact. Metadata and `artifact.saved` persist with the session; successful `artifact:<name>` refs validate against that session’s current verified file. Read-only workbenches preserve their files.
 
-The Artifacts tab lists names, bytes and times, opens Markdown/plain text, and offers native Reveal and Export. Export uses a save dialog; cancelling writes nothing. Deleting a session removes its artifact folder. See [artifact contracts](../.agentic/knowledge/artifacts.md) for confinement, crash-mismatch handling and tests. `fixtures/llm-scripts/save-artifact.jsonl` runs in desktop test replay or the ordinary headless replay CLI.
+The Artifacts tab lists names, bytes and times, opens Markdown/plain text, and offers native Reveal and Export. Export uses a save dialog; cancelling writes nothing. Deleting a session removes its artifact folder. See [artifact contracts](../.agentic/knowledge/artifacts.md) for confinement, crash-mismatch handling and tests. `tests/fixtures/llm-scripts/save-artifact.jsonl` runs in desktop test replay or the ordinary headless replay CLI.
 
 ### Session Plan
 
-The `todo` session tool replaces the entire ordered Plan list using `{items:[{id?,text,status}]}` with at most50items, at most200UTF16code units per text and pending/in_progress/done statuses. An empty list clears it. The current SQLite row and `todo.updated` event commit together; Plan consumes session snapshots/live events and restores the final list after restart. Session modes allow the tool; workbench read-only denies mutation. The Plan tab presents localized status icons and labels. `fixtures/llm-scripts/plan-updates.jsonl` drives deterministic acceptance; the browser mock accepts “Update the plan”.
+The `todo` session tool replaces the entire ordered Plan list using `{items:[{id?,text,status}]}` with at most50items, at most200UTF16code units per text and pending/in_progress/done statuses. An empty list clears it. The current SQLite row and `todo.updated` event commit together; Plan consumes session snapshots/live events and restores the final list after restart. Session modes allow the tool; workbench read-only denies mutation. The Plan tab presents localized status icons and labels. `tests/fixtures/llm-scripts/plan-updates.jsonl` drives deterministic acceptance; the browser mock accepts “Update the plan”.
 
 ## ChatGPT subscription
 
@@ -214,7 +267,7 @@ Real acceptance: sign in with your own subscription, run a short session, close 
 
 Run `python ../02_Tools/npmw.py npm run make:demo-pdfs` from05_Software to
 regenerate the three fictional VERA-DEMO-01 PDFs from
-`fixtures/workbenches/demo-board/sources/`. Background desktop/CLI ingest extracts
+`tests/fixtures/workbenches/demo-board/sources/`. Background desktop/CLI ingest extracts
 PDF pages in a dedicated worker, caches extraction by SHA256 and persists
 page/heading/line chunks. Scanned PDFs report `needs_ocr`.
 

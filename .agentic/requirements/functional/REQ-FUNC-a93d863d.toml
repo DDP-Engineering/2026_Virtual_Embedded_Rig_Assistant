@@ -19,9 +19,9 @@ While a workbench has owned writable storage, its ingest service shall synchroni
 
 verification = "Real watcher and SQLite integration: add/edit/delete ordinary files and inspect rows/events; rewrite identical bytes and observe unchanged row/events; test exact text/PDF size limits, unsupported types, processor statuses/failures, ignores/links, owner loss and shutdown. Strict shared contract tests reject invalid requests/events."
 
-affected_paths = ["05_Software/packages/core/src/knowledge/", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/core/src/index.ts", "05_Software/packages/core/package.json", "05_Software/package-lock.json", "05_Software/packages/shared/src/documents.ts", "05_Software/packages/shared/src/documents-ipc.test.ts", "05_Software/packages/shared/src/events.ts", "05_Software/packages/shared/src/index.ts", "05_Software/apps/desktop/src/main/events.ts", "05_Software/apps/desktop/src/main/events.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/e2e/ingest.spec.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/main/events.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
 
-linked_tests = ["05_Software/packages/core/src/knowledge/ingest.test.ts", "05_Software/packages/shared/src/documents-ipc.test.ts", "05_Software/apps/desktop/src/main/events.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts", "05_Software/e2e/ingest.spec.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/apps/desktop/src/main/events.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
 
 
 spec = "specs/REQ-FUNC-a93d863d.md"

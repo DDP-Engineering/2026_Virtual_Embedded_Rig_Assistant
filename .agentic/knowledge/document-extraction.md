@@ -98,12 +98,12 @@ embedding port. Guarded read-only source verification is shared by read_doc.
 
 - core/src/knowledge/{extraction,chunk,token-budget,processor,pdf-worker,worker-host}.ts — extraction/cache/worker.
 - core/src/knowledge/{extraction,processor,ingest}.test.ts — fixtures and lifecycle.
-- apps/{cli/src,desktop/src/main}/{document-processor,pdf-worker}.ts — host composition.
-- tests/tooling/{document-hosts,demo-documents}.test.ts; e2e/ingest.spec.ts — compiled/native proof.
-- scripts/make-demo-pdfs.mjs; fixtures/{documents,workbenches/demo-board} — fixtures/demo assets.
+- src/apps/{cli/src,desktop/src/main}/{document-processor,pdf-worker}.ts — host composition.
+- tests/integration/document-hosts.test.ts and tests/tooling/demo-documents.test.ts; tests/e2e/ingest.spec.ts — compiled/native proof.
+- scripts/make-demo-pdfs.mjs; tests/fixtures/{documents,workbenches/demo-board} — tests/fixtures/demo assets.
 
 Tokenizer JSON/configuration are a semantic snapshot of the already packaged
 Xenova/bge-small-en-v1.5 assets at revision
 `ea104dacec62c0de699686887e3f920caeb4f3e3`, MIT license. The original hashes
-are recorded in resources/model-manifest.json. No ONNX/model runtime is used by
+are recorded in src/models/model-manifest.json. No ONNX/model runtime is used by
 chunking.

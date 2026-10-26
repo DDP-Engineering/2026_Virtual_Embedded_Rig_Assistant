@@ -1,82 +1,65 @@
-# Demo and onboarding
+# Fictional verification fixtures
 
 ## Routing
 
-Select for VERA-DEMO-01, first-run Welcome, suggested prompts and sample skills.
-Start at main/demo-workbench.ts, renderer/components/demo-guide.tsx and shared/src/demo.json.
-Future focused scenarios: main/demo-workbench.test.ts, shared/demo.test.ts,
-renderer/components/session/workspace.test.ts and mocks/mockApi.test.ts.
-[Workbench](workbench.md) owns folder validation/locks/ingest/recents; [skills](skills.md)
-owns discovery/load_skill; [chat UI](chat-ui.md) owns ordinary session state and composer.
+Select for the fictional board corpus, PDF regeneration and fixture-only
+retrieval/CLI/smoke inputs. Start at `05_Software/tests/fixtures/README.md`,
+`scripts/make-demo-pdfs.mjs`, `scripts/retrieval/product-eval.mjs` and `scripts/package.mjs`.
+[Workbench](workbench.md) owns explicit user folder creation/opening and the normal lifecycle;
+[chat UI](chat-ui.md) owns user-composed sessions; [native packaging](native-packaging.md)
+owns application and real model/runtime resource delivery.
 
 ## Purpose and boundaries
 
-Main installs and opens a private bundled example through the existing session lifecycle.
-Welcome presents the localized learning guide; App creates ordinary sessions and supplies
-an ID-bound initial draft consumed when the composer mounts. Provider setup and Send stay
-explicit user actions in the ordinary UI.
+The fictional VERA-DEMO-01 corpus is verification data under `tests/fixtures/workbenches/`.
+Tests and evaluation/smoke harnesses copy it into owned isolated workspaces. The application
+starts with ordinary user-selected workbenches and explicit session input.
 
 ## Public interface
 
-- `workbench.demo.open {}` returns WorkbenchSnapshot; the host selects source/destination.
-- `prepareDemoWorkbench(userData,bundled)` returns the installed/reused ordinary folder.
-- `demoWorkbench` exports the shared JSON identity and finite asset list consumed by packaging.
-- `DemoGuide` offers datasheet, boot-log and bring-up prompts in en/ro/de, provider navigation,
-  citation/index guidance and a route back through the workbench sidebar name.
-- `Composer.initialDraft/consumeDraft` seed and consume a draft without sending it automatically.
+- Welcome creates or opens a user-selected workbench and displays recents.
+- Ordinary workbench and session IPC contracts support those user actions.
+- `makeDemoPdfs(destination)` generates the three fixture PDFs from fixture Markdown.
+- `demo-board.json` is a test-only identity and finite asset inventory.
 
 ## Invariants
 
-- Private copy lives in canonical userData/demo-workbenches/VERA-DEMO-01. Existing files and
-  runtime state survive reopen. An incomplete/redirected target is refused; no reset is implicit.
-- Installation reuses the OS-released workbench IPC guard with its own installation identity,
-  copies only allowlisted ordinary single-link files into owned staging and publishes by rename.
-  Cleanup checks the parent and removes only that invocation's staging; interrupted leftovers
-  remain unreferenced and a future installation can retry without deleting unknown contents.
-- Main checks application settings readOnly before installing. Workbench open retains normal
-  format/lock/storage/ingest/recents behavior and SessionsHost drains turns on replacement.
-- Package staging and development use the same fixture inventory; runtime .vera/credentials
-  and unrelated fixture/host files stay outside the shipped demo inventory.
-- The shared inventory declares its JSON module type so the compiled ESM export loads
-  directly in Node.js as well as through application bundlers.
-- All board data is fictional. Log-analysis/checklist skills distinguish recorded events from
-  expected checks: I2C delay then ready does not establish sensor-ID or LED acceptance.
+- Fictional documents, skills and inventory live in `tests/fixtures/` and remain outside
+  the compiled application and installer resources.
+- Test consumers use isolated copies; fixture source bytes remain stable.
+- Existing user folders/profiles are preserved and remain openable through normal lifecycle.
+- Model assets and Windows runtime libraries remain real packaged application resources.
+- Board values are fictional evidence; recorded boot events do not prove unmeasured hardware checks.
 
 ## Change map
 
-| Change requested | Start with | Future focused proof |
+| Change | Source | Proof |
 |---|---|---|
-| Asset delivery/copy/reopen | demo.json, main/demo-workbench.ts, package.mjs, electron-builder.yml | main/demo-workbench.test.ts |
-| Empty host-owned IPC | shared/ipc.ts, main/index.ts | shared/demo.test.ts; router/preload type consumers |
-| Prompts/draft/localization | DemoGuide, Workbench, App, Composer, catalogs | workspace.test.ts; mockApi.test.ts; check:i18n |
-| Sample procedures/corpus | fixtures/workbenches/demo-board | private copy inventory; fresh-userData realmodel by hand |
+| Welcome and normal composition | renderer workbench/App/session components | workspace.test.ts; native workbench acceptance |
+| Runtime contract and payload | shared ipc/index; main index; builder and package.mjs | workbench-entry.test.ts; packaging.test.ts; real staging |
+| Fixture documents and PDF generation | tests/fixtures/workbenches; make-demo-pdfs.mjs | inventory/hash checks; demo-documents.test.ts |
+| Retrieval and CLI inputs | scripts/retrieval; scripts/smoke-runtime; tooling tests | focused retrieval/CLI/PDF consumers |
 
 ## Key behaviors
 
-- REQ-FUNC-66b6fda6 — deliver/reopen the complete private fictional workbench and three skills.
-- REQ-UX-194ecc98 — offer the demo and three localized ordinary-session prompt drafts.
+- User-selected workbenches and explicit session composition.
+- Fictional verification data is separate from the distributed application.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
- Welcome[Welcome / DemoGuide] --> IPC[workbench.demo.open]
- IPC --> Lifecycle[SessionsHost.lifecycle]
- Lifecycle --> Installer[prepareDemoWorkbench]
- Inventory[shared demo.json] --> Installer
- Inventory --> Package[package staging / extraResources]
- Installer --> Guard[existing OS IPC guard]
- Installer --> Copy[private userData copy]
- Lifecycle --> Workbench[WorkbenchService.open]
- Welcome --> Draft[App session creation / initial draft]
- Draft --> Composer[ordinary Composer / explicit Send]
+ Welcome --> CreateOpen[Explicit user folder selection]
+ CreateOpen --> Lifecycle[Workbench lifecycle]
+ Lifecycle --> Sessions[Ordinary user-composed sessions]
+ Fixtures[tests/fixtures] --> Tests[Tests and evaluation/smoke harnesses]
+ Tests --> Copies[Owned isolated workbench copies]
+ Build[Compiled application] --> Package[Installer payload]
+ Resources[Real model/runtime resources] --> Package
 ```
 
 ## Files
 
-Shared demo.json/demo.ts/ipc.ts; main demo-workbench.ts/index.ts; core index.ts exports the
-existing guard. Renderer DemoGuide/Workbench/App/SessionWorkspace/Composer and en/ro/de catalogs;
-mockApi carries the strict route. Package staging and builder extraResources deliver the finite
-fixture inventory, including unchanged generated PDFs, source Markdown, log, notes and pinout,
-GETTING-STARTED.md and skills/{datasheet-reader,log-analyst,bringup-checklist}/SKILL.md.
-Future tests are listed in Routing; runtime/manual acceptance status belongs in the task journal.
+`tests/fixtures/workbenches/demo-board/`, `demo-board.json`; renderer App/Workbench/Composer;
+shared ipc/index; main index; electron-builder.yml; scripts/package.mjs, make-demo-pdfs.mjs,
+retrieval/product-eval.mjs, compare-embeddings.mjs and smoke-runtime.mjs.

@@ -5,16 +5,16 @@
       "path": "./tsconfig.tools.json"
     },
     {
-      "path": "./packages/shared"
+      "path": "./src/libraries/shared"
     },
     {
-      "path": "./packages/core"
+      "path": "./src/libraries/core"
     },
     {
-      "path": "./apps/desktop"
+      "path": "./src/apps/desktop"
     },
     {
-      "path": "./apps/cli"
+      "path": "./src/apps/cli"
     }
   ]
 }

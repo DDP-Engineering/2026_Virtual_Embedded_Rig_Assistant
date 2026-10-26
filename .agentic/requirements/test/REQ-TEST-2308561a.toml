@@ -19,7 +19,7 @@ When built with VERA_TEST=1, the desktop build shall compile its test-build cons
 
 verification = "Build both modes; inspect emitted build identity and execute the emitted ESM flag module with Node; runtime VERA_TEST does not change an ordinary build."
 
-affected_paths = ["05_Software/apps/desktop/electron.vite.config.ts", "05_Software/apps/desktop/src/main/build-mode.ts"]
+affected_paths = ["05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/build-mode.ts"]
 
 linked_tests = ["05_Software/tests/tooling/build-mode.test.ts"]
 

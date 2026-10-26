@@ -28,7 +28,7 @@ Authority: [system laws](../architecture/01-system.md),
 
 ## 2. Shared bounded host adapter
 
-CAP-01 task 1 owns `packages/core/src/tools/capabilities/host.ts` and its test. It adapts WP-11's
+CAP-01 task 1 owns `src/libraries/core/src/tools/capabilities/host.ts` and its test. It adapts WP-11's
 WorkerPool without importing Electron or changing its grep semantics. CAP-02 consumes this interface:
 
 ```ts
@@ -48,7 +48,7 @@ no main-thread fallback. Tests inject a shorter deadline through the host, not a
 ## 3. RunRecord v1
 
 CAP-01 task 1 defines `RunRecordSchema` and inferred `RunRecord` in
-`packages/shared/src/capabilities/run-record.ts`. A run record is user-supplied metadata plus source
+`src/libraries/shared/src/capabilities/run-record.ts`. A run record is user-supplied metadata plus source
 references. Validation proves its shape and log binding; its hardware conditions remain declared.
 
 ```ts
@@ -85,7 +85,7 @@ test conditions match; raw A/B values are shown without automatic conversion or 
 
 ## 4. Shared fixture workbench
 
-CAP-01 creates the base fixture under `fixtures/workbenches/demo-board/`; CAP-02 extends it.
+CAP-01 creates the base fixture under `tests/fixtures/workbenches/demo-board/`; CAP-02 extends it.
 All tests work on copies. Planned files:
 
 | File | Fixed content/purpose |

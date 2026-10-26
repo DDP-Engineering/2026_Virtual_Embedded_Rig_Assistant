@@ -19,9 +19,9 @@ When VERA starts, the desktop shell shall display a React renderer in a window t
 
 verification = "Launch the built app with temporary userData; observe window title, rendered identity and minimum size."
 
-affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/renderer/"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
 
 
 spec = ""

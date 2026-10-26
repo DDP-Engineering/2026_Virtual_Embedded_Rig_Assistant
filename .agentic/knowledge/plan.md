@@ -48,4 +48,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software: shared session.ts/events.ts/session-state.ts/todos.test.ts;core tools/todo.ts/context.ts/registry.ts/registry.test.ts,storage/repos/todos.ts,sessions/service.ts/todos.test.ts,index.ts;renderer components/session/plan-tab.tsx/plan-tab.test.ts,App.tsx,components/shell.tsx,mocks/sessions.ts,styles.css,locales;fixtures/llm-scripts/plan-updates.jsonl;tests/tooling/cli.test.ts;e2e/plan.spec.ts.
+Under05_Software: shared session.ts/events.ts/session-state.ts/todos.test.ts;core tools/todo.ts/context.ts/registry.ts/registry.test.ts,storage/repos/todos.ts,sessions/service.ts/todos.test.ts,index.ts;renderer components/session/plan-tab.tsx/plan-tab.test.ts,App.tsx,components/shell.tsx,mocks/sessions.ts,styles.css,locales;tests/fixtures/llm-scripts/plan-updates.jsonl;tests/integration/cli.test.ts;tests/e2e/plan.spec.ts.

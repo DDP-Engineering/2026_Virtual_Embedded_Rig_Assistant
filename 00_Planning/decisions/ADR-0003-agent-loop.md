@@ -9,7 +9,7 @@ user's approval before a write, abort, events for the UI, resumption from stored
 context budget before every model call, including the first turn. Steering and advanced historical
 compaction follow in M5. Two candidates exist, and the BenchPilot reference code in `09_Others/benchpilot-reference/` may be reused:
 
-- The reference loop (`09_Others/benchpilot-reference/apps/server/src/agent/loop.ts`, 185 lines on pi-ai 1.1.0), together with its
+- The reference loop (`09_Others/benchpilot-reference/src/apps/server/src/agent/loop.ts`, 185 lines on pi-ai 1.1.0), together with its
   session hub (persisted events folded by the shared reducer), approval gate, replay provider and
   end-to-end replay tests.
 - `@earendil-works/pi-agent-core` 1.1.0: an `Agent` with `beforeToolCall` and `afterToolCall` hooks,
@@ -17,7 +17,7 @@ compaction follow in M5. Two candidates exist, and the BenchPilot reference code
   engine of pi and pi-desktop.
 
 ## Decision
-Start from the reference loop, moved behind `packages/core/src/agent/runtime.ts` (03 §2). Per-call
+Start from the reference loop, moved behind `src/libraries/core/src/agent/runtime.ts` (03 §2). Per-call
 approvals reuse its approval-gate pattern, with the immutable request, single consumption and
 workbench-wide writer contract of ADR-0012. M1 adds the shared context policy of 03 §2 before every
 model call. Steering (user messages queued before the next call) and advanced historical compaction

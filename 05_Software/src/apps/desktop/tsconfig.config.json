@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "emitDeclarationOnly": true,
+    "outDir": "../../../node_modules/.cache/tsc/desktop-config",
+    "tsBuildInfoFile": "../../../node_modules/.cache/tsc/desktop-config.tsbuildinfo"
+  },
+  "include": ["electron.vite.config.ts", "src/main/content-policy.ts", "vitest.config.ts"],
+  "references": [
+    {
+      "path": "../../libraries/shared"
+    }
+  ]
+}

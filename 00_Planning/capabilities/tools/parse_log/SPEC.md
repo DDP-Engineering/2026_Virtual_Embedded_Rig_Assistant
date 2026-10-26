@@ -26,7 +26,7 @@ clock alignment, custom regex execution or automatic firmware-format detection i
 
 ## 2. Input and output
 
-`packages/shared/src/tools/parse-log.ts` exports `ParseLogArgsSchema`, `ParsedLogResultSchema` and
+`src/libraries/shared/src/tools/parse-log.ts` exports `ParseLogArgsSchema`, `ParsedLogResultSchema` and
 their inferred `ParseLogArgs` / `ParsedLogResult` types, plus `ParsedLogEvent`. Unknown input fields
 are rejected. Input paths are at most 256 characters.
 

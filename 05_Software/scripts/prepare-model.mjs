@@ -67,8 +67,8 @@ export async function prepareModel(manifest, destination, { fetchImpl = fetch, o
 }
 
 export async function prepareBundledModel(offline = false) {
-  const manifest = JSON.parse(await readFile(join(root, "resources/model-manifest.json"), "utf8"));
-  await prepareModel(manifest, join(root, "resources/models"), { offline });
+  const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
+  await prepareModel(manifest, join(root, "src/models"), { offline });
   return manifest;
 }
 

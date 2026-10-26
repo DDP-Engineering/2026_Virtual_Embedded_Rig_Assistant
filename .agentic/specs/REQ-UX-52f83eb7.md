@@ -8,7 +8,7 @@ Approval A/D uses the existing focused group, current immutable request digest, 
 
 Repeated Open/Edit/Remove/Test/Enabled controls include item identity in their accessible names and retain visible action wording. Document/text, diff and artifact scrollers accept focus for keyboard scrolling. The PDF view provides already-scrubbed host page text in a native disclosure; canvas navigation/search and exact bytes remain owned by the established viewer contract. Theme tokens style ordinary fields, and field borders use the input token.
 
-Catalogs retain English key structure, placeholder multisets, errors and technical identifiers. Romanian uses `spațiu de lucru`, `skill`, `execuție`; German uses `Arbeitsbereich`, `Skill`, `Durchlauf` and informal `du`. Names such as WORKBENCH.md, SKILL.md, VERA-DEMO-01, datasheet-reader, log-analyst and bringup-checklist stay literal. The key checker proves key usage/completeness only; placeholder comparison and AI semantic inspection are separate evidence. Human native-language review remains required before release.
+Catalogs retain English key structure, placeholder multisets, errors and technical identifiers. Romanian uses `spațiu de lucru`, `skill`, `execuție`; German uses `Arbeitsbereich`, `Skill`, `Durchlauf` and informal `du`. Names such as .vera/WORKBENCH.md, SKILL.md, VERA-DEMO-01, datasheet-reader, log-analyst and bringup-checklist stay literal. The key checker proves key usage/completeness only; placeholder comparison and AI semantic inspection are separate evidence. Human native-language review remains required before release.
 
 ## Source coverage matrix
 

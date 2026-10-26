@@ -26,10 +26,10 @@ and the M1 context budget. The tasks below cover these five review cases:
 
 ## Task 1: Schemas, bounded-host adapter and exact fixtures
 
-**Files:** create `packages/shared/src/tools/parse-log.ts`,
-`packages/shared/src/capabilities/run-record.ts` and adjacent `.test.ts` files;
-`packages/core/src/tools/capabilities/host.ts` and `host.test.ts`;
-`fixtures/workbenches/demo-board/{logs,runs,docs}/` files named in shared contracts.
+**Files:** create `src/libraries/shared/src/tools/parse-log.ts`,
+`src/libraries/shared/src/capabilities/run-record.ts` and adjacent `.test.ts` files;
+`src/libraries/core/src/tools/capabilities/host.ts` and `host.test.ts`;
+`tests/fixtures/workbenches/demo-board/{logs,runs,docs}/` files named in shared contracts.
 **Interfaces:** produce the SPEC's schema/type exports and `CapabilityWorkerHost`;
 `CapabilityTimeout extends Error`; adapt WP-11 WorkerPool's deadline/abort to that interface.
 
@@ -43,7 +43,7 @@ expect(ParseLogArgsSchema.safeParse({path: "x", profile: "auto"}).success).toBe(
 expect(ParseLogArgsSchema.safeParse({path: "x", profile: "vera-log-v1", maxEvents: 101}).success).toBe(false);
 ```
 
-- [ ] Run `npm test -- --run packages/shared/src/tools/parse-log.test.ts packages/shared/src/capabilities/run-record.test.ts packages/core/src/tools/capabilities/host.test.ts`;
+- [ ] Run `npm test -- --run src/libraries/shared/src/tools/parse-log.test.ts src/libraries/shared/src/capabilities/run-record.test.ts src/libraries/core/src/tools/capabilities/host.test.ts`;
   expect failure from missing exports/behaviour, not from a broken test runner.
 - [ ] Implement strict zod schemas, the WorkerPool adapter and the shared fixtures named in contracts.
   Calculate both log hashes from their exact fixture bytes and verify every source range.
@@ -53,7 +53,7 @@ expect(ParseLogArgsSchema.safeParse({path: "x", profile: "vera-log-v1", maxEvent
 
 ## Task 2: Line parser, bounded scanner and worker
 
-**Files:** create `packages/core/src/tools/parse-log/{profile,scanner,worker}.ts` and their `.test.ts` files.
+**Files:** create `src/libraries/core/src/tools/parse-log/{profile,scanner,worker}.ts` and their `.test.ts` files.
 **Interfaces:** consume task 1 schemas and host. Produce
 `parseVeraLogLine(line: string, lineNumber: number, clockSegment: number): Omit<ParsedLogEvent, "ref"> | null`;
 `scanLog(lines: AsyncIterable<{line: number; text: string; bytes: number}>, args: ParseLogArgs,
@@ -78,7 +78,7 @@ expect(result.preview.omittedEvents).toBe(2);
 expect(JSON.stringify(result).length).toBeLessThanOrEqual(32000);
 ```
 
-- [ ] Run `npm test -- --run packages/core/src/tools/parse-log`; expect the named behavioural tests to fail.
+- [ ] Run `npm test -- --run src/libraries/core/src/tools/parse-log`; expect the named behavioural tests to fail.
 - [ ] Implement the signatures above, streaming UTF-8 decoding, checkpoints, run binding and complete
   JSON budgeting. Add boundary fixtures: empty input; malformed UTF-8; uint64 max and overflow;
   timestamps 10 then 0; 16 KiB and over-limit lines; metadata over 16 KiB; maxEvents/fromLine edges;
@@ -88,10 +88,10 @@ expect(JSON.stringify(result).length).toBeLessThanOrEqual(32000);
 
 ## Task 3: Registry, replay session and CLI parity
 
-**Files:** create `packages/core/src/tools/parse-log/index.ts` and `index.test.ts`;
-modify `packages/core/src/tools/registry.ts`; create `packages/core/test/parse-log.test.ts`,
-`fixtures/llm-scripts/parse-log-answer.jsonl` and `e2e/parse-log.test.ts`;
-create `apps/cli/src/parse-log.test.ts` using the WP-15 CLI integration helpers.
+**Files:** create `src/libraries/core/src/tools/parse-log/index.ts` and `index.test.ts`;
+modify `src/libraries/core/src/tools/registry.ts`; create `src/libraries/core/test/parse-log.test.ts`,
+`tests/fixtures/llm-scripts/parse-log-answer.jsonl` and `tests/e2e/parse-log.test.ts`;
+create `src/apps/cli/src/parse-log.test.ts` using the WP-15 CLI integration helpers.
 **Interfaces:** consume CapabilityWorkerHost and task 2 worker. Produce
 `executeParseLog(root: string, args: ParseLogArgs, host: CapabilityWorkerHost,
 signal: AbortSignal): Promise<ParsedLogResult>`; register `parse_log` as class read.
@@ -102,14 +102,14 @@ the last checkpoint as partial; with no checkpoint it constructs the zero-count 
   `replay_parse_and_cite`, `cli_parse_parity`, `stop_during_scan` and `many_results_one_turn`.
   Pin a replay call to the candidate file and the answer ref `logs/candidate.log#L3-L3`;
   assert disabled parse_log is not offered and a fabricated disabled call is rejected.
-- [ ] Run `npm test -- --run packages/core/src/tools/parse-log/index.test.ts packages/core/test/parse-log.test.ts apps/cli/src/parse-log.test.ts`;
+- [ ] Run `npm test -- --run src/libraries/core/src/tools/parse-log/index.test.ts src/libraries/core/test/parse-log.test.ts src/apps/cli/src/parse-log.test.ts`;
   expect missing registration/integration failures.
 - [ ] Bind worker dispatch, source refs and ToolDef to the existing registry; use existing tool rows,
   IPC events and CLI paths. Add no dedicated screen or alternate agent loop. Exercise timeout with
   a shortened injected host deadline and ensure app.info still responds and the next worker task succeeds.
 - [ ] Rerun focused tests. CLI integration launches `vera run` on a temporary demo copy with
   `parse-log-answer.jsonl`, expecting a complete cited answer and exit 0. Run
-  `npm run test:e2e -- e2e/parse-log.test.ts`, then `npm run verify`. Preserve failure/limit exit codes.
+  `npm run test:e2e -- tests/e2e/parse-log.test.ts`, then `npm run verify`. Preserve failure/limit exit codes.
 
 ## Done
 

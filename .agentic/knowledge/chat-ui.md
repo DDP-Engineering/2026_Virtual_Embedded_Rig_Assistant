@@ -4,12 +4,12 @@
 
 Select for session navigation/CRUD, transcript, Markdown/code/citations, reasoning/tool rows,
 composer, @ completion, models, Stop, context usage and renderer resume. Start with
-05_Software/apps/desktop/src/renderer/components/session/workspace.tsx and App.tsx.
-Focused tests: components/session/workspace.test.ts; e2e/chat-ui.spec.ts and mock.spec.ts.
+05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx and App.tsx.
+Focused tests: components/session/workspace.test.ts; tests/e2e/chat-ui.spec.ts and mock.spec.ts.
 [Sessions](sessions.md) owns persistence/runtime; [renderer foundation](renderer-foundation.md)
 owns geometry/preferences; [workbench](workbench.md) owns folder lifecycle/pinned edits.
 
-[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+[Verification fixtures](demo-onboarding.md) routes the fictional board corpus and PDF sources under tests/fixtures, used by isolated tests and evaluation/smoke harnesses.
 
 ## Purpose and boundaries
 
@@ -26,7 +26,7 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
-- ContextTab queries WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
+- ContextTab queries .vera/WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
 - UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Full transcript items remain visible after historical compaction.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
 - CitationChip uses shared refs.ts parsing/compact labels and per-kind page, range,
@@ -52,10 +52,10 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 |---|---|---|
 | Navigation/CRUD/read-only | App, session-list | workspace.test.ts |
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
-| Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; e2e/citations.spec.ts |
+| Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
-| Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; e2e/approvals.spec.ts |
-| Plan task list | plan-tab;mock sessions | plan-tab.test.ts;e2e/plan.spec.ts |
+| Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts |
+| Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 
 ## Key behaviors
@@ -120,17 +120,17 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 
 Paths relative to05_Software.
 
-- apps/desktop/src/renderer/App.tsx — routes and workbench/session selection.
-- apps/desktop/src/renderer/hooks/use-session-events.ts — guarded snapshot/subscription.
-- apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer,plan-tab}.tsx — session presentation.
-- apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
-- apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
-- apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.
-- apps/desktop/src/main/index.ts; packages/shared/src/ipc.ts — config readOnly metadata and instrumented replay delay composition.
-- fixtures/llm-scripts/ui-{slow,grep-bad,grep-good}.jsonl — deterministic native acceptance.
-- e2e/{approvals,chat-ui,mock}.spec.ts — real native lifecycle/abort and browser matrix.
-- components/session/markdown.test.ts and e2e/citations.spec.ts — all reference kinds,
+- src/apps/desktop/src/renderer/App.tsx — routes and workbench/session selection.
+- src/apps/desktop/src/renderer/hooks/use-session-events.ts — guarded snapshot/subscription.
+- src/apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer,plan-tab}.tsx — session presentation.
+- src/apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
+- src/apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
+- src/apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.
+- src/apps/desktop/src/main/index.ts; src/libraries/shared/src/ipc.ts — config readOnly metadata and instrumented replay delay composition.
+- tests/fixtures/llm-scripts/ui-{slow,grep-bad,grep-good}.jsonl — deterministic native acceptance.
+- tests/e2e/{approvals,chat-ui,mock}.spec.ts — real native lifecycle/abort and browser matrix.
+- components/session/markdown.test.ts and tests/e2e/citations.spec.ts — all reference kinds,
   warning presentation, inert controls and native restart citation projection;
-  fixtures/llm-scripts/citations-all.jsonl supplies deterministic tool-issued refs.
+  tests/fixtures/llm-scripts/citations-all.jsonl supplies deterministic tool-issued refs.
 - tests/tooling/build-mode.test.ts — release omission of replay delay seam.
-- apps/desktop/package.json; package-lock.json — pinned Markdown/component-test dependencies.
+- src/apps/desktop/package.json; package-lock.json — pinned Markdown/component-test dependencies.

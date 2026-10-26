@@ -4,7 +4,7 @@
 
 Select for settings.json, installationId, schemaVersion, app.settings.get/update, portable data,
 PathProvider/Clock/FileAccess/Logger, atomic writes and secret redaction. Start with
-05_Software/packages/core/src/settings/service.ts and packages/shared/src/settings.ts.
+05_Software/src/libraries/core/src/settings/service.ts and src/libraries/shared/src/settings.ts.
 Focused tests sit beside the service and main adapters. Native lifecycle is
 [desktop-shell](desktop-shell.md); validated transport is [ipc-boundary](ipc-boundary.md).
 
@@ -63,7 +63,7 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 | Atomic filesystem/retry | main file-access.ts | file-access.test.ts |
 | Portable locations | main data-locations.ts and index.ts | data-locations.test.ts |
 | Levels/rotation/redaction | main logger.ts | logger.test.ts |
-| Native persistence/read-only | main index.ts; IPC contracts | e2e/shell.spec.ts |
+| Native persistence/read-only | main index.ts; IPC contracts | tests/e2e/shell.spec.ts |
 
 ## Key behaviors
 
@@ -102,15 +102,15 @@ Ports keep core independent of Electron. Main owns platform I/O and supplies the
 
 Paths below are relative to 05_Software.
 
-- packages/shared/src/settings.ts — persisted/v0/patch/snapshot schemas, defaults and merge.
-- packages/core/src/{index,ports}.ts — exports and host contracts.
-- packages/core/src/settings/service.ts and service.test.ts — load/migrate/serial state/lifecycle.
-- packages/core/vitest.config.ts — Node test project and shared source resolution.
-- fixtures/settings/version-{0,1,2,3}.json — previous preferences, UUID, recents and extensions;
+- src/libraries/shared/src/settings.ts — persisted/v0/patch/snapshot schemas, defaults and merge.
+- src/libraries/core/src/{index,ports}.ts — exports and host contracts.
+- src/libraries/core/src/settings/service.ts and service.test.ts — load/migrate/serial state/lifecycle.
+- src/libraries/core/vitest.config.ts — Node test project and shared source resolution.
+- tests/fixtures/settings/version-{0,1,2,3}.json — previous preferences, UUID, recents and extensions;
   [Upgrade safety](upgrade-safety.md) supplies per-version backup/failure acceptance.
-- apps/desktop/src/main/{data-locations,file-access,host-ports,logger}.ts — host adapters.
-- apps/desktop/src/main/{data-locations,file-access,logger}.test.ts — storage/log regression seams.
-- apps/desktop/src/main/index.ts — handlers, initialization and shutdown drains.
-- apps/desktop/src/main/app-info.ts — effective portable-mode metadata.
-- apps/desktop/src/renderer/api/{client,ipc}.ts and mocks/mockApi.ts — settings API/mock parity.
-- e2e/shell.spec.ts — real update/restart and newer-schema protection.
+- src/apps/desktop/src/main/{data-locations,file-access,host-ports,logger}.ts — host adapters.
+- src/apps/desktop/src/main/{data-locations,file-access,logger}.test.ts — storage/log regression seams.
+- src/apps/desktop/src/main/index.ts — handlers, initialization and shutdown drains.
+- src/apps/desktop/src/main/app-info.ts — effective portable-mode metadata.
+- src/apps/desktop/src/renderer/api/{client,ipc}.ts and mocks/mockApi.ts — settings API/mock parity.
+- tests/e2e/shell.spec.ts — real update/restart and newer-schema protection.

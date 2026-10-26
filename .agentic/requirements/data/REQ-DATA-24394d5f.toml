@@ -19,9 +19,9 @@ When a runtime message ends, the session engine shall retain the complete verbat
 
 verification = "Read-then-answer integration observes two tool pairs, final cited answer/end; compare transcript rows, event sequences and live-only absence."
 
-affected_paths = ["05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/hub.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/llm/replay.ts", "05_Software/fixtures/llm-scripts/read-then-answer.jsonl", "05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/llm/replay.test.ts", "05_Software/e2e/sessions.spec.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/hub.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/llm/replay.ts", "05_Software/tests/fixtures/llm-scripts/read-then-answer.jsonl", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/agent/runtime.test.ts", "05_Software/src/libraries/core/src/llm/replay.test.ts", "05_Software/tests/e2e/sessions.spec.ts"]
 
-linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts", "05_Software/packages/core/src/llm/replay.test.ts", "05_Software/e2e/sessions.spec.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/agent/runtime.test.ts", "05_Software/src/libraries/core/src/llm/replay.test.ts", "05_Software/tests/e2e/sessions.spec.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"

@@ -6,15 +6,17 @@ __pycache__/
 # Dependencies are restored by npm and never committed.
 **/node_modules/
 
-# Build output: TypeScript and Vite (dist/), electron-vite (out/), electron-builder packages (release/).
+# Build output: TypeScript and Vite (dist/), electron-vite (out/), electron-builder working output (release_tmp/).
 **/dist/
 **/out/
-**/release/
-/05_Software/resources/models/
-/05_Software/resources/windows-runtime/
+**/release_tmp/
+/05_Software/src/models/*
+!/05_Software/src/models/model-manifest.json
+/05_Software/src/windows_runtime/*
+!/05_Software/src/windows_runtime/windows-runtime-manifest.json
 *.tsbuildinfo
 
-# Test output: Vitest coverage and Playwright runs. A successful run leaves none.
+# Ignore explicitly requested coverage/reports and any legacy Playwright output.
 **/coverage/
 **/test-results/
 **/playwright-report/
@@ -23,6 +25,7 @@ __pycache__/
 # Workbench runtime state (index, sessions, artifacts) that VERA creates when it opens a workbench,
 # the demo fixture included.
 **/.vera/
+!/05_Software/tests/fixtures/workbenches/demo-board/.vera/
 
 # Local Vite environment overrides are per-developer. Shared .env.<mode> files stay in Git.
 **/.env.local

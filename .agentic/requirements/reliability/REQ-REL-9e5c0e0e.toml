@@ -19,9 +19,9 @@ When a second VERA process starts with the same userData, VERA shall retain one 
 
 verification = "Start two real Electron processes sharing temporary userData; second exits, first still has exactly one window."
 
-affected_paths = ["05_Software/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
 
 
 spec = ""

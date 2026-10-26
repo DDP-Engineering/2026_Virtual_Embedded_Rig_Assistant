@@ -16,7 +16,7 @@ Scope:
   Windows x64; AppImage and deb for Linux x64. `package:test` builds separately labelled instrumented
   artifacts for debugging; only release artifacts are delivered (08 §3, §5).
 - `asarUnpack` for native modules and models; only the target platform's native binaries.
-- The embedding model under `resources/models/`.
+- The embedding model under `src/models/`.
 - Pre-packaging checks: no secrets in the package, path lengths, native files complete.
 - Release check: the test switches are compiled out; `VERA_REPLAY_DIR`, `VERA_TEST_DIALOG_PATH` and
   `VERA_NETWORK_AUDIT` have no effect on the release app.

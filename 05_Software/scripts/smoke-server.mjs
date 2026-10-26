@@ -61,11 +61,11 @@ export async function startSmokeServer() {
         let deltas;
         if (step < 2) {
           if (step === 1)
-            assert(body.messages.some((m) => m.role === "tool" && m.content.includes("WORKBENCH.md#L1")));
+            assert(body.messages.some((m) => m.role === "tool" && m.content.includes("board.txt#L1")));
           const name = step === 0 ? "read" : "write";
           const args = JSON.stringify(
             step === 0
-              ? { path: "WORKBENCH.md", offset: 1, limit: 4 }
+              ? { path: "board.txt", offset: 1, limit: 4 }
               : { path: "notes/smoke-approved.md", content: "Release smoke approval passed.\n" },
           );
           deltas = [
@@ -80,7 +80,7 @@ export async function startSmokeServer() {
           ];
         } else {
           assert(body.messages.filter((m) => m.role === "tool").length >= 2);
-          deltas = [{ content: "Demo board verified " }, { content: "[[WORKBENCH.md#L1-L4]]." }];
+          deltas = [{ content: "Demo board verified " }, { content: "[[board.txt#L1-L2]]." }];
         }
         res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache" });
         const chunk = (delta, finish_reason) =>

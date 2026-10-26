@@ -314,9 +314,9 @@ try {
   const outputs = {};
   if (!previous) {
     const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js");
-    await run([process.execPath, vite, "build", "apps/desktop"], software, env, "compile");
+    await run([process.execPath, vite, "build", "src/apps/desktop"], software, env, "compile");
     const staged = await stageRuntime("test", scratch);
-    const manifest = JSON.parse(await readFile(join(software, "resources/model-manifest.json"), "utf8"));
+    const manifest = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
     report.prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
     const distribution = distributionConfig(process.platform, true, env);
     distribution.appId = migrationSafety
@@ -354,7 +354,7 @@ try {
       const output = join(scratch, version);
       const target = process.platform === "win32" ? "nsis" : "AppImage";
       const config = {
-        extends: join(software, "apps/desktop/electron-builder.yml"),
+        extends: join(software, "src/apps/desktop/electron-builder.yml"),
         directories: { app: staged.stage, output },
         ...distribution,
         compression: "normal",
@@ -433,9 +433,9 @@ try {
       inputs.filter(
         ({ path }) =>
           !path.includes(".test.") &&
-          !path.startsWith("05_Software/e2e/") &&
+          !path.startsWith("05_Software/tests/e2e/") &&
           !path.startsWith("05_Software/tests/") &&
-          !path.startsWith("05_Software/fixtures/") &&
+          !path.startsWith("05_Software/tests/fixtures/") &&
           path !== "05_Software/scripts/probe-upgrade.mjs" &&
           path !== "05_Software/scripts/upgrade-fixture.mjs",
       );
@@ -565,7 +565,7 @@ try {
       });
       const benchRoot = join(scratch, "bench é");
       await mkdir(benchRoot, { recursive: true });
-      if ((await readdir(benchRoot)).includes("workbench.yaml"))
+      if ((await readdir(join(benchRoot, ".vera")).catch(() => [])).includes("workbench.yaml"))
         await old.invoke("workbench.open", { folder: benchRoot });
       else await old.invoke("workbench.create", { folder: benchRoot, name: "WP32 upgrade board" });
       await mkdir(join(benchRoot, "docs"), { recursive: true });
@@ -736,7 +736,7 @@ try {
       await old.page.locator("[data-update-banner]").waitFor();
       const benchRoot = join(scratch, "bench é");
       await mkdir(benchRoot, { recursive: true });
-      if ((await readdir(benchRoot)).includes("workbench.yaml"))
+      if ((await readdir(join(benchRoot, ".vera")).catch(() => [])).includes("workbench.yaml"))
         await old.invoke("workbench.open", { folder: benchRoot });
       else await old.invoke("workbench.create", { folder: benchRoot, name: "WP31 upgrade board" });
       await writeFile(join(benchRoot, "docs/note.md"), "old\n");

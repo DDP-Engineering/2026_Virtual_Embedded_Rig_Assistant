@@ -2,7 +2,7 @@ import { resolveConfig } from "electron-vite";
 import { createServer } from "vite";
 
 // Reuse the desktop renderer config; start only Vite, without main/preload or Electron.
-const resolved = await resolveConfig({ root: "apps/desktop" }, "serve", "development");
+const resolved = await resolveConfig({ root: "src/apps/desktop" }, "serve", "development");
 if (!resolved.config?.renderer) throw new Error("Missing renderer config");
 const server = await createServer(resolved.config.renderer);
 await server.listen();

@@ -21,7 +21,7 @@ const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/e
 const environment = { ...process.env, VERA_TEST: "0" };
 delete environment.ELECTRON_RUN_AS_NODE;
 delete environment.VERA_REPLAY_DIR;
-const build = spawnSync(process.execPath, [vite, "build", "apps/desktop"], {
+const build = spawnSync(process.execPath, [vite, "build", "src/apps/desktop"], {
   env: environment,
   stdio: "inherit",
 });
@@ -31,7 +31,7 @@ const electron = require("electron");
 const result = spawnSync(
   electron,
   [
-    "apps/desktop",
+    "src/apps/desktop",
     `--vera-smoke-provider=${provider}`,
     ...(data ? [`--user-data-dir=${resolve(data)}`] : []),
   ],

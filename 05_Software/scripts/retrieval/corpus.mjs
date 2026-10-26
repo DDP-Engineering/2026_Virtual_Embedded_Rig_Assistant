@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { chunkDocument } from "../../packages/core/src/knowledge/chunk.ts";
-import { extractMarkdown, extractText } from "../../packages/core/src/knowledge/extraction.ts";
-import { createPdfExtractor } from "../../packages/core/src/knowledge/worker-host.ts";
+import { chunkDocument } from "../../src/libraries/core/src/knowledge/chunk.ts";
+import { extractMarkdown, extractText } from "../../src/libraries/core/src/knowledge/extraction.ts";
+import { createPdfExtractor } from "../../src/libraries/core/src/knowledge/worker-host.ts";
 
 export async function loadCorpus(workbench, worker) {
   const paths = [

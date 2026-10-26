@@ -43,4 +43,4 @@ Source change/delete/reindex uses the established derived-row invalidation.
 
 Demo Markdown sources describe the fictional VERA-DEMO-01 board. The generator
 renders a datasheet, reference manual excerpt and application note to stable
-PDF names in fixtures/workbenches/demo-board/docs. No vendor material is used.
+PDF names in tests/fixtures/workbenches/demo-board/docs. No vendor material is used.

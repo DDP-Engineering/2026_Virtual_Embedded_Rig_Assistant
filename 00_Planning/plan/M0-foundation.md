@@ -10,13 +10,13 @@ text size and language switch and persist; the packaging spike WP-05 has filed i
 **Goal:** a running Electron app — main, preload and React renderer built with electron-vite — on the
 source layout of 01 §5, hardened per 01 §7, with the first Playwright test.
 **Depends on:** —. **Specs:** 01 §2, §3, §5, §7; 06 §1; 08 §1–§3; ADR-0001, ADR-0009.
-**Start from:** `09_Others/benchpilot-reference/apps/web` set-up (Vite, Tailwind CSS v4, shadcn/ui) for the renderer.
+**Start from:** `09_Others/benchpilot-reference/src/apps/web` set-up (Vite, Tailwind CSS v4, shadcn/ui) for the renderer.
 
 Scope:
 - The tooling is already in `05_Software/` (Biome, TypeScript, Vitest, `verify`; 08 §1). Add the
-  workspaces `packages/shared`, `packages/core`, `apps/desktop`, `apps/cli`, each with a `tsconfig.json`
+  workspaces `src/libraries/shared`, `src/libraries/core`, `src/apps/desktop`, `src/apps/cli`, each with a `tsconfig.json`
   extending `tsconfig.base.json` and referenced from the solution `tsconfig.json`; Playwright for Electron.
-- `apps/desktop` with electron-vite: `src/main`, `src/preload`, `src/renderer` (React 19, Vite,
+- `src/apps/desktop` with electron-vite: `src/main`, `src/preload`, `src/renderer` (React 19, Vite,
   Tailwind CSS v4, shadcn/ui, lucide-react).
 - `BrowserWindow` with `contextIsolation`, `sandbox`, `nodeIntegration: false`, `webSecurity`; minimum
   size 1024×640; title "VERA".
@@ -38,13 +38,13 @@ Done when:
 **Goal:** the only path between renderer and main — typed channels validated with zod on both sides,
 event subscription and a mock bridge for UI work.
 **Depends on:** WP-01. **Specs:** 01 §1 (L1, L2, L9), §3, §4; 06 §8; ADR-0010.
-**Start from:** `09_Others/benchpilot-reference/apps/web/src/api/client.ts` and `api/index.ts` (one data boundary with a
-mock switch), `apps/web/src/mocks/`, `packages/shared/src/api.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/web/src/api/client.ts` and `api/index.ts` (one data boundary with a
+mock switch), `src/apps/web/src/mocks/`, `src/libraries/shared/src/api.ts`.
 
 Scope:
-- `packages/shared/src/ipc.ts`: a `defineChannel(name, request, response)` registry with inferred
+- `src/libraries/shared/src/ipc.ts`: a `defineChannel(name, request, response)` registry with inferred
   types; the `VeraError` schema (`code`, `messageKey`, `params`).
-- `packages/shared/src/events.ts`: the `AppEvent` union, starting with `settings.changed`.
+- `src/libraries/shared/src/events.ts`: the `AppEvent` union, starting with `settings.changed`.
 - Main: one `ipcMain.handle("vera:invoke")` router — checks that the sender frame is the app's
   renderer, validates the request, dispatches, validates the response, maps thrown errors to
   `VeraError` (`INTERNAL` plus a log entry for unknown errors).
@@ -68,14 +68,14 @@ Done when:
 **Goal:** where VERA keeps its own data — versioned settings with migrations, portable mode, and
 redacting logs.
 **Depends on:** WP-02. **Specs:** 01 §1 (L7, L10), §6; 07 §4, §6; ADR-0009.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/credentials.ts` (write-then-rename with the Windows retry).
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/llm/credentials.ts` (write-then-rename with the Windows retry).
 
 Scope:
-- Ports in `packages/core/src/ports.ts`: `PathProvider`, `Clock`, `Logger`, and a file-access port;
+- Ports in `src/libraries/core/src/ports.ts`: `PathProvider`, `Clock`, `Logger`, and a file-access port;
   main-process implementations.
 - Portable mode: `vera.portable` beside the executable sets `userData` to `<app folder>/data/` before
   `app.whenReady()`.
-- `packages/shared/src/settings.ts`: `schemaVersion`; `installationId` (UUID made on first run);
+- `src/libraries/shared/src/settings.ts`: `schemaVersion`; `installationId` (UUID made on first run);
   `language` (`system | en | ro | de`); `theme` (`system | light | dark`); `textScale`
   (`0.875 | 1 | 1.125 | 1.25 | 1.5`); `defaultModel` (`null`); `providers` (non-secret, empty);
   `updates` (`{ mode: "notify", channel: "latest" }`); `recentWorkbenches` (`[]`); `limits`
@@ -99,7 +99,7 @@ Done when:
 
 **Goal:** the app shell every screen lives in, with appearance and language settings working end to end.
 **Depends on:** WP-03. **Specs:** 06 §1, §2, §4, §6, §7, §8; 01 §1 (L9).
-**Start from:** `09_Others/benchpilot-reference/apps/web/src/components/shell/`, `hooks/use-theme.ts`, `components/ui/`,
+**Start from:** `09_Others/benchpilot-reference/src/apps/web/src/components/shell/`, `hooks/use-theme.ts`, `components/ui/`,
 `pages/SettingsPage.tsx` (layout of the settings screen).
 
 Scope:
@@ -135,7 +135,7 @@ Scope:
 - A test-build-only check (`VERA_TEST=1`) that, in the packaged app:
   1. opens better-sqlite3 in a temporary folder with WAL, creates an FTS5 `unicode61` table and an FTS5
      `trigram` table, inserts and queries both — the trigram query `C1_C` must find `I2C1_CR1`;
-  2. loads `bge-small-en-v1.5` (quantised ONNX) from `resources/models/` with `@huggingface/transformers`
+  2. loads `bge-small-en-v1.5` (quantised ONNX) from `src/models/` with `@huggingface/transformers`
      on onnxruntime-node, in a worker thread, with `allowRemoteModels = false`, and embeds three
      sentences, timing load and per-chunk embedding.
 - Plan B: does `node:sqlite` open in Electron's Node, with FTS5 and trigram?

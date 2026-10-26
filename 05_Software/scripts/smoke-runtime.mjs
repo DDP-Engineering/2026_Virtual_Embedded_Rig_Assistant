@@ -420,6 +420,9 @@ export async function copyDemo(root, reuse = false) {
       }))
   )
     return bench;
-  await cp(join(software, "fixtures/workbenches/demo-board"), bench, { recursive: true, errorOnExist: true });
+  await cp(join(software, "tests/fixtures/workbenches/demo-board"), bench, {
+    recursive: true,
+    errorOnExist: true,
+  });
   return bench;
 }

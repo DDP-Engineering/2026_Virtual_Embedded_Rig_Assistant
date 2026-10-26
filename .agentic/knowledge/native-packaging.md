@@ -4,11 +4,11 @@
 
 Select for package/test-package commands, model asset delivery, ASAR native paths, NSIS/portable ZIP/AppImage/deb
 budgets and packaged SQLite/embedding probes. Start at `05_Software/scripts/package.mjs`;
-focused tests are `tests/tooling/{packaging,build-mode}.test.ts` and
-`apps/desktop/src/main/packaging/sqlite-probe.test.ts`. General workspace/compiler behavior belongs
+focused tests are `tests/packaging/packaging.test.ts and tests/tooling/build-mode.test.ts` and
+`src/apps/desktop/src/main/packaging/sqlite-probe.test.ts`. General workspace/compiler behavior belongs
 to [software-tooling](software-tooling.md); window/security lifecycle belongs to [desktop-shell](desktop-shell.md).
 
-[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+[Verification fixtures](demo-onboarding.md) routes the fictional corpus used by tests/evaluation/smoke; only real model/runtime resources enter the application payload.
 
 ## Purpose and boundaries
 
@@ -24,7 +24,7 @@ Already-built artifact functional/egress acceptance belongs to [release smoke](r
 
 From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only),
 `npm run package` (compiled release) and `npm run package:test` (compiled instrumented).
-Outputs are `release/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.
+Outputs are `release_tmp/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.
 The instrumented packaged app accepts `--packaging-probe=<absolute JSON path>` and exits 0/1
 after writing schema-1 SQLite/embedding results. `probe-windows-offline.ps1` takes ZIP, expected
 SHA256 and evidence directory; `probe-linux-offline.sh` takes AppImage, evidence directory and
@@ -57,7 +57,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
-| Model delivery/pins | `resources/model-manifest.json`, `prepare-model.mjs` | packaging asset integrity tests, actual offline cached verification |
+| Model delivery/pins | `src/models/model-manifest.json`, `prepare-model.mjs` | packaging asset integrity tests, actual offline cached verification |
 | Native collection/budget | `package.mjs`, `electron-builder.yml` | packaging budget/ASAR tests, native OS artifact inspections |
 | SQLite SQL/fallback | `main/packaging/sqlite-probe.ts` | real SQLite test, packaged probe |
 | Embedding lifecycle | `embedding-worker.ts`, `probe.ts` | actual packaged offline worker, build-mode exclusion |
@@ -82,7 +82,7 @@ Native acceptance exercises real SQLite, local CPU indexing/search and PDF throu
 ```mermaid
 flowchart LR
   manifest[(model-manifest.json)] --> prepare[prepare-model.mjs]
-  prepare --> models[(resources/models)]
+  prepare --> models[(src/models)]
   command([package / package:test]) --> package[package.mjs]
   package --> prepare
   package --> build[Vite compiled identity]
@@ -109,12 +109,12 @@ builds omit the probe branch and worker entry while retaining bundled runtime/mo
 ## Files
 
 - `05_Software/scripts/{package,package-checks,prepare-model,prepare-windows-runtime}.mjs` — collection, source/cache integrity, sanitized prepack, target isolation and reports.
-- `05_Software/resources/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
+- `05_Software/src/windows_runtime/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
 - `main/app-info.ts`, shared ipc.ts, renderer Metadata/locales — immutable build/signature identity in About.
-- `05_Software/resources/model-manifest.json` — immutable model provenance/pins.
-- `05_Software/apps/desktop/electron-builder.yml` — targets, unpacking and real resource delivery.
-- `05_Software/apps/desktop/electron.vite.config.ts`, `src/main/index.ts` — compiled boundary and test hook.
-- `05_Software/apps/desktop/src/main/packaging/{probe,sqlite-probe,embedding-worker}.ts` — actual packaged checks.
+- `05_Software/src/models/model-manifest.json` — immutable model provenance/pins.
+- `05_Software/src/apps/desktop/electron-builder.yml` — targets, unpacking and real resource delivery.
+- `05_Software/src/apps/desktop/electron.vite.config.ts`, `src/main/index.ts` — compiled boundary and test hook.
+- `05_Software/src/apps/desktop/src/main/packaging/{probe,sqlite-probe,embedding-worker}.ts` — actual packaged checks.
 - `05_Software/scripts/{probe-windows-offline,probe-windows-sandbox}.ps1`, `probe-linux-offline.sh` — host evidence.
-- `05_Software/tests/tooling/{packaging,build-mode}.test.ts`, `apps/desktop/src/main/packaging/sqlite-probe.test.ts` — focused regressions.
+- `05_Software/tests/packaging/packaging.test.ts and 05_Software/tests/tooling/build-mode.test.ts`, `src/apps/desktop/src/main/packaging/sqlite-probe.test.ts` — focused regressions.
 - `06_SoftwareDocu/wp05-packaging-measurements.md`, `evidence/wp05/` — observed outcomes and raw evidence.

@@ -7,7 +7,7 @@
       "!**/node_modules",
       "!**/out",
       "!**/dist",
-      "!**/release",
+      "!**/release_tmp",
       "!**/coverage",
       "!**/test-results",
       "!**/playwright-report"
@@ -33,11 +33,11 @@
   },
   "overrides": [
     {
-      "includes": ["apps/desktop/src/renderer/**/*.css"],
+      "includes": ["src/apps/desktop/src/renderer/**/*.css"],
       "css": { "parser": { "tailwindDirectives": true } }
     },
     {
-      "includes": ["packages/core/**"],
+      "includes": ["src/libraries/core/**"],
       "linter": {
         "rules": {
           "style": {
@@ -45,13 +45,13 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "electron": "packages/core never imports electron (01 §1 L1); use a port from ports.ts.",
-                  "react": "packages/core never imports react (01 §4)."
+                  "electron": "src/libraries/core never imports electron (01 §1 L1); use a port from ports.ts.",
+                  "react": "src/libraries/core never imports react (01 §4)."
                 },
                 "patterns": [
                   {
                     "group": ["@vera/desktop*", "@vera/cli*", "**/apps/**"],
-                    "message": "packages/core never imports apps/* (01 §4)."
+                    "message": "src/libraries/core never imports src/apps/* (01 §4)."
                   }
                 ]
               }
@@ -61,7 +61,7 @@
       }
     },
     {
-      "includes": ["packages/shared/**"],
+      "includes": ["src/libraries/shared/**"],
       "linter": {
         "rules": {
           "style": {
@@ -71,7 +71,7 @@
                 "patterns": [
                   {
                     "group": ["electron", "react", "node:*", "@vera/core*", "@vera/desktop*", "@vera/cli*"],
-                    "message": "packages/shared depends only on zod (01 §4)."
+                    "message": "src/libraries/shared depends only on zod (01 §4)."
                   }
                 ]
               }
@@ -81,7 +81,7 @@
       }
     },
     {
-      "includes": ["apps/desktop/src/renderer/**"],
+      "includes": ["src/apps/desktop/src/renderer/**"],
       "linter": {
         "rules": {
           "style": {
@@ -90,7 +90,7 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["electron", "node:*", "@vera/core*", "**/packages/core/**"],
+                    "group": ["electron", "node:*", "@vera/core*", "**/libraries/core/**"],
                     "message": "The renderer imports only @vera/shared and UI libraries; use window.vera (01 §1 L2, §4)."
                   }
                 ]
@@ -101,7 +101,7 @@
       }
     },
     {
-      "includes": ["apps/desktop/src/preload/**"],
+      "includes": ["src/apps/desktop/src/preload/**"],
       "linter": {
         "rules": {
           "style": {
@@ -110,7 +110,7 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["@vera/core*", "**/packages/core/**", "react"],
+                    "group": ["@vera/core*", "**/libraries/core/**", "react"],
                     "message": "The preload imports only @vera/shared and electron's contextBridge/ipcRenderer (01 §4)."
                   }
                 ]

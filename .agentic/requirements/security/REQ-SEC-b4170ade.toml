@@ -19,9 +19,9 @@ When creating a local inference host, VERA shall disable ONNX Runtime native tel
 
 verification = "Focused parent/worker startup regression and actual release process-tree traces with local CPU inference; ambient enabled telemetry cannot retain an uploader."
 
-affected_paths = ["05_Software/packages/core/src/knowledge/embedding.ts", "05_Software/packages/core/src/knowledge/embedding.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts"]
 
-linked_tests = ["05_Software/packages/core/src/knowledge/embedding.test.ts", "05_Software/tests/tooling/package-smoke.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/tests/packaging/package-smoke.test.ts"]
 
 
 spec = ""

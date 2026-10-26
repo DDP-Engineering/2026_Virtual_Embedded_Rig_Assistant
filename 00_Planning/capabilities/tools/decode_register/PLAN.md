@@ -25,9 +25,9 @@ deadline 10,000 ms; result <=32,000 characters. No device I/O, network, shell or
 
 ## Task 1: Definition schema, JSON loading and fixture
 
-**Files:** create `packages/shared/src/tools/decode-register.ts` and `decode-register.test.ts`;
-`packages/core/src/tools/decode-register/definition.ts` and `definition.test.ts`;
-`fixtures/workbenches/demo-board/definitions/registers/reset-cause.json` and `docs/registers.md`.
+**Files:** create `src/libraries/shared/src/tools/decode-register.ts` and `decode-register.test.ts`;
+`src/libraries/core/src/tools/decode-register/definition.ts` and `definition.test.ts`;
+`tests/fixtures/workbenches/demo-board/definitions/registers/reset-cause.json` and `docs/registers.md`.
 **Interfaces:** produce the SPEC's schemas/types;
 `parseRegisterDefinition(text: string): RegisterDefinition` and
 `loadRegisterDefinition(root: string, path: string, signal: AbortSignal): Promise<{definition:
@@ -44,7 +44,7 @@ expect(RegisterDefinitionSchema.safeParse({ ...definition,
 expect(() => parseRegisterDefinition('{"schemaVersion":1,"schemaVersion":2}')).toThrow();
 ```
 
-- [ ] Run `npm test -- --run packages/shared/src/tools/decode-register.test.ts packages/core/src/tools/decode-register/definition.test.ts`;
+- [ ] Run `npm test -- --run src/libraries/shared/src/tools/decode-register.test.ts src/libraries/core/src/tools/decode-register/definition.test.ts`;
   expect missing implementation/behaviour failures.
 - [ ] Implement strict validation, mask/enum invariants and bounded JSON loading. Add the exact
   sample definition and its eight-line synthetic source. Detect duplicate keys with a bounded
@@ -54,7 +54,7 @@ expect(() => parseRegisterDefinition('{"schemaVersion":1,"schemaVersion":2}')).t
 
 ## Task 2: Pure unsigned decoder
 
-**Files:** create `packages/core/src/tools/decode-register/decode.ts` and `decode.test.ts`.
+**Files:** create `src/libraries/core/src/tools/decode-register/decode.ts` and `decode.test.ts`.
 **Interfaces:** consume validated RegisterDefinition; produce
 `parseUnsignedValue(value: string, widthBits: 8 | 16 | 32 | 64): bigint` and
 `decodeRegister(definition: RegisterDefinition, value: string): DecodedValue`.
@@ -70,7 +70,7 @@ expect(() => parseUnsignedValue("18446744073709551616", 64)).toThrow();
 expect(() => parseUnsignedValue("1 << 7", 8)).toThrow();
 ```
 
-- [ ] Run `npm test -- --run packages/core/src/tools/decode-register/decode.test.ts`; expect failure.
+- [ ] Run `npm test -- --run src/libraries/core/src/tools/decode-register/decode.test.ts`; expect failure.
 - [ ] Implement unsigned BigInt parsing, extraction, enum lookup, unmapped masks and width padding.
   Add fixtures for hex uppercase, whitespace, zero/all bits, negative/sign/float/empty inputs,
   values at each width boundary, empty fields and partial final hex nibble for a field width.
@@ -79,10 +79,10 @@ expect(() => parseUnsignedValue("1 << 7", 8)).toThrow();
 
 ## Task 3: Worker, registry, citations and CLI
 
-**Files:** create `packages/core/src/tools/decode-register/{worker,index}.ts` and adjacent tests;
-modify `packages/core/src/tools/registry.ts`; create `packages/core/test/decode-register.test.ts`,
-`apps/cli/src/decode-register.test.ts`, `fixtures/llm-scripts/decode-register-answer.jsonl`
-and `e2e/decode-register.test.ts`.
+**Files:** create `src/libraries/core/src/tools/decode-register/{worker,index}.ts` and adjacent tests;
+modify `src/libraries/core/src/tools/registry.ts`; create `src/libraries/core/test/decode-register.test.ts`,
+`src/apps/cli/src/decode-register.test.ts`, `tests/fixtures/llm-scripts/decode-register-answer.jsonl`
+and `tests/e2e/decode-register.test.ts`.
 **Interfaces:** consume CAP-01 CapabilityWorkerHost and tasks 1/2. Produce
 `executeDecodeRegister(root: string, args: DecodeRegisterArgs, host: CapabilityWorkerHost,
 signal: AbortSignal): Promise<DecodedRegisterResult>` and the read-class registry entry.
@@ -91,13 +91,13 @@ signal: AbortSignal): Promise<DecodedRegisterResult>` and the read-class registr
   `decode_worker_timeout_abort_and_replacement`, `disabled_decode_rejected` and `replay_cli_decode`.
   Assert target revision B with the A definition yields CONFLICT; an ignored/external/symlinked path
   is denied; a fabricated disabled call is rejected; a replay result cites the definition file.
-- [ ] Run `npm test -- --run packages/core/src/tools/decode-register packages/core/test/decode-register.test.ts apps/cli/src/decode-register.test.ts`;
+- [ ] Run `npm test -- --run src/libraries/core/src/tools/decode-register src/libraries/core/test/decode-register.test.ts src/apps/cli/src/decode-register.test.ts`;
   expect integration failures from missing entry points.
 - [ ] Register worker dispatch and the normal tool-result/error adapter; validate target identity
   before returning a decode. Use standard transcript rows and citation handling. Add a worst-case
   allowed field/enum-label fixture to prove the result ceiling without dropping fields.
 - [ ] Rerun focused tests. CLI integration launches `vera run` on a temporary demo copy and expects
-  the same 0x83 decode and exit 0. Run `npm run test:e2e -- e2e/decode-register.test.ts`, then
+  the same 0x83 decode and exit 0. Run `npm run test:e2e -- tests/e2e/decode-register.test.ts`, then
   `npm run verify`. Record both platforms and worker recovery evidence.
 
 ## Done

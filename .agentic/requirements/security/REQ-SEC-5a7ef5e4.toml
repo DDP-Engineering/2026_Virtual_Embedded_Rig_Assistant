@@ -19,9 +19,9 @@ Before executing a tool, the session engine shall consult its permission-engine 
 
 verification = "Inject denied policy and verify no execution; default reads succeed and prepared writes follow current session mode and exact approval; fabricated read-only writes fail."
 
-affected_paths = ["05_Software/packages/core/src/agent/approvals.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/agent/permissions.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/permissions.ts"]
 
-linked_tests = ["05_Software/packages/core/src/sessions/approvals.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/approvals.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
 
 spec = "specs/REQ-FUNC-bded1702.md"

@@ -10,6 +10,13 @@ Do not open AEGIS tasks, journals or requirements for anything else: repository 
 remotes, labels, configuration, `02_Tools` setup), planning and architecture documents in
 `00_Planning/`, standalone documentation, brainstorming, research or questions. Do those directly.
 
+## Development compatibility policy
+
+VERA is currently in development. Treat the current project layout, configuration and data
+contracts as authoritative. Do not implement migrations, legacy-layout detection, backward
+compatibility or fallback paths for earlier development versions unless the user explicitly
+requests them. Update current code, tests, fixtures and documentation together.
+
 ## Implementation branch and commits
 
 Implement work packages directly in the shared checkout on `master`.

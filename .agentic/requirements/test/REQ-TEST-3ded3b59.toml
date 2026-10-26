@@ -19,9 +19,9 @@ The demo document generator shall render repository-owned Markdown for the ficti
 
 verification = "Generate three PDFs twice, inspect byte equality and real worker extracted board/register content and pages."
 
-affected_paths = ["05_Software/packages/core/src/knowledge/", "05_Software/packages/core/src/storage/repos/documents.ts", "05_Software/apps/desktop/", "05_Software/apps/cli/", "05_Software/scripts/", "05_Software/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/packages/core/package.json"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/apps/desktop/", "05_Software/src/apps/cli/", "05_Software/scripts/", "05_Software/tests/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/package.json"]
 
-linked_tests = ["05_Software/packages/core/src/knowledge/extraction.test.ts", "05_Software/packages/core/src/knowledge/processor.test.ts", "05_Software/packages/core/src/knowledge/ingest.test.ts", "05_Software/tests/tooling/document-hosts.test.ts", "05_Software/tests/tooling/demo-documents.test.ts", "05_Software/e2e/ingest.spec.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/extraction.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/tests/integration/document-hosts.test.ts", "05_Software/tests/tooling/demo-documents.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
 
 
 spec = "specs/REQ-FUNC-e78b18ad.md"

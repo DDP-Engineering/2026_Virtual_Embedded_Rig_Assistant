@@ -4,8 +4,8 @@ title = "Browser mock renderer parity"
 status = "active"
 requirement = "When VITE_API=mock is selected for dev:renderer, the renderer shall run in a browser with an in-memory VeraBridge implementing the same app.info and app subscription contract."
 verification = "Browser acceptance runs the actual dev:renderer script with VITE_API=mock and compares home metadata with fixture values; no Electron globals or external network required."
-affected_paths = ["05_Software/package.json", "05_Software/apps/desktop/src/renderer/", "05_Software/scripts/dev-renderer.mjs", "05_Software/apps/desktop/vitest.config.ts", "05_Software/tests/tooling/build-mode.test.ts"]
-linked_tests = ["05_Software/e2e/mock.spec.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+affected_paths = ["05_Software/package.json", "05_Software/src/apps/desktop/src/renderer/", "05_Software/scripts/dev-renderer.mjs", "05_Software/src/apps/desktop/vitest.config.ts", "05_Software/tests/tooling/build-mode.test.ts"]
+linked_tests = ["05_Software/tests/e2e/mock.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/tooling/build-mode.test.ts"]
 spec = "specs/REQ-FUNC-17dfdd16.md"
 priority = "normal"
 created = 2026-10-10

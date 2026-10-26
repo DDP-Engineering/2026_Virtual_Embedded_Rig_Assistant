@@ -17,7 +17,7 @@ with remote model loading disabled.
 
 Bundle Xenova/bge-small-en-v1.5 at revision
 ea104dacec62c0de699686887e3f920caeb4f3e3, q8, MIT,384 dimensions. The selected
-[manifest](../../05_Software/resources/model-manifest.json) supplies CLS pooling,
+[manifest](../../05_Software/src/models/model-manifest.json) supplies CLS pooling,
 L2 normalization,512-token maximum, query instruction
 "Represent this sentence for searching relevant passages: " and empty passage
 prefix. Prefixes belong to the descriptor. Intake checks full prefixed tokens
@@ -53,7 +53,7 @@ terms over English documents, while direct RO query quality is measured explicit
 Multilingual E5 remains a viable alternative for a broader multilingual corpus.
 Its real Xenova export revision761b726dd34fb83930e26aab4e9ac3899aa1fa78,
 MIT upstream source, mean/L2/query:/passage: convention and exact assets are in
-the [candidate manifest](../../05_Software/fixtures/retrieval/e5-model-manifest.json).
+the [candidate manifest](../../05_Software/tests/fixtures/retrieval/e5-model-manifest.json).
 It was evaluated locally rather than inferred from public benchmark scores.
 
 ## Consequences and limits

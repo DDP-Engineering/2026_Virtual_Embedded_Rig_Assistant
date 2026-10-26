@@ -19,9 +19,9 @@ When page content attempts navigation, VERA shall prevent the renderer from leav
 
 verification = "Invoke location.assign to https://example.com and observe same URL and live renderer with no outbound request."
 
-affected_paths = ["05_Software/apps/desktop/src/main/security.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/security.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
 
 
 spec = ""

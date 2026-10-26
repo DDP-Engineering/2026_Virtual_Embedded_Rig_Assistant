@@ -87,7 +87,7 @@ search(query, k = 8, mode = hybrid, pathGlob?)
   line range (text), at most 12 000 characters, with the `ref` of exactly what it returned.
 - The agent writes its own queries (03 §3 asks for English search terms over English documents), so
   an English-only embedding model can still serve a Romanian conversation.
-- Starting code: `09_Others/benchpilot-reference/apps/server/src/tools/knowledge.ts` (FTS5 search and document reading).
+- Starting code: `09_Others/benchpilot-reference/src/apps/server/src/tools/knowledge.ts` (FTS5 search and document reading).
 
 ## 7. References
 
@@ -99,14 +99,14 @@ search(query, k = 8, mode = hybrid, pathGlob?)
 | Line range | `<path>#L<a>-L<b>` | `logs/boot-0412.log#L118-L131` |
 | Session artifact | `artifact:<name>` | `artifact:i2c-summary.md` |
 
-- The model cites as `[[docs/stm32g4-ds.pdf#p=45]]`. Parser and formatter: `packages/shared/src/refs.ts`,
-  starting from `09_Others/benchpilot-reference/packages/shared/src/evidence.ts`.
+- The model cites as `[[docs/stm32g4-ds.pdf#p=45]]`. Parser and formatter: `src/libraries/shared/src/refs.ts`,
+  starting from `09_Others/benchpilot-reference/src/libraries/shared/src/evidence.ts`.
 - A ref is valid when the file exists in the workbench (or the artifact in the session) and the
   locator is within range (page count, heading slug, line count).
 
 ## 8. Retrieval evaluation
 
-- `fixtures/retrieval/demo-board.yaml` holds 20–30 questions, each with the expected `path` and page
+- `tests/fixtures/retrieval/demo-board.yaml` holds 20–30 questions, each with the expected `path` and page
   or heading, over the demo workbench's documents.
 - `npm run eval:retrieval` reports recall@5 for `hybrid`, `keyword` and `semantic`, and fails when
   hybrid recall@5 drops below the threshold recorded in WP-24's ADR.

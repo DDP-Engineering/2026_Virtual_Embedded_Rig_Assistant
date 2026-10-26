@@ -146,27 +146,30 @@ function signatureStatus(file) {
   return result.status === 0 ? result.stdout.trim() : "unavailable";
 }
 
-export async function stageRuntime(mode, outputRoot = resolve(root, "release")) {
+export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp")) {
   const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
   if (!stage.startsWith(`${resolve(outputRoot)}${sep}`)) throw new Error("Unsafe staging path");
   await rm(stage, { recursive: true, force: true });
   await mkdir(stage, { recursive: true });
-  await cp(join(root, "apps/desktop/out"), join(stage, "out"), { recursive: true });
-  await cp(join(root, "resources"), join(stage, "resources"), {
+  await cp(join(root, "src/apps/desktop/out"), join(stage, "out"), { recursive: true });
+  await mkdir(join(stage, "resources"), { recursive: true });
+  await cp(join(root, "src/models"), join(stage, "resources/models"), {
     recursive: true,
-    filter: (source) =>
-      process.platform === "win32" || !source.startsWith(join(root, "resources/windows-runtime")),
+    filter: (source) => source !== join(root, "src/models/model-manifest.json"),
   });
-  const demo = JSON.parse(await readFile(join(root, "packages/shared/src/demo.json"), "utf8"));
-  for (const path of demo.files) {
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(path) || path.split("/").includes(".."))
-      throw new Error("Unsafe demo asset path");
-    const target = join(stage, "resources/demo-board", path);
-    await mkdir(dirname(target), { recursive: true });
-    await cp(join(root, "fixtures/workbenches/demo-board", path), target);
+  await cp(join(root, "src/models/model-manifest.json"), join(stage, "resources/model-manifest.json"));
+  await cp(
+    join(root, "src/windows_runtime/windows-runtime-manifest.json"),
+    join(stage, "resources/windows-runtime-manifest.json"),
+  );
+  if (process.platform === "win32") {
+    await cp(join(root, "src/windows_runtime"), join(stage, "resources/windows-runtime"), {
+      recursive: true,
+      filter: (source) => source !== join(root, "src/windows_runtime/windows-runtime-manifest.json"),
+    });
   }
-  const desktop = JSON.parse(await readFile(join(root, "apps/desktop/package.json"), "utf8"));
+  const desktop = JSON.parse(await readFile(join(root, "src/apps/desktop/package.json"), "utf8"));
   const runtimeNames = [
     "better-sqlite3",
     "@huggingface/transformers",
@@ -216,13 +219,16 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release")) 
       await copyDependency(dependency, directory, true);
     }
   }
-  for (const name of runtimeNames) await copyDependency(name, join(root, "apps/desktop"));
+  for (const name of runtimeNames) await copyDependency(name, join(root, "src/apps/desktop"));
   if (process.platform === "win32") {
     // Node's native addon loader searches the addon's directory, so VC++ must be beside ORT.
     await cp(
-      join(root, "resources/windows-runtime"),
+      join(root, "src/windows_runtime"),
       join(stage, "node_modules/onnxruntime-node/bin/napi-v6/win32/x64"),
-      { recursive: true },
+      {
+        recursive: true,
+        filter: (source) => source !== join(root, "src/windows_runtime/windows-runtime-manifest.json"),
+      },
     );
   }
   await writeFile(
@@ -253,12 +259,11 @@ async function packageApp() {
     "scripts/package-checks.mjs",
     "scripts/prepare-windows-runtime.mjs",
     "scripts/update-config.mjs",
-    "apps/desktop/electron-builder.yml",
-    "apps/desktop/electron.vite.config.ts",
+    "src/apps/desktop/electron-builder.yml",
+    "src/apps/desktop/electron.vite.config.ts",
     "package-lock.json",
-    "resources/model-manifest.json",
-    "resources/windows-runtime-manifest.json",
-    "packages/shared/src/demo.json",
+    "src/models/model-manifest.json",
+    "src/windows_runtime/windows-runtime-manifest.json",
   ];
   const fingerprintInputs = () =>
     Promise.all(
@@ -284,34 +289,34 @@ async function packageApp() {
   const windowsRuntime = process.platform === "win32" ? await prepareBundledWindowsRuntime() : undefined;
   run(
     join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js"),
-    ["build", "apps/desktop"],
+    ["build", "src/apps/desktop"],
     env,
   );
-  const emitted = await measureDirectory(join(root, "apps/desktop/out"));
+  const emitted = await measureDirectory(join(root, "src/apps/desktop/out"));
   const code = (
     await Promise.all(
       emitted.files
         .filter((file) => /\.(?:js|cjs|html)$/.test(file.path))
-        .map((file) => readFile(join(root, "apps/desktop/out", file.path), "utf8")),
+        .map((file) => readFile(join(root, "src/apps/desktop/out", file.path), "utf8")),
     )
   ).join("\n");
   verifyAppCode(code, testBuild);
   // Exclude foreign N-API binaries without altering the installed dependencies.
   const builderModule = await import("electron-builder");
   const mode = testBuild ? "test" : "release";
-  const output = join(root, "release", mode);
+  const output = join(root, "release_tmp", mode);
   const staged = await stageRuntime(mode);
-  const manifest = JSON.parse(await readFile(join(root, "resources/model-manifest.json"), "utf8"));
+  const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
   const prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
   // This mode's generated output is rebuilt from scratch, so stale artifacts cannot pass.
-  if (!output.startsWith(`${resolve(root, "release")}${sep}`)) throw new Error("Unsafe output path");
+  if (!output.startsWith(`${resolve(root, "release_tmp")}${sep}`)) throw new Error("Unsafe output path");
   await rm(output, { recursive: true, force: true });
   // Fast deterministic deflate; the same 250 MB limit is enforced on the artifact.
   process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL = "1";
   const builderOptions = {
     projectDir: staged.stage,
     config: {
-      extends: join(root, "apps/desktop/electron-builder.yml"),
+      extends: join(root, "src/apps/desktop/electron-builder.yml"),
       directories: { app: staged.stage, output },
       electronVersion: JSON.parse(await readFile(join(root, "package.json"), "utf8")).devDependencies
         .electron,

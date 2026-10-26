@@ -6,7 +6,7 @@ Select for citation opening, document modal, PDF navigation/zoom/find/snippet,
 Markdown/HTML anchors, numbered lines and Docs status/search/reindex/progress.
 Start under05_Software at shared/documents.ts, core/knowledge/viewer.ts and
 renderer/components/documents. Focused tests are viewer.test.ts, search.test.ts,
-documents.test.ts and e2e/{citations,documents}.spec.ts.
+documents.test.ts and tests/e2e/{citations,documents}.spec.ts.
 [Document search](document-search.md) owns retrieval/extraction validity;
 [sessions](sessions.md) owns successful-tool issuance; [ingest](knowledge-ingest.md)
 owns the index queue; [artifacts](artifacts.md) owns managed content/actions.
@@ -104,4 +104,4 @@ desktop/main/{index,document-viewer,security,content-policy}.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
 pdf-viewer}.tsx and documents.test.ts; session/{markdown,transcript,artifacts-tab};
 App/Shell/styles/locales/mock documents+mockApi; electron.vite.config.ts/index.html;
-fixtures/llm-scripts/document-viewer.jsonl; e2e/{citations,documents}.spec.ts.
+tests/fixtures/llm-scripts/document-viewer.jsonl; tests/e2e/{citations,documents}.spec.ts.

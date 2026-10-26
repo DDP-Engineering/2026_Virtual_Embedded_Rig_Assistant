@@ -19,9 +19,9 @@ Before asynchronous desktop startup and renderer access, VERA shall route dictio
 
 verification = "Test synchronous session-created protection; observe real packaged session isSpellCheckerEnabled=false and no dictionary egress during fresh-profile offline/scripted runs; preserve all sandbox/CSP/Node boundaries."
 
-affected_paths = ["05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/security.ts", "05_Software/apps/desktop/src/main/security-policy.test.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/security.ts", "05_Software/src/apps/desktop/src/main/security-policy.test.ts"]
 
-linked_tests = ["05_Software/apps/desktop/src/main/security-policy.test.ts", "05_Software/tests/tooling/package-smoke.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/security-policy.test.ts", "05_Software/tests/packaging/package-smoke.test.ts"]
 
 
 spec = ""

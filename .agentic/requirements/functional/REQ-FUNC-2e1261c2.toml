@@ -19,9 +19,9 @@ After each assistant message, the citation checker shall mark every extracted li
 
 verification = "Test emitted valid citation and invented/out-of-range/missing/escaped/binary refs as invalid."
 
-affected_paths = ["05_Software/packages/core/src/agent/citations.ts", "05_Software/packages/core/src/agent/citations.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/agent/citations.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
-linked_tests = ["05_Software/packages/core/src/agent/citations.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"

@@ -4,8 +4,8 @@
 
 Select for Electron launch, VERA window, sandbox, CSP, `vera://app`, permissions,
 single instance, window geometry, React foundation shell and desktop Vite configuration.
-Start at `05_Software/apps/desktop/src/main/index.ts`; focused acceptance is
-`05_Software/e2e/shell.spec.ts`. Workspace/compiler commands belong to
+Start at `05_Software/src/apps/desktop/src/main/index.ts`; focused acceptance is
+`05_Software/tests/e2e/shell.spec.ts`. Workspace/compiler commands belong to
 [software-tooling](software-tooling.md).
 
 ## Purpose and boundaries
@@ -24,7 +24,7 @@ through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch
 ## Public interface
 
 `npm run dev` starts the loopback development renderer and Electron. `npm run build`
-emits main ESM, preload CommonJS and renderer assets under `apps/desktop/out/`.
+emits main ESM, preload CommonJS and renderer assets under `src/apps/desktop/out/`.
 `--user-data-dir=<path>` selects the isolated Electron userData directory.
 `window-state.json` uses schema version 1 and integer normal bounds; its format is
 specified in [REQ-DATA-6c54a48f](../specs/REQ-DATA-6c54a48f.md).
@@ -105,7 +105,7 @@ schema, metadata and event call graph. The application-data page details core se
 
 ## Files
 
-Paths below are relative to `05_Software/apps/desktop/` unless qualified.
+Paths below are relative to `05_Software/src/apps/desktop/` unless qualified.
 
 - `package.json`, `tsconfig*.json`, `vitest.config.ts` — package identity and process-specific compilation/tests.
 - `electron.vite.config.ts`, `components.json` — build/dev CSP and shadcn configuration.
@@ -116,7 +116,7 @@ Paths below are relative to `05_Software/apps/desktop/` unless qualified.
 - `src/preload/index.ts`, `bridge.ts` — sandbox assertion and validated page-world bridge.
 - `src/renderer/index.html`, `main.tsx`, `App.tsx`, `styles.css` — document, React entry and foundation shell; [renderer foundation](renderer-foundation.md) routes view files.
 - `src/renderer/components/ui/card.tsx`, `lib/utils.ts` — adapted Card and class merging.
-- `05_Software/e2e/shell.spec.ts`, `network-guard.ts` — real Electron acceptance and egress guard.
+- `05_Software/tests/e2e/shell.spec.ts`, `network-guard.ts` — real Electron acceptance and egress guard.
 - `05_Software/tests/tooling/build-mode.test.ts` — emitted identity execution in both build modes.
 
 Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.

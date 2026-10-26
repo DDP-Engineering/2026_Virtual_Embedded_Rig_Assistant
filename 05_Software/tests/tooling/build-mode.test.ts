@@ -11,7 +11,7 @@ const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/e
 
 it("compiles the test flag and ignores runtime overrides in ordinary builds", () => {
   // A fresh setup has no compiled shared entrypoint; every desktop layer must bundle from source.
-  const compiledShared = join(root, "packages/shared/dist/index.js");
+  const compiledShared = join(root, "src/libraries/shared/dist/index.js");
   const savedShared = `${compiledShared}.build-mode-backup`;
   expect(existsSync(savedShared), "no leftover generated-entry backup").toBe(false);
   const hadCompiledShared = existsSync(compiledShared);
@@ -21,7 +21,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
       ["1", "true"],
       ["0", "false"],
     ] as const) {
-      const build = spawnSync(process.execPath, [vite, "build", "apps/desktop"], {
+      const build = spawnSync(process.execPath, [vite, "build", "src/apps/desktop"], {
         cwd: root,
         encoding: "utf8",
         env: {
@@ -31,7 +31,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
         },
       });
       expect(build.status, build.stderr).toBe(0);
-      const mainDir = join(root, "apps/desktop/out/main");
+      const mainDir = join(root, "src/apps/desktop/out/main");
       const code = readdirSync(mainDir, { recursive: true })
         .filter((name) => String(name).endsWith(".js"))
         .map((name) => readFileSync(join(mainDir, String(name)), "utf8"))
@@ -79,7 +79,7 @@ it("compiles the test flag and ignores runtime overrides in ordinary builds", ()
       }
       expect(code).toContain("allowRemoteModels");
       expect(existsSync(join(mainDir, "document-embedding-worker.js"))).toBe(true);
-      const url = pathToFileURL(join(root, "apps/desktop/out/main/build-mode.js")).href;
+      const url = pathToFileURL(join(root, "src/apps/desktop/out/main/build-mode.js")).href;
       const run = spawnSync(
         process.execPath,
         ["--input-type=module", "--eval", `console.log((await import(${JSON.stringify(url)})).testBuild)`],

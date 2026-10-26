@@ -17,9 +17,9 @@ requirement = "When usage is reported, the context meter shall present optional 
 
 verification = "Project live and replayed usage events into the meter in en/ro/de; old events remain valid and summary actual usage does not replace estimates. Execution deferred by direct user instruction."
 
-affected_paths = ["05_Software/packages/shared/src/events.ts", "05_Software/apps/desktop/src/renderer/components/session/usage-meter.tsx", "05_Software/apps/desktop/src/renderer/locales/en.json", "05_Software/apps/desktop/src/renderer/locales/ro.json", "05_Software/apps/desktop/src/renderer/locales/de.json", "05_Software/packages/shared/src/session-state.test.ts", "05_Software/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
+affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
 
-linked_tests = ["05_Software/packages/shared/src/session-state.test.ts", "05_Software/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
 
 
 spec = ""

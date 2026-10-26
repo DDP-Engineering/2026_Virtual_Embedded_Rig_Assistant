@@ -5,7 +5,7 @@ import { join } from "node:path";
 import Database from "better-sqlite3";
 
 const fixture = JSON.parse(
-  await readFile(new URL("../fixtures/upgrade/interrupted.json", import.meta.url), "utf8"),
+  await readFile(new URL("../tests/fixtures/upgrade/interrupted.json", import.meta.url), "utf8"),
 );
 function sessionFixture(sessionIds) {
   return fixture.sessions.map((session, index) => {

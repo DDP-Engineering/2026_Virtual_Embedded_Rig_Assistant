@@ -19,9 +19,9 @@ When the desktop window closes and VERA restarts, the shell shall restore its va
 
 verification = "Resize/move window, close and restart in same temporary userData; observe restored bounds; unit cases cover invalid/off-screen data and write/read recovery."
 
-affected_paths = ["05_Software/apps/desktop/src/main/window-state.test.ts", "05_Software/apps/desktop/src/main/window-state.ts", "05_Software/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/window-state.test.ts", "05_Software/src/apps/desktop/src/main/window-state.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts", "05_Software/apps/desktop/src/main/window-state.test.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts", "05_Software/src/apps/desktop/src/main/window-state.test.ts"]
 
 
 spec = "specs/REQ-DATA-6c54a48f.md"

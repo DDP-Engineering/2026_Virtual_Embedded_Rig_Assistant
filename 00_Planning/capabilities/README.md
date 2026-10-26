@@ -30,7 +30,7 @@ manual, as in the existing v1 scope.
 3. CAP-02: implement local register definitions and numeric decoding, then the same adapters.
 4. After document citations, artifacts and skill loading exist, implement CAP-03 and CAP-04 on
    copies of a fixture workbench. They are functional M3 deliverables; WP-37 packages their samples
-   with the finished demo and onboarding in M5.
+   with the complete verification fixture in M5.
 5. Include their tests in `verify`, their scripts in e2e, and their assets/scenarios in the final
    release smoke of WP-33. Existing context budgets and result limits apply to every new tool call.
 

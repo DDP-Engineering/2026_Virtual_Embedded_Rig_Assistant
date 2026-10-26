@@ -19,9 +19,9 @@ For every model request, the session engine shall apply M1 context policy using 
 
 verification = "Exercise reduced long first turn/irreducible limit/no gateway and switched model budgets; configured call cap; stalled gateway with short injected deadline."
 
-affected_paths = ["05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/sessions/timed-gateway.ts", "05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/agent/runtime.test.ts"]
 
-linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts", "05_Software/packages/core/src/agent/runtime.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/agent/runtime.test.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"

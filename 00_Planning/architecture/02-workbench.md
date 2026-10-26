@@ -1,29 +1,31 @@
 # 02 — Workbench, skills and runtime data
 
-PURPOSE: define the workbench folder format, the skills format, the `.vera/` runtime folder and the
+PURPOSE: define the workbench folder format, the skills format, the `.vera/` project metadata and runtime folder and the
 SQLite data model that every core module shares.
 DONE-WHEN (for the work packages that implement it): a workbench created by VERA validates against
-`packages/shared/src/workbench.ts`, opens on another machine after being copied, and rebuilds
-`.vera/` when that folder is deleted.
+`src/libraries/shared/src/workbench.ts`, opens on another machine after being copied, and rebuilds
+the index from project documents while preserving its configuration.
 
 ## 1. Folder layout
 
 ```
 my-bench/
-  workbench.yaml        # configuration (§2)
-  WORKBENCH.md          # pinned context, always in the system prompt (§3)
-  docs/                 # any files; indexed per §4
-  skills/<name>/SKILL.md  # workbench skills (§5)
-  tools/                # reserved for post-1.0 wrapper descriptors; ignored by 1.0
-  notes/, firmware/, …  # anything else the user keeps; readable by tools, not indexed unless included
-  .veraignore           # optional, gitignore syntax (§6)
-  .vera/                # runtime state, never edited by hand or by tools (§8)
+  .vera/
+    workbench.yaml        # project configuration (§2)
+    WORKBENCH.md          # pinned context (§3)
+    .veraignore           # optional, project-relative gitignore patterns (§6)
+    skills/<name>/SKILL.md # project skills (§5)
+    .gitignore            # tracks configuration/skills, ignores runtime state
+    lock, vera.db, artifacts/, cache/, backups/
+  docs/                   # project documents; indexed per §4
+  notes/, firmware/, …    # project content
 ```
 
-A workbench is a plain folder (ADR-0004). It can live in a Git repository; `.vera/` contains its own
-`.gitignore` with `*`.
+The selected project folder remains the root for document patterns and tool paths.
+Opening requires `.vera/workbench.yaml`; root files are never detected or migrated.
+Global application settings, credentials and user skills remain in userData.
 
-## 2. `workbench.yaml`
+## 2. `.vera/workbench.yaml`
 
 ```yaml
 format: 1                       # format version; VERA refuses a newer one (L10)
@@ -54,7 +56,7 @@ agent:
 
 Unknown keys are preserved on save and reported as warnings, so a newer minor format does not lose data.
 
-## 3. `WORKBENCH.md`
+## 3. `.vera/WORKBENCH.md`
 
 - Included verbatim in the system prompt inside `<workbench>` tags (`03` §3).
 - Soft limit 16 KB: above it the UI warns and the prompt carries the first 16 KB with a truncation note.
@@ -97,7 +99,7 @@ description: Extract electrical limits, pinouts and register maps from component
 
 | Rule | Value |
 |---|---|
-| Location | workbench `skills/<name>/SKILL.md`; user `<userData>/skills/<name>/SKILL.md` |
+| Location | workbench `.vera/skills/<name>/SKILL.md`; user `<userData>/skills/<name>/SKILL.md` |
 | `name` | lowercase letters, digits and hyphens, 1–64 characters, equal to the folder name |
 | `description` | 1–1024 characters; says what the skill does and when to use it |
 | Body | Markdown; loaded only through `load_skill` |
@@ -108,8 +110,8 @@ description: Extract electrical limits, pinouts and register maps from component
 
 ## 6. Ignore rules
 
-Always ignored by tools and the index: `.vera/`, `.git/`, `node_modules/`. Then `.veraignore`
-(gitignore syntax, workbench root only). Binary detection (`03` §5) applies on top.
+Always ignored by tools and the index: `.vera/`, `.git/`, `node_modules/`. Then `.vera/.veraignore`
+(gitignore syntax, patterns relative to the project root; logical skills/ paths for the dedicated skill loader). Binary detection (`03` §5) applies on top.
 
 ## 7. Path rules
 
@@ -117,11 +119,11 @@ All tool paths are workbench-relative with `/` separators. Resolution and confin
 in `03-agent-and-tools.md` §5; this folder format only promises that nothing outside the root is
 part of a workbench.
 
-## 8. `.vera/` runtime folder
+## 8. `.vera/` project metadata and runtime folder
 
 ```
 .vera/
-  .gitignore            # "*"
+  .gitignore            # excludes runtime; allows configuration and skills
   lock                  # {"pid": 1234, "app": "1.0.0", "since": "…", "token": "…"}; live pid opens read-only
   vera.db               # SQLite (§9)
   artifacts/<session-id>/<name>
@@ -129,15 +131,17 @@ part of a workbench.
   backups/vera.db.v<schema>.bak # copy taken before each migration
 ```
 
-Deleting `.vera/` loses sessions and artifacts; VERA recreates the folder and reindexes documents.
-The UI warns before any action that does this.
+The `.vera` folder contains project configuration as well as sessions and artifacts. Keep it with
+the project. The dedicated skill catalog can read `.vera/skills`; general tools and indexing
+exclude metadata. The default `.gitignore` allows the configuration files and skills while ignoring
+runtime databases, locks, caches, backups and artifacts.
 
 The WP-06 service serializes operations and rechecks token ownership before saves/close. Each open
 reassesses live/dead ownership, including same-folder reopen. Dead pid locks are taken over under a
 short process-owned local IPC guard (Windows named pipe/Linux abstract Unix socket); the OS releases
 it on crash. Only EADDRINUSE contention opens read-only with LOCK_GUARD_BUSY. Live owners retain
 their bytes. Completion skips symlink/junction entries,
-applies the case-insensitive permanent ignored directories and `.veraignore`, and returns at most50 relative paths.
+applies the case-insensitive permanent ignored directories and `.vera/.veraignore`, and returns at most50 relative paths.
 Config extension values must be JSON-compatible for IPC; invalid/non-finite/circular values are
 refused without changing the source. Settings schema2 stores ten typed recents, migrating0/1 with
 original backups and stable UUID/extensions; recent-entry extensions survive reopening. The workbench format remains1.

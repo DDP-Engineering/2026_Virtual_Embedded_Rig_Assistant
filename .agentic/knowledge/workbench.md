@@ -2,19 +2,21 @@
 
 ## Routing
 
-Select for workbench.yaml, WORKBENCH.md, wb_ identity, create/open/close, runtime lock,
+Select for .vera/workbench.yaml, .vera/WORKBENCH.md, wb_ identity, create/open/close, runtime lock,
 recent folders, config/pinned saves, ignore rules and path completion. Start with
-05_Software/packages/core/src/workbench/service.ts and packages/shared/src/workbench.ts.
+05_Software/src/libraries/core/src/workbench/service.ts and src/libraries/shared/src/workbench.ts.
 Focused tests: core workbench/service.test.ts and shared workbench.test.ts. Native/UI tests:
-e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) owns settings migration;
+tests/e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) owns settings migration;
 [IPC boundary](ipc-boundary.md) owns authorization/transport; [renderer foundation](renderer-foundation.md)
 owns the shell, appearance, language and layout.
 Tool path confinement, read/list/glob/grep and worker deadlines route to [File tools](file-tools.md).
 Database migrations, compatibility, backups and row repositories route to [Workbench storage](workbench-storage.md).
 
-[Demo and onboarding](demo-onboarding.md) routes the bundled fictional example, sample skills, private copy and guided session drafts.
+[Verification fixtures](demo-onboarding.md) routes the fictional board corpus and PDF sources under tests/fixtures, used by isolated tests and evaluation/smoke harnesses.
 
 ## Purpose and boundaries
+
+Core owns project metadata under .vera: workbench.yaml, WORKBENCH.md, optional .veraignore, skills and runtime state. The selected folder stays the root for user documents and sources. Opening requires .vera/workbench.yaml; root files are ordinary content and are never migrated.
 
 Core owns the folder lifecycle, identity, YAML validation, runtime lock, pinned context and common
 ignore/completion policy. Main supplies process liveness, version, clock, token, settings and atomic
@@ -25,7 +27,7 @@ mode offers empty, missing, read-only and warning fixtures.
 
 - skillCatalog/listSkills/openSkill/saveSkill/toggleSkill admit [skills](skills.md)
   operations against current workbench ID, folder, database lifetime and token. Source
-  selects the workbench or host userData root. Reads serialize with lifecycle; writes
+  selects project/.vera or the host userData root. Reads serialize with lifecycle; writes
   use shared admission, exclusive creation and original SHA256 before publication.
 
 - WorkbenchService owns one writable background Ingester and reindexDocuments;
@@ -49,7 +51,7 @@ mode offers empty, missing, read-only and warning fixtures.
   Reopen retains entry extensions while refreshing known metadata.
   Future read-only settings permit opening while preserving settings bytes and suppressing recent saves.
 - files(query) returns up to50 slash-separated relative ordinary-file paths, case-insensitive substring
-  matches. createIgnoreRules applies case-insensitive permanent .vera/.git/node_modules segments before root .veraignore.
+  matches. createIgnoreRules applies case-insensitive permanent .vera/.git/node_modules segments before project-relative rules from .vera/.veraignore.
 - Shared workbenchSchema/configWarnings/mergeWorkbench/workbenchTemplate supply format1 defaults,
   passthrough extensions, unresolved disabled-name warnings and the specified English pinned template.
 - Native app.chooseFolder uses Electron dialog; instrumented compilation accepts VERA_TEST_DIALOG_PATH.
@@ -74,7 +76,7 @@ mode offers empty, missing, read-only and warning fixtures.
 - Locks hold pid/app/since and unique ownership token. Writes recheck ownership; close releases only
   its matching lock. A failed replacement/recent save retains the preceding workbench and cleans
   newly acquired ownership. Confirmed config saves publish events; observer errors cannot undo saves.
-- UNC paths warn that network shares are unsupported. WORKBENCH.md text is user data; the editor
+- UNC paths warn that network shares are unsupported. .vera/WORKBENCH.md text is user data; the editor
   saves full content explicitly and restores focus after Cancel/Escape/save. Each dialog loads fresh
   content before enabling input; drafts stay isolated from focus/reconnect refresh.
 
@@ -114,11 +116,11 @@ flowchart LR
   service --> settings[SettingsService schema3]
   service --> writes[WriteQueue]
   Sessions[SessionService prepared writes] --> writes
-  writes --> YAML[workbench.yaml and WORKBENCH.md]
+  writes --> YAML[.vera/workbench.yaml and .vera/WORKBENCH.md]
   writes --> Files[confined workbench files]
   service --> lock[.vera lock and process-owned IPC guard]
   service --> storage[core storage compatibility and SQLite handle]
-  service --> ignore[createIgnoreRules and completion]
+  service --> ignore[.vera ignore policy and project completion]
   service --> events[WorkbenchEvent]
   events --> bridge
 ```
@@ -130,15 +132,15 @@ workbench formats have separate versioning and compatibility rules.
 
 All paths below are relative to05_Software.
 
-- packages/shared/src/workbench.ts and workbench.test.ts — format/warnings/template/merge.
-- packages/shared/src/{ipc,events,settings}.ts — channels/events/recent metadata.
-- packages/core/src/workbench/{service,ignore,guard}.ts and service.test.ts/guard.test.ts — lifecycle/ownership/saves/completion.
-- packages/core/src/{ports,index}.ts — WorkbenchHost and public exports.
-- packages/core/package.json and package-lock.json — exact yaml/ulid/ignore pins.
-- apps/desktop/src/main/index.ts — service wiring, native picker, handlers and shutdown.
-- apps/desktop/src/preload/bridge.ts and bridge.test.ts — scoped subscriptions.
-- apps/desktop/src/renderer/api/{ipc,subscriptions}.ts — validated API subscriptions.
-- apps/desktop/src/renderer/{App.tsx,components/workbench.tsx,components/error-message.tsx,styles.css,locales/} — Welcome/editor and translated states.
-- apps/desktop/src/renderer/mocks/mockApi.ts and mockApi.test.ts — contract fixtures.
-- fixtures/workbenches/demo-board/ — fictional board, notes, pinout and boot capture.
-- e2e/workbench.spec.ts, e2e/mock.spec.ts, tests/tooling/build-mode.test.ts — acceptance and release hook regression.
+- src/libraries/shared/src/workbench.ts and workbench.test.ts — format/warnings/template/merge.
+- src/libraries/shared/src/{ipc,events,settings}.ts — channels/events/recent metadata.
+- src/libraries/core/src/workbench/{service,ignore,guard}.ts and service.test.ts/guard.test.ts — lifecycle/ownership/saves/completion.
+- src/libraries/core/src/{ports,index}.ts — WorkbenchHost and public exports.
+- src/libraries/core/package.json and package-lock.json — exact yaml/ulid/ignore pins.
+- src/apps/desktop/src/main/index.ts — service wiring, native picker, handlers and shutdown.
+- src/apps/desktop/src/preload/bridge.ts and bridge.test.ts — scoped subscriptions.
+- src/apps/desktop/src/renderer/api/{ipc,subscriptions}.ts — validated API subscriptions.
+- src/apps/desktop/src/renderer/{App.tsx,components/workbench.tsx,components/error-message.tsx,styles.css,locales/} — Welcome/editor and translated states.
+- src/apps/desktop/src/renderer/mocks/mockApi.ts and mockApi.test.ts — contract fixtures.
+- tests/fixtures/workbenches/demo-board/ — fictional board, notes, pinout and boot capture.
+- tests/e2e/workbench.spec.ts, tests/e2e/mock.spec.ts, tests/tooling/build-mode.test.ts — acceptance and release hook regression.

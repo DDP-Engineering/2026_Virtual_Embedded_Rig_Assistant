@@ -20,7 +20,7 @@ Offline: copied demo, writable open, real local CPU embedding/SQLite reindex and
 search, production PDF IPC and painted viewer canvas, then document/session
 SQLite persistence after shutdown/restart. Scripted normal custom provider at
 127.0.0.1:0 serves SSE fragmented read/write tools, ordinary exact approval,
-valid WORKBENCH.md#L1-L4 citation and complete snapshot persistence. No app hook.
+valid .vera/WORKBENCH.md#L1-L4 citation and complete snapshot persistence. No app hook.
 
 All Linux launches use strace-f-s4096-v connect/sendto/sendmsg. Failed attempts
 count; Unix ignored. Offline list empty, scripted exact AF_INET127.0.0.1/server

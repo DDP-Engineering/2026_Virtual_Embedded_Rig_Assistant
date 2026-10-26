@@ -19,9 +19,9 @@ When subscribing with sinceSeq, the session service shall deliver persisted even
 
 verification = "Subscribe after partial history, compare ordered replay/live and coalesced text, terminal ordering, cleanup and detached subscribers."
 
-affected_paths = ["05_Software/packages/core/src/sessions/hub.ts", "05_Software/apps/desktop/src/main/session-events.ts", "05_Software/apps/desktop/src/preload/bridge.ts", "05_Software/apps/desktop/src/main/events.ts", "05_Software/apps/desktop/src/renderer/api/subscriptions.ts", "05_Software/apps/desktop/src/renderer/api/ipc.ts", "05_Software/packages/core/src/sessions/service.test.ts", "05_Software/apps/desktop/src/main/session-events.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/hub.ts", "05_Software/src/apps/desktop/src/main/session-events.ts", "05_Software/src/apps/desktop/src/preload/bridge.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/api/subscriptions.ts", "05_Software/src/apps/desktop/src/renderer/api/ipc.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/main/session-events.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
 
-linked_tests = ["05_Software/packages/core/src/sessions/service.test.ts", "05_Software/apps/desktop/src/main/session-events.test.ts", "05_Software/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/main/session-events.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"

@@ -14,7 +14,7 @@ extensions. The request names the expected device, revision and register; a mism
 
 ## 2. Definition format
 
-`RegisterDefinitionSchema` in `packages/shared/src/tools/decode-register.ts` validates this shape:
+`RegisterDefinitionSchema` in `src/libraries/shared/src/tools/decode-register.ts` validates this shape:
 
 ```json
 {

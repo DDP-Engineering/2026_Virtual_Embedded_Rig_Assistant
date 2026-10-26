@@ -19,7 +19,7 @@ The software solution shall build four strict ESM TypeScript npm workspaces name
 
 verification = "Read workspace manifests and solution references, build/typecheck and run boundary tests; reject missing workspaces or forbidden renderer/core imports."
 
-affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "05_Software/tsconfig.json", "05_Software/tsconfig.tools.json", "05_Software/biome.json", "05_Software/packages/", "05_Software/apps/desktop/package.json", "05_Software/apps/desktop/components.json", "05_Software/apps/desktop/vitest.config.ts", "05_Software/apps/cli/", "05_Software/apps/desktop/tsconfig.config.json", "05_Software/apps/desktop/tsconfig.json", "05_Software/apps/desktop/tsconfig.main.json", "05_Software/apps/desktop/tsconfig.preload.json", "05_Software/apps/desktop/tsconfig.renderer.json"]
+affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "05_Software/tsconfig.json", "05_Software/tsconfig.tools.json", "05_Software/biome.json", "05_Software/src/libraries/", "05_Software/src/apps/desktop/package.json", "05_Software/src/apps/desktop/components.json", "05_Software/src/apps/desktop/vitest.config.ts", "05_Software/src/apps/cli/", "05_Software/src/apps/desktop/tsconfig.config.json", "05_Software/src/apps/desktop/tsconfig.json", "05_Software/src/apps/desktop/tsconfig.main.json", "05_Software/src/apps/desktop/tsconfig.preload.json", "05_Software/src/apps/desktop/tsconfig.renderer.json"]
 
 linked_tests = ["05_Software/tests/tooling/skeleton.test.ts", "05_Software/tests/tooling/boundaries.test.ts"]
 

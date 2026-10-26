@@ -44,14 +44,14 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 | Change | Start | Focused proof |
 |---|---|---|
-| Prepared writes/startup barrier | tools/changes.ts,SessionService,desktop SessionsHost | sessions/write-edit.test.ts,main/sessions.test.ts,e2e/write-edit.spec.ts |
-| Modes/digest/decisions/abort | agent/approvals.ts,sessions/service.ts | sessions/approvals.test.ts; e2e/approvals.spec.ts |
+| Prepared writes/startup barrier | tools/changes.ts,SessionService,desktop SessionsHost | sessions/write-edit.test.ts,main/sessions.test.ts,tests/e2e/write-edit.spec.ts |
+| Modes/digest/decisions/abort | agent/approvals.ts,sessions/service.ts | sessions/approvals.test.ts; tests/e2e/approvals.spec.ts |
 | Lifecycle/persistence/recovery/budgets/permission | core sessions/service.ts | service.test.ts |
 | Replay/live ordering | sessions/hub.ts | service.test.ts replay/reentrancy |
 | Terminal projection | shared session-state.ts/events.ts | session-state.test.ts |
-| Citation resolution | agent/citations.ts; knowledge/search.ts | citations.test.ts; search.test.ts; artifacts.test.ts; e2e/citations.spec.ts |
+| Citation resolution | agent/citations.ts; knowledge/search.ts | citations.test.ts; search.test.ts; artifacts.test.ts; tests/e2e/citations.spec.ts |
 | Model output wait | sessions/timed-gateway.ts | service.test.ts timeout/ignored abort |
-| Main host/transport/bridge | desktop main sessions/session-events,index;preload bridge | sessions/session-events/bridge tests; e2e/sessions.spec.ts |
+| Main host/transport/bridge | desktop main sessions/session-events,index;preload bridge | sessions/session-events/bridge tests; tests/e2e/sessions.spec.ts |
 
 ## Key behaviors
 
@@ -94,4 +94,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software: packages/shared/src/{session,session-state,events,ipc,index}.ts and session-state.test.ts; packages/core/src/sessions/{service,hub,timed-gateway}.ts/service.test.ts; agent/{approvals,permissions,citations,runtime,types}.ts/citations.test.ts; sessions/approvals.test.ts; core exports; workbench/service.ts ownership/snapshot seams; llm/replay.ts session-isolated deterministic IDs. Desktop main/{sessions,session-events,events,ipc-router,index}.ts and related tests; preload/bridge.ts/test; renderer api/subscriptions.ts,ipc.ts and mocks/sessions.ts,mockApi.ts. fixtures/llm-scripts/read-then-answer.jsonl and e2e/sessions.spec.ts provide deterministic acceptance.
+Under05_Software: src/libraries/shared/src/{session,session-state,events,ipc,index}.ts and session-state.test.ts; src/libraries/core/src/sessions/{service,hub,timed-gateway}.ts/service.test.ts; agent/{approvals,permissions,citations,runtime,types}.ts/citations.test.ts; sessions/approvals.test.ts; core exports; workbench/service.ts ownership/snapshot seams; llm/replay.ts session-isolated deterministic IDs. Desktop main/{sessions,session-events,events,ipc-router,index}.ts and related tests; preload/bridge.ts/test; renderer api/subscriptions.ts,ipc.ts and mocks/sessions.ts,mockApi.ts. tests/fixtures/llm-scripts/read-then-answer.jsonl and tests/e2e/sessions.spec.ts provide deterministic acceptance.

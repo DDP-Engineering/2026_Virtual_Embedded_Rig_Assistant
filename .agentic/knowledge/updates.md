@@ -48,7 +48,7 @@ VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is
 | modes/safety | main/updates.ts | updates.test.ts |
 | channels/integrity | main/update-backend.ts | update-backend.test.ts, actual upgrade |
 | admission | core sessions/service.ts, main/sessions.ts/index.ts | approvals.test.ts, sessions.test.ts |
-| UI/IPC | shared updates/ipc/events, renderer updates.tsx | shared/UI tests, e2e/updates.spec.ts |
+| UI/IPC | shared updates/ipc/events, renderer updates.tsx | shared/UI tests, tests/e2e/updates.spec.ts |
 | build/feed | update-config.mjs, package.mjs, update-feed.mjs | tooling/updates.test.ts, packaging.test.ts |
 
 ## Key behaviors
@@ -75,10 +75,10 @@ The backend owns download bytes; main owns installation timing.
 
 Paths relative to05_Software:
 
-- packages/shared/src/{updates,settings,ipc,events}.ts — state/actions/preferences.
-- apps/desktop/src/main/{updates,update-backend,index,sessions}.ts — lifecycle/adapters.
-- packages/core/src/sessions/service.ts — actual activity.
+- src/libraries/shared/src/{updates,settings,ipc,events}.ts — state/actions/preferences.
+- src/apps/desktop/src/main/{updates,update-backend,index,sessions}.ts — lifecycle/adapters.
+- src/libraries/core/src/sessions/service.ts — actual activity.
 - renderer components/updates.tsx/settings.tsx, App.tsx, mocks/mockApi.ts/locales — presentation.
 - scripts/{update-config,package,update-feed,probe-upgrade}.mjs — build/feed and actual artifact probe.
 - shared updates.test.ts, main updates/update-backend.test.ts, core approvals.test.ts,
-  renderer updates.test.ts, tooling updates.test.ts and e2e/updates.spec.ts — proof seams.
+  renderer updates.test.ts, tooling updates.test.ts and tests/e2e/updates.spec.ts — proof seams.

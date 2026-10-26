@@ -7,7 +7,7 @@ file together with its tests, then adapt it.
 
 Rules:
 - **Logic stays, transport changes.** Hono routes and Server-Sent Events become IPC handlers and the
-  `vera:event` channel (01 §3). Request and event shapes move into `packages/shared/src/ipc.ts` and
+  `vera:event` channel (01 §3). Request and event shapes move into `src/libraries/shared/src/ipc.ts` and
   `events.ts`.
 - **Domain words change.** Testbench → workbench, `docs/TESTBENCH.md` → `WORKBENCH.md`, `ev:` evidence
   references → VERA references (05 §7).
@@ -15,14 +15,14 @@ Rules:
   ingest, reports, plans, triage evaluation and the tshark tools. They are prior art for the test
   catalog and wrapper tools after 1.0.
 
-## Core — `09_Others/benchpilot-reference/apps/server/src/` → VERA `packages/core/src/`
+## Core — `09_Others/benchpilot-reference/src/apps/server/src/` → VERA `src/libraries/core/src/`
 
 | Reference file | Lines | VERA target | Change |
 |---|---|---|---|
 | `llm/gateway.ts` | 60 | `llm/gateway.ts` | keep the `LlmGateway` interface; provider ids gain `custom:<slug>` |
 | `llm/providers.ts` | 223 | `llm/providers.ts` | keep the **api** and **subscription** collections and the custom provider; allow several custom endpoints |
 | `llm/oauth.ts` | 79 | `llm/chatgpt.ts` | keep the in-process sign-in; open `auth_url` through the `OpenExternal` port; add the manual-code paste flow; `agentName: "VERA"` |
-| `llm/credentials.ts` | 190 | `CredentialStore` port + `apps/desktop/src/main/credentials.ts` | keep write-then-rename with the Windows retry and the pi-ai store view; encrypt every value with `safeStorage` |
+| `llm/credentials.ts` | 190 | `CredentialStore` port + `src/apps/desktop/src/main/credentials.ts` | keep write-then-rename with the Windows retry and the pi-ai store view; encrypt every value with `safeStorage` |
 | `llm/replay.ts` | 228 | `llm/replay.ts` | the scripted provider for tests (08 §3); keep placeholders and the stateless step derivation; drop the verdict guards |
 | `agent/loop.ts` | 185 | `agent/runtime.ts` | starting loop (ADR-0003); M1 context policy before every call, per-call approvals, limits; M5 steering and historical compaction |
 | `agent/approval.ts` | 45 | `agent/approvals.ts` | gate pattern only; VERA binds each approval to the digest of the exact change and the active turn, used once |
@@ -36,9 +36,9 @@ Rules:
 | `skills/load.ts`, `content.ts` | 25, 41 | `skills/`, `workbench/` | keep the frontmatter split and zod validation; add the user skill folder; limits per 02 §5 |
 | `testbench/load.ts` | 61 | `workbench/` | from loading a testbench folder to create, open and validate a workbench |
 | `db/index.ts`, `db/schema.sql`, `db/repos/` | 34, 87, — | `storage/` | keep the better-sqlite3 set-up and repository style; schema per 02 §9; add checksummed migrations |
-| `cli/chat.ts`, `cli/bench.ts` | 138, 117 | `apps/cli/` | `chat --script` becomes `vera run` |
+| `cli/chat.ts`, `cli/bench.ts` | 138, 117 | `src/apps/cli/` | `chat --script` becomes `vera run` |
 
-## Shared — `09_Others/benchpilot-reference/packages/shared/src/` → VERA `packages/shared/src/`
+## Shared — `09_Others/benchpilot-reference/src/libraries/shared/src/` → VERA `src/libraries/shared/src/`
 
 | Reference file | Lines | VERA target | Change |
 |---|---|---|---|
@@ -48,7 +48,7 @@ Rules:
 | `api.ts`, `domain.ts` | 452, 260 | `ipc.ts`, `workbench.ts`, `settings.ts` | request and response types become zod-defined channels |
 | `markdown.ts` | 20 | `markdown.ts` | as is |
 
-## Renderer — `09_Others/benchpilot-reference/apps/web/src/` → VERA `apps/desktop/src/renderer/`
+## Renderer — `09_Others/benchpilot-reference/src/apps/web/src/` → VERA `src/apps/desktop/src/renderer/`
 
 | Reference file | Lines | VERA target | Change |
 |---|---|---|---|
@@ -71,5 +71,5 @@ Rules:
 | `scripts/package-smoke.mjs` | 368 | `scripts/smoke-package.mjs` | reuse path/environment checks; add the artifact SHA-256, the scripted loopback session and the egress check (WP-33) |
 | `scripts/package.mjs` | 358 | packaging checks | electron-builder replaces it; keep its pre-packaging checks: no secrets, path length, native files complete |
 | `scripts/sandbox/BenchPilot.wsb` | — | `scripts/sandbox/VERA.wsb` | Windows Sandbox for the clean-machine run |
-| `agent/replay-e2e.spec.ts`, `agent/guards.spec.ts`, `tools/caps.spec.ts` | — | `packages/core/test/` | the same kinds of tests for VERA's runtime, approvals and caps |
-| `skills/*/SKILL.md` (7) | — | `fixtures/` and the demo workbench | format examples; `failure-analyzer` is the exemplar shape |
+| `agent/replay-e2e.spec.ts`, `agent/guards.spec.ts`, `tools/caps.spec.ts` | — | `src/libraries/core/test/` | the same kinds of tests for VERA's runtime, approvals and caps |
+| `skills/*/SKILL.md` (7) | — | `tests/fixtures/` and the demo workbench | format examples; `failure-analyzer` is the exemplar shape |

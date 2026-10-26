@@ -57,7 +57,7 @@ async function main() {
   await build({
     entryPoints: {
       corpus: join(root, "scripts/retrieval/corpus.mjs"),
-      "pdf-worker": join(root, "packages/core/src/knowledge/pdf-worker.ts"),
+      "pdf-worker": join(root, "src/libraries/core/src/knowledge/pdf-worker.ts"),
     },
     outdir: scratch,
     platform: "node",
@@ -67,16 +67,16 @@ async function main() {
     outExtension: { ".js": ".mjs" },
     target: "node24",
   });
-  const fixtureBytes = await readFile(join(root, "fixtures/retrieval/demo-board.yaml"));
+  const fixtureBytes = await readFile(join(root, "tests/fixtures/retrieval/demo-board.yaml"));
   const { loadCorpus } = await import(pathToFileURL(join(scratch, "corpus.mjs")).href);
   const corpus = await loadCorpus(
-    join(root, "fixtures/workbenches/demo-board"),
+    join(root, "tests/fixtures/workbenches/demo-board"),
     pathToFileURL(join(scratch, "pdf-worker.mjs")),
   );
   const fixture = validateFixture(fixtureBytes.toString("utf8"), corpus.chunks);
   const candidates = [];
   for (const file of ["bge-model-manifest.json", "e5-model-manifest.json"]) {
-    const bytes = await readFile(join(root, "fixtures/retrieval", file));
+    const bytes = await readFile(join(root, "tests/fixtures/retrieval", file));
     const manifest = JSON.parse(bytes.toString("utf8"));
     await prepareModel(manifest, models, { offline: !args.includes("--prepare") });
     candidates.push({
@@ -125,13 +125,13 @@ async function main() {
     "scripts/retrieval/corpus.mjs",
     "scripts/retrieval/embedding-worker.mjs",
     "scripts/retrieval/evaluation.mjs",
-    "packages/core/src/knowledge/chunk.ts",
-    "packages/core/src/knowledge/token-budget.ts",
-    "packages/core/src/knowledge/extraction.ts",
-    "packages/core/src/knowledge/worker-host.ts",
-    "packages/core/src/knowledge/pdf-worker.ts",
-    "packages/core/src/knowledge/bge-tokenizer.json",
-    "packages/core/src/knowledge/bge-tokenizer_config.json",
+    "src/libraries/core/src/knowledge/chunk.ts",
+    "src/libraries/core/src/knowledge/token-budget.ts",
+    "src/libraries/core/src/knowledge/extraction.ts",
+    "src/libraries/core/src/knowledge/worker-host.ts",
+    "src/libraries/core/src/knowledge/pdf-worker.ts",
+    "src/libraries/core/src/knowledge/bge-tokenizer.json",
+    "src/libraries/core/src/knowledge/bge-tokenizer_config.json",
     "package-lock.json",
   ];
   const sourceHashes = {};

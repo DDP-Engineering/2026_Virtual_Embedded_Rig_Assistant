@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for artifact_save, artifact refs, art_ULID rows, artifact.saved, Artifacts tab and list/open/reveal/export. Start at05_Software/packages/core/src/artifacts/store.ts and tools/artifact-save.ts; real filesystem/SQLite proof is sessions/artifacts.test.ts. [Sessions](sessions.md) owns turns/citations/lifetime; [file tools](file-tools.md) owns workbench content and .vera denial; [IPC](ipc-boundary.md) owns authorization.
+Select for artifact_save, artifact refs, art_ULID rows, artifact.saved, Artifacts tab and list/open/reveal/export. Start at05_Software/src/libraries/core/src/artifacts/store.ts and tools/artifact-save.ts; real filesystem/SQLite proof is sessions/artifacts.test.ts. [Sessions](sessions.md) owns turns/citations/lifetime; [file tools](file-tools.md) owns workbench content and .vera denial; [IPC](ipc-boundary.md) owns authorization.
 
 ## Purpose and boundaries
 
@@ -32,8 +32,8 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 |---|---|---|
 | Save/overwrite/limits/rollback/ownership/deletion | ArtifactStore,artifactSaveTool,SessionService | core sessions/artifacts.test.ts |
 | Refs/IPC/repository | shared refs/artifacts/ipc,ArtifactsRepository | shared artifacts-ipc.test.ts;core artifacts tests |
-| Dialog/reveal/redaction/export | main artifacts.ts/index.ts | main artifacts.test.ts;e2e/artifacts.spec.ts |
-| View/live/late results/errors | ArtifactsTab,mock sessions | artifacts-tab.test.ts;e2e/artifacts.spec.ts |
+| Dialog/reveal/redaction/export | main artifacts.ts/index.ts | main artifacts.test.ts;tests/e2e/artifacts.spec.ts |
+| View/live/late results/errors | ArtifactsTab,mock sessions | artifacts-tab.test.ts;tests/e2e/artifacts.spec.ts |
 | Headless composition | CLI shared SessionService | tooling/cli.test.ts artifact case |
 
 ## Key behaviors
@@ -59,4 +59,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software: core artifacts/store.ts,storage/repos/artifacts.ts,tools/artifact-save.ts,tools/context.ts/registry.ts,sessions/service.ts and agent/citations.ts; shared artifacts.ts/refs.ts/ipc.ts/index.ts; desktop main artifacts.ts/index.ts and renderer components/session/artifacts-tab.tsx,Shell/App,mocks/sessions.ts/mockApi.ts,styles/locales. Tests: core sessions/artifacts.test.ts,shared artifacts-ipc.test.ts,main artifacts.test.ts,renderer artifacts-tab.test.ts,tooling/cli.test.ts,e2e/artifacts.spec.ts and fixtures/llm-scripts/save-artifact.jsonl.
+Under05_Software: core artifacts/store.ts,storage/repos/artifacts.ts,tools/artifact-save.ts,tools/context.ts/registry.ts,sessions/service.ts and agent/citations.ts; shared artifacts.ts/refs.ts/ipc.ts/index.ts; desktop main artifacts.ts/index.ts and renderer components/session/artifacts-tab.tsx,Shell/App,mocks/sessions.ts/mockApi.ts,styles/locales. Tests: core sessions/artifacts.test.ts,shared artifacts-ipc.test.ts,main artifacts.test.ts,renderer artifacts-tab.test.ts,tooling/cli.test.ts,tests/e2e/artifacts.spec.ts and tests/fixtures/llm-scripts/save-artifact.jsonl.

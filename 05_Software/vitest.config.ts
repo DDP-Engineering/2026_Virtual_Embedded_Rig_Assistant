@@ -1,20 +1,19 @@
 import { defineConfig } from "vitest/config";
 
-// Workspace packages (packages/*, apps/*) become Vitest projects as WP-01 creates them;
-// "tooling" tests the repository's own checks, such as the import boundaries in biome.json.
+// Workspaces contain local unit/component tests; root projects group cross-cutting verification.
 export default defineConfig({
   test: {
     projects: [
-      "packages/*",
-      "apps/*",
-      {
+      "src/libraries/*",
+      "src/apps/*",
+      ...["tooling", "integration", "packaging"].map((name) => ({
         test: {
-          name: "tooling",
+          name,
           setupFiles: ["tests/network-setup.ts"],
-          include: ["tests/tooling/**/*.test.ts"],
+          include: [`tests/${name}/**/*.test.ts`],
           environment: "node",
         },
-      },
+      })),
     ],
     coverage: {
       provider: "v8",

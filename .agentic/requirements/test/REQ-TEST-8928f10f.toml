@@ -21,7 +21,7 @@ verification = "Run package smoke on NSIS/ZIP/AppImage/deb and inspect runtime, 
 
 affected_paths = ["05_Software/package.json", "05_Software/scripts/smoke-package.mjs", "05_Software/scripts/smoke-server.mjs", "05_Software/scripts/smoke-runtime.mjs"]
 
-linked_tests = ["05_Software/tests/tooling/package-smoke.test.ts"]
+linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts"]
 
 
 spec = "specs/REQ-TEST-8928f10f.md"

@@ -34,7 +34,7 @@ test("i18n audit rejects missing, unused and translation-only keys including dyn
 test("catalog CLI fails with a missing-key fixture", () => {
   const result = spawnSync(
     process.execPath,
-    ["scripts/check-i18n.mjs", "--fixture", "fixtures/i18n/missing-key.json"],
+    ["scripts/check-i18n.mjs", "--fixture", "tests/fixtures/i18n/missing-key.json"],
     { encoding: "utf8" },
   );
   expect(result.status).toBe(1);

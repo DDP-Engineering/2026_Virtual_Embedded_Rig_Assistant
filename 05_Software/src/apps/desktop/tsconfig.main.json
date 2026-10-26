@@ -1,0 +1,20 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "emitDeclarationOnly": true,
+    "outDir": "../../../node_modules/.cache/tsc/desktop-main",
+    "tsBuildInfoFile": "../../../node_modules/.cache/tsc/desktop-main.tsbuildinfo"
+  },
+  "include": ["src/main/**/*.ts"],
+  "references": [
+    {
+      "path": "../../libraries/shared"
+    },
+    {
+      "path": "../../libraries/core"
+    }
+  ]
+}

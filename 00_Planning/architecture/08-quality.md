@@ -14,7 +14,7 @@ Node.js and the npm packages. Without Node on the PATH, prefix a command with `p
 | `npm run lint` | Biome: lint, format check and the import boundaries of 01 §4 | in place |
 | `npm run format` | Biome: apply formatting and safe fixes | in place |
 | `npm run typecheck` | `tsc -b` over the solution `tsconfig.json`; each workspace adds a reference | in place; WP-01 adds workspaces |
-| `npm test` | Vitest projects: `packages/*`, `apps/*` and `tests/tooling` | in place; WP-01 adds workspaces |
+| `npm test` | Vitest workspace projects plus `tooling`, `integration` and `packaging` | source and root test categories |
 | `npm run test:coverage` | the same with V8 coverage, for information only | in place |
 | `npm run verify` | lint, typecheck, test (and `check:i18n` from WP-04); the AEGIS `lint` command | in place |
 | `npm run test:e2e` | Playwright against the built Electron app with the replay provider | WP-01 |
@@ -30,24 +30,24 @@ Node.js and the npm packages. Without Node on the PATH, prefix a command with `p
 
 | Layer | Where | Covers |
 |---|---|---|
-| Unit | `packages/*/src/**/*.test.ts` | path guard, tools, context budgets, chunkers, refs, reducer, migrations, scrubber, prompt snapshot |
-| Core integration | `packages/core/test/` | replay sessions: bounded first turns, approvals, concurrent edits, restart recovery, citations |
-| Renderer components | `apps/desktop/src/renderer/**/*.test.tsx` | Testing Library on the mock bridge (06 §8) |
-| End-to-end | `e2e/` | Playwright `_electron.launch` with a temporary `<userData>` and a copy of the demo workbench |
+| Unit | `src/libraries/*/src/**/*.test.ts` | path guard, tools, context budgets, chunkers, refs, reducer, migrations, scrubber, prompt snapshot |
+| Core integration | `src/libraries/core/test/` | replay sessions: bounded first turns, approvals, concurrent edits, restart recovery, citations |
+| Renderer components | `src/apps/desktop/src/renderer/**/*.test.tsx` | Testing Library on the mock bridge (06 §8) |
+| End-to-end | `tests/e2e/` | Playwright `_electron.launch` with a temporary `<userData>` and a copy of the demo workbench |
 | Release package smoke | `scripts/smoke-package.mjs` | the release artifact itself: offline indexing, scripted loopback session, egress check (§5) |
-| Retrieval evaluation | `fixtures/retrieval/` | recall@5 thresholds (05 §8) |
+| Retrieval evaluation | `tests/fixtures/retrieval/` | recall@5 thresholds (05 §8) |
 
 ## 3. Fixtures and test switches
 
-- `fixtures/workbenches/demo-board/`: a fictional board, "VERA-DEMO-01", with `workbench.yaml`,
-  `WORKBENCH.md`, Markdown notes, a boot log, a CSV pinout and, from M3, PDFs generated from Markdown
+- `tests/fixtures/workbenches/demo-board/`: a fictional board, "VERA-DEMO-01", with `.vera/workbench.yaml`,
+  `.vera/WORKBENCH.md`, Markdown notes, a boot log, a CSV pinout and, from M3, PDFs generated from Markdown
   sources by `scripts/make-demo-pdfs.mjs`. Tests copy it to a temporary folder and never change it in place.
 - WP-06 adds native create/restart/recent, deleted-folder removal and live-lock read-only acceptance,
   plus browser pinned focus/full-text/mock-state checks. Build-mode regression inspects both actual
   emissions for the picker override. Windows and Ubuntu E2E run serially on the shared Vite port.
-- `fixtures/settings/version-1.json` verifies schema2 migration retaining UUID/preferences/extensions.
-- `fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario, in the format of
-  `09_Others/benchpilot-reference/apps/server/src/llm/replay.ts` — one line per model step:
+- `tests/fixtures/settings/version-1.json` verifies schema2 migration retaining UUID/preferences/extensions.
+- `tests/fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario, in the format of
+  `09_Others/benchpilot-reference/src/apps/server/src/llm/replay.ts` — one line per model step:
 
 ```jsonl
 {"match": "(?i)pinout|SDA", "prompt": "On which pin is SDA?", "toolCalls": [{"name": "grep", "args": {"pattern": "SDA", "path": "docs"}}]}

@@ -14,7 +14,7 @@ including the in-process ChatGPT sign-in with pi-ai's callback server on 127.0.0
 Its dependency `@earendil-works/pi-telemetry` holds contracts only, with no exporter.
 
 ## Decision
-VERA reaches every model through pi-ai, pinned exactly, wrapped in `packages/core/src/llm/`. It keeps
+VERA reaches every model through pi-ai, pinned exactly, wrapped in `src/libraries/core/src/llm/`. It keeps
 two `Models` collections: **api** (OpenAI with a key, custom endpoints) and **subscription** (OpenAI
 with the ChatGPT OAuth credential), because both use pi-ai's `openai` provider id with different
 credentials. Session messages are persisted in pi-ai's message shape.
@@ -32,5 +32,5 @@ credentials. Session messages are persisted in pi-ai's message shape.
   message migration.
 - The ChatGPT callback port 1455 is shared with the Codex CLI; VERA reports the conflict clearly.
 - Anthropic, Azure OpenAI and other providers are small additions.
-- The reference `llm/` module (`09_Others/benchpilot-reference/apps/server/src/llm/`) (gateway, providers, ChatGPT sign-in, credentials, replay) is the
+- The reference `llm/` module (`09_Others/benchpilot-reference/src/apps/server/src/llm/`) (gateway, providers, ChatGPT sign-in, credentials, replay) is the
   starting code.

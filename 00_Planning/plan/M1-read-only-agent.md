@@ -13,12 +13,12 @@ pathological grep patterns can be stopped without blocking IPC.
 **Goal:** users create or open a workbench folder; VERA validates it, prepares `.vera/`, locks it and
 remembers it.
 **Depends on:** WP-04. **Specs:** 02 §1–§3, §6, §8; ADR-0004; 06 §2; 08 §3.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/testbench/load.ts`, `content.ts` (YAML plus zod),
-`apps/web/src/pages/NewTestbenchPage.tsx`, `components/testbench/OverviewTab.tsx`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/testbench/load.ts`, `content.ts` (YAML plus zod),
+`src/apps/web/src/pages/NewTestbenchPage.tsx`, `components/testbench/OverviewTab.tsx`.
 
 Scope:
-- `packages/shared/src/workbench.ts`: the zod schema of 02 §2; unknown keys kept and reported as warnings.
-- `packages/core/src/workbench/`:
+- `src/libraries/shared/src/workbench.ts`: the zod schema of 02 §2; unknown keys kept and reported as warnings.
+- `src/libraries/core/src/workbench/`:
   - `create(folder, name)`: the folder must be empty or lack `workbench.yaml`; writes `workbench.yaml`
     with a `wb_` ULID, the `WORKBENCH.md` template, `docs/`, `skills/`, `.vera/.gitignore`;
   - `open(folder)`: validates; refuses a newer `format` (`WORKBENCH_TOO_NEW`); takes `.vera/lock`, takes
@@ -31,7 +31,7 @@ Scope:
   completion. `WorkbenchEvent` `opened`, `closed`, `config.changed`.
 - The Welcome screen (06 §2) and a `WORKBENCH.md` editor dialog; `app.chooseFolder` with the
   `VERA_TEST_DIALOG_PATH` switch (08 §3).
-- `fixtures/workbenches/demo-board/`: `workbench.yaml`, `WORKBENCH.md` (fictional board VERA-DEMO-01),
+- `tests/fixtures/workbenches/demo-board/`: `workbench.yaml`, `WORKBENCH.md` (fictional board VERA-DEMO-01),
   `docs/notes/bringup.md`, `docs/pinout.csv`, `logs/boot-0412.log`.
 
 Done when:
@@ -46,7 +46,7 @@ Done when:
 
 **Goal:** the per-workbench SQLite database with checksummed migrations, backups and the first repositories.
 **Depends on:** WP-05, WP-06. **Specs:** 02 §9; 07 §6; ADR-0005 and the ADR filed by WP-05.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/db/index.ts`, `db/schema.sql`, `db/repos/sessions.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/db/index.ts`, `db/schema.sql`, `db/repos/sessions.ts`.
 
 Scope:
 - `storage/db.ts`: open with the driver WP-05 confirmed; `journal_mode=WAL`, `foreign_keys=ON`,
@@ -70,8 +70,8 @@ Done when:
 
 **Goal:** keep API keys safe in the main process and let the user configure the OpenAI API and custom endpoints.
 **Depends on:** WP-04. **Specs:** 04 §1, §2, §5; 01 §1 (L7), §6; ADR-0011.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/credentials.ts`; the provider section of
-`apps/web/src/pages/SettingsPage.tsx`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/llm/credentials.ts`; the provider section of
+`src/apps/web/src/pages/SettingsPage.tsx`.
 
 Scope:
 - A `CredentialStore` port matching pi-ai's contract (`read`, `list`, `modify`, `delete`).
@@ -98,7 +98,7 @@ Done when:
 **Goal:** one core module through which every model call goes — catalogs, the connection test, error
 mapping — and the scripted replay provider for core and test-build model scenarios (L11).
 **Depends on:** WP-08. **Specs:** 04 §1–§4, §7, §8; 08 §3, §4; ADR-0002.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/llm/gateway.ts`, `providers.ts`, `replay.ts`, `llm.spec.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/llm/gateway.ts`, `providers.ts`, `replay.ts`, `llm.spec.ts`.
 
 Scope:
 - `@earendil-works/pi-ai` with an exact pin. `llm/`: the **api** and **subscription** collections
@@ -130,7 +130,7 @@ Done when:
 **Goal:** confirm the runtime that carries VERA's turns — the reference loop, per ADR-0003 — and measure
 the alternative, pi-agent-core, before the session engine depends on either.
 **Depends on:** WP-09. **Specs:** 03 §1, §2, §6, §8; ADR-0003, ADR-0010.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/loop.ts`, `agent/approval.ts`,
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/agent/loop.ts`, `agent/approval.ts`,
 `agent/replay-e2e.spec.ts`, `agent/guards.spec.ts`.
 
 Scope:
@@ -160,14 +160,14 @@ Done when:
 **Goal:** the confinement layer every file tool relies on, the tool registry, and `read`, `list`,
 `glob` and `grep`.
 **Depends on:** WP-06. **Specs:** 03 §4, §5, §7; 02 §6, §7; 05 §7 (line references); ADR-0007, ADR-0010.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/tools/registry.ts`, `tools/caps.spec.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/tools/registry.ts`, `tools/caps.spec.ts`.
 
 Scope:
 - `workbench/path-guard.ts` (03 §5 steps 1–5) and binary detection.
 - The `WorkerPool` port and reusable desktop/CLI worker hosts: one task per worker, host-owned
   absolute deadlines, termination on timeout/abort, and replacement after termination. `grep` runs
   discovery, file reads and JavaScript regex matching there; partial matches cross the worker boundary.
-- `packages/shared/src/refs.ts`: line references `<path>#L<a>-L<b>`; other kinds arrive in WP-27.
+- `src/libraries/shared/src/refs.ts`: line references `<path>#L<a>-L<b>`; other kinds arrive in WP-27.
 - `tools/registry.ts`: `{ name, class, description, params (zod), execute(ctx, args, signal) }`;
   `tools.disabled` filtering; JSON Schema for the model; capping at 32 000 characters with `truncated`.
 - `read`, `list`, `glob`, `grep` per 03 §4, with the in-memory last-read fingerprints per session;
@@ -194,7 +194,7 @@ Done when:
 
 **Goal:** the system prompt of 03 §3 from the workbench, the available skills and the environment.
 **Depends on:** WP-06. **Specs:** 03 §3; 02 §3, §5.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/prompt.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/agent/prompt.ts`.
 
 Scope:
 - `agent/prompt.ts`: `buildSystemPrompt({ workbench, pinned, skills, env })` in the order of 03 §3.
@@ -212,8 +212,8 @@ Done when:
 **Goal:** sessions that run turns through the runtime, persist messages and events, stream them to
 subscribers and resume after a restart.
 **Depends on:** WP-07, WP-09, WP-10, WP-11, WP-12. **Specs:** 03 §1, §2, §7, §8, §9; 02 §9, §10; 01 §3.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/agent/sessions.ts`, `agent/hub.ts`, `agent/citations.ts`,
-`evidence/resolve.ts`; `packages/shared/src/events.ts`, `session.ts`, `session.test.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/agent/sessions.ts`, `agent/hub.ts`, `agent/citations.ts`,
+`evidence/resolve.ts`; `src/libraries/shared/src/events.ts`, `session.ts`, `session.test.ts`.
 
 Scope:
 - `events.ts`: the `SessionEvent` union of 03 §8. `session-state.ts`: `applySessionEvent` with golden tests.
@@ -230,7 +230,7 @@ Scope:
   and `turn.done`; complete unanswered tool-call/result pairs before resuming. WP-16 and WP-17 add
   `pending`-change resolution and approval cleanup to this recovery path (03 §6, §8).
 - IPC `session.list | create | get | rename | delete | send | stop | model.set | mode.set`; topic `session`.
-- `fixtures/llm-scripts/read-then-answer.jsonl`.
+- `tests/fixtures/llm-scripts/read-then-answer.jsonl`.
 
 Done when:
 - [ ] Integration: `read-then-answer` yields `message.user`, `turn.started`, two tool pairs,
@@ -251,7 +251,7 @@ Done when:
 **Goal:** the session workspace — session list, streaming transcript with tool rows and citations,
 composer with model choice and Stop — on the IPC bridge and in mock mode.
 **Depends on:** WP-04, WP-13. **Specs:** 06 §1, §3, §6, §7, §8; 03 §8, §9; 01 §3.
-**Start from:** `09_Others/benchpilot-reference/apps/web/src/pages/SessionWorkspace.tsx`, `components/session/`
+**Start from:** `09_Others/benchpilot-reference/src/apps/web/src/pages/SessionWorkspace.tsx`, `components/session/`
 (`Transcript`, `ToolCallRow`, `Composer`, `SessionList`, `ContextTab`), `api/useSessionEvents.ts`,
 `components/common/Markdown.tsx`, `components/evidence/EvidenceChip.tsx`.
 
@@ -282,10 +282,10 @@ Done when:
 
 **Goal:** run VERA's core without the GUI, so behaviour can be checked end to end from a terminal.
 **Depends on:** WP-13. **Specs:** 01 §4; 08 §3; 03 §2, §4, §7, §8; ADR-0009, ADR-0012.
-**Start from:** `09_Others/benchpilot-reference/apps/server/src/cli/chat.ts` (`--script` replay runs), `cli/bench.ts`.
+**Start from:** `09_Others/benchpilot-reference/src/apps/server/src/cli/chat.ts` (`--script` replay runs), `cli/bench.ts`.
 
 Scope:
-- `apps/cli` with a `vera` bin (`npm run vera -- …`).
+- `src/apps/cli` with a `vera` bin (`npm run vera -- …`).
 - Node ports: `PathProvider` (`--data <dir>`, default a temporary folder), an in-memory
   `CredentialStore` from `OPENAI_API_KEY` or `--key-file`, a console `Logger` with redaction, a
   worker-thread `WorkerPool`.

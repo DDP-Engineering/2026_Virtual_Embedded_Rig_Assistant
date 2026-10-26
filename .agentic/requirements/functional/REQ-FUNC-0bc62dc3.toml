@@ -1,0 +1,9 @@
+schema = 1
+id = "REQ-FUNC-0bc62dc3"
+title = "Load project skills from .vera"
+status = "active"
+requirement = """VERA shall discover, manage and load project skills exclusively from .vera/skills through the bounded skill catalog, preserving project precedence over user skills, ignore-policy admission, ownership checks and denial of general file-tool access to .vera."""
+verification = """Create/load/edit a project skill, verify it shadows user skills, honors ignore rules, denies redirects and out-of-folder extras, while ordinary file tools still reject .vera."""
+affected_paths = ["05_Software/src/libraries/core/src/skills/catalog.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/skills/catalog.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/sessions/skills.test.ts"]
+spec = "specs/REQ-DATA-18d4b62d.md"

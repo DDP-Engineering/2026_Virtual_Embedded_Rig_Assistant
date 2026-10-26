@@ -39,12 +39,12 @@ export function renderMarkdownPdf(markdown, output, title) {
     document.end();
   });
 }
-export async function makeDemoPdfs(destination = join(root, "fixtures/workbenches/demo-board/docs")) {
+export async function makeDemoPdfs(destination = join(root, "tests/fixtures/workbenches/demo-board/docs")) {
   await mkdir(destination, { recursive: true });
   const paths = [];
   for (const name of names) {
     const markdown = await readFile(
-      join(root, "fixtures/workbenches/demo-board/sources", `${name}.md`),
+      join(root, "tests/fixtures/workbenches/demo-board/sources", `${name}.md`),
       "utf8",
     );
     paths.push(

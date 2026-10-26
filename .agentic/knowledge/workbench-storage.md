@@ -50,7 +50,7 @@ Core owns the better-sqlite3 connection, initial schema, migration catalogue and
 |---|---|---|
 | Connection/protected reads | db.ts | db.test.ts readonly/newer/WAL/links |
 | Migration/schema/backup | migrate.ts, migrations/0001_initial.ts | db.test.ts ordered upgrades/rollback/checksum/schema |
-| Previous-version upgrade/recovery | fixtures/upgrade, storage/upgrade-safety.test.ts | frozen0/1/2, intact pre-step backups/rows, interrupted recovery before next turn |
+| Previous-version upgrade/recovery | tests/fixtures/upgrade, storage/upgrade-safety.test.ts | frozen0/1/2, intact pre-step backups/rows, interrupted recovery before next turn |
 | Keyword index/backfill/triggers | migrations/0002_keyword.ts | keyword-migration.test.ts, ingest.test.ts |
 | Row repository | repos/{sessions,messages,events}.ts | repositories.test.ts CRUD/order/persistence/cascades |
 | Handle lifetime/lock | workbench/service.ts | service.test.ts database/live-owner/failed-switch plus WP06 |
@@ -90,8 +90,8 @@ SQLite backup reads the committed WAL view. SQL and meta updates commit together
 
 ## Files
 
-- 05_Software/packages/core/src/storage/db.ts and db.test.ts — connections/snapshots/compatibility.
-- 05_Software/packages/core/src/storage/migrate.ts and migrations/0001_initial.ts — runner/schema.
-- 05_Software/packages/core/src/storage/repos/{sessions,messages,events}.ts and repositories.test.ts — rows.
-- 05_Software/packages/core/src/workbench/{service,service.test}.ts — handle lifetime/ownership.
-- 05_Software/packages/core/{src/index.ts,package.json} and 05_Software/package-lock.json — exports/pinned dependency.
+- 05_Software/src/libraries/core/src/storage/db.ts and db.test.ts — connections/snapshots/compatibility.
+- 05_Software/src/libraries/core/src/storage/migrate.ts and migrations/0001_initial.ts — runner/schema.
+- 05_Software/src/libraries/core/src/storage/repos/{sessions,messages,events}.ts and repositories.test.ts — rows.
+- 05_Software/src/libraries/core/src/workbench/{service,service.test}.ts — handle lifetime/ownership.
+- 05_Software/src/libraries/core/{src/index.ts,package.json} and 05_Software/package-lock.json — exports/pinned dependency.

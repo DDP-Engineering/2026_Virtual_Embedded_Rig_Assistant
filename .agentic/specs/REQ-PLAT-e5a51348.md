@@ -6,7 +6,7 @@ The build delivers pinned native CPU SQLite/ORT libraries and offline document a
 
 ## Interface and lifecycle
 
-`npm run package` always compiles VERA_TEST=0 and uses a release output directory. `npm run package:test` compiles VERA_TEST=1 and uses a labelled test output directory. No runtime environment can change the compiled constant. Both use electron-builder v26 configuration under apps/desktop. Native libraries reside in app.asar.unpacked; extraResources materializes models as real files outside the archive (same native-access purpose as asarUnpack).
+`npm run package` always compiles VERA_TEST=0 and uses a release output directory. `npm run package:test` compiles VERA_TEST=1 and uses a labelled test output directory. No runtime environment can change the compiled constant. Both use electron-builder v26 configuration under src/apps/desktop. Native libraries reside in app.asar.unpacked; extraResources materializes models as real files outside the archive (same native-access purpose as asarUnpack).
 
 The packaged test shell accepts `--packaging-probe=<absolute JSON path>` after readiness, then runs probes and exits 0 on success or 1 on probe failure. It rejects unpackaged launches as packaging proof. This CLI hook has no renderer IPC exposure. Existing sandbox/CSP/origin/IPC rules are preserved. A JSON report contains schema version, OS/arch, Electron/Node versions, packaged=true, resource path, timestamp, per-probe status/results/errors and timing units in milliseconds. The external host harness records SHA256 of the exact artifact separately; the app does not claim host isolation.
 

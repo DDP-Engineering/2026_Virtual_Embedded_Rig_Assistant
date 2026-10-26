@@ -19,9 +19,9 @@ When renderer content calls window.open, VERA shall deny the new window and retu
 
 verification = "Call window.open to external URL; observe null and unchanged BrowserWindow count."
 
-affected_paths = ["05_Software/apps/desktop/src/main/security.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/security.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
 
 
 spec = ""

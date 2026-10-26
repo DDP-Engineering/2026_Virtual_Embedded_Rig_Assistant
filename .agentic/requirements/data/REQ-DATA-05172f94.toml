@@ -19,9 +19,9 @@ When an indexed source is deleted, deselected, changed, or docs.reindex is reque
 
 verification = "Real temporary SQLite integration seeds documents/chunks and migration-created external-content FTS and synthetic embeddings, deletes or reindexes via WorkbenchService and observes all affected rows/index matches removed, rebuilt pending selection and removal/progress events; config/ignore deselection and read-only reindex denial are covered."
 
-affected_paths = ["05_Software/packages/core/src/storage/repos/documents.ts", "05_Software/packages/core/src/knowledge/", "05_Software/packages/core/src/workbench/service.ts", "05_Software/packages/shared/src/ipc.ts", "05_Software/apps/desktop/src/main/index.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
 
-linked_tests = ["05_Software/packages/core/src/knowledge/ingest.test.ts", "05_Software/packages/shared/src/documents-ipc.test.ts", "05_Software/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/e2e/ingest.spec.ts", "05_Software/apps/desktop/src/main/ipc-router.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/e2e/ingest.spec.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
 
 
 spec = "specs/REQ-FUNC-a93d863d.md"

@@ -25,7 +25,7 @@ Full history and queued/delivered identities survive export independently of con
 | Change | Start | Verification seam |
 |---|---|---|
 | Format/archive | core sessions/export, shared session-export | export.test.ts frozen fixture/JSON reducer roundtrip; shared strict schema |
-| Search | service, EventsRepository.messageTexts | service.test.ts; e2e/session-search.spec.ts |
+| Search | service, EventsRepository.messageTexts | service.test.ts; tests/e2e/session-search.spec.ts |
 | Native disclosure | main session-export/artifacts/events | session-export.test.ts; existing ipc-router authorization |
 | Presentation | App/session-list/workspace/mock/locales | native session-search spec; existing browser presentation |
 
@@ -48,4 +48,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software: shared session-export.ts/test.ts,ipc/index; core sessions/export.ts/test.ts,service.ts/test.ts,storage/repos/events.ts,index; desktop main session-export.ts/test.ts,artifacts/events/index; renderer App,session-list/workspace,mocks/sessions,locales; e2e/session-search.spec.ts.
+Under05_Software: shared session-export.ts/test.ts,ipc/index; core sessions/export.ts/test.ts,service.ts/test.ts,storage/repos/events.ts,index; desktop main session-export.ts/test.ts,artifacts/events/index; renderer App,session-list/workspace,mocks/sessions,locales; tests/e2e/session-search.spec.ts.

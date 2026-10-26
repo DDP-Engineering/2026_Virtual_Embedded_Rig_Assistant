@@ -17,18 +17,18 @@ tools. No packet comparison, report database or new compare_runs tool is introdu
 
 ## Task 1: Skill assets and evidence template
 
-Create these assets under `fixtures/workbenches/demo-board/skills/firmware-comparator/`:
+Create these assets under `tests/fixtures/workbenches/demo-board/skills/firmware-comparator/`:
 
 - `SKILL.md`: frontmatter name/description and the SPEC's procedure, trust rules and blocker handling.
 - `references/run-record.md`: RunRecord v1 fields, comparability rules and imported-outcome examples.
 - `templates/comparison.md`: the six output sections, A/B tables, digests and citation placeholders.
 
-Create `packages/core/test/skills/firmware-comparator-assets.test.ts`. Consume CAP-01's RunRecordSchema
+Create `src/libraries/core/test/skills/firmware-comparator-assets.test.ts`. Consume CAP-01's RunRecordSchema
 and the WP-29 loader; do not maintain another executable metadata schema inside the skill.
 
 - [ ] Write failing tests for frontmatter discovery, valid extra-file loading and the template contract.
   Pin the name firmware-comparator and all required output sections.
-- [ ] Run `npm test -- --run packages/core/test/skills/firmware-comparator-assets.test.ts`.
+- [ ] Run `npm test -- --run src/libraries/core/test/skills/firmware-comparator-assets.test.ts`.
 - [ ] Author the assets. Name only load_skill, list, glob, read, grep, parse_log, decode_register,
   search_docs, read_doc and artifact_save as available capabilities. Explicitly remove reference
   APIs that VERA does not provide; examples use [[ref]] rather than BenchPilot evidence syntax.
@@ -38,9 +38,9 @@ and the WP-29 loader; do not maintain another executable metadata schema inside 
 
 ## Task 2: Replay, artifact persistence and ordinary UI/CLI paths
 
-Create `fixtures/llm-scripts/firmware-compare.jsonl`,
-`packages/core/test/skills/firmware-comparator.test.ts`, `apps/cli/src/firmware-comparator.test.ts`
-and `e2e/firmware-comparator.test.ts`. Use the existing session/CLI test helpers and a demo copy.
+Create `tests/fixtures/llm-scripts/firmware-compare.jsonl`,
+`src/libraries/core/test/skills/firmware-comparator.test.ts`, `src/apps/cli/src/firmware-comparator.test.ts`
+and `tests/e2e/firmware-comparator.test.ts`. Use the existing session/CLI test helpers and a demo copy.
 
 The scripted success path loads the skill/template, reads the records, parses both bound logs,
 reads boot@1 evidence and release notes, and saves the comparison. An optional register step decodes
@@ -57,19 +57,19 @@ expect(candidate.runRecord?.logVerified).toBe(true);
 expect(saved.content).toContain("[[logs/candidate.log#L3-L3]]");
 ```
 
-- [ ] Run `npm test -- --run packages/core/test/skills/firmware-comparator.test.ts apps/cli/src/firmware-comparator.test.ts`.
+- [ ] Run `npm test -- --run src/libraries/core/test/skills/firmware-comparator.test.ts src/apps/cli/src/firmware-comparator.test.ts`.
 - [ ] Add the script and integrated artifact path. Validate source refs against fixture ranges;
   prove the report and tool transcript survive core/app restart and CLI exit is 0 on success.
 - [ ] Add replay cases for source conflict, partial results and a disabled prerequisite. Verify error
   delivery and persistence. Scripted blocker wording alone is not proof of model reasoning.
 - [ ] Test an existing artifact name: a suffixed save preserves the first artifact; a three-attempt
   failure returns a chat report. No automatic overwrite or workbench edit occurs.
-- [ ] Rerun focused tests and `npm run test:e2e -- e2e/firmware-comparator.test.ts`.
+- [ ] Rerun focused tests and `npm run test:e2e -- tests/e2e/firmware-comparator.test.ts`.
   Inspect the artifact through the existing panel and open its log citation once WP-28 is available.
 
 ## Task 3: Real-model rubric and sample delivery
 
-Create `fixtures/skills/firmware-comparator/cases.json` and `rubric.md`. Each case defines the prompt,
+Create `tests/fixtures/skills/firmware-comparator/cases.json` and `rubric.md`. Each case defines the prompt,
 fixture mutation, expected evidence, permitted assessment, mandatory blockers and prohibited claims.
 Keep the canonical demo unchanged: mutations apply only to temporary copies.
 

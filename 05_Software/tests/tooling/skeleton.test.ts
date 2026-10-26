@@ -15,17 +15,17 @@ describe("workspace build skeleton", () => {
     });
   });
   it.each([
-    ["packages/shared", "@vera/shared"],
-    ["packages/core", "@vera/core"],
-    ["apps/desktop", "@vera/desktop"],
-    ["apps/cli", "@vera/cli"],
+    ["src/libraries/shared", "@vera/shared"],
+    ["src/libraries/core", "@vera/core"],
+    ["src/apps/desktop", "@vera/desktop"],
+    ["src/apps/cli", "@vera/cli"],
   ])("integrates %s with the strict ESM solution", (path, name) => {
     expect(existsSync(join(root, path, "package.json"))).toBe(true);
     const manifest = readJson(`${path}/package.json`);
     expect(manifest.name).toBe(name);
     expect(manifest.type).toBe("module");
     const config = readJson(`${path}/tsconfig.json`);
-    expect(config.extends).toBe("../../tsconfig.base.json");
+    expect(config.extends).toBe("../../../tsconfig.base.json");
     expect(readJson("tsconfig.json").references).toContainEqual({ path: `./${path}` });
     for (const version of Object.values({ ...manifest.dependencies, ...manifest.devDependencies })) {
       expect(version).toMatch(/^\d+\.\d+\.\d+$/);

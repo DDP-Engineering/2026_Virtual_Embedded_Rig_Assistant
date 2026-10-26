@@ -21,7 +21,7 @@ verification = "Focused parser cases cover Unix, IPv4/IPv6, failed/interleaved/t
 
 affected_paths = ["05_Software/scripts/smoke-egress.mjs", "05_Software/scripts/smoke-runtime.mjs", "05_Software/scripts/smoke-calibration.mjs"]
 
-linked_tests = ["05_Software/tests/tooling/package-smoke.test.ts"]
+linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts"]
 
 
 spec = "specs/REQ-TEST-8928f10f.md"

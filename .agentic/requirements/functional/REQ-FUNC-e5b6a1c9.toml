@@ -17,9 +17,9 @@ requirement = "Above80% of the input budget, the runtime shall attempt at most o
 
 verification = "Replay multiple completed turns in a small window and inspect every normal/summary request budget, preserved decisions/refs/current input and full transcript; first-turn, oversized input, smaller model, invalid/failed summary and abort verify the one-attempt bound and M1 outcomes. Execution deferred by direct user instruction; authored scenarios are not proof."
 
-affected_paths = ["05_Software/packages/core/src/agent/compaction.ts", "05_Software/packages/core/src/agent/context.ts", "05_Software/packages/core/src/agent/runtime.ts", "05_Software/packages/core/src/agent/types.ts", "05_Software/packages/core/src/sessions/service.ts", "05_Software/packages/core/src/agent/compaction.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
-linked_tests = ["05_Software/packages/core/src/agent/compaction.test.ts", "05_Software/packages/core/src/sessions/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
 
 spec = "specs/REQ-FUNC-e5b6a1c9.md"

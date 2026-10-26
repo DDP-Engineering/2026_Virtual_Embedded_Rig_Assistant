@@ -73,4 +73,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software/packages/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,steering,runtime-edge,pi-spike}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts and pi-spike.test-support.ts; package.json/src/index.ts. Root package-lock pins the experiment. core/src/llm/replay.ts emits argument deltas. Current runtime contract and mapping live in06_SoftwareDocu/agent-runtime-spike.md and ADR0014.
+Under05_Software/src/libraries/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,steering,runtime-edge,pi-spike}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts and pi-spike.test-support.ts; package.json/src/index.ts. Root package-lock pins the experiment. core/src/llm/replay.ts emits argument deltas. Current runtime contract and mapping live in06_SoftwareDocu/agent-runtime-spike.md and ADR0014.

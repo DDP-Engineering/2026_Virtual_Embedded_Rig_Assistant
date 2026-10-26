@@ -31,7 +31,7 @@ finds no unexpected connection; release builds contain no test switches.
 | Linux x64 | AppImage | yes | primary Linux distribution |
 | Linux x64 | deb | no (package manager) | for managed machines |
 
-Built by electron-builder from `apps/desktop/electron-builder.yml`; files named
+Built by electron-builder from `src/apps/desktop/electron-builder.yml`; files named
 `VERA-<version>-<os>-<arch>.<ext>`. Only the target platform's native binaries are included.
 
 ## 3. Version and channels
@@ -77,7 +77,7 @@ start-up, then every 6 h, when updates are enabled → electron-updater checkFor
 | `settings.json` | `schemaVersion` | migrated on load and written back; backup `settings.json.bak-<n>` first |
 | `credentials.json` | `schemaVersion` | as settings |
 | `.vera/vera.db` | `meta.schema_version`, checksummed migrations | backup into `.vera/backups/` first (02 §9) |
-| `workbench.yaml` | `format` | `1` in 1.0; a later bump migrates with a backup and a notice |
+| `.vera/workbench.yaml` | `format` | `1` in 1.0; a later bump migrates with a backup and a notice |
 
 - Data with a newer version than the app knows is never modified. Settings fall back to read-only
   defaults with a banner; a workbench does not open and the UI explains that a newer VERA created it (L10).

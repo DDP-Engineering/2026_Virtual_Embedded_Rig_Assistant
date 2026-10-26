@@ -2,7 +2,7 @@
 
 The workbench owns one chokidar watcher and one serialized ingest queue while it
 has writable storage. A root watcher sees new included directories and root
-.veraignore changes; permanent ignored segments and links are excluded. Each
+.vera/.veraignore changes; permanent ignored segments and links are excluded. Each
 batch reconciles docs.include minus docs.exclude through confined discovery after
 a trailing 1000 ms debounce. Config saves request reconciliation. Reopen also
 reconciles stale persisted paths. Empty include means an empty selection.

@@ -14,7 +14,7 @@ Composer: Enter sends nonblank text unless IME composition or Shift. Shift+Enter
 
 Markdown uses react-markdown/GFM/highlight without raw HTML, image loading or uncontrolled navigation. External links use explicit UI confirmation then app.openExternal where available; the current bridge has no openExternal channel, so links render inert readable text in M1. Citation AST replacement applies to text nodes, not code; validity requires message.done evidence, otherwise warning. Chip activation presents the reference and explains future viewer availability; invalid chips cannot open content. No WP28 viewer.
 
-Context: current WORKBENCH.md preview through API, empty available skills until WP29. Other tabs are placeholders. Footer shows input/output provider counts, context/window/input budget/reserved output/safety with estimates labelled. CONTEXT_LIMIT guidance reduces prompt or changes custom model window. Error Retry re-sends latest user instruction when idle; full history remains.
+Context: current .vera/WORKBENCH.md preview through API, empty available skills until WP29. Other tabs are placeholders. Footer shows input/output provider counts, context/window/input budget/reserved output/safety with estimates labelled. CONTEXT_LIMIT guidance reduces prompt or changes custom model window. Error Retry re-sends latest user instruction when idle; full history remains.
 
 Mock fixtures are seeded through the same in-memory bridge and selectable from the browser workspace. Native replay fixtures include slow response and pathological/normal grep, composed through real SessionService and worker host. Stop/reload/restart tests observe UI and backend terminal state. en/ro/de catalogs contain every label.
 

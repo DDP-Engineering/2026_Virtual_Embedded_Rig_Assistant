@@ -19,9 +19,9 @@ The software root shall provide dev, build and test:e2e commands, with Playwrigh
 
 verification = "Run build and acceptance suite on Windows/Ubuntu, inspect Linux launcher, and execute verify; report missing-platform readiness separately."
 
-affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "05_Software/scripts/", "05_Software/e2e/", "05_Software/playwright.config.ts"]
+affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "05_Software/scripts/", "05_Software/tests/e2e/", "05_Software/playwright.config.ts"]
 
-linked_tests = ["05_Software/e2e/shell.spec.ts", "05_Software/tests/tooling/skeleton.test.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/tooling/skeleton.test.ts"]
 
 
 spec = ""

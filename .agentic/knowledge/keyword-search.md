@@ -62,7 +62,7 @@ flowchart LR
 
 ## Files
 
-- 05_Software/packages/core/src/knowledge/{keyword.ts,keyword.test.ts}
-- 05_Software/packages/core/src/storage/{migrate.ts,keyword-migration.test.ts,migrations/0002_keyword.ts}
-- 05_Software/packages/core/src/storage/repos/documents.ts
-- 05_Software/packages/core/src/knowledge/ingest.test.ts
+- 05_Software/src/libraries/core/src/knowledge/{keyword.ts,keyword.test.ts}
+- 05_Software/src/libraries/core/src/storage/{migrate.ts,keyword-migration.test.ts,migrations/0002_keyword.ts}
+- 05_Software/src/libraries/core/src/storage/repos/documents.ts
+- 05_Software/src/libraries/core/src/knowledge/ingest.test.ts
