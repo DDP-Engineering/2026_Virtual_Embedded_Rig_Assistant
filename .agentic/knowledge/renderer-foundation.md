@@ -17,6 +17,13 @@ React supplies the responsive shell, Welcome workbench management and Settings s
 edit the existing typed settings API through TanStack Query. Main sets nativeTheme from confirmed
 settings. Renderer owns separate UI geometry storage and i18next presentation.
 
+The shell presents one compact title/menu row, with native window controls supplied by main.
+Expanded navigation has VERA branding, Home, project/session or settings-section content,
+and bottom Settings. A collapsed sidebar retains Home/project/Settings icons and accessible
+labels. Project navigation expands the sidebar; Home and Settings remain usable in rail mode.
+Application metadata is displayed in Settings About. F10 focuses the native-menu triggers;
+left/right/Home/End move focus and Down or Enter opens the selected native menu.
+
 ## Public interface
 
 - App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact. Global actions yield to modal/handled/repeated/composing keys; the skip-content control focuses main without URL changes.
@@ -25,9 +32,9 @@ settings. Renderer owns separate UI geometry storage and i18next presentation.
 - Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index and viewer; Artifacts opens/reveals/exports session content; Plan displays current session todos.
   Below1280px the right panel overlays the centre. Tabs expose stable linked panels and a single Tab stop with Left/Right/Home/End activation.
 - Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates presents distribution-specific state/actions; Data retains its placeholder. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
-- About and Welcome metadata localize release/instrumented build identity and Windows signed/unsigned
-  status from strict app.info, with English/Romanian/German catalogs. [Native packaging](native-packaging.md)
-  owns compiled identity and actual signature verification; Metadata tests cover all three languages.
+- About renders application name, version, platform, architecture, portable state and system locale
+  from strict app.info. Home contains workbench actions and recents. Build/signing labels do not
+  appear in the presentation; native packaging owns compiled identity and signature checks.
 - usePreferences loads {settings,readOnly}, applies mutation responses, invalidates on settings.changed
   and cleans up its app subscription. Failure displays localized structured errors and retry.
 - System theme follows prefers-color-scheme; root data-theme is light/dark. Main nativeTheme.themeSource
@@ -92,6 +99,8 @@ flowchart LR
   Shell --> ChangesTab
   ChangesTab --> API
   Shell --> layout[(versioned localStorage geometry)]
+  Shell --> Rail[Expanded sidebar or icon rail]
+  Shell --> NativeMenu[Validated native menu IPC]
   main[main settings handler] --> nativeTheme
 ```
 

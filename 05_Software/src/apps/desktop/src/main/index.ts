@@ -9,6 +9,7 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  Menu,
   nativeTheme,
   protocol,
   safeStorage,
@@ -37,6 +38,7 @@ import { exportSession } from "./session-export.js";
 import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
+import { popupWindowMenu, restoreWindowBounds, titleBarOverlay } from "./window-chrome.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
@@ -57,6 +59,10 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let window: BrowserWindow | undefined;
+nativeTheme.on("updated", () => {
+  if (window && !window.isDestroyed())
+    window.setTitleBarOverlay(titleBarOverlay(nativeTheme.shouldUseDarkColors));
+});
 const fileWorkers = createDesktopWorkerPool();
 const documents = createDocumentServices(
   app.isPackaged ? join(process.resourcesPath, "models") : join(here, "../../../../../src/models"),
@@ -321,6 +327,7 @@ ipcMain.handle(
       "providers.save": (request) => providers.save(request),
       "providers.remove": (request) => providers.remove(request),
       "app.info": () => getAppInfo(dataLocations.portable),
+      "window.menu": (request) => popupWindowMenu(window, request),
       "app.settings.get": () => {
         const snapshot = settings.get();
         if (credentials.containsSecret(snapshot)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -364,6 +371,7 @@ ipcMain.handle(
 );
 
 async function createWindow(): Promise<void> {
+  Menu.setApplicationMenu(null);
   const stateFile = join(app.getPath("userData"), "window-state.json");
   const state = await loadWindowState(
     stateFile,
@@ -371,6 +379,8 @@ async function createWindow(): Promise<void> {
   );
   window = new BrowserWindow({
     title: "VERA",
+    titleBarStyle: "hidden",
+    titleBarOverlay: titleBarOverlay(nativeTheme.shouldUseDarkColors),
     ...state.bounds,
     minWidth: 1024,
     minHeight: 640,
@@ -387,6 +397,8 @@ async function createWindow(): Promise<void> {
     },
   });
   secureWindow(window);
+  window.removeMenu();
+  restoreWindowBounds(window, state.bounds);
   const created = window;
   created.webContents.on("did-start-navigation", (_event, _url, _isInPlace, isMainFrame) => {
     if (isMainFrame) sessions.clearSubscriptions();

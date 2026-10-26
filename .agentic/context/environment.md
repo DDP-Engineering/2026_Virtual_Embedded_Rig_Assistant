@@ -119,6 +119,8 @@ Node Vitest projects install the non-loopback fetch/socket guard before applicat
 
 Plan acceptance uses shared todos.test.ts, core sessions/todos.test.ts, registry.test.ts and renderer plan-tab.test.ts; tests/e2e/plan.spec.ts observes every replacement live plus final list after native restart and localized browser status/geometry. CLI process proof covers the same fixture. Final selections include affected session/runtime/storage/IPC/panel/tooling consumers under the verification policy.
 
+Compact chrome acceptance uses main/window-chrome.test.ts, shared/window-ipc.test.ts, renderer components/shell.test.ts and tests/e2e/compact-shell.spec.ts with immediate shell/mock consumers. Native Linux maximize/restore and persisted-position checks require a real window manager alongside Xvfb; WSLg alone does not provide those semantics.
+
 ## Platform details
 
 Windows and Ubuntu use separate platform Node distributions and npm native dependencies. Share sources and lockfile, use separate node_modules for platform validation.

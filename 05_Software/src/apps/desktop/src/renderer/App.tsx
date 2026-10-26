@@ -6,7 +6,6 @@ import { api } from "./api/index.js";
 import { DocsTab } from "./components/documents/docs-tab.js";
 import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
-import { Metadata } from "./components/metadata.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
 import { ChangesTab } from "./components/session/changes-tab.js";
 import { ContextTab } from "./components/session/context-tab.js";
@@ -312,12 +311,6 @@ export function App() {
                 changed={benchChanged}
                 sessionPending={sessionPending}
               />
-            )}
-            {info.data && (
-              <section className="surface">
-                <h3>{t("welcome.application")}</h3>
-                <Metadata info={info.data} />
-              </section>
             )}
           </div>
         </div>

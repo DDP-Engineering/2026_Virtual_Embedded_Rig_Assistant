@@ -53,6 +53,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     });
     await page.goto("http://127.0.0.1:5173/");
     await expect(page.locator('[data-i18n="home.title"]')).toBeVisible();
+    await expect(page.locator(".metadata")).toHaveCount(0);
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="about"]').click();
     const version = JSON.parse(readFileSync("src/apps/desktop/package.json", "utf8")).version;
     await expect(page.locator('[data-info="version"]')).toHaveText(version);
     await expect(page.locator('[data-info="name"]')).toHaveText("VERA");
@@ -200,7 +203,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await providerSection.getByRole("button", { name: "Add endpoint", exact: true }).click();
     await providerSection.getByLabel("Endpoint name", { exact: true }).fill("Browser fixture");
     await providerSection.getByLabel("Model", { exact: true }).fill("fake-browser-model");
-    const localizedNames = { en: "Endpoint name", ro: "Nume endpoint", de: "Name des Endpunkts" };
+    const localizedNames = { en: "Endpoint name", ro: "Numele endpoint-ului", de: "Name des Endpunkts" };
     for (const language of ["en", "ro", "de"] as const) {
       await page.locator("#language").selectOption(language);
       await expect(providerSection.getByLabel(localizedNames[language], { exact: true })).toHaveValue(
@@ -275,7 +278,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await page.locator("#language").selectOption("en");
     await providerSection
       .locator('[data-provider="custom:browser-fixture"]')
-      .getByRole("button", { name: "Remove", exact: true })
+      .getByRole("button", { name: "Remove Browser fixture", exact: true })
       .click();
     await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath("keyboard-focus.png") });
@@ -391,7 +394,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     );
     await page.reload();
     await expect(page.getByRole("alert")).toHaveAttribute("data-i18n", "errors.INTERNAL");
-    await expect(page.getByRole("alert")).toHaveText("Application information could not be loaded.");
+    await expect(page.getByRole("alert")).toHaveText("An internal application error occurred. Retry.");
     expect(errors).toEqual([]);
     expect(outbound).toEqual([]);
     const failedSettings = {

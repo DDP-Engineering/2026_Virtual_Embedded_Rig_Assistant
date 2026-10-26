@@ -61,6 +61,15 @@ export const appInfoSchema = z.strictObject({
   signing: z.enum(["signed", "unsigned", "not-applicable"]),
 });
 export const channels = {
+  "window.menu": defineChannel(
+    "window.menu",
+    z.strictObject({
+      menu: z.enum(["file", "edit", "view", "help"]),
+      x: z.number().int().min(0).max(32767),
+      y: z.number().int().min(0).max(32767),
+    }),
+    z.strictObject({}),
+  ),
   "update.get": defineChannel("update.get", z.strictObject({}), updateSnapshotSchema),
   "update.check": defineChannel("update.check", z.strictObject({}), updateSnapshotSchema),
   "update.download": defineChannel(

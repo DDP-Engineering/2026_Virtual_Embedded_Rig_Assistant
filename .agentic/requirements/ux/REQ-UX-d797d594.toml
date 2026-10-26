@@ -1,0 +1,9 @@
+schema = 1
+id = "REQ-UX-d797d594"
+title = "Keep navigation available in a collapsible icon rail"
+status = "active"
+requirement = "When the sidebar is collapsed, VERA shall retain a compact icon rail with accessible Home, project-navigation and Settings actions, preserving the saved collapsed state and restoring full project/session navigation when expanded."
+verification = "Toggle expanded navigation to rail, use Home/Settings/project actions with mouse and keyboard, reload/restart to verify saved state; exercise both themes, en/ro/de and supported text scales at the minimum window size."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/components/shell.test.ts", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/shell.test.ts", "05_Software/src/apps/desktop/src/renderer/lib/preferences.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/compact-shell.spec.ts", "05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/e2e/mock.spec.ts"]
+spec = "specs/REQ-UX-d87fc848.md"

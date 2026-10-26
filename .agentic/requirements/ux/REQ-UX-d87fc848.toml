@@ -1,0 +1,9 @@
+schema = 1
+id = "REQ-UX-d87fc848"
+title = "Unify desktop chrome into a compact title bar"
+status = "active"
+requirement = "The desktop application shall provide one compact draggable title/menu bar with native window controls, accessible File/Edit/View/Help menus and the existing right-panel toggle, preserving the sandboxed validated IPC boundary."
+verification = "Native Electron observes hidden native title chrome, overlay controls, one compact renderer bar and validated menu dispatch; malformed or unauthorized menu requests are refused; keyboard navigation, theme and minimum-size checks remain usable."
+affected_paths = ["05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/main/window-chrome.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/libraries/shared/src/window-ipc.test.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/window-chrome.ts", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/window-chrome.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/libraries/shared/src/window-ipc.test.ts", "05_Software/tests/e2e/compact-shell.spec.ts", "05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/e2e/mock.spec.ts"]
+spec = "specs/REQ-UX-d87fc848.md"

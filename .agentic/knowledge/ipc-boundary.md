@@ -20,6 +20,12 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 
 ## Public interface
 
+- window.menu is a strict fixed-role request with menu=file/edit/view/help and bounded
+  integer x/y popup coordinates. The exact main-frame authorization protects native dispatch;
+  main constructs role templates and clamps coordinates. No supplied templates, URLs or
+  commands are accepted. Browser mock acknowledges this native-only operation.
+
+
 Strict update.get/check/download/restart/openRelease channels and update.available/update.changed
 AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capability gates.
 

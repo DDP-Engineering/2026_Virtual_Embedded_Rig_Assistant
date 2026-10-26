@@ -530,6 +530,9 @@ export function createMockApi(
       case "app.info":
         value = info;
         break;
+      case "window.menu":
+        value = {};
+        break;
       case "app.settings.get":
         value = { settings, readOnly: false };
         break;

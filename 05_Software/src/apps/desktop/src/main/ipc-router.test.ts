@@ -17,6 +17,7 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "window.menu": unused,
   "update.get": unused,
   "update.check": unused,
   "update.download": unused,

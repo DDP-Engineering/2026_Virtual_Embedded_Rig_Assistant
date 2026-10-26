@@ -33,6 +33,13 @@ node_modules/         Ignored installed dependencies
 ```
 
 Unit and component tests remain beside the implementation in `src/`.
+
+The desktop uses one compact title/menu row with native window controls. The sidebar
+toggle switches between full project/session navigation and a compact icon rail; Home,
+project navigation and Settings remain reachable. Collapse and panel sizes persist.
+F10 focuses the menu bar; arrow keys move between menus. Application information lives
+in Settings → About, while Home contains workbench creation/opening and recents.
+
 The fictional corpus in `tests/fixtures/workbenches/demo-board/` is copied only into isolated verification workbenches. The application opens user-selected projects and packages real model/runtime resources.
 Configuration and npm workspace manifests remain at the software root.
 

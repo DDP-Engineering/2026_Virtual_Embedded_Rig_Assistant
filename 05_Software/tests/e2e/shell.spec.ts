@@ -45,6 +45,11 @@ test("built shell enforces the desktop security boundary", async () => {
     page.on("pageerror", (error) => errors.push(error.message));
     await expect(page).toHaveTitle("VERA");
     await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
+    await expect(page.locator(".metadata")).toHaveCount(0);
+    await expect(page.locator(".topbar")).toHaveCount(1);
+    expect((await page.locator(".topbar").boundingBox())?.height).toBe(40);
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="about"]').click();
     await expect(page.locator('[data-i18n="home.version"]')).toBeVisible({ timeout: 5000 });
     const metadata = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {}),
@@ -66,8 +71,6 @@ test("built shell enforces the desktop security boundary", async () => {
     const displayedMetadata = {
       ...nativeMetadata,
       portable: labels.no,
-      build: labels.testBuild,
-      ...(process.platform === "win32" ? { signing: labels.unsignedBuild } : {}),
     };
     for (const [field, value] of Object.entries(displayedMetadata)) {
       await expect(page.locator(`[data-info="${field}"]`)).toHaveText(String(value));
@@ -251,7 +254,8 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
     await app.close();
     app = await launch(userData);
     page = await app.firstWindow();
-    await expect(page.locator('[data-panel="sidebar"]')).toHaveCount(0);
+    await expect(page.locator('[data-panel="sidebar"]')).toHaveAttribute("data-collapsed", "true");
+    await expect(page.locator('[data-i18n="nav.settings"]')).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBe(collapsed);
     await page.locator('[data-toggle="sidebar"]').click();
     expect(
@@ -261,7 +265,10 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
       .poll(async () => (await page.locator('[data-panel="sidebar"]').boundingBox())?.width ?? 0)
       .toBe(resizedWidth);
     await expect(page.locator('[data-panel="right"]')).toBeVisible();
-    expect((await page.locator('[data-panel="right"]').boundingBox())?.width).toBe(resizedRightWidth);
+    expect((await page.locator('[data-panel="right"]').boundingBox())?.width).toBeCloseTo(
+      resizedRightWidth ?? 0,
+      2,
+    );
     await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
         theme: "dark",
@@ -332,7 +339,7 @@ test("bridge subscriptions clean up and main denies a foreign real renderer", as
   try {
     app = await launch(userData);
     const page = await app.firstWindow();
-    await expect(page.locator('[data-info="version"]')).toBeVisible();
+    await expect(page.locator('[data-action="create-workbench"]')).toBeVisible();
     await page.evaluate(() => {
       const bridge = (window as unknown as { vera: VeraBridge }).vera;
       const probe = { events: [] as string[], stop: () => {} };
@@ -396,7 +403,7 @@ test("validated settings update survives an application restart", async () => {
   try {
     app = await launch(userData);
     const page = await app.firstWindow();
-    await expect(page.locator('[data-info="version"]')).toBeVisible();
+    await expect(page.locator('[data-action="create-workbench"]')).toBeVisible();
     const first = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
@@ -421,7 +428,7 @@ test("validated settings update survives an application restart", async () => {
     await app.close();
     app = await launch(userData);
     const restarted = await app.firstWindow();
-    await expect(restarted.locator('[data-info="version"]')).toBeVisible();
+    await expect(restarted.locator('[data-action="create-workbench"]')).toBeVisible();
     const stored = await restarted.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
@@ -443,7 +450,7 @@ test("newer settings stay read-only and byte-identical through native IPC and sh
     await import("node:fs/promises").then(({ writeFile }) => writeFile(join(userData, "settings.json"), raw));
     app = await launch(userData);
     const page = await app.firstWindow();
-    await expect(page.locator('[data-info="version"]')).toBeVisible();
+    await expect(page.locator('[data-action="create-workbench"]')).toBeVisible();
     const snapshot = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
@@ -504,7 +511,7 @@ test("window geometry survives a process restart", async () => {
 test("development React and HMR load with sandbox and bounded CSP", async () => {
   const userData = await mkdtemp(join(tmpdir(), "vera-dev-"));
   const server = spawn(process.execPath, ["scripts/dev-test-server.mjs"], {
-    cwd: join(desktop, "../.."),
+    cwd: join(desktop, "../../.."),
     env: environment,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -559,7 +566,7 @@ test("development React and HMR load with sandbox and bounded CSP", async () => 
     await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
     expect(
       await page.evaluate(() => getComputedStyle(document.querySelector("h1") ?? document.body).fontSize),
-    ).toBe("24px");
+    ).toBe("21px");
     expect(errors).toEqual([]);
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {

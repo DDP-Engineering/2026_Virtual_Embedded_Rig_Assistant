@@ -1,6 +1,7 @@
-import { Activity, PanelLeft, PanelRight } from "lucide-react";
+import { Activity, Folder, Home, PanelLeft, PanelRight, Settings as SettingsIcon } from "lucide-react";
 import { type CSSProperties, type PointerEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../api/index.js";
 import { defaultLayout, type Layout, readLayout, saveLayout } from "../lib/layout.js";
 
 type Side = "sidebar" | "right";
@@ -23,7 +24,7 @@ export function Shell({
   plan,
   docs,
 }: {
-  children: ReactNode;
+  children?: ReactNode;
   navigation: ReactNode;
   settings: boolean;
   navigate: (settings: boolean) => void;
@@ -38,8 +39,49 @@ export function Shell({
   const [initial] = useState(initialLayout);
   const [layout, setLayout] = useState(initial.layout);
   const [tab, setTab] = useState("context");
+  const [menuUnavailable, setMenuUnavailable] = useState(false);
+  function openMenu(menu: "file" | "edit" | "view" | "help", button: HTMLButtonElement) {
+    const bounds = button.getBoundingClientRect();
+    setMenuUnavailable(false);
+    void api
+      .invoke("window.menu", {
+        menu,
+        x: Math.max(0, Math.min(32767, Math.round(bounds.left))),
+        y: Math.max(0, Math.min(32767, Math.round(bounds.bottom))),
+      })
+      .catch(() => setMenuUnavailable(true));
+  }
   const drag = useRef<{ side: Side; start: number; width: number } | null>(null);
   const panelToggle = useRef<HTMLButtonElement>(null);
+  const projectFocusPending = useRef(false);
+  useEffect(() => {
+    if (!layout.sidebarCollapsed && projectFocusPending.current && !settings) {
+      projectFocusPending.current = false;
+      document
+        .querySelector<HTMLElement>(
+          "#sidebar-details select:not(:disabled), #sidebar-details button:not(:disabled)",
+        )
+        ?.focus();
+    }
+  }, [layout.sidebarCollapsed, settings]);
+  useEffect(() => {
+    const focusMenus = (event: KeyboardEvent) => {
+      if (
+        event.key !== "F10" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.isComposing ||
+        document.querySelector("dialog[open]")
+      )
+        return;
+      event.preventDefault();
+      document.querySelector<HTMLButtonElement>('[data-window-menu="file"]')?.focus();
+    };
+    window.addEventListener("keydown", focusMenus);
+    return () => window.removeEventListener("keydown", focusMenus);
+  }, []);
   useEffect(() => {
     try {
       saveLayout(localStorage, layout, initial.readOnly || storageReadOnly);
@@ -124,42 +166,74 @@ export function Shell({
         {t("nav.skipToContent")}
       </button>
       <header className="topbar">
-        <Activity aria-hidden="true" />
-        <h1 data-i18n="home.title">{t("home.title")}</h1>
         <button
           type="button"
           data-toggle="sidebar"
           aria-label={t("layout.toggleSidebar")}
+          title={t("layout.toggleSidebar")}
           aria-expanded={!layout.sidebarCollapsed}
-          aria-controls="sidebar"
+          aria-controls="sidebar-details"
           onClick={() =>
             setLayout((value: Layout) => ({ ...value, sidebarCollapsed: !value.sidebarCollapsed }))
           }
         >
           <PanelLeft aria-hidden="true" />
         </button>
+        <div
+          className="window-menus"
+          role="menubar"
+          aria-label={t("windowMenu.main")}
+          onKeyDown={(event) => {
+            if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing) return;
+            const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button"));
+            const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+            const next =
+              event.key === "ArrowRight"
+                ? (index + 1) % buttons.length
+                : event.key === "ArrowLeft"
+                  ? (index + buttons.length - 1) % buttons.length
+                  : event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? buttons.length - 1
+                      : undefined;
+            if (next !== undefined) {
+              event.preventDefault();
+              buttons[next]?.focus();
+            }
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              buttons[index]?.click();
+            }
+          }}
+        >
+          {(
+            [
+              ["file", t("windowMenu.file")],
+              ["edit", t("windowMenu.edit")],
+              ["view", t("windowMenu.view")],
+              ["help", t("windowMenu.help")],
+            ] as const
+          ).map(([menu, label]) => (
+            <button
+              key={menu}
+              type="button"
+              role="menuitem"
+              aria-haspopup="menu"
+              data-window-menu={menu}
+              onClick={(event) => openMenu(menu, event.currentTarget)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="topbar-spacer" />
-        <button
-          type="button"
-          data-i18n="nav.welcome"
-          aria-current={!settings ? "page" : undefined}
-          onClick={() => navigate(false)}
-        >
-          {t("nav.welcome")}
-        </button>
-        <button
-          type="button"
-          data-i18n="nav.settings"
-          aria-current={settings ? "page" : undefined}
-          onClick={() => navigate(true)}
-        >
-          {t("nav.settings")}
-        </button>
         <button
           ref={panelToggle}
           type="button"
           data-toggle="right"
           aria-label={t("layout.toggleRight")}
+          title={t("layout.toggleRight")}
           aria-expanded={!layout.rightCollapsed}
           aria-controls="right-panel"
           onClick={() => setLayout((value) => ({ ...value, rightCollapsed: !value.rightCollapsed }))}
@@ -168,13 +242,60 @@ export function Shell({
         </button>
       </header>
       <div className="shell-body">
-        {!layout.sidebarCollapsed && (
-          <aside id="sidebar" data-panel="sidebar" className="sidebar">
-            <nav aria-label={t("nav.main")}>{navigation}</nav>
-            {separator("sidebar")}
-          </aside>
-        )}
+        <aside id="sidebar" data-panel="sidebar" className="sidebar" data-collapsed={layout.sidebarCollapsed}>
+          <div className="sidebar-brand" hidden={layout.sidebarCollapsed}>
+            <Activity aria-hidden="true" />
+            <h1 data-i18n="home.title">{t("home.title")}</h1>
+          </div>
+          <nav className="sidebar-primary" aria-label={t("nav.main")}>
+            <button
+              type="button"
+              className="sidebar-action"
+              data-i18n="nav.welcome"
+              aria-label={t("nav.welcome")}
+              title={t("nav.welcome")}
+              aria-current={!settings ? "page" : undefined}
+              onClick={() => navigate(false)}
+            >
+              <Home aria-hidden="true" />
+              <span className="nav-label">{t("nav.welcome")}</span>
+            </button>
+            <button
+              type="button"
+              className="sidebar-action"
+              data-action="show-projects"
+              hidden={!layout.sidebarCollapsed}
+              aria-label={t("welcome.workbenches")}
+              title={t("welcome.workbenches")}
+              onClick={() => {
+                projectFocusPending.current = true;
+                setLayout((value) => ({ ...value, sidebarCollapsed: false }));
+                navigate(false);
+              }}
+            >
+              <Folder aria-hidden="true" />
+              <span className="nav-label">{t("welcome.workbenches")}</span>
+            </button>
+          </nav>
+          <div id="sidebar-details" className="sidebar-details" hidden={layout.sidebarCollapsed}>
+            {navigation}
+          </div>
+          <button
+            type="button"
+            className="sidebar-settings sidebar-action"
+            data-i18n="nav.settings"
+            aria-label={t("nav.settings")}
+            title={t("nav.settings")}
+            aria-current={settings ? "page" : undefined}
+            onClick={() => navigate(true)}
+          >
+            <SettingsIcon aria-hidden="true" />
+            <span className="nav-label">{t("nav.settings")}</span>
+          </button>
+          {!layout.sidebarCollapsed && separator("sidebar")}
+        </aside>
         <main id="main-content" tabIndex={-1}>
+          {menuUnavailable && <p role="alert">{t("windowMenu.unavailable")}</p>}
           {children}
         </main>
         {!layout.rightCollapsed && (

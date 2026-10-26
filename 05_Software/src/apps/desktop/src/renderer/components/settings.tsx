@@ -121,7 +121,7 @@ export function Settings({
         .map(({ id, label }) => (
           <section className="surface" key={id} id={`section-${id}`} data-settings-section={id}>
             <h2 tabIndex={-1}>{label}</h2>
-            <p className="muted">{t("settings.placeholder")}</p>
+            {id !== "about" && <p className="muted">{t("settings.placeholder")}</p>}
             {id === "about" && info && <Metadata info={info} />}
           </section>
         ))}

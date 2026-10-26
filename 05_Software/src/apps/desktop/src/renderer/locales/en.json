@@ -27,7 +27,7 @@
   },
   "nav": {
     "settings": "Settings",
-    "welcome": "Welcome",
+    "welcome": "Home",
     "main": "Main navigation",
     "skipToContent": "Skip to main content"
   },
@@ -38,8 +38,7 @@
     "sidebarPlaceholder": "Your workbenches and sessions will appear here.",
     "create": "Create a workbench",
     "open": "Open an existing one",
-    "recent": "Recent",
-    "application": "Application information"
+    "recent": "Recent"
   },
   "settings": {
     "title": "App settings",
@@ -381,5 +380,13 @@
     "confirmText": "This opens the update feed link in your system browser.",
     "confirm": "Open in browser",
     "cancel": "Cancel"
+  },
+  "windowMenu": {
+    "main": "Application menu",
+    "file": "File",
+    "edit": "Edit",
+    "view": "View",
+    "help": "Help",
+    "unavailable": "The application menu could not be opened. Try again."
   }
 }

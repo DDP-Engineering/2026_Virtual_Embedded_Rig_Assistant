@@ -27,7 +27,7 @@
   },
   "nav": {
     "settings": "Setări",
-    "welcome": "Bun venit",
+    "welcome": "Acasă",
     "main": "Navigare principală",
     "skipToContent": "Treci la conținutul principal"
   },
@@ -38,8 +38,7 @@
     "sidebarPlaceholder": "Spațiile de lucru și sesiunile tale vor apărea aici.",
     "create": "Creează un spațiu de lucru",
     "open": "Deschide unul existent",
-    "recent": "Recente",
-    "application": "Informații despre aplicație"
+    "recent": "Recente"
   },
   "settings": {
     "title": "Setările aplicației",
@@ -381,5 +380,13 @@
     "confirmText": "Linkul sursei de actualizări se va deschide în browserul sistemului.",
     "confirm": "Deschide în browser",
     "cancel": "Anulează"
+  },
+  "windowMenu": {
+    "main": "Meniul aplicației",
+    "file": "Fișier",
+    "edit": "Editare",
+    "view": "Vizualizare",
+    "help": "Ajutor",
+    "unavailable": "Meniul aplicației nu a putut fi deschis. Încearcă din nou."
   }
 }

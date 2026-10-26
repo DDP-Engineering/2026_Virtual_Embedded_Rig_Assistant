@@ -27,7 +27,7 @@
   },
   "nav": {
     "settings": "Einstellungen",
-    "welcome": "Willkommen",
+    "welcome": "Start",
     "main": "Hauptnavigation",
     "skipToContent": "Zum Hauptinhalt springen"
   },
@@ -38,8 +38,7 @@
     "sidebarPlaceholder": "Deine Arbeitsbereiche und Sitzungen erscheinen hier.",
     "create": "Arbeitsbereich erstellen",
     "open": "Vorhandenen öffnen",
-    "recent": "Zuletzt geöffnet",
-    "application": "Anwendungsinformationen"
+    "recent": "Zuletzt geöffnet"
   },
   "settings": {
     "title": "Anwendungseinstellungen",
@@ -381,5 +380,13 @@
     "confirmText": "Der Link des Update-Feeds wird im Systembrowser geöffnet.",
     "confirm": "Im Browser öffnen",
     "cancel": "Abbrechen"
+  },
+  "windowMenu": {
+    "main": "Anwendungsmenü",
+    "file": "Datei",
+    "edit": "Bearbeiten",
+    "view": "Ansicht",
+    "help": "Hilfe",
+    "unavailable": "Das Anwendungsmenü konnte nicht geöffnet werden. Erneut versuchen."
   }
 }

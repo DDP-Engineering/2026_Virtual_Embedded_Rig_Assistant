@@ -69,6 +69,7 @@ afterEach(async () => {
 test("Welcome offers user workbenches without a bundled demo or guided sessions", async () => {
   const observed = vi.spyOn(api, "invoke");
   await mount();
+  expect(container.querySelector(".metadata")).toBeNull();
   expect(container.querySelector('[data-action="choose-create"]')).toBeTruthy();
   expect(container.querySelector('[data-action="create-workbench"]')).toBeTruthy();
   expect(container.querySelector("[data-demo-offer], [data-demo-guide], [data-demo-prompt]")).toBeNull();
@@ -196,7 +197,7 @@ test("Welcome creation draft survives Settings navigation while viewer scope cha
   await act(async () => user.type(name, "Unsaved board draft"));
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
   await act(async () => button("Settings").click());
-  await act(async () => button("Welcome").click());
+  await act(async () => button("Home").click());
   expect(container.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("Unsaved board draft");
   expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(
     false,
@@ -208,7 +209,7 @@ test("Welcome restores the active workbench and follows sidebar switches through
   await api.invoke("workbench.pinned.update", { content: "Context B" });
   await api.invoke("workbench.open", { folder: "/mock/switch-a" });
   await mount();
-  await act(async () => button("Welcome").click());
+  await act(async () => button("Home").click());
   expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Switch A");
   expect(container.querySelector('[data-action="close-workbench"]')).toBeTruthy();
   const picker = container.querySelector<HTMLSelectElement>(
@@ -216,7 +217,7 @@ test("Welcome restores the active workbench and follows sidebar switches through
   ) as HTMLSelectElement;
   await act(async () => userEvent.setup().selectOptions(picker, "/mock/switch-b"));
   await settle();
-  await act(async () => button("Welcome").click());
+  await act(async () => button("Home").click());
   expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Switch B");
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="edit-pinned"]')?.click());
   await settle();

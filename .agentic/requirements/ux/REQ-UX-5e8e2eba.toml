@@ -1,0 +1,9 @@
+schema = 1
+id = "REQ-UX-5e8e2eba"
+title = "Keep application information in About"
+status = "active"
+requirement = "VERA shall display application information in Settings About while the Home workbench page presents project creation, opening and recent projects."
+verification = "Home contains project actions without metadata; Settings About renders actual application metadata and remains reachable from expanded navigation and the collapsed rail."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/compact-shell.spec.ts", "05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/e2e/mock.spec.ts"]
+spec = "specs/REQ-UX-d87fc848.md"

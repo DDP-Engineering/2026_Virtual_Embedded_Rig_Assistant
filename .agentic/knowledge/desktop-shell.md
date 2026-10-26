@@ -11,6 +11,9 @@ Start at `05_Software/src/apps/desktop/src/main/index.ts`; focused acceptance is
 ## Purpose and boundaries
 
 Main owns the native window, instance lock, local asset protocol and window-state file.
+The window uses hidden native title chrome with a40px native-control overlay and renderer
+menu/drag row. window-chrome.ts supplies fixed native role popups, theme-matched overlay
+colors and outer-bounds restoration that compensates host DPI frame insets.
 Main also wires [application data](app-data.md): portable paths, core settings, atomic filesystem and logs.
 Main composes [updates](updates.md), defers downloaded-update close/quit while turns or approvals
 remain active, then drains persistence before explicit installation.
@@ -33,6 +36,10 @@ run [native packaging](native-packaging.md) probes and exit before creating a re
 Release compilation eliminates this hook and its worker entry.
 Instrumented folder selection accepts VERA_TEST_DIALOG_PATH; release emission eliminates the
 override and uses Electron dialog. Shutdown releases owned workbench locks and terminates file workers before settings/log drain. Instrumented file-tool acceptance exposes a probe for host abort/responsiveness; release compilation eliminates the probe.
+
+window.menu accepts only file/edit/view/help plus bounded integer window-local popup
+coordinates through the authorized main-frame router. Native menus use fixed role templates;
+coordinates clamp to content bounds. Browser mock acknowledges the native-only operation.
 
 ## Invariants
 
@@ -84,6 +91,8 @@ flowchart TD
   main --> state[loadWindowState / saveWindowState]
   state --> file[(userData/window-state.json)]
   main --> window[BrowserWindow]
+  window --> chrome[Hidden titlebar and native overlay controls]
+  router --> menus[Fixed native role menus]
   window --> preload[preload/index.cjs]
   main --> protocol[bundledResponse]
   protocol --> assets[(renderer output + CSP headers)]
