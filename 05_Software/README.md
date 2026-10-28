@@ -45,6 +45,8 @@ Appearance offers the same six named sizes for interface, conversation and code/
 Extra small, Small, Normal, Large, Extra large and Largest. Sizes remain independent,
 with immediate previews; numeric dimensions are internal. Normal is the default.
 Changes save automatically; Restore default text sizes resets only these three controls.
+Development (`npm run dev`) watches main/preload modules as well as the renderer,
+so shared IPC/settings contract changes rebuild the native layers automatically.
 F10 focuses the menu bar; arrow keys move between menus. Application information lives
 in Settings → About, while Home contains workbench creation/opening and recents.
 

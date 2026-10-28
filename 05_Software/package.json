@@ -18,7 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "verify": "npm run lint && npm run typecheck && npm run check:i18n && npm run test",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "dev": "electron-vite src/apps/desktop --entry src/apps/desktop",
+    "dev": "electron-vite src/apps/desktop --entry src/apps/desktop --watch",
     "dev:renderer": "node scripts/dev-renderer.mjs",
     "build": "electron-vite build src/apps/desktop",
     "test:e2e": "node scripts/test-e2e.mjs",
