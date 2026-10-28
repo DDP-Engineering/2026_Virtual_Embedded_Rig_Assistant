@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { changeSetting } from "./settings-navigation.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 const executable = join(
@@ -195,7 +196,7 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
     await page.locator('[data-i18n="nav.settings"]').click({ timeout: 2000 });
     expect(page.url()).toBe("vera://app/index.html");
     for (const theme of ["light", "dark", "system"] as const) {
-      await page.locator(`[data-theme-option="${theme}"]`).click();
+      await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
       await expect(page.locator("html")).toHaveAttribute(
         "data-theme",
         theme === "system" ? /light|dark/ : theme,
@@ -210,7 +211,7 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
       expect(await app.evaluate(({ nativeTheme }) => nativeTheme.themeSource)).toBe(theme);
     }
     for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-      await page.locator(`[data-scale="${scale}"]`).click();
+      await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
       await expect
         .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
         .toBe(`${14 * scale}px`);
@@ -224,7 +225,7 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
       await page.locator('[data-i18n="nav.settings"]').click();
       await expect(page.locator(`[data-scale="${scale}"]`)).toHaveAttribute("aria-pressed", "true");
     }
-    await page.locator('[data-scale="1"]').click();
+    await changeSetting(page, "appearance", () => page.locator('[data-scale="1"]').click());
     const sidebar = page.locator('[data-panel="sidebar"]');
     const before = await sidebar.boundingBox();
     const separator = await page.locator('[data-resize="sidebar"]').boundingBox();

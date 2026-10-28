@@ -51,7 +51,11 @@
     "placeholder": "This section will be available in a future update.",
     "readOnly": "These settings were written by a newer version. Preferences are read-only.",
     "saving": "Saving preferences…",
-    "retry": "Retry"
+    "retry": "Retry",
+    "notifications": "Notifications",
+    "shortcuts": "Keyboard shortcuts",
+    "storage": "Storage",
+    "configuration": "Configuration"
   },
   "appearance": {
     "theme": "Theme",

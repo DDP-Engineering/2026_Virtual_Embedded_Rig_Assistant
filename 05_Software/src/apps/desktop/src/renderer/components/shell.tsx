@@ -39,6 +39,9 @@ export function Shell({
   const [initial] = useState(initialLayout);
   const [layout, setLayout] = useState(initial.layout);
   const [tab, setTab] = useState("context");
+  useEffect(() => {
+    if (settings) setLayout((value) => ({ ...value, sidebarCollapsed: false }));
+  }, [settings]);
   const [menuUnavailable, setMenuUnavailable] = useState(false);
   function openMenu(menu: "file" | "edit" | "view" | "help", button: HTMLButtonElement) {
     const bounds = button.getBoundingClientRect();

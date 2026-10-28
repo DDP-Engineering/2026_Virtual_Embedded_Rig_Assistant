@@ -23,6 +23,10 @@ export function App() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState(false);
   const [section, setSection] = useState("appearance");
+  useEffect(() => {
+    const main = document.getElementById("main-content");
+    if (settings && section && main) main.scrollTop = 0;
+  }, [section, settings]);
   const client = useQueryClient();
   const [chat, setChat] = useState(false);
   const [activeSession, setActiveSession] = useState<string>();
@@ -152,22 +156,50 @@ export function App() {
     return () => window.removeEventListener("keydown", listener);
   }, [create]);
   const navigation = settings ? (
-    sections.map(({ id, label }) => (
-      <button
-        key={id}
-        type="button"
-        data-section={id}
-        aria-current={section === id ? "location" : undefined}
-        onClick={() => {
+    <div
+      className="settings-tabs"
+      role="tablist"
+      aria-label={t("settings.title")}
+      aria-orientation="vertical"
+      onKeyDown={(event) => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        const index = sections.findIndex(({ id }) => id === section);
+        const next =
+          event.key === "ArrowDown"
+            ? (index + 1) % sections.length
+            : event.key === "ArrowUp"
+              ? (index + sections.length - 1) % sections.length
+              : event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? sections.length - 1
+                  : undefined;
+        if (next === undefined) return;
+        event.preventDefault();
+        const id = sections[next]?.id;
+        if (id) {
           setSection(id);
-          const target = document.getElementById(`section-${id}`);
-          target?.scrollIntoView({ block: "start" });
-          target?.querySelector("h2")?.focus();
-        }}
-      >
-        {label}
-      </button>
-    ))
+          document.getElementById(`settings-tab-${id}`)?.focus();
+        }
+      }}
+    >
+      {sections.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          id={`settings-tab-${id}`}
+          data-section={id}
+          aria-selected={section === id}
+          aria-controls="settings-panel"
+          tabIndex={section === id ? 0 : -1}
+          onClick={() => setSection(id)}
+        >
+          <Icon aria-hidden="true" />
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
   ) : (
     <>
       <strong>{t("welcome.workbenches")}</strong>
@@ -295,6 +327,7 @@ export function App() {
           )}
           {settings && snapshot.data && (
             <Settings
+              section={section}
               snapshot={snapshot.data}
               info={info.data}
               saving={mutation.isPending}

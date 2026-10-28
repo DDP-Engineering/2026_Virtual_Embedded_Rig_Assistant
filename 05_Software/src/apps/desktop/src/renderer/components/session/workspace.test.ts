@@ -633,3 +633,38 @@ test.each(["a", "d"])(
     expect(input.disabled).toBe(false);
   },
 );
+
+test("Settings selects one page with vertical tabs, including placeholders and keyboard navigation", async () => {
+  await mount();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-toggle="sidebar"]')?.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-i18n="nav.settings"]')?.click());
+  await settle();
+  expect(container.querySelector("#sidebar")?.getAttribute("data-collapsed")).toBe("false");
+  const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tablist"] [role="tab"]')];
+  expect(tabs).toHaveLength(10);
+  function visibleSections() {
+    return [...container.querySelectorAll<HTMLElement>("[data-settings-section]")]
+      .filter((node) => !node.closest("[hidden]"))
+      .map((node) => node.dataset.settingsSection);
+  }
+  expect(visibleSections()).toEqual(["appearance"]);
+  for (const tab of tabs) {
+    const main = container.querySelector<HTMLElement>("#main-content");
+    if (main) main.scrollTop = 120;
+    await act(async () => tab.click());
+    expect(main?.scrollTop).toBe(0);
+    expect(tab.getAttribute("aria-selected")).toBe("true");
+    expect(visibleSections()).toEqual([tab.dataset.section]);
+    expect(container.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1);
+  }
+  const last = tabs.at(-1);
+  await act(async () => {
+    last?.focus();
+    last?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+  });
+  expect(document.activeElement).toBe(tabs[0]);
+  expect(visibleSections()).toEqual(["providers"]);
+  await act(async () => tabs[0]?.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true })));
+  expect(document.activeElement).toBe(last);
+  expect(visibleSections()).toEqual(["about"]);
+});

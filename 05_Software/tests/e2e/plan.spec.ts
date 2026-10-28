@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { _electron, expect, type Locator, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { changeSetting } from "./settings-navigation.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 async function launch(root: string, folder: string) {
@@ -280,7 +281,7 @@ test.describe("browser Plan", () => {
         await page.evaluate(() => localStorage.clear());
         await page.reload();
         await page.locator('[data-i18n="nav.settings"]').click();
-        await page.locator("#language").selectOption(lang);
+        await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
         await expect(page.locator("html")).toHaveAttribute("lang", lang);
         await page.locator('[data-i18n="nav.welcome"]').click();
         await page.locator('[data-action="open-recent"]').click();

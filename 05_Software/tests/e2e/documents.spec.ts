@@ -2,6 +2,7 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { expect, test } from "@playwright/test";
+import { changeSetting } from "./settings-navigation.js";
 
 test.use({ viewport: { width: 1024, height: 640 } });
 test("browser Docs and offline PDF/Markdown/text viewer fit all languages, themes and type scales", async ({
@@ -48,7 +49,7 @@ test("browser Docs and offline PDF/Markdown/text viewer fit all languages, theme
       await page.evaluate(() => localStorage.clear());
       await page.reload();
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator("#language").selectOption(lang);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
       await expect(page.locator("html")).toHaveAttribute("lang", lang);
       await page.locator('[data-i18n="nav.welcome"]').click();
       await page.locator('[data-action="open-recent"]').click();

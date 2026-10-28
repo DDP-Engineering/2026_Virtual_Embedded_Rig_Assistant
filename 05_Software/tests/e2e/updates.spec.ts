@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { expect, test } from "@playwright/test";
+import { changeSetting } from "./settings-navigation.js";
 
 test("Updates controls/notes/banner are usable in en/ro/de at minimum size", async ({ page, context }) => {
   test.setTimeout(120000);
@@ -35,13 +36,14 @@ test("Updates controls/notes/banner are usable in en/ro/de at minimum size", asy
     });
     await page.goto("http://127.0.0.1:5173/");
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="updates"]').click();
     const panel = page.locator("#section-updates");
     for (const language of ["en", "ro", "de"]) {
-      await page.locator("#language").selectOption(language);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark"]) {
-        await page.locator(`[data-theme-option="${theme}"]`).click();
+        await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-          await page.locator(`[data-scale="${scale}"]`).click();
+          await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
           await panel.locator("#update-mode").selectOption("off");
           await panel.locator("#update-channel").selectOption("beta");
           await panel.locator('[data-i18n="updates.check"]').click();

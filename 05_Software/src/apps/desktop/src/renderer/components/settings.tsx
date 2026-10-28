@@ -1,4 +1,16 @@
 import type { AppInfo, SettingsPatch, SettingsSnapshot } from "@vera/shared";
+import {
+  Bell,
+  Database,
+  Info,
+  Keyboard,
+  Languages,
+  Palette,
+  RefreshCw,
+  Server,
+  Shield,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "./error-message.js";
 import { Metadata } from "./metadata.js";
@@ -8,22 +20,28 @@ import { UpdatesPanel } from "./updates.js";
 export function useSettingsSections() {
   const { t } = useTranslation();
   return [
-    { id: "providers", label: t("settings.providers") },
-    { id: "appearance", label: t("settings.appearance") },
-    { id: "language", label: t("settings.language") },
-    { id: "updates", label: t("settings.updates") },
-    { id: "data", label: t("settings.data") },
-    { id: "about", label: t("settings.about") },
+    { id: "providers", icon: Server, label: t("settings.providers") },
+    { id: "appearance", icon: Palette, label: t("settings.appearance") },
+    { id: "language", icon: Languages, label: t("settings.language") },
+    { id: "notifications", icon: Bell, label: t("settings.notifications") },
+    { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
+    { id: "storage", icon: Database, label: t("settings.storage") },
+    { id: "configuration", icon: SlidersHorizontal, label: t("settings.configuration") },
+    { id: "updates", icon: RefreshCw, label: t("settings.updates") },
+    { id: "data", icon: Shield, label: t("settings.data") },
+    { id: "about", icon: Info, label: t("settings.about") },
   ];
 }
 
 export function Settings({
+  section = "appearance",
   snapshot,
   info,
   saving,
   error,
   update,
 }: {
+  section?: string;
   snapshot: SettingsSnapshot;
   info: AppInfo | undefined;
   saving: boolean;
@@ -39,7 +57,14 @@ export function Settings({
     { value: "system", label: t("appearance.system") },
   ] as const;
   return (
-    <div className="settings-page">
+    <div
+      className="settings-page"
+      role="tabpanel"
+      id="settings-panel"
+      aria-labelledby={`settings-tab-${section}`}
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA tab panel keyboard focus, including empty pages.
+      tabIndex={0}
+    >
       {snapshot.readOnly && (
         <p role="status" data-i18n="settings.readOnly">
           {t("settings.readOnly")}
@@ -51,8 +76,15 @@ export function Settings({
         </p>
       )}
       {Boolean(error) && <ErrorMessage error={error} />}
-      <Providers readOnly={snapshot.readOnly} />
-      <section className="surface" id="section-appearance" data-settings-section="appearance">
+      <div hidden={section !== "providers"}>
+        <Providers readOnly={snapshot.readOnly} />
+      </div>
+      <section
+        hidden={section !== "appearance"}
+        className="surface"
+        id="section-appearance"
+        data-settings-section="appearance"
+      >
         <h2 data-i18n="settings.appearance" tabIndex={-1}>
           {t("settings.appearance")}
         </h2>
@@ -95,7 +127,12 @@ export function Settings({
         <p className="muted">{t("appearance.description")}</p>
         <code>{t("appearance.codePreview")}</code>
       </section>
-      <section className="surface" id="section-language" data-settings-section="language">
+      <section
+        hidden={section !== "language"}
+        className="surface"
+        id="section-language"
+        data-settings-section="language"
+      >
         <h2 tabIndex={-1}>{t("settings.language")}</h2>
         <div className="language-field">
           <label htmlFor="language">{t("language.label")}</label>
@@ -113,13 +150,21 @@ export function Settings({
         </div>
         <p className="muted">{t("language.description")}</p>
       </section>
-      <UpdatesPanel preferences={snapshot.settings.updates} disabled={disabled} update={update} />
+      <div hidden={section !== "updates"}>
+        <UpdatesPanel preferences={snapshot.settings.updates} disabled={disabled} update={update} />
+      </div>
       {sections
         .filter(
           ({ id }) => id !== "providers" && id !== "appearance" && id !== "language" && id !== "updates",
         )
         .map(({ id, label }) => (
-          <section className="surface" key={id} id={`section-${id}`} data-settings-section={id}>
+          <section
+            hidden={section !== id}
+            className="surface"
+            key={id}
+            id={`section-${id}`}
+            data-settings-section={id}
+          >
             <h2 tabIndex={-1}>{label}</h2>
             {id !== "about" && <p className="muted">{t("settings.placeholder")}</p>}
             {id === "about" && info && <Metadata info={info} />}

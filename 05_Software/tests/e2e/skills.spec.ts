@@ -8,6 +8,7 @@ import { join, resolve } from "node:path";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { changeSetting } from "./settings-navigation.js";
 
 test("native UI skill creation/edit/disable changes the NEXT turn system prompt", async () => {
   test.setTimeout(90000);
@@ -229,7 +230,7 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       await page.evaluate(() => localStorage.clear());
       await page.reload();
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator("#language").selectOption(lang);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
       await expect(page.locator("html")).toHaveAttribute("lang", lang);
       await page.locator('[data-i18n="nav.welcome"]').click();
       await page.locator('[data-action="open-recent"]').click();

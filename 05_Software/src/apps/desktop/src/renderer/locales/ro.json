@@ -51,7 +51,11 @@
     "placeholder": "Această secțiune va fi disponibilă într-o actualizare viitoare.",
     "readOnly": "Aceste setări au fost scrise de o versiune mai nouă. Preferințele sunt doar pentru citire.",
     "saving": "Se salvează preferințele…",
-    "retry": "Reîncearcă"
+    "retry": "Reîncearcă",
+    "notifications": "Notificări",
+    "shortcuts": "Comenzi rapide",
+    "storage": "Stocare",
+    "configuration": "Configurare"
   },
   "appearance": {
     "theme": "Temă",

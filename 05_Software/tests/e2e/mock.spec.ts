@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { defaultSettings } from "@vera/shared";
+import { changeSetting } from "./settings-navigation.js";
 
 test("browser mock displays the same metadata screen through dev:renderer", async ({ page, context }) => {
   test.setTimeout(150_000);
@@ -75,13 +76,13 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     expect(outbound).toEqual([]);
     await page.locator('[data-i18n="nav.settings"]').click({ timeout: 2000 });
     for (const language of ["ro", "de", "en"]) {
-      await page.locator("#language").selectOption(language);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       await expect(page.locator('[data-i18n="settings.appearance"]')).toHaveText(
         language === "ro" ? "Aspect" : language === "de" ? "Darstellung" : "Appearance",
       );
     }
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
-    await page.locator('[data-theme-option="system"]').click();
+    await changeSetting(page, "appearance", () => page.locator('[data-theme-option="system"]').click());
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await page.emulateMedia({ colorScheme: "light" });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
@@ -101,9 +102,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await page.locator('[data-toggle="right"]').click();
     }
     for (const theme of ["light", "dark", "system"]) {
-      await page.locator(`[data-theme-option="${theme}"]`).click();
+      await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
       for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-        await page.locator(`[data-scale="${scale}"]`).click();
+        await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
         await expect
           .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
           .toBe(`${14 * scale}px`);
@@ -166,11 +167,11 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       expect(contrastFailures, `AA text contrast in ${theme}`).toEqual([]);
     }
     for (const language of ["ro", "de"]) {
-      await page.locator("#language").selectOption(language);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark", "system"]) {
-        await page.locator(`[data-theme-option="${theme}"]`).click();
+        await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-          await page.locator(`[data-scale="${scale}"]`).click();
+          await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
           await expect
             .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
             .toBe(`${14 * scale}px`);
@@ -188,8 +189,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         }
       }
     }
-    await page.locator("#language").selectOption("en");
+    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
     // Provider editors participate in the localized minimum-size and keyboard contracts.
+    await page.locator('[data-section="providers"]').click();
     const providerSection = page.locator('[data-settings-section="providers"]');
     const fakeKey = "fak-browser-only-private-middle-8Zx4";
     await providerSection.getByLabel("OpenAI API key", { exact: true }).fill(fakeKey);
@@ -205,12 +207,12 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await providerSection.getByLabel("Model", { exact: true }).fill("fake-browser-model");
     const localizedNames = { en: "Endpoint name", ro: "Numele endpoint-ului", de: "Name des Endpunkts" };
     for (const language of ["en", "ro", "de"] as const) {
-      await page.locator("#language").selectOption(language);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       await expect(providerSection.getByLabel(localizedNames[language], { exact: true })).toHaveValue(
         "Browser fixture",
       );
       for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-        await page.locator(`[data-scale="${scale}"]`).click();
+        await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
         expect(
           await page.evaluate(() =>
             [...document.querySelectorAll("section,fieldset,input,button")]
@@ -220,7 +222,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         ).toEqual([]);
       }
     }
-    await page.locator("#language").selectOption("en");
+    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
     // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus.
     const controls = await page
       .locator(
@@ -263,7 +265,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     );
     const testedProvider = providerSection.locator('[data-provider="custom:browser-fixture"]');
     for (const language of ["en", "ro", "de"] as const) {
-      await page.locator("#language").selectOption(language);
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       const control = testedProvider.locator('[data-provider-test="custom:browser-fixture"]');
       await expect(control).toHaveText(
         language === "ro" ? "Testează" : language === "de" ? "Testen" : "Test",
@@ -275,7 +277,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await expect(testedProvider.locator('[data-test-status="pass"]')).toHaveCount(4);
       expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
     }
-    await page.locator("#language").selectOption("en");
+    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
     await providerSection
       .locator('[data-provider="custom:browser-fixture"]')
       .getByRole("button", { name: "Remove Browser fixture", exact: true })
@@ -289,9 +291,10 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     }
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.keyboard.press("Control+,");
+    await page.locator('[data-section="language"]').click();
     await expect(page.locator("#language")).toBeVisible();
-    await page.locator('[data-theme-option="light"]').click();
-    await page.locator('[data-scale="1"]').click();
+    await changeSetting(page, "appearance", () => page.locator('[data-theme-option="light"]').click());
+    await changeSetting(page, "appearance", () => page.locator('[data-scale="1"]').click());
     const futureLayout = '{ "version": 99, "future": "retain exact bytes" }';
     await page.evaluate((raw) => localStorage.setItem("vera.ui.layout", raw), futureLayout);
     await page.reload();
@@ -414,7 +417,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     );
     await page.reload();
     await page.locator('[data-i18n="nav.settings"]').click();
-    await page.locator('[data-theme-option="dark"]').click();
+    await changeSetting(page, "appearance", () => page.locator('[data-theme-option="dark"]').click());
     await expect(page.getByRole("alert")).toHaveText("Operația solicitată probe nu a fost găsită.");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     await expect(page.locator('[data-theme-option="light"]')).toHaveAttribute("aria-pressed", "true");

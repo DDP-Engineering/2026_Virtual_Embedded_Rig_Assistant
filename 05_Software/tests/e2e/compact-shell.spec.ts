@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { changeSetting } from "./settings-navigation.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 test("native compact chrome retains window controls and a persistent navigation rail", async () => {
@@ -57,15 +58,19 @@ test("native compact chrome retains window controls and a persistent navigation 
       await page.screenshot({ path: join(process.env.VERA_UI_CAPTURE_DIR, "rail.png") });
     await page.locator('[data-i18n="nav.settings"]').click();
     await expect(page.locator('[data-settings-section="about"] .metadata')).toHaveCount(1);
+    await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "false");
+    await page.locator('[data-toggle="sidebar"]').click();
     await app.close();
     app = await launch();
     await installNetworkGuard(app);
     page = await app.firstWindow();
     await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "true");
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="language"]').click();
     await expect(page.locator("#language")).toBeVisible();
     await page.locator('[data-i18n="nav.welcome"]').click();
     await expect(page.locator('[data-action="create-workbench"]')).toBeVisible();
+    await page.locator('[data-toggle="sidebar"]').click();
     await page.locator('[data-action="show-projects"]').click();
     await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "false");
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.maximize());
@@ -124,9 +129,11 @@ test("compact navigation fits all languages, themes and text scales at minimum s
       for (const theme of ["light", "dark"]) {
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
           await page.locator('[data-i18n="nav.settings"]').click();
-          await page.locator("#language").selectOption(language);
-          await page.locator(`[data-theme-option="${theme}"]`).click();
-          await page.locator(`[data-scale="${scale}"]`).click();
+          await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+          await changeSetting(page, "appearance", () =>
+            page.locator(`[data-theme-option="${theme}"]`).click(),
+          );
+          await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
           await expect
             .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))

@@ -37,6 +37,10 @@ Unit and component tests remain beside the implementation in `src/`.
 The desktop uses one compact title/menu row with native window controls. The sidebar
 toggle switches between full project/session navigation and a compact icon rail; Home,
 project navigation and Settings remain reachable. Collapse and panel sizes persist.
+Settings opens its sidebar automatically and displays one selected category at a time;
+Up/Down and Home/End select categories. Providers, Appearance, Language, Updates and About
+contain current controls; Notifications, Keyboard shortcuts, Storage, Configuration and
+Data & privacy show a placeholder until implemented.
 F10 focuses the menu bar; arrow keys move between menus. Application information lives
 in Settings → About, while Home contains workbench creation/opening and recents.
 

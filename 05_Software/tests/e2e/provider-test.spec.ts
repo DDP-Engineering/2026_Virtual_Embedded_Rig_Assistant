@@ -80,6 +80,7 @@ test("provider Test displays per-step native results and test-build replay is re
       });
     }, `http://127.0.0.1:${addr.port}/v1`);
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="providers"]').click();
     const provider = page.locator('[data-provider="custom:scripted"]');
     const button = provider.locator('[data-i18n="providers.test"]');
     await expect(button).toBeVisible();

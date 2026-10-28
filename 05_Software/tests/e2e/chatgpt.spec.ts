@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { changeSetting } from "./settings-navigation.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 const scratch = join(tmpdir(), "vera-wp21-TASK-5423a330");
@@ -72,6 +73,7 @@ test("native pinned OAuth starts the actual callback flow and cancels without br
     app = await launch(join(root, "data"), "startup");
     const page = await app.firstWindow();
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="providers"]').click();
     const card = page.locator('[data-provider="chatgpt"]');
     const secure = (
       await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("providers.list", {}))
@@ -103,6 +105,7 @@ test("native subscription fake login persists across restart and signs out throu
     app = await launch(data);
     let page = await app.firstWindow();
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="providers"]').click();
     const card = page.locator('[data-provider="chatgpt"]');
     const secure = (
       await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("providers.list", {}))
@@ -134,6 +137,7 @@ test("native subscription fake login persists across restart and signs out throu
     app = await launch(data);
     page = await app.firstWindow();
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="providers"]').click();
     await expect(page.locator('[data-provider="chatgpt"]').getByRole("status")).toHaveText(
       "Signed in with ChatGPT",
     );
@@ -206,6 +210,7 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
     await page.setViewportSize({ width: 1024, height: 640 });
     await page.goto("http://127.0.0.1:5173");
     await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="providers"]').click();
     const card = page.locator('[data-provider="chatgpt"]');
     for (const [lang, title, signIn, signOut, submit, cancel] of [
       ["en", "ChatGPT subscription", "Sign in with ChatGPT", "Sign out", "Complete sign-in", "Cancel"],
@@ -219,7 +224,7 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
       ],
       ["de", "ChatGPT-Abonnement", "Mit ChatGPT anmelden", "Abmelden", "Anmeldung abschließen", "Abbrechen"],
     ] as const) {
-      await page.locator("#language").selectOption(lang ?? "en");
+      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang ?? "en"));
       await expect(card.getByRole("heading")).toHaveText(title ?? "");
       await card.getByRole("button", { name: signIn, exact: true }).click();
       await card.getByRole("button", { name: cancel, exact: true }).click();

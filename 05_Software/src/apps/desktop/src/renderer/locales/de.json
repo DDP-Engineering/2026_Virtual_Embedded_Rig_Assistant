@@ -51,7 +51,11 @@
     "placeholder": "Dieser Bereich wird in einer zukünftigen Aktualisierung verfügbar sein.",
     "readOnly": "Diese Einstellungen wurden von einer neueren Version geschrieben. Einstellungen sind schreibgeschützt.",
     "saving": "Einstellungen werden gespeichert…",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "notifications": "Benachrichtigungen",
+    "shortcuts": "Tastenkombinationen",
+    "storage": "Speicher",
+    "configuration": "Konfiguration"
   },
   "appearance": {
     "theme": "Design",
