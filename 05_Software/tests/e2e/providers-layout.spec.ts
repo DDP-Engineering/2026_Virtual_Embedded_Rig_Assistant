@@ -116,6 +116,13 @@ test("provider categories support concurrent connections, presets and aligned ac
     for (const language of ["en", "ro", "de"]) {
       await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       await row.locator("[data-provider-test]").click();
+      await expect(dialog.getByRole("heading")).toHaveText(
+        language === "ro"
+          ? "Testarea conexiunii: API OpenAI"
+          : language === "de"
+            ? "Verbindungstest: OpenAI-API"
+            : "Connection test: OpenAI API",
+      );
       const close = dialog.locator("[data-provider-test-close]");
       await expect(close).toHaveText(
         language === "ro" ? "Închide" : language === "de" ? "Schließen" : "Close",
