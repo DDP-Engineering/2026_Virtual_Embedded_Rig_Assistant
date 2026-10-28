@@ -1,4 +1,4 @@
-import type { AppInfo, SettingsPatch, SettingsSnapshot } from "@vera/shared";
+import { type AppInfo, type SettingsPatch, type SettingsSnapshot, typographyDefaults } from "@vera/shared";
 import {
   Bell,
   Database,
@@ -51,6 +51,8 @@ export function Settings({
   const { t } = useTranslation();
   const sections = useSettingsSections();
   const disabled = snapshot.readOnly || saving;
+  const chatFontSize = snapshot.settings.chatFontSize ?? typographyDefaults.chatFontSize;
+  const codeFontSize = snapshot.settings.codeFontSize ?? typographyDefaults.codeFontSize;
   const themes = [
     { value: "light", label: t("appearance.light") },
     { value: "dark", label: t("appearance.dark") },
@@ -125,7 +127,55 @@ export function Settings({
           </div>
         </fieldset>
         <p className="muted">{t("appearance.description")}</p>
-        <code>{t("appearance.codePreview")}</code>
+        <p className="typography-interface-preview">{t("appearance.interfacePreview")}</p>
+        <fieldset disabled={disabled} className="typography-control">
+          <legend>{t("appearance.chatSize")}</legend>
+          <label className="sr-only" htmlFor="chat-font-size">
+            {t("appearance.chatSize")}
+          </label>
+          <select
+            id="chat-font-size"
+            value={chatFontSize}
+            onChange={(event) => update({ chatFontSize: Number(event.target.value) })}
+          >
+            {Array.from({ length: 23 }, (_, index) => index + 10).map((size) => (
+              <option key={size} value={size}>
+                {t("appearance.pixels", { size })}
+              </option>
+            ))}
+          </select>
+          <p className="muted">{t("appearance.chatDescription")}</p>
+          <p className="typography-chat-preview">{t("appearance.chatPreview")}</p>
+        </fieldset>
+        <fieldset disabled={disabled} className="typography-control">
+          <legend>{t("appearance.codeSize")}</legend>
+          <label className="sr-only" htmlFor="code-font-size">
+            {t("appearance.codeSize")}
+          </label>
+          <select
+            id="code-font-size"
+            value={codeFontSize}
+            onChange={(event) => update({ codeFontSize: Number(event.target.value) })}
+          >
+            {Array.from({ length: 23 }, (_, index) => index + 10).map((size) => (
+              <option key={size} value={size}>
+                {t("appearance.pixels", { size })}
+              </option>
+            ))}
+          </select>
+          <p className="muted">{t("appearance.codeDescription")}</p>
+          <pre className="typography-code-preview">
+            <code>{t("appearance.codePreview")}</code>
+          </pre>
+        </fieldset>
+        <button
+          type="button"
+          disabled={disabled}
+          data-action="reset-typography"
+          onClick={() => update({ textScale: 1, ...typographyDefaults })}
+        >
+          {t("appearance.resetSizes")}
+        </button>
       </section>
       <section
         hidden={section !== "language"}

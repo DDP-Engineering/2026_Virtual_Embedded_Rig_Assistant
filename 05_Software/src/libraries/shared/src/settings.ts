@@ -13,10 +13,15 @@ export const recentWorkbenchStateSchema = recentWorkbenchSchema.extend({ missing
 export type RecentWorkbench = z.infer<typeof recentWorkbenchSchema>;
 export type RecentWorkbenchState = z.infer<typeof recentWorkbenchStateSchema>;
 
+/** Optional font-size overrides select these built-in sizes when unset. */
+export const typographyDefaults = { chatFontSize: 14, codeFontSize: 14 } as const;
+const fontSizeSchema = z.number().int().min(10).max(32);
 const mutable = {
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
   textScale: z.union([z.literal(0.875), z.literal(1), z.literal(1.125), z.literal(1.25), z.literal(1.5)]),
+  chatFontSize: fontSizeSchema.optional(),
+  codeFontSize: fontSizeSchema.optional(),
   defaultModel: modelReferenceSchema.nullable(),
   providers: providerSettingsSchema,
   updates: z.looseObject({ mode: updateModeSchema, channel: updateChannelSchema }),
@@ -33,6 +38,8 @@ export const settingsPatchSchema = z.strictObject({
   language: mutable.language.optional(),
   theme: mutable.theme.optional(),
   textScale: mutable.textScale.optional(),
+  chatFontSize: mutable.chatFontSize,
+  codeFontSize: mutable.codeFontSize,
   defaultModel: mutable.defaultModel.optional(),
   recentWorkbenches: mutable.recentWorkbenches.optional(),
   updates: z
@@ -96,6 +103,7 @@ export function defaultSettings(installationId: string): Settings {
     language: "system",
     theme: "system",
     textScale: 1,
+    ...typographyDefaults,
     defaultModel: null,
     providers: { openai: {}, custom: [] },
     updates: { mode: "notify", channel: "latest" },

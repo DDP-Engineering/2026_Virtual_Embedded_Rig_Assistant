@@ -316,6 +316,9 @@ main {
   gap: 0.5rem;
   line-height: 1.6;
 }
+.markdown code {
+  font-size: var(--code-font-size, 14px);
+}
 .markdown pre,
 .transcript pre {
   max-width: 100%;
@@ -324,10 +327,12 @@ main {
   background: var(--card);
   padding: 0.75rem;
   font:
-    0.95rem / 1.5 ui-monospace,
+    var(--code-font-size, 14px) / 1.5 ui-monospace,
     monospace;
 }
 .approval-diff > pre {
+  font-size: var(--code-font-size, 14px);
+  font-family: ui-monospace, monospace;
   white-space: inherit;
   overflow-wrap: anywhere;
   overflow: visible;
@@ -883,6 +888,8 @@ legend {
   overflow: auto;
 }
 .artifacts-tab .artifact-viewer pre {
+  font-size: var(--code-font-size, 14px);
+  font-family: ui-monospace, monospace;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -984,7 +991,7 @@ legend {
 }
 .document-lines {
   font-family: monospace;
-  font-size: 0.92rem;
+  font-size: var(--code-font-size, 14px);
 }
 .document-lines > div {
   display: grid;
@@ -1174,4 +1181,44 @@ legend {
   background: var(--accent);
   color: var(--primary);
   font-weight: 600;
+}
+
+/* Content fonts use pixels so interface rem scaling stays independent. */
+.transcript .markdown,
+.composer textarea,
+.typography-chat-preview {
+  font-size: var(--chat-font-size, 14px);
+}
+.markdown :where(h1) {
+  font-size: 1.7em;
+}
+.markdown :where(h2) {
+  font-size: 1.25em;
+}
+.markdown :where(h3) {
+  font-size: 1.1em;
+}
+.typography-code-preview,
+.typography-code-preview code {
+  font-size: var(--code-font-size, 14px);
+  line-height: 1.5;
+  font-family: ui-monospace, monospace;
+}
+.typography-control {
+  display: grid;
+  gap: 0.5rem;
+}
+.typography-control select {
+  width: fit-content;
+  min-width: 6rem;
+}
+.typography-chat-preview,
+.typography-code-preview,
+.typography-interface-preview {
+  border: 1px solid var(--border);
+  background: var(--background);
+  border-radius: 0.4rem;
+  padding: 0.75rem;
+  margin: 0;
+  overflow: auto;
 }

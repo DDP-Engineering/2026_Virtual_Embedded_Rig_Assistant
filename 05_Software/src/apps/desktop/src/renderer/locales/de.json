@@ -62,10 +62,18 @@
     "light": "Hell",
     "dark": "Dunkel",
     "system": "System",
-    "textSize": "Textgröße",
+    "textSize": "Textgröße der Oberfläche",
     "percent": "{{percent}}%",
-    "description": "Skaliert alle Texte und Bedienelemente. Änderungen werden automatisch gespeichert.",
-    "codePreview": "Code-Vorschau: const board = 1;"
+    "description": "Skaliert Beschriftungen, Menüs und Bedienelemente. Wird automatisch gespeichert.",
+    "codePreview": "Code-Vorschau: const board = 1;",
+    "interfacePreview": "Vorschau der Oberfläche: Menüs, Beschriftungen und Schaltflächen.",
+    "chatSize": "Textgröße der Unterhaltung",
+    "chatDescription": "Gilt für Nachrichten und das Eingabefeld, unabhängig von der Oberfläche.",
+    "chatPreview": "So wird eine Nachricht in deiner Unterhaltung aussehen.",
+    "codeSize": "Textgröße für Code und Ausgaben",
+    "codeDescription": "Gilt für Codeblöcke, Diffs und technische Textausgaben.",
+    "pixels": "{{size}} px",
+    "resetSizes": "Standardtextgrößen wiederherstellen"
   },
   "language": {
     "label": "Sprache der Oberfläche",

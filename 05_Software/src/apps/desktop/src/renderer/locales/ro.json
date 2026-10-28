@@ -62,10 +62,18 @@
     "light": "Luminoasă",
     "dark": "Întunecată",
     "system": "Sistem",
-    "textSize": "Dimensiunea textului",
+    "textSize": "Dimensiunea textului interfeței",
     "percent": "{{percent}}%",
-    "description": "Scalează tot textul și controalele. Modificările se salvează automat.",
-    "codePreview": "Previzualizare cod: const board = 1;"
+    "description": "Redimensionează etichetele, meniurile și controalele. Salvare automată.",
+    "codePreview": "Previzualizare cod: const board = 1;",
+    "interfacePreview": "Previzualizare interfață: meniuri, etichete și butoane.",
+    "chatSize": "Dimensiunea textului conversației",
+    "chatDescription": "Se aplică mesajelor și casetei de compunere, independent de interfață.",
+    "chatPreview": "Așa va arăta un mesaj din conversația ta.",
+    "codeSize": "Dimensiunea codului și a rezultatelor",
+    "codeDescription": "Se aplică blocurilor de cod, diferențelor și rezultatelor tehnice text.",
+    "pixels": "{{size}} px",
+    "resetSizes": "Restabilește dimensiunile implicite"
   },
   "language": {
     "label": "Limba interfeței",

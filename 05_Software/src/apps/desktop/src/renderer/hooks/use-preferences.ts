@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SettingsPatch, SettingsSnapshot } from "@vera/shared";
+import { type SettingsPatch, type SettingsSnapshot, typographyDefaults } from "@vera/shared";
 import { useEffect, useLayoutEffect } from "react";
 import { api } from "../api/index.js";
 import i18next from "../i18n.js";
@@ -23,6 +23,8 @@ export function usePreferences(locale: string) {
   );
   const theme = snapshot.data?.settings.theme ?? "system";
   const scale = snapshot.data?.settings.textScale ?? 1;
+  const chatFontSize = snapshot.data?.settings.chatFontSize ?? typographyDefaults.chatFontSize;
+  const codeFontSize = snapshot.data?.settings.codeFontSize ?? typographyDefaults.codeFontSize;
   const language = resolveLanguage(snapshot.data?.settings.language ?? "system", locale);
   useLayoutEffect(() => {
     const media = matchMedia("(prefers-color-scheme: dark)");
@@ -37,6 +39,10 @@ export function usePreferences(locale: string) {
   useLayoutEffect(() => {
     document.documentElement.style.fontSize = `${14 * scale}px`;
   }, [scale]);
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty("--chat-font-size", `${chatFontSize}px`);
+    document.documentElement.style.setProperty("--code-font-size", `${codeFontSize}px`);
+  }, [chatFontSize, codeFontSize]);
   useLayoutEffect(() => {
     document.documentElement.lang = language;
     void i18next.changeLanguage(language);

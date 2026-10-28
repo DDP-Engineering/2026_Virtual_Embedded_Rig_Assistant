@@ -191,6 +191,8 @@ describe("application settings persistence", () => {
       language: "system",
       theme: "system",
       textScale: 1,
+      chatFontSize: 14,
+      codeFontSize: 14,
       defaultModel: null,
       providers: { openai: {}, custom: [] },
       updates: { mode: "notify", channel: "latest" },
@@ -355,4 +357,25 @@ describe("application settings persistence", () => {
       expect(h.fileAccess.writeAtomic).not.toHaveBeenCalled();
     },
   );
+});
+
+it("persists independent interface, conversation and code sizes without changing unrelated preferences", async () => {
+  const h = harness();
+  await h.service.load();
+  const before = h.service.get().settings;
+  await h.service.update({ textScale: 0.875, chatFontSize: 12, codeFontSize: 22 });
+  const next = h.service.get().settings;
+  expect(next).toEqual({ ...before, textScale: 0.875, chatFontSize: 12, codeFontSize: 22 });
+  const reload = harness(h.files.get("/data/settings.json"));
+  await reload.service.load();
+  expect(reload.service.get().settings).toEqual(next);
+  for (const patch of [
+    { chatFontSize: 9 },
+    { codeFontSize: 33 },
+    { chatFontSize: 14.5 },
+    { codeFontSize: "large" },
+  ]) {
+    await expect(reload.service.update(patch as never)).rejects.toMatchObject({ code: "INVALID" });
+  }
+  expect(reload.service.get().settings).toEqual(next);
 });

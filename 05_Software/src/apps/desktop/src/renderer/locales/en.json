@@ -62,10 +62,18 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System",
-    "textSize": "Text size",
+    "textSize": "Interface text size",
     "percent": "{{percent}}%",
-    "description": "Scales all text and controls. Changes are saved automatically.",
-    "codePreview": "Code preview: const board = 1;"
+    "description": "Scale interface labels, menus and controls. Saved automatically.",
+    "codePreview": "Code preview: const board = 1;",
+    "interfacePreview": "Interface preview: menus, labels and buttons.",
+    "chatSize": "Conversation text size",
+    "chatDescription": "Applies to messages and the message composer, independently of interface size.",
+    "chatPreview": "This is how a message in your conversation will look.",
+    "codeSize": "Code and output text size",
+    "codeDescription": "Applies to code blocks, diffs and technical text output.",
+    "pixels": "{{size}} px",
+    "resetSizes": "Restore default text sizes"
   },
   "language": {
     "label": "Interface language",
