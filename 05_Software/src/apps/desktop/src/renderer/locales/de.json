@@ -63,7 +63,6 @@
     "dark": "Dunkel",
     "system": "System",
     "textSize": "Textgröße der Oberfläche",
-    "percent": "{{percent}}%",
     "description": "Skaliert Beschriftungen, Menüs und Bedienelemente. Wird automatisch gespeichert.",
     "codePreview": "Code-Vorschau: const board = 1;",
     "interfacePreview": "Vorschau der Oberfläche: Menüs, Beschriftungen und Schaltflächen.",

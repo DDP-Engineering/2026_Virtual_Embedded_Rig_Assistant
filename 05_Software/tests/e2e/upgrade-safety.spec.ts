@@ -71,7 +71,7 @@ test("newer settings expose defaults and visible read-only controls with unchang
     ).toMatchObject({ readOnly: true, settings: { schemaVersion: 4, theme: "system" } });
     await page.locator('[data-i18n="nav.settings"]').click();
     await expect(page.locator('[data-i18n="settings.readOnly"]')).toBeVisible();
-    for (const control of await page.locator("[data-theme-option], [data-scale], #language").all())
+    for (const control of await page.locator("[data-theme-option], #interface-font-size, #language").all())
       await expect(control).toBeDisabled();
     expect(
       await page.evaluate(() =>

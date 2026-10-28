@@ -63,7 +63,6 @@
     "dark": "Dark",
     "system": "System",
     "textSize": "Interface text size",
-    "percent": "{{percent}}%",
     "description": "Scale interface labels, menus and controls. Saved automatically.",
     "codePreview": "Code preview: const board = 1;",
     "interfacePreview": "Interface preview: menus, labels and buttons.",

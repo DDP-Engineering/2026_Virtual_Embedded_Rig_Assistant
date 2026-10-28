@@ -63,7 +63,6 @@
     "dark": "Întunecată",
     "system": "Sistem",
     "textSize": "Dimensiunea textului interfeței",
-    "percent": "{{percent}}%",
     "description": "Redimensionează etichetele, meniurile și controalele. Salvare automată.",
     "codePreview": "Previzualizare cod: const board = 1;",
     "interfacePreview": "Previzualizare interfață: meniuri, etichete și butoane.",

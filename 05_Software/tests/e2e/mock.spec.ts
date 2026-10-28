@@ -104,7 +104,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     for (const theme of ["light", "dark", "system"]) {
       await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
       for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-        await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
+        await changeSetting(page, "appearance", () =>
+          page.locator("#interface-font-size").selectOption(String(scale)),
+        );
         await expect
           .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
           .toBe(`${14 * scale}px`);
@@ -121,11 +123,13 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
             .map((element) => element.outerHTML.slice(0, 160)),
         }));
         expect(overflow, `${theme}/${scale}`).toEqual({ page: false, elements: [] });
-        expect(await page.locator("code").evaluate((code) => getComputedStyle(code).fontSize)).toBe(
-          `${14 * scale}px`,
-        );
         expect(
-          await page.locator('[data-scale="1"]').evaluate((button) => getComputedStyle(button).fontSize),
+          await page
+            .locator(".typography-code-preview code")
+            .evaluate((code) => getComputedStyle(code).fontSize),
+        ).toBe("14px");
+        expect(
+          await page.locator("#interface-font-size").evaluate((button) => getComputedStyle(button).fontSize),
         ).toBe(`${14 * scale}px`);
         await page.locator('[data-toggle="right"]').click();
         expect(
@@ -171,7 +175,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       for (const theme of ["light", "dark", "system"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-          await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
+          await changeSetting(page, "appearance", () =>
+            page.locator("#interface-font-size").selectOption(String(scale)),
+          );
           await expect
             .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
             .toBe(`${14 * scale}px`);
@@ -212,7 +218,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         "Browser fixture",
       );
       for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-        await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
+        await changeSetting(page, "appearance", () =>
+          page.locator("#interface-font-size").selectOption(String(scale)),
+        );
         expect(
           await page.evaluate(() =>
             [...document.querySelectorAll("section,fieldset,input,button")]
@@ -294,7 +302,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await page.locator('[data-section="language"]').click();
     await expect(page.locator("#language")).toBeVisible();
     await changeSetting(page, "appearance", () => page.locator('[data-theme-option="light"]').click());
-    await changeSetting(page, "appearance", () => page.locator('[data-scale="1"]').click());
+    await changeSetting(page, "appearance", () => page.locator("#interface-font-size").selectOption("1"));
     const futureLayout = '{ "version": 99, "future": "retain exact bytes" }';
     await page.evaluate((raw) => localStorage.setItem("vera.ui.layout", raw), futureLayout);
     await page.reload();

@@ -110,21 +110,24 @@ export function Settings({
             ))}
           </div>
         </fieldset>
-        <fieldset disabled={disabled}>
+        <fieldset disabled={disabled} className="typography-control">
           <legend>{t("appearance.textSize")}</legend>
-          <div className="scale-options">
+          <label className="sr-only" htmlFor="interface-font-size">
+            {t("appearance.textSize")}
+          </label>
+          <select
+            id="interface-font-size"
+            value={snapshot.settings.textScale}
+            onChange={(event) =>
+              update({ textScale: Number(event.target.value) as SettingsPatch["textScale"] })
+            }
+          >
             {([0.875, 1, 1.125, 1.25, 1.5] as const).map((scale) => (
-              <button
-                type="button"
-                key={scale}
-                data-scale={scale}
-                aria-pressed={snapshot.settings.textScale === scale}
-                onClick={() => update({ textScale: scale })}
-              >
-                {t("appearance.percent", { percent: scale * 100 })}
-              </button>
+              <option key={scale} value={scale}>
+                {t("appearance.pixels", { size: 14 * scale })}
+              </option>
             ))}
-          </div>
+          </select>
         </fieldset>
         <p className="muted">{t("appearance.description")}</p>
         <p className="typography-interface-preview">{t("appearance.interfacePreview")}</p>

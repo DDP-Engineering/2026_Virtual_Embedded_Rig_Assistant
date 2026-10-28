@@ -211,7 +211,9 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
       expect(await app.evaluate(({ nativeTheme }) => nativeTheme.themeSource)).toBe(theme);
     }
     for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-      await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
+      await changeSetting(page, "appearance", () =>
+        page.locator("#interface-font-size").selectOption(String(scale)),
+      );
       await expect
         .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
         .toBe(`${14 * scale}px`);
@@ -223,9 +225,9 @@ test("foundation preferences and panel dimensions survive native restarts", asyn
         .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
         .toBe(`${14 * scale}px`);
       await page.locator('[data-i18n="nav.settings"]').click();
-      await expect(page.locator(`[data-scale="${scale}"]`)).toHaveAttribute("aria-pressed", "true");
+      await expect(page.locator("#interface-font-size")).toHaveValue(String(scale));
     }
-    await changeSetting(page, "appearance", () => page.locator('[data-scale="1"]').click());
+    await changeSetting(page, "appearance", () => page.locator("#interface-font-size").selectOption("1"));
     const sidebar = page.locator('[data-panel="sidebar"]');
     const before = await sidebar.boundingBox();
     const separator = await page.locator('[data-resize="sidebar"]').boundingBox();
@@ -458,7 +460,7 @@ test("newer settings stay read-only and byte-identical through native IPC and sh
     expect(snapshot).toMatchObject({ readOnly: true, settings: { schemaVersion: 4, theme: "system" } });
     await page.locator('[data-i18n="nav.settings"]').click();
     await expect(page.locator('[data-i18n="settings.readOnly"]')).toBeVisible();
-    for (const control of await page.locator("[data-theme-option], [data-scale], #language").all())
+    for (const control of await page.locator("[data-theme-option], #interface-font-size, #language").all())
       await expect(control).toBeDisabled();
     await page.locator('[data-toggle="sidebar"]').click();
     expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBeNull();

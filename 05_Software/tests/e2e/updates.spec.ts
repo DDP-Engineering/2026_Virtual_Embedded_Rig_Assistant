@@ -43,7 +43,9 @@ test("Updates controls/notes/banner are usable in en/ro/de at minimum size", asy
       for (const theme of ["light", "dark"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
-          await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
+          await changeSetting(page, "appearance", () =>
+            page.locator("#interface-font-size").selectOption(String(scale)),
+          );
           await panel.locator("#update-mode").selectOption("off");
           await panel.locator("#update-channel").selectOption("beta");
           await panel.locator('[data-i18n="updates.check"]').click();

@@ -133,7 +133,9 @@ test("compact navigation fits all languages, themes and text scales at minimum s
           await changeSetting(page, "appearance", () =>
             page.locator(`[data-theme-option="${theme}"]`).click(),
           );
-          await changeSetting(page, "appearance", () => page.locator(`[data-scale="${scale}"]`).click());
+          await changeSetting(page, "appearance", () =>
+            page.locator("#interface-font-size").selectOption(String(scale)),
+          );
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
           await expect
             .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
