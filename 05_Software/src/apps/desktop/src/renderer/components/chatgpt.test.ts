@@ -79,6 +79,10 @@ it("completes manual sign-in, clears secret draft/caches, offers subscription mo
   await act(async () => user.click(button("Complete sign-in")));
   await settle();
   expect(container.textContent).toContain("Signed in with ChatGPT");
+  expect(
+    [...container.querySelectorAll("button")].some((button) => button.textContent === "Sign in with ChatGPT"),
+  ).toBe(false);
+  expect(container.textContent).not.toContain("1455");
   expect(container.textContent).toContain("Token expires at");
   expect(container.querySelector("input")).toBeNull();
   await act(async () => client.invalidateQueries({ queryKey: ["chatgpt.status"] }));
@@ -96,6 +100,9 @@ it("completes manual sign-in, clears secret draft/caches, offers subscription mo
   await act(async () => user.click(button("Sign out")));
   await settle();
   expect(container.textContent).toContain("Not signed in");
+  expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Sign out")).toBe(
+    false,
+  );
   // A selected session reference remains visible as a fallback after sign-out.
   expect(container.querySelectorAll('option[value="chatgpt/mock-subscription"]')).toHaveLength(1);
 });
@@ -118,4 +125,19 @@ it.each(["ro", "de"])("uses localized controls in %s", async (lang) => {
   await mount();
   expect(container.textContent).toContain(i18n.t("chatgpt.title"));
   expect(button(i18n.t("chatgpt.signIn"))).toBeTruthy();
+});
+
+it("does not present an expired token as still valid", async () => {
+  await api.invoke("providers.chatgpt.login", {});
+  const state = await api.invoke("providers.chatgpt.status", {});
+  if (!state.promptId) throw Error("Missing mock sign-in prompt");
+  await api.invoke("providers.chatgpt.login", {
+    promptId: state.promptId,
+    manualCode: "http://127.0.0.1:1455/auth/callback?code=mock",
+  });
+  vi.spyOn(Date, "now").mockReturnValue(new Date("2040-01-01T00:00:00Z").getTime());
+  await mount();
+  expect(container.textContent).toContain("Token renewal is due");
+  expect(container.textContent).not.toContain("Token expires at");
+  expect(button("Sign out")).toBeTruthy();
 });

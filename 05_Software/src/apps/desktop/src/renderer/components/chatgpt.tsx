@@ -51,8 +51,8 @@ export function Chatgpt({ disabled }: { disabled: boolean }) {
   const waiting = state?.state === "pending" || state?.state === "manual";
   return (
     <div data-provider="chatgpt" className="provider-card">
-      <h3>{t("chatgpt.title")}</h3>
-      <p className="muted">{t("chatgpt.description")}</p>
+      <h4>{t("chatgpt.title")}</h4>
+      {!state?.connected && <p className="muted">{t("chatgpt.description")}</p>}
       {(error !== undefined || status.isError || state?.error) && (
         <ErrorMessage error={error ?? status.error ?? state?.error} />
       )}
@@ -63,20 +63,23 @@ export function Chatgpt({ disabled }: { disabled: boolean }) {
             ? t("chatgpt.waiting")
             : t("chatgpt.disconnected")}
       </p>
-      {state?.expiresAt && (
+      {state?.connected && state.expiresAt && (
         <p>
-          {t("chatgpt.expires", {
-            time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(
-              new Date(state.expiresAt),
-            ),
-          })}
+          {new Date(state.expiresAt).getTime() > Date.now()
+            ? t("chatgpt.expires", {
+                time: new Intl.DateTimeFormat(i18n.language, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }).format(new Date(state.expiresAt)),
+              })
+            : t("chatgpt.renewalDue")}
         </p>
       )}
       <div className="workbench-actions">
-        {!waiting && (
+        {state && !state.connected && !waiting && state.state !== "consent-required" && (
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || status.isError}
             onClick={() => void run(() => api.invoke("providers.chatgpt.login", {}))}
           >
             {t("chatgpt.signIn")}
@@ -94,7 +97,7 @@ export function Chatgpt({ disabled }: { disabled: boolean }) {
             {t("providers.cancel")}
           </button>
         )}
-        {state?.connected && (
+        {state?.connected && !waiting && (
           <button
             type="button"
             disabled={busy}

@@ -128,11 +128,11 @@
     "openNamed": "Deschide {{name}}"
   },
   "providers": {
-    "description": "Configurează API-ul OpenAI și endpoint-uri compatibile OpenAI. Cheile rămân în depozitul de credențiale al aplicației desktop.",
+    "description": "Gestionează abonamentele și conexiunile API sau locale. Poți folosi mai mulți provideri simultan.",
     "openai": "API OpenAI",
     "openaiKey": "Cheie API OpenAI",
     "openaiModel": "Model OpenAI (opțional)",
-    "custom": "Endpoint-uri personalizate",
+    "custom": "Conexiune API / locală",
     "name": "Numele endpoint-ului",
     "baseUrl": "URL de bază",
     "model": "Model",
@@ -148,7 +148,7 @@
     "save": "Salvează",
     "remove": "Elimină",
     "edit": "Editează",
-    "add": "Adaugă endpoint",
+    "add": "Adaugă o conexiune",
     "cancel": "Anulează",
     "saving": "Se salvează furnizorul…",
     "consentTitle": "Stocarea sigură a credențialelor nu este disponibilă",
@@ -171,7 +171,15 @@
     },
     "editNamed": "Editează {{name}}",
     "removeNamed": "Elimină {{name}}",
-    "testNamed": "Testează {{name}}"
+    "testNamed": "Testează {{name}}",
+    "subscriptions": "Abonamente",
+    "connections": "Conexiuni API / locale",
+    "multiple": "Aceste conexiuni pot fi folosite alături de abonament. Selectează providerul și modelul în fiecare conversație.",
+    "savedConnections": "Conexiunile tale",
+    "emptyConnections": "Nu ai adăugat încă o conexiune API sau locală.",
+    "provider": "Provider",
+    "other": "Alt provider compatibil",
+    "noKey": "Fără cheie API"
   },
   "provider": {
     "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
@@ -289,7 +297,7 @@
   },
   "chatgpt": {
     "title": "Abonament ChatGPT",
-    "description": "Autentifică-te în browserul sistemului. Revenirea folosește portul local 1455.",
+    "description": "Folosește abonamentul ChatGPT. Autentificarea deschide browserul sistemului.",
     "signIn": "Autentificare cu ChatGPT",
     "signOut": "Deconectare",
     "connected": "Autentificat cu ChatGPT",
@@ -301,7 +309,8 @@
     "timeout": "Autentificarea a expirat după 10 minute. Încearcă din nou.",
     "portBusy": "Portul 1455 este ocupat, adesea de o autentificare neterminată în Codex CLI. Anuleaz-o și încearcă din nou.",
     "loginFailed": "Autentificarea ChatGPT a eșuat. Încearcă din nou.",
-    "browserFailed": "Pagina de autentificare nu se poate deschide. Încearcă din nou."
+    "browserFailed": "Pagina de autentificare nu se poate deschide. Încearcă din nou.",
+    "renewalDue": "Tokenul trebuie reînnoit; reînnoirea se face automat la nevoie."
   },
   "documents": {
     "viewer": "Vizualizare document",

@@ -128,11 +128,11 @@
     "openNamed": "{{name}} öffnen"
   },
   "providers": {
-    "description": "Konfiguriere die OpenAI-API und OpenAI-kompatible Endpunkte. Schlüssel bleiben im Zugangsdaten-Speicher der Desktop-App.",
+    "description": "Verwalte Abonnements sowie API- oder lokale Verbindungen. Mehrere Anbieter können gleichzeitig verwendet werden.",
     "openai": "OpenAI-API",
     "openaiKey": "OpenAI-API-Schlüssel",
     "openaiModel": "OpenAI-Modell (optional)",
-    "custom": "Benutzerdefinierte Endpunkte",
+    "custom": "API- / lokale Verbindung",
     "name": "Name des Endpunkts",
     "baseUrl": "Basis-URL",
     "model": "Modell",
@@ -148,7 +148,7 @@
     "save": "Speichern",
     "remove": "Entfernen",
     "edit": "Bearbeiten",
-    "add": "Endpunkt hinzufügen",
+    "add": "Verbindung hinzufügen",
     "cancel": "Abbrechen",
     "saving": "Anbieter wird gespeichert…",
     "consentTitle": "Sichere Speicherung der Zugangsdaten nicht verfügbar",
@@ -171,7 +171,15 @@
     },
     "editNamed": "{{name}} bearbeiten",
     "removeNamed": "{{name}} entfernen",
-    "testNamed": "{{name}} testen"
+    "testNamed": "{{name}} testen",
+    "subscriptions": "Abonnements",
+    "connections": "API- / lokale Verbindungen",
+    "multiple": "Diese Verbindungen können neben deinem Abonnement verwendet werden. Wähle Anbieter und Modell in jeder Unterhaltung.",
+    "savedConnections": "Deine Verbindungen",
+    "emptyConnections": "Noch keine API- oder lokale Verbindung hinzugefügt.",
+    "provider": "Anbieter",
+    "other": "Anderer kompatibler Anbieter",
+    "noKey": "Ohne API-Schlüssel"
   },
   "provider": {
     "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
@@ -289,7 +297,7 @@
   },
   "chatgpt": {
     "title": "ChatGPT-Abonnement",
-    "description": "Im Systembrowser anmelden. Die Rückleitung verwendet den lokalen Port 1455.",
+    "description": "Verwende dein ChatGPT-Abonnement. Die Anmeldung öffnet den Systembrowser.",
     "signIn": "Mit ChatGPT anmelden",
     "signOut": "Abmelden",
     "connected": "Mit ChatGPT angemeldet",
@@ -301,7 +309,8 @@
     "timeout": "Die Anmeldung wurde nach 10 Minuten beendet. Erneut versuchen.",
     "portBusy": "Port 1455 ist belegt, häufig durch eine unvollständige Anmeldung in der Codex CLI. Diese Anmeldung abbrechen und erneut versuchen.",
     "loginFailed": "ChatGPT-Anmeldung fehlgeschlagen. Erneut versuchen.",
-    "browserFailed": "Die Anmeldeseite kann nicht geöffnet werden. Erneut versuchen."
+    "browserFailed": "Die Anmeldeseite kann nicht geöffnet werden. Erneut versuchen.",
+    "renewalDue": "Das Token muss erneuert werden; dies erfolgt bei Bedarf automatisch."
   },
   "documents": {
     "viewer": "Dokumentanzeige",

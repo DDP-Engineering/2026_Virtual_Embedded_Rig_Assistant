@@ -128,11 +128,11 @@
     "openNamed": "Open {{name}}"
   },
   "providers": {
-    "description": "Configure the OpenAI API and OpenAI-compatible endpoints. Keys stay in the desktop credential store.",
+    "description": "Manage subscriptions and API or local connections. You can use several providers at the same time.",
     "openai": "OpenAI API",
     "openaiKey": "OpenAI API key",
     "openaiModel": "OpenAI model (optional)",
-    "custom": "Custom endpoints",
+    "custom": "API / local connection",
     "name": "Endpoint name",
     "baseUrl": "Base URL",
     "model": "Model",
@@ -148,7 +148,7 @@
     "save": "Save",
     "remove": "Remove",
     "edit": "Edit",
-    "add": "Add endpoint",
+    "add": "Add connection",
     "cancel": "Cancel",
     "saving": "Saving provider…",
     "consentTitle": "Secure credential storage unavailable",
@@ -171,7 +171,15 @@
     },
     "editNamed": "Edit {{name}}",
     "removeNamed": "Remove {{name}}",
-    "testNamed": "Test {{name}}"
+    "testNamed": "Test {{name}}",
+    "subscriptions": "Subscriptions",
+    "connections": "API / local connections",
+    "multiple": "These connections can be used alongside your subscription. Select the provider and model in each conversation.",
+    "savedConnections": "Your connections",
+    "emptyConnections": "No API or local connections added yet.",
+    "provider": "Provider",
+    "other": "Other compatible provider",
+    "noKey": "Without API key"
   },
   "provider": {
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
@@ -289,7 +297,7 @@
   },
   "chatgpt": {
     "title": "ChatGPT subscription",
-    "description": "Sign in in your system browser. The callback uses local port 1455.",
+    "description": "Use your ChatGPT subscription. Sign in opens your system browser.",
     "signIn": "Sign in with ChatGPT",
     "signOut": "Sign out",
     "connected": "Signed in with ChatGPT",
@@ -301,7 +309,8 @@
     "timeout": "Sign-in timed out after 10 minutes. Try again.",
     "portBusy": "Port 1455 is busy, often because a sign-in in the Codex CLI is unfinished. Cancel that sign-in and try again.",
     "loginFailed": "ChatGPT sign-in failed. Try again.",
-    "browserFailed": "Cannot open the sign-in page. Try again."
+    "browserFailed": "Cannot open the sign-in page. Try again.",
+    "renewalDue": "Token renewal is due; it renews automatically when needed."
   },
   "documents": {
     "viewer": "Document viewer",

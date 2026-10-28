@@ -200,15 +200,16 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await page.locator('[data-section="providers"]').click();
     const providerSection = page.locator('[data-settings-section="providers"]');
     const fakeKey = "fak-browser-only-private-middle-8Zx4";
+    await providerSection.locator('[data-action="add-provider"]').click();
     await providerSection.getByLabel("OpenAI API key", { exact: true }).fill(fakeKey);
     await providerSection
-      .locator('[data-provider="openai"]')
+      .locator('[data-provider-editor="openai"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
-    await expect(providerSection.getByLabel("OpenAI API key", { exact: true })).toHaveValue("");
+    await expect(providerSection.getByLabel("OpenAI API key", { exact: true })).toHaveCount(0);
     await expect(providerSection.locator("[data-provider-hint]")).toHaveText("fak…8Zx4");
     expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
-    await providerSection.getByRole("button", { name: "Add endpoint", exact: true }).click();
+    await providerSection.getByRole("button", { name: "Add connection", exact: true }).click();
     await providerSection.getByLabel("Endpoint name", { exact: true }).fill("Browser fixture");
     await providerSection.getByLabel("Model", { exact: true }).fill("fake-browser-model");
     const localizedNames = { en: "Endpoint name", ro: "Numele endpoint-ului", de: "Name des Endpunkts" };
@@ -234,7 +235,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus.
     const controls = await page
       .locator(
-        "button:enabled:visible, select:enabled:visible, input:enabled:visible, textarea:enabled:visible, [data-resize]:visible",
+        "button:enabled:visible:not([tabindex='-1']), select:enabled:visible, input:enabled:visible, textarea:enabled:visible, [data-resize]:visible",
       )
       .count();
     await page.evaluate(() => {

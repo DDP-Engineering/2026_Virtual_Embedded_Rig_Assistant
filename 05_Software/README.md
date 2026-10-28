@@ -45,6 +45,13 @@ Appearance offers the same six named sizes for interface, conversation and code/
 Extra small, Small, Normal, Large, Extra large and Largest. Sizes remain independent,
 with immediate previews; numeric dimensions are internal. Normal is the default.
 Changes save automatically; Restore default text sizes resets only these three controls.
+Providers separates Subscriptions from API / local connections. Saved connections have
+Edit/Test/Remove actions; Add connection opens an OpenAI API, LM Studio, Ollama or other
+compatible-provider editor. Local presets prefill editable addresses without model names;
+keys are optional for local/custom connections. Multiple connections coexist with ChatGPT.
+ChatGPT shows only Sign in or Sign out as appropriate; callback ports stay out of the summary.
+Preset addresses follow [LM Studio](https://lmstudio.ai/docs/developer/openai-compat/tools)
+and [Ollama](https://github.com/ollama/ollama/blob/main/docs/api/introduction.mdx).
 Development (`npm run dev`) watches main/preload modules as well as the renderer,
 so shared IPC/settings contract changes rebuild the native layers automatically.
 F10 focuses the menu bar; arrow keys move between menus. Application information lives

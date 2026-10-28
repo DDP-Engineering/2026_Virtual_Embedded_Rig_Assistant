@@ -1,5 +1,5 @@
 import type { ProviderTestResult } from "@vera/shared";
-import { useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
@@ -9,11 +9,15 @@ export function ProviderTest({
   version,
   disabled,
   name,
+  before,
+  after,
 }: {
   id: "openai" | `custom:${string}`;
   version: string;
   disabled: boolean;
   name?: string;
+  before?: ReactNode;
+  after?: ReactNode;
 }) {
   const { t } = useTranslation();
   const label = useId();
@@ -60,24 +64,30 @@ export function ProviderTest({
   };
   return (
     <fieldset className="provider-test" aria-labelledby={label} aria-busy={pending}>
-      <button
-        type="button"
-        id={label}
-        data-provider-test={id}
-        aria-label={t("providers.testNamed", { name: name ?? id })}
-        data-i18n="providers.test"
-        disabled={disabled || pending}
-        onClick={() => void run()}
-      >
-        {t("providers.test")}
-      </button>
-      <p
-        role="status"
-        aria-live="polite"
-        data-i18n={pending ? "providers.testing" : result ? "providers.testComplete" : undefined}
-      >
-        {pending ? t("providers.testing") : result ? t("providers.testComplete") : ""}
-      </p>
+      <div className="workbench-actions provider-actions">
+        {before}
+        <button
+          type="button"
+          id={label}
+          data-provider-test={id}
+          aria-label={t("providers.testNamed", { name: name ?? id })}
+          data-i18n="providers.test"
+          disabled={disabled || pending}
+          onClick={() => void run()}
+        >
+          {t("providers.test")}
+        </button>
+        {after}
+      </div>
+      {(pending || result) && (
+        <p
+          role="status"
+          aria-live="polite"
+          data-i18n={pending ? "providers.testing" : result ? "providers.testComplete" : undefined}
+        >
+          {pending ? t("providers.testing") : result ? t("providers.testComplete") : ""}
+        </p>
+      )}
       {error !== undefined && <ErrorMessage error={error} />}
       {result && (
         <ol className="provider-test-results">

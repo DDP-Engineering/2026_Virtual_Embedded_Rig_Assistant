@@ -118,12 +118,14 @@ test("provider UI saves masked keys and exposes only bounded hints in every IPC 
     app = await launch(data);
     const page = await app.firstWindow();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.locator('[data-section="providers"]').click();
     const section = page.locator('[data-settings-section="providers"]');
+    await section.locator('[data-action="add-provider"]').click();
     const input = section.getByLabel("OpenAI API key", { exact: true });
     await expect(input).toHaveAttribute("type", "password");
     await input.fill(key);
     await section
-      .locator('[data-provider="openai"]')
+      .locator('[data-provider-editor="openai"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
     const status = await page.evaluate(() =>
@@ -131,17 +133,19 @@ test("provider UI saves masked keys and exposes only bounded hints in every IPC 
     );
     if (!status.secureStorage)
       await section.getByRole("button", { name: "Use only for this run", exact: true }).click();
-    await expect(input).toHaveValue("");
+    await expect(input).toHaveCount(0);
     await expect(section.locator('[data-provider="openai"] [data-provider-hint]')).toHaveText("fak…9Zx4");
     await audit(app);
     await page.reload();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.locator('[data-section="providers"]').click();
     await expect(section.locator('[data-provider="openai"] [data-provider-hint]')).toHaveText("fak…9Zx4");
     await audit(app);
     await app.close();
     app = await launch(data);
     const restart = await app.firstWindow();
     await restart.getByRole("button", { name: "Settings", exact: true }).click();
+    await restart.locator('[data-section="providers"]').click();
     if (status.secureStorage) {
       await expect(restart.locator('[data-provider="openai"] [data-provider-hint]')).toHaveText("fak…9Zx4");
       expect(existsSync(join(data, "credentials.json"))).toBe(true);
@@ -175,6 +179,10 @@ test("provider UI saves masked keys and exposes only bounded hints in every IPC 
     await expect
       .poll(() => running.evaluate(() => (Reflect.get(globalThis, "veraProviderEvents") as unknown[]).length))
       .toBeGreaterThan(beforeEvents);
+    await restart
+      .locator('[data-provider="openai"]')
+      .getByRole("button", { name: "Edit OpenAI API", exact: true })
+      .click();
     await expect(restart.getByLabel("OpenAI model (optional)", { exact: true })).toHaveValue(
       "event-regression",
     );
@@ -192,8 +200,10 @@ test("custom provider add edit remove and explicit weak storage choices", async 
     app = await launch(data);
     const page = await app.firstWindow();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.locator('[data-section="providers"]').click();
     const section = page.locator('[data-settings-section="providers"]');
-    await section.getByRole("button", { name: "Add endpoint" }).click();
+    await section.getByRole("button", { name: "Add connection" }).click();
+    await section.locator("[data-provider-preset]").selectOption("ollama");
     await section.getByLabel("Endpoint name", { exact: true }).fill("Local fixture");
     await section.getByLabel("Base URL", { exact: true }).fill("http://localhost:11434/v1");
     await section.getByLabel("Model", { exact: true }).fill("fake-model");
@@ -203,7 +213,7 @@ test("custom provider add edit remove and explicit weak storage choices", async 
       .click();
     const row = section.locator('[data-provider="custom:local-fixture"]');
     await expect(row).toBeVisible();
-    await row.getByRole("button", { name: "Edit", exact: true }).click();
+    await row.getByRole("button", { name: "Edit Local fixture", exact: true }).click();
     await section.getByLabel("Model", { exact: true }).fill("edited-fake-model");
     await section.getByLabel("Endpoint API key", { exact: true }).fill(key);
     await section
@@ -218,7 +228,7 @@ test("custom provider add edit remove and explicit weak storage choices", async 
     await expect(section.locator('[data-provider-editor="custom"]')).toHaveCount(0);
     await expect(row).toContainText("edited-fake-model");
     await audit(app);
-    await row.getByRole("button", { name: "Remove", exact: true }).click();
+    await row.getByRole("button", { name: "Remove Local fixture", exact: true }).click();
     await expect(row).toHaveCount(0);
     await audit(app);
     await app.close();
