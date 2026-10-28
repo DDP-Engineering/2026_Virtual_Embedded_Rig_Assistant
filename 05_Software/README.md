@@ -246,6 +246,11 @@ document indexing exclude `.vera`; skills use the dedicated bounded loader.
 The current layout is authoritative: opening requires `.vera/workbench.yaml`.
 Root-level files are ordinary project content and are never detected or migrated.
 Global application settings, credentials and user skills remain in userData.
+Workbench creation and opening manage only `.vera/`; they do not create or impose
+a `docs/` directory. Document folders belong to the user. The default `docs/**`
+indexing pattern is configurable through `docs.include` and `docs.exclude` in
+`.vera/workbench.yaml` and does not create folders. Existing document folders are
+left in place.
 
 Welcome creates a workbench in an existing chosen folder without .vera/workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema4 settings; versions0/1/2/3 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the .vera/WORKBENCH.md editor; context above16KB warns and saves full content.
 

@@ -370,7 +370,7 @@ export class WorkbenchService {
     await ordinary(join(folder, ".vera"), true);
     for (const file of [".vera/workbench.yaml", ".vera/WORKBENCH.md", ".vera/.veraignore"])
       await ordinary(join(folder, file), false);
-    for (const dir of ["docs", ".vera/skills"]) await ordinary(join(folder, dir), true);
+    await ordinary(join(folder, ".vera/skills"), true);
     for (const file of [".gitignore", "lock"]) await ordinary(join(folder, ".vera", file), false);
   }
   private async config(folder: string): Promise<WorkbenchConfig> {
@@ -405,7 +405,7 @@ export class WorkbenchService {
         if (code(error) === "EEXIST") throw veraError("CONFLICT");
         throw error;
       }
-      for (const dir of ["docs", ".vera/skills"]) await mkdir(join(folder, dir), { recursive: true });
+      await mkdir(join(folder, ".vera/skills"), { recursive: true });
       try {
         await exclusive(join(folder, ".vera/WORKBENCH.md"), pinnedTemplate(config.name));
       } catch (error) {

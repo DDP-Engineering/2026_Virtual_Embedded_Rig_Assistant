@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import Database from "better-sqlite3";
@@ -70,13 +70,31 @@ it("creates project metadata only inside .vera and reopens it", async () => {
     expect(existsSync(join(h.folder, ".vera/workbench.yaml"))).toBe(true);
     expect(existsSync(join(h.folder, ".vera/WORKBENCH.md"))).toBe(true);
     expect(existsSync(join(h.folder, ".vera/skills"))).toBe(true);
-    for (const name of ["workbench.yaml", "WORKBENCH.md", "skills"])
+    for (const name of ["docs", "workbench.yaml", "WORKBENCH.md", "skills"])
       expect(existsSync(join(h.folder, name))).toBe(false);
     await h.service.updatePinned("Project context");
     await h.service.updateConfig({ name: "Updated" });
     await h.service.close();
     expect((await h.service.open(h.folder)).config.id).toBe(created.config.id);
     expect((await h.service.getPinned()).content).toBe("Project context");
+    expect(await readdir(h.folder)).toEqual([".vera"]);
+  } finally {
+    await h.service.close();
+  }
+});
+it.each(["file", "directory"])("leaves user-owned docs %s unchanged on create and open", async (kind) => {
+  const h = await harness();
+  const docs = join(h.folder, "docs");
+  if (kind === "directory") await mkdir(docs);
+  const path = kind === "file" ? docs : join(docs, "notes.md");
+  await writeFile(path, "User content");
+  try {
+    await h.service.create(h.folder, "User-owned documents");
+    await h.service.close();
+    await h.service.open(h.folder);
+    expect(await readFile(path, "utf8")).toBe("User content");
+    expect((await readdir(h.folder)).sort()).toEqual([".vera", "docs"]);
+    if (kind === "directory") expect(await readdir(docs)).toEqual(["notes.md"]);
   } finally {
     await h.service.close();
   }
@@ -173,7 +191,7 @@ it("create/open roundtrip writes validating YAML/template/runtime and preserves 
   expect(await readFile(join(h.folder, ".vera/.gitignore"), "utf8")).toBe(
     "*\n!.gitignore\n!workbench.yaml\n!WORKBENCH.md\n!.veraignore\n!skills/\n!skills/**\n",
   );
-  expect(existsSync(join(h.folder, "docs"))).toBe(true);
+  expect(existsSync(join(h.folder, "docs"))).toBe(false);
   expect(existsSync(join(h.folder, ".vera/skills"))).toBe(true);
   await expect(h.service.create(h.folder, "Other")).rejects.toMatchObject({ code: "CONFLICT" });
   await h.service.close();
@@ -225,6 +243,7 @@ it("Docs search verifies current source hash/status/kind/locator and rejects edi
     const opened = await h.service.create(h.folder, "Current docs"),
       path = "docs/current.md";
     const text = "# Supply\nCURRENT_DOC_TOKEN123 3.3 V\n# Reset\nCURRENT_DOC_TOKEN123 assert reset\n";
+    await mkdir(join(h.folder, "docs"));
     await writeFile(join(h.folder, path), text);
     const sha256 = createHash("sha256").update(text).digest("hex");
     const result = await createDocumentProcessor(async () => {

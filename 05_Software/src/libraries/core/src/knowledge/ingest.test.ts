@@ -60,6 +60,7 @@ async function harness(processDocument?: DocumentProcessor) {
   );
   cleanup.push(() => service.close());
   await service.create(folder, "Ingest");
+  await mkdir(join(folder, "docs"), { recursive: true });
   const db = service.getDatabase();
   const row = () =>
     db.prepare("SELECT * FROM documents WHERE path='docs/board.md'").get() as
