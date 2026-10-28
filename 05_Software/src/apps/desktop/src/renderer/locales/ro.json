@@ -413,5 +413,26 @@
     "view": "Vizualizare",
     "help": "Ajutor",
     "unavailable": "Meniul aplicației nu a putut fi deschis. Încearcă din nou."
+  },
+  "discovery": {
+    "keyHelp": "Opțională pentru LM Studio. Testarea nu salvează cheia.",
+    "test": "Testează conexiunea",
+    "testing": "Se citesc modelele…",
+    "found": "Conexiune verificată. Modele de conversație găsite: {{count}}.",
+    "perModel": "Aceste setări sunt salvate separat pentru fiecare model. Modelele de embeddings sunt excluse.",
+    "maximum": "Context maxim al modelului: {{count}} tokeni.",
+    "loaded": "Context încărcat în prezent: {{count}} tokeni.",
+    "unknownContext": "Serverul nu a raportat limita contextului. Configurează manual limita VERA.",
+    "reasoning": "Raționament (opțional)",
+    "temperature": "Temperatură (opțională)",
+    "default": "Implicit la provider",
+    "defaultsHelp": "Lasă parametrii opționali necompletați pentru valorile implicite ale providerului. Limita de ieșire este configurată de VERA, nu raportată de server.",
+    "invalidLimits": "Verifică limitele de context și ieșire ale modelelor. Contextul activ trebuie să includă intrarea, ieșirea și marja de siguranță.",
+    "off": "Dezactivat",
+    "on": "Activat",
+    "low": "Redus",
+    "medium": "Mediu",
+    "high": "Ridicat",
+    "xhigh": "Foarte ridicat"
   }
 }

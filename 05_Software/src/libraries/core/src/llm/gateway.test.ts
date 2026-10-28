@@ -371,3 +371,54 @@ describe("model gateway", () => {
     expect(() => gateway.capabilities("openai/invented-model")).toThrow();
   });
 });
+
+it("uses per-model discovered context and optional LM Studio generation parameters", async () => {
+  const payloads: Record<string, unknown>[] = [];
+  const { url } = await endpoint((req, res) => {
+    let raw = "";
+    req.on("data", (part) => {
+      raw += part;
+    });
+    req.on("end", () => {
+      payloads.push(JSON.parse(raw));
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.end(
+        `data: ${JSON.stringify({ id: "test", model: "org/model", choices: [{ index: 0, delta: { content: "OK" }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`,
+      );
+    });
+  });
+  const { settings, gateway } = setup(url);
+  const local = settings.providers.custom[0];
+  if (!local) throw Error("Missing local provider");
+  local.protocol = "lmstudio";
+  local.models = [
+    {
+      id: "org/model",
+      name: "First",
+      maxContextWindow: 262144,
+      loadedContextWindow: 65536,
+      contextWindow: 65536,
+      maxOutputTokens: 4096,
+      reasoningOptions: ["off", "on", "xhigh"],
+      reasoningDefault: "xhigh",
+      reasoning: "off",
+      temperature: 0,
+    },
+    { id: "other", name: "Second", contextWindow: 32768, maxOutputTokens: 2048, reasoningOptions: [] },
+  ];
+  expect(gateway.capabilities("custom:local/org/model").contextWindow).toBe(65536);
+  expect(gateway.capabilities("custom:local/other").contextWindow).toBe(32768);
+  expect((await gateway.models("custom:local")).models.map((m) => m.contextWindow)).toEqual([65536, 32768]);
+  await events(gateway);
+  expect(payloads[0]).toMatchObject({ temperature: 0, reasoning_effort: "none" });
+  const profile = local.models[0];
+  if (!profile) throw Error("Missing model");
+  profile.reasoning = "on";
+  await events(gateway);
+  expect(payloads[1]).toMatchObject({ reasoning_effort: "xhigh" });
+  delete profile.reasoning;
+  delete profile.temperature;
+  await events(gateway);
+  expect(payloads[2]).not.toHaveProperty("temperature");
+  expect(payloads[2]).not.toHaveProperty("reasoning_effort");
+});

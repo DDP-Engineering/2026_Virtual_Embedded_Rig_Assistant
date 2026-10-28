@@ -56,7 +56,17 @@ export class ProviderSettings {
     };
     const custom = await Promise.all(
       settings.providers.custom.map(async (config) => {
-        const { name, slug, baseUrl, model, contextWindow, maxOutputTokens, supportsTools } = config;
+        const {
+          name,
+          slug,
+          baseUrl,
+          model,
+          contextWindow,
+          maxOutputTokens,
+          supportsTools,
+          protocol,
+          models,
+        } = config;
         return {
           id: `custom:${slug}`,
           name,
@@ -66,6 +76,8 @@ export class ProviderSettings {
           contextWindow,
           maxOutputTokens,
           ...(supportsTools === undefined ? {} : { supportsTools }),
+          ...(protocol ? { protocol } : {}),
+          ...(models ? { models } : {}),
           ...(await metadata(`custom:${slug}`, true)),
         };
       }),

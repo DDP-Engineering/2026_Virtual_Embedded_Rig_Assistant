@@ -10,6 +10,7 @@ import {
   viewerContentSchema,
 } from "./documents.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
+import { providerDiscoveryRequestSchema, providerDiscoverySchema } from "./provider-discovery.js";
 import {
   modelReferenceSchema,
   providerCatalogSchema,
@@ -251,6 +252,11 @@ export const channels = {
     "session.mode.set",
     z.strictObject({ sessionId: sessionIdSchema, mode: permissionModeSchema }),
     sessionSummarySchema,
+  ),
+  "providers.discover": defineChannel(
+    "providers.discover",
+    providerDiscoveryRequestSchema,
+    providerDiscoverySchema,
   ),
   "providers.models": defineChannel("providers.models", providerModelsRequestSchema, providerCatalogSchema),
   "providers.test": defineChannel("providers.test", providerTestRequestSchema, providerTestResultSchema),

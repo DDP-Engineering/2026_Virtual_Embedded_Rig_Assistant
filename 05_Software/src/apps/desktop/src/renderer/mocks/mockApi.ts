@@ -376,6 +376,25 @@ export function createMockApi(
         value = sessions.reveal(path);
         break;
       }
+      case "providers.discover": {
+        const request = channels["providers.discover"].request.parse(input.data);
+        value = {
+          baseUrl: `${new URL(request.endpoint).origin}/v1`,
+          models: [
+            {
+              id: "mock-local",
+              name: "Mock local",
+              maxContextWindow: 262144,
+              loadedContextWindow: 65536,
+              supportsTools: true,
+              reasoningOptions: ["off", "on", "low", "medium", "high"],
+              reasoningDefault: "on",
+            },
+            { id: "mock-small", name: "Mock small", maxContextWindow: 32768, reasoningOptions: [] },
+          ],
+        };
+        break;
+      }
       case "providers.models": {
         const { id } = input.data as Request<"providers.models">;
         if (id === "chatgpt") {
@@ -396,21 +415,31 @@ export function createMockApi(
         } else {
           const config = settings.providers.custom.find((c) => `custom:${c.slug}` === id);
           if (!config) throw veraError("NOT_FOUND");
-          const safetyMargin = Math.max(1024, Math.ceil(config.contextWindow * 0.05));
           value = {
             reachability: "pass",
-            models: [
-              {
-                id: config.model,
-                name: config.model,
-                reference: `${id}/${config.model}`,
-                contextWindow: config.contextWindow,
-                maxOutputTokens: config.maxOutputTokens,
+            models: (
+              config.models ?? [
+                {
+                  id: config.model,
+                  name: config.model,
+                  contextWindow: config.contextWindow,
+                  maxOutputTokens: config.maxOutputTokens,
+                  supportsTools: config.supportsTools,
+                },
+              ]
+            ).map((profile) => {
+              const safetyMargin = Math.max(1024, Math.ceil(profile.contextWindow * 0.05));
+              return {
+                id: profile.id,
+                name: profile.name,
+                reference: `${id}/${profile.id}`,
+                contextWindow: profile.contextWindow,
+                maxOutputTokens: profile.maxOutputTokens,
                 safetyMargin,
-                inputBudget: config.contextWindow - config.maxOutputTokens - safetyMargin,
-                ...(config.supportsTools === undefined ? {} : { supportsTools: config.supportsTools }),
-              },
-            ],
+                inputBudget: profile.contextWindow - profile.maxOutputTokens - safetyMargin,
+                ...(profile.supportsTools === undefined ? {} : { supportsTools: profile.supportsTools }),
+              };
+            }),
           };
         }
         break;

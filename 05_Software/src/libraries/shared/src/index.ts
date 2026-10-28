@@ -6,6 +6,7 @@ export * from "./chatgpt.js";
 export * from "./documents.js";
 export * from "./events.js";
 export * from "./ipc.js";
+export * from "./provider-discovery.js";
 export * from "./providers.js";
 export * from "./refs.js";
 export * from "./session.js";

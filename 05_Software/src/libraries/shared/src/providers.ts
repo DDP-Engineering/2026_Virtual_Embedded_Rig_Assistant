@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { veraErrorSchema } from "./errors.js";
+import { modelProfileSchema } from "./provider-discovery.js";
 
 export const customProviderIdSchema = z
   .string()
@@ -72,12 +73,23 @@ const configFields = {
   contextWindow: positive.default(32768),
   maxOutputTokens: positive.default(4096),
   supportsTools: z.boolean().optional(),
+  protocol: z.literal("lmstudio").optional(),
+  models: z.array(modelProfileSchema).max(10000).optional(),
 };
-function budget(value: { contextWindow: number; maxOutputTokens: number }): boolean {
+function budget(value: {
+  contextWindow: number;
+  maxOutputTokens: number;
+  protocol?: "lmstudio" | undefined;
+  models?: { id: string }[] | undefined;
+  model?: string | undefined;
+}): boolean {
   return (
-    value.contextWindow - value.maxOutputTokens - Math.max(1024, Math.ceil(value.contextWindow * 0.05)) > 0
+    value.contextWindow - value.maxOutputTokens - Math.max(1024, Math.ceil(value.contextWindow * 0.05)) > 0 &&
+    (value.protocol !== "lmstudio" || !!value.models?.some((m) => m.id === value.model)) &&
+    (!value.models || new Set(value.models.map((m) => m.id)).size === value.models.length)
   );
 }
+
 export const customConfigSchema = z.strictObject(configFields).refine(budget);
 function noSecretFields(value: unknown): boolean {
   if (Array.isArray(value)) return value.every(noSecretFields);

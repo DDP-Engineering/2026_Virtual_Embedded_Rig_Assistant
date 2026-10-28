@@ -28,17 +28,19 @@ export interface GatewayHost {
 }
 type Custom = Settings["providers"]["custom"][number];
 function customModel(config: Custom, provider: string, id = config.model): Model<"openai-completions"> {
+  const profile = config.models?.find((m) => m.id === id);
+  if (config.protocol === "lmstudio" && !profile) throw veraError("NOT_FOUND");
   return {
     id,
-    name: id,
+    name: profile?.name ?? id,
     api: "openai-completions",
     provider,
     baseUrl: config.baseUrl.replace(/\/+$/, ""),
-    reasoning: false,
+    reasoning: !!profile?.reasoningOptions.length,
     input: ["text"],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-    contextWindow: config.contextWindow,
-    maxTokens: config.maxOutputTokens,
+    contextWindow: profile?.contextWindow ?? config.contextWindow,
+    maxTokens: profile?.maxOutputTokens ?? config.maxOutputTokens,
     compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
   };
 }
@@ -186,7 +188,13 @@ export function createPiAiGateway(
     const model = customModel(custom, provider, id);
     const models = createModels({ credentials: host.credentials });
     models.setProvider(customProvider(custom, provider, model));
-    return { models, model, endpoint: custom.baseUrl, supportsTools: custom.supportsTools, slot: provider };
+    return {
+      models,
+      model,
+      endpoint: custom.baseUrl,
+      supportsTools: custom.models?.find((m) => m.id === id)?.supportsTools ?? custom.supportsTools,
+      slot: provider,
+    };
   };
   const gateway: LlmGateway & { collections: typeof collections } = {
     get collections() {
@@ -237,6 +245,18 @@ export function createPiAiGateway(
         const custom = config(provider);
         endpoint = custom.baseUrl;
         splitModelReference(`${provider}/${custom.model}`);
+        if (custom.protocol === "lmstudio" && custom.models) {
+          const listed = probe ? await list(endpoint, provider, signal) : null;
+          return {
+            reachability: listed === null ? "skipped" : "pass",
+            models: custom.models.map((profile) => ({
+              id: host.scrub(profile.id),
+              name: host.scrub(profile.name),
+              reference: host.scrub(`${provider}/${profile.id}`),
+              ...limits(customModel(custom, provider, profile.id), profile.supportsTools),
+            })),
+          };
+        }
         const ids = await list(endpoint, provider, signal);
         return {
           reachability: ids === null ? "skipped" : "pass",
@@ -290,6 +310,20 @@ export function createPiAiGateway(
             throw error;
           }
         };
+        const custom = resolved.slot.startsWith("custom:") ? config(resolved.slot) : undefined;
+        const profile =
+          custom?.protocol === "lmstudio"
+            ? custom.models?.find((m) => m.id === resolved.model.id)
+            : undefined;
+        // LM Studio's OpenAI-compatible route uses "none" for native "off".
+        const reasoningEffort =
+          profile?.reasoning === "off"
+            ? "none"
+            : profile?.reasoning === "on"
+              ? profile.reasoningDefault && !["off", "on"].includes(profile.reasoningDefault)
+                ? profile.reasoningDefault
+                : "medium"
+              : profile?.reasoning;
         const stream = resolved.models.stream(
           resolved.model,
           {
@@ -304,6 +338,15 @@ export function createPiAiGateway(
             maxRetries: 0,
             fetch: transport,
             transport: "sse",
+            ...(profile?.temperature === undefined ? {} : { temperature: profile.temperature }),
+            ...(profile?.reasoning === undefined
+              ? {}
+              : {
+                  onPayload: (payload: unknown) => ({
+                    ...(payload as Record<string, unknown>),
+                    reasoning_effort: reasoningEffort,
+                  }),
+                }),
             ...(request.sessionId ? { sessionId: request.sessionId } : {}),
           },
         );

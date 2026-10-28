@@ -321,6 +321,7 @@ ipcMain.handle(
         sessions.run((s) =>
           sanitizeSessionSummary(s.setMode(sessionId, mode), (text) => credentials.scrub(text)),
         ),
+      "providers.discover": (request) => modelGateway.discover(request),
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),

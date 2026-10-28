@@ -6,6 +6,7 @@ import { api } from "../api/index.js";
 import { Chatgpt } from "./chatgpt.js";
 import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
+import { LmStudioEditor } from "./lmstudio-editor.js";
 import { ProviderTest } from "./provider-test.js";
 
 type Custom = ProviderList["custom"][number];
@@ -179,15 +180,19 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
               {list.data.custom.map((provider) => (
                 <li key={provider.id} data-provider={provider.id}>
                   {editing?.kind === "custom" && editing.provider.id === provider.id ? (
-                    <CustomEditor
-                      key={provider.id}
-                      initial={provider}
-                      preset="other"
-                      disabled={disabled}
-                      save={save}
-                      close={close}
-                      remove={() => void remove(provider.id as `custom:${string}`)}
-                    />
+                    provider.protocol === "lmstudio" ? (
+                      <LmStudioEditor initial={provider} disabled={disabled} save={save} close={close} />
+                    ) : (
+                      <CustomEditor
+                        key={provider.id}
+                        initial={provider}
+                        preset="other"
+                        disabled={disabled}
+                        save={save}
+                        close={close}
+                        remove={() => void remove(provider.id as `custom:${string}`)}
+                      />
+                    )
                   ) : (
                     <>
                       <div>
@@ -254,6 +259,8 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
                     close={close}
                     remove={() => {}}
                   />
+                ) : editing.preset === "lmstudio" ? (
+                  <LmStudioEditor initial={null} disabled={disabled} save={save} close={close} />
                 ) : (
                   <CustomEditor
                     key={editing.preset}

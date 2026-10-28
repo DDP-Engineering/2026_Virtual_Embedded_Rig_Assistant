@@ -413,5 +413,26 @@
     "view": "View",
     "help": "Help",
     "unavailable": "The application menu could not be opened. Try again."
+  },
+  "discovery": {
+    "keyHelp": "Optional for LM Studio. Testing does not save the key.",
+    "test": "Test connection",
+    "testing": "Reading models…",
+    "found": "Connection verified. Conversation models found: {{count}}.",
+    "perModel": "These settings are saved separately for each model. Embedding models are excluded.",
+    "maximum": "Model maximum context: {{count}} tokens.",
+    "loaded": "Currently loaded context: {{count}} tokens.",
+    "unknownContext": "The server did not report a context limit. Set the VERA context limit manually.",
+    "reasoning": "Reasoning (optional)",
+    "temperature": "Temperature (optional)",
+    "default": "Provider default",
+    "defaultsHelp": "Leave optional parameters unset to use provider defaults. The output limit is configured by VERA, not reported by the server.",
+    "invalidLimits": "Check the context and output limits for the models. The active context must fit input, output and the safety margin.",
+    "off": "Off",
+    "on": "On",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "xhigh": "Extra high"
   }
 }

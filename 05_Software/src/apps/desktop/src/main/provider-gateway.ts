@@ -2,12 +2,14 @@ import type { Clock, SettingsService } from "@vera/core";
 import { createPiAiGateway, type LlmGateway, resolveModelReference, testConnection } from "@vera/core";
 import {
   type ProviderCatalog,
+  type ProviderDiscoveryRequest,
   type ProviderTestResult,
   providerCatalogSchema,
   providerTestResultSchema,
   veraError,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
+import { discoverProvider } from "./provider-discovery.js";
 import type { ProviderSettings } from "./provider-settings.js";
 import { subscriptionStore } from "./subscription-store.js";
 
@@ -51,6 +53,11 @@ export class ProviderGateway {
       () => this.active.delete(task),
     );
     return task;
+  }
+  discover(request: ProviderDiscoveryRequest) {
+    return this.track(() =>
+      discoverProvider(request, { settings: this.settings, credentials: this.credentials }),
+    );
   }
   models(id: string): Promise<ProviderCatalog> {
     return this.track(async () => providerCatalogSchema.parse(await this.api.models(id)));

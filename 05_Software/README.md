@@ -50,6 +50,14 @@ Edit/Test/Remove actions; Add connection opens an OpenAI API, LM Studio, Ollama 
 compatible-provider editor. Local presets prefill editable addresses without model names;
 keys are optional for local/custom connections. Multiple connections coexist with ChatGPT.
 ChatGPT shows only Sign in or Sign out as appropriate; callback ports stay out of the summary.
+LM Studio setup accepts a server origin (or its `/v1` URL), then an optional key.
+Test connection reads the current `/api/v1/models` catalog before any configuration is
+saved. Only conversation models appear. Each model keeps its configured context/output
+limits and optional reasoning/temperature; loaded context is distinguished from maximum
+supported context. The conversation model selector uses these per-model limits. Unset
+parameters are omitted from inference requests; reasoning Off uses `reasoning_effort: none`
+on the compatible route, while On uses the reported effort default or Medium.
+Draft keys stay outside query caches and saved keys cannot be sent to a changed origin.
 Preset addresses follow [LM Studio](https://lmstudio.ai/docs/developer/openai-compat/tools)
 and [Ollama](https://github.com/ollama/ollama/blob/main/docs/api/introduction.mdx).
 Development (`npm run dev`) watches main/preload modules as well as the renderer,
