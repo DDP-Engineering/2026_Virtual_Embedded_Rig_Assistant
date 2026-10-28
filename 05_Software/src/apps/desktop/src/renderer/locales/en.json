@@ -71,8 +71,13 @@
     "chatPreview": "This is how a message in your conversation will look.",
     "codeSize": "Code and output text size",
     "codeDescription": "Applies to code blocks, diffs and technical text output.",
-    "pixels": "{{size}} px",
-    "resetSizes": "Restore default text sizes"
+    "resetSizes": "Restore default text sizes",
+    "extraSmall": "Extra small",
+    "small": "Small",
+    "normal": "Normal",
+    "large": "Large",
+    "extraLarge": "Extra large",
+    "largest": "Largest"
   },
   "language": {
     "label": "Interface language",

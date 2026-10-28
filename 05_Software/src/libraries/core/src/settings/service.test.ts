@@ -363,9 +363,9 @@ it("persists independent interface, conversation and code sizes without changing
   const h = harness();
   await h.service.load();
   const before = h.service.get().settings;
-  await h.service.update({ textScale: 0.875, chatFontSize: 12, codeFontSize: 22 });
+  await h.service.update({ textScale: 0.875, chatFontSize: 12, codeFontSize: 24 });
   const next = h.service.get().settings;
-  expect(next).toEqual({ ...before, textScale: 0.875, chatFontSize: 12, codeFontSize: 22 });
+  expect(next).toEqual({ ...before, textScale: 0.875, chatFontSize: 12, codeFontSize: 24 });
   const reload = harness(h.files.get("/data/settings.json"));
   await reload.service.load();
   expect(reload.service.get().settings).toEqual(next);
@@ -374,6 +374,8 @@ it("persists independent interface, conversation and code sizes without changing
     { codeFontSize: 33 },
     { chatFontSize: 14.5 },
     { codeFontSize: "large" },
+    { codeFontSize: 22 },
+    { textScale: 0.5 },
   ]) {
     await expect(reload.service.update(patch as never)).rejects.toMatchObject({ code: "INVALID" });
   }

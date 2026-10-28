@@ -71,8 +71,13 @@
     "chatPreview": "So wird eine Nachricht in deiner Unterhaltung aussehen.",
     "codeSize": "Textgröße für Code und Ausgaben",
     "codeDescription": "Gilt für Codeblöcke, Diffs und technische Textausgaben.",
-    "pixels": "{{size}} px",
-    "resetSizes": "Standardtextgrößen wiederherstellen"
+    "resetSizes": "Standardtextgrößen wiederherstellen",
+    "extraSmall": "Sehr klein",
+    "small": "Klein",
+    "normal": "Normal",
+    "large": "Groß",
+    "extraLarge": "Sehr groß",
+    "largest": "Maximal"
   },
   "language": {
     "label": "Sprache der Oberfläche",

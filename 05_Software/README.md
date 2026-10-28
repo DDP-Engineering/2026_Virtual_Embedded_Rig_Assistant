@@ -41,8 +41,9 @@ Settings opens its sidebar automatically and displays one selected category at a
 Up/Down and Home/End select categories. Providers, Appearance, Language, Updates and About
 contain current controls; Notifications, Keyboard shortcuts, Storage, Configuration and
 Data & privacy show a placeholder until implemented.
-Appearance displays all three text-size controls as pixel dropdowns: interface, conversation and code/output. It controls interface scale, conversation font size and code/output font size
-independently. Conversation/code sizes range from10–32px; unset overrides use14px.
+Appearance offers the same six named sizes for interface, conversation and code/output:
+Extra small, Small, Normal, Large, Extra large and Largest. Sizes remain independent,
+with immediate previews; numeric dimensions are internal. Normal is the default.
 Changes save automatically; Restore default text sizes resets only these three controls.
 F10 focuses the menu bar; arrow keys move between menus. Application information lives
 in Settings → About, while Home contains workbench creation/opening and recents.

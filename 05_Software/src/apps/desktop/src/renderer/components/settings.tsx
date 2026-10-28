@@ -53,6 +53,14 @@ export function Settings({
   const disabled = snapshot.readOnly || saving;
   const chatFontSize = snapshot.settings.chatFontSize ?? typographyDefaults.chatFontSize;
   const codeFontSize = snapshot.settings.codeFontSize ?? typographyDefaults.codeFontSize;
+  const sizes = [
+    { label: t("appearance.extraSmall"), scale: 0.75, size: 10 },
+    { label: t("appearance.small"), scale: 0.875, size: 12 },
+    { label: t("appearance.normal"), scale: 1, size: 14 },
+    { label: t("appearance.large"), scale: 1.125, size: 16 },
+    { label: t("appearance.extraLarge"), scale: 1.25, size: 20 },
+    { label: t("appearance.largest"), scale: 1.5, size: 24 },
+  ] as const;
   const themes = [
     { value: "light", label: t("appearance.light") },
     { value: "dark", label: t("appearance.dark") },
@@ -122,9 +130,9 @@ export function Settings({
               update({ textScale: Number(event.target.value) as SettingsPatch["textScale"] })
             }
           >
-            {([0.875, 1, 1.125, 1.25, 1.5] as const).map((scale) => (
+            {sizes.map(({ scale, label }) => (
               <option key={scale} value={scale}>
-                {t("appearance.pixels", { size: 14 * scale })}
+                {label}
               </option>
             ))}
           </select>
@@ -139,11 +147,13 @@ export function Settings({
           <select
             id="chat-font-size"
             value={chatFontSize}
-            onChange={(event) => update({ chatFontSize: Number(event.target.value) })}
+            onChange={(event) =>
+              update({ chatFontSize: Number(event.target.value) as SettingsPatch["chatFontSize"] })
+            }
           >
-            {Array.from({ length: 23 }, (_, index) => index + 10).map((size) => (
+            {sizes.map(({ size, label }) => (
               <option key={size} value={size}>
-                {t("appearance.pixels", { size })}
+                {label}
               </option>
             ))}
           </select>
@@ -158,11 +168,13 @@ export function Settings({
           <select
             id="code-font-size"
             value={codeFontSize}
-            onChange={(event) => update({ codeFontSize: Number(event.target.value) })}
+            onChange={(event) =>
+              update({ codeFontSize: Number(event.target.value) as SettingsPatch["codeFontSize"] })
+            }
           >
-            {Array.from({ length: 23 }, (_, index) => index + 10).map((size) => (
+            {sizes.map(({ size, label }) => (
               <option key={size} value={size}>
-                {t("appearance.pixels", { size })}
+                {label}
               </option>
             ))}
           </select>

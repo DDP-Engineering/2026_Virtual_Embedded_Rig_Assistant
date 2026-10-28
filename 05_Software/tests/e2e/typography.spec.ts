@@ -35,12 +35,19 @@ test("Appearance keeps interface, conversation and code sizes independent and re
     await page.locator('[data-section="appearance"]').click();
     for (const id of ["interface-font-size", "chat-font-size", "code-font-size"]) {
       const labels = await page.locator(`#${id} option`).allTextContents();
-      expect(labels.every((label) => label.trim().endsWith("px") && !label.includes("%"))).toBe(true);
+      expect(labels.map((label) => label.trim())).toEqual([
+        "Extra small",
+        "Small",
+        "Normal",
+        "Large",
+        "Extra large",
+        "Largest",
+      ]);
     }
     await page.locator("#chat-font-size").selectOption("12");
     await expect(page.locator("#chat-font-size")).toBeEnabled();
-    await page.locator("#code-font-size").selectOption("22");
-    for (const scale of ["0.875", "1.5"]) {
+    await page.locator("#code-font-size").selectOption("24");
+    for (const scale of ["0.75", "1.5"]) {
       await expect(page.locator("#interface-font-size")).toBeEnabled();
       await page.locator("#interface-font-size").selectOption(String(scale));
       await expect
@@ -55,13 +62,23 @@ test("Appearance keeps interface, conversation and code sizes independent and re
         .poll(() =>
           page.locator(".typography-code-preview code").evaluate((el) => getComputedStyle(el).fontSize),
         )
-        .toBe("22px");
+        .toBe("24px");
     }
     await page.locator('[data-section="language"]').click();
     await page.locator("#language").selectOption("ro");
     await page.locator('[data-section="appearance"]').click();
+    for (const id of ["interface-font-size", "chat-font-size", "code-font-size"]) {
+      expect((await page.locator(`#${id} option`).allTextContents()).map((label) => label.trim())).toEqual([
+        "Foarte mic",
+        "Mic",
+        "Normal",
+        "Mare",
+        "Foarte mare",
+        "Maxim",
+      ]);
+    }
     await expect(page.locator("#chat-font-size")).toHaveValue("12");
-    await expect(page.locator("#code-font-size")).toHaveValue("22");
+    await expect(page.locator("#code-font-size")).toHaveValue("24");
     await expect(page.locator('[data-action="reset-typography"]')).toBeEnabled();
     await page.locator('[data-action="reset-typography"]').click();
     await expect(page.locator("#chat-font-size")).toHaveValue("14");

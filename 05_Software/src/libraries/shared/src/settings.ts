@@ -15,11 +15,25 @@ export type RecentWorkbenchState = z.infer<typeof recentWorkbenchStateSchema>;
 
 /** Optional font-size overrides select these built-in sizes when unset. */
 export const typographyDefaults = { chatFontSize: 14, codeFontSize: 14 } as const;
-const fontSizeSchema = z.number().int().min(10).max(32);
+const fontSizeSchema = z.union([
+  z.literal(10),
+  z.literal(12),
+  z.literal(14),
+  z.literal(16),
+  z.literal(20),
+  z.literal(24),
+]);
 const mutable = {
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
-  textScale: z.union([z.literal(0.875), z.literal(1), z.literal(1.125), z.literal(1.25), z.literal(1.5)]),
+  textScale: z.union([
+    z.literal(0.75),
+    z.literal(0.875),
+    z.literal(1),
+    z.literal(1.125),
+    z.literal(1.25),
+    z.literal(1.5),
+  ]),
   chatFontSize: fontSizeSchema.optional(),
   codeFontSize: fontSizeSchema.optional(),
   defaultModel: modelReferenceSchema.nullable(),

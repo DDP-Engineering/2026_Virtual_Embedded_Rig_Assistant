@@ -71,8 +71,13 @@
     "chatPreview": "Așa va arăta un mesaj din conversația ta.",
     "codeSize": "Dimensiunea codului și a rezultatelor",
     "codeDescription": "Se aplică blocurilor de cod, diferențelor și rezultatelor tehnice text.",
-    "pixels": "{{size}} px",
-    "resetSizes": "Restabilește dimensiunile implicite"
+    "resetSizes": "Restabilește dimensiunile implicite",
+    "extraSmall": "Foarte mic",
+    "small": "Mic",
+    "normal": "Normal",
+    "large": "Mare",
+    "extraLarge": "Foarte mare",
+    "largest": "Maxim"
   },
   "language": {
     "label": "Limba interfeței",
