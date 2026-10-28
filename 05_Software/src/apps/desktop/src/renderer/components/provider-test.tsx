@@ -104,7 +104,7 @@ export function ProviderTest({
         }}
       >
         <header className="provider-test-header">
-          <h3 id={title}>{t("providers.testNamed", { name: name ?? id })}</h3>
+          <h3 id={title}>{t("providers.testTitle", { name: name ?? id })}</h3>
           <button type="button" aria-label={t("panel.close")} onClick={() => setVisible(false)}>
             ×
           </button>
@@ -124,15 +124,26 @@ export function ProviderTest({
             <ol className="provider-test-results">
               {result.steps.map((step) => (
                 <li key={step.step} data-test-step={step.step} data-test-status={step.status}>
-                  <span>
-                    {labels[step.step]}: {states[step.status]}
-                  </span>
+                  <div className="provider-test-step">
+                    <span>{labels[step.step]}</span>
+                    <strong className="provider-test-outcome">{states[step.status]}</strong>
+                  </div>
                   {step.error && <ErrorMessage error={step.error} />}
                 </li>
               ))}
             </ol>
           )}
         </div>
+        <footer className="provider-test-footer">
+          <button
+            type="button"
+            data-provider-test-close
+            data-i18n="panel.close"
+            onClick={() => setVisible(false)}
+          >
+            {t("panel.close")}
+          </button>
+        </footer>
       </dialog>
     </fieldset>
   );

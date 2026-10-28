@@ -158,6 +158,7 @@
     "test": "Test",
     "testing": "Testing provider…",
     "testComplete": "Test complete",
+    "testTitle": "Connection test: {{name}}",
     "steps": {
       "reachability": "Reachability",
       "authentication": "Authentication and model",

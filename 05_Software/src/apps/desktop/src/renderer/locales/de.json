@@ -158,6 +158,7 @@
     "test": "Testen",
     "testing": "Anbieter wird getestet…",
     "testComplete": "Test abgeschlossen",
+    "testTitle": "Verbindungstest: {{name}}",
     "steps": {
       "reachability": "Erreichbarkeit",
       "authentication": "Authentifizierung und Modell",

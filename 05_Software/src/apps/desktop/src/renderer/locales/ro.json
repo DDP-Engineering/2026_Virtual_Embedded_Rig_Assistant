@@ -158,6 +158,7 @@
     "test": "Testează",
     "testing": "Se testează furnizorul…",
     "testComplete": "Test încheiat",
+    "testTitle": "Testarea conexiunii: {{name}}",
     "steps": {
       "reachability": "Conectivitate",
       "authentication": "Autentificare și model",

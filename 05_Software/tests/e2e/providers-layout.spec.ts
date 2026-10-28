@@ -115,6 +115,14 @@ test("provider categories support concurrent connections, presets and aligned ac
     await page.keyboard.press("Escape");
     for (const language of ["en", "ro", "de"]) {
       await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await row.locator("[data-provider-test]").click();
+      const close = dialog.locator("[data-provider-test-close]");
+      await expect(close).toHaveText(
+        language === "ro" ? "Închide" : language === "de" ? "Schließen" : "Close",
+      );
+      await expect(close).toBeInViewport();
+      await close.click();
+      await expect(dialog).not.toBeVisible();
       for (const scale of ["0.75", "1", "1.5"]) {
         await changeSetting(page, "appearance", () =>
           page.locator("#interface-font-size").selectOption(scale),

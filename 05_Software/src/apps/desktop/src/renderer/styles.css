@@ -829,7 +829,8 @@ legend {
   overflow-wrap: anywhere;
 }
 .provider-test-results {
-  padding-inline-start: 1.4rem;
+  padding: 0;
+  list-style: none;
 }
 .provider-test-results li {
   margin-block: 0.5rem;
@@ -1249,6 +1250,7 @@ legend {
   flex-direction: column;
 }
 .provider-test-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1261,7 +1263,28 @@ legend {
   flex-shrink: 0;
 }
 .provider-test-body {
+  flex: 1;
+  line-height: 1.5;
   min-height: 0;
   overflow: auto;
   margin-block-start: 1rem;
+}
+
+.provider-test-step {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.provider-test-outcome {
+  flex-shrink: 0;
+}
+.provider-test-footer {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-block-start: 1rem;
+  border-top: 1px solid var(--border);
 }

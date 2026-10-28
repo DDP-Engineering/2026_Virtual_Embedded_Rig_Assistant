@@ -100,7 +100,7 @@ test("provider Test displays per-step native results and test-build replay is re
     const dialog = provider.getByRole("dialog");
     await expect(dialog).toBeVisible();
     expect(await provider.boundingBox()).toEqual(bounds);
-    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await dialog.locator("[data-provider-test-close]").click();
     await expect(dialog).not.toBeVisible();
     await expect(button).toBeFocused();
     expect(await provider.boundingBox()).toEqual(bounds);
@@ -114,7 +114,7 @@ test("provider Test displays per-step native results and test-build replay is re
     const pendingBounds = await dialog.boundingBox();
     expect(await provider.boundingBox()).toEqual(bounds);
     await expect.poll(() => !!releaseModels).toBe(true);
-    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await dialog.locator("[data-provider-test-close]").click();
     await expect(dialog).not.toBeVisible();
     holdModels = false;
     releaseModels?.();
