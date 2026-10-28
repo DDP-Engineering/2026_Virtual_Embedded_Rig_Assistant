@@ -97,6 +97,21 @@ test("provider categories support concurrent connections, presets and aligned ac
     await row.getByRole("button", { name: "Cancel", exact: true }).click();
     await row.locator("[data-provider-test]").click();
     await expect(row.locator('[data-test-status="pass"]')).toHaveCount(4);
+    const dialog = row.getByRole("dialog");
+    for (const viewport of [
+      { width: 1495, height: 997 },
+      { width: 1024, height: 640 },
+      { width: 640, height: 480 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const bounds = await dialog.boundingBox();
+      expect(bounds).not.toBeNull();
+      if (!bounds) throw Error("Missing test results dialog");
+      expect(Math.abs(bounds.x + bounds.width / 2 - viewport.width / 2)).toBeLessThan(2);
+      expect(Math.abs(bounds.y + bounds.height / 2 - viewport.height / 2)).toBeLessThan(2);
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.y).toBeGreaterThanOrEqual(0);
+    }
     await page.keyboard.press("Escape");
     for (const language of ["en", "ro", "de"]) {
       await changeSetting(page, "language", () => page.locator("#language").selectOption(language));

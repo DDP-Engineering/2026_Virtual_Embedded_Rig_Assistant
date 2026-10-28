@@ -1238,6 +1238,9 @@ legend {
 }
 
 .provider-test-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
   width: min(36rem, calc(100vw - 3rem));
   height: min(26rem, calc(100dvh - 3rem));
 }
