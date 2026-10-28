@@ -97,6 +97,7 @@ test("provider categories support concurrent connections, presets and aligned ac
     await row.getByRole("button", { name: "Cancel", exact: true }).click();
     await row.locator("[data-provider-test]").click();
     await expect(row.locator('[data-test-status="pass"]')).toHaveCount(4);
+    await page.keyboard.press("Escape");
     for (const language of ["en", "ro", "de"]) {
       await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       for (const scale of ["0.75", "1", "1.5"]) {

@@ -1236,3 +1236,29 @@ legend {
 [data-provider-add] > select {
   margin-block: 0.5rem 1rem;
 }
+
+.provider-test-dialog {
+  width: min(36rem, calc(100vw - 3rem));
+  height: min(26rem, calc(100dvh - 3rem));
+}
+.provider-test-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.provider-test-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.provider-test-header h3 {
+  margin: 0;
+}
+.provider-test-header button {
+  flex-shrink: 0;
+}
+.provider-test-body {
+  min-height: 0;
+  overflow: auto;
+  margin-block-start: 1rem;
+}

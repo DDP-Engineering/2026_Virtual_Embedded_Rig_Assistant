@@ -15,11 +15,19 @@ test("provider Test displays per-step native results and test-build replay is re
     join(scripts, "echo.jsonl"),
     `${JSON.stringify({ text: "OK ".repeat(40), toolCalls: [{ name: "echo", args: { text: "OK" } }] })}\n`,
   );
+  let holdModels = false;
+  let rejectModels = false;
+  let releaseModels: (() => void) | undefined;
   const server = createServer((req, res) => {
-    if (req.url?.endsWith("/models"))
-      return void res
-        .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify({ data: [{ id: "scripted" }] }));
+    if (req.url?.endsWith("/models")) {
+      const respond = () =>
+        res
+          .writeHead(rejectModels ? 401 : 200, { "content-type": "application/json" })
+          .end(JSON.stringify({ data: [{ id: "scripted" }] }));
+      if (holdModels) releaseModels = respond;
+      else respond();
+      return;
+    }
     let raw = "";
     req.on("data", (chunk) => (raw += chunk));
     req.on("end", () => {
@@ -84,10 +92,41 @@ test("provider Test displays per-step native results and test-build replay is re
     const provider = page.locator('[data-provider="custom:scripted"]');
     const button = provider.locator('[data-i18n="providers.test"]');
     await expect(button).toBeVisible();
+    const bounds = await provider.boundingBox();
     await button.focus();
     await page.keyboard.press("Enter");
     await expect(provider.locator('[data-test-status="pass"]')).toHaveCount(4);
     await expect(provider.locator('[data-i18n="providers.testComplete"]')).toBeVisible();
+    const dialog = provider.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    expect(await provider.boundingBox()).toEqual(bounds);
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(button).toBeFocused();
+    expect(await provider.boundingBox()).toEqual(bounds);
+    await button.click();
+    await expect(dialog.locator('[data-test-status="pass"]')).toHaveCount(4);
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    holdModels = true;
+    await button.click();
+    await expect(dialog.locator('[data-i18n="providers.testing"]')).toBeVisible();
+    const pendingBounds = await dialog.boundingBox();
+    expect(await provider.boundingBox()).toEqual(bounds);
+    await expect.poll(() => !!releaseModels).toBe(true);
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    holdModels = false;
+    releaseModels?.();
+    await expect(button).toBeEnabled();
+    await expect(dialog).not.toBeVisible();
+    rejectModels = true;
+    await button.click();
+    await expect(dialog.locator('[data-test-status="fail"]')).toHaveCount(1);
+    expect(await dialog.boundingBox()).toEqual(pendingBounds);
+    expect(await provider.boundingBox()).toEqual(bounds);
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
     const metadata = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("providers.list", {}),
     );

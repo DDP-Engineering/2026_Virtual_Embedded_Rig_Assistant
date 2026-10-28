@@ -284,6 +284,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await expect(testedProvider.locator('[data-i18n="providers.testComplete"]')).toBeVisible();
       await expect(testedProvider.locator("[data-test-step]")).toHaveCount(4);
       await expect(testedProvider.locator('[data-test-status="pass"]')).toHaveCount(4);
+      await page.keyboard.press("Escape");
       expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
     }
     await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
