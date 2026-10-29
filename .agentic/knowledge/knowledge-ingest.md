@@ -49,6 +49,15 @@ while .vera content stays permanently excluded from indexed documents.
   PathGuard/shared ignore policies and ordinary ancestor checks confine input.
   Permanent .vera/.git/node_modules segments and symlink/junction aliases are
   excluded. Root .vera/.veraignore edits and saved configuration trigger reconciliation.
+- REQ-REL-2512a455: watcher registrations use positive-include literal prefixes and
+  the two policy files, rather than recursively monitoring unrelated workbench trees.
+  Root-wide globs intentionally watch the root. Missing source roots remain targets;
+  explicit nested targets stop at existing symlink ancestors. Invalid globs keep only
+  policy monitoring and are rejected by reconciliation. Changed roots close the old
+  watcher and create a replacement through a serialized queue; readiness reconciles
+  any registration gap. Cancelled readiness settles before a watcher closes; waitIdle
+  follows the current watcher generation. Close cancels replacements and releases
+  the current watcher.
 - Bounded asynchronous SHA-256 reads cap input at100MiB PDF/20MiB text. Exact
   limits are allowed. Unknown extensions, binary text and oversized files carry
   TYPE_UNSUPPORTED/BINARY/SIZE_LIMIT. Raw errors become IO/PROCESSING codes.
@@ -78,24 +87,6 @@ while .vera content stays permanently excluded from indexed documents.
 
 - REQ-FUNC-a93d863d — background selection/hash/status/events with owned lifecycle.
 - REQ-DATA-05172f94 — atomic invalidation on delete/change/reindex/deselection.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Hosts[desktop and CLI] --> WorkbenchService
-  WorkbenchService --> Ingester
-  Ingester --> Chokidar
-  Chokidar --> Policy[.vera configuration and ignore events]
-  Policy --> Ingester
-  Ingester --> DocumentsRepository
-  Ingester --> Processor[DocumentProcessor with extraction/cache/chunks]
-  Ingester --> WorkbenchEvent
-  DocumentsRepository --> SQLite
-```
-
-The workbench controls lifetime; processing extensions share its abort signal and
-the serialized ingest queue.
 
 ## Files
 

@@ -114,13 +114,41 @@ function selection(docs: WorkbenchConfig["docs"]): { include: string[]; exclude:
   return { include, exclude };
 }
 
+/** Literal include prefixes bound recursive monitoring; policy files stay live independently. */
+function watchTargets(root: string, docs: WorkbenchConfig["docs"]): string[] {
+  let include: string[] = [];
+  try {
+    include = selection(docs).include;
+  } catch {
+    // Invalid selection remains a reconcile error; never expand its monitoring outside the root.
+  }
+  const roots = include.map((pattern) => {
+    const parts = picomatch.scan(pattern).base.split("/").filter(Boolean);
+    // An explicit nested target must not bypass followSymlinks=false on its ancestors.
+    for (let i = 1; i < parts.length; i++) {
+      const ancestor = join(root, ...parts.slice(0, i));
+      try {
+        if (lstatSync(ancestor).isSymbolicLink()) return ancestor;
+      } catch (error) {
+        if (!missing(error)) return ancestor;
+        break;
+      }
+    }
+    return join(root, ...parts);
+  });
+  return [...new Set([...roots, join(root, ".vera/workbench.yaml"), join(root, ".vera/.veraignore")])].sort();
+}
+
 /** One serial ingest queue owned by one writable workbench, independent of session writes. */
 export class Ingester {
   private readonly rows: DocumentsRepository;
   private readonly queue = new WriteQueue();
   private readonly abort = new AbortController();
-  private readonly watcher: FSWatcher;
-  private readonly ready: Promise<void>;
+  private watcher: FSWatcher;
+  private ready: Promise<void>;
+  private cancelReady: () => void;
+  private targets: string[];
+  private watcherUpdates: Promise<void> = Promise.resolve();
   private timer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
   private active = false;
@@ -158,12 +186,23 @@ export class Ingester {
   constructor(private readonly options: IngestOptions) {
     this.rows = new DocumentsRepository(options.db);
     this.refreshPolicy();
+    this.targets = watchTargets(options.root, options.config().docs);
+    const initial = this.createWatcher(this.targets);
+    this.watcher = initial.watcher;
+    this.ready = initial.ready;
+    this.cancelReady = initial.cancelReady;
+  }
+  private createWatcher(targets: string[]): {
+    watcher: FSWatcher;
+    ready: Promise<void>;
+    cancelReady: () => void;
+  } {
     const ignored = createIgnoreRules();
-    this.watcher = watch(options.root, {
+    const watcher = watch(targets, {
       ignoreInitial: true,
       followSymlinks: false,
       ignored: (path) => {
-        const rel = relative(options.root, path).split(sep).join("/");
+        const rel = relative(this.options.root, path).split(sep).join("/");
         const policyPath = process.platform === "win32" ? rel.toLowerCase() : rel;
         if (
           policyPath === ".vera" ||
@@ -174,21 +213,51 @@ export class Ingester {
         return !!rel && ignored(rel);
       },
     });
-    this.ready = new Promise((resolve) => {
-      this.watcher.once("ready", resolve);
-      this.watcher.once("error", () => resolve());
+    let settleReady = () => {};
+    let cancelled = false;
+    const ready = new Promise<void>((resolve) => {
+      settleReady = resolve;
+      watcher.once("ready", resolve);
+      watcher.once("error", () => resolve());
     });
-    this.watcher.on("all", (event, path) => {
-      const rel = relative(options.root, path).split(sep).join("/");
+    watcher.on("all", (event, path) => {
+      const rel = relative(this.options.root, path).split(sep).join("/");
       const policyPath = process.platform === "win32" ? rel.toLowerCase() : rel;
       if (policyPath === ".vera/.veraignore" || policyPath === ".vera/workbench.yaml") {
         this.refreshPolicy();
         this.request();
-      } else if (!this.ignored(rel) && (event === "addDir" || event === "unlinkDir" || this.matches(rel)))
+      } else if (
+        !this.ignored(rel) &&
+        (event === "addDir" || event === "unlinkDir" || this.matches(rel) || targets.includes(path))
+      )
         this.request();
     });
-    this.watcher.on("error", () => this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 }));
-    void this.ready.then(() => this.request());
+    watcher.on("error", () => this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 }));
+    void ready.then(() => {
+      if (!cancelled) this.request();
+    });
+    const cancelReady = () => {
+      cancelled = true;
+      settleReady();
+    };
+    return { watcher, ready, cancelReady };
+  }
+  private refreshWatcher(): void {
+    const next = watchTargets(this.options.root, this.options.config().docs);
+    if (JSON.stringify(next) === JSON.stringify(this.targets)) return;
+    this.targets = next;
+    this.watcherUpdates = this.watcherUpdates
+      .then(async () => {
+        if (this.closed) return;
+        this.cancelReady();
+        await this.watcher.close();
+        if (this.closed) return;
+        const current = this.createWatcher(next);
+        this.watcher = current.watcher;
+        this.ready = current.ready;
+        this.cancelReady = current.cancelReady;
+      })
+      .catch(() => this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 }));
   }
   private emit(event: WorkbenchEvent): void {
     if (this.closed) return;
@@ -207,6 +276,7 @@ export class Ingester {
     if (this.closed) return;
     const docs = this.options.config().docs;
     if (this.patterns !== JSON.stringify([docs.include, docs.exclude])) this.refreshPolicy();
+    this.refreshWatcher();
     this.requested = true;
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {
@@ -242,7 +312,13 @@ export class Ingester {
     });
   }
   async waitIdle(): Promise<void> {
-    await this.ready;
+    while (!this.closed) {
+      const updates = this.watcherUpdates;
+      await updates;
+      const ready = this.ready;
+      await ready;
+      if (updates === this.watcherUpdates && ready === this.ready) break;
+    }
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = undefined;
@@ -506,6 +582,8 @@ export class Ingester {
       this.closed = true;
       if (this.timer) clearTimeout(this.timer);
       this.abort.abort();
+      this.cancelReady();
+      await this.watcherUpdates;
       await this.watcher.close();
       await this.queue.drain();
     })();

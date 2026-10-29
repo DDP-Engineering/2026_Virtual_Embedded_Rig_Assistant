@@ -3,23 +3,53 @@ import { mkdir, mkdtemp, open, readFile, rm, symlink, writeFile } from "node:fs/
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type EventEnvelope, eventEnvelopeSchema } from "@vera/shared";
-import { afterEach, expect, it } from "vitest";
+import type { FSWatcher } from "chokidar";
+import { afterEach, expect, it, vi } from "vitest";
+
+const watched = vi.hoisted(() => [] as { watcher: FSWatcher; ready: Promise<void> }[]);
+vi.mock("chokidar", async (original) => {
+  const actual = await original<typeof import("chokidar")>();
+  return {
+    ...actual,
+    watch: (...args: Parameters<typeof actual.watch>) => {
+      const watcher = actual.watch(...args);
+      const ready = new Promise<void>((resolve) => {
+        watcher.once("ready", resolve);
+        watcher.once("error", () => resolve());
+      });
+      watched.push({ watcher, ready });
+      return watcher;
+    },
+  };
+});
+
 import { SettingsService } from "../settings/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { WorkbenchService } from "../workbench/service.js";
-import { type DocumentProcessor, PDF_LIMIT, TEXT_LIMIT } from "./ingest.js";
+import { type DocumentProcessor, Ingester, PDF_LIMIT, TEXT_LIMIT } from "./ingest.js";
 import { KeywordSearch } from "./keyword.js";
 import { createDocumentProcessor } from "./processor.js";
+
+function latestWatcher() {
+  const current = watched.at(-1);
+  if (!current) throw Error("No watcher was started");
+  return current;
+}
 
 const cleanup: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
   for (const close of cleanup.reverse().splice(0)) await close();
 });
-async function harness(processDocument?: DocumentProcessor) {
+async function harness(
+  processDocument?: DocumentProcessor,
+  prepare?: (folder: string) => Promise<void>,
+  createDocs = true,
+) {
   const root = await mkdtemp(join(tmpdir(), "vera-ingest-"));
   cleanup.push(() => rm(root, { recursive: true, force: true }));
   const folder = join(root, "bench");
   await mkdir(folder);
+  await prepare?.(folder);
   const files = {
     read: async (path: string) => {
       try {
@@ -60,7 +90,7 @@ async function harness(processDocument?: DocumentProcessor) {
   );
   cleanup.push(() => service.close());
   await service.create(folder, "Ingest");
-  await mkdir(join(folder, "docs"), { recursive: true });
+  if (createDocs) await mkdir(join(folder, "docs"), { recursive: true });
   const db = service.getDatabase();
   const row = () =>
     db.prepare("SELECT * FROM documents WHERE path='docs/board.md'").get() as
@@ -506,4 +536,94 @@ it("rebuilds chunks when workbench embedding settings change without source edit
   const after = h.db.prepare("SELECT count(*) FROM chunks").pluck().get() as number;
   expect(after).toBeGreaterThan(before);
   expect(h.db.prepare("SELECT max(chars) FROM chunks").pluck().get()).toBeLessThanOrEqual(400);
+});
+
+it("does not traverse SDK siblings when the selected docs root is initially missing", async () => {
+  const h = await harness(
+    undefined,
+    async (folder) => {
+      await mkdir(join(folder, "SDK/vendor/generated"), { recursive: true });
+      await writeFile(join(folder, "SDK/vendor/generated/unrelated.md"), "SDK");
+    },
+    false,
+  );
+  const current = latestWatcher();
+  await current.ready;
+  expect(Object.keys(current.watcher.getWatched()).some((path) => path.includes("SDK"))).toBe(false);
+  await mkdir(join(h.folder, "docs"));
+  await writeFile(join(h.folder, "docs/board.md"), "selected");
+  await expect.poll(h.row, { timeout: 7000 }).toMatchObject({ status: "pending" });
+  await rm(join(h.folder, "docs"), { recursive: true });
+  await expect.poll(h.row, { timeout: 7000 }).toBeUndefined();
+  await mkdir(join(h.folder, "docs"));
+  await writeFile(join(h.folder, "docs/board.md"), "recreated");
+  await expect.poll(h.row, { timeout: 7000 }).toMatchObject({ status: "pending" });
+});
+
+it("rebinds source roots, retaining policy monitoring and releasing the old watcher", async () => {
+  const h = await harness();
+  const old = latestWatcher();
+  await old.ready;
+  await mkdir(join(h.folder, "reference/nested"), { recursive: true });
+  await h.service.updateConfig({ docs: { include: ["reference/nested/**"] } });
+  await expect.poll(() => watched.at(-1) !== old, { timeout: 3000 }).toBe(true);
+  const current = latestWatcher();
+  await current.ready;
+  expect(old.watcher.getWatched()).toEqual({});
+  expect(Object.keys(current.watcher.getWatched())).not.toContain(join(h.folder, "docs"));
+  await writeFile(join(h.folder, "reference/nested/new.md"), "new source");
+  const source = () =>
+    h.db.prepare("SELECT status FROM documents WHERE path='reference/nested/new.md'").get();
+  await expect.poll(source, { timeout: 7000 }).toMatchObject({ status: "pending" });
+  await writeFile(join(h.folder, ".vera/.veraignore"), "reference/**\n");
+  await expect.poll(source, { timeout: 7000 }).toBeUndefined();
+  await h.service.close();
+  expect(current.watcher.getWatched()).toEqual({});
+});
+
+it("does not traverse a symlink ancestor of an explicitly selected nested root", async () => {
+  const h = await harness();
+  const outside = join(h.root, "outside/deeper");
+  await mkdir(outside, { recursive: true });
+  await writeFile(join(outside, "secret.md"), "outside");
+  await symlink(
+    join(h.root, "outside"),
+    join(h.folder, "docs/linked"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  const old = latestWatcher();
+  await h.service.updateConfig({ docs: { include: ["docs/linked/deeper/**"] } });
+  await expect.poll(() => latestWatcher() !== old).toBe(true);
+  const current = latestWatcher();
+  await current.ready;
+  expect(
+    Object.keys(current.watcher.getWatched()).some(
+      (path) => path.includes("deeper") || path.includes("outside"),
+    ),
+  ).toBe(false);
+  await h.service.reindexDocuments();
+  expect(new DocumentsRepository(h.db).list()).toEqual([]);
+});
+
+it.each(["rebind", "close"])("settles startup waitIdle when %s cancels readiness", async (action) => {
+  const h = await harness();
+  const config = h.service.getSnapshot().config;
+  const ingest = new Ingester({
+    root: h.folder,
+    db: h.db,
+    config: () => config,
+    now: () => new Date(),
+    assertWritable: () => {},
+    emit: () => {},
+  });
+  cleanup.push(() => ingest.close());
+  // Fault injection over a real watcher: startup IO hasn't delivered readiness yet.
+  latestWatcher().watcher.removeAllListeners("ready");
+  const pending = ingest.waitIdle();
+  await Promise.resolve();
+  if (action === "rebind") {
+    config.docs = { include: ["reference/**"], exclude: [] };
+    ingest.request();
+  } else await ingest.close();
+  await pending;
 });

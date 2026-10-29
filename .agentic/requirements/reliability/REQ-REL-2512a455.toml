@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-2512a455"
+title = "Scoped document monitoring avoids unrelated directory watches"
+status = "active"
+requirement = "When document include patterns have a confined literal prefix, VERA shall register filesystem monitoring only for those source roots and workbench policy files, rebinding it after selection changes while preserving creation, updates, deletion, policy events and safe close; root-wide patterns retain root monitoring."
+verification = "Real Chokidar topology with unrelated SDK siblings, absent/recreated sources and changed include roots; native Test1 opening measures window responsiveness and handle count against the observed pre-fix hang."
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
+created = 2026-10-29
+updated = 2026-10-29

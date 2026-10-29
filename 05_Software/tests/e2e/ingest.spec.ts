@@ -51,6 +51,7 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
       host.indexEvents = [];
       host.vera.subscribe("workbench", bench.config.id, (event) => host.indexEvents.push(event));
     }, folder);
+    await mkdir(join(folder, "docs"));
     await writeFile(join(folder, "docs/board.md"), "board one");
     const records = () =>
       page.evaluate(() =>
