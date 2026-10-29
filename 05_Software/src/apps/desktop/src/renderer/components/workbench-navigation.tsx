@@ -1,4 +1,5 @@
 import type { RecentWorkbenchState } from "@vera/shared";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -67,10 +68,12 @@ export function WorkbenchNavigation({
               <div className="workbench-group-heading">
                 <button
                   type="button"
+                  className="workbench-sessions-toggle"
+                  title={`${shown ? t("projects.collapse") : t("projects.expand")}: ${entry.name}`}
                   disabled={disabled || entry.missing}
                   aria-expanded={shown}
                   aria-controls={`sessions-${entry.id}`}
-                  aria-label={(shown ? t("projects.collapse") : t("projects.expand")) + ": " + entry.name}
+                  aria-label={`${shown ? t("projects.collapse") : t("projects.expand")}: ${entry.name}`}
                   onClick={() => {
                     if (!shown && !active)
                       void open(entry.folder).then((ok) => {
@@ -79,7 +82,7 @@ export function WorkbenchNavigation({
                     else expand(entry.folder, !shown);
                   }}
                 >
-                  {shown ? "▾" : "▸"}
+                  {shown ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
                 </button>
                 <button
                   type="button"

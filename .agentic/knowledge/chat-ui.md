@@ -51,6 +51,9 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   These do not expose or fabricate a raw provider/system wire prompt.
 - Inspectors use native dialog modality, Escape/Close and opener focus restoration.
   App keys workspaces by workbench/session to isolate drafts and inspector state.
+- Workbench session disclosure uses a distinct 2rem button with Lucide right/down
+  chevrons, translated state-aware tooltip/accessible label and expanded/controls
+  semantics; name selection keeps opening the workbench overview.
 - Each sidebar session row displays the localized date/time of updatedAt (last
   recorded activity). Selecting the row does not write an access time; runtime
   status remains in screen-reader text and action guards. REQ-UX-9a0489f1 covers

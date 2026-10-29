@@ -826,3 +826,26 @@ test.each(["en", "ro", "de"])(
     }
   },
 );
+
+test("workbench session disclosure is a visible icon button with translated state tooltip", async () => {
+  const bench = await api.invoke("workbench.create", {
+    folder: "/mock/disclosure-bench",
+    name: "Disclosure bench",
+  });
+  await mount();
+  const group = container.querySelector(`[data-workbench-entry="${bench.config.id}"]`) as HTMLElement;
+  const toggle = group.querySelector<HTMLButtonElement>(".workbench-sessions-toggle");
+  expect(toggle).toBeTruthy();
+  expect(toggle?.querySelector("svg")).toBeTruthy();
+  expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+  expect(toggle?.title).toBe("Hide sessions: Disclosure bench");
+  await act(async () => toggle?.click());
+  expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+  expect(toggle?.title).toBe("Show sessions: Disclosure bench");
+  expect(document.getElementById(toggle?.getAttribute("aria-controls") ?? "")?.hidden).toBe(true);
+  await act(async () => toggle?.click());
+  expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+  expect(group.querySelector<HTMLButtonElement>(".workbench-group-name")?.textContent).toContain(
+    "Disclosure bench",
+  );
+});

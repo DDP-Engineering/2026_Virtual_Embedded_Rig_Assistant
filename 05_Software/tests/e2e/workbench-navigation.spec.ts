@@ -27,6 +27,20 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     const group = page.locator("[data-workbench-entry]").filter({ hasText: "ESP32 bench" });
+    const disclosure = group.locator(".workbench-sessions-toggle");
+    await expect(disclosure).toHaveAttribute("aria-expanded", "true");
+    await expect(disclosure).toHaveAttribute("title", "Hide sessions: ESP32 bench");
+    expect(await disclosure.evaluate((node) => node.getBoundingClientRect().width)).toBeGreaterThanOrEqual(
+      28,
+    );
+    await expect(disclosure.locator("svg")).toBeVisible();
+    await disclosure.focus();
+    await disclosure.press("Enter");
+    await expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    await expect(disclosure).toHaveAttribute("title", "Show sessions: ESP32 bench");
+    await disclosure.press("Enter");
+    await expect(disclosure).toHaveAttribute("aria-expanded", "true");
+
     await expect(group).toBeVisible();
     await expect(page.locator('[data-workbench="active"] > .workbench-actions > button')).toHaveCount(1);
     await expect(page.locator("[data-workbench-overview]")).toBeVisible();
@@ -34,10 +48,10 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
-    await group.locator("summary").click();
+    await group.locator(".workbench-menu > summary").click();
     await group.getByRole("button", { name: "Pin", exact: true }).click();
     await expect(group).toHaveAttribute("data-pinned", "true");
-    await group.locator("summary").click();
+    await group.locator(".workbench-menu > summary").click();
     await group.getByRole("button", { name: "Edit workbench", exact: true }).click();
     const dialog = page.locator(".workbench-editor");
     await expect(dialog).toBeVisible();
@@ -70,7 +84,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(dialog).not.toBeVisible();
     const revised = page.locator("[data-workbench-entry]").filter({ hasText: "ESP32 revised" });
     await expect(revised).toBeVisible();
-    await revised.locator("summary").click();
+    await revised.locator(".workbench-menu > summary").click();
     await revised.getByRole("button", { name: "Edit workbench", exact: true }).click();
     await dialog.locator('[data-project-section="embeddings"]').click();
     await expect(dialog.locator("[data-project-chunk]")).toHaveValue("800");

@@ -1897,3 +1897,25 @@ legend {
     max-height: 90vh;
   }
 }
+
+.workbench-group-heading > .workbench-sessions-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: var(--muted);
+  color: var(--foreground);
+}
+.workbench-group-heading > .workbench-sessions-toggle svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-width: 2.25;
+}
+.workbench-sessions-toggle:not(:disabled):hover {
+  background: var(--accent);
+  border-color: var(--primary);
+}
