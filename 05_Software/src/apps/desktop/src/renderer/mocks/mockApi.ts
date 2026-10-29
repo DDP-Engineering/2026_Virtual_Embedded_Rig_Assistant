@@ -137,7 +137,7 @@ export function createMockApi(
           lastOpened: new Date().toISOString(),
         },
         ...settings.recentWorkbenches.filter((e) => e.folder !== snapshot.folder),
-      ].slice(0, 10),
+      ],
     });
     emitAppEvent({ type: "settings.changed" });
   }
@@ -146,6 +146,13 @@ export function createMockApi(
     const input = channels[channel].request.safeParse(request);
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
+    if (
+      (channel === "session.list" || channel === "session.search" || channel === "session.create") &&
+      "workbenchId" in input.data &&
+      input.data.workbenchId &&
+      current().snapshot.config.id !== input.data.workbenchId
+    )
+      throw veraError("CONFLICT");
     if (channel === "session.list" && scenario === "chat") sessions.seedFixtures();
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
@@ -624,7 +631,18 @@ export function createMockApi(
         break;
       }
       case "workbench.recent": {
-        const { remove } = channels["workbench.recent"].request.parse(input.data);
+        const { remove, pin, reveal } = channels["workbench.recent"].request.parse(input.data);
+        if (pin) {
+          if (scenario === "read-only") throw veraError("DENIED");
+          if (!settings.recentWorkbenches.some((e) => e.folder === pin.folder)) throw veraError("NOT_FOUND");
+          settings = mergeSettings(settings, {
+            recentWorkbenches: settings.recentWorkbenches.map((e) =>
+              e.folder === pin.folder ? { ...e, pinned: pin.value } : e,
+            ),
+          });
+          emitAppEvent({ type: "settings.changed" });
+        }
+        if (reveal && !benches.has(reveal)) throw veraError("NOT_FOUND");
         if (remove) {
           settings = mergeSettings(settings, {
             recentWorkbenches: settings.recentWorkbenches.filter((e) => e.folder !== remove),
@@ -643,13 +661,15 @@ export function createMockApi(
         };
         break;
       case "workbench.config.update": {
-        const { patch } = channels["workbench.config.update"].request.parse(input.data);
+        const { patch, workbenchId } = channels["workbench.config.update"].request.parse(input.data);
         const bench = current();
         if (bench.snapshot.readOnly) throw veraError("DENIED");
+        if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
         const config = mergeWorkbench(bench.snapshot.config, patch);
         const warnings = configWarnings(config);
         if (JSON.stringify(config) !== JSON.stringify(bench.snapshot.config)) {
           bench.snapshot = { ...bench.snapshot, config, warnings };
+          remember(bench.snapshot);
           emit({ topic: "workbench", id: config.id, event: { type: "config.changed", config, warnings } });
         }
         value = { config, warnings };
@@ -660,7 +680,8 @@ export function createMockApi(
         break;
       case "workbench.pinned.update": {
         if (current().snapshot.readOnly) throw veraError("DENIED");
-        const { content } = channels["workbench.pinned.update"].request.parse(input.data);
+        const { content, workbenchId } = channels["workbench.pinned.update"].request.parse(input.data);
+        if (workbenchId && current().snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
         current().pinned = content;
         value = pinned(content);
         break;

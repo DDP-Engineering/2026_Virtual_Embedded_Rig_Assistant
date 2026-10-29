@@ -30,6 +30,7 @@ export interface DocumentInput {
   path: string;
   kind: Exclude<DocumentKind, "other">;
   sha256: string;
+  embeddings?: WorkbenchConfig["embeddings"];
   signal: AbortSignal;
   assertWritable: () => void;
 }
@@ -289,6 +290,19 @@ export class Ingester {
     this.options.assertWritable();
     const { guard, paths } = await this.selected();
     if (this.closed) return;
+    const fingerprint = JSON.stringify(this.options.config().embeddings);
+    const previous = this.options.db
+      .prepare("SELECT value FROM meta WHERE key='indexing_config'")
+      .pluck()
+      .get();
+    if (previous !== fingerprint) {
+      this.mutation(() => {
+        for (const row of this.rows.list()) this.rows.remove(row.path);
+        this.options.db
+          .prepare("INSERT OR REPLACE INTO meta(key,value) VALUES('indexing_config',?)")
+          .run(fingerprint);
+      });
+    }
     const selected = new Set(paths);
     const removed = this.rows.list().filter((row) => !selected.has(row.path));
     this.mutation(() => {
@@ -429,7 +443,9 @@ export class Ingester {
       }
       const pending = this.publish(record, true);
       if (!this.options.process) return "pending";
+      const embeddings = this.options.config().embeddings;
       const result = await this.options.process({
+        embeddings,
         root: this.options.root,
         path,
         kind,
@@ -441,6 +457,10 @@ export class Ingester {
         },
       });
       if (this.closed) return "pending";
+      if (JSON.stringify(embeddings) !== JSON.stringify(this.options.config().embeddings)) {
+        this.request();
+        return "pending";
+      }
       const current = await lstat((await this.ordinary(guard, path)).absolute);
       if (
         current.ino !== before.ino ||

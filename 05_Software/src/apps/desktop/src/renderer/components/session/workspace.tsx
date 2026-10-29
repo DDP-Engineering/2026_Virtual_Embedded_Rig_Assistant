@@ -1,9 +1,9 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
-import { globalShortcutBlocked } from "../../lib/shortcuts.js";
+import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
 import { Composer } from "./composer.js";
 import { Transcript } from "./transcript.js";
@@ -19,6 +19,7 @@ export function SessionWorkspace({
   readOnly: boolean;
 }) {
   const { t } = useTranslation();
+  const bindings = useContext(ShortcutContext);
   const { view, error, retry } = useSessionEvents(id, changed);
   const [failure, setFailure] = useState<unknown>();
   const [pending, setPending] = useState(false);
@@ -80,12 +81,23 @@ export function SessionWorkspace({
   }
   useEffect(() => {
     function key(event: KeyboardEvent) {
-      if (globalShortcutBlocked(event)) return;
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+      const command = shortcutCommand(event, bindings);
+      if (command === "focusComposer" || command === "focusModel") {
+        const target = workspace.current?.querySelector<HTMLElement>(
+          command === "focusComposer" ? "#chat-message:not(:disabled)" : "[data-model-picker]:not(:disabled)",
+        );
+        if (target) {
+          event.preventDefault();
+          target.focus();
+        }
+        return;
+      }
+      if (command === "find") {
         event.preventDefault();
         setSearching(true);
         searchInput.current?.focus();
       }
+      if (globalShortcutBlocked(event)) return;
       if (
         event.key === "Escape" &&
         !event.ctrlKey &&
@@ -103,7 +115,7 @@ export function SessionWorkspace({
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [view?.state.activeTurnId, readOnly, pending]);
+  }, [bindings, view?.state.activeTurnId, readOnly, pending]);
   useEffect(() => {
     if (searching) searchInput.current?.focus();
   }, [searching]);

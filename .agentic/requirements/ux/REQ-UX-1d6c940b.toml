@@ -1,11 +1,11 @@
 schema = 1
 id = "REQ-UX-1d6c940b"
-title = "Edit pinned context through dialog"
+title = "Edit pinned context through project Instructions"
 status = "active"
 requirement = "When editing pinned workbench context, the engineer shall receive a keyboard-accessible dialog that loads and explicitly saves full WORKBENCH.md content, supports Cancel/Escape with focus restoration and disables saves for read-only workbenches while warning above16KB UTF8."
 verification = "Open editor through native and browser mock; edit/save bytes; Escape restores focus; seeded live-lock readonly disables save; non-ASCII oversized text warns without truncating."
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx"]
 linked_tests = ["05_Software/tests/e2e/workbench.spec.ts", "05_Software/tests/e2e/mock.spec.ts"]
 spec = "specs/REQ-DATA-85139c56.md"
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-10-29

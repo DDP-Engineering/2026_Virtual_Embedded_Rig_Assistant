@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-57299a1a"
+title = "Single workbench settings entry"
+status = "active"
+requirement = "When viewing a workbench, VERA shall expose one Edit toolbar action leading to an editor containing Skills management and WORKBENCH.md editing, preserving live skill choices, read-only inspection and instruction drafts; Settings navigation presents its categories and Back while hiding primary New/Open actions."
+verification = "Browser/native tests assert single action, open Skills through editor, toggle then Save without reversal, save/reopen instructions and readonly restrictions."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/"]
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts", "05_Software/tests/e2e/skills.spec.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+created = 2026-10-29
+updated = 2026-10-29

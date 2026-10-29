@@ -94,6 +94,7 @@ function SkillsDialog({
       className="pinned-dialog skills-dialog"
       aria-labelledby={titleId}
       onCancel={(event) => {
+        event.stopPropagation();
         event.preventDefault();
         if (!busy && !editing) finish();
       }}
@@ -252,6 +253,7 @@ function SkillEditor({
       className="pinned-dialog"
       aria-labelledby={titleId}
       onCancel={(event) => {
+        event.stopPropagation();
         event.preventDefault();
         if (!saving) finish();
       }}

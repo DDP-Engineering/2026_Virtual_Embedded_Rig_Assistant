@@ -1,13 +1,13 @@
 schema = 1
 id = "REQ-DATA-dfbfac7c"
-title = "Persist ten recent workbenches"
+title = "Persist registered workbenches"
 status = "active"
-requirement = "When a workbench opens with writable application settings, VERA shall persist at most ten unique recent folders in most-recent order, retaining their metadata across restarts and deriving missing-folder state on retrieval."
-verification = "Open eleven folders/reopen; restart settings and assert order/ten; delete folder/remove recent; migrate v1 including extensions; future schema bytes remain untouched."
+requirement = "When a workbench opens with writable application settings, VERA shall persist unique registered folders in most-recent order until explicitly removed, retaining their metadata across restarts and deriving missing-folder state on retrieval."
+verification = "Open eleven folders/reopen; restart settings and assert all entries and order; delete folder/remove entry; verify retained metadata and read-only settings behavior."
 affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/settings.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts"]
 spec = "specs/REQ-DATA-85139c56.md"
 priority = "normal"
 rationale = "Workbench folder lifecycle (architecture02,06,08)"
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-10-28

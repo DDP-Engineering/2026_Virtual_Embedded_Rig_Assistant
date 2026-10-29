@@ -47,7 +47,7 @@ mode offers empty, missing, read-only and warning fixtures.
   Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.
 - Config get/update deep-merges known mutable fields with current disk data, retains unknown keys,
   and fixes id/format. Pinned get/update saves full UTF8 text; oversized counts bytes above16384.
-- Recent retrieval/removal uses up to ten settings entries; folder existence derives missing state.
+- Registry retrieval/removal/pinning retains application settings entries until explicit removal; folder existence derives missing state.
   Reopen retains entry extensions while refreshing known metadata.
   Future read-only settings permit opening while preserving settings bytes and suppressing recent saves.
 - files(query) returns up to50 slash-separated relative ordinary-file paths, case-insensitive substring
@@ -66,7 +66,7 @@ mode offers empty, missing, read-only and warning fixtures.
 
 - Core remains Electron-agnostic; renderer uses shared IPC only. Management paths and traversed
   directories reject symlinks/junction redirection. Completion skips links and permanently ignored roots.
-- Create publishes configuration exclusively, retains existing user content and adds missing scaffolding.
+- Create publishes configuration exclusively, retains existing user content and adds metadata only inside .vera.
 - YAML format1 supports JSON-compatible extension values. Non-finite numbers/circular aliases are
   refused without rewriting source. Newer format/changed identity blocks user saves.
 - One service serializes operations; a short exclusive process-owned local IPC guard coordinates stale takeover.
@@ -108,12 +108,13 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ```mermaid
 flowchart LR
+  SidebarRegistry --> VeraApi
+  ProjectEditor --> VeraApi
   Welcome --> VeraApi
-  PinnedEditor --> VeraApi
   VeraApi --> bridge[shared IPC and preload]
   bridge --> main[main handlers]
   main --> service[core WorkbenchService]
-  service --> settings[SettingsService schema3]
+  service --> settings[SettingsService schema4]
   service --> writes[WriteQueue]
   Sessions[SessionService prepared writes] --> writes
   writes --> YAML[.vera/workbench.yaml and .vera/WORKBENCH.md]
@@ -144,3 +145,31 @@ All paths below are relative to05_Software.
 - src/apps/desktop/src/renderer/mocks/mockApi.ts and mockApi.test.ts — contract fixtures.
 - tests/fixtures/workbenches/demo-board/ — fictional board, notes, pinout and boot capture.
 - tests/e2e/workbench.spec.ts, tests/e2e/mock.spec.ts, tests/tooling/build-mode.test.ts — acceptance and release hook regression.
+
+## Navigation and project editor
+
+New/Open Workbench and Plugins are primary sidebar actions. The unselected canvas displays the Activity/VERA mark; creation forms open through New. Sidebar groups have no search controls. The selected workbench overview presents folder, configuration, dated session count/list and Edit. Loading failures are shown with retry rather than an empty-session claim. Registered workbenches
+are pinned first and expose collapsible active session groups. One core workbench
+is active; switching uses the session lifecycle. Session list/search/create requests
+carry expected workbench identity. The centered editor saves current supported
+project fields and instructions, honors read-only state, and reports partial saves
+if settings were written but instructions failed. Explorer accepts registered,
+existing ordinary directories without changing the active workbench.
+
+Embeddings config stores supported local model, character chunk size and overlap.
+The ingest fingerprint rebuilds derived rows after configuration changes, including
+reopen; pending old-configuration results are discarded. See document extraction.
+
+### Navigation verification
+
+`05_Software/tests/e2e/workbench-navigation.spec.ts` covers grouped sessions,
+pinning and editor behavior; core workbench tests cover durable registry and ownership.
+
+## Unified settings entry
+
+The overview toolbar contains only Edit. Its editor hosts WORKBENCH.md drafts
+under Instructions and the Skills manager under Tools/skills. Skill changes save
+independently and project Save preserves their current enabled/disabled choices.
+Close is available from the active workbench menu. Settings replaces primary
+New/Open/Plugins navigation with settings categories and Back to workbenches.
+Dialogs are centered; nested Skills Escape returns to the parent editor.

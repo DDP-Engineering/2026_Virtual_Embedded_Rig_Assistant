@@ -189,6 +189,8 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
             ),
             `${language}/${theme}/${scale}`,
           ).toEqual([]);
+          if (await page.locator('[data-action="leave-settings"]').isVisible())
+            await page.locator('[data-action="leave-settings"]').click();
           await page.locator('[data-i18n="nav.welcome"]').click();
           expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
           await page.locator('[data-i18n="nav.settings"]').click();
@@ -299,6 +301,8 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await page.locator(`[data-section="${section}"]`).click();
       await expect(page.locator(`[data-settings-section="${section}"]`)).toBeInViewport();
     }
+    if (await page.locator('[data-action="leave-settings"]').isVisible())
+      await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.keyboard.press("Control+,");
     await page.locator('[data-section="language"]').click();
@@ -311,23 +315,34 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await page.locator('[data-toggle="sidebar"]').click();
     await page.locator('[data-toggle="right"]').click();
     expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBe(futureLayout);
+    if (await page.locator('[data-action="leave-settings"]').isVisible())
+      await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
+    if (await page.locator('[data-action="leave-settings"]').isVisible())
+      await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("#workbench-name").fill("Browser board");
     await page.locator('[data-action="create-workbench"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("Browser board");
     await page.locator('[data-i18n="nav.settings"]').click();
-    await page.locator('[data-i18n="nav.welcome"]').click();
+    await expect(page.locator('[data-i18n="nav.welcome"]')).not.toBeVisible();
+    await expect(page.locator('[data-action="open-workbench-nav"]')).not.toBeVisible();
+    await page.locator('[data-action="leave-settings"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("Browser board");
-    await page.locator('[data-action="edit-pinned"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(page.locator('[data-action="edit-pinned"]')).toBeFocused();
-    await page.locator('[data-action="edit-pinned"]').click();
+    await expect(page.locator('[data-action="edit-workbench-overview"]')).toBeFocused();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await page.locator("#pinned-content").fill("ă".repeat(9000));
     await expect(page.getByRole("dialog").getByRole("status")).toBeVisible();
-    await page.locator('[data-action="save-pinned"]').click();
+    await page.locator("[data-project-save]").click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
+    await page.locator("[data-workbench-entry] .workbench-menu summary").first().click();
     await page.locator('[data-action="close-workbench"]').click();
     // Control the second load to expose stale cached editor data and draft replacement.
     await context.route("**/api/index.*", (route) =>
@@ -336,30 +351,48 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         body: `import { createMockApi } from "/mocks/mockApi.ts";
           const base = createMockApi(undefined, "warnings").api;
           window.pinnedReads = 0;
+          window.blockPinned = false;
+          const pendingReads = [];
+          window.releasePinned = () => {
+            window.blockPinned = false;
+            pendingReads.splice(0).forEach(resolve => resolve());
+          };
           export const api = { ...base, invoke: async (channel, request) => {
             if (channel === "workbench.pinned.get") {
               window.pinnedReads++;
-              if (window.pinnedReads > 1) await new Promise(resolve => { window.releasePinned = resolve; });
+              if (window.blockPinned) await new Promise(resolve => pendingReads.push(resolve));
             }
             return base.invoke(channel, request);
           }};`,
       }),
     );
     await page.reload();
+    if (await page.locator('[data-action="leave-settings"]').isVisible())
+      await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="open-recent"]').click();
-    await page.locator('[data-action="edit-pinned"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toHaveValue("ă".repeat(9000));
     await page.locator("#pinned-content").fill("saved current context");
-    await page.locator('[data-action="save-pinned"]').click();
+    await page.locator("[data-project-save]").click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
-    await page.locator('[data-action="edit-pinned"]').click();
+    const previousReads = await page.evaluate(() => {
+      const state = window as unknown as { pinnedReads: number; blockPinned: boolean };
+      state.blockPinned = true;
+      return state.pinnedReads;
+    });
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads))
-      .toBe(2);
+      .toBeGreaterThan(previousReads);
+    await expect(page.getByRole("dialog").getByRole("status")).toBeVisible();
     await expect(page.locator("#pinned-content")).toBeDisabled();
     await page.evaluate(() => (window as unknown as { releasePinned: () => void }).releasePinned());
     await expect(page.locator("#pinned-content")).toHaveValue("saved current context");
     await page.locator("#pinned-content").fill("unsaved draft");
+    const loadedReads = await page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads);
     await page.evaluate(async () => {
       Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
       document.dispatchEvent(new Event("visibilitychange"));
@@ -369,7 +402,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       );
     });
-    expect(await page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads)).toBe(2);
+    expect(await page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads)).toBe(
+      loadedReads,
+    );
     await expect(page.locator("#pinned-content")).toHaveValue("unsaved draft");
     await page.keyboard.press("Escape");
     await context.unroute("**/api/index.*");
@@ -381,10 +416,14 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       }),
     );
     await page.reload();
+    if (await page.locator('[data-action="leave-settings"]').isVisible())
+      await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="open-recent"]').click();
-    await page.locator('[data-action="edit-pinned"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toHaveAttribute("readonly", "");
-    await expect(page.locator('[data-action="save-pinned"]')).toBeDisabled();
+    await expect(page.locator("[data-project-save]")).toBeDisabled();
     await page.keyboard.press("Escape");
     await context.unroute("**/api/index.*");
     await context.route("**/api/index.*", (route) =>
@@ -394,6 +433,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       }),
     );
     await page.reload();
+    if (await page.locator('[data-action="leave-settings"]').isVisible())
+      await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await expect(page.locator('[data-recent="missing"]')).toBeVisible();
     await page.locator('[data-action="remove-recent"]').click();
     await expect(page.locator('[data-recent="missing"]')).toHaveCount(0);
@@ -402,7 +444,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await context.route("**/api/index.*", (route) =>
       route.fulfill({
         contentType: "application/javascript",
-        body: 'export const api = { getAppInfo: async () => { throw { code: "INTERNAL", messageKey: "errors.INTERNAL" }; }, getSettings: async () => ({ settings: { theme: "system", textScale: 1, language: "system" }, readOnly: false }), subscribe: () => () => {} };',
+        body: 'import { createMockApi } from "/mocks/mockApi.ts"; const base = createMockApi().api; export const api = { ...base, getAppInfo: async () => { throw { code: "INTERNAL", messageKey: "errors.INTERNAL" }; } };',
       }),
     );
     await page.reload();
@@ -451,6 +493,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         );
         await page.reload();
         await page.setViewportSize({ width: 1024, height: 640 });
+        if (await page.locator('[data-action="leave-settings"]').isVisible())
+          await page.locator('[data-action="leave-settings"]').click();
+        await page.locator('[data-i18n="nav.welcome"]').click();
         await page.locator('[data-action="open-recent"]').click();
         await page.locator("[data-session]").filter({ hasText: "Tool rows" }).focus();
         await page.keyboard.press("Enter");

@@ -31,7 +31,10 @@ CLI composes the same catalog. Renderer uses strict named/source/scoped IPC only
 - Skills settings provides diagnostics, enable/disable, open/edit, source selection,
   template creation, loading/retry/read-only states and isolated drafts. Context lists
   enabled valid metadata. en/ro/de labels use root-scaled rem/theme styles and modal
-  keyboard focus restoration. Repeated Enabled/Open accessible names include each skill name. Browser mock supplies the same routes in memory.
+  keyboard focus restoration. Workbench access is through Edit → Tools/skills;
+  manager changes save independently, and project Save preserves their live choices.
+  Nested Escape closes only the top dialog, returning focus to its launcher.
+  Repeated Enabled/Open accessible names include each skill name. Browser mock supplies the same routes in memory.
 
 ## Invariants
 
@@ -87,5 +90,5 @@ flowchart LR
 
 Core skills/catalog.ts; tools/load-skill.ts; workbench/service.ts; sessions/service.ts.
 Shared skills.ts/ipc.ts. Desktop main/index.ts/sessions.ts; renderer components/skills.tsx,
-session/context-tab.tsx,workbench.tsx,mocks/mockApi.ts,locales. CLI run.ts.
+session/context-tab.tsx,workbench-editor.tsx,mocks/mockApi.ts,locales. CLI run.ts.
 Acceptance tests/e2e/skills.spec.ts and focused tests in Change map.

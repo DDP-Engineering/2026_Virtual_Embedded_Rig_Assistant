@@ -1,30 +1,37 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WorkbenchSnapshot } from "@vera/shared";
-import { useEffect, useId, useRef, useState } from "react";
+import type { SessionSummary, WorkbenchSnapshot } from "@vera/shared";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
-import { SkillSettings } from "./skills.js";
 
 export function Workbench({
   settingsReadOnly,
   active,
   changed,
   sessionPending = false,
+  sessions,
+  edit,
+  selectSession,
+  sessionsError,
+  retrySessions,
 }: {
   settingsReadOnly: boolean;
   active: WorkbenchSnapshot | undefined;
   changed: (active?: WorkbenchSnapshot, configOnly?: boolean) => void;
   sessionPending?: boolean;
+  sessions?: SessionSummary[] | undefined;
+  edit?: () => void;
+  selectSession?: (id: string) => void;
+  sessionsError?: unknown;
+  retrySessions?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const [folder, setFolder] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
-  const editButton = useRef<HTMLButtonElement>(null);
   const activeId = active?.config.id;
   const recent = useQuery({
     queryKey: ["workbench.recent"],
@@ -53,10 +60,6 @@ export function Workbench({
       off();
     };
   }, [activeId, active, changed]);
-  useEffect(() => {
-    void activeId; // A workbench switch closes the preceding editor draft.
-    setEditing(false);
-  }, [activeId]);
   async function perform(action: () => Promise<void>) {
     if (pending || sessionPending) return;
     setPending(true);
@@ -87,7 +90,6 @@ export function Workbench({
       {active ? (
         <section className="surface" data-workbench="active">
           <h3>{active.config.name}</h3>
-          <p className="path-text">{active.folder}</p>
           {active.config.description && <p>{active.config.description}</p>}
           {active.readOnly && <p role="status">{t("workbench.readOnly")}</p>}
           {active.warnings.length > 0 && (
@@ -99,34 +101,90 @@ export function Workbench({
               ))}
             </ul>
           )}
+          <dl className="workbench-config-summary" data-workbench-overview>
+            <dt>{t("overview.folder")}</dt>
+            <dd className="path-text">{active.folder}</dd>
+            <dt>{t("overview.model")}</dt>
+            <dd>{active.config.agent.model ?? t("overview.appDefault")}</dd>
+            <dt>{t("overview.permissions")}</dt>
+            <dd>
+              {active.config.agent.permission_mode === "ask"
+                ? t("approval.ask")
+                : active.config.agent.permission_mode === "read-only"
+                  ? t("approval.readOnly")
+                  : t("approval.autoEdit")}
+            </dd>
+            <dt>{t("overview.include")}</dt>
+            <dd>{active.config.docs.include.join(", ") || "—"}</dd>
+            <dt>{t("overview.exclude")}</dt>
+            <dd>{active.config.docs.exclude.join(", ") || "—"}</dd>
+            <dt>{t("projects.embeddingModel")}</dt>
+            <dd>{active.config.embeddings.model}</dd>
+            <dt>{t("projects.chunkSize")}</dt>
+            <dd>{active.config.embeddings.chunkSize}</dd>
+            <dt>{t("projects.overlap")}</dt>
+            <dd>{active.config.embeddings.overlap}</dd>
+          </dl>
           <div className="workbench-actions">
-            <SkillSettings workbenchId={active.config.id} readOnly={active.readOnly} />
-            <button ref={editButton} type="button" data-action="edit-pinned" onClick={() => setEditing(true)}>
-              {t("workbench.editPinned")}
-            </button>
-            <button
-              type="button"
-              data-action="close-workbench"
-              disabled={pending}
-              onClick={() =>
-                void perform(async () => {
-                  await api.invoke("workbench.close", {});
-                  changed();
-                })
-              }
-            >
-              {t("workbench.close")}
-            </button>
+            {edit && (
+              <button
+                type="button"
+                data-action="edit-workbench-overview"
+                disabled={pending || sessionPending}
+                onClick={edit}
+              >
+                {t("projects.edit")}
+              </button>
+            )}
           </div>
-          {editing && (
-            <PinnedEditor
-              workbench={active}
-              close={() => {
-                setEditing(false);
-                editButton.current?.focus();
-              }}
-            />
-          )}
+          <section className="workbench-session-summary">
+            <h3>
+              {t("overview.sessions")}
+              {sessions ? ` (${sessions.length})` : ""}
+            </h3>
+            {!sessions && !sessionsError && <p role="status">{t("home.loading")}</p>}
+            {sessionsError != null && (
+              <>
+                <ErrorMessage error={sessionsError} />
+                <button type="button" onClick={retrySessions}>
+                  {t("settings.retry")}
+                </button>
+              </>
+            )}
+            {sessions?.length === 0 && <p>{t("overview.noSessions")}</p>}
+            {!!sessions?.length && (
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("overview.session")}</th>
+                    <th>{t("overview.created")}</th>
+                    <th>{t("overview.updated")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((session) => (
+                    <tr key={session.id} data-overview-session={session.id}>
+                      <td>
+                        <button type="button" onClick={() => selectSession?.(session.id)}>
+                          {session.title || t("chat.untitled")}
+                        </button>
+                      </td>
+                      <td>
+                        <time dateTime={session.createdAt}>
+                          {new Date(session.createdAt).toLocaleString(i18n.resolvedLanguage ?? "en")}
+                        </time>
+                      </td>
+                      <td>
+                        <time dateTime={session.updatedAt}>
+                          {new Date(session.updatedAt).toLocaleString(i18n.resolvedLanguage ?? "en")}
+                        </time>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
         </section>
       ) : (
         <div className="welcome-grid">
@@ -199,157 +257,57 @@ export function Workbench({
           </section>
         </div>
       )}
-      <section className="surface">
-        <h3>{t("welcome.recent")}</h3>
-        {recent.isPending && <p role="status">{t("workbench.working")}</p>}
-        {recent.isError && (
-          <>
-            <ErrorMessage error={recent.error} />
-            <button type="button" onClick={() => void recent.refetch()}>
-              {t("settings.retry")}
-            </button>
-          </>
-        )}
-        {recent.data?.length === 0 && <p className="muted">{t("workbench.noRecent")}</p>}
-        <ul className="recent-workbenches">
-          {recent.data?.map((entry) => (
-            <li key={entry.folder} data-recent={entry.missing ? "missing" : "present"}>
-              <div>
-                <strong>{entry.name}</strong>
-                <p className="path-text">{entry.folder}</p>
-                {entry.missing && <p>{t("workbench.missing")}</p>}
-              </div>
-              <div className="workbench-actions">
-                <button
-                  type="button"
-                  data-action="open-recent"
-                  aria-label={t("workbench.openNamed", { name: entry.name })}
-                  disabled={pending || entry.missing}
-                  onClick={() => void perform(() => open(entry.folder))}
-                >
-                  {t("workbench.openRecent")}
-                </button>
-                <button
-                  type="button"
-                  data-action="remove-recent"
-                  aria-label={t("workbench.removeNamed", { name: entry.name })}
-                  disabled={pending || settingsReadOnly}
-                  onClick={() =>
-                    void perform(async () => {
-                      await api.invoke("workbench.recent", { remove: entry.folder });
-                      await recent.refetch();
-                    })
-                  }
-                >
-                  {t("workbench.remove")}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {!active && (
+        <section className="surface">
+          <h3>{t("welcome.recent")}</h3>
+          {recent.isPending && <p role="status">{t("workbench.working")}</p>}
+          {recent.isError && (
+            <>
+              <ErrorMessage error={recent.error} />
+              <button type="button" onClick={() => void recent.refetch()}>
+                {t("settings.retry")}
+              </button>
+            </>
+          )}
+          {recent.data?.length === 0 && <p className="muted">{t("workbench.noRecent")}</p>}
+          <ul className="recent-workbenches">
+            {recent.data?.map((entry) => (
+              <li key={entry.folder} data-recent={entry.missing ? "missing" : "present"}>
+                <div>
+                  <strong>{entry.name}</strong>
+                  <p className="path-text">{entry.folder}</p>
+                  {entry.missing && <p>{t("workbench.missing")}</p>}
+                </div>
+                <div className="workbench-actions">
+                  <button
+                    type="button"
+                    data-action="open-recent"
+                    aria-label={t("workbench.openNamed", { name: entry.name })}
+                    disabled={pending || entry.missing}
+                    onClick={() => void perform(() => open(entry.folder))}
+                  >
+                    {t("workbench.openRecent")}
+                  </button>
+                  <button
+                    type="button"
+                    data-action="remove-recent"
+                    aria-label={t("workbench.removeNamed", { name: entry.name })}
+                    disabled={pending || settingsReadOnly}
+                    onClick={() =>
+                      void perform(async () => {
+                        await api.invoke("workbench.recent", { remove: entry.folder });
+                        await recent.refetch();
+                      })
+                    }
+                  >
+                    {t("workbench.remove")}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
-  );
-}
-
-function PinnedEditor({ workbench, close }: { workbench: WorkbenchSnapshot; close: () => void }) {
-  const { t } = useTranslation();
-  const session = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  const input = useRef<HTMLTextAreaElement>(null);
-  const [content, setContent] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<unknown>();
-  const pinned = useQuery({
-    queryKey: ["workbench.pinned", workbench.folder, workbench.config.id, session],
-    queryFn: () => api.invoke("workbench.pinned.get", {}),
-    staleTime: Infinity,
-    gcTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-  useEffect(() => {
-    const node = dialog.current;
-    node?.showModal();
-    return () => node?.close();
-  }, []);
-  useEffect(() => {
-    if (pinned.data) {
-      setContent(pinned.data.content);
-      input.current?.focus();
-    }
-  }, [pinned.data]);
-  function finish() {
-    dialog.current?.close();
-    close();
-  }
-  async function save() {
-    setSaving(true);
-    setError(undefined);
-    try {
-      await api.invoke("workbench.pinned.update", { content });
-      finish();
-    } catch (failure) {
-      setError(failure);
-    } finally {
-      setSaving(false);
-    }
-  }
-  return (
-    <dialog
-      ref={dialog}
-      className="pinned-dialog"
-      aria-labelledby="pinned-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!saving) finish();
-      }}
-    >
-      <form
-        className="workbench-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save();
-        }}
-      >
-        <h3 id="pinned-title">{t("workbench.pinnedTitle")}</h3>
-        {pinned.isPending && <p role="status">{t("workbench.working")}</p>}
-        {pinned.isError && (
-          <>
-            <ErrorMessage error={pinned.error} />
-            <button type="button" onClick={() => void pinned.refetch()}>
-              {t("settings.retry")}
-            </button>
-          </>
-        )}
-        {error !== undefined && <ErrorMessage error={error} />}
-        {workbench.readOnly && <p>{t("workbench.readOnly")}</p>}
-        <label htmlFor="pinned-content">{t("workbench.pinnedTitle")}</label>
-        <textarea
-          ref={input}
-          id="pinned-content"
-          rows={14}
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          readOnly={workbench.readOnly}
-          disabled={!pinned.data || saving}
-        />
-        {new TextEncoder().encode(content).byteLength > 16384 && (
-          <p role="status">{t("workbench.pinnedOversized")}</p>
-        )}
-        <div className="workbench-actions">
-          <button type="button" disabled={saving} onClick={finish}>
-            {t("workbench.cancel")}
-          </button>
-          <button
-            type="submit"
-            data-action="save-pinned"
-            disabled={saving || workbench.readOnly || !pinned.data}
-          >
-            {t("workbench.save")}
-          </button>
-        </div>
-      </form>
-    </dialog>
   );
 }

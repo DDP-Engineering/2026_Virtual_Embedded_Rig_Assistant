@@ -228,7 +228,7 @@ export function createDocumentProcessor(pdf: PdfExtractor, embeddings?: Embeddin
     const pages = extraction.kind === "pdf" ? { pages: extraction.pages.length } : {};
     const chunks = needsOcr(extraction)
       ? []
-      : chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv");
+      : chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv", input.embeddings);
     const vectors =
       embeddings && chunks.length
         ? await embeddings.embed(

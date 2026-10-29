@@ -36,6 +36,7 @@ test("Welcome creates, restarts, reopens recent, edits pinned and closes with va
   try {
     let page = await app.firstWindow();
     await expect(page.locator('[data-action="open-demo"], [data-demo-guide]')).toHaveCount(0);
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("VERA-DEMO-01");
     await page.locator('[data-action="create-workbench"]').click();
@@ -43,10 +44,11 @@ test("Welcome creates, restarts, reopens recent, edits pinned and closes with va
     expect(existsSync(join(folder, ".vera/lock"))).toBe(true);
     expect(existsSync(join(folder, ".vera/vera.db"))).toBe(true);
     expect(existsSync(join(folder, ".vera/backups/vera.db.v0.bak"))).toBe(true);
-    await page.locator('[data-action="edit-pinned"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.locator("#pinned-content").fill("# VERA-DEMO-01\nFictional board context");
-    await page.locator('[data-action="save-pinned"]').click();
+    await page.locator("[data-project-save]").click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
     expect(await readFile(join(folder, ".vera/WORKBENCH.md"), "utf8")).toContain("Fictional board context");
     const ipc = await page.evaluate(async () => {
@@ -71,8 +73,11 @@ test("Welcome creates, restarts, reopens recent, edits pinned and closes with va
     expect(existsSync(join(folder, ".vera/lock"))).toBe(false);
     app = await launch(join(root, "data"), folder);
     page = await app.firstWindow();
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="open-recent"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
+    await page.locator("[data-workbench-entry] .workbench-menu summary").first().click();
     await page.locator('[data-action="close-workbench"]').click();
     await expect(page.locator('[data-workbench="active"]')).toHaveCount(0);
     expect(existsSync(join(folder, ".vera/lock"))).toBe(false);
@@ -90,6 +95,7 @@ test("Welcome deleted recent is missing and can be removed", async () => {
   let app = await launch(join(root, "data"), folder);
   try {
     let page = await app.firstWindow();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("Deleted board");
     await page.locator('[data-action="create-workbench"]').click();
@@ -98,6 +104,8 @@ test("Welcome deleted recent is missing and can be removed", async () => {
     await rm(folder, { recursive: true });
     app = await launch(join(root, "data"), folder);
     page = await app.firstWindow();
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await expect(page.locator('[data-recent="missing"]')).toBeVisible();
     await expect(page.locator('[data-action="open-recent"]')).toBeDisabled();
     await page.screenshot({ path: test.info().outputPath("missing-recent.png") });
@@ -123,16 +131,20 @@ test("Welcome opens copied demo with a live lock read-only and preserves owner b
   const app = await launch(join(root, "data"), folder);
   try {
     const page = await app.firstWindow();
-    await page.locator('[data-action="open-workbench"]').click();
+    await page.locator('[data-action="open-workbench-nav"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     const config = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.config.get", {}),
     );
     expect(config.config.id).toBe("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C");
-    await page.locator('[data-action="edit-pinned"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toHaveAttribute("readonly", "");
-    await expect(page.locator('[data-action="save-pinned"]')).toBeDisabled();
+    await expect(page.locator("#pinned-content")).toBeEnabled();
+    await expect(page.locator("#pinned-content")).toBeFocused();
+    await expect(page.locator("[data-project-save]")).toBeDisabled();
     await page.keyboard.press("Escape");
+    await page.locator("[data-workbench-entry] .workbench-menu summary").first().click();
     await page.locator('[data-action="close-workbench"]').click();
     expect(await readFile(join(folder, ".vera/lock"), "utf8")).toBe(lock);
     expect(existsSync(join(folder, ".vera/vera.db"))).toBe(false);

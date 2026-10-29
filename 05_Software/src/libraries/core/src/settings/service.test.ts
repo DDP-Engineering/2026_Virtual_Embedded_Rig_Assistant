@@ -381,3 +381,16 @@ it("persists independent interface, conversation and code sizes without changing
   }
   expect(reload.service.get().settings).toEqual(next);
 });
+
+it("persists shortcut removal/reassignment and defaults reset across real SettingsService loads", async () => {
+  const h = harness();
+  await h.service.load();
+  await h.service.update({ keyboardShortcuts: { newSession: [], settings: ["Mod+N"] } });
+  const reload = harness(h.files.get("/data/settings.json"));
+  await reload.service.load();
+  expect(reload.service.get().settings.keyboardShortcuts).toEqual({ newSession: [], settings: ["Mod+N"] });
+  await reload.service.update({ keyboardShortcuts: {} });
+  const reset = harness(reload.files.get("/data/settings.json"));
+  await reset.service.load();
+  expect(reset.service.get().settings.keyboardShortcuts).toEqual({});
+});

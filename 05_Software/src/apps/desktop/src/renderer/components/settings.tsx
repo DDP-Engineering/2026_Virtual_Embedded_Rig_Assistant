@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "./error-message.js";
+import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
 import { Metadata } from "./metadata.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
@@ -218,9 +219,21 @@ export function Settings({
       <div hidden={section !== "updates"}>
         <UpdatesPanel preferences={snapshot.settings.updates} disabled={disabled} update={update} />
       </div>
+      {section === "shortcuts" && (
+        <KeyboardShortcuts
+          bindings={snapshot.settings.keyboardShortcuts}
+          disabled={disabled}
+          update={(keyboardShortcuts) => update({ keyboardShortcuts })}
+        />
+      )}
       {sections
         .filter(
-          ({ id }) => id !== "providers" && id !== "appearance" && id !== "language" && id !== "updates",
+          ({ id }) =>
+            id !== "providers" &&
+            id !== "appearance" &&
+            id !== "language" &&
+            id !== "updates" &&
+            id !== "shortcuts",
         )
         .map(({ id, label }) => (
           <section

@@ -5,6 +5,16 @@ const docs = z.looseObject({
   include: z.array(z.string()).default(["docs/**"]),
   exclude: z.array(z.string()).default([]),
 });
+export const workbenchEmbeddingsSchema = z
+  .strictObject({
+    model: z.literal("Xenova/bge-small-en-v1.5").default("Xenova/bge-small-en-v1.5"),
+    chunkSize: z.number().int().min(200).max(1400).default(1400),
+    overlap: z.number().int().min(0).max(600).default(200),
+  })
+  .refine((value) => value.overlap < value.chunkSize, {
+    message: "Overlap must be smaller than chunk size",
+    path: ["overlap"],
+  });
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
 const agent = z.looseObject({
   permission_mode: z.enum(["read-only", "ask", "auto-edit"]).default("ask"),
@@ -19,6 +29,11 @@ export const workbenchSchema = z.looseObject({
   id: workbenchIdSchema,
   name: z.string().trim().min(1).max(80),
   description: z.string().optional(),
+  embeddings: workbenchEmbeddingsSchema.default({
+    model: "Xenova/bge-small-en-v1.5",
+    chunkSize: 1400,
+    overlap: 200,
+  }),
   docs: docs.default({ include: ["docs/**"], exclude: [] }),
   skills: disabled.default({ disabled: [] }),
   tools: disabled.default({ disabled: [] }),
@@ -30,6 +45,7 @@ export function workbenchTemplate(name: string): string {
   return `# ${name}\n\n## Device under test\nBoard, MCU, revision, key parts.\n\n## Bench setup\nPower, probes, programmers, interfaces and where they connect.\n\n## Conventions\nHow results, logs and notes are named and where they go.\n\n## Known issues\nLab or hardware quirks the agent should check first.\n`;
 }
 export const workbenchPatchSchema = z.strictObject({
+  embeddings: workbenchEmbeddingsSchema.optional(),
   name: z.string().trim().min(1).max(80).optional(),
   description: z.string().optional(),
   docs: z
@@ -71,6 +87,7 @@ export function configWarnings(
     skills: disabled.shape,
     tools: disabled.shape,
     agent: agent.shape,
+    embeddings: { model: true, chunkSize: true, overlap: true },
   };
   for (const [prefix, shape] of Object.entries(shapes)) {
     const value = prefix ? config[prefix] : config;

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-0c165902"
+title = "When a registered workbench is pinned or unpinned, VERA shall per"
+status = "active"
+requirement = "When a registered workbench is pinned or unpinned, VERA shall persist the choice and retain registered workbenches until explicitly removed, allowing registered folders to be revealed in Explorer."
+verification = "Focused core tests and native/browser navigation acceptance validate persistence, ownership and localized UI."
+affected_paths = ["05_Software/src/"]
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+priority = "normal"
+created = 2026-10-28
+updated = 2026-10-28

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-deb7eac8"
+title = "Per-workbench embedding chunk policy"
+status = "active"
+requirement = "When embedding configuration changes, VERA shall rebuild the workbench document index using its configured supported local model, character chunk size and bounded overlap while preserving source locators."
+verification = "Ingest rebuild test changes settings without editing sources; chunk tests prove overlap across log lines and bounded progress."
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/knowledge/"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/chunk-settings.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts"]
+created = 2026-10-28
+updated = 2026-10-28

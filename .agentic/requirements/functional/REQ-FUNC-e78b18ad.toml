@@ -14,10 +14,10 @@ title = "Document extraction and precise chunks"
 status = "active"
 
 requirement = """
-While supported documents enter owned ingest, the processor shall extract PDF page text in a dedicated worker and UTF8 Markdown, HTML and plain text into ordered chunks with precise page, full heading-path or physical-line locators and a1400-character/below512-token budget including prefixes and special tokens measured by the existing packaged tokenizer, paragraph splitting and60-line windows overlapping10 lines with CSV header repetition, and classify PDFs averaging fewer than20 text characters per page as needs_ocr.
+While supported documents enter owned ingest, the processor shall extract PDF page text in a dedicated worker and UTF8 Markdown, HTML and plain text into ordered chunks with precise page, full heading-path or physical-line locators and a workbench-configured character budget capped at1400 and below512 tokens including prefixes and special tokens measured by the packaged tokenizer, paragraph splitting and bounded configured character overlap within source pages/sections/text streams with CSV header repetition, and classify PDFs averaging fewer than20 text characters per page as needs_ocr.
 """
 
-verification = "Fixture extraction/chunk tests inspect heading trees, decoded HTML, UTF8 lines, long paragraphs and exact locators/window overlap; real PDF worker exercises multiple pages, raster-only OCR and malformed PDF."
+verification = "Fixture extraction/chunk tests inspect heading trees, decoded HTML, UTF8 lines, long paragraphs and exact locators/configured overlap; real PDF worker exercises multiple pages, raster-only OCR and malformed PDF."
 
 affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/tsconfig.json", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/apps/desktop/", "05_Software/src/apps/cli/", "05_Software/scripts/", "05_Software/tests/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/package.json"]
 
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-12
-updated = 2026-10-12
+updated = 2026-10-28

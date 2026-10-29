@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-44db3c60"
+title = "When navigating VERA, the application shall provide New/Open Work"
+status = "active"
+requirement = "When navigating VERA, the application shall provide New/Open Workbench and Plugins actions and expandable workbench session groups with workbench-scoped session selection."
+verification = "Focused core tests and native/browser navigation acceptance validate persistence, ownership and localized UI."
+affected_paths = ["05_Software/src/"]
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+priority = "normal"
+created = 2026-10-28
+updated = 2026-10-28

@@ -114,3 +114,9 @@ Paths below are relative to 05_Software.
 - src/apps/desktop/src/main/app-info.ts — effective portable-mode metadata.
 - src/apps/desktop/src/renderer/api/{client,ipc}.ts and mocks/mockApi.ts — settings API/mock parity.
 - tests/e2e/shell.spec.ts — real update/restart and newer-schema protection.
+
+App settings also support optional keyboardShortcuts, a bounded validated map of
+command IDs to aliases. An absent command uses shared defaults; [] disables it.
+Updates replace the complete override map through existing atomic SettingsService
+writes; {} restores every default. Conflicting, duplicate, reserved and unknown
+bindings are rejected at the shared IPC/storage boundary. No new migration path.

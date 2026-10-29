@@ -197,7 +197,7 @@ test("Welcome creation draft survives Settings navigation while viewer scope cha
   await act(async () => user.type(name, "Unsaved board draft"));
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
   await act(async () => button("Settings").click());
-  await act(async () => button("Home").click());
+  await act(async () => button("New Workbench").click());
   expect(container.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("Unsaved board draft");
   expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(
     false,
@@ -209,19 +209,20 @@ test("Welcome restores the active workbench and follows sidebar switches through
   await api.invoke("workbench.pinned.update", { content: "Context B" });
   await api.invoke("workbench.open", { folder: "/mock/switch-a" });
   await mount();
-  await act(async () => button("Home").click());
+  await act(async () => button("Switch A").click());
   expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Switch A");
   expect(container.querySelector('[data-action="close-workbench"]')).toBeTruthy();
-  const picker = container.querySelector<HTMLSelectElement>(
-    'select[aria-label="Workbench"]',
-  ) as HTMLSelectElement;
-  await act(async () => userEvent.setup().selectOptions(picker, "/mock/switch-b"));
+  await act(async () => button("Switch B").click());
   await settle();
-  await act(async () => button("Home").click());
   expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Switch B");
-  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="edit-pinned"]')?.click());
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click(),
+  );
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-project-section="instructions"]')?.click(),
+  );
   await settle();
-  expect(container.querySelector<HTMLTextAreaElement>("dialog textarea")?.value).toBe("Context B");
+  expect(container.querySelector<HTMLTextAreaElement>("#pinned-content")?.value).toBe("Context B");
   await act(async () => container.querySelector<HTMLButtonElement>("dialog button")?.click());
   await act(async () =>
     container.querySelector<HTMLButtonElement>('[data-action="close-workbench"]')?.click(),

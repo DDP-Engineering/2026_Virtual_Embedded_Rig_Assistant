@@ -70,7 +70,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
   const warnings = (items: WorkbenchWarning[]) =>
     items.map(({ code, path }) => ({ code, ...(path === undefined ? {} : { path: scrub(path) }) }));
   const configuration = (config: WorkbenchConfig): WorkbenchConfig => {
-    const { format, id, name, description, docs, skills, tools, agent, ...extensions } = config;
+    const { format, id, name, description, docs, skills, tools, agent, embeddings, ...extensions } = config;
     const { include, exclude, ...docExtensions } = docs;
     const { disabled: disabledSkills, ...skillExtensions } = skills;
     const { disabled: disabledTools, ...toolExtensions } = tools;
@@ -81,6 +81,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       format,
       id,
       name: scrub(name).slice(0, 80),
+      embeddings: { ...embeddings },
       ...(description === undefined ? {} : { description: scrub(description) }),
       docs: { ...(extra(docExtensions) as object), include: include.map(scrub), exclude: exclude.map(scrub) },
       skills: { ...(extra(skillExtensions) as object), disabled: disabledSkills.map(scrub) },

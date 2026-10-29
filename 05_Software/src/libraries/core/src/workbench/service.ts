@@ -452,7 +452,7 @@ export class WorkbenchService {
               lastOpened: this.host.now().toISOString(),
             },
             ...recent,
-          ].slice(0, 10),
+          ],
         });
       }
     } catch (error) {
@@ -545,12 +545,16 @@ export class WorkbenchService {
       return { config, warnings: await this.warnings(config, state.folder) };
     });
   }
-  updateConfig(patch: WorkbenchPatch): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
+  updateConfig(
+    patch: WorkbenchPatch,
+    expectedId?: string,
+  ): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
     return this.run(() =>
       this.writes.run(async () => {
         const parsed = workbenchPatchSchema.safeParse(patch);
         if (!parsed.success) throw veraError("INVALID");
         const state = await this.writable();
+        if (expectedId !== undefined && state.config.id !== expectedId) throw veraError("CONFLICT");
         const current = await this.config(state.folder);
         if (current.id !== state.config.id) throw veraError("CONFLICT");
         const config = mergeWorkbench(current, parsed.data);
@@ -561,6 +565,13 @@ export class WorkbenchService {
           this.emit(config.id, { type: "config.changed", config, warnings });
           this.ingest?.request();
         }
+        const settings = this.host.settings.get();
+        if (!settings.readOnly)
+          await this.host.settings.update({
+            recentWorkbenches: settings.settings.recentWorkbenches.map((entry) =>
+              entry.folder === state.folder ? { ...entry, name: config.name } : entry,
+            ),
+          });
         return { config: structuredClone(config), warnings };
       }),
     );
@@ -576,9 +587,19 @@ export class WorkbenchService {
   getPinned(): Promise<{ content: string; oversized: boolean }> {
     return this.run(() => this.pinned(this.current().folder));
   }
-  recent(remove?: string): Promise<RecentWorkbenchState[]> {
+  recent(remove?: string, pin?: { folder: string; value: boolean }): Promise<RecentWorkbenchState[]> {
     return this.run(async () => {
       let snapshot = this.host.settings.get();
+      if (pin !== undefined) {
+        if (snapshot.readOnly) throw veraError("DENIED");
+        if (!snapshot.settings.recentWorkbenches.some((entry) => entry.folder === pin.folder))
+          throw veraError("NOT_FOUND");
+        snapshot = await this.host.settings.update({
+          recentWorkbenches: snapshot.settings.recentWorkbenches.map((entry) =>
+            entry.folder === pin.folder ? { ...entry, pinned: pin.value } : entry,
+          ),
+        });
+      }
       if (remove !== undefined) {
         if (snapshot.readOnly) throw veraError("DENIED");
         snapshot = await this.host.settings.update({
@@ -625,11 +646,12 @@ export class WorkbenchService {
       return paths;
     });
   }
-  updatePinned(content: string): Promise<{ content: string; oversized: boolean }> {
+  updatePinned(content: string, expectedId?: string): Promise<{ content: string; oversized: boolean }> {
     return this.run(() =>
       this.writes.run(async () => {
         if (typeof content !== "string") throw veraError("INVALID");
         const state = await this.writable();
+        if (expectedId !== undefined && state.config.id !== expectedId) throw veraError("CONFLICT");
         await this.host.files.writeAtomic(join(state.folder, ".vera/WORKBENCH.md"), content);
         return { content, oversized: Buffer.byteLength(content, "utf8") > 16384 };
       }),

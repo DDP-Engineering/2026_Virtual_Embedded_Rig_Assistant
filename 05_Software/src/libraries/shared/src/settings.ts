@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { updateChannelSchema, updateModeSchema } from "./updates.js";
 import { workbenchIdSchema } from "./workbench.js";
@@ -8,6 +9,7 @@ export const recentWorkbenchSchema = z.looseObject({
   id: workbenchIdSchema,
   name: z.string().min(1).max(80),
   lastOpened: z.iso.datetime(),
+  pinned: z.boolean().optional(),
 });
 export const recentWorkbenchStateSchema = recentWorkbenchSchema.extend({ missing: z.boolean() });
 export type RecentWorkbench = z.infer<typeof recentWorkbenchSchema>;
@@ -24,6 +26,7 @@ const fontSizeSchema = z.union([
   z.literal(24),
 ]);
 const mutable = {
+  keyboardShortcuts: shortcutOverridesSchema.optional(),
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
   textScale: z.union([
@@ -39,7 +42,7 @@ const mutable = {
   defaultModel: modelReferenceSchema.nullable(),
   providers: providerSettingsSchema,
   updates: z.looseObject({ mode: updateModeSchema, channel: updateChannelSchema }),
-  recentWorkbenches: z.array(recentWorkbenchSchema).max(10),
+  recentWorkbenches: z.array(recentWorkbenchSchema),
   limits: z.looseObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
 };
 
@@ -49,6 +52,7 @@ export const settingsSchema = z.looseObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  keyboardShortcuts: mutable.keyboardShortcuts,
   language: mutable.language.optional(),
   theme: mutable.theme.optional(),
   textScale: mutable.textScale.optional(),

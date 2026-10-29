@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import { type LlmGateway, SettingsService, splitModelReference, WorkbenchService } from "@vera/core";
-import { eventEnvelopeSchema } from "@vera/shared";
+import { eventEnvelopeSchema, veraError, workbenchPatchSchema } from "@vera/shared";
 import {
   app,
   BrowserWindow,
@@ -252,14 +252,18 @@ ipcMain.handle(
         sessions.run(() =>
           revealPath(workbench.getSnapshot().folder, path, (absolute) => shell.showItemInFolder(absolute)),
         ),
-      "session.list": () =>
-        sessions.run((s) =>
-          s.list().map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
-        ),
-      "session.search": ({ query }) =>
-        sessions.run((s) =>
-          s.search(query).map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
-        ),
+      "session.list": ({ workbenchId }) =>
+        sessions.run((s) => {
+          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+          return s.list().map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text)));
+        }),
+      "session.search": ({ query, workbenchId }) =>
+        sessions.run((s) => {
+          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+          return s
+            .search(query)
+            .map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text)));
+        }),
       "session.export": ({ sessionId, format }) =>
         sessions.run((s) =>
           exportSession(s, sessionId, format, {
@@ -278,8 +282,9 @@ ipcMain.handle(
             scrub: (text) => credentials.scrub(text),
           }),
         ),
-      "session.create": ({ modelRef, mode }) =>
+      "session.create": ({ modelRef, mode, workbenchId }) =>
         sessions.run((s) => {
+          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.create(modelRef, mode), (text) => credentials.scrub(text));
         }),
@@ -355,15 +360,25 @@ ipcMain.handle(
         await sessions.lifecycle(() => workbench.close());
         return {};
       },
-      "workbench.recent": ({ remove }) => workbench.recent(remove),
+      "workbench.recent": async ({ remove, pin, reveal }) => {
+        const entries = await workbench.recent(remove, pin);
+        if (reveal !== undefined) {
+          const entry = entries.find((item) => item.folder === reveal && !item.missing);
+          if (!entry) throw veraError("NOT_FOUND");
+          const error = await shell.openPath(entry.folder);
+          if (error) throw veraError("INTERNAL");
+        }
+        return entries;
+      },
       "workbench.config.get": async () => ({
         ...(await workbench.getConfig()),
         readOnly: workbench.getSnapshot().readOnly,
         folder: workbench.getSnapshot().folder,
       }),
-      "workbench.config.update": ({ patch }) => workbench.updateConfig(patch),
+      "workbench.config.update": ({ patch, workbenchId }) =>
+        workbench.updateConfig(workbenchPatchSchema.parse(patch), workbenchId),
       "workbench.pinned.get": () => workbench.getPinned(),
-      "workbench.pinned.update": ({ content }) => workbench.updatePinned(content),
+      "workbench.pinned.update": ({ content, workbenchId }) => workbench.updatePinned(content, workbenchId),
       "workbench.files": ({ query }) => workbench.files(query),
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),

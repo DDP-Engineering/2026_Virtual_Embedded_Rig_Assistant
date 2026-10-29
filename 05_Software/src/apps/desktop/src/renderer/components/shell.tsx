@@ -1,8 +1,28 @@
-import { Activity, Folder, Home, PanelLeft, PanelRight, Settings as SettingsIcon } from "lucide-react";
-import { type CSSProperties, type PointerEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  Activity,
+  ArrowLeft,
+  Folder,
+  Home,
+  PanelLeft,
+  PanelRight,
+  Plus,
+  Puzzle,
+  Settings as SettingsIcon,
+} from "lucide-react";
+import {
+  type CSSProperties,
+  type PointerEvent,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { defaultLayout, type Layout, readLayout, saveLayout } from "../lib/layout.js";
+
+import { ShortcutContext, shortcutCommand } from "../lib/shortcuts.js";
 
 type Side = "sidebar" | "right";
 function initialLayout() {
@@ -17,6 +37,11 @@ export function Shell({
   navigation,
   settings,
   navigate,
+  newWorkbench,
+  openWorkbench,
+  showPlugins,
+  newSelected,
+  pluginsSelected,
   storageReadOnly,
   context,
   changes,
@@ -28,6 +53,11 @@ export function Shell({
   navigation: ReactNode;
   settings: boolean;
   navigate: (settings: boolean) => void;
+  newWorkbench?: () => void;
+  openWorkbench?: () => void;
+  showPlugins?: () => void;
+  newSelected?: boolean;
+  pluginsSelected?: boolean;
   storageReadOnly: boolean;
   context?: ReactNode;
   changes?: ReactNode;
@@ -38,6 +68,21 @@ export function Shell({
   const { t } = useTranslation();
   const [initial] = useState(initialLayout);
   const [layout, setLayout] = useState(initial.layout);
+  const bindings = useContext(ShortcutContext);
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => {
+      const command = shortcutCommand(event, bindings);
+      if (command !== "toggleSidebar" && command !== "toggleRightPanel") return;
+      event.preventDefault();
+      setLayout((value) =>
+        command === "toggleSidebar"
+          ? { ...value, sidebarCollapsed: !value.sidebarCollapsed }
+          : { ...value, rightCollapsed: !value.rightCollapsed },
+      );
+    };
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, [bindings]);
   const [tab, setTab] = useState("context");
   useEffect(() => {
     if (settings) setLayout((value) => ({ ...value, sidebarCollapsed: false }));
@@ -250,19 +295,57 @@ export function Shell({
             <Activity aria-hidden="true" />
             <h1 data-i18n="home.title">{t("home.title")}</h1>
           </div>
-          <nav className="sidebar-primary" aria-label={t("nav.main")}>
+          {settings && (
+            <button
+              type="button"
+              className="sidebar-action sidebar-back"
+              data-action="leave-settings"
+              onClick={() => navigate(false)}
+            >
+              <ArrowLeft aria-hidden="true" />
+              <span>{t("projects.back")}</span>
+            </button>
+          )}
+          <nav className="sidebar-primary" hidden={settings} aria-label={t("nav.main")}>
             <button
               type="button"
               className="sidebar-action"
               data-i18n="nav.welcome"
-              aria-label={t("nav.welcome")}
-              title={t("nav.welcome")}
-              aria-current={!settings ? "page" : undefined}
-              onClick={() => navigate(false)}
+              aria-label={newWorkbench ? t("projects.new") : t("nav.welcome")}
+              title={newWorkbench ? t("projects.new") : t("nav.welcome")}
+              aria-current={!settings && (newSelected ?? true) ? "page" : undefined}
+              onClick={() => (newWorkbench ? newWorkbench() : navigate(false))}
             >
-              <Home aria-hidden="true" />
-              <span className="nav-label">{t("nav.welcome")}</span>
+              {newWorkbench ? <Plus aria-hidden="true" /> : <Home aria-hidden="true" />}
+              <span className="nav-label">{newWorkbench ? t("projects.new") : t("nav.welcome")}</span>
             </button>
+            {openWorkbench && (
+              <button
+                type="button"
+                className="sidebar-action"
+                data-action="open-workbench-nav"
+                aria-label={t("projects.open")}
+                title={t("projects.open")}
+                onClick={openWorkbench}
+              >
+                <Folder aria-hidden="true" />
+                <span className="nav-label">{t("projects.open")}</span>
+              </button>
+            )}
+            {showPlugins && (
+              <button
+                type="button"
+                className="sidebar-action"
+                data-action="plugins-nav"
+                aria-current={pluginsSelected ? "page" : undefined}
+                aria-label={t("projects.plugins")}
+                title={t("projects.plugins")}
+                onClick={showPlugins}
+              >
+                <Puzzle aria-hidden="true" />
+                <span className="nav-label">{t("projects.plugins")}</span>
+              </button>
+            )}
             <button
               type="button"
               className="sidebar-action"

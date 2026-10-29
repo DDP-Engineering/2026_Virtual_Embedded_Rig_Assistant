@@ -122,7 +122,7 @@ for (const kind of ["yaml", "database"] as const) {
       app = await launch(join(root, "profile"), bench);
       const page = await app.firstWindow();
       await page.waitForFunction(() => !!(window as unknown as { vera: VeraBridge }).vera);
-      await page.locator('[data-action="open-workbench"]').click();
+      await page.locator('[data-action="open-workbench-nav"]').click();
       await expect(page.locator('[data-i18n="errors.WORKBENCH_TOO_NEW"]')).toHaveText(
         "This workbench was created by a newer VERA version.",
       );

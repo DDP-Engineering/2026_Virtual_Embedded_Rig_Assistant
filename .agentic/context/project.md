@@ -18,7 +18,7 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
-[Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. Welcome creates or opens user-selected projects; sessions begin with user-composed input.
+[Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New/Open Workbench manages user-selected single-root projects. The sidebar retains pinned workbenches and grouped sessions; the project editor manages supported configuration and local embedding chunk settings. Plugins presents integration availability. Sessions begin with user-composed input.
 
 [Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
 normal loopback tools/approval/citation/restart and external process-tree egress.
@@ -83,3 +83,7 @@ required before final release; current-host import/loaded-path evidence suppleme
 [Plan](../knowledge/plan.md) routes task-list bounds, atomic persistence and live status presentation.
 
 [Chat UI](../knowledge/chat-ui.md) routes session navigation, Markdown/tool/citation presentation, composer, usage, Context and snapshot-before-subscribe restoration.
+
+App-wide keyboard bindings are confirmed settings shared through the renderer
+ShortcutContext. Settings supports searching, recording, adding/removing aliases
+and restoring defaults for current navigation, panels and conversation actions.

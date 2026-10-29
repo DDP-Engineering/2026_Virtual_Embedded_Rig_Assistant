@@ -107,3 +107,14 @@ Xenova/bge-small-en-v1.5 assets at revision
 `ea104dacec62c0de699686887e3f920caeb4f3e3`, MIT license. The original hashes
 are recorded in src/models/model-manifest.json. No ONNX/model runtime is used by
 chunking.
+
+## Workbench chunk configuration
+
+`workbench.embeddings` carries the installed BGE model identifier, `chunkSize`
+(200–1400 characters) and requested character `overlap` (0–600, smaller than size).
+Processor receives this snapshot from ingest. Chunks retain the BGE token ceiling;
+effective overlap is capped at half the actual fragment. PDF pages and structured
+sections remain separate; text streams overlap across line-window boundaries.
+Incremental line offsets maintain source locators without rescanning each prefix.
+`knowledge/chunk-settings.test.ts` covers overlap and bounded progress; ingest tests
+verify changed parameters rebuild chunks without editing source documents.

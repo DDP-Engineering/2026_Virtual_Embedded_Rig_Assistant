@@ -99,6 +99,22 @@ it.each(["file", "directory"])("leaves user-owned docs %s unchanged on create an
     await h.service.close();
   }
 });
+it("persists registered workbench pinning and rejects unregistered folders", async () => {
+  const h = await harness();
+  try {
+    await h.service.create(h.folder, "Pinned board");
+    expect((await h.service.recent(undefined, { folder: h.folder, value: true }))[0]?.pinned).toBe(true);
+    await h.service.close();
+    await h.service.open(h.folder);
+    expect((await h.service.recent())[0]?.pinned).toBe(true);
+    expect((await h.service.recent(undefined, { folder: h.folder, value: false }))[0]?.pinned).toBe(false);
+    await expect(h.service.recent(undefined, { folder: h.root, value: true })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  } finally {
+    await h.service.close();
+  }
+});
 it("does not open or migrate root-level project metadata", async () => {
   const h = await harness();
   const content = "format: 1\nid: wb_legacy\nname: Root files\n";
@@ -723,7 +739,7 @@ it("rejects redirected management files before writes and recognizes UNC network
   await expect(h.service.create(h.folder, "Board")).rejects.toMatchObject({ code: "DENIED" });
   expect(existsSync(join(h.folder, ".vera/workbench.yaml"))).toBe(false);
 });
-it("persists ten unique recents, derives missing folder and removes entry across restarts", async () => {
+it("retains all unique registered workbenches, derives missing folder and removes entry across restarts", async () => {
   const h = await harness();
   for (let n = 0; n < 11; n++) {
     const folder = join(h.root, `bench${n}`);
@@ -731,14 +747,14 @@ it("persists ten unique recents, derives missing folder and removes entry across
     await h.service.create(folder, `Board${n}`);
   }
   let entries = await h.service.recent();
-  expect(entries).toHaveLength(10);
+  expect(entries).toHaveLength(11);
   expect(entries[0]?.name).toBe("Board10");
-  expect(entries.some((e) => e.name === "Board0")).toBe(false);
+  expect(entries.some((e) => e.name === "Board0")).toBe(true);
   await h.service.open(join(h.root, "bench5"));
   await h.service.close();
   entries = await h.service.recent();
   expect(entries[0]?.name).toBe("Board5");
-  expect(entries).toHaveLength(10);
+  expect(entries).toHaveLength(11);
   await rm(join(h.root, "bench5"), { recursive: true });
   const settings = new SettingsService({
     files: h.host.files,
@@ -749,7 +765,7 @@ it("persists ten unique recents, derives missing folder and removes entry across
   await settings.load();
   const service = new WorkbenchService({ ...h.host, settings });
   expect((await service.recent())[0]).toMatchObject({ name: "Board5", missing: true });
-  expect(await service.recent(join(h.root, "bench5"))).toHaveLength(9);
+  expect(await service.recent(join(h.root, "bench5"))).toHaveLength(10);
   expect(settings.get().settings.recentWorkbenches.every((e) => e.name !== "Board5")).toBe(true);
 });
 it("failed recent save releases replacement lock and retains previous; future settings suppress recents", async () => {

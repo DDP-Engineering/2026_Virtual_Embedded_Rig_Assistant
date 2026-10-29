@@ -39,7 +39,9 @@ async function rig(delay = 0) {
   return { root, folder, launch };
 }
 async function create(page: Page, model: string) {
+  await page.locator('[data-i18n="nav.welcome"]').click();
   await page.locator("#workbench-name").fill("Board");
+  await page.locator('[data-i18n="nav.welcome"]').click();
   await page.locator('[data-action="choose-create"]').click();
   await page.locator('[data-action="create-workbench"]').click();
   await page.locator('[data-action="new-session"]').click();

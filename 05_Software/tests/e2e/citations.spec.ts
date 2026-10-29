@@ -59,7 +59,9 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
   try {
     app = await launch();
     let page = await app.firstWindow();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("#workbench-name").fill("Citations");
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await page.locator('[data-action="new-session"]').click();

@@ -86,8 +86,15 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 ```mermaid
 flowchart LR
   App --> Shell
+  App --> ShortcutContext[Confirmed shortcut overrides]
+  ShortcutContext --> Shell
+  ShortcutContext --> Workspace[Conversation actions]
+  Settings --> ShortcutEditor[Shortcut search and recorder]
+  ShortcutEditor --> API
   App --> Settings
-  App --> Workbench[Welcome and PinnedEditor]
+  App --> Workbench[Workbench overview and creation]
+  App --> Editor[Workbench editor / Instructions / Skills]
+  Editor --> API
   Workbench --> API
   App --> usePreferences
   usePreferences --> Query
@@ -111,7 +118,7 @@ The view consumes confirmed settings. Native theme and renderer geometry have di
 Paths relative to 05_Software/src/apps/desktop/src/renderer except qualified paths.
 
 - App.tsx — memory routes, metadata/query status and Ctrl+,.
-- components/{shell,settings,metadata,error-message,workbench}.tsx — panels, editors, labels and safe error text.
+- components/{shell,settings,metadata,error-message,workbench,workbench-editor}.tsx — panels, editors, labels and safe error text.
 - hooks/use-preferences.ts — Query lifecycle and theme/scale/language application.
 - lib/{layout,language}.ts and lib/preferences.test.ts — geometry storage and locale resolution.
 - lib/shortcuts.ts — modal/composition/modifier/repeat guard for global keyboard actions.
@@ -120,3 +127,29 @@ Paths relative to 05_Software/src/apps/desktop/src/renderer except qualified pat
 - 05_Software/src/apps/desktop/src/main/index.ts — initial and updated nativeTheme.
 - 05_Software/scripts/check-i18n.mjs, tests/tooling/i18n.test.ts — AST catalog auditing/fixtures.
 - 05_Software/tests/e2e/{mock,shell}.spec.ts — browser and native UI acceptance.
+
+Settings hides the primary New/Open/Plugins actions while its categories are
+visible; Back to workbenches restores the previous workbench view. The overview
+has one Edit action and its editor hosts instructions and Skills management.
+Shared dialogs are centered, including nested Skills dialogs.
+
+## Configurable keyboard shortcuts
+
+Settings → Keyboard shortcuts shows searchable command descriptions and individual
+key chips with edit/remove, add and default-reset actions. Keystroke search captures
+keys without invoking commands. A modal recorder supports Tab, Escape and conflict
+feedback. Confirmed app.settings keyboardShortcuts overrides are supplied through
+ShortcutContext; absent overrides use shared defaults and empty lists disable a
+command. App owns session/workbench/settings navigation; Shell owns panel toggles;
+Workspace owns transcript find and composer/model focus. Exact modifiers, IME,
+AltGr, repeats, handled events, dialogs and recording guards retain input ownership.
+Native editing/window/developer combinations are reserved; Enter/Shift+Enter/Escape
+retain existing contextual behavior. See shared keyboard-shortcuts.ts and
+renderer components/keyboard-shortcuts.tsx, lib/shortcuts.ts. Focused verification:
+shared/core settings persistence, shortcuts/workspace/shell tests and
+ tests/e2e/keyboard-shortcuts.spec.ts (browser and compiled native restart).
+
+Shortcut digits/comma/slash use physical code positions when supplied (letters
+follow the current layout key). Windows input without code normalizes standard
+shifted symbols to their base keys; recorder feedback rejects unsupported keys.
+Key-search activation focuses its input before the next key can execute a command.

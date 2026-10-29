@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-e36a4ca6"
+title = "When opening Plugins, VERA shall present a localized library sect"
+status = "active"
+requirement = "When opening Plugins, VERA shall present a localized library section that accurately states the availability of installation and embedded integrations."
+verification = "Focused core tests and native/browser navigation acceptance validate persistence, ownership and localized UI."
+affected_paths = ["05_Software/src/"]
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+priority = "normal"
+created = 2026-10-28
+updated = 2026-10-28

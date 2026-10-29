@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-098273a3"
+title = "Editable keyboard shortcuts"
+status = "active"
+requirement = "In Settings / Keyboard shortcuts, VERA shall let users search existing commands, add, edit, remove and restore persistent app-wide bindings, rejecting conflicting or reserved combinations while retaining dialog, IME, local editing and readonly boundaries."
+verification = "Shared validation/persistence tests; renderer guard tests; browser recording, conflicts, removal, reset, reload and dispatch; native keyboard and visual inspection."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/", "05_Software/src/libraries/shared/src/", "05_Software/src/libraries/core/src/settings/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.test.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/apps/desktop/src/renderer/lib/shortcuts.test.ts", "05_Software/tests/e2e/keyboard-shortcuts.spec.ts"]
+created = 2026-10-29
+updated = 2026-10-29

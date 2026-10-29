@@ -38,6 +38,7 @@ import { updateSnapshotSchema } from "./updates.js";
 import {
   configSnapshotSchema,
   pinnedSchema,
+  workbenchIdSchema,
   workbenchPatchSchema,
   workbenchSnapshotSchema,
 } from "./workbench.js";
@@ -193,10 +194,14 @@ export const channels = {
       .refine((v) => !v.switchToAutoEdit || v.decision === "approved"),
     z.strictObject({}),
   ),
-  "session.list": defineChannel("session.list", z.strictObject({}), z.array(sessionSummarySchema)),
+  "session.list": defineChannel(
+    "session.list",
+    z.strictObject({ workbenchId: workbenchIdSchema.optional() }),
+    z.array(sessionSummarySchema),
+  ),
   "session.search": defineChannel(
     "session.search",
-    z.strictObject({ query: sessionSearchQuerySchema }),
+    z.strictObject({ query: sessionSearchQuerySchema, workbenchId: workbenchIdSchema.optional() }),
     z.array(sessionSummarySchema),
   ),
   "session.export": defineChannel(
@@ -207,6 +212,7 @@ export const channels = {
   "session.create": defineChannel(
     "session.create",
     z.strictObject({
+      workbenchId: workbenchIdSchema.optional(),
       modelRef: modelReferenceSchema.nullable().optional(),
       mode: permissionModeSchema.optional(),
     }),
@@ -284,8 +290,12 @@ export const channels = {
   "workbench.close": defineChannel("workbench.close", z.strictObject({}), z.strictObject({})),
   "workbench.recent": defineChannel(
     "workbench.recent",
-    z.strictObject({ remove: z.string().min(1).optional() }),
-    z.array(recentWorkbenchStateSchema).max(10),
+    z.strictObject({
+      remove: z.string().min(1).optional(),
+      pin: z.strictObject({ folder: z.string().min(1), value: z.boolean() }).optional(),
+      reveal: z.string().min(1).optional(),
+    }),
+    z.array(recentWorkbenchStateSchema),
   ),
   "workbench.config.get": defineChannel(
     "workbench.config.get",
@@ -294,13 +304,13 @@ export const channels = {
   ),
   "workbench.config.update": defineChannel(
     "workbench.config.update",
-    z.strictObject({ patch: workbenchPatchSchema }),
+    z.strictObject({ patch: workbenchPatchSchema, workbenchId: workbenchIdSchema.optional() }),
     configSnapshotSchema,
   ),
   "workbench.pinned.get": defineChannel("workbench.pinned.get", z.strictObject({}), pinnedSchema),
   "workbench.pinned.update": defineChannel(
     "workbench.pinned.update",
-    z.strictObject({ content: z.string() }),
+    z.strictObject({ content: z.string(), workbenchId: workbenchIdSchema.optional() }),
     pinnedSchema,
   ),
   "workbench.files": defineChannel(

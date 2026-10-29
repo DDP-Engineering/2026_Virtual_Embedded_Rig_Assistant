@@ -32,7 +32,9 @@ test("finds a renamed session by a word only in a later message", async () => {
   try {
     await installNetworkGuard(app);
     const page = await app.firstWindow();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("#workbench-name").fill("Board");
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await page.locator('[data-action="new-session"]').click();
@@ -55,13 +57,18 @@ test("finds a renamed session by a word only in a later message", async () => {
       }
       await api.invoke("session.rename", { sessionId: id, title: "Renamed board" });
     }, id as string);
-    const search = page.getByRole("searchbox", { name: "Search sessions" });
-    await search.fill("OSCILLATORNEEDLE");
-    await expect(page.locator(`[data-session="${id}"]`)).toContainText("Renamed board");
-    await search.fill("missingneedle");
-    await expect(page.getByText("No matching sessions")).toBeVisible();
+    await expect(page.locator('#sidebar input[type="search"]')).toHaveCount(0);
+    const found = await page.evaluate(async () =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("session.search", {
+        query: "OSCILLATORNEEDLE",
+      }),
+    );
+    expect(found.some((entry) => entry.id === id && entry.title === "Renamed board")).toBe(true);
+    const absent = await page.evaluate(async () =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("session.search", { query: "missingneedle" }),
+    );
+    expect(absent).toEqual([]);
     await expect(page.locator('[data-message-kind="user"]').last()).toContainText("oscillatorneedle");
-    await search.fill("");
     await expect(page.locator(`[data-session="${id}"]`)).toBeVisible();
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {

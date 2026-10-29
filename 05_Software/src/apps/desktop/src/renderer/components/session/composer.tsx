@@ -185,6 +185,7 @@ export function Composer({
             {t("chat.model")}
             <select
               aria-label={t("chat.model")}
+              data-model-picker
               disabled={locked || running}
               value={state.modelRef ?? ""}
               onChange={(e) => void setModel(e.target.value || null)}

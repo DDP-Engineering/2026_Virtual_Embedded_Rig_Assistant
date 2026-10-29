@@ -155,3 +155,15 @@ Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint
 Document viewer acceptance uses shared documents-ipc, core knowledge/viewer and search provenance, workbench/service, main document-viewer scrubbing, renderer documents/markdown and immediate IPC/preload/mock/session/artifact/import consumers. Native tests/e2e/citations.spec.ts proves offline PDF page/snippet/search/zoom, repeated heading and line60–62 anchors, artifacts, Docs and restart; tests/e2e/documents.spec.ts checks en/ro/de light/dark/all-scale1024x640.
 
 Session export/search verification routes are core sessions/export.test.ts and service.test.ts, shared/session-export.test.ts, main/session-export.test.ts and native tests/e2e/session-search.spec.ts; exact execution policy is owned by the current task and user.
+
+## Workbench navigation verification
+
+`tests/e2e/workbench-navigation.spec.ts` exercises mock sidebar/editor and two-workbench
+session switching. `tests/e2e/workbench.spec.ts` owns native create/open/restart.
+Core workbench/ingest/chunk-settings tests cover persistent pins, retained registry,
+scoped saves and per-workbench document chunk rebuilding.
+
+Keyboard shortcuts verification uses shared keyboard-shortcuts.test.ts, core
+settings/service.test.ts, renderer lib/shortcuts.test.ts and immediate
+workspace/shell consumers. tests/e2e/keyboard-shortcuts.spec.ts covers browser
+editing/capture/conflicts/readonly plus compiled native persistence across restart.

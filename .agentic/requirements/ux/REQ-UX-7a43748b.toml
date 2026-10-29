@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-7a43748b"
+title = "Workbench overview and empty canvas"
+status = "active"
+requirement = "When selecting a workbench, VERA shall show a scoped overview with folder, dated session count/list, supported configuration and Edit, while the sidebar has no search inputs and the unselected main canvas shows VERA branding until an explicit action."
+verification = "Browser acceptance checks empty branding, no sidebar searches, scoped dated sessions/configuration, session selection and editor opening."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/"]
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts"]
+created = 2026-10-29
+updated = 2026-10-29

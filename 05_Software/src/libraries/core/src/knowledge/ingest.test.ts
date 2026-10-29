@@ -486,3 +486,24 @@ it("keeps read-only snapshots and lost-token source storage untouched", async ()
   await expect(h.service.reindexDocuments()).rejects.toMatchObject({ code: "DENIED" });
   expect(new DocumentsRepository(h.service.getDatabase()).list()).toEqual(before);
 }, 12000);
+
+it("rebuilds chunks when workbench embedding settings change without source edits", async () => {
+  const h = await harness(
+    createDocumentProcessor(async () => {
+      throw Error("No PDF expected");
+    }),
+  );
+  await writeFile(
+    join(h.folder, "docs/board.md"),
+    "# Board\n" + "Power supply measurement reference. ".repeat(120),
+  );
+  await h.service.reindexDocuments();
+  const before = h.db.prepare("SELECT count(*) FROM chunks").pluck().get() as number;
+  await h.service.updateConfig({
+    embeddings: { model: "Xenova/bge-small-en-v1.5", chunkSize: 400, overlap: 50 },
+  });
+  await h.service.reindexDocuments();
+  const after = h.db.prepare("SELECT count(*) FROM chunks").pluck().get() as number;
+  expect(after).toBeGreaterThan(before);
+  expect(h.db.prepare("SELECT max(chars) FROM chunks").pluck().get()).toBeLessThanOrEqual(400);
+});

@@ -147,7 +147,9 @@ test("artifact appears live, opens/exports, survives restart and deletion remove
     closed = false;
   try {
     let page = await rig.app.firstWindow();
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("#workbench-name").fill("Board");
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await page.locator('[data-action="new-session"]').click();

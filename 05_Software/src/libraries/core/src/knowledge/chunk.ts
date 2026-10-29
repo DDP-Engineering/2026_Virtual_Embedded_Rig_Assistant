@@ -34,10 +34,17 @@ export const chunkSchema = z
 export type Chunk = z.infer<typeof chunkSchema>;
 
 /** Prefer paragraphs, then whitespace; preserve every character, including long unbroken strings. */
-function split(text: string, limit: number, prefix = ""): string[] {
+function split(
+  text: string,
+  limit: number,
+  prefix = "",
+  overlap = 0,
+): { part: string; offset: number; lineOffset: number }[] {
   if (limit < 2 || countChunkTokens(prefix) >= CHUNK_TOKEN_LIMIT)
     throw Error("Heading or CSV prefix exceeds chunk budget.");
-  const result: string[] = [];
+  const result: { part: string; offset: number; lineOffset: number }[] = [];
+  let offset = 0;
+  let lineOffset = 0;
   while (text) {
     let ceiling = Math.min(limit, text.length);
     if (countChunkTokens(prefix + text.slice(0, ceiling)) >= CHUNK_TOKEN_LIMIT) {
@@ -65,8 +72,13 @@ function split(text: string, limit: number, prefix = ""): string[] {
       if (end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1] ?? "")) end--;
     }
     if (!end) throw Error("Heading or CSV prefix leaves no chunk budget.");
-    result.push(text.slice(0, end));
-    text = text.slice(end);
+    result.push({ part: text.slice(0, end), offset, lineOffset });
+    if (end === text.length) break;
+    let consumed = Math.max(1, end - Math.min(overlap, Math.floor(end / 2)));
+    if (/[\uD800-\uDBFF]/.test(text[consumed - 1] ?? "")) consumed++;
+    lineOffset += text.slice(0, consumed).match(/\n/g)?.length ?? 0;
+    offset += consumed;
+    text = text.slice(consumed);
   }
   return result;
 }
@@ -76,12 +88,27 @@ export function needsOcr(extraction: Extraction): boolean {
     extraction.pages.reduce((n, page) => n + page.trim().length, 0) / extraction.pages.length < 20
   );
 }
-export function chunkDocument(extraction: Extraction, csv = false): Chunk[] {
+export function chunkDocument(
+  extraction: Extraction,
+  csv = false,
+  settings?: { chunkSize: number; overlap: number },
+): Chunk[] {
+  const maxChars = settings?.chunkSize ?? CHUNK_CHARS;
+  const overlap = settings?.overlap ?? 0;
+  if (
+    !Number.isInteger(maxChars) ||
+    maxChars < 200 ||
+    maxChars > CHUNK_CHARS ||
+    !Number.isInteger(overlap) ||
+    overlap < 0 ||
+    overlap >= maxChars
+  )
+    throw Error("Invalid chunk configuration");
   const result: Chunk[] = [];
   if (extraction.kind === "pdf") {
     if (needsOcr(extraction)) return result;
     extraction.pages.forEach((text, index) => {
-      for (const part of split(text, CHUNK_CHARS))
+      for (const { part } of split(text, maxChars, "", overlap))
         if (part.trim()) result.push({ text: part, locator: { type: "page", page: index + 1 } });
     });
   } else if (extraction.kind === "text") {
@@ -89,19 +116,18 @@ export function chunkDocument(extraction: Extraction, csv = false): Chunk[] {
     const first = csv ? 1 : 0;
     const prefix = csv && lines.length ? `${lines[0]}\n` : "";
     // A header is repeated verbatim; a header wider than the budget is an extraction failure.
-    if (prefix.length > CHUNK_CHARS - 2) throw Error("CSV header exceeds chunk budget.");
+    if (prefix.length > maxChars - 2) throw Error("CSV header exceeds chunk budget.");
     if (countChunkTokens(prefix) >= CHUNK_TOKEN_LIMIT) throw Error("CSV header exceeds token budget.");
     if (csv && lines.length === 1)
       result.push({ text: lines[0] ?? "", locator: { type: "lines", start: 1, end: 1 } });
-    for (let start = first; start < lines.length; start += 50) {
-      const end = Math.min(start + 60, lines.length);
+    for (let start = first; start < lines.length; start += settings ? 60 : 50) {
+      const end = settings ? lines.length : Math.min(start + 60, lines.length);
       const text = lines.slice(start, end).join("\n");
-      let lineStart = start + 1;
-      for (const part of split(text, CHUNK_CHARS - prefix.length, prefix)) {
+      for (const { part, lineOffset } of split(text, maxChars - prefix.length, prefix, overlap)) {
+        const lineStart = start + 1 + lineOffset;
         const lineEnd = lineStart + (part.replace(/\n$/, "").match(/\n/g)?.length ?? 0);
         if (part.trim())
           result.push({ text: prefix + part, locator: { type: "lines", start: lineStart, end: lineEnd } });
-        lineStart += part.match(/\n/g)?.length ?? 0;
       }
       if (end === lines.length) break;
     }
@@ -109,8 +135,8 @@ export function chunkDocument(extraction: Extraction, csv = false): Chunk[] {
     for (const section of extraction.sections) {
       const heading = section.path.join(" > ");
       const prefix = heading ? `${heading}\n` : "";
-      let start = section.start;
-      for (const part of split(section.text, CHUNK_CHARS - prefix.length, prefix)) {
+      for (const { part, lineOffset } of split(section.text, maxChars - prefix.length, prefix, overlap)) {
+        const start = section.start + lineOffset;
         const end = start + (part.replace(/\n$/, "").match(/\n/g)?.length ?? 0);
         if (part.trim())
           result.push({
@@ -122,7 +148,6 @@ export function chunkDocument(extraction: Extraction, csv = false): Chunk[] {
               ...(extraction.kind === "markdown" ? { start, end } : {}),
             },
           });
-        start += part.match(/\n/g)?.length ?? 0;
       }
     }
   }

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SessionSummary, WorkbenchSnapshot } from "@vera/shared";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Activity } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
 import { DocsTab } from "./components/documents/docs-tab.js";
@@ -16,12 +17,17 @@ import { Settings, useSettingsSections } from "./components/settings.js";
 import { Shell } from "./components/shell.js";
 import { UpdateBanner } from "./components/updates.js";
 import { Workbench } from "./components/workbench.js";
+import { Plugins, WorkbenchEditor } from "./components/workbench-editor.js";
+import { WorkbenchNavigation } from "./components/workbench-navigation.js";
 import { usePreferences } from "./hooks/use-preferences.js";
-import { globalShortcutBlocked } from "./lib/shortcuts.js";
+import { ShortcutContext, shortcutCommand } from "./lib/shortcuts.js";
 
 export function App() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState(false);
+  const [plugins, setPlugins] = useState(false);
+  const [newWorkbench, setNewWorkbench] = useState(false);
+  const [editor, setEditor] = useState<WorkbenchSnapshot>();
   const [section, setSection] = useState("appearance");
   useEffect(() => {
     const main = document.getElementById("main-content");
@@ -30,12 +36,9 @@ export function App() {
   const client = useQueryClient();
   const [chat, setChat] = useState(false);
   const [activeSession, setActiveSession] = useState<string>();
+  const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
   const [sessionError, setSessionError] = useState<unknown>();
-  const [searchState, setSearchState] = useState<{ benchId: string | undefined; query: string }>({
-    benchId: undefined,
-    query: "",
-  });
   const bench = useQuery({
     queryKey: ["workbench.active"],
     queryFn: () => api.invoke("workbench.config.get", {}),
@@ -43,18 +46,15 @@ export function App() {
   });
   const benchId = bench.data?.config.id;
   const readOnly = bench.data?.readOnly ?? false;
+  const benchFailure = bench.isError && (bench.error as { code?: string }).code !== "NOT_FOUND";
+
+  useEffect(() => {
+    if (editor && editor.config.id !== benchId) setEditor(undefined);
+  }, [benchId, editor]);
   const sessions = useQuery({
     queryKey: ["session.list", benchId],
-    queryFn: () => api.invoke("session.list", {}),
+    queryFn: () => api.invoke("session.list", { workbenchId: benchId }),
     enabled: !!benchId,
-    refetchInterval: 2000,
-  });
-  const sessionSearch = searchState.benchId === benchId ? searchState.query : "";
-  const searchQuery = sessionSearch.trim();
-  const searchResults = useQuery({
-    queryKey: ["session.search", benchId, searchQuery],
-    queryFn: () => api.invoke("session.search", { query: searchQuery }),
-    enabled: !!benchId && !!searchQuery,
     refetchInterval: 2000,
   });
   const changed = useCallback(() => {
@@ -64,6 +64,8 @@ export function App() {
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
       if (!configOnly) {
+        setNewWorkbench(false);
+        setPlugins(false);
         setActiveSession(undefined);
         setChat(false);
       }
@@ -84,6 +86,8 @@ export function App() {
     (id: string) => {
       setActiveSession(id);
       setChat(true);
+      setPlugins(false);
+      setNewWorkbench(false);
       setSettings(false);
       if (benchId)
         try {
@@ -105,10 +109,11 @@ export function App() {
     }
     const id = sessions.data.find((s) => s.id === remembered)?.id ?? sessions.data[0]?.id;
     setActiveSession(id);
-    if (id) setChat(true);
   }, [benchId, sessions.data, activeSession]);
   const operation = useCallback(
     async (action: () => Promise<void>) => {
+      if (operationBusy.current) return false;
+      operationBusy.current = true;
       setSessionPending(true);
       setSessionError(undefined);
       try {
@@ -119,6 +124,7 @@ export function App() {
         setSessionError(e);
         return false;
       } finally {
+        operationBusy.current = false;
         setSessionPending(false);
       }
     },
@@ -127,7 +133,7 @@ export function App() {
   const create = useCallback(() => {
     if (!benchId || readOnly || sessionPending) return;
     void operation(async () => {
-      const session = await api.invoke("session.create", {});
+      const session = await api.invoke("session.create", { workbenchId: benchId });
       client.setQueryData<SessionSummary[]>(["session.list", benchId], (old) => [session, ...(old ?? [])]);
       select(session.id);
     }).catch(() => {});
@@ -135,26 +141,72 @@ export function App() {
   const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
   const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
   const { snapshot, mutation } = usePreferences(info.data?.locale ?? "en");
+  const emptyCanvas =
+    !settings &&
+    !plugins &&
+    !newWorkbench &&
+    !activeWorkbench &&
+    !bench.isPending &&
+    !benchFailure &&
+    !info.isPending &&
+    !snapshot.isPending &&
+    !info.isError &&
+    !snapshot.isError;
   const sections = useSettingsSections();
-  function navigate(value: boolean) {
+  const navigate = useCallback((value: boolean) => {
     setSettings(value);
+    setPlugins(false);
+    setNewWorkbench(false);
     if (!value) setChat(false);
-  }
+  }, []);
+  const showNewWorkbench = useCallback(() => {
+    setNewWorkbench(true);
+    setSettings(false);
+    setPlugins(false);
+    setChat(false);
+  }, []);
+  const openWorkbench = useCallback(() => {
+    if (sessionPending) return;
+    void operation(async () => {
+      const result = await api.invoke("app.chooseFolder", {});
+      if (result.folder) {
+        benchChanged(await api.invoke("workbench.open", { folder: result.folder }));
+        setSettings(false);
+        await recent.refetch();
+      }
+    });
+  }, [sessionPending, operation, benchChanged, recent.refetch]);
+  const bindings = snapshot.data?.settings.keyboardShortcuts;
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
-      if (globalShortcutBlocked(event)) return;
-      if ((event.ctrlKey || event.metaKey) && event.key === ",") {
-        event.preventDefault();
-        setSettings(true);
+      const command = shortcutCommand(event, bindings);
+      switch (command) {
+        case "settings":
+          navigate(true);
+          break;
+        case "shortcuts":
+          navigate(true);
+          setSection("shortcuts");
+          break;
+        case "newSession":
+          if (!benchId || readOnly || sessionPending) return;
+          create();
+          break;
+        case "newWorkbench":
+          showNewWorkbench();
+          break;
+        case "openWorkbench":
+          if (sessionPending) return;
+          openWorkbench();
+          break;
+        default:
+          return;
       }
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n") {
-        event.preventDefault();
-        create();
-      }
+      event.preventDefault();
     };
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
-  }, [create]);
+  }, [bindings, navigate, create, benchId, readOnly, sessionPending, showNewWorkbench, openWorkbench]);
   const navigation = settings ? (
     <div
       className="settings-tabs"
@@ -202,63 +254,88 @@ export function App() {
     </div>
   ) : (
     <>
-      <strong>{t("welcome.workbenches")}</strong>
-      <label>
-        {t("chat.workbench")}
-        <select
-          aria-label={t("chat.workbench")}
-          value={recent.data?.find((entry) => entry.id === benchId)?.folder ?? ""}
-          disabled={sessionPending}
-          onChange={(e) => {
-            if (e.target.value)
-              void operation(async () => {
-                benchChanged(await api.invoke("workbench.open", { folder: e.target.value }));
-              });
-          }}
-        >
-          <option value="">{t("chat.chooseWorkbench")}</option>
-          {recent.data
-            ?.filter((entry) => !entry.missing)
-            .map((entry) => (
-              <option key={entry.folder} value={entry.folder}>
-                {entry.name}
-              </option>
-            ))}
-        </select>
-      </label>
-      <button type="button" onClick={() => setChat(false)}>
-        {bench.data?.config.name ?? t("welcome.sidebarPlaceholder")}
-      </button>
-      {benchId && (
-        <SessionList
-          key={benchId}
-          sessions={(searchQuery ? searchResults.data : sessions.data) ?? []}
-          search={sessionSearch}
-          searchChanged={(query) => setSearchState({ benchId, query })}
-          searching={!!searchQuery && searchResults.isFetching}
-          searchError={searchQuery ? searchResults.error : null}
-          active={activeSession}
-          select={select}
-          create={create}
-          disabled={readOnly || sessionPending}
-          rename={(id, title) =>
-            operation(async () => {
-              await api.invoke("session.rename", { sessionId: id, title });
-            })
-          }
-          remove={(id) =>
-            operation(async () => {
-              await api.invoke("session.delete", { sessionId: id });
-              if (id === activeSession) {
-                setActiveSession(undefined);
-                try {
-                  localStorage.removeItem(`vera.session.${benchId}`);
-                } catch {}
-              }
-            })
-          }
-        />
-      )}
+      <WorkbenchNavigation
+        entries={recent.data ?? []}
+        activeId={benchId}
+        disabled={sessionPending}
+        settingsReadOnly={!snapshot.data || snapshot.data.readOnly}
+        open={async (folder) =>
+          operation(async () => {
+            if (folder !== activeWorkbench?.folder)
+              benchChanged(await api.invoke("workbench.open", { folder }));
+            setNewWorkbench(false);
+            setPlugins(false);
+            setChat(false);
+            await recent.refetch();
+          })
+        }
+        pin={(folder, value) =>
+          void operation(async () => {
+            await api.invoke("workbench.recent", { pin: { folder, value } });
+            await recent.refetch();
+          })
+        }
+        edit={(folder) =>
+          void operation(async () => {
+            const value =
+              folder === activeWorkbench?.folder
+                ? activeWorkbench
+                : await api.invoke("workbench.open", { folder });
+            if (value) {
+              if (value.config.id !== benchId) benchChanged(value);
+              setEditor(value);
+            }
+          })
+        }
+        reveal={(folder) =>
+          void operation(async () => {
+            await api.invoke("workbench.recent", { reveal: folder });
+          })
+        }
+        close={() =>
+          void operation(async () => {
+            await api.invoke("workbench.close", {});
+            benchChanged();
+          })
+        }
+        remove={(folder) =>
+          void operation(async () => {
+            if (folder === activeWorkbench?.folder) {
+              await api.invoke("workbench.close", {});
+              benchChanged();
+            }
+            await api.invoke("workbench.recent", { remove: folder });
+            await recent.refetch();
+          })
+        }
+      >
+        {benchId && (
+          <SessionList
+            key={benchId}
+            sessions={sessions.data ?? []}
+            active={activeSession}
+            select={select}
+            create={create}
+            disabled={readOnly || sessionPending}
+            rename={(id, title) =>
+              operation(async () => {
+                await api.invoke("session.rename", { sessionId: id, title });
+              })
+            }
+            remove={(id) =>
+              operation(async () => {
+                await api.invoke("session.delete", { sessionId: id });
+                if (id === activeSession) {
+                  setActiveSession(undefined);
+                  try {
+                    localStorage.removeItem(`vera.session.${benchId}`);
+                  } catch {}
+                }
+              })
+            }
+          />
+        )}
+      </WorkbenchNavigation>
       {sessions.isError && (
         <>
           <ErrorMessage error={sessions.error} />
@@ -271,91 +348,141 @@ export function App() {
     </>
   );
   return (
-    <DocumentViewerProvider scope={`${benchId}/${activeSession}/${settings}`} workbenchId={benchId ?? ""}>
-      <Shell
-        settings={settings}
-        navigate={navigate}
-        navigation={navigation}
-        storageReadOnly={!snapshot.data || snapshot.data.readOnly}
-        context={
-          benchId && chat && !settings ? <ContextTab workbenchId={benchId} readOnly={readOnly} /> : undefined
-        }
-        docs={
-          benchId && !settings ? (
-            <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
-          ) : undefined
-        }
-        changes={
-          benchId && activeSession && chat && !settings ? (
-            <ChangesTab workbenchId={benchId} sessionId={activeSession} />
-          ) : undefined
-        }
-        artifacts={
-          benchId && activeSession && chat && !settings ? (
-            <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
-          ) : undefined
-        }
-        plan={
-          benchId && activeSession && chat && !settings ? (
-            <PlanTab workbenchId={benchId} sessionId={activeSession} />
-          ) : undefined
-        }
-      >
-        <UpdateBanner />
-        <div className="page-content" hidden={chat && !settings}>
-          <h2 className="page-title" key={settings ? "settings" : "welcome"} ref={focusHeading} tabIndex={-1}>
-            {settings ? t("settings.title") : t("welcome.title")}
-          </h2>
-          {(info.isPending || snapshot.isPending) && (
-            <p role="status" data-i18n="home.loading">
-              {t("home.loading")}
-            </p>
-          )}
-          {(info.isError || snapshot.isError) && (
-            <>
-              <ErrorMessage error={info.error ?? snapshot.error} />
-              <button
-                type="button"
-                onClick={() => {
-                  void info.refetch();
-                  void snapshot.refetch();
-                }}
-              >
-                {t("settings.retry")}
-              </button>
-            </>
-          )}
-          {settings && snapshot.data && (
-            <Settings
-              section={section}
-              snapshot={snapshot.data}
-              info={info.data}
-              saving={mutation.isPending}
-              error={mutation.error}
-              update={(patch) => mutation.mutate(patch)}
-            />
-          )}
-          <div hidden={settings}>
-            <p className="muted">{t("welcome.description")}</p>
-            {info.data && snapshot.data && (
-              <Workbench
-                settingsReadOnly={snapshot.data.readOnly}
-                active={activeWorkbench}
-                changed={benchChanged}
-                sessionPending={sessionPending}
+    <ShortcutContext.Provider value={bindings}>
+      <DocumentViewerProvider scope={`${benchId}/${activeSession}/${settings}`} workbenchId={benchId ?? ""}>
+        <Shell
+          settings={settings}
+          newSelected={newWorkbench}
+          pluginsSelected={plugins}
+          newWorkbench={showNewWorkbench}
+          openWorkbench={openWorkbench}
+          showPlugins={() => {
+            setPlugins(true);
+            setSettings(false);
+            setChat(false);
+          }}
+          navigate={navigate}
+          navigation={navigation}
+          storageReadOnly={!snapshot.data || snapshot.data.readOnly}
+          context={
+            benchId && chat && !settings ? (
+              <ContextTab workbenchId={benchId} readOnly={readOnly} />
+            ) : undefined
+          }
+          docs={
+            benchId && !settings ? (
+              <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
+            ) : undefined
+          }
+          changes={
+            benchId && activeSession && chat && !settings ? (
+              <ChangesTab workbenchId={benchId} sessionId={activeSession} />
+            ) : undefined
+          }
+          artifacts={
+            benchId && activeSession && chat && !settings ? (
+              <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
+            ) : undefined
+          }
+          plan={
+            benchId && activeSession && chat && !settings ? (
+              <PlanTab workbenchId={benchId} sessionId={activeSession} />
+            ) : undefined
+          }
+        >
+          <UpdateBanner />
+          <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
+            <h2
+              hidden={!settings && !plugins && !newWorkbench && !activeWorkbench}
+              className="page-title"
+              key={settings ? "settings" : "welcome"}
+              ref={focusHeading}
+              tabIndex={-1}
+            >
+              {settings
+                ? t("settings.title")
+                : plugins
+                  ? t("projects.plugins")
+                  : newWorkbench
+                    ? t("projects.new")
+                    : activeWorkbench
+                      ? t("overview.title")
+                      : t("welcome.title")}
+            </h2>
+            {(info.isPending || snapshot.isPending) && (
+              <p role="status" data-i18n="home.loading">
+                {t("home.loading")}
+              </p>
+            )}
+            {benchFailure && <ErrorMessage error={bench.error} />}
+            {(info.isError || snapshot.isError) && (
+              <>
+                <ErrorMessage error={info.error ?? snapshot.error} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void info.refetch();
+                    void snapshot.refetch();
+                  }}
+                >
+                  {t("settings.retry")}
+                </button>
+              </>
+            )}
+            {settings && snapshot.data && (
+              <Settings
+                section={section}
+                snapshot={snapshot.data}
+                info={info.data}
+                saving={mutation.isPending}
+                error={mutation.error}
+                update={(patch) => mutation.mutate(patch)}
               />
             )}
+            <div hidden={settings || plugins || (!newWorkbench && !activeWorkbench)}>
+              {newWorkbench && <p className="muted">{t("welcome.description")}</p>}
+              {info.data && snapshot.data && (
+                <Workbench
+                  settingsReadOnly={snapshot.data.readOnly}
+                  active={newWorkbench ? undefined : activeWorkbench}
+                  changed={benchChanged}
+                  sessionPending={sessionPending}
+                  sessions={sessions.data}
+                  sessionsError={sessions.error}
+                  retrySessions={() => void sessions.refetch()}
+                  edit={() => activeWorkbench && setEditor(activeWorkbench)}
+                  selectSession={select}
+                />
+              )}
+            </div>
           </div>
-        </div>
-        {chat && !settings && benchId && (
-          <SessionWorkspace
-            key={`${benchId}/${activeSession}`}
-            id={activeSession}
-            changed={changed}
-            readOnly={readOnly}
-          />
-        )}
-      </Shell>
-    </DocumentViewerProvider>
+          {emptyCanvas && (
+            <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
+              <Activity aria-hidden="true" />
+              <span>VERA</span>
+            </div>
+          )}
+          {editor && (
+            <WorkbenchEditor
+              workbench={editor}
+              close={() => setEditor(undefined)}
+              saved={(value) => {
+                benchChanged(value, true);
+                void recent.refetch();
+              }}
+            />
+          )}
+          {plugins && <Plugins />}
+          {chat && !settings && !plugins && benchId && (
+            <SessionWorkspace
+              key={`${benchId}/${activeSession}`}
+              id={activeSession}
+              changed={changed}
+              readOnly={readOnly}
+            />
+          )}
+        </Shell>
+      </DocumentViewerProvider>
+    </ShortcutContext.Provider>
   );
 }

@@ -130,7 +130,7 @@ Main follows the saved preference with nativeTheme.themeSource. Panels resize by
 Renderer geometry lives in the separately versioned localStorage key vera.ui.layout; future versions and read-only settings preserve stored bytes.
 The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Updates, Data & privacy and About are placeholder sections (About also shows metadata).
 
-Skills settings opens from the active workbench or session Context. Skills live at
+Skills settings opens from Edit workbench → Tools/skills or session Context. Skills live at
 `<workbench>/.vera/skills/<name>/SKILL.md` or `<userData>/skills/<name>/SKILL.md`; workbench
 folders take precedence. Create supplies an editable template; invalid skills show
 diagnostics, and disabled/invalid skills stay outside the next-turn prompt index.
@@ -237,6 +237,24 @@ python ../02_Tools/npmw.py npm run vera -- run --workbench <copied-demo-dir> --p
 
 ## Workbenches
 
+The sidebar exposes New Workbench, Open Workbench and Plugins. Registered
+workbenches remain until explicitly removed and can be pinned, expanded to show
+sessions, edited, or opened in Explorer. Pinning is an application preference.
+Selecting a workbench opens its overview with folder, configuration and dated session count/list; selecting a session opens its conversation. The overview provides a single Edit action for project settings. Tools/skills management and WORKBENCH.md editing are accessed inside that editor; Close is in the workbench sidebar menu. Settings replaces primary New/Open/Plugins actions with its categories and a Back to workbenches action. The sidebar shows workbench/session groups without search inputs. With no selected workbench, the main canvas shows VERA branding; New/Open are explicit actions.
+The project editor saves name, description, document include/exclude patterns,
+agent model/permissions, disabled tools/skills, instructions and embedding chunk settings.
+Plugins presents the availability of future installation/import and embedded integrations.
+
+Each workbench uses one root with user-owned subfolders. The `embeddings` block in
+`.vera/workbench.yaml` selects the installed `Xenova/bge-small-en-v1.5` model and
+sets `chunkSize` (200–1400 characters, default 1400) and `overlap` (0–600 characters,
+smaller than chunkSize, default 200). Token limits can shorten chunks; effective
+overlap is capped at half the actual fragment to preserve bounded progress.
+Overlap stays within each PDF page or Markdown/HTML section and runs across text
+log lines. Changing these settings rebuilds document-derived rows in the background,
+reusing extraction caches. Embeddings and conversation models are separate settings.
+
+
 Project metadata lives in `<project>/.vera/`: `workbench.yaml` (configuration),
 `WORKBENCH.md` (pinned engineering context), optional `.veraignore` (project-relative
 ignore patterns), and `skills/<name>/SKILL.md` (project skills). SQLite, locks,
@@ -337,3 +355,13 @@ Windows portable metadata-only results. Its NSIS/AppImage launch fixtures retain
 explicit isolated userData directory across restart. These are test artifacts and
 connected-host evidence; release smoke, clean/offline Windows/CRT and separate Linux
 kernel acceptance remain required under the release policy. The command publishes nothing.
+
+Settings → Keyboard shortcuts supports command/key search, editable/removable
+aliases, adding combinations and restoring defaults. Ctrl+/ opens that page;
+Ctrl+, opens Settings; Ctrl+N or Ctrl+Shift+O starts a session; Ctrl+O opens a
+workbench; Ctrl+B or Ctrl+Shift+S toggles the sidebar; Ctrl+Shift+B toggles the
+right panel; Ctrl+F searches the current conversation; Ctrl+Shift+M focuses its
+model selector. New Workbench and Focus message input are unassigned initially.
+Changes persist in application settings; bindings run only while VERA is focused.
+Conflicts and reserved native keys are rejected. Dialogs/IME/recording retain
+input ownership. Enter/Shift+Enter/Escape remain contextual controls.
