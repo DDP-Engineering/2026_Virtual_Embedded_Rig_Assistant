@@ -84,6 +84,11 @@ autopilot = true
 enabled = true
 max_fix_cycles = 5
 
+[diagrams]
+# Generate every supported Mermaid design diagram when applicable.
+enabled = true
+types = ["structure", "sequence", "state"]
+
 [records]
 # Anchor and evolution sidecars under .agentic/tasks/ are local evidence.
 # false keeps them out of git through a managed block in .gitignore that
