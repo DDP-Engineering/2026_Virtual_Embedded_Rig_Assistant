@@ -248,7 +248,23 @@
     "exportCanceled": "Export abgebrochen.",
     "searchMatches": "Passende Nachrichten: {{count}}",
     "searchHint": "Text eingeben, um passende Nachrichten zu finden.",
-    "searchMatch": "Suchtreffer"
+    "searchMatch": "Suchtreffer",
+    "messagePlaceholder": "Frage VERA zu deinem Projekt…",
+    "defaultModelShort": "Standardmodell",
+    "contextWindow": "Kontextfenster",
+    "contextUnknown": "Die Kontextnutzung ist noch nicht verfügbar",
+    "contextPercent": "Kontextnutzung: {{percent}}%",
+    "contextInfo": "Die Nutzung entspricht der zuletzt gemeldeten Anfrage. Schätzungen sind gekennzeichnet; die Kapazität ist bis zur Modellmeldung unbekannt.",
+    "activity": "Agentenaktivität",
+    "activityInfo": "Prompts/Fragen, Antworten und Werkzeugaktionen dieser Sitzung. Öffne eine Zeile für Details.",
+    "activityEmpty": "Noch keine Aktivität. Sende eine Nachricht.",
+    "activityPrompt": "Prompt / Frage",
+    "activityReply": "Antwort",
+    "actionsNamed": "Sitzungsaktionen: {{title}}",
+    "archive": "Archivieren",
+    "restore": "Wiederherstellen",
+    "archived": "Archivierte Sitzungen",
+    "lastActivity": "Letzte Aktivität: {{date}}"
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."

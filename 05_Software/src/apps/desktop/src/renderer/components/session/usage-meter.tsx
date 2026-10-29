@@ -1,5 +1,7 @@
 // REQ-UX-4bea0005
+
 import type { SessionState } from "@vera/shared";
+import { Gauge } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 function defineTranslationKeys<const T extends readonly string[]>(keys: T): T {
@@ -56,5 +58,32 @@ export function UsageMeter({ state }: { state: SessionState }) {
       )}
       <span>{state.modelRef ?? t("chat.defaultModel")}</span>
     </footer>
+  );
+}
+
+export function contextOccupancy(state: SessionState): number | undefined {
+  const { requestViewTokens, contextTokens, contextWindow } = state.usage;
+  const tokens = requestViewTokens ?? contextTokens;
+  return tokens !== undefined && contextWindow !== undefined && contextWindow > 0
+    ? Math.round((tokens / contextWindow) * 100)
+    : undefined;
+}
+export function ContextIndicator({ state, open }: { state: SessionState; open: () => void }) {
+  const { t } = useTranslation();
+  const percent = contextOccupancy(state);
+  const label = percent === undefined ? t("chat.contextUnknown") : t("chat.contextPercent", { percent });
+  return (
+    <button
+      type="button"
+      className="context-indicator"
+      data-action="show-context"
+      aria-label={t("chat.contextWindow")}
+      aria-haspopup="dialog"
+      title={`${label}${state.usage.estimated ? ` (${t("chat.estimated")})` : ""}`}
+      onClick={open}
+    >
+      <Gauge aria-hidden="true" />
+      <span>{percent === undefined ? "—" : `${percent}%`}</span>
+    </button>
   );
 }

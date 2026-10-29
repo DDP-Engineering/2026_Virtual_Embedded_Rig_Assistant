@@ -322,6 +322,11 @@ export function App() {
                 await api.invoke("session.rename", { sessionId: id, title });
               })
             }
+            archive={(id, archived) =>
+              operation(async () => {
+                await api.invoke("session.archive.set", { sessionId: id, archived });
+              })
+            }
             remove={(id) =>
               operation(async () => {
                 await api.invoke("session.delete", { sessionId: id });
@@ -477,6 +482,7 @@ export function App() {
             <SessionWorkspace
               key={`${benchId}/${activeSession}`}
               id={activeSession}
+              workbenchId={benchId}
               changed={changed}
               readOnly={readOnly}
             />

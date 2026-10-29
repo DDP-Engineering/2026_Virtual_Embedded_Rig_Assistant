@@ -1,7 +1,10 @@
 // REQ-UX-4bea0001
+
 import type { SessionSummary } from "@vera/shared";
-import { useEffect, useRef, useState } from "react";
+import { Ellipsis } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 
 export function SessionList({
@@ -11,6 +14,7 @@ export function SessionList({
   create,
   rename,
   remove,
+  archive,
   disabled,
   search = "",
   searchChanged,
@@ -23,20 +27,60 @@ export function SessionList({
   create: () => void;
   rename: (id: string, title: string) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
+  archive: (id: string, archived: boolean) => Promise<boolean>;
   disabled: boolean;
   search?: string;
   searchChanged?: (query: string) => void;
   searching?: boolean;
   searchError?: unknown;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    [i18n.resolvedLanguage, i18n.language],
+  );
   const [editing, setEditing] = useState<SessionSummary>();
   const [title, setTitle] = useState("");
   const [deleting, setDeleting] = useState<SessionSummary>();
   const dialog = useRef<HTMLDialogElement>(null);
   const origin = useRef<HTMLElement | null>(null);
-  const editOrigin = useRef<HTMLButtonElement | null>(null);
+  const editOrigin = useRef<HTMLElement | null>(null);
   const newButton = useRef<HTMLButtonElement>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<boolean>();
+  const [exportError, setExportError] = useState<unknown>();
+  useEffect(() => {
+    if (sessions.some((s) => s.id === active && s.archived)) setShowArchived(true);
+  }, [sessions, active]);
+  function closeMenu(element: HTMLElement) {
+    const menu = element.closest("details");
+    const summary = menu?.querySelector("summary");
+    if (menu) menu.open = false;
+    summary?.focus();
+    return summary ?? element;
+  }
+  async function exportTranscript(id: string, format: "md" | "json") {
+    if (exporting) return;
+    setExporting(true);
+    setExportResult(undefined);
+    setExportError(undefined);
+    try {
+      const result = await api.invoke("session.export", { sessionId: id, format });
+      setExportResult(result.exported);
+    } catch (error) {
+      setExportError(error);
+    } finally {
+      setExporting(false);
+    }
+  }
   function finishEdit() {
     setEditing(undefined);
     if (editOrigin.current?.isConnected) editOrigin.current.focus();
@@ -64,6 +108,132 @@ export function SessionList({
     if (origin.current?.isConnected) origin.current.focus();
     else newButton.current?.focus();
   }
+  const renderSession = (s: SessionSummary) => {
+    const date = dateFormatter.format(new Date(s.updatedAt));
+    return (
+      <div key={s.id} className="session-entry">
+        <button
+          type="button"
+          data-session={s.id}
+          aria-current={s.id === active ? "page" : undefined}
+          onClick={() => select(s.id)}
+        >
+          <strong>{s.title || t("chat.untitled")}</strong>
+          <small>
+            <time data-session-updated dateTime={s.updatedAt} title={t("chat.lastActivity", { date })}>
+              {date}
+            </time>
+          </small>
+          <span className="sr-only" data-session-status={s.status}>
+            {status[s.status]}
+          </span>
+        </button>
+        <details
+          className="session-options"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              event.currentTarget.open = false;
+              event.currentTarget.querySelector("summary")?.focus();
+            }
+          }}
+        >
+          <summary aria-label={t("chat.actionsNamed", { title: s.title || t("chat.untitled") })}>
+            <Ellipsis aria-hidden="true" />
+          </summary>
+          <div className="session-actions">
+            <button
+              type="button"
+              disabled={exporting}
+              onClick={(event) => {
+                closeMenu(event.currentTarget);
+                void exportTranscript(s.id, "md");
+              }}
+            >
+              {t("chat.exportMarkdown")}
+            </button>
+            <button
+              type="button"
+              disabled={exporting}
+              onClick={(event) => {
+                closeMenu(event.currentTarget);
+                void exportTranscript(s.id, "json");
+              }}
+            >
+              {t("chat.exportJson")}
+            </button>
+            <button
+              type="button"
+              data-action={s.archived ? "restore-session" : "archive-session"}
+              disabled={disabled || s.status === "running" || s.status === "awaiting_approval"}
+              onClick={(event) => {
+                closeMenu(event.currentTarget);
+                void archive(s.id, !s.archived).then((ok) => {
+                  if (ok) {
+                    setShowArchived(true);
+                    newButton.current?.focus();
+                  }
+                });
+              }}
+            >
+              {s.archived ? t("chat.restore") : t("chat.archive")}
+            </button>
+            <button
+              type="button"
+              aria-label={t("chat.renameNamed", { title: s.title || t("chat.untitled") })}
+              disabled={disabled || s.status === "running" || s.status === "awaiting_approval"}
+              onClick={(event) => {
+                editOrigin.current = closeMenu(event.currentTarget);
+                setEditing(s);
+                setTitle(s.title);
+              }}
+            >
+              {t("chat.rename")}
+            </button>
+            <button
+              type="button"
+              aria-label={t("chat.deleteNamed", { title: s.title || t("chat.untitled") })}
+              disabled={disabled || s.status === "running" || s.status === "awaiting_approval"}
+              onClick={(e) => {
+                origin.current = closeMenu(e.currentTarget);
+                setDeleting(s);
+              }}
+            >
+              {t("chat.delete")}
+            </button>
+          </div>
+        </details>
+        {editing?.id === s.id && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void rename(s.id, title).then((ok) => {
+                if (ok) finishEdit();
+              });
+            }}
+          >
+            <label>
+              {t("chat.title")}
+              <input
+                ref={editInput}
+                value={title}
+                maxLength={60}
+                required
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </label>
+            <button type="submit" disabled={disabled || !title.trim()}>
+              {t("workbench.save")}
+            </button>
+            <button type="button" onClick={finishEdit}>
+              {t("workbench.cancel")}
+            </button>
+          </form>
+        )}
+      </div>
+    );
+  };
   return (
     <section className="session-list" aria-label={t("chat.sessions")}>
       <button ref={newButton} type="button" data-action="new-session" disabled={disabled} onClick={create}>
@@ -85,71 +255,23 @@ export function SessionList({
       {!!search.trim() && !searching && searchError == null && sessions.length === 0 && (
         <p role="status">{t("chat.noSessions")}</p>
       )}
-      {sessions.map((s) => (
-        <div key={s.id} className="session-entry">
-          <button
-            type="button"
-            data-session={s.id}
-            aria-current={s.id === active ? "page" : undefined}
-            onClick={() => select(s.id)}
-          >
-            <strong>{s.title || t("chat.untitled")}</strong>
-            <small data-session-status={s.status}>{status[s.status]}</small>
-          </button>
-          <div className="session-actions">
-            <button
-              type="button"
-              aria-label={t("chat.renameNamed", { title: s.title || t("chat.untitled") })}
-              disabled={disabled || s.status === "running" || s.status === "awaiting_approval"}
-              onClick={(event) => {
-                editOrigin.current = event.currentTarget;
-                setEditing(s);
-                setTitle(s.title);
-              }}
-            >
-              {t("chat.rename")}
-            </button>
-            <button
-              type="button"
-              aria-label={t("chat.deleteNamed", { title: s.title || t("chat.untitled") })}
-              disabled={disabled || s.status === "running" || s.status === "awaiting_approval"}
-              onClick={(e) => {
-                origin.current = e.currentTarget;
-                setDeleting(s);
-              }}
-            >
-              {t("chat.delete")}
-            </button>
-          </div>
-          {editing?.id === s.id && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void rename(s.id, title).then((ok) => {
-                  if (ok) finishEdit();
-                });
-              }}
-            >
-              <label>
-                {t("chat.title")}
-                <input
-                  ref={editInput}
-                  value={title}
-                  maxLength={60}
-                  required
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </label>
-              <button type="submit" disabled={disabled || !title.trim()}>
-                {t("workbench.save")}
-              </button>
-              <button type="button" onClick={finishEdit}>
-                {t("workbench.cancel")}
-              </button>
-            </form>
-          )}
-        </div>
-      ))}
+      {sessions.filter((s) => !s.archived).map(renderSession)}
+      {sessions.some((s) => s.archived) && (
+        <details
+          className="archived-sessions"
+          open={showArchived}
+          onToggle={(event) => setShowArchived(event.currentTarget.open)}
+        >
+          <summary>
+            {t("chat.archived")} ({sessions.filter((s) => s.archived).length})
+          </summary>
+          {sessions.filter((s) => s.archived).map(renderSession)}
+        </details>
+      )}
+      {exportResult !== undefined && (
+        <p role="status">{exportResult ? t("chat.exported") : t("chat.exportCanceled")}</p>
+      )}
+      {exportError !== undefined && <ErrorMessage error={exportError} />}
       {deleting && (
         <dialog
           ref={dialog}

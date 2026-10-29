@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-9a0489f1"
+title = "Show localized last activity date and time in session rows"
+status = "active"
+requirement = "Each session row shall display the date and time of its latest recorded update in the current interface locale and local timezone instead of a visible runtime status label; runtime status remains accessible and continues to govern action availability."
+verification = "Verify en/ro/de formatted date and time uses updatedAt rather than createdAt and remains unchanged by selection; verify running/approval/read-only action guards and compact native/browser layout. A separately recorded last access, new ordering and date filters are outside this change."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/tests/e2e/session-workspace.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/session-workspace.spec.ts"]

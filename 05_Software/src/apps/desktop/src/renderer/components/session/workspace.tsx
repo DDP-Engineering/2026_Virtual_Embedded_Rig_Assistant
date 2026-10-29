@@ -1,4 +1,6 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
+
+import { Activity } from "lucide-react";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -6,15 +8,18 @@ import { useSessionEvents } from "../../hooks/use-session-events.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
 import { Composer } from "./composer.js";
+import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
-import { UsageMeter } from "./usage-meter.js";
+import { ContextIndicator } from "./usage-meter.js";
 
 export function SessionWorkspace({
   id,
+  workbenchId,
   changed,
   readOnly,
 }: {
   id?: string | undefined;
+  workbenchId: string;
   changed: () => void;
   readOnly: boolean;
 }) {
@@ -25,22 +30,7 @@ export function SessionWorkspace({
   const [pending, setPending] = useState(false);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [exportResult, setExportResult] = useState<boolean>();
-  async function exportTranscript(format: "md" | "json") {
-    if (!id || exporting) return;
-    setExporting(true);
-    setExportResult(undefined);
-    setFailure(undefined);
-    try {
-      const result = await api.invoke("session.export", { sessionId: id, format });
-      setExportResult(result.exported);
-    } catch (error) {
-      setFailure(error);
-    } finally {
-      setExporting(false);
-    }
-  }
+  const [inspector, setInspector] = useState<"context" | "activity">();
   const searchInput = useRef<HTMLInputElement>(null);
   const workspace = useRef<HTMLElement>(null);
   function closeSearch() {
@@ -123,17 +113,9 @@ export function SessionWorkspace({
   return (
     <section ref={workspace} className="session-workspace" aria-label={t("chat.conversation")}>
       {readOnly && <p role="status">{t("documents.readOnly")}</p>}
-      <div className="workbench-actions">
-        <button type="button" disabled={!view || exporting} onClick={() => void exportTranscript("md")}>
-          {t("chat.exportMarkdown")}
-        </button>
-        <button type="button" disabled={!view || exporting} onClick={() => void exportTranscript("json")}>
-          {t("chat.exportJson")}
-        </button>
-      </div>
-      {exportResult !== undefined && (
-        <p role="status">{exportResult ? t("chat.exported") : t("chat.exportCanceled")}</p>
-      )}
+      <header className="session-heading">
+        <h2>{view?.state.title || t("chat.untitled")}</h2>
+      </header>
       {error !== undefined && (
         <>
           <ErrorMessage error={error} />
@@ -197,6 +179,21 @@ export function SessionWorkspace({
       {view && (
         <Composer
           state={view.state}
+          inspectorControls={
+            <>
+              <ContextIndicator state={view.state} open={() => setInspector("context")} />
+              <button
+                type="button"
+                data-action="show-activity"
+                aria-label={t("chat.activity")}
+                title={t("chat.activity")}
+                aria-haspopup="dialog"
+                onClick={() => setInspector("activity")}
+              >
+                <Activity aria-hidden="true" />
+              </button>
+            </>
+          }
           disabled={readOnly || pending}
           send={send}
           stop={() => void stop()}
@@ -226,7 +223,17 @@ export function SessionWorkspace({
           }}
         />
       )}
-      {view && <UsageMeter state={view.state} />}
+      {view && inspector && (
+        <SessionInspector
+          mode={inspector}
+          state={view.state}
+          workbenchId={workbenchId}
+          reasoning={view.reasoning}
+          updates={view.updates}
+          close={() => setInspector(undefined)}
+        />
+      )}
+
       <dialog
         ref={stopDialog}
         className="pinned-dialog"

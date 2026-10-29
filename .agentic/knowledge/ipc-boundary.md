@@ -18,7 +18,15 @@ calls, reads native app metadata and emits application events. Preload validates
 and exposes invoke/subscribe; renderer api selects ipcApi or in-memory mockApi.
 React reads metadata and settings through TanStack Query, applies confirmed preference snapshots, invalidates settings on app events and translates catalog labels and structured errors through i18next.
 
+createDeltaCoalescer is a separately tested utility whose callers supply merge policy and flush ordering.
+
 ## Public interface
+
+- session.archive.set requires an exact sessionId and boolean archived, rejects
+  extra/missing fields and returns a sanitized SessionSummary. Main delegates to
+  the owned SessionService lifecycle with idle/writable guards; preload derives
+  the allowlist from channels and the mock mirrors the metadata mutation.
+
 
 - window.menu is a strict fixed-role request with menu=file/edit/view/help and bounded
   integer x/y popup coordinates. The exact main-frame authorization protects native dispatch;
@@ -100,42 +108,6 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - REQ-NFR-b8df2592 — keyed 50ms delta coalescing and cleanup.
 - REQ-UX-6340c035 — metadata home through Query and translation.
 - REQ-TEST-799c278d — browser mock boundary parity.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  UI[React App + Query + i18n] --> API[renderer api]
-  API --> MOCK[mockApi + fixtures]
-  API --> PRE[window.vera / createBridge]
-  PRE --> ROUTER[vera:invoke / createInvokeRouter]
-  ROUTER --> INFO[getAppInfo]
-  ROUTER --> SETTINGS[core SettingsService]
-  ROUTER --> AUTH[main ChatgptAuth / confirmed external host]
-  ROUTER --> GATEWAY[main ProviderGateway]
-  GATEWAY --> LLM[core LlmGateway / ConnectionTest]
-  ROUTER --> WORKBENCH[core WorkbenchService]
-  ROUTER --> SESSIONS[SessionsHost + core SessionService]
-  ROUTER --> ArtifactsNative
-  ArtifactsNative --> SESSIONS
-  ArtifactsNative --> NativeDialogShell
-  ROUTER --> RevealPath
-  RevealPath --> PathGuard
-  RevealPath --> NativeShell
-  SESSIONS --> COALESCE[per-subscription 50ms transport]
-  COALESCE --> EMIT
-  WORKBENCH --> EMIT
-  SETTINGS --> PORTS[main application-data ports]
-  SETTINGS --> EMIT
-  INFO --> HOST[Electron app + runtime metadata]
-  EMIT[emitAppEvent / createEventEmitter] --> PRE
-  PRE --> UI
-  SHARED[shared schemas + inferred types] --> ROUTER
-  SHARED --> PRE
-  SHARED --> API
-```
-
-createDeltaCoalescer is a separately tested utility whose callers supply merge policy and flush ordering.
 
 ## Files
 

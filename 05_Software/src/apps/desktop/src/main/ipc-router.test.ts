@@ -52,6 +52,7 @@ const workbenchHandlers = {
   "session.create": unused,
   "session.get": unused,
   "session.rename": unused,
+  "session.archive.set": unused,
   "session.delete": unused,
   "session.send": unused,
   "session.stop": unused,

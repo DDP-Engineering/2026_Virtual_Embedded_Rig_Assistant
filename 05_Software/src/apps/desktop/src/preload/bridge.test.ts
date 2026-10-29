@@ -104,6 +104,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.create"
     | "session.get"
     | "session.rename"
+    | "session.archive.set"
     | "session.delete"
     | "session.send"
     | "session.stop"

@@ -758,3 +758,23 @@ it("stop completes promptly even if the provider iterator ignores its abort sign
   service.stop(s.id);
   expect(await service.waitIdle(s.id)).toEqual({ stopReason: "aborted" });
 });
+
+it("archives and restores durable sessions without losing transcript, denying busy and read-only mutations", async () => {
+  const { service, host } = await setup();
+  const session = service.create();
+  service.send(session.id, "Read the board");
+  expect(() => service.setArchived(session.id, true)).toThrow(expect.objectContaining({ code: "BUSY" }));
+  await service.waitIdle(session.id);
+  const transcript = service.get(session.id).snapshot.items;
+  expect(service.setArchived(session.id, true).archived).toBe(true);
+  expect(service.get(session.id).snapshot.items).toEqual(transcript);
+  await service.close();
+  const reopened = new core.SessionService(host);
+  cleanup.push(() => reopened.close());
+  expect(reopened.list().find((s) => s.id === session.id)?.archived).toBe(true);
+  const readOnly = new core.SessionService({ ...host, readOnly: true });
+  cleanup.push(() => readOnly.close());
+  expect(() => readOnly.setArchived(session.id, false)).toThrow(expect.objectContaining({ code: "DENIED" }));
+  expect(reopened.setArchived(session.id, false).archived).toBe(false);
+  expect(reopened.get(session.id).snapshot.items).toEqual(transcript);
+});

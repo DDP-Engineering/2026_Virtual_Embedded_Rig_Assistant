@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-f7ef5641"
+title = "Session actions support durable reversible archival"
+status = "active"
+requirement = "The sidebar session ellipsis menu shall expose export, rename, confirmed delete and archive/restore; archive shall persist using existing workbench session metadata, retain the transcript, group archived sessions separately and reject mutations when read-only or busy."
+verification = "Core archive/restore persistence, active/read-only rejection, strict IPC and mock behavior; row menu export targets chosen session, archive/restore and keyboard focus."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/shared/src/session-archive-ipc.test.ts", "05_Software/tests/e2e/session-workspace.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/tests/e2e/session-workspace.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]

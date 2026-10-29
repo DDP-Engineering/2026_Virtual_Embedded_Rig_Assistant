@@ -360,6 +360,19 @@ export class SessionService {
     this.update(id, { type: "session.updated", title });
     return this.summary(this.row(id));
   }
+  setArchived(id: string, archived: boolean): SessionSummary {
+    const row = this.idle(id);
+    if (typeof archived !== "boolean") throw veraError("INVALID");
+    const value = this.host.db.transaction(() => {
+      this.writable();
+      this.host.db
+        .prepare("UPDATE sessions SET archived=?,updated_at=? WHERE id=?")
+        .run(archived ? 1 : 0, this.now(), id);
+      return this.hub.record(id, { type: "session.updated", status: row.status });
+    })();
+    this.hub.publish(id, value);
+    return this.summary(this.row(id));
+  }
   setModel(id: string, modelRef: string | null): SessionSummary {
     this.idle(id);
     if (modelRef !== null) this.host.gateway.capabilities(resolveModelReference(modelRef));

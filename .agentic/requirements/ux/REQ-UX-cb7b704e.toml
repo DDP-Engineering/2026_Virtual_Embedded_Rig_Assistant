@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-cb7b704e"
+title = "Growing conversation composer and compact session controls"
+status = "active"
+requirement = "The session shall present a centered compact conversation with a text editor that grows and shrinks with its draft up to a scrolling cap while retaining current Enter, Shift+Enter, completion, model, permission, steering, approval and Stop behavior."
+verification = "Native small/large viewport growth, shrink and cap; existing composer/runtime control tests."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/tests/e2e/session-workspace.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/tests/e2e/session-workspace.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]

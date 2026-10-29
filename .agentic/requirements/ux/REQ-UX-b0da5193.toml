@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-b0da5193"
+title = "Inspectable agent activity from live session state"
+status = "active"
+requirement = "The session shall provide an on-demand activity view of actual user prompts/questions, assistant replies and tool calls with arguments, available updates/results and status, refreshed by the existing session stream."
+verification = "Seeded and live session changes, tool disclosure contents/status, no invented raw prompt or chronology, dialog close and session isolation."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/tests/e2e/session-workspace.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/tests/e2e/session-workspace.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]

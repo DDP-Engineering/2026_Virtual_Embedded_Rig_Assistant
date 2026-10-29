@@ -102,6 +102,7 @@ export class MockSessions {
       decision: "approved" | "denied";
       switchToAutoEdit?: boolean;
       query: string;
+      archived: boolean;
     };
     if (channel === "session.list" || channel === "session.search") {
       this.current();
@@ -229,6 +230,11 @@ export class MockSessions {
     }
     this.idle(id);
     row.summary.updatedAt = new Date().toISOString();
+    if (channel === "session.archive.set") {
+      row.summary.archived = request.archived;
+      this.emit(id, { type: "session.updated", status: row.summary.status });
+      return row.summary;
+    }
     if (channel === "session.delete") {
       this.sessions.delete(this.key(id));
       this.listeners.delete(this.key(id));

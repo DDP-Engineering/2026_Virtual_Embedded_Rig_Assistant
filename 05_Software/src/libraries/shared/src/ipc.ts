@@ -231,6 +231,11 @@ export const channels = {
     z.strictObject({ sessionId: sessionIdSchema, title: z.string().trim().min(1).max(60) }),
     sessionSummarySchema,
   ),
+  "session.archive.set": defineChannel(
+    "session.archive.set",
+    z.strictObject({ sessionId: sessionIdSchema, archived: z.boolean() }),
+    sessionSummarySchema,
+  ),
   "session.delete": defineChannel(
     "session.delete",
     z.strictObject({ sessionId: sessionIdSchema }),

@@ -12,6 +12,13 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- setArchived(id, archived) updates the existing workbench-owned archived flag and
+  updated timestamp atomically with a session.updated notification. It checks
+  idle state, current ownership and writable storage; read-only workbenches and
+  active/deleting sessions reject the mutation. list returns the flag. Archival
+  preserves messages/events and is explicitly reversible. No schema change is needed.
+
+
 - SessionService(host) recovers writable state before accepting work. host supplies SQLite/root/gateway/Clock/model/prompt and optional workers/registry/permissions/policy/runtime/limits/scrubbing/ownership check and [skill catalog](skills.md). Desktop refreshes catalog metadata before each turn and binds its owned loader to the tool context. Read-only services expose reads/subscriptions.
 - TodoHost binds synchronous validated whole-list upserts and durable todo.updated recording/publication for sequential session tools; [Plan](plan.md) owns bounds and renderer status presentation.
 - search(query) matches scrubbed titles and durable message.user/message.queued/message.done text using case-insensitive literal substrings; bounded queries read existing per-session events, including full historical and pending messages. exportSession(id) returns strict schemaVersion1 metadata and ordered durable event records; main scrubs fields and uses the pure core buildSessionMarkdown formatter with applied stored diffs or JSON serialization. [Session export](session-export.md) owns formats/native disclosure and acceptance seams.
@@ -56,41 +63,6 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 ## Key behaviors
 
 REQ-FUNC-63733e2c durable queued steering; REQ-UX-3001bd00 pending/delivery replay; REQ-FUNC-5e2438d5 reducer; FUNC-c76b4c8f CRUD; DATA-24394d5f durable transcript/events; REL-384b6464 BUSY/stop; NFR-83ac0a94 limits; FUNC-2e1261c2 citations; FUNC-eca9b9a1 replay/coalescing; REL-2098b145 recovery; FUNC-2b462360 IPC; SEC-5a7ef5e4 permission seam.
-
-## Architecture
-
-```mermaid
-flowchart LR
- bridge[createBridge] --> control[vera:subscription authorized control]
- bridge --> invokes[session IPC]
- invokes --> host[SessionsHost]
- control --> host
- host --> service[SessionService]
- service --> export[SessionExport schema + Markdown formatter]
- service --> search[messageTexts literal search]
- search --> events
- service --> hub[SessionHub]
- hub --> events[(SQLite events)]
- service --> messages[(messages/tool_calls)]
- service --> TodoHost --> TodosRepository --> SQLite
- service --> ArtifactStore
- ArtifactStore --> artifacts[(artifacts metadata and managed files)]
- service --> completedChanges[(applied changes read projection)]
- service --> compactor[ContextCompactor per session]
- service --> runtime[AgentRuntime]
- runtime --> compactor
- runtime --> policy[ContextPolicy]
- policy --> gateway[timedGateway / LlmGateway]
- runtime --> permission[ApprovalGate or injected PermissionEngine]
- permission --> approval[(approvals + requested/decided events)]
- decision[Desktop IPC / CLI] --> permission
- permission --> queue[shared WorkbenchService WriteQueue]
- queue --> changes[changes + SessionHub event transaction]
- service --> registry[ToolRegistry.prepare/bind]
- hub --> transport[createSessionTransport 50ms coalescer]
- transport --> bridge
- host --> prompt[buildSystemPrompt + Clock]
-```
 
 ## Files
 

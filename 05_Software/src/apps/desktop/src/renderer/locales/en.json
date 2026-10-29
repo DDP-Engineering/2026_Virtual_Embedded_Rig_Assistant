@@ -248,7 +248,23 @@
     "exportCanceled": "Export canceled.",
     "searchMatches": "Matching messages: {{count}}",
     "searchHint": "Enter text to find matching messages.",
-    "searchMatch": "Search match"
+    "searchMatch": "Search match",
+    "messagePlaceholder": "Ask VERA about your project…",
+    "defaultModelShort": "Default model",
+    "contextWindow": "Context window",
+    "contextUnknown": "Context usage is not available yet",
+    "contextPercent": "Context used: {{percent}}%",
+    "contextInfo": "Usage reflects the latest reported request. Estimates are labeled; capacity is unknown until reported by the model.",
+    "activity": "Agent activity",
+    "activityInfo": "Prompts/questions, replies and tool operations recorded for this session. Expand a row to inspect its details.",
+    "activityEmpty": "No activity yet. Send a message to begin.",
+    "activityPrompt": "Prompt / question",
+    "activityReply": "Reply",
+    "actionsNamed": "Session actions: {{title}}",
+    "archive": "Archive",
+    "restore": "Restore",
+    "archived": "Archived sessions",
+    "lastActivity": "Last activity: {{date}}"
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."

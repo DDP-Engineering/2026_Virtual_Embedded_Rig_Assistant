@@ -16,11 +16,14 @@ owns geometry/preferences; [workbench](workbench.md) owns folder lifecycle/pinne
 React presents durable session state through the shared API/reducer. Main/core own persistence,
 tools, models, budgets and abort. The browser mock seeds six selectable states and an edit approval scenario through the same API.
 
+Durable state comes from
+the backend; reasoning and live tool-update presentation are transient renderer state.
+
 ## Public interface
 
 - App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
-- SessionWorkspace offers native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches, and composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
+- SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
@@ -34,6 +37,30 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
   Unverified and malformed refs render inert warning chips; verified chips open the scoped document viewer through session/message-bound host revalidation.
 
 - Queued user rows show a localized pending status until message.delivered clears the marker; the event-backed projection retains pending rows after interruption and restart.
+
+## Session workspace and inspectors
+
+- The transcript and growing composer share a centered content column. The textarea
+  resizes on draft/width changes up to a scrolling cap. Compact model/mode controls
+  retain Enter/Shift+Enter, completion, steering, approval waits and Stop.
+- The context icon shows latest request-view/context tokens divided by reported
+  context window; missing capacity is displayed as unknown. Estimated values are
+  labeled. Its modal renders UsageMeter and workbench instructions/available skills
+  on demand. Activity opens a separate modal over actual prompt/question, assistant,
+  tool argument/update/preview/status and supplied live reasoning projections.
+  These do not expose or fabricate a raw provider/system wire prompt.
+- Inspectors use native dialog modality, Escape/Close and opener focus restoration.
+  App keys workspaces by workbench/session to isolate drafts and inspector state.
+- Each sidebar session row displays the localized date/time of updatedAt (last
+  recorded activity). Selecting the row does not write an access time; runtime
+  status remains in screen-reader text and action guards. REQ-UX-9a0489f1 covers
+  this presentation; filtering and ordering are unchanged.
+- Each sidebar session row has one ellipsis menu: Markdown/JSON export of that row,
+  rename, confirmed delete, archive/restore. Exports remain available in read-only
+  workbenches. Mutations lock for read-only workbenches and active/approval turns.
+  Archived sessions remain accessible in a collapsible section and can be restored.
+- REQ-UX-cb7b704e, REQ-UX-bdd845d0, REQ-UX-b0da5193 and REQ-FUNC-f7ef5641
+  attach to workspace/usage tests and tests/e2e/session-workspace.spec.ts.
 
 ## Invariants
 
@@ -74,47 +101,6 @@ tools, models, budgets and abort. The browser mock seeds six selectable states a
 - REQ-UX-8b320385 — running composer steering outside approval waits.
 - REQ-UX-3001bd00 — localized pending delivery markers.
 - REQ-UX-d1b480e0 — optional compaction status and derived request-view size.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  App --> Shell
-  App --> SessionList
-  App --> SessionWorkspace
-  SessionWorkspace --> useSessionEvents
-  App --> SessionSearch[workbench query cache]
-  SessionSearch --> API
-  SessionWorkspace --> Export[session.export]
-  Export --> API
-  SessionWorkspace --> Transcript
-  SessionWorkspace --> Composer
-  SessionWorkspace --> UsageMeter
-  Shell --> PlanTab
-  PlanTab --> useSessionEvents
-  Shell --> ContextTab
-  Shell --> DocsTab
-  DocsTab --> DocumentViewerProvider
-  Transcript --> DocumentViewerProvider
-  DocumentViewerProvider --> API
-  Shell --> ArtifactsTab
-  ArtifactsTab --> API
-  ArtifactsTab --> useSessionEvents
-  Shell --> ChangesTab
-  ChangesTab --> API
-  ChangesTab --> useSessionEvents
-  ChangesTab --> DiffViewer
-  ApprovalCard --> DiffViewer
-  useSessionEvents --> API[shared VeraApi boundary]
-  useSessionEvents --> SharedReducer
-  Transcript --> ApprovalCard
-  ApprovalCard --> API
-  Composer --> API
-  ContextTab --> API
-```
-
-Durable state comes from
-the backend; reasoning and live tool-update presentation are transient renderer state.
 
 ## Files
 

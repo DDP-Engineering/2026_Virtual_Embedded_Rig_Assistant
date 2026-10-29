@@ -1,7 +1,8 @@
 // REQ-UX-4bea0003 REQ-REL-4bea0004
 import { useQuery } from "@tanstack/react-query";
 import { permissionModeSchema, type SessionState } from "@vera/shared";
-import { useEffect, useRef, useState } from "react";
+import { ArrowUp, Square } from "lucide-react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
@@ -13,7 +14,9 @@ export function Composer({
   stop,
   setModel,
   setMode,
+  inspectorControls,
 }: {
+  inspectorControls?: ReactNode;
   state: SessionState;
   disabled: boolean;
   send: (text: string) => Promise<boolean>;
@@ -28,6 +31,27 @@ export function Composer({
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const element = input.current;
+    if (!element || element.value !== text) return;
+    const resize = () => {
+      element.style.height = "auto";
+      element.style.height = `${element.scrollHeight}px`;
+    };
+    resize();
+    let width = element.clientWidth;
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(() => {
+            if (element.clientWidth !== width) {
+              width = element.clientWidth;
+              resize();
+            }
+          });
+    observer?.observe(element);
+    return () => observer?.disconnect();
+  }, [text]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
   const locked = disabled || state.status === "awaiting_approval";
@@ -121,7 +145,8 @@ export function Composer({
         <textarea
           id="chat-message"
           ref={input}
-          rows={3}
+          rows={1}
+          placeholder={t("chat.messagePlaceholder")}
           aria-label={t("chat.message")}
           aria-autocomplete="list"
           aria-controls={matches.length ? "path-completions" : undefined}
@@ -182,7 +207,7 @@ export function Composer({
         {completionError !== undefined && <ErrorMessage error={completionError} />}
         <div className="composer-controls">
           <label>
-            {t("chat.model")}
+            <span className="sr-only">{t("chat.model")}</span>
             <select
               aria-label={t("chat.model")}
               data-model-picker
@@ -190,7 +215,7 @@ export function Composer({
               value={state.modelRef ?? ""}
               onChange={(e) => void setModel(e.target.value || null)}
             >
-              <option value="">{t("chat.defaultModel")}</option>
+              <option value="">{t("chat.defaultModelShort")}</option>
               {state.modelRef &&
                 !catalog.data?.some((m) => m.reference === state.modelRef) &&
                 !(
@@ -210,16 +235,8 @@ export function Composer({
                 ))}
             </select>
           </label>
-          <button type="submit" data-action="send-message" disabled={locked || !text.trim()}>
-            {t("chat.send")}
-          </button>
-          {running && (
-            <button type="button" data-action="stop-session" disabled={disabled} onClick={stop}>
-              {t("chat.stop")}
-            </button>
-          )}
           <label>
-            {t("approval.mode")}
+            <span className="sr-only">{t("approval.mode")}</span>
             <select
               aria-label={t("approval.mode")}
               value={state.mode}
@@ -231,6 +248,24 @@ export function Composer({
               <option value="auto-edit">{t("approval.autoEdit")}</option>
             </select>
           </label>
+          <div className="composer-tools">
+            {inspectorControls}
+            <button
+              className="send-control"
+              type="submit"
+              data-action="send-message"
+              disabled={locked || !text.trim()}
+            >
+              <ArrowUp aria-hidden="true" />
+              <span className="sr-only">{t("chat.send")}</span>
+            </button>
+            {running && (
+              <button type="button" data-action="stop-session" disabled={disabled} onClick={stop}>
+                <Square aria-hidden="true" />
+                <span className="sr-only">{t("chat.stop")}</span>
+              </button>
+            )}
+          </div>
         </div>
       </form>
       {(providers.isError || catalog.isError) && (

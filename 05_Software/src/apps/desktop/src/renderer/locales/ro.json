@@ -248,7 +248,23 @@
     "exportCanceled": "Export anulat.",
     "searchMatches": "Mesaje găsite: {{count}}",
     "searchHint": "Introdu text pentru a găsi mesaje.",
-    "searchMatch": "Rezultat al căutării"
+    "searchMatch": "Rezultat al căutării",
+    "messagePlaceholder": "Întreabă VERA despre proiect…",
+    "defaultModelShort": "Model implicit",
+    "contextWindow": "Fereastra de context",
+    "contextUnknown": "Utilizarea contextului nu este încă disponibilă",
+    "contextPercent": "Context utilizat: {{percent}}%",
+    "contextInfo": "Utilizarea reflectă ultima cerere raportată. Estimările sunt indicate; capacitatea rămâne necunoscută până este raportată de model.",
+    "activity": "Activitatea agentului",
+    "activityInfo": "Prompturi/întrebări, răspunsuri și operații cu tool-uri din această sesiune. Extinde un rând pentru detalii.",
+    "activityEmpty": "Încă nu există activitate. Trimite un mesaj pentru a începe.",
+    "activityPrompt": "Prompt / întrebare",
+    "activityReply": "Răspuns",
+    "actionsNamed": "Acțiuni sesiune: {{title}}",
+    "archive": "Arhivează",
+    "restore": "Restaurează",
+    "archived": "Sesiuni arhivate",
+    "lastActivity": "Ultima activitate: {{date}}"
   },
   "context": {
     "budget_exceeded": "Textul depășește bugetul de context al modelului."

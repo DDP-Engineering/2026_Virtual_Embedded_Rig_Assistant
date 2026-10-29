@@ -9,10 +9,13 @@ import { afterEach, expect, test, vi } from "vitest";
 import { App } from "../../App.js";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
+import i18n from "../../i18n.js";
 import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
+import { ActivityLog } from "./session-inspector.js";
+import { SessionList } from "./session-list.js";
 import { Transcript } from "./transcript.js";
-import "../../i18n.js";
+import { SessionWorkspace } from "./workspace.js";
 
 vi.mock("../../api/index.js", async () => {
   const { createMockApi } = await import("../../mocks/mockApi.js");
@@ -348,6 +351,7 @@ test("chat fixtures render tool arguments, invalid citations, provider Retry and
       ?.click(),
   );
   await settle();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="show-context"]')?.click());
   expect(container.textContent).toContain("Estimated");
   expect(container.textContent).toContain("27033");
   expect(container.textContent).toContain("4096");
@@ -428,19 +432,26 @@ test("session list creation, rename, confirmed delete and tool details work by k
   );
   const id = container.querySelector('[data-session][aria-current="page"]')?.getAttribute("data-session");
   const row = container.querySelector(`[data-session="${id}"]`)?.parentElement as HTMLElement;
+  const actions = row.querySelector("summary") as HTMLElement;
+  actions.focus();
+  await act(async () => user.keyboard("{Enter}"));
   row.querySelector<HTMLButtonElement>('[aria-label^="Rename"]')?.focus();
   await act(async () => user.keyboard("{Enter}"));
   expect(document.activeElement?.tagName).toBe("INPUT");
   await act(async () => user.keyboard("Keyboard Session{Enter}"));
   await settle();
   expect((await api.invoke("session.list", {})).find((s) => s.id === id)?.title).toBe("Keyboard Session");
+  actions.focus();
+  await act(async () => user.keyboard("{Enter}"));
   const deletion = row.querySelector<HTMLButtonElement>('[aria-label^="Delete"]') as HTMLButtonElement;
   deletion.focus();
   await act(async () => user.keyboard("{Enter}"));
   expect(container.querySelector("dialog[open]")).toBeTruthy();
   await act(async () => user.keyboard("{Enter}")); // initially focused Cancel
   expect((await api.invoke("session.list", {})).some((s) => s.id === id)).toBe(true);
-  expect(document.activeElement).toBe(deletion);
+  expect(document.activeElement).toBe(actions);
+  await act(async () => user.keyboard("{Enter}"));
+  deletion.focus();
   await act(async () => user.keyboard("{Enter}"));
   await act(async () => user.tab());
   expect(document.activeElement?.getAttribute("data-action")).toBe("confirm-delete");
@@ -669,3 +680,149 @@ test("Settings selects one page with vertical tabs, including placeholders and k
   expect(document.activeElement).toBe(last);
   expect(visibleSections()).toEqual(["about"]);
 });
+
+test("session context details stay closed until requested and editor grows and shrinks", async () => {
+  const bench = await api.invoke("workbench.create", { folder: "/mock/compact-session", name: "Compact" });
+  const session = await api.invoke("session.create", { workbenchId: bench.config.id });
+  await mount(
+    createElement(SessionWorkspace, {
+      id: session.id,
+      workbenchId: bench.config.id,
+      changed: () => {},
+      readOnly: false,
+    }),
+  );
+  expect(container.querySelector("[data-usage]")).toBeNull();
+  expect(container.querySelector('[data-action="show-context"]')).toBeTruthy();
+  expect(container.querySelector('[data-action="show-activity"]')).toBeTruthy();
+  expect(container.textContent).not.toContain("Export Markdown");
+  const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
+  Object.defineProperty(input, "scrollHeight", { configurable: true, get: () => (input.value ? 160 : 40) });
+  await typeText(input, "Line one\nLine two");
+  expect(input.style.height).toBe("160px");
+  await typeText(input, "");
+  expect(input.style.height).toBe("40px");
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="show-context"]')?.click());
+  expect(container.querySelector("dialog[open] [data-usage]")).toBeTruthy();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="close-inspector"]')?.click(),
+  );
+  expect(container.querySelector("[data-usage]")).toBeNull();
+});
+
+test("agent activity projects real prompt/reply and tool arguments, updates and results", async () => {
+  let state = emptySessionState();
+  for (const event of [
+    { type: "message.user", messageId: "u", text: "Inspect board" },
+    { type: "tool.started", callId: "call", name: "read", args: { path: "board.txt" } },
+    { type: "message.done", messageId: "a", text: "Reply from VERA", citations: [] },
+  ] as import("@vera/shared").SessionEvent[])
+    state = applySessionEvent(state, event);
+  await mount(
+    createElement(ActivityLog, {
+      state,
+      reasoning: { a: "Visible provider reasoning" },
+      updates: { call: "Live result" },
+    }),
+  );
+  expect(container.querySelectorAll("[data-activity-kind]")).toHaveLength(3);
+  expect(container.textContent).toContain("Inspect board");
+  expect(container.textContent).toContain('"path": "board.txt"');
+  expect(container.textContent).toContain("Live result");
+  expect(container.textContent).toContain("Reply from VERA");
+  expect(container.textContent).toContain("Visible provider reasoning");
+  state = applySessionEvent(state, {
+    type: "tool.done",
+    callId: "call",
+    ok: true,
+    preview: "Completed result",
+    summary: "Read completed",
+    durationMs: 5,
+  });
+  await act(async () => root.render(createElement(ActivityLog, { state, reasoning: {}, updates: {} })));
+  expect(container.textContent).toContain("Completed result");
+  expect(container.textContent).not.toContain("Visible provider reasoning");
+});
+
+test("session ellipsis exports its own row and archives/restores without duplicate workspace actions", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/menu-board", name: "Menu board" });
+  const first = await api.invoke("session.create", {});
+  const target = await api.invoke("session.create", {});
+  await mount();
+  await act(async () => container.querySelector<HTMLButtonElement>(`[data-session="${first.id}"]`)?.click());
+  await settle();
+  const observed = vi.spyOn(api, "invoke");
+  const row = () => container.querySelector(`[data-session="${target.id}"]`)?.parentElement as HTMLElement;
+  const menu = row().querySelector("details") as HTMLDetailsElement;
+  await act(async () => {
+    menu.open = true;
+  });
+  const exportButton = [...row().querySelectorAll("button")].find((b) => b.textContent === "Export Markdown");
+  await act(async () => exportButton?.click());
+  await settle();
+  expect(observed.mock.calls).toContainEqual(["session.export", { sessionId: target.id, format: "md" }]);
+  expect(container.querySelector(".session-workspace")?.textContent).not.toContain("Export Markdown");
+  await act(async () => row().querySelector<HTMLButtonElement>('[data-action="archive-session"]')?.click());
+  await settle();
+  expect((await api.invoke("session.list", {})).find((s) => s.id === target.id)?.archived).toBe(true);
+  expect(container.querySelector(`.archived-sessions [data-session="${target.id}"]`)).toBeTruthy();
+  await act(async () => row().querySelector<HTMLButtonElement>('[data-action="restore-session"]')?.click());
+  await settle();
+  expect((await api.invoke("session.list", {})).find((s) => s.id === target.id)?.archived).toBe(false);
+});
+
+test.each(["en", "ro", "de"])(
+  "session row shows localized last activity date and time in %s",
+  async (language) => {
+    const bench = await api.invoke("workbench.create", {
+      folder: `/mock/session-dates-${language}`,
+      name: "Dates",
+    });
+    const created = await api.invoke("session.create", { workbenchId: bench.config.id });
+    const session = {
+      ...created,
+      title: "Dated session",
+      createdAt: "2026-09-01T01:02:00.000Z",
+      updatedAt: "2026-10-28T10:15:00.000Z",
+    };
+    const select = vi.fn();
+    await act(async () => {
+      await i18n.changeLanguage(language);
+    });
+    try {
+      await mount(
+        createElement(SessionList, {
+          sessions: [session],
+          active: session.id,
+          select,
+          create: vi.fn(),
+          rename: vi.fn(),
+          remove: vi.fn(),
+          archive: vi.fn(),
+          disabled: false,
+        }),
+      );
+      const row = container.querySelector(`[data-session="${session.id}"]`) as HTMLButtonElement;
+      const time = row.querySelector("time");
+      expect(time).toBeTruthy();
+      expect(time?.dateTime).toBe(session.updatedAt);
+      const formatted = new Intl.DateTimeFormat(language, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(session.updatedAt));
+      expect(time?.textContent).toBe(formatted);
+      expect(time?.title).toBe(i18n.t("chat.lastActivity", { date: formatted }));
+      expect(row.querySelector('[data-session-status="idle"]')?.classList.contains("sr-only")).toBe(true);
+      await act(async () => row.click());
+      expect(select).toHaveBeenCalledWith(session.id);
+      expect(time?.dateTime).toBe(session.updatedAt);
+    } finally {
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+    }
+  },
+);

@@ -301,6 +301,10 @@ ipcMain.handle(
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.rename(sessionId, title), (text) => credentials.scrub(text));
         }),
+      "session.archive.set": ({ sessionId, archived }) =>
+        sessions.run((s) =>
+          sanitizeSessionSummary(s.setArchived(sessionId, archived), (text) => credentials.scrub(text)),
+        ),
       "session.delete": ({ sessionId }) =>
         sessions.run(async (s) => {
           await s.delete(sessionId);

@@ -1620,3 +1620,280 @@ legend {
     gap: 1rem;
   }
 }
+
+/* Compact session surface: independent transcript, expanding editor, on-demand inspectors. */
+.session-workspace {
+  min-height: 0;
+  padding: 0.75rem 1.5rem 1rem;
+  gap: 0.75rem;
+}
+.session-heading {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.session-heading h2 {
+  font-size: 1rem;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-workspace > .transcript {
+  min-height: 0;
+  width: 100%;
+  max-width: 58rem;
+  margin-inline: auto;
+  padding: 1rem 0.5rem;
+}
+.transcript-item {
+  flex-shrink: 0;
+}
+.transcript-item.user {
+  border-radius: 1.25rem;
+  background: var(--muted);
+  padding: 0.8rem 1rem;
+  max-width: 85%;
+}
+.transcript-item.user > strong {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.session-workspace > .composer {
+  width: 100%;
+  max-width: 58rem;
+  margin-inline: auto;
+}
+.composer form {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--card);
+  box-shadow: 0 0.25rem 1rem #00000008;
+}
+.composer textarea {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.4rem 0.5rem;
+  min-height: 2.75rem;
+  max-height: min(35vh, 20rem);
+  resize: none;
+  overflow-y: auto;
+}
+.composer textarea:focus-visible {
+  outline-offset: 0;
+  border-radius: 0.5rem;
+}
+.composer-controls {
+  justify-content: start;
+  align-items: center;
+  gap: 0.35rem;
+}
+.composer-controls label {
+  display: block;
+  max-width: min(18rem, 100%);
+}
+.composer-controls select {
+  border-color: transparent;
+  background: transparent;
+  padding: 0.3rem;
+  max-width: 18rem;
+  font-size: 0.9rem;
+}
+.composer-controls label + label select {
+  max-width: 9rem;
+}
+.composer-tools {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.composer-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  padding: 0.4rem;
+  border-radius: 2rem;
+  border-color: transparent;
+  background: transparent;
+}
+.composer-tools button svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.composer-tools .send-control {
+  color: var(--background);
+  background: var(--foreground);
+}
+.composer-hint {
+  margin: 0.35rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+}
+.context-indicator span {
+  font-size: 0.75rem;
+}
+.session-inspector[open] {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  width: min(56rem, calc(100vw - 3rem));
+  max-height: min(85vh, 60rem);
+}
+.session-inspector > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.session-inspector h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.session-inspector > header button {
+  display: grid;
+  place-items: center;
+  padding: 0.4rem;
+}
+.session-inspector > header svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.session-inspector-body {
+  overflow: auto;
+  min-height: 0;
+  padding: 1rem 1.5rem;
+}
+.session-inspector > footer {
+  display: flex;
+  justify-content: end;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.session-inspector .usage-meter {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0.75rem;
+  background: var(--muted);
+}
+.agent-activity ol {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.agent-activity .disclosure-toggle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.agent-activity svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.activity-preview {
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.agent-activity pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 0.75rem;
+  background: var(--muted);
+  font-size: var(--code-font-size);
+}
+.session-entry {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.2rem;
+}
+.session-entry > button {
+  min-width: 0;
+}
+.session-entry > form {
+  grid-column: 1 / -1;
+}
+.session-options > summary {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 0.4rem;
+  min-width: 2rem;
+  min-height: 2rem;
+}
+.session-options > summary::-webkit-details-marker {
+  display: none;
+}
+.session-options svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+.session-options[open] > summary,
+.session-options > summary:hover {
+  background: var(--accent);
+}
+.session-options .session-actions {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  padding: 0.4rem;
+  gap: 0.2rem;
+  min-width: 12rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  box-shadow: 0 0.5rem 1.5rem #00000015;
+}
+.session-actions button {
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+.archived-sessions {
+  min-width: 0;
+}
+.archived-sessions > summary {
+  cursor: pointer;
+  padding: 0.6rem 0;
+  color: var(--muted-foreground);
+}
+@media (max-width: 800px) {
+  .session-workspace {
+    padding: 0.75rem;
+  }
+  .composer-controls label {
+    max-width: 100%;
+  }
+  .composer-controls select {
+    max-width: min(15rem, 55vw);
+  }
+  .composer-tools {
+    flex-wrap: wrap;
+  }
+  .session-inspector[open] {
+    width: calc(100vw - 1.5rem);
+    max-height: 90vh;
+  }
+}

@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-bdd845d0"
+title = "On-demand context details with honest occupancy indication"
+status = "active"
+requirement = "The session shall show context usage details only after activating its context indicator, deriving labeled occupancy from current request-view/context usage and context window, and displaying unavailable capacity honestly."
+verification = "Closed-by-default usage, known ratio and estimated label, unknown/over-budget, dismiss and focus restoration; en/ro/de."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/tests/e2e/session-workspace.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/tests/e2e/session-workspace.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts"]
