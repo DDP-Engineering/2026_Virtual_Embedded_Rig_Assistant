@@ -41,6 +41,7 @@ export class MockSessions {
       model: string | null;
       mode: SessionSummary["mode"];
     },
+    private readonly reasoningLevels: (model: string) => string[] = () => [],
   ) {}
   seedFixtures() {
     if ([...this.sessions.keys()].some((key) => key.startsWith(`${this.current().id}/`))) return;
@@ -103,6 +104,7 @@ export class MockSessions {
       switchToAutoEdit?: boolean;
       query: string;
       archived: boolean;
+      reasoning: string | null;
     };
     if (channel === "session.list" || channel === "session.search") {
       this.current();
@@ -176,6 +178,19 @@ export class MockSessions {
     }
     const id = request.sessionId;
     const row = this.row(id);
+    if (channel === "session.reasoning.get" || channel === "session.reasoning.set") {
+      const modelRef = row.summary.modelRef ?? this.current().model;
+      if (!modelRef) throw veraError("INVALID");
+      const options = this.reasoningLevels(modelRef);
+      if (channel === "session.reasoning.set") {
+        this.writable();
+        if (modelRef !== request.modelRef) throw veraError("CONFLICT");
+        if (request.reasoning !== null && !options.includes(request.reasoning)) throw veraError("INVALID");
+        this.emit(id, { type: "session.updated", reasoning: request.reasoning });
+      }
+      const saved = row.events.reduce(applySessionEvent, emptySessionState()).reasoning;
+      return { modelRef, options, selected: saved && options.includes(saved) ? saved : null };
+    }
     if (channel === "session.export") return { exported: true };
     if (channel === "artifacts.list")
       return row.artifacts.map(({ content: _, ...summary }) => structuredClone(summary));
@@ -247,7 +262,13 @@ export class MockSessions {
     }
     if (channel === "session.model.set") {
       row.summary.modelRef = request.modelRef;
-      this.emit(id, { type: "session.updated", modelRef: request.modelRef });
+      const saved = row.events.reduce(applySessionEvent, emptySessionState()).reasoning;
+      const model = request.modelRef ?? this.current().model;
+      this.emit(id, {
+        type: "session.updated",
+        modelRef: request.modelRef,
+        ...(saved && (!model || !this.reasoningLevels(model).includes(saved)) ? { reasoning: null } : {}),
+      });
       return row.summary;
     }
     if (channel === "session.send") {

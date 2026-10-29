@@ -34,6 +34,7 @@ export interface LlmRequest {
   signal: AbortSignal;
   maxOutputTokens?: number;
   sessionId?: string;
+  reasoning?: string | null;
 }
 export type LlmEvent =
   | { type: "text"; delta: string; sourceDeltas?: number }
@@ -41,6 +42,8 @@ export type LlmEvent =
   | { type: "done"; message: AssistantMessage }
   | { type: "error"; error: VeraError; aborted: boolean; partial?: AssistantMessage };
 export interface LlmGateway {
+  /** Resolve live model metadata before synchronous budgeting/validation. */
+  prepareModel?(reference: string, signal?: AbortSignal): Promise<void>;
   selectedModel(provider: string): string;
   capabilities(reference: string, output?: number): ModelCapabilities;
   models(provider: string, signal?: AbortSignal, probe?: boolean): Promise<ProviderCatalog>;

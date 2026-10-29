@@ -321,6 +321,26 @@ ipcMain.handle(
           s.decideApproval(request);
           return {};
         }),
+      "session.reasoning.get": ({ sessionId }) =>
+        sessions.run(async (s) => {
+          const value = await s.reasoningOptions(sessionId);
+          return {
+            modelRef: credentials.scrub(value.modelRef),
+            options: value.options.map((v) => credentials.scrub(v)),
+            selected: value.selected === null ? null : credentials.scrub(value.selected),
+          };
+        }),
+      "session.reasoning.set": ({ sessionId, modelRef, reasoning }) =>
+        sessions.run(async (s) => {
+          if (credentials.containsSecret(modelRef) || credentials.containsSecret(reasoning))
+            throw { code: "INVALID", messageKey: "errors.INVALID" };
+          const value = await s.setReasoning(sessionId, reasoning, modelRef);
+          return {
+            modelRef: credentials.scrub(value.modelRef),
+            options: value.options.map((v) => credentials.scrub(v)),
+            selected: value.selected === null ? null : credentials.scrub(value.selected),
+          };
+        }),
       "session.model.set": ({ sessionId, modelRef }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -598,8 +618,10 @@ if (!app.requestSingleInstanceLock()) {
           },
         });
         const api = modelGateway.api;
-        const select = (id: string) => (id === "replay" ? replay : api);
+        const select = (id: string): LlmGateway => (id === "replay" ? replay : api);
         const gateway: LlmGateway = {
+          prepareModel: (ref, signal) =>
+            select(splitModelReference(ref).provider).prepareModel?.(ref, signal) ?? Promise.resolve(),
           selectedModel: (id) => select(id).selectedModel(id),
           capabilities: (ref, output) => select(splitModelReference(ref).provider).capabilities(ref, output),
           models: (id, signal, probe) => select(id).models(id, signal, probe),

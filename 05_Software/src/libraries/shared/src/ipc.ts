@@ -10,7 +10,11 @@ import {
   viewerContentSchema,
 } from "./documents.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
-import { providerDiscoveryRequestSchema, providerDiscoverySchema } from "./provider-discovery.js";
+import {
+  providerDiscoveryRequestSchema,
+  providerDiscoverySchema,
+  reasoningOptionSchema,
+} from "./provider-discovery.js";
 import {
   modelReferenceSchema,
   providerCatalogSchema,
@@ -253,6 +257,28 @@ export const channels = {
     "session.stop",
     z.strictObject({ sessionId: sessionIdSchema }),
     z.strictObject({ stopped: z.boolean() }),
+  ),
+  "session.reasoning.get": defineChannel(
+    "session.reasoning.get",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({
+      modelRef: modelReferenceSchema,
+      options: z.array(reasoningOptionSchema).max(16),
+      selected: reasoningOptionSchema.nullable(),
+    }),
+  ),
+  "session.reasoning.set": defineChannel(
+    "session.reasoning.set",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      modelRef: modelReferenceSchema,
+      reasoning: reasoningOptionSchema.nullable(),
+    }),
+    z.strictObject({
+      modelRef: modelReferenceSchema,
+      options: z.array(reasoningOptionSchema).max(16),
+      selected: reasoningOptionSchema.nullable(),
+    }),
   ),
   "session.model.set": defineChannel(
     "session.model.set",

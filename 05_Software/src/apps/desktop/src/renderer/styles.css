@@ -1708,6 +1708,18 @@ legend {
 .composer-controls label + label select {
   max-width: 9rem;
 }
+.composer-controls .composer-reasoning {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.1rem;
+}
+.composer-reasoning svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
 .composer-tools {
   margin-left: auto;
   display: flex;

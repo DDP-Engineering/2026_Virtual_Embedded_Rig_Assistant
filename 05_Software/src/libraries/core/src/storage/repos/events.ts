@@ -30,6 +30,14 @@ export class EventsRepository {
       .prepare("SELECT * FROM events WHERE session_id=? AND seq>? ORDER BY seq")
       .all(sessionId, afterSeq) as EventRow[];
   }
+  latestReasoning(sessionId: string): string | null {
+    const row = this.db
+      .prepare(
+        "SELECT json_extract(payload_json,'$.reasoning') AS reasoning FROM events WHERE session_id=? AND type='session.updated' AND json_type(payload_json,'$.reasoning') IS NOT NULL ORDER BY seq DESC LIMIT 1",
+      )
+      .get(sessionId) as { reasoning: string | null } | undefined;
+    return row?.reasoning ?? null;
+  }
   messageTexts(sessionId: string): string[] {
     return (
       this.db

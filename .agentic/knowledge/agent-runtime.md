@@ -12,6 +12,8 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ## Public interface
 
+- Before each model budget calculation, ReferenceRuntime awaits optional gateway.prepareModel(model,signal). This resolves live provider capabilities for cold/expired catalogs without relying on renderer queries; readiness errors settle through the normal turn error path. Timed/session wrappers preserve the hook. Reasoning is snapshotted at dispatch by SessionService, including internal subsequent model calls.
+
 - start accepts systemPrompt,model string,ToolDef[],Message[],ContextPolicy and optional maxToolCallsPerTurn (default50); send runs one turn and returns end/aborted/error/limit; abort propagates the turn signal; onEvent returns unsubscribe; messages returns full detached pi Message[]. Busy start/send return BUSY.
 - RuntimeHost owns gateway,now,nextId,approve(validated cloned call,signal) and optional steering(), a detached durable FIFO queue snapshot. ToolDef owns name,class(read/write/session),description,params(zod),execute(args,signal). Approval host binds decisions to the prepared change.
 - RuntimeInit optionally accepts a session-owned ContextCompactor; default runtime instances retain it across sends and reset it at start. ContextCompactor.prepare asynchronously creates derived history views using one bounded summary callback and an optional original-turn history boundary.
@@ -51,25 +53,6 @@ REQ-FUNC-27cc4ac0 streaming; FUNC-fa7348bd ordering; FUNC-1092757e approval; FUN
 REQ-FUNC-9441c5d6 canonical prompt; DATA-446edf2a UTF8 pinned boundary; FUNC-2faac04b skills metadata; FUNC-76d8e0f2 injected environment; UX-6e2e647a final character size.
 
 REQ-FUNC-63733e2c queued steering admission; REQ-FUNC-e5b6a1c9 bounded derived historical compaction; REQ-UX-d1b480e0 optional status and request-view count.
-
-## Architecture
-
-```mermaid
-flowchart LR
- Host[Host workbench pinned skills env Clock] --> Prompt[buildSystemPrompt]
- Prompt --> PromptResult[text and characters]
- Session[session owner] --> Runtime[ReferenceRuntime]
- Runtime --> Compactor[ContextCompactor session cache]
- Compactor --> Context[ContextPolicy request view]
- Compactor --> Gateway
- Context --> Gateway[LlmGateway capabilities + stream]
- Runtime --> Tool[ToolDef zod params]
- Runtime --> Approval[approval host]
- Harness[replay matrix] --> Runtime
- Harness --> Pi[pi Agent experiment]
- Pi --> Context
- Pi --> Tool
-```
 
 ## Files
 

@@ -849,3 +849,51 @@ test("workbench session disclosure is a visible icon button with translated stat
     "Disclosure bench",
   );
 });
+
+test.each([false, true])(
+  "composer shows model-declared reasoning during a turn (read-only=%s)",
+  async (disabled) => {
+    await api.invoke("workbench.create", { folder: `/mock/reasoning-${disabled}`, name: "Reasoning" });
+    const original = api.invoke;
+    let selected: string | null = null;
+    const invoke: typeof api.invoke = async (channel, request) => {
+      if (channel === "session.reasoning.get" || channel === "session.reasoning.set") {
+        if (channel === "session.reasoning.set")
+          selected = (request as { reasoning: string | null }).reasoning;
+        return { modelRef: "chatgpt/future", options: ["low", "high", "ultra"], selected } as never;
+      }
+      return original(channel, request);
+    };
+    vi.spyOn(api, "invoke").mockImplementation(invoke);
+    const state = {
+      ...emptySessionState(),
+      modelRef: "chatgpt/future",
+      activeTurnId: "turn-live",
+      status: "running" as const,
+    };
+    await mount(
+      createElement(Composer, {
+        sessionId: "session_reasoning",
+        state,
+        disabled,
+        send: async () => true,
+        stop: () => {},
+        setModel: async () => {},
+        setMode: async () => {},
+      }),
+    );
+    const picker = container.querySelector<HTMLSelectElement>("[data-reasoning-picker]");
+    expect(picker).toBeTruthy();
+    if (!picker) throw Error("Missing reasoning picker");
+    expect([...picker.options].map((o) => o.value)).toEqual(["", "low", "high", "ultra"]);
+    expect(picker?.disabled).toBe(disabled);
+    if (disabled) return;
+    await act(async () => userEvent.selectOptions(picker, "high"));
+    await settle();
+    expect(selected).toBe("high");
+    expect(picker?.value).toBe("high");
+    await act(async () => userEvent.selectOptions(picker, ""));
+    await settle();
+    expect(selected).toBeNull();
+  },
+);

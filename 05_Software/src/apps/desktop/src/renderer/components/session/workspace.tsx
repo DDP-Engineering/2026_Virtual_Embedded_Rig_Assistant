@@ -178,6 +178,7 @@ export function SessionWorkspace({
       {failure !== undefined && <ErrorMessage error={failure} />}
       {view && (
         <Composer
+          sessionId={id}
           state={view.state}
           inspectorControls={
             <>

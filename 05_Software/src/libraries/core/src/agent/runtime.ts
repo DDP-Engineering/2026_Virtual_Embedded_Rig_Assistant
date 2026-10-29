@@ -151,6 +151,8 @@ export class ReferenceRuntime implements AgentRuntime {
     for (;;) {
       if (signal.aborted) return "aborted";
       const tools = toolSpecs(init.tools);
+      await this.host.gateway.prepareModel?.(init.model, signal);
+      signal.throwIfAborted();
       const capabilities = this.host.gateway.capabilities(init.model);
       let queued = pending();
       // Recovered queue precedes the new instruction in the provider view. The full

@@ -22,6 +22,8 @@ createDeltaCoalescer is a separately tested utility whose callers supply merge p
 
 ## Public interface
 
+- session.reasoning.get takes sessionId; session.reasoning.set takes sessionId/modelRef/reasoning (nullable for Default). Both return strict modelRef/options/selected metadata. Main delegates to the owned session, scrubs returned strings, and rejects credential-bearing setters. Preload derives channel authorization from shared contracts; mock metadata/save behavior mirrors current provider profiles and session events.
+
 - session.archive.set requires an exact sessionId and boolean archived, rejects
   extra/missing fields and returns a sanitized SessionSummary. Main delegates to
   the owned SessionService lifecycle with idle/writable guards; preload derives

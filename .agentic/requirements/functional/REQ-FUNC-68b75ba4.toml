@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-68b75ba4"
+title = "Dispatch validated native reasoning efforts with provider defaults"
+status = "active"
+requirement = "The gateway shall transmit only verified native reasoning efforts for the requested model, using provider/model metadata, while Default preserves existing provider defaults."
+verification = "Authenticated live ChatGPT catalog, future IDs/native levels, account invalidation and independent cancellation; discovered LM Studio levels; injected Responses and loopback completions payloads, unsupported rejection and Default reset."
+affected_paths = ["05_Software/src/libraries/shared/src/", "05_Software/src/libraries/core/src/llm/", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/storage/repos/events.ts", "05_Software/src/apps/desktop/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/llm/subscription.test.ts", "05_Software/tests/e2e/session-reasoning.spec.ts"]

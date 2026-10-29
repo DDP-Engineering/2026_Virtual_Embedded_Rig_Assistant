@@ -10,9 +10,12 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 
 ## Public interface
 
+- prepareModel(reference,signal?) resolves live metadata before synchronous capabilities and budgeting. ChatGPT catalog discovery uses its authenticated Codex models endpoint (schema version 0.162.1); inference retains the pinned SDK public Responses route. Catalog IDs, context and native reasoning levels come from the server, including SDK-unknown models; no local model-specific reasoning allowlist or name heuristic. Codex Ultra is excluded as client subagent orchestration, not a public Responses effort. Unknown model prices have no SDK estimate.
+- Account-scoped catalog memory is refreshed after five minutes and on token/account changes, with superseded-publication protection. Individual caller abort detaches from a shared fetch. Optional reasoningOptions project declared levels; LM Studio uses discovered profiles, ordinary API-key catalogs with no declared levels expose none. LlmRequest.reasoning overrides the profile only when supported; Default leaves the provider/profile default. Responses use reasoning.effort, completions use reasoning_effort; LM Studio off/on mapping remains.
+
 - resolveModelReference(session,workbench,app), splitModelReference; LlmGateway selectedModel/capabilities/models/stream. Model IDs retain slashes; session wins over workbench over app.
 - createPiAiGateway(host) exposes current OpenAI/custom API collection and OAuth-only subscription collection, mapping pi-ai openai to credential slot chatgpt. Host supplies settings, CredentialStore, scrub, now and optional fetch/knownSecrets.
-- ChatGPT models carry chatgpt/<model> references and the same fresh budgets. Subscription requests resolve only stored OAuth, with locked refresh; API requests remain API-key-only. Connected catalogs come from the exact-pinned provider catalog, and pi-ai owns subscription access errors.
+- ChatGPT models carry chatgpt/<model> references and the same fresh budgets. Subscription requests resolve only stored OAuth, with locked refresh; API requests remain API-key-only. ChatGPT catalogs come from the authenticated live account catalog, while pi-ai owns subscription inference and refresh.
 - capabilities expose contextWindow/maxOutputTokens/safetyMargin/inputBudget/supportsTools; custom configured limits are authoritative. OpenAI effective output is capped16384 and context-margin-1.
 - providers.models({id}) returns scrubbed catalog metadata. OpenAI default is offline static metadata; connection Test explicitly probes the endpoint. Custom catalogs validate discovered IDs against reference syntax and attach configured capabilities and fall back on404/405/501 only.
 - providers.test({id,model?}) returns reachability/authentication/tools/streaming ordered pass/fail/skipped rows. Authentication failure skips downstream probes. Streaming requests a complete multiword sentence and requires multiple nonempty source text chunks; a single-token OK is sufficient for authentication, while one coalesced text chunk fails streaming. Tools requires an offered echo call with exactly the required string text and no extra properties.
@@ -50,29 +53,6 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 - REQ-UX-53628854 — localized accessible per-step results.
 - REQ-DATA-f69eaef6 — schema4 model-reference migration.
 - REQ-FUNC-103979aa — manual real-provider smoke.
-
-## Architecture
-
-```mermaid
-flowchart LR
- UI([ProviderTest]) --> IPC[shared models/test schemas + router]
- IPC --> Host[main ProviderGateway]
- Host --> Test[testConnection]
- Host --> GW[createPiAiGateway]
- Test --> GW
- GW --> API[pi-ai OpenAI/custom API collection]
- GW --> Subscription[pi-ai OpenAI OAuth-only subscription]
- Subscription --> ChatgptStore[main chatgpt credential slot / mutex]
- GW --> Budget[fresh capabilities]
- API --> Fetch[configured fetch + status capture]
- Store[(main CredentialFile / retained registry)] --> GW
- GW --> Scrub[stream overlap scrub / final safe message]
- Test --> Persist[ProviderSettings recordToolSupport]
- Startup[compiled test startup composition] --> Replay[ReplayGateway]
- Startup --> Host
-```
-
-The host accepts generic gateway injection. Replay composition exists in the compiled test branch; ordinary service code contains no replay registrar.
 
 ## Files
 

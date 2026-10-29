@@ -52,7 +52,7 @@ hybrid search, guarded document tools and CLI index/search with a real eval gate
 
 [Providers](../knowledge/providers.md) routes credential encryption, consent, redaction, endpoint configuration and masked forms.
 
-[LLM gateway](../knowledge/llm-gateway.md) routes model selection/capabilities/catalogs, connection tests, replay and manual smoke.
+[LLM gateway](../knowledge/llm-gateway.md) routes model selection/capabilities/catalogs, connection tests, replay and manual smoke. ChatGPT model/reasoning metadata comes from its live account catalog; session reasoning preferences persist in .vera events and apply to subsequent prepared model requests.
 
 [Application data](../knowledge/app-data.md) routes settings, migrations, portable locations, atomic saves and redacting logs.
 

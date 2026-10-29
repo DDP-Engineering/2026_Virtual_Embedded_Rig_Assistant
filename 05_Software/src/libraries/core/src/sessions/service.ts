@@ -15,6 +15,7 @@ import {
   sessionSearchQuerySchema,
   type ViewerContent,
   veraError,
+  veraErrorSchema,
 } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
@@ -91,6 +92,7 @@ export class SessionService {
   private readonly active = new Map<string, ActiveTurn>();
   private readonly last = new Map<string, { stopReason: StopReason }>();
   private readonly contexts = new Map<string, ToolContext>();
+  private readonly reasonings = new Map<string, string | null>();
   private readonly compactors = new Map<string, ContextCompactor>();
   private readonly deleting = new Set<string>();
   private closed = false;
@@ -352,6 +354,7 @@ export class SessionService {
         );
       return this.hub.record(id, event);
     })();
+    if (event.reasoning !== undefined) this.reasonings.set(id, event.reasoning);
     this.hub.publish(id, value);
   }
   rename(id: string, title: string): SessionSummary {
@@ -373,10 +376,56 @@ export class SessionService {
     this.hub.publish(id, value);
     return this.summary(this.row(id));
   }
+  private savedReasoning(id: string): string | null {
+    if (!this.reasonings.has(id))
+      this.reasonings.set(id, new EventsRepository(this.host.db).latestReasoning(id));
+    return this.reasonings.get(id) ?? null;
+  }
+  private requestReasoning(id: string, model: string): string | undefined {
+    const value = this.savedReasoning(id);
+    return value !== null && this.host.gateway.capabilities(model).reasoningOptions?.includes(value)
+      ? value
+      : undefined;
+  }
+  async reasoningOptions(id: string) {
+    const row = this.row(id);
+    const modelRef = this.host.model(row.model_ref);
+    await this.host.gateway.prepareModel?.(modelRef);
+    const options = [...(this.host.gateway.capabilities(modelRef).reasoningOptions ?? [])];
+    return { modelRef, options, selected: this.requestReasoning(id, modelRef) ?? null };
+  }
+  async setReasoning(id: string, reasoning: string | null, expectedModel: string) {
+    this.row(id);
+    this.writable();
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    const current = await this.reasoningOptions(id);
+    this.writable();
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    if (this.host.model(this.row(id).model_ref) !== expectedModel) throw veraError("CONFLICT");
+    if (current.modelRef !== expectedModel) throw veraError("CONFLICT");
+    if (reasoning !== null && !current.options.includes(reasoning)) throw veraError("INVALID");
+    this.update(id, { type: "session.updated", reasoning });
+    return { ...current, selected: reasoning };
+  }
   setModel(id: string, modelRef: string | null): SessionSummary {
     this.idle(id);
-    if (modelRef !== null) this.host.gateway.capabilities(resolveModelReference(modelRef));
-    this.update(id, { type: "session.updated", modelRef });
+    const caps =
+      modelRef !== null ? this.host.gateway.capabilities(resolveModelReference(modelRef)) : undefined;
+    const saved = this.savedReasoning(id);
+    let options = caps?.reasoningOptions ?? [];
+    if (modelRef === null && saved !== null) {
+      try {
+        options = this.host.gateway.capabilities(this.host.model(null)).reasoningOptions ?? [];
+      } catch (error) {
+        const parsed = veraErrorSchema.safeParse(error);
+        if (!parsed.success || !["INVALID", "NOT_FOUND"].includes(parsed.data.code)) throw error;
+      }
+    }
+    this.update(id, {
+      type: "session.updated",
+      modelRef,
+      ...(saved !== null && !options?.includes(saved) ? { reasoning: null } : {}),
+    });
     return this.summary(this.row(id));
   }
   setMode(id: string, mode: PermissionMode): SessionSummary {
@@ -418,6 +467,7 @@ export class SessionService {
       this.hub.clear(id);
       this.contexts.delete(id);
       this.compactors.delete(id);
+      this.reasonings.delete(id);
       this.last.delete(id);
     } finally {
       this.deleting.delete(id);
@@ -511,7 +561,7 @@ export class SessionService {
       this.writable();
     };
     const model = this.host.model(row.model_ref);
-    this.host.gateway.capabilities(model);
+    if (!this.host.gateway.prepareModel) this.host.gateway.capabilities(model);
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
     ctx.knowledge = this.knowledge;
@@ -615,6 +665,7 @@ export class SessionService {
           yield* gateway.stream({
             ...request,
             sessionId: id,
+            reasoning: self.requestReasoning(id, request.model) ?? null,
             tools: request.tools.filter(
               (tool) =>
                 self.row(id).permission_mode !== "read-only" ||
@@ -869,6 +920,7 @@ export class SessionService {
     this.hub.clear();
     this.contexts.clear();
     this.compactors.clear();
+    this.reasonings.clear();
   }
   private recover(): void {
     for (const row of this.sessions.list()) {

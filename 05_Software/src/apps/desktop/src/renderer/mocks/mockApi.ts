@@ -114,15 +114,24 @@ export function createMockApi(
     if (!value) throw veraError("NOT_FOUND");
     return value;
   }
-  const sessions = new MockSessions(() => {
-    const snapshot = current().snapshot;
-    return {
-      id: snapshot.config.id,
-      readOnly: snapshot.readOnly,
-      model: snapshot.config.agent.model,
-      mode: snapshot.config.agent.permission_mode,
-    };
-  });
+  const sessions = new MockSessions(
+    () => {
+      const snapshot = current().snapshot;
+      return {
+        id: snapshot.config.id,
+        readOnly: snapshot.readOnly,
+        model: snapshot.config.agent.model ?? settings.defaultModel,
+        mode: snapshot.config.agent.permission_mode,
+      };
+    },
+    (reference) => {
+      const connection = settings.providers.custom.find((p) => reference.startsWith(`custom:${p.slug}/`));
+      const id = connection && reference.slice(`custom:${connection.slug}/`.length);
+      return connection?.protocol === "lmstudio"
+        ? (connection.models?.find((m) => m.id === id)?.reasoningOptions ?? [])
+        : [];
+    },
+  );
   function pinned(content: string) {
     return { content, oversized: new TextEncoder().encode(content).byteLength > 16384 };
   }

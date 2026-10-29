@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { type SessionEvent, usageEventSchema } from "./events.js";
+import { reasoningOptionSchema } from "./provider-discovery.js";
 import { permissionModeSchema, sessionStatusSchema, stopReasonSchema, todoItemsSchema } from "./session.js";
 
 const assistant = z.strictObject({
@@ -25,6 +26,7 @@ export const sessionStateSchema = z.strictObject({
   title: z.string(),
   status: sessionStatusSchema,
   modelRef: z.string().nullable(),
+  reasoning: reasoningOptionSchema.nullable().optional(),
   mode: permissionModeSchema,
   activeTurnId: z.string().nullable(),
   interrupted: z.array(z.string()),

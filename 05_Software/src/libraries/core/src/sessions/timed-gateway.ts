@@ -4,7 +4,9 @@ import type { LlmEvent, LlmGateway, LlmRequest } from "../llm/gateway.js";
 /** Timer runs only while requesting model output, excluding tool and approval work. */
 export function timedGateway(gateway: LlmGateway, milliseconds: number): LlmGateway {
   if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0) throw veraError("INVALID");
+  const prepareModel = gateway.prepareModel?.bind(gateway);
   return {
+    ...(prepareModel ? { prepareModel } : {}),
     selectedModel: (id) => gateway.selectedModel(id),
     capabilities: (id, output) => gateway.capabilities(id, output),
     models: (id, signal, probe) => gateway.models(id, signal, probe),

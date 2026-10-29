@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { documentSchema } from "./documents.js";
 import type { Channel, Request, Response } from "./ipc.js";
+import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
   permissionModeSchema,
   sessionIdSchema,
@@ -67,6 +68,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     status: sessionStatusSchema.optional(),
     modelRef: z.string().nullable().optional(),
     mode: permissionModeSchema.optional(),
+    reasoning: reasoningOptionSchema.nullable().optional(),
   }),
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),

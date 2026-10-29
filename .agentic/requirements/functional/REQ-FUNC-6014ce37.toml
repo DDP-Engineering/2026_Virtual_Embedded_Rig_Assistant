@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-FUNC-6014ce37"
+title = "Persist session reasoning preference and isolate subsequent requests"
+status = "active"
+requirement = "The session shall persist its reasoning override independently, apply the latest compatible value when each subsequent model request starts, retain in-flight request values, and reset unsupported choices when the session model changes."
+verification = "Restart and independent sessions; read-only/stale-model/invalid effort rejection; deferred stream proves old request unchanged and following request updated."
+affected_paths = ["05_Software/src/libraries/shared/src/", "05_Software/src/libraries/core/src/llm/", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/storage/repos/events.ts", "05_Software/src/apps/desktop/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/llm/subscription.test.ts", "05_Software/tests/e2e/session-reasoning.spec.ts"]

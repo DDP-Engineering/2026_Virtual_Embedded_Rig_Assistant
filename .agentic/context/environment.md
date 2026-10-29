@@ -28,6 +28,8 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Session reasoning acceptance uses tests/e2e/session-reasoning.spec.ts: isolated native profile, loopback model transport, restart/isolation/default/reset and responsive layout. Gateway fixtures inject authenticated catalog responses and block external egress; no real model spend is required.
+
 Workbench entry acceptance uses shared/workbench-entry.test.ts, renderer workspace/mock scenarios and native workbench create/open/restart tests. Fictional corpus and inventory live under tests/fixtures/workbenches and are consumed by PDF, retrieval, CLI and smoke verification.
 
 Release acceptance uses `smoke:package -- --artifact <already-built native release>`;

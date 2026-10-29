@@ -57,6 +57,8 @@ const workbenchHandlers = {
   "session.send": unused,
   "session.stop": unused,
   "session.model.set": unused,
+  "session.reasoning.get": unused,
+  "session.reasoning.set": unused,
   "session.mode.set": unused,
   "providers.discover": unused,
   "providers.models": unused,

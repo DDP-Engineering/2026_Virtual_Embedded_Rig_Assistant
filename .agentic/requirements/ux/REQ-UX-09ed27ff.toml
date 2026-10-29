@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-09ed27ff"
+title = "Offer model-supported session reasoning beside the model selector"
+status = "active"
+requirement = "The conversation shall offer Default and model-supported reasoning levels beside its model selector, reflecting the effective default model and hiding the control for models without verified support."
+verification = "Localized picker options/default, model switching, pending/read-only and session isolation; browser/native layout and persistence."
+affected_paths = ["05_Software/src/libraries/shared/src/", "05_Software/src/libraries/core/src/llm/", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/storage/repos/events.ts", "05_Software/src/apps/desktop/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/core/src/llm/subscription.test.ts", "05_Software/tests/e2e/session-reasoning.spec.ts"]

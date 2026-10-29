@@ -62,10 +62,16 @@ function setup(url: string) {
   });
   return { settings, gateway };
 }
-async function events(gateway: LlmGateway, output?: number) {
+async function events(
+  gateway: LlmGateway,
+  output?: number,
+  reasoning?: string,
+  model = "custom:local/org/model",
+) {
   const results: LlmEvent[] = [];
   for await (const event of gateway.stream({
-    model: "custom:local/org/model",
+    model,
+    ...(reasoning !== undefined ? { reasoning } : {}),
     system: "system",
     messages: [{ role: "user", content: "hi", timestamp: 0 }],
     tools: [],
@@ -406,6 +412,7 @@ it("uses per-model discovered context and optional LM Studio generation paramete
     },
     { id: "other", name: "Second", contextWindow: 32768, maxOutputTokens: 2048, reasoningOptions: [] },
   ];
+  expect(gateway.capabilities("custom:local/org/model").reasoningOptions).toEqual(["off", "on", "xhigh"]);
   expect(gateway.capabilities("custom:local/org/model").contextWindow).toBe(65536);
   expect(gateway.capabilities("custom:local/other").contextWindow).toBe(32768);
   expect((await gateway.models("custom:local")).models.map((m) => m.contextWindow)).toEqual([65536, 32768]);
@@ -421,4 +428,133 @@ it("uses per-model discovered context and optional LM Studio generation paramete
   await events(gateway);
   expect(payloads[2]).not.toHaveProperty("temperature");
   expect(payloads[2]).not.toHaveProperty("reasoning_effort");
+  profile.reasoning = "off";
+  await events(gateway, undefined, "xhigh");
+  expect(payloads[3]).toMatchObject({ reasoning_effort: "xhigh" });
+  await events(gateway, undefined, "invented");
+  expect(payloads).toHaveLength(4);
+  expect((await gateway.models("custom:local")).models[0]?.reasoningOptions).toEqual(["off", "on", "xhigh"]);
+});
+
+it("loads ChatGPT models and native reasoning from the account catalog, including future models", async () => {
+  const settings = defaultSettings("00000000-0000-4000-8000-000000000001");
+  let access = "fictional-oauth-a",
+    loads = 0;
+  let deny = false;
+  const payloads: Record<string, unknown>[] = [];
+  const gateway = createPiAiGateway({
+    settings: () => settings,
+    now: () => 0,
+    scrub: (s) => s,
+    credentials: {
+      ...credentials,
+      read: async () => ({
+        type: "oauth",
+        access,
+        refresh: "fictional-refresh",
+        expires: Date.now() + 3600000,
+      }),
+    },
+    fetch: async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("https://chatgpt.com/backend-api/codex/models?client_version=")) {
+        loads++;
+        if (deny) return Response.json({}, { status: 401 });
+        expect(new Headers(init?.headers).get("authorization")).toBe(`Bearer ${access}`);
+        return Response.json({
+          models: [
+            {
+              slug: "future-reasoner",
+              display_name: "Future reasoner",
+              visibility: "list",
+              context_window: 128000,
+              supported_reasoning_levels: [
+                { effort: "ultra", description: "Codex client orchestration" },
+                { effort: access.endsWith("a") ? "future_effort" : "low", description: "From server" },
+              ],
+              default_reasoning_level: "future_effort",
+            },
+          ],
+        });
+      }
+      expect(url).toBe("https://api.openai.com/v1/responses");
+      payloads.push(JSON.parse(String(init?.body)));
+      return Response.json({ error: { message: "fixture" } }, { status: 500 });
+    },
+  });
+  expect((await gateway.models("chatgpt")).models.map((m) => m.id)).toEqual(["future-reasoner"]);
+  expect(gateway.selectedModel("chatgpt")).toBe("future-reasoner");
+  expect(gateway.capabilities("chatgpt/future-reasoner").reasoningOptions).toEqual(["future_effort"]);
+  await gateway.models("chatgpt");
+  expect(loads).toBe(1);
+  await events(gateway, undefined, "future_effort", "chatgpt/future-reasoner");
+  expect(payloads.at(-1)).toMatchObject({ reasoning: { effort: "future_effort" } });
+  await events(gateway, undefined, undefined, "chatgpt/future-reasoner");
+  expect(payloads.at(-1)).not.toHaveProperty("reasoning.effort");
+  access = "fictional-oauth-b";
+  await gateway.models("chatgpt");
+  expect(loads).toBe(2);
+  expect(gateway.capabilities("chatgpt/future-reasoner").reasoningOptions).toEqual(["low"]);
+  access = "fictional-oauth-c";
+  deny = true;
+  await expect(gateway.models("chatgpt")).rejects.toBeDefined();
+  expect(() => gateway.capabilities("chatgpt/future-reasoner")).toThrow();
+});
+
+it("isolates cancellation of callers sharing ChatGPT catalog discovery", async () => {
+  let finish!: (response: Response) => void,
+    started!: () => void,
+    loads = 0;
+  const ready = new Promise<void>((r) => {
+    started = r;
+  });
+  const gateway = createPiAiGateway({
+    settings: () => defaultSettings("00000000-0000-4000-8000-000000000001"),
+    now: () => 0,
+    scrub: (s) => s,
+    credentials: {
+      ...credentials,
+      read: async () => ({
+        type: "oauth",
+        access: "fictional-oauth",
+        refresh: "fictional-refresh",
+        accountId: "account_fixture",
+        expires: Date.now() + 3600000,
+      }),
+    },
+    fetch: async (url, init) => {
+      expect(String(url)).toBe("https://chatgpt.com/backend-api/codex/models?client_version=0.162.1");
+      expect(new Headers(init?.headers).get("ChatGPT-Account-ID")).toBe("account_fixture");
+      loads++;
+      started();
+      return new Promise<Response>((resolve) => {
+        finish = resolve;
+      });
+    },
+  });
+  const controller = new AbortController();
+  const result = Promise.allSettled([
+    gateway.models("chatgpt", controller.signal),
+    gateway.models("chatgpt"),
+  ]);
+  await ready;
+  await new Promise<void>((r) => setTimeout(r, 0));
+  controller.abort();
+  finish(
+    Response.json({
+      models: [
+        {
+          slug: "future",
+          display_name: "Future",
+          visibility: "list",
+          context_window: 32000,
+          supported_reasoning_levels: [{ effort: "high" }],
+        },
+      ],
+    }),
+  );
+  const [first, second] = await result;
+  expect(first?.status).toBe("rejected");
+  expect(second?.status).toBe("fulfilled");
+  expect(loads).toBe(1);
 });

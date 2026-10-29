@@ -52,7 +52,19 @@ describe("ChatGPT subscription collection", () => {
         },
       },
     ];
-    const fetcher: typeof fetch = async (_input, init) => {
+    const fetcher: typeof fetch = async (input, init) => {
+      if (String(input).startsWith("https://chatgpt.com/backend-api/codex/models?client_version="))
+        return Response.json({
+          models: [
+            {
+              slug: "gpt-4.1",
+              display_name: "GPT-4.1",
+              visibility: "list",
+              context_window: 1047576,
+              supported_reasoning_levels: [],
+            },
+          ],
+        });
       captured = new Headers(init?.headers);
       return new Response(events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(""), {
         headers: { "content-type": "text/event-stream" },
@@ -145,6 +157,18 @@ describe("ChatGPT subscription collection", () => {
       credentials: h.credentials,
       scrub: (t) => t,
       now: () => 0,
+      fetch: async () =>
+        Response.json({
+          models: [
+            {
+              slug: "gpt-4.1",
+              display_name: "GPT-4.1",
+              visibility: "list",
+              context_window: 1047576,
+              supported_reasoning_levels: [],
+            },
+          ],
+        }),
     });
     const catalog = await g.models("chatgpt");
     expect(catalog.models.length).toBeGreaterThan(0);

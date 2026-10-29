@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { veraErrorSchema } from "./errors.js";
-import { modelProfileSchema } from "./provider-discovery.js";
+import { modelProfileSchema, reasoningOptionSchema } from "./provider-discovery.js";
 
 export const customProviderIdSchema = z
   .string()
@@ -18,6 +18,7 @@ export const modelCapabilitiesSchema = z.strictObject({
   safetyMargin: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   inputBudget: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   supportsTools: z.boolean().optional(),
+  reasoningOptions: z.array(reasoningOptionSchema).max(16).optional(),
 });
 export const gatewayProviderIdSchema = z.union([providerIdSchema, z.literal("chatgpt"), z.literal("replay")]);
 export const providerModelsRequestSchema = z.strictObject({ id: gatewayProviderIdSchema });

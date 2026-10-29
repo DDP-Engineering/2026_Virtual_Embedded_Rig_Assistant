@@ -10,6 +10,7 @@ import {
   veraError,
 } from "@vera/shared";
 import type { CredentialStore } from "../ports.js";
+import { parseChatGptCatalog } from "./chatgpt-catalog.js";
 import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { createStreamScrubber } from "./stream-scrub.js";
@@ -63,7 +64,12 @@ function customProvider(custom: Custom, provider: string, model = customModel(cu
     api: openAICompletionsApi(),
   });
 }
-function limits(model: Model<string>, supportsTools?: boolean, output?: number): ModelCapabilities {
+function limits(
+  model: Model<string>,
+  supportsTools?: boolean,
+  output?: number,
+  reasoningOptions: string[] = [],
+): ModelCapabilities {
   if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
   const safetyMargin = Math.max(1024, Math.ceil(model.contextWindow * 0.05));
   const effectiveMaximum =
@@ -86,6 +92,7 @@ function limits(model: Model<string>, supportsTools?: boolean, output?: number):
     safetyMargin,
     inputBudget,
     ...(supportsTools !== undefined ? { supportsTools } : {}),
+    ...(reasoningOptions.length ? { reasoningOptions: [...reasoningOptions] } : {}),
   };
 }
 export function createCollections(
@@ -169,6 +176,86 @@ export function createPiAiGateway(
   host: GatewayHost,
 ): LlmGateway & { collections: ReturnType<typeof createCollections> } {
   const collections = createCollections(host.credentials, host.subscriptionCredentials);
+  type Catalog = ReturnType<typeof parseChatGptCatalog>;
+  let live: { token: string; until: number; models: Catalog } | undefined;
+  let pending: { token: string; promise: Promise<Catalog> } | undefined;
+  let generation = 0;
+  async function chatgptModels(signal?: AbortSignal): Promise<Catalog> {
+    signal?.throwIfAborted();
+    const auth = await collections.subscription.getAuth("openai", signal ? { signal } : {});
+    const token = auth?.auth.apiKey;
+    if (!token) {
+      live = undefined;
+      generation++;
+      throw veraError("PROVIDER");
+    }
+    const credential = await (host.subscriptionCredentials ?? host.credentials).read(
+      "chatgpt",
+      signal ? { signal } : {},
+    );
+    let account: unknown = credential?.type === "oauth" ? credential.accountId : undefined;
+    if (account === undefined) {
+      try {
+        const claims = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString("utf8"));
+        account = claims["https://api.openai.com/auth"]?.chatgpt_account_id;
+      } catch {
+        /* Opaque access tokens have no optional account header. */
+      }
+    }
+    const accountId =
+      typeof account === "string" && /^[a-zA-Z0-9_-]{1,200}$/.test(account) ? account : undefined;
+    const identity = `${token}/${accountId ?? ""}`;
+    if (live && live.token !== identity) {
+      live = undefined;
+      generation++;
+    }
+    if (live?.token === identity && host.now() < live.until) return live.models;
+    if (pending?.token === identity) return waitCatalog(pending.promise, signal);
+    const current = ++generation;
+    const promise = (async () => {
+      const endpoint = "https://chatgpt.com/backend-api/codex/models?client_version=0.162.1";
+      const response = await (host.fetch ?? globalThis.fetch)(endpoint, {
+        redirect: "error",
+        signal: AbortSignal.timeout(30000),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(accountId ? { "ChatGPT-Account-ID": accountId } : {}),
+        },
+      });
+      if (!response.ok) throw mapProviderError("", host.scrub, endpoint, { status: response.status });
+      const models = parseChatGptCatalog(await response.json(), (id) =>
+        collections.subscription.getModel("openai", id),
+      );
+      if (current !== generation) throw veraError("CONFLICT");
+      const control = response.headers.get("cache-control") ?? "";
+      const age = /(?:^|,)\s*max-age=(\d+)/i.exec(control)?.[1];
+      const ttl = /(?:^|,)\s*(?:no-store|no-cache)\b/i.test(control)
+        ? 0
+        : Math.min(300000, age === undefined ? 300000 : Number(age) * 1000);
+      live = { token: identity, until: host.now() + ttl, models };
+      return models;
+    })();
+    pending = { token: identity, promise };
+    void promise.then(
+      () => {
+        if (pending?.promise === promise) pending = undefined;
+      },
+      () => {
+        if (pending?.promise === promise) pending = undefined;
+      },
+    );
+    return waitCatalog(promise, signal);
+  }
+  function waitCatalog(promise: Promise<Catalog>, signal?: AbortSignal): Promise<Catalog> {
+    if (!signal) return promise;
+    signal.throwIfAborted();
+    let abort: () => void;
+    return new Promise<Catalog>((resolve, reject) => {
+      abort = () => reject(signal.reason);
+      signal.addEventListener("abort", abort, { once: true });
+      void promise.then(resolve, reject);
+    }).finally(() => signal.removeEventListener("abort", abort));
+  }
   const config = (provider: string): Custom => {
     const found = host.settings().providers.custom.find((c) => `custom:${c.slug}` === provider);
     if (!found) throw veraError("NOT_FOUND");
@@ -180,9 +267,18 @@ export function createPiAiGateway(
     const { provider, model: id } = splitModelReference(reference);
     if (provider === "openai" || provider === "chatgpt") {
       const models = provider === "chatgpt" ? collections.subscription : collections.api;
-      const model = models.getModel("openai", id);
+      const current = provider === "chatgpt" ? live?.models.get(id) : undefined;
+      const model =
+        current?.model ?? (provider === "chatgpt" && live ? undefined : models.getModel("openai", id));
       if (!model) throw veraError("NOT_FOUND");
-      return { models, model, endpoint: model.baseUrl, supportsTools: undefined, slot: provider };
+      return {
+        models,
+        model,
+        endpoint: model.baseUrl,
+        supportsTools: undefined,
+        slot: provider,
+        reasoningOptions: current?.reasoningOptions ?? [],
+      };
     }
     const custom = config(provider);
     const model = customModel(custom, provider, id);
@@ -194,6 +290,10 @@ export function createPiAiGateway(
       endpoint: custom.baseUrl,
       supportsTools: custom.models?.find((m) => m.id === id)?.supportsTools ?? custom.supportsTools,
       slot: provider,
+      reasoningOptions:
+        custom.protocol === "lmstudio"
+          ? (custom.models?.find((m) => m.id === id)?.reasoningOptions ?? [])
+          : [],
     };
   };
   const gateway: LlmGateway & { collections: typeof collections } = {
@@ -205,12 +305,18 @@ export function createPiAiGateway(
       }
       return snapshot;
     },
+    async prepareModel(reference, signal) {
+      if (reference.startsWith("chatgpt/")) await chatgptModels(signal);
+      target(reference);
+    },
     selectedModel(provider) {
       if (provider === "chatgpt") {
         const current = host.settings().defaultModel;
         return current?.startsWith("chatgpt/")
           ? splitModelReference(current).model
-          : (collections.subscription.getModels("openai")[0]?.id ?? "");
+          : (live?.models.values().next().value?.model.id ??
+              collections.subscription.getModels("openai")[0]?.id ??
+              "");
       }
       const model = provider === "openai" ? host.settings().providers.openai.model : config(provider).model;
       if (!model) throw veraError("INVALID");
@@ -218,19 +324,26 @@ export function createPiAiGateway(
     },
     capabilities(reference, output) {
       const resolved = target(reference);
-      return limits(resolved.model, resolved.supportsTools, output);
+      return limits(resolved.model, resolved.supportsTools, output, resolved.reasoningOptions);
     },
     async models(provider, signal, probe = false) {
       let endpoint = "";
       try {
         if (provider === "openai" || provider === "chatgpt") {
           endpoint = "https://api.openai.com/v1";
-          const models = provider === "chatgpt" ? collections.subscription : collections.api;
-          if (
-            provider === "chatgpt" &&
-            (await host.credentials.read("chatgpt", signal ? { signal } : {}))?.type !== "oauth"
-          )
-            throw mapProviderError("", host.scrub, endpoint, { status: 401 });
+          if (provider === "chatgpt") {
+            const catalog = await chatgptModels(signal);
+            return {
+              reachability: "pass",
+              models: [...catalog.values()].map(({ model, reasoningOptions }) => ({
+                id: host.scrub(model.id),
+                name: host.scrub(model.name),
+                reference: host.scrub(`chatgpt/${model.id}`),
+                ...limits(model, undefined, undefined, reasoningOptions),
+              })),
+            };
+          }
+          const models = collections.api;
           const listed = probe && provider === "openai" ? await list(endpoint, provider, signal) : null;
           return {
             reachability: listed === null ? "skipped" : "pass",
@@ -253,7 +366,12 @@ export function createPiAiGateway(
               id: host.scrub(profile.id),
               name: host.scrub(profile.name),
               reference: host.scrub(`${provider}/${profile.id}`),
-              ...limits(customModel(custom, provider, profile.id), profile.supportsTools),
+              ...limits(
+                customModel(custom, provider, profile.id),
+                profile.supportsTools,
+                undefined,
+                profile.reasoningOptions,
+              ),
             })),
           };
         }
@@ -275,7 +393,16 @@ export function createPiAiGateway(
       let endpoint = "";
       const failure: ProviderFailure = {};
       try {
+        if (request.model.startsWith("chatgpt/")) await chatgptModels(request.signal);
         const resolved = target(request.model);
+        let selectedReasoning = request.reasoning;
+        if (selectedReasoning != null && !resolved.reasoningOptions.includes(selectedReasoning)) {
+          if (request.sessionId) selectedReasoning = undefined;
+          else {
+            yield { type: "error", error: veraError("INVALID"), aborted: false };
+            return;
+          }
+        }
         endpoint = resolved.endpoint;
         const capabilities = limits(resolved.model, resolved.supportsTools, request.maxOutputTokens);
         const key = await host.credentials.read(resolved.slot, { signal: request.signal });
@@ -315,15 +442,16 @@ export function createPiAiGateway(
           custom?.protocol === "lmstudio"
             ? custom.models?.find((m) => m.id === resolved.model.id)
             : undefined;
+        const chosenReasoning = selectedReasoning ?? profile?.reasoning;
         // LM Studio's OpenAI-compatible route uses "none" for native "off".
         const reasoningEffort =
-          profile?.reasoning === "off"
+          chosenReasoning === "off"
             ? "none"
-            : profile?.reasoning === "on"
-              ? profile.reasoningDefault && !["off", "on"].includes(profile.reasoningDefault)
+            : chosenReasoning === "on"
+              ? profile?.reasoningDefault && !["off", "on"].includes(profile.reasoningDefault)
                 ? profile.reasoningDefault
                 : "medium"
-              : profile?.reasoning;
+              : chosenReasoning;
         const stream = resolved.models.stream(
           resolved.model,
           {
@@ -339,12 +467,19 @@ export function createPiAiGateway(
             fetch: transport,
             transport: "sse",
             ...(profile?.temperature === undefined ? {} : { temperature: profile.temperature }),
-            ...(profile?.reasoning === undefined
+            ...(chosenReasoning === undefined
               ? {}
               : {
                   onPayload: (payload: unknown) => ({
                     ...(payload as Record<string, unknown>),
-                    reasoning_effort: reasoningEffort,
+                    ...(resolved.model.api === "openai-completions"
+                      ? { reasoning_effort: reasoningEffort }
+                      : {
+                          reasoning: {
+                            ...((payload as { reasoning?: object }).reasoning ?? {}),
+                            effort: reasoningEffort,
+                          },
+                        }),
                   }),
                 }),
             ...(request.sessionId ? { sessionId: request.sessionId } : {}),

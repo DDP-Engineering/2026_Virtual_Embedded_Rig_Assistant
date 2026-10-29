@@ -6,6 +6,7 @@ import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "re
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
+import { ReasoningPicker } from "./reasoning-picker.js";
 
 export function Composer({
   state,
@@ -15,8 +16,10 @@ export function Composer({
   setModel,
   setMode,
   inspectorControls,
+  sessionId,
 }: {
   inspectorControls?: ReactNode;
+  sessionId?: string;
   state: SessionState;
   disabled: boolean;
   send: (text: string) => Promise<boolean>;
@@ -235,6 +238,14 @@ export function Composer({
                 ))}
             </select>
           </label>
+          {sessionId && (
+            <ReasoningPicker
+              sessionId={sessionId}
+              state={state}
+              disabled={disabled}
+              catalogVersion={subscriptionModels.dataUpdatedAt + providers.dataUpdatedAt}
+            />
+          )}
           <label>
             <span className="sr-only">{t("approval.mode")}</span>
             <select

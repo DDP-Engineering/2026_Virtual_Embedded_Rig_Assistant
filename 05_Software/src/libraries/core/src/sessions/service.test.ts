@@ -778,3 +778,133 @@ it("archives and restores durable sessions without losing transcript, denying bu
   expect(reopened.setArchived(session.id, false).archived).toBe(false);
   expect(reopened.get(session.id).snapshot.items).toEqual(transcript);
 });
+
+it("persists supported reasoning independently per session and validates model/ownership", async () => {
+  const { service, gateway, host } = await setup();
+  const capabilities = gateway.capabilities.bind(gateway);
+  gateway.capabilities = (model, output) => ({
+    ...capabilities(model, output),
+    reasoningOptions: ["low", "high"],
+  });
+  const first = service.create(),
+    other = service.create();
+  expect((await service.reasoningOptions(first.id)).selected).toBeNull();
+  expect((await service.setReasoning(first.id, "high", "replay/read-then-answer")).selected).toBe("high");
+  expect(service.get(first.id).snapshot.reasoning).toBe("high");
+  expect((await service.reasoningOptions(other.id)).selected).toBeNull();
+  await expect(service.setReasoning(first.id, "invented", "replay/read-then-answer")).rejects.toMatchObject({
+    code: "INVALID",
+  });
+  await expect(service.setReasoning(first.id, "low", "replay/changed")).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
+  await service.close();
+  const reopened = new core.SessionService(host);
+  cleanup.push(() => reopened.close());
+  expect((await reopened.reasoningOptions(first.id)).selected).toBe("high");
+  const readOnly = new core.SessionService({ ...host, readOnly: true });
+  cleanup.push(() => readOnly.close());
+  expect((await readOnly.reasoningOptions(first.id)).selected).toBe("high");
+  await expect(readOnly.setReasoning(first.id, null, "replay/read-then-answer")).rejects.toMatchObject({
+    code: "DENIED",
+  });
+  expect((await reopened.setReasoning(first.id, null, "replay/read-then-answer")).selected).toBeNull();
+});
+
+it("snapshots reasoning per subsequent model request, preserving the in-flight request", async () => {
+  const { service, gateway } = await setup();
+  const capabilities = gateway.capabilities.bind(gateway);
+  gateway.capabilities = (model, output) => ({
+    ...capabilities(model, output),
+    reasoningOptions: ["low", "high"],
+  });
+  const original = gateway.stream.bind(gateway);
+  const seen: Parameters<typeof gateway.stream>[0][] = [];
+  let release!: () => void, started!: () => void;
+  const gate = new Promise<void>((r) => {
+    release = r;
+  });
+  const ready = new Promise<void>((r) => {
+    started = r;
+  });
+  gateway.stream = async function* (request) {
+    seen.push(request);
+    if (seen.length === 1) {
+      started();
+      await gate;
+    }
+    yield* original(request);
+  };
+  const row = service.create();
+  await service.setReasoning(row.id, "low", "replay/read-then-answer");
+  service.send(row.id, "Read the board");
+  await ready;
+  try {
+    await service.setReasoning(row.id, "high", "replay/read-then-answer");
+    expect(seen[0]?.reasoning).toBe("low");
+  } finally {
+    release();
+  }
+  expect(await service.waitIdle(row.id)).toEqual({ stopReason: "end" });
+  expect(seen.length).toBeGreaterThan(1);
+  expect(seen.slice(1).every((request) => request.reasoning === "high")).toBe(true);
+});
+
+it("retains compatible reasoning and resets incompatible model changes to Default", async () => {
+  const { service, gateway, host } = await setup();
+  host.model = (reference) => reference ?? "replay/read-then-answer";
+  const capabilities = gateway.capabilities.bind(gateway);
+  gateway.capabilities = (model, output) => ({
+    ...capabilities(model, output),
+    reasoningOptions: model === "replay/no-reasoning" ? [] : ["low", "high"],
+  });
+  const row = service.create();
+  await service.setReasoning(row.id, "high", "replay/read-then-answer");
+  service.setModel(row.id, "replay/compatible");
+  expect((await service.reasoningOptions(row.id)).selected).toBe("high");
+  service.setModel(row.id, "replay/no-reasoning");
+  expect(service.get(row.id).snapshot.reasoning).toBeNull();
+  expect((await service.reasoningOptions(row.id)).selected).toBeNull();
+  service.setModel(row.id, "replay/compatible");
+  await service.setReasoning(row.id, "high", "replay/compatible");
+  host.model = (reference) => {
+    if (!reference) throw { code: "INVALID", messageKey: "errors.INVALID" };
+    return reference;
+  };
+  service.setModel(row.id, null);
+  expect(service.get(row.id).snapshot).toMatchObject({ modelRef: null, reasoning: null });
+});
+
+it("restores reasoning on a cold gateway before budgeting and sending, without opening its picker", async () => {
+  const { service, gateway, host } = await setup();
+  let warm = false,
+    prepares = 0;
+  const capabilities = gateway.capabilities.bind(gateway);
+  Object.assign(gateway, {
+    prepareModel: async () => {
+      prepares++;
+      warm = true;
+    },
+  });
+  gateway.capabilities = (model, output) => {
+    if (!warm) throw Error("Cold catalog");
+    return { ...capabilities(model, output), reasoningOptions: ["high"] };
+  };
+  const row = service.create();
+  await service.setReasoning(row.id, "high", "replay/read-then-answer");
+  expect(prepares).toBe(1);
+  await service.close();
+  warm = false;
+  const reopened = new core.SessionService(host);
+  cleanup.push(() => reopened.close());
+  const seen: (string | null | undefined)[] = [];
+  const stream = gateway.stream.bind(gateway);
+  gateway.stream = async function* (request) {
+    seen.push(request.reasoning);
+    yield* stream(request);
+  };
+  reopened.send(row.id, "Read the board");
+  expect(await reopened.waitIdle(row.id)).toEqual({ stopReason: "end" });
+  expect(seen.length).toBeGreaterThan(0);
+  expect(seen.every((level) => level === "high")).toBe(true);
+});

@@ -186,6 +186,12 @@
     "failure": "Eroare furnizor: {{message}}"
   },
   "chat": {
+    "reasoningLevel": "Nivel de reasoning",
+    "reasoningDefault": "Implicit",
+    "reasoningNone": "Fără reasoning",
+    "reasoningMinimal": "Minim",
+    "reasoningMax": "Maxim",
+    "reasoningUltra": "Ultra",
     "sessions": "Sesiuni",
     "new": "Sesiune nouă",
     "untitled": "Sesiune fără titlu",

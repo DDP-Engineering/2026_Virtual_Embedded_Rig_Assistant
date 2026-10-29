@@ -186,6 +186,12 @@
     "failure": "Provider error: {{message}}"
   },
   "chat": {
+    "reasoningLevel": "Reasoning level",
+    "reasoningDefault": "Default",
+    "reasoningNone": "None",
+    "reasoningMinimal": "Minimal",
+    "reasoningMax": "Maximum",
+    "reasoningUltra": "Ultra",
     "sessions": "Sessions",
     "new": "New session",
     "untitled": "Untitled session",

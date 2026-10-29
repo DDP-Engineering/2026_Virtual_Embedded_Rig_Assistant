@@ -109,6 +109,8 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.send"
     | "session.stop"
     | "session.model.set"
+    | "session.reasoning.get"
+    | "session.reasoning.set"
     | "session.mode.set"
     | "providers.discover"
     | "providers.models"

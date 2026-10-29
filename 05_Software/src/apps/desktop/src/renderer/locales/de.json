@@ -186,6 +186,12 @@
     "failure": "Anbieterfehler: {{message}}"
   },
   "chat": {
+    "reasoningLevel": "Reasoning-Stufe",
+    "reasoningDefault": "Standard",
+    "reasoningNone": "Ohne Reasoning",
+    "reasoningMinimal": "Minimal",
+    "reasoningMax": "Maximum",
+    "reasoningUltra": "Ultra",
     "sessions": "Sitzungen",
     "new": "Neue Sitzung",
     "untitled": "Unbenannte Sitzung",

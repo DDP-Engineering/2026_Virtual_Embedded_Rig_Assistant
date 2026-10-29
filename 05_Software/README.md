@@ -365,3 +365,15 @@ model selector. New Workbench and Focus message input are unassigned initially.
 Changes persist in application settings; bindings run only while VERA is focused.
 Conflicts and reserved native keys are rejected. Dialogs/IME/recording retain
 input ownership. Enter/Shift+Enter/Escape remain contextual controls.
+
+### Session reasoning
+
+The conversation offers a reasoning selector beside Model when that model declares supported
+levels. Default leaves the provider or saved connection profile in control. The choice is
+stored per session under `.vera` and applies to subsequent model requests; a request already
+in flight keeps its value. Switching to an incompatible model clears the override.
+ChatGPT model IDs and reasoning levels are read from its authenticated model catalog, with
+an account-scoped short memory cache. VERA keeps no static model/effort table. LM Studio uses
+the model capabilities discovered for the connection. Endpoints without declared capabilities
+offer no reasoning override. Codex Ultra is a client orchestration mode and is not sent as
+a native Responses reasoning effort. Catalog discovery and inference retain separate routes.

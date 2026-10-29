@@ -12,6 +12,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- reasoningOptions(id) and setReasoning(id,reasoning,expectedModel) prepare current model metadata and return modelRef/options/selected. Strict writable/current-model validation protects saves; an active turn may change its next-request preference. Optional nullable session.updated.reasoning persists/replays the preference in the existing event store, without SQL schema changes. A latest-event lookup seeds the service cache; durable commit precedes cache update and publication. Model switches retain compatible choices and atomically reset incompatible ones. Each request snapshots the current supported value; in-flight requests remain unchanged.
+
 - setArchived(id, archived) updates the existing workbench-owned archived flag and
   updated timestamp atomically with a session.updated notification. It checks
   idle state, current ownership and writable storage; read-only workbenches and
