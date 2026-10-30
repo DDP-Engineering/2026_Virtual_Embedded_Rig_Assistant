@@ -1,0 +1,17 @@
+# PDF downloads
+
+Task: TASK-6bbaec5c. Requirements: REQ-FUNC-b975a8b5, REQ-SEC-6c43bda5, REQ-REL-45112294, REQ-SEC-1a37ade3, REQ-DATA-fd1933a1, REQ-UX-b93197aa, REQ-FUNC-4c3f4f0c, REQ-REL-39e8cc78.
+
+`web_download({url, filename?})` is a prepared write tool. A successful result contains `download` metadata (UUID identifier, portable PDF filename, relative .vera/downloads path, originating session/call, source URL, final URL, application/pdf, byte size, SHA-256, ISO saved time, page count). It never contains PDF bytes or extracted text. No source browser credentials or provider keys are available to the transfer port.
+
+The source is normalized using publicWebUrl. Every hop resolves all DNS addresses, rejects a non-public answer, and uses a custom Node HTTP lookup bound to a validated address while retaining the original hostname for TLS verification. Only GET, Accept application/pdf, identity encoding and a VERA user agent are sent. Redirect responses are destroyed and revalidated. Five redirects are allowed. HTTP errors, encoded/non-PDF responses, size/deadline limits and invalid PDF parsing fail through current tool error handling; failed work remains unpublished.
+
+Reuse the document pipeline PDF_LIMIT (100 MiB) and the PDF worker's 120-second deadline, applied to the complete download/validation/publication operation. The filename is portable and ends in .pdf; if omitted, use the safe URL basename or document.pdf. Content-Disposition cannot choose paths. Each download uses a fresh UUID directory and atomic publication, with ordinary parent/file checks, no overwrite, and persisted exact-byte SHA-256. Recheck live write authority before publication. A completed published download belongs to the workbench and remains after deleting its session; no RAG ingestion is performed.
+
+The approval request binds URL, filename, generated destination, scope and maximum bytes. No request is issued before approval. Read-only and disabled-tool policy hide it. The .vera destination is protected, so Ask and Auto-edit require approval; Bypass uses the existing automatic gate. Global Web access disabled/revoked cancels network/validation regardless of provider selection or credentials. Already stored PDFs remain openable offline with Web access disabled.
+
+`downloads.list({workbenchId})` returns validated metadata, newest first. `downloads.open({workbenchId,downloadId})` checks active workbench ownership, managed ordinary paths, metadata identity and exact file hash, then supplies the existing local PDF viewer content via typed IPC. The viewer accepts only host-produced bytes and preserves its existing cancellation, stale selection, page navigation and close behavior. Metadata tampering/missing or modified content uses current INVALID/NOT_FOUND/CONFLICT errors, never an arbitrary-path fallback.
+
+The download parser uses a disposable worker with a 256 MiB V8 old-generation heap budget; pre-existing ingest parser defaults are unchanged. PDF downloads open in a centered modal; uncited documents omit citation-only labels. Completed approval summaries stay compact and technical result JSON remains expandable.
+
+No migrations, RAG changes, external launching, cookies or automatic popup. UI translations cover English, Romanian and German. Tests use injected public-resolution/transport ports and real local PDF parsing, not uncontrolled network calls.

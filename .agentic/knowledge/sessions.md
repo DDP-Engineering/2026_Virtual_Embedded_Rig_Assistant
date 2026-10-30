@@ -12,6 +12,9 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+SessionHost may own a PdfDownloads instance, exposed as listDownloads/openDownload and ctx.downloads. Prepared web_download requests use the existing write approval gate; close cancels/drains downloads before releasing storage. Download files remain workbench-owned after deleting their session. Live read-only model filtering covers all bound write-class tools. See [PDF downloads](pdf-downloads.md).
+
+
 - Optional SessionHost.web supplies the provider to session context; desktop/CLI compose anonymous Exa without startup requests. Web tools use existing read execution/permissions/activity. [Web search](web-search.md) owns the network boundary.
 
 - SessionService.create(modelRef?,mode?,reuseEmpty=false) keeps explicit creation separate. Opt-in New session selects the most recently updated idle/unarchived row with no user transcript row or submitted/queued event, or creates within the same synchronous transaction. Reuse preserves name, model, mode and history. Separate workbench databases and main ownership checks prevent cross-workbench reuse; archived/used/queued rows stay excluded. service.test.ts covers reuse and boundaries; navigation-actions.spec.ts covers concurrent IPC, UI and restart.

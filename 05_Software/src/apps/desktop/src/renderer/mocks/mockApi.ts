@@ -313,6 +313,17 @@ export function createMockApi(
         value = { workbenchId, documents: scenario === "empty" ? [] : mockDocuments };
         break;
       }
+      case "downloads.list": {
+        const { workbenchId } = channels["downloads.list"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        value = { workbenchId, downloads: [] };
+        break;
+      }
+      case "downloads.open": {
+        const { workbenchId } = channels["downloads.open"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        throw veraError("NOT_FOUND");
+      }
       case "docs.search": {
         const { workbenchId, query } = channels["docs.search"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");

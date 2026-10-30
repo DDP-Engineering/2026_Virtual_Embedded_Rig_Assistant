@@ -20,6 +20,9 @@ The sandboxed renderer renders typed data through authorized IPC.
 
 ## Public interface
 
+Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Download modals are centered and uncited PDFs omit citation-only labels. Host publicPdfDownload scrubs metadata strings and drops invalid redacted records.
+
+
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
 - docs.search({workbenchId,query}) returns at most20 current keyword hits after deduplicated per-source SHA/status/kind/locator verification and index epoch checks.
 - docs.open accepts workbenchId with indexed path, document ref, or

@@ -2,6 +2,7 @@ import {
   buildSystemPrompt,
   type Clock,
   type EmbeddingPort,
+  type PdfDownloads,
   type PermissionEngine,
   SessionService,
   type SettingsService,
@@ -49,6 +50,7 @@ export class SessionsHost {
       emit: (event: EventEnvelope) => unknown;
       permissions?: PermissionEngine;
       web?: WebProvider;
+      downloads?: (root: string) => PdfDownloads;
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
@@ -82,6 +84,7 @@ export class SessionsHost {
           },
           gateway: options.gateway().api,
           ...(options.web ? { web: options.web } : {}),
+          ...(options.downloads ? { downloads: options.downloads(snapshot.folder) } : {}),
           clock: options.clock,
           workers: options.workers,
           get skills() {

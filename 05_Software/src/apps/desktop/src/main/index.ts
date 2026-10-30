@@ -2,7 +2,14 @@ import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
-import { type LlmGateway, SettingsService, splitModelReference, WorkbenchService } from "@vera/core";
+import {
+  createDownloadPdfExtractor,
+  type LlmGateway,
+  PdfDownloads,
+  SettingsService,
+  splitModelReference,
+  WorkbenchService,
+} from "@vera/core";
 import { eventEnvelopeSchema, veraError, workbenchPatchSchema } from "@vera/shared";
 import {
   app,
@@ -23,7 +30,7 @@ import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createDocumentServices } from "./document-processor.js";
-import { publicDocument, publicDocumentHit, publicViewer } from "./document-viewer.js";
+import { publicDocument, publicDocumentHit, publicPdfDownload, publicViewer } from "./document-viewer.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
@@ -132,6 +139,11 @@ let chatgpt = new ChatgptAuth({
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
 const sessions = new SessionsHost({
   web: webAccess.provider,
+  downloads: (root) =>
+    new PdfDownloads(root, {
+      access: webAccess.provider,
+      pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
+    }),
   workbench,
   settings,
   gateway: () => modelGateway,
@@ -223,6 +235,23 @@ ipcMain.handle(
         await workbench.reindexDocuments(workbenchId);
         return {};
       },
+      "downloads.list": ({ workbenchId }) =>
+        sessions.run((service) =>
+          workbench.readDocuments(workbenchId, async () => ({
+            workbenchId,
+            downloads: (await service.listDownloads())
+              .map((record) => publicPdfDownload(record, (text) => credentials.scrub(text)))
+              .filter((record) => record !== undefined),
+          })),
+        ),
+      "downloads.open": ({ workbenchId, downloadId }) =>
+        sessions.run((service) =>
+          workbench.readDocuments(workbenchId, async () => ({
+            workbenchId,
+            downloadId,
+            content: publicViewer(await service.openDownload(downloadId), (text) => credentials.scrub(text)),
+          })),
+        ),
       "app.openExternal": (request) => openExternal(request, (url) => shell.openExternal(url)),
       "providers.chatgpt.login": (request) => chatgpt.login(request),
       "providers.chatgpt.cancel": () => chatgpt.cancel(),

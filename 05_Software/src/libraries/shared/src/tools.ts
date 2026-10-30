@@ -13,6 +13,7 @@ export const builtinToolNames = [
   "load_skill",
   "web_search",
   "web_read",
+  "web_download",
 ] as const;
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];

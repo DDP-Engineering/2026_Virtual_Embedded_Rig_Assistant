@@ -21,6 +21,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     load_skill: { name: "reader" },
     web_search: { query: "general topic" },
     web_read: { url: "https://example.com/" },
+    web_download: { url: "https://example.com/chip.pdf" },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -43,6 +44,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "load_skill",
     "web_search",
     "web_read",
+    "web_download",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

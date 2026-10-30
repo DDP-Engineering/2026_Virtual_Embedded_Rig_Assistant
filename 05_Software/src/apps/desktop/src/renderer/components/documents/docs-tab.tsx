@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
+import { DownloadsList } from "./downloads.js";
 import { useDocumentViewer } from "./viewer-context.js";
 
 function defineTranslationKeys<const T extends readonly string[]>(keys: T): T {
@@ -92,6 +93,7 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
   }
   return (
     <section className="docs-tab" aria-label={t("panel.docs")}>
+      <DownloadsList workbenchId={workbenchId} />
       <label>
         {t("documents.search")}
         <input maxLength={1000} value={query} onChange={(e) => setQuery(e.target.value)} />

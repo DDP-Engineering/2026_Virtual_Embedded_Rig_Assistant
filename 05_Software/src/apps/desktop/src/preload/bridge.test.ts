@@ -87,6 +87,8 @@ it("infers registry types and returns validated metadata", async () => {
     | "skills.save"
     | "skills.toggle"
     | "docs.list"
+    | "downloads.list"
+    | "downloads.open"
     | "docs.search"
     | "docs.open"
     | "docs.reindex"

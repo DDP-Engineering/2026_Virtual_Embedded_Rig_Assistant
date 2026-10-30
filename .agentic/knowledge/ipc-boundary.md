@@ -22,6 +22,9 @@ createDeltaCoalescer is a separately tested utility whose callers supply merge p
 
 ## Public interface
 
+downloads.list/open are strict workbench-scoped channels; open takes only a UUID identifier, never an arbitrary path or external-launch option. Download approval events require source/budget and reject invented text diffs/byte counts. See [PDF downloads](pdf-downloads.md).
+
+
 - session.create accepts optional boolean reuseEmpty for the New session command. Response remains SessionSummary; main validates current workbenchId before forwarding the opt-in flag. Core owns transactional reuse and mock mirrors it. Existing callers omitting the flag retain explicit creation.
 
 - session.reasoning.get takes sessionId; session.reasoning.set takes sessionId/modelRef/reasoning (nullable for Default). Both return strict modelRef/options/selected metadata. Main delegates to the owned session, scrubs returned strings, and rejects credential-bearing setters. Preload derives channel authorization from shared contracts; mock metadata/save behavior mirrors current provider profiles and session events.

@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-REL-45112294"
+title = "Bound and cancel PDF transfers without partial publication"
+status = "active"
+requirement = "When a PDF transfer exceeds its bounded byte, redirect or time budget or is cancelled before publication, VERA shall fail the tool call and leave no published or partial download."
+verification = "Exercise header and streamed oversize, redirect exhaustion, deadline and caller/global cancellation using scripted responses; inspect the managed directory for absent final and temporary files."
+affected_paths = ["05_Software/src/libraries/core/src/web/pdf-transfer.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/web/configured-provider.ts", "05_Software/src/libraries/core/src/web/pdf-transfer.test.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/web/pdf-transfer.test.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30

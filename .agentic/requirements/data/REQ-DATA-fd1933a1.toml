@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-DATA-fd1933a1"
+title = "Keep immutable PDF downloads inside the current workbench"
+status = "active"
+requirement = "When storing or retrieving a managed PDF download, VERA shall confine immutable files and validated provenance to the current workbench .vera/downloads directory without following filesystem links, overwriting files or adding them to the RAG index."
+verification = "Attempt malformed identifiers, names, linked managed directories/files and metadata tampering; assert rejection and unchanged outside sentinels; confirm .vera remains excluded and downloads survive originating-session deletion."
+affected_paths = ["05_Software/src/libraries/core/src/web/pdf-downloads.ts", "05_Software/src/libraries/shared/src/downloads.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/libraries/core/src/sessions/downloads.test.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/libraries/core/src/sessions/downloads.test.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30

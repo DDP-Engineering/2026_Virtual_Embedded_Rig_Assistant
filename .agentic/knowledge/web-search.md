@@ -6,6 +6,9 @@ Select for web_search, web_read, WebProvider, Exa MCP, Web access settings or so
 
 ## Purpose and boundaries
 
+Direct PDF downloads route to [managed PDF downloads](pdf-downloads.md). web_download is a separate prepared-write transport; it shares global Web access cancellation/authorization without requiring Exa/Tavily/Brave credentials, and remains available with Brave when globally enabled. The shared URL guard keeps IPv4 and IPv6 BlockLists separate because Node matches IPv4 against mapped-IPv6 ranges.
+
+
 WebProvider is the vendor-neutral search/read port. ConfiguredWebProvider selects Exa MCP, Tavily REST or Brave Search REST; main and CLI inject it into sessions. Tavily supports anonymous keyless or keyed search/extraction. Brave requires a key and is explicitly search-only: new model definitions omit web_read and already-bound calls reject it locally. No startup egress, generic MCP configuration, OAuth, account provisioning, browser automation or automatic provider fallback.
 
 ## Public interface

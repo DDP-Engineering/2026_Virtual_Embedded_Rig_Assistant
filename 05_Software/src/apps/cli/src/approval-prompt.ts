@@ -22,7 +22,11 @@ export function promptApproval(
         })
         .join("");
     output.write(
-      safe(`\n${request.tool} ${JSON.stringify(request.path)} (${request.bytes} bytes)\n${request.diff}\n`),
+      safe(
+        request.tool === "web_download" && request.download
+          ? `\n${request.tool} ${JSON.stringify(request.path)}\nSource: ${request.download.url}\nMaximum: ${request.download.maxBytes} bytes\n`
+          : `\n${request.tool} ${JSON.stringify(request.path)} (${request.bytes} bytes)\n${request.diff}\n`,
+      ),
     );
     const reader = createInterface({ input, output, terminal: false });
     let done = false;

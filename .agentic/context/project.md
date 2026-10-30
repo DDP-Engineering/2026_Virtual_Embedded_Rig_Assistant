@@ -103,3 +103,5 @@ and restoring defaults for current navigation, panels and conversation actions.
 Settings > Web access owns the global web gate and explicit provider-specific anonymous/API-key modes, separately from AI Providers. Dedicated credential-safe IPC and ConfiguredWebProvider apply it across workbenches/CLI; see [web access](../knowledge/web-search.md).
 
 Web access supports Exa/Tavily/Brave with isolated credentials and CLI EXA_API_KEY/TAVILY_API_KEY/BRAVE_SEARCH_API_KEY. Tavily supports anonymous search/read; Brave requires a key and is search-only. Focused adapter/gate/main/UI/shared and native provider-isolation tests verify routing; live anonymous Tavily search/extraction is separate from scripted private-key acceptance.
+
+Managed PDF downloads: web_download is a provider-neutral approved write tool saving exact binary PDFs and provenance under .vera/downloads; local Open PDF actions reuse the viewer and remain offline-readable. Downloads share live Web access/permissions, never search-provider credentials, and are not automatically indexed for RAG. See [PDF downloads](../knowledge/pdf-downloads.md).

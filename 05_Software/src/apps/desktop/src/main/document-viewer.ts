@@ -1,9 +1,27 @@
 import {
   type DocumentRecord,
   documentSearchHitSchema,
+  type PdfDownload,
+  pdfDownloadSchema,
   type Response,
   type ViewerContent,
 } from "@vera/shared";
+
+/** Preserve only structurally usable provenance after scrubbing every textual field. */
+export function publicPdfDownload(
+  download: PdfDownload,
+  scrub: (text: string) => string,
+): PdfDownload | undefined {
+  const result = pdfDownloadSchema.safeParse(
+    Object.fromEntries(
+      Object.entries(download).map(([name, value]) => [
+        name,
+        typeof value === "string" ? scrub(value) : value,
+      ]),
+    ),
+  );
+  return result.success ? result.data : undefined;
+}
 
 export function publicDocument(
   document: DocumentRecord,

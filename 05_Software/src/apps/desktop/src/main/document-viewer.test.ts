@@ -3,7 +3,29 @@
 import { scrub as redact } from "@vera/core";
 import { channels, documentSchema, documentSearchHitSchema, viewerContentSchema } from "@vera/shared";
 import { expect, it } from "vitest";
-import { publicDocument, publicDocumentHit, publicViewer } from "./document-viewer.js";
+import { publicDocument, publicDocumentHit, publicPdfDownload, publicViewer } from "./document-viewer.js";
+
+it("scrubs all download provenance strings and drops redacted identities that no longer validate", () => {
+  const downloadId = "32332d81-4efa-4b94-838b-f40d1fc701d8";
+  const record = {
+    downloadId,
+    name: "chip.pdf",
+    path: `.vera/downloads/${downloadId}/chip.pdf`,
+    sessionId: `ses_${"0".repeat(26)}`,
+    callId: "secret-call",
+    sourceUrl: "https://example.org/chip.pdf?ticket=secret",
+    finalUrl: "https://example.org/chip.pdf",
+    mime: "application/pdf" as const,
+    bytes: 20,
+    pages: 1,
+    sha256: "a".repeat(64),
+    createdAt: "2026-10-30T12:00:00.000Z",
+  };
+  const result = publicPdfDownload(record, (value) => value.replaceAll("secret", "[redacted]"));
+  expect(result).toMatchObject({ downloadId, callId: "[redacted]-call" });
+  expect(JSON.stringify(result)).not.toContain("secret");
+  expect(publicPdfDownload(record, (value) => value.replaceAll(downloadId, "[redacted]"))).toBeUndefined();
+});
 
 it("scrubs textual document content while retaining exact PDF bytes and locator identity", () => {
   const result = publicViewer(

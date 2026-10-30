@@ -10,6 +10,9 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 ## Public interface
 
+The registry also exposes web_download as a prepared write operation with its own narrow binary store; it does not widen write/edit text formats or their .vera restrictions. ChangeRequest distinguishes a download approval (unknown final SHA, explicit source/budget) from text-file hashes/diffs. See [PDF downloads](pdf-downloads.md).
+
+
 - Registry includes read-class web_search/web_read over injected WebProvider. [Web search](web-search.md) owns the anonymous Exa adapter, bounded source extraction and errors; file-tool confinement remains unchanged.
 
 - Bypass is a host-selected filesystem scope on read/list/glob/grep/write/edit. ToolContext supplies live permissionMode and a revocable bypassSignal; model args cannot choose scope. PathGuard defaults to the existing confined policy, while filesystem scope accepts canonical absolute/parent paths and ignored locations, rejecting device/stream/special-file syntax. Grep receives scope as host task metadata and remains worker-isolated. External text results expose paths without inventing confined refs; indexed document/citation viewers remain workbench-scoped. OS rights, enabled tools, text/binary/output limits, fingerprints and write integrity still apply.

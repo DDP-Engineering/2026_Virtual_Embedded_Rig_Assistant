@@ -91,6 +91,7 @@ export class ApprovalGate {
           path: request.path,
           diff: request.diff,
           bytes: request.bytes,
+          ...(request.tool === "web_download" ? { download: request.download } : {}),
         });
       })();
       signal.addEventListener("abort", abort, { once: true });

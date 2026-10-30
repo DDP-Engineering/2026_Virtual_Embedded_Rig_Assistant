@@ -41,6 +41,7 @@ import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
+import type { PdfDownloads } from "../web/pdf-downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
@@ -62,6 +63,7 @@ export interface SessionHost {
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   web?: WebProvider;
+  downloads?: PdfDownloads;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
   runtime?: (host: RuntimeHost) => AgentRuntime;
@@ -470,6 +472,14 @@ export class SessionService {
     this.row(id);
     return this.artifacts.list(id);
   }
+  listDownloads() {
+    if (!this.host.downloads) return Promise.resolve([]);
+    return this.host.downloads.list();
+  }
+  openDownload(downloadId: string) {
+    if (!this.host.downloads) throw veraError("NOT_FOUND");
+    return this.host.downloads.open(downloadId);
+  }
   async openArtifact(id: string) {
     return this.verifiedArtifact(id).artifact;
   }
@@ -605,6 +615,8 @@ export class SessionService {
     ctx.knowledge = this.knowledge;
     if (this.host.web) ctx.web = this.host.web;
     else delete ctx.web;
+    if (this.host.downloads) ctx.downloads = this.host.downloads;
+    else delete ctx.downloads;
     if (this.host.skills) ctx.skills = this.host.skills;
     else delete ctx.skills;
     ctx.todos = {
@@ -645,6 +657,7 @@ export class SessionService {
     const tools = registry
       .bind(ctx, this.host.disabledTools)
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
+      .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
       .map((tool) => ({
         ...tool,
         execute: async (args: unknown, signal: AbortSignal) => {
@@ -686,6 +699,7 @@ export class SessionService {
           }
         },
       }));
+    const writeToolNames = new Set(tools.filter((tool) => tool.class === "write").map((tool) => tool.name));
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
     const self = this;
     const runtimeHost: RuntimeHost = {
@@ -707,9 +721,7 @@ export class SessionService {
             sessionId: id,
             reasoning: self.requestReasoning(id, request.model) ?? null,
             tools: request.tools.filter(
-              (tool) =>
-                self.row(id).permission_mode !== "read-only" ||
-                (tool.name !== "write" && tool.name !== "edit"),
+              (tool) => self.row(id).permission_mode !== "read-only" || !writeToolNames.has(tool.name),
             ),
           });
         },
@@ -954,7 +966,9 @@ export class SessionService {
     for (const turn of this.active.values()) turn.accepting = false;
     for (const turn of this.active.values()) turn.runtime.abort();
     for (const scope of this.bypassScopes.values()) scope.abort();
+    const downloadsClosed = this.host.downloads?.close();
     await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
+    await downloadsClosed;
     await this.ready;
     await this.writeQueue.drain();
     this.closed = true;

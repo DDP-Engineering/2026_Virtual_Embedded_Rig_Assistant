@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-SEC-6c43bda5"
+title = "Validate and pin public PDF download destinations"
+status = "active"
+requirement = "When transferring a PDF URL or following a redirect, VERA shall permit only credential-free public HTTP(S) destinations whose resolved addresses are public and pinned to the connection, without forwarding search, model, browser or API credentials."
+verification = "Reject private literals, mixed public/private DNS answers, local redirects and credential URLs before connecting; assert the selected public DNS address is used and request headers contain no authorization or cookies."
+affected_paths = ["05_Software/src/libraries/core/src/web/pdf-transfer.ts", "05_Software/src/libraries/core/src/web/provider.ts", "05_Software/src/apps/desktop/src/main/document-viewer.ts", "05_Software/src/libraries/core/src/web/pdf-transfer.test.ts", "05_Software/src/apps/desktop/src/main/document-viewer.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/web/pdf-transfer.test.ts", "05_Software/src/apps/desktop/src/main/document-viewer.test.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30

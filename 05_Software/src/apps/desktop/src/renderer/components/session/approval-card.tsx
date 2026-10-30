@@ -36,9 +36,21 @@ export function ApprovalCard({
       setPending(false);
     }
   }
+  if (approval.tool === "web_download" && approval.decision)
+    return (
+      <p className="muted" data-approval-card={approval.approvalId}>
+        {approval.decision === "approved"
+          ? t("approval.approved")
+          : approval.decision === "denied"
+            ? t("approval.denied")
+            : t("approval.aborted")}
+        {" · "}
+        {approval.by === "mode" ? t("approval.byMode") : t("approval.byUser")}
+      </p>
+    );
   return (
     <fieldset
-      className="approval-card"
+      className={`approval-card${approval.tool === "web_download" ? " download-approval" : ""}`}
       data-approval-card={approval.approvalId}
       aria-label={`${t("approval.card")}: ${approval.tool} · ${approval.path}`}
       // biome-ignore lint/a11y/noNoninteractiveTabindex: The whole approval group receives the documented A/D shortcuts with visible focus.
@@ -63,9 +75,18 @@ export function ApprovalCard({
       <h4>
         {approval.tool} · {approval.path}
       </h4>
-      <p>{t("approval.bytes", { count: approval.bytes })}</p>
-      <p className="sr-only">{t("approval.diff")}</p>
-      <DiffViewer diff={approval.diff} identity={approval.approvalId} />
+      {approval.download ? (
+        <>
+          <p className="download-source">{t("downloads.approvalSource", { url: approval.download.url })}</p>
+          <p>{t("downloads.maximum", { count: approval.download.maxBytes / (1024 * 1024) })}</p>
+        </>
+      ) : (
+        <>
+          <p>{t("approval.bytes", { count: approval.bytes })}</p>
+          <p className="sr-only">{t("approval.diff")}</p>
+          <DiffViewer diff={approval.diff} identity={approval.approvalId} />
+        </>
+      )}
       {error !== undefined && <ErrorMessage error={error} />}
       {approval.decision ? (
         <p role="status">
@@ -85,9 +106,11 @@ export function ApprovalCard({
             <button type="button" disabled={locked} onClick={() => void decide("denied")}>
               {t("approval.deny")}
             </button>
-            <button type="button" disabled={locked} onClick={() => void decide("approved", true)}>
-              {t("approval.switch")}
-            </button>
+            {approval.tool !== "web_download" && (
+              <button type="button" disabled={locked} onClick={() => void decide("approved", true)}>
+                {t("approval.switch")}
+              </button>
+            )}
           </div>
           <p className="muted">{t("approval.keys")}</p>
         </>

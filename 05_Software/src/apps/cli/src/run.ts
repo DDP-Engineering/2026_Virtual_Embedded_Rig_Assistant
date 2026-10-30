@@ -4,8 +4,10 @@ import { join } from "node:path";
 import {
   buildSystemPrompt,
   ConfiguredWebProvider,
+  createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  PdfDownloads,
   SessionService,
   SettingsService,
   unavailableWebTools,
@@ -159,6 +161,10 @@ export async function runTurn(
       readOnly: snapshot.readOnly,
       gateway,
       web,
+      downloads: new PdfDownloads(snapshot.folder, {
+        access: web,
+        pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
+      }),
       clock: nodeClock,
       workers,
       skills,

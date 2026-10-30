@@ -19,7 +19,7 @@ export class WebAccessBlocked extends Error {
 /** The application gate remains authoritative even for tools bound before a settings change. */
 export class ConfiguredWebProvider implements WebProvider {
   private readonly active = new Set<AbortController>();
-  private readonly pending = new Set<Promise<WebResult>>();
+  private readonly pending = new Set<Promise<unknown>>();
   private generation = 0;
   private closed = false;
   constructor(
@@ -34,6 +34,39 @@ export class ConfiguredWebProvider implements WebProvider {
   }
   read(args: WebReadRequest, signal: AbortSignal) {
     return this.run("read", args, signal);
+  }
+  /** Direct downloads share global authorization/lifetime, never search-provider keys or capabilities. */
+  withAccess<T>(
+    operation: (signal: AbortSignal, assertCurrent: () => void) => Promise<T>,
+    caller: AbortSignal,
+  ): Promise<T> {
+    const pending = (async () => {
+      if (this.closed || !this.host.config().enabled) throw new WebAccessBlocked("disabled");
+      caller.throwIfAborted();
+      const controller = new AbortController();
+      const revision = this.generation;
+      this.active.add(controller);
+      const signal = AbortSignal.any([caller, controller.signal]);
+      const assertCurrent = () => {
+        signal.throwIfAborted();
+        if (revision !== this.generation || !this.host.config().enabled || this.closed)
+          throw new WebAccessBlocked("cancelled");
+      };
+      try {
+        return await operation(signal, assertCurrent);
+      } catch (error) {
+        if (signal.aborted) throw new WebAccessBlocked("cancelled");
+        throw error;
+      } finally {
+        this.active.delete(controller);
+      }
+    })();
+    this.pending.add(pending);
+    void pending.then(
+      () => this.pending.delete(pending),
+      () => this.pending.delete(pending),
+    );
+    return pending;
   }
   test(
     authentication: {
@@ -130,7 +163,7 @@ export class ConfiguredWebProvider implements WebProvider {
 
 export function unavailableWebTools(config: WebAccessSettings): string[] {
   return !config.enabled
-    ? ["web_search", "web_read"]
+    ? ["web_search", "web_read", "web_download"]
     : webProviders[config.provider].read
       ? []
       : ["web_read"];

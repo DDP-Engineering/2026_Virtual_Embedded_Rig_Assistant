@@ -21,6 +21,7 @@ const PdfViewer = lazy(() => import("./pdf-viewer.js"));
 export type ViewerTarget =
   | { path: string }
   | { ref: string }
+  | { downloadId: string }
   | { sessionId: string; messageId: string; ref: string };
 const ViewerContext = createContext<((target: ViewerTarget) => void) | undefined>(undefined);
 export function useDocumentViewer() {
@@ -75,12 +76,19 @@ export function DocumentViewerProvider({
     dialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
     setContent(undefined);
     setError(undefined);
-    void api
-      .invoke("docs.open", { workbenchId, ...target })
+    const request =
+      "downloadId" in target
+        ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
+        : api.invoke("docs.open", { workbenchId, ...target });
+    void request
       .then((result) => {
         if (
           result.workbenchId !== workbenchId ||
-          ("ref" in target ? result.content.ref !== target.ref : result.content.path !== target.path)
+          ("downloadId" in target
+            ? !("downloadId" in result) || result.downloadId !== target.downloadId
+            : "ref" in target
+              ? result.content.ref !== target.ref
+              : result.content.path !== target.path)
         )
           throw veraError("NOT_FOUND");
         if (alive) setContent(result.content);
@@ -98,7 +106,7 @@ export function DocumentViewerProvider({
       {target && (
         <dialog
           ref={dialog}
-          className="document-dialog"
+          className={`document-dialog${"downloadId" in target ? " download-viewer" : ""}`}
           aria-labelledby="document-title"
           onCancel={(event) => {
             event.preventDefault();
@@ -119,7 +127,13 @@ export function DocumentViewerProvider({
               {t("panel.close")}
             </button>
           </header>
-          <p className="document-path">{"path" in target ? target.path : target.ref}</p>
+          <p className="document-path">
+            {"downloadId" in target
+              ? (content?.path ?? t("downloads.title"))
+              : "path" in target
+                ? target.path
+                : target.ref}
+          </p>
           {error !== undefined ? (
             <>
               <ErrorMessage error={error} />

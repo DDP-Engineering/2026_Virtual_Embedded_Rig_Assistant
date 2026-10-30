@@ -2,6 +2,7 @@
 import type { SessionState } from "@vera/shared";
 import { useId, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { ApprovalCard } from "./approval-card.js";
@@ -117,7 +118,9 @@ export function Transcript({
                               ? t("chat.toolOk")
                               : t("chat.error")}
                         </span>{" "}
-                        {(item.summary || JSON.stringify(item.args)).slice(0, 100)}{" "}
+                        {item.name === "web_download" && item.status === "ok"
+                          ? t("downloads.saved")
+                          : (item.summary || JSON.stringify(item.args)).slice(0, 100)}{" "}
                         {item.durationMs !== undefined && `${item.durationMs} ms`}
                       </>
                     }
@@ -127,6 +130,9 @@ export function Transcript({
                     <h4>{t("chat.preview")}</h4>
                     <pre>{item.preview ?? updates[item.id] ?? item.summary ?? t("chat.noPreview")}</pre>
                   </Disclosure>
+                  {item.name === "web_download" && item.status === "ok" && (
+                    <DownloadCard result={item.preview ?? item.summary ?? ""} />
+                  )}
                   {state.approvals
                     .filter((a) => a.callId === item.id)
                     .map((approval) => (

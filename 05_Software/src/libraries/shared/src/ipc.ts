@@ -9,6 +9,7 @@ import {
   documentSearchHitSchema,
   viewerContentSchema,
 } from "./documents.js";
+import { downloadIdSchema, pdfDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
   providerDiscoveryRequestSchema,
@@ -139,6 +140,16 @@ export const channels = {
     docsScopeSchema.extend({ content: viewerContentSchema }),
   ),
   "docs.reindex": defineChannel("docs.reindex", docsScopeSchema.partial(), z.strictObject({})),
+  "downloads.list": defineChannel(
+    "downloads.list",
+    docsScopeSchema,
+    docsScopeSchema.extend({ downloads: z.array(pdfDownloadSchema) }),
+  ),
+  "downloads.open": defineChannel(
+    "downloads.open",
+    docsScopeSchema.extend({ downloadId: downloadIdSchema }),
+    docsScopeSchema.extend({ downloadId: downloadIdSchema, content: viewerContentSchema }),
+  ),
   "app.openExternal": defineChannel(
     "app.openExternal",
     z.strictObject({ url: z.url({ protocol: /^https?$/ }).max(16384), confirmed: z.literal(true) }),

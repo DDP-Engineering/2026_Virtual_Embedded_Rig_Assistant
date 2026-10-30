@@ -528,7 +528,8 @@
     "read_doc": "Read extracted document pages, sections or text lines.",
     "load_skill": "Load instructions and supporting text from an enabled skill.",
     "web_search": "Search the public web through Exa. Sends the search query; no account or API key required. Free-service limits apply.",
-    "web_read": "Read public web pages and accessible documents through Exa. Sends the requested URL."
+    "web_read": "Read public web pages and accessible documents through Exa. Sends the requested URL.",
+    "web_download": "Download a public PDF into .vera/downloads after approval, then open it locally. Downloads are not automatically indexed."
   },
   "projects": {
     "new": "New Workbench",
@@ -625,5 +626,15 @@
     "invalid": "This combination is unsupported or reserved for text editing, the window or developer tools.",
     "conflict": "This combination is already assigned. Remove or change the other assignment first.",
     "local": "In the message input: Enter sends, Shift+Enter starts a new line. Escape closes search or asks to stop an active response. These contextual controls remain unchanged."
+  },
+  "downloads": {
+    "title": "Downloaded PDFs",
+    "open": "Open PDF",
+    "openNamed": "Open PDF: {{name}}",
+    "source": "Source: {{host}}",
+    "localOnly": "Saved in this workbench. Downloads are not automatically indexed for search.",
+    "approvalSource": "Download from: {{url}}",
+    "maximum": "Maximum download size: {{count}} MiB.",
+    "saved": "Saved locally"
   }
 }

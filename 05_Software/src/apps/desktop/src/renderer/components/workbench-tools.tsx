@@ -26,6 +26,7 @@ export function WorkbenchTools({
     load_skill: t("workbenchTools.load_skill"),
     web_search: t("workbenchTools.web_search"),
     web_read: t("workbenchTools.web_read"),
+    web_download: t("workbenchTools.web_download"),
   };
   return (
     <div className="workbench-tools">

@@ -528,7 +528,8 @@
     "read_doc": "Extrahierte Dokumentseiten, Abschnitte oder Textzeilen lesen.",
     "load_skill": "Anweisungen und ergänzende Textdateien eines aktivierten Skills laden.",
     "web_search": "Das öffentliche Web über Exa durchsuchen. Sendet die Suchanfrage; kein Konto oder API-Schlüssel erforderlich. Es gelten die Grenzen des kostenlosen Dienstes.",
-    "web_read": "Öffentliche Webseiten und zugängliche Dokumente über Exa lesen. Sendet die angeforderte URL."
+    "web_read": "Öffentliche Webseiten und zugängliche Dokumente über Exa lesen. Sendet die angeforderte URL.",
+    "web_download": "Eine öffentliche PDF nach Freigabe in .vera/downloads speichern und lokal öffnen. Keine automatische Indexierung."
   },
   "projects": {
     "new": "Neue Workbench",
@@ -625,5 +626,15 @@
     "invalid": "Diese Kombination wird nicht unterstützt oder ist für Textbearbeitung, Fenster oder Entwicklerwerkzeuge reserviert.",
     "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern.",
     "local": "In der Nachrichteneingabe: Enter sendet, Shift+Enter fügt eine neue Zeile ein. Escape schließt die Suche oder fragt nach dem Stoppen einer aktiven Antwort. Diese kontextbezogenen Befehle bleiben unverändert."
+  },
+  "downloads": {
+    "title": "Heruntergeladene PDFs",
+    "open": "PDF öffnen",
+    "openNamed": "PDF öffnen: {{name}}",
+    "source": "Quelle: {{host}}",
+    "localOnly": "In dieser Workbench gespeichert. Downloads werden nicht automatisch für die Suche indexiert.",
+    "approvalSource": "Herunterladen von: {{url}}",
+    "maximum": "Maximale Downloadgröße: {{count}} MiB.",
+    "saved": "Lokal gespeichert"
   }
 }

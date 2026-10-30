@@ -29,6 +29,8 @@ const workbenchHandlers = {
   "skills.save": unused,
   "skills.toggle": unused,
   "docs.list": unused,
+  "downloads.list": unused,
+  "downloads.open": unused,
   "docs.search": unused,
   "docs.open": unused,
   "docs.reindex": unused,

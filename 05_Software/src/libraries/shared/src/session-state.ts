@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import { type SessionEvent, usageEventSchema } from "./events.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import { permissionModeSchema, sessionStatusSchema, stopReasonSchema, todoItemsSchema } from "./session.js";
@@ -64,17 +65,20 @@ export const sessionStateSchema = z.strictObject({
     z.strictObject({ turnId: z.string(), steps: z.number(), stopReason: stopReasonSchema.nullable() }),
   ),
   approvals: z.array(
-    z.strictObject({
-      approvalId: z.string(),
-      callId: z.string(),
-      requestSha256: z.string(),
-      tool: z.enum(["write", "edit"]),
-      path: z.string(),
-      diff: z.string(),
-      bytes: z.number(),
-      decision: z.enum(["approved", "denied", "aborted"]).nullable(),
-      by: z.enum(["user", "mode"]).optional(),
-    }),
+    z
+      .strictObject({
+        approvalId: z.string(),
+        callId: z.string(),
+        requestSha256: z.string(),
+        tool: z.enum(["write", "edit", "web_download"]),
+        path: z.string(),
+        diff: z.string(),
+        bytes: z.number(),
+        download: downloadApprovalSchema.optional(),
+        decision: z.enum(["approved", "denied", "aborted"]).nullable(),
+        by: z.enum(["user", "mode"]).optional(),
+      })
+      .refine(validDownloadApproval),
   ),
   changes: z.array(
     z.strictObject({ changeId: z.number(), path: z.string(), added: z.number(), removed: z.number() }),

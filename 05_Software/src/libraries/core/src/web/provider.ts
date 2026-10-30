@@ -27,7 +27,8 @@ export interface WebProvider {
   read(request: WebReadRequest, signal: AbortSignal): Promise<WebResult>;
 }
 
-const privateAddresses = new BlockList();
+// Node matches IPv4 addresses against mapped IPv6 ranges too; keep the families separate.
+const privateAddresses = { ipv4: new BlockList(), ipv6: new BlockList() };
 for (const [address, prefix] of [
   ["0.0.0.0", 8],
   ["10.0.0.0", 8],
@@ -44,7 +45,7 @@ for (const [address, prefix] of [
   ["224.0.0.0", 4],
   ["240.0.0.0", 4],
 ] as const)
-  privateAddresses.addSubnet(address, prefix, "ipv4");
+  privateAddresses.ipv4.addSubnet(address, prefix, "ipv4");
 for (const [address, prefix] of [
   ["::", 128],
   ["::1", 128],
@@ -54,7 +55,7 @@ for (const [address, prefix] of [
   ["ff00::", 8],
   ["2001:db8::", 32],
 ] as const)
-  privateAddresses.addSubnet(address, prefix, "ipv6");
+  privateAddresses.ipv6.addSubnet(address, prefix, "ipv6");
 
 /** URL destinations are resolved by the remote provider, never by VERA's local network. */
 export function publicWebUrl(value: string): string {
@@ -71,7 +72,7 @@ export function publicWebUrl(value: string): string {
       url.username ||
       url.password ||
       (ip
-        ? privateAddresses.check(host, ip === 4 ? "ipv4" : "ipv6")
+        ? privateAddresses[ip === 4 ? "ipv4" : "ipv6"].check(host, ip === 4 ? "ipv4" : "ipv6")
         : !host.includes(".") ||
           /(?:^|\.)(?:localhost|local|internal|intranet|lan|home|test|invalid|arpa)$/.test(host))
     )

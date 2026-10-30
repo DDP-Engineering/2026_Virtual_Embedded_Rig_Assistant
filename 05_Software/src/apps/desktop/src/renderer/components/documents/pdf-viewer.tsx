@@ -238,7 +238,9 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
           </>
         )}
       </div>
-      <p>{t("documents.citedPages", { start: content.page, end: content.pageEnd })}</p>
+      {content.ref !== null && (
+        <p>{t("documents.citedPages", { start: content.page, end: content.pageEnd })}</p>
+      )}
       <details className="pdf-page-text">
         <summary>{t("documents.pageText", { page })}</summary>
         <section

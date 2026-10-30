@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-b975a8b5"
+title = "Download an approved public PDF into managed storage"
+status = "active"
+requirement = "When an approved web_download call receives a valid public PDF, VERA shall save its exact bytes under .vera/downloads and return its identifier, relative path, source and final URLs, timestamp, size and SHA-256 without returning binary data."
+verification = "Use a scripted public PDF transport; compare saved bytes and SHA-256 with the fixture, inspect provenance and the metadata-only tool result; repeat with the same filename and verify neither download is overwritten."
+affected_paths = ["05_Software/src/libraries/core/src/web/pdf-downloads.ts", "05_Software/src/libraries/core/src/tools/web-download.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/downloads.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/src/libraries/core/src/tools/web-download.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/src/libraries/core/src/tools/web-download.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30

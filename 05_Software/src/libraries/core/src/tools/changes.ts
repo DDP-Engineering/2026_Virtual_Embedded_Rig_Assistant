@@ -35,7 +35,7 @@ export interface ChangeEvent {
   added: number;
   removed: number;
 }
-export interface ChangeRequest {
+export interface FileChangeRequest {
   readonly workbench: string;
   readonly sessionId: string;
   readonly turnId: string;
@@ -51,6 +51,13 @@ export interface ChangeRequest {
   readonly protected: boolean;
   readonly scope?: "filesystem";
 }
+export type ChangeRequest =
+  | FileChangeRequest
+  | (Omit<FileChangeRequest, "tool" | "afterSha256"> & {
+      readonly tool: "web_download";
+      readonly afterSha256: null;
+      readonly download: { readonly url: string; readonly maxBytes: number };
+    });
 export interface PreparedChange {
   readonly request: ChangeRequest;
   apply(signal: AbortSignal): Promise<Record<string, unknown>>;

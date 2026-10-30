@@ -528,7 +528,8 @@
     "read_doc": "Citește pagini, secțiuni sau linii de text extrase din documente.",
     "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ.",
     "web_search": "Caută pe internet prin Exa. Trimite termenii căutării; nu necesită cont sau cheie API. Se aplică limitele serviciului gratuit.",
-    "web_read": "Citește pagini web publice și documente accesibile prin Exa. Trimite adresa solicitată."
+    "web_read": "Citește pagini web publice și documente accesibile prin Exa. Trimite adresa solicitată.",
+    "web_download": "Descarcă un PDF public în .vera/downloads după aprobare, apoi îl deschide local. Nu este indexat automat."
   },
   "projects": {
     "new": "Workbench nou",
@@ -625,5 +626,15 @@
     "invalid": "Combinația nu este acceptată sau este rezervată editării textului, ferestrei ori instrumentelor de dezvoltare.",
     "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire.",
     "local": "În câmpul mesajului: Enter trimite, Shift+Enter adaugă un rând. Escape închide căutarea sau cere oprirea unui răspuns activ. Aceste comenzi contextuale rămân neschimbate."
+  },
+  "downloads": {
+    "title": "PDF-uri descărcate",
+    "open": "Deschide PDF",
+    "openNamed": "Deschide PDF: {{name}}",
+    "source": "Sursă: {{host}}",
+    "localOnly": "Salvate în acest workbench. Documentele descărcate nu sunt indexate automat pentru căutare.",
+    "approvalSource": "Descarcă de la: {{url}}",
+    "maximum": "Dimensiunea maximă: {{count}} MiB.",
+    "saved": "Salvat local"
   }
 }

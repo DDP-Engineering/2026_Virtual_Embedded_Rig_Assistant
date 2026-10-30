@@ -13,6 +13,7 @@ import { loadSkillTool } from "./load-skill.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
 import { webReadTool, webSearchTool } from "./web.js";
+import { webDownloadTool } from "./web-download.js";
 import { writeTool } from "./write.js";
 
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
@@ -29,6 +30,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   load_skill: loadSkillTool,
   web_search: webSearchTool,
   web_read: webReadTool,
+  web_download: webDownloadTool,
 };
 
 export const TOOL_RESULT_CAP = 32000;

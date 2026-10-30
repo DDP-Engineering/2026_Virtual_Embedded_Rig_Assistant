@@ -19,6 +19,9 @@ for extraction, cache and chunks; bare core composition can supply its own proce
 
 ## Public interface
 
+createPdfExtractor accepts optional Node worker resourceLimits; existing ingest callers retain their current defaults. Downloaded PDFs use a separately capped worker and stay in .vera/downloads, outside the ingest/RAG boundary; see [PDF downloads](pdf-downloads.md).
+
+
 - WorkbenchService.reindexDocuments serializes an owned rebuild. Strict empty
   docs.reindex IPC invokes it through desktop main; the mock enforces ownership.
 - Ingester.request coalesces changes with trailing1000ms debounce; reindex clears

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { documentSchema } from "./documents.js";
+import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
@@ -106,16 +107,19 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     preview: z.string().optional(),
     durationMs: count,
   }),
-  z.strictObject({
-    type: z.literal("approval.requested"),
-    approvalId: z.string(),
-    callId: z.string(),
-    requestSha256: z.string(),
-    tool: z.enum(["write", "edit"]),
-    path: z.string(),
-    diff: z.string(),
-    bytes: count,
-  }),
+  z
+    .strictObject({
+      type: z.literal("approval.requested"),
+      approvalId: z.string(),
+      callId: z.string(),
+      requestSha256: z.string(),
+      tool: z.enum(["write", "edit", "web_download"]),
+      path: z.string(),
+      diff: z.string(),
+      bytes: count,
+      download: downloadApprovalSchema.optional(),
+    })
+    .refine(validDownloadApproval),
   z.strictObject({
     type: z.literal("approval.decided"),
     approvalId: z.string(),

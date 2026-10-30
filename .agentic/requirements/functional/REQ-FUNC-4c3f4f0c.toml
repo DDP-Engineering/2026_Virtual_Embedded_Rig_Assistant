@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-4c3f4f0c"
+title = "Open scoped verified downloads in the existing PDF viewer"
+status = "active"
+requirement = "When the user opens a managed download identifier belonging to the active workbench, VERA shall verify its stored bytes against provenance and display it using the existing local PDF viewer, rejecting stale workbench scopes or changed files."
+verification = "Native Electron: open a multi-page download, navigate pages and close; restart and reopen; service tests change file bytes and workbench identity and assert no unverified content is returned."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/document-viewer.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/tests/e2e/pdf-download.spec.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/apps/desktop/src/main/document-viewer.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/tests/e2e/pdf-download.spec.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/apps/desktop/src/main/document-viewer.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30

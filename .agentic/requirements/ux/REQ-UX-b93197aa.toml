@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-UX-b93197aa"
+title = "Expose localized downloaded PDF actions and history"
+status = "active"
+requirement = "When a PDF download succeeds, VERA shall expose a localized Open PDF action in its tool result and a workbench downloaded-documents list with filename, source and saved date."
+verification = "Native Electron: download a controlled PDF through the real tool, inspect its card and documents list, open it using keyboard/mouse, check en/ro/de labels and failure/retry presentation without PDF bytes displayed in activity."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/downloads.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/downloads.css", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/tests/e2e/pdf-download.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/pdf-download.spec.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30

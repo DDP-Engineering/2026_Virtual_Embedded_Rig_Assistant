@@ -1,14 +1,18 @@
-import { Worker } from "node:worker_threads";
+import { type ResourceLimits, Worker } from "node:worker_threads";
 import { type Extraction, extractionSchema } from "./extraction.js";
 
 export type PdfExtractor = (bytes: Uint8Array, signal: AbortSignal) => Promise<Extraction & { kind: "pdf" }>;
 /** One disposable thread per serial ingest request, with bounded abort/exit cleanup. */
-export function createPdfExtractor(entry: URL, deadlineMs = 120000): PdfExtractor {
+export function createPdfExtractor(
+  entry: URL,
+  deadlineMs = 120000,
+  resourceLimits?: ResourceLimits,
+): PdfExtractor {
   if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw Error("Invalid PDF worker deadline.");
   return (bytes, signal) => {
     signal.throwIfAborted();
     return new Promise((resolve, reject) => {
-      const worker = new Worker(entry);
+      const worker = new Worker(entry, resourceLimits ? { resourceLimits } : {});
       let terminal = false;
       const finish = (value?: unknown, error?: Error) => {
         if (terminal) return;

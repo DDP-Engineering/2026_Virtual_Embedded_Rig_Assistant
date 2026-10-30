@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-SEC-1a37ade3"
+title = "Enforce download permissions and live Web access"
+status = "active"
+requirement = "When web_download is offered or invoked, VERA shall enforce the current enabled tool list, write permission approval and live global Web access state independently of the selected search provider credentials."
+verification = "Verify read-only/disabled availability, deny-before-network, protected Ask/Auto-edit approval and Bypass through the existing gate; revoke Web access while pending and prove cancellation, while Brave without a key still permits an authorized direct PDF transfer."
+affected_paths = ["05_Software/src/libraries/core/src/tools/web-download.ts", "05_Software/src/libraries/core/src/tools/changes.ts", "05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/web/configured-provider.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/approval-prompt.ts", "05_Software/src/libraries/core/src/sessions/downloads.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/downloads.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts"]
+spec = "specs/pdf-downloads.md"
+priority = "normal"
+rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
+created = 2026-10-30
+updated = 2026-10-30
