@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-3f814549"
+
+title = "Isolate web provider credentials and bounded egress"
+
+status = "active"
+
+requirement = "When web access credentials or requests are processed, VERA shall isolate each provider key and restrict egress to its fixed service with existing cancellation and size bounds."
+
+verification = "Prove selected-only header/key use, anonymous omission, no credential in URL/body/metadata, fixed destinations and redirect denial, private URL rejection, deadline/cancellation and1MiB cap."
+
+affected_paths = ["05_Software/src/libraries/shared/src/web-access.ts", "05_Software/src/libraries/shared/src/web-access.test.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/web/", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/main/web-access.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/renderer/components/web-access.tsx", "05_Software/src/apps/desktop/src/renderer/components/web-access.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/cli/src/run.ts", "05_Software/tests/e2e/web-access.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/web/http-providers.test.ts", "05_Software/src/libraries/core/src/web/configured-provider.test.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts", "05_Software/src/apps/desktop/src/renderer/components/web-access.test.ts", "05_Software/src/libraries/shared/src/web-access.test.ts", "05_Software/tests/e2e/web-access.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

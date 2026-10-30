@@ -3,7 +3,7 @@ import * as api from "../index.js";
 
 const result = { provider: "fixture", retrievedAt: "2026-10-30T12:00:00Z", sources: [], truncated: false };
 function harness() {
-  let config = {
+  let config: import("@vera/shared").WebAccessSettings = {
     enabled: true,
     provider: "exa" as const,
     authentication: "anonymous" as "anonymous" | "api-key",
@@ -35,7 +35,7 @@ it("gates both web methods globally and anonymous mode ignores saved keys", asyn
   const signal = new AbortController().signal;
   await h.provider.search({ query: "topic" }, signal);
   expect(h.getKey).not.toHaveBeenCalled();
-  expect(h.create).toHaveBeenCalledExactlyOnceWith(undefined);
+  expect(h.create).toHaveBeenCalledExactlyOnceWith("exa", undefined);
   h.set({ enabled: false });
   await expect(h.provider.search({ query: "blocked" }, signal)).rejects.toThrow(/disabled/i);
   await expect(h.provider.read({ url: "https://example.com" }, signal)).rejects.toThrow(/disabled/i);
@@ -47,11 +47,11 @@ it("uses selected stored or draft keys and never silently falls back to anonymou
     signal = new AbortController().signal;
   h.set({ authentication: "api-key" });
   await h.provider.search({ query: "topic" }, signal);
-  expect(h.create).toHaveBeenLastCalledWith("private-fixture-key");
-  await h.provider.test({ authentication: "api-key", apiKey: "temporary-key" }, signal);
-  expect(h.create).toHaveBeenLastCalledWith("temporary-key");
-  await h.provider.test({ authentication: "anonymous" }, signal);
-  expect(h.create).toHaveBeenLastCalledWith(undefined);
+  expect(h.create).toHaveBeenLastCalledWith("exa", "private-fixture-key");
+  await h.provider.test({ provider: "exa", authentication: "api-key", apiKey: "temporary-key" }, signal);
+  expect(h.create).toHaveBeenLastCalledWith("exa", "temporary-key");
+  await h.provider.test({ provider: "exa", authentication: "anonymous" }, signal);
+  expect(h.create).toHaveBeenLastCalledWith("exa", undefined);
   h.clearKey();
   await expect(h.provider.search({ query: "missing" }, signal)).rejects.toThrow(/key.*required/i);
 });
@@ -89,4 +89,24 @@ it("revokes active calls and calls still resolving a credential, then permits ne
   await expect(
     h.provider.read({ url: "https://example.com" }, new AbortController().signal),
   ).rejects.toThrow();
+});
+
+it("routes only the selected provider and omits or blocks unsupported Brave reads before egress", async () => {
+  const h = harness();
+  h.set({ provider: "tavily" });
+  await h.provider.search({ query: "board" }, new AbortController().signal);
+  expect(h.create).toHaveBeenLastCalledWith("tavily", undefined);
+  expect(h.getKey).not.toHaveBeenCalled();
+  h.set({ provider: "brave", authentication: "api-key" });
+  await h.provider.search({ query: "board" }, new AbortController().signal);
+  expect(h.getKey).toHaveBeenLastCalledWith("brave", expect.any(AbortSignal));
+  expect(h.create).toHaveBeenLastCalledWith("brave", "private-fixture-key");
+  expect(api.unavailableWebTools({ enabled: true, provider: "brave", authentication: "api-key" })).toEqual([
+    "web_read",
+  ]);
+  const calls = h.create.mock.calls.length;
+  await expect(h.provider.read({ url: "https://example.com" }, new AbortController().signal)).rejects.toThrow(
+    /not support/,
+  );
+  expect(h.create).toHaveBeenCalledTimes(calls);
 });

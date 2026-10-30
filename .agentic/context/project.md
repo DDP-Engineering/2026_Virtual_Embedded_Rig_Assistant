@@ -20,7 +20,7 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
-General web research uses enabled web_search/web_read over vendor-neutral WebProvider with default anonymous Exa MCP. [Web search](../knowledge/web-search.md) routes bounded calls, public source extraction and confirmed source links; no mandatory account/key or startup egress.
+General web research uses enabled web_search/web_read over vendor-neutral WebProvider with default anonymous Exa MCP with selectable Tavily and Brave Search. [Web search](../knowledge/web-search.md) routes bounded calls, public source extraction and confirmed source links; no mandatory account/key or startup egress.
 
 Sidebar session/workbench action menus are exclusive. New session reuses an unused idle unarchived session in the current workbench, with transactional rapid-click protection and composer focus.
 
@@ -100,4 +100,6 @@ App-wide keyboard bindings are confirmed settings shared through the renderer
 ShortcutContext. Settings supports searching, recording, adding/removing aliases
 and restoring defaults for current navigation, panels and conversation actions.
 
-Settings > Web access owns the global web gate and explicit anonymous/optional Exa-key mode, separately from AI Providers. Dedicated credential-safe IPC and ConfiguredWebProvider apply it across workbenches/CLI; see [web access](../knowledge/web-search.md).
+Settings > Web access owns the global web gate and explicit provider-specific anonymous/API-key modes, separately from AI Providers. Dedicated credential-safe IPC and ConfiguredWebProvider apply it across workbenches/CLI; see [web access](../knowledge/web-search.md).
+
+Web access supports Exa/Tavily/Brave with isolated credentials and CLI EXA_API_KEY/TAVILY_API_KEY/BRAVE_SEARCH_API_KEY. Tavily supports anonymous search/read; Brave requires a key and is search-only. Focused adapter/gate/main/UI/shared and native provider-isolation tests verify routing; live anonymous Tavily search/extraction is separate from scripted private-key acceptance.

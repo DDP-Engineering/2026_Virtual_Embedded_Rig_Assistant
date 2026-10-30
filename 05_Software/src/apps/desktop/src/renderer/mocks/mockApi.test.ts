@@ -2,6 +2,20 @@ import type { Request } from "@vera/shared";
 import { beforeAll, expect, it, vi } from "vitest";
 
 let createMockApi: typeof import("./mockApi.js").createMockApi;
+it.each(["exa", "tavily", "brave"] as const)(
+  "browser web test identifies %s without saving a draft key",
+  async (provider) => {
+    const { api } = createMockApi();
+    const request = {
+      testId: "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
+      provider,
+      authentication: "api-key" as const,
+      apiKey: "owned-browser-test-key",
+    };
+    expect(await api.invoke("web.access.test", request)).toMatchObject({ provider, status: "pass" });
+    expect((await api.invoke("web.access.get", {})).keys[provider].keyConfigured).toBe(false);
+  },
+);
 it("ordinary workbench create/open preserves user notes without creating an example", async () => {
   const { api } = createMockApi();
   const folder = "/mock/user-project";

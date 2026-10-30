@@ -22,27 +22,80 @@ afterEach(async () => {
   container?.remove();
   vi.resetAllMocks();
 });
+it.each([
+  ["en", "tavily"],
+  ["ro", "tavily"],
+  ["de", "tavily"],
+  ["en", "brave"],
+  ["ro", "brave"],
+  ["de", "brave"],
+] as const)("names the selected provider while connection is pending: %s %s", async (language, provider) => {
+  const user = await mount(language);
+  await act(async () => user.selectOptions(container!.querySelector("#web-provider")!, provider));
+  if (provider === "brave")
+    await act(async () => user.type(container!.querySelector("#web-api-key")!, "owned-pending-key"));
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  vi.mocked(api.invoke).mockImplementationOnce(async (_name, raw) => {
+    await pending;
+    return {
+      ...(raw as object),
+      apiKey: undefined,
+      status: "pass",
+      checkedAt: "2026-10-30T12:00:00Z",
+      durationMs: 10,
+    } as never;
+  });
+  await act(async () => user.click(container!.querySelector("[data-web-test]")!));
+  try {
+    const text = document.querySelector("dialog[open]")!.textContent;
+    expect(text).toContain(provider === "tavily" ? "Tavily" : "Brave Search");
+    expect(text).not.toContain("Exa");
+  } finally {
+    await act(async () => {
+      release();
+      await pending;
+    });
+  }
+});
 async function mount(language = "en") {
   await i18n.changeLanguage(language);
   let snapshot = {
     preferences: { enabled: true, provider: "exa", authentication: "anonymous" },
-    keyConfigured: false,
-    storage: null as string | null,
+    keys: {
+      exa: { keyConfigured: false, storage: null as string | null },
+      tavily: { keyConfigured: false, storage: null as string | null },
+      brave: { keyConfigured: false, storage: null as string | null },
+    },
     secureStorage: true,
     readOnly: false,
   };
   vi.mocked(api.invoke).mockImplementation(async (name, raw) => {
     if (name === "web.access.get") return structuredClone(snapshot) as never;
     if (name === "web.access.save") {
-      const input = raw as { enabled: boolean; authentication: string; apiKey?: string };
+      const input = raw as {
+        provider: "exa" | "tavily" | "brave";
+        enabled: boolean;
+        authentication: string;
+        apiKey?: string;
+      };
       snapshot = {
         ...snapshot,
         preferences: {
           ...snapshot.preferences,
+          provider: input.provider,
           enabled: input.enabled,
           authentication: input.authentication,
         },
-        keyConfigured: !!input.apiKey || snapshot.keyConfigured,
+        keys: {
+          ...snapshot.keys,
+          [input.provider]: {
+            keyConfigured: !!input.apiKey || snapshot.keys[input.provider].keyConfigured,
+            storage: null,
+          },
+        },
       };
       return { status: "saved" } as never;
     }
@@ -101,3 +154,26 @@ it("saves explicit API-key mode and clears the password draft without echoing a 
   expect(container!.querySelector<HTMLInputElement>("#web-api-key")?.value).toBe("");
   expect(container!.textContent).not.toContain(key);
 });
+
+it.each(["en", "ro", "de"])(
+  "selects providers and clears cross-provider draft keys with translated capability labels: %s",
+  async (language) => {
+    const user = await mount(language);
+    const select = container!.querySelector("#web-provider")!;
+    await act(async () => user.selectOptions(select, "tavily"));
+    await act(async () => user.selectOptions(container!.querySelector("#web-authentication")!, "api-key"));
+    await act(async () => user.type(container!.querySelector("#web-api-key")!, "unsaved-tavily-key"));
+    await act(async () => user.selectOptions(select, "brave"));
+    expect(container!.querySelector<HTMLInputElement>("#web-api-key")?.value).toBe("");
+    expect(container!.querySelectorAll("#web-authentication option")).toHaveLength(1);
+    expect(container!.querySelector<HTMLButtonElement>("[data-web-test]")?.disabled).toBe(true);
+    expect(container!.textContent).not.toContain("webAccess.");
+    await act(async () => user.type(container!.querySelector("#web-api-key")!, "owned-brave-draft"));
+    await act(async () => user.click(container!.querySelector("[data-web-test]")!));
+    expect(api.invoke).toHaveBeenCalledWith(
+      "web.access.test",
+      expect.objectContaining({ provider: "brave", authentication: "api-key", apiKey: "owned-brave-draft" }),
+    );
+    expect(document.querySelector("dialog[open]")?.textContent).toContain("Brave Search");
+  },
+);

@@ -5,12 +5,15 @@ import {
   type WebAccessSnapshot,
   type WebAccessTest,
   type WebAccessTestResult,
+  type WebProviderId,
   webAccessSaveSchema,
   webAccessTestSchema,
+  webProviderIds,
+  webProviders,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
 
-const credentialId = "web:exa";
+const credentialId = (provider: WebProviderId) => `web:${provider}`;
 type TestAttempt = { id: string; controller: AbortController; done?: Promise<WebAccessTestResult> };
 /** Main owns keys, authority changes, rollback and temporary connection tests. */
 export class WebAccessService {
@@ -25,7 +28,7 @@ export class WebAccessService {
       credentials: CredentialFile;
       changed(): void;
       now?: () => Date;
-      create?: (key: string | undefined) => WebProvider;
+      create?: (provider: WebProviderId, key: string | undefined) => WebProvider;
     },
   ) {
     this.provider = new ConfiguredWebProvider({
@@ -33,26 +36,33 @@ export class WebAccessService {
         ...host.settings.get().settings.webAccess,
         ...(this.saving ? { enabled: false } : {}),
       }),
-      getKey: async (signal) => {
-        const value = await host.credentials.read(credentialId, { signal });
+      getKey: async (provider, signal) => {
+        const value = await host.credentials.read(credentialId(provider), { signal });
         return value?.type === "api_key" ? value.key : undefined;
       },
       ...(host.create ? { create: host.create } : {}),
     });
   }
-  async get(): Promise<WebAccessSnapshot> {
-    await this.queue;
-    const value = await this.host.credentials.read(credentialId);
-    const state = this.host.settings.get();
-    const snapshot = {
-      preferences: state.settings.webAccess,
-      keyConfigured: value?.type === "api_key" && !!value.key,
-      storage: this.host.credentials.storage(credentialId),
-      secureStorage: this.host.credentials.secureStorage,
-      readOnly: state.readOnly,
-    };
-    if (this.host.credentials.containsSecret(snapshot)) throw veraError("INVALID");
-    return snapshot;
+  get(): Promise<WebAccessSnapshot> {
+    return this.enqueue(async () => {
+      const keys = {} as WebAccessSnapshot["keys"];
+      for (const provider of webProviderIds) {
+        const value = await this.host.credentials.read(credentialId(provider));
+        keys[provider] = {
+          keyConfigured: value?.type === "api_key" && !!value.key,
+          storage: this.host.credentials.storage(credentialId(provider)),
+        };
+      }
+      const state = this.host.settings.get();
+      const snapshot = {
+        preferences: state.settings.webAccess,
+        keys,
+        secureStorage: this.host.credentials.secureStorage,
+        readOnly: state.readOnly,
+      };
+      if (this.host.credentials.containsSecret(snapshot)) throw veraError("INVALID");
+      return snapshot;
+    });
   }
   private enqueue<T>(action: () => Promise<T>): Promise<T> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
@@ -69,8 +79,9 @@ export class WebAccessService {
     if (!parsed.success) return Promise.reject(veraError("INVALID"));
     return this.enqueue(async () => {
       const input = parsed.data;
+      const id = credentialId(input.provider);
       if (this.host.settings.get().readOnly) throw veraError("DENIED");
-      const savedKey = await this.host.credentials.read(credentialId);
+      const savedKey = await this.host.credentials.read(id);
       if (
         input.enabled &&
         input.authentication === "api-key" &&
@@ -80,18 +91,22 @@ export class WebAccessService {
         throw veraError("INVALID");
       if (input.apiKey && !this.host.credentials.secureStorage && input.storageConsent === undefined)
         return { status: "consent-required" as const };
-      const restore = await this.host.credentials.checkpoint(credentialId);
+      const restore = await this.host.credentials.checkpoint(id);
       this.saving = true;
       this.provider.revoke();
       try {
         if (input.apiKey)
           await this.host.credentials.modify(
-            credentialId,
+            id,
             async () => ({ type: "api_key", key: input.apiKey! }),
             input.storageConsent === undefined ? undefined : { storageConsent: input.storageConsent },
           );
         await this.host.settings.update({
-          webAccess: { enabled: input.enabled, provider: "exa", authentication: input.authentication },
+          webAccess: {
+            enabled: input.enabled,
+            provider: input.provider,
+            authentication: input.authentication,
+          },
         });
       } catch {
         await restore();
@@ -107,18 +122,24 @@ export class WebAccessService {
       return { status: "saved" as const };
     });
   }
-  removeKey() {
+  removeKey({ provider }: { provider: WebProviderId }) {
     return this.enqueue(async () => {
       const state = this.host.settings.get();
+      const id = credentialId(provider);
       if (state.readOnly) throw veraError("DENIED");
-      const restore = await this.host.credentials.checkpoint(credentialId);
+      const restore = await this.host.credentials.checkpoint(id);
       this.saving = true;
       this.provider.revoke();
       try {
-        await this.host.credentials.delete(credentialId);
-        await this.host.settings.update({
-          webAccess: { ...state.settings.webAccess, authentication: "anonymous" },
-        });
+        await this.host.credentials.delete(id);
+        if (state.settings.webAccess.provider === provider)
+          await this.host.settings.update({
+            webAccess: {
+              ...state.settings.webAccess,
+              authentication: webProviders[provider].anonymous ? "anonymous" : "api-key",
+              enabled: webProviders[provider].anonymous && state.settings.webAccess.enabled,
+            },
+          });
       } catch {
         await restore();
         throw veraError("INTERNAL");
@@ -154,6 +175,7 @@ export class WebAccessService {
       }
       return {
         testId: input.testId,
+        provider: input.provider,
         authentication: input.authentication,
         status,
         checkedAt: (this.host.now?.() ?? new Date()).toISOString(),

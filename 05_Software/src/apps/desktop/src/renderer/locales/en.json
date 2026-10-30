@@ -476,13 +476,13 @@
     "authentication": "Access mode",
     "anonymous": "Anonymous — no account required",
     "apiKeyMode": "Use my API key",
-    "anonymousHint": "Exa can be used without an account or key, subject to the service’s free usage limits. A saved key is not sent in this mode.",
-    "keyHint": "Your key uses your Exa account quota and may incur charges under its plan. It is stored separately from application settings.",
-    "apiKey": "Exa API key",
+    "anonymousHint": "{{provider}} can be used without an account or key, subject to its free service limits. A saved key is not sent in this mode.",
+    "keyHint": "Your {{provider}} key uses that account’s quota and may incur costs according to your plan.",
+    "apiKey": "{{provider}} API key",
     "keepKey": "Leave blank to keep the saved key",
     "storedKey": "Saved key available · {{storage}}",
-    "noKey": "No API key saved. Anonymous access is available.",
-    "keyRequired": "Enter a key or select anonymous access.",
+    "noKey": "No API key saved for {{provider}}.",
+    "keyRequired": "An API key is required in this access mode.",
     "save": "Save",
     "test": "Test connection",
     "removeKey": "Remove saved key",
@@ -490,7 +490,7 @@
     "saved": "Web access settings saved.",
     "saveHint": "Save to apply global access changes. Test connection checks the selected access mode without saving the draft key.",
     "testTitle": "Web connection test",
-    "testing": "Connecting to Exa…",
+    "testing": "Connecting to {{provider}}…",
     "close": "Close",
     "storage": {
       "encrypted": "encrypted storage",
@@ -503,7 +503,9 @@
       "disabled": "Web access is disabled. Enable and save it before testing.",
       "key-required": "An API key is required for the selected access mode.",
       "cancelled": "The connection test was cancelled or access changed."
-    }
+    },
+    "searchAndRead": "Web search and page reading.",
+    "searchOnly": "Search only. For reading web pages, select Exa or Tavily."
   },
   "web": {
     "openTitle": "Open external website?",

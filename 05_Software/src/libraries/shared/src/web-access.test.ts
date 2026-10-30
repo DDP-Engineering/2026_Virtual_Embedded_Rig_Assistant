@@ -37,3 +37,24 @@ it("defaults to anonymous enabled Exa and rejects bypassing the dedicated prefer
     }).success,
   ).toBe(false);
 });
+
+it("validates provider-specific authentication and requires provider-scoped test/removal", () => {
+  for (const provider of ["exa", "tavily", "brave"]) {
+    expect(
+      channels["web.access.save"].request.safeParse({ enabled: true, provider, authentication: "api-key" })
+        .success,
+    ).toBe(true);
+    expect(
+      channels["web.access.save"].request.safeParse({ enabled: true, provider, authentication: "anonymous" })
+        .success,
+    ).toBe(provider !== "brave");
+  }
+  expect(
+    channels["web.access.test"].request.safeParse({
+      testId: "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
+      provider: "brave",
+      authentication: "anonymous",
+    }).success,
+  ).toBe(false);
+  expect(channels["web.access.removeKey"].request.safeParse({}).success).toBe(false);
+});

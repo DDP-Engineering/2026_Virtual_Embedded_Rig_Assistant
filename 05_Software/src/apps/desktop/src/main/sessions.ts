@@ -6,6 +6,7 @@ import {
   SessionService,
   type SettingsService,
   type SkillCatalog,
+  unavailableWebTools,
   type WebProvider,
   type WorkbenchService,
   type WorkerPool,
@@ -95,7 +96,7 @@ export class SessionsHost {
           get disabledTools() {
             return [
               ...(self.config?.tools.disabled ?? []),
-              ...(!options.settings.get().settings.webAccess.enabled ? ["web_search", "web_read"] : []),
+              ...unavailableWebTools(options.settings.get().settings.webAccess),
             ];
           },
           model: (ref) => options.gateway().modelReference(ref, this.config?.agent.model),

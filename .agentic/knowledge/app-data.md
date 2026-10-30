@@ -103,4 +103,4 @@ Updates replace the complete override map through existing atomic SettingsServic
 writes; {} restores every default. Conflicting, duplicate, reserved and unknown
 bindings are rejected at the shared IPC/storage boundary. No new migration path.
 
-Web access preferences are non-secret {enabled:true, provider:exa, authentication:anonymous} defaults in the current settings contract. Dedicated web.access.save/removeKey own changes; generic renderer patches reject webAccess. Web credentials stay in CredentialFile under web:exa, never settings.json. See [web access](web-search.md).
+Web access preferences are non-secret {enabled:true, provider:exa, authentication:anonymous} defaults in the current settings contract. The provider enum is exa/tavily/brave, with Brave requiring key mode. Dedicated web.access.save/removeKey own changes; generic renderer patches reject webAccess. Web credentials stay in CredentialFile under separate web:<provider> slots, never settings.json. See [web access](web-search.md).

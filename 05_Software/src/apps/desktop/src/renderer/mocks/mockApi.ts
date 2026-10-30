@@ -20,7 +20,10 @@ import {
   skillTemplate,
   type UpdateSnapshot,
   veraError,
+  type WebProviderId,
   type WorkbenchSnapshot,
+  webProviderIds,
+  webProviders,
   workbenchSchema,
   workbenchTemplate,
 } from "@vera/shared";
@@ -72,7 +75,7 @@ export function createMockApi(
     return `${source === "user" ? "user" : current().snapshot.config.id}:${name}`;
   }
   let sequence = 0;
-  let webKeyConfigured = false;
+  const webKeyConfigured: Record<WebProviderId, boolean> = { exa: false, tavily: false, brave: false };
   // Browser fixtures keep metadata only; production secrets are handled by desktop main.
   const providerHints = new Map<string, string | null>();
   if (scenario !== "empty") {
@@ -351,8 +354,12 @@ export function createMockApi(
       case "web.access.get":
         value = {
           preferences: settings.webAccess,
-          keyConfigured: webKeyConfigured,
-          storage: webKeyConfigured ? "memory" : null,
+          keys: Object.fromEntries(
+            webProviderIds.map((id) => [
+              id,
+              { keyConfigured: webKeyConfigured[id], storage: webKeyConfigured[id] ? "memory" : null },
+            ]),
+          ),
           secureStorage: true,
           readOnly: scenario === "read-only",
         };
@@ -360,34 +367,52 @@ export function createMockApi(
       case "web.access.save": {
         if (scenario === "read-only") throw veraError("DENIED");
         const request = channels["web.access.save"].request.parse(input.data);
-        if (request.enabled && request.authentication === "api-key" && !request.apiKey && !webKeyConfigured)
+        if (
+          request.enabled &&
+          request.authentication === "api-key" &&
+          !request.apiKey &&
+          !webKeyConfigured[request.provider]
+        )
           throw veraError("INVALID");
-        webKeyConfigured ||= !!request.apiKey;
+        webKeyConfigured[request.provider] ||= !!request.apiKey;
         settings = mergeSettings(settings, {
-          webAccess: { enabled: request.enabled, provider: "exa", authentication: request.authentication },
+          webAccess: {
+            enabled: request.enabled,
+            provider: request.provider,
+            authentication: request.authentication,
+          },
         });
         emitAppEvent({ type: "settings.changed" });
         value = { status: "saved" };
         break;
       }
-      case "web.access.removeKey":
+      case "web.access.removeKey": {
         if (scenario === "read-only") throw veraError("DENIED");
-        webKeyConfigured = false;
-        settings = mergeSettings(settings, {
-          webAccess: { ...settings.webAccess, authentication: "anonymous" },
-        });
+        const { provider } = channels["web.access.removeKey"].request.parse(input.data);
+        webKeyConfigured[provider] = false;
+        if (settings.webAccess.provider === provider)
+          settings = mergeSettings(settings, {
+            webAccess: {
+              ...settings.webAccess,
+              authentication: webProviders[provider].anonymous ? "anonymous" : "api-key",
+              enabled: webProviders[provider].anonymous && settings.webAccess.enabled,
+            },
+          });
+        emitAppEvent({ type: "settings.changed" });
         value = {};
         break;
+      }
       case "web.access.test": {
         const request = channels["web.access.test"].request.parse(input.data);
         value = {
           testId: request.testId,
+          provider: request.provider,
           authentication: request.authentication,
           checkedAt: "2026-10-30T12:00:00Z",
           durationMs: 15,
           status: !settings.webAccess.enabled
             ? "disabled"
-            : request.authentication === "api-key" && !request.apiKey && !webKeyConfigured
+            : request.authentication === "api-key" && !request.apiKey && !webKeyConfigured[request.provider]
               ? "key-required"
               : "pass",
         };

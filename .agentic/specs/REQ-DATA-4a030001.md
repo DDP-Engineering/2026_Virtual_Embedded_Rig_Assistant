@@ -12,7 +12,7 @@ settings.changed after persistence. Read-only updates reject DENIED; malformed p
 
 ## Web access preferences
 
-The current schema also contains webAccess {enabled:boolean, provider:exa, authentication:anonymous|api-key}, default enabled/anonymous. General app.settings.update rejects this authority field; dedicated web.access.save/removeKey serialize persistence alongside credentials. web.access.get returns only preferences/keyConfigured/storage/secureStorage/readOnly. API keys are kept separately under web:exa using the existing credential security/consent policy. No migration or compatibility branch is introduced.
+The current schema contains webAccess {enabled:boolean, provider:exa|tavily|brave, authentication:anonymous|api-key}, default enabled anonymous Exa; Brave requires API-key mode. General app.settings.update rejects this authority field; dedicated web.access.save/removeKey serialize persistence alongside credentials. web.access.get returns preferences/keys:{exa,tavily,brave}/secureStorage/readOnly, each key metadata containing only keyConfigured/storage. Test/remove require provider id; test results identify that provider. Keys use isolated web:<provider> slots with existing security/consent. Removing the active Brave key disables access; other providers select anonymous. No migration or compatibility branch is introduced.
 
 ## Persistence and recovery
 PathProvider provides userData/settings/logs; Clock supplies Date and asynchronous retry delay.

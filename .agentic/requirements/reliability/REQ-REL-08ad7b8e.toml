@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-08ad7b8e"
+
+title = "Revoke provider changes and recover failed web configuration"
+
+status = "active"
+
+requirement = "When provider access changes or a configuration write fails, VERA shall revoke stale calls and retain the previous committed preferences and isolated credentials on failure."
+
+verification = "Focused transaction/switch/cancel tests, missing-key/auth/quota/failure recovery, retained inactive keys and active Brave removal disables without fallback."
+
+affected_paths = ["05_Software/src/libraries/shared/src/web-access.ts", "05_Software/src/libraries/shared/src/web-access.test.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/web/", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/main/web-access.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/renderer/components/web-access.tsx", "05_Software/src/apps/desktop/src/renderer/components/web-access.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/cli/src/run.ts", "05_Software/tests/e2e/web-access.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/web/http-providers.test.ts", "05_Software/src/libraries/core/src/web/configured-provider.test.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts", "05_Software/src/apps/desktop/src/renderer/components/web-access.test.ts", "05_Software/src/libraries/shared/src/web-access.test.ts", "05_Software/tests/e2e/web-access.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

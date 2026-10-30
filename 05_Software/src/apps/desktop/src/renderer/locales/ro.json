@@ -476,13 +476,13 @@
     "authentication": "Mod de acces",
     "anonymous": "Anonim — fără cont",
     "apiKeyMode": "Folosește cheia mea API",
-    "anonymousHint": "Exa poate fi utilizat fără cont sau cheie, în limitele serviciului gratuit. Cheia salvată nu este trimisă în acest mod.",
-    "keyHint": "Cheia utilizează cota contului tău Exa și poate genera costuri conform planului. Este păstrată separat de setările aplicației.",
-    "apiKey": "Cheie API Exa",
+    "anonymousHint": "{{provider}} poate fi folosit fără cont sau cheie, în limitele serviciului gratuit. Cheia salvată nu este trimisă în acest mod.",
+    "keyHint": "Cheia {{provider}} folosește cota contului respectiv și poate genera costuri conform planului tău.",
+    "apiKey": "Cheie API {{provider}}",
     "keepKey": "Lasă gol pentru a păstra cheia salvată",
     "storedKey": "Cheie salvată disponibilă · {{storage}}",
-    "noKey": "Nu există o cheie API salvată. Accesul anonim este disponibil.",
-    "keyRequired": "Introdu o cheie sau selectează accesul anonim.",
+    "noKey": "Nu există o cheie API salvată pentru {{provider}}.",
+    "keyRequired": "Acest mod de acces necesită o cheie API.",
     "save": "Salvează",
     "test": "Testează conexiunea",
     "removeKey": "Șterge cheia salvată",
@@ -490,7 +490,7 @@
     "saved": "Setările de acces web au fost salvate.",
     "saveHint": "Salvează pentru a aplica modificările globale. Testul verifică modul selectat fără a salva cheia introdusă.",
     "testTitle": "Test conexiune web",
-    "testing": "Se conectează la Exa…",
+    "testing": "Se conectează la {{provider}}…",
     "close": "Închide",
     "storage": {
       "encrypted": "stocare criptată",
@@ -503,7 +503,9 @@
       "disabled": "Accesul web este dezactivat. Activează-l și salvează înainte de testare.",
       "key-required": "Modul de acces selectat necesită o cheie API.",
       "cancelled": "Testul a fost anulat sau accesul s-a modificat."
-    }
+    },
+    "searchAndRead": "Căutare web și citirea paginilor.",
+    "searchOnly": "Doar căutare. Pentru citirea paginilor web, selectează Exa sau Tavily."
   },
   "web": {
     "openTitle": "Deschizi un site extern?",

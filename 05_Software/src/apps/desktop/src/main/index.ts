@@ -159,7 +159,7 @@ ipcMain.handle(
     handlers: {
       "web.access.get": () => webAccess.get(),
       "web.access.save": (request) => webAccess.save(request),
-      "web.access.removeKey": () => webAccess.removeKey(),
+      "web.access.removeKey": (request) => webAccess.removeKey(request),
       "web.access.test": (request) => webAccess.test(request),
       "web.access.cancel": (request) => webAccess.cancelTest(request),
       "update.get": () => {

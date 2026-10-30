@@ -183,3 +183,5 @@ workspace/shell consumers. tests/e2e/keyboard-shortcuts.spec.ts covers browser
 editing/capture/conflicts/readonly plus compiled native persistence across restart.
 
 Web access verification: targeted shared/core/main/renderer tests and tests/e2e/web-access.spec.ts. Native acceptance uses isolated profile/loopback MCP, verifies optional key headers, persistence, cancellation/global denial and en/ro/de modal geometry without paid API calls. Live anonymous connectivity is a separate external-service check; user-key account success requires a user-supplied key.
+
+Web access supports Exa/Tavily/Brave with isolated credentials and CLI EXA_API_KEY/TAVILY_API_KEY/BRAVE_SEARCH_API_KEY. Tavily supports anonymous search/read; Brave requires a key and is search-only. Focused adapter/gate/main/UI/shared and native provider-isolation tests verify routing; live anonymous Tavily search/extraction is separate from scripted private-key acceptance.

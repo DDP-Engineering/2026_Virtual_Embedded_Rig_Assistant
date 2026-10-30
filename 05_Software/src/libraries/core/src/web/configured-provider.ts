@@ -1,6 +1,8 @@
-import type { WebAccessSettings } from "@vera/shared";
+import { type WebAccessSettings, type WebProviderId, webProviders } from "@vera/shared";
+import { BraveWebProvider } from "./brave.js";
 import { ExaWebProvider } from "./exa.js";
 import type { WebProvider, WebReadRequest, WebResult, WebSearchRequest } from "./provider.js";
+import { TavilyWebProvider } from "./tavily.js";
 
 export class WebAccessBlocked extends Error {
   constructor(readonly reason: "disabled" | "key-required" | "cancelled") {
@@ -8,7 +10,7 @@ export class WebAccessBlocked extends Error {
       reason === "disabled"
         ? "Web access is disabled globally. Enable it in Settings > Web access."
         : reason === "key-required"
-          ? "An Exa API key is required in the selected access mode. Configure it in Web access settings."
+          ? "An API key for the selected web provider is required in the selected access mode. Configure it in Web access settings."
           : "Web access request cancelled or its authorization changed.",
     );
   }
@@ -23,8 +25,8 @@ export class ConfiguredWebProvider implements WebProvider {
   constructor(
     private readonly host: {
       config(): WebAccessSettings;
-      getKey(signal: AbortSignal): Promise<string | undefined>;
-      create?: (key: string | undefined) => WebProvider;
+      getKey(provider: WebProviderId, signal: AbortSignal): Promise<string | undefined>;
+      create?: (provider: WebProviderId, key: string | undefined) => WebProvider;
     },
   ) {}
   search(args: WebSearchRequest, signal: AbortSignal) {
@@ -34,12 +36,16 @@ export class ConfiguredWebProvider implements WebProvider {
     return this.run("read", args, signal);
   }
   test(
-    authentication: { authentication: "anonymous" | "api-key"; apiKey?: string | undefined },
+    authentication: {
+      provider: WebProviderId;
+      authentication: "anonymous" | "api-key";
+      apiKey?: string | undefined;
+    },
     signal: AbortSignal,
   ) {
     return this.run(
       "search",
-      { query: "Exa official web search documentation", limit: 1 },
+      { query: "official web search documentation", limit: 1 },
       signal,
       authentication,
     );
@@ -57,7 +63,11 @@ export class ConfiguredWebProvider implements WebProvider {
     kind: "search" | "read",
     args: WebSearchRequest | WebReadRequest,
     caller: AbortSignal,
-    override?: { authentication: "anonymous" | "api-key"; apiKey?: string | undefined },
+    override?: {
+      provider: WebProviderId;
+      authentication: "anonymous" | "api-key";
+      apiKey?: string | undefined;
+    },
   ) {
     const operation = this.perform(kind, args, caller, override);
     this.pending.add(operation);
@@ -71,7 +81,11 @@ export class ConfiguredWebProvider implements WebProvider {
     kind: "search" | "read",
     args: WebSearchRequest | WebReadRequest,
     caller: AbortSignal,
-    override?: { authentication: "anonymous" | "api-key"; apiKey?: string | undefined },
+    override?: {
+      provider: WebProviderId;
+      authentication: "anonymous" | "api-key";
+      apiKey?: string | undefined;
+    },
   ): Promise<WebResult> {
     if (this.closed || !this.host.config().enabled) throw new WebAccessBlocked("disabled");
     caller.throwIfAborted();
@@ -80,13 +94,25 @@ export class ConfiguredWebProvider implements WebProvider {
     this.active.add(controller);
     const signal = AbortSignal.any([caller, controller.signal]);
     try {
+      const providerId = override?.provider ?? this.host.config().provider;
+      if (kind === "read" && !webProviders[providerId].read)
+        throw Error("Brave Search does not support page reading. Select Exa or Tavily in Web access.");
       const mode = override?.authentication ?? this.host.config().authentication;
-      const key = mode === "api-key" ? (override?.apiKey ?? (await this.host.getKey(signal))) : undefined;
+      if (mode === "anonymous" && !webProviders[providerId].anonymous)
+        throw new WebAccessBlocked("key-required");
+      const key =
+        mode === "api-key" ? (override?.apiKey ?? (await this.host.getKey(providerId, signal))) : undefined;
       signal.throwIfAborted();
       if (revision !== this.generation || !this.host.config().enabled)
         throw new WebAccessBlocked("cancelled");
       if (mode === "api-key" && !key) throw new WebAccessBlocked("key-required");
-      const provider = this.host.create?.(key) ?? new ExaWebProvider(key ? { apiKey: key } : {});
+      const provider =
+        this.host.create?.(providerId, key) ??
+        (providerId === "exa"
+          ? new ExaWebProvider(key ? { apiKey: key } : {})
+          : providerId === "tavily"
+            ? new TavilyWebProvider(key ? { apiKey: key } : {})
+            : new BraveWebProvider({ apiKey: key! }));
       const result =
         kind === "search"
           ? await provider.search(args as WebSearchRequest, signal)
@@ -100,4 +126,12 @@ export class ConfiguredWebProvider implements WebProvider {
       this.active.delete(controller);
     }
   }
+}
+
+export function unavailableWebTools(config: WebAccessSettings): string[] {
+  return !config.enabled
+    ? ["web_search", "web_read"]
+    : webProviders[config.provider].read
+      ? []
+      : ["web_read"];
 }

@@ -6,7 +6,7 @@ title = "Persist and enforce global web access preferences"
 
 status = "active"
 
-requirement = "When global web access preferences are saved, VERA shall enforce the selected enabled state and Exa authentication across agent web calls while retaining per-workbench tool restrictions."
+requirement = "When global web access preferences are saved, VERA shall enforce the selected enabled state, provider and authentication across agent web calls while retaining per-workbench tool restrictions."
 
 verification = "Save/reload global preferences; disabled hides/blocks tools without network, enabling restores permitted tools; CLI honors same gate."
 

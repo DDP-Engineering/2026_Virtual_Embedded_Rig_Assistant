@@ -476,13 +476,13 @@
     "authentication": "Zugriffsmodus",
     "anonymous": "Anonym — kein Konto erforderlich",
     "apiKeyMode": "Meinen API-Schlüssel verwenden",
-    "anonymousHint": "Exa kann ohne Konto oder Schlüssel innerhalb der kostenlosen Dienstgrenzen genutzt werden. Ein gespeicherter Schlüssel wird in diesem Modus nicht gesendet.",
-    "keyHint": "Ihr Schlüssel verwendet das Kontingent Ihres Exa-Kontos und kann Kosten verursachen. Er wird getrennt von den Anwendungseinstellungen gespeichert.",
-    "apiKey": "Exa-API-Schlüssel",
+    "anonymousHint": "{{provider}} kann ohne Konto oder Schlüssel innerhalb der kostenlosen Dienstgrenzen verwendet werden. Ein gespeicherter Schlüssel wird in diesem Modus nicht gesendet.",
+    "keyHint": "Ihr {{provider}}-Schlüssel verwendet das Kontokontingent und kann je nach Tarif Kosten verursachen.",
+    "apiKey": "{{provider}}-API-Schlüssel",
     "keepKey": "Leer lassen, um den gespeicherten Schlüssel beizubehalten",
     "storedKey": "Gespeicherter Schlüssel verfügbar · {{storage}}",
-    "noKey": "Kein API-Schlüssel gespeichert. Anonymer Zugriff ist verfügbar.",
-    "keyRequired": "Schlüssel eingeben oder anonymen Zugriff auswählen.",
+    "noKey": "Kein API-Schlüssel für {{provider}} gespeichert.",
+    "keyRequired": "Dieser Zugriffsmodus erfordert einen API-Schlüssel.",
     "save": "Speichern",
     "test": "Verbindung testen",
     "removeKey": "Gespeicherten Schlüssel entfernen",
@@ -490,7 +490,7 @@
     "saved": "Webzugriffseinstellungen gespeichert.",
     "saveHint": "Globale Änderungen speichern. Der Verbindungstest prüft den gewählten Modus, ohne den eingegebenen Schlüssel zu speichern.",
     "testTitle": "Web-Verbindungstest",
-    "testing": "Verbindung zu Exa wird hergestellt…",
+    "testing": "Verbindung zu {{provider}} wird hergestellt…",
     "close": "Schließen",
     "storage": {
       "encrypted": "verschlüsselte Speicherung",
@@ -503,7 +503,9 @@
       "disabled": "Webzugriff ist deaktiviert. Vor dem Test aktivieren und speichern.",
       "key-required": "Der gewählte Zugriffsmodus erfordert einen API-Schlüssel.",
       "cancelled": "Der Test wurde abgebrochen oder der Zugriff geändert."
-    }
+    },
+    "searchAndRead": "Websuche und Lesen von Webseiten.",
+    "searchOnly": "Nur Suche. Zum Lesen von Webseiten Exa oder Tavily wählen."
   },
   "web": {
     "openTitle": "Externe Website öffnen?",

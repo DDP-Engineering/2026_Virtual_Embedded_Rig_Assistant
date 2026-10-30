@@ -8,6 +8,7 @@ import {
   type LlmGateway,
   SessionService,
   SettingsService,
+  unavailableWebTools,
   WorkbenchService,
 } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
@@ -58,14 +59,21 @@ export async function runTurn(
     const provider = options.provider === "custom" ? "custom:cli" : options.provider;
     if (key) await store.modify(provider, async () => ({ type: "api_key", key }));
     const config = structuredClone(settings.get().settings);
-    if (process.env.EXA_API_KEY) {
-      logger.registerSecret(process.env.EXA_API_KEY);
-      await store.modify("web:exa", async () => ({ type: "api_key", key: process.env.EXA_API_KEY! }));
+    for (const [provider, variable] of [
+      ["exa", "EXA_API_KEY"],
+      ["tavily", "TAVILY_API_KEY"],
+      ["brave", "BRAVE_SEARCH_API_KEY"],
+    ] as const) {
+      const key = process.env[variable];
+      if (key) {
+        logger.registerSecret(key);
+        await store.modify(`web:${provider}`, async () => ({ type: "api_key", key }));
+      }
     }
     const web = new ConfiguredWebProvider({
       config: () => config.webAccess,
-      getKey: async (signal) => {
-        const value = await store.read("web:exa", { signal });
+      getKey: async (provider, signal) => {
+        const value = await store.read(`web:${provider}`, { signal });
         return value?.type === "api_key" ? value.key : undefined;
       },
     });
@@ -157,10 +165,7 @@ export async function runTurn(
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
-      disabledTools: [
-        ...snapshot.config.tools.disabled,
-        ...(!config.webAccess.enabled ? ["web_search", "web_read"] : []),
-      ],
+      disabledTools: [...snapshot.config.tools.disabled, ...unavailableWebTools(config.webAccess)],
       maxToolCallsPerTurn: config.limits.maxToolCallsPerTurn,
       model: () => model,
       assertWritable: () => workbench.assertSessionWritable(),

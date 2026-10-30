@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-9a97f953"
+
+title = "Configure and test each web provider with capability labels"
+
+status = "active"
+
+requirement = "When Web access settings are used, VERA shall provide translated provider selection, capability information and provider-specific save/remove/test controls with a stable dismissible result dialog."
+
+verification = "Native/UI en/ro/de provider selection, password clearing on switch, saved credential metadata separation, draft Test no persistence, one centered Close dialog and Brave API-key-only/search-only labels."
+
+affected_paths = ["05_Software/src/libraries/shared/src/web-access.ts", "05_Software/src/libraries/shared/src/web-access.test.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/web/", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/main/web-access.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/renderer/components/web-access.tsx", "05_Software/src/apps/desktop/src/renderer/components/web-access.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/cli/src/run.ts", "05_Software/tests/e2e/web-access.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/web/http-providers.test.ts", "05_Software/src/libraries/core/src/web/configured-provider.test.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts", "05_Software/src/apps/desktop/src/renderer/components/web-access.test.ts", "05_Software/src/libraries/shared/src/web-access.test.ts", "05_Software/tests/e2e/web-access.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

@@ -29,8 +29,11 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
   const held = new Set<ServerResponse>();
   let hold = false,
     cancelled = 0;
+  const restCalls: { provider: string; key: string | undefined }[] = [];
+  const tavilyKey = "owned-tavily-native-key",
+    braveKey = "owned-brave-native-key";
   const server = createServer((request, response) => {
-    if (request.method === "GET") {
+    if (request.method === "GET" && !request.url?.startsWith("/rest/")) {
       response.writeHead(405).end();
       return;
     }
@@ -39,7 +42,32 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
       raw += chunk;
     });
     request.on("end", () => {
-      const body = JSON.parse(raw);
+      const body = JSON.parse(raw || "{}");
+      if (request.url?.startsWith("/rest/")) {
+        const provider = request.url.includes("/tavily/") ? "tavily" : "brave";
+        const apiKey = (
+          provider === "tavily"
+            ? request.headers.authorization?.replace(/^Bearer /, "")
+            : request.headers["x-subscription-token"]
+        ) as string | undefined;
+        restCalls.push({ provider, key: apiKey });
+        if (
+          (provider === "brave" && apiKey !== braveKey) ||
+          (provider === "tavily" && apiKey && apiKey !== tavilyKey)
+        ) {
+          response.writeHead(401).end("owned authentication error");
+          return;
+        }
+        const source = {
+          title: "Public guide",
+          url: "https://example.com/guide",
+          content: "Public information",
+          description: "Public information",
+        };
+        const result = provider === "tavily" ? { results: [source] } : { web: { results: [source] } };
+        response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(result));
+        return;
+      }
       if (body.id === undefined) {
         response.writeHead(202).end();
         return;
@@ -104,6 +132,10 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
       const original = globalThis.fetch;
       globalThis.fetch = (input, init) => {
         const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith("https://api.tavily.com/"))
+          return original(`${base}/rest/tavily/${new URL(url).pathname.slice(1)}`, init);
+        if (url.startsWith("https://api.search.brave.com/"))
+          return original(`${base}/rest/brave/search${new URL(url).search}`, init);
         return original(url === "https://mcp.exa.ai/mcp" ? `${base}/mcp` : input, init);
       };
     }, `http://127.0.0.1:${address.port}`);
@@ -138,7 +170,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     const draft = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("web.access.get", {}),
     );
-    expect(draft.keyConfigured).toBe(false);
+    expect(draft.keys.exa.keyConfigured).toBe(false);
     await page.locator("[data-web-close]").click();
     await page.locator("#web-api-key").fill("invalid-owned-key");
     await page.locator("[data-web-test]").click();
@@ -152,8 +184,60 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     const stored = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("web.access.get", {}),
     );
-    expect(stored).toMatchObject({ keyConfigured: true, preferences: { authentication: "api-key" } });
+    expect(stored).toMatchObject({
+      keys: { exa: { keyConfigured: true } },
+      preferences: { authentication: "api-key" },
+    });
     expect(JSON.stringify(stored)).not.toContain(key);
+    await page.locator("#web-provider").selectOption("tavily");
+    await page.locator("[data-web-test]").click();
+    await expect(page.locator('[data-web-test-status="pass"]')).toBeVisible();
+    await expect(page.locator("dialog[open]")).toContainText("Tavily");
+    if (process.env.VERA_WEB_ACCESS_SCREENSHOT)
+      await page.screenshot({
+        path: process.env.VERA_WEB_ACCESS_SCREENSHOT.replace(".png", "-tavily-result.png"),
+      });
+    expect(restCalls.at(-1)).toEqual({ provider: "tavily", key: undefined });
+    await page.locator("[data-web-close]").click();
+    await page.locator("#web-authentication").selectOption("api-key");
+    await page.locator("#web-api-key").fill(tavilyKey);
+    await page.locator("#web-provider").selectOption("brave");
+    await expect(page.locator("#web-api-key")).toHaveValue("");
+    await expect(page.locator("#web-authentication option")).toHaveCount(1);
+    await expect(page.locator("[data-web-test]")).toBeDisabled();
+    await page.locator("#web-api-key").fill(braveKey);
+    await page.locator("[data-web-test]").click();
+    await expect.poll(() => restCalls.at(-1)).toEqual({ provider: "brave", key: braveKey });
+    await expect(page.locator('[data-web-test-status="pass"]')).toBeVisible();
+    await expect(page.locator("dialog[open]")).toContainText("Brave Search");
+    expect(restCalls.at(-1)).toEqual({ provider: "brave", key: braveKey });
+    await page.locator("[data-web-close]").click();
+    if (process.env.VERA_WEB_ACCESS_SCREENSHOT)
+      await page.screenshot({ path: process.env.VERA_WEB_ACCESS_SCREENSHOT.replace(".png", "-brave.png") });
+    await page.locator("[data-web-save]").click();
+    if (!stored.secureStorage) await page.locator("dialog[open] button").nth(1).click();
+    await expect(page.locator("#web-api-key")).toHaveValue("");
+    await page.locator("[data-web-test]").click();
+    await expect(page.locator('[data-web-test-status="pass"]')).toBeVisible();
+    expect(restCalls.at(-1)).toEqual({ provider: "brave", key: braveKey });
+    await page.locator("[data-web-close]").click();
+    await page.locator("#web-provider").selectOption("tavily");
+    await page.locator("#web-authentication").selectOption("api-key");
+    await page.locator("#web-api-key").fill(tavilyKey);
+    await page.locator("[data-web-save]").click();
+    if (!stored.secureStorage) await page.locator("dialog[open] button").nth(1).click();
+    await expect(page.locator("#web-api-key")).toHaveValue("");
+    const allKeys = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("web.access.get", {}),
+    );
+    expect(Object.values(allKeys.keys).every((meta) => meta.keyConfigured)).toBe(true);
+    expect(JSON.stringify(allKeys)).not.toContain(tavilyKey);
+    expect(JSON.stringify(allKeys)).not.toContain(braveKey);
+    await page.locator("#web-provider").selectOption("exa");
+    await page.locator("#web-authentication").selectOption("api-key");
+    await page.locator("[data-web-save]").click();
+    await expect(page.locator('.web-access [role="status"]')).toContainText("saved");
+
     expect(await readFile(join(profile, "settings.json"), "utf8")).not.toContain(key);
     expect(await readFile(join(profile, "credentials.json"), "utf8")).not.toContain(key);
     await page.locator("[data-web-test]").click();
@@ -232,7 +316,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
         await page.evaluate(() =>
           (window as unknown as { vera: VeraBridge }).vera.invoke("web.access.get", {}),
         )
-      ).keyConfigured,
+      ).keys.exa.keyConfigured,
     ).toBe(true);
     await page.locator("[data-web-remove]").click();
     await expect(page.locator("[data-web-remove]")).toHaveCount(0);

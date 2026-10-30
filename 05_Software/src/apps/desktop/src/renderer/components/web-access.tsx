@@ -1,5 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WebAccessSave, WebAccessSnapshot, WebAccessTestResult } from "@vera/shared";
+import {
+  type WebAccessSave,
+  type WebAccessSnapshot,
+  type WebAccessTestResult,
+  type WebProviderId,
+  webProviderIds,
+  webProviders,
+} from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -29,6 +36,9 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
     memory: t("webAccess.storage.memory"),
   };
   const client = useQueryClient();
+  const [provider, setProvider] = useState<WebProviderId>(snapshot.preferences.provider);
+  const keyMetadata = snapshot.keys[provider];
+  const providerName = webProviders[provider].name;
   const [enabled, setEnabled] = useState(snapshot.preferences.enabled);
   const [authentication, setAuthentication] = useState(snapshot.preferences.authentication);
   const [key, setKey] = useState("");
@@ -73,7 +83,7 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
     setError(undefined);
     const request: WebAccessSave = {
       enabled,
-      provider: "exa",
+      provider,
       authentication,
       ...(authentication === "api-key" && key.trim() ? { apiKey: key.trim() } : {}),
       ...(storageConsent === undefined ? {} : { storageConsent }),
@@ -102,10 +112,11 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
     setSaved(false);
     setError(undefined);
     try {
-      await api.invoke("web.access.removeKey", {});
-      setAuthentication("anonymous");
+      await api.invoke("web.access.removeKey", { provider });
+      setAuthentication(webProviders[provider].anonymous ? "anonymous" : "api-key");
       setKey("");
-      await refresh();
+      const current = await refresh();
+      setEnabled(current.preferences.enabled);
       setSaved(true);
     } catch (failure) {
       setError(failure);
@@ -126,6 +137,7 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
     try {
       const response = await api.invoke("web.access.test", {
         testId: id,
+        provider,
         authentication,
         ...(authentication === "api-key" && key.trim() ? { apiKey: key.trim() } : {}),
       });
@@ -145,8 +157,8 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
     generation.current++;
     if (attempt.current) void api.invoke("web.access.cancel", { testId: attempt.current }).catch(() => {});
   };
-  const disabled = readOnly || snapshot.readOnly || saving;
-  const missingKey = authentication === "api-key" && !key.trim() && !snapshot.keyConfigured;
+  const disabled = readOnly || snapshot.readOnly || saving || testing;
+  const missingKey = authentication === "api-key" && !key.trim() && !keyMetadata.keyConfigured;
   return (
     <>
       <form
@@ -171,10 +183,34 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
           <p className="muted">{t("webAccess.globalHint")}</p>
           <label className="web-access-field" htmlFor="web-provider">
             {t("webAccess.provider")}
-            <select id="web-provider" value="exa" disabled>
-              <option value="exa">Exa</option>
+            <select
+              id="web-provider"
+              value={provider}
+              onChange={(event) => {
+                const next = event.target.value as WebProviderId;
+                setProvider(next);
+                setKey("");
+                setSaved(false);
+                setError(undefined);
+                setAuthentication(
+                  next === snapshot.preferences.provider
+                    ? snapshot.preferences.authentication
+                    : webProviders[next].anonymous
+                      ? "anonymous"
+                      : "api-key",
+                );
+              }}
+            >
+              {webProviderIds.map((id) => (
+                <option key={id} value={id}>
+                  {webProviders[id].name}
+                </option>
+              ))}
             </select>
           </label>
+          <p className="muted" data-web-capabilities>
+            {webProviders[provider].read ? t("webAccess.searchAndRead") : t("webAccess.searchOnly")}
+          </p>
           <label className="web-access-field" htmlFor="web-authentication">
             {t("webAccess.authentication")}
             <select
@@ -185,23 +221,27 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
                 setSaved(false);
               }}
             >
-              <option value="anonymous">{t("webAccess.anonymous")}</option>
+              {webProviders[provider].anonymous && (
+                <option value="anonymous">{t("webAccess.anonymous")}</option>
+              )}
               <option value="api-key">{t("webAccess.apiKeyMode")}</option>
             </select>
           </label>
           <p className="muted">
-            {authentication === "anonymous" ? t("webAccess.anonymousHint") : t("webAccess.keyHint")}
+            {authentication === "anonymous"
+              ? t("webAccess.anonymousHint", { provider: providerName })
+              : t("webAccess.keyHint", { provider: providerName })}
           </p>
           {authentication === "api-key" && (
             <label className="web-access-field" htmlFor="web-api-key">
-              {t("webAccess.apiKey")}
+              {t("webAccess.apiKey", { provider: providerName })}
               <input
                 id="web-api-key"
                 type="password"
                 autoComplete="off"
                 spellCheck={false}
                 value={key}
-                placeholder={snapshot.keyConfigured ? t("webAccess.keepKey") : ""}
+                placeholder={keyMetadata.keyConfigured ? t("webAccess.keepKey") : ""}
                 onChange={(event) => {
                   setKey(event.target.value);
                   setSaved(false);
@@ -210,9 +250,9 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
             </label>
           )}
           <p data-web-key-status>
-            {snapshot.keyConfigured
-              ? t("webAccess.storedKey", { storage: storageDescriptions[snapshot.storage ?? "memory"] })
-              : t("webAccess.noKey")}
+            {keyMetadata.keyConfigured
+              ? t("webAccess.storedKey", { storage: storageDescriptions[keyMetadata.storage ?? "memory"] })
+              : t("webAccess.noKey", { provider: providerName })}
           </p>
           {missingKey && <p className="muted">{t("webAccess.keyRequired")}</p>}
           <div className="workbench-actions">
@@ -228,7 +268,7 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
             >
               {t("webAccess.test")}
             </button>
-            {snapshot.keyConfigured && (
+            {keyMetadata.keyConfigured && (
               <button type="button" data-web-remove onClick={() => void remove()}>
                 {t("webAccess.removeKey")}
               </button>
@@ -241,17 +281,27 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
         {Boolean(error) && <ErrorMessage error={error} />}
       </form>
       {consent && <ConsentDialog pending={saving} choice={save} cancel={() => setConsent(false)} />}
-      {visible && <WebTestDialog testing={testing} result={result} error={testError} close={closeTest} />}
+      {visible && (
+        <WebTestDialog
+          provider={provider}
+          testing={testing}
+          result={result}
+          error={testError}
+          close={closeTest}
+        />
+      )}
     </>
   );
 }
 
 function WebTestDialog({
+  provider,
   testing,
   result,
   error,
   close,
 }: {
+  provider: WebProviderId;
   testing: boolean;
   result: WebAccessTestResult | undefined;
   error: unknown;
@@ -281,7 +331,7 @@ function WebTestDialog({
     >
       <h3 id={title}>{t("webAccess.testTitle")}</h3>
       <div className="web-test-body" aria-live="polite" aria-busy={testing}>
-        {testing && <p>{t("webAccess.testing")}</p>}
+        {testing && <p>{t("webAccess.testing", { provider: webProviders[provider].name })}</p>}
         {result && (
           <>
             <p data-web-test-status={result.status}>
@@ -296,7 +346,7 @@ function WebTestDialog({
               }
             </p>
             <p className="muted">
-              Exa ·{" "}
+              {webProviders[result.provider].name} ·{" "}
               {result.authentication === "anonymous" ? t("webAccess.anonymous") : t("webAccess.apiKeyMode")}
             </p>
           </>
