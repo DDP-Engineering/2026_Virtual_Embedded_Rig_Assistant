@@ -454,6 +454,20 @@
     "high": "Hoch",
     "xhigh": "Sehr hoch"
   },
+  "workbenchTools": {
+    "hint": "Markierte Werkzeuge sind für diese Workbench aktiviert. Änderungen gelten nach dem Speichern; die Sitzungsberechtigungen bleiben wirksam.",
+    "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
+    "list": "Dateien und Unterordner eines Verzeichnisses auflisten.",
+    "glob": "Dateien anhand von Namens- oder Pfadmustern wie **/*.cpp finden.",
+    "grep": "Dateiinhalte durchsuchen, auch mit regulären Ausdrücken.",
+    "write": "Textdateien erstellen oder ihren Inhalt ersetzen.",
+    "edit": "Exakte Textstellen in einer zuvor gelesenen Datei ersetzen.",
+    "artifact_save": "Ein Textergebnis als Sitzungsartefakt speichern.",
+    "todo": "Die Aufgabenliste der Sitzung im Plan verwalten.",
+    "search_docs": "Die indexierten Dokumente der Workbench durchsuchen.",
+    "read_doc": "Extrahierte Dokumentseiten, Abschnitte oder Textzeilen lesen.",
+    "load_skill": "Anweisungen und ergänzende Textdateien eines aktivierten Skills laden."
+  },
   "projects": {
     "new": "Neue Workbench",
     "open": "Workbench öffnen",
@@ -478,7 +492,6 @@
     "exclude": "Ausschlussmuster (eines pro Zeile)",
     "model": "Standardmodell (Anbieter/Modell; leer nutzt App-Standard)",
     "permissions": "Berechtigungen",
-    "disabledTools": "Deaktivierte Werkzeuge (eines pro Zeile)",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "empty": "Keine Workbenches. Erstellen oder öffnen Sie eine Workbench.",

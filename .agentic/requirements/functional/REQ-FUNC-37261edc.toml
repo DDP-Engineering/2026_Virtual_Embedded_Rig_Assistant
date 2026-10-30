@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-37261edc"
+
+title = "Save workbench tool availability from checkboxes"
+
+status = "active"
+
+requirement = """
+When a writable workbench editor's tool checkbox selection is saved, VERA shall persist the enabled state through the workbench's tools.disabled configuration for subsequent opens and agent requests, while unsaved or read-only edits leave the saved configuration unchanged.
+"""
+
+verification = "Disable and re-enable tools through checkboxes; save and reopen/restart to compare checked state and .vera/workbench.yaml tools.disabled. Cancel a later edit and confirm saved state is retained; read-only checkbox controls remain disabled. Existing runtime disabled-tool filtering tests verify subsequent request catalogs."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts", "05_Software/tests/e2e/workbench-tools.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

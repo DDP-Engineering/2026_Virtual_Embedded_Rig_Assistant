@@ -1,3 +1,4 @@
+import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { artifactSaveTool } from "./artifact-save.js";
@@ -11,6 +12,20 @@ import { loadSkillTool } from "./load-skill.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
 import { writeTool } from "./write.js";
+
+const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
+  read: readTool,
+  list: listTool,
+  glob: globTool,
+  grep: grepTool,
+  write: writeTool,
+  edit: editTool,
+  artifact_save: artifactSaveTool,
+  todo: todoTool,
+  search_docs: searchDocsTool,
+  read_doc: readDocTool,
+  load_skill: loadSkillTool,
+};
 
 export const TOOL_RESULT_CAP = 32000;
 export function capToolResult(value: Record<string, unknown>) {
@@ -67,19 +82,7 @@ export interface ToolOutcome {
 export class ToolRegistry {
   private readonly definitions: readonly ToolDefinition[];
   constructor(
-    definitions: readonly ToolDefinition[] = [
-      readTool,
-      listTool,
-      globTool,
-      grepTool,
-      writeTool,
-      editTool,
-      artifactSaveTool,
-      todoTool,
-      searchDocsTool,
-      readDocTool,
-      loadSkillTool,
-    ],
+    definitions: readonly ToolDefinition[] = builtinToolNames.map((name) => builtinDefinitions[name]),
   ) {
     const names = definitions.map((tool) => tool.name);
     if (new Set(names).size !== names.length) throw Error("Duplicate tool name.");

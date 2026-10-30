@@ -1,3 +1,4 @@
+import { builtinToolNames } from "@vera/shared";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import * as api from "../index.js";
@@ -5,6 +6,7 @@ import * as api from "../index.js";
 it("converts every tool schema and validates samples while filtering disabled names", () => {
   expect(api.ToolRegistry).toBeTypeOf("function");
   const registry = new api.ToolRegistry();
+  expect(registry.available().map((tool) => tool.name)).toEqual(builtinToolNames);
   const samples = {
     read: { path: "docs/a.txt" },
     list: {},

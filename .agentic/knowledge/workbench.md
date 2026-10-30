@@ -25,6 +25,8 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
+- The editor's Tools section lists the shared built-in catalog with en/ro/de descriptions and enabled checkboxes. Draft selection writes the existing tools.disabled array on Save; Cancel discards it and read-only/loading/pending controls remain disabled. WorkbenchService recognizes shared built-ins by default when reporting unknown disabled names; injected host catalogs retain their existing authority.
+
 - skillCatalog/listSkills/openSkill/saveSkill/toggleSkill admit [skills](skills.md)
   operations against current workbench ID, folder, database lifetime and token. Source
   selects project/.vera or the host userData root. Reads serialize with lifecycle; writes
@@ -173,3 +175,5 @@ independently and project Save preserves their current enabled/disabled choices.
 Close is available from the active workbench menu. Settings replaces primary
 New/Open/Plugins navigation with settings categories and Back to workbenches.
 Dialogs are centered; nested Skills Escape returns to the parent editor.
+
+REQ-UX-0f1a32c4 covers the described tool catalog; REQ-FUNC-37261edc covers saved checkbox availability. Runtime permissions remain independent. `shared/src/tools.ts` defines the ordered catalog consumed by `core/src/tools/registry.ts` and `renderer/components/workbench-tools.tsx`; the editor owns draft/save state. `tests/e2e/workbench-tools.spec.ts` covers native persistence/restart/cancel, YAML and translated descriptions; renderer workbench-tools.test.ts covers read-only controls, and registry/workbench service tests cover catalog parity and known-name validation.

@@ -649,6 +649,19 @@ it("rejects YAML tagged non-JSON extensions without bytes or runtime changes", a
     expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
   }
 });
+it("recognizes built-in checkbox tool selections while reporting unavailable names", async () => {
+  const h = await harness();
+  try {
+    await h.service.create(h.folder, "Tools");
+    const saved = await h.service.updateConfig({ tools: { disabled: ["grep", "read", "unavailable_tool"] } });
+    expect(saved.warnings.filter((warning) => warning.code === "UNKNOWN_NAME")).toEqual([
+      { code: "UNKNOWN_NAME", path: "tools.disabled.unavailable_tool" },
+    ]);
+  } finally {
+    await h.service.close();
+  }
+});
+
 it("updates config preserving unknown nested keys/id and emits confirmed change; pinned full content warns", async () => {
   const h = await harness();
   const original = await h.service.create(h.folder, "Board");

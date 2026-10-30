@@ -454,6 +454,20 @@
     "high": "High",
     "xhigh": "Extra high"
   },
+  "workbenchTools": {
+    "hint": "Checked tools are enabled for this workbench. Changes take effect after you save; session permissions still apply.",
+    "read": "Read text files or selected line ranges.",
+    "list": "List files and subfolders in a directory.",
+    "glob": "Find files by name or path patterns, such as **/*.cpp.",
+    "grep": "Search file contents, including regular expressions.",
+    "write": "Create text files or replace their contents.",
+    "edit": "Replace exact text in a previously read file.",
+    "artifact_save": "Save a text result as a session artifact.",
+    "todo": "Manage the session's task list in Plan.",
+    "search_docs": "Search the workbench's indexed documents.",
+    "read_doc": "Read extracted document pages, sections or text lines.",
+    "load_skill": "Load instructions and supporting text from an enabled skill."
+  },
   "projects": {
     "new": "New Workbench",
     "open": "Open Workbench",
@@ -478,7 +492,6 @@
     "exclude": "Exclude patterns (one per line)",
     "model": "Default model (provider/model; blank uses app default)",
     "permissions": "Permissions",
-    "disabledTools": "Disabled tools (one per line)",
     "save": "Save",
     "cancel": "Cancel",
     "empty": "No workbenches yet. Create or open one to begin.",

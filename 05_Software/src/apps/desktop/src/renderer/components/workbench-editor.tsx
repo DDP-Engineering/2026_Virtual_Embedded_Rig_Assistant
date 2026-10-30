@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { SkillSettings } from "./skills.js";
+import { WorkbenchTools } from "./workbench-tools.js";
 
 const sections = ["general", "documents", "agent", "instructions", "tools", "embeddings", "plugins"] as const;
 export function Plugins() {
@@ -42,7 +43,6 @@ export function WorkbenchEditor({
   const [config, setConfig] = useState(workbench.config);
   const [instructions, setInstructions] = useState("");
   const [original, setOriginal] = useState("");
-  const [toolText, setToolText] = useState(workbench.config.tools.disabled.join("\n"));
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -102,7 +102,7 @@ export function WorkbenchEditor({
         },
         embeddings: config.embeddings,
         agent: { permission_mode: config.agent.permission_mode, model: config.agent.model },
-        tools: { disabled: lines(toolText) },
+        tools: { disabled: config.tools.disabled },
       });
       const updated = await api.invoke("workbench.config.update", {
         patch,
@@ -263,10 +263,20 @@ export function WorkbenchEditor({
               </label>
             )}
             {section === "tools" && (
-              <label>
-                {t("projects.disabledTools")}
-                <textarea value={toolText} onChange={(e) => setToolText(e.target.value)} />
-              </label>
+              <WorkbenchTools
+                disabled={config.tools.disabled}
+                toggle={(name, enabled) =>
+                  setConfig((current) => ({
+                    ...current,
+                    tools: {
+                      ...current.tools,
+                      disabled: enabled
+                        ? current.tools.disabled.filter((entry) => entry !== name)
+                        : [...current.tools.disabled.filter((entry) => entry !== name), name],
+                    },
+                  }))
+                }
+              />
             )}
             {section === "embeddings" && (
               <>

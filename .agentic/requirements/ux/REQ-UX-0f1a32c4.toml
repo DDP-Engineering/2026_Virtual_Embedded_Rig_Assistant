@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-0f1a32c4"
+
+title = "Show the built-in tool catalog in the workbench editor"
+
+status = "active"
+
+requirement = """
+When a user opens Tools in the workbench editor, VERA shall show the current built-in tool catalog with each tool's name, a short localized description and a checkbox reflecting its configured enabled state.
+"""
+
+verification = "Compare the UI catalog and runtime registry with the shared ordered names; verify all eleven current tool names/descriptions, initial enabled checkboxes and existing disabled selections, including translated descriptions and minimum-size bounds."
+
+affected_paths = ["05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/tests/e2e/workbench-navigation.spec.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

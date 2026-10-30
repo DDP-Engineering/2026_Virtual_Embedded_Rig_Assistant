@@ -10,6 +10,8 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 ## Public interface
 
+- Shared builtinToolNames is the canonical ordered built-in execution catalog, with a BuiltinToolName type. ToolRegistry maps its existing definitions through those names; the workbench editor uses the same catalog with localized descriptions and enabled checkboxes. Registry parity tests enforce correspondence. WorkbenchService also uses built-ins for default disabled-name validation. Injected registries/catalogs retain their existing behavior.
+
 - Registry includes read-class load_skill {name,file?} through a separately
   authorized optional SkillCatalog context; [Skills](skills.md) owns validation,
   root selection and bounded body/extra loading. Existing result limits apply.
@@ -65,38 +67,16 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 - REQ-REL-df1e6461 — Abort and replace grep workers.
 - REQ-PLAT-2b27ef1d — Keep desktop responsive during grep.
 - REQ-FUNC-0300323e — Validate filter and cap tool registry.
+- REQ-UX-0f1a32c4 — Share built-in names with the described workbench checkbox catalog.
+- REQ-FUNC-37261edc — Use saved checkbox exclusions when exposing runtime tools.
 - REQ-FUNC-73151724 — Format and parse line references.
 
 REQ-FUNC-9aa789af create; REQ-DATA-8c71b990 freshness; REQ-FUNC-d5b5be90 exact replacement/counts; REQ-DATA-cf979c63 CRLF/BOM; REQ-REL-d2437b70 shared immutable admission; REQ-DATA-f44069c2 atomic recording; REQ-DATA-60e025f4 event/fingerprint; REQ-REL-50217071 recovery; REQ-SEC-294dcab2 sequential write classification and internal metadata denial.
 
-## Architecture
-
-```mermaid
-flowchart LR
- Runtime[AgentRuntime] --> Registry[ToolRegistry.bind]
- Registry --> Context[ToolContext session fingerprint Map]
- Registry --> Guard[PathGuard + common ignore]
- Registry --> Read[readWindow streaming metadata]
- Registry --> Prepared[PreparedChange private bytes + frozen request]
- Prepared --> Permission[SessionService ApprovalGate / host policy]
- Permission --> Queue[WorkbenchService WriteQueue]
- AppSaves[config/pinned saves] --> Queue
- Queue --> Pending[changes pending]
- Pending --> Rename[temp fsync rename]
- Rename --> Applied[applied + SessionHub record transaction]
- Applied --> Event[publication + fingerprint]
- Recovery[recoverChanges guarded hashes] --> Applied
- Registry --> Pool[WorkerPool port]
- Pool --> Host[NodeWorkerPool desktop / CLI]
- Host --> Worker[grep-worker task]
- Worker --> Guard
- Worker --> Files[bounded reads + regex]
- Worker --> Partial[partial matches]
- Partial --> Host
-```
-
 The host controls lifetime; the worker owns all grep discovery/read/matching. The registry adapts these tools to the runtime without importing an app.
 
 ## Files
+
+- shared/src/tools.ts — canonical built-in names and type; renderer components/workbench-tools.tsx presents localized selection. tools/registry.test.ts verifies runtime parity; renderer workbench-tools.test.ts and tests/e2e/workbench-tools.spec.ts cover selection/save/permissions.
 
 Under05_Software: core/src/tools/{changes,write,edit,context,registry,read,read-window,files,binary,discovery,list,glob,grep,grep-worker}.ts and corresponding tests; core/src/workbench/path-guard.ts/test; core/src/workers/{node-host,worker.test-support}.ts and node-host.test.ts; core/src/{ports,index}.ts. shared/src/refs.ts/test/index.ts. src/apps/{cli/src,desktop/src/main}/{worker-pool,grep-worker}.ts; desktop/main/file-tool-probe.ts/index.ts and electron.vite.config.ts. tests/integration/worker-hosts.test.ts and tests/tooling/build-mode.test.ts and tests/e2e/file-tools.spec.ts. WriteQueue is core/src/workbench/write-queue.ts; write/edit tests and tests/fixtures/llm-scripts/read-then-edit.jsonl/tests/e2e/write-edit.spec.ts prove changes. diff9.0.0 is pinned in root/core package manifests and lockfile.

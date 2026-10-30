@@ -160,6 +160,8 @@ Session export/search verification routes are core sessions/export.test.ts and s
 
 ## Workbench navigation verification
 
+Workbench tool selection is verified by renderer workbench-tools.test.ts (draft/read-only), core registry/service tests (canonical catalog and warnings), existing browser workbench-navigation.spec.ts and native workbench-tools.spec.ts (save/cancel/YAML/restart and en/ro/de descriptions). The native folder picker fixture requires VERA_TEST=1 during build and an isolated profile.
+
 `tests/e2e/session-scroll.spec.ts` covers fixed viewport geometry, enlarged composer/text, long Settings and update banner, plus the independent left conversation rail with pointer, keyboard, wheel, touch and reading/follow checks. Native replay tests require an instrumented build (`VERA_TEST=1 npm run test:e2e -- ...`) and isolated profiles; the normal development application uses its existing user profile.
 
 `tests/e2e/workbench-navigation.spec.ts` exercises mock sidebar/editor and two-workbench

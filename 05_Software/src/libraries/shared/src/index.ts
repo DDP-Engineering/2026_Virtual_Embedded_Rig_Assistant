@@ -15,5 +15,6 @@ export * from "./session-export.js";
 export * from "./session-state.js";
 export * from "./settings.js";
 export * from "./skills.js";
+export * from "./tools.js";
 export * from "./updates.js";
 export * from "./workbench.js";

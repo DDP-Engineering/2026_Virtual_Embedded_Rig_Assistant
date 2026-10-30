@@ -57,13 +57,27 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(dialog).toBeVisible();
     await dialog.locator("[data-project-name]").fill("ESP32 revised");
     await dialog.locator('[data-project-section="tools"]').click();
-    const tools = dialog.getByLabel("Disabled tools (one per line)");
-    await tools.fill("grep");
-    await tools.press("End");
-    await tools.press("Enter");
-    await tools.pressSequentially("read");
-    await expect(tools).toHaveValue("grep\nread");
-    await tools.fill("");
+    const tools = dialog.locator("[data-tool-toggle]");
+    await expect(tools).toHaveCount(11);
+    await expect(dialog.locator("[data-tool-description]")).toHaveCount(11);
+    for (const tool of [
+      "read",
+      "list",
+      "glob",
+      "grep",
+      "write",
+      "edit",
+      "artifact_save",
+      "todo",
+      "search_docs",
+      "read_doc",
+      "load_skill",
+    ])
+      await expect(dialog.locator(`[data-tool-toggle="${tool}"]`)).toBeChecked();
+    await expect(dialog.locator('[data-tool-description="grep"]')).toContainText("Search");
+    await dialog.locator('[data-tool-toggle="grep"]').uncheck();
+    await dialog.locator('[data-tool-toggle="read"]').uncheck();
+    await dialog.locator('[data-tool-toggle="read"]').check();
     await dialog.locator('[data-action="skills-settings"]').click();
     const skillDialog = page.locator(".skills-dialog");
     await skillDialog.locator("[data-skill-name]").fill("test-reader");
@@ -90,6 +104,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(dialog.locator("[data-project-chunk]")).toHaveValue("800");
     await expect(dialog.locator("[data-project-overlap]")).toHaveValue("100");
     await dialog.locator('[data-project-section="tools"]').click();
+    await expect(dialog.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
+    await expect(dialog.locator('[data-tool-toggle="read"]')).toBeChecked();
     await dialog.locator('[data-action="skills-settings"]').click();
     await expect(skillDialog.locator('input[type="checkbox"]')).not.toBeChecked();
     await page.keyboard.press("Escape");

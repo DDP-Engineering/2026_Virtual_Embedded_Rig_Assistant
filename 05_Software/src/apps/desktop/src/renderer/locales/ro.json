@@ -454,6 +454,20 @@
     "high": "Ridicat",
     "xhigh": "Foarte ridicat"
   },
+  "workbenchTools": {
+    "hint": "Tool-urile bifate sunt active pentru acest workbench. Modificările se aplică după salvare; permisiunile sesiunii se păstrează.",
+    "read": "Citește fișiere text sau intervale de linii.",
+    "list": "Listează fișierele și subfolderele unui director.",
+    "glob": "Găsește fișiere după tipare de nume sau cale, precum **/*.cpp.",
+    "grep": "Caută în conținutul fișierelor, inclusiv cu expresii regulate.",
+    "write": "Creează fișiere text sau le înlocuiește conținutul.",
+    "edit": "Înlocuiește exact fragmente de text într-un fișier citit anterior.",
+    "artifact_save": "Salvează un rezultat text ca artefact al sesiunii.",
+    "todo": "Gestionează lista de sarcini a sesiunii din Plan.",
+    "search_docs": "Caută în documentele indexate ale workbenchului.",
+    "read_doc": "Citește pagini, secțiuni sau linii de text extrase din documente.",
+    "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ."
+  },
   "projects": {
     "new": "Workbench nou",
     "open": "Deschide workbench",
@@ -478,7 +492,6 @@
     "exclude": "Reguli de excludere (una pe linie)",
     "model": "Model implicit (provider/model; gol folosește setarea aplicației)",
     "permissions": "Permisiuni",
-    "disabledTools": "Instrumente dezactivate (unul pe linie)",
     "save": "Salvează",
     "cancel": "Anulează",
     "empty": "Niciun workbench. Creează sau deschide unul pentru a începe.",

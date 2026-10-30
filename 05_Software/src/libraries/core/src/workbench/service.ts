@@ -3,6 +3,7 @@ import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
 import {
+  builtinToolNames,
   configWarnings,
   mergeWorkbench,
   parseRef,
@@ -174,7 +175,7 @@ export class WorkbenchService {
     }).names();
     return configWarnings(config, {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
-      tools: this.host.catalogs?.tools ?? [],
+      tools: this.host.catalogs?.tools ?? builtinToolNames,
     });
   }
   toggleSkill(id: string, name: string, enabled: boolean) {

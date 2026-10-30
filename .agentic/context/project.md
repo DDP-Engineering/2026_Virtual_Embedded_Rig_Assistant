@@ -22,6 +22,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 [Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New/Open Workbench manages user-selected single-root projects. The sidebar retains pinned workbenches and grouped sessions; the project editor manages supported configuration and local embedding chunk settings. Plugins presents integration availability. Sessions begin with user-composed input.
 
+The workbench Tools editor presents the shared built-in catalog with localized descriptions and enabled checkboxes, persisting exclusions through the current tools.disabled configuration.
+
 [Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
 normal loopback tools/approval/citation/restart and external process-tree egress.
 
