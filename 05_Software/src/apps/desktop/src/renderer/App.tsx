@@ -460,6 +460,7 @@ export function App() {
                 />
               )}
             </div>
+            {plugins && <Plugins />}
           </div>
           {emptyCanvas && (
             <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
@@ -477,7 +478,6 @@ export function App() {
               }}
             />
           )}
-          {plugins && <Plugins />}
           {chat && !settings && !plugins && benchId && (
             <SessionWorkspace
               key={`${benchId}/${activeSession}`}

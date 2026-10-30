@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-1676bc64"
+
+title = "Scroll conversations through an independent left rail"
+
+status = "active"
+
+requirement = """
+While a session conversation overflows its available viewport, VERA shall provide an independent conversation scroller with a discreet segmented left rail showing its scroll position and supporting pointer, wheel, touch and keyboard scrolling, keeping the composer visible and preserving the reader's position during new messages until the reader returns to the bottom.
+"""
+
+verification = "Create a long conversation; assert a left rail with scrollbar semantics and proportional position, no visible native right transcript bar, pointer dragging and track clicks move the conversation, Arrow/Page/Home/End keys operate it, wheel/touch use the same viewport, a short conversation hides the rail, and content/viewport changes refresh metrics without moving a reader away from older content. Inspect the resulting desktop layout visually."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-scroll.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/tests/e2e/session-scroll.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

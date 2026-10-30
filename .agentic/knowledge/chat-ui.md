@@ -45,6 +45,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - The transcript and growing composer share a centered content column. The textarea
   resizes on draft/width changes up to a scrolling cap. Compact model/mode controls
   retain Enter/Shift+Enter, completion, steering, approval waits and Stop.
+- The transcript fills the remaining bounded session area; its native scrolling is controlled by a segmented left rail with a proportional position marker. The rail appears only for overflowing content, supports pointer dragging/track clicks and Arrow/Page/Home/End keys, and has an en/ro/de accessible label. Wheel and touch use the same native viewport. Content and viewport resize refresh rail metrics; new messages retain an older reading position until the reader returns to the bottom. Composer and shell stay in place.
 - The context icon shows latest request-view/context tokens divided by reported
   context window; missing capacity is displayed as unknown. Estimated values are
   labeled. Its modal renders UsageMeter and workbench instructions/available skills
@@ -89,6 +90,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts |
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
+| Conversation scroll rail | transcript.tsx, transcript-scroll.tsx, styles.css | tests/e2e/session-scroll.spec.ts |
 
 ## Key behaviors
 
@@ -106,6 +108,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - REQ-UX-8b320385 — running composer steering outside approval waits.
 - REQ-UX-3001bd00 — localized pending delivery markers.
 - REQ-UX-d1b480e0 — optional compaction status and derived request-view size.
+- REQ-UX-1676bc64 — independent accessible segmented left conversation scroll rail.
+- REQ-UX-7c3fd9a6 — viewport containment including the growing composer.
 
 ## Files
 
@@ -115,6 +119,8 @@ Paths relative to05_Software.
 - src/apps/desktop/src/renderer/hooks/use-session-events.ts — guarded snapshot/subscription.
 - src/apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer,plan-tab}.tsx — session presentation.
 - src/apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
+- src/apps/desktop/src/renderer/components/session/transcript-scroll.tsx — local native viewport metrics and accessible pointer/keyboard rail.
+- tests/e2e/session-scroll.spec.ts — bounded chat/settings/banner geometry, pointer/keyboard/wheel/touch scrolling and reading/follow behavior in browser and native Electron.
 - src/apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
 - src/apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.
 - src/apps/desktop/src/main/index.ts; src/libraries/shared/src/ipc.ts — config readOnly metadata and instrumented replay delay composition.

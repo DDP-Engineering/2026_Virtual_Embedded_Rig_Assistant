@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-7c3fd9a6"
+
+title = "Keep the application inside a fixed viewport"
+
+status = "active"
+
+requirement = """
+While VERA is displayed at supported window sizes and interface text sizes, the application shall occupy a fixed viewport with no document-level scrolling, retaining its title row and navigation inside the window and confining long page or panel content to internal scrolling regions.
+"""
+
+verification = "Open a long conversation at 1280x900 and 1024x640 with normal and largest interface text, grow the composer, scroll chat and open long Settings; assert the document has no scroll range on either axis, the title/navigation/composer remain inside the viewport, and the last Settings control remains reachable by internal scrolling. Repeat conversation containment in native Electron."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/session-scroll.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

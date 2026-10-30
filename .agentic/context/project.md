@@ -12,6 +12,8 @@ The software root contains four ESM workspaces and strict TypeScript tooling wit
 
 The target platforms are Windows x64 and Linux x64 (01-system section 9).
 
+The desktop shell occupies a fixed viewport without document scrolling; long pages/panels scroll internally, and conversations use an independent segmented left scroll rail while the composer remains visible.
+
 ## Established constraints
 
 The architecture laws in [01-system](../../00_Planning/architecture/01-system.md) govern process boundaries, local assets, credentials and test isolation. Versions are pinned exactly. Core remains independent of Electron; renderer access to main uses shared contracts.

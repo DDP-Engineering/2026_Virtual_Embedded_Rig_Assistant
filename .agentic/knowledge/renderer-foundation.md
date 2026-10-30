@@ -55,7 +55,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
   stays transient, and application readOnly suppresses geometry writes.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
 - Keyboard controls use visible focus-ring CSS and semantic labels; opaque theme-token text pairs meet calculated AA contrast. Actual visual/AT acceptance follows the renderer accessibility contract. Selected buttons expose semantic state and heavier type.
-  Reduced-motion styles disable animation/transition. Minimum viewport uses wrapping and vertical scroll.
+  Reduced-motion styles disable animation/transition. The shell is fixed to the viewport with no document scroll; long pages and panels own their internal scroll regions. Minimum viewport uses wrapping inside these bounded regions.
 - [Chat UI](chat-ui.md) owns session navigation, transcript, composer, usage and session Context.
 
 ## Change map
@@ -64,6 +64,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 |---|---|---|
 | Routes/placeholder sections | App.tsx, components/settings.tsx | browser acceptance |
 | Panels/geometry | components/shell.tsx, lib/layout.ts | preferences.test.ts and native foundation acceptance |
+| Viewport containment and regional scrolling | styles.css, App.tsx | tests/e2e/session-scroll.spec.ts |
 | Appearance/theme/scale | hooks/use-preferences.ts, styles/ | native restart plus browser minimum-size matrix |
 | Languages/errors | i18n.ts, locales/, lib/language.ts, components/error-message.tsx | catalog fixture and browser translated failure |
 | Query invalidation/readOnly | hooks/use-preferences.ts | native external update/future-schema and browser save failure |
@@ -80,36 +81,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 - REQ-UX-52f83eb7 — modal-aware shortcuts and accessible transcript search.
 - REQ-UX-b7eabce7 — source-consistent Romanian/German catalog semantics.
 - REQ-UX-4a040008 — confirmed snapshots and read-only behavior.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  App --> Shell
-  App --> ShortcutContext[Confirmed shortcut overrides]
-  ShortcutContext --> Shell
-  ShortcutContext --> Workspace[Conversation actions]
-  Settings --> ShortcutEditor[Shortcut search and recorder]
-  ShortcutEditor --> API
-  App --> Settings
-  App --> Workbench[Workbench overview and creation]
-  App --> Editor[Workbench editor / Instructions / Skills]
-  Editor --> API
-  Workbench --> API
-  App --> usePreferences
-  usePreferences --> Query
-  Query --> API[typed VeraApi]
-  API --> service[core SettingsService]
-  service --> event[settings.changed]
-  event --> Query
-  usePreferences --> root[theme / font / language]
-  Shell --> ChangesTab
-  ChangesTab --> API
-  Shell --> layout[(versioned localStorage geometry)]
-  Shell --> Rail[Expanded sidebar or icon rail]
-  Shell --> NativeMenu[Validated native menu IPC]
-  main[main settings handler] --> nativeTheme
-```
+- REQ-UX-7c3fd9a6 — fixed viewport and internally scrollable page/panel content.
 
 The view consumes confirmed settings. Native theme and renderer geometry have distinct owners.
 
@@ -127,6 +99,7 @@ Paths relative to 05_Software/src/apps/desktop/src/renderer except qualified pat
 - 05_Software/src/apps/desktop/src/main/index.ts — initial and updated nativeTheme.
 - 05_Software/scripts/check-i18n.mjs, tests/tooling/i18n.test.ts — AST catalog auditing/fixtures.
 - 05_Software/tests/e2e/{mock,shell}.spec.ts — browser and native UI acceptance.
+- 05_Software/tests/e2e/session-scroll.spec.ts — fixed document/main bounds, long Settings, update banner, enlarged input and conversation rail in browser/native Electron.
 
 Settings hides the primary New/Open/Plugins actions while its categories are
 visible; Back to workbenches restores the previous workbench view. The overview

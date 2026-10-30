@@ -160,6 +160,8 @@ Session export/search verification routes are core sessions/export.test.ts and s
 
 ## Workbench navigation verification
 
+`tests/e2e/session-scroll.spec.ts` covers fixed viewport geometry, enlarged composer/text, long Settings and update banner, plus the independent left conversation rail with pointer, keyboard, wheel, touch and reading/follow checks. Native replay tests require an instrumented build (`VERA_TEST=1 npm run test:e2e -- ...`) and isolated profiles; the normal development application uses its existing user profile.
+
 `tests/e2e/workbench-navigation.spec.ts` exercises mock sidebar/editor and two-workbench
 session switching. `tests/e2e/workbench.spec.ts` owns native create/open/restart.
 Core workbench/ingest/chunk-settings tests cover persistent pins, retained registry,
