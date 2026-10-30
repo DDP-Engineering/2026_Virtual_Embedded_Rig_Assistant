@@ -21,6 +21,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 
 ## Public interface
 
+- Agent activity displays a muted, wrapping statistics line per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; en/ro/de strings and activity-usage.test.ts plus native prompt-usage.spec.ts cover presentation and restart.
+
 - PermissionPicker offers read-only, Ask, Auto-edit and marked Bypass. Bypass persists as the session mode and enables full ordinary file tool access outside the workbench without confirmations; its red/bold warning-marked selection remains visible even when the localized Close/X/Escape warning is suppressed through application preferences. Mode changes remain available during active turns, with scoped execution revoked by the core on downgrade. Permission save failures surface at the picker.
 
 - The composer places a localized reasoning picker immediately after Model. It offers Default plus the model-declared native levels and hides for models without declared support. Its session-keyed metadata follows effective session/workbench/app model configuration; saves use an expected-model guard and confirmed responses. Read-only/pending saves disable editing; running or awaiting-approval turns can select the next request level. No polling or full-history replay is needed for reasoning metadata.

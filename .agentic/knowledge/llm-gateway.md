@@ -10,6 +10,8 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 
 ## Public interface
 
+- Replay steps optionally declare validated nonnegative integer usage.input and usage.output for deterministic numeric statistics acceptance. Omitted usage stays zero/unreported; totals sum the supplied counts, costs stay zero. Replay fixture parsing validates on scenario use, and replay.test.ts covers invalid measurements. Native prompt-usage.spec.ts exercises real model/tool steps, per-prompt projection and restart without live egress.
+
 - prepareModel(reference,signal?) resolves live metadata before synchronous capabilities and budgeting. ChatGPT catalog discovery uses its authenticated Codex models endpoint (schema version 0.162.1); inference retains the pinned SDK public Responses route. Catalog IDs, context and native reasoning levels come from the server, including SDK-unknown models; no local model-specific reasoning allowlist or name heuristic. Codex Ultra is excluded as client subagent orchestration, not a public Responses effort. Unknown model prices have no SDK estimate.
 - Account-scoped catalog memory is refreshed after five minutes and on token/account changes, with superseded-publication protection. Individual caller abort detaches from a shared fetch. Optional reasoningOptions project declared levels; LM Studio uses discovered profiles, ordinary API-key catalogs with no declared levels expose none. LlmRequest.reasoning overrides the profile only when supported; Default leaves the provider/profile default. Responses use reasoning.effort, completions use reasoning_effort; LM Studio off/on mapping remains.
 

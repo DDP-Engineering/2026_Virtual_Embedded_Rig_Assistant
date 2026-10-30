@@ -186,6 +186,12 @@
     "failure": "Eroare furnizor: {{message}}"
   },
   "chat": {
+    "promptInput": "Intrare",
+    "promptOutput": "Ieșire",
+    "promptInitialContext": "Context inițial",
+    "promptContextTokens": "{{value}} tokenuri",
+    "promptShared": "Comun",
+    "promptSharedInfo": "Consum comun pentru prompturile incluse împreună în aceeași cerere către model.",
     "reasoningLevel": "Nivel de reasoning",
     "reasoningDefault": "Implicit",
     "reasoningNone": "Fără reasoning",

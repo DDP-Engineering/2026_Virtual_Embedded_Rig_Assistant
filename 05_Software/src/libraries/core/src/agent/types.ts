@@ -50,7 +50,7 @@ export type RuntimeEvent =
     }
   | { type: "approval.requested"; call: ToolCall }
   | { type: "approval.decided"; callId: string; decision: "approved" | "denied" | "aborted" }
-  | ({ type: "usage.updated"; inputTokens: number; outputTokens: number } & Partial<
+  | ({ type: "usage.updated"; inputTokens: number; outputTokens: number; promptIds?: string[] } & Partial<
       Omit<ContextView, "messages" | "fits">
     >)
   | { type: "error"; code: VeraError["code"]; messageKey: string; retryable: boolean };

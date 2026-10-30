@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-bc9adf3a"
+
+title = "Show discreet localized per-prompt statistics in Agent activity"
+
+status = "active"
+
+requirement = """
+When viewing Agent activity, VERA shall display a discreet localized line for each prompt showing its attributed input/output token counts and historical initial context with estimate or unavailable indicators and an explicit shared-consumption marker for batched prompts.
+"""
+
+verification = "Render multiple prompts in English, Romanian and German, verify independent historical values, estimate/unavailable/shared labels and compact narrow layouts; native session restart retains the same statistics without additional model calls."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-inspector.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/session/activity-usage.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/activity-usage.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts", "05_Software/tests/e2e/prompt-usage.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

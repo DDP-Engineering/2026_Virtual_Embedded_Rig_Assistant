@@ -1,5 +1,7 @@
 # Environment guide
 
+Per-prompt activity verification: shared/core prompt-usage tests and renderer activity-usage.test.ts; tests/e2e/prompt-usage.spec.ts uses isolated native replay counts, real file tools and restart with no external provider calls.
+
 ## Toolchain
 
 The repository toolchain is defined by [02_Tools/toolchain.json](../../02_Tools/toolchain.json). [02_Tools/README.md](../../02_Tools/README.md) documents Python, Git and the local Node runtime.

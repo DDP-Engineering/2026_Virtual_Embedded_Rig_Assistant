@@ -186,6 +186,12 @@
     "failure": "Anbieterfehler: {{message}}"
   },
   "chat": {
+    "promptInput": "Eingabe",
+    "promptOutput": "Ausgabe",
+    "promptInitialContext": "Anfangskontext",
+    "promptContextTokens": "{{value}} Token",
+    "promptShared": "Gemeinsam",
+    "promptSharedInfo": "Gemeinsamer Verbrauch für Prompts, die zusammen in derselben Modellanfrage verarbeitet werden.",
     "reasoningLevel": "Reasoning-Stufe",
     "reasoningDefault": "Standard",
     "reasoningNone": "Ohne Reasoning",

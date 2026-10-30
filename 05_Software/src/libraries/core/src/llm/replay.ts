@@ -2,14 +2,20 @@ import { readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { AssistantMessage, Message, ToolCall } from "@earendil-works/pi-ai";
 import { type ProviderCatalog, veraError } from "@vera/shared";
+import { z } from "zod";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 
 interface ReplayStep {
+  usage?: { input: number; output: number };
   match?: string;
   prompt?: string;
   text?: string;
   toolCalls?: { name: string; args: ToolCall["arguments"] }[];
 }
+const declaredUsage = z.strictObject({
+  input: z.number().int().nonnegative(),
+  output: z.number().int().nonnegative(),
+});
 interface Scenario {
   name: string;
   match: RegExp | null;
@@ -38,6 +44,7 @@ function scenarios(dir: string): Scenario[] {
           (step) =>
             !step ||
             typeof step !== "object" ||
+            (step.usage !== undefined && !declaredUsage.safeParse(step.usage).success) ||
             (step.text !== undefined && typeof step.text !== "string") ||
             (step.toolCalls !== undefined &&
               (!Array.isArray(step.toolCalls) ||
@@ -171,11 +178,11 @@ export class ReplayGateway implements LlmGateway {
           })),
         ],
         usage: {
-          input: 0,
-          output: 0,
+          input: selected.usage?.input ?? 0,
+          output: selected.usage?.output ?? 0,
           cacheRead: 0,
           cacheWrite: 0,
-          totalTokens: 0,
+          totalTokens: (selected.usage?.input ?? 0) + (selected.usage?.output ?? 0),
           cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
         },
         stopReason: selected.toolCalls?.length ? "toolUse" : "stop",

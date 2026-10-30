@@ -118,7 +118,7 @@ export class ReferenceRuntime implements AgentRuntime {
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
     try {
-      stopReason = await this.run(init, controller.signal, currentStart, recovered);
+      stopReason = await this.run(init, controller.signal, currentStart, recovered, messageId);
     } catch (error) {
       stopReason = controller.signal.aborted ? "aborted" : "error";
       if (stopReason === "error")
@@ -135,10 +135,17 @@ export class ReferenceRuntime implements AgentRuntime {
     signal: AbortSignal,
     currentStart: number,
     recovered: Set<string>,
+    initialPromptId: string,
   ): Promise<StopReason> {
     let callsUsed = 0;
     let inputTokens = 0;
     let outputTokens = 0;
+    let promptIds = [initialPromptId];
+    let firstRequest = true;
+    const addUsage = (message: AssistantMessage) => {
+      inputTokens += message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
+      outputTokens += message.usage.output;
+    };
     const delivered = new Set<string>();
     const recoveredPositions = new Set<number>();
     const pending = () =>
@@ -186,22 +193,25 @@ export class ReferenceRuntime implements AgentRuntime {
           });
           signal.throwIfAborted();
           let summary: AssistantMessage | undefined;
-          for await (const event of this.host.gateway.stream({
-            model: init.model,
-            system: input.system,
-            tools: input.tools,
-            messages: summaryMessages,
-            signal,
-            maxOutputTokens: summaryView.reservedOutputTokens,
-          })) {
-            if (event.type === "error") return undefined;
-            if (event.type === "done") summary = event.message;
+          try {
+            for await (const event of this.host.gateway.stream({
+              model: init.model,
+              system: input.system,
+              tools: input.tools,
+              messages: summaryMessages,
+              signal,
+              maxOutputTokens: summaryView.reservedOutputTokens,
+            })) {
+              if (event.type === "error") {
+                summary = event.partial ?? summary;
+                return undefined;
+              }
+              if (event.type === "done") summary = event.message;
+            }
+            return summary;
+          } finally {
+            if (summary) addUsage(summary);
           }
-          if (summary) {
-            inputTokens += summary.usage.input;
-            outputTokens += summary.usage.output;
-          }
-          return summary;
         },
         historicalEnd,
       );
@@ -225,7 +235,8 @@ export class ReferenceRuntime implements AgentRuntime {
       };
       view.requestViewTokens = view.contextTokens;
       const { messages, fits, ...budget } = view;
-      this.emit({ type: "usage.updated", inputTokens, outputTokens, ...budget });
+      if (signal.aborted || !fits)
+        this.emit({ type: "usage.updated", inputTokens, outputTokens, ...budget, promptIds });
       if (signal.aborted) return "aborted";
       if (!fits) {
         this.emit({
@@ -243,9 +254,22 @@ export class ReferenceRuntime implements AgentRuntime {
         for (const message of queued) delivered.add(message.messageId);
         // One durable transition persists the entire admitted batch and its markers.
         this.emit({ type: "message.delivered", messageIds: queued.map((message) => message.messageId) });
+        promptIds = [
+          ...(firstRequest ? [initialPromptId] : []),
+          ...queued.map((message) => message.messageId),
+        ];
       }
+      firstRequest = false;
+      this.emit({ type: "usage.updated", inputTokens, outputTokens, ...budget, promptIds });
       const messageId = this.host.nextId();
       let final: AssistantMessage | undefined;
+      let usageRecorded = false;
+      const reportUsage = (message: AssistantMessage | undefined) => {
+        if (!message || usageRecorded) return;
+        usageRecorded = true;
+        addUsage(message);
+        this.emit({ type: "usage.updated", inputTokens, outputTokens, promptIds });
+      };
       let streamed = "";
       const retainPartial = (partial?: AssistantMessage) => {
         if (!streamed) return;
@@ -283,6 +307,7 @@ export class ReferenceRuntime implements AgentRuntime {
           else if (event.type === "done") final = event.message;
           else {
             retainPartial(event.partial);
+            reportUsage(event.partial ?? final);
             if (signal.aborted || event.aborted) return "aborted";
             const limit =
               event.error.code === "CONTEXT_LIMIT" ||
@@ -298,12 +323,14 @@ export class ReferenceRuntime implements AgentRuntime {
         }
       } catch {
         retainPartial();
+        reportUsage(final);
         if (signal.aborted) return "aborted";
         this.emit({ type: "error", code: "PROVIDER", messageKey: "error.provider", retryable: false });
         return "error";
       }
       if (signal.aborted) {
         retainPartial(final);
+        reportUsage(final);
         return "aborted";
       }
       if (!final) {
@@ -318,9 +345,7 @@ export class ReferenceRuntime implements AgentRuntime {
         .join("");
       if (text && !streamed) this.emit({ type: "message.delta", messageId, text });
       this.emit({ type: "message.done", messageId, text, message: final });
-      inputTokens += final.usage.input;
-      outputTokens += final.usage.output;
-      this.emit({ type: "usage.updated", inputTokens, outputTokens });
+      reportUsage(final);
       const calls = final.content.filter((c): c is ToolCall => c.type === "toolCall");
       if (final.stopReason === "length" || final.stopReason === "error" || final.stopReason === "aborted") {
         for (const call of calls)

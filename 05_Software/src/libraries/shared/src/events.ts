@@ -52,6 +52,8 @@ export const usageEventSchema = z.strictObject({
   type: z.literal("usage.updated"),
   inputTokens: count,
   outputTokens: count,
+  /** User messages whose processing owns the newly reported consumption. */
+  promptIds: z.array(z.string().min(1)).min(1).optional(),
   contextTokens: count.optional(),
   contextWindow: count.optional(),
   inputBudgetTokens: z.number().int().optional(),

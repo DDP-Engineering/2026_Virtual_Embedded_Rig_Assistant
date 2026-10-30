@@ -33,6 +33,15 @@ async function stream(
   for await (const e of gateway.stream({ model, system: "s", messages, tools: [], signal })) out.push(e);
   return out;
 }
+it("preserves declared replay token usage and rejects invalid fixture measurements", async () => {
+  const dir = await fixture(JSON.stringify({ text: "Done", usage: { input: 100, output: 12 } }));
+  const events = await stream(new ReplayGateway({ dir, now: () => 0 }), []);
+  expect(events.find((event) => event.type === "done")).toMatchObject({
+    message: { usage: { input: 100, output: 12, totalTokens: 112 } },
+  });
+  await writeFile(join(dir, "echo.jsonl"), JSON.stringify({ text: "Done", usage: { input: -1, output: 2 } }));
+  await expect(new ReplayGateway({ dir, now: () => 0 }).models("replay")).rejects.toThrow();
+});
 it("passes every connection step for scripted tools and fails tools for text-only model", async () => {
   const dir = await fixture(
     `${JSON.stringify({

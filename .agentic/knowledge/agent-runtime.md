@@ -12,6 +12,8 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ## Public interface
 
+- Normal usage updates carry the admitted promptIds group; first dispatch can include the initiating prompt and admitted queue, and later steering takes ownership of subsequent calls. Normal budgets follow durable delivery; internal summary budgets have no prompt ownership. Input consumption includes SDK input/cacheRead/cacheWrite, output uses reported output. Terminal partial reports on error/abort and completed reports before cancellation are accounted once; summary finally retains reported consumption even when summarization fails. Unreported all-zero usage is not a measured zero. prompt-usage.test.ts verifies groups, totals and dispatch order; native prompt-usage.spec.ts verifies persistence and UI.
+
 - A Bypass prompt appends the current full filesystem scope and existing tool/OS boundaries. Ordinary file tool descriptions include that scope before normal runtime budgeting; Bypass does not introduce new tool capabilities or remove size, binary, exact-read or host ownership constraints. The SessionService/ApprovalGate layer supplies live revocable authority.
 
 - Before each model budget calculation, ReferenceRuntime awaits optional gateway.prepareModel(model,signal). This resolves live provider capabilities for cold/expired catalogs without relying on renderer queries; readiness errors settle through the normal turn error path. Timed/session wrappers preserve the hook. Reasoning is snapshotted at dispatch by SessionService, including internal subsequent model calls.

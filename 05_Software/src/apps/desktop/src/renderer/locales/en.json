@@ -186,6 +186,12 @@
     "failure": "Provider error: {{message}}"
   },
   "chat": {
+    "promptInput": "Input",
+    "promptOutput": "Output",
+    "promptInitialContext": "Initial context",
+    "promptContextTokens": "{{value}} tokens",
+    "promptShared": "Shared",
+    "promptSharedInfo": "Shared consumption for prompts admitted together in the same model request.",
     "reasoningLevel": "Reasoning level",
     "reasoningDefault": "Default",
     "reasoningNone": "None",

@@ -1,12 +1,49 @@
 import type { SessionState } from "@vera/shared";
 import { Bot, MessageSquare, Wrench, X } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
 import { ContextTab } from "./context-tab.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 import { UsageMeter } from "./usage-meter.js";
+
+function PromptUsage({
+  usage,
+}: {
+  usage: Extract<SessionState["items"][number], { kind: "user" }>["usage"];
+}) {
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage ?? i18n.language;
+  const number = useMemo(() => new Intl.NumberFormat(language), [language]);
+  const percent = useMemo(
+    () =>
+      new Intl.NumberFormat(language, {
+        style: "percent",
+        maximumFractionDigits: 0,
+      }),
+    [language],
+  );
+  const value = (count: number | undefined) => (count === undefined ? "—" : number.format(count));
+  const context =
+    usage?.contextTokens === undefined
+      ? "—"
+      : `${usage.estimated ? "≈" : ""}${usage.contextWindow ? percent.format(usage.contextTokens / usage.contextWindow) : t("chat.promptContextTokens", { count: usage.contextTokens, value: number.format(usage.contextTokens) })}`;
+  return (
+    <p className="activity-prompt-usage" data-prompt-usage>
+      <span>
+        {t("chat.promptInput")}: {value(usage?.inputTokens)}
+      </span>
+      <span>
+        {t("chat.promptOutput")}: {value(usage?.outputTokens)}
+      </span>
+      <span>
+        {t("chat.promptInitialContext")}: {context}
+      </span>
+      {usage?.shared && <span title={t("chat.promptSharedInfo")}>{t("chat.promptShared")}</span>}
+    </p>
+  );
+}
 
 export function ActivityLog({
   state,
@@ -26,18 +63,21 @@ export function ActivityLog({
         {state.items.map((item) => (
           <li key={`${item.kind}/${item.id}`} data-activity-kind={item.kind}>
             {item.kind === "user" && (
-              <Disclosure
-                title={
-                  <>
-                    <MessageSquare aria-hidden="true" />
-                    {t("chat.activityPrompt")}
-                    <span className="activity-preview">{item.text.slice(0, 100)}</span>
-                  </>
-                }
-              >
-                {item.pending && <p role="status">{t("chat.pending")}</p>}
-                <pre>{item.text}</pre>
-              </Disclosure>
+              <>
+                <Disclosure
+                  title={
+                    <>
+                      <MessageSquare aria-hidden="true" />
+                      {t("chat.activityPrompt")}
+                      <span className="activity-preview">{item.text.slice(0, 100)}</span>
+                    </>
+                  }
+                >
+                  {item.pending && <p role="status">{t("chat.pending")}</p>}
+                  <pre>{item.text}</pre>
+                </Disclosure>
+                <PromptUsage usage={item.usage} />
+              </>
             )}
             {item.kind === "assistant" && (
               <Disclosure

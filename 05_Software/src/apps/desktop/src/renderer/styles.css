@@ -1968,6 +1968,18 @@ legend {
   white-space: nowrap;
   max-width: 100%;
 }
+.activity-prompt-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.85rem;
+  margin: 0.15rem 0.75rem 0.65rem;
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+.activity-prompt-usage span {
+  overflow-wrap: anywhere;
+}
 .agent-activity pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

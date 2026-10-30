@@ -38,6 +38,16 @@ export const sessionStateSchema = z.strictObject({
         text: z.string(),
         pending: z.boolean().optional(),
         timestamp: z.number().int().nonnegative().optional(),
+        usage: z
+          .strictObject({
+            inputTokens: z.number().int().nonnegative().optional(),
+            outputTokens: z.number().int().nonnegative().optional(),
+            contextTokens: z.number().int().nonnegative().optional(),
+            contextWindow: z.number().int().positive().optional(),
+            estimated: z.boolean().optional(),
+            shared: z.boolean().optional(),
+          })
+          .optional(),
       }),
       assistant,
       tool,
@@ -107,6 +117,7 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
       break;
     case "turn.started":
       s.activeTurnId = event.turnId;
+      s.usage = { inputTokens: 0, outputTokens: 0 };
       s.status = "running";
       s.turns.push({ turnId: event.turnId, steps: 0, stopReason: null });
       break;
@@ -218,6 +229,28 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
       s.todos = event.items;
       break;
     case "usage.updated": {
+      const input = Math.max(0, event.inputTokens - s.usage.inputTokens);
+      const output = Math.max(0, event.outputTokens - s.usage.outputTokens);
+      const owners = new Set(event.promptIds);
+      for (const item of s.items) {
+        if (item.kind !== "user" || item.pending || !owners.has(item.id)) continue;
+        const usage = item.usage ?? {};
+        if (input || output) {
+          usage.inputTokens = (usage.inputTokens ?? 0) + input;
+          usage.outputTokens = (usage.outputTokens ?? 0) + output;
+        }
+        if (
+          usage.contextTokens === undefined &&
+          event.contextTokens !== undefined &&
+          event.compactionStatus !== "running"
+        ) {
+          usage.contextTokens = event.requestViewTokens ?? event.contextTokens;
+          if (event.contextWindow) usage.contextWindow = event.contextWindow;
+          usage.estimated = event.estimated ?? true;
+        }
+        if (owners.size > 1) usage.shared = true;
+        item.usage = usage;
+      }
       const { type: _, ...u } = event;
       s.usage = { ...s.usage, ...u };
       break;

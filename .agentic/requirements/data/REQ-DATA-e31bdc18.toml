@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-e31bdc18"
+
+title = "Preserve attributed per-prompt consumption and initial context snapshots"
+
+status = "active"
+
+requirement = """
+When processing user prompts, VERA shall preserve attributed input/output consumption across their model calls and the first normal-request context snapshot, distinguishing shared prompt batches and unavailable consumption without replacing past snapshots.
+"""
+
+verification = "Replay two turns with different budgets and repeated cumulative usage, aggregate tool steps without double counting, admit queued batches with explicitly shared totals, and cover missing reports, context limits, stop and internal compaction."
+
+affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/shared/src/prompt-usage.test.ts", "05_Software/src/libraries/core/src/agent/prompt-usage.test.ts", "05_Software/src/libraries/core/src/llm/replay.ts", "05_Software/src/libraries/core/src/llm/replay.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/prompt-usage.test.ts", "05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/libraries/core/src/agent/prompt-usage.test.ts", "05_Software/src/libraries/core/src/agent/steering.test.ts", "05_Software/src/libraries/core/src/agent/runtime.test.ts", "05_Software/src/libraries/core/src/agent/runtime-edge.test.ts", "05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/llm/replay.test.ts", "05_Software/tests/e2e/prompt-usage.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30
