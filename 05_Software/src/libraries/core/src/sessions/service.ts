@@ -92,6 +92,7 @@ export class SessionService {
   private readonly active = new Map<string, ActiveTurn>();
   private readonly last = new Map<string, { stopReason: StopReason }>();
   private readonly contexts = new Map<string, ToolContext>();
+  private readonly bypassScopes = new Map<string, AbortController>();
   private readonly reasonings = new Map<string, string | null>();
   private readonly compactors = new Map<string, ContextCompactor>();
   private readonly deleting = new Set<string>();
@@ -429,12 +430,18 @@ export class SessionService {
     return this.summary(this.row(id));
   }
   setMode(id: string, mode: PermissionMode): SessionSummary {
-    this.row(id);
+    const previousMode = this.row(id).permission_mode;
     this.writable();
     if (this.deleting.has(id)) throw veraError("BUSY");
     if (!permissionModeSchema.safeParse(mode).success) throw veraError("INVALID");
     this.update(id, { type: "session.updated", mode });
+    if (mode !== "bypass") {
+      this.bypassScopes.get(id)?.abort();
+      this.bypassScopes.delete(id);
+      if (previousMode === "bypass") this.approvals.abort(id, "mode");
+    }
     if (mode === "read-only") this.approvals.abort(id, "mode");
+    if (mode === "bypass") this.approvals.approveBypass(id);
     return this.summary(this.row(id));
   }
   decideApproval(input: ApprovalDecision): void {
@@ -466,6 +473,8 @@ export class SessionService {
       });
       this.hub.clear(id);
       this.contexts.delete(id);
+      this.bypassScopes.get(id)?.abort();
+      this.bypassScopes.delete(id);
       this.compactors.delete(id);
       this.reasonings.delete(id);
       this.last.delete(id);
@@ -564,6 +573,16 @@ export class SessionService {
     if (!this.host.gateway.prepareModel) this.host.gateway.capabilities(model);
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
+    ctx.permissionMode = () => this.row(id).permission_mode;
+    ctx.bypassSignal = () => {
+      if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
+      let scope = this.bypassScopes.get(id);
+      if (!scope) {
+        scope = new AbortController();
+        this.bypassScopes.set(id, scope);
+      }
+      return scope.signal;
+    };
     ctx.knowledge = this.knowledge;
     if (this.host.skills) ctx.skills = this.host.skills;
     else delete ctx.skills;
@@ -913,12 +932,14 @@ export class SessionService {
     this.closing = true;
     for (const turn of this.active.values()) turn.accepting = false;
     for (const turn of this.active.values()) turn.runtime.abort();
+    for (const scope of this.bypassScopes.values()) scope.abort();
     await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
     await this.ready;
     await this.writeQueue.drain();
     this.closed = true;
     this.hub.clear();
     this.contexts.clear();
+    this.bypassScopes.clear();
     this.compactors.clear();
     this.reasonings.clear();
   }

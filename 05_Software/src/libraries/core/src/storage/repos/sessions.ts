@@ -1,3 +1,4 @@
+import type { PermissionMode } from "@vera/shared";
 import type Database from "better-sqlite3";
 
 export interface SessionRow {
@@ -6,7 +7,7 @@ export interface SessionRow {
   created_at: string | null;
   updated_at: string | null;
   model_ref: string | null;
-  permission_mode: "read-only" | "ask" | "auto-edit";
+  permission_mode: PermissionMode;
   status: "idle" | "running" | "awaiting_approval" | "error";
   archived: 0 | 1;
 }

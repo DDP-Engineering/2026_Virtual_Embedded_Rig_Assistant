@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { permissionModeSchema } from "./session.js";
 
 export const workbenchIdSchema = z.string().regex(/^wb_[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
 const docs = z.looseObject({
@@ -17,7 +18,7 @@ export const workbenchEmbeddingsSchema = z
   });
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
 const agent = z.looseObject({
-  permission_mode: z.enum(["read-only", "ask", "auto-edit"]).default("ask"),
+  permission_mode: permissionModeSchema.default("ask"),
   model: z
     .string()
     .regex(/^[^/]+\/.+$/)

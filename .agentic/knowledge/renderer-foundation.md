@@ -106,6 +106,8 @@ visible; Back to workbenches restores the previous workbench view. The overview
 has one Edit action and its editor hosts instructions and Skills management.
 Shared dialogs are centered, including nested Skills dialogs.
 
+PermissionPicker is shared by the session composer and workbench Agent settings. Bypass has a warning marker plus red/bold selected styling; explicit selection shows a centered, localized full-file-access warning with Close/X/Escape and focus restoration. The application suppressBypassWarning preference hides later notices after confirmed checkbox persistence; failed saves retain a visible error/notice, and read-only app settings disable that checkbox. Native warnings are portaled outside the composer form, preserving input ownership. REQ-UX-33b9d601 and REQ-UX-bb147586 attach to permission-picker.test.ts and tests/e2e/bypass.spec.ts.
+
 Workbench Tools uses the canonical shared built-in names and short localized descriptions with native enabled checkboxes. `components/workbench-tools.tsx` presents the list; `workbench-editor.tsx` owns the existing tools.disabled draft and Save/Cancel/read-only lifecycle. Focused proof: workbench-tools.test.ts plus tests/e2e/workbench-navigation.spec.ts and workbench-tools.spec.ts (REQ-UX-0f1a32c4, REQ-FUNC-37261edc).
 
 ## Configurable keyboard shortcuts

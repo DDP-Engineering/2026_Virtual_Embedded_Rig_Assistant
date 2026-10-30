@@ -12,6 +12,8 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ## Public interface
 
+- A Bypass prompt appends the current full filesystem scope and existing tool/OS boundaries. Ordinary file tool descriptions include that scope before normal runtime budgeting; Bypass does not introduce new tool capabilities or remove size, binary, exact-read or host ownership constraints. The SessionService/ApprovalGate layer supplies live revocable authority.
+
 - Before each model budget calculation, ReferenceRuntime awaits optional gateway.prepareModel(model,signal). This resolves live provider capabilities for cold/expired catalogs without relying on renderer queries; readiness errors settle through the normal turn error path. Timed/session wrappers preserve the hook. Reasoning is snapshotted at dispatch by SessionService, including internal subsequent model calls.
 
 - start accepts systemPrompt,model string,ToolDef[],Message[],ContextPolicy and optional maxToolCallsPerTurn (default50); send runs one turn and returns end/aborted/error/limit; abort propagates the turn signal; onEvent returns unsubscribe; messages returns full detached pi Message[]. Busy start/send return BUSY.

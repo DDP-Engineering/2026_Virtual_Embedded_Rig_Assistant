@@ -454,6 +454,12 @@
     "high": "Ridicat",
     "xhigh": "Foarte ridicat"
   },
+  "bypass": {
+    "option": "Bypass — acces complet",
+    "title": "Bypass: acces complet la fișiere",
+    "warning": "Agentul poate citi și modifica fișiere oriunde contul tău are acces, inclusiv în afara workbenchului, fără să mai ceară confirmare. Poate deteriora proiecte, fișiere sau setările aplicațiilor. Sunt disponibile doar tool-urile activate; permisiunile sistemului de operare se păstrează.",
+    "dontShowAgain": "Nu mai afișa acest mesaj data viitoare"
+  },
   "workbenchTools": {
     "hint": "Tool-urile bifate sunt active pentru acest workbench. Modificările se aplică după salvare; permisiunile sesiunii se păstrează.",
     "read": "Citește fișiere text sau intervale de linii.",

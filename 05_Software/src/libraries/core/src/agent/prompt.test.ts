@@ -31,6 +31,14 @@ const input = () => ({
     indexedDocuments: 7,
   },
 });
+
+it("describes the explicitly enabled full filesystem scope to Bypass models", () => {
+  const base = input();
+  const result = prompt.buildSystemPrompt({ ...base, env: { ...base.env, permissionMode: "bypass" } });
+  expect(result.text).toContain("Permission mode: bypass");
+  expect(result.text).toContain("absolute paths outside the workbench");
+  expect(result.characters).toBe(result.text.length);
+});
 const rules = [
   "Ground factual claims in workbench files and documents. Cite them with the ref values tools return, written as [[ref]]. Never invent a ref.",
   "Use search_docs before answering questions about parts, boards, registers, limits or procedures. If the workbench does not answer the question, say so.",

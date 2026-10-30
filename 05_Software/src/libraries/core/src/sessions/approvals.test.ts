@@ -170,6 +170,21 @@ it("auto-edit ordinary path records mode and internal metadata stays inaccessibl
     expect(await readFile(join(p.root, protectedName), "utf8")).toBe("old\n");
   }
 });
+
+it("switching an approval wait into Bypass grants the pending exact change without another decision", async () => {
+  const { service, root, path, handle } = await setup();
+  const session = service.create();
+  service.send(session.id, "edit");
+  await waiting(service, session.id);
+  service.setMode(session.id, "bypass");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(await readFile(join(root, path), "utf8")).toBe("new\n");
+  expect(handle.db.prepare("SELECT decision,decided_by,consumed_at FROM approvals").get()).toMatchObject({
+    decision: "approved",
+    decided_by: "mode",
+    consumed_at: expect.any(String),
+  });
+});
 it("read-only catalog and fabricated execution reject writes", async () => {
   const { service, root, path, catalogs, handle } = await setup(undefined, true);
   const s = service.create(null, "read-only");

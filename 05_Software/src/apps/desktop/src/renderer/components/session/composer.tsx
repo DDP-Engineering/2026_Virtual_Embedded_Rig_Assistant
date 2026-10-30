@@ -1,11 +1,12 @@
 // REQ-UX-4bea0003 REQ-REL-4bea0004
 import { useQuery } from "@tanstack/react-query";
-import { permissionModeSchema, type SessionState } from "@vera/shared";
+import type { SessionState } from "@vera/shared";
 import { ArrowUp, Square } from "lucide-react";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
+import { PermissionPicker } from "../permission-picker.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
 export function Composer({
@@ -246,19 +247,7 @@ export function Composer({
               catalogVersion={subscriptionModels.dataUpdatedAt + providers.dataUpdatedAt}
             />
           )}
-          <label>
-            <span className="sr-only">{t("approval.mode")}</span>
-            <select
-              aria-label={t("approval.mode")}
-              value={state.mode}
-              disabled={disabled}
-              onChange={(e) => void setMode(permissionModeSchema.parse(e.target.value))}
-            >
-              <option value="read-only">{t("approval.readOnly")}</option>
-              <option value="ask">{t("approval.ask")}</option>
-              <option value="auto-edit">{t("approval.autoEdit")}</option>
-            </select>
-          </label>
+          <PermissionPicker mode={state.mode} disabled={disabled} change={setMode} />
           <div className="composer-tools">
             {inspectorControls}
             <button

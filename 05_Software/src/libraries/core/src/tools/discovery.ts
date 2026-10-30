@@ -16,14 +16,17 @@ export async function discoverFiles(guard: PathGuard, path: string, pattern: str
     dot: true,
     onlyFiles: true,
     followSymbolicLinks: false,
-    ignore: [
-      "**/.vera/**",
-      "**/.git/**",
-      "**/node_modules/**",
-      "**/.VERA/**",
-      "**/.GIT/**",
-      "**/NODE_MODULES/**",
-    ],
+    ignore:
+      guard.scope === "filesystem"
+        ? []
+        : [
+            "**/.vera/**",
+            "**/.git/**",
+            "**/node_modules/**",
+            "**/.VERA/**",
+            "**/.GIT/**",
+            "**/NODE_MODULES/**",
+          ],
   });
   const files: { path: string; mtimeMs: number; size: number }[] = [];
   for (const item of paths) {

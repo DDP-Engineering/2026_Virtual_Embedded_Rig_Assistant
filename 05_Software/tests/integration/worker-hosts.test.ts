@@ -127,7 +127,9 @@ parentPort.once("message", () => { ${failure === "crash" ? 'throw Error("determi
       await pool.run(
         { root: temporary, args: { pattern: "ok", glob: "*.txt" } },
         nextController.signal,
-        (match) => matches.push(match.ref),
+        (match) => {
+          if (match.ref) matches.push(match.ref);
+        },
       ),
     ).toEqual({
       truncated: false,

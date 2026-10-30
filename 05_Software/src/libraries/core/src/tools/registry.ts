@@ -3,6 +3,7 @@ import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
+import { toolSignal } from "./context.js";
 import { readDocTool, searchDocsTool } from "./documents.js";
 import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
@@ -104,7 +105,7 @@ export class ToolRegistry {
     signal.throwIfAborted();
     const tool = this.available(disabled).find((definition) => definition.name === name);
     if (!tool?.prepare) throw Error("Prepared write tool is unavailable.");
-    return tool.prepare(ctx, tool.params.parse(raw), signal);
+    return tool.prepare(ctx, tool.params.parse(raw), toolSignal(ctx, signal));
   }
   async execute(
     ctx: ToolContext,
@@ -115,6 +116,7 @@ export class ToolRegistry {
   ): Promise<ToolOutcome> {
     let result: Record<string, unknown>;
     let isError = false;
+    let effectiveSignal = signal;
     try {
       signal.throwIfAborted();
       const tool = this.available(disabled).find((definition) => definition.name === name);
@@ -124,12 +126,14 @@ export class ToolRegistry {
         throw Error(
           `Invalid arguments for ${name}: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message}`).join("; ")}`,
         );
-      result = await tool.execute(ctx, parsed.data, signal);
+      effectiveSignal = toolSignal(ctx, signal);
+      result = await tool.execute(ctx, parsed.data, effectiveSignal);
+      effectiveSignal.throwIfAborted();
     } catch (error) {
       isError = true;
       result = {
         isError: true,
-        error: signal.aborted
+        error: effectiveSignal.aborted
           ? "Tool aborted."
           : error instanceof Error
             ? error.message
@@ -156,7 +160,11 @@ export class ToolRegistry {
     return this.available(blocked).map((tool) => ({
       name: tool.name,
       class: tool.class,
-      description: tool.description,
+      description:
+        ctx.permissionMode?.() === "bypass" &&
+        ["read", "list", "glob", "grep", "write", "edit"].includes(tool.name)
+          ? `${tool.description} Bypass is active: ordinary filesystem paths may be absolute or relative to the workbench, including outside and ignored locations.`
+          : tool.description,
       params: tool.params,
       execute: async (args, signal) => {
         const outcome = await this.execute(ctx, tool.name, args, signal, blocked);

@@ -25,6 +25,8 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
+- Agent defaults reuse the shared permission enum including Bypass. The editor's PermissionPicker shows the same full-access warning and permanent selection marking as the composer; project Save persists the default and Cancel discards that draft. Warning suppression is an independently saved application preference.
+
 - The editor's Tools section lists the shared built-in catalog with en/ro/de descriptions and enabled checkboxes. Draft selection writes the existing tools.disabled array on Save; Cancel discards it and read-only/loading/pending controls remain disabled. WorkbenchService recognizes shared built-ins by default when reporting unknown disabled names; injected host catalogs retain their existing authority.
 
 - skillCatalog/listSkills/openSkill/saveSkill/toggleSkill admit [skills](skills.md)
@@ -105,31 +107,6 @@ mode offers empty, missing, read-only and warning fixtures.
 - REQ-UX-1d6c940b — pinned dialog, size warning, read-only and focus.
 - REQ-UX-9e7529d5 — missing recent display and removal.
 - REQ-TEST-6a6c266d — compiled instrumented picker and release exclusion.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  SidebarRegistry --> VeraApi
-  ProjectEditor --> VeraApi
-  Welcome --> VeraApi
-  VeraApi --> bridge[shared IPC and preload]
-  bridge --> main[main handlers]
-  main --> service[core WorkbenchService]
-  service --> settings[SettingsService schema4]
-  service --> writes[WriteQueue]
-  Sessions[SessionService prepared writes] --> writes
-  writes --> YAML[.vera/workbench.yaml and .vera/WORKBENCH.md]
-  writes --> Files[confined workbench files]
-  service --> lock[.vera lock and process-owned IPC guard]
-  service --> storage[core storage compatibility and SQLite handle]
-  service --> ignore[.vera ignore policy and project completion]
-  service --> events[WorkbenchEvent]
-  events --> bridge
-```
-
-The service owns state and serial ordering; main supplies native host capabilities. Settings and
-workbench formats have separate versioning and compatibility rules.
 
 ## Files
 

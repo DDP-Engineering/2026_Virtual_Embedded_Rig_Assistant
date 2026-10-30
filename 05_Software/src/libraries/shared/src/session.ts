@@ -2,7 +2,7 @@ import { z } from "zod";
 import { modelReferenceSchema } from "./providers.js";
 
 export const sessionIdSchema = z.string().regex(/^ses_[0-9A-HJKMNP-TV-Z]{26}$/);
-export const permissionModeSchema = z.enum(["read-only", "ask", "auto-edit"]);
+export const permissionModeSchema = z.enum(["read-only", "ask", "auto-edit", "bypass"]);
 export const sessionStatusSchema = z.enum(["idle", "running", "awaiting_approval", "error"]);
 export const stopReasonSchema = z.enum(["end", "aborted", "error", "limit"]);
 export const todoItemSchema = z.strictObject({

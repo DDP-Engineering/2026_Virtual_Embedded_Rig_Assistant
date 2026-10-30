@@ -6,7 +6,7 @@ export interface GrepMatch {
   path: string;
   line: number;
   text: string;
-  ref: string;
+  ref?: string;
   context?: { line: number; text: string }[];
 }
 export interface WorkerResult {
@@ -17,7 +17,7 @@ export interface WorkerResult {
 }
 export interface WorkerPool {
   run(
-    task: { root: string; args: unknown },
+    task: { root: string; args: unknown; scope?: "filesystem" },
     signal: AbortSignal,
     onPartial?: (match: GrepMatch) => void,
   ): Promise<WorkerResult>;

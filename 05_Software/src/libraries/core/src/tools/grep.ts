@@ -19,7 +19,14 @@ export const grepTool: ToolDefinition = {
   async execute(ctx, raw, signal) {
     const args = grepParams.parse(raw);
     if (!ctx.workers) throw Error("Grep worker host is unavailable.");
-    const result = await ctx.workers.run({ root: ctx.root, args }, signal);
+    const result = await ctx.workers.run(
+      {
+        root: ctx.root,
+        args,
+        ...(ctx.permissionMode?.() === "bypass" ? { scope: "filesystem" as const } : {}),
+      },
+      signal,
+    );
     if (result.error) throw Error(result.error);
     if (result.reason === "aborted") throw Error("Grep aborted.");
     const metadata = { truncated: result.truncated, ...(result.reason ? { reason: result.reason } : {}) };

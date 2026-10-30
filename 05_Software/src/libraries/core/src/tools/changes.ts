@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, rename, stat, unlink } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import type Database from "better-sqlite3";
 import { formatPatch, parsePatch, structuredPatch } from "diff";
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { type GuardedPath, PathGuard } from "../workbench/path-guard.js";
 import type { WriteQueue } from "../workbench/write-queue.js";
 import { isBinary } from "./binary.js";
 import type { ToolContext } from "./context.js";
+import { toolPathGuard } from "./context.js";
 
 export const writeParams = z.strictObject({ path: z.string().min(1), content: z.string() });
 export const editParams = z.strictObject({
@@ -48,6 +49,7 @@ export interface ChangeRequest {
   readonly diff: string;
   readonly bytes: number;
   readonly protected: boolean;
+  readonly scope?: "filesystem";
 }
 export interface PreparedChange {
   readonly request: ChangeRequest;
@@ -80,7 +82,8 @@ export async function prepareChange(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const target = await (await PathGuard.create(ctx.root)).resolve(args.path);
+  const guard = await toolPathGuard(ctx);
+  const target = await guard.resolve(args.path);
   if (target.relative === ".") throw Error("Choose a workbench file.");
   const before = await contents(target);
   const beforeSha256 = before === null ? null : hash(before);
@@ -111,7 +114,8 @@ export async function prepareChange(
   }
   const after = Buffer.from(output, "utf8");
   const afterSha256 = hash(after);
-  const patch = structuredPatch(target.relative, target.relative, original, output, "", "");
+  const changePath = guard.scope === "filesystem" ? target.absolute.replaceAll("\\", "/") : target.relative;
+  const patch = structuredPatch(changePath, changePath, original, output, "", "");
   const lines = patch.hunks.flatMap((hunk) => hunk.lines);
   const added = lines.filter((line) => line.startsWith("+")).length;
   const removed = lines.filter((line) => line.startsWith("-")).length;
@@ -122,7 +126,7 @@ export async function prepareChange(
     turnId: host.turnId,
     callId: host.callId,
     tool,
-    path: target.relative,
+    path: changePath,
     args: Object.freeze({ ...args }),
     existed: before !== null,
     beforeSha256,
@@ -130,13 +134,14 @@ export async function prepareChange(
     diff,
     bytes: after.length,
     protected: protectedPath(target.relative),
+    ...(guard.scope === "filesystem" ? { scope: "filesystem" as const } : {}),
   });
   // Capture host identity as well: caller changes to its next call cannot retarget this row.
   const identity = { sessionId: host.sessionId, callId: host.callId };
   const result =
     tool === "write"
-      ? { path: target.relative, bytes: after.length, created: before === null }
-      : { path: target.relative, replacements, added, removed };
+      ? { path: changePath, bytes: after.length, created: before === null }
+      : { path: changePath, replacements, added, removed };
   let consumed = false;
   return Object.freeze({
     request,
@@ -145,9 +150,10 @@ export async function prepareChange(
       consumed = true;
       return host.queue.run(async () => {
         const check = async () => {
+          signal.throwIfAborted();
           applySignal.throwIfAborted();
           host.assertWritable?.();
-          const current = await (await PathGuard.create(ctx.root)).resolve(args.path);
+          const current = await (await toolPathGuard(ctx)).resolve(args.path);
           if (current.key !== target.key || current.relative !== target.relative) throw conflict();
           const currentBytes = await contents(current);
           if ((currentBytes === null ? null : hash(currentBytes)) !== beforeSha256) throw conflict();
@@ -161,15 +167,8 @@ export async function prepareChange(
             .prepare(
               "INSERT INTO changes(session_id,tool_call_id,path,before_sha256,after_sha256,diff,status,created_at) VALUES (?,?,?,?,?,?,'pending',?)",
             )
-            .run(
-              identity.sessionId,
-              identity.callId,
-              target.relative,
-              beforeSha256,
-              afterSha256,
-              diff,
-              host.now(),
-            ).lastInsertRowid,
+            .run(identity.sessionId, identity.callId, changePath, beforeSha256, afterSha256, diff, host.now())
+            .lastInsertRowid,
         );
         const temporary = join(dirname(target.absolute), `.vera-change-${randomUUID()}.tmp`);
         let renamed = false;
@@ -195,7 +194,7 @@ export async function prepareChange(
             return host.recorded({
               type: "change.recorded",
               changeId: id,
-              path: target.relative,
+              path: changePath,
               added,
               removed,
             });
@@ -241,7 +240,12 @@ export async function recoverChanges(
     signal.throwIfAborted();
     let current: string | null | undefined;
     try {
-      const bytes = await contents(await (await PathGuard.create(root)).resolve(row.path));
+      // Bypass records canonical absolute paths. Recovery only checks hashes; it never rewrites targets.
+      const bytes = await contents(
+        await (await PathGuard.create(root, root, isAbsolute(row.path) ? "filesystem" : "workbench")).resolve(
+          row.path,
+        ),
+      );
       current = bytes === null ? null : hash(bytes);
     } catch {
       current = undefined;

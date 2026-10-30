@@ -1,5 +1,5 @@
 import { parentPort } from "node:worker_threads";
-import { formatLineRef } from "@vera/shared";
+import { formatLineRef, parseLineRef } from "@vera/shared";
 import type { GrepMatch } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
@@ -8,7 +8,7 @@ import { readGuardedFile, textLines } from "./files.js";
 import { grepParams } from "./grep.js";
 
 /** Dedicated task entry, bundled independently by each host; never called by main-thread tools. */
-async function execute(task: { root: string; args: unknown }) {
+async function execute(task: { root: string; args: unknown; scope?: "filesystem" }) {
   const port = parentPort;
   if (!port) throw Error("Grep requires a dedicated worker.");
   try {
@@ -19,7 +19,11 @@ async function execute(task: { root: string; args: unknown }) {
     } catch {
       throw Error("Invalid JavaScript regular expression. Correct the regex pattern.");
     }
-    const guard = await PathGuard.create(task.root);
+    const guard = await PathGuard.create(
+      task.root,
+      task.root,
+      task.scope === "filesystem" ? "filesystem" : "workbench",
+    );
     const signal = new AbortController().signal;
     const files = await discoverFiles(guard, args.path ?? ".", args.glob ?? "**/*", signal);
     files.sort((a, b) => a.path.localeCompare(b.path));
@@ -44,7 +48,9 @@ async function execute(task: { root: string; args: unknown }) {
           path: file.path,
           line: i + 1,
           text: content ? text.slice(0, 16000) : "",
-          ref: formatLineRef({ path: file.path, start: i + 1, end: i + 1 }),
+          ...(guard.scope !== "filesystem" || parseLineRef(`${file.path}#L${i + 1}-L${i + 1}`)
+            ? { ref: formatLineRef({ path: file.path, start: i + 1, end: i + 1 }) }
+            : {}),
         };
         if (content && match.text.length < text.length) truncated = true;
         const context = args.context;
@@ -71,6 +77,6 @@ async function execute(task: { root: string; args: unknown }) {
   }
 }
 if (parentPort)
-  parentPort.once("message", (task: { root: string; args: unknown }) => {
+  parentPort.once("message", (task: { root: string; args: unknown; scope?: "filesystem" }) => {
     void execute(task);
   });

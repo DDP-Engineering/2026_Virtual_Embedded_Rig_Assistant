@@ -54,7 +54,7 @@ export class ApprovalGate {
     this.host.assertWritable();
     if (!this.host.active(request.sessionId, request.turnId)) throw veraError("CONFLICT");
     const mode = this.host.mode(request.sessionId);
-    if (mode === "read-only") return "aborted";
+    if (mode === "read-only" || (request.scope === "filesystem" && mode !== "bypass")) return "aborted";
     const id = `apv_${ulid()}`,
       digest = requestSha256(request);
     let resolve!: (decision: Decision) => void;
@@ -96,7 +96,7 @@ export class ApprovalGate {
       signal.addEventListener("abort", abort, { once: true });
       publish();
       if (signal.aborted) abort();
-      else if (mode === "auto-edit" && !request.protected && this.pending.has(id))
+      else if ((mode === "bypass" || (mode === "auto-edit" && !request.protected)) && this.pending.has(id))
         this.finish(id, "approved", "mode");
       return await result;
     } catch (error) {
@@ -148,6 +148,16 @@ export class ApprovalGate {
     for (const [id, entry] of this.pending)
       if (entry.request.sessionId === sessionId) this.cancel(id, by, true);
   }
+  approveBypass(sessionId: string): void {
+    if (this.host.mode(sessionId) !== "bypass") return;
+    for (const [id, entry] of this.pending)
+      if (
+        this.host.mode(sessionId) === "bypass" &&
+        entry.request.sessionId === sessionId &&
+        !entry.signal.aborted
+      )
+        this.finish(id, "approved", "mode");
+  }
   private cancel(id: string, by: "user" | "mode", propagate: boolean): void {
     const entry = this.pending.get(id);
     if (!entry) return;
@@ -193,8 +203,9 @@ export class ApprovalGate {
       | undefined;
     if (
       !row ||
-      (request.protected && row.decided_by !== "user") ||
-      (row.decided_by === "mode" && this.host.mode(request.sessionId) !== "auto-edit")
+      (request.scope === "filesystem" && this.host.mode(request.sessionId) !== "bypass") ||
+      (request.protected && row.decided_by !== "user" && this.host.mode(request.sessionId) !== "bypass") ||
+      (row.decided_by === "mode" && !["auto-edit", "bypass"].includes(this.host.mode(request.sessionId)))
     )
       throw veraError("CONFLICT");
   }

@@ -1,6 +1,5 @@
-import { type ChildProcess, spawn } from "node:child_process";
+import type { ChildProcess, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { once } from "node:events";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -8,6 +7,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { resolveConfig } from "electron-vite";
+import { createServer } from "vite";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
@@ -177,6 +178,16 @@ for (const action of ["Approve", "Deny", "A", "D"] as const)
         await card.press(action);
       } else await card.getByRole("button", { name: action, exact: true }).click();
       await expect(input).toBeEnabled();
+      await expect
+        .poll(async () => {
+          const current = await page.evaluate(
+            async (id) =>
+              (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id }),
+            id,
+          );
+          return current.snapshot.turns.at(-1)?.stopReason;
+        })
+        .toBe("end");
       const result = await page.evaluate(
         async (id) =>
           (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id }),
@@ -307,19 +318,15 @@ test("native approval switches session mode and read-only aborts the next wait",
 });
 
 test("browser approval keys and mode picker remain accessible at minimum size", async ({ page, context }) => {
-  const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
-    env: { ...process.env, VITE_API: "mock" },
-    stdio: ["ignore", "pipe", "pipe"],
+  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
+  if (!config) throw Error("Missing renderer configuration");
+  const server = await createServer({
+    ...config,
+    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
+    server: { ...config.server, port: 0, strictPort: false, hmr: false },
   });
-  let output = "";
   const attempts: string[] = [],
     errors: string[] = [];
-  server.stdout.on("data", (b) => {
-    output += b.toString();
-  });
-  server.stderr.on("data", (b) => {
-    output += b.toString();
-  });
   page.on("pageerror", (e) => errors.push(e.message));
   await context.route("**/*", async (route) => {
     if (new URL(route.request().url()).hostname === "127.0.0.1") await route.continue();
@@ -329,27 +336,12 @@ test("browser approval keys and mode picker remain accessible at minimum size", 
     }
   });
   try {
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(Error(`Renderer startup timeout: ${output}`)), 20000);
-      const ready = () => {
-        if (output.includes("VERA_RENDERER_READY")) {
-          clearTimeout(timer);
-          resolve();
-        }
-      };
-      server.stdout.on("data", ready);
-      server.stderr.on("data", ready);
-      server.once("error", (e) => {
-        clearTimeout(timer);
-        reject(e);
-      });
-      server.once("exit", (code) => {
-        clearTimeout(timer);
-        reject(Error(`Renderer exit ${code}: ${output}`));
-      });
-    });
+    await server.listen();
+    const address = server.httpServer?.address();
+    if (!address || typeof address === "string") throw Error("Missing renderer address");
     await page.setViewportSize({ width: 1024, height: 640 });
-    await page.goto("http://127.0.0.1:5173/?mock=chat");
+    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
+    await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="open-recent"]').click();
     await page.locator('[data-action="new-session"]').click();
     const input = page.getByRole("textbox", { name: "Message", exact: true });
@@ -374,10 +366,6 @@ test("browser approval keys and mode picker remain accessible at minimum size", 
     expect(errors).toEqual([]);
     await page.screenshot({ path: test.info().outputPath("approval-browser-minimum.png") });
   } finally {
-    if (server.exitCode === null) {
-      const stopped = once(server, "exit");
-      server.kill("SIGTERM");
-      await stopped;
-    }
+    await server.close();
   }
 });

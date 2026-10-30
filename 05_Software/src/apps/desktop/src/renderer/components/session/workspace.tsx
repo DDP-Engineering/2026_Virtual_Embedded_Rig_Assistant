@@ -204,8 +204,6 @@ export function SessionWorkspace({
             try {
               await api.invoke("session.mode.set", { sessionId: id, mode });
               changed();
-            } catch (e) {
-              setFailure(e);
             } finally {
               setPending(false);
             }

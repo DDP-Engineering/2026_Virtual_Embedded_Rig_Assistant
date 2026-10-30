@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a7ad5920"
+
+title = "Execute enabled file tools in full filesystem Bypass mode"
+
+status = "active"
+
+requirement = """
+While a writable VERA session is in Bypass mode, the agent shall execute its enabled ordinary file tools without approval prompts using absolute or workbench-relative filesystem paths, including outside and normally ignored locations, subject to OS permissions and existing tool integrity limits, with that extra authority revoked when the mode changes.
+"""
+
+verification = "Use owned temporary workbench and sibling directories to read/list/glob/grep/write/edit in Bypass, including ignored metadata; assert automatic exact durable grants and mode persistence. Downgrade during queued/in-flight work and confirm external operations stop or are denied; existing modes still reject escapes. Native replay exercises actual isolated grep and external changes; recovery only reconciles hashes without writing files."
+
+affected_paths = ["05_Software/src/libraries/shared/src/session.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/agent/prompt.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/workbench/path-guard.ts", "05_Software/src/libraries/core/src/ports.ts", "05_Software/src/libraries/core/src/workers/node-host.ts", "05_Software/src/libraries/core/src/storage/repos/sessions.ts", "05_Software/src/libraries/core/src/sessions/bypass.test.ts", "05_Software/src/libraries/core/src/sessions/approvals.test.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bypass.test.ts", "05_Software/src/libraries/core/src/sessions/approvals.test.ts", "05_Software/src/libraries/core/src/workbench/path-guard.test.ts", "05_Software/src/libraries/core/src/tools/write-edit.test.ts", "05_Software/src/libraries/core/src/workers/node-host.test.ts", "05_Software/tests/e2e/bypass.spec.ts", "05_Software/tests/e2e/approvals.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

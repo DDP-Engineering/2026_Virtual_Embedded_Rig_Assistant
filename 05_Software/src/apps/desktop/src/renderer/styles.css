@@ -1811,6 +1811,52 @@ legend {
   align-items: center;
   gap: 0.1rem;
 }
+.composer-controls .permission-field select {
+  max-width: 16rem;
+}
+.permission-field select.bypass-selected {
+  color: var(--destructive);
+  font-weight: 700;
+  border-color: var(--destructive);
+}
+.permission-field option[value="bypass"] {
+  color: var(--destructive);
+  font-weight: 700;
+}
+.bypass-warning[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+}
+.bypass-warning header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.bypass-warning h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--destructive);
+}
+.bypass-remember {
+  display: flex;
+  align-items: start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+.bypass-remember input {
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+}
+.bypass-warning footer {
+  display: flex;
+  justify-content: end;
+}
 .composer-reasoning svg {
   width: 1.1rem;
   height: 1.1rem;

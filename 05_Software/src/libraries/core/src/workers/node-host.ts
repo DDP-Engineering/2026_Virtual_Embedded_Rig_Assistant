@@ -7,7 +7,7 @@ export interface WorkerHostOptions {
   deadlineMs?: number;
 }
 interface Pending {
-  task: { root: string; args: unknown };
+  task: { root: string; args: unknown; scope?: "filesystem" };
   signal: AbortSignal;
   deadline: number;
   matches: GrepMatch[];
@@ -45,7 +45,7 @@ export class NodeWorkerPool implements WorkerPool {
       throw Error("Invalid worker host limits.");
   }
   run(
-    task: { root: string; args: unknown },
+    task: { root: string; args: unknown; scope?: "filesystem" },
     signal: AbortSignal,
     onPartial?: (match: GrepMatch) => void,
   ): Promise<WorkerResult> {

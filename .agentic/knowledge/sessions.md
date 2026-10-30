@@ -8,9 +8,11 @@ Select for SessionService, session CRUD/model/mode, persisted snapshots, turn/to
 
 ## Purpose and boundaries
 
-Core SessionService owns one workbench's durable sessions over injected AgentRuntime, gateway, registry, permission port and Clock. SessionHub stores schema-validated events and folds shared snapshots. Main SessionsHost binds current workbench/config/pinned/environment/settings and credentials, owns subscription transport and drains turns before workbench lifecycle changes. The default ApprovalGate executes reads and selects immutable write approvals from current ask/auto-edit/read-only mode and canonical protection. It owns pending requests, transactional rows/events, exact single-use grants and abort. Injected PermissionEngine retains the host policy seam; every write keeps core mode/ownership checks. Desktop and CLI decide through the same core lifecycle.
+Core SessionService owns one workbench's durable sessions over injected AgentRuntime, gateway, registry, permission port and Clock. SessionHub stores schema-validated events and folds shared snapshots. Main SessionsHost binds current workbench/config/pinned/environment/settings and credentials, owns subscription transport and drains turns before workbench lifecycle changes. The default ApprovalGate executes reads and selects immutable write approvals from current ask/auto-edit/read-only/Bypass mode and canonical protection. It owns pending requests, transactional rows/events, exact single-use grants and abort. Injected PermissionEngine retains the host policy seam; every write keeps core mode/ownership checks. Desktop and CLI decide through the same core lifecycle.
 
 ## Public interface
+
+- Bypass persists through the existing session mode/event contracts and grants enabled ordinary file tools full filesystem scope without manual approvals. Exact automatic grants retain single-use hashes; filesystem requests require current Bypass. Selecting Bypass resolves existing approval waits. Downgrade aborts scoped work and pending grants; later calls use the normal confined policy. Workbench read-only/ownership and injected host permission policies remain authoritative. Canonical absolute Bypass change paths support hash-only startup recovery.
 
 - reasoningOptions(id) and setReasoning(id,reasoning,expectedModel) prepare current model metadata and return modelRef/options/selected. Strict writable/current-model validation protects saves; an active turn may change its next-request preference. Optional nullable session.updated.reasoning persists/replays the preference in the existing event store, without SQL schema changes. A latest-event lookup seeds the service cache; durable commit precedes cache update and publication. Model switches retain compatible choices and atomically reset incompatible ones. Each request snapshots the current supported value; in-flight requests remain unchanged.
 
@@ -55,6 +57,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 |---|---|---|
 | Prepared writes/startup barrier | tools/changes.ts,SessionService,desktop SessionsHost | sessions/write-edit.test.ts,main/sessions.test.ts,tests/e2e/write-edit.spec.ts |
 | Modes/digest/decisions/abort | agent/approvals.ts,sessions/service.ts | sessions/approvals.test.ts; tests/e2e/approvals.spec.ts |
+| Full filesystem Bypass/revocation | sessions/service.ts,tools/context.ts,PathGuard | sessions/bypass.test.ts; tests/e2e/bypass.spec.ts |
 | Lifecycle/persistence/recovery/budgets/permission | core sessions/service.ts | service.test.ts |
 | Replay/live ordering | sessions/hub.ts | service.test.ts replay/reentrancy |
 | Terminal projection | shared session-state.ts/events.ts | session-state.test.ts |

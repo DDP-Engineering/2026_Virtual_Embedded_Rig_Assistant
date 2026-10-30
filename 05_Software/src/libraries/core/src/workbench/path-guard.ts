@@ -23,18 +23,26 @@ export function validateRelativePath(path: string): string {
   return slash;
 }
 
-/** Every file tool uses lexical and canonical confinement, including nonexistent tails. */
+/** Canonical ordinary file resolution, confined by default; full scope is explicitly host-selected. */
 export class PathGuard {
   private constructor(
     readonly root: string,
     private readonly ignored: (path: string) => boolean,
+    readonly scope: "workbench" | "filesystem" = "workbench",
+    private readonly authorize?: () => void,
   ) {}
 
   /** A separately confined skill root may use its owning project's ignore policy. */
-  static async create(root: string, policyRoot = root): Promise<PathGuard> {
+  static async create(
+    root: string,
+    policyRoot = root,
+    scope: "workbench" | "filesystem" = "workbench",
+    authorize?: () => void,
+  ): Promise<PathGuard> {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
     if (!(await lstat(canonical)).isDirectory()) throw Error("Workbench root must be a directory.");
+    if (scope === "filesystem") return new PathGuard(canonical, () => false, scope, authorize);
     let text = "";
     const metadata = join(await realpath(policyRoot), ".vera");
     const ignorePath = join(metadata, ".veraignore");
@@ -56,8 +64,10 @@ export class PathGuard {
 
   private confined(path: string): string {
     const rel = relative(pathIdentity(this.root), pathIdentity(path));
-    if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel))
+    if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+      if (this.scope === "filesystem") return path.split(sep).join("/");
       throw Error("Path leaves the workbench.");
+    }
     return relative(this.root, path).split(sep).join("/");
   }
 
@@ -67,7 +77,27 @@ export class PathGuard {
   }
 
   async resolve(path: string): Promise<GuardedPath> {
-    const lexical = resolve(this.root, validateRelativePath(path));
+    this.authorize?.();
+    if (this.scope === "filesystem") {
+      if (!path || /[\0\r\n]/.test(path)) throw Error("Use an ordinary filesystem path.");
+      if (process.platform === "win32") {
+        const slash = path.replaceAll("\\", "/");
+        if (
+          /^\/\/[?.]\//.test(slash) ||
+          /^[A-Za-z]:(?:$|[^/])/.test(slash) ||
+          slash.replace(/^[A-Za-z]:\//, "").includes(":")
+        )
+          throw Error(
+            "Use an ordinary absolute or relative filesystem path, without device or stream syntax.",
+          );
+        for (const segment of slash.replace(/^[A-Za-z]:\//, "").split("/")) {
+          if (segment === "." || segment === "..") continue;
+          if (/[ .]$/.test(segment) || /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(segment))
+            throw Error("Device names and ambiguous Windows paths are unavailable.");
+        }
+      }
+    }
+    const lexical = resolve(this.root, this.scope === "filesystem" ? path : validateRelativePath(path));
     this.allowed(this.confined(lexical));
     let ancestor = lexical;
     const tail: string[] = [];
@@ -84,6 +114,12 @@ export class PathGuard {
       }
     }
     const canonical = join(await realpath(ancestor), ...tail);
+    this.authorize?.();
+    if (this.scope === "filesystem" && tail.length === 0) {
+      const info = await lstat(canonical);
+      if (!info.isFile() && !info.isDirectory())
+        throw Error("Choose an ordinary file or directory, not a device or special file.");
+    }
     const rel = this.confined(canonical);
     this.allowed(rel);
     return {

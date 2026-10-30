@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-33b9d601"
+
+title = "Mark Bypass selections and show the full access warning"
+
+status = "active"
+
+requirement = """
+When a user selects Bypass in a session or workbench permission selector without suppressing its notice, VERA shall retain a visibly marked red/bold full-access selection and display a localized warning that enabled tools can modify files outside the workbench without confirmations and damage files or configurations, dismissible through Close, X or Escape.
+"""
+
+verification = "Select Bypass from both selectors, assert warning marker plus distinct selected styling and en/ro/de risk text, dismiss through Close/X/Escape with focus restoration and verify no extra activation confirmation is required. Mode remains selected and writable controls still honor read-only/pending states. Inspect native layout and minimum geometry."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/permission-picker.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/bypass.spec.ts", "05_Software/tests/e2e/approvals.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

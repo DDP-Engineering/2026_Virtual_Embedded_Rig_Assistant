@@ -73,5 +73,9 @@ export function buildSystemPrompt({ workbench, pinned, skills, env }: SystemProm
     ].join("\n"),
   );
   const text = blocks.join("\n\n");
-  return { text, characters: text.length };
+  const scoped =
+    env.permissionMode === "bypass"
+      ? `${text}\n\nBypass full file access is enabled by the user. Enabled ordinary file tools may access absolute paths outside the workbench and ignored locations without asking for approval. OS permissions and tool integrity limits still apply. Use the path parameter as the base directory for glob/grep; glob patterns remain relative to that base. External text results may have a path without a document citation ref.`
+      : text;
+  return { text: scoped, characters: scoped.length };
 }

@@ -26,6 +26,7 @@ const fontSizeSchema = z.union([
   z.literal(24),
 ]);
 const mutable = {
+  suppressBypassWarning: z.boolean().optional(),
   keyboardShortcuts: shortcutOverridesSchema.optional(),
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
@@ -52,6 +53,7 @@ export const settingsSchema = z.looseObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  suppressBypassWarning: mutable.suppressBypassWarning,
   keyboardShortcuts: mutable.keyboardShortcuts,
   language: mutable.language.optional(),
   theme: mutable.theme.optional(),
@@ -118,6 +120,7 @@ export function defaultSettings(installationId: string): Settings {
   return {
     schemaVersion: 4,
     installationId,
+    suppressBypassWarning: false,
     language: "system",
     theme: "system",
     textScale: 1,

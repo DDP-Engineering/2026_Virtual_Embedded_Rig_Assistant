@@ -454,6 +454,12 @@
     "high": "Hoch",
     "xhigh": "Sehr hoch"
   },
+  "bypass": {
+    "option": "Bypass — voller Zugriff",
+    "title": "Bypass: voller Dateizugriff",
+    "warning": "Der Agent kann ohne Rückfrage Dateien überall lesen und ändern, wo Ihr Benutzerkonto Zugriff hat, auch außerhalb der Workbench. Dabei können Projekte, Dateien oder Anwendungseinstellungen beschädigt werden. Es stehen nur aktivierte Werkzeuge zur Verfügung; Betriebssystemberechtigungen gelten weiterhin.",
+    "dontShowAgain": "Diese Meldung beim nächsten Mal nicht mehr anzeigen"
+  },
   "workbenchTools": {
     "hint": "Markierte Werkzeuge sind für diese Workbench aktiviert. Änderungen gelten nach dem Speichern; die Sitzungsberechtigungen bleiben wirksam.",
     "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",

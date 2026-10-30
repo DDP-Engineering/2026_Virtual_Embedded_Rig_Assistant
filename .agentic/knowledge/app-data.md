@@ -16,6 +16,8 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 
 ## Public interface
 
+- Optional schema4 suppressBypassWarning is a non-secret application preference, false by default. The typed patch accepts a boolean and serial settings persistence confirms suppression before the notice closes. It affects presentation only, leaving session/workbench mode and execution authority independent.
+
 - SettingsService.load/get/update/close; get/update return detached {settings,readOnly}.
 - Update preferences accept off/notify/download and latest/beta within schema4; notify/latest
   are defaults. [Updates](updates.md) owns their scheduling and artifact behavior.
@@ -77,26 +79,6 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 - REQ-PLAT-4a030007 — portable data selected before readiness.
 - REQ-FUNC-4a030008 — structured levels and seven UTC daily logs.
 - REQ-SEC-4a030009 — registered-secret content redaction.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  bootstrap[main index.ts] --> paths[configureDataLocations]
-  paths --> location[(userData)]
-  bootstrap --> service[core SettingsService]
-  router[IPC router] --> service
-  service --> files[main FileAccess]
-  files --> json[(settings.json and bak-n)]
-  service --> emitter[settings.changed emitter]
-  emitter --> bridge[window.vera subscriber]
-  bootstrap --> logger[main Logger]
-  logger --> logs[(seven UTC daily log files)]
-  schema[shared settings schemas] --> service
-  schema --> router
-```
-
-Ports keep core independent of Electron. Main owns platform I/O and supplies the event callback.
 
 ## Files
 

@@ -10,6 +10,8 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 ## Public interface
 
+- Bypass is a host-selected filesystem scope on read/list/glob/grep/write/edit. ToolContext supplies live permissionMode and a revocable bypassSignal; model args cannot choose scope. PathGuard defaults to the existing confined policy, while filesystem scope accepts canonical absolute/parent paths and ignored locations, rejecting device/stream/special-file syntax. Grep receives scope as host task metadata and remains worker-isolated. External text results expose paths without inventing confined refs; indexed document/citation viewers remain workbench-scoped. OS rights, enabled tools, text/binary/output limits, fingerprints and write integrity still apply.
+
 - Shared builtinToolNames is the canonical ordered built-in execution catalog, with a BuiltinToolName type. ToolRegistry maps its existing definitions through those names; the workbench editor uses the same catalog with localized descriptions and enabled checkboxes. Registry parity tests enforce correspondence. WorkbenchService also uses built-ins for default disabled-name validation. Injected registries/catalogs retain their existing behavior.
 
 - Registry includes read-class load_skill {name,file?} through a separately
@@ -29,13 +31,14 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 - Registry includes sequential session-class todo with bounded shared list schema and an optional TodoHost; [Plan](plan.md) owns atomic SQLite replacement/events.
 - Registry includes sequential session-class artifact_save over its optional ArtifactHost, with no write approval; [Artifacts](artifacts.md) owns its managed storage and limits.
 - Registry includes sequential write/edit; prepare validates the schema and returns a one-use PreparedChange with frozen metadata/private output bytes. write returns path/bytes/created and creates parents; overwrite requires a fresh read or returns "Read the file before overwriting it." edit requires a fresh file/version and one literal nonempty oldString match unless replaceAll, returning replacements/added/removed. Binary source is refused.
-- Preparation captures before/after SHA256 and one structured unified patch/counts. edit converts LF arguments for CRLF sources and preserves BOM. General tools deny project metadata under .vera, including configuration, pinned context and skills. Application saves and the dedicated skill catalog use their own bounded admission.
+- Preparation captures before/after SHA256 and one structured unified patch/counts. edit converts LF arguments for CRLF sources and preserves BOM. Outside Bypass, general tools deny project metadata under .vera, including configuration, pinned context and skills. Application saves and the dedicated skill catalog use their own bounded admission.
 - Application enters the shared queue after permission waits. It rechecks confinement/identity/expected hash/authority/abort on admission and before rename; conflicts require a new read, preserving prepared output. Pending SQL precedes exclusive same-folder temp/fsync/rename. Existing POSIX permission bits are copied to the temporary file before fsync; new files start0600. Applied status and the caller's event record share a transaction; publication follows commit, and successful changes refresh the session fingerprint. Stop preserves completed renames.
 - recoverChanges resolves pending rows by guarded current hash: after marks applied and records the recovered event, before removes the row, otherwise conflict. It never changes file bytes. Session hosts await waitReady before exposing recovered state.
+- Bypass prepared requests mark filesystem scope and record canonical absolute change paths, including internal metadata changes. Recovery reconciles those recorded targets by hash only. Scope signal, current-mode guard and grant checks revoke queued writes/in-flight reads or grep on downgrade.
 
 ## Invariants
 
-- Model-selected paths cannot leave root, select absolute/drive/UNC/device/reserved/NUL paths or ignored aliases. Windows native case aliases share a canonical fingerprint key.
+- Outside explicitly selected Bypass, model-selected paths cannot leave root, select absolute/drive/UNC/device/reserved/NUL paths or ignored aliases. Windows native case aliases share a canonical fingerprint key. Bypass accepts ordinary filesystem paths with OS rights and retains canonical fingerprint identity.
 - Worker sources are host-selected. Host timers and AbortSignal terminate stalled regex; matching has no main-thread fallback. Each terminal path cleans up listeners/timers and releases capacity after termination.
 - Worker crashes, premature exits and startup failures return actionable retry errors and release capacity. Compiled desktop/CLI failure fixtures restore the real entry and verify subsequent matching through the same capacity-one pool; constructor rejection is covered independently.
 - Source files are data; file tools expose confined writes through the host permission boundary and no shell/network capability. Desktop sandbox/CSP and vera://app origin remain enforced; instrumented probe is compiled out of release.
@@ -53,6 +56,7 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 | Prepared writes/diff/recovery | tools/changes.ts,write.ts,edit.ts | tools/write-edit.test.ts,sessions/write-edit.test.ts,native write-edit acceptance |
 | Shared app/session queue | workbench/write-queue.ts,service.ts | workbench/service.test.ts,desktop sessions startup recovery |
 | Schema/filter/errors/output cap | ToolRegistry,capToolResult | registry tests and runtime regression |
+| Bypass filesystem scope and revocation | context.ts, PathGuard, worker task scope, changes.ts | sessions/bypass.test.ts, tests/e2e/bypass.spec.ts |
 
 ## Key behaviors
 
@@ -69,6 +73,7 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 - REQ-FUNC-0300323e — Validate filter and cap tool registry.
 - REQ-UX-0f1a32c4 — Share built-in names with the described workbench checkbox catalog.
 - REQ-FUNC-37261edc — Use saved checkbox exclusions when exposing runtime tools.
+- REQ-FUNC-a7ad5920 — Explicit Bypass filesystem execution, exact grants and revocation.
 - REQ-FUNC-73151724 — Format and parse line references.
 
 REQ-FUNC-9aa789af create; REQ-DATA-8c71b990 freshness; REQ-FUNC-d5b5be90 exact replacement/counts; REQ-DATA-cf979c63 CRLF/BOM; REQ-REL-d2437b70 shared immutable admission; REQ-DATA-f44069c2 atomic recording; REQ-DATA-60e025f4 event/fingerprint; REQ-REL-50217071 recovery; REQ-SEC-294dcab2 sequential write classification and internal metadata denial.

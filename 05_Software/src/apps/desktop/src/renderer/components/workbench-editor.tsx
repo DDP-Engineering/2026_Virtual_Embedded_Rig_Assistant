@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { PermissionPicker } from "./permission-picker.js";
 import { SkillSettings } from "./skills.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
@@ -227,25 +228,14 @@ export function WorkbenchEditor({
                     }
                   />
                 </label>
-                <label>
-                  {t("projects.permissions")}
-                  <select
-                    value={config.agent.permission_mode}
-                    onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        agent: {
-                          ...config.agent,
-                          permission_mode: e.target.value as typeof config.agent.permission_mode,
-                        },
-                      })
-                    }
-                  >
-                    <option value="read-only">{t("approval.readOnly")}</option>
-                    <option value="ask">{t("approval.ask")}</option>
-                    <option value="auto-edit">{t("approval.autoEdit")}</option>
-                  </select>
-                </label>
+                <PermissionPicker
+                  mode={config.agent.permission_mode}
+                  disabled={pending || workbench.readOnly || !loaded}
+                  label={t("projects.permissions")}
+                  change={(permission_mode) =>
+                    setConfig((current) => ({ ...current, agent: { ...current.agent, permission_mode } }))
+                  }
+                />
               </>
             )}
             {section === "instructions" && (

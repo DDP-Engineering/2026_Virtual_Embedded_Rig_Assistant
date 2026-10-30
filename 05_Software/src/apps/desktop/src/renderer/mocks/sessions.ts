@@ -233,6 +233,7 @@ export class MockSessions {
       row.summary.mode = request.mode;
       this.emit(id, { type: "session.updated", mode: request.mode });
       if (request.mode === "read-only" && row.approval) this.decide(id, "aborted", "mode");
+      if (request.mode === "bypass" && row.approval) this.decide(id, "approved", "mode");
       return row.summary;
     }
     if (channel === "session.send" && row.active) {
@@ -320,7 +321,8 @@ export class MockSessions {
               },
               key,
             );
-            if (row.summary.mode === "auto-edit" && row.approval) this.decide(id, "approved", "mode");
+            if (["auto-edit", "bypass"].includes(row.summary.mode) && row.approval)
+              this.decide(id, "approved", "mode");
             const outcome = await decision;
             if (outcome === "approved") {
               const change: ChangeDetail = {

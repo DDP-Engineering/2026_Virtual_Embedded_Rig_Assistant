@@ -24,6 +24,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 The workbench Tools editor presents the shared built-in catalog with localized descriptions and enabled checkboxes, persisting exclusions through the current tools.disabled configuration.
 
+Session/workbench permission modes include explicit Bypass for enabled ordinary file tools with full OS-account filesystem scope, including outside/ignored paths. It retains durable exact grants, integrity limits and revocation on downgrade. The shared marked permission picker presents a localized dismissible warning and a persisted application-level suppression preference.
+
 [Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
 normal loopback tools/approval/citation/restart and external process-tree egress.
 

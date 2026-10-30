@@ -454,6 +454,12 @@
     "high": "High",
     "xhigh": "Extra high"
   },
+  "bypass": {
+    "option": "Bypass — full access",
+    "title": "Bypass: full file access",
+    "warning": "The agent can read and change files wherever your account has access, including outside the workbench, without asking for confirmation. It can damage projects, files or application settings. Only enabled tools are available; operating system permissions still apply.",
+    "dontShowAgain": "Don't show this message next time"
+  },
   "workbenchTools": {
     "hint": "Checked tools are enabled for this workbench. Changes take effect after you save; session permissions still apply.",
     "read": "Read text files or selected line ranges.",

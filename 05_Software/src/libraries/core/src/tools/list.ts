@@ -1,7 +1,8 @@
 import { lstat, readdir } from "node:fs/promises";
 import { z } from "zod";
-import { type GuardedPath, PathGuard } from "../workbench/path-guard.js";
+import type { GuardedPath } from "../workbench/path-guard.js";
 import type { ToolDefinition } from "./context.js";
+import { toolPathGuard } from "./context.js";
 
 export const listTool: ToolDefinition = {
   name: "list",
@@ -13,7 +14,7 @@ export const listTool: ToolDefinition = {
   }),
   async execute(ctx, raw, signal) {
     const args = listTool.params.parse(raw) as { path?: string; depth?: number };
-    const guard = await PathGuard.create(ctx.root);
+    const guard = await toolPathGuard(ctx);
     const base = await guard.resolve(args.path ?? ".");
     const entries: { name: string; type: "file" | "directory"; bytes: number }[] = [];
     const walk = async (path: string, depth: number) => {

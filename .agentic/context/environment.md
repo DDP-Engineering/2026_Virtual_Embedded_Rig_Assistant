@@ -160,6 +160,8 @@ Session export/search verification routes are core sessions/export.test.ts and s
 
 ## Workbench navigation verification
 
+Bypass acceptance uses sessions/bypass.test.ts, approvals/path/registry/write/worker regressions and renderer permission-picker.test.ts. Instrumented tests/e2e/bypass.spec.ts uses owned sibling temporary folders and replay to exercise actual full-scope read/list/glob/grep/edit/write, automatic grants and mode/suppression restart, plus multilingual minimum-window warning controls. Existing approval browser acceptance uses an ephemeral Vite port so the development app can remain open; native approval assertions wait for the terminal turn.
+
 Workbench tool selection is verified by renderer workbench-tools.test.ts (draft/read-only), core registry/service tests (canonical catalog and warnings), existing browser workbench-navigation.spec.ts and native workbench-tools.spec.ts (save/cancel/YAML/restart and en/ro/de descriptions). The native folder picker fixture requires VERA_TEST=1 during build and an isolated profile.
 
 `tests/e2e/session-scroll.spec.ts` covers fixed viewport geometry, enlarged composer/text, long Settings and update banner, plus the independent left conversation rail with pointer, keyboard, wheel, touch and reading/follow checks. Native replay tests require an instrumented build (`VERA_TEST=1 npm run test:e2e -- ...`) and isolated profiles; the normal development application uses its existing user profile.
