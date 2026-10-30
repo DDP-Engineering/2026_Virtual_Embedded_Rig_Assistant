@@ -2,6 +2,7 @@ import {
   buildSystemPrompt,
   type Clock,
   type EmbeddingPort,
+  ExaWebProvider,
   type PermissionEngine,
   SessionService,
   type SettingsService,
@@ -78,6 +79,7 @@ export class SessionsHost {
             return self.config?.agent.permission_mode ?? "ask";
           },
           gateway: options.gateway().api,
+          web: new ExaWebProvider(),
           clock: options.clock,
           workers: options.workers,
           get skills() {

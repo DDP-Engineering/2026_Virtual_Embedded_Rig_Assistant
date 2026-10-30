@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   buildSystemPrompt,
   createPiAiGateway,
+  ExaWebProvider,
   type LlmGateway,
   SessionService,
   SettingsService,
@@ -137,6 +138,7 @@ export async function runTurn(
       root: snapshot.folder,
       readOnly: snapshot.readOnly,
       gateway,
+      web: new ExaWebProvider(),
       clock: nodeClock,
       workers,
       skills,

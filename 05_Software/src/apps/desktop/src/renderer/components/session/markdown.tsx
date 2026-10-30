@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
+import { ExternalSourceLink } from "./external-source-link.js";
 
 interface Node {
   type: string;
@@ -96,6 +97,9 @@ export function Markdown({
   // Keep chip DOM identity and keyboard focus through transcript refresh and modal updates.
   const custom = useMemo<Record<string, (props: Record<string, unknown>) => ReactNode>>(
     () => ({
+      a: (props) => (
+        <ExternalSourceLink href={String(props.href ?? "")}>{props.children as ReactNode}</ExternalSourceLink>
+      ),
       "vera-citation": (props) => {
         const reference = String(props["data-ref"] ?? "");
         return (
@@ -117,7 +121,6 @@ export function Markdown({
         skipHtml
         components={{
           ...(custom as Components),
-          a: ({ children }) => <span className="markdown-link">{children}</span>,
           img: ({ alt }) => <span>{alt}</span>,
           table: ({ children }) => (
             <div className="markdown-table">

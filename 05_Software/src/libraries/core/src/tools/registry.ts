@@ -12,6 +12,7 @@ import { listTool } from "./list.js";
 import { loadSkillTool } from "./load-skill.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
+import { webReadTool, webSearchTool } from "./web.js";
 import { writeTool } from "./write.js";
 
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
@@ -26,6 +27,8 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   search_docs: searchDocsTool,
   read_doc: readDocTool,
   load_skill: loadSkillTool,
+  web_search: webSearchTool,
+  web_read: webReadTool,
 };
 
 export const TOOL_RESULT_CAP = 32000;

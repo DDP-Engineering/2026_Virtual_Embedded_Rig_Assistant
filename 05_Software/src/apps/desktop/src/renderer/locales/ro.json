@@ -466,6 +466,13 @@
     "warning": "Agentul poate citi și modifica fișiere oriunde contul tău are acces, inclusiv în afara workbenchului, fără să mai ceară confirmare. Poate deteriora proiecte, fișiere sau setările aplicațiilor. Sunt disponibile doar tool-urile activate; permisiunile sistemului de operare se păstrează.",
     "dontShowAgain": "Nu mai afișa acest mesaj data viitoare"
   },
+  "web": {
+    "openTitle": "Deschizi un site extern?",
+    "openDescription": "Această adresă se va deschide în browserul sistemului.",
+    "open": "Deschide în browser",
+    "cancel": "Anulează",
+    "openError": "Linkul nu a putut fi deschis. Încearcă din nou."
+  },
   "workbenchTools": {
     "hint": "Tool-urile bifate sunt active pentru acest workbench. Modificările se aplică după salvare; permisiunile sesiunii se păstrează.",
     "read": "Citește fișiere text sau intervale de linii.",
@@ -478,7 +485,9 @@
     "todo": "Gestionează lista de sarcini a sesiunii din Plan.",
     "search_docs": "Caută în documentele indexate ale workbenchului.",
     "read_doc": "Citește pagini, secțiuni sau linii de text extrase din documente.",
-    "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ."
+    "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ.",
+    "web_search": "Caută pe internet prin Exa. Trimite termenii căutării; nu necesită cont sau cheie API. Se aplică limitele serviciului gratuit.",
+    "web_read": "Citește pagini web publice și documente accesibile prin Exa. Trimite adresa solicitată."
   },
   "projects": {
     "new": "Workbench nou",

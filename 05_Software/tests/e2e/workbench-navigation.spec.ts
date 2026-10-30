@@ -58,8 +58,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator("[data-project-name]").fill("ESP32 revised");
     await dialog.locator('[data-project-section="tools"]').click();
     const tools = dialog.locator("[data-tool-toggle]");
-    await expect(tools).toHaveCount(11);
-    await expect(dialog.locator("[data-tool-description]")).toHaveCount(11);
+    await expect(tools).toHaveCount(13);
+    await expect(dialog.locator("[data-tool-description]")).toHaveCount(13);
     for (const tool of [
       "read",
       "list",
@@ -72,6 +72,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
       "search_docs",
       "read_doc",
       "load_skill",
+      "web_search",
+      "web_read",
     ])
       await expect(dialog.locator(`[data-tool-toggle="${tool}"]`)).toBeChecked();
     await expect(dialog.locator('[data-tool-description="grep"]')).toContainText("Search");

@@ -10,6 +10,8 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 ## Public interface
 
+- Registry includes read-class web_search/web_read over injected WebProvider. [Web search](web-search.md) owns the anonymous Exa adapter, bounded source extraction and errors; file-tool confinement remains unchanged.
+
 - Bypass is a host-selected filesystem scope on read/list/glob/grep/write/edit. ToolContext supplies live permissionMode and a revocable bypassSignal; model args cannot choose scope. PathGuard defaults to the existing confined policy, while filesystem scope accepts canonical absolute/parent paths and ignored locations, rejecting device/stream/special-file syntax. Grep receives scope as host task metadata and remains worker-isolated. External text results expose paths without inventing confined refs; indexed document/citation viewers remain workbench-scoped. OS rights, enabled tools, text/binary/output limits, fingerprints and write integrity still apply.
 
 - Shared builtinToolNames is the canonical ordered built-in execution catalog, with a BuiltinToolName type. ToolRegistry maps its existing definitions through those names; the workbench editor uses the same catalog with localized descriptions and enabled checkboxes. Registry parity tests enforce correspondence. WorkbenchService also uses built-ins for default disabled-name validation. Injected registries/catalogs retain their existing behavior.

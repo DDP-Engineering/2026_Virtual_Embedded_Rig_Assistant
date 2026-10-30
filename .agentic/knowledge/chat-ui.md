@@ -21,6 +21,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 
 ## Public interface
 
+- Markdown HTTP(S) source buttons use translated confirmation before system-browser IPC; cancel/Escape restore focus. A body portal preserves valid Markdown nesting; stable source components survive transcript refresh. [Web search](web-search.md) owns source handling.
+
 - WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. workspace.test.ts and native navigation-actions.spec.ts cover crossings, keyboard, clicks, errors and restart.
 
 - Agent activity displays a muted, wrapping statistics line per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; en/ro/de strings and activity-usage.test.ts plus native prompt-usage.spec.ts cover presentation and restart.

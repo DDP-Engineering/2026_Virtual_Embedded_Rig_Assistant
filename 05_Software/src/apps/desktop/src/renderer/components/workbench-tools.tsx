@@ -24,6 +24,8 @@ export function WorkbenchTools({
     search_docs: t("workbenchTools.search_docs"),
     read_doc: t("workbenchTools.read_doc"),
     load_skill: t("workbenchTools.load_skill"),
+    web_search: t("workbenchTools.web_search"),
+    web_read: t("workbenchTools.web_read"),
   };
   return (
     <div className="workbench-tools">

@@ -211,6 +211,7 @@ The complete list of outbound destinations. The release-package smoke (WP-33) ch
 | Custom endpoint base URL (often `localhost`) | a session uses that endpoint | pi-ai |
 | OpenAI and ChatGPT auth and model endpoints | ChatGPT sign-in, token refresh and requests | pi-ai |
 | Update feed URL | update checks are enabled | electron-updater |
+| Exa MCP (`https://mcp.exa.ai/mcp`) | an enabled `web_search` or `web_read` tool is explicitly invoked; anonymous free-service limits apply | core ExaWebProvider over bounded MCP Streamable HTTP; remote content URLs are read by Exa |
 | Any http/https link | the user clicks it and confirms; opens in the system browser | `app.openExternal` |
 
 ## 9. Platforms and version

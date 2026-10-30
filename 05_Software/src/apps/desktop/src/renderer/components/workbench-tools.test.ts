@@ -51,7 +51,7 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
     await user.click(container.querySelector('[data-project-section="tools"]') as HTMLElement);
   });
   const toggles = [...container.querySelectorAll<HTMLInputElement>("[data-tool-toggle]")];
-  expect(toggles).toHaveLength(11);
+  expect(toggles).toHaveLength(13);
   const grep = container.querySelector<HTMLInputElement>('[data-tool-toggle="grep"]') as HTMLInputElement;
   expect(grep.checked).toBe(false);
   for (const input of toggles) expect(input.matches(":disabled")).toBe(readOnly);

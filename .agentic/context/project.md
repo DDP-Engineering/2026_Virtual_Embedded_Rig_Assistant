@@ -20,6 +20,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
+General web research uses enabled web_search/web_read over vendor-neutral WebProvider with default anonymous Exa MCP. [Web search](../knowledge/web-search.md) routes bounded calls, public source extraction and confirmed source links; no mandatory account/key or startup egress.
+
 Sidebar session/workbench action menus are exclusive. New session reuses an unused idle unarchived session in the current workbench, with transactional rapid-click protection and composer focus.
 
 Agent activity presents localized historical per-prompt token consumption and frozen initial context estimates, with shared-batch/unavailable labels, through existing persisted usage events.

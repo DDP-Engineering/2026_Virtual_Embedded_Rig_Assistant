@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-ee363d68"
+
+title = "Bound web provider calls and expose recoverable errors"
+
+status = "active"
+
+requirement = "When a web provider call is cancelled, times out, exceeds its response limit or fails, VERA shall settle the call with an actionable bounded tool error while closing the MCP connection and retaining the ability to retry."
+
+verification = "Abort during initialize/call, stalled stream deadline, oversized JSON/SSE, HTTP 429/402/401, malformed and isError responses; subsequent valid call succeeds."
+
+affected_paths = ["05_Software/src/libraries/core/src/web/", "05_Software/src/libraries/core/src/tools/web.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/package.json", "05_Software/package-lock.json", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/core/src/agent/prompt.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts", "05_Software/src/libraries/core/src/agent/__snapshots__/prompt.test.ts.snap", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/external-source-link.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/tests/e2e/web-search.spec.ts", "00_Planning/architecture/01-system.md", "00_Planning/architecture/03-agent-and-tools.md", "05_Software/tests/e2e/workbench-tools.spec.ts", "05_Software/tests/e2e/workbench-navigation.spec.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/web/exa.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.test.ts", "05_Software/tests/e2e/web-search.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

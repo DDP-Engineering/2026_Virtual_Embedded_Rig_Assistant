@@ -466,6 +466,13 @@
     "warning": "The agent can read and change files wherever your account has access, including outside the workbench, without asking for confirmation. It can damage projects, files or application settings. Only enabled tools are available; operating system permissions still apply.",
     "dontShowAgain": "Don't show this message next time"
   },
+  "web": {
+    "openTitle": "Open external website?",
+    "openDescription": "This address will open in your system browser.",
+    "open": "Open in browser",
+    "cancel": "Cancel",
+    "openError": "Could not open the link. Try again."
+  },
   "workbenchTools": {
     "hint": "Checked tools are enabled for this workbench. Changes take effect after you save; session permissions still apply.",
     "read": "Read text files or selected line ranges.",
@@ -478,7 +485,9 @@
     "todo": "Manage the session's task list in Plan.",
     "search_docs": "Search the workbench's indexed documents.",
     "read_doc": "Read extracted document pages, sections or text lines.",
-    "load_skill": "Load instructions and supporting text from an enabled skill."
+    "load_skill": "Load instructions and supporting text from an enabled skill.",
+    "web_search": "Search the public web through Exa. Sends the search query; no account or API key required. Free-service limits apply.",
+    "web_read": "Read public web pages and accessible documents through Exa. Sends the requested URL."
   },
   "projects": {
     "new": "New Workbench",

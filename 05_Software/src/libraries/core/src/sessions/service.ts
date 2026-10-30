@@ -41,6 +41,7 @@ import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
+import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { timedGateway } from "./timed-gateway.js";
@@ -60,6 +61,7 @@ export interface SessionHost {
   embeddings?: EmbeddingPort;
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
+  web?: WebProvider;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
   runtime?: (host: RuntimeHost) => AgentRuntime;
@@ -601,6 +603,8 @@ export class SessionService {
       return scope.signal;
     };
     ctx.knowledge = this.knowledge;
+    if (this.host.web) ctx.web = this.host.web;
+    else delete ctx.web;
     if (this.host.skills) ctx.skills = this.host.skills;
     else delete ctx.skills;
     ctx.todos = {

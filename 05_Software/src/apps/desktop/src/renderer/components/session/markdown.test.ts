@@ -3,10 +3,52 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
+import { api } from "../../api/index.js";
 import { Markdown } from "./markdown.js";
 import "../../i18n.js";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+vi.mock("../../api/index.js", () => ({ api: { invoke: vi.fn().mockResolvedValue({}) } }));
+HTMLDialogElement.prototype.showModal = function () {
+  this.setAttribute("open", "");
+};
+HTMLDialogElement.prototype.close = function () {
+  this.removeAttribute("open");
+};
+it("opens source URLs only after confirmation and keeps non-web URLs inert", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        createElement(Markdown, {
+          text: "[Source](https://example.com/doc) [File](file:///secret) [JS](javascript:alert)",
+        }),
+      ),
+    );
+    const link = container.querySelector<HTMLButtonElement>('[data-web-source="https://example.com/doc"]');
+    expect(link).toBeTruthy();
+    expect(container.querySelectorAll("a")).toHaveLength(0);
+    link!.focus();
+    await act(async () => link!.click());
+    expect(document.querySelector("dialog[open]")?.textContent).toContain("https://example.com/doc");
+    expect(api.invoke).not.toHaveBeenCalled();
+    await act(async () => document.querySelector<HTMLButtonElement>("[data-web-cancel]")!.click());
+    expect(api.invoke).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(link);
+    await act(async () => link!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>("[data-web-open]")!.click());
+    expect(api.invoke).toHaveBeenCalledExactlyOnceWith("app.openExternal", {
+      url: "https://example.com/doc",
+      confirmed: true,
+    });
+    expect(document.querySelector("dialog[open]")).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
 it("shows kind icons/compact labels/full refs and keeps invalid or malformed chips inert", async () => {
   const cases = [
     ["docs/a.pdf#p=2", "page", "a.pdf p2"],

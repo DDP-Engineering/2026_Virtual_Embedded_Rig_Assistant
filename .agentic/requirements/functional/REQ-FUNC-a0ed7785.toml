@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a0ed7785"
+
+title = "Read public web pages through the web provider"
+
+status = "active"
+
+requirement = "When the agent invokes enabled web_read with a public HTTP or HTTPS URL, VERA shall return bounded extracted page content and its source URL through the same provider port."
+
+verification = "Loopback MCP read receives requested URL and character limit; source/content returned; invalid URL rejected before transport."
+
+affected_paths = ["05_Software/src/libraries/core/src/web/", "05_Software/src/libraries/core/src/tools/web.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/package.json", "05_Software/package-lock.json", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/core/src/agent/prompt.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts", "05_Software/src/libraries/core/src/agent/__snapshots__/prompt.test.ts.snap", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/external-source-link.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/tests/e2e/web-search.spec.ts", "00_Planning/architecture/01-system.md", "00_Planning/architecture/03-agent-and-tools.md", "05_Software/tests/e2e/workbench-tools.spec.ts", "05_Software/tests/e2e/workbench-navigation.spec.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/web/exa.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.test.ts", "05_Software/tests/e2e/web-search.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

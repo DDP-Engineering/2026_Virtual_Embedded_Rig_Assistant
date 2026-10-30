@@ -12,6 +12,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- Optional SessionHost.web supplies the provider to session context; desktop/CLI compose anonymous Exa without startup requests. Web tools use existing read execution/permissions/activity. [Web search](web-search.md) owns the network boundary.
+
 - SessionService.create(modelRef?,mode?,reuseEmpty=false) keeps explicit creation separate. Opt-in New session selects the most recently updated idle/unarchived row with no user transcript row or submitted/queued event, or creates within the same synchronous transaction. Reuse preserves name, model, mode and history. Separate workbench databases and main ownership checks prevent cross-workbench reuse; archived/used/queued rows stay excluded. service.test.ts covers reuse and boundaries; navigation-actions.spec.ts covers concurrent IPC, UI and restart.
 
 - usage.updated optionally carries host/runtime-owned promptIds. The common reducer resets current counters with each turn, attributes only positive cumulative deltas to admitted user items, freezes their first normal-request context snapshot and marks shared batches. All-zero unreported consumption remains unavailable; queued undelivered messages receive no measurements. Durable event replay reconstructs the same per-prompt statistics without a database migration or extra provider request.

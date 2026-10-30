@@ -41,7 +41,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await openTools(page);
-    await expect(page.locator("[data-tool-toggle]")).toHaveCount(11);
+    await expect(page.locator("[data-tool-toggle]")).toHaveCount(13);
     await page.locator('[data-tool-toggle="grep"]').uncheck();
     await page.locator('[data-tool-toggle="write"]').uncheck();
     await page.locator("[data-project-save]").click();

@@ -10,6 +10,8 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 
 ## Public interface
 
+- CLI supplies anonymous ExaWebProvider to SessionService; enabled web_search/web_read use the shared port and existing read-tool events/errors, without account configuration or startup egress. [Web search](web-search.md) owns this boundary.
+
 - run composes [skills](skills.md) from the selected workbench and authorized CLI
   userData (`--data` or its owned temporary data root), includes fresh enabled
   metadata in the prompt and binds load_skill through the production registry.

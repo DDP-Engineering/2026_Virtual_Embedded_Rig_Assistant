@@ -12,6 +12,8 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ## Public interface
 
+- Canonical prompt permits enabled web_search/web_read for general/current topics, treats web content as untrusted data and cites returned URLs as Markdown links while retaining local [[ref]] syntax. No automatic project/context upload is performed.
+
 - Normal usage updates carry the admitted promptIds group; first dispatch can include the initiating prompt and admitted queue, and later steering takes ownership of subsequent calls. Normal budgets follow durable delivery; internal summary budgets have no prompt ownership. Input consumption includes SDK input/cacheRead/cacheWrite, output uses reported output. Terminal partial reports on error/abort and completed reports before cancellation are accounted once; summary finally retains reported consumption even when summarization fails. Unreported all-zero usage is not a measured zero. prompt-usage.test.ts verifies groups, totals and dispatch order; native prompt-usage.spec.ts verifies persistence and UI.
 
 - A Bypass prompt appends the current full filesystem scope and existing tool/OS boundaries. Ordinary file tool descriptions include that scope before normal runtime budgeting; Bypass does not introduce new tool capabilities or remove size, binary, exact-read or host ownership constraints. The SessionService/ApprovalGate layer supplies live revocable authority.
