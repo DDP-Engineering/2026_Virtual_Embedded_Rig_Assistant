@@ -20,6 +20,8 @@ The architecture laws in [01-system](../../00_Planning/architecture/01-system.md
 
 ## Implementation orientation
 
+Sidebar session/workbench action menus are exclusive. New session reuses an unused idle unarchived session in the current workbench, with transactional rapid-click protection and composer focus.
+
 Agent activity presents localized historical per-prompt token consumption and frozen initial context estimates, with shared-batch/unavailable labels, through existing persisted usage events.
 
 [Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New/Open Workbench manages user-selected single-root projects. The sidebar retains pinned workbenches and grouped sessions; the project editor manages supported configuration and local embedding chunk settings. Plugins presents integration availability. Sessions begin with user-composed input.

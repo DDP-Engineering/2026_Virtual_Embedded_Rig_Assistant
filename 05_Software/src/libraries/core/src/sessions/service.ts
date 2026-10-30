@@ -218,13 +218,30 @@ export class SessionService {
       })),
     });
   }
-  create(modelRef: string | null = null, mode: PermissionMode = this.host.mode ?? "ask"): SessionSummary {
+  /** Opt-in New session reuses unused rows; explicit creation keeps allocating. */
+  create(
+    modelRef: string | null = null,
+    mode: PermissionMode = this.host.mode ?? "ask",
+    reuseEmpty = false,
+  ): SessionSummary {
     this.writable();
     permissionModeSchema.parse(mode);
     if (modelRef !== null) resolveModelReference(modelRef);
-    const id = `ses_${ulid()}`;
-    const now = this.now();
-    this.host.db.transaction(() => {
+    return this.host.db.transaction(() => {
+      if (reuseEmpty) {
+        const empty = this.host.db
+          .prepare(`
+          SELECT s.id FROM sessions s
+          WHERE s.archived=0 AND s.status='idle'
+            AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.session_id=s.id AND m.role='user')
+            AND NOT EXISTS (SELECT 1 FROM events e WHERE e.session_id=s.id AND e.type IN ('message.user','message.queued'))
+          ORDER BY s.updated_at DESC,s.id DESC LIMIT 1
+        `)
+          .get() as { id: string } | undefined;
+        if (empty) return this.summary(this.row(empty.id));
+      }
+      const id = `ses_${ulid()}`;
+      const now = this.now();
       this.sessions.create({
         id,
         title: "",
@@ -236,8 +253,8 @@ export class SessionService {
         archived: 0,
       });
       this.hub.record(id, { type: "session.updated", title: "", status: "idle", modelRef, mode });
+      return this.summary(this.row(id));
     })();
-    return this.summary(this.row(id));
   }
   get(id: string) {
     this.row(id);

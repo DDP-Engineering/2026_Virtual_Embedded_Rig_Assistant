@@ -282,11 +282,13 @@ ipcMain.handle(
             scrub: (text) => credentials.scrub(text),
           }),
         ),
-      "session.create": ({ modelRef, mode, workbenchId }) =>
+      "session.create": ({ modelRef, mode, workbenchId, reuseEmpty }) =>
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.create(modelRef, mode), (text) => credentials.scrub(text));
+          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) =>
+            credentials.scrub(text),
+          );
         }),
       "session.get": ({ sessionId }) =>
         sessions.run((s) => {

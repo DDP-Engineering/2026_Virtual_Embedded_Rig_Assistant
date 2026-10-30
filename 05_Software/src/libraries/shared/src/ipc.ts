@@ -217,6 +217,7 @@ export const channels = {
     "session.create",
     z.strictObject({
       workbenchId: workbenchIdSchema.optional(),
+      reuseEmpty: z.boolean().optional(),
       modelRef: modelReferenceSchema.nullable().optional(),
       mode: permissionModeSchema.optional(),
     }),

@@ -12,6 +12,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- SessionService.create(modelRef?,mode?,reuseEmpty=false) keeps explicit creation separate. Opt-in New session selects the most recently updated idle/unarchived row with no user transcript row or submitted/queued event, or creates within the same synchronous transaction. Reuse preserves name, model, mode and history. Separate workbench databases and main ownership checks prevent cross-workbench reuse; archived/used/queued rows stay excluded. service.test.ts covers reuse and boundaries; navigation-actions.spec.ts covers concurrent IPC, UI and restart.
+
 - usage.updated optionally carries host/runtime-owned promptIds. The common reducer resets current counters with each turn, attributes only positive cumulative deltas to admitted user items, freezes their first normal-request context snapshot and marks shared batches. All-zero unreported consumption remains unavailable; queued undelivered messages receive no measurements. Durable event replay reconstructs the same per-prompt statistics without a database migration or extra provider request.
 
 - Bypass persists through the existing session mode/event contracts and grants enabled ordinary file tools full filesystem scope without manual approvals. Exact automatic grants retain single-use hashes; filesystem requests require current Bypass. Selecting Bypass resolves existing approval waits. Downgrade aborts scoped work and pending grants; later calls use the normal confined policy. Workbench read-only/ownership and injected host permission policies remain authoritative. Canonical absolute Bypass change paths support hash-only startup recovery.

@@ -69,6 +69,119 @@ afterEach(async () => {
 });
 
 // Users choose their own workbench and explicitly compose requests.
+test("sidebar action menus are exclusive across session and workbench triggers, with outside and Escape dismissal", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/exclusive-menus", name: "Menus" });
+  await api.invoke("session.create", {});
+  await api.invoke("session.create", {});
+  await mount();
+  const user = userEvent.setup();
+  const menus = [...container.querySelectorAll<HTMLDetailsElement>(".session-options")];
+  const bench = container.querySelector<HTMLDetailsElement>(".workbench-menu") as HTMLDetailsElement;
+  const trigger = (menu: HTMLDetailsElement) => menu.querySelector("summary") as HTMLElement;
+  await act(async () => user.click(trigger(menus[0] as HTMLDetailsElement)));
+  await act(async () => user.click(trigger(menus[1] as HTMLDetailsElement)));
+  expect(menus[0]?.open).toBe(false);
+  expect(menus[1]?.open).toBe(true);
+  await act(async () => user.click(trigger(bench)));
+  expect(menus[1]?.open).toBe(false);
+  expect(bench.open).toBe(true);
+  await act(async () => user.keyboard("{Escape}"));
+  expect(bench.open).toBe(false);
+  expect(document.activeElement).toBe(trigger(bench));
+  // Native summary Enter/Space activation is verified in Electron, not emulated by jsdom.
+  await act(async () => user.click(trigger(bench)));
+  expect(bench.open).toBe(true);
+  await act(async () => user.click(container.querySelector("main") as HTMLElement));
+  expect(bench.open).toBe(false);
+});
+test("New session reuses a renamed empty session, preserves its draft and focuses the composer", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/reuse-empty", name: "Reuse" });
+  const empty = await api.invoke("session.create", {});
+  await api.invoke("session.rename", { sessionId: empty.id, title: "Named unused" });
+  await mount();
+  await act(async () => button("New session").click());
+  await settle();
+  expect(container.querySelector('[data-session][aria-current="page"]')?.getAttribute("data-session")).toBe(
+    empty.id,
+  );
+  const editor = container.querySelector<HTMLTextAreaElement>("#chat-message") as HTMLTextAreaElement;
+  expect(document.activeElement).toBe(editor);
+  const user = userEvent.setup();
+  await act(async () => user.type(editor, "Unsent draft"));
+  await act(async () => {
+    for (let i = 0; i < 15; i++) button("New session").click();
+  });
+  await settle();
+  expect(await api.invoke("session.list", {})).toHaveLength(1);
+  expect(editor.value).toBe("Unsent draft");
+  expect(document.activeElement).toBe(editor);
+});
+test("New session guards an in-flight failure against rapid clicks and allows a successful retry", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/slow-new-session", name: "Slow create" });
+  const archived = await api.invoke("session.create", {});
+  await api.invoke("session.archive.set", { sessionId: archived.id, archived: true });
+  await mount();
+  const original = api.invoke.bind(api);
+  let attempts = 0;
+  let fail = true;
+  let release: (() => void) | undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const invoke: typeof api.invoke = async (channel, request) => {
+    if (channel === "session.create") {
+      attempts++;
+      await gate;
+      if (fail) throw { code: "BUSY", messageKey: "errors.BUSY" };
+    }
+    return original(channel, request);
+  };
+  vi.spyOn(api, "invoke").mockImplementation(invoke);
+  await act(async () => {
+    for (let i = 0; i < 15; i++) button("New session").click();
+  });
+  expect(attempts).toBe(1);
+  await act(async () => release?.());
+  await settle();
+  expect(container.querySelector('[role="alert"]')).toBeTruthy();
+  expect(button("New session").disabled).toBe(false);
+  fail = false;
+  await act(async () => {
+    for (let i = 0; i < 15; i++) button("New session").click();
+  });
+  await settle();
+  expect(attempts).toBe(2);
+  const sessions = await original("session.list", {});
+  expect(sessions).toHaveLength(2);
+  expect(sessions.filter((session) => !session.archived)).toHaveLength(1);
+  expect(document.activeElement?.id).toBe("chat-message");
+});
+test("removing the only selected session leaves New session usable without a stale composer focus request", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/delete-only-session", name: "Delete only" });
+  const session = await api.invoke("session.create", {});
+  await mount();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>(`[data-session="${session.id}"]`)?.click(),
+  );
+  await settle();
+  const row = container.querySelector(`[data-session="${session.id}"]`)?.parentElement as HTMLElement;
+  await act(async () => row.querySelector<HTMLElement>("summary")?.click());
+  await act(async () => row.querySelector<HTMLButtonElement>('button[aria-label^="Delete"]')?.click());
+  await settle();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="confirm-delete"]')?.click(),
+  );
+  await settle();
+  // The chat mock seeds demonstration rows again after its last row is deleted.
+  expect((await api.invoke("session.list", {})).some((row) => row.id === session.id)).toBe(false);
+  expect(container.querySelector('[data-action="new-session"]')).toBeTruthy();
+  await act(async () => button("New session").click());
+  await settle();
+  expect(
+    container.querySelector('[data-session][aria-current="page"]')?.getAttribute("data-session"),
+  ).not.toBe(session.id);
+  expect(document.activeElement?.id).toBe("chat-message");
+});
 test("Welcome offers user workbenches without a bundled demo or guided sessions", async () => {
   const observed = vi.spyOn(api, "invoke");
   await mount();
@@ -566,7 +679,10 @@ test("Markdown keeps remote content inert and citation syntax in code unmodified
   expect(container.querySelector("script,img,a[href]")).toBeNull();
 });
 test("permission picker confirms mode and new sessions inherit the workbench default", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await api.invoke("workbench.create", {
+    folder: "/mock/new-default-permissions",
+    name: "Default permissions",
+  });
   await api.invoke("workbench.config.update", { patch: { agent: { permission_mode: "auto-edit" } } });
   await mount();
   await act(async () => button("New session").click());

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-1739d053"
+
+title = "Keep one sidebar workbench or session action menu open"
+
+status = "active"
+
+requirement = """
+When a workbench or session action menu is opened in the sidebar, VERA shall keep only that menu open, dismiss it on outside interaction or Escape and restore its trigger focus on Escape.
+"""
+
+verification = "Open two session menus and a workbench menu by mouse/keyboard; verify exactly the last is open, outside interaction closes it and Escape closes it with trigger focus; archived-list expansion remains independent."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/navigation-actions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

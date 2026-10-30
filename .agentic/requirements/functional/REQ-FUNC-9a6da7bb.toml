@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9a6da7bb"
+
+title = "Reuse an unused session on New session without rapid-click duplicates"
+
+status = "active"
+
+requirement = """
+When New session is requested, VERA shall select the most recently updated idle unarchived session in that workbench without submitted or queued user messages, preserving its identity and configuration and focusing the composer, or create exactly one if none exists, including rapid concurrent requests.
+"""
+
+verification = "Reuse a renamed empty session, preserve model/mode/history, exclude used/queued/archived/foreign sessions, verify concurrent opt-in requests and rapid UI/shortcut clicks produce one ID, verify failures release UI protection and reuse preserves a current unsent draft; ordinary explicit session.create still creates a separate session."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/navigation-actions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-30
+updated = 2026-10-30

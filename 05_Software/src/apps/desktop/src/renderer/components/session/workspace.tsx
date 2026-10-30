@@ -17,11 +17,13 @@ export function SessionWorkspace({
   workbenchId,
   changed,
   readOnly,
+  composerFocusRequest = 0,
 }: {
   id?: string | undefined;
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
+  composerFocusRequest?: number;
 }) {
   const { t } = useTranslation();
   const bindings = useContext(ShortcutContext);
@@ -33,6 +35,16 @@ export function SessionWorkspace({
   const [inspector, setInspector] = useState<"context" | "activity">();
   const searchInput = useRef<HTMLInputElement>(null);
   const workspace = useRef<HTMLElement>(null);
+  const lastComposerFocus = useRef(0);
+  const composerReady = !!view && !readOnly && !pending;
+  useEffect(() => {
+    if (!composerFocusRequest || !composerReady || composerFocusRequest === lastComposerFocus.current) return;
+    const input = workspace.current?.querySelector<HTMLTextAreaElement>("#chat-message:not(:disabled)");
+    if (input) {
+      input.focus();
+      lastComposerFocus.current = composerFocusRequest;
+    }
+  }, [composerFocusRequest, composerReady]);
   function closeSearch() {
     setSearching(false);
     setSearch("");

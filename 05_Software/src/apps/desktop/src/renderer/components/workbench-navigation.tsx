@@ -1,7 +1,7 @@
 import type { RecentWorkbenchState } from "@vera/shared";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export function WorkbenchNavigation({
@@ -30,6 +30,41 @@ export function WorkbenchNavigation({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const navigation = useRef<HTMLElement>(null);
+  const menuSelector = ".workbench-menu,.session-options";
+  const closeMenus = useCallback((except: Element | null = null, restoreFocus = false) => {
+    for (const menu of navigation.current?.querySelectorAll<HTMLDetailsElement>(
+      ".workbench-menu[open],.session-options[open]",
+    ) ?? []) {
+      if (menu === except) continue;
+      menu.open = false;
+      if (restoreFocus) menu.querySelector("summary")?.focus();
+    }
+  }, []);
+  useEffect(() => {
+    const outside = (event: Event) => {
+      const menu = event.target instanceof Element ? event.target.closest(menuSelector) : null;
+      closeMenus(menu && navigation.current?.contains(menu) ? menu : null);
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Escape" ||
+        !navigation.current?.querySelector(".workbench-menu[open],.session-options[open]")
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenus(null, true);
+    };
+    document.addEventListener("pointerdown", outside, true);
+    document.addEventListener("focusin", outside, true);
+    document.addEventListener("keydown", handleEscape, true);
+    return () => {
+      document.removeEventListener("pointerdown", outside, true);
+      document.removeEventListener("focusin", outside, true);
+      document.removeEventListener("keydown", handleEscape, true);
+    };
+  }, [closeMenus]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     try {
       const parsed: unknown = JSON.parse(localStorage.getItem("vera.workbench.expanded") ?? "{}");
@@ -50,7 +85,14 @@ export function WorkbenchNavigation({
     });
   }
   return (
-    <section className="workbench-navigation" aria-label={t("welcome.workbenches")}>
+    <section
+      ref={navigation}
+      className="workbench-navigation"
+      aria-label={t("welcome.workbenches")}
+      onClickCapture={(event) =>
+        closeMenus(event.target instanceof Element ? event.target.closest(menuSelector) : null)
+      }
+    >
       <strong>{t("welcome.workbenches")}</strong>
       {!entries.length && <p>{t("projects.empty")}</p>}
       {[...entries]

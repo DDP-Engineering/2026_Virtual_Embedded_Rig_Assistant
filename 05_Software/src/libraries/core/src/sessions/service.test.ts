@@ -11,6 +11,44 @@ import * as core from "../index.js";
 import { ReplayGateway } from "../llm/replay.js";
 
 const cleanup: (() => Promise<void>)[] = [];
+// REQ-FUNC-9a6da7bb
+it("reuses a renamed unused session without changing its configuration and serializes repeated reuse requests", async () => {
+  const { service } = await setup();
+  const empty = service.create("replay/read-then-answer", "auto-edit");
+  service.rename(empty.id, "Renamed unused session");
+  const before = service.get(empty.id);
+  const reused = await Promise.all(Array.from({ length: 15 }, async () => service.create(null, "ask", true)));
+  expect(new Set(reused.map((s) => s.id))).toEqual(new Set([empty.id]));
+  expect(reused[0]).toMatchObject({
+    title: "Renamed unused session",
+    modelRef: "replay/read-then-answer",
+    mode: "auto-edit",
+  });
+  expect(service.get(empty.id)).toEqual(before);
+  expect(service.list()).toHaveLength(1);
+  expect(service.create().id).not.toBe(empty.id);
+});
+it("does not reuse archived, submitted, queued or other-workbench sessions", async () => {
+  const { service, handle, host } = await setup();
+  const archived = service.create();
+  service.setArchived(archived.id, true);
+  const used = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  hub.emit(used.id, { type: "message.user", messageId: "user", text: "Submitted" });
+  const queued = service.create();
+  hub.emit(queued.id, { type: "message.queued", messageId: "queue", text: "Queued", timestamp: 1 });
+  const rowOnly = service.create();
+  handle.db
+    .prepare("INSERT INTO messages(session_id,seq,role,content_json) VALUES (?,?,?,?)")
+    .run(rowOnly.id, 0, "user", JSON.stringify({ role: "user", content: "Submitted", timestamp: 1 }));
+  const empty = service.create(null, "ask", true);
+  expect([archived.id, used.id, queued.id, rowOnly.id]).not.toContain(empty.id);
+  const other = await setup();
+  expect(other.service.create(null, "ask", true).id).not.toBe(empty.id);
+  const readOnly = new core.SessionService({ ...host, readOnly: true });
+  cleanup.push(() => readOnly.close());
+  expect(() => readOnly.create(null, "ask", true)).toThrow(expect.objectContaining({ code: "DENIED" }));
+});
 // REQ-FUNC-1b882a4b REQ-FUNC-70479d66; runtime execution deferred by user.
 it("searches full persisted and pending messages literally and exports their ordered events", async () => {
   const { service, handle } = await setup();

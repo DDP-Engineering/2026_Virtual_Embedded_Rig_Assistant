@@ -21,6 +21,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 
 ## Public interface
 
+- WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. workspace.test.ts and native navigation-actions.spec.ts cover crossings, keyboard, clicks, errors and restart.
+
 - Agent activity displays a muted, wrapping statistics line per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; en/ro/de strings and activity-usage.test.ts plus native prompt-usage.spec.ts cover presentation and restart.
 
 - PermissionPicker offers read-only, Ask, Auto-edit and marked Bypass. Bypass persists as the session mode and enables full ordinary file tool access outside the workbench without confirmations; its red/bold warning-marked selection remains visible even when the localized Close/X/Escape warning is suppressed through application preferences. Mode changes remain available during active turns, with scoped execution revoked by the core on downgrade. Permission save failures surface at the picker.

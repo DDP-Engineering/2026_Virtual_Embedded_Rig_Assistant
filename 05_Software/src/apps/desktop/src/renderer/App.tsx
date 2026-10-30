@@ -38,6 +38,8 @@ export function App() {
   const [activeSession, setActiveSession] = useState<string>();
   const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
+  const [composerFocus, setComposerFocus] = useState<{ id: string; request: number }>();
+  const composerFocusSequence = useRef(0);
   const [sessionError, setSessionError] = useState<unknown>();
   const bench = useQuery({
     queryKey: ["workbench.active"],
@@ -84,6 +86,7 @@ export function App() {
   }, [bench.data, benchId, recent.data, readOnly]);
   const select = useCallback(
     (id: string) => {
+      setComposerFocus(undefined);
       setActiveSession(id);
       setChat(true);
       setPlugins(false);
@@ -133,9 +136,13 @@ export function App() {
   const create = useCallback(() => {
     if (!benchId || readOnly || sessionPending) return;
     void operation(async () => {
-      const session = await api.invoke("session.create", { workbenchId: benchId });
-      client.setQueryData<SessionSummary[]>(["session.list", benchId], (old) => [session, ...(old ?? [])]);
+      const session = await api.invoke("session.create", { workbenchId: benchId, reuseEmpty: true });
+      client.setQueryData<SessionSummary[]>(["session.list", benchId], (old) => [
+        session,
+        ...(old ?? []).filter((row) => row.id !== session.id),
+      ]);
       select(session.id);
+      setComposerFocus({ id: session.id, request: ++composerFocusSequence.current });
     }).catch(() => {});
   }, [benchId, readOnly, sessionPending, select, operation, client]);
   const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
@@ -485,6 +492,9 @@ export function App() {
               workbenchId={benchId}
               changed={changed}
               readOnly={readOnly}
+              composerFocusRequest={
+                composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
+              }
             />
           )}
         </Shell>

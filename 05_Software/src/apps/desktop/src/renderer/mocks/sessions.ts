@@ -94,6 +94,7 @@ export class MockSessions {
   invoke(channel: string, raw: unknown): unknown {
     const request = raw as {
       sessionId: string;
+      reuseEmpty?: boolean;
       text: string;
       title: string;
       modelRef: string | null;
@@ -124,6 +125,21 @@ export class MockSessions {
     }
     if (channel === "session.create") {
       this.writable();
+      if (request.reuseEmpty) {
+        const prefix = this.key("");
+        const unused = [...this.sessions.entries()]
+          .filter(
+            ([key, row]) =>
+              key.startsWith(prefix) &&
+              !row.active &&
+              row.summary.status === "idle" &&
+              !row.summary.archived &&
+              !row.events.some((event) => event.type === "message.user" || event.type === "message.queued"),
+          )
+          .map(([, row]) => row.summary)
+          .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0];
+        if (unused) return structuredClone(unused);
+      }
       const id = `ses_${String(++this.number).padStart(26, "0")}`;
       const now = new Date().toISOString();
       const summary: SessionSummary = {
