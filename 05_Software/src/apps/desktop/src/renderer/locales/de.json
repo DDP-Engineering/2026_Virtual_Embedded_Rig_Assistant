@@ -42,6 +42,7 @@
   "settings": {
     "title": "Anwendungseinstellungen",
     "providers": "Anbieter",
+    "webAccess": "Webzugriff",
     "appearance": "Darstellung",
     "language": "Sprache",
     "updates": "Aktualisierungen",
@@ -465,6 +466,44 @@
     "title": "Bypass: voller Dateizugriff",
     "warning": "Der Agent kann ohne Rückfrage Dateien überall lesen und ändern, wo Ihr Benutzerkonto Zugriff hat, auch außerhalb der Workbench. Dabei können Projekte, Dateien oder Anwendungseinstellungen beschädigt werden. Es stehen nur aktivierte Werkzeuge zur Verfügung; Betriebssystemberechtigungen gelten weiterhin.",
     "dontShowAgain": "Diese Meldung beim nächsten Mal nicht mehr anzeigen"
+  },
+  "webAccess": {
+    "description": "Internetzugriff getrennt von KI-Anbietern verwalten. Die Tool-Berechtigungen des Workbenchs gelten weiterhin.",
+    "loading": "Webzugriff wird geladen…",
+    "enabled": "Webzugriff aktivieren",
+    "globalHint": "Gilt für alle Workbenches. Deaktivieren bricht laufende Webanfragen ab und sperrt Webtools.",
+    "provider": "Suchanbieter",
+    "authentication": "Zugriffsmodus",
+    "anonymous": "Anonym — kein Konto erforderlich",
+    "apiKeyMode": "Meinen API-Schlüssel verwenden",
+    "anonymousHint": "Exa kann ohne Konto oder Schlüssel innerhalb der kostenlosen Dienstgrenzen genutzt werden. Ein gespeicherter Schlüssel wird in diesem Modus nicht gesendet.",
+    "keyHint": "Ihr Schlüssel verwendet das Kontingent Ihres Exa-Kontos und kann Kosten verursachen. Er wird getrennt von den Anwendungseinstellungen gespeichert.",
+    "apiKey": "Exa-API-Schlüssel",
+    "keepKey": "Leer lassen, um den gespeicherten Schlüssel beizubehalten",
+    "storedKey": "Gespeicherter Schlüssel verfügbar · {{storage}}",
+    "noKey": "Kein API-Schlüssel gespeichert. Anonymer Zugriff ist verfügbar.",
+    "keyRequired": "Schlüssel eingeben oder anonymen Zugriff auswählen.",
+    "save": "Speichern",
+    "test": "Verbindung testen",
+    "removeKey": "Gespeicherten Schlüssel entfernen",
+    "saving": "Wird gespeichert…",
+    "saved": "Webzugriffseinstellungen gespeichert.",
+    "saveHint": "Globale Änderungen speichern. Der Verbindungstest prüft den gewählten Modus, ohne den eingegebenen Schlüssel zu speichern.",
+    "testTitle": "Web-Verbindungstest",
+    "testing": "Verbindung zu Exa wird hergestellt…",
+    "close": "Schließen",
+    "storage": {
+      "encrypted": "verschlüsselte Speicherung",
+      "memory": "nur im Arbeitsspeicher",
+      "unprotected": "ungeschützte Speicherung"
+    },
+    "results": {
+      "pass": "Verbindung erfolgreich. Websuche ist verfügbar.",
+      "fail": "Verbindung fehlgeschlagen. Schlüssel, Internetverbindung oder Exa-Dienstgrenzen prüfen.",
+      "disabled": "Webzugriff ist deaktiviert. Vor dem Test aktivieren und speichern.",
+      "key-required": "Der gewählte Zugriffsmodus erfordert einen API-Schlüssel.",
+      "cancelled": "Der Test wurde abgebrochen oder der Zugriff geändert."
+    }
   },
   "web": {
     "openTitle": "Externe Website öffnen?",

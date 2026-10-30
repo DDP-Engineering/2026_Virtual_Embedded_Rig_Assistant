@@ -35,6 +35,11 @@ const workbenchHandlers = {
   "app.openExternal": unused,
   "providers.chatgpt.login": unused,
   "providers.chatgpt.status": unused,
+  "web.access.get": unused,
+  "web.access.save": unused,
+  "web.access.removeKey": unused,
+  "web.access.test": unused,
+  "web.access.cancel": unused,
   "providers.chatgpt.cancel": unused,
   "providers.chatgpt.logout": unused,
 

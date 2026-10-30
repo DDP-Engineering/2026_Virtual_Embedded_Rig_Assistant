@@ -2,6 +2,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { webApiKeySchema } from "@vera/shared";
 import {
   publicWebUrl,
   webReadSchema as readSchema,
@@ -21,7 +22,12 @@ class WebFailure extends Error {}
 /** Restricted Exa client: no configurable server, OAuth, billing, sampling or server instructions. */
 export class ExaWebProvider implements WebProvider {
   constructor(
-    private readonly options: { fetch?: typeof fetch; now?: () => Date; timeoutMs?: number } = {},
+    private readonly options: {
+      fetch?: typeof fetch;
+      now?: () => Date;
+      timeoutMs?: number;
+      apiKey?: string;
+    } = {},
   ) {}
 
   async search(request: WebSearchRequest, signal: AbortSignal): Promise<WebResult> {
@@ -108,6 +114,9 @@ export class ExaWebProvider implements WebProvider {
     const signal = AbortSignal.any([caller, deadline, failed.signal]);
     const client = new Client({ name: "VERA", version: "0.0.0" }, { capabilities: {} });
     const transport = new StreamableHTTPClientTransport(new URL(endpoint), {
+      ...(this.options.apiKey
+        ? { requestInit: { headers: { "x-api-key": webApiKeySchema.parse(this.options.apiKey) } } }
+        : {}),
       fetch: async (input, init) => {
         signal.throwIfAborted();
         const request = new Request(input, init);
@@ -121,11 +130,11 @@ export class ExaWebProvider implements WebProvider {
           await response.body?.cancel();
           if ([402, 429].includes(response.status))
             throw new WebFailure(
-              "Web search free-service limit reached. Try again later; no paid service was enabled.",
+              "Web search service limit reached. Try again later or check the selected account quota.",
             );
           if ([401, 403].includes(response.status))
             throw new WebFailure(
-              "Web search service now requires authentication. Anonymous access is unavailable.",
+              "Web search authentication failed. Check the selected access mode or API key.",
             );
           // An optional SSE listening stream is not supported by stateless Exa.
           if (request.method === "GET" && response.status === 405) return response;

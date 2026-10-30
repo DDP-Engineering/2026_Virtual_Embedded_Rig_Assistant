@@ -10,6 +10,10 @@ app.settings.get({}) and app.settings.update(patch) return {settings,readOnly}.
 No-op patches return the snapshot without writing or emitting. Successful changed saves emit
 settings.changed after persistence. Read-only updates reject DENIED; malformed patches reject INVALID.
 
+## Web access preferences
+
+The current schema also contains webAccess {enabled:boolean, provider:exa, authentication:anonymous|api-key}, default enabled/anonymous. General app.settings.update rejects this authority field; dedicated web.access.save/removeKey serialize persistence alongside credentials. web.access.get returns only preferences/keyConfigured/storage/secureStorage/readOnly. API keys are kept separately under web:exa using the existing credential security/consent policy. No migration or compatibility branch is introduced.
+
 ## Persistence and recovery
 PathProvider provides userData/settings/logs; Clock supplies Date and asynchronous retry delay.
 FileAccess supplies optional UTF-8 read (absence only), atomic write and exclusive backup.

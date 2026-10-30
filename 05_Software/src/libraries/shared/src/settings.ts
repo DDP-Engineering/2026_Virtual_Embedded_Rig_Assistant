@@ -2,6 +2,7 @@ import { z } from "zod";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { updateChannelSchema, updateModeSchema } from "./updates.js";
+import { webAccessDefaults, webAccessSettingsSchema } from "./web-access.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 export const recentWorkbenchSchema = z.looseObject({
@@ -27,6 +28,7 @@ const fontSizeSchema = z.union([
 ]);
 const mutable = {
   suppressBypassWarning: z.boolean().optional(),
+  webAccess: webAccessSettingsSchema.default(webAccessDefaults),
   keyboardShortcuts: shortcutOverridesSchema.optional(),
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
@@ -101,6 +103,7 @@ export const settingsV0Schema = z.looseObject({
 export type Settings = z.infer<typeof settingsSchema>;
 /** Internal service patch; provider writes enter through their dedicated IPC boundary. */
 export const settingsServicePatchSchema = settingsPatchSchema.extend({
+  webAccess: webAccessSettingsSchema.optional(),
   providers: providerSettingsSchema.optional(),
 });
 export type SettingsPatch = z.infer<typeof settingsPatchSchema>;
@@ -121,6 +124,7 @@ export function defaultSettings(installationId: string): Settings {
     schemaVersion: 4,
     installationId,
     suppressBypassWarning: false,
+    webAccess: { ...webAccessDefaults },
     language: "system",
     theme: "system",
     textScale: 1,

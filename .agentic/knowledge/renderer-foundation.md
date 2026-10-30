@@ -130,3 +130,5 @@ Shortcut digits/comma/slash use physical code positions when supplied (letters
 follow the current layout key). Windows input without code normalizes standard
 shifted symbols to their base keys; recorder feedback rejects unsupported keys.
 Key-search activation focuses its input before the next key can execute a command.
+
+Settings includes a separately mounted Web access section. Its global checkbox, Exa authentication choice, non-prefilled optional password and inline save/test/remove actions use dedicated IPC. Connection results stay in a centered translated modal with one Close button and restored focus; stale/cancelled results cannot reopen it. en/ro/de labels, consent and native screenshot geometry are verified. See [web access](web-search.md).

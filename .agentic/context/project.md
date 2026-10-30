@@ -99,3 +99,5 @@ required before final release; current-host import/loaded-path evidence suppleme
 App-wide keyboard bindings are confirmed settings shared through the renderer
 ShortcutContext. Settings supports searching, recording, adding/removing aliases
 and restoring defaults for current navigation, panels and conversation actions.
+
+Settings > Web access owns the global web gate and explicit anonymous/optional Exa-key mode, separately from AI Providers. Dedicated credential-safe IPC and ConfiguredWebProvider apply it across workbenches/CLI; see [web access](../knowledge/web-search.md).

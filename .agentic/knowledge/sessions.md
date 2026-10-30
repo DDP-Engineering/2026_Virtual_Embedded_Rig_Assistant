@@ -78,3 +78,5 @@ REQ-FUNC-63733e2c durable queued steering; REQ-UX-3001bd00 pending/delivery repl
 ## Files
 
 Under05_Software: src/libraries/shared/src/{session,session-state,events,ipc,index}.ts and session-state.test.ts; src/libraries/core/src/sessions/{service,hub,timed-gateway}.ts/service.test.ts; agent/{approvals,permissions,citations,runtime,types}.ts/citations.test.ts; sessions/approvals.test.ts; core exports; workbench/service.ts ownership/snapshot seams; llm/replay.ts session-isolated deterministic IDs. Desktop main/{sessions,session-events,events,ipc-router,index}.ts and related tests; preload/bridge.ts/test; renderer api/subscriptions.ts,ipc.ts and mocks/sessions.ts,mockApi.ts. tests/fixtures/llm-scripts/read-then-answer.jsonl and tests/e2e/sessions.spec.ts provide deterministic acceptance.
+
+Desktop main injects a shared ConfiguredWebProvider into SessionsHost. New turns omit globally disabled web tools in addition to workbench restrictions; already-bound web calls also consult the live global gate. Saving access/key changes revokes active requests. No SessionsHost fallback constructs an ungated Exa provider. See [web access](web-search.md).

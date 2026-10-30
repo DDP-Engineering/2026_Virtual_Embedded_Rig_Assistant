@@ -102,3 +102,5 @@ command IDs to aliases. An absent command uses shared defaults; [] disables it.
 Updates replace the complete override map through existing atomic SettingsService
 writes; {} restores every default. Conflicting, duplicate, reserved and unknown
 bindings are rejected at the shared IPC/storage boundary. No new migration path.
+
+Web access preferences are non-secret {enabled:true, provider:exa, authentication:anonymous} defaults in the current settings contract. Dedicated web.access.save/removeKey own changes; generic renderer patches reject webAccess. Web credentials stay in CredentialFile under web:exa, never settings.json. See [web access](web-search.md).

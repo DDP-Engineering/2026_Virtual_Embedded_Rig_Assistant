@@ -181,3 +181,5 @@ Keyboard shortcuts verification uses shared keyboard-shortcuts.test.ts, core
 settings/service.test.ts, renderer lib/shortcuts.test.ts and immediate
 workspace/shell consumers. tests/e2e/keyboard-shortcuts.spec.ts covers browser
 editing/capture/conflicts/readonly plus compiled native persistence across restart.
+
+Web access verification: targeted shared/core/main/renderer tests and tests/e2e/web-access.spec.ts. Native acceptance uses isolated profile/loopback MCP, verifies optional key headers, persistence, cancellation/global denial and en/ro/de modal geometry without paid API calls. Live anonymous connectivity is a separate external-service check; user-key account success requires a user-supplied key.

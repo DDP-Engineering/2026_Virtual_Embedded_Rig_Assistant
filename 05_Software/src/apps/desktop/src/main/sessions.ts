@@ -2,11 +2,11 @@ import {
   buildSystemPrompt,
   type Clock,
   type EmbeddingPort,
-  ExaWebProvider,
   type PermissionEngine,
   SessionService,
   type SettingsService,
   type SkillCatalog,
+  type WebProvider,
   type WorkbenchService,
   type WorkerPool,
 } from "@vera/core";
@@ -47,6 +47,7 @@ export class SessionsHost {
       target: () => RendererTarget | undefined;
       emit: (event: EventEnvelope) => unknown;
       permissions?: PermissionEngine;
+      web?: WebProvider;
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
@@ -79,7 +80,7 @@ export class SessionsHost {
             return self.config?.agent.permission_mode ?? "ask";
           },
           gateway: options.gateway().api,
-          web: new ExaWebProvider(),
+          ...(options.web ? { web: options.web } : {}),
           clock: options.clock,
           workers: options.workers,
           get skills() {
@@ -92,7 +93,10 @@ export class SessionsHost {
             return options.settings.get().settings.limits.maxToolCallsPerTurn;
           },
           get disabledTools() {
-            return self.config?.tools.disabled ?? [];
+            return [
+              ...(self.config?.tools.disabled ?? []),
+              ...(!options.settings.get().settings.webAccess.enabled ? ["web_search", "web_read"] : []),
+            ];
           },
           model: (ref) => options.gateway().modelReference(ref, this.config?.agent.model),
           prompt: (mode) =>

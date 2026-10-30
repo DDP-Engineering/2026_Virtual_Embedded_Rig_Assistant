@@ -2,14 +2,17 @@
 import { expect, it, vi } from "vitest";
 import * as api from "../index.js";
 
-function mcp(reply: (name: string, args: Record<string, unknown>, signal: AbortSignal) => unknown) {
+function mcp(
+  reply: (name: string, args: Record<string, unknown>, signal: AbortSignal) => unknown,
+  key?: string,
+) {
   const calls: { name: string; args: Record<string, unknown> }[] = [];
   const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
     const request = new Request(input, init);
     expect(request.url).toBe("https://mcp.exa.ai/mcp");
     expect(request.redirect).toBe("error");
     expect(request.headers.has("authorization")).toBe(false);
-    expect(request.headers.has("x-api-key")).toBe(false);
+    expect(request.headers.get("x-api-key")).toBe(key ?? null);
     if (request.method === "GET") return new Response(null, { status: 405 });
     if (request.method === "DELETE") return new Response(null, { status: 204 });
     const body = (await request.json()) as {
@@ -44,6 +47,17 @@ function mcp(reply: (name: string, args: Record<string, unknown>, signal: AbortS
 const text = (value: string) => ({ content: [{ type: "text", text: value }] });
 const source =
   "Title: Reliable source\nURL: https://example.com/docs\nPublished: N/A\nAuthor: N/A\nHighlights:\nUseful facts.";
+
+it("sends an explicit API key only in the fixed-endpoint header", async () => {
+  const key = "exa-header-fixture-key-012345";
+  const fixture = mcp(() => text(source), key);
+  const result = await new api.ExaWebProvider({ fetch: fixture.fetch, apiKey: key }).search(
+    { query: "public topic" },
+    new AbortController().signal,
+  );
+  expect(JSON.stringify(result)).not.toContain(key);
+  expect(JSON.stringify(fixture.calls)).not.toContain(key);
+});
 
 it("searches anonymously and normalizes Exa source blocks with bounded content", async () => {
   expect(api.ExaWebProvider).toBeTypeOf("function");

@@ -118,3 +118,5 @@ Paths relative to05_Software.
   tests/e2e/{providers,mock,shell}.spec.ts — deterministic fictional secrets and native/browser regressions.
 
 Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.
+
+Exa search access is separate from AI providers: Settings > Web access owns anonymous/optional key choice and its web:exa credential. It reuses CredentialFile encryption, redaction and explicit weak-storage consent, without joining LLM provider/model selection. See [web access](web-search.md).

@@ -38,6 +38,7 @@ import { exportSession } from "./session-export.js";
 import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
+import { WebAccessService } from "./web-access.js";
 import { popupWindowMenu, restoreWindowBounds, titleBarOverlay } from "./window-chrome.js";
 import { loadWindowState, saveWindowState } from "./window-state.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
@@ -116,6 +117,11 @@ const workbench = new WorkbenchService(
   documents.processDocument,
 );
 const providers = new ProviderSettings(settings, credentials);
+const webAccess = new WebAccessService({
+  settings,
+  credentials,
+  changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
+});
 let chatgpt = new ChatgptAuth({
   settings,
   credentials,
@@ -125,6 +131,7 @@ let chatgpt = new ChatgptAuth({
 });
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
 const sessions = new SessionsHost({
+  web: webAccess.provider,
   workbench,
   settings,
   gateway: () => modelGateway,
@@ -150,6 +157,11 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "web.access.get": () => webAccess.get(),
+      "web.access.save": (request) => webAccess.save(request),
+      "web.access.removeKey": () => webAccess.removeKey(),
+      "web.access.test": (request) => webAccess.test(request),
+      "web.access.cancel": (request) => webAccess.cancelTest(request),
       "update.get": () => {
         if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
         return updates.get();
@@ -503,6 +515,7 @@ if (!app.requestSingleInstanceLock()) {
       .then(() => modelGateway.close())
       .then(() => chatgpt.close())
       .then(() => providers.close())
+      .then(() => webAccess.close())
       .then(() => credentials.close())
       .then(() => settings.close())
       .then(() => logger.flush())
@@ -602,6 +615,7 @@ if (!app.requestSingleInstanceLock()) {
         }
         await modelGateway.close();
         await providers.close();
+        await webAccess.close();
         await credentials.close();
         await settings.close();
         await logger.flush();

@@ -189,6 +189,7 @@ describe("application settings persistence", () => {
       schemaVersion: 4,
       installationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       suppressBypassWarning: false,
+      webAccess: { enabled: true, provider: "exa", authentication: "anonymous" },
       language: "system",
       theme: "system",
       textScale: 1,

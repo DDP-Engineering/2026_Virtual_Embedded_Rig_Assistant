@@ -2,11 +2,11 @@
 
 ## Routing
 
-Select for web_search, web_read, WebProvider, anonymous Exa MCP or source links. Start at core/src/web/{provider,exa}.ts and tools/web.ts under05_Software. Tests: web/exa.test.ts,tools/registry.test.ts,renderer session/markdown.test.ts and tests/e2e/web-search.spec.ts. Local retrieval belongs to [document search](document-search.md); execution belongs to [file tools](file-tools.md).
+Select for web_search, web_read, WebProvider, Exa MCP, Web access settings or source links. Start at core/src/web/{provider,exa}.ts and tools/web.ts under05_Software. Tests: web/exa.test.ts,tools/registry.test.ts,renderer session/markdown.test.ts and tests/e2e/web-search.spec.ts. Local retrieval belongs to [document search](document-search.md); execution belongs to [file tools](file-tools.md).
 
 ## Purpose and boundaries
 
-WebProvider is the vendor-neutral search/read port. ExaWebProvider implements it with pinned official MCP SDK1.32.2. Desktop SessionsHost and CLI compose it; SessionService injects it into contexts. Constructor/startup makes no network request. General MCP configuration, authentication, billing, browser automation and document downloading/indexing are outside this adapter.
+WebProvider is the vendor-neutral search/read port. ExaWebProvider implements it with pinned official MCP SDK1.32.2. Desktop WebAccessService and CLI compose ConfiguredWebProvider around it; SessionService injects it into contexts. Constructor/startup makes no network request. General MCP configuration, OAuth, billing management, browser automation and document downloading/indexing are outside this adapter.
 
 ## Public interface
 
@@ -18,7 +18,13 @@ WebProvider is the vendor-neutral search/read port. ExaWebProvider implements it
 
 ## Invariants
 
-Only https://mcp.exa.ai/mcp is contacted, without redirects, auth headers, roots, sampling or server instructions in prompts. Separate MCP client per call,30s deadline,1MiB response limit, cancellation through initialize/fetch/call and close on settlement. Only explicit tool arguments leave the process; no automatic project/context upload. Local/private IPs and local hostnames are rejected before remote reading. Canonical prompt treats web content as untrusted and cites returned URLs as Markdown links, retaining local [[ref]] provenance. Anonymous quotas/availability are external limits; no paid fallback or sign-in.
+Only https://mcp.exa.ai/mcp is contacted, without redirects, roots, sampling or server instructions in prompts. Separate MCP client per call,30s deadline,1MiB response limit, cancellation through initialize/fetch/call and close on settlement. Anonymous sends no auth header; explicitly selected API-key mode sends only x-api-key to that fixed destination. Only explicit tool arguments leave the process; no automatic project/context upload. Local/private IPs and local hostnames are rejected before remote reading. Canonical prompt treats web content as untrusted and cites returned URLs as Markdown links, retaining local [[ref]] provenance. Anonymous quotas/availability are external limits; no automatic paid fallback or sign-in. Selecting own-key mode uses that account quota; a missing key fails closed.
+
+## Global access and credentials
+
+Settings > Web access persists enabled/provider:exa/authentication (anonymous by default). The public app.settings.update cannot change web authority; web.access.get/save/removeKey/test/cancel are strict dedicated channels. Main stores web:exa in CredentialFile, returns only metadata, preserves existing secure-storage consent/memory options, and rolls back failed writes. Anonymous ignores a retained key; Remove key explicitly selects anonymous. No secret hints or raw provider errors reach renderer snapshots/results. Test may use an unsaved draft key, performs a fixed public documentation query and never saves it. Close/unmount cancels only its UUID attempt.
+
+ConfiguredWebProvider enforces the current global gate before and after credential resolution, revokes active calls when configuration changes and drains on shutdown. Workbench disabledTools remain effective. CLI honors the gate and uses explicit EXA_API_KEY in API-key mode; it does not decrypt desktop keys. Native acceptance covers no automatic requests, key/draft/header use, denial, cancellation, restart, translations and stable modal geometry.
 
 ## Key behaviors
 
@@ -28,6 +34,8 @@ REQ-FUNC-39dc23b2 anonymous general search; REQ-FUNC-a0ed7785 public reading; RE
 
 | Change | Start | Verification |
 |---|---|---|
+| Settings/credentials/UI | main/web-access.ts; renderer/components/web-access.tsx | main/renderer web-access.test.ts; native web-access.spec.ts |
+| Global runtime gate | web/configured-provider.ts; main/sessions.ts; cli/run.ts | configured-provider.test.ts; native web-access.spec.ts |
 | MCP/errors/normalization | web/exa.ts | web/exa.test.ts; manual live anonymous search/read |
 | Vendor-neutral schema/public URLs | web/provider.ts; tools/web.ts | exa.test.ts; registry.test.ts |
 | Host lifetime/exposure | main/sessions.ts; cli/run.ts; sessions/service.ts | native web-search.spec.ts; typecheck |

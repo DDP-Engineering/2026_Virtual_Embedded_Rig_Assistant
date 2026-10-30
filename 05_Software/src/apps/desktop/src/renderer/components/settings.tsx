@@ -2,6 +2,7 @@ import { type AppInfo, type SettingsPatch, type SettingsSnapshot, typographyDefa
 import {
   Bell,
   Database,
+  Globe,
   Info,
   Keyboard,
   Languages,
@@ -17,11 +18,13 @@ import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
 import { Metadata } from "./metadata.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
+import { WebAccessPanel } from "./web-access.js";
 
 export function useSettingsSections() {
   const { t } = useTranslation();
   return [
     { id: "providers", icon: Server, label: t("settings.providers") },
+    { id: "web", icon: Globe, label: t("settings.webAccess") },
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "language", icon: Languages, label: t("settings.language") },
     { id: "notifications", icon: Bell, label: t("settings.notifications") },
@@ -90,6 +93,7 @@ export function Settings({
       <div hidden={section !== "providers"}>
         <Providers readOnly={snapshot.readOnly} />
       </div>
+      {section === "web" && <WebAccessPanel readOnly={snapshot.readOnly} />}
       <section
         hidden={section !== "appearance"}
         className="surface"
@@ -230,6 +234,7 @@ export function Settings({
         .filter(
           ({ id }) =>
             id !== "providers" &&
+            id !== "web" &&
             id !== "appearance" &&
             id !== "language" &&
             id !== "updates" &&

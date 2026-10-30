@@ -3,8 +3,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   buildSystemPrompt,
+  ConfiguredWebProvider,
   createPiAiGateway,
-  ExaWebProvider,
   type LlmGateway,
   SessionService,
   SettingsService,
@@ -58,6 +58,18 @@ export async function runTurn(
     const provider = options.provider === "custom" ? "custom:cli" : options.provider;
     if (key) await store.modify(provider, async () => ({ type: "api_key", key }));
     const config = structuredClone(settings.get().settings);
+    if (process.env.EXA_API_KEY) {
+      logger.registerSecret(process.env.EXA_API_KEY);
+      await store.modify("web:exa", async () => ({ type: "api_key", key: process.env.EXA_API_KEY! }));
+    }
+    const web = new ConfiguredWebProvider({
+      config: () => config.webAccess,
+      getKey: async (signal) => {
+        const value = await store.read("web:exa", { signal });
+        return value?.type === "api_key" ? value.key : undefined;
+      },
+    });
+    resources.push(() => web.close());
     let gateway: LlmGateway, model: string;
     if (options.provider === "replay") {
       // Isolate only the explicitly chosen script; unrelated sibling fixtures have no effect.
@@ -138,14 +150,17 @@ export async function runTurn(
       root: snapshot.folder,
       readOnly: snapshot.readOnly,
       gateway,
-      web: new ExaWebProvider(),
+      web,
       clock: nodeClock,
       workers,
       skills,
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
-      disabledTools: snapshot.config.tools.disabled,
+      disabledTools: [
+        ...snapshot.config.tools.disabled,
+        ...(!config.webAccess.enabled ? ["web_search", "web_read"] : []),
+      ],
       maxToolCallsPerTurn: config.limits.maxToolCallsPerTurn,
       model: () => model,
       assertWritable: () => workbench.assertSessionWritable(),

@@ -72,6 +72,7 @@ export function createMockApi(
     return `${source === "user" ? "user" : current().snapshot.config.id}:${name}`;
   }
   let sequence = 0;
+  let webKeyConfigured = false;
   // Browser fixtures keep metadata only; production secrets are handled by desktop main.
   const providerHints = new Map<string, string | null>();
   if (scenario !== "empty") {
@@ -345,6 +346,54 @@ export function createMockApi(
         break;
       }
       case "app.openExternal":
+        value = {};
+        break;
+      case "web.access.get":
+        value = {
+          preferences: settings.webAccess,
+          keyConfigured: webKeyConfigured,
+          storage: webKeyConfigured ? "memory" : null,
+          secureStorage: true,
+          readOnly: scenario === "read-only",
+        };
+        break;
+      case "web.access.save": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        const request = channels["web.access.save"].request.parse(input.data);
+        if (request.enabled && request.authentication === "api-key" && !request.apiKey && !webKeyConfigured)
+          throw veraError("INVALID");
+        webKeyConfigured ||= !!request.apiKey;
+        settings = mergeSettings(settings, {
+          webAccess: { enabled: request.enabled, provider: "exa", authentication: request.authentication },
+        });
+        emitAppEvent({ type: "settings.changed" });
+        value = { status: "saved" };
+        break;
+      }
+      case "web.access.removeKey":
+        if (scenario === "read-only") throw veraError("DENIED");
+        webKeyConfigured = false;
+        settings = mergeSettings(settings, {
+          webAccess: { ...settings.webAccess, authentication: "anonymous" },
+        });
+        value = {};
+        break;
+      case "web.access.test": {
+        const request = channels["web.access.test"].request.parse(input.data);
+        value = {
+          testId: request.testId,
+          authentication: request.authentication,
+          checkedAt: "2026-10-30T12:00:00Z",
+          durationMs: 15,
+          status: !settings.webAccess.enabled
+            ? "disabled"
+            : request.authentication === "api-key" && !request.apiKey && !webKeyConfigured
+              ? "key-required"
+              : "pass",
+        };
+        break;
+      }
+      case "web.access.cancel":
         value = {};
         break;
       case "providers.chatgpt.status":

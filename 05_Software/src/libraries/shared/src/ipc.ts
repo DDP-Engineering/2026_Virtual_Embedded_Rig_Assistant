@@ -40,6 +40,14 @@ import {
 } from "./skills.js";
 import { updateSnapshotSchema } from "./updates.js";
 import {
+  webAccessCancelSchema,
+  webAccessSaveResultSchema,
+  webAccessSaveSchema,
+  webAccessSnapshotSchema,
+  webAccessTestResultSchema,
+  webAccessTestSchema,
+} from "./web-access.js";
+import {
   configSnapshotSchema,
   pinnedSchema,
   workbenchIdSchema,
@@ -67,6 +75,11 @@ export const appInfoSchema = z.strictObject({
   signing: z.enum(["signed", "unsigned", "not-applicable"]),
 });
 export const channels = {
+  "web.access.get": defineChannel("web.access.get", z.strictObject({}), webAccessSnapshotSchema),
+  "web.access.save": defineChannel("web.access.save", webAccessSaveSchema, webAccessSaveResultSchema),
+  "web.access.removeKey": defineChannel("web.access.removeKey", z.strictObject({}), z.strictObject({})),
+  "web.access.test": defineChannel("web.access.test", webAccessTestSchema, webAccessTestResultSchema),
+  "web.access.cancel": defineChannel("web.access.cancel", webAccessCancelSchema, z.strictObject({})),
   "window.menu": defineChannel(
     "window.menu",
     z.strictObject({

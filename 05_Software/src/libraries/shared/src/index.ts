@@ -17,4 +17,5 @@ export * from "./settings.js";
 export * from "./skills.js";
 export * from "./tools.js";
 export * from "./updates.js";
+export * from "./web-access.js";
 export * from "./workbench.js";

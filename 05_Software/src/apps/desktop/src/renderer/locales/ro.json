@@ -42,6 +42,7 @@
   "settings": {
     "title": "Setările aplicației",
     "providers": "Furnizori",
+    "webAccess": "Acces web",
     "appearance": "Aspect",
     "language": "Limbă",
     "updates": "Actualizări",
@@ -465,6 +466,44 @@
     "title": "Bypass: acces complet la fișiere",
     "warning": "Agentul poate citi și modifica fișiere oriunde contul tău are acces, inclusiv în afara workbenchului, fără să mai ceară confirmare. Poate deteriora proiecte, fișiere sau setările aplicațiilor. Sunt disponibile doar tool-urile activate; permisiunile sistemului de operare se păstrează.",
     "dontShowAgain": "Nu mai afișa acest mesaj data viitoare"
+  },
+  "webAccess": {
+    "description": "Gestionează accesul la internet separat de providerii AI. Se aplică în continuare permisiunile tool-urilor din workbench.",
+    "loading": "Se încarcă setările de acces web…",
+    "enabled": "Activează accesul web",
+    "globalHint": "Se aplică tuturor workbenchurilor. Dezactivarea anulează cererile web în curs și blochează tool-urile web.",
+    "provider": "Provider de căutare",
+    "authentication": "Mod de acces",
+    "anonymous": "Anonim — fără cont",
+    "apiKeyMode": "Folosește cheia mea API",
+    "anonymousHint": "Exa poate fi utilizat fără cont sau cheie, în limitele serviciului gratuit. Cheia salvată nu este trimisă în acest mod.",
+    "keyHint": "Cheia utilizează cota contului tău Exa și poate genera costuri conform planului. Este păstrată separat de setările aplicației.",
+    "apiKey": "Cheie API Exa",
+    "keepKey": "Lasă gol pentru a păstra cheia salvată",
+    "storedKey": "Cheie salvată disponibilă · {{storage}}",
+    "noKey": "Nu există o cheie API salvată. Accesul anonim este disponibil.",
+    "keyRequired": "Introdu o cheie sau selectează accesul anonim.",
+    "save": "Salvează",
+    "test": "Testează conexiunea",
+    "removeKey": "Șterge cheia salvată",
+    "saving": "Se salvează…",
+    "saved": "Setările de acces web au fost salvate.",
+    "saveHint": "Salvează pentru a aplica modificările globale. Testul verifică modul selectat fără a salva cheia introdusă.",
+    "testTitle": "Test conexiune web",
+    "testing": "Se conectează la Exa…",
+    "close": "Închide",
+    "storage": {
+      "encrypted": "stocare criptată",
+      "memory": "doar în memorie",
+      "unprotected": "stocare neprotejată"
+    },
+    "results": {
+      "pass": "Conexiune reușită. Căutarea web este disponibilă.",
+      "fail": "Conexiune eșuată. Verifică cheia, conexiunea la internet sau limitele serviciului Exa.",
+      "disabled": "Accesul web este dezactivat. Activează-l și salvează înainte de testare.",
+      "key-required": "Modul de acces selectat necesită o cheie API.",
+      "cancelled": "Testul a fost anulat sau accesul s-a modificat."
+    }
   },
   "web": {
     "openTitle": "Deschizi un site extern?",

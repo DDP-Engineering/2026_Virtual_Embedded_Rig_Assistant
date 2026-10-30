@@ -44,6 +44,7 @@ export * from "./tools/read.js";
 export * from "./tools/registry.js";
 export * from "./tools/todo.js";
 export * from "./tools/write.js";
+export * from "./web/configured-provider.js";
 export * from "./web/exa.js";
 export * from "./web/provider.js";
 export { acquireGuard as acquireWorkbenchGuard } from "./workbench/guard.js";
