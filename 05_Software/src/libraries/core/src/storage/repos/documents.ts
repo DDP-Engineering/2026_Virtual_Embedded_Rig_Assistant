@@ -78,16 +78,14 @@ export class DocumentsRepository {
     })();
   }
 
-  /** Delete chunks once: migration2 triggers remove their external-content entries. */
+  /** Delete chunks once: Keyword triggers remove their external-content entries. */
   clearDerived(id: number): void {
     this.db.transaction(() => {
-      if (this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='embeddings'").get())
-        this.db
-          .prepare("DELETE FROM embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)")
-          .run(id);
+      this.db
+        .prepare("DELETE FROM embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)")
+        .run(id);
       this.db.prepare("DELETE FROM chunks WHERE doc_id=?").run(id);
-      if (this.db.prepare("SELECT 1 FROM sqlite_master WHERE name='document_extractions'").get())
-        this.db.prepare("DELETE FROM document_extractions WHERE doc_id=?").run(id);
+      this.db.prepare("DELETE FROM document_extractions WHERE doc_id=?").run(id);
     })();
   }
   remove(path: string): void {

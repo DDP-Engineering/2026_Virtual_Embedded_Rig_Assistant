@@ -11,6 +11,22 @@ import * as core from "../index.js";
 import { ReplayGateway } from "../llm/replay.js";
 
 const cleanup: (() => Promise<void>)[] = [];
+it("reports the durable cursor without projecting the transcript", async () => {
+  const { service, handle } = await setup();
+  const s = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  const projection = vi.spyOn(core.SessionHub.prototype, "get");
+  expect(service.revision(s.id)).toEqual({ seq: 1 });
+  hub.emit(s.id, { type: "turn.started", turnId: "turn" });
+  hub.emit(s.id, { type: "message.delta", messageId: "answer", text: "live" });
+  expect(service.revision(s.id)).toEqual({ seq: 2 });
+  hub.emit(s.id, { type: "turn.done", turnId: "turn", stopReason: "error" });
+  expect(service.revision(s.id)).toEqual({ seq: 3 });
+  expect(projection).not.toHaveBeenCalled();
+  expect(() => service.revision("ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C")).toThrow(
+    expect.objectContaining({ code: "NOT_FOUND" }),
+  );
+});
 // REQ-FUNC-9a6da7bb
 it("reuses a renamed unused session without changing its configuration and serializes repeated reuse requests", async () => {
   const { service } = await setup();

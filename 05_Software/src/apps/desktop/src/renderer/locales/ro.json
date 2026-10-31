@@ -527,9 +527,9 @@
     "search_docs": "Caută în documentele indexate ale workbenchului.",
     "read_doc": "Citește pagini, secțiuni sau linii de text extrase din documente.",
     "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ.",
-    "web_search": "Caută pe internet prin Exa. Trimite termenii căutării; nu necesită cont sau cheie API. Se aplică limitele serviciului gratuit.",
-    "web_read": "Citește pagini web publice și documente accesibile prin Exa. Trimite adresa solicitată.",
-    "web_download": "Descarcă un PDF public în .vera/downloads după aprobare, apoi îl deschide local. Nu este indexat automat."
+    "web_search": "Caută pe internet folosind furnizorul selectat în Setări → Acces web. Cerințele de acces și limitele serviciului depind de furnizor.",
+    "web_read": "Extrage textul paginilor web publice și al documentelor acceptate folosind furnizorul web selectat. Nu salvează un fișier local.",
+    "web_download": "Descarcă un fișier public (PDF, ZIP, CSV, text, imagini sau alte formate) în .vera/downloads, conform permisiunilor sesiunii. Previzualizează PDF-urile în VERA sau găsește celelalte fișiere în Explorer. Descărcările nu sunt indexate automat."
   },
   "projects": {
     "new": "Workbench nou",
@@ -547,7 +547,7 @@
     "documents": "Documente și RAG",
     "agent": "Agent",
     "instructions": "Instrucțiuni",
-    "tools": "Instrumente și skills",
+    "tools": "Instrumente",
     "embeddings": "Embeddings",
     "name": "Nume",
     "description": "Descriere",
@@ -573,7 +573,8 @@
     "partialSave": "Setările proiectului au fost salvate, dar instrucțiunile nu au putut fi salvate. Reîncearcă salvarea; închiderea păstrează setările deja salvate.",
     "loadingInstructions": "Se încarcă instrucțiunile workbenchului…",
     "skillsIndependent": "Modificările Skills sunt salvate în managerul Skills, separat de formularul proiectului.",
-    "back": "Înapoi la workbenchuri"
+    "back": "Înapoi la workbenchuri",
+    "skills": "Skills"
   },
   "overview": {
     "title": "Prezentare workbench",
@@ -628,7 +629,9 @@
     "local": "În câmpul mesajului: Enter trimite, Shift+Enter adaugă un rând. Escape închide căutarea sau cere oprirea unui răspuns activ. Aceste comenzi contextuale rămân neschimbate."
   },
   "downloads": {
-    "title": "PDF-uri descărcate",
+    "revealNamed": "Arată în Explorer: {{name}}",
+    "reveal": "Arată în Explorer",
+    "title": "Fișiere descărcate",
     "open": "Deschide PDF",
     "openNamed": "Deschide PDF: {{name}}",
     "source": "Sursă: {{host}}",

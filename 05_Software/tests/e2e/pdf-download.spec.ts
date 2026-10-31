@@ -168,7 +168,7 @@ test("native approved PDF download opens locally, persists offline and rejects f
     }
     await page.locator('[aria-controls="right-panel"]').click();
     await page.locator("#tab-docs").click();
-    await expect(page.getByRole("heading", { name: "Downloaded PDFs" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Downloaded files" })).toBeVisible();
     const indexed = await page.evaluate(
       async (workbenchId) =>
         (await (window as unknown as { vera: VeraBridge }).vera.invoke("docs.list", { workbenchId }))

@@ -99,7 +99,7 @@ export function WorkbenchNavigation({
         .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
         .map((entry) => {
           const active = entry.id === activeId;
-          const shown = expanded[entry.folder] ?? active;
+          const shown = active && (expanded[entry.folder] ?? true);
           return (
             <div
               key={entry.folder}
@@ -196,17 +196,7 @@ export function WorkbenchNavigation({
               </div>
               {entry.missing && <small>{t("workbench.missing")}</small>}
               <div id={`sessions-${entry.id}`} hidden={!shown}>
-                {active
-                  ? children
-                  : shown && (
-                      <button
-                        type="button"
-                        disabled={disabled || entry.missing}
-                        onClick={() => void open(entry.folder)}
-                      >
-                        {t("projects.expand")}
-                      </button>
-                    )}
+                {active && children}
               </div>
             </div>
           );

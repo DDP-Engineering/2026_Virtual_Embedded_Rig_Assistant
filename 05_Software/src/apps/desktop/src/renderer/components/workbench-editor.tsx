@@ -7,7 +7,16 @@ import { PermissionPicker } from "./permission-picker.js";
 import { SkillSettings } from "./skills.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
-const sections = ["general", "documents", "agent", "instructions", "tools", "embeddings", "plugins"] as const;
+const sections = [
+  "general",
+  "documents",
+  "agent",
+  "instructions",
+  "tools",
+  "skills",
+  "embeddings",
+  "plugins",
+] as const;
 export function Plugins() {
   const { t } = useTranslation();
   return (
@@ -35,10 +44,12 @@ export function WorkbenchEditor({
     agent: t("projects.agent"),
     instructions: t("projects.instructions"),
     tools: t("projects.tools"),
+    skills: t("projects.skills"),
     embeddings: t("projects.embeddings"),
     plugins: t("projects.plugins"),
   };
   const ref = useRef<HTMLDialogElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const title = useId();
   const [section, setSection] = useState<(typeof sections)[number]>("general");
   const [config, setConfig] = useState(workbench.config);
@@ -151,13 +162,16 @@ export function WorkbenchEditor({
               type="button"
               aria-current={section === key ? "page" : undefined}
               data-project-section={key}
-              onClick={() => setSection(key)}
+              onClick={() => {
+                setSection(key);
+                if (content.current) content.current.scrollTop = 0;
+              }}
             >
               {labels[key]}
             </button>
           ))}
         </nav>
-        <div className="workbench-editor-content">
+        <div ref={content} className="workbench-editor-content">
           {error !== undefined && <ErrorMessage error={error} />}
           {!loaded && error === undefined && <p role="status">{t("projects.loadingInstructions")}</p>}
           {!loaded && error !== undefined && (
@@ -313,10 +327,10 @@ export function WorkbenchEditor({
               </>
             )}
           </fieldset>
-          {section === "tools" && (
+          {section === "skills" && (
             <>
-              <p className="muted">{t("projects.skillsIndependent")}</p>
               <SkillSettings workbenchId={workbench.config.id} readOnly={workbench.readOnly} />
+              <p className="muted">{t("projects.skillsIndependent")}</p>
             </>
           )}
           {section === "plugins" && <Plugins />}

@@ -5,7 +5,15 @@ import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { SkillSettings } from "../skills.js";
 import { Markdown } from "./markdown.js";
-export function ContextTab({ workbenchId, readOnly = false }: { workbenchId: string; readOnly?: boolean }) {
+export function ContextTab({
+  workbenchId,
+  readOnly = false,
+  showSkillSettings = true,
+}: {
+  workbenchId: string;
+  readOnly?: boolean;
+  showSkillSettings?: boolean;
+}) {
   const { t } = useTranslation();
   const pinned = useQuery({
     queryKey: ["context.pinned", workbenchId],
@@ -17,6 +25,7 @@ export function ContextTab({ workbenchId, readOnly = false }: { workbenchId: str
   });
   return (
     <div className="context-tab">
+      {showSkillSettings && <SkillSettings workbenchId={workbenchId} readOnly={readOnly} />}
       <h3>.vera/WORKBENCH.md</h3>
       {pinned.data && <Markdown text={pinned.data.content} />}
       {pinned.isPending && <p role="status">{t("home.loading")}</p>}
@@ -29,7 +38,6 @@ export function ContextTab({ workbenchId, readOnly = false }: { workbenchId: str
         </>
       )}
       <h3>{t("chat.skills")}</h3>
-      <SkillSettings workbenchId={workbenchId} readOnly={readOnly} />
       {skills.isPending && <p role="status">{t("home.loading")}</p>}
       {skills.isError && <ErrorMessage error={skills.error} />}
       {skills.data?.filter((s) => s.enabled && !s.error).length === 0 && (

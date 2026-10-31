@@ -8,8 +8,8 @@ import { expect, it } from "vitest";
 import { validateCitations } from "../agent/citations.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { SessionService } from "../sessions/service.js";
-import { migrations } from "../storage/migrate.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { schemaSql } from "../storage/schema.js";
 import { createToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
 import type { EmbeddingPort } from "./embedding.js";
@@ -21,7 +21,7 @@ async function harness() {
   const root = await mkdtemp(join(tmpdir(), "vera-search-")),
     db = new Database(":memory:");
   db.pragma("foreign_keys=ON");
-  for (const m of migrations) db.exec(m.sql);
+  db.exec(schemaSql);
   await mkdir(join(root, "docs"));
   await mkdir(join(root, ".vera"));
   const vectors = new Map<number, number>();

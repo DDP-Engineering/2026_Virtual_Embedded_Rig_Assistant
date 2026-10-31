@@ -457,7 +457,7 @@ it("loads ChatGPT models and native reasoning from the account catalog, includin
     },
     fetch: async (input, init) => {
       const url = String(input);
-      if (url.startsWith("https://chatgpt.com/backend-api/codex/models?client_version=")) {
+      if (url === "https://api.openai.com/v1/models") {
         loads++;
         if (deny) return Response.json({}, { status: 401 });
         expect(new Headers(init?.headers).get("authorization")).toBe(`Bearer ${access}`);
@@ -523,7 +523,7 @@ it("isolates cancellation of callers sharing ChatGPT catalog discovery", async (
       }),
     },
     fetch: async (url, init) => {
-      expect(String(url)).toBe("https://chatgpt.com/backend-api/codex/models?client_version=0.162.1");
+      expect(String(url)).toBe("https://api.openai.com/v1/models");
       expect(new Headers(init?.headers).get("ChatGPT-Account-ID")).toBe("account_fixture");
       loads++;
       started();

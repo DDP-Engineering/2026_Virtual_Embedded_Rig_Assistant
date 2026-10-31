@@ -527,9 +527,9 @@
     "search_docs": "Die indexierten Dokumente der Workbench durchsuchen.",
     "read_doc": "Extrahierte Dokumentseiten, Abschnitte oder Textzeilen lesen.",
     "load_skill": "Anweisungen und ergänzende Textdateien eines aktivierten Skills laden.",
-    "web_search": "Das öffentliche Web über Exa durchsuchen. Sendet die Suchanfrage; kein Konto oder API-Schlüssel erforderlich. Es gelten die Grenzen des kostenlosen Dienstes.",
-    "web_read": "Öffentliche Webseiten und zugängliche Dokumente über Exa lesen. Sendet die angeforderte URL.",
-    "web_download": "Eine öffentliche PDF nach Freigabe in .vera/downloads speichern und lokal öffnen. Keine automatische Indexierung."
+    "web_search": "Das öffentliche Web mit dem unter Einstellungen → Webzugriff ausgewählten Anbieter durchsuchen. Zugangsbedingungen und Dienstlimits hängen vom Anbieter ab.",
+    "web_read": "Text aus öffentlichen Webseiten und unterstützten Dokumenten mit dem ausgewählten Webanbieter abrufen. Es wird keine lokale Datei gespeichert.",
+    "web_download": "Öffentliche Dateien (PDF, ZIP, CSV, Text, Bilder oder andere Formate) gemäß den Sitzungsberechtigungen nach .vera/downloads herunterladen. PDFs in VERA anzeigen oder andere Dateien im Explorer finden. Downloads werden nicht automatisch indexiert."
   },
   "projects": {
     "new": "Neue Workbench",
@@ -547,7 +547,7 @@
     "documents": "Dokumente & RAG",
     "agent": "Agent",
     "instructions": "Anweisungen",
-    "tools": "Werkzeuge & Skills",
+    "tools": "Werkzeuge",
     "embeddings": "Embeddings",
     "name": "Name",
     "description": "Beschreibung",
@@ -573,7 +573,8 @@
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",
     "loadingInstructions": "Workbench-Anweisungen werden geladen…",
     "skillsIndependent": "Skill-Änderungen werden im Skills-Manager unabhängig vom Projektformular gespeichert.",
-    "back": "Zurück zu Workbenches"
+    "back": "Zurück zu Workbenches",
+    "skills": "Skills"
   },
   "overview": {
     "title": "Workbench-Übersicht",
@@ -628,7 +629,9 @@
     "local": "In der Nachrichteneingabe: Enter sendet, Shift+Enter fügt eine neue Zeile ein. Escape schließt die Suche oder fragt nach dem Stoppen einer aktiven Antwort. Diese kontextbezogenen Befehle bleiben unverändert."
   },
   "downloads": {
-    "title": "Heruntergeladene PDFs",
+    "revealNamed": "Im Explorer anzeigen: {{name}}",
+    "reveal": "Im Explorer anzeigen",
+    "title": "Heruntergeladene Dateien",
     "open": "PDF öffnen",
     "openNamed": "PDF öffnen: {{name}}",
     "source": "Quelle: {{host}}",

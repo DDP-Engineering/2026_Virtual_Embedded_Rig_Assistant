@@ -213,7 +213,7 @@ export function createPiAiGateway(
     if (pending?.token === identity) return waitCatalog(pending.promise, signal);
     const current = ++generation;
     const promise = (async () => {
-      const endpoint = "https://chatgpt.com/backend-api/codex/models?client_version=0.162.1";
+      const endpoint = "https://api.openai.com/v1/models";
       const response = await (host.fetch ?? globalThis.fetch)(endpoint, {
         redirect: "error",
         signal: AbortSignal.timeout(30000),

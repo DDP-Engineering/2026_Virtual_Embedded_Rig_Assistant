@@ -212,6 +212,7 @@ export class MockSessions {
       return row.artifacts.map(({ content: _, ...summary }) => structuredClone(summary));
     if (channel === "changes.list")
       return row.changes.map(({ diff: _, ...summary }) => structuredClone(summary));
+    if (channel === "session.revision") return { seq: row.events.length };
     if (channel === "session.get")
       return { snapshot: row.events.reduce(applySessionEvent, emptySessionState()), seq: row.events.length };
     if (channel === "session.stop") {

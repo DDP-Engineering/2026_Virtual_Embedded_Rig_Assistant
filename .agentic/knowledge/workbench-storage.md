@@ -2,96 +2,50 @@
 
 ## Routing
 
-Select for vera.db, schema_version, checksummed SQL migrations, backup files and sessions/messages/events row repositories. Start with core/src/storage/db.ts and migrate.ts; focused real-driver tests are db.test.ts and repositories.test.ts. [Workbench](workbench.md) owns folder/lock/handle lifetime; [native packaging](native-packaging.md) owns addon delivery and probes.
+Select for vera.db, the current schema and row repositories. Start with
+05_Software/src/libraries/core/src/storage/db.ts and schema.ts. Focused checks are
+db.test.ts, keyword-schema.test.ts, embedding-schema.test.ts, repositories.test.ts
+and session-recovery.test.ts. [Workbench](workbench.md) owns folder/lock/handle
+lifetime; [native packaging](native-packaging.md) owns addon delivery.
 
-## Purpose and boundaries
+## Current contract
 
-Core owns the better-sqlite3 connection, initial schema, migration catalogue and session/message/event/artifact/todo storage repositories. [Changes](changes.md) owns the applied-row read projection and recorded patch/count presentation. Prepared file tools own changes-table transitions, with applied status/change-event recording in one transaction and guarded hash recovery; [file tools](file-tools.md) routes that behavior. WorkbenchService owns active connection lifetime, ownership and recents. Row repositories preserve stored JSON and caller-assigned sequence; [session behavior](sessions.md) owns runtime integration, native provider-ID tool rows, recovery and event projection.
-
-## Public interface
-
-- DocumentsRepository projects typed metadata from schema1 documents and clears
-  document-derived chunks plus associated keyword/embedding rows before
-  source removal; replaceChunks validates locators/text budgets and atomically
-  replaces ordered chunk rows with locator_json/chars. Migration2 triggers own
-  both external-content keyword indexes, including SQL updates and FK cascades;
-  standalone clearDerived/remove are atomic. Migration3 adds FK-cascaded
-  embeddings/full extraction and trigger-maintained vector epochs; replacement
-  validates and commits derived vectors/extraction with ordered chunks.
-  [Document search](document-search.md) owns the current model/cache contract. [Knowledge ingest](knowledge-ingest.md)
-  owns queue and states; [keyword search](keyword-search.md) owns lexical candidates.
-
-- openDb(path, StorageOptions) returns WorkbenchDatabase with db and idempotent close(preserveSource?). Options supply workbenchId/appVersion, readOnly and an optional ordered migration catalogue for fixture upgrades.
-- inspectDatabase checks metadata on a temporary db/WAL copy before writable opening or lock acquisition. Missing source is permitted; an absent live-owner source stays absent.
-- checkDatabase verifies schema_version, applied SHA256 and workbench_id. Newer versions return WORKBENCH_TOO_NEW; invalid version/catalogue/checksum returns INVALID with reason; identity mismatch and occupied backup path return CONFLICT.
-- TodosRepository reads and validates whole ordered replacements in existing schema1; [Plan](plan.md) owns atomic event integration and list presentation.
-- ArtifactsRepository owns existing schema1 artifact metadata with session/name uniqueness, stable overwrite identity and time/id ordering; [Artifacts](artifacts.md) owns managed files and saved events.
-- SessionsRepository creates/gets/lists/deletes raw rows. List order is created_at DESC,id DESC; deletion cascades session child rows.
-- MessagesRepository and EventsRepository create/get/list/delete by (session_id,seq). JSON strings remain verbatim. Lists order seq ascending; event afterSeq defaults to -1. Missing get is undefined, delete returns boolean; SQLite rejects duplicate/FK violations.
-
-## Invariants
-
-- better-sqlite3 13.0.3 is exactly pinned. Writable connections use WAL, foreign_keys ON, busy_timeout5000 and synchronous NORMAL. Core imports its own dependencies and shared.
-- Compatibility inspection preserves source db/WAL/SHM bytes. Read-only handles retain private snapshots and reject SQL writes; close removes their temporary directories. Concurrent source changes during capture produce BUSY.
-- Catalogue versions are contiguous from1; SHA256 covers exact UTF8 SQL and meta uses migration_0001_sha256 keys. Each pending step has an exclusive vera.db.v<previous-version>.bak backup of the committed SQLite view before SQL/version/checksum commit atomically. Existing recovery files are preserved and block retries.
-- Managed db/sidecars/backups paths reject symlinks or nonordinary types. A failed transaction retains the previous schema and pre-step backup.
-- Writable handles activate an auxiliary read-only source connection while owned. The service checkpoints
-  under its token guard before lock unlink while retaining the open handle if unlink fails. Disposal after
-  release/token loss closes writer first and read-only last, preserving DB/WAL/SHM bytes. Ordinary standalone
-  close reverses that order for normal SQLite checkpoint/sidecar cleanup. Message/event seq is a nonnegative
-  safe integer, checked by repositories and SQL constraints.
-- Initial schema contains meta plus sessions/messages/events/tool_calls/approvals/changes/artifacts/todos/documents/chunks. Session foreign keys cascade; document chunks cascade with their document. Requested session, seq, document/status indexes exist.
-- Migration2 adds unicode61 underscore/diacritic and trigram external-content
-  indexes, backfills chunks and synchronizes through insert/update/delete triggers.
+- schemaSql defines the complete current schema, including keyword indexes,
+  embedding/extraction tables and their synchronization triggers.
+- CURRENT_SCHEMA_VERSION remains 3, identifying the existing current format.
+  It is a format marker, not a catalogue of upgrade steps.
+- initializeDatabase creates an empty database in one immediate transaction,
+  including workbench_id, created_by, schema_version and embedding_epoch metadata.
+- Existing current databases are validated and opened without data or metadata
+  rewrites. Unknown metadata remains untouched. Missing objects or a different
+  schema return INVALID; a different workbench identity returns CONFLICT.
+- There is no database migration runner or checksum catalogue, and no automatic
+  database backups. Existing metadata is preserved without interpreting extra keys. No old-schema detection, repair, reset or compatibility path exists.
+- StorageOptions supplies workbenchId, appVersion and optional readOnly.
+  openDb returns db and idempotent close(preserveSource?).
+- inspectDatabase validates a private temporary DB/WAL copy before lock acquisition
+  or writable opening. Read-only handles reject writes and remove their temporary
+  copies on close. Unstable concurrent captures return BUSY.
+- Database and sidecar paths reject symlinks and nonordinary file types. Storage
+  neither creates nor consults a backups folder.
+- Writable connections use WAL, foreign_keys ON, busy_timeout 5000 and synchronous
+  NORMAL. An auxiliary read-only connection preserves DB/WAL/SHM bytes on ownership
+  loss; ordinary close permits normal SQLite checkpointing.
+- Session child rows cascade on session deletion; document-derived rows cascade
+  with their documents/chunks. Keyword and embedding triggers commit with changes.
+  Message/event sequences remain nonnegative safe integers.
+- Row repositories preserve caller-supplied JSON. Session recovery repairs
+  interrupted runtime operations in the current schema; it is independent of
+  schema initialization and is not a database migration.
 
 ## Change map
 
-| Change | Start with | Focused proof |
+| Change | Start | Focused verification |
 |---|---|---|
-| Connection/protected reads | db.ts | db.test.ts readonly/newer/WAL/links |
-| Migration/schema/backup | migrate.ts, migrations/0001_initial.ts | db.test.ts ordered upgrades/rollback/checksum/schema |
-| Previous-version upgrade/recovery | tests/fixtures/upgrade, storage/upgrade-safety.test.ts | frozen0/1/2, intact pre-step backups/rows, interrupted recovery before next turn |
-| Keyword index/backfill/triggers | migrations/0002_keyword.ts | keyword-migration.test.ts, ingest.test.ts |
-| Row repository | repos/{sessions,messages,events}.ts | repositories.test.ts CRUD/order/persistence/cascades |
-| Handle lifetime/lock | workbench/service.ts | service.test.ts database/live-owner/failed-switch plus WP06 |
-
-## Key behaviors
-
-- REQ-PLAT-f0d13546 — pinned SQLite pragmas.
-- REQ-DATA-9dbda56e — ordered atomic migration application.
-- REQ-DATA-6c9447cb — synchronized keyword indexes and backfill.
-- REQ-DATA-d137ab0e — changed/missing applied checksum refusal.
-- REQ-DATA-ac2dc07a — complete pre-step exclusive backup.
-- REQ-DATA-73e0309d — newer database source preservation.
-- REQ-DATA-bc498301 — session storage/cascades.
-- REQ-DATA-40c94e08 — message JSON/seq storage.
-- REQ-DATA-ee009054 — event JSON/seq storage.
-- REQ-REL-b7f1889b — lifecycle ownership and storage cleanup.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  service([WorkbenchService]) --> inspectDatabase
-  inspectDatabase --> snapshot[temporary db/WAL copy]
-  service --> openDb
-  openDb --> checkDatabase
-  openDb --> keeper[read-only source connection]
-  openDb --> migrate
-  migrate --> catalogue[TypeScript SQL modules]
-  migrate --> backups[(exclusive backup files)]
-  migrate --> db[(vera.db and WAL)]
-  repositories[sessions/messages/events/artifacts/todos] --> db
-  chunks[(chunks)] --> triggers[insert/update/delete triggers]
-  triggers --> keyword[(chunks_fts / chunks_tri)]
-```
-
-SQLite backup reads the committed WAL view. SQL and meta updates commit together per step; workbench ownership serializes application operations.
-
-## Files
-
-- 05_Software/src/libraries/core/src/storage/db.ts and db.test.ts — connections/snapshots/compatibility.
-- 05_Software/src/libraries/core/src/storage/migrate.ts and migrations/0001_initial.ts — runner/schema.
-- 05_Software/src/libraries/core/src/storage/repos/{sessions,messages,events}.ts and repositories.test.ts — rows.
-- 05_Software/src/libraries/core/src/workbench/{service,service.test}.ts — handle lifetime/ownership.
-- 05_Software/src/libraries/core/{src/index.ts,package.json} and 05_Software/package-lock.json — exports/pinned dependency.
+| Initialization/schema | storage/schema.ts | storage/db.test.ts |
+| Connections and protected reads | storage/db.ts | storage/db.test.ts |
+| Keyword indexes and triggers | storage/schema.ts; repos/documents.ts | keyword-schema.test.ts; knowledge/keyword.test.ts |
+| Vectors and extraction | storage/schema.ts; repos/documents.ts | embedding-schema.test.ts |
+| Session recovery | sessions/service.ts | storage/session-recovery.test.ts |
+| Row storage and cascades | storage/repos | storage/repositories.test.ts |
+| Ownership and handle lifetime | workbench/service.ts | workbench/service.test.ts |

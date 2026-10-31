@@ -5,9 +5,9 @@ import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import {
   createDownloadPdfExtractor,
   type LlmGateway,
-  PdfDownloads,
   SettingsService,
   splitModelReference,
+  WebDownloads,
   WorkbenchService,
 } from "@vera/core";
 import { eventEnvelopeSchema, veraError, workbenchPatchSchema } from "@vera/shared";
@@ -30,7 +30,8 @@ import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { createDocumentServices } from "./document-processor.js";
-import { publicDocument, publicDocumentHit, publicPdfDownload, publicViewer } from "./document-viewer.js";
+import { publicDocument, publicDocumentHit, publicViewer, publicWebDownload } from "./document-viewer.js";
+import { createDesktopDownloadTransfer } from "./download-transfer.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
@@ -56,6 +57,8 @@ declare const __VERA_TEST__: boolean;
 declare const __VERA_UPDATE_URL__: string;
 declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
+// Datasheet CDNs can reject Chromium HTTP/2 streams. Keep its anonymous download transport on HTTP/1.1.
+app.commandLine.appendSwitch("disable-http2");
 installSessionPolicy(app);
 // pi-ai's public standalone entrypoint makes its variable OAuth imports available in bundles.
 registerBunOAuthFlows();
@@ -72,6 +75,7 @@ nativeTheme.on("updated", () => {
     window.setTitleBarOverlay(titleBarOverlay(nativeTheme.shouldUseDarkColors));
 });
 const fileWorkers = createDesktopWorkerPool();
+const downloadTransfer = createDesktopDownloadTransfer();
 const documents = createDocumentServices(
   app.isPackaged ? join(process.resourcesPath, "models") : join(here, "../../../../../src/models"),
   app.isPackaged ? join(process.resourcesPath, "model-manifest.json") : undefined,
@@ -140,8 +144,9 @@ let modelGateway = new ProviderGateway(settings, credentials, providers, systemC
 const sessions = new SessionsHost({
   web: webAccess.provider,
   downloads: (root) =>
-    new PdfDownloads(root, {
+    new WebDownloads(root, {
       access: webAccess.provider,
+      transfer: downloadTransfer,
       pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
     }),
   workbench,
@@ -240,7 +245,7 @@ ipcMain.handle(
           workbench.readDocuments(workbenchId, async () => ({
             workbenchId,
             downloads: (await service.listDownloads())
-              .map((record) => publicPdfDownload(record, (text) => credentials.scrub(text)))
+              .map((record) => publicWebDownload(record, (text) => credentials.scrub(text)))
               .filter((record) => record !== undefined),
           })),
         ),
@@ -331,6 +336,7 @@ ipcMain.handle(
             credentials.scrub(text),
           );
         }),
+      "session.revision": ({ sessionId }) => sessions.run((service) => service.revision(sessionId)),
       "session.get": ({ sessionId }) =>
         sessions.run((s) => {
           const value = s.get(sessionId);
@@ -483,8 +489,8 @@ async function createWindow(): Promise<void> {
   window.removeMenu();
   restoreWindowBounds(window, state.bounds);
   const created = window;
-  created.webContents.on("did-start-navigation", (_event, _url, _isInPlace, isMainFrame) => {
-    if (isMainFrame) sessions.clearSubscriptions();
+  created.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
+    if (isMainFrame && !isInPlace) sessions.clearSubscriptions();
   });
   let closing = false;
   created.on("close", (event) => {

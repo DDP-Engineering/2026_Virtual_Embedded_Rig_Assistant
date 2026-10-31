@@ -1,13 +1,13 @@
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
-import { migrations } from "./migrate.js";
 import { DocumentsRepository } from "./repos/documents.js";
+import { schemaSql } from "./schema.js";
 
 it("publishes embeddings and extraction atomically and invalidates on replacement/cascade", () => {
   const db = new Database(":memory:");
   try {
     db.pragma("foreign_keys=ON");
-    for (const migration of migrations) db.exec(migration.sql);
+    db.exec(schemaSql);
     expect(db.prepare("SELECT name FROM sqlite_master WHERE name='embeddings'").get()).toBeDefined();
     const rows = new DocumentsRepository(db);
     const doc = rows.save({

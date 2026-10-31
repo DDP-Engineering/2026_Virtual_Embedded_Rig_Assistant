@@ -10,7 +10,7 @@ tests/e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) ow
 [IPC boundary](ipc-boundary.md) owns authorization/transport; [renderer foundation](renderer-foundation.md)
 owns the shell, appearance, language and layout.
 Tool path confinement, read/list/glob/grep and worker deadlines route to [File tools](file-tools.md).
-Database migrations, compatibility, backups and row repositories route to [Workbench storage](workbench-storage.md).
+The current database schema, initialization and row repositories route to [Workbench storage](workbench-storage.md).
 
 [Verification fixtures](demo-onboarding.md) routes the fictional board corpus and PDF sources under tests/fixtures, used by isolated tests and evaluation/smoke harnesses.
 

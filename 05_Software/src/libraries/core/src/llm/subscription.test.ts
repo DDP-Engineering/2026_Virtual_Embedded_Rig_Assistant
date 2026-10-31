@@ -53,7 +53,7 @@ describe("ChatGPT subscription collection", () => {
       },
     ];
     const fetcher: typeof fetch = async (input, init) => {
-      if (String(input).startsWith("https://chatgpt.com/backend-api/codex/models?client_version="))
+      if (String(input) === "https://api.openai.com/v1/models")
         return Response.json({
           models: [
             {

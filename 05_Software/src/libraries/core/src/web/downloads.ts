@@ -4,20 +4,20 @@ import { realpathSync } from "node:fs";
 import { lstat, mkdir, open, readdir, realpath, rename, rmdir, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
+  DOWNLOAD_MAX_BYTES,
+  downloadFilenameSchema,
   downloadIdSchema,
-  PDF_DOWNLOAD_MAX_BYTES,
-  type PdfDownload,
-  pdfDownloadSchema,
-  pdfFilenameSchema,
   type ViewerContent,
   veraError,
+  type WebDownload,
+  webDownloadSchema,
 } from "@vera/shared";
 import { createPdfExtractor, type PdfExtractor } from "../knowledge/worker-host.js";
 import type { WriteQueue } from "../workbench/write-queue.js";
-import { PDF_DOWNLOAD_DEADLINE_MS, transferPdf } from "./pdf-transfer.js";
+import { DOWNLOAD_DEADLINE_MS, transferFile } from "./download-transfer.js";
 import { publicWebUrl } from "./provider.js";
 
-export interface PdfDownloadTarget {
+export interface DownloadTarget {
   readonly downloadId: string;
   readonly name: string;
   readonly path: string;
@@ -32,13 +32,14 @@ export interface DownloadAccess {
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 const missing = (error: unknown) => (error as NodeJS.ErrnoException).code === "ENOENT";
+const manifestName = ".vera-download.json";
 /** Public document parsing has a disposable worker, a deadline and a bounded JS heap. */
 export function createDownloadPdfExtractor(entry: URL): PdfExtractor {
-  return createPdfExtractor(entry, PDF_DOWNLOAD_DEADLINE_MS, { maxOldGenerationSizeMb: 256 });
+  return createPdfExtractor(entry, DOWNLOAD_DEADLINE_MS, { maxOldGenerationSizeMb: 256 });
 }
 
 /** Provider-neutral workbench data. Neither downloaded bytes nor extracted text enter RAG/model results. */
-export class PdfDownloads {
+export class WebDownloads {
   private readonly root: string;
   private readonly lifetime = new AbortController();
   private readonly pending = new Set<Promise<unknown>>();
@@ -47,28 +48,28 @@ export class PdfDownloads {
     private readonly host: {
       access: DownloadAccess;
       pdf: PdfExtractor;
-      transfer?: typeof transferPdf;
+      transfer?: typeof transferFile;
     },
   ) {
     this.root = realpathSync(root);
   }
 
-  allocate(url: string, filename?: string): PdfDownloadTarget {
+  allocate(url: string, filename?: string): DownloadTarget {
     const sourceUrl = publicWebUrl(url);
-    let candidate = "document.pdf";
+    let candidate = "download.bin";
     try {
       const basename = decodeURIComponent(new URL(sourceUrl).pathname.split("/").at(-1) ?? "");
-      if (pdfFilenameSchema.safeParse(basename).success) candidate = basename;
+      if (downloadFilenameSchema.safeParse(basename).success) candidate = basename;
     } catch {
       /* An unusable URL basename uses the ordinary managed default. */
     }
-    const name = pdfFilenameSchema.parse(filename ?? candidate);
+    const name = downloadFilenameSchema.parse(filename ?? candidate);
     const downloadId = randomUUID();
     return Object.freeze({ downloadId, name, sourceUrl, path: `.vera/downloads/${downloadId}/${name}` });
   }
 
   save(
-    target: PdfDownloadTarget,
+    target: DownloadTarget,
     context: {
       sessionId: string;
       callId: string;
@@ -77,38 +78,39 @@ export class PdfDownloads {
       assertWritable(): void;
     },
     caller: AbortSignal,
-  ): Promise<PdfDownload> {
+  ): Promise<WebDownload> {
     return this.track(
       async (lifetime) =>
         this.host.access.withAccess(async (access, assertCurrent) => {
-          const signal = AbortSignal.any([lifetime, access, AbortSignal.timeout(PDF_DOWNLOAD_DEADLINE_MS)]);
+          const signal = AbortSignal.any([lifetime, access, AbortSignal.timeout(DOWNLOAD_DEADLINE_MS)]);
           signal.throwIfAborted();
           assertCurrent();
           context.assertWritable();
-          const { data, finalUrl } = await (this.host.transfer ?? transferPdf)(target.sourceUrl, signal);
+          const { data, finalUrl, mime } = await (this.host.transfer ?? transferFile)(
+            target.sourceUrl,
+            signal,
+          );
           signal.throwIfAborted();
           assertCurrent();
           context.assertWritable();
-          if (
-            !data.length ||
-            data.length > PDF_DOWNLOAD_MAX_BYTES ||
-            !data.subarray(0, 1024).includes(Buffer.from("%PDF-"))
-          )
-            throw Error("The response is not a supported PDF document.");
-          const parsed = await this.host.pdf(data, signal);
+          if (data.length > DOWNLOAD_MAX_BYTES) throw Error("Download exceeds the size limit.");
+          const pdfSignature = data.subarray(0, 1024).includes(Buffer.from("%PDF-"));
+          const isPdf = mime === "application/pdf" || /\.pdf$/i.test(target.name) || pdfSignature;
+          if (isPdf && !pdfSignature) throw Error("The response is not a supported PDF document.");
+          const parsed = isPdf ? await this.host.pdf(data, signal) : undefined;
           signal.throwIfAborted();
-          if (!parsed.pages.length) throw Error("The PDF contains no pages.");
-          const record = pdfDownloadSchema.parse({
+          if (parsed && !parsed.pages.length) throw Error("The PDF contains no pages.");
+          const record = webDownloadSchema.parse({
             ...target,
             sourceUrl: publicWebUrl(target.sourceUrl),
             finalUrl: publicWebUrl(finalUrl),
             sessionId: context.sessionId,
             callId: context.callId,
-            mime: "application/pdf",
+            mime: isPdf ? "application/pdf" : mime,
             bytes: data.length,
             sha256: hash(data),
             createdAt: context.now(),
-            pages: parsed.pages.length,
+            ...(parsed ? { pages: parsed.pages.length } : {}),
           });
           return context.queue.run(async () => {
             signal.throwIfAborted();
@@ -126,7 +128,7 @@ export class PdfDownloads {
               await this.ordinaryDirectory(staging);
               for (const [name, bytes] of [
                 [target.name, data],
-                ["manifest.json", Buffer.from(JSON.stringify(record))],
+                [manifestName, Buffer.from(JSON.stringify(record))],
               ] as const) {
                 signal.throwIfAborted();
                 assertCurrent();
@@ -174,7 +176,7 @@ export class PdfDownloads {
     );
   }
 
-  list(caller: AbortSignal = new AbortController().signal): Promise<PdfDownload[]> {
+  list(caller: AbortSignal = new AbortController().signal): Promise<WebDownload[]> {
     return this.track(async (signal) => {
       let parent: string;
       try {
@@ -183,7 +185,7 @@ export class PdfDownloads {
         if (missing(error)) return [];
         throw error;
       }
-      const records: PdfDownload[] = [];
+      const records: WebDownload[] = [];
       for (const name of await readdir(parent)) {
         signal.throwIfAborted();
         if (!downloadIdSchema.safeParse(name).success) continue;
@@ -206,9 +208,10 @@ export class PdfDownloads {
   ): Promise<ViewerContent & { kind: "pdf" }> {
     return this.track(async (signal) => {
       const record = await this.record(downloadId, signal);
+      if (record.mime !== "application/pdf") throw veraError("INVALID");
       const directory = join(await this.directory(), record.downloadId);
       await this.ordinaryDirectory(directory);
-      const data = await this.read(join(directory, record.name), PDF_DOWNLOAD_MAX_BYTES, signal);
+      const data = await this.read(join(directory, record.name), DOWNLOAD_MAX_BYTES, signal);
       if (data.length !== record.bytes || hash(data) !== record.sha256) throw veraError("CONFLICT");
       const extracted = await this.host.pdf(data, signal);
       signal.throwIfAborted();
@@ -250,7 +253,7 @@ export class PdfDownloads {
     try {
       await this.directory();
       await this.ordinaryDirectory(directory);
-      for (const file of [name, "manifest.json"]) {
+      for (const file of [name, manifestName]) {
         try {
           await unlink(join(directory, file));
         } catch (error) {
@@ -283,7 +286,7 @@ export class PdfDownloads {
     }
     return path;
   }
-  private async record(downloadId: string, signal: AbortSignal): Promise<PdfDownload> {
+  private async record(downloadId: string, signal: AbortSignal): Promise<WebDownload> {
     if (!downloadIdSchema.safeParse(downloadId).success) throw veraError("INVALID");
     let path: string;
     try {
@@ -293,14 +296,14 @@ export class PdfDownloads {
       if (missing(error)) throw veraError("NOT_FOUND");
       throw error;
     }
-    const text = (await this.read(join(path, "manifest.json"), 16_384, signal)).toString("utf8");
+    const text = (await this.read(join(path, manifestName), 16_384, signal)).toString("utf8");
     let json: unknown;
     try {
       json = JSON.parse(text);
     } catch {
       throw veraError("INVALID");
     }
-    const parsed = pdfDownloadSchema.safeParse(json);
+    const parsed = webDownloadSchema.safeParse(json);
     if (!parsed.success) throw veraError("INVALID");
     const record = parsed.data;
     try {

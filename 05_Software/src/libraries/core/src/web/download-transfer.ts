@@ -3,29 +3,29 @@ import { lookup } from "node:dns/promises";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { BlockList, isIP } from "node:net";
-import { PDF_DOWNLOAD_MAX_BYTES } from "@vera/shared";
+import { DOWNLOAD_MAX_BYTES } from "@vera/shared";
 import { publicWebUrl } from "./provider.js";
 
-export const PDF_DOWNLOAD_DEADLINE_MS = 120_000;
-const headers = { Accept: "application/pdf", "Accept-Encoding": "identity", "User-Agent": "VERA" } as const;
+export const DOWNLOAD_DEADLINE_MS = 120_000;
+const headers = { Accept: "*/*", "Accept-Encoding": "identity", "User-Agent": "VERA" } as const;
 export interface PublicAddress {
   address: string;
   family: number;
 }
-export interface PdfHttpResponse {
+export interface DownloadHttpResponse {
   status: number;
   headers: Record<string, string | string[] | undefined>;
   body: AsyncIterable<Uint8Array>;
   close(): void;
 }
-export interface PdfTransferPorts {
+export interface DownloadTransferPorts {
   resolve?(hostname: string): Promise<PublicAddress[]>;
   connect?(
     url: URL,
     address: PublicAddress,
     requestHeaders: typeof headers,
     signal: AbortSignal,
-  ): Promise<PdfHttpResponse>;
+  ): Promise<DownloadHttpResponse>;
   /** A lower budget is useful for deterministic transport tests; callers cannot raise the product cap. */
   maxBytes?: number;
   deadlineMs?: number;
@@ -46,7 +46,12 @@ export function publicDownloadAddress(value: PublicAddress): boolean {
     return false;
   }
 }
-const connect: NonNullable<PdfTransferPorts["connect"]> = (url, address, requestHeaders, signal) =>
+export const connectDownload: NonNullable<DownloadTransferPorts["connect"]> = (
+  url,
+  address,
+  requestHeaders,
+  signal,
+) =>
   new Promise((resolve, reject) => {
     const request = (url.protocol === "https:" ? httpsRequest : httpRequest)(
       url,
@@ -74,11 +79,11 @@ const connect: NonNullable<PdfTransferPorts["connect"]> = (url, address, request
   });
 
 /** No provider client, cookie jar, credentials or ambient proxy participates in this transport. */
-export async function transferPdf(source: string, caller: AbortSignal, ports: PdfTransferPorts = {}) {
-  const maxBytes = Math.min(ports.maxBytes ?? PDF_DOWNLOAD_MAX_BYTES, PDF_DOWNLOAD_MAX_BYTES);
-  const deadlineMs = Math.min(ports.deadlineMs ?? PDF_DOWNLOAD_DEADLINE_MS, PDF_DOWNLOAD_DEADLINE_MS);
+export async function transferFile(source: string, caller: AbortSignal, ports: DownloadTransferPorts = {}) {
+  const maxBytes = Math.min(ports.maxBytes ?? DOWNLOAD_MAX_BYTES, DOWNLOAD_MAX_BYTES);
+  const deadlineMs = Math.min(ports.deadlineMs ?? DOWNLOAD_DEADLINE_MS, DOWNLOAD_DEADLINE_MS);
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || !Number.isFinite(deadlineMs) || deadlineMs < 1)
-    throw Error("Invalid PDF download budget.");
+    throw Error("Invalid Download budget.");
   const signal = AbortSignal.any([caller, AbortSignal.timeout(deadlineMs)]);
   let url = new URL(publicWebUrl(source));
   for (let redirects = 0; redirects <= 5; redirects++) {
@@ -90,9 +95,9 @@ export async function transferPdf(source: string, caller: AbortSignal, ports: Pd
     signal.throwIfAborted();
     const address = addresses[0];
     if (!address || addresses.some((address) => !publicDownloadAddress(address)))
-      throw Error("PDF downloads require a public network destination.");
+      throw Error("Downloads require a public network destination.");
     const response = await cancellable(
-      (ports.connect ?? connect)(url, address, headers, signal),
+      (ports.connect ?? connectDownload)(url, address, headers, signal),
       signal,
       (late) => late.close(),
     );
@@ -100,29 +105,26 @@ export async function transferPdf(source: string, caller: AbortSignal, ports: Pd
       signal.throwIfAborted();
       if ([301, 302, 303, 307, 308].includes(response.status)) {
         const location = response.headers.location;
-        if (redirects === 5 || typeof location !== "string")
-          throw Error("PDF download redirect limit exceeded.");
+        if (redirects === 5 || typeof location !== "string") throw Error("Download redirect limit exceeded.");
         url = new URL(publicWebUrl(new URL(location, url).href));
         continue;
       }
-      if (response.status !== 200) throw Error(`PDF download failed (HTTP ${response.status}).`);
-      const mime = response.headers["content-type"];
+      if (response.status !== 200) throw Error(`Download failed (HTTP ${response.status}).`);
+      const contentType = response.headers["content-type"];
+      const mime =
+        typeof contentType === "string"
+          ? (contentType.split(";", 1)[0]?.trim().toLowerCase() ?? "application/octet-stream")
+          : "application/octet-stream";
       const encoding = response.headers["content-encoding"];
-      if (
-        typeof mime !== "string" ||
-        !["application/pdf", "application/octet-stream"].includes(
-          mime.split(";", 1)[0]?.trim().toLowerCase() ?? "",
-        )
-      )
-        throw Error("The URL did not return a PDF document.");
-      if (encoding && encoding !== "identity")
-        throw Error("Compressed PDF download responses are unavailable.");
+      if (!/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(mime) || mime.length > 160)
+        throw Error("The URL returned an invalid content type.");
+      if (encoding && encoding !== "identity") throw Error("Compressed Download responses are unavailable.");
       const length = response.headers["content-length"];
       if (
         length !== undefined &&
         (typeof length !== "string" || !/^\d+$/.test(length) || Number(length) > maxBytes)
       )
-        throw Error("PDF download exceeds the size limit.");
+        throw Error("Download exceeds the size limit.");
       const chunks: Buffer[] = [];
       let bytes = 0;
       const iterator = response.body[Symbol.asyncIterator]();
@@ -132,21 +134,18 @@ export async function transferPdf(source: string, caller: AbortSignal, ports: Pd
         const chunk = next.value;
         signal.throwIfAborted();
         bytes += chunk.byteLength;
-        if (bytes > maxBytes) throw Error("PDF download exceeds the size limit.");
+        if (bytes > maxBytes) throw Error("Download exceeds the size limit.");
         chunks.push(Buffer.from(chunk));
       }
       signal.throwIfAborted();
-      if (!bytes || (length !== undefined && bytes !== Number(length)))
-        throw Error("Incomplete PDF download.");
+      if (length !== undefined && bytes !== Number(length)) throw Error("Incomplete download.");
       const data = Buffer.concat(chunks, bytes);
-      if (!data.subarray(0, 1024).includes(Buffer.from("%PDF-")))
-        throw Error("The response is not a PDF document.");
-      return { data, finalUrl: url.href };
+      return { data, finalUrl: url.href, mime };
     } finally {
       response.close();
     }
   }
-  throw Error("PDF download redirect limit exceeded.");
+  throw Error("Download redirect limit exceeded.");
 }
 
 function cancellable<T>(operation: Promise<T>, signal: AbortSignal, late?: (value: T) => void): Promise<T> {

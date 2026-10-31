@@ -90,9 +90,9 @@ export class DocumentKnowledge {
     private readonly embeddings?: EmbeddingPort,
   ) {}
   private epoch(): string {
-    return String(
-      this.db.prepare("SELECT value FROM meta WHERE key='embedding_epoch'").pluck().get() ?? "legacy",
-    );
+    const epoch = this.db.prepare("SELECT value FROM meta WHERE key='embedding_epoch'").pluck().get();
+    if (typeof epoch !== "string") throw Error("Missing current embedding epoch.");
+    return epoch;
   }
   async search(raw: SearchArgs, signal: AbortSignal): Promise<{ results: SearchResult[]; message?: string }> {
     const args = searchDocsSchema.parse(raw);
@@ -115,8 +115,7 @@ export class DocumentKnowledge {
         : new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined);
     let semantic: { id: number; score: number }[] = [];
     if (args.mode !== "keyword") {
-      if (!this.embeddings || epoch === "legacy")
-        throw Error("Semantic index unavailable. Index documents or use keyword/grep.");
+      if (!this.embeddings) throw Error("Semantic index unavailable. Index documents or use keyword/grep.");
       const key = `${epoch}:${this.embeddings.modelId}:${args.pathGlob ?? ""}`;
       const modelId = this.embeddings.modelId;
       const loadVectors = (): VectorRow[] => {
@@ -182,8 +181,6 @@ export class DocumentKnowledge {
     const doc = new DocumentsRepository(this.db).get(target.relative);
     if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other")
       throw Error("Document not indexed. Use grep/read or index documents.");
-    if (!this.db.prepare("SELECT 1 FROM sqlite_master WHERE name='document_extractions'").get())
-      throw Error("Full extraction unavailable. Reindex documents.");
     const stored = this.db
       .prepare("SELECT extraction_json FROM document_extractions WHERE doc_id=?")
       .pluck()

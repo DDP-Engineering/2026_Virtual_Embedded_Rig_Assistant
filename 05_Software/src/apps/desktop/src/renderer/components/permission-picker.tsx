@@ -1,7 +1,7 @@
 // REQ-UX-33b9d601 REQ-UX-bb147586
 import { type UseQueryResult, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type PermissionMode, permissionModeSchema, type SettingsSnapshot } from "@vera/shared";
-import { TriangleAlert, X } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { type RefObject, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -137,15 +137,6 @@ function BypassWarning({
           <TriangleAlert aria-hidden="true" />
           {t("bypass.title")}
         </h2>
-        <button
-          type="button"
-          data-action="dismiss-bypass-warning"
-          aria-label={t("panel.close")}
-          disabled={save.isPending}
-          onClick={() => void dismiss()}
-        >
-          <X aria-hidden="true" />
-        </button>
       </header>
       <p id={description}>{t("bypass.warning")}</p>
       <label className="bypass-remember">

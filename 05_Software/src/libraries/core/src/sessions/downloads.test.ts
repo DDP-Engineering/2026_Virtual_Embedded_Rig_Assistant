@@ -34,8 +34,9 @@ async function setup(mode: PermissionMode = "ask", disabledTools: string[] = [])
   const transfer = vi.fn(async (_source: string, _signal: AbortSignal) => ({
     data: Buffer.from("%PDF-1.7\nfixture"),
     finalUrl: url,
+    mime: "application/pdf",
   }));
-  const downloads = new core.PdfDownloads(root, {
+  const downloads = new core.WebDownloads(root, {
     access,
     transfer,
     pdf: async () => ({ kind: "pdf", pages: ["Datasheet"] }),

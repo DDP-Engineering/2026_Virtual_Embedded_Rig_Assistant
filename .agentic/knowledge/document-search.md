@@ -4,7 +4,7 @@
 
 Select for persisted embeddings, semantic/hybrid ranking, search_docs/read_doc,
 CLI index/search and the production retrieval gate. Start at core knowledge/
-{embedding,embedding-worker,search}.ts and storage/migrations/0003_embeddings.ts.
+{embedding,embedding-worker,search}.ts and storage/schema.ts.
 [Ingest](knowledge-ingest.md) owns source admission/publication and locks;
 [extraction](document-extraction.md) owns locators/cache/chunks;
 [keyword](keyword-search.md) owns lexical candidates;
@@ -95,7 +95,7 @@ flowchart LR
 | Change | Start | Focused proof |
 |---|---|---|
 | local descriptor/batches/cache/termination | embedding.ts, embedding-worker.ts | embedding.test.ts; real eval |
-| atomic lifecycle/migration | migration3, DocumentsRepository, processor/ingest | embedding-migration, embedding-ingest, ingest tests |
+| atomic lifecycle/schema | storage/schema.ts, DocumentsRepository, processor/ingest | embedding-schema, embedding-ingest, ingest tests |
 | modes/RRF/glob/snippets/read bounds | search.ts, keyword.ts | search.test.ts, keyword.test.ts |
 | registry/replay/citations | tools/documents.ts, SessionService | registry/search replay and document-cli tests |
 | citation page/heading bounds and current source | search.ts validDocumentRef; shared refs.ts | search.test.ts; agent/citations.test.ts; tests/e2e/citations.spec.ts |
@@ -110,7 +110,7 @@ REQ-FUNC-51165496 verifies issued document bounds against current source/extract
 ## Files
 
 Under05_Software: core knowledge/{embedding,embedding-worker,embedding-ingest,
-search,processor,ingest}; storage/{migrations/0003_embeddings,repos/documents};
+search,processor,ingest}; storage/{schema,repos/documents};
 tools/documents; CLI {args,documents,document-processor,embedding-worker}; desktop
 {document-processor,document-embedding-worker,index,sessions}; scripts/{eval-retrieval,
 retrieval/product-eval,build-cli,package}; corresponding focused tests and ingest E2E.

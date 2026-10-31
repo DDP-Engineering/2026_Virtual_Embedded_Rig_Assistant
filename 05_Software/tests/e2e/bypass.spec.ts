@@ -58,6 +58,7 @@ test("marked Bypass selectors display dismissible warning and remember its suppr
     await picker.selectOption("bypass");
     const warning = page.locator(".bypass-warning");
     await expect(warning).toBeVisible();
+    await expect(warning.getByRole("button")).toHaveCount(1);
     await expect(warning).toContainText("outside the workbench");
     await expect(picker).toHaveClass(/bypass-selected/);
     await page.locator('[data-action="close-bypass-warning"]').click();
@@ -69,7 +70,7 @@ test("marked Bypass selectors display dismissible warning and remember its suppr
     await expect(warning).toBeHidden();
     await picker.selectOption("ask");
     await picker.selectOption("bypass");
-    await page.locator('[data-action="dismiss-bypass-warning"]').click();
+    await page.locator('[data-action="close-bypass-warning"]').click();
     await expect(warning).toBeHidden();
     await picker.selectOption("ask");
     await picker.selectOption("bypass");

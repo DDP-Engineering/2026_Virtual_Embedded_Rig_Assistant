@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { DocumentKnowledge, DocumentsRepository, EmbeddingHost, migrations } from "@vera/core";
+import { DocumentKnowledge, DocumentsRepository, EmbeddingHost, schemaSql } from "@vera/core";
 import Database from "better-sqlite3";
 import { loadCorpus } from "./corpus.mjs";
 import { summarize, validateFixture } from "./evaluation.mjs";
@@ -22,7 +22,7 @@ export async function evaluate(software, scratch) {
   const db = new Database(":memory:");
   try {
     db.pragma("foreign_keys=ON");
-    for (const m of migrations) db.exec(m.sql);
+    db.exec(schemaSql);
     const repository = new DocumentsRepository(db),
       signal = new AbortController().signal;
     const vectors = await host.embed(
@@ -41,7 +41,7 @@ export async function evaluate(software, scratch) {
         error: null,
         indexedAt: null,
       });
-      // Evaluation exercises real migrated persistence/search; full extraction reads are covered by ingest/replay.
+      // Evaluation exercises current persistence/search; full extraction reads are covered by ingest/replay.
       repository.replaceChunks(
         doc.id,
         chunks.map(({ text, locator }) => ({ text, locator })),

@@ -4,7 +4,7 @@ import type { ArtifactHost } from "../artifacts/store.js";
 import type { DocumentKnowledge } from "../knowledge/search.js";
 import type { WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
-import type { PdfDownloads } from "../web/pdf-downloads.js";
+import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
@@ -25,7 +25,7 @@ export interface ToolContext {
   todos?: TodoHost;
   knowledge?: DocumentKnowledge;
   web?: WebProvider;
-  downloads?: PdfDownloads;
+  downloads?: WebDownloads;
   skills?: SkillCatalog;
 }
 export interface ToolDefinition {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // REQ-UX-0f1a32c4 REQ-FUNC-37261edc
 import userEvent from "@testing-library/user-event";
-import { workbenchSchema } from "@vera/shared";
+import { builtinToolNames, workbenchSchema } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -51,7 +51,8 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
     await user.click(container.querySelector('[data-project-section="tools"]') as HTMLElement);
   });
   const toggles = [...container.querySelectorAll<HTMLInputElement>("[data-tool-toggle]")];
-  expect(toggles).toHaveLength(13);
+  expect(toggles).toHaveLength(builtinToolNames.length);
+  expect(container.querySelector('[data-action="skills-settings"]')).toBeNull();
   const grep = container.querySelector<HTMLInputElement>('[data-tool-toggle="grep"]') as HTMLInputElement;
   expect(grep.checked).toBe(false);
   for (const input of toggles) expect(input.matches(":disabled")).toBe(readOnly);
@@ -59,6 +60,19 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
     await user.click(grep);
   });
   expect(grep.checked).toBe(!readOnly);
+  const content = container.querySelector<HTMLDivElement>(".workbench-editor-content");
+  if (!content) throw Error("Missing editor content");
+  content.scrollTop = 500;
+  await act(async () => {
+    await user.click(container.querySelector('[data-project-section="skills"]') as HTMLElement);
+  });
+  expect(content.scrollTop).toBe(0);
+  expect(container.querySelector('[data-action="skills-settings"]')).not.toBeNull();
+  expect(container.querySelector("[data-tool-toggle]")).toBeNull();
+  await act(async () => {
+    await user.click(container.querySelector('[data-project-section="tools"]') as HTMLElement);
+  });
+  expect(container.querySelector<HTMLInputElement>('[data-tool-toggle="grep"]')?.checked).toBe(!readOnly);
   expect(config.tools.disabled).toEqual(["grep"]);
   expect(api.invoke).toHaveBeenCalledTimes(1); // Draft changes do not save or invoke tools.
 });

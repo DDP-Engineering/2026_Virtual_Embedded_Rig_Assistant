@@ -6,8 +6,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import Database from "better-sqlite3";
 import { build } from "esbuild";
 import { expect, it } from "vitest";
-import { migrations } from "../storage/migrate.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { schemaSql } from "../storage/schema.js";
 import { EmbeddingHost } from "./embedding.js";
 import { DocumentKnowledge } from "./search.js";
 
@@ -73,7 +73,7 @@ it("runs local CPU batches32, enforces full query budget and caches deterministi
     const db = new Database(":memory:");
     try {
       db.pragma("foreign_keys=ON");
-      for (const m of migrations) db.exec(m.sql);
+      db.exec(schemaSql);
       await mkdir(join(temporary, "docs"));
       const repository = new DocumentsRepository(db);
       for (const [n, text] of [
@@ -127,7 +127,8 @@ it("runs local CPU batches32, enforces full query budget and caches deterministi
 it("terminates deadline, abort, crash and premature exit jobs and replaces workers", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-failure-")),
     entry = join(temporary, "worker.mjs");
-  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest, 100);
+  // Allow Windows worker startup; the nonresponding worker still verifies the deadline.
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest, 1000);
   try {
     await mkdir(join(temporary, "bench"));
     await writeFile(

@@ -9,7 +9,7 @@ import {
   documentSearchHitSchema,
   viewerContentSchema,
 } from "./documents.js";
-import { downloadIdSchema, pdfDownloadSchema } from "./downloads.js";
+import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
   providerDiscoveryRequestSchema,
@@ -143,7 +143,7 @@ export const channels = {
   "downloads.list": defineChannel(
     "downloads.list",
     docsScopeSchema,
-    docsScopeSchema.extend({ downloads: z.array(pdfDownloadSchema) }),
+    docsScopeSchema.extend({ downloads: z.array(webDownloadSchema) }),
   ),
   "downloads.open": defineChannel(
     "downloads.open",
@@ -247,6 +247,11 @@ export const channels = {
       mode: permissionModeSchema.optional(),
     }),
     sessionSummarySchema,
+  ),
+  "session.revision": defineChannel(
+    "session.revision",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({ seq: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) }),
   ),
   "session.get": defineChannel(
     "session.get",

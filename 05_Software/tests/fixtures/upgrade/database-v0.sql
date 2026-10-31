@@ -1,1 +1,0 @@
--- Empty database before the initial persisted schema; no prior user tables.

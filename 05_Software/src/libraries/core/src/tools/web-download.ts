@@ -1,5 +1,5 @@
 // REQ-SEC-1a37ade3, REQ-FUNC-b975a8b5
-import { PDF_DOWNLOAD_MAX_BYTES, pdfFilenameSchema } from "@vera/shared";
+import { DOWNLOAD_MAX_BYTES, downloadFilenameSchema } from "@vera/shared";
 import { z } from "zod";
 import { publicWebUrl } from "../web/provider.js";
 import type { PreparedChange } from "./changes.js";
@@ -18,14 +18,14 @@ const params = z.strictObject({
         return false;
       }
     }),
-  filename: pdfFilenameSchema.optional(),
+  filename: downloadFilenameSchema.optional(),
 });
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
   signal.throwIfAborted();
   const args = params.parse(raw),
     host = ctx.change,
     store = ctx.downloads;
-  if (!host || !store) throw Error("PDF download host is unavailable.");
+  if (!host || !store) throw Error("Download host is unavailable.");
   host.assertWritable?.();
   const target = store.allocate(args.url, args.filename);
   const approvalSignal = signal;
@@ -43,7 +43,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
     diff: "",
     bytes: 0,
     protected: true,
-    download: Object.freeze({ url: target.sourceUrl, maxBytes: PDF_DOWNLOAD_MAX_BYTES }),
+    download: Object.freeze({ url: target.sourceUrl, maxBytes: DOWNLOAD_MAX_BYTES }),
   });
   return {
     request,
@@ -66,7 +66,7 @@ export const webDownloadTool: ToolDefinition = {
   name: "web_download",
   class: "write",
   description:
-    "Download a public PDF URL into managed .vera/downloads storage after write approval. Returns metadata, not PDF bytes or text. The user can open the saved PDF in VERA; downloads are not automatically indexed. Requires global Web access; no search-provider API key is needed.",
+    "Download a public HTTP/HTTPS file (PDF, ZIP, CSV, text, images or other binary formats) into managed .vera/downloads storage, subject to session write permissions. Optional filename may use any file extension. Returns the saved path, byte count, MIME type and SHA-256, not file contents. PDFs can be previewed in VERA; other files can be shown in Explorer. Files are not executed or automatically indexed. Requires global Web access; no search-provider API key is needed.",
   params,
   prepare,
   execute: async (ctx, args, signal) => (await prepare(ctx, args, signal)).apply(signal),

@@ -78,43 +78,53 @@ export function KeyboardShortcuts({
   return (
     <section data-settings-section="shortcuts" className="shortcut-settings">
       <h2>{t("settings.shortcuts")}</h2>
-      <div className="shortcut-search">
-        <Search aria-hidden="true" />
-        <input
-          type="search"
-          ref={searchInput}
-          value={search}
-          aria-label={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
-          placeholder={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
-          data-shortcut-capture={keySearch || undefined}
-          onChange={(event) => setSearch(event.target.value)}
-          onKeyDown={(event) => {
-            if (!keySearch) return;
-            event.stopPropagation();
-            if (event.key === "Escape") {
-              event.preventDefault();
+      <div className="shortcut-toolbar">
+        <div className="shortcut-search">
+          <Search aria-hidden="true" />
+          <input
+            type="search"
+            ref={searchInput}
+            value={search}
+            aria-label={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
+            placeholder={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
+            data-shortcut-capture={keySearch || undefined}
+            onChange={(event) => setSearch(event.target.value)}
+            onKeyDown={(event) => {
+              if (!keySearch) return;
+              event.stopPropagation();
+              if (event.key === "Escape") {
+                event.preventDefault();
+                setSearch("");
+                return;
+              }
+              if (event.ctrlKey || event.metaKey) {
+                event.preventDefault();
+                const value = bindingFromEvent(event.nativeEvent);
+                if (value) setSearch(displayBinding(value));
+              }
+            }}
+          />
+          <button
+            type="button"
+            aria-label={t("keyboard.searchKeys")}
+            title={t("keyboard.searchKeys")}
+            aria-pressed={keySearch}
+            onClick={() => {
+              setKeySearch((value) => !value);
               setSearch("");
-              return;
-            }
-            if (event.ctrlKey || event.metaKey) {
-              event.preventDefault();
-              const value = bindingFromEvent(event.nativeEvent);
-              if (value) setSearch(displayBinding(value));
-            }
-          }}
-        />
+              searchInput.current?.focus();
+            }}
+          >
+            <Keyboard aria-hidden="true" />
+          </button>
+        </div>
         <button
           type="button"
-          aria-label={t("keyboard.searchKeys")}
-          title={t("keyboard.searchKeys")}
-          aria-pressed={keySearch}
-          onClick={() => {
-            setKeySearch((value) => !value);
-            setSearch("");
-            searchInput.current?.focus();
-          }}
+          className="shortcut-restore"
+          disabled={disabled || !Object.keys(bindings ?? {}).length}
+          onClick={() => update({})}
         >
-          <Keyboard aria-hidden="true" />
+          {t("keyboard.resetAll")}
         </button>
       </div>
       <p className="muted">{t("keyboard.intro")}</p>
@@ -204,13 +214,6 @@ export function KeyboardShortcuts({
           ))}
       </div>
       <p className="muted">{t("keyboard.local")}</p>
-      <button
-        type="button"
-        disabled={disabled || !Object.keys(bindings ?? {}).length}
-        onClick={() => update({})}
-      >
-        {t("keyboard.resetAll")}
-      </button>
       {record && (
         <dialog
           ref={dialog}

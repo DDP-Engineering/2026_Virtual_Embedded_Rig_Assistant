@@ -1,19 +1,19 @@
 // REQ-SEC-6c43bda5, REQ-REL-45112294
 import { describe, expect, it, vi } from "vitest";
 import {
-  type PdfHttpResponse,
-  type PdfTransferPorts,
+  type DownloadHttpResponse,
+  type DownloadTransferPorts,
   publicDownloadAddress,
-  transferPdf,
-} from "./pdf-transfer.js";
+  transferFile,
+} from "./download-transfer.js";
 
 const signal = () => new AbortController().signal;
 const bytes = Buffer.from("%PDF-1.7\npublic binary\x00\xff\n%%EOF");
 function reply(
   status = 200,
   body: Uint8Array[] = [bytes],
-  headers: PdfHttpResponse["headers"] = { "content-type": "application/pdf" },
-): PdfHttpResponse {
+  headers: DownloadHttpResponse["headers"] = { "content-type": "application/pdf" },
+): DownloadHttpResponse {
   return {
     status,
     headers,
@@ -23,9 +23,9 @@ function reply(
     close: vi.fn(),
   };
 }
-function fixture(responses: PdfHttpResponse[] = [reply()]) {
+function fixture(responses: DownloadHttpResponse[] = [reply()]) {
   const resolve = vi.fn(async () => [{ address: "93.184.215.14", family: 4 }]);
-  const connect = vi.fn<NonNullable<PdfTransferPorts["connect"]>>(async () => {
+  const connect = vi.fn<NonNullable<DownloadTransferPorts["connect"]>>(async () => {
     const response = responses.shift();
     if (!response) throw Error("Unexpected HTTP request");
     return response;
@@ -34,15 +34,16 @@ function fixture(responses: PdfHttpResponse[] = [reply()]) {
 }
 it("preserves PDF bytes and pins validated DNS without sending credentials", async () => {
   const f = fixture();
-  expect(await transferPdf("https://datasheets.example.org/file.pdf", signal(), f)).toEqual({
+  expect(await transferFile("https://datasheets.example.org/file.pdf", signal(), f)).toEqual({
     data: bytes,
     finalUrl: "https://datasheets.example.org/file.pdf",
+    mime: "application/pdf",
   });
   expect(f.resolve).toHaveBeenCalledExactlyOnceWith("datasheets.example.org");
   expect(f.connect.mock.calls[0]?.slice(0, 3)).toEqual([
     new URL("https://datasheets.example.org/file.pdf"),
     { address: "93.184.215.14", family: 4 },
-    { Accept: "application/pdf", "Accept-Encoding": "identity", "User-Agent": "VERA" },
+    { Accept: "*/*", "Accept-Encoding": "identity", "User-Agent": "VERA" },
   ]);
 });
 describe("public destination boundary", () => {
@@ -55,7 +56,7 @@ describe("public destination boundary", () => {
     "http://metadata.internal/a.pdf",
   ])("rejects %s before DNS or connect", async (url) => {
     const f = fixture();
-    await expect(transferPdf(url, signal(), f)).rejects.toThrow(/public/i);
+    await expect(transferFile(url, signal(), f)).rejects.toThrow(/public/i);
     expect(f.resolve).not.toHaveBeenCalled();
     expect(f.connect).not.toHaveBeenCalled();
   });
@@ -67,7 +68,7 @@ describe("public destination boundary", () => {
         { address: "93.184.215.14", family: 4 },
         { address, family: 4 },
       ]);
-      await expect(transferPdf("https://datasheets.example.org/a.pdf", signal(), f)).rejects.toThrow(
+      await expect(transferFile("https://datasheets.example.org/a.pdf", signal(), f)).rejects.toThrow(
         /public/i,
       );
       expect(f.connect).not.toHaveBeenCalled();
@@ -86,7 +87,9 @@ describe("public destination boundary", () => {
   it("revalidates a redirect before contacting its private destination", async () => {
     const response = reply(302, [], { location: "http://127.0.0.1/admin.pdf" }),
       f = fixture([response]);
-    await expect(transferPdf("https://datasheets.example.org/a.pdf", signal(), f)).rejects.toThrow(/public/i);
+    await expect(transferFile("https://datasheets.example.org/a.pdf", signal(), f)).rejects.toThrow(
+      /public/i,
+    );
     expect(f.connect).toHaveBeenCalledTimes(1);
     expect(response.close).toHaveBeenCalledOnce();
   });
@@ -95,16 +98,13 @@ describe("public destination boundary", () => {
     f.resolve
       .mockResolvedValueOnce([{ address: "93.184.215.14", family: 4 }])
       .mockResolvedValueOnce([{ address: "1.1.1.1", family: 4 }]);
-    expect((await transferPdf("https://datasheets.example.org/a.pdf", signal(), f)).finalUrl).toBe(
+    expect((await transferFile("https://datasheets.example.org/a.pdf", signal(), f)).finalUrl).toBe(
       "https://cdn.example.org/a.pdf",
     );
     expect(f.connect.mock.calls[1]?.[1]).toEqual({ address: "1.1.1.1", family: 4 });
   });
 });
 it.each([
-  ["empty response", reply(200, [])],
-  ["HTML", reply(200, [Buffer.from("<html>login</html>")], { "content-type": "text/html" })],
-  ["forged MIME", reply(200, [Buffer.from("<html>login</html>")])],
   ["encoding", reply(200, [bytes], { "content-type": "application/pdf", "content-encoding": "gzip" })],
   ["oversize header", reply(200, [bytes], { "content-type": "application/pdf", "content-length": "1000" })],
   ["oversize stream", reply(200, [bytes, bytes, bytes])],
@@ -112,38 +112,52 @@ it.each([
   ["HTTP error", reply(403)],
 ] as const)("rejects %s and closes the response", async (_name, response) => {
   await expect(
-    transferPdf("https://datasheets.example.org/a.pdf", signal(), { ...fixture([response]), maxBytes: 64 }),
+    transferFile("https://datasheets.example.org/a.pdf", signal(), { ...fixture([response]), maxBytes: 64 }),
   ).rejects.toThrow();
   expect(response.close).toHaveBeenCalledOnce();
 });
 it("bounds redirect loops", async () => {
   const f = fixture(Array.from({ length: 6 }, () => reply(302, [], { location: "/again.pdf" })));
-  await expect(transferPdf("https://datasheets.example.org/a.pdf", signal(), f)).rejects.toThrow(
+  await expect(transferFile("https://datasheets.example.org/a.pdf", signal(), f)).rejects.toThrow(
     /redirect limit/i,
   );
   expect(f.connect).toHaveBeenCalledTimes(6);
 });
-it("accepts a binary-download MIME only when the body is a PDF", async () => {
+it("preserves a binary-download MIME and its original bytes", async () => {
   const f = fixture([reply(200, [bytes], { "content-type": "application/octet-stream" })]);
-  expect((await transferPdf("https://datasheets.example.org/chip", signal(), f)).data).toEqual(bytes);
+  expect((await transferFile("https://datasheets.example.org/chip", signal(), f)).data).toEqual(bytes);
+});
+it.each([
+  ["application/zip", Buffer.from("PK\x03\x04\x00\xff")],
+  ["application/octet-stream", Buffer.from([0, 255, 1, 2])],
+  ["text/csv; charset=utf-8", Buffer.from("time,voltage\n1,3.3\n")],
+  ["text/plain", Buffer.alloc(0)],
+])("transfers %s without imposing a PDF signature", async (mime, data) => {
+  const result = await transferFile(
+    "https://example.org/file",
+    signal(),
+    fixture([reply(200, [data], { "content-type": mime })]),
+  );
+  expect(result.data).toEqual(data);
+  expect(result.mime).toBe(mime.split(";")[0]);
 });
 it("bounds stalled DNS and honors an already cancelled caller", async () => {
   const connect = vi.fn(),
     resolve = vi.fn(() => new Promise<never>(() => {}));
   await expect(
-    transferPdf("https://datasheets.example.org/a.pdf", signal(), { resolve, connect, deadlineMs: 10 }),
+    transferFile("https://datasheets.example.org/a.pdf", signal(), { resolve, connect, deadlineMs: 10 }),
   ).rejects.toThrow();
   const controller = new AbortController();
   controller.abort();
   await expect(
-    transferPdf("https://datasheets.example.org/a.pdf", controller.signal, { resolve, connect }),
+    transferFile("https://datasheets.example.org/a.pdf", controller.signal, { resolve, connect }),
   ).rejects.toThrow();
   expect(connect).not.toHaveBeenCalled();
 });
 it("bounds a stalled connector or body independently of transport cancellation", async () => {
   const f = fixture();
   await expect(
-    transferPdf("https://datasheets.example.org/a.pdf", signal(), {
+    transferFile("https://datasheets.example.org/a.pdf", signal(), {
       ...f,
       deadlineMs: 10,
       connect: () => new Promise<never>(() => {}),
@@ -152,7 +166,10 @@ it("bounds a stalled connector or body independently of transport cancellation",
   const response = reply();
   response.body = { [Symbol.asyncIterator]: () => ({ next: () => new Promise<never>(() => {}) }) };
   await expect(
-    transferPdf("https://datasheets.example.org/a.pdf", signal(), { ...fixture([response]), deadlineMs: 10 }),
+    transferFile("https://datasheets.example.org/a.pdf", signal(), {
+      ...fixture([response]),
+      deadlineMs: 10,
+    }),
   ).rejects.toThrow();
   expect(response.close).toHaveBeenCalledOnce();
 }, 500);

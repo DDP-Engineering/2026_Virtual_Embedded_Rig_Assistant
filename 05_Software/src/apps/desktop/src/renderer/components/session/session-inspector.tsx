@@ -3,6 +3,7 @@ import { Bot, MessageSquare, Wrench, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
+import { SkillSettings } from "../skills.js";
 import { ContextTab } from "./context-tab.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
@@ -177,9 +178,10 @@ export function SessionInspector({
       <div className="session-inspector-body">
         {mode === "context" ? (
           <>
+            <SkillSettings workbenchId={workbenchId} readOnly />
             <p className="muted">{t("chat.contextInfo")}</p>
             <UsageMeter state={state} />
-            <ContextTab workbenchId={workbenchId} readOnly />
+            <ContextTab workbenchId={workbenchId} readOnly showSkillSettings={false} />
           </>
         ) : (
           <ActivityLog state={state} reasoning={reasoning} updates={updates} />

@@ -7,10 +7,10 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
-  PdfDownloads,
   SessionService,
   SettingsService,
   unavailableWebTools,
+  WebDownloads,
   WorkbenchService,
 } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
@@ -161,7 +161,7 @@ export async function runTurn(
       readOnly: snapshot.readOnly,
       gateway,
       web,
-      downloads: new PdfDownloads(snapshot.folder, {
+      downloads: new WebDownloads(snapshot.folder, {
         access: web,
         pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
       }),

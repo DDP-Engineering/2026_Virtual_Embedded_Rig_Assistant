@@ -50,6 +50,12 @@ Testele care folosesc hook-uri de instrumentare cer un build cu `VERA_TEST=1`;
 scriptul de rulare nu activează singur această opțiune. Politica de selecție a
 verificărilor este în [02_Tools/verification-policy.md](../../02_Tools/verification-policy.md).
 
+Build-ul E2E rescrie `src/apps/desktop/out`, folosit și de development. Închide
+instanța development înaintea acestor teste: modulele încă neîncărcate dintr-un
+proces deschis pot ajunge să folosească fișiere din alt build. După teste,
+pentru verificarea manuală, repornește `npm run dev` cu `VERA_TEST=0`, astfel
+încât procesul și toate modulele sale să provină din același build.
+
 ## Pregătirea resurselor
 
 | Fișier | Ce face | Cum este folosit / rezultat |

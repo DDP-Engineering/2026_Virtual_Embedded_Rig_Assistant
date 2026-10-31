@@ -258,12 +258,15 @@ reusing extraction caches. Embeddings and conversation models are separate setti
 Project metadata lives in `<project>/.vera/`: `workbench.yaml` (configuration),
 `WORKBENCH.md` (pinned engineering context), optional `.veraignore` (project-relative
 ignore patterns), and `skills/<name>/SKILL.md` (project skills). SQLite, locks,
-backups and session artifacts use the same `.vera` folder. User documents and
+downloads and session artifacts use the same `.vera` folder. User documents and
 sources remain relative to the selected project root. Ordinary file tools and
 document indexing exclude `.vera`; skills use the dedicated bounded loader.
 The current layout is authoritative: opening requires `.vera/workbench.yaml`.
 Root-level files are ordinary project content and are never detected or migrated.
 Global application settings, credentials and user skills remain in userData.
+New databases are created directly with the complete current schema. Existing databases
+are validated and opened without migrations or automatic database backups; their data
+and metadata are preserved. Unsupported or incomplete schemas are refused without repair.
 Workbench creation and opening manage only `.vera/`; they do not create or impose
 a `docs/` directory. Document folders belong to the user. The default `docs/**`
 indexing pattern is configurable through `docs.include` and `docs.exclude` in

@@ -389,14 +389,14 @@ it("newer database is refused before lock/recents changes and failed storage swi
   const original = await readFile(file);
   const lock = await readFile(join(second, ".vera/lock"));
   const settings = await readFile(h.paths.settings);
-  await expect(h.service.open(second)).rejects.toMatchObject({ code: "WORKBENCH_TOO_NEW" });
+  await expect(h.service.open(second)).rejects.toMatchObject({ code: "INVALID" });
   expect(await readFile(file)).toEqual(original);
   expect(await readFile(join(second, ".vera/lock"))).toEqual(lock);
   expect(await readFile(h.paths.settings)).toEqual(settings);
   expect(h.service.getDatabase()).toBe(first);
   await h.service.close();
 });
-it("failed database preparation releases the new token and retains the previous database", async () => {
+it("old backup copies do not block opening a workbench and are left untouched", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Board");
   const first = h.service.getDatabase();
@@ -407,11 +407,11 @@ it("failed database preparation releases the new token and retains the previous 
     await readFile(join(h.folder, ".vera/workbench.yaml")),
   );
   await writeFile(join(second, ".vera/backups/vera.db.v0.bak"), "existing recovery data");
-  await expect(h.service.open(second)).rejects.toMatchObject({ code: "CONFLICT" });
-  expect(existsSync(join(second, ".vera/lock"))).toBe(false);
+  await h.service.open(second);
+  expect(existsSync(join(second, ".vera/lock"))).toBe(true);
   expect(await readFile(join(second, ".vera/backups/vera.db.v0.bak"), "utf8")).toBe("existing recovery data");
-  expect(h.service.getDatabase()).toBe(first);
-  expect(first.open).toBe(true);
+  expect(h.service.getDatabase()).not.toBe(first);
+  expect(first.open).toBe(false);
   await h.service.close();
 });
 it("lost token reopen and close preserve every live-owner runtime byte while disposing prior storage", async () => {

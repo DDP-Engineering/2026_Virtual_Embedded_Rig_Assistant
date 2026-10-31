@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { ConfiguredWebProvider } from "./configured-provider.js";
-import { createDownloadPdfExtractor, PdfDownloads } from "./pdf-downloads.js";
+import { createDownloadPdfExtractor, WebDownloads } from "./downloads.js";
 
 const cleanups: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
@@ -26,8 +26,9 @@ async function fixture() {
   const transfer = vi.fn(async (_url: string, _signal: AbortSignal) => ({
     data: bytes,
     finalUrl: "https://cdn.example.org/chip.pdf",
+    mime: "application/pdf",
   }));
-  const store = new PdfDownloads(root, { access, pdf, transfer });
+  const store = new WebDownloads(root, { access, pdf, transfer });
   cleanups.push(() => store.close());
   const context = {
     sessionId: `ses_${"0".repeat(26)}`,
@@ -58,7 +59,7 @@ it("stores exact immutable binary/provenance, reopens offline, and never creates
   expect(content.pages).toEqual(["Page one", "Page two"]);
   expect(await f.store.list()).toEqual([record]);
   expect(existsSync(join(f.root, "docs"))).toBe(false);
-  const second = new PdfDownloads(f.root, { access: f.access, pdf: f.pdf, transfer: f.transfer });
+  const second = new WebDownloads(f.root, { access: f.access, pdf: f.pdf, transfer: f.transfer });
   cleanups.push(() => second.close());
   expect(await second.list()).toEqual([record]);
 });
@@ -75,14 +76,37 @@ it("uses fresh identities for repeated names and refuses overwriting an existing
   expect(await f.store.list()).toHaveLength(2);
   expect(await readFile(join(f.root, first.path))).toEqual(bytes);
 });
-it.each(["../escape.pdf", "C:\\escape.pdf", "CON.pdf", "notes.txt", "a.pdf:stream", ".pdf/../a.pdf"])(
-  "refuses nonportable name %s before transfer",
-  async (filename) => {
-    const f = await fixture();
-    expect(() => f.store.allocate(f.target.sourceUrl, filename)).toThrow();
-    expect(f.transfer).not.toHaveBeenCalled();
-  },
-);
+it.each([
+  ["archive.zip", "application/zip", Buffer.from("PK\x03\x04\x00\xff")],
+  ["firmware.bin", "application/octet-stream", Buffer.from([0, 255, 1, 2])],
+  ["measurements.csv", "text/csv", Buffer.from("time,voltage\n1,3.3\n")],
+  ["notes.txt", "text/plain", Buffer.from("Bench notes")],
+  ["manifest.json", "application/json", Buffer.from('{"board":"ESP32"}')],
+  ["empty.txt", "text/plain", Buffer.alloc(0)],
+])("stores and lists %s exactly without invoking the PDF parser", async (name, mime, data) => {
+  const f = await fixture();
+  f.transfer.mockResolvedValue({ data, mime, finalUrl: `https://cdn.example.org/${name}` });
+  const target = f.store.allocate(`https://example.org/${name}`);
+  const record = await f.store.save(target, f.context, new AbortController().signal);
+  expect(record).toMatchObject({ name, mime, bytes: data.length });
+  expect(record.pages).toBeUndefined();
+  expect(await readFile(join(f.root, record.path))).toEqual(data);
+  expect(await f.store.list()).toEqual([record]);
+  expect(f.pdf).not.toHaveBeenCalled();
+  await expect(f.store.open(record.downloadId)).rejects.toMatchObject({ code: "INVALID" });
+});
+it.each([
+  "../escape.pdf",
+  "C:\\escape.pdf",
+  "CON.pdf",
+  ".vera-download.json",
+  "a.pdf:stream",
+  ".pdf/../a.pdf",
+])("refuses nonportable name %s before transfer", async (filename) => {
+  const f = await fixture();
+  expect(() => f.store.allocate(f.target.sourceUrl, filename)).toThrow();
+  expect(f.transfer).not.toHaveBeenCalled();
+});
 it("detects changed PDF bytes and rejects malformed identifiers or manifest identities", async () => {
   const f = await fixture();
   const record = await f.store.save(f.target, f.context, new AbortController().signal);
@@ -90,7 +114,7 @@ it("detects changed PDF bytes and rejects malformed identifiers or manifest iden
   await expect(f.store.open(record.downloadId)).rejects.toMatchObject({ code: "CONFLICT" });
   await expect(f.store.open("../../outside")).rejects.toMatchObject({ code: "INVALID" });
   await writeFile(
-    join(f.root, ".vera/downloads", record.downloadId, "manifest.json"),
+    join(f.root, ".vera/downloads", record.downloadId, ".vera-download.json"),
     JSON.stringify({ ...record, path: "../outside.pdf" }),
   );
   await expect(f.store.open(record.downloadId)).rejects.toBeDefined();
@@ -137,7 +161,7 @@ it("reports missing files and corrupt manifests through the current structured e
   const record = await f.store.save(f.target, f.context, new AbortController().signal);
   await rm(join(f.root, record.path));
   await expect(f.store.open(record.downloadId)).rejects.toMatchObject({ code: "NOT_FOUND" });
-  await writeFile(join(f.root, ".vera/downloads", record.downloadId, "manifest.json"), "not JSON");
+  await writeFile(join(f.root, ".vera/downloads", record.downloadId, ".vera-download.json"), "not JSON");
   await expect(f.store.open(record.downloadId)).rejects.toMatchObject({ code: "INVALID" });
 });
 it("blocks global-disabled downloads before network and cancels a pending request on revocation", async () => {
@@ -165,20 +189,21 @@ it("validates real PDF pages before saving and rejects corrupt or fake PDF bodie
   const valid = await readFile(
     "tests/fixtures/workbenches/demo-board/docs/vera-demo-01-reference-manual.pdf",
   );
-  const store = new PdfDownloads(f.root, {
+  const store = new WebDownloads(f.root, {
     access: f.access,
     pdf,
-    transfer: async () => ({ data: valid, finalUrl: f.target.sourceUrl }),
+    transfer: async () => ({ data: valid, finalUrl: f.target.sourceUrl, mime: "application/pdf" }),
   });
   cleanups.push(() => store.close());
   const record = await store.save(f.target, f.context, new AbortController().signal);
   expect(record.pages).toBeGreaterThan(1);
+  if (record.pages === undefined) throw Error("PDF page count missing");
   expect((await store.open(record.downloadId)).pages).toHaveLength(record.pages);
   for (const data of [Buffer.from("%PDF-1.7\nnot a document"), Buffer.from("<html>Login</html>")]) {
-    const invalid = new PdfDownloads(f.root, {
+    const invalid = new WebDownloads(f.root, {
       access: f.access,
       pdf,
-      transfer: async () => ({ data, finalUrl: f.target.sourceUrl }),
+      transfer: async () => ({ data, finalUrl: f.target.sourceUrl, mime: "application/pdf" }),
     });
     cleanups.push(() => invalid.close());
     await expect(

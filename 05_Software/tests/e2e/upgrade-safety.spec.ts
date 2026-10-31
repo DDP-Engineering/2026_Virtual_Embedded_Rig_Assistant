@@ -95,7 +95,7 @@ test("newer settings expose defaults and visible read-only controls with unchang
 });
 
 for (const kind of ["yaml", "database"] as const) {
-  test(`newer ${kind} shows created-by-newer-VERA refusal and preserves YAML/DB/WAL/SHM/lock/backups`, async () => {
+  test(`unsupported ${kind} is refused and preserves YAML/DB/WAL/SHM/lock/backups`, async () => {
     const root = await mkdtemp(join(tmpdir(), "vera-wp32-newer-"));
     const bench = join(root, "Board é");
     await mkdir(join(bench, ".vera/backups"), { recursive: true });
@@ -123,9 +123,8 @@ for (const kind of ["yaml", "database"] as const) {
       const page = await app.firstWindow();
       await page.waitForFunction(() => !!(window as unknown as { vera: VeraBridge }).vera);
       await page.locator('[data-action="open-workbench-nav"]').click();
-      await expect(page.locator('[data-i18n="errors.WORKBENCH_TOO_NEW"]')).toHaveText(
-        "This workbench was created by a newer VERA version.",
-      );
+      const code = kind === "database" ? "INVALID" : "WORKBENCH_TOO_NEW";
+      await expect(page.locator(`[data-i18n="errors.${code}"]`)).toBeVisible();
       await expect(page.locator('[data-workbench="active"]')).toHaveCount(0);
       expect(
         await page.evaluate(() =>

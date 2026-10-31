@@ -1546,6 +1546,19 @@ legend {
   margin: 0 0 2rem;
   font-size: 1.8rem;
 }
+.shortcut-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.shortcut-toolbar > .shortcut-search {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.shortcut-toolbar > .shortcut-restore {
+  flex: 0 0 auto;
+}
 .shortcut-search {
   display: flex;
   align-items: center;
@@ -1818,6 +1831,11 @@ legend {
   color: var(--destructive);
   font-weight: 700;
   border-color: var(--destructive);
+}
+.permission-field option {
+  color: var(--foreground);
+  font-weight: 400;
+  background: var(--card);
 }
 .permission-field option[value="bypass"] {
   color: var(--destructive);

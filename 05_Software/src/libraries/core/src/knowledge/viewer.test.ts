@@ -5,15 +5,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
-import { migrations } from "../storage/migrate.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { schemaSql } from "../storage/schema.js";
 import { createDocumentProcessor } from "./processor.js";
 import { DocumentViewer } from "./viewer.js";
 
 it("opens exact page ranges, duplicate heading anchors and unindexed file-tool lines; refuses stale/invalid sources", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-viewer-"));
   const db = new Database(":memory:");
-  for (const m of migrations) db.exec(m.sql);
+  db.exec(schemaSql);
   await mkdir(join(root, "docs"));
   await mkdir(join(root, ".vera"));
   const rows = new DocumentsRepository(db);

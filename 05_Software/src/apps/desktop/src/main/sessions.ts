@@ -2,12 +2,12 @@ import {
   buildSystemPrompt,
   type Clock,
   type EmbeddingPort,
-  type PdfDownloads,
   type PermissionEngine,
   SessionService,
   type SettingsService,
   type SkillCatalog,
   unavailableWebTools,
+  type WebDownloads,
   type WebProvider,
   type WorkbenchService,
   type WorkerPool,
@@ -50,7 +50,7 @@ export class SessionsHost {
       emit: (event: EventEnvelope) => unknown;
       permissions?: PermissionEngine;
       web?: WebProvider;
-      downloads?: (root: string) => PdfDownloads;
+      downloads?: (root: string) => WebDownloads;
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {

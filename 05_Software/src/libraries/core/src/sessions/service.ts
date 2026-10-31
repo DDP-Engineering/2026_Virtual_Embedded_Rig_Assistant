@@ -41,7 +41,7 @@ import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
-import type { PdfDownloads } from "../web/pdf-downloads.js";
+import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
@@ -63,7 +63,7 @@ export interface SessionHost {
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   web?: WebProvider;
-  downloads?: PdfDownloads;
+  downloads?: WebDownloads;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
   runtime?: (host: RuntimeHost) => AgentRuntime;
@@ -259,6 +259,10 @@ export class SessionService {
       this.hub.record(id, { type: "session.updated", title: "", status: "idle", modelRef, mode });
       return this.summary(this.row(id));
     })();
+  }
+  revision(id: string) {
+    this.row(id);
+    return this.hub.revision(id);
   }
   get(id: string) {
     this.row(id);

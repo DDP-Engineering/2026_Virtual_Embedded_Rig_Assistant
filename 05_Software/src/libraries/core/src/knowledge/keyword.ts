@@ -24,9 +24,6 @@ export class KeywordSearch {
   search(query: string, acceptsPath?: (path: string) => boolean): KeywordCandidate[] {
     const terms = [...new Set(query.match(/[\p{L}\p{N}_][\p{L}\p{N}\p{M}_]*/gu) ?? [])];
     if (!terms.length) return [];
-    // Protected legacy workbenches can be read before a writable migration is possible.
-    if (!this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='chunks_fts'").get())
-      return [];
     const select = (table: "chunks_fts" | "chunks_tri", tokens: string[]): Row[] =>
       tokens.length
         ? (

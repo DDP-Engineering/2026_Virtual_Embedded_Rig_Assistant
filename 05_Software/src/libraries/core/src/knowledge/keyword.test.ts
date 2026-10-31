@@ -1,10 +1,9 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import * as core from "../index.js";
 import type { WorkbenchDatabase } from "../storage/db.js";
-import * as initial from "../storage/migrations/0001_initial.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import type { Chunk } from "./chunk.js";
 
@@ -130,18 +129,6 @@ it("reads persisted indexes through a readonly snapshot and survives source repl
     expect(search.search("W2_REG")).toHaveLength(1);
     rows.remove(doc.path);
     expect(search.search("W2_REG")).toEqual([]);
-  } finally {
-    read.close();
-  }
-});
-it("returns empty candidates for an unupgraded readonly schema1 database", async () => {
-  await mkdir(join(root, "legacy"));
-  const path = join(root, "legacy/old.db");
-  const old = await core.openDb(path, { ...options, migrations: [initial] });
-  old.close();
-  const read = await core.openDb(path, { ...options, readOnly: true });
-  try {
-    expect(new core.KeywordSearch(read.db).search("I2C1_CR1")).toEqual([]);
   } finally {
     read.close();
   }

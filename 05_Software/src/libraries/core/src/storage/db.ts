@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { veraError } from "@vera/shared";
 import Database from "better-sqlite3";
-import { catalogue, checkDatabase, migrate, type StorageOptions } from "./migrate.js";
+import { checkDatabase, initializeDatabase, type StorageOptions } from "./schema.js";
 
 export interface WorkbenchDatabase {
   readonly db: Database.Database;
@@ -21,8 +21,6 @@ function ordinary(path: string, directory = false): void {
 function safePaths(path: string): void {
   ordinary(dirname(path), true);
   for (const file of [path, `${path}-wal`, `${path}-shm`, `${path}-journal`]) ordinary(file);
-  const backups = join(dirname(path), "backups");
-  ordinary(backups, true);
 }
 /** SQLite reads a private copy so even WAL recovery/SHM creation cannot alter protected source data. */
 function snapshot(path: string): WorkbenchDatabase {
@@ -58,9 +56,8 @@ function snapshot(path: string): WorkbenchDatabase {
     throw error;
   }
 }
-/** Compatibility precedes lock or writable SQLite activity, including for foreign live owners. */
+/** Current-schema validation precedes lock or writable SQLite activity, including for foreign live owners. */
 export async function inspectDatabase(path: string, options: StorageOptions): Promise<void> {
-  catalogue(options);
   safePaths(path);
   if (!existsSync(path)) return;
   const handle = snapshot(path);
@@ -75,7 +72,7 @@ export async function openDb(path: string, options: StorageOptions): Promise<Wor
   if (options.readOnly) {
     const handle = snapshot(path);
     try {
-      checkDatabase(handle.db, options);
+      if (!checkDatabase(handle.db, options)) throw veraError("INVALID");
       return handle;
     } catch (error) {
       handle.close();
@@ -85,12 +82,12 @@ export async function openDb(path: string, options: StorageOptions): Promise<Wor
   const db = new Database(path, { timeout: 5000 });
   let keeper: Database.Database | undefined;
   try {
-    checkDatabase(db, options);
+    const initialized = checkDatabase(db, options);
     db.pragma("journal_mode=WAL");
     db.pragma("foreign_keys=ON");
     db.pragma("busy_timeout=5000");
     db.pragma("synchronous=NORMAL");
-    await migrate(db, path, options);
+    if (!initialized) initializeDatabase(db, options);
     // SQLite checkpoints on the last writable close. Keep a read-only connection active
     // so ownership loss can dispose the writer first without checkpointing foreign data.
     keeper = new Database(path, { readonly: true, fileMustExist: true, timeout: 5000 });

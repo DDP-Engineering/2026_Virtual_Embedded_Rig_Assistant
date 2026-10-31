@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { workbenchSchema } from "@vera/shared";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
-import { migrations } from "../storage/migrate.js";
+import { schemaSql } from "../storage/schema.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { Ingester } from "./ingest.js";
 import { createDocumentProcessor } from "./processor.js";
@@ -16,7 +16,7 @@ it("re-embeds unchanged source on descriptor change and atomically invalidates c
     calls = 0;
   try {
     db.pragma("foreign_keys=ON");
-    for (const m of migrations) db.exec(m.sql);
+    db.exec(schemaSql);
     await mkdir(join(root, "docs"));
     await mkdir(join(root, ".vera"));
     await writeFile(join(root, "docs/a.txt"), "I2C control register.");
@@ -85,7 +85,7 @@ it("aborts embedding before publication and keeps no indexed/vector/extraction c
   let ingest: Ingester | undefined;
   try {
     db.pragma("foreign_keys=ON");
-    for (const m of migrations) db.exec(m.sql);
+    db.exec(schemaSql);
     await mkdir(join(root, "docs"));
     await mkdir(join(root, ".vera"));
     await writeFile(join(root, "docs/a.txt"), "Content pending embedding.");

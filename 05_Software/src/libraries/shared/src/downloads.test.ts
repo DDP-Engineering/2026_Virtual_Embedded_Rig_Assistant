@@ -1,11 +1,17 @@
 // REQ-DATA-fd1933a1, REQ-SEC-1a37ade3, REQ-FUNC-4c3f4f0c
 import { expect, it } from "vitest";
-import { downloadApprovalSchema, pdfDownloadSchema } from "./downloads.js";
+import { downloadApprovalSchema, downloadFilenameSchema, webDownloadSchema } from "./downloads.js";
 import { sessionEventSchema } from "./events.js";
 import { channels } from "./ipc.js";
 
 const downloadId = "f203834e-881c-40da-940d-432276c10d04";
 const workbenchId = `wb_${"0".repeat(26)}`;
+it("accepts multiple file types while retaining portable file names", () => {
+  for (const name of ["chip.pdf", "firmware.bin", "notes.txt", "archive.zip", "manifest.json"])
+    expect(downloadFilenameSchema.safeParse(name).success).toBe(true);
+  for (const name of ["../archive.zip", "C:\\notes.txt", "CON.bin", ".vera-download.json"])
+    expect(downloadFilenameSchema.safeParse(name).success).toBe(false);
+});
 it("validates scoped UUID requests and excludes arbitrary paths and launch arguments", () => {
   expect(channels["downloads.open"].request.safeParse({ workbenchId, downloadId }).success).toBe(true);
   for (const request of [
@@ -31,7 +37,7 @@ it("requires a matching immutable managed path and bounded PDF metadata", () => 
     sha256: "a".repeat(64),
     createdAt: "2026-10-30T12:00:00.000Z",
   };
-  expect(pdfDownloadSchema.safeParse(record).success).toBe(true);
+  expect(webDownloadSchema.safeParse(record).success).toBe(true);
   for (const patch of [
     { path: "docs/chip.pdf" },
     { name: "../chip.pdf" },
@@ -41,7 +47,7 @@ it("requires a matching immutable managed path and bounded PDF metadata", () => 
     { sha256: "unknown" },
     { data: "base64-not-allowed" },
   ])
-    expect(pdfDownloadSchema.safeParse({ ...record, ...patch }).success).toBe(false);
+    expect(webDownloadSchema.safeParse({ ...record, ...patch }).success).toBe(false);
 });
 it("requires source and budget in PDF approvals and forbids misleading file diffs", () => {
   const approval = {

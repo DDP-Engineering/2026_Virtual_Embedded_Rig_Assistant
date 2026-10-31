@@ -527,9 +527,9 @@
     "search_docs": "Search the workbench's indexed documents.",
     "read_doc": "Read extracted document pages, sections or text lines.",
     "load_skill": "Load instructions and supporting text from an enabled skill.",
-    "web_search": "Search the public web through Exa. Sends the search query; no account or API key required. Free-service limits apply.",
-    "web_read": "Read public web pages and accessible documents through Exa. Sends the requested URL.",
-    "web_download": "Download a public PDF into .vera/downloads after approval, then open it locally. Downloads are not automatically indexed."
+    "web_search": "Search the public web using the provider selected in Settings → Web access. Access requirements and service limits depend on the provider.",
+    "web_read": "Retrieve text from public web pages and supported documents using the selected web provider. No local file is saved.",
+    "web_download": "Download a public file (PDF, ZIP, CSV, text, images or other formats) to .vera/downloads, subject to session permissions. Preview PDFs in VERA or locate other files in Explorer. Downloads are not automatically indexed."
   },
   "projects": {
     "new": "New Workbench",
@@ -547,7 +547,7 @@
     "documents": "Documents & RAG",
     "agent": "Agent",
     "instructions": "Instructions",
-    "tools": "Tools & skills",
+    "tools": "Tools",
     "embeddings": "Embeddings",
     "name": "Name",
     "description": "Description",
@@ -573,7 +573,8 @@
     "partialSave": "Project settings were saved, but instructions could not be saved. Retry Save to finish; closing keeps the saved settings.",
     "loadingInstructions": "Loading workbench instructions…",
     "skillsIndependent": "Skill changes are saved in the Skills manager independently of the project form.",
-    "back": "Back to workbenches"
+    "back": "Back to workbenches",
+    "skills": "Skills"
   },
   "overview": {
     "title": "Workbench overview",
@@ -628,7 +629,9 @@
     "local": "In the message input: Enter sends, Shift+Enter starts a new line. Escape closes search or asks to stop an active response. These contextual controls remain unchanged."
   },
   "downloads": {
-    "title": "Downloaded PDFs",
+    "revealNamed": "Show in Explorer: {{name}}",
+    "reveal": "Show in Explorer",
+    "title": "Downloaded files",
     "open": "Open PDF",
     "openNamed": "Open PDF: {{name}}",
     "source": "Source: {{host}}",

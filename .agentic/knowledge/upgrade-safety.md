@@ -28,15 +28,15 @@ real updater installation, durable state and recovery before the next turn.
 |---|---|---|
 | settings.json | 0/1/2/3 directly to4 | exact exclusive bak-n before write; UUID/preferences/extensions retained; failure preserves source |
 | credentials.json | schema1; no migration | synthetic encrypted API/OAuth values, extensions, redaction and read without rewrite; newer refusal before crypto/write |
-| vera.db | 1 initial, 2 keyword, 3 embeddings | frozen empty0/schema1/schema2 SQL; each pre-step committed backup, integrity/FK checks and verbatim rows |
+| vera.db | current format3 only; no migrations or automatic backups | initialization, unchanged current rows, integrity/FK checks and interrupted-session recovery |
 | .vera/workbench.yaml | format1; no migration | unchanged supported YAML; format2 refusal before runtime/recents writes |
 
 - Interrupted running/awaiting_approval sessions become idle, old approvals aborted
   and unusable, unanswered calls receive interrupted results and terminal events.
 - Hash recovery marks after as applied, removes before rows and marks other as conflict;
   original workbench file hashes/metadata remain unchanged. Repeated recovery is idempotent.
-- Newer settings expose read-only defaults/banner. Newer YAML/DB shows the localized
-  created-by-newer-VERA refusal; private DB/WAL inspection preserves source DB/WAL/SHM,
+- Newer settings expose read-only defaults/banner. Newer YAML shows the localized
+  created-by-newer-VERA refusal; unsupported databases return INVALID; private DB/WAL inspection preserves source DB/WAL/SHM,
   locks, backups and file inventory/metadata, excluding access time.
 - Connected instrumented installed upgrade acceptance has its own scope. Release signing,
   clean/offline Windows, CRT self-containment and separate Linux-kernel proof retain their
@@ -46,8 +46,8 @@ real updater installation, durable state and recovery before the next turn.
 
 | Change | Start | Focused proof |
 |---|---|---|
-| migration inventory | tests/fixtures/settings and tests/fixtures/upgrade | settings/service, credentials, storage/upgrade-safety tests |
-| interrupted recovery | frozen interrupted.json | storage/upgrade-safety.test.ts plus sessions/service.test.ts |
+| migration inventory | tests/fixtures/settings and tests/fixtures/upgrade | settings/service, credentials, storage/db and session-recovery tests |
+| interrupted recovery | frozen interrupted.json | storage/session-recovery.test.ts plus sessions/service.test.ts |
 | installed persistence | probe-upgrade/upgrade-fixture.mjs | actual NSIS/AppImage reports |
 | future-data UI | tests/e2e/upgrade-safety.spec.ts | native Electron and recursive original-file comparison |
 
@@ -73,7 +73,7 @@ flowchart LR
 ## Files
 
 Paths relative to05_Software: tests/fixtures/settings/version-{0,1,2,3}.json;
-tests/fixtures/upgrade/{database-v0,database-v1,database-v2}.sql, interrupted.json,
-credentials-{v1,newer}.json, workbench-{v1,newer}.yaml; core storage/upgrade-safety.test.ts,
+tests/fixtures/upgrade/interrupted.json,
+credentials-{v1,newer}.json, workbench-{v1,newer}.yaml; core storage/session-recovery.test.ts,
 settings/service.test.ts, workbench/service.test.ts; desktop main/credentials.test.ts;
 tests/e2e/upgrade-safety.spec.ts; scripts/{probe-upgrade,upgrade-fixture}.mjs.

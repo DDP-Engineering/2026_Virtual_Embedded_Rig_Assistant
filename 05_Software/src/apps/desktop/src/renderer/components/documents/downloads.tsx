@@ -1,25 +1,27 @@
 // REQ-UX-b93197aa
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type PdfDownload, pdfDownloadResultSchema, veraError } from "@vera/shared";
-import { useEffect } from "react";
+import { veraError, type WebDownload, webDownloadResultSchema } from "@vera/shared";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { useDocumentViewer } from "./viewer-context.js";
 import "./downloads.css";
 
-export function downloadFromResult(text: string): PdfDownload | undefined {
+export function downloadFromResult(text: string): WebDownload | undefined {
   try {
-    const parsed = pdfDownloadResultSchema.safeParse(JSON.parse(text));
+    const parsed = webDownloadResultSchema.safeParse(JSON.parse(text));
     return parsed.success ? parsed.data.download : undefined;
   } catch {
     return undefined;
   }
 }
 
-function DownloadItem({ download }: { download: PdfDownload }) {
+function DownloadItem({ download }: { download: WebDownload }) {
   const { t, i18n } = useTranslation(),
     open = useDocumentViewer();
+  const [error, setError] = useState<unknown>();
+  const isPdf = download.mime === "application/pdf";
   return (
     <div className="download-card" data-download={download.downloadId}>
       <div>
@@ -31,12 +33,23 @@ function DownloadItem({ download }: { download: PdfDownload }) {
       </div>
       <button
         type="button"
-        disabled={!open}
-        aria-label={t("downloads.openNamed", { name: download.name })}
-        onClick={() => open?.({ downloadId: download.downloadId })}
+        disabled={isPdf && !open}
+        aria-label={
+          isPdf
+            ? t("downloads.openNamed", { name: download.name })
+            : t("downloads.revealNamed", { name: download.name })
+        }
+        onClick={() => {
+          if (isPdf) open?.({ downloadId: download.downloadId });
+          else {
+            setError(undefined);
+            void api.invoke("app.revealPath", { path: download.path }).catch(setError);
+          }
+        }}
       >
-        {t("downloads.open")}
+        {isPdf ? t("downloads.open") : t("downloads.reveal")}
       </button>
+      {error !== undefined && <ErrorMessage error={error} />}
     </div>
   );
 }

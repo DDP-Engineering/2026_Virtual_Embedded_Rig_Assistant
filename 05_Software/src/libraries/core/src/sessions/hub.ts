@@ -20,6 +20,11 @@ export class SessionHub {
   ) {
     this.events = new EventsRepository(db);
   }
+  revision(id: string): { seq: number } {
+    return this.db.prepare("SELECT COALESCE(MAX(seq),0) AS seq FROM events WHERE session_id=?").get(id) as {
+      seq: number;
+    };
+  }
   get(id: string) {
     const rows = this.events.list(id);
     return {
