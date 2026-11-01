@@ -1,7 +1,7 @@
 # ADR-0014: Confirm the reference agent runtime
 
 Date: 2026-10-11
-Status: Accepted
+Status: Accepted; implemented
 
 ## Context
 
@@ -18,3 +18,17 @@ The common matrix measures pi's native behavior: executionMode=sequential on a w
 VERA owns a small gateway loop and its approval/context seams. Session engine and production prepared-change/write-queue ownership remain WP13/WP16/WP17. Pi would require gateway event adaptation, system/tools baseline projection, stop-reason mapping, batch scheduling changes and interrupted pair repair. Its steering/compaction hooks may inform WP34/WP35 but do not change M1 selection.
 
 Tool parameters remain zod4, converted to pure JSON Schema then Type.Unsafe; original zod parsing precedes execution. The default counter is a labeled conservative UTF8-byte estimate with explicit framing, injectable tokenizer support, current output reserve and mandatory safety margin. Full messages remain unchanged when request views shorten completed results. Irreducible requests end a recoverable limit without gateway dispatch.
+
+## Implementation status (2026-11-01)
+
+- Implemented as decided: `ReferenceRuntime` (`src/libraries/core/src/agent/runtime.ts:68`) implements
+  `AgentRuntime` (`agent/types.ts:57`) and is exported from `core/src/index.ts:6`; `ContextPolicy`
+  (`agent/context.ts:74`) uses the conservative UTF-8 counter (`context.ts:23-31`); limits end as
+  `CONTEXT_LIMIT` (`runtime.ts:244`).
+- pi-agent-core 1.1.0 is an exact-pinned dev dependency (`core/package.json:52`), imported only by
+  `agent/pi-spike.test-support.ts:3-4` and not exported.
+- Tool parameters: zod to JSON Schema to `Type.Unsafe` (`agent/tool.ts:11`), zod parsing before
+  execution (`tools/registry.ts:129-135`).
+- Since then, WP-34/WP-35 steering and compaction were built on the reference runtime, not on pi hooks
+  (`runtime.ts:72-84,115,152`, `agent/compaction.ts`). The linked `06_SoftwareDocu/agent-runtime-spike.md`
+  still exists.

@@ -1,8 +1,16 @@
 # M3 — Knowledge
 
 PURPOSE: workbench documents become searchable and citable — PDFs included — and skills extend the agent.
+STATE: 2026-11-01 — implemented; WP-22…WP-29 and the M3 epic are closed in Gitea. This file is now a
+historical record of the plan: the WP text below is unchanged, and
+[Implementation notes](#implementation-notes-2026-11-01) record what the code does. In "Start from"
+lines, read `09_Others/benchpilot-reference/src/apps/…` as `…/apps/…` and the reference's
+`src/libraries/shared/` as `packages/shared/`.
 DONE-WHEN: demo PDFs, Markdown and logs index in the background; hybrid `search_docs` meets the recall
 threshold of WP-24; citations open the viewer at the cited page; skills load from workbench and user folders.
+As built, logs are not indexed: only PDF, Markdown, HTML, `.txt`, `.csv`, `.tsv` and Office files
+are documents (`05_Software/src/libraries/core/src/knowledge/kinds.ts:8-22`); `.log` files stay
+reachable through `read` and `grep`.
 
 ## WP-22 Ingest pipeline
 
@@ -133,3 +141,60 @@ Done when:
 - [ ] Unit: discovery, clash resolution, validation errors, disabled skills.
 - [ ] Integration: a replay script loads a skill and its extra file.
 - [ ] e2e: a skill created in the UI appears in the prompt index of the next turn.
+
+## Implementation notes (2026-11-01)
+
+Checked against the working tree on `master` (33e72b8 plus uncommitted changes) by reading code and
+tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/libraries/core/src/`,
+`kn/` = `core/knowledge/`, `shared/` = `src/libraries/shared/src/`, `main/` and `renderer/` =
+`src/apps/desktop/src/main/`, `…/renderer/`.
+
+- WP-22: implemented with deviation: on desktop, selection, hashing, extraction, chunking and
+  embedding run in a separate Electron utility process, "VERA Indexer", while main keeps the SQLite
+  writes (`main/index.ts:90-98`, `main/indexer-process.ts`); files that are not documents get no row
+  instead of `unsupported` (`kn/selection.ts:43,117-118`). chokidar, 1 s debounce, SHA-256, one queue
+  per workbench and `docs.reindex` as planned (`kn/ingest.ts`); the integration items are vitest files
+  (`kn/ingest.test.ts:139,155,229`) plus `tests/e2e/ingest.spec.ts`.
+- WP-23: implemented with deviation: only `.txt`, `.csv` and `.tsv` are text documents, so logs, code,
+  JSON and YAML are not indexed (`kn/kinds.ts:8-12`); production chunking takes the workbench
+  `embeddings` settings — 1 400-character windows with 200-character overlap
+  (`shared/workbench.ts:39-43`, `kn/chunk.ts:123-124`) — and the 60-line/10-line rule applies only
+  without settings. pdf.js in a worker, the heading tree, HTML, the extract cache, `needs_ocr` and
+  `scripts/make-demo-pdfs.mjs` as planned (`kn/pdf-worker.ts`, `kn/processor.ts:40-55`).
+- WP-24: implemented as planned: 28 questions, 14 English and 14 Romanian
+  (`tests/fixtures/retrieval/demo-board.yaml`), `scripts/compare-embeddings.mjs`; ADR-0015 picks
+  `Xenova/bge-small-en-v1.5` q8 with hybrid recall@5 ≥ 0.85 overall, ≥ 0.95 EN, ≥ 0.75 RO. Its
+  measurement file was deleted in commit 891a699.
+- WP-25: implemented with deviation: no migration — `chunks_fts` and `chunks_tri` are part of the single
+  schema v3 (`core/storage/schema.ts:48-65`, see WP-07). Tokenizers and bm25 plus trigram search as
+  planned (`kn/keyword.ts:27-61`, `kn/keyword.test.ts:42`).
+- WP-26: implemented with deviation: batches of 32, the vector cache, RRF with k = 60, 300-character
+  snippets, `search_docs`/`read_doc` and CLI `vera index`/`vera search` as planned
+  (`kn/embedding-worker.ts:47-49`, `kn/search.ts:161-186`, `core/tools/documents.ts`); but
+  `eval:retrieval` chunks its own corpus without the workbench settings and includes
+  `logs/boot-0412.log` and `board.txt`, which the product does not index
+  (`scripts/retrieval/corpus.mjs:9-31`), so the recall gate does not measure the shipped chunking
+  (ADR-0015 says so); no passing result is committed.
+- WP-27: implemented as planned: five kinds — page, page range, heading, lines, artifact
+  (`shared/refs.ts:49-54`); range checks sit in core (`kn/search.ts:420-466`,
+  `core/agent/citations.ts:46-55`), chips per kind in `renderer/components/session/markdown.tsx:41-85`.
+  A citation is valid only when a tool result of the session issued it (`core/agent/citations.ts:43`).
+- WP-28: implemented as planned (`renderer/components/documents/pdf-viewer.tsx`,
+  `viewer-context.tsx:330-392`, `docs-tab.tsx`, `tests/e2e/citations.spec.ts:135-191`).
+- WP-29: implemented with deviation: workbench skills are read from `.vera/skills/`, not
+  `<workbench>/skills/` (`core/skills/catalog.ts:56`), following the amended 02 §5. User skills, clash
+  rule, `skills.disabled`, `load_skill` and the Skills settings as planned (`core/tools/load-skill.ts`,
+  `renderer/components/skills.tsx`, `tests/e2e/skills.spec.ts:13`).
+
+Not in the plan, implemented in this area:
+- Office documents: DOCX/ODT, PPTX/ODP (slides cited as pages) and XLSX/ODS are indexed and cited
+  (`kn/office.ts`, `kn/kinds.ts:18-21`, `tests/e2e/office-documents.spec.ts`).
+- The separate VERA Indexer process, with status and restart in the Docs tab
+  (`main/indexer-host.ts`, `tests/e2e/indexer.spec.ts`).
+- Chunks kept under the BGE 512-token limit with the bundled tokenizer (`kn/token-budget.ts`);
+  per-workbench document roots, chunk and retrieval settings; an `index.volume` warning for large
+  document sets (`kn/ingest.ts:312-324`, `renderer/components/documents/volume-warning.tsx`).
+- Open a document in its default application (`renderer/components/documents/open-externally.tsx`);
+  `read_doc` reads long sections in parts; a recent-sources list in the Source panel.
+- PDFs fetched by `web_download` open in the viewer from `.vera/downloads/` but are not indexed
+  (`tests/e2e/pdf-download.spec.ts`).

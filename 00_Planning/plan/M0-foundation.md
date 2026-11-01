@@ -2,6 +2,11 @@
 
 PURPOSE: a secure, themed, translated Electron app on the planned source layout, and proof that the
 native parts VERA depends on work inside a packaged build.
+STATE: 2026-11-01 — implemented; WP-01…WP-05 and the M0 epic are closed in Gitea. This file is now a
+historical record of the plan: the WP text below is unchanged, and
+[Implementation notes](#implementation-notes-2026-11-01) record what the code does. In "Start from"
+lines, read `09_Others/benchpilot-reference/src/apps/…` as `…/apps/…` and the reference's
+`src/libraries/shared/` as `packages/shared/`.
 DONE-WHEN: the launch e2e passes on Windows and Ubuntu with the security baseline of 01 §7; theme,
 text size and language switch and persist; the packaging spike WP-05 has filed its ADR.
 
@@ -156,3 +161,48 @@ Done when:
 
 NOTES:
 - WP-05 gates WP-07 (database driver) and, through its measurements, WP-24 (model choice).
+
+## Implementation notes (2026-11-01)
+
+Checked against the working tree on `master` (33e72b8 plus uncommitted changes) by reading code and
+tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/libraries/core/src/`,
+`shared/` = `src/libraries/shared/src/`, `main/` and `renderer/` = `src/apps/desktop/src/main/`,
+`…/renderer/`.
+
+- WP-01: implemented with deviation: shadcn/ui is only scaffolded — its one component,
+  `renderer/components/ui/card.tsx`, is unused, and styling is hand-written CSS on Tailwind v4
+  (`renderer/styles.css:1`). The five e2e checks are in `tests/e2e/shell.spec.ts:47-179`.
+- WP-02: implemented with deviation: there is no home screen — the `app.info` version shows in
+  Settings › About (`tests/e2e/shell.spec.ts:52-54`); `app.info` adds `testBuild` and `signing`
+  (`shared/ipc.ts:90-99`); a second IPC handler, `vera:subscription`, carries subscriptions
+  (`main/index.ts:191`). Router, 50 ms coalescing and mock mode as planned (`main/ipc-router.ts:73-101`,
+  `main/events.ts:188-231`, `tests/e2e/mock.spec.ts`).
+- WP-03: implemented with deviation: settings are at `schemaVersion` 4 with v0–v3 migrations
+  (`core/settings/service.ts:51-94`); `textScale` has a sixth step, 0.75 (`shared/settings.ts:36-43`);
+  `providers` defaults to `{ openai: {}, custom: [] }`. Portable mode, atomic save with the Windows
+  retry, read-only newer file and the seven-file redacting logger as planned
+  (`main/data-locations.ts:14-31`, `main/file-access.ts:33-50`, `main/logger.ts:9-25,66`).
+- WP-04: implemented with deviation: six text sizes, plus chat and code font sizes in px that ignore
+  the scale (`renderer/hooks/use-preferences.ts:39-45`), so not "every size in `rem`"; navigation is
+  React state, not a memory-history router (`renderer/App.tsx:29-31`); one settings page with eleven
+  sections and vertical navigation (`renderer/components/settings.tsx:26-36`); the native e2e checks
+  German only, Romanian only in mock mode (`tests/e2e/mock.spec.ts:78-83`).
+- WP-05: partly implemented: the probes, the `node:sqlite` plan B (`main/packaging/sqlite-probe.ts`),
+  verified model delivery by pinned URL and SHA-256 (`src/models/model-manifest.json`,
+  `scripts/prepare-model.mjs:25-67`), probe exclusion from release builds
+  (`tests/tooling/build-mode.test.ts:62-77`) and ADR-0013 exist; missing: the offline Windows run (a
+  connected-host run was accepted, ADR-0013 "Evidence and acceptance") and the per-OS measurements,
+  whose file was deleted with the evidence folder in commit 891a699 — only sizes remain in ADR-0013.
+
+Not in the plan, implemented in this area:
+- Custom window chrome: hidden title bar with a themed overlay, File/Edit/View/Help menus over a
+  `window.menu` channel, F10 to the menu (`main/window-chrome.ts`, `shared/ipc.ts:106-114`).
+- Extra hardening: `will-frame-navigate` and webview attachment blocked, the preload refuses to run
+  unsandboxed, HTTP/2 off (`main/security.ts:59-84`, `src/apps/desktop/src/preload/index.ts:4`).
+- Remappable, persisted keyboard shortcuts (`shared/keyboard-shortcuts.ts`,
+  `tests/e2e/keyboard-shortcuts.spec.ts`); versioned window-state and layout records that turn
+  read-only when newer.
+- Extra settings: `webAccess`, `keyboardShortcuts`, `chatFontSize`, `codeFontSize`, `sessionOrder`,
+  `suppressBypassWarning` (`shared/settings.ts:30-53`).
+- An app-local Microsoft VC++ runtime for Windows (`src/windows_runtime/`,
+  `scripts/prepare-windows-runtime.mjs`).

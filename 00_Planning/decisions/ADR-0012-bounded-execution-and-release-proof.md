@@ -1,7 +1,7 @@
 # ADR-0012: Bounded execution, exact approvals and release proof
 
 Date: 2026-10-09
-Status: Accepted — planning contract; implementation is verified by the named work packages
+Status: Accepted; implemented in code; release-artifact proof partly open (see Implementation status)
 
 ## Context
 A single turn can fill the model context with tool results before historical compaction is useful.
@@ -49,3 +49,24 @@ Electron artifact.
 - The existing 38 work packages remain; their scopes and acceptance criteria carry these contracts.
 - Detailed contracts live in [03-agent-and-tools](../architecture/03-agent-and-tools.md),
   [02-workbench](../architecture/02-workbench.md) and [08-quality](../architecture/08-quality.md).
+
+## Implementation status (2026-11-01)
+- Context: `ContextPolicy` (`src/libraries/core/src/agent/context.ts:74`) budgets every request with
+  a conservative UTF-8 counter (`context.ts:23-31`). An irreducible request ends as `CONTEXT_LIMIT`
+  without dispatch (`agent/runtime.ts:244-248`). Historical compaction exists (`agent/compaction.ts`).
+- Writes: one `WriteQueue` per workbench serves sessions and the app's own saves
+  (`core/src/workbench/write-queue.ts`, `src/apps/desktop/src/main/sessions.ts:97`). Approvals store
+  `request_sha256`, bind to the turn and are consumed once (`core/src/agent/approvals.ts:180-209`).
+  A `pending` change row precedes the rename (`core/src/tools/changes.ts:175-200`). Restart resolves
+  it by hash only (`changes.ts:236-277`), and `running`/`awaiting_approval` sessions are recovered
+  (`core/src/sessions/service.ts:1054`).
+- Deviation: in `bypass` mode every approval, protected paths included, is granted by mode
+  (`approvals.ts:100,152-161,208`; see ADR-0007).
+- Search: `grep` runs in a terminable worker with a host deadline
+  (`core/src/workers/node-host.ts:22-132`).
+- Packages: `npm run smoke:package` tests the release artifact itself, bound by SHA-256
+  (`05_Software/scripts/smoke-package.mjs`, `scripts/smoke-report.mjs:30`). Ubuntu egress uses
+  `strace` (`scripts/smoke-egress.mjs`); procedure in `06_SoftwareDocu/release-package-smoke.md`.
+- Open: the Windows Sandbox run with networking disabled is pending manual execution
+  (`scripts/smoke-report.mjs:55-61`). Clean Windows/VC++ self-containment is deferred to the final
+  release, and the M5 repeat on 1.0 artifacts has not been done.

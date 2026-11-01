@@ -1,103 +1,90 @@
-# decode_register specification
+# decode_register — specification
 
-Status: proposed. ID: CAP-02. Kind: internal `read` tool.
-Read [shared contracts](../../contracts.md) and [implementation plan](PLAN.md).
+PURPOSE: CAP-02, an internal `read` tool that decodes a captured register value against a local
+definition file, field by field, without precision loss.
+DONE-WHEN: the acceptance cases of §5 pass on Windows x64 and Linux x64. Shared rules:
+[contracts](../../contracts.md); work: [PLAN](PLAN.md).
+STATUS: rewritten 2026-11-01; nothing implemented yet.
 
-## 1. Purpose and boundary
+## 1. Boundary
 
-Decode an already captured unsigned register value against a local, explicitly identified device
-definition. This is numeric interpretation of supplied data. It does not read or write a device,
-interpret firmware binaries, execute expressions or infer a hardware fault from one flag.
+The tool interprets a value the user or a log already supplied. It never reads or writes a device,
+evaluates expressions or infers a fault from one flag. Reading a live register is a plugin command
+(OpenOCD or GDB, `device-read`); its output can then be decoded here. Importing CMSIS-SVD files
+into this format is a later extension.
 
-MVP uses one JSON definition per register. CMSIS-SVD ingestion and byte-dump endianness are later
-extensions. The request names the expected device, revision and register; a mismatch is an error.
+## 2. Definition file
 
-## 2. Definition format
-
-`RegisterDefinitionSchema` in `src/libraries/shared/src/tools/decode-register.ts` validates this shape:
+One JSON file per device, holding several registers:
 
 ```json
 {
   "schemaVersion": 1,
   "device": { "id": "VERA-DEMO-01", "revision": "A" },
-  "name": "RESET_CAUSE",
-  "widthBits": 8,
-  "sourceRefs": ["docs/registers.md#L1-L8"],
-  "fields": [
-    { "name": "POR", "lsb": 0, "width": 1,
-      "enumeratedValues": [{ "value": "0", "label": "not_set" }, { "value": "1", "label": "set" }] },
-    { "name": "WATCHDOG", "lsb": 1, "width": 1,
-      "enumeratedValues": [{ "value": "0", "label": "not_set" }, { "value": "1", "label": "set" }] }
+  "sourceRefs": ["sources/reference-manual.md#L7-L7"],
+  "registers": [
+    { "name": "I2C1_CR1", "widthBits": 32, "address": "0x40005400",
+      "fields": [
+        { "name": "PE", "lsb": 0, "width": 1 },
+        { "name": "TXIE", "lsb": 1, "width": 1 },
+        { "name": "RXIE", "lsb": 2, "width": 1 },
+        { "name": "ERRIE", "lsb": 7, "width": 1 }
+      ] }
   ]
 }
 ```
 
-Objects are strict. widthBits is 8, 16, 32 or 64; at most 64 fields; names/identities 1–80 characters;
-lsb is a non-negative integer, width a positive integer, and lsb+width must fit the register.
-Field names are unique and masks must not overlap. Empty fields are allowed and leave all bits unmapped.
-Optional descriptions are at most 256 characters; enumeratedValues contains at most 16 entries per
-field, labels up to 80 characters, with distinct normalized unsigned values fitting the field width.
-Definition sourceRefs has 1–8 entries, each at most 256 characters, using workbench-local line refs.
-No remote source, alias field, inherited definition or executable formula is accepted.
+- `widthBits` is 8, 16, 32 or 64; at most 512 registers and 64 fields per register; names unique;
+  `lsb + width ≤ widthBits`; field masks never overlap.
+- Optional per field: `description` (≤ 256 characters) and `enum` (≤ 16 `{value, label}` entries
+  with distinct values that fit the field).
+- `sourceRefs`: 1…8 workbench line references; per-register `sourceRefs` are optional.
+- UTF-8, at most 1 MiB. Duplicate JSON keys are refused: parse with the `yaml` package and
+  `uniqueKeys: true` (JSON is valid YAML), as `core/src/skills/catalog.ts` already does for skill
+  frontmatter.
 
-The definition file is UTF-8, at most 256 KiB, with an optional BOM. Invalid JSON, duplicate JSON
-object keys, an unsupported version or an invalid definition produces INVALID with a stable reason.
-The parser detects duplicate keys instead of accepting JSON.parse's last-key-wins behaviour.
-
-## 3. Tool contract
+## 3. Arguments and result
 
 ```ts
 type DecodeRegisterArgs = {
-  definitionPath: string; value: string;
-  deviceId: string; deviceRevision: string; register: string;
+  definitionPath: string;                  // workbench-relative, ≤ 256 characters
+  register: string;
+  value: string;                           // unsigned decimal or 0x/0X hexadecimal, ≤ 80 characters
+  device?: { id: string; revision?: string };   // when given, must match the definition
+  expectedSha256?: string;
 };
-type DecodedValue = {
-  register: string; widthBits: 8 | 16 | 32 | 64;
-  valueHex: string; valueDec: string;
-  fields: { name: string; lsb: number; width: number;
-            valueHex: string; valueDec: string; enumLabel: string | null }[];
-  unmappedMaskHex: string; unmappedSetBitsHex: string;
-};
-type DecodedRegisterResult = DecodedValue & {
+type DecodeRegisterResult = {
   device: { id: string; revision: string };
-  definition: { path: string; sha256: string; ref: string };
-  declaredSourceRefs: string[];
+  register: string; widthBits: 8 | 16 | 32 | 64; address?: string;
+  valueHex: string; valueDec: string;
+  fields: { name: string; lsb: number; width: number; valueHex: string; valueDec: string;
+            label: string | null }[];
+  unmappedMaskHex: string; unmappedSetBitsHex: string;
+  source: { path: string; sha256: string; ref: string };
+  sourceRefs: string[];
 };
 ```
 
-Export `DecodeRegisterArgsSchema`, `RegisterDefinitionSchema`, `DecodedRegisterResultSchema` and
-inferred types, including `DecodedValue`. Input paths are at most 256 characters. Value accepts
-unsigned decimal or `0x`/`0X` hexadecimal with outer whitespace trimmed;
-limit is 80 characters. Negative numbers, signs, floats, arithmetic, partial parses and overflow
-are rejected. All arithmetic uses BigInt; no conversion of full register values to Number.
-Return decimal strings and lowercase hex, padded to the relevant width in nibbles. BigInt never
-crosses IPC or JSON. Fields are returned by increasing lsb; enumLabel=null means no declared match.
+- All arithmetic uses BigInt; numbers cross JSON as strings. Hex is lowercase and padded to the
+  register width. Signs, fractions, expressions and values wider than the register are refused.
+- Fields are returned by increasing `lsb`. `label: null` means no declared enum value matches.
+  Unmapped set bits are reported, never called reserved or faulty.
+- `source.ref` covers the whole definition file. Schemas live in `shared/src/tools/decode-register.ts`.
 
-For the sample definition and value `0x83`: valueDec=`131`, POR=`1`, WATCHDOG=`1`, both labels `set`,
-unmappedMaskHex=`0xfc` and unmappedSetBitsHex=`0x80`. Unmapped bits are reported; they are not
-assumed reserved or erroneous. Descriptions are read from the definition when needed, not echoed
-for every field in the result.
+## 4. Execution and errors
 
-## 4. Provenance, execution and errors
-
-- File guard and bounded worker host are those of CAP-01/WP-11. Full definition loading, validation,
-  duplicate-key detection and decoding run in the worker, with the 10,000-ms absolute deadline.
-- Result definition.ref covers its physical lines and sha256 hashes the exact original bytes.
-  Declared source refs must have valid syntax and confined, non-ignored paths. Citation existence
-  and line bounds are checked by the ordinary resolver when cited. The tool does not certify that
-  a manufacturer's document agrees with a user-authored mapping; the skill must inspect the source.
-- Requested device/revision/register must exactly match the definition. No automatic fallback to
-  another device, filename guess or silent field truncation occurs.
-- Missing definition -> NOT_FOUND; path refusal -> DENIED; invalid value/definition -> INVALID;
-  requested-target mismatch or observed source change -> CONFLICT. Timeout is INVALID with reason
-  `deadline_exceeded`; abort uses the runtime's aborted outcome. Files are unchanged.
-- Results must fit the global 32,000-character limit; test worst-case metadata, including JSON escaping.
-  An oversized mandatory result is an explicit INVALID error with reason `result_too_large`,
-  never a partly decoded register or invalid JSON.
+Runs in the main process (contracts §4): the file read is capped at 1 MiB and decoding is constant
+time. Missing file → `NOT_FOUND`; path refused → `DENIED`; invalid value or definition, duplicate
+keys, unknown register → `INVALID`; `device` mismatch, changed file or `expectedSha256` mismatch →
+`CONFLICT`.
 
 ## 5. Acceptance
 
-The sample decode, all four register widths, bits 31/63, uint64 max, decimal/hex equivalence,
-normalized enum duplicates, overlapping/out-of-range fields, incorrect target, unknown set bits,
-bad UTF-8/JSON/duplicate keys, size/deadline/abort, confinement and JSON round-trip have tests.
-Replay and CLI return the same values and reference; the next worker task succeeds after termination.
+- `definitions/registers/vera-demo-01.json`, `I2C1_CR1`, value `0x81`: `valueDec` `129`; PE 1, TXIE 0,
+  RXIE 0, ERRIE 1; `unmappedMaskHex` `0xffffff78`; `unmappedSetBitsHex` `0x00000000`.
+- Decimal and hexadecimal inputs give identical results; bit 63 and `0xffffffffffffffff` survive a JSON
+  round trip.
+- Overlapping fields, a field beyond the width, duplicate keys, duplicate enum values and a wrong
+  `device` are refused.
+- Agent and CLI return identical results; a replay answer cites the definition and the reference
+  manual line.

@@ -1,7 +1,7 @@
 # ADR-0003: Agent loop — start from the reference loop
 
 Date: 2026-10-09
-Status: Proposed — the runtime spike WP-10 confirms it or switches to pi-agent-core
+Status: Accepted — confirmed by ADR-0014 (WP-10); implemented
 
 ## Context
 A session turn needs streaming, parallel read tools and sequential write tools, a wait for the
@@ -35,3 +35,14 @@ same on pi-agent-core; if pi-agent-core wins, a new ADR records the switch behin
 - Budgeting and current-turn result reduction are required in M1; steering and historical
   compaction remain M5 additions. The spike measures these requirements rather than assuming the
   reused loop already meets them.
+
+## Implementation status (2026-11-01)
+- The reference loop is production code: `ReferenceRuntime` implements `AgentRuntime`
+  (`src/libraries/core/src/agent/runtime.ts:68`, `agent/types.ts:57`), exported from
+  `core/src/index.ts:6`. Approvals go through `agent/approvals.ts`; `ContextPolicy`
+  (`agent/context.ts:74`) runs before every model call.
+- pi-agent-core is not used in production: it is a dev dependency (`core/package.json:52`) imported
+  only by the spike harness `agent/pi-spike.test-support.ts:3-4`.
+- The M5 items are already on this loop: steering (`runtime.ts:115,152`, `steering.test.ts`) and
+  historical compaction (`agent/compaction.ts`, `runtime.ts:72-84`).
+- The loop is 433 lines rather than about 200, because of steering, compaction and recovery.

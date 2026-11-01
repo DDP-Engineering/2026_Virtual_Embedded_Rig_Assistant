@@ -2,6 +2,11 @@
 
 PURPOSE: the finish that makes VERA usable every day — long sessions, interaction during a turn,
 export, fictional verification fixtures, accessibility and reviewed translations.
+STATE: 2026-11-01 — implemented; WP-34…WP-38 and the M5 epic are closed in Gitea (WP-37 is still
+titled "Demo workbench, sample skills, onboarding" there). This file is now a historical record of
+the plan: the WP text below is unchanged, and [Implementation notes](#implementation-notes-2026-11-01)
+record what the code does. In "Start from" lines, read `09_Others/benchpilot-reference/src/apps/…`
+as `…/apps/…`.
 DONE-WHEN: long sessions survive context limits; messages can be sent during a turn; sessions export;
 the fictional workbench remains a verification fixture; `ro` and `de` are reviewed; the clean-machine run of WP-33
 passes on the 1.0 build.
@@ -82,3 +87,38 @@ Scope:
 Done when:
 - [ ] The review findings are fixed or recorded.
 - [ ] `check:i18n` passes and the reviewed catalogs are in place.
+
+## Implementation notes (2026-11-01)
+
+Checked against the working tree on `master` (33e72b8 plus uncommitted changes) by reading code and
+tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/libraries/core/src/`,
+`shared/` = `src/libraries/shared/src/`, `renderer/` = `src/apps/desktop/src/renderer/`.
+
+- WP-34: implemented as planned: summary above 80 % of the budget, one attempt per request, budget
+  rechecked (`core/agent/compaction.ts:92,125-129`, `core/agent/runtime.ts:218-249`); the meter shows the
+  compaction status (`renderer/components/session/usage-meter.tsx:10-13`). The tests
+  (`core/agent/compaction.test.ts`) carry a "runtime execution deferred" header.
+- WP-35: implemented as planned (`renderer/components/session/composer.tsx:61`, `shared/events.ts:83,88`,
+  `core/agent/steering.test.ts:58-113`, `tests/e2e/chat-ui.spec.ts:71-89`); it replaced WP-13's `BUSY`
+  for sends during a turn.
+- WP-36: implemented with deviation: Markdown and JSON export as planned (`core/sessions/export.ts`,
+  `core/sessions/export.test.ts:32,100`); search exists only as the `session.search` channel
+  (`core/sessions/service.ts:205`) — the sidebar search box is never rendered because `App.tsx` passes
+  no `searchChanged` (`renderer/components/session/session-list.tsx:315`), and the e2e asserts its
+  absence and searches over IPC (`tests/e2e/session-search.spec.ts:60-66`).
+- WP-37: implemented as planned in this file's version: no demo-opening IPC
+  (`shared/workbench-entry.test.ts:5-10`), no demo or guided prompts on Welcome
+  (`renderer/components/session/workspace.test.ts:356-394`), fixtures kept out of packages
+  (`tests/packaging/packaging.test.ts:263-269`). The demo workbench, sample skills and onboarding first
+  built for WP-37 (commit d579d77, 2026-10-13) were removed on 2026-10-26 (commit 1d016b0).
+- WP-38: partly implemented: the shortcuts of 06 §7 and `check:i18n` exist
+  (`shared/keyboard-shortcuts.ts:17-25`, `scripts/check-i18n.mjs`); missing: a review beyond source
+  reading — the record (`.agentic/specs/REQ-UX-52f83eb7.md`) has no keyboard, assistive-technology or
+  screenshot pass — and the human `ro`/`de` review, which the same record says is still required.
+
+Not in the plan, implemented in this area:
+- Session archive and manual ordering beside export (`shared/ipc.ts:269-315`,
+  `tests/e2e/sidebar-order.spec.ts`); search inside the open transcript.
+- Remappable, persisted keyboard shortcuts and a confirmation before Escape stops a turn
+  (`tests/e2e/keyboard-shortcuts.spec.ts`, `renderer/components/session/workspace.tsx:103-115`).
+- An Activity dialog with per-prompt token and context statistics (`tests/e2e/prompt-usage.spec.ts`).

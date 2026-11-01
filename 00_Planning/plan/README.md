@@ -2,7 +2,21 @@
 
 PURPOSE: the order in which VERA 1.0 is built — milestones, work packages, dependencies and risks —
 and the decisions taken with the user that shape it. Specs: `../architecture/`; decisions: `../decisions/`.
-STATE: 2026-10-09 — planned; nothing implemented yet.
+STATE: planned 2026-10-09; implemented — WP-01…WP-38 and the epics M0–M5 are closed in Gitea. This file and the milestone files are now the historical record of the plan. What the code
+actually does is in `../architecture/`; per-WP outcomes are in the "Implementation notes" section of
+each milestone file. New work is planned in `../plugins/plan.md` and `../capabilities/`.
+
+## 0. Outcome (2026-11-01)
+
+| Milestone | Outcome |
+|---|---|
+| M0 | Implemented. shadcn/ui only scaffolded (hand-written CSS); six text sizes plus separate chat/code sizes; custom window chrome; the WP-05 measurement record was later deleted (ADR-0013) |
+| M1 | Implemented. A send during a running turn is queued as steering instead of refused with BUSY; the prompt size is not shown in the UI; the workbench database has no migrations (schema v3 fixed) |
+| M2 | Implemented, plus a fourth permission mode `bypass`. `.vera/` is refused outright outside bypass, so "protected paths ask in auto-edit" only applies to `web_download` |
+| M3 | Implemented. Office documents are indexed; `.log` files are not; default chunking uses 1 400-character windows; indexing runs in the VERA Indexer utility process; the retrieval eval does not use the product's chunking |
+| M4 | Implemented. No size budget (removed 2026-11-01, ADR-0017); About shows no "unsigned build" label; database migrations not implemented; clean offline Windows, release-artifact upgrade and Windows pktmon evidence still pending |
+| M5 | Implemented, except: session search has no UI; the demo workbench and onboarding were removed on 2026-10-26 (WP-37 now means fictional verification fixtures); human review of `ro`/`de` translations is not recorded |
+| Beyond the plan | web search/read (Exa, Tavily, Brave) and approved `web_download`; reasoning-level picker; session archive and manual ordering; customisable keyboard shortcuts; CLI `vera index` and `vera search` |
 
 ## 1. Decisions taken with the user (2026-10-09)
 
@@ -17,7 +31,7 @@ STATE: 2026-10-09 — planned; nothing implemented yet.
 |---|---|---|
 | **M0 Foundation** | [M0-foundation.md](M0-foundation.md) | the launch e2e passes on Windows and Ubuntu with the security baseline (01 §7); theme, text size and language switch and persist; the packaging spike WP-05 has filed its ADR |
 | **M1 Read-only agent** | [M1-read-only-agent.md](M1-read-only-agent.md) | the agent reads and cites files; every request fits its context budget, including a long first turn; grep timeout/abort leaves IPC responsive; sessions survive restart; `vera run` prints the same events headless; real-provider smoke is manual |
-| **M2 Edits, artifacts, ChatGPT** | [M2-edits-artifacts-chatgpt.md](M2-edits-artifacts-chatgpt.md) | approval is bound to one exact change and used once; sessions share one write queue per workbench; restart recovers interrupted approvals and writes; protected paths ask even in `auto-edit`; panels and ChatGPT sign-in work |
+| **M2 Edits, artifacts, ChatGPT** | [M2-edits-artifacts-chatgpt.md](M2-edits-artifacts-chatgpt.md) | approval is bound to one exact change and used once; sessions share one write queue per workbench; restart recovers interrupted approvals and writes; protected paths ask even in `auto-edit` (as built: `.vera/` is refused outside `bypass`, so only `web_download` asks in `auto-edit`); panels and ChatGPT sign-in work |
 | **M3 Knowledge** | [M3-knowledge.md](M3-knowledge.md) | demo PDFs, Markdown and logs index in the background; hybrid `search_docs` meets the recall threshold; citations open the viewer at the cited page; skills load from workbench and user folders |
 | **M4 Delivery** | [M4-delivery.md](M4-delivery.md) | release artifacts install and index offline on both systems; a scripted loopback endpoint drives the normal provider path; the egress check finds no unexpected connection; vN → vN+1 preserves data |
 | **M5 Version 1.0** | [M5-version-1.md](M5-version-1.md) | historical compaction extends the M1 context budget; messages can be sent during a turn; sessions export; fictional fixtures support verification; translations reviewed; final 1.0 release smoke passes |
@@ -62,7 +76,7 @@ STATE: 2026-10-09 — planned; nothing implemented yet.
 | WP-34 | Advanced context compaction | M5 | 10, 13, 14 |
 | WP-35 | Messages during a running turn | M5 | 13, 14 |
 | WP-36 | Session export and search | M5 | 13 |
-| WP-37 | Demo workbench, sample skills, onboarding | M5 | 29 |
+| WP-37 | Demo workbench, sample skills, onboarding (delivered as fictional verification fixtures; demo and onboarding removed 2026-10-26) | M5 | 29 |
 | WP-38 | Accessibility and translation pass | M5 | all UI packages |
 
 ## 4. Dependencies, M0–M2
@@ -104,10 +118,10 @@ in parallel from WP-01 and must finish before the database (WP-07).
 | R-01 | pi-ai changes its API | exact pin; one wrapper module; replay tests | WP-09 |
 | R-02 | A native module (better-sqlite3, onnxruntime-node) fails in a packaged build | spike in M0; plan B `node:sqlite`; WASM ONNX backend as last resort | WP-05 |
 | R-03 | The ChatGPT sign-in flow changes on OpenAI's side | isolated module; API key and local endpoints keep working | WP-21 |
-| R-04 | Local models call tools poorly | the connection test flags tool support; UI warning | WP-09 |
+| R-04 | Local models call tools poorly | the connection test flags tool support; UI warning (not implemented: `supportsTools` is recorded but unused) | WP-09 |
 | R-05 | Datasheet PDFs extract badly (multi-column pages, tables) | page-level citations; `read_doc` page ranges; evaluation on demo PDFs; tables and OCR after 1.0 | WP-23, WP-24 |
 | R-06 | Prompt injection through documents | the defences of 03 §10 | every tool package |
-| R-07 | The package exceeds its size budget | size check; smaller English model as fallback | WP-30 |
+| R-07 | The package exceeds its size budget | retired 2026-11-01: no size budget (ADR-0017); the package report still lists the largest contributors | WP-30 |
 | R-08 | Agent-written code drifts from the architecture | laws of 01 §1, the import boundaries in `npm run lint`, review of every work package | all |
 | R-09 | A first turn or model switch exceeds context before historical compaction | budget every request from M1, including current-turn tool results; reserve output; explicit limit outcome | WP-09, WP-10, WP-13, WP-34 |
 | R-10 | Concurrent or interrupted edits apply stale or repeated approvals | approval bound to the change's digest and used once; one write queue per workbench; hash check before writing; `pending` changes resolved on restart | WP-16, WP-17, WP-32 |
@@ -116,12 +130,14 @@ in parallel from WP-01 and must finish before the database (WP-07).
 
 ## 6. After 1.0
 
+Seams marked "planned" below were never built; the others exist in the code.
+
 | Direction | Seam already in 1.0 |
 |---|---|
-| Wrapper tools: declared external programs (STM32 and ESP32 flashers, `sigrok-cli`, scripts) with typed parameters, fixed argument templates, policy, timeout, success criteria and process-tree termination | `<workbench>/tools/`; an operation descriptor with input schema, policy, timeout and resources; ADR-0007; the spawn pattern of `09_Others/benchpilot-reference/src/apps/server/src/tshark.ts` (argument array, no shell, timeout, output cap) |
-| Serial terminal and logging | `serialport`; a `devices` module in core |
+| Analysis capabilities: `parse_log`, `decode_register`, firmware comparison and test planning skills — planned in [../capabilities/README.md](../capabilities/README.md) (CAP-01…04, epic #75) | the tool registry, the grep worker host, the skill catalog |
+| Wrapper tools and serial: superseded by plugins, planned in [../plugins/plan.md](../plugins/plan.md) (PLG-01…18) | skills, approvals bound to `requestSha256`, permission modes; the spawn pattern of `09_Others/benchpilot-reference/apps/server/src/tshark.ts` (argument array, no shell, timeout, output cap) |
 | Camera snapshots and live view | `getUserMedia`; the permission handler of 01 §7 |
-| Voice: local speech-to-text, optional text-to-speech | `SpeechToText` port; the ONNX runtime shipped for embeddings (06 §9) |
+| Voice: local speech-to-text, optional text-to-speech | `SpeechToText` port (planned; not in `core/src/ports.ts`); the ONNX runtime shipped for embeddings (06 §9) |
 | Test catalog with deterministic evaluators | test definitions with machine-checked criteria; VERA's artifacts and references as evidence |
 | Anthropic and Azure OpenAI providers | ADR-0002 |
 | `apply_patch` for Codex-trained models; image input | the tool registry |

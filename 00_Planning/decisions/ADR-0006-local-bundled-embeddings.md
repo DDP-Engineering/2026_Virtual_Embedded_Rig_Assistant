@@ -1,7 +1,7 @@
 # ADR-0006: Local embeddings with a bundled model
 
 Date: 2026-10-09
-Status: Accepted — the model itself is chosen by WP-24
+Status: Accepted; implemented — model selected by ADR-0015 (WP-24)
 
 ## Context
 Semantic search over datasheets and notes needs embeddings. The ChatGPT subscription offers no
@@ -27,3 +27,20 @@ hybrid: exact identifiers come from the keyword index, so retrieval does not dep
 - First indexing of large PDF sets takes CPU time; it runs in the background with progress.
 - Changing the model re-embeds every workbench on open.
 - The same ONNX runtime can later serve a local speech-to-text model for voice.
+
+## Implementation status (2026-11-01)
+- Implemented as decided: transformers 4.3.1 on onnxruntime-node 1.30.0
+  (`src/apps/desktop/package.json:9,18`), CPU, in a worker thread
+  (`src/libraries/core/src/knowledge/embedding.ts:123`, `knowledge/embedding-worker.ts:26`).
+- Remote model loading and filesystem/browser caches are off (`embedding-worker.ts:13-17`). Model
+  files ship from `src/models` to `resources/models` through `extraResources`
+  (`src/apps/desktop/electron-builder.yml`, `scripts/package.mjs:149-153`,
+  `src/apps/desktop/src/main/index.ts:84-89`).
+- Model: `Xenova/bge-small-en-v1.5` q8 (ADR-0015), the only value the workbench schema accepts
+  (`src/libraries/shared/src/workbench.ts:11`).
+- Hybrid search fuses keyword and semantic ranks with RRF (`knowledge/search.ts:161-170,264`).
+  Ingest re-embeds when the current model's vectors are missing (`knowledge/ingest.ts:438-445`).
+- On desktop, the embedding worker runs inside the "VERA Indexer" utility process, not in main
+  (see ADR-0009).
+- L5 (no run-time downloads) is superseded by ADR-0017 for plugins only; the embedding model is
+  still bundled. Open: speech-to-text on the same runtime.

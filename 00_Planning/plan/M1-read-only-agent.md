@@ -2,6 +2,11 @@
 
 PURPOSE: open a workbench, configure a model, and get answers grounded in workbench files — the first
 end-to-end slice of VERA.
+STATE: 2026-11-01 — implemented; WP-06…WP-15 and the M1 epic are closed in Gitea. This file is now a
+historical record of the plan: the WP text below is unchanged, and
+[Implementation notes](#implementation-notes-2026-11-01) record what the code does. In "Start from"
+lines, read `09_Others/benchpilot-reference/src/apps/…` as `…/apps/…` and the reference's
+`src/libraries/shared/` as `packages/shared/`.
 DONE-WHEN: in the demo workbench — with the replay script `read-then-answer` in tests, and with a real
 OpenAI key or a local endpoint by hand — the agent greps and reads files and answers with a valid
 citation; the session reloads after a restart; `vera run` prints the same events headless.
@@ -307,3 +312,68 @@ Done when:
 
 NOTES:
 - WP-10 gates WP-13: if the spike switches to pi-agent-core, only `runtime.ts` and the replay adapter change.
+
+## Implementation notes (2026-11-01)
+
+Checked against the working tree on `master` (33e72b8 plus uncommitted changes) by reading code and
+tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/libraries/core/src/`,
+`shared/` = `src/libraries/shared/src/`, `main/` and `renderer/` = `src/apps/desktop/src/main/`,
+`…/renderer/`, `cli/` = `src/apps/cli/src/`.
+
+- WP-06: implemented with deviation: the workbench files live in `.vera/` (`.vera/workbench.yaml`,
+  `.vera/WORKBENCH.md`, `.vera/skills/`, `.vera/.veraignore`); create makes no root `docs/` or
+  `skills/` and refuses only when `.vera/workbench.yaml` exists (`core/workbench/service.ts:393-411,474-507`);
+  the recent list is not capped at ten (`core/workbench/service.ts:536-548`); the demo fixture uses
+  the `.vera/` layout and adds `board.txt`, `sources/*.md` and three PDFs. Done-when tests:
+  `core/workbench/service.test.ts:272,606,627,782`, `tests/e2e/workbench.spec.ts:32,97`.
+- WP-07: implemented with deviation: there are no migrations — one schema (version 3, FTS5 and
+  embeddings tables included) is created in an empty database only; there are no checksums and no
+  `.vera/backups/vera.db.v<n>.bak`, and any other `schema_version`, older or newer, is refused with
+  `INVALID`, not `WORKBENCH_TOO_NEW` (`core/storage/schema.ts:4-5,122-141`; `core/storage/db.test.ts:86,107,109`).
+  The runner and migrations 0001–0003 were deleted in commit 33e72b8, so the checksum and backup
+  Done-when items no longer hold. Pragmas, better-sqlite3 and the repositories as planned
+  (`core/storage/db.ts:86-89`, `core/storage/repositories.test.ts`).
+- WP-08: implemented as planned (`main/credentials.ts:60-65,168-227`, `main/provider-settings.ts:14-19`,
+  `tests/e2e/providers.spec.ts:114`).
+- WP-09: implemented as planned: pi-ai pinned at 1.1.0, custom providers through
+  `openAICompletionsApi` (`core/llm/providers.ts:31-66`), replay only through `VERA_REPLAY_DIR` in test
+  builds (`main/index.ts:719`), loopback error-mapping tests (`core/llm/gateway.test.ts:342,367`);
+  `smoke:live` exists (`scripts/smoke-live.mjs`), its manual run is not provable from code.
+- WP-10: implemented as planned: `ReferenceRuntime` (`core/agent/runtime.ts:68`) and
+  `core/agent/context.ts`, with one replay matrix run on both runtimes
+  (`core/agent/runtime-matrix.test-support.ts`, `core/agent/pi-spike.test.ts`); ADR-0014 confirms
+  ADR-0003; comparison and event mapping in `06_SoftwareDocu/agent-runtime-spike.md`.
+- WP-11: implemented as planned (`core/workbench/path-guard.ts`, `core/workers/node-host.ts`,
+  `core/tools/grep-worker.ts`, `tests/e2e/file-tools.spec.ts:15`, `tests/integration/worker-hosts.test.ts`);
+  the later `bypass` mode widens the guard (see M2).
+- WP-12: implemented with deviation: rule 2 reads "`search_docs` first, web tools only when the
+  documents do not answer" and a `bypass` paragraph was added (`core/agent/prompt.ts:31,76-79`); the
+  prompt size is computed (`prompt.ts:80`) but shown nowhere in the UI.
+- WP-13: implemented with deviation: a second `send` during a running turn is queued as steering
+  (`message.queued`, WP-35) instead of failing with `BUSY`, which remains for approval waits and
+  stopping (`core/sessions/service.ts:573-597`); the integration items are vitest files in
+  `core/sessions/service.test.ts`, not in `tests/integration/`.
+- WP-14: implemented with deviation: no footer — usage and context budget sit in a Context dialog
+  opened from a gauge in the composer (`renderer/components/session/session-inspector.tsx:179-185`,
+  `workspace.tsx:197`); status badges are screen-reader-only (`session-list.tsx:172`); reasoning shows
+  once at the top of the transcript (`transcript.tsx:59-63`). e2e: `tests/e2e/chat-ui.spec.ts:97-174`.
+- WP-15: implemented as planned (`cli/args.ts:102-188`, `tests/integration/cli.test.ts:368,494,544,579,674`);
+  `--format pretty` prints one `<id> <type> <json>` line per event.
+
+Not in the plan, implemented in this area:
+- Web tools `web_search` and `web_read` over Exa (anonymous MCP at `mcp.exa.ai` by default, or an
+  API key), Tavily and Brave, configured in Settings › Web access; web access is on by default
+  (`core/web/`, `core/tools/web.ts`, `shared/web-access.ts:18`, `tests/e2e/web-search.spec.ts`).
+  `web_download` is noted in M2.
+- LM Studio model discovery with per-model profiles (context, tools, reasoning, temperature) and an
+  Ollama preset; providers split into Subscriptions and API connections
+  (`main/provider-discovery.ts`, `renderer/components/lmstudio-editor.tsx`, `tests/e2e/lmstudio.spec.ts`).
+- Per-session reasoning-effort picker from live provider capabilities
+  (`renderer/components/session/reasoning-picker.tsx`, `tests/e2e/session-reasoning.spec.ts`).
+- Session archive, manual sidebar ordering, reuse of an empty session, transcript scroll rail and
+  search, an Activity dialog with per-prompt token statistics, and a confirmation before Escape stops
+  a turn (`main/session-order.ts`, `tests/e2e/prompt-usage.spec.ts`, `sidebar-order.spec.ts`).
+- Workbench extras: `workbench.inspect`, `scanDocs`, `previewDocs`; pin, move and reveal on recent
+  entries; per-workbench `embeddings` and `retrieval` sections; tool checkboxes with descriptions
+  (`shared/ipc.ts:390-431`, `shared/workbench.ts:9-24`, `renderer/components/workbench-tools.tsx`).
+- CLI `vera index` and `vera search` (`cli/args.ts:11-12`).

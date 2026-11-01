@@ -1,7 +1,7 @@
 # ADR-0013: Native packaging and verified local model delivery
 
 Date: 2026-10-11
-Status: Accepted for WP-05 — offline Linux and current connected Windows ZIP passed; clean/offline Windows and VC++ independence required before final release WP-30/WP-33
+Status: Accepted; implemented, amended in part by ADR-0017 (size check removed); app-local VC++ runtime now packaged; clean/offline Windows release proof still open (see Implementation status)
 
 ## Context
 
@@ -72,3 +72,25 @@ DLLs, which are absent from this ZIP. Current-host success cannot establish thei
 Verified app-local redistribution is required if the clean supported OS lacks them. Packaging
 and this spike change no host or guest security policies. Final signing and full distribution
 smoke remain part of the release work packages.
+
+## Implementation status (2026-11-01)
+- Versions as decided: better-sqlite3 13.0.3, transformers 4.3.1, onnxruntime-node 1.30.0 (CPU),
+  electron-builder 26.17.0, Electron 44.7.0. `npmRebuild: false`, `asarUnpack` for SQLite, ORT and
+  `@img`, models through `extraResources` (`src/apps/desktop/electron-builder.yml`); install scripts
+  are denied (`05_Software/package.json`, `allowScripts`).
+- Staging copies the locked runtime closure and drops foreign-platform and CUDA/TensorRT binaries
+  (`scripts/package.mjs:164-210`, `scripts/package-checks.mjs:73-99`); DirectML companions stay.
+  Probe markers are checked in emitted and packaged code (`package.mjs:21,79-83`). The manifest pins
+  URL, SHA-256, bytes and revision (`src/models/model-manifest.json`).
+- Changed by ADR-0017: the 250 MB Windows size check was removed from `scripts/package.mjs` and
+  `scripts/probe-upgrade.mjs` on 2026-11-01. "Windows compressed size is enforced at build" no longer
+  holds (`tests/packaging/packaging.test.ts:213`: "measures package contributions without a size budget").
+- Changed since the spike: a pinned app-local VC++ x64 runtime (`msvcp140*`, `vcruntime140*`) is now
+  packaged. It is verified by hash and Microsoft signature (`src/windows_runtime/windows-runtime-manifest.json`,
+  `scripts/prepare-windows-runtime.mjs`) and copied beside ORT and into resources
+  (`scripts/package.mjs:154-162,215-224`). A clean-machine proof that this is sufficient is still missing.
+- Targets now include NSIS and deb besides zip and AppImage (`electron-builder.yml`).
+- Open: clean/offline Windows run of the final artifact (WP-30/WP-33), pending manual Sandbox
+  execution (`scripts/smoke-report.mjs:55-61`); code signing.
+- Link removed: `06_SoftwareDocu/wp05-packaging-measurements.md` and `evidence/wp05/` were deleted in
+  commit 891a699 (2026-10-14); they remain in Git history (`891a699^`).

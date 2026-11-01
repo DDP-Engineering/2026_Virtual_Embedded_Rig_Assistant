@@ -1,5 +1,8 @@
 # 02 — Workbench, skills and runtime data
 
+Describes the implementation as of 2026-11-01 (`05_Software`, branch master). Anything not in the
+code is marked "Not implemented as of 2026-11-01" or "future".
+
 PURPOSE: define the workbench folder format, the skills format, the `.vera/` project metadata and runtime folder and the
 SQLite data model that every core module shares.
 DONE-WHEN (for the work packages that implement it): a workbench created by VERA validates against
@@ -16,14 +19,20 @@ my-bench/
     .veraignore           # optional, project-relative gitignore patterns (§6)
     skills/<name>/SKILL.md # project skills (§5)
     .gitignore            # tracks configuration/skills, ignores runtime state
-    lock, vera.db, artifacts/, cache/, backups/
-  docs/                   # project documents; indexed per §4
+    lock, vera.db, artifacts/, downloads/, cache/   # runtime state (§8)
+  docs/                   # default docs.include target (§4); not created by VERA
   notes/, firmware/, …    # project content
 ```
 
 The selected project folder remains the root for document patterns and tool paths.
-Opening requires `.vera/workbench.yaml`; root files are never detected or migrated.
-Global application settings, credentials and user skills remain in userData.
+Opening requires `.vera/workbench.yaml`; root files are never detected or migrated. `.vera/`,
+`.vera/skills/` and the files above must be ordinary entries; a symlink or junction there refuses
+create and open (DENIED).
+Create refuses a folder that already has `.vera/workbench.yaml` (CONFLICT), then writes
+`.vera/.gitignore` (only if missing), `workbench.yaml`, `skills/` and `WORKBENCH.md` (an existing one
+is kept). A UNC/network path opens with the warning `NETWORK_SHARE_UNSUPPORTED`.
+Global application settings (`settings.json`), credentials (`credentials.json`) and user skills
+(`skills/`) remain in userData.
 
 ## 2. `.vera/workbench.yaml`
 
@@ -31,36 +40,56 @@ Global application settings, credentials and user skills remain in userData.
 format: 1                       # format version; VERA refuses a newer one (L10)
 id: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C   # ULID with prefix, written on create, stable across moves
 name: MC-200 motor controller
-description: Bring-up and validation of the MC-200 board
+description: Bring-up and validation of the MC-200 board   # optional
+embeddings:
+  model: Xenova/bge-small-en-v1.5   # the only accepted value
+  chunkSize: 1400               # characters, 200–1400
+  overlap: 200                  # characters, 0–600, smaller than chunkSize
 docs:
   include: ["docs/**"]          # globs, relative to the workbench root
   exclude: []
+retrieval:
+  results: 8                    # 1–20; search_docs default k
+  mode: hybrid                  # hybrid | keyword | semantic; search_docs default mode
 skills:
   disabled: []                  # skill names hidden from this workbench (§5)
 tools:
-  disabled: []                  # internal tool names not offered to the model
+  disabled: []                  # built-in tool names not offered to the model
 agent:
-  permission_mode: ask          # read-only | ask | auto-edit; the default for new sessions
+  permission_mode: ask          # read-only | ask | auto-edit | bypass; the default for new sessions
   model: null                   # optional "<providerId>/<modelId>"; else the app default
 ```
 
+Every block except `format`, `id` and `name` is optional and takes the defaults shown.
+
 | Field | Rule |
 |---|---|
-| `format` | integer; `1` in VERA 1.0 |
-| `id` | `wb_` + ULID; never changes |
-| `name` | 1–80 characters |
-| `docs.include`, `docs.exclude` | glob arrays; `exclude` wins; `.vera/**` and ignore rules always excluded |
-| `skills.disabled`, `tools.disabled` | names; unknown names produce a warning, not an error |
-| `agent.permission_mode` | enum above |
-| `agent.model` | `null` or a reference the provider catalog resolves |
+| `format` | integer literal `1`; an integer above 1 refuses the open with `WORKBENCH_TOO_NEW` ("created by a newer VERA") |
+| `id` | `wb_` + ULID (26 Crockford characters, first `0`–`7`); generated on create, never changes |
+| `name` | 1–80 characters after trimming |
+| `description` | optional string |
+| `embeddings` | strict object: unknown keys are an error, not a warning; chunking is in `05-knowledge-rag.md` |
+| `docs.include`, `docs.exclude` | glob arrays; selection rules in §4 |
+| `retrieval` | used when `search_docs` passes no `k` or `mode` |
+| `skills.disabled`, `tools.disabled` | non-empty names; unknown names produce an `UNKNOWN_NAME` warning, not an error; tools are the 14 built-ins of `shared/src/tools.ts` |
+| `agent.permission_mode` | enum above; default `ask` |
+| `agent.model` | `null` or `"<providerId>/<modelId>"` (syntax only); a session's own model wins, then this, then the app default |
 
-Unknown keys are preserved on save and reported as warnings, so a newer minor format does not lose data.
+Parsing (`parseConfig`, `core/src/workbench/service.ts`): YAML with unique keys; values must be
+JSON-compatible. A YAML error reports `YAML_INVALID` with line and column, a schema error
+`CONFIG_INVALID` with path and line. Unknown keys at the top level and inside `docs`, `retrieval`,
+`skills`, `tools` and `agent` are preserved on save and reported as `UNKNOWN_KEY` warnings, so a newer
+minor format does not lose data. Saves merge a strict patch, write the file atomically through the
+workbench write queue and do not keep YAML comments or formatting. Web tools are also withheld from
+the model when the global web-access settings do not allow them, independently of `tools.disabled`.
 
 ## 3. `.vera/WORKBENCH.md`
 
 - Included verbatim in the system prompt inside `<workbench>` tags (`03` §3).
-- Soft limit 16 KB: above it the UI warns and the prompt carries the first 16 KB with a truncation note.
-- New workbenches get this template (English; the user edits it):
+- Soft limit 16 KiB (16384 UTF-8 bytes): above it the editor warns and the prompt carries the first
+  16 KiB followed by `[.vera/WORKBENCH.md truncated at 16 KiB (UTF-8).]`; the full text stays saved.
+- New workbenches get this template (English; the user edits it), unless the New Workbench page
+  supplies the text; an existing `.vera/WORKBENCH.md` is kept unchanged:
 
 ```markdown
 # <name>
@@ -80,9 +109,22 @@ Lab or hardware quirks the agent should check first.
 
 ## 4. Documents
 
-`docs.include` minus `docs.exclude` decides which files the knowledge index sees. Supported types,
-extraction and chunking are in `05-knowledge-rag.md`. Every file in the workbench stays readable
-through `read`, indexed or not.
+`docs.include` minus `docs.exclude` decides which files the knowledge index sees
+(`core/src/knowledge/selection.ts`, `kinds.ts`):
+
+- A pattern that does not end in `*` selects everything below it (`/**` is appended); an include
+  entry starting with `!` acts as an exclude; `exclude` wins.
+- The permanent ignored folders and `.vera/.veraignore` (§6) always apply; symlinked files and folders
+  are never followed; only supported document kinds are selected (PDF, Markdown, HTML,
+  docx/pptx/xlsx and their OpenDocument forms, `.txt`, `.csv`, `.tsv`); code, logs and other data files are not indexed.
+- The indexer watches the selected folders, `.vera/workbench.yaml` and `.vera/.veraignore` and
+  re-selects on change.
+- The New Workbench page scans a chosen folder for documentation folders (first-level names, bytes
+  and counts per kind, never file names; at most 20 000 entries, depth 8) and previews a selection;
+  picked folders become `<folder>/**` patterns.
+
+Supported types, extraction and chunking are in `05-knowledge-rag.md`. Every non-ignored text file
+stays readable through `read`, indexed or not; `read` refuses PDFs, which go through `read_doc`.
 
 ## 5. Skills
 
@@ -101,74 +143,110 @@ description: Extract electrical limits, pinouts and register maps from component
 |---|---|
 | Location | workbench `.vera/skills/<name>/SKILL.md`; user `<userData>/skills/<name>/SKILL.md` |
 | `name` | lowercase letters, digits and hyphens, 1–64 characters, equal to the folder name |
-| `description` | 1–1024 characters; says what the skill does and when to use it |
+| `description` | non-blank, at most 1024 characters (trimmed); says what the skill does and when to use it |
+| Frontmatter | YAML between `---` lines at the file start; duplicate keys and aliases are invalid |
+| Files | UTF-8 text, not binary, at most 256 KiB each; no symlinks, junctions or hard links in the skills tree |
 | Body | Markdown; loaded only through `load_skill` |
-| Extra files | allowed beside `SKILL.md`; read through `load_skill { name, file }` |
-| Resolution | workbench and user skills are both available; on a name clash the workbench skill wins |
-| Disabled | names in `skills.disabled` are neither listed in the prompt nor loadable |
-| Invalid | a skill failing validation is listed in the UI with its error and never reaches the prompt |
+| Extra files | allowed beside `SKILL.md`; read through `load_skill { name, file }` (relative path, at most 1024 characters) |
+| Resolution | workbench and user skills are both available; on a name clash the workbench skill wins, even when its folder is invalid |
+| Disabled | names in `skills.disabled` are neither listed in the prompt nor loadable; the UI lists them as disabled |
+| Invalid | a skill failing validation is listed in the UI with its error (`frontmatter`, `name`, `description` or `unavailable`) and never reaches the prompt |
+| Limits | per root at most 1024 skill folders and 4096 scanned entries |
+| Ignore | workbench skill paths also obey `.vera/.veraignore`, matched as `skills/<name>/<file>` (§6) |
+
+The prompt lists enabled valid skills as `name: description` inside `<skills>` (`03` §3). The
+workbench editor toggles `skills.disabled`, creates a skill from a template and edits `SKILL.md`;
+core saves into either root atomically and returns CONFLICT when the file changed since it was read
+(SHA-256 check).
 
 ## 6. Ignore rules
 
-Always ignored by tools and the index: `.vera/`, `.git/`, `node_modules/`. Then `.vera/.veraignore`
-(gitignore syntax, patterns relative to the project root; logical skills/ paths for the dedicated skill loader). Binary detection (`03` §5) applies on top.
+Always ignored by tools and the index: any path segment named `.vera`, `.git` or `node_modules`,
+compared case-insensitively, at any depth; `!` negations cannot re-include them. Then
+`.vera/.veraignore` (gitignore syntax, patterns relative to the project root; logical skills/ paths
+for the dedicated skill loader). A `.veraignore` or `.vera/` that is a symlink, junction or unreadable
+hides everything from the index and folder scans and fails tool path resolution. Binary detection
+(`03` §5) applies on top. In `bypass` mode ordinary file tools use a filesystem scope that applies no
+ignore rules (`03` §5).
 
 ## 7. Path rules
 
-All tool paths are workbench-relative with `/` separators. Resolution and confinement are specified
-in `03-agent-and-tools.md` §5; this folder format only promises that nothing outside the root is
-part of a workbench.
+All tool paths are workbench-relative with `/` separators (`\` is accepted and converted). Absolute
+paths, `:`, NUL, Windows device names and segments ending in a dot or space are refused, and the
+canonical (realpath) target must stay inside the root (`core/src/workbench/path-guard.ts`). Resolution
+and confinement are specified in `03-agent-and-tools.md` §5; this folder format only promises that
+nothing outside the root is part of a workbench. Exception: in `bypass` mode ordinary file tools
+accept absolute paths anywhere.
 
 ## 8. `.vera/` project metadata and runtime folder
 
 ```
 .vera/
-  .gitignore            # excludes runtime; allows configuration and skills
+  .gitignore            # "*" then allows .gitignore, workbench.yaml, WORKBENCH.md, .veraignore, skills/
   lock                  # {"pid": 1234, "app": "1.0.0", "since": "…", "token": "…"}; live pid opens read-only
-  vera.db               # SQLite (§9)
-  artifacts/<session-id>/<name>
-  cache/extract/<sha256>.json   # extracted document text, keyed by content hash
-  backups/vera.db.v<schema>.bak # copy taken before each migration
+  vera.db, vera.db-wal, vera.db-shm   # SQLite (§9)
+  artifacts/<session-id>/<name>       # session artifacts (§10)
+  downloads/<uuid>/<name>             # web_download file (≤100 MiB) plus .vera-download.json manifest
+  cache/extract/<sha256>.json         # extracted document text, keyed by content hash (≤128 MiB)
 ```
+
+Not implemented as of 2026-11-01: `backups/vera.db.v<schema>.bak` (there are no database migrations, §9).
 
 The `.vera` folder contains project configuration as well as sessions and artifacts. Keep it with
 the project. The dedicated skill catalog can read `.vera/skills`; general tools and indexing
 exclude metadata. The default `.gitignore` allows the configuration files and skills while ignoring
-runtime databases, locks, caches, backups and artifacts.
+runtime databases, locks, caches, downloads and artifacts.
 
-The WP-06 service serializes operations and rechecks token ownership before saves/close. Each open
-reassesses live/dead ownership, including same-folder reopen. Dead pid locks are taken over under a
-short process-owned local IPC guard (Windows named pipe/Linux abstract Unix socket); the OS releases
-it on crash. Only EADDRINUSE contention opens read-only with LOCK_GUARD_BUSY. Live owners retain
-their bytes. Completion skips symlink/junction entries,
-applies the case-insensitive permanent ignored directories and `.vera/.veraignore`, and returns at most50 relative paths.
-Config extension values must be JSON-compatible for IPC; invalid/non-finite/circular values are
-refused without changing the source. Settings schema2 stores ten typed recents, migrating0/1 with
-original backups and stable UUID/extensions; recent-entry extensions survive reopening. The workbench format remains1.
+`WorkbenchService` (`core/src/workbench/service.ts`) serializes lifecycle operations and rechecks
+lock pid and token before every save, session mutation and close. Each open reassesses live/dead
+ownership, including same-folder reopen:
+
+- A lock whose pid is alive and is not this process's own lock opens the workbench read-only:
+  SQLite is read from a private temporary copy, nothing is written and no indexing runs.
+- A dead-pid lock is taken over under a short process-owned local IPC guard (Windows named pipe /
+  Linux abstract Unix socket, named from the folder hash); the OS releases it on crash. Only
+  EADDRINUSE contention opens read-only with `LOCK_GUARD_BUSY`.
+- A malformed lock refuses the open (CONFLICT). Live owners retain their bytes.
+- Close and switch drain the write queue, stop indexing, checkpoint the WAL and delete the lock only
+  while it still carries this process's pid and token.
+
+File completion (`workbench.files`) skips symlink/junction entries, applies the permanent ignored
+directories and `.vera/.veraignore`, matches the query case-insensitively and returns at most 50
+relative paths. Config extension values must be JSON-compatible for IPC; invalid/non-finite/circular
+values are refused without changing the source.
+
+Recent workbenches live in the userData `settings.json` (settings `schemaVersion` 4; versions 0–3
+migrate on load after a `settings.json.bak-<n>` backup). An entry has `folder`, `id`, `name`,
+`lastOpened` and optional `pinned`; the list is unbounded, a new entry goes first, a known one keeps
+its user-arranged place, unknown entry fields survive reopening and missing folders are flagged. The
+workbench format remains 1.
 
 ## 9. Data model (`vera.db`)
 
+Source: `core/src/storage/schema.ts` (the full schema, created in one transaction).
+
 ```sql
-meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);       -- schema_version, workbench_id, created_by
+meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+     -- schema_version ('3'), workbench_id, created_by (app version), embedding_epoch (counter)
 sessions(id TEXT PRIMARY KEY, title TEXT NOT NULL, created_at TEXT, updated_at TEXT,
-         model_ref TEXT, permission_mode TEXT NOT NULL,
+         model_ref TEXT, permission_mode TEXT NOT NULL,  -- read-only | ask | auto-edit | bypass
          status TEXT NOT NULL,                          -- idle | running | awaiting_approval | error
          archived INTEGER NOT NULL DEFAULT 0);
-messages(session_id TEXT, seq INTEGER, role TEXT, content_json TEXT NOT NULL, created_at TEXT,
-         PRIMARY KEY (session_id, seq));                -- pi-ai message, verbatim
-events(session_id TEXT, seq INTEGER, type TEXT, payload_json TEXT NOT NULL, created_at TEXT,
-       PRIMARY KEY (session_id, seq));                  -- persisted SessionEvents (03 §8)
+messages(session_id TEXT NOT NULL, seq INTEGER NOT NULL, role TEXT, content_json TEXT NOT NULL,
+         created_at TEXT, PRIMARY KEY (session_id, seq));  -- pi-ai message, verbatim
+events(session_id TEXT NOT NULL, seq INTEGER NOT NULL, type TEXT, payload_json TEXT NOT NULL,
+       created_at TEXT, PRIMARY KEY (session_id, seq));    -- persisted SessionEvents (03 §8)
 tool_calls(id TEXT PRIMARY KEY, session_id TEXT, name TEXT, args_json TEXT, result_json TEXT,
            status TEXT,                                 -- pending | ok | error | denied | aborted
            started_at TEXT, ended_at TEXT);
 approvals(id TEXT PRIMARY KEY, session_id TEXT, turn_id TEXT, tool_call_id TEXT,
           request_sha256 TEXT NOT NULL, request_json TEXT NOT NULL,
           decision TEXT, decided_by TEXT, decided_at TEXT, consumed_at TEXT);
-          -- decision null while pending, else approved | denied | aborted; user | mode
+          -- decision null while pending, else approved | denied | aborted; decided_by user | mode
 changes(id INTEGER PRIMARY KEY, session_id TEXT, tool_call_id TEXT, path TEXT,
         before_sha256 TEXT, after_sha256 TEXT, diff TEXT,
         status TEXT NOT NULL,                           -- pending | applied | conflict (03 §6)
-        created_at TEXT, UNIQUE (tool_call_id));
+        created_at TEXT, UNIQUE (tool_call_id));        -- path is absolute for bypass writes
 artifacts(id TEXT PRIMARY KEY, session_id TEXT, name TEXT, mime TEXT, bytes INTEGER,
           sha256 TEXT, description TEXT, created_at TEXT, UNIQUE (session_id, name));
 todos(session_id TEXT PRIMARY KEY, items_json TEXT NOT NULL, updated_at TEXT);
@@ -177,40 +255,69 @@ documents(id INTEGER PRIMARY KEY, path TEXT UNIQUE, kind TEXT, sha256 TEXT, byte
           status TEXT,                                  -- pending | indexed | failed | unsupported | needs_ocr
           error TEXT, indexed_at TEXT);
 chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, ordinal INTEGER, locator_json TEXT, text TEXT, chars INTEGER);
--- FTS5 virtual tables and the embeddings table: 05-knowledge-rag.md §5
+chunks_fts USING fts5(text, content='chunks', content_rowid='id',
+                      tokenize="unicode61 remove_diacritics 2 tokenchars '_'");
+chunks_tri USING fts5(text, content='chunks', content_rowid='id', tokenize='trigram');
+embeddings(chunk_id INTEGER PRIMARY KEY, model_id TEXT NOT NULL,
+           dim INTEGER NOT NULL CHECK (dim = 384), vector BLOB NOT NULL CHECK (length(vector) = dim*4));
+document_extractions(doc_id INTEGER PRIMARY KEY, extraction_json TEXT NOT NULL);
+-- search use of the FTS5 tables and embeddings: 05-knowledge-rag.md §5
 ```
 
-- Indexes on every `session_id`, `(session_id, seq)`, `chunks(doc_id)`, `documents(status)`.
+- Foreign keys, all `ON DELETE CASCADE`: every `session_id` → `sessions(id)`; `chunks.doc_id` and
+  `document_extractions.doc_id` → `documents(id)`; `embeddings.chunk_id` → `chunks(id)`.
+  `messages.seq` and `events.seq` are CHECKed to integers 0 … 2^53−1.
+- Triggers keep `chunks_fts` and `chunks_tri` in step with `chunks` and bump `meta.embedding_epoch`
+  on every chunk or embedding change; an updated chunk drops its embedding.
+- Indexes: `messages(session_id, seq)`, `events(session_id, seq)`, `session_id` on `tool_calls`,
+  `approvals`, `changes`, `artifacts` and `todos`; `chunks(doc_id)`, `documents(status)`.
 - IDs: sessions `ses_` + ULID, artifacts `art_` + ULID, approvals `apv_` + ULID; tool-call IDs come
   from the provider.
 - Timestamps are ISO 8601 UTC strings.
-- Migrations: ordered TypeScript modules exporting SQL embedded in core, each with a SHA-256 recorded in `meta`; a changed
-  applied migration is an error; a backup precedes every migration; a database with a higher
-  `schema_version` than the app knows opens nothing and shows "created by a newer VERA" (L10).
-- Core uses better-sqlite3 13.0.3 with WAL, foreign_keys ON, busy_timeout5000 and synchronous NORMAL.
+- Schema version: `CURRENT_SCHEMA_VERSION = 3` names the only accepted format. An empty database
+  gets the full schema and `meta` rows in one immediate transaction; an existing database is never
+  rewritten. Another `schema_version` (older or newer), an incomplete schema or a bad
+  `embedding_epoch` is refused with INVALID before the lock or recents change; a different
+  `workbench_id` gives CONFLICT. Not implemented as of 2026-11-01: ordered checksummed migrations,
+  backups before a migration, and a "created by a newer VERA" message for the database (that
+  message exists only for `workbench.yaml` `format`, §2).
+- Core uses better-sqlite3 13.0.3 with WAL, foreign_keys ON, busy_timeout 5000 and synchronous NORMAL.
   Compatibility is inspected on a private db/WAL snapshot before lock or writable database activity;
-  foreign-owner read-only handles retain private snapshots. An unstable concurrent capture returns BUSY.
-  Each pending step backs up the committed SQLite view exclusively to the prior-version filename,
-  then commits SQL, checksum and version atomically. An existing backup returns CONFLICT and is preserved.
-  Initial metadata includes workbench_id and created_by. Sessions/messages/events repositories expose
-  row CRUD with verbatim JSON and ascending message/event seq; session child foreign keys cascade.
-  Sequences are nonnegative safe integers. Writable handles retain an auxiliary read-only connection;
-  owned release checkpoints under the token guard before unlink, while disposal after ownership loss
-  uses writer-first/read-only-last close to preserve runtime bytes. Failed unlink leaves storage usable.
+  foreign-owner read-only handles retain private snapshots (`query_only`). An unstable concurrent
+  capture returns BUSY. Sessions/messages/events repositories expose row CRUD with verbatim JSON and
+  ascending message/event seq; sequences are nonnegative safe integers. Writable handles retain an
+  auxiliary read-only connection; owned release checkpoints (`wal_checkpoint(TRUNCATE)`) under the
+  token guard before unlink, and the writer closes before the read-only connection so ownership loss
+  never checkpoints foreign data. Failed unlink leaves storage usable.
 
 ## 10. Sessions and artifacts
 
 - A session belongs to one workbench. Its title is the first user message cut to 60 characters, with
-  no model call; the user can rename it.
-- The core session service stores full runtime transcripts independently of transient M1 request budgets, projects snapshots through shared events, and validates line and session-artifact citations against issued tool refs and current confined files. Main drains turns before workbench close/switch and rechecks owned lock pid/token before session mutations.
+  no model call; the user can rename it (1–60 characters, not blank).
+- A new session defaults to `agent.permission_mode`; a null `model_ref` falls back to `agent.model`,
+  then the app default. "New session" reuses the newest unused idle session instead of adding a row. Sessions can be
+  archived, searched (title and message text) and exported as JSON (`schemaVersion: 1`, all persisted
+  events). The user-arranged session order lives in settings `sessionOrder`.
+- The core session service (`core/src/sessions/service.ts`) stores full transcripts independently of
+  the per-request context budget, projects snapshots from persisted events, and revalidates a
+  citation against issued tool refs and current confined files before opening it. The desktop host
+  drains turns before workbench close/switch; every session mutation rechecks the owned lock pid/token.
 - Statuses: `idle`, `running`, `awaiting_approval`, `error`. Several sessions may run at once; each
-  has at most one running turn. File writes go through one queue per workbench (03 §6), the app's
-  own saves included. Restart recovery closes both active statuses and resolves `pending` changes
-  before another turn starts (03 §8).
-- Deleting a session removes its rows and its `artifacts/<session-id>/` folder after a confirmation.
-- Artifacts are text files the agent saves with `artifact_save`. 1.0 stores UTF-8 text up to 5 MB each;
-  binary artifacts arrive with device tools after 1.0.
+  has at most one running turn, and messages sent during it are queued into it. File writes go
+  through one queue per workbench (03 §6), the app's own saves included. Restart recovery marks
+  undecided approvals `aborted` (by `mode`), adds "Interrupted" results for unanswered tool calls,
+  returns `running` and `awaiting_approval` sessions to `idle`, and resolves `pending` changes by
+  hash (applied, dropped or conflict) before another turn starts (03 §8).
+- Deleting an idle session removes its rows and its `artifacts/<session-id>/` folder after a
+  confirmation; files in `.vera/downloads/` are kept.
+- Artifacts are text files the agent saves with `artifact_save`: UTF-8 up to 5 MiB each; names of
+  1–100 characters from `A–Z a–z 0–9 . _ -`, no Windows device names; `overwrite: true` replaces one;
+  MIME `text/markdown` for `.md`/`.markdown`, else `text/plain`; cited as `artifact:<name>`. Content
+  holding stored credentials is refused. The UI opens, reveals and exports artifacts (never into
+  `.vera/`). Binary artifacts arrive with device tools after 1.0 (future).
 
 NOTES:
-- Format version bumps need a migration in `workbench/migrate.ts` and a fixture of the old format.
+- Not implemented as of 2026-11-01: `workbench/migrate.ts`. A future `format` bump needs it and a
+  fixture of the old format; `tests/fixtures/upgrade/workbench-newer.yaml` covers only the refusal
+  of a newer format.
 - Work packages cite this file as `02 §n`.

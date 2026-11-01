@@ -1,7 +1,7 @@
 # ADR-0005: One SQLite database per workbench
 
 Date: 2026-10-09
-Status: Proposed — WP-05 confirms the driver and the tokenizers in a packaged app
+Status: Accepted — confirmed by ADR-0013 (WP-05); implemented; clean/offline Windows release proof still open
 
 ## Context
 Each workbench needs full-text search, vectors, sessions, events, approvals, changes and artifact
@@ -25,3 +25,16 @@ Windows and Linux that the module loads, that both tokenizers work, and that WAL
 - Writes are serialised within the process; WAL keeps reads concurrent.
 - Moving the folder moves the database (ADR-0004).
 - Native module packaging is a known risk, retired early by a spike in M0.
+
+## Implementation status (2026-11-01)
+- Implemented as decided: `.vera/vera.db` (`src/libraries/core/src/workbench/service.ts:520`) through
+  better-sqlite3 13.0.3 (`core/package.json:35`) in WAL mode (`core/src/storage/db.ts:86`).
+- Keyword search: FTS5 `chunks_fts` with `unicode61 remove_diacritics 2 tokenchars '_'` and
+  `chunks_tri` with `trigram` (`core/src/storage/schema.ts:48-51`). Vectors are 384-dimension float32
+  BLOBs (`schema.ts:66-71`), ranked by brute force in the embedding worker
+  (`core/src/knowledge/search.ts:236-255`, `knowledge/embedding.ts:216`).
+- `node:sqlite` is used only by the packaging probe
+  (`src/apps/desktop/src/main/packaging/sqlite-probe.ts`), not in production.
+- Additions: read-only opens use a private temporary copy of the database (`storage/db.ts:26-58`).
+  On desktop, all SQLite writes stay in main while indexing runs in a utility process (ADR-0009).
+- Open: proof on a clean/offline Windows machine (WP-30/WP-33, see ADR-0013).

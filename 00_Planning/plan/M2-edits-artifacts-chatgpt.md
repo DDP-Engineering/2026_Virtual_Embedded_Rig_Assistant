@@ -2,6 +2,10 @@
 
 PURPOSE: the agent changes workbench files under the user's control, keeps artifacts and a plan, and
 runs on a ChatGPT subscription.
+STATE: 2026-11-01 — implemented; WP-16…WP-21 and the M2 epic are closed in Gitea. This file is now a
+historical record of the plan: the WP text below is unchanged, and
+[Implementation notes](#implementation-notes-2026-11-01) record what the code does. In "Start from"
+lines, read `09_Others/benchpilot-reference/src/apps/…` as `…/apps/…`.
 DONE-WHEN: in `ask` mode an edit waits for approval with a diff; approve, deny and stop behave per
 03 §6; protected paths ask even in `auto-edit`; artifacts, changes and the plan show in their panels;
 a ChatGPT subscription signs in and runs a session.
@@ -164,3 +168,46 @@ Done when:
 - [ ] Unit: sign-out deletes the credential and clears the active provider when it was the subscription.
 - [ ] Unit: no token appears in events, logs or IPC responses.
 - [ ] Manual: sign in with a real subscription, run a short session, restart, run again, sign out.
+
+## Implementation notes (2026-11-01)
+
+Checked against the working tree on `master` (33e72b8 plus uncommitted changes) by reading code and
+tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/libraries/core/src/`,
+`shared/` = `src/libraries/shared/src/`, `main/` and `renderer/` = `src/apps/desktop/src/main/`,
+`…/renderer/`, `cli/` = `src/apps/cli/src/`.
+
+- WP-16: implemented as planned (`core/tools/changes.ts:97-120,158-278`; one write queue per
+  workbench, `core/workbench/service.ts:141-145`; tests `core/tools/write-edit.test.ts`,
+  `core/sessions/write-edit.test.ts:47,83`).
+- WP-17: implemented with deviation: a fourth mode, `bypass`, exists (`shared/session.ts:5`); the only
+  protected path is `.vera/` — which now holds `workbench.yaml`, `WORKBENCH.md` and skills — and the
+  path guard refuses it in every mode except `bypass`, so an edit to `WORKBENCH.md` in `auto-edit` is
+  refused instead of waiting for approval (`core/tools/changes.ts:76-79`,
+  `core/sessions/approvals.test.ts:161-171`); `edit-protected.jsonl` edits an ordinary file and serves
+  the "approve and switch" test (`tests/e2e/approvals.spec.ts:216`). Digest binding, single use,
+  `CONFLICT`, the `A`/`D` keys and CLI `--approve` as planned (`core/agent/approvals.ts:8-23,109-190`,
+  `cli/args.ts:153-155`).
+- WP-18: implemented as planned (`renderer/components/session/changes-tab.tsx`,
+  `tests/e2e/changes.spec.ts:141`); only `applied` changes are listed (`core/sessions/service.ts:344`).
+- WP-19: implemented as planned (`core/artifacts/store.ts`, `shared/artifacts.ts:5`,
+  `tests/e2e/artifacts.spec.ts:142`).
+- WP-20: implemented as planned (`core/tools/todo.ts:16-45`, `shared/session.ts:8-13`,
+  `tests/e2e/plan.spec.ts:161`).
+- WP-21: implemented as planned (`main/chatgpt-auth.ts:19,69-76,163-166,187-189`,
+  `main/chatgpt-auth.test.ts`, `tests/e2e/chatgpt.spec.ts:99`); the sign-in URL is opened by main and
+  only for `auth.openai.com` (`main/open-external.ts:12-20`); the manual real sign-in is not provable
+  from code.
+
+Not in the plan, implemented in this area:
+- `bypass` permission mode: file tools reach the whole filesystem, `.vera/` and ignored files
+  included; approvals, waiting ones too, are granted automatically; a warning dialog with "don't show
+  again"; leaving the mode revokes the access (`core/tools/context.ts:43-55`,
+  `core/workbench/path-guard.ts:81-99`, `renderer/components/permission-picker.tsx:84-172`,
+  `tests/e2e/bypass.spec.ts`).
+- `web_download`: fetches a URL into `.vera/downloads/<id>/<name>` (at most 100 MB) after an approval
+  that is asked even in `auto-edit`; `downloads.list`/`downloads.open` and an in-app viewer for
+  downloaded PDFs (`core/tools/web-download.ts:45`, `shared/downloads.ts:6`,
+  `renderer/components/documents/downloads.tsx`, `tests/e2e/pdf-download.spec.ts`).
+- Live ChatGPT model catalog with reasoning levels (`core/llm/chatgpt-catalog.ts`); a storage-consent
+  choice for the OAuth credential; diffs that contain a stored secret are refused before approval
+  (`core/sessions/approvals.test.ts:348`); `app.openPath`.
