@@ -68,8 +68,10 @@ test("native compact chrome retains window controls and a persistent navigation 
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="language"]').click();
     await expect(page.locator("#language")).toBeVisible();
+    // Settings replaces the primary navigation with its Back action.
+    await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await expect(page.locator('[data-action="create-workbench"]')).toBeVisible();
+    await expect(page.locator("[data-workbench-create]")).toBeVisible();
     await page.locator('[data-toggle="sidebar"]').click();
     await page.locator('[data-action="show-projects"]').click();
     await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "false");
@@ -140,6 +142,7 @@ test("compact navigation fits all languages, themes and text scales at minimum s
           await expect
             .poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize))
             .toBe(`${14 * scale}px`);
+          await page.locator('[data-action="leave-settings"]').click();
           await page.locator('[data-i18n="nav.welcome"]').click();
           await expect(page.locator(".metadata")).toHaveCount(0);
           await page.locator('[data-toggle="sidebar"]').click();

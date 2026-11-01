@@ -652,7 +652,6 @@ async function createWindow(): Promise<void> {
       updates.requestQuit();
       return;
     }
-    if (state.readOnly) return;
     event.preventDefault();
     if (closing) return;
     closing = true;

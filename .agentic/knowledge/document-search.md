@@ -58,7 +58,7 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 - CLI index reindexes a writable workbench and returns document statuses; search
   reads current owned/protected snapshots in three modes. Both drain workbench/
   worker/settings/temp resources on all exits. eval:retrieval uses production
-  migrated storage/worker/search over the frozen ordered corpus and raw questions.
+  storage/worker/search over the frozen ordered corpus and raw questions.
 
 ## Invariants
 
@@ -80,15 +80,15 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   ends the whole process with 0xE06D7363 (seen when switching workbenches during indexing).
   Serialized per-root workers cache vectors by epoch/model/filter. Root disposal
   clears cache and drains queued operations before owned resources disappear.
-- Migration3 adds embeddings with FK cascade and full document_extractions.
+- The schema (schema_version 1) includes embeddings with FK cascade and full document_extractions.
   DocumentsRepository validates extraction/vector count/finite/dimension/norm and
   atomically replaces chunks, full extraction and vectors in ingest publication.
   SQL triggers advance embedding_epoch for vector/chunk mutations and invalidate
-  updated chunk vectors. Existing migration SQL/checksums remain immutable.
+  updated chunk vectors.
 - Unchanged indexed sources reprocess when current-model vector coverage differs;
   file change/delete/reindex shares established ownership/abort invalidation.
-  Protected read-only snapshots run no ingest/migration; legacy lexical availability
-  is preserved and unavailable semantic/extraction data has an explicit error.
+  Protected read-only snapshots run no ingest; unavailable semantic/extraction data
+  has an explicit error.
 - Lexical and cosine lists cap50, ties use numeric ids; hybrid uses one-based
   RRF60 and deduplication. Validated path glob filters before candidate limits.
   Search checks epoch across async ranking/path guards and rejects concurrent

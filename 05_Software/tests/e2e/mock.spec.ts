@@ -309,12 +309,6 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect(page.locator("#language")).toBeVisible();
     await changeSetting(page, "appearance", () => page.locator('[data-theme-option="light"]').click());
     await changeSetting(page, "appearance", () => page.locator("#interface-font-size").selectOption("1"));
-    const futureLayout = '{ "version": 99, "future": "retain exact bytes" }';
-    await page.evaluate((raw) => localStorage.setItem("vera.ui.layout", raw), futureLayout);
-    await page.reload();
-    await page.locator('[data-toggle="sidebar"]').click();
-    await page.locator('[data-toggle="right"]').click();
-    expect(await page.evaluate(() => localStorage.getItem("vera.ui.layout"))).toBe(futureLayout);
     if (await page.locator('[data-action="leave-settings"]').isVisible())
       await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();

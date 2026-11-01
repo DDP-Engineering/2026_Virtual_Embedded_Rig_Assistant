@@ -16,7 +16,7 @@ Replay scripts JSONL match/prompt/text/toolCalls(name,args), first-line match su
 
 The renderer mock exposes the deterministic mock-openai catalog before authentication with reachability skipped. Its Test probes auth separately, honors explicit model overrides, rejects unknown OpenAI fixture IDs and does not persist current-model capability for an alternate model.
 
-Settings4 extends nullable defaultModel to validated reference; migrate0/1/2/3 to4 with original bytes backup, preserve extensions/identity/providers, protect>4. Workbench existing string model contract remains unchanged; helper validates when used. smoke:live launches the ordinary release Electron host with userData, invokes the same provider service/connection test internally and emits scrubbed results, without renderer key access; no test seam or real-provider automatic run.
+Settings schemaVersion 1 holds a nullable defaultModel validated as a model reference. Workbench existing string model contract remains unchanged; helper validates when used. smoke:live launches the ordinary release Electron host with userData, invokes the same provider service/connection test internally and emits scrubbed results, without renderer key access; no test seam or real-provider automatic run.
 
 ## Examples and acceptance
 

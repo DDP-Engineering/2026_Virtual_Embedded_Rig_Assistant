@@ -363,7 +363,7 @@ export function App() {
         entries={recent.data ?? []}
         activeId={benchId}
         disabled={sessionPending}
-        settingsReadOnly={!snapshot.data || snapshot.data.readOnly}
+        settingsLoading={!snapshot.data}
         open={async (folder) =>
           leaveEditor() &&
           operation(async () => {
@@ -453,7 +453,7 @@ export function App() {
                 await client.invalidateQueries({ queryKey: ["session.list", benchId] });
               })
             }
-            moveDisabled={!snapshot.data || snapshot.data.readOnly}
+            moveDisabled={!snapshot.data}
             remove={(id) =>
               operation(async () => {
                 await api.invoke("session.delete", { sessionId: id });
@@ -498,7 +498,6 @@ export function App() {
             }}
             navigate={navigate}
             navigation={navigation}
-            storageReadOnly={!snapshot.data || snapshot.data.readOnly}
             context={
               benchId && chat && !settings ? (
                 <ContextTab workbenchId={benchId} readOnly={readOnly} />

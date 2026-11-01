@@ -9,8 +9,8 @@ import { SessionService } from "../sessions/service.js";
 import { openDb } from "./db.js";
 import { initializeDatabase } from "./schema.js";
 
-const fixtures = resolve("tests/fixtures/upgrade");
-const interrupted = JSON.parse(await readFile(join(fixtures, "interrupted.json"), "utf8"));
+const fixtures = resolve("tests/fixtures/app-data");
+const interrupted = JSON.parse(await readFile(join(fixtures, "interrupted-sessions.json"), "utf8"));
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 const preservedTables = [
   "sessions",
@@ -90,10 +90,10 @@ it("recovers interrupted current-schema sessions, preserves files/history and ca
   let handle: Awaited<ReturnType<typeof openDb>> | undefined;
   let service: SessionService | undefined;
   try {
-    const previous = new Database(path);
-    initializeDatabase(previous, { workbenchId: "wb_fixture", appVersion: "0.0.0" });
-    seed(previous);
-    previous.close();
+    const seeded = new Database(path);
+    initializeDatabase(seeded, { workbenchId: "wb_fixture", appVersion: "0.0.0" });
+    seed(seeded);
+    seeded.close();
     for (const c of interrupted.changes) await writeFile(join(root, c.path), c.current);
     async function fileState() {
       return Promise.all(

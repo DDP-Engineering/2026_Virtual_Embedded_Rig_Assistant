@@ -124,11 +124,9 @@ describe("validated invoke router", () => {
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
         "app.settings.update": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
       },
       log,
@@ -144,7 +142,7 @@ describe("validated invoke router", () => {
     expect(log).not.toHaveBeenCalled();
   });
   it("dispatches settings patches only after strict validation and validates the snapshot", async () => {
-    const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"), readOnly: false };
+    const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19") };
     const update = vi.fn(async () => ({
       ...snapshot,
       settings: { ...snapshot.settings, theme: "dark" as const },
@@ -171,7 +169,7 @@ describe("validated invoke router", () => {
         error: { code: "INVALID" },
       });
     expect(update).toHaveBeenCalledTimes(1);
-    update.mockResolvedValueOnce({ ...snapshot, readOnly: "bad" } as never);
+    update.mockResolvedValueOnce({ ...snapshot, settings: { ...snapshot.settings, theme: "bad" } } as never);
     expect(await invoke(event, "app.settings.update", {})).toMatchObject({
       ok: false,
       error: { code: "INTERNAL" },
@@ -216,11 +214,9 @@ describe("validated invoke router", () => {
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
         "app.settings.update": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
       },
       log,
@@ -239,11 +235,9 @@ describe("validated invoke router", () => {
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
         "app.settings.update": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
       },
       log,
@@ -257,11 +251,9 @@ describe("validated invoke router", () => {
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
         "app.settings.update": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
       },
       log,
@@ -282,11 +274,9 @@ describe("validated invoke router", () => {
         "app.info": handler,
         "app.settings.get": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
         "app.settings.update": () => ({
           settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-          readOnly: false,
         }),
       },
       log,

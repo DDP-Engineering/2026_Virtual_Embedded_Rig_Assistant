@@ -104,7 +104,8 @@ reachability may be skipped (`main/index.ts:697-717`).
 ## 5. Credentials
 
 - Port `CredentialStore` (`core/src/ports.ts:42`), implemented by `CredentialFile`
-  (`main/credentials.ts`) over `<userData>/credentials.json` (`schemaVersion: 1`, entries
+  (`main/credentials.ts`) over `<userData>/credentials.json` (`schemaVersion: 1`, strict
+  schema; another version or invalid content gives INVALID before decryption; entries
   `{ encoding, value (base64), weak }`); writes are atomic and serialized in one queue. It satisfies
   pi-ai's `read`, `list`, `modify`, `delete`.
 - Credential ids: `openai`, `custom:<slug>`, `chatgpt`, `web:exa|tavily|brave` (§11).
@@ -143,7 +144,7 @@ providers.chatgpt.logout → cancel, delete the credential, clear a `chatgpt/` a
 
 - Timeout 10 minutes (`chatgpt.timeout`). A busy port 1455 (`EADDRINUSE`) gives `chatgpt.portBusy`,
   which names an unfinished Codex CLI sign-in as the likely cause; a browser failure gives
-  `chatgpt.browserFailed`; anything else `chatgpt.loginFailed`. Read-only settings deny login.
+  `chatgpt.browserFailed`; anything else `chatgpt.loginFailed`.
 - `getDeviceId` returns `settings.installationId`. pi-ai refreshes tokens itself; the UI shows the
   expiry with "renews automatically"; the ChatGPT card and the composer poll the status every second.
 

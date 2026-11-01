@@ -1,10 +1,9 @@
 # Persisted keyword search
 
-Migration 2 adds external-content chunks_fts (unicode61 remove_diacritics 2,
-underscore token character) and chunks_tri (trigram), rebuilds both from existing
-chunks, and synchronizes insert/update/delete through SQLite triggers. The
-initial migration remains immutable. The existing migration runner owns backups,
-checksum checks, rollback and read-only compatibility.
+The workbench schema (schema_version 1) contains external-content chunks_fts
+(unicode61 remove_diacritics 2, underscore token character) and chunks_tri
+(trigram), created with the database. SQLite triggers synchronize both with
+chunk insert/update/delete. There is no migration or backfill.
 
 DocumentsRepository deletes chunks once; triggers own FTS removal, including
 document FK cascades. Derived embedding cleanup remains repository-owned.
@@ -24,8 +23,8 @@ deduplicated ids, descending score then numeric id) and cap the union at 50,
 following the frozen WP24 keyword convention. Without fragments preserve word
 bm25 order. bm25 is the best available raw lexical score; rank is the downstream
 fusion interface. Search is a synchronous read of persisted indexed chunks and
-their document paths/locators. Read-only schema1 yields no keyword candidates;
-writable opening upgrades it through the migration runner.
+their document paths/locators. Read-only snapshots query the same persisted
+indexes.
 
 Embeddings, semantic/hybrid services, snippets, refs/tools/CLI/UI and retrieval
 gates belong to later work packages.

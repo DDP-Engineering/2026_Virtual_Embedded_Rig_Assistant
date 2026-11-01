@@ -18,7 +18,8 @@ export interface CredentialCrypto {
 }
 export type CredentialStorage = "encrypted" | "unprotected" | "memory" | null;
 type Entry = { encoding: "safeStorage" | "unprotected"; value: string; weak: boolean };
-type Document = { schemaVersion: 1; entries: Record<string, Entry>; [key: string]: unknown };
+/** The credentials format; its version stays 1 during development (AGENTS.md). */
+type Document = { schemaVersion: 1; entries: Record<string, Entry> };
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -120,9 +121,8 @@ export class CredentialFile implements CredentialStore {
     } catch {
       throw veraError("INVALID");
     }
-    if (!object(parsed) || !Number.isSafeInteger(parsed.schemaVersion)) throw veraError("INVALID");
-    if ((parsed.schemaVersion as number) > 1) throw veraError("DENIED");
-    if (parsed.schemaVersion !== 1 || !object(parsed.entries)) throw veraError("INVALID");
+    if (!object(parsed) || parsed.schemaVersion !== 1 || !object(parsed.entries)) throw veraError("INVALID");
+    const entries: Record<string, Entry> = {};
     const values = new Map<string, Credential>();
     const locations = new Map<string, CredentialStorage>();
     for (const [id, entry] of Object.entries(parsed.entries)) {
@@ -149,8 +149,9 @@ export class CredentialFile implements CredentialStore {
       this.register(value);
       values.set(id, value);
       locations.set(id, entry.weak ? "unprotected" : "encrypted");
+      entries[id] = { encoding: entry.encoding as Entry["encoding"], value: entry.value, weak: entry.weak };
     }
-    this.document = parsed as Document;
+    this.document = { schemaVersion: 1, entries };
     this.values = values;
     this.locations = locations;
   }

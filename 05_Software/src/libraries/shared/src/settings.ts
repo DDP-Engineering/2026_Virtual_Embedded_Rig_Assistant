@@ -6,7 +6,7 @@ import { updateChannelSchema, updateModeSchema } from "./updates.js";
 import { webAccessDefaults, webAccessSettingsSchema } from "./web-access.js";
 import { workbenchIdSchema } from "./workbench.js";
 
-export const recentWorkbenchSchema = z.looseObject({
+export const recentWorkbenchSchema = z.strictObject({
   folder: z.string().min(1),
   id: workbenchIdSchema,
   name: z.string().min(1).max(80),
@@ -29,7 +29,7 @@ const fontSizeSchema = z.union([
 ]);
 const mutable = {
   suppressBypassWarning: z.boolean().optional(),
-  webAccess: webAccessSettingsSchema.default(webAccessDefaults),
+  webAccess: webAccessSettingsSchema,
   keyboardShortcuts: shortcutOverridesSchema.optional(),
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
@@ -45,15 +45,16 @@ const mutable = {
   codeFontSize: fontSizeSchema.optional(),
   defaultModel: modelReferenceSchema.nullable(),
   providers: providerSettingsSchema,
-  updates: z.looseObject({ mode: updateModeSchema, channel: updateChannelSchema }),
+  updates: z.strictObject({ mode: updateModeSchema, channel: updateChannelSchema }),
   recentWorkbenches: z.array(recentWorkbenchSchema),
   /** Session ids per workbench in the order the user arranged them (TASK-c99ca08c). */
   sessionOrder: z.record(workbenchIdSchema, z.array(sessionIdSchema)).optional(),
-  limits: z.looseObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
+  limits: z.strictObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
 };
 
-export const settingsSchema = z.looseObject({
-  schemaVersion: z.literal(4),
+/** The settings format; its version stays 1 during development (AGENTS.md). */
+export const settingsSchema = z.strictObject({
+  schemaVersion: z.literal(1),
   installationId: z.uuid(),
   ...mutable,
 });
@@ -77,32 +78,7 @@ export const settingsPatchSchema = z.strictObject({
     .strictObject({ maxToolCallsPerTurn: mutable.limits.shape.maxToolCallsPerTurn.optional() })
     .optional(),
 });
-export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema, readOnly: z.boolean() });
-export const settingsV3Schema = settingsSchema.extend({
-  schemaVersion: z.literal(3),
-  defaultModel: z.null(),
-});
-export const settingsV1Schema = settingsSchema.extend({
-  schemaVersion: z.literal(1),
-  defaultModel: z.null(),
-  providers: z.strictObject({}),
-  recentWorkbenches: z.array(z.never()),
-});
-export const settingsV2Schema = settingsSchema.extend({
-  schemaVersion: z.literal(2),
-  defaultModel: z.null(),
-  providers: z.strictObject({}),
-});
-export const settingsV0Schema = z.looseObject({
-  ...settingsPatchSchema.shape,
-  schemaVersion: z.literal(0),
-  defaultModel: z.null().optional(),
-  providers: z.strictObject({}).optional(),
-  installationId: z.uuid().optional(),
-  recentWorkbenches: z.array(z.never()).optional(),
-  updates: mutable.updates.partial().optional(),
-  limits: mutable.limits.partial().optional(),
-});
+export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema });
 export type Settings = z.infer<typeof settingsSchema>;
 /** Internal service patch; provider writes enter through their dedicated IPC boundary. */
 export const settingsServicePatchSchema = settingsPatchSchema.extend({
@@ -125,7 +101,7 @@ export function mergeSettings(current: Settings, patch: SettingsServicePatch): S
 }
 export function defaultSettings(installationId: string): Settings {
   return {
-    schemaVersion: 4,
+    schemaVersion: 1,
     installationId,
     suppressBypassWarning: false,
     webAccess: { ...webAccessDefaults },

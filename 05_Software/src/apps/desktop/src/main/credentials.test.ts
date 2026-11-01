@@ -23,7 +23,6 @@ function harness(secure = true, backend = "gnome_libsecret", platform = "linux")
     writeAtomic: vi.fn(async (p: string, text: string) => {
       disk.set(p, text);
     }),
-    backup: vi.fn(async () => true),
   };
   const crypto = {
     isEncryptionAvailable: () => secure,
@@ -42,9 +41,9 @@ function harness(secure = true, backend = "gnome_libsecret", platform = "linux")
   };
 }
 describe("main encrypted credential store", () => {
-  it("opens the frozen schema1 synthetic encrypted fixture without rewriting it and scrubs its credentials", async () => {
+  it("opens the current schema1 synthetic encrypted fixture without rewriting it and scrubs its credentials", async () => {
     const raw = readFileSync(
-      new URL("../../../../../tests/fixtures/upgrade/credentials-v1.json", import.meta.url),
+      new URL("../../../../../tests/fixtures/app-data/credentials.json", import.meta.url),
       "utf8",
     );
     const h = harness();
@@ -60,33 +59,15 @@ describe("main encrypted credential store", () => {
     ).toEqual({ error: "[REDACTED] [REDACTED] [REDACTED]" });
     expect(h.disk.get("/data/credentials.json")).toBe(raw);
     expect(h.files.writeAtomic).not.toHaveBeenCalled();
-    expect(h.files.backup).not.toHaveBeenCalled();
     await h.store.modify("openai", async () => ({ type: "api_key", key: "synthetic-WP32-replacement" }));
-    expect(JSON.parse(h.disk.get("/data/credentials.json")!).extension).toEqual({ retained: true });
+    expect(Object.keys(JSON.parse(h.disk.get("/data/credentials.json")!))).toEqual([
+      "schemaVersion",
+      "entries",
+    ]);
     expect(await h.reload().read("chatgpt")).toMatchObject({
       type: "oauth",
       access: "synthetic-WP32-access",
     });
-    expect(h.logger.log).not.toHaveBeenCalled();
-  });
-  it("refuses the newer credentials fixture before decryption and all mutations without leaking future contents", async () => {
-    const raw = readFileSync(
-      new URL("../../../../../tests/fixtures/upgrade/credentials-newer.json", import.meta.url),
-      "utf8",
-    );
-    const h = harness();
-    h.disk.set("/data/credentials.json", raw);
-    for (const operation of [
-      () => h.store.list(),
-      () => h.store.read("openai"),
-      () => h.store.delete("openai"),
-      () => h.store.modify("openai", async () => ({ type: "api_key", key: secret })),
-    ])
-      await expect(operation()).rejects.toEqual({ code: "DENIED", messageKey: "errors.DENIED" });
-    expect(h.disk.get("/data/credentials.json")).toBe(raw);
-    expect(h.crypto.decryptString).not.toHaveBeenCalled();
-    expect(h.files.writeAtomic).not.toHaveBeenCalled();
-    expect(h.files.backup).not.toHaveBeenCalled();
     expect(h.logger.log).not.toHaveBeenCalled();
   });
   it("persists ciphertext only and roundtrips detached API and OAuth credentials", async () => {
@@ -170,7 +151,7 @@ describe("main encrypted credential store", () => {
     expect(h.crypto.encryptString).toHaveBeenCalledTimes(available ? 1 : 0);
     expect(h.store.storage("openai")).toBe("unprotected");
   });
-  it("refusal replaces a disk key with memory only, while preserving other slots and extensions", async () => {
+  it("refusal replaces a disk key with memory only, while preserving other slots", async () => {
     const h = harness(true, "basic_text");
     await h.store.modify("other", async () => ({ type: "api_key", key: "fake-other-private" }), {
       storageConsent: true,
@@ -178,25 +159,20 @@ describe("main encrypted credential store", () => {
     await h.store.modify("openai", async () => ({ type: "api_key", key: "fake-old-private" }), {
       storageConsent: true,
     });
-    const raw = JSON.parse(h.disk.get("/data/credentials.json") ?? "{}");
-    raw.extension = { retained: true };
-    h.disk.set("/data/credentials.json", JSON.stringify(raw));
     const reload = h.reload();
     await reload.modify("openai", async () => ({ type: "api_key", key: secret }), { storageConsent: false });
     expect(await h.reload().read("openai")).toBeUndefined();
     expect(await h.reload().read("other")).toEqual({ type: "api_key", key: "fake-other-private" });
-    expect(JSON.parse(h.disk.get("/data/credentials.json") ?? "{}").extension).toEqual({ retained: true });
   });
   it.each([
-    '{"schemaVersion":99,"future":true}',
+    // Version 1 is the only credentials format during development (AGENTS.md).
+    '{"schemaVersion":2,"entries":{}}',
     "broken",
     '{"schemaVersion":1,"entries":{"openai":{"encoding":"safeStorage","value":"invalid%"}}}',
-  ])("preserves invalid or future bytes %s", async (raw) => {
+  ])("preserves invalid bytes %s", async (raw) => {
     const h = harness();
     h.disk.set("/data/credentials.json", raw);
-    await expect(h.store.read("openai")).rejects.toMatchObject({
-      code: expect.stringMatching(/INVALID|DENIED/),
-    });
+    await expect(h.store.read("openai")).rejects.toMatchObject({ code: "INVALID" });
     await expect(
       h.store.modify("openai", async () => ({ type: "api_key", key: secret })),
     ).rejects.toBeDefined();

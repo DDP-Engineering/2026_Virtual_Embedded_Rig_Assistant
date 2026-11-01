@@ -39,8 +39,8 @@ that wrapper (`.agentic/aegis.toml`); `aegis check --run` runs lint, typecheck a
 | `npm run package:test` | build separately labelled instrumented packages ("VERA Test"), for debugging only |
 | `npm run smoke:package -- --artifact <path> [--scratch <new dir>] [--resume <failed run>] [--upgrade-proof <report>]… [--windows-evidence <json>]` | verify an already-built release package (§5) |
 
-Scripts without an npm command: `node scripts/probe-upgrade.mjs <scratch> [--migration-safety]`
-(instrumented upgrade probe, 07 §6); `node scripts/smoke-calibration.mjs <built app> <new root>` (egress
+Scripts without an npm command: `node scripts/probe-upgrade.mjs <scratch>`
+(instrumented updater probe, 07 §5); `node scripts/smoke-calibration.mjs <built app> <new root>` (egress
 negative control, §5); `scripts/probe-windows-sandbox.ps1` with `probe-windows-offline.ps1`, and
 `scripts/probe-linux-offline.sh` (offline `--packaging-probe` runs of an instrumented zip or AppImage
 in Windows Sandbox or a VM with its adapters down).
@@ -49,7 +49,7 @@ in Windows Sandbox or a VM with its adapters down).
 
 | Layer | Where | Covers |
 |---|---|---|
-| Unit and service | `src/libraries/{shared,core}/src/**/*.test.ts`; `src/apps/desktop/src/{main,preload}/**/*.test.ts`; `src/apps/cli/src/**/*.test.ts` | path guard, tools, context budgets, chunkers, refs, reducer, settings migrations, scrubber, prompt snapshot, updater, credentials, IPC router |
+| Unit and service | `src/libraries/{shared,core}/src/**/*.test.ts`; `src/apps/desktop/src/{main,preload}/**/*.test.ts`; `src/apps/cli/src/**/*.test.ts` | path guard, tools, context budgets, chunkers, refs, reducer, settings schema validation, scrubber, prompt snapshot, updater, credentials, IPC router |
 | Core integration | `src/libraries/core/src/sessions/*.test.ts`, `storage/session-recovery.test.ts`, `knowledge/*.test.ts` (there is no `src/libraries/core/test/`) | replay sessions: bounded first turns, approvals, concurrent edits, restart recovery, citations |
 | Renderer components | `src/apps/desktop/src/renderer/**/*.test.ts` | per-file `@vitest-environment jsdom`, React `createRoot` and `@testing-library/user-event` over the mock API (`mocks/mockApi.ts`, 06 §8) |
 | Root Vitest projects | `tests/tooling/`, `tests/integration/`, `tests/packaging/` | import boundaries, build modes, demo documents, i18n checker, network guard, workspace skeleton; CLI process, document CLI and hosts, retrieval, worker hosts; payload checks, smoke tooling, update feed configuration and server |
@@ -70,9 +70,9 @@ in Windows Sandbox or a VM with its adapters down).
   states. `tests/tooling/build-mode.test.ts` executes the emitted code of both build modes, including
   the picker override. E2E runs serially because Vite owns port 5173.
 - Other fixtures: `documents/` (text and scanned PDF, HTML, Markdown, office samples),
-  `i18n/missing-key.json`, `retrieval/` (questions and bge/e5 model manifests), `settings/version-0…3.json`
-  (migration to `schemaVersion` 4 keeping installation id and preferences), `upgrade/` (credentials v1
-  and newer, workbench v1 and newer, interrupted session).
+  `i18n/missing-key.json`, `retrieval/` (questions and bge/e5 model manifests), `app-data/` (current-format
+  `credentials.json`, `workbench.yaml` and the crash-recovery fixture `interrupted-sessions.json`). The
+  settings version fixtures and the `upgrade/` fixtures were removed with the migrations (07 §6).
 - `tests/fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario (14 on 2026-11-01).
   The format follows `09_Others/benchpilot-reference/apps/server/src/llm/replay.ts`; VERA's provider is
   `src/libraries/core/src/llm/replay.ts`. One line per model step; empty lines and `//` lines are
@@ -151,7 +151,7 @@ pending. `--resume` reuses the extraction of a failed run of the same artifact.
 |---|---|---|
 | Offline | none | extract or install into `Release é` (a space and a non-ASCII character); start; the copied demo (`Demo board é`) indexes with no failed document; a local embedding search returns results; a PDF opens and renders a painted canvas. A restart keeps the index and an SQLite session |
 | Scripted session | the test server's exact 127.0.0.1 port | an ask-mode session through the normal custom provider: `read`, an approved `write` of `notes/smoke-approved.md`, an answer citing `board.txt#L1-L2`, exactly 3 provider requests within budget. After a restart the session snapshot is identical and no request is sent |
-| Upgrade | not run by the smoke | `--upgrade-proof <upgrade-report.json>` attaches the instrumented WP-31/32 reports of `probe-upgrade.mjs` (07 §6) as supplementary evidence; the release upgrade status stays "pending". Not implemented as of 2026-11-01: an upgrade run on release artifacts |
+| Update | not run by the smoke | `--upgrade-proof <upgrade-report.json>` attaches the instrumented WP-31 updater-probe report of `probe-upgrade.mjs` (07 §5) as supplementary evidence; the release upgrade status stays "pending". Not implemented as of 2026-11-01: an update run on release artifacts. Data migration safety (WP-32) is deferred until the first public release |
 
 - Egress on Ubuntu, automated: every launch runs under
   `strace -f -s 4096 -v -e trace=connect,sendto,sendmsg`, which records the network calls of every

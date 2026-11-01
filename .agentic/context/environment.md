@@ -43,17 +43,15 @@ see [release smoke](../knowledge/release-smoke.md) for native strace calibration
 normal custom-provider approval/restart and pending manual Windows capture.
 Release and instrumented calibration builds are separate; M4 gate is coordinator-owned.
 
-Upgrade safety acceptance uses frozen settings0/1/2/3, credentials schema1 and
-workbench format1, plus previous SQLite0/1/2 fixtures in storage/upgrade-safety.test.ts.
-`scripts/probe-upgrade.mjs <owned-scratch> --migration-safety` observes actual NSIS/AppImage
-upgrade, prior settings/history and interrupted recovery before the next turn.
-tests/e2e/upgrade-safety.spec.ts checks native newer-data refusal/read-only UI and original
-file hashes/metadata including WAL/SHM/locks/backups. See [Upgrade safety](../knowledge/upgrade-safety.md).
+There is no upgrade-safety suite: every stored format is version 1 during development and any other
+version is invalid data (root AGENTS.md). Current-format fixtures live in tests/fixtures/app-data/:
+credentials.json, workbench.yaml and the crash-recovery interrupted-sessions.json.
 
 Update ticket acceptance uses shared/main/backend/core-approval/UI tests and immediate transports,
 tests/e2e/updates.spec.ts browser geometry/languages, and scripts/probe-upgrade.mjs with explicit owned scratch.
 The latter builds separately identified local instrumented artifacts and records real installed
-vN->vN+1, turn/approval deferral and packaged portable metadata-only results; it publishes nothing.
+vN->vN+1, SHA-512 refusal of a corrupt hash, turn/approval deferral and deb/portable metadata-only
+results; it publishes nothing. It does not check that settings, history or recovery survive an update.
 VERA_UPDATE_URL is a fixed build setting. Full M4 gate follows the verification policy owner.
 
 Skills acceptance uses catalog/schema/workbench/registry/session replay and immediate
@@ -67,14 +65,14 @@ session/artifact/registry/state/workspace/import-boundary consumers. Focused nat
 tests/e2e/citations.spec.ts exercises real PDF/Markdown/HTML/text/artifact tool refs,
 verified/warning chip presentation and restart persistence on Windows/Ubuntu.
 
-Local document retrieval uses embedding/search/migration/lifecycle units plus
+Local document retrieval uses embedding/search/schema/lifecycle units plus
 compiled document-hosts/document-cli, issued PDF session replay and native ingest
 E2E. eval:retrieval executes the frozen corpus with real local CPU product worker,
 persisted search and ADR0015 floors; see [document search](../knowledge/document-search.md).
 
-Keyword proof uses core knowledge/keyword.test.ts, storage/keyword-migration.test.ts
+Keyword proof uses core knowledge/keyword.test.ts, storage/keyword-schema.test.ts
 and real processor/watcher/SQLite ingest.test.ts; immediate database/repository,
-workbench and import-boundary checks cover migration and lifecycle consumers.
+workbench and import-boundary checks cover schema and lifecycle consumers.
 The configured strict run retains static checks under the verification policy.
 
 Retrieval comparison uses pinned Node scripts/compare-embeddings.mjs with owned scratch, local models and output paths. Explicit --prepare downloads verified assets; default inference is local/offline. Focused retrieval/packaging/extraction/boundary tests and native Windows/Ubuntu measurements accompany ADR0015; see [retrieval evaluation](../knowledge/retrieval-evaluation.md).
@@ -133,14 +131,14 @@ Compact chrome acceptance uses main/window-chrome.test.ts, shared/window-ipc.tes
 
 Windows and Ubuntu use separate platform Node distributions and npm native dependencies. Share sources and lockfile, use separate node_modules for platform validation.
 Core storage tests execute the pinned real better-sqlite3 addon against temporary databases, including
-WAL data, pre-step backups, compatibility refusal and repository rows. Use the focused db/repositories
+WAL data, current-schema validation and repository rows. Use the focused db/repositories
 and workbench service tests for changes, then the configured strict proof and serial native E2E.
 
 Executable-adjacent vera.portable selects adjacent data before readiness. Installed launches accept
 --user-data-dir for isolation; selected directories are created before Electron setPath. Portable
 regressions use faithful hosts enforcing directory existence, with temporary markers/executables.
 Credential/provider tests use injected deterministic crypto and temporary atomic files/logs; native Providers acceptance observes all IPC responses and cleared password drafts through reload/restart and explicit weak-storage choices. Settings/log tests use injected ports and temporary directories;
-native acceptance checks all UI theme/scale preferences and panel geometry across restarts, external event refresh and newer-schema protection through shutdown. Browser acceptance checks the three-language minimum-size matrix, keyboard focus, AA contrast, overlay, storage protection and localized save errors.
+native acceptance checks all UI theme/scale preferences and panel geometry across restarts, external event refresh and persistence through shutdown. Browser acceptance checks the three-language minimum-size matrix, keyboard focus, AA contrast, overlay, storage protection and localized save errors.
 
 ## Authoritative references
 

@@ -21,7 +21,6 @@
     "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
     "OFFLINE": "{{endpoint}} ist nicht erreichbar. Erneut versuchen.",
     "INTERNAL": "Ein interner Anwendungsfehler ist aufgetreten. Erneut versuchen.",
-    "WORKBENCH_TOO_NEW": "Dieser Arbeitsbereich wurde mit einer neueren VERA-Version erstellt.",
     "YAML_INVALID": "Ungültiges YAML in Zeile {{line}}, Spalte {{column}}.",
     "CONFIG_INVALID": "Ungültige Arbeitsbereichskonfiguration bei {{path}}, Zeile {{line}}."
   },
@@ -46,7 +45,6 @@
     "data": "Daten & Datenschutz",
     "about": "Über",
     "placeholder": "Dieser Bereich wird in einer zukünftigen Aktualisierung verfügbar sein.",
-    "readOnly": "Diese Einstellungen wurden von einer neueren Version geschrieben. Einstellungen sind schreibgeschützt.",
     "saving": "Einstellungen werden gespeichert…",
     "retry": "Erneut versuchen",
     "notifications": "Benachrichtigungen",

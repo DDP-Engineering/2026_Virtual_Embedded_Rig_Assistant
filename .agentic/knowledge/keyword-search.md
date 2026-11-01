@@ -42,7 +42,7 @@ Empty/punctuation queries return []. Only the current database schema is support
 
 ## Key behaviors
 
-- REQ-DATA-6c9447cb — atomic synchronized indexes/backfill and compatibility.
+- REQ-DATA-6c9447cb — atomic synchronized indexes.
 - REQ-FUNC-463b6c91 — deterministic word/fragment candidates and locators.
 
 ## Architecture

@@ -10,7 +10,7 @@ test("system language resolves native regional locales and safely falls back to 
   expect(resolveLanguage("ro", "de-DE")).toBe("ro");
 });
 
-test("layout storage validates geometry, preserves future versions and tolerates denied storage", () => {
+test("layout storage validates geometry, uses defaults for other formats and tolerates denied storage", () => {
   let raw: string | null = null;
   const storage = {
     getItem: (key: string) => {
@@ -22,24 +22,19 @@ test("layout storage validates geometry, preserves future versions and tolerates
       raw = value;
     },
   };
-  expect(readLayout(storage)).toEqual({ layout: defaultLayout, readOnly: false });
+  expect(readLayout(storage)).toEqual(defaultLayout);
   const resized = { ...defaultLayout, sidebar: 19.5, right: 25, rightCollapsed: false };
-  saveLayout(storage, resized, false);
-  expect(readLayout(storage)).toEqual({ layout: resized, readOnly: false });
+  saveLayout(storage, resized);
+  expect(readLayout(storage)).toEqual(resized);
   raw = JSON.stringify({ ...resized, sidebar: 300 });
-  expect(readLayout(storage).layout).toEqual(defaultLayout);
+  expect(readLayout(storage)).toEqual(defaultLayout);
   raw = JSON.stringify({ ...resized, extra: true });
-  expect(readLayout(storage).layout).toEqual(defaultLayout);
-  raw = '{ "version": 99, "future": "preserve" }';
-  const before = raw;
-  const future = readLayout(storage);
-  expect(future.readOnly).toBe(true);
-  saveLayout(storage, resized, future.readOnly);
-  expect(raw).toBe(before);
-  saveLayout(storage, resized, true);
-  expect(raw).toBe(before);
+  expect(readLayout(storage)).toEqual(defaultLayout);
+  // Version 1 is the only layout format during development (AGENTS.md).
+  raw = JSON.stringify({ ...resized, version: 2 });
+  expect(readLayout(storage)).toEqual(defaultLayout);
   raw = "{";
-  expect(readLayout(storage).layout).toEqual(defaultLayout);
+  expect(readLayout(storage)).toEqual(defaultLayout);
   const denied = {
     getItem: () => {
       throw new Error("denied");
@@ -48,23 +43,23 @@ test("layout storage validates geometry, preserves future versions and tolerates
       throw new Error("denied");
     },
   };
-  expect(readLayout(denied).layout).toEqual(defaultLayout);
-  expect(() => saveLayout(denied, resized, false)).not.toThrow();
+  expect(readLayout(denied)).toEqual(defaultLayout);
+  expect(() => saveLayout(denied, resized)).not.toThrow();
 });
 
 // REQ-UX-b3231a55
-test("layout storage keeps a separate Source width and loads an older layout with its default", () => {
+test("layout storage keeps a separate Source width that a stored layout must hold", () => {
   const values = new Map<string, string>();
   const storage = {
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => void values.set(key, value),
   };
   expect(defaultLayout.source).toBe(36);
-  const { source: _source, ...older } = defaultLayout;
-  values.set(layoutKey, JSON.stringify({ ...older, right: 25 }));
-  expect(readLayout(storage).layout).toEqual({ ...defaultLayout, right: 25 });
-  saveLayout(storage, { ...defaultLayout, source: 64 }, false);
-  expect(readLayout(storage).layout.source).toBe(64);
+  saveLayout(storage, { ...defaultLayout, source: 64 });
+  expect(readLayout(storage).source).toBe(64);
+  const { source: _source, ...without } = defaultLayout;
+  values.set(layoutKey, JSON.stringify({ ...without, right: 25 }));
+  expect(readLayout(storage)).toEqual(defaultLayout);
   values.set(layoutKey, JSON.stringify({ ...defaultLayout, source: 95 }));
-  expect(readLayout(storage).layout).toEqual(defaultLayout);
+  expect(readLayout(storage)).toEqual(defaultLayout);
 });

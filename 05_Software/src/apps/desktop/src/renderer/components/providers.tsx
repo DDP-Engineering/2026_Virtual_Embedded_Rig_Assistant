@@ -30,7 +30,7 @@ const presets = {
   ollama: { name: "Ollama", url: "http://localhost:11434/v1" },
   other: { name: "", url: "" },
 };
-export function Providers({ readOnly }: { readOnly: boolean }) {
+export function Providers() {
   const { t } = useTranslation();
   const client = useQueryClient();
   const prefix = useId();
@@ -99,7 +99,7 @@ export function Providers({ readOnly }: { readOnly: boolean }) {
       setPending(false);
     }
   }
-  const disabled = readOnly || !!list.data?.readOnly || pending;
+  const disabled = pending;
   const openai = list.data?.openai;
   const hasOpenai = !!(openai?.configured || openai?.model);
   const locked = disabled || !!editing;

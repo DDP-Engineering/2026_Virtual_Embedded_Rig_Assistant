@@ -21,7 +21,6 @@
     "PROVIDER": "The provider could not complete the request.",
     "OFFLINE": "Cannot reach {{endpoint}}. Retry.",
     "INTERNAL": "An internal application error occurred. Retry.",
-    "WORKBENCH_TOO_NEW": "This workbench was created by a newer VERA version.",
     "YAML_INVALID": "Invalid YAML at line {{line}}, column {{column}}.",
     "CONFIG_INVALID": "Invalid workbench configuration at {{path}}, line {{line}}."
   },
@@ -46,7 +45,6 @@
     "data": "Data & privacy",
     "about": "About",
     "placeholder": "This section will be available in a future update.",
-    "readOnly": "These settings were written by a newer version. Preferences are read-only.",
     "saving": "Saving preferences…",
     "retry": "Retry",
     "notifications": "Notifications",

@@ -41,7 +41,7 @@ Rules:
 | `tools/knowledge.ts` | 138 | `tools/documents.ts` | FTS5 search and document reading become the keyword part of `search_docs`, and `read_doc` |
 | `skills/load.ts`, `content.ts` | 25, 41 | `skills/catalog.ts`, `workbench/` | keep the frontmatter split and zod validation; add the user skill folder; limits per 02 §5 |
 | `testbench/load.ts` | 61 | `workbench/` | from loading a testbench folder to create, open and validate a workbench |
-| `db/index.ts`, `db/schema.sql`, `db/repos/` | 34, 87, — | `storage/` | keep the better-sqlite3 set-up and repository style; schema per 02 §9; add checksummed migrations (built, then removed in commit 33e72b8: `storage/schema.ts` creates one fixed schema v3) |
+| `db/index.ts`, `db/schema.sql`, `db/repos/` | 34, 87, — | `storage/` | keep the better-sqlite3 set-up and repository style; schema per 02 §9; add checksummed migrations (built, then removed in commit 33e72b8: `storage/schema.ts` creates one complete schema, `schema_version` 1) |
 | `cli/chat.ts`, `cli/bench.ts` | 138, 117 | `src/apps/cli/` | `chat --script` becomes `vera run` |
 
 ## Shared — `09_Others/benchpilot-reference/packages/shared/src/` → VERA `src/libraries/shared/src/`

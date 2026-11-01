@@ -102,9 +102,9 @@ function noSecretFields(value: unknown): boolean {
     );
   return true;
 }
-export const openaiSettingsSchema = z.looseObject({ model: model.optional() }).refine(noSecretFields);
+export const openaiSettingsSchema = z.strictObject({ model: model.optional() }).refine(noSecretFields);
 export const customSettingsSchema = z
-  .looseObject({
+  .strictObject({
     ...configFields,
     slug: z
       .string()
@@ -114,7 +114,7 @@ export const customSettingsSchema = z
   .refine(budget)
   .refine(noSecretFields);
 export const providerSettingsSchema = z
-  .looseObject({ openai: openaiSettingsSchema, custom: z.array(customSettingsSchema).max(100) })
+  .strictObject({ openai: openaiSettingsSchema, custom: z.array(customSettingsSchema).max(100) })
   .refine(noSecretFields)
   .refine(
     (value) =>
@@ -150,7 +150,6 @@ export const providerListSchema = z.strictObject({
     z.strictObject({ ...configFields, slug: z.string(), id: customProviderIdSchema, ...metadata }),
   ),
   secureStorage: z.boolean(),
-  readOnly: z.boolean(),
 });
 export const providerSaveResultSchema = z.strictObject({ status: z.enum(["saved", "consent-required"]) });
 export const providerRemoveSchema = z.strictObject({ id: providerIdSchema });

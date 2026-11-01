@@ -66,7 +66,6 @@ async function harness(layout: Record<string, string>, docs: { include: string[]
     writeAtomic: async (path: string, text: string) => {
       await writeFile(path, text);
     },
-    backup: async () => true,
   };
   const settings = new SettingsService({
     files,
@@ -179,7 +178,7 @@ it("drops a stored row of a non-document file on the next reconciliation and kee
   );
   const repository = new DocumentsRepository(h.service.getDatabase());
   const board = repository.get("docs/board.pdf");
-  // A row indexed by an earlier version that still selected source code.
+  // A row indexed under an earlier selection that still included source code.
   repository.save({
     path: "src/main.c",
     kind: "text",

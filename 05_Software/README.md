@@ -2,7 +2,7 @@
 
 For already-built release acceptance, use `npm run smoke:package -- --artifact <path>`;
 see [release smoke](../06_SoftwareDocu/release-package-smoke.md) for external egress,
-separate test-renderer calibration, original upgrade report bindings and pending manual Windows capture.
+separate test-renderer calibration, original updater-probe (`--upgrade-proof`) report bindings and pending manual Windows capture.
 
 The npm workspaces of VERA — `src/libraries/shared`, `src/libraries/core`, `src/apps/desktop`, `src/apps/cli` — with
 end-to-end tests and development scripts. Layout and module boundaries:
@@ -123,11 +123,11 @@ core publishes host ports and versioned settings; CLI composes the durable sessi
 resolves core/shared from source; sandbox preload/renderer resolve shared from source,
 so build and development work before compiled library output exists.
 
-The desktop shell displays name, version, platform, architecture, portable marker and OS locale from `app.info`, and saves normal window bounds in `<userData>/window-state.json`.
+The desktop shell displays name, version, platform, architecture, portable marker and OS locale from `app.info`, and saves normal window bounds in `<userData>/window-state.json` (version 1). An invalid, other-version or off-screen file uses centred defaults and is overwritten on close.
 Welcome and Settings use memory navigation; Ctrl+, opens Settings without changing the authorized URL.
 Appearance selects Light/Dark/System and five text scales from a 14px base; controls and code use rem.
 Main follows the saved preference with nativeTheme.themeSource. Panels resize by pointer or arrow/Home/End keys and collapse; right-panel content overlays below1280px.
-Renderer geometry lives in the separately versioned localStorage key vera.ui.layout; future versions and read-only settings preserve stored bytes.
+Renderer geometry lives in the separate localStorage key vera.ui.layout at version 1, with a required source width; invalid or other-version data uses the defaults.
 The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Updates, Data & privacy and About are placeholder sections (About also shows metadata).
 
 Skills settings opens from Edit workbench → Tools/skills or session Context. Skills live at
@@ -188,17 +188,19 @@ Full scripted session, update and external egress acceptance belongs to WP31–3
 
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
 app.info, app.settings.get/update and app subscriptions in memory. The OpenAI browser fixture catalog contains mock-openai and is available offline before auth; mock Test honors explicit model overrides and separate authentication. The API exposes
-getSettings/updateSettings returning {settings,readOnly}. TanStack Query owns metadata and settings snapshots; mutations apply confirmed preferences and settings.changed invalidates the cache.
+getSettings/updateSettings returning {settings}. TanStack Query owns metadata and settings snapshots; mutations apply confirmed preferences and settings.changed invalidates the cache.
 i18next catalogs in `src/renderer/locales/{en,ro,de}.json` cover labels, accessible names and structured error keys/params. System language resolves the OS locale, with English fallback. App subscriptions are invalidation signals; later event domains
 add their own schemas and services. `portable` reports a `vera.portable` marker beside the executable;
 the regular marker selects adjacent data before readiness. Installed mode uses Electron userData,
 with --user-data-dir available for isolated tests. Selected portable/override directories are created
 before Electron setPath and readiness; existing contents persist and creation errors propagate.
-Settings live in settings.json, schema version 4; defaultModel is a nullable validated provider/model reference.
-Versions0/1/2/3 migrate after an exclusive original-byte bak-n; future schemas expose read-only defaults.
+Settings live in settings.json, schemaVersion 1; defaultModel is a nullable validated provider/model reference.
+The schema is strict: unknown keys are invalid and webAccess is required. Settings are never read-only.
+An unreadable or invalid file, including any other schemaVersion, gives INVALID, stays untouched and stops
+startup (app.startup.failed); the CLI fails the same way. There are no migrations or backups.
 Accepted partial updates serialize and emit settings.changed after successful atomic saves.
 Host logs retain seven UTC daily JSON-line files under userData/logs and redact registered secrets.
-[Application data](../.agentic/knowledge/app-data.md) routes schemas, migrations and host adapters.
+[Application data](../.agentic/knowledge/app-data.md) routes schemas, validation and host adapters.
 
 Before browser acceptance, run `python ../02_Tools/npmw.py npx playwright install chromium` once
 (Ubuntu: python3). In PowerShell, browser mock development uses `$env:VITE_API="mock"`, then
@@ -263,18 +265,19 @@ document indexing exclude `.vera`; skills use the dedicated bounded loader.
 The current layout is authoritative: opening requires `.vera/workbench.yaml`.
 Root-level files are ordinary project content and are never detected or migrated.
 Global application settings, credentials and user skills remain in userData.
-New databases are created directly with the complete current schema. Existing databases
-are validated and opened without migrations or automatic database backups; their data
-and metadata are preserved. Unsupported or incomplete schemas are refused without repair.
+New databases are created directly with the complete current schema, meta schema_version "1".
+Existing databases are validated and opened without migrations or automatic database backups;
+their data and metadata are preserved. Any other schema_version or an incomplete schema gives
+INVALID without repair, and the file stays untouched.
 Workbench creation and opening manage only `.vera/`; they do not create or impose
 a `docs/` directory. Document folders belong to the user. The default `docs/**`
 indexing pattern is configurable through `docs.include` and `docs.exclude` in
 `.vera/workbench.yaml` and does not create folders. Existing document folders are
 left in place.
 
-Welcome creates a workbench in an existing chosen folder without .vera/workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in schema4 settings; versions0/1/2/3 migrate with byte-identical backups. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the .vera/WORKBENCH.md editor; context above16KB warns and saves full content.
+Welcome creates a workbench in an existing chosen folder without .vera/workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in settings. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the .vera/WORKBENCH.md editor; context above16KB warns and saves full content.
 
-Workbench format1 retains unknown keys and warns. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
+Workbench format1 retains unknown keys and warns; any other format gives CONFIG_INVALID at path format. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
 
 For native folder-dialog acceptance, compile instrumented code by setting VERA_TEST=1 before npm run test:e2e. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from tests/fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
 
@@ -352,8 +355,10 @@ Portable announces notes and offers a confirmed browser link; deb uses its packa
 
 The local acceptance command is `node scripts/probe-upgrade.mjs <absolute-owned-scratch>`.
 It builds distinct instrumented0.31.0/0.31.1 artifacts with a compile-time loopback feed
-and records actual SHA512 refusal, installed upgrade, real approval/turn deferral and
-Windows portable metadata-only results. Its NSIS/AppImage launch fixtures retain an
+and records managed (deb) metadata-only checks, required SHA512 with refusal of a corrupt hash,
+installation deferred until a pending approval finishes followed by a real install, and a
+portable release link. It does not check that settings, history or recovery survive an update;
+upgrade data safety is deferred until the first public release. Its NSIS/AppImage launch fixtures retain an
 explicit isolated userData directory across restart. These are test artifacts and
 connected-host evidence; release smoke, clean/offline Windows/CRT and separate Linux
 kernel acceptance remain required under the release policy. The command publishes nothing.

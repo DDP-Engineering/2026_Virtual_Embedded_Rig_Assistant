@@ -4,9 +4,9 @@ id = "REQ-REL-514e47d3"
 
 title = "Refuse reordering when settings are read-only"
 
-status = "active"
+status = "retired"
 
-requirement = "If the user settings are read-only, then VERA shall refuse a workbench or session move with DENIED and keep the stored orders unchanged."
+requirement = "If the user settings are read-only, then VERA shall refuse a workbench or session move with DENIED and keep the stored orders unchanged. Retired 2026-11-01: settings are never read-only, so this refusal no longer exists."
 
 verification = "Core and main tests with read-only settings: a workbench move and a session move each fail with DENIED and the settings stay byte-identical."
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-31
-updated = 2026-10-31
+updated = 2026-11-01

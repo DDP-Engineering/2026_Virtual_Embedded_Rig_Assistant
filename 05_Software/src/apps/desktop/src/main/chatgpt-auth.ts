@@ -61,7 +61,7 @@ export class ChatgptAuth {
     });
   }
   async login(input: ChatgptLogin): Promise<ChatgptStatus> {
-    if (this.closed || this.host.settings.get().readOnly) throw veraError("DENIED");
+    if (this.closed) throw veraError("DENIED");
     if (this.loggingOut) throw veraError("BUSY");
     const parsed = chatgptLoginSchema.safeParse(input);
     if (!parsed.success) throw veraError("INVALID");
@@ -220,7 +220,7 @@ export class ChatgptAuth {
     return {};
   }
   async logout(): Promise<Record<string, never>> {
-    if (this.closed || this.host.settings.get().readOnly) throw veraError("DENIED");
+    if (this.closed) throw veraError("DENIED");
     if (this.loggingOut) throw veraError("BUSY");
     this.loggingOut = true;
     try {

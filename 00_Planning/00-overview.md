@@ -55,12 +55,12 @@ Exemple:
   germană, scurtături de tastatură configurabile, meniuri proprii în bara de titlu.
 - **Linie de comandă:** `vera run`, `vera index` și `vera search` folosesc același nucleu ca aplicația.
 
-**Încă nu există:** migrații ale bazei de date a workbench-ului (o versiune diferită a schemei e
-refuzată), interfață pentru căutarea în sesiuni (căutarea există doar în nucleu), workbench-ul demo
+**Încă nu există:** migrații de date și siguranța la upgrade (amânate până la prima lansare publică;
+în dezvoltare toate formatele rămân la versiunea 1, iar orice altă versiune e dată invalidă), interfață pentru căutarea în sesiuni (căutarea există doar în nucleu), workbench-ul demo
 și ghidul de început (scoase din cod pe 2026-10-26), mențiunea „unsigned build” în About, plugin-uri,
 serial, cameră, voce, macOS. Pagina *Plugins* din aplicație anunță doar integrările planificate.
 
-**Verificări rămase deschise:** rularea pe un Windows curat și offline, upgrade-ul verificat pe
+**Verificări rămase deschise:** rularea pe un Windows curat și offline, actualizarea verificată pe
 artefactele de release și dovada de rețea pe Windows (pktmon).
 
 ## Decizii cheie

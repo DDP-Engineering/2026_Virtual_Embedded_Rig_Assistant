@@ -58,7 +58,6 @@ export class WebAccessService {
         preferences: state.settings.webAccess,
         keys,
         secureStorage: this.host.credentials.secureStorage,
-        readOnly: state.readOnly,
       };
       if (this.host.credentials.containsSecret(snapshot)) throw veraError("INVALID");
       return snapshot;
@@ -80,7 +79,6 @@ export class WebAccessService {
     return this.enqueue(async () => {
       const input = parsed.data;
       const id = credentialId(input.provider);
-      if (this.host.settings.get().readOnly) throw veraError("DENIED");
       const savedKey = await this.host.credentials.read(id);
       if (
         input.enabled &&
@@ -126,7 +124,6 @@ export class WebAccessService {
     return this.enqueue(async () => {
       const state = this.host.settings.get();
       const id = credentialId(provider);
-      if (state.readOnly) throw veraError("DENIED");
       const restore = await this.host.credentials.checkpoint(id);
       this.saving = true;
       this.provider.revoke();

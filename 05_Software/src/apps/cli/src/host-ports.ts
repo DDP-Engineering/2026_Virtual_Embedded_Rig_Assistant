@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type FileHandle, mkdir, mkdtemp, open, readFile, rename, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { setTimeout } from "node:timers/promises";
@@ -148,26 +148,6 @@ export function createNodeFiles(clock: Clock): FileAccess {
       } finally {
         await rm(temporary, { force: true });
       }
-    },
-    async backup(path, content) {
-      await mkdir(dirname(path), { recursive: true });
-      let handle: FileHandle;
-      try {
-        handle = await open(path, "wx", 0o600);
-      } catch (error) {
-        if (errorCode(error) === "EEXIST") return false;
-        throw error;
-      }
-      try {
-        await handle.writeFile(content, "utf8");
-        await handle.sync();
-      } catch (error) {
-        await handle.close();
-        await rm(path, { force: true });
-        throw error;
-      }
-      await handle.close();
-      return true;
     },
   };
 }

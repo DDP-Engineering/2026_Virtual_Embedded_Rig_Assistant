@@ -1,12 +1,15 @@
 # M4 — Delivery
 
-PURPOSE: VERA installs, starts offline, updates itself and keeps users' data across versions.
-STATE: 2026-11-01 — implemented; WP-30…WP-33 and the M4 epic are closed in Gitea. This file is now a
+PURPOSE: VERA installs, starts offline and updates itself; keeping users' data across versions (WP-32)
+is deferred until the first public release.
+STATE: 2026-11-01 — implemented, except WP-32, which is deferred until the first public release and
+whose code and fixtures were removed. WP-30…WP-33 and the M4 epic are closed in Gitea. This file is now a
 historical record of the plan: the WP text below is unchanged, and
 [Implementation notes](#implementation-notes-2026-11-01) record what the code does.
 DONE-WHEN: the DONE-WHEN of 07 holds — offline clean-machine install and a scripted loopback session
-on the Windows and Ubuntu release artifacts, an update vN → vN+1 from a test feed with sessions and
-settings intact, and an egress check with no unexpected connection (08 §5).
+on the Windows and Ubuntu release artifacts, an update vN → vN+1 from a test feed, and an egress check
+with no unexpected connection (08 §5). (The original text also required sessions and settings to stay
+intact across the update; that belongs to the deferred WP-32.)
 
 ## WP-30 Packaging targets
 
@@ -54,6 +57,15 @@ Done when:
 
 ## WP-32 Upgrade and migration safety
 
+**Status: deferred until the first public release.** During development every persisted format stays
+at version 1 and changes in place (root `AGENTS.md`, "Development compatibility policy"; 07 §6). Removed
+from the code: the settings v0–v3 migration chain and `.bak-<n>` backups, read-only modes for newer
+settings, window state and layout, the `WORKBENCH_TOO_NEW` error, the FileAccess `backup` port,
+`tests/e2e/upgrade-safety.spec.ts`, `scripts/upgrade-fixture.mjs`, the settings version fixtures and
+`tests/fixtures/upgrade/`, and the `--migration-safety` switch and data checks of
+`scripts/probe-upgrade.mjs`. The text below is the plan for the release; it is not implemented. The
+updater itself (WP-31) and crash recovery of interrupted sessions are current and stay.
+
 **Goal:** data survives upgrades, and newer data is never damaged by an older VERA.
 **Depends on:** WP-17, WP-30. **Specs:** 07 §6; 02 §9; 03 §6, §8; 01 §1 (L10).
 
@@ -94,14 +106,15 @@ Done when:
   extracts and starts on its target.
 - [ ] The scripted session passes on the release artifact, connecting only to its loopback endpoint.
 - [ ] On Ubuntu, a test build's deliberate request from the renderer makes the egress check fail.
-- [ ] The report names the tested artifacts by SHA-256 and includes the upgrade result of WP-31/32.
+- [ ] The report names the tested artifacts by SHA-256 and includes the updater result of WP-31
+  (`--upgrade-proof`). (The WP-32 data-migration result is deferred until the first public release.)
 
 ## Implementation notes (2026-11-01)
 
 Checked against the working tree on `master` (33e72b8 plus uncommitted changes) by reading code,
 scripts and tests; nothing was built or run. Paths are relative to `05_Software/`: `core/` =
 `src/libraries/core/src/`, `main/` and `renderer/` = `src/apps/desktop/src/main/`, `…/renderer/`.
-Clean-machine, Windows Sandbox and `pktmon` items are manual; no smoke or upgrade report is committed.
+Clean-machine, Windows Sandbox and `pktmon` items are manual; no smoke or update report is committed.
 
 - WP-30: implemented with deviation: the four targets, `package`/`package:test`, `asarUnpack`, the
   model, pre-packaging checks, compiled-out test switches and per-artifact SHA-256 exist
@@ -113,21 +126,25 @@ Clean-machine, Windows Sandbox and `pktmon` items are manual; no smoke or upgrad
 - WP-31: implemented as planned (`main/update-backend.ts:55-107`, `main/updates.ts:63-182`,
   `renderer/components/updates.tsx`, `scripts/update-feed.mjs`, `main/updates.test.ts:57-145`); the
   vN → vN+1, deferral and portable checks live in the manual test-build probe
-  `scripts/probe-upgrade.mjs`, which has no npm script.
-- WP-32: partly implemented: settings v0–v3 → v4, credential and workbench-format fixtures and the
-  read-only/newer banners exist (`core/settings/service.test.ts:37-60`, `main/credentials.test.ts:45-91`,
-  `core/workbench/service.test.ts:200-217`, `tests/e2e/upgrade-safety.spec.ts:56-146`); missing: any
-  workbench-database migration (schema fixed at v3, see M1 WP-07), the "created by a newer VERA"
-  message for a newer database — it shows the generic `INVALID` (`tests/e2e/upgrade-safety.spec.ts:126`)
-  — and a previous-version database for the interrupted-session fixture, which is seeded into the
-  current schema (`core/storage/session-recovery.test.ts:85`, `scripts/upgrade-fixture.mjs`).
+  `scripts/probe-upgrade.mjs`, which has no npm script. The probe keeps only the updater checks
+  (managed deb gets metadata only, SHA-512 required and a corrupt hash refused, install deferred until
+  approval finishes and then a real install, portable release link); the checks that settings, history
+  and recovery survive an update were removed.
+- WP-32: deferred until the first public release (policy 2026-11-01). An earlier build had settings
+  v0–v3 → v4 migrations, credential and workbench-format fixtures, read-only/newer banners and
+  `tests/e2e/upgrade-safety.spec.ts`; all of it was removed, and settings, credentials, window state,
+  layout, `workbench.yaml` and `vera.db` are now version 1 and reject any other version (07 §6). The
+  interrupted-session crash-recovery fixture is kept as `tests/fixtures/app-data/interrupted-sessions.json`
+  (`core/storage/session-recovery.test.ts`); `credentials.json` and `workbench.yaml` current-format
+  fixtures moved to `tests/fixtures/app-data/`.
 - WP-33: implemented with deviation: `smoke:package -- --artifact`, a path with a space and "é",
   updates Off, a loopback custom-provider session with tools, citation, approval and restart, `strace`
   egress on Ubuntu, artifact SHA-256 and `scripts/sandbox/VERA.wsb` exist (`scripts/smoke-package.mjs`,
   `scripts/smoke-runtime.mjs:98,261-267,412`, `scripts/smoke-egress.mjs`); the deliberate-request check
   runs in a separate `data:` probe window on development Electron, not in VERA's renderer in a test
   build (`scripts/smoke-calibration.mjs:47-68`); the report marks the release upgrade result and the
-  Windows `pktmon` evidence "pending" (`scripts/smoke-report.mjs:49-61`).
+  Windows `pktmon` evidence "pending" (`scripts/smoke-report.mjs`). `--upgrade-proof` binds the
+  original WP-31 updater-probe report as supplementary instrumented evidence.
 
 Not in the plan, implemented in this area:
 - An app-local Microsoft VC++ runtime beside onnxruntime (`scripts/prepare-windows-runtime.mjs`,

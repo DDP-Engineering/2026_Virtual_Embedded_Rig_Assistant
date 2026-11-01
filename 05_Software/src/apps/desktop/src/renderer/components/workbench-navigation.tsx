@@ -9,7 +9,7 @@ export function WorkbenchNavigation({
   entries,
   activeId,
   disabled,
-  settingsReadOnly,
+  settingsLoading,
   open,
   pin,
   move,
@@ -22,7 +22,7 @@ export function WorkbenchNavigation({
   entries: RecentWorkbenchState[];
   activeId: string | undefined;
   disabled: boolean;
-  settingsReadOnly: boolean;
+  settingsLoading: boolean;
   open: (folder: string) => Promise<boolean>;
   pin: (folder: string, value: boolean) => void;
   /** Moves a workbench one place within its pinned group; false when nothing moved. */
@@ -100,7 +100,7 @@ export function WorkbenchNavigation({
       ?.focus();
   }, [entries, disabled]);
   const shift = (entry: RecentWorkbenchState, offset: -1 | 1, selector: string) => {
-    if (!move || disabled || settingsReadOnly || atEdge(entry, offset)) return;
+    if (!move || disabled || settingsLoading || atEdge(entry, offset)) return;
     // Kept after a failed move too: the row then gets its focus back once it is enabled again.
     refocus.current = { id: entry.id, selector };
     void move(entry.folder, offset);
@@ -200,7 +200,7 @@ export function WorkbenchNavigation({
                 <div>
                   <button
                     type="button"
-                    disabled={disabled || settingsReadOnly}
+                    disabled={disabled || settingsLoading}
                     onClick={() => pin(entry.folder, !entry.pinned)}
                   >
                     {entry.pinned ? t("projects.unpin") : t("projects.pin")}
@@ -210,7 +210,7 @@ export function WorkbenchNavigation({
                       <button
                         type="button"
                         data-action="move-workbench-up"
-                        disabled={disabled || settingsReadOnly || atEdge(entry, -1)}
+                        disabled={disabled || settingsLoading || atEdge(entry, -1)}
                         onClick={() => shift(entry, -1, "summary")}
                       >
                         {t("projects.moveUp")}
@@ -218,7 +218,7 @@ export function WorkbenchNavigation({
                       <button
                         type="button"
                         data-action="move-workbench-down"
-                        disabled={disabled || settingsReadOnly || atEdge(entry, 1)}
+                        disabled={disabled || settingsLoading || atEdge(entry, 1)}
                         onClick={() => shift(entry, 1, "summary")}
                       >
                         {t("projects.moveDown")}
@@ -246,7 +246,7 @@ export function WorkbenchNavigation({
                   )}
                   <button
                     type="button"
-                    disabled={disabled || settingsReadOnly}
+                    disabled={disabled || settingsLoading}
                     onClick={() => remove(entry.folder)}
                   >
                     {t("projects.remove")}

@@ -49,7 +49,6 @@ async function harness(
     writeAtomic: async (p: string, v: string) => {
       disk.set(p, v);
     },
-    backup: async () => true,
   };
   const logger = { log: vi.fn(), registerSecret: vi.fn(() => () => {}), flush: async () => {} };
   const settings = new SettingsService({

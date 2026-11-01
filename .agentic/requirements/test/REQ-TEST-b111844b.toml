@@ -9,15 +9,15 @@ schema = 1
 
 id = "REQ-TEST-b111844b"
 
-title = "Bind smoke and upgrade outcomes to immutable artifacts"
+title = "Bind smoke and upgrade-proof outcomes to immutable artifacts"
 
 status = "active"
 
 requirement = """
-The package smoke report shall bind run outcomes to artifact SHA256, version and platform and preserve exact supplementary upgrade artifact results and manual Windows egress status without claiming absent proof as passing.
+The package smoke report shall bind run outcomes to artifact SHA256, version and platform and preserve exact supplementary updater-probe (upgrade-proof) artifact results and manual Windows egress status without claiming absent proof as passing.
 """
 
-verification = "Inspect artifact/report/log hashes and original upgrade projections; missing manual evidence stays pending; invalid identity or missing artifact bindings rejects manual/upgrade input."
+verification = "Inspect artifact/report/log hashes and original upgrade-proof projections; missing manual evidence stays pending; invalid identity or missing artifact bindings rejects manual/upgrade-proof input."
 
 affected_paths = ["05_Software/scripts/smoke-report.mjs", "05_Software/scripts/smoke-package.mjs", "05_Software/scripts/sandbox/VERA.wsb"]
 
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-10-13
+updated = 2026-11-01

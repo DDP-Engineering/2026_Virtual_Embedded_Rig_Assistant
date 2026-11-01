@@ -60,7 +60,7 @@ it("serializes memory credential mutations, retains undefined values and honors 
   expect(registered).toEqual(["first", "second"]);
   await store.close();
 });
-it("cleans owned temporary paths and preserves supplied data plus atomic backup bytes", async () => {
+it("cleans owned temporary paths and preserves supplied data and atomic writes", async () => {
   const owned = await createPaths(),
     path = owned.paths.userData;
   await owned.close();
@@ -71,12 +71,9 @@ it("cleans owned temporary paths and preserves supplied data plus atomic backup 
       files = createNodeFiles(nodeClock);
     await writeFile(join(dir, "keep"), "original");
     await files.writeAtomic(supplied.paths.settings, "exact\nbytes");
-    expect(await files.backup(join(dir, "backup"), "original\n")).toBe(true);
-    expect(await files.backup(join(dir, "backup"), "replacement")).toBe(false);
     await supplied.close();
     expect(await readFile(join(dir, "keep"), "utf8")).toBe("original");
     expect(await files.read(supplied.paths.settings)).toBe("exact\nbytes");
-    expect(await readFile(join(dir, "backup"), "utf8")).toBe("original\n");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

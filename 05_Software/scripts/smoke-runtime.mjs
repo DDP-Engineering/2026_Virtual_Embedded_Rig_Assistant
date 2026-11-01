@@ -243,8 +243,9 @@ export async function seedData(data) {
   await writeFile(
     join(data, "settings.json"),
     JSON.stringify({
-      schemaVersion: 4,
+      schemaVersion: 1,
       installationId: randomUUID(),
+      webAccess: { enabled: true, provider: "exa", authentication: "anonymous" },
       language: "en",
       theme: "light",
       textScale: 1,

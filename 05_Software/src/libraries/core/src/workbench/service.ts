@@ -77,15 +77,6 @@ export function parseConfig(text: string): WorkbenchConfig {
   } catch {
     throw veraError("INVALID");
   }
-  if (
-    typeof data === "object" &&
-    data !== null &&
-    "format" in data &&
-    typeof data.format === "number" &&
-    Number.isInteger(data.format) &&
-    data.format > 1
-  )
-    throw veraError("WORKBENCH_TOO_NEW");
   const parsed = workbenchSchema.safeParse(data);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -558,22 +549,20 @@ export class WorkbenchService {
             ? await openDb(databasePath, { ...storageOptions, readOnly: acquired.readOnly })
             : undefined;
       const snapshot = this.host.settings.get();
-      if (!snapshot.readOnly) {
-        // A listed workbench keeps the place the user gave it; a new one goes first.
-        const recent = snapshot.settings.recentWorkbenches;
-        const index = recent.findIndex((entry) => entry.folder === folder);
-        const entry = {
-          ...recent[index],
-          folder,
-          name: config.name,
-          id: config.id,
-          lastOpened: this.host.now().toISOString(),
-        };
-        await this.host.settings.update({
-          recentWorkbenches:
-            index < 0 ? [entry, ...recent] : recent.map((item, at) => (at === index ? entry : item)),
-        });
-      }
+      // A listed workbench keeps the place the user gave it; a new one goes first.
+      const recent = snapshot.settings.recentWorkbenches;
+      const index = recent.findIndex((entry) => entry.folder === folder);
+      const entry = {
+        ...recent[index],
+        folder,
+        name: config.name,
+        id: config.id,
+        lastOpened: this.host.now().toISOString(),
+      };
+      await this.host.settings.update({
+        recentWorkbenches:
+          index < 0 ? [entry, ...recent] : recent.map((item, at) => (at === index ? entry : item)),
+      });
     } catch (error) {
       if (database !== this.database) database?.close();
       if (newlyOwned && acquired.owned) await this.release(acquired.owned);
@@ -685,12 +674,11 @@ export class WorkbenchService {
           this.ingest?.request();
         }
         const settings = this.host.settings.get();
-        if (!settings.readOnly)
-          await this.host.settings.update({
-            recentWorkbenches: settings.settings.recentWorkbenches.map((entry) =>
-              entry.folder === state.folder ? { ...entry, name: config.name } : entry,
-            ),
-          });
+        await this.host.settings.update({
+          recentWorkbenches: settings.settings.recentWorkbenches.map((entry) =>
+            entry.folder === state.folder ? { ...entry, name: config.name } : entry,
+          ),
+        });
         return { config: structuredClone(config), warnings };
       }),
     );
@@ -714,7 +702,6 @@ export class WorkbenchService {
     return this.run(async () => {
       let snapshot = this.host.settings.get();
       if (move !== undefined) {
-        if (snapshot.readOnly) throw veraError("DENIED");
         snapshot = await this.host.settings.update({
           recentWorkbenches: moveRecentWorkbench(
             snapshot.settings.recentWorkbenches,
@@ -724,7 +711,6 @@ export class WorkbenchService {
         });
       }
       if (pin !== undefined) {
-        if (snapshot.readOnly) throw veraError("DENIED");
         if (!snapshot.settings.recentWorkbenches.some((entry) => entry.folder === pin.folder))
           throw veraError("NOT_FOUND");
         snapshot = await this.host.settings.update({
@@ -734,7 +720,6 @@ export class WorkbenchService {
         });
       }
       if (remove !== undefined) {
-        if (snapshot.readOnly) throw veraError("DENIED");
         snapshot = await this.host.settings.update({
           recentWorkbenches: snapshot.settings.recentWorkbenches.filter((entry) => entry.folder !== remove),
         });

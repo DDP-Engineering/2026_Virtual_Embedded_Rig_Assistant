@@ -37,7 +37,6 @@ export const webAccessSnapshotSchema = z.strictObject({
   preferences: webAccessSettingsSchema,
   keys: z.record(webProviderIdSchema, webCredentialMetadataSchema),
   secureStorage: z.boolean(),
-  readOnly: z.boolean(),
 });
 export const webAccessTestSchema = z
   .strictObject({

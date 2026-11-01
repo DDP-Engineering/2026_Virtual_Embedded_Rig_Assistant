@@ -1,7 +1,7 @@
 # Exact release artifact smoke
 
 `smoke:package -- --artifact <path>` accepts native NSIS/portableZIP/AppImage/deb,
-never builds or downloads. A fresh owned root contains `Release é` and Off schema4
+never builds or downloads. A fresh owned root contains `Release é` and Off schemaVersion 1
 settings. NSIS inventory precedes execution: existing VERA identity triggers
 extraction with actual installer acceptance pending, protecting installed data.
 Windows extraction requires cached pinned builder7Zip; Linux formats extract.
@@ -31,9 +31,9 @@ must reach the HTTP server and fail the same oracle; product window/CSP unchange
 
 Report schema1: SHA/bytes/version/platform, binary/ASAR identities, launch
 argv/cwd/time/PID/exit/log hashes, runtime, trace/oracle, per-run outcomes, HTTP
-request transcript. Original upgrade reports preserve SHA/exact artifacts/checks
-and supplementary instrumented connected-host classification; release upgrade
-pending. Missing actual Windows capture stays pending; manual evidence binds
+request transcript. Original WP31 updater-probe reports (`--upgrade-proof`) preserve
+SHA/exact artifacts/checks and supplementary instrumented connected-host
+classification; release upgrade pending. Missing actual Windows capture stays pending; manual evidence binds
 artifact and capture SHA. Exit0 completePASS,1FAIL,2functionalPASS/manual pending.
 
 Optional `--resume <owned failed root>` excludes scratch, verifies exact artifact

@@ -54,7 +54,7 @@ export function Settings({
 }) {
   const { t } = useTranslation();
   const sections = useSettingsSections();
-  const disabled = snapshot.readOnly || saving;
+  const disabled = saving;
   const chatFontSize = snapshot.settings.chatFontSize ?? typographyDefaults.chatFontSize;
   const codeFontSize = snapshot.settings.codeFontSize ?? typographyDefaults.codeFontSize;
   const sizes = [
@@ -79,11 +79,6 @@ export function Settings({
       // biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA tab panel keyboard focus, including empty pages.
       tabIndex={0}
     >
-      {snapshot.readOnly && (
-        <p role="status" data-i18n="settings.readOnly">
-          {t("settings.readOnly")}
-        </p>
-      )}
       {saving && (
         <p role="status" data-i18n="settings.saving">
           {t("settings.saving")}
@@ -91,9 +86,9 @@ export function Settings({
       )}
       {Boolean(error) && <ErrorMessage error={error} />}
       <div hidden={section !== "providers"}>
-        <Providers readOnly={snapshot.readOnly} />
+        <Providers />
       </div>
-      {section === "web" && <WebAccessPanel readOnly={snapshot.readOnly} />}
+      {section === "web" && <WebAccessPanel />}
       <section
         hidden={section !== "appearance"}
         className="surface"

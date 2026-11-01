@@ -634,7 +634,6 @@ export function createMockApi(
             ]),
           ),
           secureStorage: true,
-          readOnly: scenario === "read-only",
         };
         break;
       case "web.access.save": {
@@ -868,7 +867,6 @@ export function createMockApi(
             ...meta(`custom:${c.slug}`, true),
           })),
           secureStorage: true,
-          readOnly: false,
         };
         break;
       }
@@ -935,7 +933,7 @@ export function createMockApi(
         value = {};
         break;
       case "app.settings.get":
-        value = { settings, readOnly: false };
+        value = { settings };
         break;
       case "app.settings.update": {
         const next = mergeSettings(settings, settingsPatchSchema.parse(input.data));
@@ -943,7 +941,7 @@ export function createMockApi(
           settings = next;
           emitAppEvent({ type: "settings.changed" });
         }
-        value = { settings, readOnly: false };
+        value = { settings };
         break;
       }
       case "app.chooseFolder":

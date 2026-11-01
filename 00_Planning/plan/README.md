@@ -11,10 +11,10 @@ each milestone file. New work is planned in `../plugins/plan.md` and `../capabil
 | Milestone | Outcome |
 |---|---|
 | M0 | Implemented. shadcn/ui only scaffolded (hand-written CSS); six text sizes plus separate chat/code sizes; custom window chrome; the WP-05 measurement record was later deleted (ADR-0013) |
-| M1 | Implemented. A send during a running turn is queued as steering instead of refused with BUSY; the prompt size is not shown in the UI; the workbench database has no migrations (schema v3 fixed) |
+| M1 | Implemented. A send during a running turn is queued as steering instead of refused with BUSY; the prompt size is not shown in the UI; the workbench database has no migrations (one complete schema, `schema_version` 1; any other value is INVALID) |
 | M2 | Implemented, plus a fourth permission mode `bypass`. `.vera/` is refused outright outside bypass, so "protected paths ask in auto-edit" only applies to `web_download` |
 | M3 | Implemented. Office documents are indexed; `.log` files are not; default chunking uses 1 400-character windows; indexing runs in the VERA Indexer utility process; the retrieval eval does not use the product's chunking |
-| M4 | Implemented. No size budget (removed 2026-11-01, ADR-0017); About shows no "unsigned build" label; database migrations not implemented; clean offline Windows, release-artifact upgrade and Windows pktmon evidence still pending |
+| M4 | Implemented. No size budget (removed 2026-11-01, ADR-0017); About shows no "unsigned build" label; WP-32 (upgrade and migration safety) is deferred until the first public release and its code and fixtures were removed; clean offline Windows, release-artifact update and Windows pktmon evidence still pending |
 | M5 | Implemented, except: session search has no UI; the demo workbench and onboarding were removed on 2026-10-26 (WP-37 now means fictional verification fixtures); human review of `ro`/`de` translations is not recorded |
 | Beyond the plan | web search/read (Exa, Tavily, Brave) and approved `web_download`; reasoning-level picker; session archive and manual ordering; customisable keyboard shortcuts; CLI `vera index` and `vera search` |
 
@@ -33,7 +33,7 @@ each milestone file. New work is planned in `../plugins/plan.md` and `../capabil
 | **M1 Read-only agent** | [M1-read-only-agent.md](M1-read-only-agent.md) | the agent reads and cites files; every request fits its context budget, including a long first turn; grep timeout/abort leaves IPC responsive; sessions survive restart; `vera run` prints the same events headless; real-provider smoke is manual |
 | **M2 Edits, artifacts, ChatGPT** | [M2-edits-artifacts-chatgpt.md](M2-edits-artifacts-chatgpt.md) | approval is bound to one exact change and used once; sessions share one write queue per workbench; restart recovers interrupted approvals and writes; protected paths ask even in `auto-edit` (as built: `.vera/` is refused outside `bypass`, so only `web_download` asks in `auto-edit`); panels and ChatGPT sign-in work |
 | **M3 Knowledge** | [M3-knowledge.md](M3-knowledge.md) | demo PDFs, Markdown and logs index in the background; hybrid `search_docs` meets the recall threshold; citations open the viewer at the cited page; skills load from workbench and user folders |
-| **M4 Delivery** | [M4-delivery.md](M4-delivery.md) | release artifacts install and index offline on both systems; a scripted loopback endpoint drives the normal provider path; the egress check finds no unexpected connection; vN → vN+1 preserves data |
+| **M4 Delivery** | [M4-delivery.md](M4-delivery.md) | release artifacts install and index offline on both systems; a scripted loopback endpoint drives the normal provider path; the egress check finds no unexpected connection; vN → vN+1 updates through the updater (data preservation across versions is WP-32, deferred until the first public release) |
 | **M5 Version 1.0** | [M5-version-1.md](M5-version-1.md) | historical compaction extends the M1 context budget; messages can be sent during a turn; sessions export; fictional fixtures support verification; translations reviewed; final 1.0 release smoke passes |
 
 ## 3. Work packages
@@ -46,7 +46,7 @@ each milestone file. New work is planned in `../plugins/plan.md` and `../capabil
 | WP-04 | UI foundation: layout, themes, text size, languages | M0 | 03 |
 | WP-05 | Spike: native modules and the embedding model in packaged builds | M0 | 01 |
 | WP-06 | Workbench format, create and open, Welcome screen | M1 | 04 |
-| WP-07 | Workbench database and migrations | M1 | 05, 06 |
+| WP-07 | Workbench database and migrations (built without migrations: one schema, version 1) | M1 | 05, 06 |
 | WP-08 | Credential store and provider settings | M1 | 04 |
 | WP-09 | LLM gateway, connection test, replay provider | M1 | 08 |
 | WP-10 | Spike: agent runtime | M1 | 09 |
@@ -71,7 +71,7 @@ each milestone file. New work is planned in `../plugins/plan.md` and `../capabil
 | WP-29 | Skills | M3 | 12 |
 | WP-30 | Packaging targets | M4 | 05, 26 |
 | WP-31 | Auto-update | M4 | 30 |
-| WP-32 | Upgrade and migration safety | M4 | 17, 30 |
+| WP-32 | Upgrade and migration safety (deferred until the first public release) | M4 | 17, 30 |
 | WP-33 | Release-package smoke and egress check | M4 | 18, 28, 30, 31, 32 |
 | WP-34 | Advanced context compaction | M5 | 10, 13, 14 |
 | WP-35 | Messages during a running turn | M5 | 13, 14 |
@@ -124,7 +124,7 @@ in parallel from WP-01 and must finish before the database (WP-07).
 | R-07 | The package exceeds its size budget | retired 2026-11-01: no size budget (ADR-0017); the package report still lists the largest contributors | WP-30 |
 | R-08 | Agent-written code drifts from the architecture | laws of 01 §1, the import boundaries in `npm run lint`, review of every work package | all |
 | R-09 | A first turn or model switch exceeds context before historical compaction | budget every request from M1, including current-turn tool results; reserve output; explicit limit outcome | WP-09, WP-10, WP-13, WP-34 |
-| R-10 | Concurrent or interrupted edits apply stale or repeated approvals | approval bound to the change's digest and used once; one write queue per workbench; hash check before writing; `pending` changes resolved on restart | WP-16, WP-17, WP-32 |
+| R-10 | Concurrent or interrupted edits apply stale or repeated approvals | approval bound to the change's digest and used once; one write queue per workbench; hash check before writing; `pending` changes resolved on restart | WP-16, WP-17 |
 | R-11 | A pathological grep blocks the main process or ignores Stop | regex work in a terminable worker; host deadline and abort; responsiveness test | WP-11, WP-14, WP-15 |
 | R-12 | Instrumented-build results hide a release packaging or egress defect | separate artifacts; smoke on the release artifact by SHA-256; `strace` egress check on Ubuntu, Sandbox check on Windows | WP-30, WP-33 |
 

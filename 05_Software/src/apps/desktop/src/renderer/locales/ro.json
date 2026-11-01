@@ -21,7 +21,6 @@
     "PROVIDER": "Furnizorul nu a putut finaliza cererea.",
     "OFFLINE": "Nu se poate accesa {{endpoint}}. Reîncearcă.",
     "INTERNAL": "A apărut o eroare internă a aplicației. Reîncearcă.",
-    "WORKBENCH_TOO_NEW": "Acest spațiu de lucru a fost creat de o versiune VERA mai nouă.",
     "YAML_INVALID": "YAML invalid la linia {{line}}, coloana {{column}}.",
     "CONFIG_INVALID": "Configurație invalidă a spațiului de lucru la {{path}}, linia {{line}}."
   },
@@ -46,7 +45,6 @@
     "data": "Date și confidențialitate",
     "about": "Despre",
     "placeholder": "Această secțiune va fi disponibilă într-o actualizare viitoare.",
-    "readOnly": "Aceste setări au fost scrise de o versiune mai nouă. Preferințele sunt doar pentru citire.",
     "saving": "Se salvează preferințele…",
     "retry": "Reîncearcă",
     "notifications": "Notificări",

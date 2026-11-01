@@ -1,12 +1,12 @@
 schema = 1
 id = "REQ-DATA-87619ef8"
 title = "Provider settings format migration"
-status = "active"
-requirement = "When settings version2 are loaded, settings shall migrate to schema4 non-secret openai/custom configuration with an exclusive original-byte backup, stable installation identity and extensions, retaining future versions read-only."
+status = "retired"
+requirement = "When settings version2 are loaded, settings shall migrate to schema4 non-secret openai/custom configuration with an exclusive original-byte backup, stable installation identity and extensions, retaining future versions read-only. Retired 2026-11-01: the settings migration chain was removed; the development compatibility policy keeps every stored format at version 1 until the first public release."
 verification = "Settings tests load schema2 with extensions, verify schema4 and byte-identical bak2, restart and failed migration preservation, and future-schema refusal."
 affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/core/src/settings/service.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/settings/service.test.ts"]
 spec = "specs/REQ-SEC-fe4d5c4c.md"
 priority = "high"
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-11-01

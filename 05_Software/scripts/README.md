@@ -74,7 +74,7 @@ versionate. Generarea lor poate modifica fișiere urmărite de Git.
 | [package.mjs](package.mjs) | Pregătește resursele, compilează desktopul, asamblează dependențele native și produce installer-ele/pachetele platformei. Verifică payload-ul și separarea build-urilor; raportează dimensiunile, fără limită (ADR-0017). | `npm run package` pentru release; `npm run package:test` pentru build instrumentat. Generează staging în `release_tmp/`, artefacte și `package-report.json` în `release_tmp/{release,test}/`. Nu publică pachetele. |
 | [package-checks.mjs](package-checks.mjs) | Verificări reutilizabile pentru resurse PDF.js, fișiere native, hook-uri de test și conținutul payload-ului. | Modul intern importat de împachetare, probe și teste; nu are CLI propriu. |
 | [update-config.mjs](update-config.mjs) | Validează URL-ul feed-ului de actualizări și construiește configurația de publicare pentru electron-builder. | Modul importat de Vite și `package.mjs`; citește setarea furnizată la build. Release cere HTTPS; build-ul instrumentat permite și HTTP loopback. Nu publică nimic singur. |
-| [update-feed.mjs](update-feed.mjs) | Servește fișierele unui feed de actualizări local și înregistrează cererile. | Modul `startUpdateFeed(directory, port)` folosit de probele de upgrade; ascultă numai pe loopback și nu are CLI propriu. |
+| [update-feed.mjs](update-feed.mjs) | Servește fișierele unui feed de actualizări local și înregistrează cererile. | Modul `startUpdateFeed(directory, port)` folosit de proba de actualizare; ascultă numai pe loopback și nu are CLI propriu. |
 
 Împachetarea cere un host nativ Windows/Linux x64. Reface staging-ul și directorul
 de output al modului ales; nu este un director pentru arhivarea livrărilor.
@@ -97,29 +97,31 @@ directoarele explicit alese pentru diagnosticare sau în directoare temporare.
 | Fișier | Ce face | Cum este folosit / rezultat |
 |---|---|---|
 | [smoke-live.mjs](smoke-live.mjs) | Compilează un build release și lansează verificarea unui furnizor real prin aplicație. | `npm run smoke:live -- --provider openai` sau `--provider custom:slug`; acceptă `--data <userData>`. Folosește configurația/credențialele aplicației și poate trimite cereri reale furnizorului. |
-| [smoke-package.mjs](smoke-package.mjs) | Verifică un artefact release deja construit: extragere/instalare, pornire, indexare, PDF, unelte, aprobare și persistență după restart. Folosește un furnizor simulat local pentru fluxul scriptat. | `npm run smoke:package -- --artifact <path>`; opțional `--scratch <new-directory>`, `--resume <failed-run>`, `--upgrade-proof <report>` și `--windows-evidence <json>`. Nu compilează. Păstrează `smoke-report.json`, extrageri, profiluri izolate și loguri. Poate instala NSIS dacă nu există deja o instalare VERA. |
+| [smoke-package.mjs](smoke-package.mjs) | Verifică un artefact release deja construit: extragere/instalare, pornire, indexare, PDF, unelte, aprobare și persistență după restart. Folosește un furnizor simulat local pentru fluxul scriptat. | `npm run smoke:package -- --artifact <path>`; opțional `--scratch <new-directory>`, `--resume <failed-run>`, `--upgrade-proof <report>` (repetabil) și `--windows-evidence <json>`. Nu compilează. Păstrează `smoke-report.json`, extrageri, profiluri izolate și loguri. Poate instala NSIS dacă nu există deja o instalare VERA. |
 | [smoke-calibration.mjs](smoke-calibration.mjs) | Calibrează pe Linux observarea conexiunilor unui renderer instrumentat, folosind deliberat un endpoint care trebuie detectat de oracle-ul de rețea. | `node scripts/smoke-calibration.mjs <built-test-app-directory> <new-scratch>`; cere build separat cu `VERA_TEST=1`, Electron local și `strace`. Generează `calibration-report.json`; nu reprezintă validarea unui release. |
 | [smoke-runtime.mjs](smoke-runtime.mjs) | Extrage artefacte, pregătește profiluri și copii demo, pornește/oprește aplicația și colectează identități de execuție și loguri. | Modul intern folosit de `smoke-package.mjs` și calibrare; include observarea externă Linux cu `strace`. |
 | [smoke-server.mjs](smoke-server.mjs) | Furnizor HTTP/SSE local și verificări ale bugetelor de cerere/context pentru fluxul scriptat. | Modul intern folosit de smoke-ul de pachet; fără CLI propriu. |
 | [smoke-egress.mjs](smoke-egress.mjs) | Analizează trace-urile de rețea, inclusiv tentativele eșuate, și verifică destinațiile permise exact. | Modul intern; furnizează și regula pentru endpoint-ul loopback permis. |
-| [smoke-report.mjs](smoke-report.mjs) | Parsează argumentele smoke-ului, calculează hash-uri și combină stările funcționale, de rețea și dovezile suplimentare. | Modul intern; stabilește și interpretarea dovezilor Windows și de upgrade. |
+| [smoke-report.mjs](smoke-report.mjs) | Parsează argumentele smoke-ului, calculează hash-uri și combină stările funcționale, de rețea și dovezile suplimentare. | Modul intern; stabilește și interpretarea dovezilor Windows și a raportului probei de actualizare (`--upgrade-proof`), clasificat ca dovadă instrumentată suplimentară WP31. |
 
 Pentru `smoke-package.mjs`, codurile de ieșire sunt: `0` = PASS complet,
 `1` = eșec, `2` = flux funcțional trecut cu dovada de rețea a platformei încă
 în așteptare. Procedura completă este în
 [release-package-smoke.md](../../06_SoftwareDocu/release-package-smoke.md).
 
-## Upgrade și migrarea datelor
+## Proba de actualizare
 
 | Fișier | Ce face | Cum este folosit / rezultat |
 |---|---|---|
-| [probe-upgrade.mjs](probe-upgrade.mjs) | Construiește și execută scenarii instrumentate de instalare/upgrade; verifică migrarea, recovery și protejarea datelor. | `node scripts/probe-upgrade.mjs <owned-scratch>`; `--migration-safety` selectează scenariile extinse, `--reuse` reutilizează raportul existent în condițiile verificate de script. Păstrează `upgrade-report.json`, build-uri și loguri. |
-| [upgrade-fixture.mjs](upgrade-fixture.mjs) | Pregătește datele scenariilor de întrerupere și verifică recuperarea lor prin IPC. | Modul intern al probei de upgrade și al testelor; folosește `tests/fixtures/upgrade/interrupted.json`. |
+| [probe-upgrade.mjs](probe-upgrade.mjs) | Construiește build-uri instrumentate și verifică actualizarea: build-ul gestionat (deb) primește doar metadate, SHA-512 este obligatoriu și un hash corupt este refuzat, instalarea așteaptă terminarea aprobării și apoi instalează real, iar build-ul portabil primește un link de release. | `node scripts/probe-upgrade.mjs <owned-scratch>`; `--reuse` reutilizează raportul existent în condițiile verificate de script. Păstrează `upgrade-report.json`, build-uri și loguri. |
 
 `probe-upgrade.mjs` este un harness istoric cu versiuni și commit-uri de bază
 fixate în cod, nu un test generic de rulat după fiecare modificare. Necesită
 acele revizii Git, uneltele platformei și un director de lucru propriu; poate
 executa installer-e și dezinstalări pentru identitățile sale de test.
+Proba nu verifică migrarea datelor și nici păstrarea setărilor, a istoricului sau a
+recuperării după actualizare; siguranța datelor la upgrade este amânată până la prima
+versiune publică.
 
 ## Probe offline pe mașini dedicate
 

@@ -53,8 +53,8 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 - Navigation, new windows, webviews and permission requests/checks are denied before content loads.
 - Production CSP is identical in meta and response headers; protocol assets stay inside the real renderer root.
 - Development origin is exactly `http://127.0.0.1:5173`; its inline-script allowances are content hashes.
-- Valid visible normal bounds persist atomically; corrupt or off-screen state uses centered defaults.
-  A newer schema uses defaults without overwriting its file.
+- Valid visible normal bounds persist atomically in window-state.json version 1. Corrupt, other-version
+  or off-screen state uses centered defaults and is overwritten on close.
 
 ## Change map
 

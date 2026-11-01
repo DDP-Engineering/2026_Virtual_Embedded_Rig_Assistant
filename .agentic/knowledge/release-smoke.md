@@ -6,7 +6,7 @@ Select for smoke:package, artifact functional acceptance, external egress,
 renderer calibration and manual Windows capture. Start at
 `05_Software/scripts/smoke-package.mjs`; focused tests: tooling/package-smoke.test.ts.
 Package construction/pins belong to [native packaging](native-packaging.md),
-installed update/migration to [upgrade safety](upgrade-safety.md).
+installed updates to [updates](updates.md).
 
 ## Purpose and boundaries
 
@@ -14,13 +14,13 @@ External public IPC/UI observes unmodified release artifacts. A normal custom
 provider SSE fixture drives read/write/citation/approval/restart. Process-tree
 strace owns Ubuntu destination evidence; Sandbox/pktmon owns manual Windows
 egress. Separately identified instrumented renderer calibration proves detection.
-Original instrumented upgrade reports remain supplementary.
+Original WP31 updater-probe reports (probe-upgrade.mjs) remain supplementary.
 
 ## Public interface
 
 `smoke:package -- --artifact <path> [--scratch <new root>]` accepts NSIS/ZIP or
 AppImage/deb, never builds/downloads. Optional repeatable --upgrade-proof binds
-original reports; --windows-evidence binds manual capture. --resume reuses an
+original updater-probe reports; --windows-evidence binds manual capture. --resume reuses an
 exact matching failed owned extraction after exits, preserving original logs.
 Exit0 completePASS,1FAIL,2functionalPASS/manual pending. Separate Linux
 `smoke-calibration.mjs <built test app dir> <new root>` uses pinned development
@@ -44,12 +44,12 @@ Electron and expects oracleFAIL. See [manual procedure](../../06_SoftwareDocu/re
   port, Unix ignored, failed/incomplete/unknown destinations fail closed.
 - Calibration fixture renderer is sandboxed; product vera://app window/CSP unchanged.
 - Missing manual Windows or release upgrade evidence remains pending; source-report
-  SHA and exact instrumented upgrade artifacts retain their limitations.
+  SHA and exact instrumented upgrade-proof artifacts retain their limitations.
 
 ## Key behaviors
 
 REQ-TEST-8928f10f exact release scenarios; REQ-TEST-f84d343e external destination
-oracle/calibration; REQ-TEST-b111844b artifact/manual/upgrade bindings.
+oracle/calibration; REQ-TEST-b111844b artifact/manual/upgrade-proof bindings.
 
 ## Architecture
 
@@ -64,7 +64,7 @@ flowchart LR
   trace --> oracle[Exact destination oracle]
   calibration[Separate test renderer] --> oracle
   oracle --> report[Artifact-bound report]
-  manual[Sandbox pktmon and original upgrade reports] --> report
+  manual[Sandbox pktmon and original updater-probe reports] --> report
 ```
 
 ## Files

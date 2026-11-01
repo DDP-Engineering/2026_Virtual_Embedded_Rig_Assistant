@@ -6,7 +6,7 @@ Select for .vera/workbench.yaml, .vera/WORKBENCH.md, wb_ identity, create/open/c
 recent folders, config/pinned saves, ignore rules and path completion. Start with
 05_Software/src/libraries/core/src/workbench/service.ts and src/libraries/shared/src/workbench.ts.
 Focused tests: core workbench/service.test.ts and shared workbench.test.ts. Native/UI tests:
-tests/e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) owns settings migration;
+tests/e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) owns settings persistence;
 [IPC boundary](ipc-boundary.md) owns authorization/transport; [renderer foundation](renderer-foundation.md)
 owns the shell, appearance, language and layout.
 Tool path confinement, read/list/glob/grep and worker deadlines route to [File tools](file-tools.md).
@@ -58,19 +58,18 @@ mode offers empty, missing, read-only and warning fixtures.
   (INVALID leaves no workbench.yaml); WORKBENCH.md gets the given instructions or the template, and an
   existing WORKBENCH.md is kept. The CLI calls the two-argument form. Snapshots contain
   canonical folder/config/readOnly/warnings; invalid YAML reports line/column, invalid configuration
-  reports path/line, newer format returns WORKBENCH_TOO_NEW before runtime writes.
+  reports path/line, and any format other than 1 reports CONFIG_INVALID at path format before runtime writes.
 - Core-only getSnapshot supplies a detached current snapshot and assertSessionWritable immediately checks ordinary lock paths plus the owned pid/token before session database changes. Main session lifecycle drains active turns before switches/close.
 - Core-only getWriteQueue supplies the shared queue for application config/pinned saves and every session write. File saves validate ownership/current state inside their queue callback; close and replacement drain admitted writes before storage disposal.
-- Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open checks
-  database compatibility before lock/recents writes; failed replacement preparation closes its handle
+- Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open validates
+  the database schema before lock/recents writes; failed replacement preparation closes its handle
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
   Owned release checkpoints under the token guard before unlink; failed unlink retains usable storage.
   Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.
 - Config get/update deep-merges known mutable fields with current disk data, retains unknown keys,
   and fixes id/format. Pinned get/update saves full UTF8 text; oversized counts bytes above16384.
 - Registry retrieval/removal/pinning retains application settings entries until explicit removal; folder existence derives missing state.
-  Reopen retains entry extensions while refreshing known metadata.
-  Future read-only settings permit opening while preserving settings bytes and suppressing recent saves.
+  Reopen refreshes known metadata.
 - files(query) returns up to50 slash-separated relative ordinary-file paths, case-insensitive substring
   matches. createIgnoreRules applies case-insensitive permanent .vera/.git/node_modules segments before project-relative rules from .vera/.veraignore.
 - Shared workbenchSchema/configWarnings/mergeWorkbench/workbenchTemplate supply format1 defaults,
@@ -89,7 +88,7 @@ mode offers empty, missing, read-only and warning fixtures.
   directories reject symlinks/junction redirection. Completion skips links and permanently ignored roots.
 - Create publishes configuration exclusively, retains existing user content and adds metadata only inside .vera.
 - YAML format1 supports JSON-compatible extension values. Non-finite numbers/circular aliases are
-  refused without rewriting source. Newer format/changed identity blocks user saves.
+  refused without rewriting source. An invalid format or changed identity blocks user saves.
 - One service serializes operations; a short exclusive process-owned local IPC guard coordinates stale takeover.
   A live pid yields read-only without changing its runtime files; a dead pid permits takeover.
   Windows named pipes/Linux abstract Unix sockets auto-release on crash; EADDRINUSE contention
@@ -107,14 +106,14 @@ mode offers empty, missing, read-only and warning fixtures.
 |---|---|---|
 | Format/extensions/validation | shared workbench.ts, core parseConfig | shared/core workbench tests |
 | Lifecycle/ownership/failure | core WorkbenchService | service.test.ts, native live lock acceptance |
-| Recents/migration/order | WorkbenchService, SettingsService, shared ordering.ts, workbench-navigation.tsx | service/settings/ordering tests, workspace.test.ts, deleted-recent and sidebar-order E2E |
+| Recents/order | WorkbenchService, SettingsService, shared ordering.ts, workbench-navigation.tsx | service/settings/ordering tests, workspace.test.ts, deleted-recent and sidebar-order E2E |
 | Ignore/completion | createIgnoreRules, WorkbenchService.files | confined completion tests |
 | New page/editor/locales | components/workbench-create.tsx, workbench-config-form.tsx, workbench-editor.tsx, App.tsx, locales | renderer workspace.test.ts, native workbench.spec.ts, browser mock.spec.ts |
 | Dialog instrumentation | main/index.ts | actual build-mode.test.ts, instrumented native picker |
 
 ## Key behaviors
 
-- REQ-DATA-85139c56 — format, JSON-compatible extensions, location errors and newer refusal.
+- REQ-DATA-85139c56 — format 1 validation, JSON-compatible extensions and location errors.
 - REQ-FUNC-adf92ecb — non-destructive creation and shared template.
 - REQ-REL-bcb6fb23 — live/stale ownership and token-aware close.
 - REQ-DATA-d7ced6a1 — confirmed atomic config/pinned saves and extension retention.
@@ -129,7 +128,7 @@ mode offers empty, missing, read-only and warning fixtures.
 - REQ-FUNC-4ee03ca8 / REQ-FUNC-ad5868a2 / REQ-FUNC-03b73d56 — bounded documentation scan, selection preview and in-workbench relative folders.
 - REQ-UX-5b390823 / REQ-UX-64605f7e / REQ-UX-b96730c7 / REQ-UX-b7002720 / REQ-UX-ff645484 — Documents checklist, creation preselection, Add folder, preview line and Advanced globs.
 - REQ-UX-9e7529d5 — missing recent display and removal in the sidebar.
-- REQ-FUNC-df70c1c8 / REQ-FUNC-2b3ff3a8 / REQ-REL-514e47d3 / REQ-UX-ab0d5e61 — move within the pinned group, open keeps place, read-only refusal, row menu and keyboard.
+- REQ-FUNC-df70c1c8 / REQ-FUNC-2b3ff3a8 / REQ-UX-ab0d5e61 — move within the pinned group, open keeps place, row menu and keyboard.
 - REQ-TEST-6a6c266d — compiled instrumented picker and release exclusion.
 
 ## Files
@@ -156,7 +155,7 @@ New/Open Workbench and Plugins are primary sidebar actions. The unselected canva
 are pinned first and expose collapsible active session groups. Their order is the stored recents
 order: opening keeps a listed workbench's place and new workbenches go first; Move up/Move down in
 the row menu, or Alt+Shift+ArrowUp/ArrowDown on a focused row, moves a workbench within its pinned
-group through workbench.recent move (shared moveRecentWorkbench; DENIED for read-only settings).
+group through workbench.recent move (shared moveRecentWorkbench).
 Non-archived sessions of the active workbench move the same way through session.move; their order
 lives in the user settings ([sessions](sessions.md)). Focus returns to the moved row by id. One core workbench
 is active; switching uses the session lifecycle. Session list/search/create requests

@@ -168,7 +168,7 @@ it("infers registry types and returns validated metadata", async () => {
 });
 it("transports settings snapshots and rejects secret/immutable patches before IPC", async () => {
   const { bridge, transport } = fixture();
-  const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"), readOnly: true };
+  const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19") };
   transport.invoke.mockResolvedValueOnce({ ok: true, value: snapshot } as never);
   expect(await bridge.invoke("app.settings.get", {})).toEqual(snapshot);
   await expect(

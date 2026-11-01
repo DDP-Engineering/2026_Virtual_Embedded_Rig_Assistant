@@ -31,9 +31,9 @@ function Harness() {
   const [mode, change] = useState<PermissionMode>("ask");
   return createElement(PermissionPicker, { mode, disabled: false, change });
 }
-async function mount(readOnly = false) {
+async function mount() {
   await i18n.changeLanguage("en");
-  const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"), readOnly };
+  const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19") };
   vi.mocked(api.getSettings).mockResolvedValue(snapshot);
   client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: false } },
@@ -75,13 +75,4 @@ it("keeps the warning and a visible error when suppression cannot be saved, then
     await user.selectOptions(picker, "bypass");
   });
   expect(document.querySelector(".bypass-warning")).toBeNull();
-});
-it("read-only application settings keep the preference disabled while Close remains usable", async () => {
-  const { user } = await mount(true);
-  expect((document.querySelector("[data-hide-bypass-warning]") as HTMLInputElement).disabled).toBe(true);
-  await act(async () => {
-    await user.click(document.querySelector('[data-action="close-bypass-warning"]') as HTMLElement);
-  });
-  expect(document.querySelector(".bypass-warning")).toBeNull();
-  expect(api.updateSettings).not.toHaveBeenCalled();
 });

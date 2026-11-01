@@ -62,13 +62,9 @@ it("bounded retry exhaustion retains old bytes and cleans temporary files", asyn
   expect(await readFile(path, "utf8")).toBe("old");
   expect(await readdir(dir)).toEqual(["settings.json"]);
 });
-it("exclusive backups preserve old data, absence is distinct from I/O failure", async () => {
+it("reads distinguish an absent file from an I/O failure", async () => {
   const dir = await temp();
   const files = createFileAccess(clock);
-  const path = join(dir, "backup");
-  expect(await files.read(path)).toBeUndefined();
-  expect(await files.backup(path, "original")).toBe(true);
-  expect(await files.backup(path, "replacement")).toBe(false);
-  expect(await files.read(path)).toBe("original");
+  expect(await files.read(join(dir, "absent"))).toBeUndefined();
   await expect(files.read(dir)).rejects.toThrow();
 });

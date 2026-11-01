@@ -5,8 +5,7 @@ export const layoutSchema = z.strictObject({
   version: z.literal(1),
   sidebar: z.number().min(12).max(24),
   right: z.number().min(14).max(28),
-  // The Source tab has its own wider width; a layout saved before it existed takes the default.
-  source: z.number().min(20).max(90).default(36),
+  source: z.number().min(20).max(90),
   sidebarCollapsed: z.boolean(),
   rightCollapsed: z.boolean(),
 });
@@ -19,25 +18,16 @@ export const defaultLayout: Layout = {
   sidebarCollapsed: false,
   rightCollapsed: true,
 };
-export function readLayout(storage: Pick<Storage, "getItem">): { layout: Layout; readOnly: boolean } {
+/** The stored layout, or the defaults when it is missing or not in the current format. */
+export function readLayout(storage: Pick<Storage, "getItem">): Layout {
   try {
-    const parsed: unknown = JSON.parse(storage.getItem(layoutKey) ?? "null");
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      "version" in parsed &&
-      typeof parsed.version === "number" &&
-      parsed.version > 1
-    )
-      return { layout: { ...defaultLayout }, readOnly: true };
-    const result = layoutSchema.safeParse(parsed);
-    return { layout: result.success ? result.data : { ...defaultLayout }, readOnly: false };
+    const result = layoutSchema.safeParse(JSON.parse(storage.getItem(layoutKey) ?? "null"));
+    return result.success ? result.data : { ...defaultLayout };
   } catch {
-    return { layout: { ...defaultLayout }, readOnly: false };
+    return { ...defaultLayout };
   }
 }
-export function saveLayout(storage: Pick<Storage, "setItem">, layout: Layout, readOnly: boolean): void {
-  if (readOnly) return;
+export function saveLayout(storage: Pick<Storage, "setItem">, layout: Layout): void {
   try {
     storage.setItem(layoutKey, JSON.stringify(layoutSchema.parse(layout)));
   } catch {

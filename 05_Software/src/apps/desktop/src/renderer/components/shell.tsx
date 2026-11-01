@@ -29,7 +29,7 @@ function initialLayout() {
   try {
     return readLayout(localStorage);
   } catch {
-    return { layout: { ...defaultLayout }, readOnly: false };
+    return { ...defaultLayout };
   }
 }
 export function Shell({
@@ -42,7 +42,6 @@ export function Shell({
   showPlugins,
   newSelected,
   pluginsSelected,
-  storageReadOnly,
   context,
   changes,
   artifacts,
@@ -59,7 +58,6 @@ export function Shell({
   showPlugins?: () => void;
   newSelected?: boolean;
   pluginsSelected?: boolean;
-  storageReadOnly: boolean;
   context?: ReactNode;
   changes?: ReactNode;
   artifacts?: ReactNode;
@@ -68,8 +66,7 @@ export function Shell({
   source?: ReactNode;
 }) {
   const { t } = useTranslation();
-  const [initial] = useState(initialLayout);
-  const [layout, setLayout] = useState(initial.layout);
+  const [layout, setLayout] = useState(initialLayout);
   const bindings = useContext(ShortcutContext);
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -181,11 +178,11 @@ export function Shell({
   }, []);
   useEffect(() => {
     try {
-      saveLayout(localStorage, layout, initial.readOnly || storageReadOnly);
+      saveLayout(localStorage, layout);
     } catch {
       /* Storage disabled. */
     }
-  }, [layout, initial.readOnly, storageReadOnly]);
+  }, [layout]);
   function resize(side: Side, width: number) {
     const key = field(side);
     const [min, max] = ranges[key];

@@ -1,18 +1,20 @@
-# 07 — Packaging, portable mode, updates and migrations
+# 07 — Packaging, portable mode, updates and data format versions
 
 This document describes the implementation as of 2026-11-01 (branch `master`, 33e72b8 plus the
 working tree). Items marked "Not implemented as of 2026-11-01" are still planned.
 
 PURPOSE: specify how VERA ships as self-contained packages, how portable mode works, how updates are
-found, downloaded and installed, how persisted data survives upgrades, and how signed builds behave.
+found, downloaded and installed, how persisted data formats are versioned during development, and how
+signed builds behave.
 DONE-WHEN (for M4): the exact release packages install, start and index the demo workbench on clean
 Windows and Ubuntu machines without Node, Python or internet access. A second run proves an agent
 session through a scripted loopback endpoint using the normal custom provider; an installed vN
-updates itself to vN+1 from a test feed with sessions and settings intact. The egress check of 08 §5
+updates itself to vN+1 from a test feed. The egress check of 08 §5
 finds no unexpected connection; release builds contain no test switches.
 Status 2026-11-01: the tooling for each check exists (08 §5). The clean/offline Windows run (Windows
-Sandbox, `pktmon`, VC++ independence) is manual and still pending, and the upgrade proof comes from
-instrumented builds only (§6), so the smoke report keeps both as pending.
+Sandbox, `pktmon`, VC++ independence) is manual and still pending, and the update check runs on
+instrumented builds only (§5), so the smoke report keeps both as pending. Data migration and
+upgrade safety (L10, WP-32) are deferred until the first public release (§6).
 
 ## 1. Self-containment rules
 
@@ -136,35 +138,50 @@ after the window opens, then every 6 h, when the mode is not Off and the build h
   VERA drives each step. Errors appear as network or integrity failures with "Check again to retry".
 - Setting values: Off, Notify (default), Download automatically. "Check now" works also when Off.
 - Offline update: run the newer installer by hand. The per-user NSIS installer upgrades in place and
-  keeps `<userData>`. For AppImage, replace the file; for deb, use the package manager.
+  keeps `<userData>`. For AppImage, replace the file; for deb, use the package manager. Whether a newer
+  build can read data written by an older development build is not guaranteed (§6).
 - Release notes come from the feed (`releaseNotes`, text or list, up to 64 KiB) and appear in the
   Updates panel.
 - Rollback: install the previous version's installer by hand; the updater never downgrades. Data
-  compatibility follows §6.
+  compatibility across versions is deferred until the first public release (§6).
 - `scripts/update-feed.mjs` serves a local feed folder on 127.0.0.1, with range requests and a request
-  log, for the upgrade probe (§6).
+  log, for the update probe.
+- Update probe: `node scripts/probe-upgrade.mjs <scratch>` (WP-31) builds two instrumented versions
+  (0.31.0 → 0.31.1), installs the older NSIS or AppImage package for real and updates it through
+  electron-updater from the local feed. It checks that a managed (deb) build gets metadata only, that a
+  SHA-512 is required and a corrupt hash is refused, that the install is deferred until approval
+  finishes and then really installs, and that a portable build gets a release link. It is not an npm
+  script and runs on a connected host. It no longer checks that settings, history or recovery survive
+  an update, and its `--migration-safety` switch (WP32) is removed. Not implemented as of 2026-11-01:
+  an update run on release artifacts (08 §5).
 
-## 6. Data migrations
+## 6. Data format versions
+
+Migration and upgrade safety (rule L10, WP-32) are deferred until the first public release. The
+application's update feature (§5) is unaffected. During development:
+
+- Every persisted format keeps its version field, and the value is always 1 and never incremented.
+  Any other value is invalid data and is reported like other invalid data. Data from an earlier
+  development build may stop loading; delete or recreate it.
+- There are no migrations, migration runner, upgrade backups (`settings.json.bak-<n>`,
+  `.vera/backups/`), legacy fallbacks, newer-version guards (read-only modes, "too new" errors),
+  upgrade-safety checks or upgrade fixtures.
 
 | Data | Versioned by | Rule |
 |---|---|---|
-| `settings.json` | `schemaVersion` (4) | versions 0–3 are migrated on load; the original is first copied to `settings.json.bak-<old version>` (the next free number, never overwritten), then the result is written atomically |
-| `credentials.json` | `schemaVersion` (1) | only version 1 exists; no migration code yet |
-| `.vera/vera.db` | `meta.schema_version` (3) | only the current schema opens; an empty database receives it. Any other version (older or newer) is refused with INVALID and the files stay untouched (02 §9). Not implemented as of 2026-11-01: checksummed migrations and backups into `.vera/backups/` |
-| `.vera/workbench.yaml` | `format` | `1`; no migration code exists. Not implemented as of 2026-11-01: the migration with a backup and a notice that a later bump requires |
+| `settings.json` | `schemaVersion` (1) | strict schema: unknown keys are invalid and `webAccess` is required. An unreadable or invalid file, including any other `schemaVersion`, gives INVALID, is left untouched and stops startup (`app.startup.failed`); the CLI fails the same way. Settings are never read-only |
+| `credentials.json` | `schemaVersion` (1) | strict schema. Any other version or invalid content gives INVALID before decryption; unknown keys are not kept |
+| `window-state.json` | `version` (1) | an invalid, other-version or off-screen file gives centred defaults and is overwritten on close |
+| renderer layout (`localStorage` `vera.ui.layout`) | `version` (1) | `source` is required; invalid or other-version data gives the defaults |
+| `.vera/vera.db` | `meta.schema_version` (1) | the complete schema is created in one transaction for a new database. Any other value gives INVALID and the file stays untouched (02 §9) |
+| `.vera/workbench.yaml` | `format` (1) | any other format gives `CONFIG_INVALID` with path `format` |
+| session export | `schemaVersion` (1) | unchanged |
+| extraction cache | `version` (1) | unchanged |
 
-- Data with a newer version than the app knows is never modified (L10). Newer settings load as defaults
-  in read-only mode: Settings shows a read-only notice and every change is DENIED. A newer
-  `credentials.json` is refused with DENIED. A workbench with a newer `format` does not open and the UI
-  says it was created by a newer VERA (`WORKBENCH_TOO_NEW`); a database with another schema version
-  gives only the plain INVALID message. `tests/e2e/upgrade-safety.spec.ts` checks that these files and
-  existing backups stay unchanged.
-- Upgrade test: `node scripts/probe-upgrade.mjs <scratch>` (WP-31) and `… --migration-safety` (WP-32)
-  build two instrumented versions (0.31.0 → 0.31.1, 0.32.0 → 0.32.1), install the older NSIS or
-  AppImage package for real, update it through electron-updater from the local feed and verify
-  settings, sessions, recovery of an interrupted turn, turn/approval deferral, SHA-512 refusal, the deb
-  ("managed") and portable behaviour. It is not an npm script and runs on a connected host. Not
-  implemented as of 2026-11-01: an upgrade proof on release artifacts (08 §5).
+- Deferred until the first public release: ordered migrations with backups, "created by a newer VERA"
+  handling, an upgrade test that proves settings, sessions and crash recovery survive an update, and
+  an upgrade proof on release artifacts (08 §5). WP-32 keeps this plan.
+- Crash recovery of interrupted sessions is current behaviour and is not part of the deferral (03 §6, §8).
 
 ## 7. Signed builds
 

@@ -32,7 +32,7 @@ describe("window geometry storage", () => {
   it("persists versioned bounds and restores them", async () => {
     const path = await file();
     await state.saveWindowState(path, bounds);
-    expect(await state.loadWindowState(path, displays)).toEqual({ bounds, readOnly: false });
+    expect(await state.loadWindowState(path, displays)).toEqual({ bounds });
     expect(JSON.parse(await readFile(path, "utf8"))).toEqual({ schemaVersion: 1, bounds });
   });
 
@@ -41,12 +41,13 @@ describe("window geometry storage", () => {
     JSON.stringify({ schemaVersion: 1, bounds: { ...bounds, width: 10 } }),
     JSON.stringify({ schemaVersion: 1, bounds: { ...bounds, x: 9000 } }),
     JSON.stringify({ schemaVersion: 1, bounds: { ...bounds, y: null } }),
+    // Version 1 is the only window-state format during development (AGENTS.md).
+    JSON.stringify({ schemaVersion: 2, bounds }),
   ])("falls back to visible minimum bounds for invalid state %s", async (contents) => {
     const path = await file();
     await writeFile(path, contents);
     expect(await state.loadWindowState(path, displays)).toEqual({
       bounds: { width: 1200, height: 800 },
-      readOnly: false,
     });
   });
 
@@ -55,17 +56,6 @@ describe("window geometry storage", () => {
       width: 1200,
       height: 800,
     });
-  });
-
-  it("refuses newer versions and leaves them intact", async () => {
-    const path = await file();
-    const contents = JSON.stringify({ schemaVersion: 2, bounds });
-    await writeFile(path, contents);
-    expect(await state.loadWindowState(path, displays)).toEqual({
-      bounds: { width: 1200, height: 800 },
-      readOnly: true,
-    });
-    expect(await readFile(path, "utf8")).toBe(contents);
   });
 
   it("accepts bounds on a monitor left of the primary display", async () => {

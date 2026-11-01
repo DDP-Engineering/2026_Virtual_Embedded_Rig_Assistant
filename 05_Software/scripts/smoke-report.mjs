@@ -49,7 +49,7 @@ export function upgradeSummary(proof) {
     classification: "supplementary-instrumented-upgrade",
     releaseUpgradeStatus: "pending",
     limitations:
-      "Original WP31/32 instrumented connected-host proof; no release, signing, clean/offline or separate-kernel upgrade claim.",
+      "Original WP31 instrumented connected-host proof; no release, signing, clean/offline or separate-kernel upgrade claim.",
   };
 }
 export function windowsEvidence(proof, artifactSHA256) {

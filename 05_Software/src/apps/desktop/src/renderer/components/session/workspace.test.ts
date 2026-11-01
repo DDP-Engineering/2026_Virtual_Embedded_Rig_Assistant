@@ -247,7 +247,7 @@ test("search results get no move items or shortcut, and row menu triggers take A
     entries,
     activeId: undefined,
     disabled: false,
-    settingsReadOnly: false,
+    settingsLoading: false,
     open: vi.fn(async () => true),
     pin: vi.fn(),
     move: moveBench,

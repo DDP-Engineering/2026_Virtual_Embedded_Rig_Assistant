@@ -80,22 +80,22 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - subscribe('workbench', wbId, on) filters validated opened/closed/config.changed events by id.
 - app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/
   pinned.update/files have strict requests/responses; configuration objects retain extensions.
-  config.get includes optional folder/readOnly metadata for renderer reload. WORKBENCH_TOO_NEW is explicit. [Workbench](workbench.md) owns lifecycle semantics.
+  config.get includes optional folder/readOnly metadata for renderer reload. [Workbench](workbench.md) owns lifecycle semantics.
 - emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
 - artifacts.list/open/reveal/export use strict shared metadata/content schemas and current SessionsHost lifetime; [Artifacts](artifacts.md) owns verified files, native save cancellation, reveal/export and scrubbing.
 - changes.list/get use strict summary/detail schemas and current SessionsHost recovery/lifetime. Main scrubs path/diff while preserving IDs/dates/counts. app.revealPath accepts a workbench-relative path, validates canonical confinement/ordinary existence and calls native shell; [Changes](changes.md) owns behavior and proof.
 - app.openPath({path}) opens a workbench document with the OS default application: main refuses any extension outside shared `externalDocumentExtensions` (DENIED) before the filesystem is touched, then applies the same PathGuard/ordinary-file/identity checks as reveal (DENIED, NOT_FOUND) and checks the allowlist again on the resolved file, since a link or short name may resolve to a script; an OS failure is INTERNAL (REQ-FUNC-d37a2092, REQ-SEC-33b98d33, REQ-REL-85ae1f66).
 - todo.updated and session snapshot todos use shared bounded list validation; current known secrets redact optional todo IDs and text, with presentation text bounded at200 after redaction; Plan consumes the existing snapshot/subscription channels. [Plan](plan.md) owns whole replacement and icons.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
-- Durable session events include message.queued {messageId,text,timestamp} and message.delivered {messageIds}; user snapshot pending/timestamp fields are optional for historical replay. Existing sanitizer preserves IDs/numeric timestamps and scrubs queued user text.
+- Durable session events include message.queued {messageId,text,timestamp} and message.delivered {messageIds}; user snapshot pending/timestamp fields are optional. Existing sanitizer preserves IDs/numeric timestamps and scrubs queued user text.
 - session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and tests/e2e/approvals.spec.ts cover strict values and real exact decisions.
 - Session list/get and mutation summaries redact user fields while preserving schema identities and enums. Titles remain bounded after redaction; known-secret text/title/model requests are refused. Mock sessions bind delayed responses to their originating workbench and drain aborted turns before switches/close.
 - session.search validates trimmed1..1000 character query; session.export validates session ID and md/json enum, returns exported boolean. Both dispatch through existing exact-frame authorization and serial SessionsHost; renderer supplies no filesystem path. Main shares schema-preserving session sanitizers and the existing native export destination guard.
 - createDeltaCoalescer takes key/merge/emit functions, batches for 50ms, flushes explicitly before
   terminal events and cancels pending values on dispose.
 - VeraApi adds getAppInfo/getSettings/updateSettings to VeraBridge; VITE_API=mock selects mockApi during compilation.
-- app.settings.get({}) and app.settings.update(patch) return {settings,readOnly}.
-  [Application data](app-data.md) owns schema defaults, migration and persistence semantics.
+- app.settings.get({}) and app.settings.update(patch) return {settings}.
+  [Application data](app-data.md) owns schema defaults, validation and persistence semantics.
 
 ## Invariants
 
@@ -108,8 +108,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - Each subscription owns its listener; unsubscribe removes it once.
 - Coalescing preserves first-key insertion order; caller merge policies own text/update semantics.
 - App metadata portable reports the effective executable-adjacent regular vera.portable marker decision.
-- Changed settings saves emit settings.changed after persistence. Future schemas expose read-only
-  defaults and reject updates through the validated error envelope.
+- Changed settings saves emit settings.changed after persistence. Settings are never read-only.
 
 ## Change map
 

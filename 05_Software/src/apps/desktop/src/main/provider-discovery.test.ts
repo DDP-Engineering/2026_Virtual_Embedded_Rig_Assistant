@@ -32,7 +32,7 @@ function host() {
     containsSecret: vi.fn((value: unknown) => JSON.stringify(value).includes("private-key")),
   };
   const fetch = vi.fn(async () => Response.json(body));
-  return { settings: { get: () => ({ settings, readOnly: false }) }, credentials, fetch };
+  return { settings: { get: () => ({ settings }) }, credentials, fetch };
 }
 it("discovers current LM Studio metadata without inference, persisting keys or returning embeddings", async () => {
   const h = host();

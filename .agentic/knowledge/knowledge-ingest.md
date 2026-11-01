@@ -6,7 +6,7 @@ Select for document discovery, watcher/hash/size states, index events, reindex
 and source invalidation. Start at core knowledge/ingest.ts and
 storage/repos/documents.ts under05_Software. Focused proof is ingest.test.ts,
 shared documents-ipc.test.ts and native tests/e2e/ingest.spec.ts. Workbench lifecycle
-and locks route to [Workbench](workbench.md), database compatibility to
+and locks route to [Workbench](workbench.md), the database schema to
 [Storage](workbench-storage.md), transport/redaction to [IPC](ipc-boundary.md).
 
 ## Purpose and boundaries
@@ -50,9 +50,9 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
   a mounted tab. The Documents section preview, which runs before indexing, has its own
   wording and also warns when its bounded scan stopped early, as "at least N files"
   (RULING-004).
-- DocumentsRepository list/get/save/remove/clearDerived/replaceChunks uses existing schema1.
+- DocumentsRepository list/get/save/remove/clearDerived/replaceChunks uses the current schema (schema_version 1).
   Invalidation clears associated embeddings and chunks before source deletion
-  or replacement. Migration2 chunk triggers atomically maintain chunks_fts/chunks_tri;
+  or replacement. Schema chunk triggers atomically maintain chunks_fts/chunks_tri;
   [keyword search](keyword-search.md) reads persisted candidates and locators.
 
 Policy reads .vera/.veraignore with ordinary-parent checks. The watcher admits events
@@ -100,8 +100,7 @@ while .vera content stays permanently excluded from indexed documents.
 - Ownership is checked before synchronous SQLite mutations. Read-only workbenches
   keep private snapshots and run no watcher. Close/switch aborts and drains ingest
   before lock release/storage close; failed release restores observation.
-- Schema1/2 migration SQL remains immutable; migration3 supplies embeddings and
-  full extraction storage. Current-model vector coverage controls unchanged-file
+- The schema supplies embeddings and full extraction storage. Current-model vector coverage controls unchanged-file
   reprocessing; atomic publication includes validated derived data. See
   [document search](document-search.md) for model/worker/ranking contracts.
 - Manual reindex admits work on the lifecycle queue and waits for completion
@@ -112,7 +111,7 @@ while .vera content stays permanently excluded from indexed documents.
 | Change | Start | Focused verification |
 |---|---|---|
 | Selection/hash/limits/status/processing | Ingester | ingest.test.ts |
-| Invalidation/publication/indexes | DocumentsRepository | real migration FTS/synthetic embedding cases and processor/watcher/search integration |
+| Invalidation/publication/indexes | DocumentsRepository | real schema FTS/synthetic embedding cases and processor/watcher/search integration |
 | Lifecycle | WorkbenchService | ingest and workbench service tests |
 | IPC/event shape/redaction | shared contracts, main/events | documents-ipc and main events tests; native ingest |
 

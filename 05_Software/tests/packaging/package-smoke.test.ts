@@ -23,7 +23,7 @@ it("accepts flattened and wrapped NSIS payloads while rejecting absent payloads"
 
 it("protects versioned and companion VERA installer identities", () => {
   const pattern = new RegExp(veraInstallNamePattern, "i");
-  for (const name of ["VERA", "VERA 0.0.0", "VERA WP32 Test 0.32.1", "vera 1.0"])
+  for (const name of ["VERA", "VERA 0.0.0", "VERA WP31 Test 0.31.1", "vera 1.0"])
     expect(pattern.test(name)).toBe(true);
   for (const name of ["Other", "VERACITY", "My VERA"]) expect(pattern.test(name)).toBe(false);
 });

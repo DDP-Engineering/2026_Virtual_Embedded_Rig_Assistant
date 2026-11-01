@@ -168,49 +168,21 @@ it("moves a workbench only within its pinned group and keeps its place when open
     "Move1",
   ]);
 });
-it("refuses a workbench move with DENIED when settings are read-only", async () => {
-  const h = await harness();
-  await h.service.create(h.folder, "Only");
-  await h.service.close();
-  const text = await readFile(h.paths.settings, "utf8");
-  const future = JSON.stringify({ ...JSON.parse(text), schemaVersion: 5 });
-  await writeFile(h.paths.settings, future);
-  const settings = new SettingsService({
-    files: h.host.files,
-    paths: h.paths,
-    uuid: randomUUID,
-    changed: () => {},
-  });
-  await settings.load();
-  const service = new WorkbenchService({ ...h.host, settings });
-  await expect(service.recent(undefined, undefined, { folder: h.folder, offset: 1 })).rejects.toMatchObject({
-    code: "DENIED",
-  });
-  expect(await readFile(h.paths.settings, "utf8")).toBe(future);
-});
-it("does not open or migrate root-level project metadata", async () => {
-  const h = await harness();
-  const content = "format: 1\nid: wb_legacy\nname: Root files\n";
-  await writeFile(join(h.folder, "workbench.yaml"), content);
-  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "NOT_FOUND" });
-  expect(await readFile(join(h.folder, "workbench.yaml"), "utf8")).toBe(content);
-  expect(existsSync(join(h.folder, ".vera/workbench.yaml"))).toBe(false);
-  expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
-});
-it("opens frozen workbench format1 unchanged and refuses format2 without runtime or recent writes", async () => {
+it("opens the current workbench format unchanged and refuses another format without runtime or recent writes", async () => {
   const h = await harness();
   const file = join(h.folder, ".vera/workbench.yaml");
-  const previous = await readFile(resolve("tests/fixtures/upgrade/workbench-v1.yaml"), "utf8");
-  await writeFile(file, previous);
+  const current = await readFile(resolve("tests/fixtures/app-data/workbench.yaml"), "utf8");
+  await writeFile(file, current);
   const opened = await h.service.open(h.folder);
   expect(opened.config).toMatchObject({ format: 1, extension: "kept" });
   await h.service.close();
-  expect(await readFile(file, "utf8")).toBe(previous);
-  const future = await readFile(resolve("tests/fixtures/upgrade/workbench-newer.yaml"), "utf8");
-  await writeFile(file, future);
+  expect(await readFile(file, "utf8")).toBe(current);
+  // Format 1 is the only format during development (AGENTS.md).
+  const other = current.replace("format: 1", "format: 2");
+  await writeFile(file, other);
   const beforeSettings = await readFile(h.paths.settings, "utf8");
-  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "WORKBENCH_TOO_NEW" });
-  expect(await readFile(file, "utf8")).toBe(future);
+  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "INVALID" });
+  expect(await readFile(file, "utf8")).toBe(other);
   expect(await readFile(h.paths.settings, "utf8")).toBe(beforeSettings);
   expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
 });
@@ -483,7 +455,7 @@ it("database lifetime follows owned open, same-folder reopen, close and failed r
   await h.service.close();
   expect(first.open).toBe(false);
 });
-it("newer database is refused before lock/recents changes and failed storage switch retains previous", async () => {
+it("a database in another format is refused before lock/recents changes and failed storage switch retains previous", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Board");
   const first = h.service.getDatabase();
@@ -511,24 +483,6 @@ it("newer database is refused before lock/recents changes and failed storage swi
   expect(await readFile(join(second, ".vera/lock"))).toEqual(lock);
   expect(await readFile(h.paths.settings)).toEqual(settings);
   expect(h.service.getDatabase()).toBe(first);
-  await h.service.close();
-});
-it("old backup copies do not block opening a workbench and are left untouched", async () => {
-  const h = await harness();
-  await h.service.create(h.folder, "Board");
-  const first = h.service.getDatabase();
-  const second = join(h.root, "second");
-  await mkdir(join(second, ".vera/backups"), { recursive: true });
-  await writeFile(
-    join(second, ".vera/workbench.yaml"),
-    await readFile(join(h.folder, ".vera/workbench.yaml")),
-  );
-  await writeFile(join(second, ".vera/backups/vera.db.v0.bak"), "existing recovery data");
-  await h.service.open(second);
-  expect(existsSync(join(second, ".vera/lock"))).toBe(true);
-  expect(await readFile(join(second, ".vera/backups/vera.db.v0.bak"), "utf8")).toBe("existing recovery data");
-  expect(h.service.getDatabase()).not.toBe(first);
-  expect(first.open).toBe(false);
   await h.service.close();
 });
 it("lost token reopen and close preserve every live-owner runtime byte while disposing prior storage", async () => {
@@ -574,7 +528,7 @@ it("failed prior-lock unlink leaves prior storage usable and releases replacemen
   await expect(h.service.open(second)).rejects.toThrow();
   expect(h.service.getDatabase()).toBe(first);
   expect(first.open).toBe(true);
-  expect(first.prepare("SELECT value FROM meta WHERE key='schema_version'").pluck().get()).toBe("3");
+  expect(first.prepare("SELECT value FROM meta WHERE key='schema_version'").pluck().get()).toBe("1");
   expect(existsSync(join(second, ".vera/lock"))).toBe(false);
   await rm(lockPath, { recursive: true });
   await writeFile(lockPath, original);
@@ -603,7 +557,7 @@ it("live owner opens a WAL snapshot readonly and leaves source bytes intact, abs
   expect(() => reader.getDatabase()).toThrow();
   await reader.close();
 });
-it("creates the specified English template and rejects malformed YAML with line and newer format before writes", async () => {
+it("creates the specified English template and rejects malformed YAML with line and another format before writes", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Test board");
   await h.service.close();
@@ -612,11 +566,11 @@ it("creates the specified English template and rejects malformed YAML with line 
   );
   await rm(join(h.folder, ".vera"), { recursive: true });
   await mkdir(join(h.folder, ".vera"));
-  const newer = "format: 2\nfuture: yes\n";
-  await writeFile(join(h.folder, ".vera/workbench.yaml"), newer);
-  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "WORKBENCH_TOO_NEW" });
+  const other = "format: 2\nid: wb_01K00000000000000000000000\nname: Other\n";
+  await writeFile(join(h.folder, ".vera/workbench.yaml"), other);
+  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "INVALID" });
   expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
-  expect(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).toBe(newer);
+  expect(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).toBe(other);
   await writeFile(join(h.folder, ".vera/workbench.yaml"), "format: 1\nname: [broken\n");
   await expect(h.service.open(h.folder)).rejects.toMatchObject({
     code: "INVALID",
@@ -662,20 +616,14 @@ it("concurrent opens have one writer, guard contention is conservative, malforme
   await writeFile(join(h.folder, ".vera/lock"), "invalid");
   await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "CONFLICT" });
 });
-it("reassesses same-folder ownership and preserves recent extensions on reopen", async () => {
+it("reassesses same-folder ownership on reopen", async () => {
   const h = await harness();
   const writer = h.service;
   const first = await writer.create(h.folder, "Board");
   const reader = new WorkbenchService(h.host);
   expect((await reader.open(h.folder)).readOnly).toBe(true);
-  const entry = h.settings.get().settings.recentWorkbenches[0];
-  if (!entry) throw new Error("Created workbench must be remembered");
-  await h.settings.update({
-    recentWorkbenches: [{ ...entry, vendor: { flag: true } }],
-  });
   await writer.close();
   expect((await reader.open(h.folder)).readOnly).toBe(false);
-  expect(h.settings.get().settings.recentWorkbenches[0]?.vendor).toEqual({ flag: true });
   await reader.updatePinned("writer after reopen");
   await writeFile(
     join(h.folder, ".vera/lock"),
@@ -899,7 +847,7 @@ it("retains all unique registered workbenches, derives missing folder and remove
   expect(await service.recent(join(h.root, "bench5"))).toHaveLength(10);
   expect(settings.get().settings.recentWorkbenches.every((e) => e.name !== "Board5")).toBe(true);
 });
-it("failed recent save releases replacement lock and retains previous; future settings suppress recents", async () => {
+it("failed recent save releases replacement lock and retains previous", async () => {
   const h = await harness();
   const first = await h.service.create(h.folder, "First");
   const second = join(h.root, "second");
@@ -915,21 +863,6 @@ it("failed recent save releases replacement lock and retains previous; future se
   expect((await h.service.getConfig()).config).toEqual(first.config);
   h.host.files.writeAtomic = atomic;
   await h.service.close();
-  const future = '{"schemaVersion":99,"future":true}';
-  await writeFile(h.paths.settings, future);
-  const settings = new SettingsService({
-    files: h.host.files,
-    paths: h.paths,
-    uuid: randomUUID,
-    changed: () => {},
-  });
-  await settings.load();
-  const service = new WorkbenchService({ ...h.host, settings });
-  expect((await service.open(h.folder)).readOnly).toBe(false);
-  expect(await service.recent()).toEqual([]);
-  await expect(service.recent(h.folder)).rejects.toMatchObject({ code: "DENIED" });
-  await service.close();
-  expect(await readFile(h.paths.settings, "utf8")).toBe(future);
 });
 it("refuses external format/identity changes during pinned saves and closing redirected runtime", async () => {
   const h = await harness();
@@ -937,7 +870,7 @@ it("refuses external format/identity changes during pinned saves and closing red
   const yaml = join(h.folder, ".vera/workbench.yaml");
   const raw = await readFile(yaml, "utf8");
   await writeFile(yaml, raw.replace("format: 1", "format: 2"));
-  await expect(h.service.updatePinned("bad")).rejects.toMatchObject({ code: "WORKBENCH_TOO_NEW" });
+  await expect(h.service.updatePinned("bad")).rejects.toMatchObject({ code: "INVALID" });
   await writeFile(yaml, raw);
   const before = await readFile(join(h.folder, ".vera/WORKBENCH.md"), "utf8");
   const { rename } = await import("node:fs/promises");

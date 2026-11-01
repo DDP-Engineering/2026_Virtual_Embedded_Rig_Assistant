@@ -45,8 +45,7 @@ Invalid states produce standard VeraError, never raw updater errors/paths/URLs.
 Snapshot: distribution, configured, phase(idle/checking/current/available/downloading/
 ready/deferred/error), offer(version,notes,link), progress0..100 or null, errorCode or null.
 AppEvents: update.available {version,notes}, update.changed {snapshot}.
-Notes are bounded plain text. Settings retain schema4 and unknown extension data;
-accepted update enums widen existing values without a destructive migration.
+Notes are bounded plain text. Update preferences live in settings schemaVersion 1.
 
 ## Ordering and recovery
 
@@ -68,4 +67,5 @@ Focused service/adapter/schema/UI and immediate-consumer tests on Windows/native
 plus exact-artifact installed vN->vN+1 local-feed upgrade and deferred real-turn acceptance,
 and packaged portable metadata-only acceptance. Full M4 belongs to coordinator/WP33.
 Raw logs/exit codes and SHA256/SHA512 bind evidence to source and package bytes.
-WP32 exhaustive data migration fixtures and final clean/offline/CRT/kernel checks remain separate.
+Data migration safety (WP32) is deferred until the first public release; final
+clean/offline/CRT/kernel checks remain separate.

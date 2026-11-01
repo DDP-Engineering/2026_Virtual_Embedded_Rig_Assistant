@@ -182,7 +182,8 @@ current state. The lifecycle cannot stop an agent or alter a session subscriptio
 
 Proposed settings are visibility, selected pet ID, size, display position and motion mode. Initial
 defaults are disabled visibility, PCB Buddy selected and motion following the system preference.
-The later implementation confirms those defaults and supplies required settings migrations.
+The later implementation confirms those defaults. Until the first public release the settings schema
+stays at `schemaVersion` 1 and changes in place, without migrations.
 An unavailable character ID falls back to a bundled default, without resetting other preferences.
 
 Motion modes are System, Animated and Static. System honors reduced motion. Animated requires an
@@ -208,7 +209,7 @@ The later work should demonstrate the following before delivery:
 - The overlay reflects activity while the main VERA window is hidden, and opens the correct session.
 - Concurrent tools, approvals, handled tool failures, cancellation, terminal errors, session
   switching and restart recovery produce correct states. Replay never generates fresh success.
-- Preferences survive restart and schema migrations. Unsupported saved IDs recover cleanly.
+- Preferences survive restart. Unsupported saved IDs recover cleanly.
 - Hidden or disabled pets release animation work; switching pets leaves no timers or listeners.
 - The separate renderer preserves the existing IPC and process boundaries and works offline with
   bundled assets. Automated session checks use fixtures or replay, without a real model.

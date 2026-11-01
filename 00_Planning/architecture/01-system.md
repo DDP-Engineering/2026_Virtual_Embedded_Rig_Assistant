@@ -22,7 +22,7 @@ Every work package preserves these. Changing one is an architecture decision, re
 | L7 | Secrets exist only in the main-process credential store (04 §5); the CLI keeps them in memory, read from environment variables or `--key-file`. They never reach the renderer, logs, events, the database or error text; IPC responses, events and logs are scrubbed of every registered secret. |
 | L8 | Document and file content is data, never instructions. No tool executes content. |
 | L9 | Every user-facing string goes through i18n; `en` is the source catalog (`ro` and `de` also ship). Core returns error codes, not sentences. |
-| L10 | A persisted-format change ships with a migration. VERA refuses data written by a newer version. As of 2026-11-01: `settings.json` versions 0–3 migrate to 4 after a backup, and a newer version opens read-only with defaults; a `workbench.yaml` `format` above 1 fails with `WORKBENCH_TOO_NEW`; `vera.db` accepts only the current schema (3) and has no migration runner yet. |
+| L10 | Deferred until the first public release: a persisted-format change ships with a migration, and data written by a newer version is never modified. During development formats change in place at version 1: every format or schema version field is kept and is always 1, and any other value is invalid data, reported like other invalid data. Data from an earlier development build may stop loading and is deleted or recreated. There are no migrations, upgrade backups, legacy fallbacks, newer-version guards or upgrade fixtures (root `AGENTS.md`, "Development compatibility policy"; WP-32). The application's update feature (07 §5) is not part of this deferral. |
 | L11 | Automated tests never call a real model. Core and test builds use the replay provider; release-package agent tests use a scripted loopback endpoint through the normal custom-provider path (08 §3, ADR-0012). Vitest projects and e2e runs block non-loopback connections (`tests/network-guard.ts`). |
 
 ## 2. Stack
@@ -103,7 +103,7 @@ interface VeraBridge {
   subscribe(topic: "workbench", id: string, on: (e: WorkbenchEvent) => void): () => void;
   subscribe(topic: "app", on: (e: AppEvent) => void): () => void;
 }
-type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED" | "CONTEXT_LIMIT" | "PROVIDER" | "OFFLINE" | "INTERNAL" | "WORKBENCH_TOO_NEW";
+type VeraError = { code: "INVALID" | "NOT_FOUND" | "CONFLICT" | "BUSY" | "DENIED" | "CONTEXT_LIMIT" | "PROVIDER" | "OFFLINE" | "INTERNAL";
                    messageKey: string; params?: Record<string, string | number> };
 ```
 
@@ -168,7 +168,7 @@ src/libraries/core/src/          # Electron-agnostic (L1)
   web/                      # WebProvider (Exa MCP, Tavily, Brave, access gate), managed downloads and transfer
   artifacts/                # session artifact store
   skills/                   # discovery, frontmatter validation, resolution
-  settings/                 # settings service and schema migrations over a file port
+  settings/                 # settings service (strict schema at version 1, no migrations) over a file port
   workers/                  # NodeWorkerPool, the WorkerPool implementation
 src/apps/desktop/src/
   main/                     # lifecycle, window, IPC router, events, credential store, updater, worker pool,
@@ -234,10 +234,10 @@ libraries' `dist/`. Model and runtime assets are fetched and verified by `npm ru
 
 | Data | Location |
 |---|---|
-| App settings (`schemaVersion` 4): preferences, provider configuration without secrets, web-access preferences, recent workbenches, session order, installation id | `<userData>/settings.json`; a migration leaves `settings.json.bak-<n>` |
+| App settings (`schemaVersion` 1): preferences, provider configuration without secrets, web-access preferences, recent workbenches, session order, installation id | `<userData>/settings.json`; an unreadable or invalid file, including any other `schemaVersion`, is left untouched and stops startup |
 | Credentials, each value encrypted with safeStorage; when OS encryption is unavailable (Linux `basic_text`), stored unprotected only with the user's consent, otherwise kept in memory | `<userData>/credentials.json` |
 | User skills, available to every workbench | `<userData>/skills/<name>/SKILL.md` |
-| Window bounds | `<userData>/window-state.json` |
+| Window bounds (`version` 1; an invalid, other-version or off-screen file gives centred defaults and is overwritten on close) | `<userData>/window-state.json` |
 | Logs, JSON lines, 7 daily files, secrets redacted | `<userData>/logs/vera-YYYY-MM-DD.log` |
 | Workbench content | the workbench folder the user chose |
 | Workbench metadata and runtime state | `<workbench>/.vera/` (02 §8) |

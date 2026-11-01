@@ -37,7 +37,7 @@ Global application settings (`settings.json`), credentials (`credentials.json`) 
 ## 2. `.vera/workbench.yaml`
 
 ```yaml
-format: 1                       # format version; VERA refuses a newer one (L10)
+format: 1                       # format version; always 1 during development, any other value is invalid
 id: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C   # ULID with prefix, written on create, stable across moves
 name: MC-200 motor controller
 description: Bring-up and validation of the MC-200 board   # optional
@@ -64,7 +64,7 @@ Every block except `format`, `id` and `name` is optional and takes the defaults 
 
 | Field | Rule |
 |---|---|
-| `format` | integer literal `1`; an integer above 1 refuses the open with `WORKBENCH_TOO_NEW` ("created by a newer VERA") |
+| `format` | integer literal `1`; any other value gives `CONFIG_INVALID` with path `format` (no "too new" error code, no migration; L10 is deferred) |
 | `id` | `wb_` + ULID (26 Crockford characters, first `0`–`7`); generated on create, never changes |
 | `name` | 1–80 characters after trimming |
 | `description` | optional string |
@@ -78,8 +78,8 @@ Every block except `format`, `id` and `name` is optional and takes the defaults 
 Parsing (`parseConfig`, `core/src/workbench/service.ts`): YAML with unique keys; values must be
 JSON-compatible. A YAML error reports `YAML_INVALID` with line and column, a schema error
 `CONFIG_INVALID` with path and line. Unknown keys at the top level and inside `docs`, `retrieval`,
-`skills`, `tools` and `agent` are preserved on save and reported as `UNKNOWN_KEY` warnings, so a newer
-minor format does not lose data. Saves merge a strict patch, write the file atomically through the
+`skills`, `tools` and `agent` are preserved on save and reported as `UNKNOWN_KEY` warnings, so they
+are not lost. Saves merge a strict patch, write the file atomically through the
 workbench write queue and do not keep YAML comments or formatting. Web tools are also withheld from
 the model when the global web-access settings do not allow them, independently of `tools.disabled`.
 
@@ -190,7 +190,7 @@ accept absolute paths anywhere.
   cache/extract/<sha256>.json         # extracted document text, keyed by content hash (≤128 MiB)
 ```
 
-Not implemented as of 2026-11-01: `backups/vera.db.v<schema>.bak` (there are no database migrations, §9).
+There is no `.vera/backups/` folder: the database has no migrations and no upgrade backups (§9).
 
 The `.vera` folder contains project configuration as well as sessions and artifacts. Keep it with
 the project. The dedicated skill catalog can read `.vera/skills`; general tools and indexing
@@ -215,8 +215,8 @@ directories and `.vera/.veraignore`, matches the query case-insensitively and re
 relative paths. Config extension values must be JSON-compatible for IPC; invalid/non-finite/circular
 values are refused without changing the source.
 
-Recent workbenches live in the userData `settings.json` (settings `schemaVersion` 4; versions 0–3
-migrate on load after a `settings.json.bak-<n>` backup). An entry has `folder`, `id`, `name`,
+Recent workbenches live in the userData `settings.json` (settings `schemaVersion` 1; strict schema,
+07 §6). An entry has `folder`, `id`, `name`,
 `lastOpened` and optional `pinned`; the list is unbounded, a new entry goes first, a known one keeps
 its user-arranged place, unknown entry fields survive reopening and missing folders are flagged. The
 workbench format remains 1.
@@ -227,7 +227,7 @@ Source: `core/src/storage/schema.ts` (the full schema, created in one transactio
 
 ```sql
 meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
-     -- schema_version ('3'), workbench_id, created_by (app version), embedding_epoch (counter)
+     -- schema_version ('1'), workbench_id, created_by (app version), embedding_epoch (counter)
 sessions(id TEXT PRIMARY KEY, title TEXT NOT NULL, created_at TEXT, updated_at TEXT,
          model_ref TEXT, permission_mode TEXT NOT NULL,  -- read-only | ask | auto-edit | bypass
          status TEXT NOT NULL,                          -- idle | running | awaiting_approval | error
@@ -274,13 +274,12 @@ document_extractions(doc_id INTEGER PRIMARY KEY, extraction_json TEXT NOT NULL);
 - IDs: sessions `ses_` + ULID, artifacts `art_` + ULID, approvals `apv_` + ULID; tool-call IDs come
   from the provider.
 - Timestamps are ISO 8601 UTC strings.
-- Schema version: `CURRENT_SCHEMA_VERSION = 3` names the only accepted format. An empty database
-  gets the full schema and `meta` rows in one immediate transaction; an existing database is never
-  rewritten. Another `schema_version` (older or newer), an incomplete schema or a bad
-  `embedding_epoch` is refused with INVALID before the lock or recents change; a different
-  `workbench_id` gives CONFLICT. Not implemented as of 2026-11-01: ordered checksummed migrations,
-  backups before a migration, and a "created by a newer VERA" message for the database (that
-  message exists only for `workbench.yaml` `format`, §2).
+- Schema version: `meta.schema_version` is `'1'` and names the only accepted format. An empty
+  database gets the complete schema and `meta` rows in one immediate transaction; an existing database
+  is never rewritten. Any other `schema_version`, an incomplete schema or a bad `embedding_epoch` is
+  refused with INVALID before the lock or recents change and the file stays untouched; a different
+  `workbench_id` gives CONFLICT. There are no migrations, no migration runner and no backups
+  (`.vera/backups/` is gone); migrations are deferred until the first public release (07 §6).
 - Core uses better-sqlite3 13.0.3 with WAL, foreign_keys ON, busy_timeout 5000 and synchronous NORMAL.
   Compatibility is inspected on a private db/WAL snapshot before lock or writable database activity;
   foreign-owner read-only handles retain private snapshots (`query_only`). An unstable concurrent
@@ -317,7 +316,7 @@ document_extractions(doc_id INTEGER PRIMARY KEY, extraction_json TEXT NOT NULL);
   `.vera/`). Binary artifacts arrive with device tools after 1.0 (future).
 
 NOTES:
-- Not implemented as of 2026-11-01: `workbench/migrate.ts`. A future `format` bump needs it and a
-  fixture of the old format; `tests/fixtures/upgrade/workbench-newer.yaml` covers only the refusal
-  of a newer format.
+- Deferred until the first public release: `workbench/migrate.ts`. A later `format` bump needs it and a
+  fixture of the old format. During development `format` stays 1 and `tests/fixtures/app-data/workbench.yaml`
+  is the current-format fixture.
 - Work packages cite this file as `02 §n`.

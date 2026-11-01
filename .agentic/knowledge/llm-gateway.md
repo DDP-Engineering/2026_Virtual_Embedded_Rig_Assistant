@@ -32,7 +32,7 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 - Provider errors map to OFFLINE or PROVIDER with auth/rate_limit/context/provider reasons, safe messages and optional Retry-After. Retained raw/escaped secrets are scrubbed across stream chunk boundaries and in final messages; actual usage and protocol discriminants are preserved. Complete assistant metadata/signatures are recursively scrubbed, and successful/partial timestamps use host Clock at terminal emission.
 - Shared strict projections and the existing authorized sandbox bridge guard catalog/result IPC. Renderer keeps no credential-bearing query mutation cache.
 - Test registration and dynamic replay import reside entirely inside compiled __VERA_TEST__; release emission excludes their code. Automated Node and acceptance transports block non-loopback traffic before dispatch.
-- Schema4 model defaults migrate0-3 with exact backups and future read-only protection. Live smoke is a distinct mandatory manual acceptance observation.
+- The default model reference lives in settings schemaVersion 1. Live smoke is a distinct mandatory manual acceptance observation.
 
 ## Change map
 
@@ -41,7 +41,7 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
-| IPC/schema/migration | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |
+| IPC/schema | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |
 | Localized Test presentation/mock | renderer provider-test/providers/mockApi/locales/styles | mockApi.test.ts; tests/e2e/{provider-test,mock}.spec.ts |
 | Guarded automation/manual smoke | tests/network-guard/network-setup; scripts/smoke-live | tooling/network-guard.test.ts; manual real-provider observation |
 
@@ -53,7 +53,6 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 - REQ-SEC-647da472 — scrubbed structured failures and streamed/final output.
 - REQ-TEST-38b20a35/771b99be/c986438f — deterministic replay, release seam elimination and automated egress rejection.
 - REQ-UX-53628854 — localized accessible per-step results.
-- REQ-DATA-f69eaef6 — schema4 model-reference migration.
 - REQ-FUNC-103979aa — manual real-provider smoke.
 
 ## Files

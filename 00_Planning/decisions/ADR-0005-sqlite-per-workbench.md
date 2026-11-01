@@ -37,4 +37,7 @@ Windows and Linux that the module loads, that both tokenizers work, and that WAL
   (`src/apps/desktop/src/main/packaging/sqlite-probe.ts`), not in production.
 - Additions: read-only opens use a private temporary copy of the database (`storage/db.ts:26-58`).
   On desktop, all SQLite writes stay in main while indexing runs in a utility process (ADR-0009).
+- Schema versioning: the complete schema is created in one transaction for a new database and
+  `meta.schema_version` is `'1'`. Any other value gives INVALID and the file stays untouched. There
+  are no migrations and no backups; they are deferred until the first public release (07 §6, WP-32).
 - Open: proof on a clean/offline Windows machine (WP-30/WP-33, see ADR-0013).

@@ -95,7 +95,7 @@ generation supplies fictional board documents for document and retrieval tests.
   size) reach the processor from ingest; effective overlap is capped at half the
   actual fragment, and changed parameters rebuild chunks without source edits.
 - Core imports its own dependencies and shared; Electron remains host-only.
-  Initial schema and migration checksums stay immutable.
+  The SQLite schema belongs to [workbench storage](workbench-storage.md).
 
 ## Change map
 

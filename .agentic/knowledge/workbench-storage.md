@@ -12,8 +12,10 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
 
 - schemaSql defines the complete current schema, including keyword indexes,
   embedding/extraction tables and their synchronization triggers.
-- CURRENT_SCHEMA_VERSION remains 3, identifying the existing current format.
-  It is a format marker, not a catalogue of upgrade steps.
+- CURRENT_SCHEMA_VERSION is 1, stored as meta schema_version "1". It identifies the
+  current format and is never incremented during development (root AGENTS.md
+  development compatibility policy). Any other value returns INVALID and the file
+  stays untouched.
 - initializeDatabase creates an empty database in one immediate transaction,
   including workbench_id, created_by, schema_version and embedding_epoch metadata.
 - Existing current databases are validated and opened without data or metadata
@@ -27,7 +29,7 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
   or writable opening. Read-only handles reject writes and remove their temporary
   copies on close. Unstable concurrent captures return BUSY.
 - Database and sidecar paths reject symlinks and nonordinary file types. Storage
-  neither creates nor consults a backups folder.
+  creates no backups.
 - Writable connections use WAL, foreign_keys ON, busy_timeout 5000 and synchronous
   NORMAL. An auxiliary read-only connection preserves DB/WAL/SHM bytes on ownership
   loss; ordinary close permits normal SQLite checkpointing.

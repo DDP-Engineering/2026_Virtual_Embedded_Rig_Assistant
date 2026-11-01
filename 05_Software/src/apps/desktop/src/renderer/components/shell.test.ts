@@ -21,7 +21,6 @@ it("retains Home, projects and Settings in a saved collapsed rail", async () => 
           navigation: createElement("button", { type: "button", "data-project": true }, "Project navigation"),
           settings: false,
           navigate,
-          storageReadOnly: false,
         }),
       );
     });

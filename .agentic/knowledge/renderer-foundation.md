@@ -35,7 +35,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 - About renders application name, version, platform, architecture, portable state and system locale
   from strict app.info. Home contains workbench actions and recents. Build/signing labels do not
   appear in the presentation; native packaging owns compiled identity and signature checks.
-- usePreferences loads {settings,readOnly}, applies mutation responses, invalidates on settings.changed
+- usePreferences loads {settings}, applies mutation responses, invalidates on settings.changed
   and cleans up its app subscription. Failure displays localized structured errors and retry.
 - System theme follows prefers-color-scheme; root data-theme is light/dark. Main nativeTheme.themeSource
   follows the persisted setting. Root font is14px times scale; geometry and code use rem.
@@ -49,10 +49,10 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 ## Invariants
 
 - API authorization, Chromium sandbox and confined vera://app production CSP remain authoritative.
-- Application schema/UUID/migration/no-op semantics belong to core/shared. Preferences apply only
-  from confirmed snapshots; failed saves retain the preceding state. Read-only snapshots disable editors.
-- Local geometry uses a strict separate versioned record; future data retains bytes, failed storage
-  stays transient, and application readOnly suppresses geometry writes.
+- Application schema/UUID/validation/no-op semantics belong to core/shared. Preferences apply only
+  from confirmed snapshots; failed saves retain the preceding state.
+- Local geometry uses a strict separate version 1 record with a required source width. Invalid or
+  other-version data uses defaults; there is no read-only layout mode. Failed storage stays transient.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
 - Keyboard controls use visible focus-ring CSS and semantic labels; opaque theme-token text pairs meet calculated AA contrast. Actual visual/AT acceptance follows the renderer accessibility contract. Selected buttons expose semantic state and heavier type.
   Reduced-motion styles disable animation/transition. The shell is fixed to the viewport with no document scroll; long pages and panels own their internal scroll regions. Minimum viewport uses wrapping inside these bounded regions.
@@ -67,7 +67,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 | Viewport containment and regional scrolling | styles.css, App.tsx | tests/e2e/session-scroll.spec.ts |
 | Appearance/theme/scale | hooks/use-preferences.ts, styles/ | native restart plus browser minimum-size matrix |
 | Languages/errors | i18n.ts, locales/, lib/language.ts, components/error-message.tsx | catalog fixture and browser translated failure |
-| Query invalidation/readOnly | hooks/use-preferences.ts | native external update/future-schema and browser save failure |
+| Query invalidation | hooks/use-preferences.ts | native external update and browser save failure |
 
 ## Key behaviors
 
@@ -80,7 +80,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 - REQ-UX-4a040007 — keyboard/focus/contrast/reduced-motion/minimum-size accessibility.
 - REQ-UX-52f83eb7 — modal-aware shortcuts and accessible transcript search.
 - REQ-UX-b7eabce7 — source-consistent Romanian/German catalog semantics.
-- REQ-UX-4a040008 — confirmed snapshots and read-only behavior.
+- REQ-UX-4a040008 — confirmed snapshots and settings.changed invalidation.
 - REQ-UX-7c3fd9a6 — fixed viewport and internally scrollable page/panel content.
 
 The view consumes confirmed settings. Native theme and renderer geometry have distinct owners.
@@ -106,7 +106,7 @@ visible; Back to workbenches restores the previous workbench view. The overview
 has one Edit action and its editor hosts instructions and Skills management.
 Shared dialogs are centered, including nested Skills dialogs.
 
-PermissionPicker is shared by the session composer and workbench Agent settings. Bypass has a warning marker plus red/bold selected styling; explicit selection shows a centered, localized full-file-access warning with Close/X/Escape and focus restoration. The application suppressBypassWarning preference hides later notices after confirmed checkbox persistence; failed saves retain a visible error/notice, and read-only app settings disable that checkbox. Native warnings are portaled outside the composer form, preserving input ownership. REQ-UX-33b9d601 and REQ-UX-bb147586 attach to permission-picker.test.ts and tests/e2e/bypass.spec.ts.
+PermissionPicker is shared by the session composer and workbench Agent settings. Bypass has a warning marker plus red/bold selected styling; explicit selection shows a centered, localized full-file-access warning with Close/X/Escape and focus restoration. The application suppressBypassWarning preference hides later notices after confirmed checkbox persistence; failed saves retain a visible error/notice. Native warnings are portaled outside the composer form, preserving input ownership. REQ-UX-33b9d601 and REQ-UX-bb147586 attach to permission-picker.test.ts and tests/e2e/bypass.spec.ts.
 
 Workbench Tools uses the canonical shared built-in names and short localized descriptions with native enabled checkboxes. `components/workbench-tools.tsx` presents the list; `workbench-editor.tsx` owns the existing tools.disabled draft and Save/Cancel/read-only lifecycle. Focused proof: workbench-tools.test.ts plus tests/e2e/workbench-navigation.spec.ts and workbench-tools.spec.ts (REQ-UX-0f1a32c4, REQ-FUNC-37261edc).
 

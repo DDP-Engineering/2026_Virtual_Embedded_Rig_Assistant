@@ -70,8 +70,8 @@ Done when:
 
 ## WP-03 App data locations, settings and logging
 
-**Goal:** where VERA keeps its own data — versioned settings with migrations, portable mode, and
-redacting logs.
+**Goal:** where VERA keeps its own data — versioned settings (no migrations until the first public
+release), portable mode, and redacting logs.
 **Depends on:** WP-02. **Specs:** 01 §1 (L7, L10), §6; 07 §4, §6; ADR-0009.
 **Start from:** `09_Others/benchpilot-reference/src/apps/server/src/llm/credentials.ts` (write-then-rename with the Windows retry).
 
@@ -85,17 +85,19 @@ Scope:
   (`0.875 | 1 | 1.125 | 1.25 | 1.5`); `defaultModel` (`null`); `providers` (non-secret, empty);
   `updates` (`{ mode: "notify", channel: "latest" }`); `recentWorkbenches` (`[]`); `limits`
   (`{ maxToolCallsPerTurn: 50 }`).
-- Settings service: load; migrate with a `settings.json.bak-<n>` backup; atomic save; partial updates
-  validated by zod; `settings.changed` events; a higher `schemaVersion` loads defaults read-only.
+- Settings service: load; atomic save; partial updates validated by a strict zod schema;
+  `settings.changed` events; `schemaVersion` is 1, and a file with any other version is invalid.
+  (As first planned: migrate with a `settings.json.bak-<n>` backup, and a higher `schemaVersion` loads
+  defaults read-only. Both were removed; WP-32 is deferred until the first public release.)
 - IPC `app.settings.get` and `app.settings.update`.
 - Logger: JSON lines in `<userData>/logs/vera-YYYY-MM-DD.log`, seven files kept, levels, and a redaction
   hook that removes registered secrets.
 
 Done when:
 - [ ] Unit: the first run creates settings with a new `installationId`.
-- [ ] Unit: a version-0 fixture migrates and leaves a backup.
 - [ ] Unit: a save interrupted between write and rename leaves the previous file valid.
-- [ ] Unit: a file with a higher `schemaVersion` is not modified; the service reports read-only.
+- [ ] Unit: an unreadable file, one with an unknown key or one with another `schemaVersion` is
+  invalid, is not modified and stops startup; settings are never read-only.
 - [ ] Unit: the portable marker switches `userData` (path logic tested without Electron).
 - [ ] Unit: a registered secret never appears in a log line.
 - [ ] e2e: `app.settings.update({ theme: "dark" })` survives an app restart.
@@ -177,11 +179,13 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   (`shared/ipc.ts:90-99`); a second IPC handler, `vera:subscription`, carries subscriptions
   (`main/index.ts:191`). Router, 50 ms coalescing and mock mode as planned (`main/ipc-router.ts:73-101`,
   `main/events.ts:188-231`, `tests/e2e/mock.spec.ts`).
-- WP-03: implemented with deviation: settings are at `schemaVersion` 4 with v0–v3 migrations
-  (`core/settings/service.ts:51-94`); `textScale` has a sixth step, 0.75 (`shared/settings.ts:36-43`);
-  `providers` defaults to `{ openai: {}, custom: [] }`. Portable mode, atomic save with the Windows
-  retry, read-only newer file and the seven-file redacting logger as planned
-  (`main/data-locations.ts:14-31`, `main/file-access.ts:33-50`, `main/logger.ts:9-25,66`).
+- WP-03: implemented with deviation: settings are at `schemaVersion` 1 with a strict schema (unknown
+  keys invalid, `webAccess` required) and no migrations, backups or read-only mode; an unreadable or
+  invalid file, including any other version, gives INVALID, stays untouched and stops startup
+  (`app.startup.failed`; the CLI fails the same way); the FileAccess `backup` port is removed;
+  `textScale` has a sixth step, 0.75 (`shared/settings.ts`); `providers` defaults to
+  `{ openai: {}, custom: [] }`. Portable mode, atomic save with the Windows retry and the seven-file
+  redacting logger as planned (`main/data-locations.ts`, `main/file-access.ts`, `main/logger.ts`).
 - WP-04: implemented with deviation: six text sizes, plus chat and code font sizes in px that ignore
   the scale (`renderer/hooks/use-preferences.ts:39-45`), so not "every size in `rem`"; navigation is
   React state, not a memory-history router (`renderer/App.tsx:29-31`); one settings page with eleven
@@ -200,8 +204,8 @@ Not in the plan, implemented in this area:
 - Extra hardening: `will-frame-navigate` and webview attachment blocked, the preload refuses to run
   unsandboxed, HTTP/2 off (`main/security.ts:59-84`, `src/apps/desktop/src/preload/index.ts:4`).
 - Remappable, persisted keyboard shortcuts (`shared/keyboard-shortcuts.ts`,
-  `tests/e2e/keyboard-shortcuts.spec.ts`); versioned window-state and layout records that turn
-  read-only when newer.
+  `tests/e2e/keyboard-shortcuts.spec.ts`); versioned window-state and layout records (version 1;
+  invalid or other-version data gives the defaults and is overwritten, with no read-only mode).
 - Extra settings: `webAccess`, `keyboardShortcuts`, `chatFontSize`, `codeFontSize`, `sessionOrder`,
   `suppressBypassWarning` (`shared/settings.ts:30-53`).
 - An app-local Microsoft VC++ runtime for Windows (`src/windows_runtime/`,

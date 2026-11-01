@@ -18,7 +18,7 @@ App maintains ordinary list for active selection and separate workbench/query se
 
 ## Invariants
 
-Full history and queued/delivered identities survive export independently of context compaction. Search excludes tool arguments/derived summaries and other-workbench events. Native paths come only from chosen save dialog; existing canonical .vera guard and atomic file port apply. Core remains Electron-independent and renderer imports shared only. Pins and SQLite migrations remain stable. Fences are longer than content backtick runs; title/tool names escape Markdown, citations use literal code refs.
+Full history and queued/delivered identities survive export independently of context compaction. Search excludes tool arguments/derived summaries and other-workbench events. Native paths come only from chosen save dialog; existing canonical .vera guard and atomic file port apply. Core remains Electron-independent and renderer imports shared only. Pins and the SQLite schema remain stable. Fences are longer than content backtick runs; title/tool names escape Markdown, citations use literal code refs.
 
 ## Change map
 

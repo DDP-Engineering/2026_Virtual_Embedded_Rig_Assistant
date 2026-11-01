@@ -46,7 +46,7 @@ VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is
 | Change | Start | Focused proof |
 |---|---|---|
 | modes/safety | main/updates.ts | updates.test.ts |
-| channels/integrity | main/update-backend.ts | update-backend.test.ts, actual upgrade |
+| channels/integrity | main/update-backend.ts | update-backend.test.ts, scripts/probe-upgrade.mjs |
 | admission | core sessions/service.ts, main/sessions.ts/index.ts | approvals.test.ts, sessions.test.ts |
 | UI/IPC | shared updates/ipc/events, renderer updates.tsx | shared/UI tests, tests/e2e/updates.spec.ts |
 | build/feed | update-config.mjs, package.mjs, update-feed.mjs | tooling/updates.test.ts, packaging.test.ts |
@@ -79,6 +79,10 @@ Paths relative to05_Software:
 - src/apps/desktop/src/main/{updates,update-backend,index,sessions}.ts — lifecycle/adapters.
 - src/libraries/core/src/sessions/service.ts — actual activity.
 - renderer components/updates.tsx/settings.tsx, App.tsx, mocks/mockApi.ts/locales — presentation.
-- scripts/{update-config,package,update-feed,probe-upgrade}.mjs — build/feed and actual artifact probe.
+- scripts/{update-config,package,update-feed}.mjs — build/feed.
+- scripts/probe-upgrade.mjs — actual artifact updater probe: a managed (deb) build gets metadata only,
+  SHA-512 is required and a corrupt hash is refused, install waits for a pending approval and then
+  really installs, and a portable build gets a release link. It does not check data migration;
+  upgrade data safety is deferred until the first public release.
 - shared updates.test.ts, main updates/update-backend.test.ts, core approvals.test.ts,
   renderer updates.test.ts, tooling updates.test.ts and tests/e2e/updates.spec.ts — proof seams.

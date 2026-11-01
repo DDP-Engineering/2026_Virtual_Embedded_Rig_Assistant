@@ -112,22 +112,6 @@ test("shortcut UI edits aliases, rejects conflicts, removes and resets, with iso
     await page.setViewportSize({ width: 1024, height: 640 });
     await expect(section).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.route("**/api/index.*", (route) =>
-      route.fulfill({
-        contentType: "application/javascript",
-        body: 'import { createMockApi } from "/mocks/mockApi.ts"; const base = createMockApi().api; export const api = { ...base, getSettings: async () => ({ ...await base.getSettings(), readOnly: true }) };',
-      }),
-    );
-    await page.reload();
-    await expect(page.locator("[data-empty-workbench]")).toBeVisible();
-    await page.keyboard.press("Control+/");
-    await expect(
-      section.getByRole("button", { name: "Edit Open settings: Ctrl+,", exact: true }),
-    ).toBeDisabled();
-    await expect(
-      section.getByRole("button", { name: "Remove Open settings: Ctrl+,", exact: true }),
-    ).toBeDisabled();
-    await expect(section.getByRole("searchbox")).toBeEnabled();
     expect(errors).toEqual([]);
   } finally {
     await server.close();

@@ -18,8 +18,8 @@ Model identity covers model/revision/dtype and the embedding descriptor. Intake
 counts full prefixes and special tokens with the actual tokenizer, rejecting
 inputs>=512 before inference. Model changes cause unchanged indexed documents
 to be reprocessed; replacement commits chunks, extraction and vectors together.
-Older read-only schemas remain readable with lexical availability and an explicit
-semantic-index error; no SQL migration/write occurs through tools.
+A database with any schema_version other than 1 is invalid and does not open.
+Tools never write SQL schema changes.
 
 read_doc selects PDF page/pageEnd, Markdown/HTML heading slug or text lineStart/
 lineEnd. Families cannot mix; bounds are positive integers within the extracted

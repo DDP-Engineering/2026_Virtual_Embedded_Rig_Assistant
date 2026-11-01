@@ -23,7 +23,7 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 
 - Ordinary canonical managed ancestors/files, single-link files, current owned lock, lifetime and AbortSignal are checked before saves; general file tools retain .vera confinement.
 - Runtime sequences non-read classes; cross-session saves/deletion share one workbench queue. Session-mode read-only does not change application-managed artifact authority; workbench read-only does.
-- Existing schema1/migration hashes remain immutable. Filesystem and SQLite have separate crash boundaries: interrupted mismatches are refused by open/citations; explicit overwrite repairs the stored artifact. Untracked/name-alias files require another name or user reconciliation.
+- Artifacts use the current schema (schema_version 1). Filesystem and SQLite have separate crash boundaries: interrupted mismatches are refused by open/citations; explicit overwrite repairs the stored artifact. Untracked/name-alias files require another name or user reconciliation.
 - Core imports no Electron; renderer imports no host/core/Node. Sandboxing, exact vera://app origin, import rules and secret redaction stay authoritative.
 
 ## Change map

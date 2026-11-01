@@ -26,7 +26,7 @@ Scope:
 - `src/libraries/core/src/workbench/`:
   - `create(folder, name)`: the folder must be empty or lack `workbench.yaml`; writes `workbench.yaml`
     with a `wb_` ULID, the `WORKBENCH.md` template, `docs/`, `skills/`, `.vera/.gitignore`;
-  - `open(folder)`: validates; refuses a newer `format` (`WORKBENCH_TOO_NEW`); takes `.vera/lock`, takes
+  - `open(folder)`: validates (`format` must be 1; any other value is `CONFIG_INVALID`, there is no `WORKBENCH_TOO_NEW`); takes `.vera/lock`, takes
     over a lock whose process is gone, opens read-only while the lock's process lives;
   - `close()`; the ignore rules of 02 §6, exposed for the tools.
 - UNC paths open with a "network share unsupported" warning.
@@ -41,13 +41,17 @@ Scope:
 
 Done when:
 - [ ] Unit: create → open round trip; the written YAML validates.
-- [ ] Unit: invalid YAML reports its line; `format: 2` is refused.
+- [ ] Unit: invalid YAML reports its line; `format: 2` is `CONFIG_INVALID`.
 - [ ] Unit: a stale lock is taken over; a live lock opens the workbench read-only.
 - [ ] Unit: unknown keys survive `config.update`.
 - [ ] e2e: create a workbench on the Welcome screen, restart, reopen it from the recent list.
 - [ ] e2e: a recent entry whose folder was deleted shows the missing state and can be removed.
 
 ## WP-07 Workbench database and migrations
+
+**Status:** as built there are no migrations. Checksummed migrations and backups are deferred until
+the first public release; until then the one complete schema has `schema_version` 1 and any other value
+is INVALID (07 §6). The migration scope and Done-when items below are the original plan.
 
 **Goal:** the per-workbench SQLite database with checksummed migrations, backups and the first repositories.
 **Depends on:** WP-05, WP-06. **Specs:** 02 §9; 07 §6; ADR-0005 and the ADR filed by WP-05.
@@ -59,7 +63,7 @@ Scope:
 - Migration runner: ordered migrations as TypeScript modules exporting SQL; the SHA-256 of each applied
   migration in `meta`; a changed applied migration is an error; a backup in
   `.vera/backups/vera.db.v<n>.bak` before pending migrations run; a higher `schema_version` throws
-  `WORKBENCH_TOO_NEW`.
+  `WORKBENCH_TOO_NEW` (original plan, not built).
 - Migration `0001_initial`: the tables of 02 §9 except the FTS5 and embeddings tables (M3).
 - Repositories for `sessions`, `messages` and `events`; other tables get theirs with their packages.
 - Called from `workbench.open`.
@@ -80,7 +84,7 @@ Done when:
 
 Scope:
 - A `CredentialStore` port matching pi-ai's contract (`read`, `list`, `modify`, `delete`).
-- The main-process store over `<userData>/credentials.json` (`schemaVersion`; values encrypted with
+- The main-process store over `<userData>/credentials.json` (`schemaVersion` 1, strict; another version or invalid content gives INVALID before decryption; values encrypted with
   `safeStorage`, base64); `modify` under a mutex.
 - When encryption is unavailable, or Linux reports `basic_text`: ask before storing; on refusal keep
   secrets in memory for this run only.
@@ -326,13 +330,14 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   the recent list is not capped at ten (`core/workbench/service.ts:536-548`); the demo fixture uses
   the `.vera/` layout and adds `board.txt`, `sources/*.md` and three PDFs. Done-when tests:
   `core/workbench/service.test.ts:272,606,627,782`, `tests/e2e/workbench.spec.ts:32,97`.
-- WP-07: implemented with deviation: there are no migrations — one schema (version 3, FTS5 and
-  embeddings tables included) is created in an empty database only; there are no checksums and no
-  `.vera/backups/vera.db.v<n>.bak`, and any other `schema_version`, older or newer, is refused with
-  `INVALID`, not `WORKBENCH_TOO_NEW` (`core/storage/schema.ts:4-5,122-141`; `core/storage/db.test.ts:86,107,109`).
-  The runner and migrations 0001–0003 were deleted in commit 33e72b8, so the checksum and backup
-  Done-when items no longer hold. Pragmas, better-sqlite3 and the repositories as planned
-  (`core/storage/db.ts:86-89`, `core/storage/repositories.test.ts`).
+- WP-07: implemented with deviation: there are no migrations — one complete schema (`schema_version`
+  `'1'`, FTS5 and embeddings tables included) is created in one transaction in an empty database only;
+  there are no checksums, no migration runner and no backups (`.vera/backups/` is gone), and any other
+  `schema_version` is refused with `INVALID` and the file stays untouched; `WORKBENCH_TOO_NEW` no
+  longer exists (`core/storage/schema.ts`, `core/storage/db.test.ts`). The runner and migrations
+  0001–0003 were deleted in commit 33e72b8, and the schema version was reset from 3 to 1 under the
+  development compatibility policy, so the checksum and backup Done-when items no longer hold. Pragmas,
+  better-sqlite3 and the repositories as planned (`core/storage/db.ts`, `core/storage/repositories.test.ts`).
 - WP-08: implemented as planned (`main/credentials.ts:60-65,168-227`, `main/provider-settings.ts:14-19`,
   `tests/e2e/providers.spec.ts:114`).
 - WP-09: implemented as planned: pi-ai pinned at 1.1.0, custom providers through

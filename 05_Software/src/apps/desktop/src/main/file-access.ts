@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type FileHandle, mkdir, open, readFile, rename, rm } from "node:fs/promises";
+import { mkdir, open, readFile, rename, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Clock, FileAccess } from "@vera/core";
 
@@ -46,26 +46,6 @@ export function createFileAccess(
       } finally {
         await rm(temporary, { force: true });
       }
-    },
-    async backup(path, content) {
-      await mkdir(dirname(path), { recursive: true });
-      let handle: FileHandle;
-      try {
-        handle = await open(path, "wx", 0o600);
-      } catch (error) {
-        if (code(error) === "EEXIST") return false;
-        throw error;
-      }
-      try {
-        await handle.writeFile(content, "utf8");
-        await handle.sync();
-      } catch (error) {
-        await handle.close();
-        await rm(path, { force: true });
-        throw error;
-      }
-      await handle.close();
-      return true;
     },
   };
 }

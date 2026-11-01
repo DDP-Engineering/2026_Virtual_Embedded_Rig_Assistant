@@ -17,11 +17,11 @@ requirement = """
 When document content or the local embedding descriptor changes, the owned ingest system shall atomically publish current chunks, full extraction and model-identified normalized float32 vectors from local worker batches of32, preserving abort, ownership, delete, reindex and read-only lifecycle.
 """
 
-verification = "Real SQLite migration/repository rollback and ingest cases verify vectors/extraction with chunks, source/model invalidation and cleanup; compiled worker tests verify batching/local CPU/finite normalized dimensions, errors, timeout and abort."
+verification = "Real SQLite schema/repository rollback and ingest cases verify vectors/extraction with chunks, source/model invalidation and cleanup; compiled worker tests verify batching/local CPU/finite normalized dimensions, errors, timeout and abort."
 
-affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-worker.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/storage/embedding-migration.test.ts", "05_Software/src/libraries/core/src/storage/migrate.ts", "05_Software/src/libraries/core/src/storage/migrations/0003_embeddings.ts", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-worker.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/storage/embedding-schema.test.ts", "05_Software/src/libraries/core/src/storage/schema.ts", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/storage/embedding-migration.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/storage/embedding-schema.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
 
 
 spec = "specs/REQ-FUNC-0e93fa45.md"
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-12
-updated = 2026-10-12
+updated = 2026-11-01

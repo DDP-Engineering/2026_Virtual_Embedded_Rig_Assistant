@@ -63,7 +63,6 @@ async function harness(
     writeAtomic: async (path: string, text: string) => {
       await writeFile(path, text);
     },
-    backup: async () => true,
   };
   const settings = new SettingsService({
     files,

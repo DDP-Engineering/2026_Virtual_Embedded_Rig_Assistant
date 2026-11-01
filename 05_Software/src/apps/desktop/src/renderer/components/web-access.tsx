@@ -14,7 +14,7 @@ import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import "./web-access.css";
 
-export function WebAccessPanel({ readOnly = false }: { readOnly?: boolean }) {
+export function WebAccessPanel() {
   const { t } = useTranslation();
   const query = useQuery({ queryKey: ["web.access.get"], queryFn: () => api.invoke("web.access.get", {}) });
   return (
@@ -23,12 +23,12 @@ export function WebAccessPanel({ readOnly = false }: { readOnly?: boolean }) {
       <p className="muted">{t("webAccess.description")}</p>
       {query.isPending && <p role="status">{t("webAccess.loading")}</p>}
       {query.error && <ErrorMessage error={query.error} />}
-      {query.data && <WebAccessForm snapshot={query.data} readOnly={readOnly} />}
+      {query.data && <WebAccessForm snapshot={query.data} />}
     </section>
   );
 }
 
-function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; readOnly: boolean }) {
+function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
   const { t } = useTranslation();
   const storageDescriptions = {
     encrypted: t("webAccess.storage.encrypted"),
@@ -157,7 +157,7 @@ function WebAccessForm({ snapshot, readOnly }: { snapshot: WebAccessSnapshot; re
     generation.current++;
     if (attempt.current) void api.invoke("web.access.cancel", { testId: attempt.current }).catch(() => {});
   };
-  const disabled = readOnly || snapshot.readOnly || saving || testing;
+  const disabled = saving || testing;
   const missingKey = authentication === "api-key" && !key.trim() && !keyMetadata.keyConfigured;
   return (
     <>

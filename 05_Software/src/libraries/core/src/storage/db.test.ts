@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
@@ -35,7 +34,7 @@ async function bytes(file: string) {
   }
   return result;
 }
-it("creates the complete current schema directly, with SQLite pragmas and no automatic backups", async () => {
+it("creates the complete current schema directly, with SQLite pragmas", async () => {
   const file = await path();
   const { db } = await opened(file);
   expect(db.pragma("journal_mode", { simple: true })).toBe("wal");
@@ -45,7 +44,7 @@ it("creates the complete current schema directly, with SQLite pragmas and no aut
   expect(db.prepare("SELECT * FROM meta ORDER BY key").all()).toEqual([
     { key: "created_by", value: "0.0.0" },
     { key: "embedding_epoch", value: "0" },
-    { key: "schema_version", value: "3" },
+    { key: "schema_version", value: "1" },
     { key: "workbench_id", value: "wb_test" },
   ]);
   expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table'").pluck().all()).toEqual(
@@ -83,9 +82,8 @@ it("creates the complete current schema directly, with SQLite pragmas and no aut
   );
   expect(db.pragma("integrity_check", { simple: true })).toBe("ok");
   expect(db.pragma("foreign_key_check")).toEqual([]);
-  expect(existsSync(join(dirname(file), "backups"))).toBe(false);
 });
-it("reopens current data and metadata unchanged, including committed WAL rows, without generating backups", async () => {
+it("reopens current data and metadata unchanged, including committed WAL rows", async () => {
   const file = await path();
   const h = await opened(file);
   h.db.exec(
@@ -104,10 +102,10 @@ it("reopens current data and metadata unchanged, including committed WAL rows, w
   const disk = await bytes(file);
   (await opened(file)).close();
   expect(await bytes(file)).toEqual(disk);
-  expect(existsSync(join(dirname(file), "backups"))).toBe(false);
 });
-it.each(["0", "1", "2", "99", "not-a-version"])(
-  "refuses a non-current schema (%s) without changing DB/WAL/SHM",
+// Version 1 is the only database format during development (AGENTS.md).
+it.each(["0", "2", "99", "not-a-version"])(
+  "refuses a schema version other than the current one (%s) without changing DB/WAL/SHM",
   async (version) => {
     const file = await path();
     const { db } = await opened(file);
@@ -116,7 +114,6 @@ it.each(["0", "1", "2", "99", "not-a-version"])(
     await expect(inspectDatabase(file, options)).rejects.toMatchObject({ code: "INVALID" });
     await expect(openDb(file, options)).rejects.toMatchObject({ code: "INVALID" });
     expect(await bytes(file)).toEqual(before);
-    expect(existsSync(join(dirname(file), "backups"))).toBe(false);
   },
 );
 it.each(["TABLE document_extractions", "INDEX idx_chunks_doc", "TRIGGER chunks_keyword_insert"])(
@@ -171,15 +168,4 @@ it("initializes an empty writable database but never initializes a read-only one
   await expect(openDb(file, { ...options, readOnly: true })).rejects.toMatchObject({ code: "INVALID" });
   expect(await bytes(file)).toEqual(before);
   expect((await opened(file)).db.prepare("SELECT COUNT(*) FROM sessions").pluck().get()).toBe(0);
-});
-it("does not read, replace or extend old backup files", async () => {
-  const file = await path();
-  const directory = join(dirname(file), "backups");
-  await mkdir(directory);
-  const backup = join(directory, "vera.db.v0.bak");
-  await writeFile(backup, "leave this file alone");
-  (await opened(file)).close();
-  (await opened(file)).close();
-  expect(await readdir(directory)).toEqual(["vera.db.v0.bak"]);
-  expect(await readFile(backup, "utf8")).toBe("leave this file alone");
 });

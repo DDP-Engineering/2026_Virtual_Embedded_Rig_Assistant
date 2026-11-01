@@ -144,7 +144,7 @@ function BypassWarning({
           type="checkbox"
           data-hide-bypass-warning
           checked={remember}
-          disabled={!preferences.data || preferences.data.readOnly || save.isPending}
+          disabled={!preferences.data || save.isPending}
           onChange={(event) => setRemember(event.target.checked)}
         />
         <span>{t("bypass.dontShowAgain")}</span>

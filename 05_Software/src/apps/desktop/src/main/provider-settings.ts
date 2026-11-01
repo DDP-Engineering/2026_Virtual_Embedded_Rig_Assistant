@@ -38,7 +38,7 @@ export class ProviderSettings {
   }
   async list(): Promise<ProviderList> {
     await this.credentials.load();
-    const { settings, readOnly } = this.settings.get();
+    const { settings } = this.settings.get();
     if (this.credentials.containsSecret(settings.providers)) throw veraError("INVALID");
     const metadata = async (id: string, keyless = false) => {
       const credential = await this.credentials.read(id);
@@ -86,7 +86,6 @@ export class ProviderSettings {
       openai,
       custom,
       secureStorage: this.credentials.secureStorage,
-      readOnly,
     });
   }
   save(request: ProviderSave): Promise<{ status: "saved" | "consent-required" }> {
@@ -98,7 +97,6 @@ export class ProviderSettings {
       const input = parsed.data;
       await this.credentials.load();
       const state = this.settings.get();
-      if (state.readOnly) throw veraError("DENIED");
       const providers = structuredClone(state.settings.providers);
       let id = "openai";
       if (input.provider === "openai") {
@@ -156,7 +154,6 @@ export class ProviderSettings {
     return this.enqueue(async () => {
       await this.credentials.load();
       const state = this.settings.get();
-      if (state.readOnly) throw veraError("DENIED");
       const { id } = parsed.data;
       const providers = structuredClone(state.settings.providers);
       if (id !== "openai") {
@@ -186,7 +183,6 @@ export class ProviderSettings {
   ): Promise<void> {
     return this.enqueue(async () => {
       const state = this.settings.get();
-      if (state.readOnly) return;
       const current = state.settings.providers.custom.find((c) => c.slug === config.slug);
       if (!current || JSON.stringify(current) !== JSON.stringify(config)) return;
       const custom = state.settings.providers.custom.map((c) =>

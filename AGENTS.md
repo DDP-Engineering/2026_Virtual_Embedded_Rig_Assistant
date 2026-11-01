@@ -13,9 +13,21 @@ remotes, labels, configuration, `02_Tools` setup), planning and architecture doc
 ## Development compatibility policy
 
 VERA is currently in development. Treat the current project layout, configuration and data
-contracts as authoritative. Do not implement migrations, legacy-layout detection, backward
-compatibility or fallback paths for earlier development versions unless the user explicitly
-requests them. Update current code, tests, fixtures and documentation together.
+contracts as authoritative. Unless the user explicitly requests otherwise:
+
+- Do not implement data migrations, backups made before an upgrade, legacy-layout detection,
+  readers or fallbacks for earlier formats, guards for data written by a newer version
+  (read-only modes, "too new" errors), upgrade-safety checks or upgrade fixtures.
+- Keep the stored format and schema version fields (settings, credentials, window state, renderer
+  layout, `workbench.yaml` `format`, the workbench database `schema_version`, exports and caches):
+  they will be used after the first release. During development every one of them is `1` and is
+  never incremented.
+- Change a stored format in place at version 1, and update code, tests, fixtures and documentation
+  together. Any other version value is invalid data, reported like other invalid data. Data written
+  by an earlier development build may stop loading; delete or recreate it instead of converting it.
+- Upgrade and migration safety (00_Planning rule L10, WP-32) is deferred until the first public
+  release. The application's update feature itself (download, SHA-512 check, install) is a feature,
+  not compatibility, and stays.
 
 ## Implementation branch and commits
 

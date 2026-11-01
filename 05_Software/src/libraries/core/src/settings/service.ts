@@ -5,10 +5,6 @@ import {
   type SettingsSnapshot,
   settingsSchema,
   settingsServicePatchSchema,
-  settingsV0Schema,
-  settingsV1Schema,
-  settingsV2Schema,
-  settingsV3Schema,
   veraError,
 } from "@vera/shared";
 import type { FileAccess, PathProvider } from "../ports.js";
@@ -35,10 +31,10 @@ export class SettingsService {
 
   private async initialize(): Promise<void> {
     const raw = await this.host.files.read(this.host.paths.settings);
-    const defaults = defaultSettings(this.host.uuid());
     if (raw === undefined) {
+      const defaults = defaultSettings(this.host.uuid());
       await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(defaults, null, 2));
-      this.state = { settings: defaults, readOnly: false };
+      this.state = { settings: defaults };
       return;
     }
     let stored: unknown;
@@ -47,52 +43,10 @@ export class SettingsService {
     } catch {
       throw veraError("INVALID");
     }
-    if (typeof stored !== "object" || stored === null || Array.isArray(stored)) throw veraError("INVALID");
-    const version = (stored as { schemaVersion?: unknown }).schemaVersion;
-    if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 0)
-      throw veraError("INVALID");
-    if (version > 4) {
-      this.state = { settings: defaults, readOnly: true };
-      return;
-    }
-    let data = stored;
-    if (version === 0) {
-      const legacy = settingsV0Schema.safeParse(stored);
-      if (!legacy.success) throw veraError("INVALID");
-      const { schemaVersion: _version, installationId, ...patch } = legacy.data;
-      data = {
-        ...defaults,
-        ...patch,
-        schemaVersion: 4,
-        providers: defaults.providers,
-        installationId: installationId ?? defaults.installationId,
-        updates: { ...defaults.updates, ...patch.updates },
-        limits: { ...defaults.limits, ...patch.limits },
-      };
-    }
-    if (version === 1) {
-      const legacy = settingsV1Schema.safeParse(stored);
-      if (!legacy.success) throw veraError("INVALID");
-      data = { ...legacy.data, schemaVersion: 4, providers: defaults.providers };
-    }
-    if (version === 2) {
-      const legacy = settingsV2Schema.safeParse(stored);
-      if (!legacy.success) throw veraError("INVALID");
-      data = { ...legacy.data, schemaVersion: 4, providers: defaults.providers };
-    }
-    if (version === 3) {
-      const legacy = settingsV3Schema.safeParse(stored);
-      if (!legacy.success) throw veraError("INVALID");
-      data = { ...legacy.data, schemaVersion: 4 };
-    }
-    const parsed = settingsSchema.safeParse(data);
+    // The current format only: any other schemaVersion is invalid data (AGENTS.md).
+    const parsed = settingsSchema.safeParse(stored);
     if (!parsed.success) throw veraError("INVALID");
-    if (version < 4) {
-      let backup = version;
-      while (!(await this.host.files.backup(`${this.host.paths.settings}.bak-${backup}`, raw))) backup++;
-      await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(parsed.data, null, 2));
-    }
-    this.state = { settings: parsed.data, readOnly: false };
+    this.state = { settings: parsed.data };
   }
 
   get(): SettingsSnapshot {
@@ -110,12 +64,11 @@ export class SettingsService {
     const run = this.queue.then(async () => {
       await this.load();
       const current = this.get();
-      if (current.readOnly) throw veraError("DENIED");
       if (when && !when(current)) return current;
       const next = mergeSettings(current.settings, parsed.data);
       if (JSON.stringify(next) !== JSON.stringify(current.settings)) {
         await this.host.files.writeAtomic(this.host.paths.settings, JSON.stringify(next, null, 2));
-        this.state = { settings: next, readOnly: false };
+        this.state = { settings: next };
         // Observers cannot turn an already committed save into a failed update.
         try {
           this.host.changed();

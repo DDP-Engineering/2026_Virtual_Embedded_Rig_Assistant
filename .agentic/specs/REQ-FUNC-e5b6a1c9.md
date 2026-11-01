@@ -18,7 +18,7 @@ Status: active. Requirement: REQ-FUNC-e5b6a1c9. Architecture: 03 §2/7/8, 04 §3
 
 SessionService owns one ephemeral ContextCompactor per session and clears it on session delete/workbench close. ReferenceRuntime owns a default compactor across sends and replaces it on start unless the session owner supplies one. Restart can regenerate summaries from full SQLite history; summaries never replace durable messages or become citation provenance.
 
-Usage fields are optional for backward-compatible replay: compactionStatus is none/running/completed/unavailable/failed; requestViewTokens equals the current whole-request count (system, schemas, framing and messages), labeled with the existing estimated flag. Running reports the summary request; the final preflight reports the normal view. Summary provider usage accumulates with normal provider usage, separately from estimates.
+Usage fields are optional in the current format: compactionStatus is none/running/completed/unavailable/failed; requestViewTokens equals the current whole-request count (system, schemas, framing and messages), labeled with the existing estimated flag. Running reports the summary request; the final preflight reports the normal view. Summary provider usage accumulates with normal provider usage, separately from estimates.
 
 ## Verification
 

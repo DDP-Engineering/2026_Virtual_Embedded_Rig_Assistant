@@ -1,5 +1,5 @@
 import type { SettingsService } from "@vera/core";
-import { moveSession, orderSessions, veraError } from "@vera/shared";
+import { moveSession, orderSessions } from "@vera/shared";
 
 /**
  * The user's session order per workbench, kept in the user settings. Moves run one at a time so
@@ -19,7 +19,6 @@ export function createSessionOrder(settings: Pick<SettingsService, "get" | "upda
     ): Promise<void> {
       const run = queue.then(async () => {
         const snapshot = settings.get();
-        if (snapshot.readOnly) throw veraError("DENIED");
         const stored = snapshot.settings.sessionOrder;
         const order = moveSession(sessions, stored?.[workbenchId], sessionId, offset);
         await settings.update({ sessionOrder: { ...stored, [workbenchId]: order } });

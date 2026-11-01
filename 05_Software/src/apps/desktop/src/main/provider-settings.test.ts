@@ -22,7 +22,6 @@ function harness(secure = true) {
     writeAtomic: vi.fn(async (p: string, v: string) => {
       disk.set(p, v);
     }),
-    backup: vi.fn(async () => true),
   };
   const settings = new SettingsService({
     files,
@@ -129,7 +128,7 @@ describe("safe provider settings", () => {
       expect((await h.service.list()).openai.hint).toBeNull();
     }
   });
-  it("adds/edits/removes keyless and keyed endpoints, defaults and stable slug, retaining extensions", async () => {
+  it("adds/edits/removes keyless and keyed endpoints, defaults and stable slug, keeping stored options", async () => {
     const h = harness();
     await h.settings.load();
     await h.service.save({ provider: "custom", config: custom, apiKey: key });
@@ -141,12 +140,8 @@ describe("safe provider settings", () => {
       configured: true,
     });
     const state = h.settings.get().settings;
-    state.providers.custom[0] = {
-      ...state.providers.custom[0],
-      extension: { preserved: true },
-      supportsTools: true,
-    } as never;
-    // Simulate a current-format extension written by another compatible component.
+    state.providers.custom[0] = { ...state.providers.custom[0], supportsTools: true } as never;
+    // A stored option the edit form does not send survives an edit.
     h.disk.set("/data/settings.json", JSON.stringify(state));
     const reload = new SettingsService({
       files: h.files,
@@ -164,7 +159,6 @@ describe("safe provider settings", () => {
     expect(reload.get().settings.providers.custom[0]).toMatchObject({
       slug: "local-model",
       name: "Renamed local",
-      extension: { preserved: true },
       supportsTools: true,
     });
     expect((await service.list()).custom[0]?.hint).toBe("fak…8Zx4");
@@ -211,7 +205,7 @@ describe("safe provider settings", () => {
     }
     await expect(h.service.remove({ id: "custom:missing" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
-  it("rolls back credential when settings fail, recovers queue and protects newer settings", async () => {
+  it("rolls back credential when settings fail and recovers the queue", async () => {
     const h = harness();
     await h.settings.load();
     await h.service.save({ provider: "openai", apiKey: key, model: "old" });
@@ -226,13 +220,7 @@ describe("safe provider settings", () => {
     expect(await h.credentials.read("openai")).toEqual({ type: "api_key", key });
     expect(h.settings.get().settings.providers.openai.model).toBe("old");
     await h.service.save({ provider: "openai", model: "recovered" });
-    const newer = harness();
-    newer.disk.set("/data/settings.json", '{"schemaVersion":99,"future":true}');
-    await newer.settings.load();
-    await expect(newer.service.save({ provider: "openai", apiKey: key })).rejects.toMatchObject({
-      code: "DENIED",
-    });
-    expect(newer.disk.has("/data/credentials.json")).toBe(false);
+    expect(h.settings.get().settings.providers.openai.model).toBe("recovered");
   });
   it.each([true, false])(
     "rollback preserves original storage after crypto availability flips secure=%s",

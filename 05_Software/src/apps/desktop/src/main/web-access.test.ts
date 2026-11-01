@@ -18,7 +18,6 @@ async function harness(secure = true) {
     writeAtomic: vi.fn(async (p: string, value: string) => {
       disk.set(p, value);
     }),
-    backup: vi.fn(async () => true),
   };
   const settings = new SettingsService({
     files,

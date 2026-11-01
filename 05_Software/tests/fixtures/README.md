@@ -12,5 +12,10 @@ into isolated workspaces before opening or modifying it.
 from `workbenches/demo-board/sources/`.
 
 The remaining folders contain document extraction samples, replay scripts,
-translation checker cases, retrieval questions/model manifests and settings/upgrade
-fixtures. Existing user workbenches and profiles are never part of this directory.
+translation checker cases and retrieval questions/model manifests.
+Existing user workbenches and profiles are never part of this directory.
+
+`app-data/` holds current-format application data: `credentials.json`, `workbench.yaml`
+and `interrupted-sessions.json`, the crash-recovery fixture with interrupted sessions.
+Every stored format is version 1 during development, so there are no previous-version
+or newer-version fixtures.

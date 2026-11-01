@@ -21,7 +21,7 @@ Plugins (PLG-01…18) and analysis capabilities (CAP-01…04) are planned, not i
 | [architecture/05-knowledge-rag.md](architecture/05-knowledge-rag.md) | document selection and ingest in the VERA Indexer, extraction (PDF, Office, HTML, Markdown, text), chunking, keyword and vector index, hybrid search, references, viewer |
 | [architecture/06-ui.md](architecture/06-ui.md) | layout and window chrome, screens, session components, appearance, viewer, languages, accessibility and shortcuts |
 | [ui/README.md](ui/README.md) | historical layout A mockups and how the implemented UI differs |
-| [architecture/07-packaging-updates.md](architecture/07-packaging-updates.md) | package contents, targets, versions and channels, portable mode, updates, data migrations, signing |
+| [architecture/07-packaging-updates.md](architecture/07-packaging-updates.md) | package contents, targets, versions and channels, portable mode, updates, data format versions (migrations deferred until the first public release), signing |
 | [architecture/08-quality.md](architecture/08-quality.md) | commands, test layers, fixtures and replay, release-package smoke and egress check |
 | [decisions/README.md](decisions/README.md) | architecture decision records and their implementation status |
 | [plan/README.md](plan/README.md) | the M0–M5 plan (implemented): milestones, work packages, dependencies, risks |

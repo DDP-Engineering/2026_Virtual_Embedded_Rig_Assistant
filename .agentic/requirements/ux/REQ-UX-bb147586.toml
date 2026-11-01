@@ -7,10 +7,10 @@ title = "Remember the user's Bypass warning dismissal preference"
 status = "active"
 
 requirement = """
-When the Bypass warning is dismissed with its do-not-show-again checkbox selected, VERA shall persist the user's application-level warning suppression preference for subsequent selections and restarts, retaining a visible error and notice if saving fails and preserving disabled preference controls for read-only settings.
+When the Bypass warning is dismissed with its do-not-show-again checkbox selected, VERA shall persist the user's application-level warning suppression preference for subsequent selections and restarts, retaining a visible error and notice if saving fails.
 """
 
-verification = "Dismiss unchecked and verify another Bypass selection reopens the notice; dismiss checked and verify no notice on subsequent selections or native restart. Force a settings-save failure and assert visible error with notice retained; read-only application settings keep the suppression checkbox disabled. The marked Bypass selector remains visible in all cases."
+verification = "Dismiss unchecked and verify another Bypass selection reopens the notice; dismiss checked and verify no notice on subsequent selections or native restart. Force a settings-save failure and assert visible error with notice retained. The marked Bypass selector remains visible in all cases."
 
 affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.tsx", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-30
-updated = 2026-10-30
+updated = 2026-11-01

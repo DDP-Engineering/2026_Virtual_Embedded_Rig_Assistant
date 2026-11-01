@@ -10,7 +10,6 @@ export const veraErrorSchema = z.strictObject({
     "PROVIDER",
     "OFFLINE",
     "INTERNAL",
-    "WORKBENCH_TOO_NEW",
   ]),
   messageKey: z.string().min(1),
   params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),

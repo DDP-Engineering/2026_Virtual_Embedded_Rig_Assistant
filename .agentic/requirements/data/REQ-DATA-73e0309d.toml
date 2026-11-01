@@ -1,12 +1,12 @@
 schema = 1
 id = "REQ-DATA-73e0309d"
 title = "Refuse newer workbench databases"
-status = "active"
-requirement = "If meta.schema_version exceeds the supported migration catalogue, core shall return WORKBENCH_TOO_NEW while preserving all workbench runtime bytes."
+status = "retired"
+requirement = "If meta.schema_version exceeds the supported migration catalogue, core shall return WORKBENCH_TOO_NEW while preserving all workbench runtime bytes. Retired 2026-11-01: WORKBENCH_TOO_NEW was removed; a database whose meta schema_version is not 1 is invalid data."
 verification = "Future database including WAL is refused before writes, checkpoints or ownership changes."
 affected_paths = ["05_Software/src/libraries/core/src/storage/", "05_Software/src/libraries/core/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/src/index.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/storage/db.test.ts"]
 spec = "specs/REQ-PLAT-f0d13546.md"
 priority = "normal"
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-11-01

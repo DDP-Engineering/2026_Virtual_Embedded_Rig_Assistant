@@ -166,7 +166,7 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   `Xenova/bge-small-en-v1.5` q8 with hybrid recall@5 ≥ 0.85 overall, ≥ 0.95 EN, ≥ 0.75 RO. Its
   measurement file was deleted in commit 891a699.
 - WP-25: implemented with deviation: no migration — `chunks_fts` and `chunks_tri` are part of the single
-  schema v3 (`core/storage/schema.ts:48-65`, see WP-07). Tokenizers and bm25 plus trigram search as
+  schema (version 1; `core/storage/schema.ts`, see WP-07). Tokenizers and bm25 plus trigram search as
   planned (`kn/keyword.ts:27-61`, `kn/keyword.test.ts:42`).
 - WP-26: implemented with deviation: batches of 32, the vector cache, RRF with k = 60, 300-character
   snippets, `search_docs`/`read_doc` and CLI `vera index`/`vera search` as planned

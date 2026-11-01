@@ -24,7 +24,6 @@ async function harness(text?: string) {
     writeAtomic: vi.fn(async (p: string, value: string) => {
       disk.set(p, value);
     }),
-    backup: vi.fn(async () => true),
   };
   const settings = new SettingsService({
     files,
@@ -56,14 +55,4 @@ it("persists the order per workbench in user settings and lists new sessions fir
   // The order survives reloading the settings file.
   const reloaded = await harness(h.disk.get("/data/settings.json"));
   expect(numbers(reloaded.order.list(benchA, list))).toEqual([2, 1, 3]);
-});
-
-it("refuses a session move with DENIED when settings are read-only", async () => {
-  const future = JSON.stringify({ schemaVersion: 5, installationId: "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19" });
-  const h = await harness(future);
-  expect(h.settings.get().readOnly).toBe(true);
-  await expect(h.order.move(benchA, [session(2), session(1)], id(1), -1)).rejects.toMatchObject({
-    code: "DENIED",
-  });
-  expect(h.disk.get("/data/settings.json")).toBe(future);
 });

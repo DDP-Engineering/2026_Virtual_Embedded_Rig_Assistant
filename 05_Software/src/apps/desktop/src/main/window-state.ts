@@ -10,7 +10,6 @@ export interface Bounds {
 
 export interface WindowState {
   bounds: Pick<Bounds, "width" | "height"> & Partial<Pick<Bounds, "x" | "y">>;
-  readOnly: boolean;
 }
 
 function validBounds(value: unknown): value is Bounds {
@@ -41,19 +40,17 @@ export async function loadWindowState(path: string, displays: Bounds[]): Promise
       width: Math.max(1024, Math.min(1200, displays[0]?.width ?? 1200)),
       height: Math.max(640, Math.min(800, displays[0]?.height ?? 800)),
     },
-    readOnly: false,
   };
   try {
     const value: unknown = JSON.parse(await readFile(path, "utf8"));
     if (!value || typeof value !== "object") return defaults;
     const data = value as Record<string, unknown>;
-    if (typeof data.schemaVersion === "number" && data.schemaVersion > 1)
-      return { ...defaults, readOnly: true };
+    // The window-state format stays at version 1 during development (AGENTS.md).
     if (data.schemaVersion === 1 && validBounds(data.bounds) && visible(data.bounds, displays)) {
-      return { bounds: data.bounds, readOnly: false };
+      return { bounds: data.bounds };
     }
   } catch {
-    // Missing, corrupt or unreadable state uses centered defaults.
+    // Missing, corrupt, unreadable or other-format state uses centered defaults.
   }
   return defaults;
 }

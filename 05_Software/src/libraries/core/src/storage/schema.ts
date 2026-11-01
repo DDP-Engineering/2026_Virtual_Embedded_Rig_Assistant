@@ -1,8 +1,9 @@
 import { veraError } from "@vera/shared";
 import type Database from "better-sqlite3";
 
-// This identifies the current format, not an upgrade sequence. Existing databases are never rewritten.
-export const CURRENT_SCHEMA_VERSION = 3;
+// The current database format. It stays 1 during development and is never upgraded (AGENTS.md);
+// a database with any other value is refused and never rewritten.
+export const CURRENT_SCHEMA_VERSION = 1;
 export interface StorageOptions {
   workbenchId: string;
   appVersion: string;
