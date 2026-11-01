@@ -412,7 +412,11 @@
     "goToLine": "Go to line",
     "matchOf": "{{current}} of {{total}}",
     "pageOf": "{{page}} / {{count}}",
-    "pageNumber": "Page {{page}}"
+    "pageNumber": "Page {{page}}",
+    "documentActions": "Actions for {{name}}",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset zoom"
   },
   "skills": {
     "settings": "Skills settings",

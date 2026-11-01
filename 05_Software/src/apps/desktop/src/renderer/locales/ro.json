@@ -412,7 +412,11 @@
     "goToLine": "Mergi la linia",
     "matchOf": "{{current}} din {{total}}",
     "pageOf": "{{page}} / {{count}}",
-    "pageNumber": "Pagina {{page}}"
+    "pageNumber": "Pagina {{page}}",
+    "documentActions": "Acțiuni pentru {{name}}",
+    "zoomIn": "Mărește",
+    "zoomOut": "Micșorează",
+    "zoomReset": "Resetează zoomul"
   },
   "skills": {
     "settings": "Setări pentru skill-uri",

@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
+import type { ZoomRequest } from "./pdf-viewer.js";
 import { TextViewer } from "./text-viewer.js";
 
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
@@ -450,6 +451,7 @@ export function DocumentBody({
   onPlace,
   findRequest = 0,
   gotoRequest = 0,
+  zoomRequest,
 }: {
   content: ViewerContent;
   /** Where the document was left; without it the cited unit is shown (REQ-UX-1f53a583). */
@@ -458,6 +460,8 @@ export function DocumentBody({
   /** Bumped by Ctrl+F and Ctrl+G in the tab (TASK-4c04273a). */
   findRequest?: number;
   gotoRequest?: number;
+  /** A zoom step from the document menu (TASK-0ec8c0d0); PDFs only. */
+  zoomRequest?: ZoomRequest | undefined;
 }) {
   const { t } = useTranslation();
   const node = useRef<HTMLElement>(null);
@@ -497,6 +501,7 @@ export function DocumentBody({
         page={place && "page" in place ? place.page : undefined}
         onPage={(page) => onPlace?.({ page })}
         findRequest={findRequest}
+        zoomRequest={zoomRequest}
       />
     );
   if (content.kind === "text")

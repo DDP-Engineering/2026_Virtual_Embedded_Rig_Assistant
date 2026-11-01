@@ -857,6 +857,12 @@ legend {
   height: 0.9rem;
   flex: none;
 }
+.tree-menu-keys {
+  margin-inline-start: auto;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.8em;
+}
 .tree-menu-group {
   position: relative;
   display: grid;

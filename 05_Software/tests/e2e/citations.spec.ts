@@ -165,7 +165,10 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     // REQ-UX-e8dfdec3: zoom comes from the keyboard (and Ctrl+wheel), not a toolbar, as soon as the
     // cited PDF opens.
     await page.keyboard.press("Control+=");
-    await page.keyboard.press("Control+=");
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-zoom", "1.25");
+    // REQ-UX-160f9f68: the document's right-click menu zooms like the shortcut.
+    await dialog.locator(".pdf-scroll").click({ button: "right" });
+    await page.locator('[data-tree-menu] [data-menu-action="zoom-in"]').click();
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-zoom", "1.5");
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
     // REQ-UX-d64f086f: Ctrl+F inside a PDF tab focuses its search.
@@ -204,6 +207,13 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await expect(dialog.locator('[data-line="1"]')).toHaveAttribute("aria-current", "true");
     await expect(dialog.locator('[data-line="2"]')).toHaveAttribute("aria-current", "true");
     await expect(dialog.locator(".document-lines")).toContainText("second");
+    // REQ-FUNC-6d1fb02f: Copy in the document's menu puts the selected line on the system clipboard.
+    await dialog.locator('[data-line="2"] span').last().selectText();
+    const selected = await page.evaluate(() => window.getSelection()?.toString() ?? "");
+    expect(selected).toContain("second");
+    await dialog.locator('[data-line="2"]').click({ button: "right" });
+    await page.locator('[data-tree-menu] [data-menu-action="copy-text"]').click();
+    expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe(selected);
     await closeViewer();
     await openChip(5);
     await expect(dialog.locator(".document-body")).toContainText("Summary");

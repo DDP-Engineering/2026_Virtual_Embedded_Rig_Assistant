@@ -1,4 +1,4 @@
-// REQ-UX-28ad0002 REQ-UX-e4d5ce0f REQ-UX-e8dfdec3 REQ-UX-3eb27a6c REQ-NFR-0fe89e49
+// REQ-UX-28ad0002 REQ-UX-e4d5ce0f REQ-UX-e8dfdec3 REQ-UX-3eb27a6c REQ-NFR-0fe89e49 REQ-UX-160f9f68
 import type { ViewerContent } from "@vera/shared";
 import {
   GlobalWorkerOptions,
@@ -77,6 +77,8 @@ export function highlightText(layer: HTMLElement, snippet: string, search: strin
 }
 
 const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+/** A zoom step asked for by the document menu: in (1), out (-1) or back to 100% (0); `id` grows. */
+export type ZoomRequest = { step: -1 | 0 | 1; id: number };
 /** The page gap in CSS pixels; pages and gaps make up the scroll height. */
 const GAP = 12;
 /** Pages rendered around the one in view; the rest are empty boxes of the right size. */
@@ -164,12 +166,14 @@ export default function PdfViewer({
   page: kept,
   onPage,
   findRequest = 0,
+  zoomRequest,
 }: {
   content: Extract<ViewerContent, { kind: "pdf" }>;
   /** The page the tab was left at; without it the cited page opens (TASK-79f6ffd3). */
   page?: number | undefined;
   onPage?: ((page: number) => void) | undefined;
   findRequest?: number | undefined;
+  zoomRequest?: ZoomRequest | undefined;
 }) {
   const { t } = useTranslation();
   const [pdf, setPdf] = useState<PDFDocumentProxy>(),
@@ -329,6 +333,10 @@ export default function PdfViewer({
   useEffect(() => {
     if (findRequest) setFinding(true);
   }, [findRequest]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: each request id zooms once.
+  useEffect(() => {
+    if (zoomRequest) stepRef.current(zoomRequest.step);
+  }, [zoomRequest?.id]);
   const needle = normalize(query);
   const matches = useMemo(() => {
     if (!needle) return [];

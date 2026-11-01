@@ -176,6 +176,14 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   Escape returns focus to the row
   (REQ-FUNC-98e9d760, REQ-UX-4d1b3324). Rename and Delete are a later task.
 - Named document/text and PDF regions support keyboard scrolling. Docs Open actions include path/ref identity in accessible names.
+- Document menu (TASK-0ec8c0d0): right-click, Shift+F10 or the menu key in a document panel (not
+  in its find or line field) opens a `TreeMenu` beside the panel (outside it, so the menu's Escape
+  does not leave the tab). Items carry `keys` (`aria-keyshortcuts`, shown with Ctrl): text -> Copy,
+  Find, Go to line; PDF -> Copy, Find, Zoom in/out, Reset zoom; others -> Copy. Copy keeps the
+  selection taken when the menu opened (only one inside the panel; disabled otherwise) and runs
+  the editing `copy` command on it, because every web permission (so `navigator.clipboard`) is
+  denied (REQ-UX-c514899c, REQ-FUNC-6d1fb02f). Find and Go to line bump the same requests as
+  Ctrl+F/Ctrl+G; zoom sends a `ZoomRequest {step, id}` to PdfViewer (REQ-UX-160f9f68).
 - Saved tabs (TASK-061fe00e): `lib/document-tabs-store.ts` keeps one localStorage record per
   workbench session, `vera.tabs.<workbenchId>.<sessionId>`, `{version: 1, active, tabs: [{target,
   place?}]}` under a strict zod schema; a missing, unreadable or invalid record reads as none, and

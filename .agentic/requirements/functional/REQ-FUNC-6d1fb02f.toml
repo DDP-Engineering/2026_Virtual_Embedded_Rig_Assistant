@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-6d1fb02f"
+
+title = "Copy the selected document text from the menu"
+
+status = "active"
+
+requirement = "When the engineer chooses Copy in a document's context menu, the desktop app shall copy the text that was selected in the document when the menu opened to the system clipboard; while no text inside the document is selected, Copy shall be shown disabled."
+
+verification = "Renderer test: with 'uart 5' selected in a log, Copy runs the copy command on that selection after the menu took focus; with nothing selected, or a selection outside the document, Copy is aria-disabled and does nothing; native e2e: selecting a cited log line and choosing Copy puts its text on the system clipboard."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-menu.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

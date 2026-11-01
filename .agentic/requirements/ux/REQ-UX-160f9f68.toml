@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-160f9f68"
+
+title = "Run view commands from the document menu"
+
+status = "active"
+
+requirement = "When the engineer chooses Find, Go to line, Zoom in, Zoom out or Reset zoom in a document's context menu, the desktop app shall do what the command's keyboard shortcut does in that document."
+
+verification = "Renderer test: Find in a text document shows the find field focused, Go to line shows the line field focused; Zoom in, Zoom out and Reset zoom in a PDF give 125%, 100% and 100%; native e2e: Zoom in from a cited PDF's menu takes its zoom one step up (125% to 150%); boundary: Zoom in at 200% stays at 200%."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-menu.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

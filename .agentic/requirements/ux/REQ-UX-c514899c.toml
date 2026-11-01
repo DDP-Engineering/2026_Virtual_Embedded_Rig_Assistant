@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-c514899c"
+
+title = "Open a document's context menu"
+
+status = "active"
+
+requirement = "While a document is shown in a tab, when the engineer right-clicks the document or presses Shift+F10 or the menu key in it, the desktop app shall open a context menu at that point listing, with each command's keyboard shortcut: for a text document Copy, Find (Ctrl+F) and Go to line (Ctrl+G); for a PDF Copy, Find (Ctrl+F), Zoom in (Ctrl+=), Zoom out (Ctrl+-) and Reset zoom (Ctrl+0); for any other document Copy."
+
+verification = "Renderer test: right-clicking a text document lists Copy, Find and Go to line with Ctrl+F and Ctrl+G shown and exposed as aria-keyshortcuts; a PDF lists Copy, Find, Zoom in, Zoom out and Reset zoom; a Markdown document lists only Copy; Shift+F10 in the document opens the same menu; boundary: Escape closes the menu and focus returns to the document, and a right-click in the find field opens no document menu."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-menu.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

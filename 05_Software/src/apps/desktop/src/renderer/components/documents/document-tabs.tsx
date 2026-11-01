@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { useDescribeDocument, useFileActions } from "./file-actions.js";
+import type { ZoomRequest } from "./pdf-viewer.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
 import { CHAT, DocumentBody, type DocumentTab, useDocumentTabs } from "./viewer-context.js";
@@ -370,7 +371,76 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
   const node = useRef<HTMLElement>(null);
   const [findRequest, setFindRequest] = useState(0);
   const [gotoRequest, setGotoRequest] = useState(0);
+  const [zoomRequest, setZoomRequest] = useState<ZoomRequest>();
+  // The document menu (TASK-0ec8c0d0): where it opened, the selection to copy and the focus to restore.
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    selection: Range | undefined;
+    from: Element | null;
+  }>();
   const { content, error } = tab;
+  const find = (panel: HTMLElement | null) => {
+    const search = panel?.querySelector<HTMLInputElement>("[data-document-search]");
+    if (search) search.focus();
+    else setFindRequest((value) => value + 1);
+  };
+  const openMenu = (x: number, y: number) => {
+    const panel = node.current;
+    if (!panel || !content) return;
+    // The selection is kept now: the menu takes focus, and Copy must copy what was selected.
+    const current = window.getSelection();
+    const range =
+      current && current.rangeCount > 0 && !current.isCollapsed ? current.getRangeAt(0) : undefined;
+    const inside = range && panel.contains(range.commonAncestorContainer);
+    setMenu({ x, y, selection: inside ? range.cloneRange() : undefined, from: document.activeElement });
+  };
+  const menuItems = (): TreeMenuItem[] => {
+    if (!content) return [];
+    const copy: TreeMenuItem = {
+      action: "copy-text",
+      label: t("documents.copy"),
+      keys: "Control+C",
+      disabled: !menu?.selection,
+      run: () => {
+        const range = menu?.selection;
+        const current = window.getSelection();
+        if (!range || !current) return;
+        current.removeAllRanges();
+        current.addRange(range);
+        document.execCommand("copy");
+      },
+    };
+    const findItem: TreeMenuItem = {
+      action: "find",
+      label: t("documents.find"),
+      keys: "Control+F",
+      run: () => find(node.current),
+    };
+    if (content.kind === "text")
+      return [
+        copy,
+        findItem,
+        {
+          action: "go-to-line",
+          label: t("documents.goToLine"),
+          keys: "Control+G",
+          run: () => setGotoRequest((value) => value + 1),
+        },
+      ];
+    if (content.kind === "pdf") {
+      const zoom = (step: ZoomRequest["step"]) => () =>
+        setZoomRequest((value) => ({ step, id: (value?.id ?? 0) + 1 }));
+      return [
+        copy,
+        findItem,
+        { action: "zoom-in", label: t("documents.zoomIn"), keys: "Control+=", run: zoom(1) },
+        { action: "zoom-out", label: t("documents.zoomOut"), keys: "Control+-", run: zoom(-1) },
+        { action: "zoom-reset", label: t("documents.zoomReset"), keys: "Control+0", run: zoom(0) },
+      ];
+    }
+    return [copy];
+  };
   useEffect(() => {
     if (!state?.focusRequest.current) return;
     state.focusRequest.current = false;
@@ -380,57 +450,89 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
   if (!state) return null;
   // Only the document: its path is the tab's tooltip and its actions are in the tab's menu.
   return (
-    <section
-      ref={node}
-      data-source-current
-      className="document-tab-panel source-current"
-      role="tabpanel"
-      id={panelId(index)}
-      aria-labelledby={tabId(index)}
-      tabIndex={-1}
-      onKeyDown={(event) => {
-        // Ctrl+F finds in text and PDFs, Ctrl+G goes to a text line; each shows its field on demand.
-        const mod = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
-        const key = event.key.toLowerCase();
-        if (mod && key === "f" && (content?.kind === "pdf" || content?.kind === "text")) {
+    <>
+      <section
+        ref={node}
+        data-source-current
+        className="document-tab-panel source-current"
+        role="tabpanel"
+        id={panelId(index)}
+        aria-labelledby={tabId(index)}
+        tabIndex={-1}
+        onContextMenu={(event) => {
+          // The find and line fields keep their own (empty) menu.
+          if (!content || (event.target as Element).closest("input")) return;
           event.preventDefault();
-          event.stopPropagation();
-          const search = event.currentTarget.querySelector<HTMLInputElement>("[data-document-search]");
-          if (search) search.focus();
-          else setFindRequest((value) => value + 1);
-        }
-        if (mod && key === "g" && content?.kind === "text") {
-          event.preventDefault();
-          event.stopPropagation();
-          setGotoRequest((value) => value + 1);
-        }
-        if (event.key === "Escape" && !event.nativeEvent.isComposing) {
-          event.preventDefault();
-          event.stopPropagation();
-          leave();
-        }
-      }}
-    >
-      {error !== undefined ? (
-        <>
-          <ErrorMessage error={error} />
-          <button type="button" onClick={() => state.retry(tab.key)}>
-            {t("settings.retry")}
-          </button>
-        </>
-      ) : content ? (
-        <Suspense fallback={<p role="status">{t("home.loading")}</p>}>
-          <DocumentBody
-            content={content}
-            place={state.place(tab.key)}
-            onPlace={(place) => state.setPlace(tab.key, place)}
-            findRequest={findRequest}
-            gotoRequest={gotoRequest}
-          />
-        </Suspense>
-      ) : (
-        <p role="status">{t("home.loading")}</p>
+          openMenu(event.clientX, event.clientY);
+        }}
+        onKeyDown={(event) => {
+          if (
+            ((event.key === "F10" && event.shiftKey) || event.key === "ContextMenu") &&
+            !(event.target as Element).closest("input")
+          ) {
+            event.preventDefault();
+            const rect = (event.target as Element).getBoundingClientRect();
+            openMenu(rect.left + 16, rect.top + 16);
+            return;
+          }
+          // Ctrl+F finds in text and PDFs, Ctrl+G goes to a text line; each shows its field on demand.
+          const mod = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
+          const key = event.key.toLowerCase();
+          if (mod && key === "f" && (content?.kind === "pdf" || content?.kind === "text")) {
+            event.preventDefault();
+            event.stopPropagation();
+            find(event.currentTarget);
+          }
+          if (mod && key === "g" && content?.kind === "text") {
+            event.preventDefault();
+            event.stopPropagation();
+            setGotoRequest((value) => value + 1);
+          }
+          if (event.key === "Escape" && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            event.stopPropagation();
+            leave();
+          }
+        }}
+      >
+        {error !== undefined ? (
+          <>
+            <ErrorMessage error={error} />
+            <button type="button" onClick={() => state.retry(tab.key)}>
+              {t("settings.retry")}
+            </button>
+          </>
+        ) : content ? (
+          <Suspense fallback={<p role="status">{t("home.loading")}</p>}>
+            <DocumentBody
+              content={content}
+              place={state.place(tab.key)}
+              onPlace={(place) => state.setPlace(tab.key, place)}
+              findRequest={findRequest}
+              gotoRequest={gotoRequest}
+              zoomRequest={zoomRequest}
+            />
+          </Suspense>
+        ) : (
+          <p role="status">{t("home.loading")}</p>
+        )}
+      </section>
+      {/* Outside the panel, so the menu's Escape does not also leave the tab. */}
+      {menu && (
+        <TreeMenu
+          label={t("documents.documentActions", { name: tab.label })}
+          x={menu.x}
+          y={menu.y}
+          items={menuItems()}
+          close={(restore) => {
+            const from = menu.from;
+            setMenu(undefined);
+            if (!restore) return;
+            if (from instanceof HTMLElement && from.isConnected && node.current?.contains(from)) from.focus();
+            else node.current?.focus();
+          }}
+        />
       )}
-    </section>
+    </>
   );
 }

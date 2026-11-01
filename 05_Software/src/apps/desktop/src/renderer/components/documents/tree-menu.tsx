@@ -1,4 +1,4 @@
-// REQ-UX-541a5bee REQ-UX-89cdb49d
+// REQ-UX-541a5bee REQ-UX-89cdb49d REQ-UX-c514899c
 import { ChevronRight } from "lucide-react";
 import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 
@@ -9,6 +9,8 @@ export interface TreeMenuItem {
   name?: string;
   /** Shown but inert (`aria-disabled`), still reachable by the arrow keys (TASK-2fef1397). */
   disabled?: boolean;
+  /** The command's shortcut in `aria-keyshortcuts` form ("Control+F"), shown after the label. */
+  keys?: string;
   /** A submenu's items (TASK-eae3a69e); an item has either these or `run`. */
   items?: readonly TreeMenuItem[];
   run?: () => void;
@@ -165,6 +167,7 @@ export function TreeMenu({
             data-menu-depth="0"
             aria-label={item.name}
             aria-disabled={item.disabled ? "true" : undefined}
+            aria-keyshortcuts={item.keys}
             aria-haspopup={item.items ? "menu" : undefined}
             aria-expanded={item.items ? open === item.action : undefined}
             // A pointer reaches an item before clicking it, so the click must not close what hover opened.
@@ -173,6 +176,11 @@ export function TreeMenu({
             onMouseEnter={() => setOpen(item.items ? item.action : undefined)}
           >
             <span>{item.label}</span>
+            {item.keys && (
+              <span className="tree-menu-keys" aria-hidden="true">
+                {item.keys.replace(/Control/g, "Ctrl")}
+              </span>
+            )}
             {item.items && <ChevronRight aria-hidden="true" />}
           </button>
           {item.items && open === item.action && (
