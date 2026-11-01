@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-77843ccc"
+title = "Refuse a plugin package with an invalid manifest"
+status = "active"
+requirement = "If a plugin package's plugin.yaml is missing, is not UTF-8 YAML or fails the manifest schema, then the plugin store shall refuse the install with an INVALID error whose parameters name the first issue's code and field path, and shall leave the installed plugins unchanged."
+verification = "Install packages with no plugin.yaml, a YAML syntax error and timeout 4000; assert each rejects with code INVALID and params.issue manifest, yaml and field with params.path programs.esptool.timeout, and that list() and the installed folder are unchanged afterwards, including an existing install of the same id."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

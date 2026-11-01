@@ -38,6 +38,9 @@ normal loopback tools/approval/citation/restart and external process-tree egress
 Stored formats follow the root AGENTS.md development compatibility policy: every format version is 1,
 any other version is invalid data, and upgrade/migration safety is deferred until the first public release.
 
+[Plugins](../knowledge/plugins.md) routes plugin.yaml format 1 validation, the integrity-checked plugin store under
+<userData>/plugins (folder/zip install, list with issues, load, uninstall) and per-workbench plugins.enabled.
+
 [Skills](../knowledge/skills.md) routes workbench/user discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
 

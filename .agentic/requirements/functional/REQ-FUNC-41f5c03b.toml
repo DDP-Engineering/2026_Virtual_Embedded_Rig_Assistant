@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-41f5c03b"
+title = "Enable plugins per workbench"
+status = "active"
+requirement = "When the user enables or disables a plugin for a workbench, the workbench service shall add or remove its id once in plugins.enabled of that workbench's .vera/workbench.yaml, which defaults to an empty list, and shall not change any other workbench."
+verification = "Create workbenches A and B; toggle esp32-esptool on in A; assert A's workbench.yaml lists it once (a repeated enable does not duplicate it), B's config keeps plugins.enabled empty, disabling removes it, and a workbench.config.update patch of plugins.enabled merges like the other sections."
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/events.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

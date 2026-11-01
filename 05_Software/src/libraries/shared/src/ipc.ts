@@ -18,6 +18,14 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  pluginIdSchema,
+  pluginInstalledSchema,
+  pluginInstallRequestSchema,
+  pluginListRequestSchema,
+  pluginSummarySchema,
+  pluginToggleRequestSchema,
+} from "./plugins.js";
+import {
   providerDiscoveryRequestSchema,
   providerDiscoverySchema,
   reasoningOptionSchema,
@@ -149,6 +157,18 @@ export const channels = {
     skillsScopeSchema.extend({ name: z.string().min(1).max(255), enabled: z.boolean() }),
     z.strictObject({}),
   ),
+  "plugins.list": defineChannel(
+    "plugins.list",
+    pluginListRequestSchema,
+    z.array(pluginSummarySchema).max(1024),
+  ),
+  "plugins.install": defineChannel("plugins.install", pluginInstallRequestSchema, pluginInstalledSchema),
+  "plugins.uninstall": defineChannel(
+    "plugins.uninstall",
+    z.strictObject({ id: pluginIdSchema }),
+    z.strictObject({}),
+  ),
+  "plugins.toggle": defineChannel("plugins.toggle", pluginToggleRequestSchema, z.strictObject({})),
   "docs.list": defineChannel(
     "docs.list",
     docsScopeSchema,

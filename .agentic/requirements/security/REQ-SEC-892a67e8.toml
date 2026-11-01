@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-892a67e8"
+title = "Disable an installed plugin whose files changed"
+status = "active"
+requirement = "If the integrity hash recomputed over an installed plugin's sorted relative paths and file bytes differs from install.json, then the plugin store shall list the plugin with the changed issue (\"changed since review\") and refuse to load it."
+verification = "After installing the fixture, separately modify a skill file's bytes, add a file, delete a file and rename a file; after each, assert list() reports issue code changed and load(id) rejects; restoring the original bytes lists the plugin valid again."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

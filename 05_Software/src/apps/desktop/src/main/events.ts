@@ -79,6 +79,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       retrieval,
       skills,
       tools,
+      plugins,
       agent,
       embeddings,
       ...extensions
@@ -87,6 +88,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
     const { results, mode, ...retrievalExtensions } = retrieval;
     const { disabled: disabledSkills, ...skillExtensions } = skills;
     const { disabled: disabledTools, ...toolExtensions } = tools;
+    const { enabled: enabledPlugins, ...pluginExtensions } = plugins;
     const { permission_mode, model, ...agentExtensions } = agent;
     const scrubbedModel = model === null ? null : scrub(model);
     return {
@@ -100,6 +102,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       retrieval: { ...(extra(retrievalExtensions) as object), results, mode },
       skills: { ...(extra(skillExtensions) as object), disabled: disabledSkills.map(scrub) },
       tools: { ...(extra(toolExtensions) as object), disabled: disabledTools.map(scrub) },
+      plugins: { ...(extra(pluginExtensions) as object), enabled: enabledPlugins.map(scrub) },
       agent: {
         ...(extra(agentExtensions) as object),
         permission_mode,

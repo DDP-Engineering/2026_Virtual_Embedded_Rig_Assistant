@@ -77,16 +77,20 @@ docs:
 | `name`, `description` | ≤ 80 and ≤ 1024 characters; the description says what and when, like a skill's |
 | `ecosystem` | grouping tag: `esp32`, `stm32`, `microchip`, `can`, `wireshark`, `general`, … |
 | `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
-| `requires` | plugin IDs installed together with this one |
+| `requires` | plugin IDs installed together with this one (at most 64; not checked at install or enable until the catalog work) |
 | `programs.<name>` | `[a-z0-9._-]{1,64}`; the value the agent passes as `program` |
-| `programs.*.install` | exactly one kind of §5 |
+| `programs.*.install` | exactly one kind of §5; a `script` path must exist in the package; `find` takes an optional `hint` |
 | `programs.*.version` | probe arguments and a regex with one capture group; shown in the UI and the prompt |
 | `programs.*.launcher` | optional argument prefix for programs that need an activated vendor environment, for example `[eim, run]` (§3.3) |
 | `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
 | `programs.*.env` | extra variables; values are literals, `${workbench}` or `${pluginDir}` |
 | `programs.*.timeout` | default seconds for a foreground run, ≤ 3600 |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
-| `docs[]` | URLs or plugin-relative files the UI offers to add to the workbench documents |
+| `docs[]` | URLs or plugin-relative files (which must exist in the package) the UI offers to add to the workbench documents |
+
+Every object is strict: an unknown key is an error. Arguments (`version.args`, `launcher`, `prefix`) are at most
+64 strings of 1–4096 characters without NUL or line breaks; `rules` holds at most 512 entries, `programs` 64 and
+`docs` 64. The exact limits are in `.agentic/specs/REQ-DATA-4d4471f9.md`.
 
 `programs` and `rules` are optional. A plugin without programs is a **skills-only plugin**: it
 distributes Agent Skills through the catalog, runs nothing and needs no approval. Example: the
@@ -247,16 +251,23 @@ Approximate disk use, measured in PLG-05:
 
 | Data | Location |
 |---|---|
-| Installed plugin | `<userData>/plugins/installed/<id>/`, plus `install.json`: version, tier, source, sha256, install time, resolved program versions |
+| Installed plugin | `<userData>/plugins/installed/<id>/`, plus `install.json` (format 1): id, version, tier, source kind and path, sha256, install time, resolved program versions (`{}` until provisioning) |
 | Runtime | `<userData>/plugins/runtime/{cache,python,tools,downloads}` |
 | Draft | any workbench folder, for example `plugins/<id>/`; ordinary files the agent can write |
 | Enabled for a workbench | `.vera/workbench.yaml` → `plugins: { enabled: [<id>…] }` |
 | Run logs | `.vera/runs/` |
 
 - Enablement is opt-in, unlike skills, because plugins execute programs.
-- Integrity: `install.json.sha256` covers the sorted relative paths and bytes of every plugin file.
-  VERA recomputes it at load. A mismatch disables the plugin with "changed since review", the same
+- Integrity: `install.json.sha256` covers the sorted relative paths and bytes of every plugin file
+  (each file as path NUL length NUL bytes; the root `install.json` excluded). VERA recomputes it at every
+  list and load. A mismatch disables the plugin with "changed since review", the same
   rule `SkillCatalog` applies to skills that change after being read.
+- Install accepts a folder named as the id, or a zip with the package at its root or in one top folder
+  named as the id. It refuses links, unsafe or case-colliding paths, a root `install.json`, more than 4096
+  files, 64 MiB of content, a 64 MiB zip or a 256 KiB manifest, and an invalid manifest (INVALID with the
+  first issue's code and field path). A reinstall replaces the whole folder through `plugins/staging/`.
+- Listing reports every issue per plugin (`manifest`, `yaml`, `field`, `id`, `record`, `changed`,
+  `unavailable`); a plugin with any issue never loads.
 - Portable mode keeps all of this under `<app folder>/data/`.
 
 ## 7. Catalog and packs (ADR-0019)

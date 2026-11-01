@@ -6,7 +6,8 @@ risks.
 DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user installs the ESP32 pack
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
 release smoke covers the approval card, the typed confirmation and process-tree termination.
-STATUS: decisions accepted 2026-11-01; nothing implemented yet except PLG-05's removal of the size
+STATUS: decisions accepted 2026-11-01. PLG-01 is implemented (manifest schema, plugin store, per-workbench
+enablement; AEGIS TASK-0cb6ef0f); otherwise nothing is implemented yet except PLG-05's removal of the size
 checks. Builds on code that already exists: skill catalog, approvals bound to `requestSha256`,
 permission modes, tool registry. Implementation follows the repository's AEGIS workflow
 (CLAUDE.md), one work package per task. Gitea tracks each work package as one issue.

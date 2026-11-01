@@ -38,6 +38,7 @@ import { LineCounter, parseDocument, stringify } from "yaml";
 import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
+import { PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
@@ -179,7 +180,41 @@ export class WorkbenchService {
     return configWarnings(config, {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
       tools: this.host.catalogs?.tools ?? builtinToolNames,
+      plugins: this.host.userData
+        ? await new PluginStore({ root: join(this.host.userData, "plugins") }).ids()
+        : [],
     });
+  }
+  /** Plugins enabled in the current configuration of the open workbench. */
+  enabledPlugins(id: string): string[] {
+    const state = this.current();
+    if (state.config.id !== id) throw veraError("CONFLICT");
+    return [...state.config.plugins.enabled];
+  }
+  /** Plugin enablement is opt-in and stored per workbench in plugins.enabled. */
+  togglePlugin(id: string, plugin: string, enabled: boolean) {
+    return this.run(() =>
+      this.writes.run(async () => {
+        const state = await this.writable();
+        if (state.config.id !== id) throw veraError("CONFLICT");
+        const current = await this.config(state.folder);
+        if (current.id !== id) throw veraError("CONFLICT");
+        const kept = current.plugins.enabled.filter((item) => item !== plugin);
+        const list = !enabled
+          ? kept
+          : kept.length < current.plugins.enabled.length
+            ? current.plugins.enabled
+            : [...kept, plugin];
+        const config = mergeWorkbench(current, { plugins: { enabled: list } });
+        this.assertSessionWritable();
+        await this.host.files.writeAtomic(join(state.folder, ".vera/workbench.yaml"), stringify(config));
+        this.assertSessionWritable();
+        const warnings = await this.warnings(config, state.folder);
+        this.state = { ...state, config, warnings };
+        this.emit(id, { type: "config.changed", config, warnings });
+        return {};
+      }),
+    );
   }
   toggleSkill(id: string, name: string, enabled: boolean) {
     return this.run(() =>

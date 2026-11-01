@@ -9,6 +9,7 @@ export * from "./events.js";
 export * from "./ipc.js";
 export * from "./keyboard-shortcuts.js";
 export * from "./ordering.js";
+export * from "./plugins.js";
 export * from "./provider-discovery.js";
 export * from "./providers.js";
 export * from "./refs.js";

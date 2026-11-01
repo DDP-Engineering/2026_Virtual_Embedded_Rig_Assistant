@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-deaa76d1"
+title = "Replace an installed plugin on reinstall"
+status = "active"
+requirement = "When the user installs a valid plugin whose id is already installed, the plugin store shall replace the whole installed folder and install.json with the new package, leaving no file of the previous installation."
+verification = "Install version 1.2.0 with an extra file, then install 1.3.0 without it; assert list() reports 1.3.0 valid, the extra file is gone and the integrity hash matches the new package; a refused reinstall keeps 1.2.0 intact."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "normal"
+created = 2026-11-01
+updated = 2026-11-01

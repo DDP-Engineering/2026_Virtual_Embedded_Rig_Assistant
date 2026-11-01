@@ -48,6 +48,8 @@ downloads.list/open are strict workbench-scoped channels; open takes only a UUID
 Strict update.get/check/download/restart/openRelease channels and update.available/update.changed
 AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capability gates.
 
+- plugins.list/install/uninstall/toggle use strict optional workbenchId, absolute install path and plugin id
+  contracts; see [plugins](plugins.md).
 - skills.list/open/create/save/toggle use strict workbenchId/source/name contracts;
   save requires original content SHA256. Main authorizes the existing exact frame
   before WorkbenchService lifecycle/ownership checks. [Skills](skills.md) owns content.

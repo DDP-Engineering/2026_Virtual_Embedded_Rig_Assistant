@@ -8,6 +8,7 @@ import {
   embeddingModelId,
   type LlmGateway,
   modelSchema,
+  PluginStore,
   SettingsService,
   splitModelReference,
   WebDownloads,
@@ -167,6 +168,8 @@ const workbench = new WorkbenchService(
   },
   indexer.processor,
 );
+/** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
+const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
 const providers = new ProviderSettings(settings, credentials);
 const webAccess = new WebAccessService({
   settings,
@@ -268,6 +271,16 @@ ipcMain.handle(
       "skills.save": ({ workbenchId, source, name, content, sha256 }) =>
         workbench.saveSkill(workbenchId, source, name, content, sha256),
       "skills.toggle": ({ workbenchId, name, enabled }) => workbench.toggleSkill(workbenchId, name, enabled),
+      "plugins.list": async ({ workbenchId }) => {
+        const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
+        return (await plugins.list()).map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
+      },
+      "plugins.install": ({ path }) => plugins.install(path),
+      "plugins.uninstall": async ({ id }) => {
+        await plugins.uninstall(id);
+        return {};
+      },
+      "plugins.toggle": ({ workbenchId, id, enabled }) => workbench.togglePlugin(workbenchId, id, enabled),
       "docs.list": async ({ workbenchId }) => ({
         workbenchId,
         documents: (await workbench.listDocuments(workbenchId))

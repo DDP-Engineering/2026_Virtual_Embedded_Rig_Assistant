@@ -29,6 +29,10 @@ mode offers empty, missing, read-only and warning fixtures.
 
 - The editor's Tools section lists the shared built-in catalog with en/ro/de descriptions and enabled checkboxes. Draft selection writes the existing tools.disabled array on Save; Cancel discards it and read-only/loading/pending controls remain disabled. WorkbenchService recognizes shared built-ins by default when reporting unknown disabled names; injected host catalogs retain their existing authority.
 
+- plugins.enabled (default []) is the opt-in list of [plugins](plugins.md) for this workbench; togglePlugin writes it
+  on the write queue like toggleSkill, enabledPlugins reads the current config, and ids that are not installed under
+  <userData>/plugins are UNKNOWN_NAME warnings. The config event sanitizer scrubs it like skills.disabled.
+
 - skillCatalog/listSkills/openSkill/saveSkill/toggleSkill admit [skills](skills.md)
   operations against current workbench ID, folder, database lifetime and token. Source
   selects project/.vera or the host userData root. Reads serialize with lifecycle; writes

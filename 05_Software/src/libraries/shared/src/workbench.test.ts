@@ -41,3 +41,28 @@ it("holds bounded retrieval defaults that patches merge and validation rejects o
   const extended = schema.parse({ ...base, retrieval: { results: 4, mode: "semantic", rerank: true } });
   expect(warnings(extended)).toContainEqual({ code: "UNKNOWN_KEY", path: "retrieval.rerank" });
 });
+
+// REQ-FUNC-41f5c03b
+it("defaults plugins.enabled to empty and merges a plugins patch like the other sections", () => {
+  const base = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
+  expect(base.plugins).toEqual({ enabled: [] });
+  const merged = mergeWorkbench(base, { plugins: { enabled: ["esp32-esptool"] } });
+  expect(merged.plugins).toEqual({ enabled: ["esp32-esptool"] });
+  expect(mergeWorkbench(merged, { name: "Renamed" }).plugins).toEqual({ enabled: ["esp32-esptool"] });
+  expect(workbenchPatchSchema.safeParse({ plugins: { enabled: [""] } }).success).toBe(false);
+  expect(workbenchPatchSchema.safeParse({ plugins: { other: [] } }).success).toBe(false);
+});
+
+// REQ-FUNC-0c4bc419
+it("warns about enabled plugins that are not installed and unknown plugins keys", () => {
+  const config = schema.parse({
+    format: 1,
+    id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    name: "Board",
+    plugins: { enabled: ["esp32-esptool", "ghost"], other: true },
+  });
+  expect(warnings(config, { skills: [], tools: [], plugins: ["esp32-esptool"] })).toEqual([
+    { code: "UNKNOWN_KEY", path: "plugins.other" },
+    { code: "UNKNOWN_NAME", path: "plugins.enabled.ghost" },
+  ]);
+});

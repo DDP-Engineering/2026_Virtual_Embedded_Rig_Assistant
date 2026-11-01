@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-f003e3e5"
+title = "List installed plugins with field-level issues"
+status = "active"
+requirement = "When installed plugins are listed, the plugin store shall return one summary per folder under installed/, sorted by id, with the manifest's version, name, description, ecosystem and platforms, the install record's tier, source kind, hash and install time when they are valid, and every manifest, record and integrity issue with its code and field path."
+verification = "Plant a valid plugin, one whose manifest has two invalid fields with a matching hash, one with a missing install.json and one whose folder name differs from its id; assert list() returns four sorted summaries, the valid one with no issues and metadata, the malformed one with both field paths, record for the missing record and id for the mismatch."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

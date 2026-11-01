@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9dd7413b"
+title = "Expose plugin management over IPC"
+status = "active"
+requirement = "The desktop application shall provide strict plugins.list, plugins.install, plugins.uninstall and plugins.toggle channels in which list returns every installed plugin summary with its issues and whether it is enabled for the requested workbench, install takes an absolute folder or zip path, uninstall takes a plugin id and toggle takes a workbench id, a plugin id and the enabled flag."
+verification = "Shared channel tests accept valid requests and responses and reject unknown keys, relative install paths and invalid ids; the main process registers a handler for each channel through the typed router; the browser mock answers list, install, uninstall and toggle in memory."
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-01
+updated = 2026-11-01

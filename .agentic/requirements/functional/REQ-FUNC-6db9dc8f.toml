@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-6db9dc8f"
+title = "Install a plugin from a zip archive"
+status = "active"
+requirement = "When the user installs a plugin from a .zip file whose plugin.yaml is at the archive root or inside a single top-level folder named as the manifest id, the plugin store shall install the archive's files exactly as a folder install does, with source kind zip."
+verification = "Zip the fixture plugin both at the root and under esp32-esptool/, install each, restart the store and assert the plugin lists valid with the same integrity hash as the folder install and source kind zip; an archive whose single top folder differs from the id, or with plugin.yaml in neither place, is refused with INVALID."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9ba5f19c"
+title = "Uninstall a plugin"
+status = "active"
+requirement = "When the user uninstalls an installed plugin, the plugin store shall remove its folder and install.json so that it is no longer listed, and if no plugin with that id is installed, it shall reject with NOT_FOUND."
+verification = "Install and uninstall the fixture; assert list() is empty and installed/esp32-esptool does not exist, also from a new store instance; a second uninstall rejects with NOT_FOUND."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-01
+updated = 2026-11-01

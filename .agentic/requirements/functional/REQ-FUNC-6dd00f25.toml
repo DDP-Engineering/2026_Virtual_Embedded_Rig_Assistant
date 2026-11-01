@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-6dd00f25"
+title = "Install a plugin from a folder"
+status = "active"
+requirement = "When the user installs a plugin from a folder whose name equals the manifest id, the plugin store shall copy every file of the folder to <userData>/plugins/installed/<id>/, write install.json with format 1, the version, tier local, the source kind and path, the integrity hash, the install time and an empty program version map, and list the plugin as valid from a new store instance."
+verification = "Install the fixture plugin folder, then construct a second PluginStore on the same root (a restart) and assert list() returns the plugin with no issues, install.json holds the recorded fields and hash, and the copied files equal the source bytes; a folder whose name differs from the manifest id is refused with INVALID."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/core/src/index.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

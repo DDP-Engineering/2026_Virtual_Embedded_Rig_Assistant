@@ -1028,3 +1028,43 @@ it("documentation scan, preview and relative folders apply the folder's ignore r
     code: "INVALID",
   });
 });
+
+// REQ-FUNC-41f5c03b, REQ-FUNC-0c4bc419
+it("enables a plugin for one workbench only and warns about plugins that are not installed", async () => {
+  const h = await harness();
+  const other = join(h.root, "other");
+  await mkdir(other);
+  await mkdir(join(h.root, "plugins/installed/esp32-esptool"), { recursive: true });
+  try {
+    const wb = await h.service.create(h.folder, "Bench A");
+    expect(wb.config.plugins).toEqual({ enabled: [] });
+    await h.service.togglePlugin(wb.config.id, "esp32-esptool", true);
+    await h.service.togglePlugin(wb.config.id, "esp32-esptool", true);
+    await h.service.togglePlugin(wb.config.id, "ghost", true);
+    expect(h.service.enabledPlugins(wb.config.id)).toEqual(["esp32-esptool", "ghost"]);
+    expect(parseConfig(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).plugins).toEqual({
+      enabled: ["esp32-esptool", "ghost"],
+    });
+    const warnings = (await h.service.getConfig()).warnings;
+    expect(warnings).toContainEqual({ code: "UNKNOWN_NAME", path: "plugins.enabled.ghost" });
+    expect(warnings).not.toContainEqual({ code: "UNKNOWN_NAME", path: "plugins.enabled.esp32-esptool" });
+    await h.service.togglePlugin(wb.config.id, "ghost", false);
+    expect((await h.service.getConfig()).warnings).not.toContainEqual({
+      code: "UNKNOWN_NAME",
+      path: "plugins.enabled.ghost",
+    });
+    await expect(h.service.togglePlugin("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", "x", true)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await h.service.close();
+    const b = await h.service.create(other, "Bench B");
+    expect(b.config.plugins).toEqual({ enabled: [] });
+    expect(h.service.enabledPlugins(b.config.id)).toEqual([]);
+    await h.service.updateConfig({ plugins: { enabled: ["esp32-esptool"] } });
+    expect(h.service.enabledPlugins(b.config.id)).toEqual(["esp32-esptool"]);
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.plugins).toEqual({ enabled: ["esp32-esptool"] });
+  } finally {
+    await h.service.close();
+  }
+});

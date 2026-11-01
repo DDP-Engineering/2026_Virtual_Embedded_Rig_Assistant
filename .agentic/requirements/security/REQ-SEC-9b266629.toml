@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-9b266629"
+title = "Refuse unsafe or oversized plugin packages"
+status = "active"
+requirement = "If a plugin package contains a symbolic link, an absolute, parent-relative, device or case-colliding file or folder path, a stored zip entry whose declared size differs from its stored size, a root install.json, more than 4096 files, more than 64 MiB of file content, a zip file over 64 MiB or a manifest over 256 KiB, then the plugin store shall refuse the install with an INVALID or DENIED error without writing to the installed plugins."
+verification = "Unit tests build packages with each defect (a symlink where the platform allows one, zip entries ../x, C:/x, a/CON, A.txt with a.txt, Docs/a.md with docs/b.md, a with a/b, a stored entry whose directory declares size 0, a root install.json, 4097 entries, an entry declaring over 64 MiB, a 257 KiB plugin.yaml) and assert each install rejects and installed/ holds no new entry; a package exactly at the file limit installs."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01

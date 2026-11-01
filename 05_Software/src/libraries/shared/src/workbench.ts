@@ -17,6 +17,8 @@ export const workbenchEmbeddingsSchema = z
     path: ["overlap"],
   });
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
+/** Plugins run programs, so a workbench enables each one explicitly. */
+const plugins = z.looseObject({ enabled: z.array(z.string().min(1)).default([]) });
 /** Defaults for the agent's search_docs when it passes no k or mode of its own. */
 export const workbenchRetrievalSchema = z.looseObject({
   results: z.number().int().min(1).max(20).default(8),
@@ -45,6 +47,7 @@ export const workbenchSchema = z.looseObject({
   retrieval: workbenchRetrievalSchema.default({ results: 8, mode: "hybrid" }),
   skills: disabled.default({ disabled: [] }),
   tools: disabled.default({ disabled: [] }),
+  plugins: plugins.default({ enabled: [] }),
   agent: agent.default({ permission_mode: "ask", model: null }),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;
@@ -67,6 +70,7 @@ export const workbenchPatchSchema = z.strictObject({
     .optional(),
   skills: z.strictObject({ disabled: z.array(z.string().min(1)).optional() }).optional(),
   tools: z.strictObject({ disabled: z.array(z.string().min(1)).optional() }).optional(),
+  plugins: z.strictObject({ enabled: z.array(z.string().min(1)).optional() }).optional(),
   agent: z
     .strictObject({
       permission_mode: agent.shape.permission_mode.removeDefault().optional(),
@@ -134,7 +138,10 @@ export function documentPatternFolder(pattern: string): string | undefined {
 }
 export function configWarnings(
   config: WorkbenchConfig,
-  catalogs: { skills: readonly string[]; tools: readonly string[] } = { skills: [], tools: [] },
+  catalogs: { skills: readonly string[]; tools: readonly string[]; plugins?: readonly string[] } = {
+    skills: [],
+    tools: [],
+  },
 ): WorkbenchWarning[] {
   const result: WorkbenchWarning[] = [];
   const shapes = {
@@ -142,6 +149,7 @@ export function configWarnings(
     docs: docs.shape,
     skills: disabled.shape,
     tools: disabled.shape,
+    plugins: plugins.shape,
     agent: agent.shape,
     embeddings: { model: true, chunkSize: true, overlap: true },
     retrieval: workbenchRetrievalSchema.shape,
@@ -157,6 +165,8 @@ export function configWarnings(
     for (const name of config[kind].disabled)
       if (!catalogs[kind].includes(name))
         result.push({ code: "UNKNOWN_NAME", path: `${kind}.disabled.${name}` });
+  for (const id of config.plugins.enabled)
+    if (!catalogs.plugins?.includes(id)) result.push({ code: "UNKNOWN_NAME", path: `plugins.enabled.${id}` });
   return result;
 }
 export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch): WorkbenchConfig {
@@ -168,6 +178,7 @@ export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch):
     retrieval: { ...current.retrieval, ...clean.retrieval },
     skills: { ...current.skills, ...clean.skills },
     tools: { ...current.tools, ...clean.tools },
+    plugins: { ...current.plugins, ...clean.plugins },
     agent: { ...current.agent, ...clean.agent },
   });
 }

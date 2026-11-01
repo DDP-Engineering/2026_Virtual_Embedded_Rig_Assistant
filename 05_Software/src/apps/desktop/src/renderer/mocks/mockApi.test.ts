@@ -55,6 +55,29 @@ it("mock skills create/edit/toggle isolate workbenches and reject stale or read-
     readOnly.invoke("skills.toggle", { workbenchId: locked.config.id, name: "reader", enabled: false }),
   ).rejects.toMatchObject({ code: "DENIED" });
 });
+// REQ-FUNC-9dd7413b
+it("mock plugins install, list per workbench, toggle and uninstall in memory", async () => {
+  const { api } = createMockApi();
+  const a = await api.invoke("workbench.create", { folder: "C:/mock/plugins-a", name: "A" });
+  const installed = await api.invoke("plugins.install", { path: "C:/plugins/esp32-esptool.zip" });
+  expect(installed).toMatchObject({ id: "esp32-esptool", issues: [], source: "zip", tier: "local" });
+  await api.invoke("plugins.toggle", { workbenchId: a.config.id, id: "esp32-esptool", enabled: true });
+  expect(await api.invoke("plugins.list", { workbenchId: a.config.id })).toMatchObject([
+    { id: "esp32-esptool", enabled: true },
+  ]);
+  const b = await api.invoke("workbench.create", { folder: "C:/mock/plugins-b", name: "B" });
+  expect(await api.invoke("plugins.list", { workbenchId: b.config.id })).toMatchObject([
+    { id: "esp32-esptool", enabled: false },
+  ]);
+  await expect(
+    api.invoke("plugins.toggle", { workbenchId: a.config.id, id: "esp32-esptool", enabled: true }),
+  ).rejects.toMatchObject({ code: "CONFLICT" });
+  await api.invoke("plugins.uninstall", { id: "esp32-esptool" });
+  expect(await api.invoke("plugins.list", {})).toEqual([]);
+  await expect(api.invoke("plugins.uninstall", { id: "esp32-esptool" })).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+});
 it("mock reindex obeys active-workbench ownership and strict empty request", async () => {
   const { api } = createMockApi();
   await expect(api.invoke("docs.reindex", {})).rejects.toMatchObject({ code: "NOT_FOUND" });

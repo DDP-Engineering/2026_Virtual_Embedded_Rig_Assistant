@@ -18,6 +18,7 @@ import {
   moveSession,
   opensExternally,
   orderSessions,
+  type PluginInstalled,
   providerSlug,
   type Request,
   type Response,
@@ -117,6 +118,8 @@ export function createMockApi(
   ]);
   /** Folders that already hold .vera/WORKBENCH.md without being a workbench. */
   const folderNotes = new Map([["/mock/with-notes", "Existing bench notes\n"]]);
+  /** Installed plugins by id; install names the plugin after the chosen folder or zip. */
+  const installedPlugins = new Map<string, PluginInstalled>();
   /** Later prefixes shadow earlier ones, as workbench skills shadow user skills. */
   function skillSummaries(prefixes: string[], disabled: readonly string[]) {
     const names = new Map<string, { content: string; source: "user" | "workbench" }>();
@@ -412,6 +415,61 @@ export function createMockApi(
         const disabled = wb.config.skills.disabled.filter((name) => name !== request.name);
         if (!request.enabled) disabled.push(request.name);
         wb.config = mergeWorkbench(wb.config, { skills: { disabled } });
+        emit({
+          topic: "workbench",
+          id: wb.config.id,
+          event: { type: "config.changed", config: wb.config, warnings: wb.warnings },
+        });
+        value = {};
+        break;
+      }
+      case "plugins.list": {
+        const { workbenchId } = channels["plugins.list"].request.parse(input.data);
+        const enabled = workbenchId ? current().snapshot.config.plugins.enabled : [];
+        if (workbenchId && workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        value = [...installedPlugins.values()].map((plugin) => ({
+          ...plugin,
+          enabled: enabled.includes(plugin.id),
+        }));
+        break;
+      }
+      case "plugins.install": {
+        const { path } = channels["plugins.install"].request.parse(input.data);
+        const id = (path.split(/[\\/]/).pop() ?? "").replace(/\.zip$/i, "");
+        if (!/^[a-z0-9-]{1,64}$/.test(id))
+          throw { ...veraError("INVALID"), params: { issue: "id", path: "id" } };
+        const plugin: PluginInstalled = {
+          id,
+          issues: [],
+          version: "1.0.0",
+          name: id,
+          description: `Mock plugin installed from ${path}.`,
+          ecosystem: "general",
+          platforms: ["windows-x64", "linux-x64"],
+          tier: "local",
+          source: /\.zip$/i.test(path) ? "zip" : "folder",
+          sha256: "0".repeat(64),
+          installedAt: new Date().toISOString(),
+        };
+        installedPlugins.set(id, plugin);
+        value = plugin;
+        break;
+      }
+      case "plugins.uninstall": {
+        const { id } = channels["plugins.uninstall"].request.parse(input.data);
+        if (!installedPlugins.delete(id)) throw veraError("NOT_FOUND");
+        value = {};
+        break;
+      }
+      case "plugins.toggle": {
+        const request = channels["plugins.toggle"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id) throw veraError("CONFLICT");
+        if (wb.readOnly) throw veraError("DENIED");
+        const kept = wb.config.plugins.enabled.filter((id) => id !== request.id);
+        wb.config = mergeWorkbench(wb.config, {
+          plugins: { enabled: request.enabled ? [...kept, request.id] : kept },
+        });
         emit({
           topic: "workbench",
           id: wb.config.id,

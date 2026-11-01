@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-0c4bc419"
+title = "Warn about unknown plugin names and keys"
+status = "active"
+requirement = "When a workbench configuration is loaded or saved, the workbench service shall report an UNKNOWN_NAME warning at plugins.enabled.<id> for each enabled id that is not an installed plugin, and an UNKNOWN_KEY warning for each unrecognized key under plugins."
+verification = "configWarnings with plugins.enabled [esp32-esptool, ghost] and installed [esp32-esptool] reports only plugins.enabled.ghost; an extra plugins.other key reports UNKNOWN_KEY plugins.other; the workbench service passes the installed plugin ids from <userData>/plugins/installed."
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-01
+updated = 2026-11-01

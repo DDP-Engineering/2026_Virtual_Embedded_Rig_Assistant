@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-1d6999a7"
+title = "Load only valid unchanged plugins"
+status = "active"
+requirement = "When a plugin is loaded by id, the plugin store shall return its parsed manifest, folder and install record only if the plugin has no issue, and otherwise shall reject with INVALID, or NOT_FOUND when no such plugin is installed."
+verification = "load() of the installed fixture returns the manifest with its programs and rules; load() of a malformed, changed or record-less plugin rejects with INVALID; load() of an unknown or syntactically invalid id rejects with NOT_FOUND."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-DATA-4d4471f9.md"
+priority = "high"
+created = 2026-11-01
+updated = 2026-11-01
