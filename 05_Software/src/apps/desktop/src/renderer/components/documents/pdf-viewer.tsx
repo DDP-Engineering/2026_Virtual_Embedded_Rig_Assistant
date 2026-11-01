@@ -1,4 +1,4 @@
-// REQ-UX-28ad0002
+// REQ-UX-28ad0002 REQ-UX-e4d5ce0f REQ-UX-e8dfdec3 REQ-UX-3eb27a6c REQ-NFR-0fe89e49
 import type { ViewerContent } from "@vera/shared";
 import {
   GlobalWorkerOptions,
@@ -8,8 +8,9 @@ import {
   TextLayer,
 } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FindBar } from "./find-bar.js";
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 const normalize = (text: string) => text.replace(/\s+/g, " ").trim().toLowerCase();
@@ -75,36 +76,122 @@ export function highlightText(layer: HTMLElement, snippet: string, search: strin
   });
 }
 
-export default function PdfViewer({ content }: { content: Extract<ViewerContent, { kind: "pdf" }> }) {
+const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+/** The page gap in CSS pixels; pages and gaps make up the scroll height. */
+const GAP = 12;
+/** Pages rendered around the one in view; the rest are empty boxes of the right size. */
+const AROUND = 2;
+type Size = { width: number; height: number };
+
+/** One page: its canvas and text layer, drawn at the zoom, with the snippet and matches marked. */
+function PdfPage({
+  pdf,
+  number,
+  zoom,
+  snippet,
+  query,
+  rendered,
+}: {
+  pdf: PDFDocumentProxy;
+  number: number;
+  zoom: number;
+  snippet: string;
+  query: string;
+  rendered: (number: number, drawn: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const canvas = useRef<HTMLCanvasElement>(null),
+    text = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+  const done = useRef(rendered);
+  done.current = rendered;
+  useEffect(() => {
+    let alive = true,
+      render: RenderTask | undefined,
+      layer: TextLayer | undefined;
+    setReady(false);
+    void (async () => {
+      const page = await pdf.getPage(number);
+      if (!alive || !canvas.current || !text.current) return;
+      const viewport = page.getViewport({ scale: zoom });
+      if (viewport.width <= 0 || viewport.height <= 0 || viewport.width * viewport.height > 16000000)
+        throw Error("Page exceeds canvas budget");
+      canvas.current.width = Math.ceil(viewport.width);
+      canvas.current.height = Math.ceil(viewport.height);
+      text.current.replaceChildren();
+      text.current.style.setProperty("--total-scale-factor", String(zoom));
+      const context = canvas.current.getContext("2d");
+      if (!context) throw Error("Canvas unavailable");
+      render = page.render({ canvas: canvas.current, canvasContext: context, viewport });
+      layer = new TextLayer({
+        container: text.current,
+        viewport,
+        textContentSource: await page.getTextContent(),
+      });
+      await Promise.all([render.promise, layer.render()]);
+      if (alive) {
+        setReady(true);
+        done.current(number, true);
+      }
+    })().catch(() => {
+      /* An unrenderable page stays an empty box; its text is still searchable. */
+    });
+    return () => {
+      alive = false;
+      render?.cancel();
+      layer?.cancel();
+      done.current(number, false);
+    };
+  }, [pdf, number, zoom]);
+  useEffect(() => {
+    if (ready && text.current) highlightText(text.current, snippet, query);
+  }, [ready, snippet, query]);
+  return (
+    <>
+      <canvas ref={canvas} aria-label={t("documents.pageNumber", { page: number })} />
+      <div ref={text} className="pdf-text-layer" aria-hidden="true" />
+    </>
+  );
+}
+
+/**
+ * A PDF as one continuous scroll of pages (TASK-4c04273a): every page has its box from the start,
+ * only the page in view and its neighbours are drawn, and a small indicator shows the page in view.
+ * Ctrl+wheel, Ctrl+= / Ctrl+- and Ctrl+0 zoom; Ctrl+F (a request from the tab) shows a find field.
+ */
+export default function PdfViewer({
+  content,
+  page: kept,
+  onPage,
+  findRequest = 0,
+}: {
+  content: Extract<ViewerContent, { kind: "pdf" }>;
+  /** The page the tab was left at; without it the cited page opens (TASK-79f6ffd3). */
+  page?: number | undefined;
+  onPage?: ((page: number) => void) | undefined;
+  findRequest?: number | undefined;
+}) {
   const { t } = useTranslation();
   const [pdf, setPdf] = useState<PDFDocumentProxy>(),
+    [sizes, setSizes] = useState<Size[]>(),
     [error, setError] = useState(false),
-    [ready, setReady] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const [page, setPage] = useState(content.page),
+    [attempt, setAttempt] = useState(0),
     [zoom, setZoom] = useState(1),
-    [query, setQuery] = useState("");
-  const canvas = useRef<HTMLCanvasElement>(null),
-    text = useRef<HTMLDivElement>(null),
-    sheet = useRef<HTMLDivElement>(null);
-  // Reaching the first or last page disables the button just pressed; focus moves to the other one
-  // instead of falling to the document, where keyboard shortcuts such as Escape no longer reach.
-  const previous = useRef<HTMLButtonElement>(null),
-    next = useRef<HTMLButtonElement>(null),
-    refocus = useRef<HTMLButtonElement | null>(null);
-  useEffect(() => {
-    void page;
-    refocus.current?.focus();
-    refocus.current = null;
-  }, [page]);
-  const matches = query.trim()
-    ? content.pages.flatMap((value, i) => (normalize(value).includes(normalize(query)) ? [i + 1] : []))
-    : [];
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt retries parsing/rendering after a PDF error.
+    [current, setCurrent] = useState(kept && kept <= content.pages.length ? kept : content.page),
+    [drawn, setDrawn] = useState<ReadonlySet<number>>(new Set()),
+    [finding, setFinding] = useState(false),
+    [query, setQuery] = useState(""),
+    [match, setMatch] = useState(0);
+  const scroll = useRef<HTMLElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const report = useRef(onPage);
+  report.current = onPage;
+  const count = content.pages.length;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt retries parsing after a PDF error.
   useEffect(() => {
     setError(false);
     setPdf(undefined);
-    setReady(false);
+    setSizes(undefined);
     const data = Uint8Array.from(atob(content.data), (char) => char.charCodeAt(0));
     const base = new URL("./pdfjs/", document.baseURI).href;
     const loading = getDocument({
@@ -119,9 +206,18 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
     });
     let alive = true;
     void loading.promise
-      .then((doc) => {
-        if (doc.numPages !== content.pages.length) throw Error("Page count mismatch");
-        if (alive) setPdf(doc);
+      .then(async (doc) => {
+        if (doc.numPages !== count) throw Error("Page count mismatch");
+        // Every page's box is known up front, so the scroll covers the whole document.
+        const all = await Promise.all(
+          Array.from({ length: count }, async (_, i) => {
+            const viewport = (await doc.getPage(i + 1)).getViewport({ scale: 1 });
+            return { width: viewport.width, height: viewport.height };
+          }),
+        );
+        if (!alive) return;
+        setPdf(doc);
+        setSizes(all);
       })
       .catch(() => {
         if (alive) setError(true);
@@ -131,51 +227,125 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
       void loading.destroy();
     };
   }, [content, attempt]);
-  useEffect(() => {
-    if (!pdf) return;
-    let alive = true,
-      render: RenderTask | undefined,
-      layer: TextLayer | undefined;
-    setReady(false);
-    void (async () => {
-      const docPage = await pdf.getPage(page);
-      if (!alive || !canvas.current || !text.current || !sheet.current) return;
-      const viewport = docPage.getViewport({ scale: zoom });
-      if (viewport.width <= 0 || viewport.height <= 0 || viewport.width * viewport.height > 16000000)
-        throw Error("Page exceeds canvas budget");
-      const el = canvas.current,
-        container = text.current;
-      el.width = Math.ceil(viewport.width);
-      el.height = Math.ceil(viewport.height);
-      sheet.current.style.width = `${viewport.width}px`;
-      sheet.current.style.height = `${viewport.height}px`;
-      container.replaceChildren();
-      container.style.setProperty("--total-scale-factor", String(zoom));
-      const context = el.getContext("2d");
-      if (!context) throw Error("Canvas unavailable");
-      render = docPage.render({ canvas: el, canvasContext: context, viewport });
-      layer = new TextLayer({ container, viewport, textContentSource: await docPage.getTextContent() });
-      await Promise.all([render.promise, layer.render()]);
-      if (alive) {
-        setReady(true);
-      }
-    })().catch(() => {
-      if (alive) setError(true);
-    });
-    return () => {
-      alive = false;
-      render?.cancel();
-      layer?.cancel();
-    };
-  }, [pdf, page, zoom]);
-  useEffect(() => {
-    if (ready && text.current) {
-      const current = content.pages[page - 1] ?? "";
-      const snippet =
-        current && normalize(content.snippet).includes(normalize(current)) ? current : content.snippet;
-      highlightText(text.current, page >= content.page && page <= content.pageEnd ? snippet : "", query);
+  const tops = useMemo(() => {
+    const list: number[] = [];
+    let y = 0;
+    for (const size of sizes ?? []) {
+      list.push(y);
+      y += size.height * zoom + GAP;
     }
-  }, [ready, query, page, content]);
+    return list;
+  }, [sizes, zoom]);
+  const pageAt = (y: number) => {
+    let found = 1;
+    for (let i = 0; i < tops.length; i++) if ((tops[i] ?? 0) <= y) found = i + 1;
+    return found;
+  };
+  /** The offset a programmatic scroll landed on; the scroll event it causes keeps its page. */
+  const pinned = useRef<number | undefined>(undefined);
+  const show = (page: number) => {
+    const node = scroll.current;
+    const target = Math.max(1, Math.min(count, page));
+    if (node) {
+      node.scrollTop = tops[target - 1] ?? 0;
+      pinned.current = node.scrollTop;
+    }
+    setCurrent(target);
+  };
+  // Open at the kept or cited page once the boxes exist; keep the same page through a zoom change.
+  const placed = useRef(false);
+  const currentRef = useRef(current);
+  currentRef.current = current;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placing follows the boxes and the zoom only.
+  useLayoutEffect(() => {
+    if (!tops.length) return;
+    show(currentRef.current);
+    placed.current = true;
+  }, [tops]);
+  useEffect(() => {
+    report.current?.(current);
+  }, [current]);
+  const step = (direction: -1 | 0 | 1) =>
+    setZoom((value) => {
+      if (direction === 0) return 1;
+      const index = ZOOMS.indexOf(value as (typeof ZOOMS)[number]);
+      return ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, index + direction))] ?? value;
+    });
+  const pageAtRef = useRef(pageAt);
+  pageAtRef.current = pageAt;
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  // The scroll element is new after a failed load is retried, so the listeners follow `error`.
+  useEffect(() => {
+    void error;
+    const node = scroll.current;
+    if (!node) return;
+    const sync = () => {
+      if (!placed.current) return;
+      if (pinned.current !== undefined && Math.abs(node.scrollTop - pinned.current) < 2) return;
+      pinned.current = undefined;
+      setCurrent(pageAtRef.current(node.scrollTop + node.clientHeight / 3));
+    };
+    node.addEventListener("scroll", sync, { passive: true });
+    // Ctrl+wheel zooms the document, not the window; a plain wheel scrolls. A trackpad pinch sends
+    // many small deltas, so a step needs a whole wheel notch (100) in one direction.
+    let delta = 0;
+    const wheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      delta += event.deltaY;
+      if (Math.abs(delta) < 100) return;
+      stepRef.current(delta < 0 ? 1 : -1);
+      delta = 0;
+    };
+    node.addEventListener("wheel", wheel, { passive: false });
+    return () => {
+      node.removeEventListener("scroll", sync);
+      node.removeEventListener("wheel", wheel);
+    };
+  }, [error]);
+  // Zoom keys work anywhere in the document's panel, which takes focus when the tab opens.
+  useEffect(() => {
+    void error;
+    const target = root.current?.closest<HTMLElement>("[data-source-current]") ?? root.current;
+    if (!target) return;
+    const keys = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const direction =
+        event.key === "=" || event.key === "+"
+          ? 1
+          : event.key === "-"
+            ? -1
+            : event.key === "0"
+              ? 0
+              : undefined;
+      if (direction === undefined) return;
+      event.preventDefault();
+      stepRef.current(direction);
+    };
+    target.addEventListener("keydown", keys);
+    return () => target.removeEventListener("keydown", keys);
+  }, [error]);
+  useEffect(() => {
+    if (findRequest) setFinding(true);
+  }, [findRequest]);
+  const needle = normalize(query);
+  const matches = useMemo(() => {
+    if (!needle) return [];
+    const list: number[] = [];
+    content.pages.forEach((text, i) => {
+      const value = normalize(text);
+      for (let at = value.indexOf(needle); at >= 0; at = value.indexOf(needle, at + needle.length))
+        list.push(i + 1);
+    });
+    return list;
+  }, [content.pages, needle]);
+  const ready = drawn.has(current);
+  const snippetFor = (page: number) => {
+    if (page < content.page || page > content.pageEnd) return "";
+    const text = content.pages[page - 1] ?? "";
+    return text && normalize(content.snippet).includes(normalize(text)) ? text : content.snippet;
+  };
   if (error)
     return (
       <>
@@ -186,106 +356,88 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
       </>
     );
   return (
-    <div className="pdf-viewer" data-page={page} data-ready={ready}>
-      <div className="document-toolbar">
-        <button
-          ref={previous}
-          type="button"
-          disabled={page === 1}
-          onClick={() => {
-            if (page - 1 === 1) refocus.current = next.current;
-            setPage(page - 1);
+    <div ref={root} className="pdf-viewer" data-page={current} data-ready={ready} data-zoom={zoom}>
+      {finding && (
+        <FindBar
+          label={t("documents.find")}
+          value={query}
+          status={
+            needle
+              ? t("documents.matchOf", { current: matches.length ? match + 1 : 0, total: matches.length })
+              : undefined
+          }
+          change={(value) => {
+            setQuery(value);
+            setMatch(0);
+            const next = normalize(value);
+            const hit = next ? content.pages.findIndex((text) => normalize(text).includes(next)) : -1;
+            if (hit >= 0) show(hit + 1);
           }}
-        >
-          {t("documents.previous")}
-        </button>
-        <label>
-          {t("documents.page")}
-          <input
-            type="number"
-            aria-label={t("documents.page")}
-            min={1}
-            max={content.pages.length}
-            value={page}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              if (Number.isInteger(n) && n >= 1 && n <= content.pages.length) setPage(n);
-            }}
-          />
-        </label>
-        <span>{t("documents.pageCount", { count: content.pages.length })}</span>
-        <button
-          ref={next}
-          type="button"
-          disabled={page === content.pages.length}
-          onClick={() => {
-            if (page + 1 === content.pages.length) refocus.current = previous.current;
-            setPage(page + 1);
+          step={(forward) => {
+            if (!matches.length) return;
+            const next = (match + (forward ? 1 : -1) + matches.length) % matches.length;
+            setMatch(next);
+            show(matches[next] ?? 1);
           }}
-        >
-          {t("documents.next")}
-        </button>
-        <label>
-          {t("documents.zoom")}
-          <select
-            aria-label={t("documents.zoom")}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-          >
-            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((value) => (
-              <option key={value} value={value}>
-                {value * 100}%
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t("documents.find")}
-          <input
-            data-document-search
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && matches.length)
-                setPage(matches.find((n) => n > page) ?? matches[0] ?? page);
-            }}
-          />
-        </label>
-        {query.trim() && (
-          <>
-            <span role="status">{t("documents.matches", { count: matches.length })}</span>
-            <button
-              type="button"
-              disabled={!matches.length}
-              onClick={() => setPage(matches.find((n) => n > page) ?? matches[0] ?? page)}
-            >
-              {t("documents.nextMatch")}
-            </button>
-          </>
-        )}
-      </div>
-      {content.ref !== null && (
-        <p>{t("documents.citedPages", { start: content.page, end: content.pageEnd })}</p>
+          close={() => {
+            setFinding(false);
+            scroll.current?.focus();
+          }}
+        />
       )}
+      {!sizes && <p role="status">{t("home.loading")}</p>}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: The page scroll accepts keyboard scrolling. */}
+      <section ref={scroll} className="pdf-scroll" tabIndex={0} aria-label={t("documents.viewer")}>
+        {pdf &&
+          sizes?.map((size, i) => {
+            const number = i + 1;
+            return (
+              <div
+                key={number}
+                className="pdf-sheet"
+                data-page-number={number}
+                style={
+                  {
+                    width: size.width * zoom,
+                    height: size.height * zoom,
+                    marginBottom: GAP,
+                    "--total-scale-factor": zoom,
+                  } as CSSProperties
+                }
+              >
+                {Math.abs(number - current) <= AROUND && (
+                  <PdfPage
+                    pdf={pdf}
+                    number={number}
+                    zoom={zoom}
+                    snippet={snippetFor(number)}
+                    query={query}
+                    rendered={(page, drawn) =>
+                      setDrawn((set) => {
+                        const next = new Set(set);
+                        if (drawn) next.add(page);
+                        else next.delete(page);
+                        return next;
+                      })
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
+      </section>
+      {sizes && <span className="pdf-indicator">{t("documents.pageOf", { page: current, count })}</span>}
       <details className="pdf-page-text">
-        <summary>{t("documents.pageText", { page })}</summary>
+        <summary>{t("documents.pageText", { page: current })}</summary>
         <section
           className="pdf-page-text-content"
           // biome-ignore lint/a11y/noNoninteractiveTabindex: Extracted page text has its own keyboard scroll region.
           tabIndex={0}
-          aria-label={t("documents.pageText", { page })}
+          aria-label={t("documents.pageText", { page: current })}
         >
-          <pre>{content.pages[page - 1] || t("documents.reason.NEEDS_OCR")}</pre>
+          <pre>{content.pages[current - 1] || t("documents.reason.NEEDS_OCR")}</pre>
         </section>
       </details>
-      {!ready && <p role="status">{t("home.loading")}</p>}
-      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable PDF page accepts keyboard scrolling. */}
-      <section className="pdf-scroll" tabIndex={0} aria-label={t("documents.page")}>
-        <div ref={sheet} className="pdf-sheet" style={{ "--total-scale-factor": zoom } as CSSProperties}>
-          <canvas ref={canvas} aria-label={t("documents.page")} />
-          <div ref={text} className="pdf-text-layer" aria-hidden="true" />
-        </div>
-      </section>
     </div>
   );
 }

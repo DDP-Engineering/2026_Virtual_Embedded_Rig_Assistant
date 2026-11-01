@@ -2,17 +2,17 @@ schema = 1
 
 id = "REQ-UX-d64f086f"
 
-title = "Move focus into and back from the Source panel"
+title = "Move focus into and back from a document tab"
 
 status = "active"
 
-requirement = "When a source opens in the Source panel, the desktop app shall move keyboard focus into the panel, return focus to the control that opened it when the user presses Escape there or closes the source, and focus the PDF text search when the user presses Ctrl+F in a PDF source."
+requirement = "When a document opens in a tab, the desktop app shall move keyboard focus into the tab's document (its cited unit when there is one), select Chat and return focus to the control that opened the document when the user presses Escape there (to the Chat tab when that control is gone or hidden), and focus the PDF text search when the user presses Ctrl+F in a PDF tab."
 
-verification = "Renderer test: opening from a button focuses the Source panel, Escape and Close source return focus to that button, and a source opened from a Docs row returns to the Docs tab with that row focused; browser and native e2e check Ctrl+F focusing the PDF search field and Escape focus return for citation chips, Docs rows and downloads."
+verification = "Renderer test: opening from a citation-like opener focuses the document, Escape selects Chat and focuses the opener; when the opener is removed or hidden Escape focuses the Chat tab; a Files row opener gets focus back on Escape; browser and native e2e check Ctrl+F focusing the PDF search field and Escape focus return."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/citations.spec.ts", "05_Software/tests/e2e/documents.spec.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/documents.spec.ts", "05_Software/tests/e2e/pdf-download.spec.ts", "05_Software/tests/e2e/citations.spec.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-31
-updated = 2026-10-31
+updated = 2026-11-01

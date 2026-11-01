@@ -195,6 +195,6 @@ Not in the plan, implemented in this area:
   per-workbench document roots, chunk and retrieval settings; an `index.volume` warning for large
   document sets (`kn/ingest.ts:312-324`, `renderer/components/documents/volume-warning.tsx`).
 - Open a document in its default application (`renderer/components/documents/open-externally.tsx`);
-  `read_doc` reads long sections in parts; a recent-sources list in the Source panel.
+  `read_doc` reads long sections in parts; documents open as tabs of the chat area (a recent-sources list in the Source panel until TASK-79f6ffd3).
 - PDFs fetched by `web_download` open in the viewer from `.vera/downloads/` but are not indexed
   (`tests/e2e/pdf-download.spec.ts`).

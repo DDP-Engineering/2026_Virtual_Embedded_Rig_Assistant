@@ -1635,8 +1635,8 @@ test.each([false, true])(
   },
 );
 
-// REQ-UX-712804c9 REQ-UX-b3231a55
-test("citations open in the right panel Source tab beside the conversation, which widens only there", async () => {
+// REQ-UX-712804c9 REQ-UX-37821e01 REQ-UX-d64f086f REQ-UX-388cf31a
+test("citations and Files rows open documents as tabs of the chat area, never in the right panel", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   await mount();
   const list = await api.invoke("session.list", {});
@@ -1647,55 +1647,58 @@ test("citations open in the right panel Source tab beside the conversation, whic
   );
   await settle();
   const panel = () => container.querySelector<HTMLElement>("#right-panel");
-  const width = () =>
-    container.querySelector<HTMLElement>(".app-shell")?.style.getPropertyValue("--right-width");
-  const resizer = () => container.querySelector<HTMLElement>('[data-resize="right"]');
-  expect(panel()).toBeNull();
-  await act(async () => container.querySelector<HTMLButtonElement>('[data-citation="valid"]')?.click());
+  const tabs = () =>
+    [...container.querySelectorAll<HTMLElement>('[data-document-tabs] [role="tab"]')].map((tab) => [
+      tab.textContent,
+      tab.getAttribute("aria-selected"),
+    ]);
+  const chip = () => container.querySelector<HTMLButtonElement>('[data-citation="valid"]');
+  expect(tabs()).toEqual([["Chat", "true"]]);
+  chip()?.focus();
+  await act(async () => chip()?.click());
   await settle();
-  // Other app dialogs exist closed; no dialog is shown for the source.
+  // Other app dialogs exist closed; no dialog is shown for the document, and no right panel opens.
   expect(container.querySelector("dialog[open], .document-dialog")).toBeNull();
-  expect(panel()?.dataset.tab).toBe("source");
-  expect(container.querySelector("#tab-source")?.getAttribute("aria-selected")).toBe("true");
+  expect(panel()).toBeNull();
+  expect(tabs()).toEqual([
+    ["Chat", "false"],
+    ["board.txt", "true"],
+  ]);
   expect(container.querySelector('[data-source-current] [data-line="1"]')?.getAttribute("aria-current")).toBe(
     "true",
   );
-  expect(container.querySelector('textarea[aria-label="Message"]')?.hasAttribute("disabled")).toBe(false);
-  expect(width()).toBe("36rem");
-  expect(resizer()?.getAttribute("aria-valuemax")).toBe("90");
-  for (let n = 0; n < 3; n++)
-    await act(async () =>
-      resizer()?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })),
-    );
-  expect(width()).toBe("39rem");
-  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
-  expect(panel()?.dataset.tab).toBe("docs");
-  expect(width()).toBe("22rem");
-  expect(resizer()?.getAttribute("aria-valuemax")).toBe("28");
-  // REQ-UX-d64f086f: a source opened from Docs returns to Docs and its row on Escape.
+  expect(container.querySelector("[data-source-current]")?.contains(document.activeElement)).toBe(true);
+  await act(async () =>
+    document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+  );
   await settle();
-  // Docs shows a folder tree (TASK-66b7d4aa): open docs, then the document's own row.
+  expect(tabs()[0]).toEqual(["Chat", "true"]);
+  expect(container.querySelector('textarea[aria-label="Message"]')?.hasAttribute("disabled")).toBe(false);
+  expect(document.activeElement).toBe(chip());
+  // A Files row opened while New Workbench is shown brings the chat area back with its tab.
+  await act(async () => button("New Workbench").click());
+  expect(container.querySelector("[data-document-tabs]")).toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-toggle="right"]')?.click());
+  expect(container.querySelector("#tab-source")).toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
+  await settle();
   const docsFolder = container.querySelector<HTMLElement>('[role="treeitem"][data-tree-path="docs"]');
   if (docsFolder?.getAttribute("aria-expanded") === "false") {
     await act(async () => docsFolder.click());
     await settle();
   }
-  const row = container.querySelector<HTMLElement>('[data-document="docs/a.md"]');
-  row?.focus();
-  await act(async () => row?.click());
+  await act(async () => container.querySelector<HTMLElement>('[data-document="docs/a.md"]')?.click());
   await settle();
-  expect(panel()?.dataset.tab).toBe("source");
-  expect(container.querySelector("[data-source-panel]")?.contains(document.activeElement)).toBe(true);
-  await act(async () =>
-    document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
-  );
-  await settle();
-  expect(panel()?.dataset.tab).toBe("docs");
-  expect(document.activeElement).toBe(row);
+  expect(tabs()).toEqual([
+    ["Chat", "false"],
+    ["board.txt", "false"],
+    ["a.md", "true"],
+  ]);
+  expect(container.querySelector('[data-source-current] [data-heading="power"]')).not.toBeNull();
 });
 
-// REQ-UX-712804c9 REQ-UX-d64f086f
-test("the Source tab returns to where it was opened from, follows keyboard tab changes and session changes, and never drops focus", async () => {
+// REQ-UX-5fc1d7d3
+test("each session keeps its own document tabs while the user moves between sessions", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   await mount();
   const list = await api.invoke("session.list", {});
@@ -1707,63 +1710,19 @@ test("the Source tab returns to where it was opened from, follows keyboard tab c
     );
     await settle();
   };
-  const panel = () => container.querySelector<HTMLElement>("#right-panel");
-  const chip = () => container.querySelector<HTMLButtonElement>('[data-citation="valid"]');
-  const pressEscape = async () => {
-    await act(async () =>
-      document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+  const tabs = () =>
+    [...container.querySelectorAll<HTMLElement>('[data-document-tabs] [role="tab"]')].map(
+      (tab) => tab.textContent,
     );
-    await settle();
-  };
   await openSession("Tool rows");
-  // A citation opened with the panel collapsed closes back to a collapsed panel and the chip.
-  chip()?.focus();
-  await act(async () => chip()?.click());
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-citation="valid"]')?.click());
   await settle();
-  expect(panel()?.dataset.tab).toBe("source");
-  await pressEscape();
-  expect(panel()).toBeNull();
-  expect(document.activeElement).toBe(chip());
-  // Arrow keys to another tab end the old return path: the next close returns to that tab.
-  await act(async () => chip()?.click());
-  await settle();
-  await act(async () =>
-    container
-      .querySelector("#tab-source")
-      ?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })),
-  );
-  expect(panel()?.dataset.tab).toBe("changes");
-  chip()?.focus();
-  await act(async () => chip()?.click());
-  await settle();
-  expect(panel()?.dataset.tab).toBe("source");
-  await pressEscape();
-  expect(panel()?.dataset.tab).toBe("changes");
-  expect(document.activeElement).toBe(chip());
-  // A session change closes an open source and restores the panel it came from.
-  await act(async () => container.querySelector<HTMLButtonElement>("#tab-context")?.click());
-  await act(async () => chip()?.click());
-  await settle();
-  expect(panel()?.dataset.tab).toBe("source");
+  expect(tabs()).toEqual(["Chat", "board.txt"]);
   await openSession("Invalid citation");
-  expect(panel()?.dataset.tab).toBe("context");
-  expect(container.querySelector("[data-source-current]")).toBeNull();
-  // An opener that is gone hands focus to the visible tab instead of the document.
-  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
-  await settle();
-  // Docs shows a folder tree (TASK-66b7d4aa): open docs, then the document's own row.
-  const docsFolder = container.querySelector<HTMLElement>('[role="treeitem"][data-tree-path="docs"]');
-  if (docsFolder?.getAttribute("aria-expanded") === "false") {
-    await act(async () => docsFolder.click());
-    await settle();
-  }
-  const row = container.querySelector<HTMLElement>('[data-document="docs/a.md"]');
-  row?.focus();
-  await act(async () => row?.click());
-  await settle();
-  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
-  await act(async () => container.querySelector<HTMLButtonElement>("#tab-source")?.click());
-  container.querySelector<HTMLElement>("[data-source-current]")?.focus();
-  await pressEscape();
-  expect(document.activeElement).toBe(container.querySelector("#tab-source"));
+  expect(tabs()).toEqual(["Chat"]);
+  await openSession("Tool rows");
+  expect(tabs()).toEqual(["Chat", "board.txt"]);
+  expect(
+    container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.textContent,
+  ).toBe("board.txt");
 });

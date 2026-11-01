@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
+import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { Composer } from "./composer.js";
 import { SessionInspector } from "./session-inspector.js";
@@ -18,12 +19,15 @@ export function SessionWorkspace({
   changed,
   readOnly,
   composerFocusRequest = 0,
+  composerFocused,
 }: {
   id?: string | undefined;
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
   composerFocusRequest?: number;
+  /** Called once a focus request is taken, so the app drops it and never replays it. */
+  composerFocused?: () => void;
 }) {
   const { t } = useTranslation();
   const bindings = useContext(ShortcutContext);
@@ -37,14 +41,28 @@ export function SessionWorkspace({
   const workspace = useRef<HTMLElement>(null);
   const lastComposerFocus = useRef(0);
   const composerReady = !!view && !readOnly && !pending;
+  // Behind a document tab (TASK-79f6ffd3) the conversation is hidden: a composer focus request
+  // (Attach as context) shows the Chat tab first; window shortcuts wait until it is shown.
+  const tabs = useDocumentTabs();
+  const shown = !tabs || tabs.active === CHAT;
+  // A request is taken once: it shows the Chat tab once and focuses the composer when it can.
+  const pendingFocus = useRef(false);
   useEffect(() => {
-    if (!composerFocusRequest || !composerReady || composerFocusRequest === lastComposerFocus.current) return;
+    if (!composerFocusRequest || composerFocusRequest === lastComposerFocus.current) return;
+    lastComposerFocus.current = composerFocusRequest;
+    pendingFocus.current = true;
+    composerFocused?.();
+    if (!shown) tabs?.select(CHAT);
+  }, [composerFocusRequest, composerFocused, shown, tabs]);
+  useEffect(() => {
+    void composerFocusRequest;
+    if (!pendingFocus.current || !shown || !composerReady) return;
     const input = workspace.current?.querySelector<HTMLTextAreaElement>("#chat-message:not(:disabled)");
     if (input) {
       input.focus();
-      lastComposerFocus.current = composerFocusRequest;
+      pendingFocus.current = false;
     }
-  }, [composerFocusRequest, composerReady]);
+  }, [composerFocusRequest, composerReady, shown]);
   function closeSearch() {
     setSearching(false);
     setSearch("");
@@ -83,6 +101,7 @@ export function SessionWorkspace({
   }
   useEffect(() => {
     function key(event: KeyboardEvent) {
+      if (!shown) return;
       const command = shortcutCommand(event, bindings);
       if (command === "focusComposer" || command === "focusModel") {
         const target = workspace.current?.querySelector<HTMLElement>(
@@ -117,7 +136,7 @@ export function SessionWorkspace({
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [bindings, view?.state.activeTurnId, readOnly, pending]);
+  }, [bindings, view?.state.activeTurnId, readOnly, pending, shown]);
   useEffect(() => {
     if (searching) searchInput.current?.focus();
   }, [searching]);

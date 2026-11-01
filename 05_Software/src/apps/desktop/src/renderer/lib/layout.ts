@@ -5,7 +5,6 @@ export const layoutSchema = z.strictObject({
   version: z.literal(1),
   sidebar: z.number().min(12).max(24),
   right: z.number().min(14).max(28),
-  source: z.number().min(20).max(90),
   sidebarCollapsed: z.boolean(),
   rightCollapsed: z.boolean(),
 });
@@ -14,7 +13,6 @@ export const defaultLayout: Layout = {
   version: 1,
   sidebar: 17,
   right: 22,
-  source: 36,
   sidebarCollapsed: false,
   rightCollapsed: true,
 };

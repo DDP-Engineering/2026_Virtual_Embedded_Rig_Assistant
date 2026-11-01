@@ -2,7 +2,8 @@
 
 ## Routing
 
-Select for citation opening, the right panel Source tab, recent sources, PDF navigation/zoom/find/snippet,
+Select for citation opening, the document tabs of the chat area (open, select, close, kept places,
+per-session sets saved per session), continuous PDF/text scrolling with zoom/find/go-to-line/snippet,
 Markdown/HTML/office anchors, presentation slides, numbered lines and Docs
 status/search/reindex/progress, and the Docs folder tree (single search box, ignored entries,
 memory, keyboard, context menu, Properties).
@@ -25,7 +26,7 @@ progress travels through existing workbench events.
 
 ## Public interface
 
-Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in the Source tab like every source, and uncited PDFs omit citation-only labels. Host publicPdfDownload scrubs metadata strings and drops invalid redacted records.
+Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in a document tab of the chat area like every source, and uncited PDFs omit citation-only labels. Host publicPdfDownload scrubs metadata strings and drops invalid redacted records.
 
 
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
@@ -38,23 +39,65 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 - DocumentViewer.open(ref,snippet?) and openPath(path) check source/locators;
   SessionService.openCitation resolves a completed assistant citation against
   preceding successful tool results and current file/artifact content.
-- DocumentViewerProvider owns the current source (load/error/retry), the ten most recent distinct
-  sources of the provider scope (newest first, cleared with the scope) and open/close counters;
-  `useDocumentSource()` exposes them. `SourcePanel` renders the Source tab: the current source
-  with Close source and Open in default app, the body, and Recent sources. Opening focuses the
-  panel unless the body already focused its cited unit; Escape or Close source returns focus to
-  the opener, and Ctrl+F focuses PDF search (REQ-UX-712804c9, REQ-UX-aa068a49, REQ-UX-d64f086f).
-- Shell shows the Source tab beside Docs and expands the right panel on every open. It keeps the
-  tab the source was opened from mounted while hidden and returns to it (and to a collapsed
-  panel) on close, so focus reaches the opener. While Source is selected the panel uses its own
-  stored width `layout.source` (20-90 rem, capped at 60vw) (REQ-UX-b3231a55). Choosing another
-  tab (mouse or keyboard) ends that return path; a scope change (session, workbench, settings)
-  closes an open source and restores the tab/collapse without moving focus; when the opener is
-  gone, focus goes to the visible tab or the main content.
-- PDF Previous/Next hand focus to the other button when they become disabled at the first or
-  last page, so keyboard focus never falls to the document.
-- PDF renders one page via the pinned bundled module worker, supports page/range,
-  zoom50..200%, all-page extracted-text find and cross-run snippet/search marks. A native disclosure presents the host-scrubbed text of the selected page for reading alongside the canvas.
+- DocumentViewerProvider keeps one tab set per `scope` (`<workbench>/<session>`) for the run:
+  `{tabs, active}` with `active` = `CHAT` or a tab key (REQ-UX-5fc1d7d3). `useDocumentViewer()`
+  returns `open(target)`: the document key (`file:<path>` from path, textPath or the path of a
+  page/heading/line ref; `artifact:<name>`; `download:<id>`; `ref:<raw>` for an unparsable ref)
+  selects an existing tab and reloads it at the new place, or appends one (REQ-FUNC-89161a95,
+  REQ-UX-712804c9); every open calls the `reveal` prop so App shows the chat area
+  (REQ-UX-37821e01). Attempts come from one provider-wide counter, so a closed and reopened tab
+  never takes an older answer. A tab caches its content per attempt; a failed load keeps its error and Retry
+  in that tab only (REQ-REL-6fc27952). `useDocumentTabs()` exposes select/close/retry, the kept
+  place (`{page}`, `{line, scroll?}` or `{scroll}`, held in a ref so scrolling never re-renders), the opener
+  and a one-shot focus request.
+- `DocumentTabs({chat})` (documents/document-tabs.tsx) renders the tablist: Chat first without a
+  close button, document tabs labelled by file (artifact) name and titled by path (REQ-UX-388cf31a);
+  close button, Delete on a focused tab or middle click removes a tab and selects its right, else
+  left neighbour, else Chat (REQ-UX-89428322); Left/Right wrap, Home/End (REQ-UX-be7140e4). The Chat panel stays mounted
+  while hidden (draft and scroll survive); only the selected document panel (`[data-source-current]`,
+  keyed by tab and attempt) is mounted and reopens at its kept place: PdfViewer `page`/`onPage`,
+  TextViewer `line`/`onLine`, other bodies their scroll offset (REQ-UX-1f53a583). Opening moves
+  focus into the panel unless the body focused its cited unit; Escape selects Chat and focuses the
+  opener when it is still shown, else the Chat tab. In the panel Ctrl+F asks a PDF or text body for its
+  find field (or focuses an open one) and Ctrl+G asks a text body for its go-to-line field, by
+  bumping `findRequest` / `gotoRequest` (REQ-UX-d64f086f, REQ-UX-58cf59b2).
+  The right panel has no Source tab or Source width (REQ-UX-aa068a49, REQ-UX-b3231a55 retired).
+- The document panel shows only the document (or its load error with Retry): no path line or
+  buttons; the path is the tab's tooltip (REQ-UX-968b89b0). A tab menu action's error or notice
+  shows in `[data-tab-notices]`, the row between the tab strip and the panels, also while Chat is
+  selected, and clears when another tab is selected. Tab keys and stale menus: the window listener
+  is idle while any `[data-tree-menu]` is open, and a menu whose tab closed goes away.
+- Document tabs (TASK-6c4aeed8): HTML5 drag and drop moves a document tab before the tab it is
+  dropped on or to the strip end (`[data-tab-strip-end]`); Chat is not draggable and refuses drops
+  (REQ-UX-e0410483). The tab context menu (right click, Shift+F10, menu key; `TreeMenu`) offers
+  Close, Close others, Close to the right, Move left, Move right, then the file actions
+  (REQ-UX-67abf562); the provider's `move(key, before)` and `closeMany(keys, keep)` back it. One
+  window keydown listener, idle while a `dialog[open]` exists or an IME composes, handles
+  Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+PageDown / Ctrl+PageUp (select with wrap, REQ-UX-fd131983),
+  Ctrl+Shift+PageDown / PageUp (move the selected document tab, REQ-UX-6ecb6c83) and Ctrl+W / Cmd+W
+  (close it, REQ-UX-a45c4384). These keys are fixed: the shortcut registry's grammar cannot express
+  Tab or PageUp and reserves Mod+W. A managed download's tab has no Open in default app (`.vera/` is
+  outside the allowlist; DEVIATION in TASK-6c4aeed8).
+- The Chat panel (`[data-chat-panel]`) shares the grid cell of the document panel; while a document
+  is selected it is `inert` with `visibility: hidden` (never the `hidden` attribute, whose
+  `display: none` resets the transcript's scroll in Chromium), so the transcript keeps its scroll. While it is hidden,
+  SessionWorkspace ignores its window shortcuts; a composer focus request (Attach as context) is
+  taken once (`composerFocused` clears it in App), selects Chat once and focuses the composer when
+  it is enabled.
+- Continuous viewers (TASK-4c04273a), with no navigation toolbar. `TextViewer` (text-viewer.tsx)
+  lays every line out at one measured, unwrapped height (`.document-lines` is `count * lineHeight`
+  tall) and mounts only the lines in view plus 40 each side; it opens at the kept first visible
+  line, else with the cited start a third down, and reports the first visible line
+  (REQ-UX-8a994f4b, REQ-NFR-0fe89e49). `FindBar` (find-bar.tsx) is the on-demand field: Enter and
+  Shift+Enter step, Escape closes it and focuses the document body without leaving the tab
+  (REQ-UX-fe9ec5c2, REQ-UX-58cf59b2, REQ-UX-3eb27a6c).
+- PdfViewer reads every page box at load, so `.pdf-scroll` holds one `.pdf-sheet[data-page-number]`
+  per page; only pages within 2 of the page in view draw a canvas and text layer (pinned bundled
+  module worker). The page in view is the one at a third of the view height; `.pdf-indicator`
+  shows "page / count" (REQ-UX-e4d5ce0f). Zoom 50-200% in steps comes from Ctrl+wheel (non-passive
+  listener) and Ctrl+= / Ctrl+- / Ctrl+0, keeping the page in view (REQ-UX-e8dfdec3). Find covers
+  the extracted text of every page with cross-run snippet/search marks. A native disclosure
+  presents the host-scrubbed text of the page in view.
 - `path#h=` opens the untitled leading section (`data-heading=""`), current and
   focused like any heading anchor; Docs search keeps such hits (REQ-UX-9be5fd96,
   REQ-FUNC-73136b97). Its chip label is "<file> #start".
@@ -62,12 +105,15 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   slides carry aria-current and the first is scrolled into view and focused.
   Document and spreadsheet sections render as `<pre>` text with the cited heading
   focused, like HTML.
-- The viewer header offers "Open in default app" (`OpenExternally`,
-  documents/open-externally.tsx) for allowlisted workbench documents outside `.vera/`; it calls
-  app.openPath and shows errors in place (REQ-UX-f5d6e9e4); a text view opened from an ignored
-  tree row (`ViewerTarget {textPath, ignored}`) has none. In Docs the same action is a tree
-  row's context-menu item (`canOpenExternally`), with failures shown in the tree. Artifacts and
-  managed downloads have no such action.
+- File actions live in one hook, `useFileActions(workbenchId, menuFor)` (documents/file-actions.tsx,
+  TASK-6c4aeed8): Attach as context, Open in (Default app for allowlisted documents outside
+  `.vera/` through app.openPath, detected editors, Linux system apps of `menuFor`, the Open with
+  dialog), Show in Explorer/Finder/folder, Copy and Properties, with `error`/`notice` for the
+  caller to show. The Files tree row menu prepends Open; the document tab menu appends them to the
+  tab actions for workbench file tabs (`file:` keys) that are not artifacts; a managed download's
+  tab offers Show in Explorer only (downloads.reveal); an artifact tab none (REQ-UX-f261c988,
+  REQ-UX-f5d6e9e4). An ignored file has no Default app item. `useDescribeDocument()` gives the
+  localized index status for Properties in both places.
 - Docs tab layout (TASK-b34f2cc7, documents/docs-tab.tsx): one search box (`data-docs-search`,
   "Search files and documents", 200 characters), then one `.docs-actions` row with Reindex and
   Collapse all (wrapping only when too narrow; Collapse all is disabled while the box has
@@ -129,7 +175,16 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   "Not indexed", "Ignored by VERA" for an ignored entry, or a folder's indexed count. Close or
   Escape returns focus to the row
   (REQ-FUNC-98e9d760, REQ-UX-4d1b3324). Rename and Delete are a later task.
-- Named document/text and PDF regions support keyboard scrolling; text windows use labelled previous/next-lines actions. Docs Open actions include path/ref identity in accessible names.
+- Named document/text and PDF regions support keyboard scrolling. Docs Open actions include path/ref identity in accessible names.
+- Saved tabs (TASK-061fe00e): `lib/document-tabs-store.ts` keeps one localStorage record per
+  workbench session, `vera.tabs.<workbenchId>.<sessionId>`, `{version: 1, active, tabs: [{target,
+  place?}]}` under a strict zod schema; a missing, unreadable or invalid record reads as none, and
+  storage errors never throw (REQ-DATA-3b6664f9, REQ-REL-f19a4bc2). The provider restores a
+  session the first time it is shown in a run: it checks downloads (`downloads.list`), artifacts
+  (`artifacts.list`) and files (`docs.stat`, only NOT_FOUND drops a tab; other failures keep the
+  tab with its load error), puts the restored tabs before tabs opened meanwhile and keeps their
+  places (REQ-FUNC-8a061992, REQ-REL-4622d972). Only restored sessions are saved: 500 ms after a
+  change and at once on `pagehide`. Deleting a session removes its record (REQ-FUNC-d9d16533).
 - Docs subscribes to index events, displays status/reasons/progress, searches,
   opens sources/results and disables Reindex on read-only snapshots.
 
@@ -143,7 +198,8 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   (presentation) or heading (document, spreadsheet) locators, and currentBounds
   reports no line bounds for them.
 - Line refs from file tools can open unindexed ordinary text within20MB; full
-  original numbered lines and cited range retain their offsets; the renderer presents250 lines at a time with line navigation, bounding DOM cost for large sources.
+  original numbered lines and cited range retain their offsets; the renderer scrolls them
+  continuously and mounts only the lines near the view, bounding DOM cost for large sources.
 - Citation requests require completed valid assistant projection and successful
   preceding structured ref issuance in the same session. Client snippets are absent.
 - HTML executes as visible extracted text; Markdown uses inert links/images/raw
@@ -193,13 +249,14 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | provenance/session artifact | SessionService.openCitation | search.test.ts; citations.spec.ts |
 | ownership/lifecycle | WorkbenchService.readDocuments | service.test.ts |
 | PDF worker/assets/CSP | pdf-viewer;electron.vite.config;security | native citations.spec.ts; documents.spec.ts |
-| Source tab/recent/focus/width | viewer-context SourcePanel; shell.tsx; lib/layout.ts | documents.test.ts; workspace.test.ts; preferences.test.ts; e2e citations/documents/pdf-download |
+| document tabs, places, focus | viewer-context DocumentViewerProvider; documents/document-tabs.tsx; App.tsx center | document-tabs.test.ts; documents.test.ts; workspace.test.ts; e2e citations/documents/pdf-download |
 | office slides/sections | viewer.ts; viewer-context DocumentBody; document-viewer.ts | viewer.test.ts; documents.test.ts; office-documents.spec.ts |
 | tree listing/find/text/stat bounds | core workbench/tree.ts; WorkbenchService; shared docs.tree/find/read/stat | tree.test.ts; documents-ipc.test.ts |
 | tree UI, ignored rows, memory, keys | documents/docs-tree.tsx; mockApi docs.tree/find/read | docs-tree.test.ts; documents.spec.ts; docs-tree.spec.ts |
+| tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
-| Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; docs-tree.tsx menuItems | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
+| Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
 
 ## Key behaviors
 
@@ -221,7 +278,7 @@ Under05_Software: shared/{documents,ipc}.ts; core/knowledge/viewer.ts/test,
 core/sessions/service.ts, workbench/{service,tree}.ts/test and knowledge/search.test.ts;
 desktop/main/{index,document-viewer,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
-pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally}.tsx, documents.test.ts and
+pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions}.tsx, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};
 App/Shell/styles/locales/mock documents+mockApi; electron.vite.config.ts/index.html;
 tests/fixtures/llm-scripts/{document-viewer,office-citations}.jsonl;

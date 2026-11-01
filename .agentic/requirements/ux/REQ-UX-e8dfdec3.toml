@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-e8dfdec3"
+
+title = "Zoom a PDF with Ctrl and the wheel or keys"
+
+status = "active"
+
+requirement = "When the user turns the wheel with Ctrl held or presses Ctrl+= or Ctrl+- in a PDF tab, the desktop app shall zoom the PDF in or out in steps between 50% and 200% keeping the page in view, and Ctrl+0 shall reset it to 100%."
+
+verification = "Renderer test: Ctrl+= from 100% gives 125%, Ctrl+- gives 100% again, ten Ctrl+- stop at 50%, Ctrl+0 gives 100%, a Ctrl+wheel up zooms in; the page indicator keeps the same page; boundary: a wheel without Ctrl scrolls and does not zoom."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

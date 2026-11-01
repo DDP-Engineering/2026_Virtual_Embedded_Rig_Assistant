@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-e4d5ce0f"
+
+title = "Scroll PDF pages continuously"
+
+status = "active"
+
+requirement = "While a PDF is shown in a tab, the desktop app shall show its pages in one continuous scroll, without page buttons, with an indicator of the page in view and the page count, opening at the cited page with the cited snippet marked or at the tab's kept page."
+
+verification = "Renderer test with a mocked page renderer: a 3-page PDF lays out three pages, opens at the cited page 2 with the indicator 2 / 3 and no Previous/Next page buttons; scrolling to page 3 updates the indicator; native e2e: a cited PDF opens at its page with the snippet marked and scrolls to the next page; boundary: a kept page wins over the first page when the tab is selected again."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.test.ts", "05_Software/tests/e2e/citations.spec.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

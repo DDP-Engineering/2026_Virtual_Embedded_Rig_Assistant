@@ -1,10 +1,9 @@
 // REQ-UX-28ad0002
-import { referenceLabel, type ViewerContent, veraError } from "@vera/shared";
+import { parseRef, referenceLabel, type ViewerContent, veraError } from "@vera/shared";
 import {
   createContext,
   lazy,
   type ReactNode,
-  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -14,9 +13,9 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
-import { ErrorMessage } from "../error-message.js";
+import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
-import { OpenExternally } from "./open-externally.js";
+import { TextViewer } from "./text-viewer.js";
 
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
 // Retain exact portable target variants without workbench identity supplied by callers.
@@ -31,324 +30,453 @@ export type ViewerTarget =
   | { textPath: string; ignored?: boolean }
   | { sessionId: string; messageId: string; ref: string };
 const ViewerContext = createContext<((target: ViewerTarget) => void) | undefined>(undefined);
+/** Opens a target in its document tab of the chat area (TASK-79f6ffd3). */
 export function useDocumentViewer() {
   return useContext(ViewerContext);
 }
 
-interface RecentSource {
+/** Where a document was left: the PDF page, the first shown text line or a scroll offset. */
+export type DocumentPlace = { page: number } | { line: number } | { scroll: number };
+export interface DocumentTab {
   key: string;
-  /** Path or ref of the source; a download shows its file name once loaded. */
-  label: string;
   target: ViewerTarget;
-}
-const RECENT_SOURCES = 10;
-const sourceKey = (target: ViewerTarget) =>
-  "downloadId" in target
-    ? `download:${target.downloadId}`
-    : "textPath" in target
-      ? `text:${target.textPath}`
-      : "sessionId" in target
-        ? `citation:${target.sessionId}/${target.messageId}/${target.ref}`
-        : "ref" in target
-          ? `ref:${target.ref}`
-          : `path:${target.path}`;
-interface SourceState {
-  target?: ViewerTarget | undefined;
+  label: string;
+  title: string;
   content?: ViewerContent | undefined;
   error?: unknown;
+  /** Bumped by every open of the tab and by Retry; a load answers only its own attempt. */
   attempt: number;
-  recent: RecentSource[];
-  /** Bumped on every open, so the shell can reveal the Source tab. */
-  revision: number;
-  /** Bumped on every close, so the shell can return to the tab the source was opened from. */
-  closed: number;
-  /**
-   * Focuses the opener once it is visible again: "pending" while it is hidden, "lost" when it is
-   * gone (the shell then focuses a stable fallback), "none" when nothing was waiting.
-   */
-  restoreFocus: () => "none" | "focused" | "pending" | "lost";
-  open: (target: ViewerTarget) => void;
-  retry: () => void;
-  close: () => void;
-  /** Set by open and consumed once by the panel, so switching tabs never steals focus. */
-  focusRequest: { current: boolean };
 }
-const SourceContext = createContext<SourceState | undefined>(undefined);
-export function useDocumentSource() {
-  return useContext(SourceContext);
+/** The Chat tab's key in a session's tab set. */
+export const CHAT = "chat";
+interface TabSet {
+  tabs: DocumentTab[];
+  active: string;
+}
+const EMPTY: TabSet = { tabs: [], active: CHAT };
+
+const fileName = (path: string) => path.split("/").at(-1) || path;
+/** One tab per document: the workbench path, the artifact or the download (REQ-FUNC-89161a95). */
+export function documentKey(target: ViewerTarget): string {
+  if ("downloadId" in target) return `download:${target.downloadId}`;
+  if ("textPath" in target) return `file:${target.textPath}`;
+  if ("path" in target) return `file:${target.path}`;
+  const parsed = parseRef(target.ref);
+  if (!parsed) return `ref:${target.ref}`;
+  return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${parsed.path}`;
+}
+function describe(target: ViewerTarget, download: string): { label: string; title: string } {
+  if ("downloadId" in target) return { label: download, title: download };
+  if ("textPath" in target) return { label: fileName(target.textPath), title: target.textPath };
+  if ("path" in target) return { label: fileName(target.path), title: target.path };
+  const parsed = parseRef(target.ref);
+  if (!parsed) return { label: referenceLabel(target.ref), title: target.ref };
+  return parsed.kind === "artifact"
+    ? { label: parsed.name, title: parsed.name }
+    : { label: fileName(parsed.path), title: parsed.path };
 }
 
+interface TabsState {
+  workbenchId: string;
+  tabs: DocumentTab[];
+  active: string;
+  select: (key: string) => void;
+  close: (key: string) => void;
+  /** Closes several tabs; `keep` is selected when the selected tab is among them (TASK-6c4aeed8). */
+  closeMany: (keys: readonly string[], keep: string) => void;
+  /** Moves a document tab before another one, or to the end with `null`. */
+  move: (key: string, before: string | null) => void;
+  retry: (key: string) => void;
+  /** The place a tab was left at, given back when its document mounts again (REQ-UX-1f53a583). */
+  place: (key: string) => DocumentPlace | undefined;
+  setPlace: (key: string, place: DocumentPlace) => void;
+  /** The control that opened a tab's document, for Escape to return to (REQ-UX-d64f086f). */
+  opener: (key: string) => HTMLElement | null;
+  /** Set by open and consumed once by the opened document, so selecting a tab never steals focus. */
+  focusRequest: { current: boolean };
+}
+const TabsContext = createContext<TabsState | undefined>(undefined);
+export function useDocumentTabs() {
+  return useContext(TabsContext);
+}
+
+/**
+ * The open documents of each session as tabs of the chat area (TASK-79f6ffd3). `scope` names the
+ * session (`<workbench>/<session>`); every session keeps its own tabs for the application run.
+ * `reveal` asks the app to show the chat area when a document opens behind another page.
+ */
 export function DocumentViewerProvider({
   workbenchId,
   scope: contextScope,
+  sessionId,
+  reveal,
   children,
 }: {
   workbenchId: string;
   scope?: string;
+  /** The session whose tabs are saved and restored (TASK-061fe00e); none keeps them for the run only. */
+  sessionId?: string | undefined;
+  reveal?: () => void;
   children?: ReactNode;
 }) {
   const { t } = useTranslation();
   const scope = contextScope ?? workbenchId;
-  const [selection, setSelection] = useState<{ target: ViewerTarget; scope: string }>();
-  const target = selection?.scope === scope ? selection.target : undefined;
-  const [attempt, setAttempt] = useState(0);
-  const [content, setContent] = useState<ViewerContent>();
-  const [error, setError] = useState<unknown>();
-  const [recent, setRecent] = useState<RecentSource[]>([]);
-  const [revision, setRevision] = useState(0);
-  const [closed, setClosed] = useState(0);
-  const origin = useRef<HTMLElement | null>(null),
-    focusRequest = useRef(false),
-    restore = useRef(false);
+  const [sets, setSets] = useState<ReadonlyMap<string, TabSet>>(new Map());
+  const current = sets.get(scope) ?? EMPTY;
+  // Attempts come from one counter, so a closed and reopened tab never takes an older answer.
+  const attempts = useRef(0);
+  const places = useRef(new Map<string, DocumentPlace>()),
+    openers = useRef(new Map<string, HTMLElement | null>()),
+    focusRequest = useRef(false);
+  const change = useCallback(
+    (update: (set: TabSet) => TabSet) =>
+      setSets((map) => {
+        const next = update(map.get(scope) ?? EMPTY);
+        return new Map(map).set(scope, next);
+      }),
+    [scope],
+  );
+  const download = t("downloads.title");
   const open = useCallback(
-    (next: ViewerTarget) => {
-      // Reopening from the Source panel itself keeps the control that first opened a source.
+    (target: ViewerTarget) => {
+      const key = documentKey(target);
+      // Reopening from inside a document keeps the control that first opened it.
       const active = document.activeElement as HTMLElement | null;
-      if (!active?.closest("[data-source-panel]")) origin.current = active;
+      if (!active?.closest("[data-source-current]")) openers.current.set(`${scope}\n${key}`, active);
+      places.current.delete(`${scope}\n${key}`);
       focusRequest.current = true;
-      setContent(undefined);
-      setError(undefined);
-      setSelection({ target: next, scope });
-      setAttempt((v) => v + 1);
-      setRevision((v) => v + 1);
-      const key = sourceKey(next);
-      setRecent((list) => {
-        const known = list.find((entry) => entry.key === key);
-        const label =
-          known?.label ??
-          ("downloadId" in next
-            ? t("downloads.title")
-            : "textPath" in next
-              ? next.textPath
-              : "ref" in next
-                ? next.ref
-                : next.path);
-        return [{ key, label, target: next }, ...list.filter((entry) => entry.key !== key)].slice(
-          0,
-          RECENT_SOURCES,
-        );
+      change((set) => {
+        const known = set.tabs.find((tab) => tab.key === key);
+        const { label, title } = describe(target, download);
+        const tabs = known
+          ? set.tabs.map((tab) =>
+              tab.key === key
+                ? {
+                    ...tab,
+                    target,
+                    // A download keeps the file name it learned when it loaded.
+                    label: "downloadId" in target ? tab.label : label,
+                    title: "downloadId" in target ? tab.title : title,
+                    content: undefined,
+                    error: undefined,
+                    attempt: ++attempts.current,
+                  }
+                : tab,
+            )
+          : [...set.tabs, { key, target, label, title, attempt: ++attempts.current }];
+        return { tabs, active: key };
+      });
+      reveal?.();
+    },
+    [scope, change, download, reveal],
+  );
+  const select = useCallback((key: string) => change((set) => ({ ...set, active: key })), [change]);
+  const close = useCallback(
+    (key: string) => {
+      places.current.delete(`${scope}\n${key}`);
+      openers.current.delete(`${scope}\n${key}`);
+      change((set) => {
+        const index = set.tabs.findIndex((tab) => tab.key === key);
+        if (index < 0) return set;
+        const tabs = set.tabs.filter((tab) => tab.key !== key);
+        // The closed tab's right neighbour takes its place, else the left one, else Chat.
+        const active = set.active === key ? (tabs[index]?.key ?? tabs[index - 1]?.key ?? CHAT) : set.active;
+        return { tabs, active };
       });
     },
-    [scope, t],
+    [scope, change],
   );
-  // The opener may sit in a tab hidden behind Source; the shell asks again once it shows it.
-  const restoreFocus = useCallback(() => {
-    if (!restore.current) return "none" as const;
-    const node = origin.current;
-    if (!node?.isConnected) {
-      restore.current = false;
-      return "lost" as const;
-    }
-    if (node.closest("[hidden]")) return "pending" as const;
-    restore.current = false;
-    node.focus();
-    return "focused" as const;
-  }, []);
-  const close = useCallback(() => {
-    setSelection(undefined);
-    restore.current = true;
-    // A visible opener gets focus now; a hidden or removed one is settled by the shell.
-    const node = origin.current;
-    if (node?.isConnected && !node.closest("[hidden]")) {
-      restore.current = false;
-      node.focus();
-    }
-    setClosed((v) => v + 1);
-  }, []);
-  // A scope change (session, workbench or settings) also closes an open source, without moving
-  // focus, so the shell leaves the Source tab the way it came.
-  const open_ = useRef(false);
-  open_.current = selection !== undefined;
-  const scopeSeen = useRef(false);
-  // Invalidate only source state; Shell/Welcome and their unsaved drafts stay mounted.
-  useEffect(() => {
-    void scope;
-    const wasOpen = scopeSeen.current && open_.current;
-    scopeSeen.current = true;
-    restore.current = false;
-    setSelection(undefined);
-    setContent(undefined);
-    setError(undefined);
-    setRecent([]);
-    if (wasOpen) setClosed((v) => v + 1);
-  }, [scope]);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt explicitly retries the same authorized target.
-  useEffect(() => {
-    if (!target) return;
-    let alive = true;
-    setContent(undefined);
-    setError(undefined);
-    const request =
-      "downloadId" in target
-        ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
-        : "textPath" in target
-          ? api.invoke("docs.read", { workbenchId, path: target.textPath })
-          : api.invoke("docs.open", { workbenchId, ...target });
-    void request
-      .then((result) => {
-        if (
-          result.workbenchId !== workbenchId ||
-          ("downloadId" in target
-            ? !("downloadId" in result) || result.downloadId !== target.downloadId
-            : "textPath" in target
-              ? result.content.path !== target.textPath
-              : "ref" in target
-                ? result.content.ref !== target.ref
-                : result.content.path !== target.path)
-        )
-          throw veraError("NOT_FOUND");
-        if (!alive) return;
-        setContent(result.content);
-        if ("downloadId" in target) {
-          const key = sourceKey(target),
-            name = result.content.path.split("/").at(-1) ?? result.content.path;
-          setRecent((list) => list.map((entry) => (entry.key === key ? { ...entry, label: name } : entry)));
-        }
-      })
-      .catch((failure) => {
-        if (alive) setError(failure);
+  const closeMany = useCallback(
+    (keys: readonly string[], keep: string) => {
+      for (const key of keys) {
+        places.current.delete(`${scope}\n${key}`);
+        openers.current.delete(`${scope}\n${key}`);
+      }
+      change((set) => {
+        const tabs = set.tabs.filter((tab) => !keys.includes(tab.key));
+        return { tabs, active: keys.includes(set.active) ? keep : set.active };
       });
+    },
+    [scope, change],
+  );
+  const move = useCallback(
+    (key: string, before: string | null) =>
+      change((set) => {
+        const moving = set.tabs.find((tab) => tab.key === key);
+        if (!moving || key === before) return set;
+        const rest = set.tabs.filter((tab) => tab.key !== key);
+        const at = before === null ? rest.length : rest.findIndex((tab) => tab.key === before);
+        if (at < 0) return set;
+        return { ...set, tabs: [...rest.slice(0, at), moving, ...rest.slice(at)] };
+      }),
+    [change],
+  );
+  const retry = useCallback(
+    (key: string) => {
+      // The retried document takes focus again once it loads.
+      focusRequest.current = true;
+      change((set) => ({
+        ...set,
+        tabs: set.tabs.map((tab) =>
+          tab.key === key
+            ? { ...tab, content: undefined, error: undefined, attempt: ++attempts.current }
+            : tab,
+        ),
+      }));
+    },
+    [change],
+  );
+  // ---- Saving and restoring a session's tabs in localStorage (TASK-061fe00e).
+  /** Sessions whose stored tabs were read (and checked) in this run; only those are saved. */
+  const restored = useRef(new Set<string>());
+  const owners = useRef(new Map<string, { workbenchId: string; sessionId: string }>());
+  const pending = useRef(new Set<string>());
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const latestSets = useRef(sets);
+  latestSets.current = sets;
+  const flush = useCallback(() => {
+    clearTimeout(timer.current);
+    timer.current = undefined;
+    for (const owned of pending.current) {
+      const owner = owners.current.get(owned);
+      if (!owner) continue;
+      const set = latestSets.current.get(owned) ?? EMPTY;
+      const record: StoredTabs = {
+        version: 1,
+        active: set.active,
+        tabs: set.tabs.map((tab) => {
+          const place = places.current.get(`${owned}\n${tab.key}`);
+          return place ? { target: tab.target, place } : { target: tab.target };
+        }),
+      };
+      writeTabs(localStorage, owner.workbenchId, owner.sessionId, record);
+    }
+    pending.current.clear();
+  }, []);
+  const schedule = useCallback(
+    (owned: string) => {
+      if (!restored.current.has(owned) || !owners.current.has(owned)) return;
+      pending.current.add(owned);
+      timer.current ??= setTimeout(flush, 500);
+    },
+    [flush],
+  );
+  useEffect(() => {
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, [flush]);
+  // Every change of the shown session's tab set is saved; merely showing a session writes nothing.
+  const seen = useRef(new Map<string, TabSet>());
+  useEffect(() => {
+    if (seen.current.get(scope) === current) return;
+    const first = !seen.current.has(scope);
+    seen.current.set(scope, current);
+    if (!first) schedule(scope);
+  }, [current, scope, schedule]);
+  // A session's stored tabs come back the first time it is shown in a run, without those whose
+  // documents are gone; tabs opened meanwhile stay after them.
+  useEffect(() => {
+    if (!sessionId || restored.current.has(scope) || !workbenchId) return;
+    owners.current.set(scope, { workbenchId, sessionId });
+    const record = readTabs(localStorage, workbenchId, sessionId);
+    // The record's schema mirrors ViewerTarget and DocumentPlace; it only spells optionals out.
+    const stored = record && {
+      active: record.active,
+      tabs: record.tabs.map((tab) => ({
+        target: tab.target as ViewerTarget,
+        place: tab.place as DocumentPlace | undefined,
+      })),
+    };
+    if (!stored?.tabs.length) {
+      restored.current.add(scope);
+      return;
+    }
+    const owned = scope;
+    let alive = true;
+    void (async () => {
+      const keys = stored.tabs.map((tab) => documentKey(tab.target));
+      const downloads = keys.some((key) => key.startsWith("download:"))
+        ? await api
+            .invoke("downloads.list", { workbenchId })
+            .then((result) => new Set(result.downloads.map((d) => `download:${d.downloadId}`)))
+            .catch(() => undefined)
+        : undefined;
+      const artifacts = keys.some((key) => key.startsWith("artifact:"))
+        ? await api
+            .invoke("artifacts.list", { sessionId })
+            .then((list) => new Set(list.map((a) => `artifact:${a.name}`)))
+            .catch(() => undefined)
+        : undefined;
+      const exists = await Promise.all(
+        keys.map(async (key) => {
+          if (key.startsWith("download:")) return !downloads || downloads.has(key);
+          if (key.startsWith("artifact:")) return !artifacts || artifacts.has(key);
+          if (!key.startsWith("file:")) return true;
+          try {
+            await api.invoke("docs.stat", { workbenchId, path: key.slice(5) });
+            return true;
+          } catch (error) {
+            // Only a document that is gone is left out; any other failure shows in its tab.
+            return (error as { code?: unknown } | null)?.code !== "NOT_FOUND";
+          }
+        }),
+      );
+      if (!alive) return;
+      const kept = stored.tabs.filter((_, i) => exists[i]);
+      setSets((map) => {
+        const live = map.get(owned) ?? EMPTY;
+        // A document opened while the check ran keeps its live tab, target and place.
+        const liveKeys = new Set(live.tabs.map((tab) => tab.key));
+        const fresh = kept.filter((tab) => !liveKeys.has(documentKey(tab.target)));
+        for (const tab of fresh)
+          if (tab.place) places.current.set(`${owned}\n${documentKey(tab.target)}`, tab.place);
+        const restoredTabs: DocumentTab[] = fresh.map((tab) => ({
+          key: documentKey(tab.target),
+          target: tab.target,
+          ...describe(tab.target, download),
+          attempt: ++attempts.current,
+        }));
+        const restoredKeys = new Set(restoredTabs.map((tab) => tab.key));
+        // Once the engineer has opened something, their selection stands.
+        const active = live.tabs.length
+          ? live.active
+          : restoredKeys.has(stored.active)
+            ? stored.active
+            : CHAT;
+        return new Map(map).set(owned, { tabs: [...restoredTabs, ...live.tabs], active });
+      });
+      restored.current.add(owned);
+      // A record that lost tabs is rewritten without them.
+      if (kept.length !== stored.tabs.length) schedule(owned);
+    })();
     return () => {
       alive = false;
     };
-  }, [target, attempt, workbenchId]);
-  const retry = useCallback(() => setAttempt((v) => v + 1), []);
+  }, [scope, sessionId, workbenchId, download, schedule]);
+  // A tab loads when it is first selected, once per attempt; switching back reuses the content, and
+  // a session's restored tabs cost nothing until they are shown.
+  const loading = useRef(new Set<string>());
+  useEffect(() => {
+    for (const tab of current.tabs) {
+      if (tab.key !== current.active) continue;
+      const request = `${scope}\n${tab.key}\n${tab.attempt}`;
+      if (tab.content || tab.error !== undefined || loading.current.has(request)) continue;
+      loading.current.add(request);
+      const { target, key, attempt } = tab;
+      const call =
+        "downloadId" in target
+          ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
+          : "textPath" in target
+            ? api.invoke("docs.read", { workbenchId, path: target.textPath })
+            : api.invoke("docs.open", { workbenchId, ...target });
+      const settle = (result: Pick<DocumentTab, "content" | "error">) =>
+        setSets((map) => {
+          const set = map.get(scope);
+          const found = set?.tabs.find((entry) => entry.key === key);
+          // A closed, reopened or retried tab ignores this late answer.
+          if (!set || !found || found.attempt !== attempt) return map;
+          const name = result.content && "downloadId" in target ? fileName(result.content.path) : undefined;
+          return new Map(map).set(scope, {
+            ...set,
+            tabs: set.tabs.map((entry) =>
+              entry.key === key
+                ? {
+                    ...entry,
+                    ...result,
+                    ...(name ? { label: name, title: result.content?.path ?? name } : {}),
+                  }
+                : entry,
+            ),
+          });
+        });
+      void call
+        .then((result) => {
+          if (
+            result.workbenchId !== workbenchId ||
+            ("downloadId" in target
+              ? !("downloadId" in result) || result.downloadId !== target.downloadId
+              : "textPath" in target
+                ? result.content.path !== target.textPath
+                : "ref" in target
+                  ? result.content.ref !== target.ref
+                  : result.content.path !== target.path)
+          )
+            throw veraError("NOT_FOUND");
+          settle({ content: result.content, error: undefined });
+        })
+        .catch((failure: unknown) => settle({ content: undefined, error: failure ?? veraError("INTERNAL") }))
+        .finally(() => loading.current.delete(request));
+    }
+  }, [current.tabs, current.active, scope, workbenchId]);
+  const place = useCallback((key: string) => places.current.get(`${scope}\n${key}`), [scope]);
+  const setPlace = useCallback(
+    (key: string, value: DocumentPlace) => {
+      places.current.set(`${scope}\n${key}`, value);
+      schedule(scope);
+    },
+    [scope, schedule],
+  );
+  const opener = useCallback((key: string) => openers.current.get(`${scope}\n${key}`) ?? null, [scope]);
   const state = useMemo(
     () => ({
-      target,
-      content,
-      error,
-      attempt,
-      recent,
-      revision,
-      closed,
-      open,
-      retry,
+      workbenchId,
+      tabs: current.tabs,
+      active: current.active,
+      select,
       close,
-      restoreFocus,
+      closeMany,
+      move,
+      retry,
+      place,
+      setPlace,
+      opener,
       focusRequest,
     }),
-    [target, content, error, attempt, recent, revision, closed, open, retry, close, restoreFocus],
+    [workbenchId, current, select, close, closeMany, move, retry, place, setPlace, opener],
   );
   return (
     <ViewerContext.Provider value={open}>
-      <SourceContext.Provider value={state}>{children}</SourceContext.Provider>
+      <TabsContext.Provider value={state}>{children}</TabsContext.Provider>
     </ViewerContext.Provider>
   );
 }
 
-/** The right panel's Source tab: the current source, its actions and the session's recent sources. */
-export function SourcePanel() {
-  const { t } = useTranslation();
-  const state = useDocumentSource();
-  const current = useRef<HTMLElement>(null);
-  const revision = state?.revision ?? 0,
-    target = state?.target;
-  useEffect(() => {
-    void revision;
-    if (!state?.focusRequest.current || !target) return;
-    state.focusRequest.current = false;
-    // The body may already have focused its cited unit (it renders first when content is ready).
-    if (!current.current?.contains(document.activeElement)) current.current?.focus();
-  }, [revision, target, state]);
-  if (!state) return null;
-  const { content, error, attempt, recent } = state;
-  const currentKey = target ? sourceKey(target) : undefined;
-  return (
-    <section
-      data-source-panel
-      className="source-panel"
-      aria-label={t("panel.source")}
-      onKeyDown={(event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
-          const search = event.currentTarget.querySelector<HTMLInputElement>("[data-document-search]");
-          if (search) {
-            event.preventDefault();
-            event.stopPropagation();
-            search.focus();
-          }
-        }
-        if (event.key === "Escape" && target && !event.nativeEvent.isComposing) {
-          event.preventDefault();
-          event.stopPropagation();
-          state.close();
-        }
-      }}
-    >
-      {target ? (
-        <section
-          ref={current}
-          data-source-current
-          className="source-current"
-          tabIndex={-1}
-          aria-labelledby="document-title"
-        >
-          <header>
-            <h2 id="document-title">{t("documents.viewer")}</h2>
-            <button type="button" data-action="close-source" onClick={state.close}>
-              {t("documents.closeSource")}
-            </button>
-            {content && content.kind !== "artifact" && !("textPath" in target && target.ignored) && (
-              <OpenExternally path={content.path} />
-            )}
-          </header>
-          <p className="document-path">
-            {"downloadId" in target
-              ? (content?.path ?? t("downloads.title"))
-              : "textPath" in target
-                ? target.textPath
-                : "path" in target
-                  ? target.path
-                  : target.ref}
-          </p>
-          {error !== undefined ? (
-            <>
-              <ErrorMessage error={error} />
-              <button type="button" onClick={state.retry}>
-                {t("settings.retry")}
-              </button>
-            </>
-          ) : content ? (
-            <Suspense fallback={<p role="status">{t("home.loading")}</p>}>
-              <DocumentBody key={attempt} content={content} />
-            </Suspense>
-          ) : (
-            <p role="status">{t("home.loading")}</p>
-          )}
-        </section>
-      ) : (
-        <p className="muted">{t("documents.noSource")}</p>
-      )}
-      {recent.length > 0 && (
-        <nav className="recent-sources" aria-label={t("documents.recentSources")}>
-          <h3>{t("documents.recentSources")}</h3>
-          <ul>
-            {recent.map((entry) => (
-              <li key={entry.key}>
-                <button
-                  type="button"
-                  data-recent-source={entry.label}
-                  title={entry.label}
-                  aria-current={entry.key === currentKey ? "true" : undefined}
-                  onClick={() => state.open(entry.target)}
-                >
-                  {"ref" in entry.target ? referenceLabel(entry.target.ref) : entry.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
-    </section>
-  );
-}
-
-export function DocumentBody({ content }: { content: ViewerContent }) {
+export function DocumentBody({
+  content,
+  place,
+  onPlace,
+  findRequest = 0,
+  gotoRequest = 0,
+}: {
+  content: ViewerContent;
+  /** Where the document was left; without it the cited unit is shown (REQ-UX-1f53a583). */
+  place?: DocumentPlace | undefined;
+  onPlace?: ((place: DocumentPlace) => void) | undefined;
+  /** Bumped by Ctrl+F and Ctrl+G in the tab (TASK-4c04273a). */
+  findRequest?: number;
+  gotoRequest?: number;
+}) {
   const { t } = useTranslation();
   const node = useRef<HTMLElement>(null);
+  const kept = useRef(place);
+  const report = useRef(onPlace);
+  report.current = onPlace;
+  // Scrolled documents report their offset as their place (paged and line views report their own).
   useEffect(() => {
-    if (content.kind === "text")
-      node.current?.querySelector(`[data-line="${content.start}"]`)?.scrollIntoView?.({ block: "center" });
+    const body = node.current;
+    if (!body) return;
+    const scrolled = () => report.current?.({ scroll: body.scrollTop });
+    body.addEventListener("scroll", scrolled, { passive: true });
+    return () => body.removeEventListener("scroll", scrolled);
+  }, []);
+  useEffect(() => {
+    if (kept.current && "scroll" in kept.current) {
+      if (node.current) node.current.scrollTop = kept.current.scroll;
+      return;
+    }
     if (content.kind === "presentation") {
       const slide = node.current?.querySelector<HTMLElement>(`[data-slide="${content.page}"]`);
       slide?.scrollIntoView?.({ block: "start" });
@@ -362,8 +490,25 @@ export function DocumentBody({ content }: { content: ViewerContent }) {
       anchor?.focus();
     }
   }, [content]);
-  if (content.kind === "pdf") return <PdfViewer content={content} />;
-  if (content.kind === "text") return <TextViewer content={content} />;
+  if (content.kind === "pdf")
+    return (
+      <PdfViewer
+        content={content}
+        page={place && "page" in place ? place.page : undefined}
+        onPage={(page) => onPlace?.({ page })}
+        findRequest={findRequest}
+      />
+    );
+  if (content.kind === "text")
+    return (
+      <TextViewer
+        content={content}
+        line={place && "line" in place ? place.line : undefined}
+        onLine={(line) => onPlace?.({ line })}
+        findRequest={findRequest}
+        gotoRequest={gotoRequest}
+      />
+    );
   return (
     // biome-ignore lint/a11y/noNoninteractiveTabindex: Named document region supports keyboard scrolling.
     <section ref={node} className="document-body" aria-label={t("documents.viewer")} tabIndex={0}>
@@ -398,73 +543,6 @@ export function DocumentBody({ content }: { content: ViewerContent }) {
         ))
       )}
     </section>
-  );
-}
-function TextViewer({ content }: { content: Extract<ViewerContent, { kind: "text" }> }) {
-  const { t } = useTranslation();
-  const [offset, setOffset] = useState(Math.max(1, content.start - 20));
-  const node = useRef<HTMLElement>(null);
-  const visible = content.lines
-    .slice(offset - 1, offset + 249)
-    .map((text, i) => ({ text, line: offset + i }));
-  useEffect(() => {
-    node.current
-      ?.querySelector(
-        `[data-line="${content.start >= offset && content.start < offset + 250 ? content.start : offset}"]`,
-      )
-      ?.scrollIntoView?.({ block: "center" });
-  }, [offset, content.start]);
-  return (
-    <div className="text-viewer">
-      <div className="document-toolbar">
-        <button type="button" disabled={offset === 1} onClick={() => setOffset(Math.max(1, offset - 250))}>
-          {t("documents.previousLines")}
-        </button>
-        <label>
-          {t("documents.line")}
-          <input
-            type="number"
-            min={1}
-            max={content.lines.length || 1}
-            value={offset}
-            aria-label={t("documents.line")}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              if (Number.isInteger(next) && next >= 1 && next <= content.lines.length) setOffset(next);
-            }}
-          />
-        </label>
-        <span>
-          {t("documents.lineCount", {
-            start: offset,
-            end: Math.min(offset + 249, content.lines.length),
-            count: content.lines.length,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={offset + 249 >= content.lines.length}
-          onClick={() => setOffset(offset + 250)}
-        >
-          {t("documents.nextLines")}
-        </button>
-      </div>
-      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Named text region supports keyboard scrolling. */}
-      <section ref={node} className="document-body" aria-label={t("documents.viewer")} tabIndex={0}>
-        <div className="document-lines">
-          {visible.map(({ text, line }) => (
-            <div
-              key={line}
-              data-line={line}
-              aria-current={line >= content.start && line <= content.end ? "true" : undefined}
-            >
-              <span className="line-number">{line}</span>
-              <span>{text || " "}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
   );
 }
 export function ArtifactBody({ content, mime }: { content: string; mime: string }) {

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-fd131983"
+
+title = "Switch tabs with Ctrl+Tab and Ctrl+PageUp or PageDown"
+
+status = "active"
+
+requirement = "When the user presses Ctrl+Tab or Ctrl+PageDown, or Ctrl+Shift+Tab or Ctrl+PageUp, while the chat area is shown and no dialog is open, the desktop app shall select the next or previous tab, wrapping from the last tab to Chat and from Chat to the last tab."
+
+verification = "Renderer test with Chat, a.md, board.txt: Ctrl+Tab from Chat selects a.md, Ctrl+PageDown then board.txt, Ctrl+Tab wraps to Chat, Ctrl+Shift+Tab wraps to board.txt and Ctrl+PageUp selects a.md; boundary: with a dialog open the keys change nothing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

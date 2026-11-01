@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-89428322"
+
+title = "Close a document tab"
+
+status = "active"
+
+requirement = "When the user activates a document tab's close button, presses Delete on a focused document tab or middle-clicks the tab, the desktop app shall remove that tab and select the tab to its right, otherwise the tab to its left, otherwise Chat."
+
+verification = "Renderer test with three document tabs: closing the selected middle tab selects the right one; closing the last tab selects its left neighbour; closing the only document tab selects Chat; a middle click and Delete on a focused tab close it; boundary: closing an unselected tab keeps the selection and Delete on Chat does nothing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

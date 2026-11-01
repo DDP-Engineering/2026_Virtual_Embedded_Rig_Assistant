@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-f261c988"
+
+title = "Offer file actions in a document tab's menu"
+
+status = "active"
+
+requirement = "When the user opens the context menu of a workbench file's document tab, the desktop app shall offer, below the tab actions, the Files tree's file actions for that file (Attach as context, Open in, Show in Explorer, Copy and Properties), and for a downloaded PDF's tab Show in Explorer only, leaving them out for artifact tabs."
+
+verification = "Renderer test with the mock API: the docs/a.md tab menu has Open in with Default app, Show in Explorer, Copy and Properties (and Attach where a chat takes entries), and Properties shows the file's properties; a download tab offers Show in Explorer only; an artifact tab offers only the tab actions; boundary: code files, managed downloads and artifacts opened by path have no Default app item, like their Files rows."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/file-actions.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-properties.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/attachments.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

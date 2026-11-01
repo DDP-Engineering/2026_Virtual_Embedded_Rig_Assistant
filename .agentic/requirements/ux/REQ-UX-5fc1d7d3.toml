@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-5fc1d7d3"
+
+title = "Keep document tabs per session"
+
+status = "active"
+
+requirement = "When the user switches to another session or workbench, the desktop app shall show that session's own document tabs and keep the tabs of the session left for the rest of the application run."
+
+verification = "Renderer test: session A opens a.md, session B opens b.md; B shows only Chat and b.md; returning to A shows Chat and a.md with its tab selection; boundary: a workbench switch and back keeps both sessions' tabs."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

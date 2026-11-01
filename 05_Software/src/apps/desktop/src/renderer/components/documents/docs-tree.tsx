@@ -2,30 +2,18 @@
 // REQ-UX-541a5bee REQ-UX-4d1b3324 REQ-UX-ed65cbbc REQ-UX-d455531b
 // REQ-UX-25c814e1 REQ-UX-3a3d67c1 REQ-UX-ef3e2304 REQ-UX-b5edf930
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { type DocsOpener, type DocsTreeEntry, type DocumentRecord, veraError } from "@vera/shared";
+import { type DocsTreeEntry, type DocumentRecord, veraError } from "@vera/shared";
 import { Ban, ChevronDown, ChevronRight, CircleCheck, CircleX, Clock, ScanText } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
-import { useAttachments } from "../session/attachments.js";
-import { canOpenExternally } from "./open-externally.js";
+import { useFileActions } from "./file-actions.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
 import { useDocumentViewer } from "./viewer-context.js";
 
 type Summary = { count: number; problems: boolean };
-/** Program names are proper nouns and stay untranslated. */
-const programNames: Record<Exclude<DocsOpener, "terminal" | "other">, string> = {
-  vscode: "VS Code",
-  cursor: "Cursor",
-  notepadpp: "Notepad++",
-};
-/** The kinds of entries each detected program opens (TASK-eae3a69e). */
-const opens = (app: DocsOpener, type: DocsTreeEntry["type"]) =>
-  app === "terminal" ? type === "folder" : app === "notepadpp" ? type === "file" : true;
-/** Programs listed by name; the Windows Open with dialog has its own item at the end. */
-const named = (app: DocsOpener): app is Exclude<DocsOpener, "other"> => app !== "other";
 const statusIcons = {
   indexed: CircleCheck,
   pending: Clock,
@@ -136,22 +124,6 @@ export function DocsTree({
   const [active, setActive] = useState<string>();
   const [menu, setMenu] = useState<{ row: Row; x: number; y: number }>();
   const [properties, setProperties] = useState<Row>();
-  const [actionError, setActionError] = useState<unknown>();
-  const [notice, setNotice] = useState<string>();
-  const attachments = useAttachments();
-  const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
-  const openers = useQuery({
-    queryKey: ["docs.openers"],
-    // Detected once per start in main.
-    staleTime: Number.POSITIVE_INFINITY,
-    queryFn: async () => (await api.invoke("docs.openers", {})).apps,
-  });
-  /** Runs a row action; its failure shows under the tree and a success may say so. */
-  const perform = (action: Promise<unknown>, done?: string) => {
-    setActionError(undefined);
-    setNotice(undefined);
-    void action.then(() => setNotice(done), setActionError);
-  };
   const tree = useRef<HTMLDivElement>(null);
   const toggle = (path: string, value: boolean) => {
     if (query) return;
@@ -231,102 +203,16 @@ export function DocsTree({
     setActive(row.path);
     setMenu({ row, x, y });
   };
-  const platform = info.data?.platform;
   // Linux registers applications per file type; read them when a file's menu opens (TASK-c49f03d5).
-  const systemFor = menu?.row.type === "file" ? menu.row.path : undefined;
-  const systemApps = useQuery({
-    queryKey: ["docs.systemApps", workbenchId, systemFor],
-    enabled: platform === "linux" && systemFor !== undefined,
-    staleTime: 0,
-    gcTime: 0,
-    queryFn: async () =>
-      (await api.invoke("docs.systemApps", { workbenchId, path: systemFor as string })).apps,
-  });
-  const menuItems = (row: Row): TreeMenuItem[] => {
-    const openIn: TreeMenuItem[] = [
-      // The default application is reached through PathGuard, which refuses what VERA ignores.
-      ...(row.type === "file" && !row.ignored && canOpenExternally(row.path)
-        ? [
-            {
-              action: "open-external",
-              label: t("documents.defaultApp"),
-              name: t("documents.openExternalNamed", { path: row.path }),
-              run: () => perform(api.invoke("app.openPath", { path: row.path })),
-            },
-          ]
-        : []),
-      ...(openers.data ?? [])
-        .filter(named)
-        .filter((app) => opens(app, row.type))
-        .map((app) => ({
-          action: `open-in-${app}`,
-          label: app === "terminal" ? t("documents.terminal") : programNames[app],
-          run: () => perform(api.invoke("docs.openWith", { workbenchId, path: row.path, app })),
-        })),
-      ...(row.type === "file" && row.path === systemFor
-        ? (systemApps.data ?? []).map((app) => ({
-            action: `system-${app.id}`,
-            label: app.name,
-            run: () =>
-              perform(api.invoke("docs.openSystemApp", { workbenchId, path: row.path, app: app.id })),
-          }))
-        : []),
-      ...(row.type === "file" && openers.data?.includes("other")
-        ? [
-            {
-              action: "open-in-other",
-              label: t("documents.otherApp"),
-              run: () => perform(api.invoke("docs.openWith", { workbenchId, path: row.path, app: "other" })),
-            },
-          ]
-        : []),
-    ];
-    const copy = (form: "absolute" | "relative" | "name", label: string): TreeMenuItem => ({
-      action: `copy-${form}`,
-      label,
-      run: () =>
-        perform(api.invoke("docs.copyPath", { workbenchId, path: row.path, form }), t("documents.copied")),
-    });
-    return [
-      {
-        action: "open",
-        label: t("documents.open"),
-        run: () => (row.type === "folder" ? toggle(row.path, true) : activate(row)),
-      },
-      // Only where a chat can take entries (inside the app); ignored entries stay out of the agent's reach.
-      ...(attachments
-        ? [
-            {
-              action: "attach",
-              label: t("documents.attach"),
-              disabled: row.ignored || !attachments.attach || attachments.full,
-              run: () => attachments.attach?.(row.path),
-            },
-          ]
-        : []),
-      ...(openIn.length ? [{ action: "open-in", label: t("documents.openIn"), items: openIn }] : []),
-      {
-        action: "reveal",
-        label:
-          platform === "win32"
-            ? t("documents.revealExplorer")
-            : platform === "darwin"
-              ? t("documents.revealFinder")
-              : t("documents.revealFolder"),
-        run: () => perform(api.invoke("docs.reveal", { workbenchId, path: row.path })),
-      },
-      {
-        action: "copy",
-        label: t("documents.copy"),
-        items: [
-          copy("absolute", t("documents.copyAbsolute")),
-          copy("relative", t("documents.copyRelative")),
-          copy("name", t("documents.copyName")),
-        ],
-      },
-      { action: "properties", label: t("documents.properties"), run: () => setProperties(row) },
-    ];
-  };
+  const actions = useFileActions(workbenchId, menu?.row.type === "file" ? menu.row.path : undefined);
+  const menuItems = (row: Row): TreeMenuItem[] => [
+    {
+      action: "open",
+      label: t("documents.open"),
+      run: () => (row.type === "folder" ? toggle(row.path, true) : activate(row)),
+    },
+    ...actions.items(row, () => setProperties(row)),
+  ];
   const onKey = (event: KeyboardEvent<HTMLDivElement>, row: Row, index: number) => {
     const move = (target: number) => {
       event.preventDefault();
@@ -359,10 +245,10 @@ export function DocsTree({
   return (
     <section className="docs-tree" aria-label={t("documents.tree")}>
       {failure != null && <ErrorMessage error={failure} />}
-      {actionError !== undefined && <ErrorMessage error={actionError} />}
-      {notice && (
+      {actions.error !== undefined && <ErrorMessage error={actions.error} />}
+      {actions.notice && (
         <p role="status" data-tree-notice>
-          {notice}
+          {actions.notice}
         </p>
       )}
       {query && found.data && !found.data.paths.length && <p role="status">{t("documents.noMatches")}</p>}

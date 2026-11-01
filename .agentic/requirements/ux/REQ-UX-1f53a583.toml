@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-1f53a583"
+
+title = "Keep each tab's place while switching tabs"
+
+status = "active"
+
+requirement = "When the user selects a tab again, the desktop app shall show its document at the place it showed when last selected (the PDF page in view, the text's first visible line, the scroll offset of other documents) and the conversation with its unsent draft and scroll position, which stays mounted."
+
+verification = "Renderer test: a text tab scrolled to line 251 and a Markdown tab scrolled come back at line 251 and the same scroll offset after Chat is selected, and the Chat panel is the same element with the unsent draft; native e2e: a PDF tab scrolled to page 2 shows page 2 again after Chat is selected, and the transcript scrolled to 600 keeps that offset across the PDF tab and back; boundary: a new citation to the open log replaces its kept place with the cited line."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

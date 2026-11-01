@@ -4,9 +4,18 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
+import { _electron, type ElectronApplication, expect, type Locator, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+
+/** Scrolls a continuous PDF so the top of page `page` meets the top of the view (TASK-4c04273a). */
+async function scrollToPage(scope: Locator, page: number) {
+  await scope.locator(".pdf-scroll").evaluate((node, n) => {
+    const sheet = node.querySelector<HTMLElement>(`.pdf-sheet[data-page-number="${n}"]`);
+    if (!sheet) throw Error(`No page ${n}`);
+    node.scrollTop += sheet.getBoundingClientRect().top - node.getBoundingClientRect().top;
+  }, page);
+}
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 test("native citations open offline PDF snippets, heading/line anchors and session artifacts, with Docs and restart", async () => {
@@ -153,22 +162,33 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     expect(await dialog.locator("[data-cited]").allTextContents()).toEqual(
       expect.arrayContaining([expect.stringMatching(/power|First|page/)]),
     );
-    await dialog.getByLabel("Zoom", { exact: true }).selectOption("1.5");
+    // REQ-UX-e8dfdec3: zoom comes from the keyboard (and Ctrl+wheel), not a toolbar, as soon as the
+    // cited PDF opens.
+    await page.keyboard.press("Control+=");
+    await page.keyboard.press("Control+=");
+    await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-zoom", "1.5");
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
-    // REQ-UX-d64f086f: Ctrl+F inside the Source panel focuses the PDF search.
+    // REQ-UX-d64f086f: Ctrl+F inside a PDF tab focuses its search.
     await page.keyboard.press("Control+f");
     await expect(dialog.getByLabel("Find text", { exact: true })).toBeFocused();
     await dialog.getByLabel("Find text", { exact: true }).fill("page two");
     await dialog.getByLabel("Find text", { exact: true }).press("Enter");
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "2");
     await expect(dialog.locator("[data-search-match]")).not.toHaveCount(0);
+    // Escape first hides the find field and returns to the document; the next one leaves the tab.
+    await page.keyboard.press("Escape");
+    await expect(dialog.locator("[data-document-search]")).toHaveCount(0);
+    await expect(dialog.locator(".pdf-scroll")).toBeFocused();
     await closeViewer();
     await expect(page.locator('[data-citation="valid"]').first()).toBeFocused();
     await openChip(1);
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "1");
     await expect(dialog.locator("[data-cited]")).not.toHaveCount(0);
-    await dialog.getByRole("button", { name: "Next page", exact: true }).click();
+    // REQ-UX-e4d5ce0f: pages follow one another in one scroll; the indicator follows the view.
+    await expect(dialog.getByRole("button", { name: /Next/ })).toHaveCount(0);
+    await scrollToPage(dialog, 2);
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "2");
+    await expect(dialog.locator(".pdf-indicator")).toHaveText(/^2 \/ \d+$/);
     await expect(dialog.locator("[data-cited]")).not.toHaveCount(0);
     await closeViewer();
     await openChip(2);
@@ -188,6 +208,13 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await openChip(5);
     await expect(dialog.locator(".document-body")).toContainText("Summary");
     await closeViewer();
+    // REQ-UX-e0410483: a real drag moves the last document tab before the first one.
+    const tabs = page.locator('[data-document-tabs] [role="tab"]');
+    const names = await tabs.allTextContents();
+    expect(names.length).toBeGreaterThan(2);
+    const last = names.at(-1) ?? "";
+    await tabs.filter({ hasText: last }).dragTo(tabs.nth(1));
+    await expect(tabs).toHaveText([names[0] ?? "", last, ...names.slice(1, -1)]);
     await page.locator('[data-toggle="right"]').click();
     await page.getByRole("tab", { name: "Files", exact: true }).click();
     const docs = page.locator("#panel-docs");
@@ -213,6 +240,7 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
       id,
     );
     const transcript = await page.locator("[data-transcript]").textContent();
+    const openTabs = await page.locator('[data-document-tabs] [role="tab"]').allTextContents();
     expect(await outboundAttempts(app)).toEqual([]);
     if (process.env.VERA_E2E_EVIDENCE_DIR)
       await page.screenshot({ path: join(process.env.VERA_E2E_EVIDENCE_DIR, "citations-before.png") });
@@ -224,6 +252,9 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     // Reopening shows the overview; the engineer opens the restored session from the sidebar.
     await expect(page.locator(`[data-session="${id}"][aria-current="page"]`)).toBeVisible();
     await page.locator(`[data-session="${id}"]`).click();
+    // REQ-FUNC-8a061992: the session's document tabs come back in their order after a restart.
+    await expect(page.locator('[data-document-tabs] [role="tab"]')).toHaveText(openTabs);
+    await expect(page.locator('[data-document-tabs] [role="tab"][aria-selected="true"]')).toHaveText("Chat");
     await expect(page.locator('[data-citation="valid"]')).toHaveCount(6);
     await expect(page.locator('[data-citation="invalid"]')).toHaveCount(7);
     await expect(page.locator("[data-transcript]")).toHaveText(transcript!);
@@ -268,8 +299,22 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
       await page.screenshot({ path: join(process.env.VERA_E2E_EVIDENCE_DIR, "viewer-lines.png") });
     await closeViewer();
     expect(await outboundAttempts(app)).toEqual([]);
-    if (process.env.VERA_E2E_EVIDENCE_DIR) {
+    if (process.env.VERA_E2E_EVIDENCE_DIR)
       await page.screenshot({ path: join(process.env.VERA_E2E_EVIDENCE_DIR, "citations-after.png") });
+    // REQ-FUNC-d9d16533: deleting the session deletes its saved tabs; other sessions keep theirs.
+    const tabRecords = () =>
+      page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("vera.tabs.")));
+    const own = (await tabRecords()).find((key) => key.endsWith(`.${id}`));
+    expect(own).toBeDefined();
+    const other = `${own?.slice(0, -(id?.length ?? 0))}other-session`;
+    await page.evaluate((key) => localStorage.setItem(key, "{}"), other);
+    const entry = page.locator(".session-entry", { has: page.locator(`[data-session="${id}"]`) });
+    await entry.locator("summary").click();
+    await entry.getByRole("button", { name: /^Delete / }).click();
+    await page.locator('[data-action="confirm-delete"]').click();
+    await expect(page.locator(`[data-session="${id}"]`)).toHaveCount(0);
+    expect(await tabRecords()).toEqual([other]);
+    if (process.env.VERA_E2E_EVIDENCE_DIR) {
       await writeFile(
         join(process.env.VERA_E2E_EVIDENCE_DIR, "citation-snapshots.json"),
         JSON.stringify({ before, after }, null, 2),

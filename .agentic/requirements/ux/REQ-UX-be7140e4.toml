@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-be7140e4"
+
+title = "Move between tabs with the arrow keys"
+
+status = "active"
+
+requirement = "While a tab of the tab strip has keyboard focus, the desktop app shall select the next or previous tab with ArrowRight or ArrowLeft, wrapping at the ends, and the first or last tab with Home or End."
+
+verification = "Renderer test: with Chat and two document tabs, ArrowRight from Chat selects and focuses the first document tab, ArrowLeft from Chat wraps to the last, End and Home select the last and Chat; boundary: modified keys (Ctrl, Alt, Meta) are left to other shortcuts."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

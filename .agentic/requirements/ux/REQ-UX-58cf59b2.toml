@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-58cf59b2"
+
+title = "Go to a line with Ctrl+G"
+
+status = "active"
+
+requirement = "When the user presses Ctrl+G in a text document tab, the desktop app shall show a line field that scrolls to the entered line on Enter, clamped to the file's first and last line, and closes on Escape with focus back in the document."
+
+verification = "Renderer test: Ctrl+G shows the field focused; 1000 Enter brings line 1000 into view; 999999 Enter brings the last line into view; Escape closes the field and leaves the tab selected; boundary: a non-number leaves the view unchanged."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/find-bar.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -29,7 +29,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 - App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact. Global actions yield to modal/handled/repeated/composing keys; the skip-content control focuses main without URL changes.
 - Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
-- Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index; Source shows the opened source and recent sources ([document viewer](document-viewer.md)); Artifacts opens/reveals/exports session content; Plan displays current session todos.
+- Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index; documents open as tabs of the chat area beside the Chat tab ([document viewer](document-viewer.md)); Artifacts opens/reveals/exports session content; Plan displays current session todos.
   Below1280px the right panel overlays the centre. Tabs expose stable linked panels and a single Tab stop with Left/Right/Home/End activation.
 - Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates presents distribution-specific state/actions; Data retains its placeholder. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - About renders application name, version, platform, architecture, portable state and system locale
@@ -51,7 +51,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 - API authorization, Chromium sandbox and confined vera://app production CSP remain authoritative.
 - Application schema/UUID/validation/no-op semantics belong to core/shared. Preferences apply only
   from confirmed snapshots; failed saves retain the preceding state.
-- Local geometry uses a strict separate version 1 record with a required source width. Invalid or
+- Local geometry uses a strict separate version 1 record (sidebar and right widths, collapsed states). Invalid or
   other-version data uses defaults; there is no read-only layout mode. Failed storage stays transient.
 - Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
 - Keyboard controls use visible focus-ring CSS and semantic labels; opaque theme-token text pairs meet calculated AA contrast. Actual visual/AT acceptance follows the renderer accessibility contract. Selected buttons expose semantic state and heavier type.

@@ -4,9 +4,9 @@ id = "REQ-UX-aa068a49"
 
 title = "List and reopen recent sources of the session"
 
-status = "active"
+status = "retired"
 
-requirement = "While a session is active, the Source tab shall list the ten most recently opened distinct sources of that session, newest first, each reopening its source when activated, and shall empty the list when the session, the workbench or the settings view changes."
+requirement = "While a session is active, the Source tab shall list the ten most recently opened distinct sources of that session, newest first, each reopening its source when activated, and shall empty the list when the session, the workbench or the settings view changes. Retired 2026-11-01: the session's open document tabs replace the Recent sources list and the user chose tabs in the chat area only."
 
 verification = "Renderer test: opening twelve sources keeps the last ten newest first with a re-opened source moved to the top once; activating an entry reopens it; changing the provider scope empties the list."
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-31
-updated = 2026-10-31
+updated = 2026-11-01

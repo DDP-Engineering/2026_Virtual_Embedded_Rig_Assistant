@@ -2,17 +2,17 @@ schema = 1
 
 id = "REQ-UX-775eb693"
 
-title = "Open a file from the Docs tree in Source"
+title = "Open a file from the Files tree in a tab"
 
 status = "active"
 
-requirement = "When the user activates a file in the Docs tree, the desktop app shall open an indexed document in the Source tab as Open does today and any other file as text in the Source tab."
+requirement = "When the user activates a file in the Files tree, the desktop app shall open an indexed document in its document tab as Open does and any other file as text in its document tab."
 
-verification = "Renderer test: clicking or pressing Enter on an indexed document opens it through the existing document open; on main.c it opens the text view through the read channel; native e2e opens one of each."
+verification = "Renderer and native e2e: activating an indexed PDF row opens the PDF viewer in a tab, activating an unindexed log row opens its text in a tab; boundary: an ignored file opens as text without Open in default app."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::opens indexed documents and other text files in Source", "05_Software/tests/e2e/docs-tree.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/tests/e2e/docs-tree.spec.ts"]
 
 
 spec = ""

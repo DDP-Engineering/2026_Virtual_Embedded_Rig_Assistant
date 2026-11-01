@@ -152,6 +152,109 @@ test("attaches Docs tree entries to the active chat from the workbench page and 
   expect(invoke).toHaveBeenCalledWith("session.send", { sessionId: expect.any(String), text: "@docs/a.pdf" });
 });
 
+// TASK-79f6ffd3: the conversation hidden behind a document tab
+test("attaching while a document tab is shown brings back the Chat tab, and hidden chat ignores window keys", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  await openDocs();
+  await expand("docs");
+  await act(async () => container.querySelector<HTMLElement>('[data-document="docs/a.md"]')?.click());
+  await settle();
+  const selected = () =>
+    container.querySelector<HTMLElement>('[data-document-tabs] [role="tab"][aria-selected="true"]')
+      ?.textContent;
+  expect(selected()).toBe("a.md");
+  // Ctrl+F outside the document belongs to no hidden conversation search.
+  await act(async () => {
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "f", ctrlKey: true, bubbles: true }));
+  });
+  expect(container.querySelector(".transcript-search")).toBeNull();
+  await attach("board.txt");
+  expect(selected()).toBe("Chat");
+  expect(chips()).toEqual(["board.txt"]);
+  expect(document.activeElement).toBe(message());
+  expect(container.querySelector(".transcript-search")).toBeNull();
+});
+
+test("a taken composer focus request never pulls a later document tab back to Chat", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const selected = () =>
+    container.querySelector<HTMLElement>('[data-document-tabs] [role="tab"][aria-selected="true"]')
+      ?.textContent;
+  await openDocs();
+  await expand("docs");
+  await attach("board.txt");
+  expect(document.activeElement).toBe(message());
+  // Leave the chat area and come back through a document: the old request is gone.
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="plugins-nav"]')?.click());
+  expect(container.querySelector("[data-document-tabs]")).toBeNull();
+  await openDocs();
+  await expand("docs");
+  await act(async () => container.querySelector<HTMLElement>('[data-document="docs/a.md"]')?.click());
+  await settle();
+  expect(selected()).toBe("a.md");
+});
+
+test("attaching while the composer is disabled shows Chat once and lets documents stay selected", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const selected = () =>
+    container.querySelector<HTMLElement>('[data-document-tabs] [role="tab"][aria-selected="true"]')
+      ?.textContent;
+  await openDocs();
+  await expand("docs");
+  await act(async () => container.querySelector<HTMLElement>('[data-document="docs/a.md"]')?.click());
+  await settle();
+  const [session] = await api.invoke("session.list", {});
+  if (!session) throw Error("Missing session");
+  await act(async () => {
+    await api.invoke("session.send", { sessionId: session.id, text: "edit notes" });
+  });
+  await act(async () => {
+    await new Promise((done) => setTimeout(done, 400));
+  });
+  await attach("board.txt");
+  expect(selected()).toBe("Chat");
+  expect(message()?.disabled).toBe(true);
+  await act(async () =>
+    [...container.querySelectorAll<HTMLElement>('[data-document-tabs] [role="tab"]')]
+      .find((tab) => tab.textContent === "a.md")
+      ?.click(),
+  );
+  await settle();
+  await settle();
+  expect(selected()).toBe("a.md");
+});
+
+// REQ-UX-f261c988: the document tab menu attaches its file like the Files tree.
+test("attaches a document from its tab menu and brings back the Chat tab", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  await openDocs();
+  await expand("docs");
+  await act(async () => container.querySelector<HTMLElement>('[data-document="docs/a.md"]')?.click());
+  await settle();
+  const tab = [...container.querySelectorAll<HTMLElement>('[data-document-tabs] [role="tab"]')].find(
+    (node) => node.textContent === "a.md",
+  );
+  await act(async () => {
+    tab?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+  });
+  await act(async () =>
+    container.querySelector<HTMLElement>('[data-tree-menu] [data-menu-action="attach"]')?.click(),
+  );
+  await settle();
+  expect(chips()).toEqual(["docs/a.md"]);
+  expect(
+    container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.textContent,
+  ).toBe("Chat");
+  await act(async () => {
+    await new Promise((done) => setTimeout(done, 50));
+  });
+  expect(document.activeElement).toBe(message());
+});
+
 test("keeps the attachments of each session apart", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   await mount();

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-a45c4384"
+
+title = "Close the selected document tab with Ctrl+W"
+
+status = "active"
+
+requirement = "When the user presses Ctrl+W while the chat area shows a selected document tab and no dialog is open, the desktop app shall close that tab as its close button does, and shall do nothing while Chat is selected."
+
+verification = "Renderer test: with board.txt selected, Ctrl+W closes it and selects its neighbour; with Chat selected Ctrl+W leaves the tabs unchanged; boundary: with a dialog open Ctrl+W changes nothing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

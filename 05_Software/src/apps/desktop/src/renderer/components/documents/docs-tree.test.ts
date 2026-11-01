@@ -11,7 +11,8 @@ import { mockAppInfo } from "../../mocks/fixtures.js";
 import { type Attachments, AttachmentsContext } from "../session/attachments.js";
 import { DocsTab } from "./docs-tab.js";
 import { folderSummaries } from "./docs-tree.js";
-import { DocumentViewerProvider, SourcePanel } from "./viewer-context.js";
+import { DocumentTabs } from "./document-tabs.js";
+import { DocumentViewerProvider } from "./viewer-context.js";
 import "../../i18n.js";
 
 vi.mock("../../api/index.js", async () => {
@@ -54,7 +55,7 @@ async function mount(workbenchId = id, attachments?: Attachments) {
                 createElement(DocsTab, { workbenchId, readOnly: false }),
               )
             : createElement(DocsTab, { workbenchId, readOnly: false }),
-          createElement(SourcePanel),
+          createElement(DocumentTabs, { chat: null }),
         ),
       ),
     ),
@@ -219,7 +220,7 @@ it("shows entries ignored by VERA in italic with faded icons, announced, expanda
   await settle();
   expect(invoke).toHaveBeenCalledWith("docs.read", { workbenchId: id, path: ".git/config" });
   expect(container.querySelector("[data-source-current]")?.textContent).toContain(".git/config");
-  // An ignored allowlisted file has no Open in default app, in the menu or in Source.
+  // An ignored allowlisted file has no Open in default app, in the menu or in its document tab.
   await click(row("node_modules"));
   await settle();
   await click(row("node_modules/pkg"));
@@ -260,7 +261,7 @@ it("counts indexed documents beneath each folder and marks problems", async () =
   expect(row("firmware")?.querySelector("[data-folder-problems]")).toBeNull();
 });
 
-it("opens indexed documents and other text files in Source", async () => {
+it("opens indexed documents and other text files in a document tab", async () => {
   const invoke = vi.spyOn(api, "invoke");
   await mount();
   await click(row("docs"));
@@ -275,7 +276,9 @@ it("opens indexed documents and other text files in Source", async () => {
   await key(row("firmware/main.c"), "Enter");
   await settle();
   expect(invoke).toHaveBeenCalledWith("docs.read", { workbenchId: id, path: "firmware/main.c" });
-  expect(container.querySelector("[data-source-current]")?.textContent).toContain("firmware/main.c");
+  expect(
+    container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.getAttribute("title"),
+  ).toBe("firmware/main.c");
   expect(container.textContent).toContain("int main(void)");
 });
 
@@ -372,7 +375,7 @@ it("offers Open, Attach as context, Open in, Show in Explorer, Copy and Properti
   await key(document.activeElement, "Escape");
   expect(menu()).toBeNull();
   expect(document.activeElement).toBe(row("docs/a.pdf"));
-  // Open expands a folder and opens a file in Source.
+  // Open expands a folder and opens a file in a document tab.
   await contextMenu(row("manuals"));
   await click(menuItem("open"));
   await settle();

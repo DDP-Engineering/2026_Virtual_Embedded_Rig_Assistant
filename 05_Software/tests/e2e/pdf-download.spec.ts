@@ -6,9 +6,18 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, test } from "@playwright/test";
+import { _electron, expect, type Locator, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+
+/** Scrolls a continuous PDF so the top of page `page` meets the top of the view (TASK-4c04273a). */
+async function scrollToPage(scope: Locator, page: number) {
+  await scope.locator(".pdf-scroll").evaluate((node, n) => {
+    const sheet = node.querySelector<HTMLElement>(`.pdf-sheet[data-page-number="${n}"]`);
+    if (!sheet) throw Error(`No page ${n}`);
+    node.scrollTop += sheet.getBoundingClientRect().top - node.getBoundingClientRect().top;
+  }, page);
+}
 
 test("native approved PDF download opens locally, persists offline and rejects failed/revoked transfers", async () => {
   test.setTimeout(90_000);
@@ -138,14 +147,37 @@ test("native approved PDF download opens locally, persists offline and rejects f
     expect(requests.every((request) => !request.authorization && !request.cookie)).toBe(true);
     await open.click();
     await expect(page.locator(".pdf-viewer[data-ready=true]")).toBeVisible();
-    // Downloads open in the right panel Source tab beside the conversation, like every source.
+    // Downloads open as tabs of the chat area, like every document (TASK-79f6ffd3).
     const source = page.locator("[data-source-current]");
     await expect(source).not.toContainText("Cited pages");
-    await expect(page.locator('#right-panel[data-tab="source"]')).toBeVisible();
+    await expect(page.locator('[data-document-tabs] [role="tab"][aria-selected="true"]')).toHaveText(
+      "reference.pdf",
+    );
     await expect(page.locator("dialog[open]")).toHaveCount(0);
     await expect(page.locator(".pdf-viewer")).toHaveAttribute("data-page", "1");
-    await page.getByRole("button", { name: "Next page", exact: true }).click();
+    await scrollToPage(page.locator("[data-source-current]"), 2);
     await expect(page.locator(".pdf-viewer[data-ready=true]")).toHaveAttribute("data-page", "2");
+    // REQ-UX-1f53a583: the tab keeps its page while the conversation is shown.
+    await page.locator('[data-document-tabs] [role="tab"]', { hasText: "Chat" }).click();
+    await expect(page.locator(".pdf-viewer")).toHaveCount(0);
+    await page.locator('[data-document-tabs] [role="tab"]', { hasText: "reference.pdf" }).click();
+    await expect(page.locator(".pdf-viewer[data-ready=true]")).toHaveAttribute("data-page", "2");
+    // The conversation keeps its scroll position behind a document tab.
+    const chatTab = page.locator('[data-document-tabs] [role="tab"]', { hasText: "Chat" });
+    const pdfTab = page.locator('[data-document-tabs] [role="tab"]', { hasText: "reference.pdf" });
+    await chatTab.click();
+    const transcript = page.locator("[data-transcript]");
+    await transcript.evaluate((node) => {
+      const spacer = document.createElement("div");
+      spacer.style.flex = "0 0 4000px";
+      node.append(spacer);
+      node.scrollTop = 600;
+    });
+    await pdfTab.click();
+    await chatTab.click();
+    expect(await transcript.evaluate((node) => node.scrollTop)).toBe(600);
+    await pdfTab.click();
+    await page.locator("[data-source-current]").focus();
     if (process.env.VERA_PDF_SCREENSHOT) await page.screenshot({ path: process.env.VERA_PDF_SCREENSHOT });
     await source.press("Escape");
     await expect(source).toHaveCount(0);

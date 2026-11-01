@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-89161a95"
+
+title = "Select the open tab of a document"
+
+status = "active"
+
+requirement = "When the user opens a document that already has a tab in the session (the same workbench path, download or artifact, whatever the opener or the cited place), the desktop app shall select that tab and show the document at the newly requested place instead of adding a tab."
+
+verification = "Renderer test: open docs/a.md from an opener, then docs/a.html, then the ref docs/a.md#h=reset; two document tabs exist, the a.md tab is selected and its reset heading is current; boundary: a citation to another document adds a second tab, and a new citation to an open log shows the cited line instead of the kept place."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

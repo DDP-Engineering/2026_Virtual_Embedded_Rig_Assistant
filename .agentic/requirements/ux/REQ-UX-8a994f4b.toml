@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-8a994f4b"
+
+title = "Scroll text documents continuously"
+
+status = "active"
+
+requirement = "While a text document is shown in a tab, the desktop app shall show all its lines with their numbers in one continuous scroll, without line window controls, opening at the cited lines (marked as cited) or at the tab's kept first visible line."
+
+verification = "Renderer test: a 600-line log opens with no Previous/Next lines controls, its first line visible and every line reachable by scrolling (the total scroll height covers all lines); a citation to lines 412-414 opens with line 412 in view and marked; boundary: a kept first visible line 300 wins over the start, and an empty file shows no lines."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

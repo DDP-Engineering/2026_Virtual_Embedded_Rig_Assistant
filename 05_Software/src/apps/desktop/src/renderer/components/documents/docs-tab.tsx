@@ -7,38 +7,12 @@ import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { DocsTree, useTreeExpansion } from "./docs-tree.js";
 import { DownloadsList } from "./downloads.js";
+import { useDescribeDocument } from "./file-actions.js";
 import { useDocumentViewer } from "./viewer-context.js";
 import { VolumeWarning } from "./volume-warning.js";
 
-function defineTranslationKeys<const T extends readonly string[]>(keys: T): T {
-  return keys;
-}
-const statusKeys = defineTranslationKeys([
-  "documents.status.pending",
-  "documents.status.indexed",
-  "documents.status.failed",
-  "documents.status.unsupported",
-  "documents.status.needs_ocr",
-]);
-const statusIndex = { pending: 0, indexed: 1, failed: 2, unsupported: 3, needs_ocr: 4 } as const;
-const reasonKeys = defineTranslationKeys([
-  "documents.reason.SIZE_LIMIT",
-  "documents.reason.TYPE_UNSUPPORTED",
-  "documents.reason.BINARY",
-  "documents.reason.IO",
-  "documents.reason.PROCESSING",
-  "documents.reason.NEEDS_OCR",
-]);
-const reasonIndex = {
-  SIZE_LIMIT: 0,
-  TYPE_UNSUPPORTED: 1,
-  BINARY: 2,
-  IO: 3,
-  PROCESSING: 4,
-  NEEDS_OCR: 5,
-} as const;
-
 export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
+  const describe = useDescribeDocument();
   const { t } = useTranslation(),
     client = useQueryClient(),
     open = useDocumentViewer();
@@ -199,9 +173,7 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
           <DocsTree
             workbenchId={workbenchId}
             documents={list.data}
-            describe={(doc) =>
-              `${t(statusKeys[statusIndex[doc.status]])}${doc.error ? ` · ${t(reasonKeys[reasonIndex[doc.error]])}` : ""}`
-            }
+            describe={describe}
             query={search}
             expansion={expansion}
           />

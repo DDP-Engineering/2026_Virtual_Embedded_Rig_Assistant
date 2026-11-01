@@ -2,17 +2,17 @@ schema = 1
 
 id = "REQ-UX-f5d6e9e4"
 
-title = "Offer Open in default app in the document viewer and Docs rows"
+title = "Offer Open in default app in document tab and Files menus"
 
 status = "active"
 
-requirement = "While a workbench document is shown in the document viewer or listed in the Docs panel, the desktop app shall offer an 'Open in default app' action named after the file, only for allowlisted documents that VERA does not ignore, and show its errors in place."
+requirement = "While a workbench document is shown in a document tab or listed in the Files panel, the desktop app shall offer an 'Open in default app' action named after the file in the tab's context menu and in the row's menu, only for allowlisted documents that VERA does not ignore, and show its errors in place."
 
-verification = "Renderer test with the mock API: the viewer header and an indexed Docs row offer the action with the file in its accessible name and invoke the open channel with that path; a text source with a .py path, an ignored README.md opened as text, a managed download and an artifact offer no action; an INTERNAL error reply is shown in place while the viewer stays open; locales en/ro/de contain the labels."
+verification = "Renderer tests: the docs/a.pdf tab menu and Files row menu offer Open in default app named after the file and call app.openPath; a failure shows its error in the chat area's notice row (also with Chat selected) or the Files panel; boundary: tools/flash.py, an ignored file and an artifact offer none."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/open-externally.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-actions.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/open-externally.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/tests/e2e/documents.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::opens Docs tree items in the default app and the detected programs from Open in", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::shows entries ignored by VERA in italic with faded icons, announced, expandable and readable"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/tests/e2e/docs-tree.spec.ts"]
 
 
 spec = ""

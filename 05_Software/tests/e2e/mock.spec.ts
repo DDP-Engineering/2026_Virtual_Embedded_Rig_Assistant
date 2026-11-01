@@ -137,7 +137,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
             .locator('[data-panel="right"]')
             .evaluate((element) => element.scrollWidth <= element.clientWidth),
         ).toBe(true);
-        for (const tab of ["context", "docs", "source", "changes", "artifacts", "plan"]) {
+        for (const tab of ["context", "docs", "changes", "artifacts", "plan"]) {
           await page.locator(`#tab-${tab}`).click();
           await expect(page.locator(`#panel-${tab}`)).toBeVisible();
         }

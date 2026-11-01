@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3eb27a6c"
+
+title = "Find text in a PDF with Ctrl+F"
+
+status = "active"
+
+requirement = "When the user presses Ctrl+F in a PDF tab, the desktop app shall show a find field that moves through the case-insensitive matches of the extracted page text across pages with Enter and Shift+Enter, wrapping, scrolls each match's page into view with the match marked, shows the current match number of the total, and closes on Escape."
+
+verification = "Renderer test: a 3-page PDF with 'reset' on pages 1 and 3: typing reset shows 1 of 2 on page 1; Enter scrolls page 3 into view and shows 2 of 2; Enter wraps to 1 of 2; Escape closes the field; native e2e: Ctrl+F in a cited PDF finds text on another page; boundary: no match shows 0 of 0."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/find-bar.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/pdf-viewer.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

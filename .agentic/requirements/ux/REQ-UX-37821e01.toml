@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-37821e01"
+
+title = "Show the chat area when a document opens"
+
+status = "active"
+
+requirement = "When a document opens while the chat area is hidden (the workbench page, New Workbench or Plugins is shown), the desktop app shall show the chat area of the active session with the document's tab selected."
+
+verification = "Renderer test of the app: with New Workbench shown, activating a Files tree row shows the chat area with Chat and the document tabs and the new tab selected; boundary: opening from the shown chat area only changes the selected tab (the provider asks the app to reveal the chat area on every open)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

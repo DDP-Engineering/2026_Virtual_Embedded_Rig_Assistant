@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 // REQ-UX-28ad0002 REQ-UX-28ad0003
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, createElement } from "react";
+import { act, type ComponentProps, createElement, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import { WorkbenchDocuments } from "../workbench-documents.js";
 import { DocsTab } from "./docs-tab.js";
-import { DocumentBody, DocumentViewerProvider, SourcePanel, useDocumentViewer } from "./viewer-context.js";
+import { DocumentTabs } from "./document-tabs.js";
+import { DocumentBody, DocumentViewerProvider, useDocumentViewer } from "./viewer-context.js";
 import "../../i18n.js";
 
 vi.mock("../../api/index.js", async () => {
@@ -26,6 +27,17 @@ async function expandDocs(scope: ParentNode) {
     });
   }
 }
+/** Renders like `createElement`, inside a query client as the app does. */
+const withQueries = (
+  type: typeof DocumentViewerProvider,
+  props: ComponentProps<typeof DocumentViewerProvider> & { key?: string },
+  ...children: ReactNode[]
+) =>
+  createElement(
+    QueryClientProvider,
+    { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
+    createElement(type, props, ...children),
+  );
 const settle = () =>
   act(async () => {
     await new Promise((done) => setTimeout(done, 250));
@@ -47,7 +59,7 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
             DocumentViewerProvider,
             { workbenchId: id },
             createElement(DocsTab, { workbenchId: id, readOnly }),
-            createElement(SourcePanel),
+            createElement(DocumentTabs, { chat: null }),
           ),
         ),
       ),
@@ -64,7 +76,7 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
     await settle();
     expect(container.querySelector('[data-heading="power"]')?.textContent).toContain("3.3 V");
     await act(async () =>
-      container.querySelector<HTMLButtonElement>('[data-action="close-source"]')?.click(),
+      document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
     );
     expect(document.activeElement).toBe(doc);
     const reindex = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
@@ -112,11 +124,11 @@ it("rejects mismatched and late viewer responses after closing or scope remount"
   try {
     await act(async () =>
       root.render(
-        createElement(
+        withQueries(
           DocumentViewerProvider,
           { key: "one", workbenchId: id },
           createElement(Open),
-          createElement(SourcePanel),
+          createElement(DocumentTabs, { chat: null }),
         ),
       ),
     );
@@ -138,17 +150,15 @@ it("rejects mismatched and late viewer responses after closing or scope remount"
     await settle();
     expect(container.querySelector('[role="alert"]')).toBeTruthy();
     expect(container.textContent).not.toContain("secret");
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('[data-action="close-source"]')?.click(),
-    );
+    await act(async () => container.querySelector<HTMLButtonElement>('[data-action="close-tab"]')?.click());
     await act(async () => container.querySelector<HTMLButtonElement>("button")?.click());
     await act(async () =>
       root.render(
-        createElement(
+        withQueries(
           DocumentViewerProvider,
           { key: "one", workbenchId: "other" },
           createElement(Open),
-          createElement(SourcePanel),
+          createElement(DocumentTabs, { chat: null }),
         ),
       ),
     );
@@ -174,40 +184,159 @@ it("rejects mismatched and late viewer responses after closing or scope remount"
     container.remove();
   }
 });
-it("bounds large text DOM while preserving absolute line numbers and cited ranges", async () => {
+/** jsdom keeps no scroll offset; give elements a real one for the continuous viewers. */
+function keepScroll() {
+  const offsets = new WeakMap<Element, number>();
+  const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTop");
+  Object.defineProperty(Element.prototype, "scrollTop", {
+    configurable: true,
+    get(this: Element) {
+      return offsets.get(this) ?? 0;
+    },
+    set(this: Element, value: number) {
+      offsets.set(this, value);
+    },
+  });
+  return () => {
+    if (original) Object.defineProperty(Element.prototype, "scrollTop", original);
+  };
+}
+const typeInto = (input: HTMLInputElement | null, value: string) =>
+  act(async () => {
+    if (!input) return;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+const press = (target: Element | null, key: string, init: KeyboardEventInit = {}) =>
+  act(async () => {
+    target?.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...init }));
+  });
+
+// REQ-UX-8a994f4b REQ-NFR-0fe89e49 REQ-UX-58cf59b2 REQ-UX-fe9ec5c2 REQ-UX-3eb27a6c
+it("scrolls large text continuously with a bounded DOM, absolute line numbers, find and go to line", async () => {
+  const restore = keepScroll();
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
+  const content = {
+    kind: "text" as const,
+    path: "large.log",
+    ref: "large.log#L1500-L1502",
+    snippet: "",
+    lines: Array.from({ length: 2000 }, (_, i) => `Source ${i + 1}`),
+    start: 1500,
+    end: 1502,
+  };
+  const render = (findRequest = 0, gotoRequest = 0) =>
+    act(async () => root.render(createElement(DocumentBody, { content, findRequest, gotoRequest })));
   try {
-    await act(async () =>
-      root.render(
-        createElement(DocumentBody, {
-          content: {
-            kind: "text",
-            path: "large.log",
-            ref: "large.log#L1500-L1502",
-            snippet: "",
-            lines: Array.from({ length: 2000 }, (_, i) => `Source ${i + 1}`),
-            start: 1500,
-            end: 1502,
-          },
-        }),
-      ),
-    );
-    expect(container.querySelectorAll("[data-line]")).toHaveLength(250);
+    await render();
+    const body = container.querySelector<HTMLElement>(".document-body");
+    // The whole file is one scroll height, the cited lines are in view, and no navigation buttons show.
+    expect(container.querySelector<HTMLElement>(".document-lines")?.style.height).toBe("40000px");
+    expect(container.querySelectorAll("[data-line]").length).toBeLessThan(200);
     expect(container.querySelector('[data-line="1500"]')?.textContent).toBe("1500Source 1500");
     expect(container.querySelectorAll('[aria-current="true"]')).toHaveLength(3);
-    // Text windows move by lines; "Next page" belongs to the PDF viewer.
-    const next = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
-      (b) => b.textContent === "Next lines",
-    );
-    expect(next).toBeDefined();
-    await act(async () => next?.click());
-    expect(container.querySelectorAll("[data-line]")).toHaveLength(250);
-    expect(container.querySelectorAll('[aria-current="true"]')).toHaveLength(0);
+    expect(container.querySelector("button")).toBeNull();
+    expect(container.querySelector("[data-document-find]")).toBeNull();
+    // Scrolling to the top renders the first lines instead.
+    if (body) body.scrollTop = 0;
+    await act(async () => body?.dispatchEvent(new Event("scroll")));
+    expect(container.querySelector('[data-line="1"]')).not.toBeNull();
+    expect(container.querySelector('[data-line="1500"]')).toBeNull();
+    expect(container.querySelectorAll("[data-line]").length).toBeLessThan(200);
+    // Ctrl+G shows a field that jumps to a line; Escape hides it again.
+    await render(0, 1);
+    const goto = container.querySelector<HTMLInputElement>("[data-document-goto]");
+    expect(document.activeElement).toBe(goto);
+    await typeInto(goto, "1800");
+    await press(goto, "Enter");
+    expect(container.querySelector('[data-line="1800"]')?.textContent).toBe("1800Source 1800");
+    await press(goto, "Escape");
+    expect(container.querySelector("[data-document-goto]")).toBeNull();
+    // Ctrl+F finds across the whole file, marks matches and steps with Enter and Shift+Enter.
+    await render(1, 1);
+    const find = container.querySelector<HTMLInputElement>("[data-document-search]");
+    await typeInto(find, "source 19");
+    expect(container.querySelector('[role="status"]')?.textContent).toBe("1 of 111");
+    expect(container.querySelector('[data-line="19"] [data-search-match]')?.textContent).toBe("Source 19");
+    expect(container.querySelector("[data-current-match]")?.getAttribute("data-line")).toBe("19");
+    await press(find, "Enter", { shiftKey: true });
+    expect(container.querySelector('[role="status"]')?.textContent).toBe("111 of 111");
+    expect(container.querySelector("[data-current-match]")?.getAttribute("data-line")).toBe("1999");
+    await press(find, "Escape");
+    expect(container.querySelector("[data-document-search]")).toBeNull();
+    expect(document.activeElement).toBe(body);
   } finally {
     await act(async () => root.unmount());
     container.remove();
+    restore();
+  }
+});
+
+// REQ-UX-8a994f4b REQ-UX-58cf59b2 REQ-UX-fe9ec5c2 REQ-NFR-0fe89e49
+it("keeps a text tab's line, clamps go to line, reports no match and stays bounded for any size", async () => {
+  const restore = keepScroll();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const text = (count: number, start = 1) => ({
+    kind: "text" as const,
+    path: "huge.log",
+    ref: start > 1 ? `huge.log#L${start}-L${start}` : null,
+    snippet: "",
+    lines: Array.from({ length: count }, (_, i) => (i === 4 ? "ERR boot" : `ok ${i + 1}`)),
+    start,
+    end: start,
+  });
+  const body = () => container.querySelector<HTMLElement>(".document-body");
+  const rows = () => container.querySelectorAll("[data-line]").length;
+  try {
+    // A kept first visible line wins over the cited start.
+    await act(async () =>
+      root.render(createElement(DocumentBody, { content: text(600, 412), place: { line: 300 } })),
+    );
+    expect(body()?.scrollTop).toBe(299 * 20);
+    expect(container.querySelector('[data-line="300"]')).not.toBeNull();
+    await act(async () => root.render(createElement("div")));
+    // 600 000 lines stay under 300 rendered rows at the top, in the middle and at the end.
+    const huge = text(600_000);
+    const render = (gotoRequest: number, findRequest = 0) =>
+      act(async () => root.render(createElement(DocumentBody, { content: huge, gotoRequest, findRequest })));
+    await render(0);
+    expect(rows()).toBeLessThan(300);
+    const node = body();
+    if (node) node.scrollTop = 300_000 * 20;
+    await act(async () => node?.dispatchEvent(new Event("scroll")));
+    expect(container.querySelector('[data-line="300001"]')).not.toBeNull();
+    expect(rows()).toBeLessThan(300);
+    await render(1);
+    const goto = container.querySelector<HTMLInputElement>("[data-document-goto]");
+    await typeInto(goto, "999999");
+    await press(goto, "Enter");
+    expect(container.querySelector('[data-line="600000"]')).not.toBeNull();
+    expect(rows()).toBeLessThan(300);
+    const before = body()?.scrollTop;
+    await typeInto(goto, "1e");
+    await press(goto, "Enter");
+    expect(body()?.scrollTop).toBe(before);
+    await press(goto, "Escape");
+    await render(1, 1);
+    const find = container.querySelector<HTMLInputElement>("[data-document-search]");
+    await typeInto(find, "watchdog");
+    expect(container.querySelector('[role="status"]')?.textContent).toBe("0 of 0");
+    expect(body()?.scrollTop).toBe(before);
+    await act(async () => root.render(createElement("div")));
+    // A short file renders every line.
+    await act(async () => root.render(createElement(DocumentBody, { content: text(10) })));
+    expect(rows()).toBe(10);
+    // An empty file shows no lines.
+    await act(async () => root.render(createElement(DocumentBody, { content: text(0) })));
+    expect(rows()).toBe(0);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    restore();
   }
 });
 
@@ -231,11 +360,11 @@ it("shows office extractions as numbered slides and sections with the cited unit
   try {
     await act(async () =>
       root.render(
-        createElement(
+        withQueries(
           DocumentViewerProvider,
           { workbenchId: id },
           createElement(Open),
-          createElement(SourcePanel),
+          createElement(DocumentTabs, { chat: null }),
         ),
       ),
     );
@@ -255,9 +384,7 @@ it("shows office extractions as numbered slides and sections with the cited unit
     expect(slides.map((s) => s.getAttribute("aria-current"))).toEqual([null, "true"]);
     expect(scrolled).toContain("2");
     expect(document.activeElement).toBe(slides[1]);
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('[data-action="close-source"]')?.click(),
-    );
+    await act(async () => container.querySelector<HTMLButtonElement>('[data-action="close-tab"]')?.click());
     target = "docs/review.docx#h=reset";
     await act(async () => container.querySelector<HTMLButtonElement>("button")?.click());
     await settle();
@@ -269,9 +396,7 @@ it("shows office extractions as numbered slides and sections with the cited unit
     expect(scrolled).toContain("reset");
     expect(document.activeElement).toBe(sections[2]);
     // REQ-UX-9be5fd96: #h= opens the untitled leading section.
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('[data-action="close-source"]')?.click(),
-    );
+    await act(async () => container.querySelector<HTMLButtonElement>('[data-action="close-tab"]')?.click());
     target = "docs/review.docx#h=";
     scrolled.length = 0;
     await act(async () => container.querySelector<HTMLButtonElement>("button")?.click());
@@ -361,7 +486,7 @@ it("offers Open in default app for allowlisted workbench documents only and show
             { workbenchId: id },
             createElement(Open),
             createElement(DocsTab, { workbenchId: id, readOnly: false }),
-            createElement(SourcePanel),
+            createElement(DocumentTabs, { chat: null }),
           ),
         ),
       ),
@@ -399,18 +524,34 @@ it("offers Open in default app for allowlisted workbench documents only and show
     const item = await externalItem("docs/review.docx");
     await act(async () => item?.click());
     expect(opened).toEqual([{ path: "docs/review.docx" }]);
-    // Viewer header: shown for a workbench document, hidden for code and managed downloads.
+    // The document tab's menu (TASK-6c4aeed8): offered for a workbench document, not for code,
+    // managed downloads or artifacts; the document panel itself has no buttons.
     await act(async () => container.querySelector<HTMLButtonElement>("[data-test-open]")?.click());
     await settle();
     const dialog = () => container.querySelector<HTMLElement>("[data-source-current]");
-    expect(external(dialog())?.getAttribute("aria-label")).toBe("Open in default app: docs/a.pdf");
+    expect(external(dialog())).toBeNull();
+    const tabItem = async () => {
+      await act(async () => {
+        container
+          .querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')
+          ?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+      });
+      await act(async () =>
+        container.querySelector<HTMLButtonElement>('[data-tree-menu] [data-menu-action="open-in"]')?.click(),
+      );
+      return container.querySelector<HTMLButtonElement>(
+        '[data-tree-menu] [data-menu-action="open-external"]',
+      );
+    };
+    const fromTab = await tabItem();
+    expect(fromTab?.getAttribute("aria-label")).toBe("Open in default app: docs/a.pdf");
     reply = async () => {
       throw { code: "INTERNAL", messageKey: "errors.INTERNAL" };
     };
-    await act(async () => external(dialog())?.click());
+    await act(async () => fromTab?.click());
     await settle();
     expect(opened.at(-1)).toEqual({ path: "docs/a.pdf" });
-    expect(dialog()?.querySelector('[data-i18n="errors.INTERNAL"]')).toBeTruthy();
+    expect(container.querySelector('[data-tab-notices] [data-i18n="errors.INTERNAL"]')).toBeTruthy();
     expect(dialog()).toBeTruthy();
     // A failure from the tree's menu shows in the tree.
     const failing = await externalItem("docs/a.pdf");
@@ -419,14 +560,17 @@ it("offers Open in default app for allowlisted workbench documents only and show
     expect(opened.at(-1)).toEqual({ path: "docs/a.pdf" });
     expect(container.querySelector('.docs-tree [data-i18n="errors.INTERNAL"]')).toBeTruthy();
     for (const path of ["tools/flash.py", ".vera/downloads/d/chip.pdf", "summary.md"]) {
-      await act(async () =>
-        dialog()?.querySelector<HTMLButtonElement>('[data-action="close-source"]')?.click(),
-      );
+      await act(async () => container.querySelector<HTMLButtonElement>('[data-action="close-tab"]')?.click());
       target = { path };
       await act(async () => container.querySelector<HTMLButtonElement>("[data-test-open]")?.click());
       await settle();
-      expect(dialog()?.textContent).toContain(path);
-      expect(external(dialog()), path).toBeNull();
+      expect(
+        container
+          .querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')
+          ?.getAttribute("title"),
+      ).toBe(path);
+      expect(await tabItem(), path).toBeNull();
+      await closeMenu();
     }
   } finally {
     spy.mockRestore();
@@ -455,65 +599,8 @@ function textSources() {
       : invoke(channel as "app.info", request as never)) as typeof api.invoke);
 }
 
-// REQ-UX-aa068a49
-it("keeps the ten most recent distinct sources of the session, newest first, and clears them with the scope", async () => {
-  const spy = textSources();
-  const container = document.createElement("div");
-  document.body.append(container);
-  const root = createRoot(container);
-  let target = "";
-  function Opener() {
-    const open = useDocumentViewer();
-    return createElement(
-      "button",
-      { type: "button", "data-opener": "", onClick: () => open?.({ path: target }) },
-      "Open",
-    );
-  }
-  const render = (scope: string) =>
-    act(async () =>
-      root.render(
-        createElement(
-          DocumentViewerProvider,
-          { workbenchId: id, scope },
-          createElement(Opener),
-          createElement(SourcePanel),
-        ),
-      ),
-    );
-  const openPath = async (path: string) => {
-    target = path;
-    await act(async () => container.querySelector<HTMLButtonElement>("[data-opener]")?.click());
-    await settle();
-  };
-  const recent = () =>
-    [...container.querySelectorAll<HTMLElement>("[data-recent-source]")].map((el) => el.dataset.recentSource);
-  try {
-    await render("s1");
-    for (let n = 0; n < 12; n++) await openPath(`notes/${n}.txt`);
-    expect(recent()).toEqual([11, 10, 9, 8, 7, 6, 5, 4, 3, 2].map((n) => `notes/${n}.txt`));
-    await openPath("notes/5.txt");
-    expect(recent()).toEqual([5, 11, 10, 9, 8, 7, 6, 4, 3, 2].map((n) => `notes/${n}.txt`));
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('[data-recent-source="notes/9.txt"]')?.click(),
-    );
-    await settle();
-    expect(container.querySelector("[data-source-current] .document-path")?.textContent).toBe("notes/9.txt");
-    expect(recent()[0]).toBe("notes/9.txt");
-    expect(container.querySelector("dialog")).toBeNull();
-    await render("s2");
-    await settle();
-    expect(recent()).toEqual([]);
-    expect(container.querySelector("[data-source-current]")).toBeNull();
-  } finally {
-    spy.mockRestore();
-    await act(async () => root.unmount());
-    container.remove();
-  }
-});
-
 // REQ-UX-d64f086f
-it("moves focus into the Source panel and back to the opener on Escape or Close source", async () => {
+it("moves focus into a document tab, back to the opener on Escape, and to the Chat tab when it closes", async () => {
   const spy = textSources();
   const container = document.createElement("div");
   document.body.append(container);
@@ -529,16 +616,16 @@ it("moves focus into the Source panel and back to the opener on Escape or Close 
   try {
     await act(async () =>
       root.render(
-        createElement(
+        withQueries(
           DocumentViewerProvider,
           { workbenchId: id, scope: "s" },
           createElement(Opener),
-          createElement(SourcePanel),
+          createElement(DocumentTabs, { chat: null }),
         ),
       ),
     );
     const opener = container.querySelector<HTMLButtonElement>("[data-opener]");
-    const panel = () => container.querySelector<HTMLElement>("[data-source-panel]");
+    const panel = () => container.querySelector<HTMLElement>("[data-source-current]");
     opener?.focus();
     await act(async () => opener?.click());
     await settle();
@@ -551,11 +638,9 @@ it("moves focus into the Source panel and back to the opener on Escape or Close 
     await act(async () => opener?.click());
     await settle();
     expect(panel()?.contains(document.activeElement)).toBe(true);
-    await act(async () =>
-      container.querySelector<HTMLButtonElement>('[data-action="close-source"]')?.click(),
-    );
+    await act(async () => container.querySelector<HTMLButtonElement>('[data-action="close-tab"]')?.click());
     expect(container.querySelector("[data-source-current]")).toBeNull();
-    expect(document.activeElement).toBe(opener);
+    expect(document.activeElement?.textContent).toBe("Chat");
   } finally {
     spy.mockRestore();
     await act(async () => root.unmount());
@@ -580,11 +665,11 @@ it("keeps the source open when Escape only ends an IME composition", async () =>
   try {
     await act(async () =>
       root.render(
-        createElement(
+        withQueries(
           DocumentViewerProvider,
           { workbenchId: id, scope: "s" },
           createElement(Opener),
-          createElement(SourcePanel),
+          createElement(DocumentTabs, { chat: null }),
         ),
       ),
     );

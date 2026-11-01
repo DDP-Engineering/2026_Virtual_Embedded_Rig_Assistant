@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-d9d16533"
+
+title = "Remove stored tabs with their session"
+
+status = "active"
+
+requirement = "When the user deletes a session, the desktop app shall remove that session's stored tab record."
+
+verification = "Renderer test: removing a session's record deletes `vera.tabs.<workbenchId>.<sessionId>`, and a save still pending for that session writes nothing; native e2e: deleting a session from its menu removes its record; boundary: the records of other sessions stay."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

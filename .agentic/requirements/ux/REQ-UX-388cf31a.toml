@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-388cf31a"
+
+title = "Show the chat area as Chat and document tabs"
+
+status = "active"
+
+requirement = "While the chat area of a session is shown, the desktop app shall show a tab strip whose first tab, Chat, shows the conversation and has no close button, followed by one tab per open document, each labelled with the document's file name (an artifact's name for an artifact) and titled with its full path."
+
+verification = "Renderer test with the mock API: a session shows only the Chat tab, selected, with no close button; opening datasheets/a.pdf and logs/uart.log adds tabs labelled a.pdf and uart.log titled with their paths; boundary: an artifact tab is labelled with the artifact name."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

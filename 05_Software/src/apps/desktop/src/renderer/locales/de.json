@@ -96,8 +96,7 @@
     "changes": "Änderungen",
     "artifacts": "Artefakte",
     "plan": "Plan",
-    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein.",
-    "source": "Quelle"
+    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein."
   },
   "workbench": {
     "name": "Name des Arbeitsbereichs",
@@ -381,15 +380,7 @@
     "empty": "Keine Dokumente im Index.",
     "noResults": "Keine passenden Dokumente.",
     "pdfError": "Das PDF konnte nicht angezeigt werden. Zum Wiederholen schließen und erneut öffnen.",
-    "previous": "Vorherige Seite",
-    "next": "Nächste Seite",
-    "page": "Seite",
-    "pageCount": "von {{count}}",
-    "zoom": "Zoom",
     "find": "Text suchen",
-    "matches": "{{count}} passende Seiten",
-    "nextMatch": "Nächster Treffer",
-    "citedPages": "Zitierte Seiten {{start}}–{{end}}",
     "status": {
       "pending": "Ausstehend",
       "indexed": "Indiziert",
@@ -405,18 +396,23 @@
       "PROCESSING": "Verarbeitung fehlgeschlagen",
       "NEEDS_OCR": "Kein durchsuchbarer Text; OCR erforderlich"
     },
-    "line": "Zeile",
-    "lineCount": "Zeilen {{start}}–{{end}} von {{count}}",
     "openNamed": "{{path}} öffnen",
-    "previousLines": "Vorherige Zeilen",
-    "nextLines": "Nächste Zeilen",
     "pageText": "Text von Seite {{page}}",
     "slide": "Folie {{number}}",
-    "openExternal": "In Standard-App öffnen",
     "openExternalNamed": "In Standard-App öffnen: {{path}}",
-    "closeSource": "Quelle schließen",
-    "recentSources": "Letzte Quellen",
-    "noSource": "Öffne einen Beleg oder ein Dokument, um es hier zu sehen."
+    "chatTab": "Chat",
+    "tabs": "Geöffnete Dokumente",
+    "closeTab": "{{name}} schließen",
+    "close": "Schließen",
+    "closeOthers": "Andere schließen",
+    "closeRight": "Rechts schließen",
+    "moveLeft": "Nach links verschieben",
+    "moveRight": "Nach rechts verschieben",
+    "tabActions": "Aktionen für {{name}}",
+    "goToLine": "Gehe zu Zeile",
+    "matchOf": "{{current}} von {{total}}",
+    "pageOf": "{{page}} / {{count}}",
+    "pageNumber": "Seite {{page}}"
   },
   "skills": {
     "settings": "Skills-Einstellungen",

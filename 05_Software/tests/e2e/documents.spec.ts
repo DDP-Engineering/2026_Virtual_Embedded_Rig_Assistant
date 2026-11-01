@@ -80,19 +80,18 @@ test("browser Docs and offline PDF/Markdown/text viewer fit all languages, theme
       await expect(docs.locator('.docs-tree [role="status"]')).toBeVisible();
       await expect(docs).toContainText("docs/a.md#h=power");
       await docs.locator(".documents-list button").click();
+      // Documents open as tabs of the chat area (TASK-79f6ffd3).
+      await expect(page.locator('[data-document-tabs] [role="tab"][aria-selected="true"]')).toHaveText(
+        "a.md",
+      );
       await expect(dialog.locator('[data-heading="power"]')).toBeFocused();
       await page.keyboard.press("Escape");
       await expect(dialog).toHaveCount(0);
-      // REQ-UX-b3231a55: the Source tab widens to at most 60% of the window; Docs keeps its cap.
+      // The right panel keeps its cap; documents no longer widen it.
       const right = page.locator("#right-panel");
       const viewport = await page.evaluate(() => innerWidth);
-      await page.locator("#tab-source").click();
       await page.locator('[data-resize="right"]').focus();
       await page.keyboard.press("End");
-      const sourceWidth = (await right.boundingBox())?.width ?? 0;
-      expect(sourceWidth).toBeGreaterThan(viewport * 0.45);
-      expect(sourceWidth).toBeLessThanOrEqual(viewport * 0.6 + 1);
-      await page.locator("#tab-docs").click();
       expect((await right.boundingBox())?.width ?? 0).toBeLessThanOrEqual(viewport * 0.45 + 1);
       await docs.locator("[data-docs-search]").fill("");
       await expect(docs.locator("[data-document]")).toHaveCount(10);
@@ -161,6 +160,8 @@ test("browser Docs and offline PDF/Markdown/text viewer fit all languages, theme
               await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
               await page.keyboard.press("Control+f");
               await expect(dialog.locator("[data-document-search]")).toBeFocused();
+              await page.keyboard.press("Escape");
+              await expect(dialog.locator("[data-document-search]")).toHaveCount(0);
             }
             if (path.endsWith(".pptx")) await expect(dialog.locator("[data-slide]")).toHaveCount(2);
             expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);

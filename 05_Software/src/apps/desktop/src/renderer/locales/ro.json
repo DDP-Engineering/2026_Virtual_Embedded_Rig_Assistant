@@ -96,8 +96,7 @@
     "changes": "Modificări",
     "artifacts": "Artefacte",
     "plan": "Plan",
-    "placeholder": "Conținutul panoului va fi disponibil aici.",
-    "source": "Sursă"
+    "placeholder": "Conținutul panoului va fi disponibil aici."
   },
   "workbench": {
     "name": "Numele spațiului de lucru",
@@ -381,15 +380,7 @@
     "empty": "Nu există documente în index.",
     "noResults": "Niciun document găsit.",
     "pdfError": "PDF-ul nu a putut fi afișat. Închide și redeschide pentru a reîncerca.",
-    "previous": "Pagina anterioară",
-    "next": "Pagina următoare",
-    "page": "Pagină",
-    "pageCount": "din {{count}}",
-    "zoom": "Zoom",
     "find": "Caută text",
-    "matches": "{{count}} pagini găsite",
-    "nextMatch": "Următorul rezultat",
-    "citedPages": "Pagini citate {{start}}–{{end}}",
     "status": {
       "pending": "În așteptare",
       "indexed": "Indexat",
@@ -405,18 +396,23 @@
       "PROCESSING": "Procesare eșuată",
       "NEEDS_OCR": "Fără text căutabil; necesită OCR"
     },
-    "line": "Linie",
-    "lineCount": "Linii {{start}}–{{end}} din {{count}}",
     "openNamed": "Deschide {{path}}",
-    "previousLines": "Liniile anterioare",
-    "nextLines": "Liniile următoare",
     "pageText": "Textul paginii {{page}}",
     "slide": "Diapozitivul {{number}}",
-    "openExternal": "Deschide în aplicația implicită",
     "openExternalNamed": "Deschide în aplicația implicită: {{path}}",
-    "closeSource": "Închide sursa",
-    "recentSources": "Surse recente",
-    "noSource": "Deschide o citare sau un document ca să-l vezi aici."
+    "chatTab": "Chat",
+    "tabs": "Documente deschise",
+    "closeTab": "Închide {{name}}",
+    "close": "Închide",
+    "closeOthers": "Închide celelalte",
+    "closeRight": "Închide la dreapta",
+    "moveLeft": "Mută la stânga",
+    "moveRight": "Mută la dreapta",
+    "tabActions": "Acțiuni pentru {{name}}",
+    "goToLine": "Mergi la linia",
+    "matchOf": "{{current}} din {{total}}",
+    "pageOf": "{{page}} / {{count}}",
+    "pageNumber": "Pagina {{page}}"
   },
   "skills": {
     "settings": "Setări pentru skill-uri",

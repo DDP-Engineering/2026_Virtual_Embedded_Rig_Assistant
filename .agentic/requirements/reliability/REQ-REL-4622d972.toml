@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-4622d972"
+
+title = "Leave out restored tabs whose documents are gone"
+
+status = "active"
+
+requirement = "When a stored tab's document no longer exists (docs.stat reports NOT_FOUND for its workbench path, its download is not listed or its artifact is not listed), the desktop app shall leave that tab out of the restored tabs, select Chat if it was the selected tab and store the record without it."
+
+verification = "Renderer test: a stored record with docs/gone.md (NOT_FOUND) selected and docs/a.md restores Chat and a.md with Chat selected and rewrites the record without docs/gone.md; boundary: a document that exists but fails to load keeps its tab with the error and Retry."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

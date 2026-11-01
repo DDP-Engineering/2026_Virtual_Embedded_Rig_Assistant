@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-67abf562"
+
+title = "Close and move tabs from their context menu"
+
+status = "active"
+
+requirement = "When the user opens a document tab's context menu by right click, Shift+F10 or the context menu key, the desktop app shall offer Close, Close others, Close to the right, Move left and Move right, with Move left disabled on the first document tab, Move right and Close to the right disabled on the last, and shall perform the chosen action on the tab set."
+
+verification = "Renderer test with Chat, a.md, board.txt, a.html: the a.md menu has Move left and the a.html menu has Move right and Close to the right disabled; Close to the right on a.md leaves Chat, a.md; Close others on a.md leaves Chat, a.md; Move right on a.md swaps it with board.txt; Shift+F10 on a focused tab opens the menu; boundary: the Chat tab opens no menu."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

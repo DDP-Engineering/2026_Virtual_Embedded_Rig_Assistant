@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-8a061992"
+
+title = "Restore a session's document tabs"
+
+status = "active"
+
+requirement = "When a session's tabs are first needed in a run, including after an application restart, the desktop app shall reopen the stored tabs in their stored order with the stored selected tab and each document at its stored place."
+
+verification = "Renderer test: a stored record with board.txt (line 251 of a long log) and docs/a.md selected restores Chat, the log and a.md with a.md selected, and selecting the log shows line 251; native e2e restart: a session with two tabs reopens with both after the app restarts; boundary: a session already shown in the run is not restored again over its live tabs."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

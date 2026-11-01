@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-3b6664f9"
+
+title = "Save a session's document tabs in localStorage"
+
+status = "active"
+
+requirement = "When a session's document tabs change (open, close, move or select) or a document's place changes, the desktop app shall store in localStorage under `vera.tabs.<workbenchId>.<sessionId>` a version 1 record with the tabs' targets in order, the selected tab key and each tab's place, at most every 500 ms and when the page is hidden."
+
+verification = "Renderer test with a fake storage: opening two documents, moving one and selecting the other writes a version 1 record with both targets in the new order and the selected key; scrolling a text tab to a new first visible line writes that line place after the throttle; boundary: a session without an id writes nothing and a storage that throws leaves the tabs working."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

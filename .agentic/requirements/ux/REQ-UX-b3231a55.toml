@@ -4,9 +4,9 @@ id = "REQ-UX-b3231a55"
 
 title = "Widen the right panel for sources"
 
-status = "active"
+status = "retired"
 
-requirement = "While the Source tab is selected, the desktop app shall let the user resize the right panel up to 60% of the window width with a width stored separately from the other tabs, which keep their 14-28 rem range and 35% limit."
+requirement = "While the Source tab is selected, the desktop app shall let the user resize the right panel up to 60% of the window width with a width stored separately from the other tabs, which keep their 14-28 rem range and 35% limit. Retired 2026-11-01: documents no longer open in the right panel, so it has no Source width and the user chose tabs in the chat area only."
 
 verification = "Renderer test: with Source selected the resizer reports and accepts the wider range, and switching to Docs restores the other width; browser e2e: the widened Source panel measures more than 45vw and at most 60vw of the window while Docs stays within its cap; layout storage round-trips the source width, and a stored layout without it is invalid and loads the defaults."
 

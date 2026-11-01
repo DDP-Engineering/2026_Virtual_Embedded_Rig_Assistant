@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-e0410483"
+
+title = "Reorder document tabs by dragging"
+
+status = "active"
+
+requirement = "When the user drags a document tab and drops it on another document tab, or on the tab strip after the last tab, the desktop app shall move it before that tab or to the end, keep the Chat tab first and keep the selected tab selected."
+
+verification = "Renderer test with Chat, a.md, board.txt and a.html: dropping a.html on a.md gives Chat, a.html, a.md, board.txt; dropping a.html on the strip end moves it last; the selected tab stays selected; boundary: the Chat tab is not draggable and a drop on Chat moves nothing; native e2e: a real drag of the last citation tab onto the first document tab moves it there."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/citations.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
 import { DocsTab } from "./components/documents/docs-tab.js";
-import { DocumentViewerProvider, SourcePanel } from "./components/documents/viewer-context.js";
+import { DocumentTabs } from "./components/documents/document-tabs.js";
+import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { Plugins } from "./components/plugins.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
@@ -24,6 +25,7 @@ import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 import { ATTACHMENT_LIMIT, addAttachment } from "./lib/attachments.js";
+import { removeTabs } from "./lib/document-tabs-store.js";
 import { ShortcutContext, shortcutCommand } from "./lib/shortcuts.js";
 
 export function App() {
@@ -262,6 +264,16 @@ export function App() {
     },
     [leaveEditor],
   );
+  const clearComposerFocus = useCallback(() => setComposerFocus(undefined), []);
+  // Documents open as tabs of the chat area, so opening one shows it (TASK-79f6ffd3).
+  const revealChat = useCallback(() => {
+    if (!leaveEditor()) return;
+    setChat(true);
+    setSettings(false);
+    setPlugins(false);
+    setNewWorkbench(false);
+    setEditor(undefined);
+  }, [leaveEditor]);
   const showNewWorkbench = useCallback(() => {
     if (!leaveEditor()) return;
     setNewWorkbench(true);
@@ -457,6 +469,7 @@ export function App() {
             remove={(id) =>
               operation(async () => {
                 await api.invoke("session.delete", { sessionId: id });
+                if (benchId) removeTabs(localStorage, benchId, id);
                 if (id === activeSession) {
                   setActiveSession(undefined);
                   try {
@@ -482,7 +495,12 @@ export function App() {
   return (
     <ShortcutContext.Provider value={bindings}>
       <AttachmentsContext.Provider value={attachments}>
-        <DocumentViewerProvider scope={`${benchId}/${activeSession}/${settings}`} workbenchId={benchId ?? ""}>
+        <DocumentViewerProvider
+          scope={`${benchId}/${activeSession ?? ""}`}
+          sessionId={activeSession}
+          workbenchId={benchId ?? ""}
+          reveal={revealChat}
+        >
           <Shell
             settings={settings}
             newSelected={newWorkbench}
@@ -503,7 +521,6 @@ export function App() {
                 <ContextTab workbenchId={benchId} readOnly={readOnly} />
               ) : undefined
             }
-            source={<SourcePanel />}
             docs={
               benchId && !settings ? (
                 <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
@@ -623,14 +640,19 @@ export function App() {
               </div>
             )}
             {chat && !settings && !plugins && benchId && (
-              <SessionWorkspace
-                key={`${benchId}/${activeSession}`}
-                id={activeSession}
-                workbenchId={benchId}
-                changed={changed}
-                readOnly={readOnly}
-                composerFocusRequest={
-                  composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
+              <DocumentTabs
+                chat={
+                  <SessionWorkspace
+                    key={`${benchId}/${activeSession}`}
+                    id={activeSession}
+                    workbenchId={benchId}
+                    changed={changed}
+                    readOnly={readOnly}
+                    composerFocusRequest={
+                      composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
+                    }
+                    composerFocused={clearComposerFocus}
+                  />
                 }
               />
             )}
