@@ -23,20 +23,36 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   batches32 and ranks normalized cosine top50. embed/rank accept root and signal;
   rank accepts vectors or a lazy vector provider evaluated at serialized admission;
   cached tests an epoch/model/filter key; release(root)/dispose terminate/drain.
-- DocumentKnowledge(root,db,embeddingPort?) supplies search(query,k8,hybrid,
-  pathGlob?) and read(path,page/pageEnd,heading,lineStart/lineEnd). Strict schemas
+- DocumentKnowledge(root,db,embeddingPort?,defaults?) supplies search(query,k?,mode?,
+  pathGlob?) and read(path,page/pageEnd,heading,lineStart/lineEnd). Omitted k/mode
+  take the defaults provider (SessionHost.retrieval from workbench.yaml retrieval),
+  else 8/hybrid; explicit arguments win (REQ-FUNC-724d3fcc). Strict schemas
   bound k1..20, query1000 and prevent unknown fields. Results carry ref/path/
   typed locator/snippet<=300/score. Empty index suggests grep; unavailable model
   vectors suggest reindex or keyword/grep.
 - read verifies confined current source SHA256 and reads full persisted extraction.
-  PDF defaults page1; text defaults all lines; headings default first section.
+  PDF defaults page1; text defaults all lines; headings default first section, and
+  `heading: ""` names the untitled text before the first heading. A heading section over
+  the budget is returned in consecutive parts (`part`, default 1, with `part`, `parts`,
+  `truncated`): each part fits 12000 characters and 28000 JSON characters, ends after its
+  last fitting newline unless the next line cannot fit a part by itself (only such an
+  over-budget line is cut, at the largest fitting length and never inside a surrogate pair), parts
+  concatenate to the section, and every part cites the whole section (REQ-FUNC-3b70651a).
+  A part outside 1..parts, or with page/line arguments or a non-section source, is an
+  error naming the range or the heading locator (REQ-FUNC-91405ce5).
+  Presentations read slides through page/pageEnd; documents and spreadsheets read
+  by heading slug (a sheet's slug for spreadsheets); line locators are refused for
+  office kinds (REQ-FUNC-56b34eec).
   Families and bounds are checked; complete ranges shrink to the actual returned
-  ref within12000 characters and JSON budget. Oversized single units fail actionably.
+  ref within12000 characters and JSON budget. Oversized single pages or lines fail actionably.
 - Registry offers both as read-class tools and respects disabled names/permissions.
   SessionService binds the workbench knowledge port. validDocumentRef resolves PDF
-  pages/ranges and Markdown/HTML heading slugs through current guarded source SHA256,
-  indexed metadata and matching persisted extraction bounds independently of output
-  caps. validPdfRef retains the page-only compatibility entrypoint. Shared refs.ts
+  pages/ranges, presentation slides/ranges and Markdown/HTML/document/spreadsheet
+  heading slugs (shared pagedDocumentKinds/sectionDocumentKinds) through current
+  guarded source SHA256, indexed metadata and matching persisted extraction bounds
+  independently of output caps. The empty slug `path#h=` is the untitled leading section
+  of an HTML, document or spreadsheet source; it is never valid for Markdown, whose
+  preamble is cited by line range (REQ-FUNC-2a51bc39, REQ-FUNC-845e3114). validPdfRef retains the page-only compatibility entrypoint. Shared refs.ts
   owns syntax/format/labels; sessions owns successful-tool provenance and current
   text-line/session-artifact validation; transcript chips own presentation.
 - CLI index reindexes a writable workbench and returns document statuses; search
@@ -52,8 +68,16 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   are hash/length verified in the worker; Transformers disables remote loading,
   caches and inference fetch. Pinned q8 CPU ORT uses one thread, CLS/L2 float32
   dim384. Full prefixed inputs including specials must remain below512 tokens.
+- In the desktop app the EmbeddingHost lives in the [indexer process](indexer-process.md);
+  search reaches it through the IndexerHost EmbeddingPort, which sends vectors only when the
+  indexer reports the epoch as not cached (TASK-f09609fd). `embeddingModelId(model)` gives the
+  stored model identity on both sides. A ranking error marked `retry` (indexer stopped or
+  restarting) makes hybrid and semantic search return keyword results with a message saying so.
 - Host admission deadlines include queue time. Abort/deadline/crash/early exit
-  settle active work after termination; subsequent calls replace the worker.
+  settle the caller at once; subsequent calls replace the worker. A worker inside a
+  native ONNX call is retired, not terminated: it is terminated after its reply (or the
+  deadline), and release/dispose wait for that, because terminating ONNX Runtime mid-call
+  ends the whole process with 0xE06D7363 (seen when switching workbenches during indexing).
   Serialized per-root workers cache vectors by epoch/model/filter. Root disposal
   clears cache and drains queued operations before owned resources disappear.
 - Migration3 adds embeddings with FK cascade and full document_extractions.

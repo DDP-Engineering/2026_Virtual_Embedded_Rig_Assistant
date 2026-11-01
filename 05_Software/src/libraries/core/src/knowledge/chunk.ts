@@ -131,6 +131,12 @@ export function chunkDocument(
       }
       if (end === lines.length) break;
     }
+  } else if (extraction.kind === "presentation") {
+    // A slide is the presentation's page: citations and reads address slides by number.
+    extraction.slides.forEach((text, index) => {
+      for (const { part } of split(text, maxChars, "", overlap))
+        if (part.trim()) result.push({ text: part, locator: { type: "page", page: index + 1 } });
+    });
   } else {
     for (const section of extraction.sections) {
       const heading = section.path.join(" > ");

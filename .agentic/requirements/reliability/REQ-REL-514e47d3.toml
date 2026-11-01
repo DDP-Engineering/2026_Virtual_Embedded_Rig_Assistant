@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-514e47d3"
+
+title = "Refuse reordering when settings are read-only"
+
+status = "active"
+
+requirement = "If the user settings are read-only, then VERA shall refuse a workbench or session move with DENIED and keep the stored orders unchanged."
+
+verification = "Core and main tests with read-only settings: a workbench move and a session move each fail with DENIED and the settings stay byte-identical."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/session-order.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts::refuses a workbench move with DENIED when settings are read-only", "05_Software/src/apps/desktop/src/main/session-order.test.ts::refuses a session move with DENIED when settings are read-only"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

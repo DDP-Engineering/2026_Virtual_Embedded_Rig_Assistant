@@ -1,0 +1,2 @@
+{"match":"(?i)office.*sources","toolCalls":[{"name":"read_doc","args":{"path":"docs/bringup.pptx","page":2}},{"name":"read_doc","args":{"path":"docs/review.docx","heading":"reset"}},{"name":"read_doc","args":{"path":"docs/plain.docx"}}]}
+{"text":"Office sources: [[docs/bringup.pptx#p=2]] [[docs/review.docx#h=reset]] [[docs/plain.docx#h=]]. Invalid: [[docs/bringup.pptx#p=9]] [[docs/review.docx#L1-L1]]."}

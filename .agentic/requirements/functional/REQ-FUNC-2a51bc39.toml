@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-2a51bc39"
+
+title = "Issue leading-section refs from search and read"
+
+status = "active"
+
+requirement = "When search_docs or read_doc returns text from the untitled leading section of an indexed HTML or office document source, VERA shall return the ref path#h= instead of the bare path, while Markdown leading sections keep their line-range ref."
+
+verification = "Core search test: an indexed HTML file with text before its first heading and a docx without heading styles return path#h= from keyword search and from read_doc with heading \"\" and with no heading; a Markdown preamble still returns its #L ref."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

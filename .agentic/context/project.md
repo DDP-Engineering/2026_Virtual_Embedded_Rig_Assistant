@@ -26,7 +26,7 @@ Sidebar session/workbench action menus are exclusive. New session reuses an unus
 
 Agent activity presents localized historical per-prompt token consumption and frozen initial context estimates, with shared-batch/unavailable labels, through existing persisted usage events.
 
-[Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New/Open Workbench manages user-selected single-root projects. The sidebar retains pinned workbenches and grouped sessions; the project editor manages supported configuration and local embedding chunk settings. Plugins presents integration availability. Sessions begin with user-composed input.
+[Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New Workbench is a creation-only page that inspects the chosen single-root folder and creates it with a configured draft (instructions, agent, tools, skills, indexing); Open Workbench and the sidebar open, reopen and remove recents. The sidebar retains pinned workbenches and grouped sessions; the workbench editor page shares the creation form and manages supported configuration and local embedding chunk settings. Plugins presents integration availability. Sessions begin with user-composed input.
 
 The workbench Tools editor presents the shared built-in catalog with localized descriptions and enabled checkboxes, persisting exclusions through the current tools.disabled configuration.
 
@@ -43,10 +43,14 @@ prompt index, confined on-demand body/extra reads and localized Skills settings.
 
 [Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document
 selection/hash/limits/status events, reindex and derived-row invalidation through
-the workbench-owned queue shared by desktop and CLI composition.
+the workbench-owned queue shared by desktop and CLI composition. In the desktop app the
+[indexer process](../knowledge/indexer-process.md) runs selection, hashing, extraction, chunking
+and embeddings in the VERA Indexer utility process; main keeps every SQLite write.
 [Retrieval evaluation](../knowledge/retrieval-evaluation.md) supplies the isolated native CPU comparison over frozen demo questions; ADR0015 selects the bundled BGE descriptor and hybrid recall gate.
 [Document extraction](../knowledge/document-extraction.md) supplies cached PDF/text/heading
-extraction, precise chunks/OCR and dedicated PDF worker composition.
+extraction, structured office extraction (docx/odt headings, pptx/odp slides, xlsx/ods sheets;
+legacy doc/ppt/xls and RTF not indexed), precise chunks/OCR and the dedicated document worker
+composition that parses PDFs and office files.
 [Citations](../knowledge/sessions.md) use shared page/range/heading/line/artifact
 syntax, successful tool provenance and current source/session bounds; the
 [transcript](../knowledge/chat-ui.md) presents compact per-kind verified/warning chips.

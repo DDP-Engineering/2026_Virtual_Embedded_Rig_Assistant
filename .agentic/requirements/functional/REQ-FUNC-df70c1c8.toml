@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-df70c1c8"
+
+title = "Move a workbench within its pinned group"
+
+status = "active"
+
+requirement = "When the user moves a listed workbench up or down, VERA shall swap it with the nearest workbench above or below it that has the same pinned state in the stored recent workbench order and persist that order, leaving the order unchanged when no such neighbour exists."
+
+verification = "Core workbench service test with four recents, two pinned: moving the second pinned entry up makes it first; moving the first unpinned entry up does not cross the pinned ones; moving the last entry down changes nothing; the order survives reloading settings."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/ordering.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts::moves a workbench only within its pinned group and keeps its place when opened", "05_Software/src/libraries/shared/src/ordering.test.ts::swaps a recent workbench with its nearest neighbour of the same pinned state", "05_Software/tests/e2e/sidebar-order.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

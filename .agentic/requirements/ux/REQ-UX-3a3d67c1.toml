@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3a3d67c1"
+
+title = "Copy a Docs tree item's path"
+
+status = "active"
+
+requirement = "When the user chooses Copy > Absolute path, Relative path or File name for a Docs tree item, the desktop app shall put that text on the clipboard and say it was copied, and show a failure under the tree."
+
+verification = "Renderer test: each Copy item invokes the copy channel with its form for the row's path; a success shows 'Copied to the clipboard.'; an error reply shows under the tree; native e2e: the three items put the absolute path, the relative path with platform separators and the file name of firmware/main.c on the clipboard."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::copies a Docs tree item's path from the Copy submenu and says so", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

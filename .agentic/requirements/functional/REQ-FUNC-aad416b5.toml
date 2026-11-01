@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-aad416b5"
+
+title = "Reveal a workbench entry in the file manager"
+
+status = "active"
+
+requirement = "When asked to show a workbench entry in the file manager, the desktop app shall pass its absolute path to the system file manager, ignored or not, and refuse links and paths outside the workbench."
+
+verification = "Core test: locating firmware/main.c, the ignored .git/config and the docs folder returns their absolute paths and types; ../x, a Windows alias and a link are refused with DENIED and a missing entry with NOT_FOUND; main unit test: the reveal handler passes that absolute path to the shell; shared contract test."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/openers.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/tree.test.ts::locates an entry, ignored or not, by its absolute path and refuses links and outside paths", "05_Software/src/apps/desktop/src/main/openers.test.ts::reveals an entry, ignored or not, and refuses links and outside paths", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::opens, reveals and copies workbench entries through strict docs channels"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

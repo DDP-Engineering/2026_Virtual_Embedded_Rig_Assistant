@@ -1,12 +1,14 @@
-// REQ-UX-4bea0003 REQ-REL-4bea0004
+// REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-f8ec3a43 REQ-FUNC-47287974
 import { useQuery } from "@tanstack/react-query";
 import type { SessionState } from "@vera/shared";
-import { ArrowUp, Square } from "lucide-react";
+import { ArrowUp, Square, X } from "lucide-react";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
+import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
 import { PermissionPicker } from "../permission-picker.js";
+import { useAttachments } from "./attachments.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
 export function Composer({
@@ -35,6 +37,9 @@ export function Composer({
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
+  // Docs tree entries attached to this session's next message, sent as @path mentions.
+  const attachments = useAttachments();
+  const attached = sessionId ? (attachments?.list(sessionId) ?? []) : [];
   useLayoutEffect(() => {
     const element = input.current;
     if (!element || element.value !== text) return;
@@ -122,12 +127,14 @@ export function Composer({
     });
   }
   async function submit() {
-    if (locked || !text.trim() || submitting.current) return;
+    if (locked || (!text.trim() && !attached.length) || submitting.current) return;
     submitting.current = true;
     const draft = text;
+    const sent = [...attached];
     try {
-      if (await send(draft)) {
+      if (await send(withMentions(draft, sent))) {
         setText((current) => (current === draft ? "" : current));
+        if (sessionId && sent.length) attachments?.clear(sessionId, sent);
         setToken(undefined);
         input.current?.focus();
       }
@@ -137,6 +144,26 @@ export function Composer({
   }
   return (
     <div className="composer">
+      {sessionId && attached.length > 0 && (
+        <ul className="composer-attachments" aria-label={t("chat.attachments")}>
+          {attached.map((path) => (
+            <li key={path} className="attachment-chip" data-attachment={path} title={path}>
+              <span>{path.split("/").at(-1)}</span>
+              <button
+                type="button"
+                aria-label={t("chat.removeAttachment", { path })}
+                onClick={() => {
+                  attachments?.remove(sessionId, path);
+                  // The chip and its button go away; focus stays in the composer.
+                  input.current?.focus();
+                }}
+              >
+                <X aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -254,7 +281,7 @@ export function Composer({
               className="send-control"
               type="submit"
               data-action="send-message"
-              disabled={locked || !text.trim()}
+              disabled={locked || (!text.trim() && !attached.length)}
             >
               <ArrowUp aria-hidden="true" />
               <span className="sr-only">{t("chat.send")}</span>

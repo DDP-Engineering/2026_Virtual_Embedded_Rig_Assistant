@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-541a5bee"
+
+title = "Offer a context menu on Docs tree items"
+
+status = "active"
+
+requirement = "When the user right-clicks a Docs tree item or presses Shift+F10 or the context menu key on it, the desktop app shall show a menu with Open, Attach as context, Open in, Show in Explorer, Copy and Properties, operable with arrow keys, Enter and Escape that returns focus to the item, and the tree rows shall show no buttons."
+
+verification = "Renderer test: right-clicking docs/a.pdf shows Open, Attach as context, Open in, Show in Explorer, Copy and Properties; Open on a file opens it in Source and on a folder expands it; Shift+F10 and the context menu key open the menu with focus on its first item; ArrowDown and ArrowUp wrap, Escape and Tab close it and Escape focuses the row; a press outside closes it; rows contain no buttons."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/documents/open-externally.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::offers Open, Attach as context, Open in, Show in Explorer, Copy and Properties in a context menu instead of row buttons", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::offers Open in default app for allowlisted workbench documents only and shows its errors in place", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

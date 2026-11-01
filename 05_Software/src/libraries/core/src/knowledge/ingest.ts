@@ -1,11 +1,11 @@
-import { createHash } from "node:crypto";
-import { constants, lstatSync, readFileSync } from "node:fs";
-import { lstat, open } from "node:fs/promises";
-import { extname, join, posix, relative, sep } from "node:path";
+import { lstatSync } from "node:fs";
+import { lstat } from "node:fs/promises";
+import { join, relative, sep } from "node:path";
 import {
   type DocumentKind,
   type DocumentReason,
   type DocumentRecord,
+  type DocumentVolume,
   veraError,
   type WorkbenchConfig,
   type WorkbenchEvent,
@@ -13,18 +13,25 @@ import {
 import type Database from "better-sqlite3";
 import { type FSWatcher, watch } from "chokidar";
 import picomatch from "picomatch";
-import { glob } from "tinyglobby";
 import type { DocumentDerived } from "../storage/repos/documents.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
-import { isBinary } from "../tools/binary.js";
-import { validateGlob } from "../tools/discovery.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import type { Chunk } from "./chunk.js";
+import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
+import { documentKind, documentSelection, missing, sourceLimit } from "./kinds.js";
+import {
+  ordinaryFile,
+  readIgnorePolicy,
+  type SelectInput,
+  type Selection,
+  selectDocuments,
+  skipEntry,
+} from "./selection.js";
 
-export const PDF_LIMIT = 100 * 1024 * 1024;
-export const TEXT_LIMIT = 20 * 1024 * 1024;
+export { documentKind, documentSelection, PDF_LIMIT, TEXT_LIMIT } from "./kinds.js";
+
 export interface DocumentInput {
   root: string;
   path: string;
@@ -44,6 +51,10 @@ export interface DocumentResult {
 export type DocumentProcessor = ((input: DocumentInput) => Promise<DocumentResult>) & {
   modelId?: string;
   release?(root: string): Promise<void>;
+  /** Document selection; the desktop app runs it in its indexer process (TASK-f09609fd). */
+  select?(input: SelectInput): Promise<Selection>;
+  /** Source hashing; the desktop app runs it in its indexer process (TASK-f09609fd). */
+  inspect?(input: InspectInput): Promise<SourceInspection>;
 };
 export interface IngestOptions {
   root: string;
@@ -54,71 +65,11 @@ export interface IngestOptions {
   emit: (event: WorkbenchEvent) => void;
   process?: DocumentProcessor;
 }
-const textExtensions = new Set([
-  ".txt",
-  ".log",
-  ".csv",
-  ".tsv",
-  ".json",
-  ".yaml",
-  ".yml",
-  ".xml",
-  ".ini",
-  ".cfg",
-  ".c",
-  ".h",
-  ".cpp",
-  ".hpp",
-  ".cc",
-  ".cxx",
-  ".py",
-  ".js",
-  ".ts",
-  ".tsx",
-  ".jsx",
-  ".rs",
-  ".go",
-  ".java",
-  ".sh",
-  ".conf",
-]);
-export function documentKind(path: string): DocumentKind {
-  const ext = extname(path).toLowerCase();
-  if (ext === ".pdf") return "pdf";
-  if (ext === ".md" || ext === ".markdown") return "markdown";
-  if (ext === ".html" || ext === ".htm") return "html";
-  return textExtensions.has(ext) ? "text" : "other";
-}
-const missing = (error: unknown) =>
-  ["ENOENT", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? "");
-
-/** Match tinyglobby's directory expansion/negation once, for both discovery and admission. */
-function selection(docs: WorkbenchConfig["docs"]): { include: string[]; exclude: string[] } {
-  const include: string[] = [],
-    exclude: string[] = [];
-  const normalize = (pattern: string) => {
-    validateGlob(pattern);
-    let result = pattern.endsWith("/") ? pattern.slice(0, -1) : pattern;
-    if (!result.endsWith("*")) result += "/**";
-    return posix.normalize(result);
-  };
-  for (const pattern of docs.exclude) {
-    if (pattern && (!pattern.startsWith("!") || pattern.startsWith("!("))) exclude.push(normalize(pattern));
-  }
-  for (const pattern of docs.include) {
-    if (!pattern) continue;
-    if (!pattern.startsWith("!") || pattern.startsWith("!(")) include.push(normalize(pattern));
-    else if (!pattern.startsWith("!!") || pattern.startsWith("!!("))
-      exclude.push(normalize(pattern.slice(1)));
-  }
-  return { include, exclude };
-}
-
 /** Literal include prefixes bound recursive monitoring; policy files stay live independently. */
 function watchTargets(root: string, docs: WorkbenchConfig["docs"]): string[] {
   let include: string[] = [];
   try {
-    include = selection(docs).include;
+    include = documentSelection(docs).include;
   } catch {
     // Invalid selection remains a reconcile error; never expand its monitoring outside the root.
   }
@@ -155,31 +106,37 @@ export class Ingester {
   private requested = false;
   private closePromise: Promise<void> | undefined;
   private ignored = createIgnoreRules();
+  private ignoreText = "";
   private patterns = "";
   private matches = (_path: string) => false;
+  private excluded = (_path: string) => false;
+  private selectedVolume: DocumentVolume | null = null;
+  /** Indexer crashes per document content while it was processed (RULING-006). */
+  private readonly crashes = new Map<string, number>();
+  /**
+   * True for a folder the walk and the watcher must not enter, or a file that is no document:
+   * neither is listed further, opened or recorded (TASK-e5310cdb).
+   */
+  private skipped(rel: string, directory: boolean): boolean {
+    return skipEntry(rel, directory, this.ignored, this.excluded);
+  }
   private refreshPolicy(): void {
-    try {
-      const metadata = lstatSync(join(this.options.root, ".vera"));
-      if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw veraError("DENIED");
-      const path = join(this.options.root, ".vera/.veraignore");
-      const info = lstatSync(path);
-      if (!info.isFile() || info.isSymbolicLink()) throw veraError("DENIED");
-      this.ignored = createIgnoreRules(readFileSync(path, "utf8"));
-    } catch (error) {
-      if (missing(error)) this.ignored = createIgnoreRules();
-      else this.ignored = () => true;
-    }
+    const policy = readIgnorePolicy(this.options.root);
+    this.ignoreText = policy.text;
+    this.ignored = policy.ignored;
     const docs = this.options.config().docs;
     const key = JSON.stringify([docs.include, docs.exclude]);
     if (key === this.patterns) return;
     this.patterns = key;
     try {
-      const patterns = selection(docs);
+      const patterns = documentSelection(docs);
       const include = picomatch(patterns.include, { dot: true, posix: true });
       const exclude = picomatch(patterns.exclude, { dot: true, posix: true });
       this.matches = (path) => include(path) && !exclude(path);
+      this.excluded = (path) => exclude(path);
     } catch {
       this.matches = () => false;
+      this.excluded = () => false;
     }
   }
 
@@ -187,6 +144,7 @@ export class Ingester {
     this.rows = new DocumentsRepository(options.db);
     this.refreshPolicy();
     this.targets = watchTargets(options.root, options.config().docs);
+    this.watchKey = this.watcherKey(this.targets);
     const initial = this.createWatcher(this.targets);
     this.watcher = initial.watcher;
     this.ready = initial.ready;
@@ -197,11 +155,10 @@ export class Ingester {
     ready: Promise<void>;
     cancelReady: () => void;
   } {
-    const ignored = createIgnoreRules();
     const watcher = watch(targets, {
       ignoreInitial: true,
       followSymlinks: false,
-      ignored: (path) => {
+      ignored: (path, stats) => {
         const rel = relative(this.options.root, path).split(sep).join("/");
         const policyPath = process.platform === "win32" ? rel.toLowerCase() : rel;
         if (
@@ -210,7 +167,12 @@ export class Ingester {
           policyPath === ".vera/workbench.yaml"
         )
           return false;
-        return !!rel && ignored(rel);
+        if (!rel || targets.includes(path)) return false;
+        // Excluded folders are never registered, so their contents are not walked or watched.
+        if (stats?.isDirectory()) return this.skipped(rel, true);
+        if (stats?.isFile()) return this.skipped(rel, false);
+        // Type not known yet: only skip what is ignored both as a file and as a folder.
+        return this.ignored(rel) && this.ignored(`${rel}/`);
       },
     });
     let settleReady = () => {};
@@ -242,9 +204,16 @@ export class Ingester {
     };
     return { watcher, ready, cancelReady };
   }
+  private watchKey = "";
+  /** Targets plus the pruning policy: a policy change re-registers newly allowed folders. */
+  private watcherKey(targets: string[]): string {
+    return JSON.stringify([targets, this.ignoreText, this.patterns]);
+  }
   private refreshWatcher(): void {
     const next = watchTargets(this.options.root, this.options.config().docs);
-    if (JSON.stringify(next) === JSON.stringify(this.targets)) return;
+    const key = this.watcherKey(next);
+    if (key === this.watchKey) return;
+    this.watchKey = key;
     this.targets = next;
     this.watcherUpdates = this.watcherUpdates
       .then(async () => {
@@ -303,12 +272,14 @@ export class Ingester {
   reindex(): Promise<void> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
     return this.queue.run(async () => {
+      // Select first: a stopped indexer must not leave an emptied index behind.
+      const selection = await this.selected();
       const removed = this.rows.list();
       this.mutation(() => {
         for (const row of removed) this.rows.remove(row.path);
       });
       for (const row of removed) this.emit({ type: "index.document", path: row.path, document: null });
-      await this.reconcile();
+      await this.reconcile(selection);
     });
   }
   async waitIdle(): Promise<void> {
@@ -326,46 +297,35 @@ export class Ingester {
     }
     await this.queue.drain();
   }
-  private async selected(): Promise<{ guard: PathGuard; paths: string[] }> {
+  private async selected(): Promise<{ guard: PathGuard; paths: string[]; bytes: number }> {
     const guard = await PathGuard.create(this.options.root);
-    const { include, exclude } = selection(this.options.config().docs);
-    const paths = include.length
-      ? await glob(include, {
-          cwd: this.options.root,
-          ignore: exclude,
-          dot: true,
-          onlyFiles: true,
-          followSymbolicLinks: false,
-          expandDirectories: false,
-        })
-      : [];
-    const allowed: string[] = [];
-    for (const path of paths.sort()) {
-      if (this.closed) break;
-      try {
-        await this.ordinary(guard, path);
-        allowed.push(path);
-      } catch (error) {
-        if (missing(error)) this.request();
-      }
-    }
-    return { guard, paths: allowed };
+    const select = this.options.process?.select ?? selectDocuments;
+    const selection = await select({
+      root: this.options.root,
+      docs: this.options.config().docs,
+      signal: this.abort.signal,
+    });
+    if (selection.retry) this.request();
+    return {
+      guard,
+      paths: selection.paths.map((entry) => entry.path),
+      bytes: selection.paths.reduce((sum, entry) => sum + entry.size, 0),
+    };
+  }
+  /** The last selection's document count and source bytes; null before the first one. */
+  volume(): DocumentVolume | null {
+    return this.selectedVolume && { ...this.selectedVolume };
   }
   /** Unlike tool reads, ingest follows no file/directory aliases, even within the root. */
   private async ordinary(guard: PathGuard, path: string) {
-    const target = await guard.resolve(path);
-    const parts = path.split("/");
-    for (let n = 1; n <= parts.length; n++) {
-      const info = await lstat(join(this.options.root, ...parts.slice(0, n)));
-      if (info.isSymbolicLink() || (n < parts.length ? !info.isDirectory() : !info.isFile()))
-        throw veraError("DENIED");
-    }
-    return target;
+    return (await ordinaryFile(this.options.root, guard, path)).target;
   }
-  private async reconcile(): Promise<void> {
+  private async reconcile(selection?: Awaited<ReturnType<Ingester["selected"]>>): Promise<void> {
     this.options.assertWritable();
-    const { guard, paths } = await this.selected();
+    const { guard, paths, bytes } = selection ?? (await this.selected());
     if (this.closed) return;
+    this.selectedVolume = { files: paths.length, bytes };
+    this.emit({ type: "index.volume", files: paths.length, bytes });
     const fingerprint = JSON.stringify(this.options.config().embeddings);
     const previous = this.options.db
       .prepare("SELECT value FROM meta WHERE key='indexing_config'")
@@ -432,7 +392,7 @@ export class Ingester {
       const target = await this.ordinary(guard, path);
       const before = await lstat(target.absolute);
       record = { ...record, bytes: before.size, mtime: before.mtime.toISOString() };
-      if (before.size > (kind === "pdf" ? PDF_LIMIT : TEXT_LIMIT)) {
+      if (before.size > sourceLimit(kind)) {
         if (
           old?.status !== "unsupported" ||
           old.error !== "SIZE_LIMIT" ||
@@ -442,41 +402,22 @@ export class Ingester {
           this.publish({ ...record, status: "unsupported", error: "SIZE_LIMIT" }, true);
         return "unsupported";
       }
-      const handle = await open(target.absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
-      const hash = createHash("sha256");
-      let binary = false;
-      try {
-        const opened = await handle.stat();
-        if (!opened.isFile() || opened.ino !== before.ino || opened.dev !== before.dev) {
-          this.request();
-          return "pending";
-        }
-        const buffer = Buffer.alloc(64 * 1024);
-        let bytes = 0;
-        for (;;) {
-          this.abort.signal.throwIfAborted();
-          const read = await handle.read(buffer, 0, buffer.length, null);
-          if (!read.bytesRead) break;
-          if (bytes === 0 && kind !== "pdf" && kind !== "other")
-            binary = isBinary(buffer.subarray(0, read.bytesRead));
-          bytes += read.bytesRead;
-          if (bytes > (kind === "pdf" ? PDF_LIMIT : TEXT_LIMIT)) {
-            this.request();
-            return "pending";
-          }
-          hash.update(buffer.subarray(0, read.bytesRead));
-        }
-        const after = await handle.stat();
-        if (
-          after.size !== before.size ||
-          after.mtimeMs !== before.mtimeMs ||
-          after.ctimeMs !== before.ctimeMs
-        ) {
-          this.request();
-          return "pending";
-        }
-      } finally {
-        await handle.close();
+      // Selection admits documents only; a stray other path is recorded without being read.
+      if (kind === "other") {
+        this.publish({ ...record, status: "unsupported", error: "TYPE_UNSUPPORTED" }, true);
+        return "unsupported";
+      }
+      const inspect = this.options.process?.inspect ?? inspectSource;
+      const inspection = await inspect({
+        root: this.options.root,
+        path,
+        kind,
+        identity: { ino: before.ino, dev: before.dev },
+        signal: this.abort.signal,
+      });
+      if (inspection.status === "changed") {
+        this.request();
+        return "pending";
       }
       await this.ordinary(guard, path);
       const final = await lstat(target.absolute);
@@ -490,7 +431,13 @@ export class Ingester {
         this.request();
         return "pending";
       }
-      record.sha256 = hash.digest("hex");
+      record.sha256 = inspection.sha256;
+      // A document that crashed the indexer twice stays failed until its content changes.
+      if ((this.crashes.get(`${path}\n${record.sha256}`) ?? 0) >= 2) {
+        if (old?.status !== "failed" || old.sha256 !== record.sha256)
+          this.publish({ ...record, status: "failed", error: "PROCESSING" }, true);
+        return "failed";
+      }
       if (
         old?.sha256 === record.sha256 &&
         old.kind === kind &&
@@ -509,11 +456,7 @@ export class Ingester {
         )
       )
         return old.status;
-      if (kind === "other") {
-        this.publish({ ...record, status: "unsupported", error: "TYPE_UNSUPPORTED" }, true);
-        return "unsupported";
-      }
-      if (binary) {
+      if (inspection.binary) {
         this.publish({ ...record, status: "unsupported", error: "BINARY" }, true);
         return "unsupported";
       }
@@ -569,7 +512,18 @@ export class Ingester {
       return result.status;
     } catch (error) {
       if (this.closed) return "pending";
-      if (missing(error)) {
+      // A lost indexer process is retried by the next reconciliation (TASK-f09609fd).
+      const lost = error as { retry?: unknown; crashed?: unknown } | null;
+      if (lost?.crashed === true && record.sha256) {
+        const key = `${path}\n${record.sha256}`;
+        const count = (this.crashes.get(key) ?? 0) + 1;
+        this.crashes.set(key, count);
+        if (count >= 2) {
+          this.publish({ ...record, status: "failed", error: "PROCESSING" }, true);
+          return "failed";
+        }
+      }
+      if (missing(error) || lost?.retry === true) {
         this.request();
         return "pending";
       }

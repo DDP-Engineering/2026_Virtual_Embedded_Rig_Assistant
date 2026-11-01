@@ -171,6 +171,7 @@ export async function runTurn(
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
+      retrieval: snapshot.config.retrieval,
       disabledTools: [...snapshot.config.tools.disabled, ...unavailableWebTools(config.webAccess)],
       maxToolCallsPerTurn: config.limits.maxToolCallsPerTurn,
       model: () => model,

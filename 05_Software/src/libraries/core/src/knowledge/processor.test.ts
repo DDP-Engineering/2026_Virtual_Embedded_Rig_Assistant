@@ -8,12 +8,13 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { workbenchSchema } from "@vera/shared";
 import { build } from "esbuild";
+import { strToU8, zipSync } from "fflate";
 import { afterEach, expect, it } from "vitest";
 import { openDb } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { type DocumentInput, Ingester } from "./ingest.js";
 import { createDocumentProcessor } from "./processor.js";
-import { createPdfExtractor } from "./worker-host.js";
+import { createOfficeExtractor, createPdfExtractor } from "./worker-host.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
 const cleanup: (() => Promise<unknown>)[] = [];
@@ -72,6 +73,10 @@ async function compiledPdf(root: string) {
       },
     ],
     target: "node24",
+    // Bundled CommonJS office parsers require Node built-ins from this ESM worker.
+    banner: {
+      js: 'import { createRequire as bannerRequire } from "node:module"; const require = bannerRequire(import.meta.url);',
+    },
   });
   return createPdfExtractor(pathToFileURL(entry));
 }
@@ -390,3 +395,90 @@ it("rejects redirected cache directories and hardlinked cache files without touc
   await expect(processor(doc)).rejects.toThrow(/unsafe/);
   expect(await readFile(cache)).toEqual(saved);
 });
+
+/** End records only: a zip64 directory at offset 0 that declares 2^32-1 entries. */
+function zip64EntryBomb() {
+  const bytes = new Uint8Array(56 + 20 + 22);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, 0x06064b50, true);
+  view.setUint32(32, 0xffffffff, true);
+  view.setUint32(56, 0x07064b50, true);
+  view.setUint32(76, 0x06054b50, true);
+  view.setUint16(76 + 8, 0xffff, true);
+  view.setUint32(76 + 16, 0xffffffff, true);
+  return bytes;
+}
+// REQ-SEC-58c879e8 REQ-REL-7a48f161 REQ-FUNC-bc730650
+it("parses office files in the compiled document worker and maps its limit and parse failures", async () => {
+  const root = await fixtureRoot();
+  await compiledPdf(root);
+  const processor = createDocumentProcessor(
+    noPdf,
+    undefined,
+    createOfficeExtractor(pathToFileURL(join(root, "pdf-worker.mjs")), 5000),
+  );
+  const office = (name: string) => readFile(join(software, "tests/fixtures/documents/office", name));
+  const deck = await processor({
+    ...(await input(root, "docs/bringup.pptx", await office("bringup.pptx"))),
+    kind: "presentation",
+  });
+  expect(deck).toMatchObject({ status: "indexed", pages: 2 });
+  expect(
+    deck.chunks?.some((c) => c.locator.type === "page" && c.locator.page === 2 && c.text.includes("3.29 V")),
+  ).toBe(true);
+  // The guard stops at the entry limit instead of walking every declared entry until the deadline.
+  expect(
+    await processor({ ...(await input(root, "docs/bomb.xlsx", zip64EntryBomb())), kind: "spreadsheet" }),
+  ).toEqual({ status: "failed", reason: "SIZE_LIMIT" });
+  const docx = await office("review.docx");
+  await expect(
+    processor({
+      ...(await input(root, "docs/half.docx", docx.subarray(0, docx.length / 2))),
+      kind: "document",
+    }),
+  ).rejects.toThrow("Office processing failed.");
+}, 30000);
+
+// REQ-REL-7a48f161 REQ-FUNC-81dbc6fc
+it("extracts malformed repeats and sparse wide rows in a small worker heap without padding blowups", async () => {
+  const root = await fixtureRoot();
+  await compiledPdf(root);
+  // A 256 MB heap fails fast if a sheet pads cells without bound, instead of hanging the test host.
+  const processor = createDocumentProcessor(
+    noPdf,
+    undefined,
+    createOfficeExtractor(pathToFileURL(join(root, "pdf-worker.mjs")), 5000, { maxOldGenerationSizeMb: 256 }),
+  );
+  const ns =
+    'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"';
+  const ods = zipSync({
+    mimetype: [strToU8("application/vnd.oasis.opendocument.spreadsheet"), { level: 0 }],
+    "content.xml": strToU8(
+      `<office:document-content ${ns}><office:body><office:spreadsheet><table:table table:name="Odd"><table:table-row table:number-rows-repeated="-2"><table:table-cell table:number-columns-repeated="0.5"/><table:table-cell table:number-columns-repeated="-1"/><table:table-cell office:value-type="string"><text:p>kept</text:p></table:table-cell></table:table-row></table:table></office:spreadsheet></office:body></office:document-content>`,
+    ),
+  });
+  const odd = await processor({ ...(await input(root, "docs/odd.ods", ods)), kind: "spreadsheet" });
+  expect(odd).toMatchObject({ status: "indexed" });
+  expect(odd.chunks?.map((c) => c.text).join("\n")).toContain("\t\tkept");
+  const R = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const rels = (target: string, type: string) =>
+    strToU8(
+      `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${type}" Target="${target}"/></Relationships>`,
+    );
+  const empty = Array.from({ length: 20000 }, (_, n) => `<row r="${n + 2}"><c r="XFD${n + 2}"/></row>`).join(
+    "",
+  );
+  const xlsx = zipSync({
+    "_rels/.rels": rels("xl/workbook.xml", "officeDocument"),
+    "xl/workbook.xml": strToU8(
+      `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ${R}><sheets><sheet name="Sparse" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    ),
+    "xl/_rels/workbook.xml.rels": rels("worksheets/sheet1.xml", "worksheet"),
+    "xl/worksheets/sheet1.xml": strToU8(
+      `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>only value</t></is></c></row>${empty}</sheetData></worksheet>`,
+    ),
+  });
+  const sparse = await processor({ ...(await input(root, "docs/sparse.xlsx", xlsx)), kind: "spreadsheet" });
+  expect(sparse).toMatchObject({ status: "indexed" });
+  expect(sparse.chunks?.map((c) => c.text).join("\n")).toContain("only value");
+}, 30000);

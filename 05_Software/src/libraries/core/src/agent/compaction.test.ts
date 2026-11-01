@@ -227,6 +227,39 @@ it("retains structured refs across repeated cached summaries and invalidates cha
   );
 });
 
+// A restarted session meets its whole history at once, without a cached summary.
+it("compacts a long history in a few passes when one summary is not enough", async () => {
+  const summarize = vi.fn(async () => summary());
+  const history = Array.from({ length: 5 }, exchange).flat();
+  const view = await new ContextCompactor().prepare(
+    request([...history, { role: "user", content: "Continue using 3.3V", timestamp: 9 }]),
+    caps,
+    policy,
+    summarize,
+  );
+  expect(view.compactionStatus).toBe("completed");
+  expect(view.fits).toBe(true);
+  // Each exchange here takes half the budget, so every pass covers one: four passes for five.
+  expect(summarize).toHaveBeenCalledTimes(4);
+  // A later pass summarizes the earlier summary together with the next exchanges.
+  expect(JSON.stringify(summarize.mock.calls.at(1)?.at(0))).toContain("Derived historical context");
+  // Only the last pass's note stays in the request.
+  expect(JSON.stringify(view.messages).match(/Derived historical context/g)).toHaveLength(1);
+});
+
+it("stops after five summary passes even when the history still does not fit", async () => {
+  const summarize = vi.fn(async () => summary());
+  const history = Array.from({ length: 30 }, exchange).flat();
+  const view = await new ContextCompactor().prepare(
+    request([...history, { role: "user", content: "Continue", timestamp: 9 }]),
+    caps,
+    policy,
+    summarize,
+  );
+  expect(summarize).toHaveBeenCalledTimes(5);
+  expect(view.fits).toBe(false);
+});
+
 it("reuses summaries across advancing clocks while retaining interrupted history", async () => {
   const compactor = new ContextCompactor();
   const summarize = vi.fn(async () => summary());

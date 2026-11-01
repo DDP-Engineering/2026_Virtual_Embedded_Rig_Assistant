@@ -211,8 +211,10 @@ test("approved edit appears live with exact counts and recorded diff surviving n
     rig = await launch(root, folder);
     closed = false;
     page = await rig.app.firstWindow();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await expect(page.locator(`[data-session="${id}"][aria-current="page"]`)).toBeVisible();
+    // Reopening shows the overview; the engineer opens the restored session from the sidebar.
+    await page.locator(`[data-session="${id}"]`).click();
     await page.getByRole("tab", { name: "Changes", exact: true }).click();
     const restored = page.locator("#panel-changes");
     await expect(restored.locator("[data-change]")).toHaveCount(1);
@@ -284,7 +286,7 @@ test.describe("browser changes", () => {
       });
 
       await page.goto("http://127.0.0.1:5173/?mock=chat");
-      await page.locator('[data-action="open-recent"]').click();
+      await page.locator("[data-workbench-entry] .workbench-group-name").click();
       await page.locator('[data-action="new-session"]').click();
       const input = page.getByRole("textbox", { name: "Message", exact: true });
       await expect(input).toBeEnabled();

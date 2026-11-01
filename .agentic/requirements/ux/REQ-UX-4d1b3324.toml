@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-4d1b3324"
+
+title = "Show the properties of a Docs tree item"
+
+status = "active"
+
+requirement = "When the user chooses Properties for a Docs tree item, the desktop app shall show its path, type, size and modified time, and for an indexed document its index status, reason and pages, for an entry ignored by VERA that it is ignored, and for a folder the number of indexed documents beneath it."
+
+verification = "Renderer test with the mock API: Properties of docs/a.pdf shows its path, size, modified time, Indexed and 2 pages; of docs/failed.pdf its Failed status and reason; of .git/config 'Ignored by VERA' as its index status; of the docs folder its 9 indexed documents; Escape or Close dismisses it and returns focus to the row; locales en/ro/de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/tree-properties.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::shows the properties of documents, other files and folders", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-b7002720"
+
+title = "Show what the documentation selection will index"
+
+status = "active"
+
+requirement = "While the Documents section is shown, the desktop app shall state how many files and how much data the current selection will index, and how many matched legacy Office and RTF documents are not indexed, updating the statement after the selection changes."
+
+verification = "Renderer test: the preview line shows the mock counts and changes after a folder is unchecked; native e2e checks the line after choosing a folder with documents."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

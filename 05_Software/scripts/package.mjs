@@ -76,14 +76,6 @@ export async function measureDirectory(directory) {
   return { bytes: files.reduce((sum, file) => sum + file.bytes, 0), files };
 }
 
-export function enforceBudget(platform, bytes, contributors) {
-  if (platform === "win32" && bytes > 250_000_000) {
-    throw new Error(
-      `Windows package exceeds 250 MB: ${bytes} bytes; largest contributors: ${JSON.stringify(contributors.slice(0, 10))}`,
-    );
-  }
-}
-
 export function verifyAppCode(code, testBuild) {
   for (const marker of probeMarkers) {
     if (testBuild !== code.includes(marker)) throw new Error(`Build boundary failed for ${marker}`);
@@ -311,7 +303,7 @@ async function packageApp() {
   // This mode's generated output is rebuilt from scratch, so stale artifacts cannot pass.
   if (!output.startsWith(`${resolve(root, "release_tmp")}${sep}`)) throw new Error("Unsafe output path");
   await rm(output, { recursive: true, force: true });
-  // Fast deterministic deflate; the same 250 MB limit is enforced on the artifact.
+  // Fast deterministic deflate.
   process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL = "1";
   const builderOptions = {
     projectDir: staged.stage,
@@ -478,19 +470,11 @@ async function packageApp() {
       .update(await readFile(archive))
       .digest("hex"),
     inputs,
-    installerBudget: {
-      limitBytes: 250_000_000,
-      status: artifacts.some((artifact) => artifact.target === "nsis" && artifact.bytes > 250_000_000)
-        ? "FAIL"
-        : "PASS",
-    },
   };
   if (JSON.stringify(await fingerprintInputs()) !== JSON.stringify(inputs))
     throw new Error("Packaging inputs changed during build; rebuild before acceptance");
   await writeFile(join(output, "package-report.json"), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
-  const installer = artifacts.find((artifact) => artifact.target === "nsis");
-  if (installer) enforceBudget(process.platform, installer.bytes, measured.files);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await packageApp();

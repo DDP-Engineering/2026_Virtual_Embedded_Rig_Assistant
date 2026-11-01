@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-7871b582"
+
+title = "Order the sessions of a workbench as the user arranged them"
+
+status = "active"
+
+requirement = "When the user moves a non-archived session of the active workbench up or down, VERA shall persist the resulting order of that workbench's session ids in the user settings and list its sessions in that order, with sessions absent from the stored order first, newest first, and ids of deleted sessions dropped."
+
+verification = "Main/core test: with three sessions, moving the oldest up twice lists it first; a session created afterwards is listed first; deleting a session removes its id from the stored order on the next move; archived sessions keep their own group and are not moved; the order is kept per workbench."
+
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/ordering.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-order.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/ordering.test.ts", "05_Software/src/apps/desktop/src/main/session-order.test.ts::persists the order per workbench in user settings and lists new sessions first", "05_Software/tests/e2e/sidebar-order.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-64738341"
+
+title = "Show extracted office text in the document viewer"
+
+status = "active"
+
+requirement = "When an office document is opened in the document viewer, the desktop app shall show its extracted text, as slides titled by number with the cited slide in view for presentations, and as sections with the cited heading in view for documents and spreadsheets."
+
+verification = "Renderer test with the mock API: opening a presentation ref at slide 2 shows every slide's text and scrolls slide 2 into view; a document heading ref shows the sections and focuses the heading; native e2e opens a cited pptx slide."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/main/document-viewer.ts", "05_Software/src/libraries/core/src/knowledge/viewer.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/mocks/documents.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/main/document-viewer.test.ts", "05_Software/src/libraries/core/src/knowledge/viewer.test.ts", "05_Software/tests/e2e/office-documents.spec.ts", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-9be5fd96"
+
+title = "Open the leading section in the viewer"
+
+status = "active"
+
+requirement = "When a path#h= reference is opened in the document viewer, the desktop app shall show the source's sections with the untitled leading section marked current, scrolled into view and focused."
+
+verification = "Core viewer test opens an HTML preamble with #h= and anchor \"\" and rejects #h= for a source without a leading section; renderer test with the mock API focuses the leading section; native e2e opens a cited #h= chip from a headingless docx."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/viewer.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/documents.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/viewer.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/tests/e2e/office-documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-362ebed9"
+
+title = "Select documents in the indexer process"
+
+status = "active"
+
+requirement = "When reconciliation needs the document selection, VERA shall compute the selected paths and their sizes in the indexer process, applying the same include, exclude, ignore and document-type rules as before."
+
+verification = "Main test: the host sends the selection request with the workbench root and docs patterns and returns the indexer's paths and sizes; core test: reconciliation uses a supplied select port and its scripted result; the indexer's selectDocuments reads the .veraignore policy itself and keeps the core selection tests passing."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/selection.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/apps/desktop/src/main/indexer-process.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::selects and inspects documents through the processor's ports when they are supplied", "05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

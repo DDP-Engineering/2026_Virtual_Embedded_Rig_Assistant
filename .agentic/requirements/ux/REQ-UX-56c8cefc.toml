@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-56c8cefc"
+
+title = "Prefill workbench name from chosen folder"
+
+status = "active"
+
+requirement = "When a folder is chosen on the New Workbench page while the name field is empty, the desktop app shall fill the name field with the folder's final path segment, and shall keep a name the engineer already typed."
+
+verification = "Renderer/mock e2e: choose folder with empty name, assert name equals folder basename; type a name first, choose folder, assert typed name kept."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

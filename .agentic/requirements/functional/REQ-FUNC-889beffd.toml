@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-889beffd"
+
+title = "List the entries of a workbench folder"
+
+status = "active"
+
+requirement = "When the Docs tree asks for a folder of the active workbench, VERA shall return its entries with folders first and then files, each sorted by name, excluding links, marking as ignored the entries hidden from the agent and the index by the .vera, .git, node_modules and .veraignore rules and every entry inside an ignored folder, up to 5,000 entries with a flag when more exist."
+
+verification = "Core test: the workbench root lists .git, .vera, node_modules and a .veraignore'd folder as ignored and the other folders and files as not ignored, folders first in name order, without a symlink or junction; listing .git returns its entries, all ignored; a path outside the workbench, through a link or a Windows alias is refused; 5,001 files return 5,000 entries and the truncated flag; shared contract test requires the ignored flag."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/tree.test.ts::lists every entry but links, folders first, in natural name order, marking ignored ones", "05_Software/src/libraries/core/src/workbench/tree.test.ts::caps a folder at 5,000 entries and says so", "05_Software/src/libraries/core/src/workbench/tree.test.ts::refuses Windows aliases that would reach hidden or ignored entries", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::lists, finds and reads workbench files through strict docs channels", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

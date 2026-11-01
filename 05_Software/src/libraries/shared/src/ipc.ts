@@ -3,10 +3,16 @@ import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import {
+  docsEntryPropertiesSchema,
+  docsOpenerSchema,
   docsScopeSchema,
+  docsSystemAppSchema,
+  docsTreeEntrySchema,
   documentOpenSchema,
   documentSchema,
   documentSearchHitSchema,
+  documentVolumeSchema,
+  indexerStateSchema,
   viewerContentSchema,
 } from "./documents.js";
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
@@ -51,11 +57,30 @@ import {
 } from "./web-access.js";
 import {
   configSnapshotSchema,
+  documentPreviewSchema,
+  documentScanSchema,
   pinnedSchema,
   workbenchIdSchema,
   workbenchPatchSchema,
   workbenchSnapshotSchema,
 } from "./workbench.js";
+
+/** What the New Workbench page learns about a chosen folder before creating anything in it. */
+export const workbenchInspectionSchema = z.strictObject({
+  folder: z.string().min(1),
+  name: z.string(),
+  existing: z.boolean(),
+  instructions: z.string().nullable(),
+  skills: z.array(skillSummarySchema).max(2048),
+});
+export type WorkbenchInspection = z.infer<typeof workbenchInspectionSchema>;
+export const workbenchCreateSchema = z.strictObject({
+  folder: z.string().min(1),
+  name: z.string().trim().min(1).max(80),
+  config: workbenchPatchSchema.omit({ name: true }).optional(),
+  instructions: z.string().optional(),
+});
+export type WorkbenchCreate = z.input<typeof workbenchCreateSchema>;
 
 export function defineChannel<const Name extends string, Req extends z.ZodType, Res extends z.ZodType>(
   name: Name,
@@ -129,6 +154,68 @@ export const channels = {
     docsScopeSchema,
     docsScopeSchema.extend({ documents: z.array(documentSchema) }),
   ),
+  "docs.tree": defineChannel(
+    "docs.tree",
+    docsScopeSchema.extend({ path: z.string().max(4096) }),
+    docsScopeSchema.extend({
+      path: z.string().max(4096),
+      entries: z.array(docsTreeEntrySchema).max(5000),
+      truncated: z.boolean(),
+    }),
+  ),
+  "docs.find": defineChannel(
+    "docs.find",
+    docsScopeSchema.extend({ query: z.string().trim().min(1).max(200) }),
+    docsScopeSchema.extend({ paths: z.array(z.string().min(1)).max(200), truncated: z.boolean() }),
+  ),
+  "docs.read": defineChannel(
+    "docs.read",
+    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    docsScopeSchema.extend({ content: viewerContentSchema }),
+  ),
+  "docs.stat": defineChannel(
+    "docs.stat",
+    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    docsScopeSchema.extend({ properties: docsEntryPropertiesSchema }),
+  ),
+  "docs.openers": defineChannel(
+    "docs.openers",
+    z.strictObject({}),
+    z.strictObject({ apps: z.array(docsOpenerSchema).max(5) }),
+  ),
+  "docs.openWith": defineChannel(
+    "docs.openWith",
+    docsScopeSchema.extend({ path: z.string().min(1).max(4096), app: docsOpenerSchema }),
+    z.strictObject({}),
+  ),
+  "docs.systemApps": defineChannel(
+    "docs.systemApps",
+    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    z.strictObject({ apps: z.array(docsSystemAppSchema).max(50) }),
+  ),
+  "docs.openSystemApp": defineChannel(
+    "docs.openSystemApp",
+    docsScopeSchema.extend({ path: z.string().min(1).max(4096), app: docsSystemAppSchema.shape.id }),
+    z.strictObject({}),
+  ),
+  "docs.reveal": defineChannel(
+    "docs.reveal",
+    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    z.strictObject({}),
+  ),
+  "docs.copyPath": defineChannel(
+    "docs.copyPath",
+    docsScopeSchema.extend({
+      path: z.string().min(1).max(4096),
+      form: z.enum(["absolute", "relative", "name"]),
+    }),
+    z.strictObject({}),
+  ),
+  "docs.volume": defineChannel(
+    "docs.volume",
+    docsScopeSchema,
+    docsScopeSchema.extend({ volume: documentVolumeSchema.nullable() }),
+  ),
   "docs.search": defineChannel(
     "docs.search",
     docsScopeSchema.extend({ query: z.string().trim().min(1).max(1000) }),
@@ -140,6 +227,12 @@ export const channels = {
     docsScopeSchema.extend({ content: viewerContentSchema }),
   ),
   "docs.reindex": defineChannel("docs.reindex", docsScopeSchema.partial(), z.strictObject({})),
+  "indexer.status": defineChannel(
+    "indexer.status",
+    z.strictObject({}),
+    z.strictObject({ state: indexerStateSchema }),
+  ),
+  "indexer.restart": defineChannel("indexer.restart", z.strictObject({}), z.strictObject({})),
   "downloads.list": defineChannel(
     "downloads.list",
     docsScopeSchema,
@@ -149,6 +242,12 @@ export const channels = {
     "downloads.open",
     docsScopeSchema.extend({ downloadId: downloadIdSchema }),
     docsScopeSchema.extend({ downloadId: downloadIdSchema, content: viewerContentSchema }),
+  ),
+  // Shows a stored download of the open workbench in the file manager; main resolves the path.
+  "downloads.reveal": defineChannel(
+    "downloads.reveal",
+    z.strictObject({ downloadId: downloadIdSchema }),
+    z.strictObject({}),
   ),
   "app.openExternal": defineChannel(
     "app.openExternal",
@@ -207,6 +306,12 @@ export const channels = {
   ),
   "app.revealPath": defineChannel(
     "app.revealPath",
+    z.strictObject({ path: z.string().min(1) }),
+    z.strictObject({}),
+  ),
+  // Opens an allowlisted workbench document with the operating system's default application.
+  "app.openPath": defineChannel(
+    "app.openPath",
     z.strictObject({ path: z.string().min(1) }),
     z.strictObject({}),
   ),
@@ -270,6 +375,15 @@ export const channels = {
     "session.archive.set",
     z.strictObject({ sessionId: sessionIdSchema, archived: z.boolean() }),
     sessionSummarySchema,
+  ),
+  "session.move": defineChannel(
+    "session.move",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      offset: z.union([z.literal(-1), z.literal(1)]),
+    }),
+    z.strictObject({}),
   ),
   "session.delete": defineChannel(
     "session.delete",
@@ -336,13 +450,34 @@ export const channels = {
   "app.settings.update": defineChannel("app.settings.update", settingsPatchSchema, settingsSnapshotSchema),
   "app.chooseFolder": defineChannel(
     "app.chooseFolder",
-    z.strictObject({}),
+    // `start` is only where the dialog opens; the picked folder is still validated by its caller.
+    z.strictObject({ start: z.string().min(1).max(4096).optional() }),
     z.strictObject({ folder: z.string().min(1).nullable() }),
   ),
-  "workbench.create": defineChannel(
-    "workbench.create",
-    z.strictObject({ folder: z.string().min(1), name: z.string().trim().min(1).max(80) }),
-    workbenchSnapshotSchema,
+  "workbench.inspect": defineChannel(
+    "workbench.inspect",
+    z.strictObject({ folder: z.string().min(1) }),
+    workbenchInspectionSchema,
+  ),
+  "workbench.create": defineChannel("workbench.create", workbenchCreateSchema, workbenchSnapshotSchema),
+  "workbench.scanDocs": defineChannel(
+    "workbench.scanDocs",
+    z.strictObject({ folder: z.string().min(1) }),
+    documentScanSchema,
+  ),
+  "workbench.previewDocs": defineChannel(
+    "workbench.previewDocs",
+    z.strictObject({
+      folder: z.string().min(1),
+      include: z.array(z.string()).max(1000),
+      exclude: z.array(z.string()).max(1000),
+    }),
+    documentPreviewSchema,
+  ),
+  "workbench.relativeFolder": defineChannel(
+    "workbench.relativeFolder",
+    z.strictObject({ root: z.string().min(1), folder: z.string().min(1) }),
+    z.strictObject({ path: z.string().min(1) }),
   ),
   "workbench.open": defineChannel(
     "workbench.open",
@@ -355,6 +490,9 @@ export const channels = {
     z.strictObject({
       remove: z.string().min(1).optional(),
       pin: z.strictObject({ folder: z.string().min(1), value: z.boolean() }).optional(),
+      move: z
+        .strictObject({ folder: z.string().min(1), offset: z.union([z.literal(-1), z.literal(1)]) })
+        .optional(),
       reveal: z.string().min(1).optional(),
     }),
     z.array(recentWorkbenchStateSchema),

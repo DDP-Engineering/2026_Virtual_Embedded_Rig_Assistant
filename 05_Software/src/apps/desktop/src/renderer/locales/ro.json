@@ -32,12 +32,9 @@
     "skipToContent": "Treci la conținutul principal"
   },
   "welcome": {
-    "title": "Deschide un spațiu de lucru",
     "description": "Un spațiu de lucru conține documentele, notițele și skill-urile plăcii tale. Lucrul începe aici.",
     "workbenches": "Spații de lucru",
-    "create": "Creează un spațiu de lucru",
-    "open": "Deschide unul existent",
-    "recent": "Recente"
+    "create": "Creează un spațiu de lucru"
   },
   "settings": {
     "title": "Setările aplicației",
@@ -97,22 +94,17 @@
     "title": "Panoul din dreapta",
     "close": "Închide",
     "context": "Context",
-    "docs": "Documente",
+    "docs": "Fișiere",
     "changes": "Modificări",
     "artifacts": "Artefacte",
     "plan": "Plan",
-    "placeholder": "Conținutul panoului va fi disponibil aici."
+    "placeholder": "Conținutul panoului va fi disponibil aici.",
+    "source": "Sursă"
   },
   "workbench": {
     "name": "Numele spațiului de lucru",
     "chooseFolder": "Alege folderul",
-    "openFolder": "Deschide folderul",
-    "openDescription": "Alege un folder care conține .vera/workbench.yaml.",
-    "noRecent": "Nu există spații de lucru recente.",
     "missing": "Folder lipsă",
-    "openRecent": "Deschide",
-    "remove": "Elimină din lista recentă",
-    "removeNamed": "Elimină {{name}} din lista recentă",
     "close": "Închide spațiul de lucru",
     "pinnedOversized": "Contextul depășește 16 KB. Agentul va folosi primii 16 KB. Textul complet este salvat.",
     "readOnly": "Acest spațiu de lucru este deschis doar pentru citire deoarece alt proces sau o blocare îl deține.",
@@ -122,8 +114,7 @@
     "unknownKey": "Cheie de configurare necunoscută păstrată:",
     "unknownName": "Nume dezactivat neidentificat:",
     "networkShare": "Folderele de rețea nu sunt acceptate. Folosește un spațiu de lucru pe discul local.",
-    "lockGuard": "Coordonarea blocării este ocupată. Acest spațiu de lucru este deschis doar pentru citire.",
-    "openNamed": "Deschide {{name}}"
+    "lockGuard": "Coordonarea blocării este ocupată. Acest spațiu de lucru este deschis doar pentru citire."
   },
   "providers": {
     "description": "Gestionează abonamentele și conexiunile API sau locale. Poți folosi mai mulți provideri simultan.",
@@ -187,6 +178,8 @@
     "failure": "Eroare furnizor: {{message}}"
   },
   "chat": {
+    "attachments": "Fișiere atașate",
+    "removeAttachment": "Elimină atașamentul: {{path}}",
     "promptInput": "Intrare",
     "promptOutput": "Ieșire",
     "promptInitialContext": "Context inițial",
@@ -276,6 +269,8 @@
     "activityReply": "Răspuns",
     "actionsNamed": "Acțiuni sesiune: {{title}}",
     "archive": "Arhivează",
+    "moveUp": "Mută mai sus",
+    "moveDown": "Mută mai jos",
     "restore": "Restaurează",
     "archived": "Sesiuni arhivate",
     "lastActivity": "Ultima activitate: {{date}}"
@@ -339,11 +334,51 @@
     "renewalDue": "Tokenul trebuie reînnoit; reînnoirea se face automat la nevoie."
   },
   "documents": {
+    "attach": "Atașează ca context",
     "viewer": "Vizualizare document",
-    "search": "Caută documente",
+    "search": "Caută fișiere și documente",
     "reindex": "Reindexează",
     "open": "Deschide",
     "progress": "Index: {{done}} finalizate, {{pending}} în așteptare, {{failed}} eșuate",
+    "volumeWarning": "Selecție mare de documentație: {{files}} fișiere, {{size}}. Indexarea continuă în fundal; restrânge folderele de documentație pentru o indexare mai rapidă.",
+    "indexerStopped": "Indexarea s-a oprit: procesul de indexare a eșuat de mai multe ori la rând. Documentele rămân căutabile așa cum au fost indexate ultima dată.",
+    "indexerRestart": "Repornește indexarea",
+    "tree": "Fișierele workbench-ului",
+    "collapseAll": "Restrânge tot",
+    "moreMatches": "Mai multe fișiere se potrivesc. Restrânge căutarea ca să le vezi.",
+    "noMatches": "Niciun fișier nu se potrivește.",
+    "folderCount": "Documente în index: {{count}}",
+    "folderProblems": "Unele documente de aici au nevoie de atenție",
+    "notIndexed": "Neindexat",
+    "ignored": "Ignorat de VERA",
+    "inDocuments": "În documente",
+    "openIn": "Deschide în",
+    "defaultApp": "Aplicația implicită",
+    "otherApp": "Altă aplicație…",
+    "terminal": "Terminal",
+    "copy": "Copiază",
+    "copyAbsolute": "Calea absolută",
+    "copyRelative": "Calea relativă",
+    "copyName": "Numele fișierului",
+    "copied": "Copiat în clipboard.",
+    "revealExplorer": "Arată în Explorer",
+    "revealFinder": "Arată în Finder",
+    "revealFolder": "Arată în folder",
+    "treeTruncated": "Sunt afișate doar primele 5.000 de intrări.",
+    "rowActions": "Acțiuni: {{name}}",
+    "properties": "Proprietăți",
+    "propertiesTitle": "Proprietăți: {{name}}",
+    "propertyPath": "Cale",
+    "propertyType": "Tip",
+    "propertySize": "Dimensiune",
+    "propertyModified": "Modificat",
+    "propertyIndex": "Stare index",
+    "propertyPages": "Pagini",
+    "propertyIndexed": "Documente în index",
+    "typeFolder": "Folder",
+    "typeFile": "Fișier",
+    "textBinary": "Acest fișier nu este text și nu poate fi afișat aici.",
+    "textTooLarge": "Acest fișier depășește 5 MB și nu poate fi afișat aici.",
     "readOnly": "Spațiu de lucru doar pentru citire",
     "empty": "Nu există documente în index.",
     "noResults": "Niciun document găsit.",
@@ -377,7 +412,13 @@
     "openNamed": "Deschide {{path}}",
     "previousLines": "Liniile anterioare",
     "nextLines": "Liniile următoare",
-    "pageText": "Textul paginii {{page}}"
+    "pageText": "Textul paginii {{page}}",
+    "slide": "Diapozitivul {{number}}",
+    "openExternal": "Deschide în aplicația implicită",
+    "openExternalNamed": "Deschide în aplicația implicită: {{path}}",
+    "closeSource": "Închide sursa",
+    "recentSources": "Surse recente",
+    "noSource": "Deschide o citare sau un document ca să-l vezi aici."
   },
   "skills": {
     "settings": "Setări pentru skill-uri",
@@ -537,6 +578,8 @@
     "plugins": "Pluginuri",
     "pin": "Fixează",
     "unpin": "Anulează fixarea",
+    "moveUp": "Mută mai sus",
+    "moveDown": "Mută mai jos",
     "edit": "Editează workbenchul",
     "explorer": "Deschide în Explorer",
     "remove": "Elimină din listă",
@@ -548,7 +591,6 @@
     "agent": "Agent",
     "instructions": "Instrucțiuni",
     "tools": "Instrumente",
-    "embeddings": "Embeddings",
     "name": "Nume",
     "description": "Descriere",
     "include": "Reguli de includere (una pe linie)",
@@ -574,7 +616,9 @@
     "loadingInstructions": "Se încarcă instrucțiunile workbenchului…",
     "skillsIndependent": "Modificările Skills sunt salvate în managerul Skills, separat de formularul proiectului.",
     "back": "Înapoi la workbenchuri",
-    "skills": "Skills"
+    "skills": "Skills",
+    "indexing": "Indexare",
+    "discardChanges": "Renunți la modificările nesalvate ale workbench-ului?"
   },
   "overview": {
     "title": "Prezentare workbench",
@@ -604,7 +648,7 @@
     "toggleSidebar": "Afișează sau ascunde bara laterală",
     "toggleSidebarDesc": "Extinde sau restrânge navigarea workbenchurilor.",
     "toggleRightPanel": "Afișează sau ascunde panoul din dreapta",
-    "toggleRightPanelDesc": "Controlează afișarea Context, Docs și a panourilor tehnice.",
+    "toggleRightPanelDesc": "Controlează afișarea Context, Fișiere și a panourilor tehnice.",
     "find": "Caută în conversație",
     "findDesc": "Caută în mesajele sesiunii curente.",
     "focusComposer": "Activează câmpul mesajului",
@@ -639,5 +683,38 @@
     "approvalSource": "Descarcă de la: {{url}}",
     "maximum": "Dimensiunea maximă: {{count}} MiB.",
     "saved": "Salvat local"
+  },
+  "create": {
+    "folderHint": "Alege folderul care conține documentele și notițele plăcii. VERA își păstrează datele proprii în .vera, în acest folder.",
+    "existing": "Acest folder este deja un workbench.",
+    "openExisting": "Deschide acest workbench",
+    "instructionsKept": "Acest folder are deja .vera/WORKBENCH.md. Crearea workbench-ului îl păstrează neschimbat; îl poți edita apoi din editorul de workbench.",
+    "noSkills": "Nu s-au găsit skill-uri. Le poți adăuga ulterior din editorul de workbench."
+  },
+  "documentsSetup": {
+    "volumeWarning": "Selecție mare de documentație: {{files}} fișiere, {{size}}. Indexarea va dura; ia în calcul restrângerea folderelor de documentație.",
+    "volumeWarningTruncated": "Selecție mare de documentație: cel puțin {{files}} fișiere, {{size}} (previzualizarea s-a oprit mai devreme). Indexarea va dura; ia în calcul restrângerea folderelor de documentație.",
+    "scanning": "Caut folderele de documentație…",
+    "noneDetected": "Nu s-au găsit foldere de documentație. Adaugă unul sau editează pattern-urile din Avansat.",
+    "addedByHand": "adăugat manual",
+    "truncated": "O parte din folder nu a putut fi scanată (prea mare sau inaccesibilă).",
+    "addFolder": "Adaugă folder…",
+    "preview": "Documente de indexat: {{count}} ({{size}}).",
+    "officePending": "Fișierele Office vechi și RTF nu sunt indexate: {{count}}.",
+    "advanced": "Avansat: pattern-uri de includere și excludere",
+    "kindPdf": "PDF",
+    "kindOffice": "Office",
+    "kindMarkdown": "Markdown",
+    "kindHtml": "HTML",
+    "kindText": "text"
+  },
+  "retrieval": {
+    "title": "Căutare în documente",
+    "info": "Valori implicite pentru search_docs al agentului; agentul poate cere totuși alt număr sau alt mod.",
+    "results": "Rezultate per căutare (1–20)",
+    "mode": "Mod de căutare",
+    "hybrid": "Hibrid (cuvinte cheie și sens)",
+    "keyword": "Doar cuvinte cheie",
+    "semantic": "Doar după sens"
   }
 }

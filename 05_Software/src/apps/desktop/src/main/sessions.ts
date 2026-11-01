@@ -91,6 +91,9 @@ export class SessionsHost {
             return self.skills;
           },
           ...(options.embeddings ? { embeddings: options.embeddings } : {}),
+          get retrieval() {
+            return self.config?.retrieval;
+          },
           writeQueue: options.workbench.getWriteQueue(),
           ...(options.permissions ? { permissions: options.permissions } : {}),
           get maxToolCallsPerTurn() {

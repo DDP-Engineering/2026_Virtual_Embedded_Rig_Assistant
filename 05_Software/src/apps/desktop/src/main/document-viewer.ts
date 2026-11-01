@@ -77,8 +77,18 @@ export function publicViewer(content: ViewerContent, scrub: (text: string) => st
         snippet: base.snippet,
         content: scrub(content.content),
       };
+    case "presentation":
+      return {
+        ...base,
+        kind: "presentation",
+        slides: content.slides.map(scrub),
+        page: content.page,
+        pageEnd: content.pageEnd,
+      };
     case "markdown":
     case "html":
+    case "document":
+    case "spreadsheet":
       return {
         ...base,
         kind: content.kind,

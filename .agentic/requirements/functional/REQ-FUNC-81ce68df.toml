@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-81ce68df"
+
+title = "Inspect a folder before workbench creation"
+
+status = "active"
+
+requirement = "When asked to inspect a chosen folder, VERA shall return its canonical absolute folder, its final path segment as the suggested name, whether .vera/workbench.yaml exists, the content of an existing .vera/WORKBENCH.md or null, and the workbench and user skills discovered for that folder, without writing to the folder."
+
+verification = "Core service test on temporary folders: empty folder, folder with .vera/WORKBENCH.md and a .vera/skills skill, existing workbench; assert returned fields and unchanged directory listing; missing folder returns NOT_FOUND."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/libraries/shared/src/workbench-create-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

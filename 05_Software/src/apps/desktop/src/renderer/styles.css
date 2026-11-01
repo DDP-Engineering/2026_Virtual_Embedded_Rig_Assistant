@@ -413,6 +413,13 @@ main {
   overflow-wrap: anywhere;
   vertical-align: baseline;
 }
+/* The icon stays on the label's line: the global svg size and Tailwind's block svg put it above. */
+.citation svg {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+}
 .citation.invalid {
   border: 0.0714286rem solid var(--border);
   background: var(--accent);
@@ -561,21 +568,6 @@ main {
   flex-direction: column;
   gap: 1.4rem;
 }
-.welcome-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-  gap: 1.2rem;
-}
-.welcome-grid > .surface {
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
-}
-.welcome-grid {
-  margin-block: 1.25rem 2rem;
-  gap: 2rem;
-}
 [data-action="create-workbench"]:not(:disabled) {
   color: var(--primary-foreground);
   background: var(--primary);
@@ -716,6 +708,9 @@ legend {
     z-index: 2;
     box-shadow: -0.4rem 0 1rem #0003;
   }
+  .right-panel[data-tab="source"] {
+    width: min(var(--right-width), 60vw);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -761,24 +756,200 @@ legend {
   gap: 0.6rem;
   flex-wrap: wrap;
 }
-.recent-workbenches {
-  list-style: none;
-  padding: 0;
+.workbench-warnings {
+  overflow-wrap: anywhere;
 }
-.recent-workbenches li {
+.docs-tree [role="tree"] {
+  display: grid;
+  margin-block: 0.4rem;
+}
+.tree-row {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.75rem;
+  padding-block: 0.1rem;
+  padding-inline-end: 0.4rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.tree-row:hover {
+  background: var(--accent);
+}
+.tree-row[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.tree-row:focus-visible {
+  outline: 2px solid var(--ring, currentColor);
+  outline-offset: -2px;
+}
+.tree-row[data-indexed="false"] {
+  color: var(--muted-foreground);
+}
+/*
+ * Hidden from the agent and the index (TASK-b34f2cc7): italic muted text, which keeps AA contrast,
+ * and faded icons. The selected row keeps its own colours.
+ */
+.tree-row[data-ignored="true"] {
+  font-style: italic;
+}
+.tree-row[data-ignored="true"]:not([aria-selected="true"]) {
+  color: var(--muted-foreground);
+}
+.tree-row[data-ignored="true"] svg,
+.tree-row[data-ignored="true"] .tree-file-mark {
+  opacity: 0.5;
+}
+.tree-row svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+.tree-file-mark {
+  width: 1rem;
+  flex: none;
+}
+.tree-name {
+  flex: 1;
+  min-width: 0;
+}
+.tree-count,
+.tree-status {
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.tree-status {
+  display: inline-flex;
+}
+.tree-row[data-status="failed"] .tree-status,
+.tree-row[data-status="unsupported"] .tree-status,
+.tree-row[data-status="needs_ocr"] .tree-status {
+  color: var(--destructive);
+}
+.tree-problems {
+  color: var(--destructive);
+  font-weight: 700;
+}
+.tree-truncated {
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.tree-menu {
+  position: fixed;
+  z-index: 30;
+  display: grid;
+  min-width: 12rem;
+  padding: 0.3rem;
+  gap: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--background);
+  box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 20%);
+}
+.tree-menu button {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.8rem;
-  padding-block: 0.7rem;
-  border-top: 1px solid var(--border);
+  gap: 0.6rem;
+  text-align: start;
 }
-.recent-workbenches li > div {
-  min-width: 0;
-  max-width: 100%;
+.tree-menu button svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: none;
 }
-.workbench-warnings {
+.tree-menu-group {
+  position: relative;
+  display: grid;
+}
+/* Beside its item; flipped to the left when the window ends first (TASK-eae3a69e). */
+.tree-submenu {
+  position: absolute;
+  top: -0.3rem;
+  left: calc(100% + 0.3rem);
+  z-index: 31;
+  display: grid;
+  min-width: 11rem;
+  padding: 0.3rem;
+  gap: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--background);
+  box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 20%);
+}
+.tree-submenu[data-side="left"] {
+  left: auto;
+  right: calc(100% + 0.3rem);
+}
+.tree-menu button[aria-disabled="true"] {
+  color: var(--muted-foreground);
+  cursor: default;
+}
+/* Docs tree entries attached to the next message (TASK-2fef1397). */
+.composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 16rem;
+  padding: 0.1rem 0.2rem 0.1rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 0.85em;
+}
+.attachment-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attachment-chip button {
+  display: inline-flex;
+  padding: 0.1rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.attachment-chip svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+.tree-menu button:hover,
+.tree-menu button:focus {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.tree-properties {
+  width: min(32rem, calc(100vw - 3rem));
+}
+.tree-properties dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+}
+.tree-properties dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.indexer-stopped {
+  margin: 0.4rem 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--destructive);
+}
+.volume-warning {
+  margin: 0.4rem 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--muted-foreground);
   overflow-wrap: anywhere;
 }
 .pinned-dialog {
@@ -952,36 +1123,61 @@ legend {
   font-size: 0.875rem;
   color: var(--muted-foreground);
 }
-/* Document modal contains page scrolling even at minimum geometry and 150% type. */
-.document-dialog {
-  width: min(68rem, 94vw);
-  max-width: 94vw;
-  height: 90vh;
-  max-height: 90vh;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-  color: var(--foreground);
+/* The Source tab fills the right panel's height so long sources scroll inside it. */
+.right-panel[data-tab="source"] {
+  width: min(var(--right-width), 60vw);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
-.document-dialog[open] {
+#panel-source:not([hidden]),
+.source-panel {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
-.document-dialog::backdrop {
-  background: color-mix(in srgb, var(--background) 75%, transparent);
-}
-.document-dialog header {
+.source-current {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.source-current header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: space-between;
   align-items: center;
 }
-.document-dialog h2 {
+.source-current h2 {
   font-size: 1.2rem;
   margin: 0;
+}
+.recent-sources {
+  flex: 0 0 auto;
+  max-height: 30%;
+  overflow: auto;
+  border-top: 0.0714286rem solid var(--border);
+}
+.recent-sources h3 {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+.recent-sources ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.recent-sources button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+.recent-sources [aria-current="true"] {
+  font-weight: 600;
 }
 .document-path {
   overflow-wrap: anywhere;
@@ -1113,9 +1309,17 @@ legend {
   gap: 0.6rem;
   min-width: 0;
 }
-.docs-tab > label {
-  display: grid;
-  gap: 0.4rem;
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.docs-actions button {
+  flex: 1 1 auto;
+}
+.docs-hits h3 {
+  margin: 0.4rem 0;
+  font-size: 1em;
 }
 .docs-tab input {
   width: 100%;
@@ -1362,14 +1566,10 @@ legend {
 .workbench-group .session-list {
   padding: 0.5rem 0 0.5rem 1rem;
 }
+/* The editor is a page: it fills the remaining page height and scrolls its sections internally. */
 .workbench-editor {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: min(70rem, calc(100vw - 3rem));
-  height: min(48rem, calc(100dvh - 3rem));
-}
-.workbench-editor[open] {
+  flex: 1 1 0;
+  min-height: 18rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1382,7 +1582,7 @@ legend {
   gap: 1rem;
   flex-shrink: 0;
 }
-.workbench-editor > header h2 {
+.workbench-editor > header h3 {
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -1445,7 +1645,30 @@ legend {
   display: grid;
   gap: 0.5rem;
 }
-.workbench-tools .workbench-tool-option {
+.workbench-documents {
+  display: grid;
+  gap: 0.8rem;
+}
+.workbench-documents-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.workbench-documents > button {
+  justify-self: start;
+}
+.workbench-documents-advanced > summary {
+  cursor: pointer;
+}
+.workbench-documents-advanced[open] {
+  display: grid;
+  gap: 0.8rem;
+}
+.workbench-tools .workbench-tool-option,
+.workbench-create-skills .workbench-tool-option,
+.workbench-documents .workbench-tool-option {
   display: flex;
   align-items: start;
   gap: 0.75rem;

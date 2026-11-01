@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3d0691bc"
+
+title = "Edit an open workbench with the creation page's sections"
+
+status = "active"
+
+requirement = "When the engineer edits an open workbench, the desktop app shall show the workbench editor page with the same General, Documents, Instructions, Agent, Tools, Skills, Indexing and Plugins sections of the shared workbench configuration form as the New Workbench page, filled from that workbench's saved configuration and instructions, and shall write the edited configuration only through Save."
+
+verification = "Renderer unit tests: the editor of an open workbench lists the eight sections in the creation page's order and shows its saved documentation selection (datasheets checked, notes unchecked, a preview of 2 documents); the Indexing section shows the saved retrieval mode and Save writes a changed mode; boundary: Edit of another workbench from the sidebar loads that workbench's own values. Browser e2e workbench-navigation edits tools, skills and embeddings through the editor and saves them."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "RULING-001 in TASK-581e6591: the editor becomes a full page sharing the creation form"
+
+created = 2026-11-01
+updated = 2026-11-01

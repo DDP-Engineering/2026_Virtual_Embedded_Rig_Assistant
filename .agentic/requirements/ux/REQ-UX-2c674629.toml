@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-2c674629"
+
+title = "New Workbench page offers creation only"
+
+status = "active"
+
+requirement = "When the engineer selects New Workbench, the desktop app shall show a creation page containing a folder chooser, a name field and a Create action, followed by the workbench configuration sections once a folder that is not already a workbench is chosen, without controls for opening an existing or recent workbench."
+
+verification = "Native and mock e2e: click New Workbench; assert choose-create, #workbench-name and create-workbench are present and open-workbench/open-recent controls are absent; sidebar entries still open recents."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

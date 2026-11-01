@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-4ee03ca8"
+
+title = "Scan a folder for documentation subfolders"
+
+status = "active"
+
+requirement = "When asked to scan a chosen folder, VERA shall return, without writing, each first-level subfolder whose files include PDF, office, Markdown, HTML or plain-text documents, with the count of each document kind and their total bytes, skipping symbolic links, paths excluded by the workbench ignore rules and entries that cannot be read, visiting at most 20000 entries and 8 levels and reporting whether the scan was truncated or incomplete."
+
+verification = "Core service test on a temporary folder with datasheets/ (pdf), notes/ (md, docx), src/ (.c only), .git/ and an ignored folder: result lists datasheets and notes with kind counts and bytes, omits src, .git and ignored paths; directory listing unchanged; a tree over the entry bound reports truncated; missing folder gives NOT_FOUND."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/documents-scan.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/documents-scan.test.ts", "05_Software/tests/e2e/workbench.spec.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/shared/src/workbench-create-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

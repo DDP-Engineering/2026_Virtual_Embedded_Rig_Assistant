@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-593428f6"
+
+title = "Open a workbench entry with a detected program"
+
+status = "active"
+
+requirement = "When asked to open a workbench entry with a detected program, the desktop app shall start that program detached without passing the entry's path through a shell or command-line parser - the absolute path as an argument for VS Code, Cursor, Notepad++ and the Windows Open with dialog (rundll32 shell32.dll,OpenAs_RunDLL), the folder as working directory for a terminal - and shall refuse a program that is not detected, a folder for Notepad++ or the Open with dialog, a file for a terminal, a link or a path outside the workbench."
+
+verification = "Main unit test with an injected launcher: vscode gets the absolute file; Windows Terminal gets -d . with the folder, also a folder named a;b, as working directory; PowerShell is started by cmd.exe start with a fixed command line and the folder as working directory; x-terminal-emulator starts with the folder as working directory; other starts rundll32.exe with shell32.dll,OpenAs_RunDLL and the absolute file passed verbatim (OpenAs_RunDLL refuses a quoted path); notepadpp or other with a folder, terminal with a file and an undetected program are refused with INVALID and ../x and a link with DENIED, without launching; a launch error maps to INTERNAL; a real detached launch of node resolves and a missing program rejects; shared contract test for the channel. Manual: on Windows the real launcher opens a file in VS Code and Notepad++ and starts Windows Terminal (one window for a folder named a;b), the PowerShell fallback and the Open with dialog for a path with spaces."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/openers.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/openers.test.ts::starts a detected program without passing the path through a parser and refuses the rest", "05_Software/src/apps/desktop/src/main/openers.test.ts::starts programs without VERA's own Electron variables", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::opens, reveals and copies workbench entries through strict docs channels", "05_Software/src/apps/desktop/src/main/openers.test.ts::counts links and app execution aliases as present and starts real programs detached", "05_Software/src/apps/desktop/src/main/openers.test.ts::opens the Windows Open with dialog for files and the Linux terminal in folders"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

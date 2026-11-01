@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-c28dde55"
+
+title = "Show the workbench folder as a tree in Docs"
+
+status = "active"
+
+requirement = "While the Docs search box is empty, the Docs panel shall show the active workbench folder as a tree that loads a folder's entries when it is expanded, marks each indexed document with its index status and reason, and shows other files dimmed."
+
+verification = "Renderer test with the mock API: Docs shows top-level folders and files; expanding a folder requests and shows its entries; an indexed PDF shows its status with the reason in its label; a non-document file is dimmed; typing in the search box narrows the tree to name matches instead of showing the whole folder."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::shows the workbench as a lazily expanded tree with document status and dimmed other files", "05_Software/tests/e2e/docs-tree.spec.ts", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

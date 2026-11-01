@@ -125,6 +125,20 @@ they are candidates for the deferred MCP path, not a requirement.
 | `stm32-cubeprog` | `STM32_Programmer_CLI` (`find`) | `-r`, `-ob displ`: `device-read`; `-w`, `-e`: `device-write`; any option-byte write (`-ob`), above all `RDP=0xCC` (level 2, permanent): `irreversible` |
 | `stm32-openocd` | OpenOCD (`download` or `find`) | as `esp32-openocd` |
 
+## 6. Bench tools (vendor-neutral)
+
+Plugins that serve every ecosystem; vendor packs add only what these cannot do.
+
+| Plugin | Programs | Spec |
+|---|---|---|
+| `probe-rs` | `probe-rs`: flash, verify, reset, memory read, RTT for Cortex-M and RISC-V through most debug probes | [probe-rs.md](probe-rs.md) |
+| `binutils` | `size`, `nm`, `readelf`, `objdump`, `addr2line` for `arm-none-eabi-` and `riscv-none-elf-` | [binutils.md](binutils.md) |
+| `sigrok` | `sigrok-cli` from the DDP fork: logic analyzers, oscilloscopes, multimeters, supplies, loads, generators, relays; 137 decoders | [sigrok.md](sigrok.md) |
+| `git` | the user's `git`: history, diffs and blame freely; commits, branches and remotes with approval | [git.md](git.md) |
+
+With `probe-rs` in place, `stm32-cubeprog` is needed mainly for option bytes, and `stm32-openocd` may
+not be needed at all.
+
 NOTES:
 - Exact subcommand spellings, defaults and version ranges belong in each plugin's manifest and are
   checked by its owner against the installed tool's `--help` before publishing.

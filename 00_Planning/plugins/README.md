@@ -13,7 +13,8 @@ releases. Users can draft their own plugins with the agent.
 |---|---|
 | [architecture.md](architecture.md) | package format, rule matching, execution, risk levels and approvals, provisioning, storage, catalog, authoring, Linux, security |
 | [packs.md](packs.md) | ecosystem packs: ESP32 in detail; CAN, Wireshark, Microchip and STM32 seeds |
-| [plan.md](plan.md) | work packages PLG-01…PLG-18, dependencies, verification, risks |
+| [probe-rs.md](probe-rs.md), [binutils.md](binutils.md), [sigrok.md](sigrok.md), [git.md](git.md) | the vendor-neutral bench-tool plugins: flashing and debug probes, firmware image analysis, signals and bench instruments (DDP sigrok fork), version control |
+| [plan.md](plan.md) | work packages PLG-01…PLG-22, dependencies, verification, risks |
 | [ADR-0016](../decisions/ADR-0016-plugins-skills-and-guarded-programs.md) | plugins = skills + declared programs + risk rules; no shell |
 | [ADR-0017](../decisions/ADR-0017-plugin-provisioning-and-no-size-budget.md) | bundled `uv`, on-demand installs, no package size budget |
 | [ADR-0018](../decisions/ADR-0018-hardware-risk-levels.md) | risk levels and the irreversible-operation policy |

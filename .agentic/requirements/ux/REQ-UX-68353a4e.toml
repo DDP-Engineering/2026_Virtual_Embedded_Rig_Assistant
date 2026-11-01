@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-68353a4e"
+
+title = "Offer to open a folder that is already a workbench"
+
+status = "active"
+
+requirement = "If the folder chosen on the New Workbench page already contains .vera/workbench.yaml, then the desktop app shall state that the folder is already a workbench, disable Create and offer an Open action that opens it."
+
+verification = "Native e2e: create a workbench, return to New Workbench, choose the same folder; assert the existing notice, disabled Create and that Open shows the overview of that workbench."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -66,7 +66,8 @@ export function parseRef(text: string): Reference | undefined {
     if (!valid(value)) return undefined;
     return page[3] ? { kind: "page-range", ...value } : { kind: "page", path: value.path, page: value.start };
   }
-  const heading = /^(.*)#h=([\p{L}\p{N}_-]+)$/u.exec(text);
+  // An empty slug names the untitled text before a document's first heading.
+  const heading = /^(.*)#h=([\p{L}\p{N}_-]*)$/u.exec(text);
   if (heading && valid({ path: heading[1] ?? "", start: 1, end: 1 }))
     return { kind: "heading", path: heading[1] ?? "", slug: heading[2] ?? "" };
   return undefined;
@@ -90,7 +91,7 @@ export function formatRef(value: Reference): string {
     case "heading":
       if (
         !valid({ path: value.path, start: 1, end: 1 }) ||
-        /^[\p{L}\p{N}_-]+$/u.exec(value.slug)?.[0] !== value.slug
+        /^[\p{L}\p{N}_-]*$/u.exec(value.slug)?.[0] !== value.slug
       )
         throw Error("Invalid reference.");
       ref = `${value.path}#h=${value.slug}`;
@@ -112,7 +113,7 @@ export function referenceLabel(ref: string): string {
     case "page-range":
       return `${file} p${value.start}–${value.end}`;
     case "heading":
-      return `${file} #${value.slug}`;
+      return `${file} #${value.slug || "start"}`;
     case "lines":
       return `${file} L${value.start}${value.end === value.start ? "" : `–${value.end}`}`;
   }

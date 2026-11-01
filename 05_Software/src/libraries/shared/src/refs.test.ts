@@ -37,7 +37,6 @@ it("rejects malformed page/heading/artifact refs and escaping paths", () => {
     "a#p=1-9007199254740992",
     "a#p=1.5",
     "a#p=1-2-3",
-    "a#h=",
     "a#h=power sequence",
     "a#h=power#extra",
     "a#h=../power",
@@ -56,7 +55,6 @@ it("rejects malformed page/heading/artifact refs and escaping paths", () => {
     expect(api.parseRef(ref), ref).toBeUndefined();
   expect(() => api.formatRef({ kind: "page", path: "a", page: 0 })).toThrow();
   expect(() => api.formatRef({ kind: "page-range", path: "a", start: 2, end: 1 })).toThrow();
-  expect(() => api.formatRef({ kind: "heading", path: "a", slug: "" })).toThrow();
   expect(() => api.formatRef({ kind: "heading", path: "a", slug: "power#h=reset" })).toThrow();
   expect(() => api.formatRef({ kind: "artifact", name: "CON" })).toThrow();
   expect(api.referenceLabel("malformed")).toBe("malformed");
@@ -106,4 +104,15 @@ it("refuses invalid line ranges, escaping paths and other locator kinds", () => 
   ])
     expect(api.parseLineRef(ref)).toBeUndefined();
   expect(() => api.formatLineRef({ path: "x", start: 0, end: 1 })).toThrow();
+});
+
+// REQ-FUNC-626d3017
+it("round trips an empty heading slug as the untitled leading section", () => {
+  const value = { kind: "heading", path: "docs/notes.docx", slug: "" } as const;
+  expect(api.parseRef("docs/notes.docx#h=")).toEqual(value);
+  expect(api.formatRef(value)).toBe("docs/notes.docx#h=");
+  expect(api.referenceLabel("docs/notes.docx#h=")).toBe("notes.docx #start");
+  for (const ref of ["docs/notes.docx", "../a#h=", "a//b#h=", "/a#h=", "a#h=-#"])
+    expect(api.parseRef(ref), ref).toBeUndefined();
+  expect(() => api.formatRef({ kind: "heading", path: "../a", slug: "" })).toThrow();
 });

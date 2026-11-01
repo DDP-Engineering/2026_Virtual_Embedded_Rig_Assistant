@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-47287974"
+
+title = "Send attached entries as @path mentions"
+
+status = "active"
+
+requirement = "When the user sends a message with attached entries, the desktop app shall send the text followed, on a new line, by one @path mention per entry separated by spaces, writing a path that contains whitespace as @\"path\", or the mentions alone when the text is empty, and shall clear the chips once the send is accepted and keep them when it fails."
+
+verification = "Unit test of the mention builder: plain paths, a path with a space and empty text; renderer test: sending 'Summarize' with docs/a.pdf attached invokes session.send with 'Summarize' and '@docs/a.pdf' on the next line and clears the chip; a rejected send keeps the chip and the text; with only an attachment the message is '@docs/a.pdf'."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/src/apps/desktop/src/renderer/lib/attachments.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/lib/attachments.test.ts::writes @path mentions on a new line after the text, quoting paths with whitespace", "05_Software/src/apps/desktop/src/renderer/components/session/attachments.test.ts::attaches Docs tree entries to the active chat from the workbench page and sends them as mentions"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-70dc2e8f"
+
+title = "Read a non-indexed workbench file as text"
+
+status = "active"
+
+requirement = "When asked to read a workbench file as text, VERA shall return its lines for an ordinary UTF-8 text file inside the workbench of at most 5 MiB, ignored or not, and shall refuse a binary file, a larger file, a link or a path outside the workbench."
+
+verification = "Core test: main.c, a .veraignore'd file and .git/config return their lines; a file with NUL bytes and a 5 MiB + 1 byte file are refused with INVALID and their own message keys (documents.textBinary, documents.textTooLarge); a symlink, ../outside and Windows aliases are refused with one DENIED; shared contract test for the channel."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/tree.test.ts::reads a text file, ignored or not, and refuses binary, large, linked and outside paths", "05_Software/src/libraries/core/src/workbench/tree.test.ts::refuses Windows aliases that would reach hidden or ignored entries", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::lists, finds and reads workbench files through strict docs channels", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

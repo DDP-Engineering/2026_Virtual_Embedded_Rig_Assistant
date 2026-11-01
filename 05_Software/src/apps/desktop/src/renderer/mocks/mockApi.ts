@@ -7,15 +7,21 @@ import {
   channels,
   configWarnings,
   defaultSettings,
+  documentPatternFolder,
   type EventEnvelope,
   eventEnvelopeSchema,
   isChannel,
   mergeSettings,
   mergeWorkbench,
   modelReferenceSchema,
+  moveRecentWorkbench,
+  moveSession,
+  opensExternally,
+  orderSessions,
   providerSlug,
   type Request,
   type Response,
+  type SessionSummary,
   settingsPatchSchema,
   skillTemplate,
   type UpdateSnapshot,
@@ -53,6 +59,26 @@ export function createMockApi(
   const subscribers = new Set<{ topic: string; id: string | undefined; on: (event: unknown) => void }>();
   let chatgpt: ChatgptStatus = { connected: false, state: "idle" };
   let authSequence = 0;
+  let indexerState: "running" | "stopped" = "running";
+  // The mock workbench's files for the Docs tree: its documents plus a few files that are not.
+  const treeFiles = () =>
+    scenario === "empty"
+      ? []
+      : [
+          ...mockDocuments.map((doc) => doc.path),
+          "firmware/main.c",
+          "firmware/drivers/i2c.c",
+          "manuals/rm0440-reference.txt",
+          "manuals/scope-capture.png",
+          ".git/config",
+          ".vera/workbench.yaml",
+          "node_modules/pkg/index.js",
+          "node_modules/pkg/README.md",
+        ];
+  // What VERA hides from the agent and the index; the Docs tree lists it marked (TASK-b34f2cc7).
+  const treeIgnored = (path: string) =>
+    path.split("/").some((part) => [".git", ".vera", "node_modules"].includes(part.toLowerCase()));
+  const treeCollator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
   let updateState: UpdateSnapshot = {
     configured: true,
     distribution: info.portable ? "portable" : "installed",
@@ -65,6 +91,62 @@ export function createMockApi(
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
   const skillFiles = new Map<string, string>();
+  /** Documentation files the mock folder picker's default folder holds, for scan and preview. */
+  const boardDocs = [
+    { path: "datasheets/stm32g474.pdf", bytes: 3_000_000, kind: "pdf" },
+    { path: "datasheets/drv8305.pdf", bytes: 1_200_000, kind: "pdf" },
+    { path: "notes/bringup.md", bytes: 4_000, kind: "markdown" },
+    { path: "notes/review.docx", bytes: 60_000, kind: "office" },
+    { path: "notes/old-spec.doc", bytes: 90_000, kind: "office" },
+    { path: "src/main.c", bytes: 2_000 },
+    { path: "Manuals (RM0440)/rm0440.pdf", bytes: 9_000_000, kind: "pdf" },
+  ];
+  const docFiles = new Map<string, { path: string; bytes: number; kind?: string }[]>([
+    ["/mock/docs-board", boardDocs],
+    ["/mock/docs-editor", boardDocs],
+    [
+      "/mock/new-board",
+      [
+        { path: "datasheets/stm32g474.pdf", bytes: 3_000_000, kind: "pdf" },
+        { path: "datasheets/drv8305.pdf", bytes: 1_200_000, kind: "pdf" },
+        { path: "notes/bringup.md", bytes: 4_000, kind: "markdown" },
+        { path: "notes/review.docx", bytes: 60_000, kind: "office" },
+        { path: "src/main.c", bytes: 2_000 },
+      ],
+    ],
+  ]);
+  /** Folders that already hold .vera/WORKBENCH.md without being a workbench. */
+  const folderNotes = new Map([["/mock/with-notes", "Existing bench notes\n"]]);
+  /** Later prefixes shadow earlier ones, as workbench skills shadow user skills. */
+  function skillSummaries(prefixes: string[], disabled: readonly string[]) {
+    const names = new Map<string, { content: string; source: "user" | "workbench" }>();
+    for (const prefix of prefixes)
+      for (const [key, content] of skillFiles)
+        if (key.startsWith(`${prefix}:`))
+          names.set(key.slice(prefix.length + 1), {
+            content,
+            source: prefix === "user" ? "user" : "workbench",
+          });
+    return [...names]
+      .map(([name, { content, source }]) => {
+        const match = /^---\nname: ([^\n]+)\ndescription: ([^\n]+)\n---/.exec(content);
+        const error = !match
+          ? "frontmatter"
+          : match[1] !== name || !/^[a-z0-9-]{1,64}$/.test(name)
+            ? "name"
+            : !match[2]?.trim() || match[2].length > 1024
+              ? "description"
+              : undefined;
+        return {
+          name,
+          source,
+          description: error ? "" : (match?.[2] ?? ""),
+          enabled: !disabled.includes(name),
+          ...(error ? { error } : {}),
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
   async function skillHash(content: string) {
     return Array.from(
       new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(content))),
@@ -140,17 +222,18 @@ export function createMockApi(
     return { content, oversized: new TextEncoder().encode(content).byteLength > 16384 };
   }
   function remember(snapshot: WorkbenchSnapshot) {
+    // Like main: a listed workbench keeps its place, a new one goes first.
+    const recent = settings.recentWorkbenches;
+    const index = recent.findIndex((entry) => entry.folder === snapshot.folder);
+    const entry = {
+      ...recent[index],
+      folder: snapshot.folder,
+      name: snapshot.config.name,
+      id: snapshot.config.id,
+      lastOpened: new Date().toISOString(),
+    };
     settings = mergeSettings(settings, {
-      recentWorkbenches: [
-        {
-          ...settings.recentWorkbenches.find((entry) => entry.folder === snapshot.folder),
-          folder: snapshot.folder,
-          name: snapshot.config.name,
-          id: snapshot.config.id,
-          lastOpened: new Date().toISOString(),
-        },
-        ...settings.recentWorkbenches.filter((e) => e.folder !== snapshot.folder),
-      ],
+      recentWorkbenches: index < 0 ? [entry, ...recent] : recent.map((e, at) => (at === index ? entry : e)),
     });
     emitAppEvent({ type: "settings.changed" });
   }
@@ -167,6 +250,23 @@ export function createMockApi(
     )
       throw veraError("CONFLICT");
     if (channel === "session.list" && scenario === "chat") sessions.seedFixtures();
+    if (channel === "session.move") {
+      const { workbenchId, sessionId, offset } = channels["session.move"].request.parse(input.data);
+      if (current().snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+      const list = sessions.invoke("session.list", {}) as SessionSummary[];
+      if (scenario === "read-only") throw veraError("DENIED");
+      const order = moveSession(list, settings.sessionOrder?.[workbenchId], sessionId, offset);
+      settings = mergeSettings(settings, {
+        sessionOrder: { ...settings.sessionOrder, [workbenchId]: order },
+      });
+      emitAppEvent({ type: "settings.changed" });
+      return channels[channel].response.parse({}) as Response<C>;
+    }
+    if (channel === "session.list") {
+      const list = sessions.invoke(channel, input.data) as SessionSummary[];
+      const order = settings.sessionOrder?.[current().snapshot.config.id];
+      return channels[channel].response.parse(orderSessions(list, order)) as Response<C>;
+    }
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
@@ -217,33 +317,64 @@ export function createMockApi(
         const { workbenchId } = channels["skills.list"].request.parse(input.data);
         const wb = current().snapshot;
         if (workbenchId !== wb.config.id) throw veraError("CONFLICT");
-        const names = new Map<string, { content: string; source: "user" | "workbench" }>();
-        for (const prefix of ["user", wb.config.id])
-          for (const [key, content] of skillFiles)
-            if (key.startsWith(`${prefix}:`))
-              names.set(key.slice(prefix.length + 1), {
-                content,
-                source: prefix === "user" ? "user" : "workbench",
-              });
-        value = [...names]
-          .map(([name, { content, source }]) => {
-            const match = /^---\nname: ([^\n]+)\ndescription: ([^\n]+)\n---/.exec(content);
-            const error = !match
-              ? "frontmatter"
-              : match[1] !== name || !/^[a-z0-9-]{1,64}$/.test(name)
-                ? "name"
-                : !match[2]?.trim() || match[2].length > 1024
-                  ? "description"
-                  : undefined;
-            return {
-              name,
-              source,
-              description: error ? "" : (match?.[2] ?? ""),
-              enabled: !wb.config.skills.disabled.includes(name),
-              ...(error ? { error } : {}),
-            };
-          })
-          .sort((a, b) => a.name.localeCompare(b.name));
+        value = skillSummaries(["user", wb.config.id], wb.config.skills.disabled);
+        break;
+      }
+      case "workbench.scanDocs": {
+        const { folder } = channels["workbench.scanDocs"].request.parse(input.data);
+        if (folder === "/mock/locked-board") throw veraError("DENIED");
+        const folders = new Map<string, { bytes: number; kinds: Record<string, number> }>();
+        for (const file of docFiles.get(folder) ?? []) {
+          const [name] = file.path.split("/");
+          if (!name || !file.kind) continue;
+          const entry = folders.get(name) ?? { bytes: 0, kinds: {} };
+          entry.bytes += file.bytes;
+          entry.kinds[file.kind] = (entry.kinds[file.kind] ?? 0) + 1;
+          folders.set(name, entry);
+        }
+        value = {
+          folders: [...folders]
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+            .map(([path, entry]) => ({ path, ...entry })),
+          truncated: false,
+        };
+        break;
+      }
+      case "workbench.previewDocs": {
+        const { folder, include, exclude } = channels["workbench.previewDocs"].request.parse(input.data);
+        // Prefix matching stands in for ingest globs: "<folder>/**", "<folder>" and "**".
+        const prefix = (pattern: string) =>
+          documentPatternFolder(pattern) ?? pattern.replace(/\/?\*\*$/, "").replace(/\/$/, "");
+        const matches = (patterns: string[], path: string) =>
+          patterns.some((p) => p.trim() && (!prefix(p) || path.startsWith(`${prefix(p)}/`)));
+        const result = { files: 0, bytes: 0, officePending: 0, truncated: false };
+        for (const file of docFiles.get(folder) ?? [])
+          if (matches(include, file.path) && !matches(exclude, file.path)) {
+            // Modern office files are indexed; legacy binary formats and RTF stay pending.
+            if (file.kind === "office" && /\.(doc|ppt|xls|rtf)$/.test(file.path)) result.officePending++;
+            else {
+              result.files++;
+              result.bytes += file.bytes;
+            }
+          }
+        value = result;
+        break;
+      }
+      case "workbench.relativeFolder": {
+        const { root, folder } = channels["workbench.relativeFolder"].request.parse(input.data);
+        if (!folder.startsWith(`${root}/`)) throw veraError("DENIED");
+        value = { path: folder.slice(root.length + 1) };
+        break;
+      }
+      case "workbench.inspect": {
+        const { folder } = channels["workbench.inspect"].request.parse(input.data);
+        value = {
+          folder,
+          name: folder.split(/[\\/]/).filter(Boolean).at(-1) ?? "",
+          existing: benches.has(folder),
+          instructions: benches.get(folder)?.pinned ?? folderNotes.get(folder) ?? null,
+          skills: skillSummaries(["user"], []),
+        };
         break;
       }
       case "skills.open":
@@ -313,6 +444,134 @@ export function createMockApi(
         value = { workbenchId, documents: scenario === "empty" ? [] : mockDocuments };
         break;
       }
+      case "indexer.status":
+        value = { state: indexerState };
+        break;
+      case "indexer.restart":
+        indexerState = "running";
+        emitAppEvent({ type: "indexer.status", state: indexerState });
+        value = {};
+        break;
+      case "docs.tree": {
+        const { workbenchId, path } = channels["docs.tree"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        const prefix = path ? `${path}/` : "";
+        if (path && !treeFiles().some((file) => file.startsWith(prefix))) throw veraError("NOT_FOUND");
+        const folders = new Set<string>(),
+          files = new Set<string>();
+        for (const file of treeFiles()) {
+          if (!file.startsWith(prefix)) continue;
+          const [first, ...rest] = file.slice(prefix.length).split("/");
+          if (first) (rest.length ? folders : files).add(first);
+        }
+        const sorted = (names: Set<string>) => [...names].sort(treeCollator.compare);
+        value = {
+          workbenchId,
+          path,
+          entries: [
+            ...sorted(folders).map((name) => ({
+              name,
+              path: prefix + name,
+              type: "folder",
+              ignored: treeIgnored(prefix + name),
+            })),
+            ...sorted(files).map((name) => ({
+              name,
+              path: prefix + name,
+              type: "file",
+              ignored: treeIgnored(prefix + name),
+            })),
+          ],
+          truncated: false,
+        };
+        break;
+      }
+      case "docs.find": {
+        const { workbenchId, query } = channels["docs.find"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        const needle = query.trim().toLowerCase();
+        const paths = treeFiles()
+          .filter((file) => !treeIgnored(file) && file.toLowerCase().includes(needle))
+          .sort(treeCollator.compare);
+        value = { workbenchId, paths: paths.slice(0, 200), truncated: paths.length > 200 };
+        break;
+      }
+      case "docs.read": {
+        const { workbenchId, path } = channels["docs.read"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if (!treeFiles().includes(path)) throw veraError("NOT_FOUND");
+        if (/\.(pdf|docx|pptx|xlsx|odt|odp|ods)$/i.test(path))
+          throw { code: "INVALID", messageKey: "documents.textBinary" };
+        const lines = path === "firmware/main.c" ? ["int main(void) {", "  return 0;", "}"] : [`// ${path}`];
+        value = {
+          workbenchId,
+          content: { kind: "text", path, ref: null, snippet: "", lines, start: 1, end: lines.length },
+        };
+        break;
+      }
+      case "docs.stat": {
+        const { workbenchId, path } = channels["docs.stat"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        const modified = "2026-10-13T00:00:00.000Z";
+        if (treeFiles().includes(path)) {
+          const size = mockDocuments.find((doc) => doc.path === path)?.bytes ?? 42;
+          value = { workbenchId, properties: { path, type: "file", size, modified } };
+        } else if (treeFiles().some((file) => file.startsWith(`${path}/`))) {
+          value = { workbenchId, properties: { path, type: "folder", size: null, modified } };
+        } else throw veraError("NOT_FOUND");
+        break;
+      }
+      case "docs.openers":
+        channels["docs.openers"].request.parse(input.data);
+        value = { apps: ["vscode", "notepadpp", "terminal"] };
+        break;
+      case "docs.systemApps":
+      case "docs.openSystemApp": {
+        const request =
+          channel === "docs.systemApps"
+            ? channels["docs.systemApps"].request.parse(input.data)
+            : channels["docs.openSystemApp"].request.parse(input.data);
+        if (request.workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if (!treeFiles().includes(request.path))
+          throw veraError(
+            treeFiles().some((f) => f.startsWith(`${request.path}/`)) ? "INVALID" : "NOT_FOUND",
+          );
+        // Linux registers two applications for PNG images in the mock.
+        const apps = request.path.endsWith(".png")
+          ? [
+              { id: "org.gnome.eog.desktop", name: "Image Viewer" },
+              { id: "gimp.desktop", name: "GNU Image Manipulation Program" },
+            ]
+          : [];
+        if ("app" in request && !apps.some((app) => app.id === request.app)) throw veraError("INVALID");
+        value = channel === "docs.systemApps" ? { apps } : {};
+        break;
+      }
+      case "docs.openWith":
+      case "docs.reveal":
+      case "docs.copyPath": {
+        const { workbenchId, path } =
+          channel === "docs.openWith"
+            ? channels["docs.openWith"].request.parse(input.data)
+            : channel === "docs.reveal"
+              ? channels["docs.reveal"].request.parse(input.data)
+              : channels["docs.copyPath"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if (!treeFiles().some((file) => file === path || file.startsWith(`${path}/`)))
+          throw veraError("NOT_FOUND");
+        value = {};
+        break;
+      }
+      case "docs.volume": {
+        const { workbenchId } = channels["docs.volume"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        const documents = scenario === "empty" ? [] : mockDocuments;
+        value = {
+          workbenchId,
+          volume: { files: documents.length, bytes: documents.reduce((sum, doc) => sum + doc.bytes, 0) },
+        };
+        break;
+      }
       case "downloads.list": {
         const { workbenchId } = channels["downloads.list"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
@@ -324,6 +583,9 @@ export function createMockApi(
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         throw veraError("NOT_FOUND");
       }
+      case "downloads.reveal":
+        channels["downloads.reveal"].request.parse(input.data);
+        throw veraError("NOT_FOUND");
       case "docs.search": {
         const { workbenchId, query } = channels["docs.search"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
@@ -464,6 +726,15 @@ export function createMockApi(
         break;
       }
 
+      case "app.openPath": {
+        current();
+        const { path } = channels["app.openPath"].request.parse(input.data);
+        // Like PathGuard: what VERA ignores never reaches the default application.
+        if (!opensExternally(path) || treeIgnored(path) || path.split("/").includes(".."))
+          throw veraError("DENIED");
+        value = {};
+        break;
+      }
       case "app.revealPath": {
         current();
         const { path } = input.data as Request<"app.revealPath">;
@@ -679,18 +950,26 @@ export function createMockApi(
         value = { folder: "/mock/new-board" };
         break;
       case "workbench.create": {
-        const { folder, name } = channels["workbench.create"].request.parse(input.data);
+        const {
+          folder,
+          name,
+          config: initial,
+          instructions,
+        } = channels["workbench.create"].request.parse(input.data);
         if (benches.has(folder)) throw veraError("CONFLICT");
         sequence++;
-        const config = workbenchSchema.parse({
-          format: 1,
-          id: `wb_01JB8Z6Q4M7N2K5R9T3V8X${String(sequence).padStart(4, "0")}`,
-          name,
-        });
+        const config = mergeWorkbench(
+          workbenchSchema.parse({
+            format: 1,
+            id: `wb_01JB8Z6Q4M7N2K5R9T3V8X${String(sequence).padStart(4, "0")}`,
+            name,
+          }),
+          initial ?? {},
+        );
         const snapshot = { folder, config, readOnly: false, warnings: [] };
         benches.set(folder, {
           snapshot,
-          pinned: workbenchTemplate(name),
+          pinned: folderNotes.get(folder) ?? instructions ?? workbenchTemplate(name),
         });
         await sessions.close();
         active = folder;
@@ -725,7 +1004,14 @@ export function createMockApi(
         break;
       }
       case "workbench.recent": {
-        const { remove, pin, reveal } = channels["workbench.recent"].request.parse(input.data);
+        const { remove, pin, move, reveal } = channels["workbench.recent"].request.parse(input.data);
+        if (move) {
+          if (scenario === "read-only") throw veraError("DENIED");
+          settings = mergeSettings(settings, {
+            recentWorkbenches: moveRecentWorkbench(settings.recentWorkbenches, move.folder, move.offset),
+          });
+          emitAppEvent({ type: "settings.changed" });
+        }
         if (pin) {
           if (scenario === "read-only") throw veraError("DENIED");
           if (!settings.recentWorkbenches.some((e) => e.folder === pin.folder)) throw veraError("NOT_FOUND");

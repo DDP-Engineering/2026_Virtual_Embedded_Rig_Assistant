@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-2e3fad2d"
+
+title = "Find workbench files by name"
+
+status = "active"
+
+requirement = "When asked to find files by a name fragment, VERA shall return up to 200 workbench-relative paths of files that are neither ignored nor linked and whose path contains the fragment ignoring case, in name order, with a flag when more matches exist or the walk stopped after 50,000 entries."
+
+verification = "Core test: a fragment matching 3 files returns those paths; 250 matches return 200 and the flag; files under .git, node_modules or a .veraignore'd folder and linked entries never match; an empty fragment is refused; shared contract test."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/tree.test.ts::finds visible files by a case-insensitive name fragment, at most 200 with a flag", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::lists, finds and reads workbench files through strict docs channels", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

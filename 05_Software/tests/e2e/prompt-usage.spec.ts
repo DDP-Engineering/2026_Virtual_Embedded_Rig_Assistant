@@ -127,7 +127,7 @@ test("native activity retains per-prompt tokens and initial context through tool
     await installNetworkGuard(app);
     page = await app.firstWindow();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await page.locator(`[data-session="${id}"]`).click();
     await page.locator('[data-action="show-activity"]').click();
     await expect(page.locator("[data-prompt-usage]").nth(0)).toContainText("320");

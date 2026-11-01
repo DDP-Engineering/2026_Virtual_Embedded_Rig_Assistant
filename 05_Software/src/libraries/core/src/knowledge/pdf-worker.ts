@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { parentPort } from "node:worker_threads";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import type { OfficeFormat } from "./office-format.js";
 
 const assets = dirname(createRequire(import.meta.url).resolve("pdfjs-dist/package.json"));
 
@@ -47,6 +48,20 @@ async function extract(bytes: Uint8Array): Promise<void> {
     await loading.destroy();
   }
 }
-parentPort?.once("message", (bytes: Uint8Array) => {
-  void extract(bytes);
+/**
+ * Office containers share this host-owned thread: one request per disposable worker. The parsers
+ * load only for office requests, so PDF jobs keep a small worker with no relative imports.
+ */
+async function office(format: OfficeFormat, bytes: Uint8Array): Promise<void> {
+  const { OfficeLimitError } = await import("./office-format.js");
+  try {
+    const { extractOffice } = await import("./office.js");
+    parentPort?.postMessage(await extractOffice(format, bytes));
+  } catch (error) {
+    parentPort?.postMessage({ error: error instanceof OfficeLimitError ? "SIZE_LIMIT" : "PROCESSING" });
+  }
+}
+parentPort?.once("message", (message: Uint8Array | { format: OfficeFormat; bytes: Uint8Array }) => {
+  if (message instanceof Uint8Array) void extract(message);
+  else void office(message.format, message.bytes);
 });

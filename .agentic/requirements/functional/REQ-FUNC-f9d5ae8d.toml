@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-f9d5ae8d"
+
+title = "Process documents in the indexer process"
+
+status = "active"
+
+requirement = "When the desktop app indexes a selected document, VERA shall hash, verify, extract, chunk and embed it in a separate indexer process and persist the returned status, chunks and vectors only from the main process."
+
+verification = "Core test: an ingest pass through processor ports persists the returned status, chunks and vectors from main; main test: the host forwards process, select and inspect requests as data and returns the indexer's results; native e2e: documents are indexed while the indexer runs as its own utility process with a different pid."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.ts", "05_Software/src/apps/desktop/src/main/indexer-process.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/inspect.ts", "05_Software/src/libraries/core/src/knowledge/kinds.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/indexer-host.test.ts::runs document processing, selection and inspection in the indexer and returns its results", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts::answers process, select and inspect requests with each service's result and a signal of its own", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts::passes a failure's error code, such as ENOENT, back to main", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts::restores error codes and aborted errors from the indexer", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::selects and inspects documents through the processor's ports when they are supplied", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::persists the chunks and vectors a processor port returns", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::retries a document whose source vanished in the indexer instead of storing a failure", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::inspects a source in-process with identity, binary and change checks", "05_Software/tests/e2e/indexer.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

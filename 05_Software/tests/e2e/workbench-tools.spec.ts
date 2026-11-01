@@ -41,7 +41,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await openTools(page);
-    await expect(page.locator("[data-tool-toggle]")).toHaveCount(13);
+    await expect(page.locator("[data-tool-toggle]")).toHaveCount(14);
     await page.locator('[data-tool-toggle="grep"]').uncheck();
     await page.locator('[data-tool-toggle="write"]').uncheck();
     await page.locator("[data-project-save]").click();
@@ -56,7 +56,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await openTools(page);
     await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await page.locator('[data-tool-toggle="grep"]').check();
-    await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.locator(".workbench-editor").getByRole("button", { name: "Cancel", exact: true }).click();
     expect(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).toBe(yaml);
     for (const [language, description] of [
       ["ro", "Caută în conținutul"],
@@ -90,7 +90,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await installNetworkGuard(app);
     page = await app.firstWindow();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await openTools(page);
     await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await expect(page.locator('[data-tool-toggle="write"]')).not.toBeChecked();

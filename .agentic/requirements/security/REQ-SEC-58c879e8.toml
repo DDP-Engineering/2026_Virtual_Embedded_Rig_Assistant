@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-58c879e8"
+
+title = "Refuse office archives beyond extraction limits"
+
+status = "active"
+
+requirement = "If an office file's archive holds more than 10000 entries or more than 500 MB of uncompressed data, then VERA shall not extract it and shall record the document as failed with SIZE_LIMIT."
+
+verification = "Core test with a generated archive whose declared uncompressed size exceeds the limit and one with too many entries: extraction is refused before inflating, the document row is failed with SIZE_LIMIT."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/office.ts", "05_Software/src/libraries/core/src/knowledge/office-format.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/knowledge/pdf-worker.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/office.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

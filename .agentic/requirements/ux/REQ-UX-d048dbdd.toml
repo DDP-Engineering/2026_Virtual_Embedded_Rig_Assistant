@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-d048dbdd"
+
+title = "Edit retrieval defaults in the Indexing section"
+
+status = "active"
+
+requirement = "While the workbench configuration form shows its Indexing section, the desktop app shall offer results per search as a number from 1 to 20 and search mode as hybrid, keyword or semantic, and shall include them in the configuration that New Workbench creates and that the editor saves."
+
+verification = "Renderer test: Indexing shows the defaults 8 and hybrid; changing them before Create stores retrieval in the created configuration. Native e2e asserts retrieval in workbench.yaml after creation."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

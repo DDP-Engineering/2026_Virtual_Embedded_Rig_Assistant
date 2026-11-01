@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-d37a2092"
+
+title = "Open an allowlisted workbench document in the default application"
+
+status = "active"
+
+requirement = "When the user asks to open a workbench file whose extension is on the document allowlist (.pdf .txt .md .markdown .csv .tsv .log .docx .xlsx .pptx .doc .xls .ppt .odt .ods .odp .rtf, any case), the desktop app shall open that ordinary file inside the workbench with the operating system's default application."
+
+verification = "Main-process test with a fake opener: docs/a.PDF and docs/pinout.xlsx are passed to the opener as their absolute guarded paths, and the call returns success."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/reveal-path.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/documents.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/reveal-path.test.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

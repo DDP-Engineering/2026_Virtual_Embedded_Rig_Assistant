@@ -31,6 +31,14 @@ SessionHost may own a PdfDownloads instance, exposed as listDownloads/openDownlo
   active/deleting sessions reject the mutation. list returns the flag. Archival
   preserves messages/events and is explicitly reversible. No schema change is needed.
 
+- Session order (REQ-FUNC-7871b582, TASK-c99ca08c) is a user preference, not workbench data:
+  settings.sessionOrder[workbenchId] holds session ids. main/session-order.ts applies the shared
+  orderSessions to session.list (sessions missing from the stored order first, newest first;
+  archived sessions are never ordered: last in repository order once an order is stored, and
+  the renderer shows them in their own group) and serializes session.move, which
+  uses moveSession (stores non-archived ids only, deleted ids dropped) and refuses read-only
+  settings with DENIED. Search results keep the search order and offer no moves.
+
 
 - SessionService(host) recovers writable state before accepting work. host supplies SQLite/root/gateway/Clock/model/prompt and optional workers/registry/permissions/policy/runtime/limits/scrubbing/ownership check and [skill catalog](skills.md). Desktop refreshes catalog metadata before each turn and binds its owned loader to the tool context. Read-only services expose reads/subscriptions.
 - TodoHost binds synchronous validated whole-list upserts and durable todo.updated recording/publication for sequential session tools; [Plan](plan.md) owns bounds and renderer status presentation.

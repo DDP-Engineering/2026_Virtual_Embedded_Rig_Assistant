@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-f8ec3a43"
+
+title = "Show and remove the entries attached to a chat"
+
+status = "active"
+
+requirement = "While entries are attached to a chat, the desktop app shall show each above the message box as a chip with the entry's name, its path as tooltip and a remove button named after the path, in the order attached, and keep them per session until the message is sent."
+
+verification = "Renderer test: two attached entries show two chips in order with their names and paths as titles; 'Remove attachment: docs/a.pdf' removes that chip and focus stays in the message box; another session shows its own chip and the first session's chips return when it is selected again."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/src/apps/desktop/src/renderer/lib/attachments.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/attachments.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/attachments.test.ts::attaches Docs tree entries to the active chat from the workbench page and sends them as mentions", "05_Software/src/apps/desktop/src/renderer/components/session/attachments.test.ts::keeps the attachments of each session apart"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

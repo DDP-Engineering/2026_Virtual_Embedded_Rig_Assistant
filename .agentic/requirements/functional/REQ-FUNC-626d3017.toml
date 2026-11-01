@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-626d3017"
+
+title = "Reference the untitled leading section"
+
+status = "active"
+
+requirement = "When given a heading reference whose slug is empty, written path#h=, the shared reference API shall parse it as the untitled leading section of path, format it back losslessly, and label it '<file name> #start'."
+
+verification = "Shared refs test: docs/notes.docx#h= round trips through parseRef/formatRef as a heading with slug \"\" and labels 'notes.docx #start'; existing heading, page, line and artifact refs keep their results; a bare path, #h=-# (an invalid slug character) and a path with an escaping segment are still rejected."
+
+affected_paths = ["05_Software/src/libraries/shared/src/refs.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/refs.test.ts", "05_Software/tests/e2e/office-documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

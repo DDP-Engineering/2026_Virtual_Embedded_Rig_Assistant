@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-ab0d5e61"
+
+title = "Move workbenches and sessions from their row menu or the keyboard"
+
+status = "active"
+
+requirement = "While a workbench or a non-archived session is listed in the sidebar, the desktop app shall offer Move up and Move down in its row menu, disabled at the edge of its group, and move the focused row with Alt+Shift+ArrowUp or Alt+Shift+ArrowDown, keeping focus on the moved row."
+
+verification = "Renderer test with the mock API: the menu items move a workbench and a session one place, are disabled at the group edges and absent for archived sessions and search results; Alt+Shift+Arrow keys move a focused row and focus stays on it; locales en/ro/de; native e2e reorders, restarts and keeps both orders."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/lib/shortcuts.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts::Move up and Move down reorder workbenches within their pinned group and sessions, by menu and Alt+Shift+Arrow", "05_Software/tests/e2e/sidebar-order.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

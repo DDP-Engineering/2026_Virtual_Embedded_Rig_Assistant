@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-f6c347b8"
+
+title = "Show stopped indexing with a restart action"
+
+status = "active"
+
+requirement = "While indexing is stopped after repeated indexer crashes, the Docs panel shall show that indexing stopped, disable Reindex, and offer a Restart action that starts the indexer and reconciles the active workbench."
+
+verification = "Renderer test with the mock API: Docs starts with a running indexer, a stopped status event shows the message and a Restart button and disables Reindex; activating Restart invokes the restart channel and a running event removes the message and enables Reindex; locales en/ro/de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::shows stopped indexing with a Restart action that restarts the indexer", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::reports the indexer state and restarts it through strict channels and an app event"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

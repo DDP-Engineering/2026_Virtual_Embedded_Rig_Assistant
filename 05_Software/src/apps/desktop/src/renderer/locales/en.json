@@ -32,12 +32,9 @@
     "skipToContent": "Skip to main content"
   },
   "welcome": {
-    "title": "Open a workbench",
     "description": "A workbench holds your board’s documents, notes and skills. Your workspace starts here.",
     "workbenches": "Workbenches",
-    "create": "Create a workbench",
-    "open": "Open an existing one",
-    "recent": "Recent"
+    "create": "Create a workbench"
   },
   "settings": {
     "title": "App settings",
@@ -97,22 +94,17 @@
     "title": "Right panel",
     "close": "Close",
     "context": "Context",
-    "docs": "Docs",
+    "docs": "Files",
     "changes": "Changes",
     "artifacts": "Artifacts",
     "plan": "Plan",
-    "placeholder": "Panel content will be available here."
+    "placeholder": "Panel content will be available here.",
+    "source": "Source"
   },
   "workbench": {
     "name": "Workbench name",
     "chooseFolder": "Choose folder",
-    "openFolder": "Open folder",
-    "openDescription": "Choose a folder containing .vera/workbench.yaml.",
-    "noRecent": "No recent workbenches yet.",
     "missing": "Folder missing",
-    "openRecent": "Open",
-    "remove": "Remove from recent",
-    "removeNamed": "Remove {{name}} from recent",
     "close": "Close workbench",
     "pinnedOversized": "Context exceeds 16 KB. The agent will use the first 16 KB. Your full text is saved.",
     "readOnly": "This workbench is open read-only because another process or lock owns it.",
@@ -122,8 +114,7 @@
     "unknownKey": "Unknown configuration key preserved:",
     "unknownName": "Unresolved disabled name:",
     "networkShare": "Network share unsupported. Use a local disk workbench.",
-    "lockGuard": "Lock coordination is busy. This workbench is read-only.",
-    "openNamed": "Open {{name}}"
+    "lockGuard": "Lock coordination is busy. This workbench is read-only."
   },
   "providers": {
     "description": "Manage subscriptions and API or local connections. You can use several providers at the same time.",
@@ -187,6 +178,8 @@
     "failure": "Provider error: {{message}}"
   },
   "chat": {
+    "attachments": "Attached files",
+    "removeAttachment": "Remove attachment: {{path}}",
     "promptInput": "Input",
     "promptOutput": "Output",
     "promptInitialContext": "Initial context",
@@ -276,6 +269,8 @@
     "activityReply": "Reply",
     "actionsNamed": "Session actions: {{title}}",
     "archive": "Archive",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
     "restore": "Restore",
     "archived": "Archived sessions",
     "lastActivity": "Last activity: {{date}}"
@@ -339,11 +334,51 @@
     "renewalDue": "Token renewal is due; it renews automatically when needed."
   },
   "documents": {
+    "attach": "Attach as context",
     "viewer": "Document viewer",
-    "search": "Search documents",
+    "search": "Search files and documents",
     "reindex": "Reindex",
     "open": "Open",
     "progress": "Index: {{done}} done, {{pending}} pending, {{failed}} failed",
+    "volumeWarning": "Large documentation selection: {{files}} files, {{size}}. Indexing continues in the background; narrow the documentation folders to index faster.",
+    "indexerStopped": "Indexing stopped: the indexer process failed several times in a row. Documents stay searchable as last indexed.",
+    "indexerRestart": "Restart indexing",
+    "tree": "Workbench files",
+    "collapseAll": "Collapse all",
+    "moreMatches": "More files match. Refine the search to see them.",
+    "noMatches": "No files match.",
+    "folderCount": "Documents in the index: {{count}}",
+    "folderProblems": "Some documents here need attention",
+    "notIndexed": "Not indexed",
+    "ignored": "Ignored by VERA",
+    "inDocuments": "In documents",
+    "openIn": "Open in",
+    "defaultApp": "Default app",
+    "otherApp": "Other app…",
+    "terminal": "Terminal",
+    "copy": "Copy",
+    "copyAbsolute": "Absolute path",
+    "copyRelative": "Relative path",
+    "copyName": "File name",
+    "copied": "Copied to the clipboard.",
+    "revealExplorer": "Show in Explorer",
+    "revealFinder": "Show in Finder",
+    "revealFolder": "Show in folder",
+    "treeTruncated": "Only the first 5,000 entries are shown.",
+    "rowActions": "Actions: {{name}}",
+    "properties": "Properties",
+    "propertiesTitle": "Properties: {{name}}",
+    "propertyPath": "Path",
+    "propertyType": "Type",
+    "propertySize": "Size",
+    "propertyModified": "Modified",
+    "propertyIndex": "Index status",
+    "propertyPages": "Pages",
+    "propertyIndexed": "Documents in the index",
+    "typeFolder": "Folder",
+    "typeFile": "File",
+    "textBinary": "This file is not text and cannot be shown here.",
+    "textTooLarge": "This file is larger than 5 MB and cannot be shown here.",
     "readOnly": "Read-only workbench",
     "empty": "No documents in the index.",
     "noResults": "No matching documents.",
@@ -377,7 +412,13 @@
     "openNamed": "Open {{path}}",
     "previousLines": "Previous lines",
     "nextLines": "Next lines",
-    "pageText": "Text of page {{page}}"
+    "pageText": "Text of page {{page}}",
+    "slide": "Slide {{number}}",
+    "openExternal": "Open in default app",
+    "openExternalNamed": "Open in default app: {{path}}",
+    "closeSource": "Close source",
+    "recentSources": "Recent sources",
+    "noSource": "Open a citation or a document to see it here."
   },
   "skills": {
     "settings": "Skills settings",
@@ -537,6 +578,8 @@
     "plugins": "Plugins",
     "pin": "Pin",
     "unpin": "Unpin",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
     "edit": "Edit workbench",
     "explorer": "Open in Explorer",
     "remove": "Remove from list",
@@ -548,7 +591,6 @@
     "agent": "Agent",
     "instructions": "Instructions",
     "tools": "Tools",
-    "embeddings": "Embeddings",
     "name": "Name",
     "description": "Description",
     "include": "Include patterns (one per line)",
@@ -574,7 +616,9 @@
     "loadingInstructions": "Loading workbench instructions…",
     "skillsIndependent": "Skill changes are saved in the Skills manager independently of the project form.",
     "back": "Back to workbenches",
-    "skills": "Skills"
+    "skills": "Skills",
+    "indexing": "Indexing",
+    "discardChanges": "Discard your unsaved workbench changes?"
   },
   "overview": {
     "title": "Workbench overview",
@@ -604,7 +648,7 @@
     "toggleSidebar": "Toggle sidebar",
     "toggleSidebarDesc": "Show or collapse the workbench navigation.",
     "toggleRightPanel": "Toggle right panel",
-    "toggleRightPanelDesc": "Show or hide Context, Docs and technical panels.",
+    "toggleRightPanelDesc": "Show or hide Context, Files and technical panels.",
     "find": "Find in conversation",
     "findDesc": "Search the current session transcript.",
     "focusComposer": "Focus message input",
@@ -639,5 +683,38 @@
     "approvalSource": "Download from: {{url}}",
     "maximum": "Maximum download size: {{count}} MiB.",
     "saved": "Saved locally"
+  },
+  "create": {
+    "folderHint": "Choose the folder that holds the board's documents and notes. VERA keeps its own data in .vera inside it.",
+    "existing": "This folder is already a workbench.",
+    "openExisting": "Open this workbench",
+    "instructionsKept": "This folder already has .vera/WORKBENCH.md. Creating the workbench keeps it unchanged; edit it afterwards from the workbench editor.",
+    "noSkills": "No skills found. Add skills later from the workbench editor."
+  },
+  "documentsSetup": {
+    "volumeWarning": "Large documentation selection: {{files}} files, {{size}}. Indexing it will take a while; consider narrowing the documentation folders.",
+    "volumeWarningTruncated": "Large documentation selection: at least {{files}} files, {{size}} (the preview stopped early). Indexing it will take a while; consider narrowing the documentation folders.",
+    "scanning": "Looking for documentation folders…",
+    "noneDetected": "No documentation folders found. Add one, or edit the patterns under Advanced.",
+    "addedByHand": "added by hand",
+    "truncated": "Part of the folder could not be scanned (too large or unreadable).",
+    "addFolder": "Add folder…",
+    "preview": "Documents to index: {{count}} ({{size}}).",
+    "officePending": "Legacy Office and RTF files are not indexed: {{count}}.",
+    "advanced": "Advanced: include and exclude patterns",
+    "kindPdf": "PDF",
+    "kindOffice": "Office",
+    "kindMarkdown": "Markdown",
+    "kindHtml": "HTML",
+    "kindText": "text"
+  },
+  "retrieval": {
+    "title": "Document search",
+    "info": "Defaults for the agent's search_docs; the agent may still ask for a different number or mode.",
+    "results": "Results per search (1–20)",
+    "mode": "Search mode",
+    "hybrid": "Hybrid (keywords and meaning)",
+    "keyword": "Keywords only",
+    "semantic": "Meaning only"
   }
 }

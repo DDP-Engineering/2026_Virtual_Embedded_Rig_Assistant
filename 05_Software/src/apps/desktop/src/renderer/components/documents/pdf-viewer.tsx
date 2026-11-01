@@ -87,6 +87,16 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
   const canvas = useRef<HTMLCanvasElement>(null),
     text = useRef<HTMLDivElement>(null),
     sheet = useRef<HTMLDivElement>(null);
+  // Reaching the first or last page disables the button just pressed; focus moves to the other one
+  // instead of falling to the document, where keyboard shortcuts such as Escape no longer reach.
+  const previous = useRef<HTMLButtonElement>(null),
+    next = useRef<HTMLButtonElement>(null),
+    refocus = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    void page;
+    refocus.current?.focus();
+    refocus.current = null;
+  }, [page]);
   const matches = query.trim()
     ? content.pages.flatMap((value, i) => (normalize(value).includes(normalize(query)) ? [i + 1] : []))
     : [];
@@ -178,7 +188,15 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
   return (
     <div className="pdf-viewer" data-page={page} data-ready={ready}>
       <div className="document-toolbar">
-        <button type="button" disabled={page === 1} onClick={() => setPage((n) => n - 1)}>
+        <button
+          ref={previous}
+          type="button"
+          disabled={page === 1}
+          onClick={() => {
+            if (page - 1 === 1) refocus.current = next.current;
+            setPage(page - 1);
+          }}
+        >
           {t("documents.previous")}
         </button>
         <label>
@@ -196,7 +214,15 @@ export default function PdfViewer({ content }: { content: Extract<ViewerContent,
           />
         </label>
         <span>{t("documents.pageCount", { count: content.pages.length })}</span>
-        <button type="button" disabled={page === content.pages.length} onClick={() => setPage((n) => n + 1)}>
+        <button
+          ref={next}
+          type="button"
+          disabled={page === content.pages.length}
+          onClick={() => {
+            if (page + 1 === content.pages.length) refocus.current = previous.current;
+            setPage(page + 1);
+          }}
+        >
           {t("documents.next")}
         </button>
         <label>

@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { binaryDocumentKinds, isDocumentKindIn } from "@vera/shared";
 import { z } from "zod";
 import { PathGuard } from "../workbench/path-guard.js";
 import { chunkDocument, needsOcr } from "./chunk.js";
@@ -24,7 +25,8 @@ import {
   extractText,
 } from "./extraction.js";
 import { type DocumentInput, type DocumentProcessor, PDF_LIMIT, TEXT_LIMIT } from "./ingest.js";
-import type { PdfExtractor } from "./worker-host.js";
+import { OfficeLimitError, officeFormat } from "./office-format.js";
+import type { OfficeExtractor, PdfExtractor } from "./worker-host.js";
 
 const cacheSchema = z
   .object({ version: z.literal(1), sha256: z.string().regex(/^[a-f0-9]{64}$/), extraction: extractionSchema })
@@ -163,7 +165,7 @@ export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8A
     return lstat(target.absolute);
   };
   const before = await ordinary();
-  const limit = input.kind === "pdf" ? PDF_LIMIT : TEXT_LIMIT;
+  const limit = isDocumentKindIn(input.kind, binaryDocumentKinds) ? PDF_LIMIT : TEXT_LIMIT;
   if (before.size > limit) throw Error("Source exceeds budget.");
   const handle = await open(target.absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
   try {
@@ -204,14 +206,33 @@ export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8A
     await handle.close();
   }
 }
-export function createDocumentProcessor(pdf: PdfExtractor, embeddings?: EmbeddingPort): DocumentProcessor {
+/**
+ * Hosts pass worker-backed extractors; without an office extractor (tests, tools) office files are
+ * parsed in-process with the same limits.
+ */
+export function createDocumentProcessor(
+  pdf: PdfExtractor,
+  embeddings?: EmbeddingPort,
+  office: OfficeExtractor = async (format, bytes) =>
+    (await import("./office.js")).extractOffice(format, bytes),
+): DocumentProcessor {
   const processor: DocumentProcessor = async (input) => {
     if (!/^[a-f0-9]{64}$/.test(input.sha256)) throw Error("Invalid extraction key.");
     const bytes = await verifyDocumentSource(input);
     let extraction = await readCache(input);
     if (!extraction) {
       if (input.kind === "pdf") extraction = await pdf(bytes, input.signal);
-      else {
+      else if (isDocumentKindIn(input.kind, binaryDocumentKinds)) {
+        const format = officeFormat(input.path);
+        if (!format) throw Error("Unsupported office format.");
+        try {
+          extraction = await office(format, bytes, input.signal);
+        } catch (error) {
+          // An archive beyond the limits is a size failure, not a parser failure.
+          if (error instanceof OfficeLimitError) return { status: "failed", reason: "SIZE_LIMIT" };
+          throw error;
+        }
+      } else {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
         extraction =
           input.kind === "markdown"
@@ -225,7 +246,12 @@ export function createDocumentProcessor(pdf: PdfExtractor, embeddings?: Embeddin
       saveCache(input, extraction);
     }
     allowed(input);
-    const pages = extraction.kind === "pdf" ? { pages: extraction.pages.length } : {};
+    const pages =
+      extraction.kind === "pdf"
+        ? { pages: extraction.pages.length }
+        : extraction.kind === "presentation"
+          ? { pages: extraction.slides.length }
+          : {};
     const chunks = needsOcr(extraction)
       ? []
       : chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv", input.embeddings);

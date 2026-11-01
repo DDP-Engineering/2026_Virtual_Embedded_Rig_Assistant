@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-7f289a2c"
+
+title = "Edit workbench configuration on the creation page"
+
+status = "active"
+
+requirement = "While a folder that is not already a workbench is chosen on the New Workbench page, the desktop app shall present the General, Documents, Instructions, Agent, Tools, Skills, Indexing and Plugins sections of the shared workbench configuration form as an unsaved draft, with Instructions prefilled from the workbench template (or, when the folder already holds .vera/WORKBENCH.md, showing that file read-only as the instructions that creation keeps) and Skills listing the discovered skills as enabled checkboxes, and shall submit that draft only through the Create action."
+
+verification = "Native e2e: choose folder, uncheck a tool and a skill, edit instructions and chunk size, Create; assert workbench.yaml tools.disabled/skills.disabled/embeddings and WORKBENCH.md content on disk. Renderer unit test covers section list and draft defaults."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import {
   createDownloadPdfExtractor,
+  embeddingModelId,
   type LlmGateway,
+  modelSchema,
   SettingsService,
   splitModelReference,
   WebDownloads,
@@ -14,6 +17,7 @@ import { eventEnvelopeSchema, veraError, workbenchPatchSchema } from "@vera/shar
 import {
   app,
   BrowserWindow,
+  clipboard,
   dialog,
   ipcMain,
   Menu,
@@ -23,26 +27,43 @@ import {
   screen,
   session,
   shell,
+  utilityProcess,
 } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
-import { createDocumentServices } from "./document-processor.js";
 import { publicDocument, publicDocumentHit, publicViewer, publicWebDownload } from "./document-viewer.js";
 import { createDesktopDownloadTransfer } from "./download-transfer.js";
 import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
+import { IndexerHost } from "./indexer-host.js";
 import { createInvokeRouter } from "./ipc-router.js";
 import { createLogger } from "./logger.js";
 import { openExternal } from "./open-external.js";
+import {
+  copyEntry,
+  detectOpeners,
+  launchDetached,
+  type Opener,
+  type OpenerId,
+  openSystemApp,
+  openWith,
+  pathExists,
+  readOptionalText,
+  revealEntry,
+  runTool,
+  type SystemAppDeps,
+  systemApps,
+} from "./openers.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
-import { revealPath } from "./reveal-path.js";
+import { openPath, revealPath } from "./reveal-path.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
 import { exportSession } from "./session-export.js";
+import { createSessionOrder } from "./session-order.js";
 import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
@@ -76,10 +97,28 @@ nativeTheme.on("updated", () => {
 });
 const fileWorkers = createDesktopWorkerPool();
 const downloadTransfer = createDesktopDownloadTransfer();
-const documents = createDocumentServices(
-  app.isPackaged ? join(process.resourcesPath, "models") : join(here, "../../../../../src/models"),
-  app.isPackaged ? join(process.resourcesPath, "model-manifest.json") : undefined,
-);
+const models = app.isPackaged
+  ? join(process.resourcesPath, "models")
+  : join(here, "../../../../../src/models");
+const manifest = app.isPackaged
+  ? join(process.resourcesPath, "model-manifest.json")
+  : join(models, "model-manifest.json");
+// Selection, hashing, extraction, chunking and embeddings run in the VERA Indexer process; main
+// keeps every SQLite write (TASK-f09609fd).
+const indexer = new IndexerHost({
+  spawn: () =>
+    utilityProcess.fork(
+      fileURLToPath(new URL("./indexer-process.js", import.meta.url)),
+      [`--models=${models}`, `--manifest=${manifest}`],
+      { serviceName: "VERA Indexer" },
+    ),
+  modelId: embeddingModelId(modelSchema.parse(JSON.parse(readFileSync(manifest, "utf8")))),
+  status: (state) => {
+    emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
+    if (state === "running") workbench.refreshDocuments();
+  },
+});
+if (__VERA_TEST__) Object.assign(globalThis, { veraTestIndexerPid: () => indexer.pid() });
 let closeFileProbe: (() => Promise<void>) | undefined;
 let rendererUrl = "vera://app/index.html";
 let updates: Updates | undefined;
@@ -104,6 +143,7 @@ const settings = new SettingsService({
     updates?.settingsChanged();
   },
 });
+const sessionOrder = createSessionOrder(settings);
 const workbench = new WorkbenchService(
   {
     userData: dataLocations.paths.userData,
@@ -125,7 +165,7 @@ const workbench = new WorkbenchService(
       emitAppEvent(eventEnvelopeSchema.parse(event));
     },
   },
-  documents.processDocument,
+  indexer.processor,
 );
 const providers = new ProviderSettings(settings, credentials);
 const webAccess = new WebAccessService({
@@ -155,7 +195,7 @@ const sessions = new SessionsHost({
   credentials,
   clock: systemClock,
   workers: fileWorkers,
-  embeddings: documents.embeddings,
+  embeddings: indexer.embeddings,
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
@@ -168,6 +208,29 @@ ipcMain.handle("vera:subscription", (event, action, payload) =>
   sessions.subscription(event, action, payload),
 );
 
+// Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).
+let detected: Map<OpenerId, Opener> | undefined;
+const openers = () =>
+  (detected ??= detectOpeners({ platform: process.platform, env: process.env, exists: pathExists }));
+/** Linux applications registered for a file type (TASK-c49f03d5); the UI language picks their names. */
+const systemAppDeps = (): SystemAppDeps => {
+  const language = settings.get().settings.language;
+  return {
+    platform: process.platform,
+    run: runTool,
+    dataDirs: [
+      process.env.XDG_DATA_HOME || join(app.getPath("home"), ".local", "share"),
+      ...(process.env.XDG_DATA_DIRS || "/usr/local/share:/usr/share").split(":").filter(Boolean),
+    ],
+    readText: readOptionalText,
+    // The names follow the UI language, which falls back to English like the renderer does.
+    lang:
+      language !== "system"
+        ? language
+        : (["en", "ro", "de"].find((code) => app.getLocale().startsWith(code)) ?? "en"),
+    openers: openers(),
+  };
+};
 ipcMain.handle(
   "vera:invoke",
   createInvokeRouter({
@@ -211,6 +274,60 @@ ipcMain.handle(
           .map((doc) => publicDocument(doc, (text) => credentials.scrub(text)))
           .filter((doc) => doc !== undefined),
       }),
+      // Paths a redaction would change are left out, like docs.list (TASK-66b7d4aa).
+      "docs.tree": async ({ workbenchId, path }) => {
+        const listed = await workbench.listFolder(workbenchId, path);
+        return {
+          workbenchId,
+          path,
+          entries: listed.entries.filter((entry) => credentials.scrub(entry.path) === entry.path),
+          truncated: listed.truncated,
+        };
+      },
+      "docs.find": async ({ workbenchId, query }) => {
+        const found = await workbench.findFiles(workbenchId, query);
+        return {
+          workbenchId,
+          paths: found.paths.filter((path) => credentials.scrub(path) === path),
+          truncated: found.truncated,
+        };
+      },
+      "docs.read": async ({ workbenchId, path }) => ({
+        workbenchId,
+        content: publicViewer(await workbench.readText(workbenchId, path), (text) => credentials.scrub(text)),
+      }),
+      "docs.stat": async ({ workbenchId, path }) => ({
+        workbenchId,
+        properties: await workbench.statEntry(workbenchId, path),
+      }),
+      // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
+      "docs.openers": () => ({ apps: [...openers().keys()] }),
+      "docs.openWith": ({ workbenchId, path, app }) =>
+        openWith(() => workbench.locateEntry(workbenchId, path), app, openers(), launchDetached),
+      "docs.systemApps": async ({ workbenchId, path }) => ({
+        apps: (await systemApps(() => workbench.locateEntry(workbenchId, path), systemAppDeps())).map(
+          ({ id, name }) => ({ id, name }),
+        ),
+      }),
+      "docs.openSystemApp": ({ workbenchId, path, app }) =>
+        openSystemApp(() => workbench.locateEntry(workbenchId, path), app, systemAppDeps(), launchDetached),
+      "docs.reveal": ({ workbenchId, path }) =>
+        revealEntry(
+          () => workbench.locateEntry(workbenchId, path),
+          (absolute) => shell.showItemInFolder(absolute),
+        ),
+      "docs.copyPath": ({ workbenchId, path, form }) =>
+        copyEntry(
+          () => workbench.locateEntry(workbenchId, path),
+          path,
+          form,
+          (text) => clipboard.writeText(text),
+          sep,
+        ),
+      "docs.volume": async ({ workbenchId }) => ({
+        workbenchId,
+        volume: workbench.documentVolume(workbenchId),
+      }),
       "docs.search": async ({ workbenchId, query }) => ({
         workbenchId,
         results: (await workbench.searchDocuments(workbenchId, query))
@@ -236,6 +353,11 @@ ipcMain.handle(
           content: publicViewer(content, (text) => credentials.scrub(text)),
         };
       },
+      "indexer.status": async () => ({ state: indexer.state() }),
+      "indexer.restart": async () => {
+        indexer.restart();
+        return {};
+      },
       "docs.reindex": async ({ workbenchId }) => {
         await workbench.reindexDocuments(workbenchId);
         return {};
@@ -257,6 +379,11 @@ ipcMain.handle(
             content: publicViewer(await service.openDownload(downloadId), (text) => credentials.scrub(text)),
           })),
         ),
+      "downloads.reveal": ({ downloadId }) =>
+        sessions.run(async (service) => {
+          shell.showItemInFolder(await service.locateDownload(downloadId));
+          return {};
+        }),
       "app.openExternal": (request) => openExternal(request, (url) => shell.openExternal(url)),
       "providers.chatgpt.login": (request) => chatgpt.login(request),
       "providers.chatgpt.cancel": () => chatgpt.cancel(),
@@ -298,10 +425,22 @@ ipcMain.handle(
         sessions.run(() =>
           revealPath(workbench.getSnapshot().folder, path, (absolute) => shell.showItemInFolder(absolute)),
         ),
+      "app.openPath": ({ path }) =>
+        sessions.run(() =>
+          openPath(workbench.getSnapshot().folder, path, (absolute) => shell.openPath(absolute)),
+        ),
       "session.list": ({ workbenchId }) =>
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return s.list().map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text)));
+          return sessionOrder
+            .list(workbench.getSnapshot().config.id, s.list())
+            .map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text)));
+        }),
+      "session.move": ({ workbenchId, sessionId, offset }) =>
+        sessions.run(async (s) => {
+          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+          await sessionOrder.move(workbenchId, s.list(), sessionId, offset);
+          return {};
         }),
       "session.search": ({ query, workbenchId }) =>
         sessions.run((s) => {
@@ -418,23 +557,37 @@ ipcMain.handle(
         nativeTheme.themeSource = result.settings.theme;
         return result;
       },
-      "app.chooseFolder": async () => {
+      "app.chooseFolder": async ({ start }) => {
         if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
           return { folder: process.env.VERA_TEST_DIALOG_PATH };
         if (!window || window.isDestroyed()) return { folder: null };
         const result = await dialog.showOpenDialog(window, {
           properties: ["openDirectory", "createDirectory"],
+          ...(start && isAbsolute(start) ? { defaultPath: start } : {}),
         });
         return { folder: result.canceled ? null : (result.filePaths[0] ?? null) };
       },
-      "workbench.create": ({ folder, name }) => sessions.lifecycle(() => workbench.create(folder, name)),
+      "workbench.inspect": ({ folder }) => workbench.inspect(folder),
+      "workbench.scanDocs": ({ folder }) => workbench.scanDocuments(folder),
+      "workbench.previewDocs": ({ folder, include, exclude }) =>
+        workbench.previewDocuments(folder, { include, exclude }),
+      "workbench.relativeFolder": async ({ root, folder }) => ({
+        path: await workbench.relativeFolder(root, folder),
+      }),
+      "workbench.create": ({ folder, name, config, instructions }) =>
+        sessions.lifecycle(() =>
+          workbench.create(folder, name, {
+            ...(config ? { config } : {}),
+            ...(instructions !== undefined ? { instructions } : {}),
+          }),
+        ),
       "workbench.open": ({ folder }) => sessions.lifecycle(() => workbench.open(folder)),
       "workbench.close": async () => {
         await sessions.lifecycle(() => workbench.close());
         return {};
       },
-      "workbench.recent": async ({ remove, pin, reveal }) => {
-        const entries = await workbench.recent(remove, pin);
+      "workbench.recent": async ({ remove, pin, move, reveal }) => {
+        const entries = await workbench.recent(remove, pin, move);
         if (reveal !== undefined) {
           const entry = entries.find((item) => item.folder === reveal && !item.missing);
           if (!entry) throw veraError("NOT_FOUND");
@@ -545,7 +698,7 @@ if (!app.requestSingleInstanceLock()) {
       .close()
       .then(() => workbench.close())
       .then(() => fileWorkers.dispose())
-      .then(() => documents.embeddings.dispose())
+      .then(() => indexer.close())
       .then(() => closeFileProbe?.())
       .then(() => modelGateway.close())
       .then(() => chatgpt.close())

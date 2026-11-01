@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-2504362b"
+
+title = "List document matches under the filtered Docs tree"
+
+status = "active"
+
+requirement = "While the Docs search box has text, the desktop app shall list the keyword hits of indexed documents with their snippets and Open actions below the filtered tree, and say when no document matches."
+
+verification = "Renderer test with the mock API: typing 'power' keeps the tree, narrowed to name matches, and lists the hit in docs/a.md below it under 'In documents' with its snippet; Open shows it in Source; a query with no document hits says so while name matches still show; browser e2e searches 'power' and opens the hit."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::lists document matches under the filtered tree from the same search box", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

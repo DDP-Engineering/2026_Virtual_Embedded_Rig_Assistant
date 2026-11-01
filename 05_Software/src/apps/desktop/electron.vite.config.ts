@@ -107,6 +107,7 @@ export default defineConfig(({ command }) => ({
           "grep-worker": resolve(root, "src/main/grep-worker.ts"),
           "pdf-worker": resolve(root, "src/main/pdf-worker.ts"),
           "document-embedding-worker": resolve(root, "src/main/document-embedding-worker.ts"),
+          "indexer-process": resolve(root, "src/main/indexer-process.ts"),
           ...(testBuild
             ? { "embedding-worker": resolve(root, "src/main/packaging/embedding-worker.ts") }
             : {}),

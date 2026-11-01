@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-795a7f61"
+
+title = "Mark folders with their indexed documents and problems"
+
+status = "active"
+
+requirement = "While the Docs tree shows a folder, the desktop app shall show the number of indexed documents beneath it and a problem marker when any document beneath it is failed, needs OCR or unsupported."
+
+verification = "Renderer test: a folder holding three indexed documents, one of them failed, deeper in a subfolder, shows 3 and the problem marker; a folder with only indexed documents has no marker; a folder without documents shows no count."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::counts indexed documents beneath each folder and marks problems", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

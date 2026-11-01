@@ -70,8 +70,21 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
   const warnings = (items: WorkbenchWarning[]) =>
     items.map(({ code, path }) => ({ code, ...(path === undefined ? {} : { path: scrub(path) }) }));
   const configuration = (config: WorkbenchConfig): WorkbenchConfig => {
-    const { format, id, name, description, docs, skills, tools, agent, embeddings, ...extensions } = config;
+    const {
+      format,
+      id,
+      name,
+      description,
+      docs,
+      retrieval,
+      skills,
+      tools,
+      agent,
+      embeddings,
+      ...extensions
+    } = config;
     const { include, exclude, ...docExtensions } = docs;
+    const { results, mode, ...retrievalExtensions } = retrieval;
     const { disabled: disabledSkills, ...skillExtensions } = skills;
     const { disabled: disabledTools, ...toolExtensions } = tools;
     const { permission_mode, model, ...agentExtensions } = agent;
@@ -84,6 +97,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       embeddings: { ...embeddings },
       ...(description === undefined ? {} : { description: scrub(description) }),
       docs: { ...(extra(docExtensions) as object), include: include.map(scrub), exclude: exclude.map(scrub) },
+      retrieval: { ...(extra(retrievalExtensions) as object), results, mode },
       skills: { ...(extra(skillExtensions) as object), disabled: disabledSkills.map(scrub) },
       tools: { ...(extra(toolExtensions) as object), disabled: disabledTools.map(scrub) },
       agent: {
@@ -138,7 +152,8 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
   }
   if (envelope.event.type === "closed") return envelope;
   const event = envelope.event;
-  if (event.type === "index.progress") return envelope;
+  // Counters only: no paths or user text to scrub.
+  if (event.type === "index.progress" || event.type === "index.volume") return envelope;
   if (event.type === "index.document")
     return {
       ...envelope,

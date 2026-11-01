@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-25c814e1"
+
+title = "Open Docs tree items in other applications"
+
+status = "active"
+
+requirement = "When the user opens the Open in submenu of a Docs tree item, the desktop app shall list Default app for allowlisted files VERA does not ignore, the detected programs that can open the item - VS Code, Cursor and Notepad++ for a file, VS Code, Cursor and a terminal for a folder - and for a file Other app... on Windows or the applications Linux registers for its type, start the chosen one and show a failure under the tree, and shall leave out what the platform cannot do and Open in itself when nothing can be listed."
+
+verification = "Renderer test with the mock API (VS Code, Notepad++ and a terminal detected): docs/a.pdf lists Default app, VS Code and Notepad++; the ignored node_modules/pkg/README.md lists VS Code and Notepad++; the firmware folder lists VS Code and Terminal; choosing VS Code invokes the open-with channel with app vscode; an error reply shows under the tree; with no detected programs firmware/main.c has no Open in; with Other app detected a file lists it last and a folder does not; with Linux system apps Image Viewer and GIMP for a file, they follow the editors by name and choosing GIMP invokes the system-app channel with its id."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::opens Docs tree items in the default app and the detected programs from Open in", "05_Software/tests/e2e/docs-tree.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::lists the system's applications for a file on Linux and Other app on Windows, only for files"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

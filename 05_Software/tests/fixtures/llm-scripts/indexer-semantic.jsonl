@@ -1,0 +1,2 @@
+{"match":"(?i)semantic supply","toolCalls":[{"name":"search_docs","args":{"query":"which voltage powers the board","k":3,"mode":"semantic"}}]}
+{"text":"The notes describe the supply."}

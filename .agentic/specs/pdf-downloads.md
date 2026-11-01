@@ -12,6 +12,6 @@ The approval request binds URL, filename, generated destination, scope and maxim
 
 `downloads.list({workbenchId})` returns validated metadata, newest first. `downloads.open({workbenchId,downloadId})` checks active workbench ownership, managed ordinary paths, metadata identity and exact file hash, then supplies the existing local PDF viewer content via typed IPC. The viewer accepts only host-produced bytes and preserves its existing cancellation, stale selection, page navigation and close behavior. Metadata tampering/missing or modified content uses current INVALID/NOT_FOUND/CONFLICT errors, never an arbitrary-path fallback.
 
-The download parser uses a disposable worker with a 256 MiB V8 old-generation heap budget; pre-existing ingest parser defaults are unchanged. PDF downloads open in a centered modal; uncited documents omit citation-only labels. Completed approval summaries stay compact and technical result JSON remains expandable.
+The download parser uses a disposable worker with a 256 MiB V8 old-generation heap budget; pre-existing ingest parser defaults are unchanged. PDF downloads open in the right panel Source tab like every source (TASK-1c2ea187 RULING-001); uncited documents omit citation-only labels. Completed approval summaries stay compact and technical result JSON remains expandable.
 
 No migrations, RAG changes, external launching, cookies or automatic popup. UI translations cover English, Romanian and German. Tests use injected public-resolution/transport ports and real local PDF parsing, not uncontrolled network calls.

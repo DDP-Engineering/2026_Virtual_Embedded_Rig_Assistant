@@ -32,12 +32,9 @@
     "skipToContent": "Zum Hauptinhalt springen"
   },
   "welcome": {
-    "title": "Arbeitsbereich öffnen",
     "description": "Ein Arbeitsbereich enthält Dokumente, Notizen und Skills deiner Platine. Deine Arbeit beginnt hier.",
     "workbenches": "Arbeitsbereiche",
-    "create": "Arbeitsbereich erstellen",
-    "open": "Vorhandenen öffnen",
-    "recent": "Zuletzt geöffnet"
+    "create": "Arbeitsbereich erstellen"
   },
   "settings": {
     "title": "Anwendungseinstellungen",
@@ -97,22 +94,17 @@
     "title": "Rechter Bereich",
     "close": "Schließen",
     "context": "Kontext",
-    "docs": "Dokumente",
+    "docs": "Dateien",
     "changes": "Änderungen",
     "artifacts": "Artefakte",
     "plan": "Plan",
-    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein."
+    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein.",
+    "source": "Quelle"
   },
   "workbench": {
     "name": "Name des Arbeitsbereichs",
     "chooseFolder": "Ordner auswählen",
-    "openFolder": "Ordner öffnen",
-    "openDescription": "Wähle einen Ordner mit .vera/workbench.yaml.",
-    "noRecent": "Noch keine zuletzt verwendeten Arbeitsbereiche.",
     "missing": "Ordner fehlt",
-    "openRecent": "Öffnen",
-    "remove": "Aus Verlauf entfernen",
-    "removeNamed": "{{name}} aus Verlauf entfernen",
     "close": "Arbeitsbereich schließen",
     "pinnedOversized": "Der Kontext überschreitet 16 KB. Der Agent verwendet die ersten 16 KB. Der vollständige Text wird gespeichert.",
     "readOnly": "Dieser Arbeitsbereich ist schreibgeschützt, da ein anderer Prozess oder eine Sperre ihn besitzt.",
@@ -122,8 +114,7 @@
     "unknownKey": "Unbekannter Konfigurationsschlüssel erhalten:",
     "unknownName": "Unbekannter deaktivierter Name:",
     "networkShare": "Netzwerkfreigaben werden nicht unterstützt. Verwende einen Arbeitsbereich auf einem lokalen Datenträger.",
-    "lockGuard": "Die Sperrkoordination ist belegt. Dieser Arbeitsbereich ist schreibgeschützt.",
-    "openNamed": "{{name}} öffnen"
+    "lockGuard": "Die Sperrkoordination ist belegt. Dieser Arbeitsbereich ist schreibgeschützt."
   },
   "providers": {
     "description": "Verwalte Abonnements sowie API- oder lokale Verbindungen. Mehrere Anbieter können gleichzeitig verwendet werden.",
@@ -187,6 +178,8 @@
     "failure": "Anbieterfehler: {{message}}"
   },
   "chat": {
+    "attachments": "Angehängte Dateien",
+    "removeAttachment": "Anhang entfernen: {{path}}",
     "promptInput": "Eingabe",
     "promptOutput": "Ausgabe",
     "promptInitialContext": "Anfangskontext",
@@ -276,6 +269,8 @@
     "activityReply": "Antwort",
     "actionsNamed": "Sitzungsaktionen: {{title}}",
     "archive": "Archivieren",
+    "moveUp": "Nach oben verschieben",
+    "moveDown": "Nach unten verschieben",
     "restore": "Wiederherstellen",
     "archived": "Archivierte Sitzungen",
     "lastActivity": "Letzte Aktivität: {{date}}"
@@ -339,11 +334,51 @@
     "renewalDue": "Das Token muss erneuert werden; dies erfolgt bei Bedarf automatisch."
   },
   "documents": {
+    "attach": "Als Kontext anhängen",
     "viewer": "Dokumentanzeige",
-    "search": "Dokumente suchen",
+    "search": "Dateien und Dokumente suchen",
     "reindex": "Neu indizieren",
     "open": "Öffnen",
     "progress": "Index: {{done}} fertig, {{pending}} ausstehend, {{failed}} fehlgeschlagen",
+    "volumeWarning": "Große Dokumentauswahl: {{files}} Dateien, {{size}}. Die Indexierung läuft im Hintergrund weiter; schränken Sie die Dokumentationsordner ein, um schneller zu indexieren.",
+    "indexerStopped": "Indexierung angehalten: Der Indexierungsprozess ist mehrmals hintereinander fehlgeschlagen. Die Dokumente bleiben im zuletzt indexierten Stand durchsuchbar.",
+    "indexerRestart": "Indexierung neu starten",
+    "tree": "Workbench-Dateien",
+    "collapseAll": "Alle einklappen",
+    "moreMatches": "Weitere Dateien passen. Verfeinern Sie die Suche, um sie zu sehen.",
+    "noMatches": "Keine Datei passt.",
+    "folderCount": "Dokumente im Index: {{count}}",
+    "folderProblems": "Einige Dokumente hier brauchen Aufmerksamkeit",
+    "notIndexed": "Nicht indexiert",
+    "ignored": "Von VERA ignoriert",
+    "inDocuments": "In Dokumenten",
+    "openIn": "Öffnen in",
+    "defaultApp": "Standard-App",
+    "otherApp": "Andere App…",
+    "terminal": "Terminal",
+    "copy": "Kopieren",
+    "copyAbsolute": "Absoluter Pfad",
+    "copyRelative": "Relativer Pfad",
+    "copyName": "Dateiname",
+    "copied": "In die Zwischenablage kopiert.",
+    "revealExplorer": "Im Explorer anzeigen",
+    "revealFinder": "Im Finder anzeigen",
+    "revealFolder": "Im Ordner anzeigen",
+    "treeTruncated": "Nur die ersten 5.000 Einträge werden angezeigt.",
+    "rowActions": "Aktionen: {{name}}",
+    "properties": "Eigenschaften",
+    "propertiesTitle": "Eigenschaften: {{name}}",
+    "propertyPath": "Pfad",
+    "propertyType": "Typ",
+    "propertySize": "Größe",
+    "propertyModified": "Geändert",
+    "propertyIndex": "Indexstatus",
+    "propertyPages": "Seiten",
+    "propertyIndexed": "Dokumente im Index",
+    "typeFolder": "Ordner",
+    "typeFile": "Datei",
+    "textBinary": "Diese Datei ist kein Text und kann hier nicht angezeigt werden.",
+    "textTooLarge": "Diese Datei ist größer als 5 MB und kann hier nicht angezeigt werden.",
     "readOnly": "Schreibgeschützter Arbeitsbereich",
     "empty": "Keine Dokumente im Index.",
     "noResults": "Keine passenden Dokumente.",
@@ -377,7 +412,13 @@
     "openNamed": "{{path}} öffnen",
     "previousLines": "Vorherige Zeilen",
     "nextLines": "Nächste Zeilen",
-    "pageText": "Text von Seite {{page}}"
+    "pageText": "Text von Seite {{page}}",
+    "slide": "Folie {{number}}",
+    "openExternal": "In Standard-App öffnen",
+    "openExternalNamed": "In Standard-App öffnen: {{path}}",
+    "closeSource": "Quelle schließen",
+    "recentSources": "Letzte Quellen",
+    "noSource": "Öffne einen Beleg oder ein Dokument, um es hier zu sehen."
   },
   "skills": {
     "settings": "Skills-Einstellungen",
@@ -537,6 +578,8 @@
     "plugins": "Plugins",
     "pin": "Anheften",
     "unpin": "Loslösen",
+    "moveUp": "Nach oben verschieben",
+    "moveDown": "Nach unten verschieben",
     "edit": "Workbench bearbeiten",
     "explorer": "Im Explorer öffnen",
     "remove": "Aus Liste entfernen",
@@ -548,7 +591,6 @@
     "agent": "Agent",
     "instructions": "Anweisungen",
     "tools": "Werkzeuge",
-    "embeddings": "Embeddings",
     "name": "Name",
     "description": "Beschreibung",
     "include": "Einschlussmuster (eines pro Zeile)",
@@ -574,7 +616,9 @@
     "loadingInstructions": "Workbench-Anweisungen werden geladen…",
     "skillsIndependent": "Skill-Änderungen werden im Skills-Manager unabhängig vom Projektformular gespeichert.",
     "back": "Zurück zu Workbenches",
-    "skills": "Skills"
+    "skills": "Skills",
+    "indexing": "Indizierung",
+    "discardChanges": "Nicht gespeicherte Workbench-Änderungen verwerfen?"
   },
   "overview": {
     "title": "Workbench-Übersicht",
@@ -604,7 +648,7 @@
     "toggleSidebar": "Seitenleiste umschalten",
     "toggleSidebarDesc": "Die Workbench-Navigation ein- oder ausklappen.",
     "toggleRightPanel": "Rechtes Panel umschalten",
-    "toggleRightPanelDesc": "Context, Docs und technische Panels ein- oder ausblenden.",
+    "toggleRightPanelDesc": "Context, Dateien und technische Panels ein- oder ausblenden.",
     "find": "In Unterhaltung suchen",
     "findDesc": "Die Nachrichten der aktuellen Sitzung durchsuchen.",
     "focusComposer": "Nachrichteneingabe fokussieren",
@@ -639,5 +683,38 @@
     "approvalSource": "Herunterladen von: {{url}}",
     "maximum": "Maximale Downloadgröße: {{count}} MiB.",
     "saved": "Lokal gespeichert"
+  },
+  "create": {
+    "folderHint": "Wählen Sie den Ordner mit den Dokumenten und Notizen der Platine. VERA speichert eigene Daten in .vera innerhalb dieses Ordners.",
+    "existing": "Dieser Ordner ist bereits eine Workbench.",
+    "openExisting": "Diese Workbench öffnen",
+    "instructionsKept": "Dieser Ordner enthält bereits .vera/WORKBENCH.md. Beim Erstellen der Workbench bleibt die Datei unverändert; bearbeiten Sie sie anschließend im Workbench-Editor.",
+    "noSkills": "Keine Skills gefunden. Skills können später im Workbench-Editor hinzugefügt werden."
+  },
+  "documentsSetup": {
+    "volumeWarning": "Große Dokumentauswahl: {{files}} Dateien, {{size}}. Die Indexierung wird dauern; schränken Sie die Dokumentationsordner gegebenenfalls ein.",
+    "volumeWarningTruncated": "Große Dokumentauswahl: mindestens {{files}} Dateien, {{size}} (die Vorschau wurde vorzeitig beendet). Die Indexierung wird dauern; schränken Sie die Dokumentationsordner gegebenenfalls ein.",
+    "scanning": "Dokumentationsordner werden gesucht…",
+    "noneDetected": "Keine Dokumentationsordner gefunden. Fügen Sie einen hinzu oder bearbeiten Sie die Muster unter Erweitert.",
+    "addedByHand": "manuell hinzugefügt",
+    "truncated": "Ein Teil des Ordners konnte nicht durchsucht werden (zu groß oder nicht lesbar).",
+    "addFolder": "Ordner hinzufügen…",
+    "preview": "Zu indizierende Dokumente: {{count}} ({{size}}).",
+    "officePending": "Ältere Office- und RTF-Dateien werden nicht indiziert: {{count}}.",
+    "advanced": "Erweitert: Einschluss- und Ausschlussmuster",
+    "kindPdf": "PDF",
+    "kindOffice": "Office",
+    "kindMarkdown": "Markdown",
+    "kindHtml": "HTML",
+    "kindText": "Text"
+  },
+  "retrieval": {
+    "title": "Dokumentsuche",
+    "info": "Standardwerte für search_docs des Agenten; der Agent kann dennoch eine andere Anzahl oder einen anderen Modus anfordern.",
+    "results": "Ergebnisse pro Suche (1–20)",
+    "mode": "Suchmodus",
+    "hybrid": "Hybrid (Schlüsselwörter und Bedeutung)",
+    "keyword": "Nur Schlüsselwörter",
+    "semantic": "Nur Bedeutung"
   }
 }

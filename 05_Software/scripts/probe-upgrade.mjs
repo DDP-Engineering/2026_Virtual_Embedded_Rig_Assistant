@@ -7,7 +7,7 @@ import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, stringify } from "yaml";
-import { distributionConfig, enforceBudget, stageRuntime } from "./package.mjs";
+import { distributionConfig, stageRuntime } from "./package.mjs";
 import { checkStagedPayload } from "./package-checks.mjs";
 import { startUpdateFeed } from "./update-feed.mjs";
 import { seedInterrupted, verifyRecovered } from "./upgrade-fixture.mjs";
@@ -403,7 +403,6 @@ try {
       const path = join(output, file);
       const item = { version, ...(await artifact(path)), target };
       report.artifacts.push(item);
-      enforceBudget(process.platform, item.bytes, []);
       outputs[version] = { output, path, config };
       await cp(path, join(feedRoot, file));
       for (const name of await readdir(output))

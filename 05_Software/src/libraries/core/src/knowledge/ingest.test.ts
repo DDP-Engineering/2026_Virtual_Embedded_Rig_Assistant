@@ -2,8 +2,9 @@ import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, open, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type EventEnvelope, eventEnvelopeSchema } from "@vera/shared";
+import { documentFolderPattern, type EventEnvelope, eventEnvelopeSchema } from "@vera/shared";
 import type { FSWatcher } from "chokidar";
+import { strToU8, zipSync } from "fflate";
 import { afterEach, expect, it, vi } from "vitest";
 
 const watched = vi.hoisted(() => [] as { watcher: FSWatcher; ready: Promise<void> }[]);
@@ -184,7 +185,48 @@ it("debounces bursts for one second and skips identical hashes without processin
   await expect.poll(() => calls, { timeout: 7000 }).toBe(2);
 }, 25000);
 
-it("enforces inclusive PDF/text limits and records unsupported type/binary reasons", async () => {
+// REQ-FUNC-ad5868a2
+it("documentation preview counts exactly the documents ingest admits for the same selection", async () => {
+  const h = await harness(async () => ({ status: "indexed", chunks: [] }));
+  const files: Record<string, string> = {
+    "docs/a.md": "# A\n",
+    "docs/b.pdf": "%PDF-1.7",
+    "docs/c.docx": "PK",
+    "docs/d.doc": "legacy",
+    "docs/~$c.docx": "owner",
+    "docs/x.bin": "opaque",
+    "Manuals (RM0440)/rm.pdf": "%PDF-1.7 rm",
+    "notes/skip.txt": "excluded",
+    "notes/keep.md": "# Keep\n",
+  };
+  for (const [path, content] of Object.entries(files)) {
+    await mkdir(join(h.folder, path, ".."), { recursive: true });
+    await writeFile(join(h.folder, path), content);
+  }
+  const docs = {
+    include: ["docs/**", documentFolderPattern("Manuals (RM0440)"), "notes/**"],
+    exclude: ["notes/skip.txt"],
+  };
+  await h.service.updateConfig({ docs });
+  await h.service.reindexDocuments();
+  const admitted = (
+    h.db.prepare("SELECT path FROM documents WHERE status <> 'unsupported' ORDER BY path").all() as {
+      path: string;
+    }[]
+  ).map((row) => row.path);
+  expect(admitted).toEqual([
+    "Manuals (RM0440)/rm.pdf",
+    "docs/a.md",
+    "docs/b.pdf",
+    "docs/c.docx",
+    "notes/keep.md",
+  ]);
+  const preview = await h.service.previewDocuments(h.folder, docs);
+  expect(preview.files).toBe(admitted.length);
+  expect(preview.officePending).toBe(1);
+}, 15000);
+
+it("enforces inclusive PDF/text limits, records binary text as unsupported and ignores other types", async () => {
   const h = await harness();
   // PDF bytes are opaque to ingest; sparse files exercise actual sizes cheaply.
   for (const [name, bytes] of [
@@ -205,7 +247,8 @@ it("enforces inclusive PDF/text limits and records unsupported type/binary reaso
   expect(rows.get("docs/exact.txt")).toMatchObject({ status: "pending", bytes: TEXT_LIMIT });
   for (const path of ["docs/large.pdf", "docs/large.txt"])
     expect(rows.get(path)).toMatchObject({ status: "unsupported", error: "SIZE_LIMIT", sha256: null });
-  expect(rows.get("docs/blob.bin")).toMatchObject({ status: "unsupported", error: "TYPE_UNSUPPORTED" });
+  // Files of other types are not selected, so they get no row (TASK-e5310cdb).
+  expect(rows.get("docs/blob.bin")).toBeUndefined();
   expect(rows.get("docs/blob.txt")).toMatchObject({ status: "unsupported", error: "BINARY" });
 }, 15000);
 
@@ -437,7 +480,7 @@ it("unselected continuous writes cannot starve selected documents", async () => 
   await h.service.reindexDocuments();
   let count = 0;
   const timer = setInterval(() => {
-    void writeFile(join(h.folder, "firmware/live.log"), String(count++));
+    void writeFile(join(h.folder, "firmware/live.md"), String(count++));
   }, 150);
   try {
     await writeFile(join(h.folder, "docs/board.md"), "one");
@@ -477,7 +520,7 @@ it("directory excludes and negative includes cannot starve selected document eve
   const jobs: Promise<unknown>[] = [];
   const timer = setInterval(() => {
     for (const dir of ["generated", "excluded"])
-      jobs.push(writeFile(join(h.folder, `docs/${dir}/live.log`), String(count++)));
+      jobs.push(writeFile(join(h.folder, `docs/${dir}/live.md`), String(count++)));
   }, 150);
   try {
     await writeFile(join(h.folder, "docs/board.md"), "one");
@@ -627,3 +670,42 @@ it.each(["rebind", "close"])("settles startup waitIdle when %s cancels readiness
   } else await ingest.close();
   await pending;
 });
+
+// REQ-REL-7a48f161 REQ-SEC-58c879e8
+it("fails unreadable or oversized office files one by one while the rest of the folder indexes", async () => {
+  const h = await harness(
+    createDocumentProcessor(async () => {
+      throw Error("No PDF expected.");
+    }),
+  );
+  const fixture = await readFile(
+    new URL("../../../../../tests/fixtures/documents/office/review.docx", import.meta.url),
+  );
+  // One stored entry whose central directory record declares 2 GiB uncompressed.
+  const declaredHuge = zipSync({ "xl/workbook.xml": strToU8("<workbook/>") }, { level: 0 });
+  const end = new DataView(declaredHuge.buffer, declaredHuge.byteOffset, declaredHuge.byteLength);
+  end.setUint32(end.getUint32(declaredHuge.length - 22 + 16, true) + 24, 0x7fffffff, true);
+  const crowded: Record<string, Uint8Array> = {};
+  for (let i = 0; i <= 10000; i++) crowded[`p/${i}`] = new Uint8Array();
+  const files: Record<string, Uint8Array> = {
+    "docs/good.docx": fixture,
+    "docs/truncated.docx": fixture.subarray(0, fixture.length / 2),
+    "docs/no-main.docx": zipSync({ "[Content_Types].xml": strToU8("<Types/>") }),
+    "docs/encrypted.docx": new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0, 0, 0, 0]),
+    "docs/crowded.xlsx": zipSync(crowded, { level: 0 }),
+    "docs/declared-huge.xlsx": declaredHuge,
+  };
+  for (const [path, bytes] of Object.entries(files)) await writeFile(join(h.folder, path), bytes);
+  await h.service.reindexDocuments();
+  const rows = new DocumentsRepository(h.db);
+  expect(rows.get("docs/good.docx")).toMatchObject({ kind: "document", status: "indexed", error: null });
+  for (const path of ["docs/truncated.docx", "docs/no-main.docx", "docs/encrypted.docx"])
+    expect(rows.get(path)).toMatchObject({ status: "failed", error: "PROCESSING" });
+  expect(rows.get("docs/declared-huge.xlsx")).toMatchObject({ status: "failed", error: "SIZE_LIMIT" });
+  expect(rows.get("docs/crowded.xlsx")).toMatchObject({
+    kind: "spreadsheet",
+    status: "failed",
+    error: "SIZE_LIMIT",
+  });
+  expect(new KeywordSearch(h.db).search("NRST")[0]).toMatchObject({ path: "docs/good.docx" });
+}, 20000);

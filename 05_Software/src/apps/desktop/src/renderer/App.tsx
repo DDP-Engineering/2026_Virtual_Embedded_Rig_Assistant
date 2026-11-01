@@ -5,9 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
 import { DocsTab } from "./components/documents/docs-tab.js";
-import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
+import { DocumentViewerProvider, SourcePanel } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
+import { Plugins } from "./components/plugins.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
+import { type Attachments, AttachmentsContext } from "./components/session/attachments.js";
 import { ChangesTab } from "./components/session/changes-tab.js";
 import { ContextTab } from "./components/session/context-tab.js";
 import { PlanTab } from "./components/session/plan-tab.js";
@@ -17,9 +19,11 @@ import { Settings, useSettingsSections } from "./components/settings.js";
 import { Shell } from "./components/shell.js";
 import { UpdateBanner } from "./components/updates.js";
 import { Workbench } from "./components/workbench.js";
-import { Plugins, WorkbenchEditor } from "./components/workbench-editor.js";
+import { WorkbenchCreate } from "./components/workbench-create.js";
+import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
 import { usePreferences } from "./hooks/use-preferences.js";
+import { ATTACHMENT_LIMIT, addAttachment } from "./lib/attachments.js";
 import { ShortcutContext, shortcutCommand } from "./lib/shortcuts.js";
 
 export function App() {
@@ -28,6 +32,36 @@ export function App() {
   const [plugins, setPlugins] = useState(false);
   const [newWorkbench, setNewWorkbench] = useState(false);
   const [editor, setEditor] = useState<WorkbenchSnapshot>();
+  const [createdCount, setCreatedCount] = useState(0);
+  const editorDirty = useRef(false);
+  const editorOrigin = useRef<HTMLElement | null>(null);
+  const restoreEditorFocus = useRef(false);
+  const setEditorDirty = useCallback((dirty: boolean) => {
+    editorDirty.current = dirty;
+  }, []);
+  /** False when the engineer keeps unsaved editor edits instead of navigating away. */
+  const leaveEditor = useCallback(
+    () => !editorDirty.current || window.confirm(t("projects.discardChanges")),
+    [t],
+  );
+  const openEditor = useCallback((value: WorkbenchSnapshot) => {
+    editorOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setEditor(value);
+  }, []);
+  const closeEditor = useCallback(() => {
+    restoreEditorFocus.current = true;
+    setEditor(undefined);
+  }, []);
+  useEffect(() => {
+    if (editor || !restoreEditorFocus.current) return;
+    restoreEditorFocus.current = false;
+    const origin = editorOrigin.current;
+    editorOrigin.current = null;
+    // A menu item that opened the editor is gone once its menu closed; fall back to the overview Edit.
+    if (origin && origin !== document.body && origin.isConnected && origin.getClientRects().length > 0)
+      origin.focus();
+    else document.querySelector<HTMLElement>('[data-action="edit-workbench-overview"]')?.focus();
+  }, [editor]);
   const [section, setSection] = useState("appearance");
   useEffect(() => {
     const main = document.getElementById("main-content");
@@ -40,6 +74,8 @@ export function App() {
   const [sessionPending, setSessionPending] = useState(false);
   const [composerFocus, setComposerFocus] = useState<{ id: string; request: number }>();
   const composerFocusSequence = useRef(0);
+  // Docs tree entries attached to each session's next message (TASK-2fef1397).
+  const [attached, setAttached] = useState<Record<string, readonly string[]>>({});
   const [sessionError, setSessionError] = useState<unknown>();
   const bench = useQuery({
     queryKey: ["workbench.active"],
@@ -76,15 +112,33 @@ export function App() {
     },
     [client, changed],
   );
+  /**
+   * After the active workbench closes only what belonged to it goes (its session and chat). A page
+   * the user opened while the close was pending, such as New Workbench or Plugins, stays open.
+   */
+  const benchClosed = useCallback(() => {
+    setActiveSession(undefined);
+    setChat(false);
+    client.setQueryData(["workbench.active"], null);
+    changed();
+  }, [client, changed]);
   const recent = useQuery({
     queryKey: ["workbench.recent"],
     queryFn: () => api.invoke("workbench.recent", {}),
   });
+  useEffect(
+    () =>
+      api.subscribe("app", () => {
+        void client.invalidateQueries({ queryKey: ["workbench.recent"] });
+      }),
+    [client],
+  );
   const activeWorkbench = useMemo(() => {
     const folder = bench.data?.folder ?? recent.data?.find((entry) => entry.id === benchId)?.folder;
     return bench.data && folder ? { ...bench.data, folder, readOnly } : undefined;
   }, [bench.data, benchId, recent.data, readOnly]);
-  const select = useCallback(
+  /** Shows a session; callers have already confirmed leaving a dirty editor. */
+  const openSession = useCallback(
     (id: string) => {
       setComposerFocus(undefined);
       setActiveSession(id);
@@ -92,6 +146,7 @@ export function App() {
       setPlugins(false);
       setNewWorkbench(false);
       setSettings(false);
+      setEditor(undefined);
       if (benchId)
         try {
           localStorage.setItem(`vera.session.${benchId}`, id);
@@ -100,6 +155,12 @@ export function App() {
         }
     },
     [benchId],
+  );
+  const select = useCallback(
+    (id: string) => {
+      if (leaveEditor()) openSession(id);
+    },
+    [leaveEditor, openSession],
   );
   useEffect(() => {
     if (!benchId || !sessions.data) return;
@@ -133,18 +194,48 @@ export function App() {
     },
     [changed],
   );
-  const create = useCallback(() => {
-    if (!benchId || readOnly || sessionPending) return;
-    void operation(async () => {
-      const session = await api.invoke("session.create", { workbenchId: benchId, reuseEmpty: true });
-      client.setQueryData<SessionSummary[]>(["session.list", benchId], (old) => [
-        session,
-        ...(old ?? []).filter((row) => row.id !== session.id),
-      ]);
-      select(session.id);
-      setComposerFocus({ id: session.id, request: ++composerFocusSequence.current });
-    }).catch(() => {});
-  }, [benchId, readOnly, sessionPending, select, operation, client]);
+  /** Creates (or reuses an empty) session and opens it; `then` receives its id. */
+  const createWith = useCallback(
+    (then?: (id: string) => void) => {
+      if (!benchId || readOnly || sessionPending || !leaveEditor()) return;
+      void operation(async () => {
+        const session = await api.invoke("session.create", { workbenchId: benchId, reuseEmpty: true });
+        client.setQueryData<SessionSummary[]>(["session.list", benchId], (old) => [
+          session,
+          ...(old ?? []).filter((row) => row.id !== session.id),
+        ]);
+        openSession(session.id);
+        setComposerFocus({ id: session.id, request: ++composerFocusSequence.current });
+        then?.(session.id);
+      }).catch(() => {});
+    },
+    [benchId, readOnly, sessionPending, openSession, operation, client, leaveEditor],
+  );
+  const create = useCallback(() => createWith(), [createWith]);
+  const attachments = useMemo<Attachments>(
+    () => ({
+      list: (id) => attached[id] ?? [],
+      remove: (id, path) =>
+        setAttached((all) => ({ ...all, [id]: (all[id] ?? []).filter((p) => p !== path) })),
+      clear: (id, paths) =>
+        setAttached((all) => ({ ...all, [id]: (all[id] ?? []).filter((p) => !paths.includes(p)) })),
+      full: !!activeSession && (attached[activeSession]?.length ?? 0) >= ATTACHMENT_LIMIT,
+      // A chat opens to take the entry: the active session's, or a new or reused empty one.
+      attach:
+        benchId && !readOnly
+          ? (path) => {
+              const add = (id: string) =>
+                setAttached((all) => ({ ...all, [id]: addAttachment(all[id] ?? [], path) }));
+              if (!activeSession) return createWith(add);
+              if (!leaveEditor()) return;
+              add(activeSession);
+              openSession(activeSession);
+              setComposerFocus({ id: activeSession, request: ++composerFocusSequence.current });
+            }
+          : undefined,
+    }),
+    [attached, activeSession, benchId, readOnly, createWith, leaveEditor, openSession],
+  );
   const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
   const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
   const { snapshot, mutation } = usePreferences(info.data?.locale ?? "en");
@@ -160,20 +251,27 @@ export function App() {
     !info.isError &&
     !snapshot.isError;
   const sections = useSettingsSections();
-  const navigate = useCallback((value: boolean) => {
-    setSettings(value);
-    setPlugins(false);
-    setNewWorkbench(false);
-    if (!value) setChat(false);
-  }, []);
+  const navigate = useCallback(
+    (value: boolean) => {
+      if (!leaveEditor()) return;
+      setSettings(value);
+      setPlugins(false);
+      setNewWorkbench(false);
+      setEditor(undefined);
+      if (!value) setChat(false);
+    },
+    [leaveEditor],
+  );
   const showNewWorkbench = useCallback(() => {
+    if (!leaveEditor()) return;
     setNewWorkbench(true);
+    setEditor(undefined);
     setSettings(false);
     setPlugins(false);
     setChat(false);
-  }, []);
+  }, [leaveEditor]);
   const openWorkbench = useCallback(() => {
-    if (sessionPending) return;
+    if (sessionPending || !leaveEditor()) return;
     void operation(async () => {
       const result = await api.invoke("app.chooseFolder", {});
       if (result.folder) {
@@ -182,7 +280,7 @@ export function App() {
         await recent.refetch();
       }
     });
-  }, [sessionPending, operation, benchChanged, recent.refetch]);
+  }, [sessionPending, operation, benchChanged, recent.refetch, leaveEditor]);
   const bindings = snapshot.data?.settings.keyboardShortcuts;
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -267,12 +365,14 @@ export function App() {
         disabled={sessionPending}
         settingsReadOnly={!snapshot.data || snapshot.data.readOnly}
         open={async (folder) =>
+          leaveEditor() &&
           operation(async () => {
             if (folder !== activeWorkbench?.folder)
               benchChanged(await api.invoke("workbench.open", { folder }));
             setNewWorkbench(false);
             setPlugins(false);
             setChat(false);
+            setEditor(undefined);
             await recent.refetch();
           })
         }
@@ -282,7 +382,14 @@ export function App() {
             await recent.refetch();
           })
         }
+        move={(folder, offset) =>
+          operation(async () => {
+            await api.invoke("workbench.recent", { move: { folder, offset } });
+            await recent.refetch();
+          })
+        }
         edit={(folder) =>
+          (folder === editor?.folder || leaveEditor()) &&
           void operation(async () => {
             const value =
               folder === activeWorkbench?.folder
@@ -290,7 +397,10 @@ export function App() {
                 : await api.invoke("workbench.open", { folder });
             if (value) {
               if (value.config.id !== benchId) benchChanged(value);
-              setEditor(value);
+              setNewWorkbench(false);
+              setPlugins(false);
+              setChat(false);
+              openEditor(value);
             }
           })
         }
@@ -300,16 +410,18 @@ export function App() {
           })
         }
         close={() =>
+          leaveEditor() &&
           void operation(async () => {
             await api.invoke("workbench.close", {});
-            benchChanged();
+            benchClosed();
           })
         }
         remove={(folder) =>
+          (folder !== activeWorkbench?.folder || leaveEditor()) &&
           void operation(async () => {
             if (folder === activeWorkbench?.folder) {
               await api.invoke("workbench.close", {});
-              benchChanged();
+              benchClosed();
             }
             await api.invoke("workbench.recent", { remove: folder });
             await recent.refetch();
@@ -334,6 +446,14 @@ export function App() {
                 await api.invoke("session.archive.set", { sessionId: id, archived });
               })
             }
+            move={(id, offset) =>
+              operation(async () => {
+                await api.invoke("session.move", { workbenchId: benchId, sessionId: id, offset });
+                // Refresh before the list is enabled again so focus returns to the moved row.
+                await client.invalidateQueries({ queryKey: ["session.list", benchId] });
+              })
+            }
+            moveDisabled={!snapshot.data || snapshot.data.readOnly}
             remove={(id) =>
               operation(async () => {
                 await api.invoke("session.delete", { sessionId: id });
@@ -361,144 +481,163 @@ export function App() {
   );
   return (
     <ShortcutContext.Provider value={bindings}>
-      <DocumentViewerProvider scope={`${benchId}/${activeSession}/${settings}`} workbenchId={benchId ?? ""}>
-        <Shell
-          settings={settings}
-          newSelected={newWorkbench}
-          pluginsSelected={plugins}
-          newWorkbench={showNewWorkbench}
-          openWorkbench={openWorkbench}
-          showPlugins={() => {
-            setPlugins(true);
-            setSettings(false);
-            setChat(false);
-          }}
-          navigate={navigate}
-          navigation={navigation}
-          storageReadOnly={!snapshot.data || snapshot.data.readOnly}
-          context={
-            benchId && chat && !settings ? (
-              <ContextTab workbenchId={benchId} readOnly={readOnly} />
-            ) : undefined
-          }
-          docs={
-            benchId && !settings ? (
-              <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
-            ) : undefined
-          }
-          changes={
-            benchId && activeSession && chat && !settings ? (
-              <ChangesTab workbenchId={benchId} sessionId={activeSession} />
-            ) : undefined
-          }
-          artifacts={
-            benchId && activeSession && chat && !settings ? (
-              <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
-            ) : undefined
-          }
-          plan={
-            benchId && activeSession && chat && !settings ? (
-              <PlanTab workbenchId={benchId} sessionId={activeSession} />
-            ) : undefined
-          }
-        >
-          <UpdateBanner />
-          <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
-            <h2
-              hidden={!settings && !plugins && !newWorkbench && !activeWorkbench}
-              className="page-title"
-              key={settings ? "settings" : "welcome"}
-              ref={focusHeading}
-              tabIndex={-1}
-            >
-              {settings
-                ? t("settings.title")
-                : plugins
-                  ? t("projects.plugins")
-                  : newWorkbench
-                    ? t("projects.new")
-                    : activeWorkbench
-                      ? t("overview.title")
-                      : t("welcome.title")}
-            </h2>
-            {(info.isPending || snapshot.isPending) && (
-              <p role="status" data-i18n="home.loading">
-                {t("home.loading")}
-              </p>
-            )}
-            {benchFailure && <ErrorMessage error={bench.error} />}
-            {(info.isError || snapshot.isError) && (
-              <>
-                <ErrorMessage error={info.error ?? snapshot.error} />
-                <button
-                  type="button"
-                  onClick={() => {
-                    void info.refetch();
-                    void snapshot.refetch();
-                  }}
-                >
-                  {t("settings.retry")}
-                </button>
-              </>
-            )}
-            {settings && snapshot.data && (
-              <Settings
-                section={section}
-                snapshot={snapshot.data}
-                info={info.data}
-                saving={mutation.isPending}
-                error={mutation.error}
-                update={(patch) => mutation.mutate(patch)}
-              />
-            )}
-            <div hidden={settings || plugins || (!newWorkbench && !activeWorkbench)}>
-              {newWorkbench && <p className="muted">{t("welcome.description")}</p>}
-              {info.data && snapshot.data && (
-                <Workbench
-                  settingsReadOnly={snapshot.data.readOnly}
-                  active={newWorkbench ? undefined : activeWorkbench}
-                  changed={benchChanged}
-                  sessionPending={sessionPending}
-                  sessions={sessions.data}
-                  sessionsError={sessions.error}
-                  retrySessions={() => void sessions.refetch()}
-                  edit={() => activeWorkbench && setEditor(activeWorkbench)}
-                  selectSession={select}
+      <AttachmentsContext.Provider value={attachments}>
+        <DocumentViewerProvider scope={`${benchId}/${activeSession}/${settings}`} workbenchId={benchId ?? ""}>
+          <Shell
+            settings={settings}
+            newSelected={newWorkbench}
+            pluginsSelected={plugins}
+            newWorkbench={showNewWorkbench}
+            openWorkbench={openWorkbench}
+            showPlugins={() => {
+              if (!leaveEditor()) return;
+              setPlugins(true);
+              setSettings(false);
+              setChat(false);
+              setEditor(undefined);
+            }}
+            navigate={navigate}
+            navigation={navigation}
+            storageReadOnly={!snapshot.data || snapshot.data.readOnly}
+            context={
+              benchId && chat && !settings ? (
+                <ContextTab workbenchId={benchId} readOnly={readOnly} />
+              ) : undefined
+            }
+            source={<SourcePanel />}
+            docs={
+              benchId && !settings ? (
+                <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
+              ) : undefined
+            }
+            changes={
+              benchId && activeSession && chat && !settings ? (
+                <ChangesTab workbenchId={benchId} sessionId={activeSession} />
+              ) : undefined
+            }
+            artifacts={
+              benchId && activeSession && chat && !settings ? (
+                <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
+              ) : undefined
+            }
+            plan={
+              benchId && activeSession && chat && !settings ? (
+                <PlanTab workbenchId={benchId} sessionId={activeSession} />
+              ) : undefined
+            }
+          >
+            <UpdateBanner />
+            <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
+              <h2
+                hidden={!settings && !plugins && !newWorkbench && !activeWorkbench}
+                className="page-title"
+                key={settings ? "settings" : "welcome"}
+                ref={focusHeading}
+                tabIndex={-1}
+              >
+                {settings
+                  ? t("settings.title")
+                  : plugins
+                    ? t("projects.plugins")
+                    : newWorkbench
+                      ? t("projects.new")
+                      : editor
+                        ? t("projects.edit")
+                        : t("overview.title")}
+              </h2>
+              {(info.isPending || snapshot.isPending) && (
+                <p role="status" data-i18n="home.loading">
+                  {t("home.loading")}
+                </p>
+              )}
+              {benchFailure && <ErrorMessage error={bench.error} />}
+              {(info.isError || snapshot.isError) && (
+                <>
+                  <ErrorMessage error={info.error ?? snapshot.error} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void info.refetch();
+                      void snapshot.refetch();
+                    }}
+                  >
+                    {t("settings.retry")}
+                  </button>
+                </>
+              )}
+              {settings && snapshot.data && (
+                <Settings
+                  section={section}
+                  snapshot={snapshot.data}
+                  info={info.data}
+                  saving={mutation.isPending}
+                  error={mutation.error}
+                  update={(patch) => mutation.mutate(patch)}
                 />
               )}
+              {/* Stays mounted while hidden so an unsaved draft survives navigation. */}
+              <div hidden={settings || plugins || !newWorkbench}>
+                <p className="muted">{t("welcome.description")}</p>
+                <WorkbenchCreate
+                  key={createdCount}
+                  shown={!settings && !plugins && newWorkbench}
+                  created={(value) => {
+                    setCreatedCount((count) => count + 1);
+                    benchChanged(value);
+                  }}
+                  busy={sessionPending}
+                />
+              </div>
+              {!settings && !plugins && !newWorkbench && editor && (
+                <WorkbenchEditor
+                  key={editor.config.id}
+                  workbench={editor}
+                  close={closeEditor}
+                  dirtyChanged={setEditorDirty}
+                  saved={(value) => {
+                    benchChanged(value, true);
+                    void recent.refetch();
+                  }}
+                />
+              )}
+              <div hidden={settings || plugins || newWorkbench || !!editor || !activeWorkbench}>
+                {info.data && snapshot.data && (
+                  <Workbench
+                    active={activeWorkbench}
+                    changed={benchChanged}
+                    closed={benchClosed}
+                    sessionPending={sessionPending}
+                    sessions={sessions.data}
+                    sessionsError={sessions.error}
+                    retrySessions={() => void sessions.refetch()}
+                    edit={() => activeWorkbench && openEditor(activeWorkbench)}
+                    selectSession={select}
+                  />
+                )}
+              </div>
+              {plugins && <Plugins />}
             </div>
-            {plugins && <Plugins />}
-          </div>
-          {emptyCanvas && (
-            <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
-              <Activity aria-hidden="true" />
-              <span>VERA</span>
-            </div>
-          )}
-          {editor && (
-            <WorkbenchEditor
-              workbench={editor}
-              close={() => setEditor(undefined)}
-              saved={(value) => {
-                benchChanged(value, true);
-                void recent.refetch();
-              }}
-            />
-          )}
-          {chat && !settings && !plugins && benchId && (
-            <SessionWorkspace
-              key={`${benchId}/${activeSession}`}
-              id={activeSession}
-              workbenchId={benchId}
-              changed={changed}
-              readOnly={readOnly}
-              composerFocusRequest={
-                composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
-              }
-            />
-          )}
-        </Shell>
-      </DocumentViewerProvider>
+            {emptyCanvas && (
+              <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
+                <Activity aria-hidden="true" />
+                <span>VERA</span>
+              </div>
+            )}
+            {chat && !settings && !plugins && benchId && (
+              <SessionWorkspace
+                key={`${benchId}/${activeSession}`}
+                id={activeSession}
+                workbenchId={benchId}
+                changed={changed}
+                readOnly={readOnly}
+                composerFocusRequest={
+                  composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
+                }
+              />
+            )}
+          </Shell>
+        </DocumentViewerProvider>
+      </AttachmentsContext.Provider>
     </ShortcutContext.Provider>
   );
 }

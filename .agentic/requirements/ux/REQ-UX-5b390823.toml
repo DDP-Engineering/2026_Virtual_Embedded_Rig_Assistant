@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-5b390823"
+
+title = "List detected documentation folders as checkboxes"
+
+status = "active"
+
+requirement = "While the workbench configuration form shows its Documents section for a folder, the desktop app shall list the detected documentation subfolders with their document counts and size, and the literal folder patterns it did not detect labelled as added by hand, as checkboxes checked exactly when the include patterns contain that folder's escaped '<folder>/**' pattern, and toggling a checkbox shall add or remove that pattern while keeping the row listed."
+
+verification = "Renderer test with the mock API: Documents lists the scanned folders with counts and size; unchecking removes 'datasheets/**' from the draft include list and checking adds it back; the editor page shows the same list for an open workbench."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/libraries/shared/src/workbench.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts", "05_Software/src/libraries/shared/src/workbench-create-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

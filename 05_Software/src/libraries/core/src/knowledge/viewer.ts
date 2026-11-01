@@ -1,5 +1,5 @@
 // REQ-FUNC-28ad0001
-import { parseRef, type ViewerContent, veraError } from "@vera/shared";
+import { binaryDocumentKinds, isDocumentKindIn, parseRef, type ViewerContent, veraError } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { isBinary } from "../tools/binary.js";
@@ -70,6 +70,15 @@ export class DocumentViewer {
           pageEnd,
         };
       }
+      if (extraction.kind === "presentation") {
+        if (parsed && parsed.kind !== "page" && parsed.kind !== "page-range")
+          throw Error("Slide locator required.");
+        const page = parsed?.kind === "page" ? parsed.page : parsed?.kind === "page-range" ? parsed.start : 1;
+        const pageEnd = parsed?.kind === "page-range" ? parsed.end : page;
+        if (pageEnd > extraction.slides.length || checked.doc.pages !== extraction.slides.length)
+          throw Error("Slide bounds.");
+        return { ...base, kind: "presentation", slides: extraction.slides, page, pageEnd };
+      }
       if (extraction.kind === "text") {
         if (parsed) throw Error("Text locator required.");
         if (isBinary(bytes)) throw Error("Binary.");
@@ -77,7 +86,9 @@ export class DocumentViewer {
       }
       if (parsed && parsed.kind !== "heading") throw Error("Heading locator required.");
       const anchor = parsed?.kind === "heading" ? parsed.slug : null;
-      if (anchor && !extraction.sections.some((s) => s.slug === anchor)) throw Error("Heading bounds.");
+      // An empty anchor is the untitled leading section, which must exist like any heading.
+      if (anchor !== null && !extraction.sections.some((s) => s.slug === anchor))
+        throw Error("Heading bounds.");
       return { ...base, kind: extraction.kind, sections: extraction.sections, anchor };
     } catch {
       throw veraError("NOT_FOUND");
@@ -118,7 +129,8 @@ export class DocumentViewer {
           ? { kind: "pdf" as const, pages: Array<string>(doc.pages).fill("") }
           : undefined;
     if (!extraction || extraction.kind !== doc.kind) throw Error("Full extraction unavailable.");
-    if (extraction.kind !== "pdf" && isBinary(bytes)) throw Error("Binary source.");
+    if (!isDocumentKindIn(extraction.kind, binaryDocumentKinds) && isBinary(bytes))
+      throw Error("Binary source.");
     return { doc, bytes, extraction };
   }
   /** Verify each source once; only compact locator bounds survive between search candidates. */
@@ -126,15 +138,20 @@ export class DocumentViewer {
     try {
       const { doc, bytes, extraction } = await this.indexedSource(path, new AbortController().signal);
       if (doc.status !== "indexed") return undefined;
-      if (extraction.kind === "pdf")
-        return doc.pages === extraction.pages.length
-          ? { kind: "pdf" as const, pages: extraction.pages.length, lines: 0, slugs: new Set<string>() }
+      if (extraction.kind === "pdf" || extraction.kind === "presentation") {
+        const pages = extraction.kind === "pdf" ? extraction.pages.length : extraction.slides.length;
+        return doc.pages === pages
+          ? { kind: extraction.kind, pages, lines: 0, slugs: new Set<string>() }
           : undefined;
+      }
       return {
         kind: extraction.kind,
         pages: 0,
-        lines: textLines(new TextDecoder("utf-8", { fatal: true }).decode(bytes)).length,
-        slugs: new Set(extraction.kind === "text" ? [] : extraction.sections.map((s) => s.slug)),
+        // Office sources are archives: they have sections but no line locators.
+        lines: isDocumentKindIn(extraction.kind, binaryDocumentKinds)
+          ? 0
+          : textLines(new TextDecoder("utf-8", { fatal: true }).decode(bytes)).length,
+        slugs: new Set("sections" in extraction ? extraction.sections.map((s) => s.slug) : []),
       };
     } catch {
       return undefined;

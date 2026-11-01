@@ -65,16 +65,23 @@ export class SkillCatalog {
     const root = resolve(this.root(source));
     const parts = ["skills", name, ...slash.split("/")];
     let target = root;
+    // The host-chosen root may live behind an OS redirection above it (folder redirection, an MSIX
+    // container, a junctioned parent); it is trusted where it resolves. Below it, every segment must
+    // resolve to itself, so links inside the skills tree are still refused.
+    let canonical = "";
     for (const [i, part] of ["", ...parts].entries()) {
       if (part) target = join(target, part);
       try {
         const stat = await lstat(target);
+        const resolved = identity(await realpath(target));
+        const expected = part ? identity(join(canonical, part)) : resolved;
         if (
           stat.isSymbolicLink() ||
-          identity(await realpath(target)) !== identity(target) ||
+          resolved !== expected ||
           (i < parts.length ? !stat.isDirectory() : !stat.isFile() || stat.nlink !== 1)
         )
           throw veraError("DENIED");
+        canonical = resolved;
       } catch (error) {
         if (missing(error)) return join(target, ...parts.slice(i));
         throw error;

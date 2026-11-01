@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-276a5da8"
+
+title = "Rank semantic search results through the indexer"
+
+status = "active"
+
+requirement = "When search_docs ranks documents semantically or embeds a query, VERA shall compute the embeddings and similarity scores in the indexer process."
+
+verification = "Main tests: the host sends a rank request without vectors and sends them only after the indexer answers needRows; the handler passes lazy rows that ask for vectors only when the worker's cache misses at execution time; native e2e: the agent's semantic search_docs returns note hits through the restarted indexer."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.ts", "05_Software/src/libraries/core/src/knowledge/embedding.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/indexer-host.test.ts::ranks through the indexer and sends vectors only when its cache misses the epoch", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts::asks for vectors only when the epoch is not cached, embeds queries and releases a root", "05_Software/tests/e2e/indexer.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -124,6 +124,40 @@ it("runs local CPU batches32, enforces full query budget and caches deterministi
     await rm(temporary, { recursive: true, force: true });
   }
 }, 30000);
+it("lets a busy worker finish its native call before terminating it after abort or release", async () => {
+  // ONNX Runtime aborts the whole process (0xE06D7363) when its worker is terminated mid-call.
+  const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-retire-")),
+    entry = join(temporary, "worker.mjs"),
+    marker = join(temporary, "replied.txt");
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest, 5000);
+  try {
+    await mkdir(join(temporary, "bench"));
+    await writeFile(
+      entry,
+      `import {parentPort} from 'node:worker_threads'; import {appendFileSync} from 'node:fs';
+parentPort.on('message',()=>setTimeout(()=>{appendFileSync(${JSON.stringify(marker)},'x');parentPort.postMessage({ok:true,result:[Array.from({length:384},(_,n)=>Number(n===0))]});},400));`,
+    );
+    const controller = new AbortController();
+    const pending = host.embed(temporary, ["a"], controller.signal);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    const aborted = performance.now();
+    controller.abort();
+    await expect(pending).rejects.toThrow(/abort/);
+    // The caller is released at once; the worker keeps running until its reply.
+    expect(performance.now() - aborted).toBeLessThan(250);
+    await host.release(temporary);
+    expect(await readFile(marker, "utf8")).toBe("x");
+    // Release of a busy workbench also waits for the reply instead of terminating mid-call.
+    const second = host.embed(temporary, ["a"], new AbortController().signal);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await host.release(temporary);
+    await second.catch(() => {});
+    expect(await readFile(marker, "utf8")).toBe("xx");
+  } finally {
+    await host.dispose();
+    await rm(temporary, { recursive: true, force: true });
+  }
+}, 20000);
 it("terminates deadline, abort, crash and premature exit jobs and replaces workers", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-failure-")),
     entry = join(temporary, "worker.mjs");

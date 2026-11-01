@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-ff645484"
+
+title = "Keep documentation globs editable under Advanced"
+
+status = "active"
+
+requirement = "The Documents section shall keep the include and exclude patterns editable as one-pattern-per-line text under a collapsed Advanced disclosure."
+
+verification = "Renderer test: Advanced is collapsed initially, expanding it shows include and exclude textareas whose edits update the draft and the checkbox states."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

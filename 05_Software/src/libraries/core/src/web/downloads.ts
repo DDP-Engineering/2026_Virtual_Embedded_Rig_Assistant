@@ -231,6 +231,33 @@ export class WebDownloads {
     }, caller);
   }
 
+  /** The verified absolute path of a stored download, used only to show it in the file manager. */
+  locate(downloadId: string, caller: AbortSignal = new AbortController().signal): Promise<string> {
+    return this.track(async (signal) => {
+      const record = await this.record(downloadId, signal);
+      const directory = join(await this.directory(), record.downloadId);
+      await this.ordinaryDirectory(directory);
+      const path = join(directory, record.name);
+      let stat: Awaited<ReturnType<typeof lstat>>;
+      try {
+        stat = await lstat(path);
+      } catch (error) {
+        if (missing(error)) throw veraError("NOT_FOUND");
+        throw error;
+      }
+      if (
+        !stat.isFile() ||
+        stat.isSymbolicLink() ||
+        stat.nlink !== 1 ||
+        key(await realpath(path)) !== key(path)
+      )
+        throw veraError("DENIED");
+      if (stat.size !== record.bytes) throw veraError("CONFLICT");
+      signal.throwIfAborted();
+      return path;
+    }, caller);
+  }
+
   async close() {
     this.lifetime.abort();
     await Promise.allSettled(this.pending);

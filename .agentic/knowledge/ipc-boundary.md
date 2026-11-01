@@ -34,6 +34,10 @@ downloads.list/open are strict workbench-scoped channels; open takes only a UUID
   the owned SessionService lifecycle with idle/writable guards; preload derives
   the allowlist from channels and the mock mirrors the metadata mutation.
 
+- session.move takes {workbenchId, sessionId, offset: -1 | 1} and returns {}; main requires the
+  active workbench (CONFLICT), a listed non-archived session (NOT_FOUND) and writable settings
+  (DENIED). workbench.recent accepts move {folder, offset}. The mock mirrors both orders.
+
 
 - window.menu is a strict fixed-role request with menu=file/edit/view/help and bounded
   integer x/y popup coordinates. The exact main-frame authorization protects native dispatch;
@@ -51,6 +55,17 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - docs.reindex accepts an optional workbenchId and an empty response with workbench ownership checks. docs.list/search/open require exact workbenchId and return scoped typed records/results/content. Open accepts an indexed path, document ref, or session/message citation; host provenance and current guarded source checks precede disclosure. [Document viewer](document-viewer.md) owns these reads.
   Workbench index.progress/index.document transport batch counters and typed
   records/removals; main redacts paths while retaining enums/hashes/counts.
+  docs.tree/find/read/stat (exact workbenchId; folder entries, name matches, a text view and
+  entry properties of the Docs tree; tree entries carry `ignored`) are confined by core
+  workbench/tree.ts; docs.openers {} -> {apps}, docs.openWith {workbenchId,path,app},
+  docs.reveal {workbenchId,path}, docs.copyPath {workbenchId,path,form}, docs.systemApps
+  {workbenchId,path} -> {apps:[{id,name}]} and docs.openSystemApp {workbenchId,path,app} -> {}
+  reach the OS only after core `locateEntry` (TASK-eae3a69e, TASK-c49f03d5, main/openers.ts); main drops listed
+  or found paths the credential scrub would change and scrubs text views.
+  index.volume and docs.volume ({workbenchId} -> {workbenchId, volume|null}) carry
+  only counters and pass unscrubbed. App event indexer.status {state} and the strict empty
+  channels indexer.status -> {state} and indexer.restart -> {} belong to the
+  [indexer process](indexer-process.md).
   [Knowledge ingest](knowledge-ingest.md) owns their lifecycle and persistence.
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
@@ -69,6 +84,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
 - artifacts.list/open/reveal/export use strict shared metadata/content schemas and current SessionsHost lifetime; [Artifacts](artifacts.md) owns verified files, native save cancellation, reveal/export and scrubbing.
 - changes.list/get use strict summary/detail schemas and current SessionsHost recovery/lifetime. Main scrubs path/diff while preserving IDs/dates/counts. app.revealPath accepts a workbench-relative path, validates canonical confinement/ordinary existence and calls native shell; [Changes](changes.md) owns behavior and proof.
+- app.openPath({path}) opens a workbench document with the OS default application: main refuses any extension outside shared `externalDocumentExtensions` (DENIED) before the filesystem is touched, then applies the same PathGuard/ordinary-file/identity checks as reveal (DENIED, NOT_FOUND) and checks the allowlist again on the resolved file, since a link or short name may resolve to a script; an OS failure is INTERNAL (REQ-FUNC-d37a2092, REQ-SEC-33b98d33, REQ-REL-85ae1f66).
 - todo.updated and session snapshot todos use shared bounded list validation; current known secrets redact optional todo IDs and text, with presentation text bounded at200 after redaction; Plan consumes the existing snapshot/subscription channels. [Plan](plan.md) owns whole replacement and icons.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
 - Durable session events include message.queued {messageId,text,timestamp} and message.delivered {messageIds}; user snapshot pending/timestamp fields are optional for historical replay. Existing sanitizer preserves IDs/numeric timestamps and scrubs queued user text.

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-b96730c7"
+
+title = "Add a documentation folder with the folder picker"
+
+status = "active"
+
+requirement = "When the engineer uses Add folder in the Documents section and picks a folder inside the workbench folder, the desktop app shall add that folder's escaped '<relative>/**' include pattern and show it checked, and if the picked folder is rejected, then the desktop app shall show a translated error and leave the patterns unchanged."
+
+verification = "Renderer test with the mock picker: picking <root>/manuals/st adds 'manuals/st/**' checked; picking an outside folder shows the DENIED message and keeps include unchanged."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/libraries/shared/src/workbench-create-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

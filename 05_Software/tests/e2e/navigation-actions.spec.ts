@@ -174,7 +174,8 @@ test("native sidebar has one action menu and New session atomically reuses unuse
     await installNetworkGuard(app);
     page = await app.firstWindow();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').first().click();
+    // Opening no longer moves a workbench to the top (TASK-c99ca08c), so choose Sidebar A by name.
+    await page.locator(".workbench-group-name", { hasText: "Sidebar A" }).click();
     await page.locator('[data-action="new-session"]').click();
     await expect(page.locator(`[data-session="${fresh}"]`)).toHaveAttribute("aria-current", "page");
     await expect(page.locator("#chat-message")).toBeFocused();

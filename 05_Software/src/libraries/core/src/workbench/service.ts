@@ -1,20 +1,30 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
-import { dirname, isAbsolute, join } from "node:path";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import {
+  binaryDocumentKinds,
   builtinToolNames,
   configWarnings,
+  type DocumentPreview,
+  type DocumentScan,
+  type DocumentVolume,
+  isDocumentKindIn,
   mergeWorkbench,
+  moveRecentWorkbench,
+  pagedDocumentKinds,
   parseRef,
   type RecentWorkbenchState,
   SKILL_BYTES,
   type SkillSource,
+  sectionDocumentKinds,
   skillNameSchema,
   skillTemplate,
   veraError,
   type WorkbenchConfig,
+  type WorkbenchCreate,
   type WorkbenchEvent,
+  type WorkbenchInspection,
   type WorkbenchPatch,
   type WorkbenchSnapshot,
   type WorkbenchWarning,
@@ -32,8 +42,10 @@ import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
+import { findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
 import { WriteQueue } from "./write-queue.js";
 
 function requireJson(value: unknown, ancestors = new Set<object>()): void {
@@ -306,6 +318,40 @@ export class WorkbenchService {
       return value;
     });
   }
+  /** One folder of the active workbench for the Docs tree (TASK-66b7d4aa). */
+  listFolder(workbenchId: string, path: string) {
+    return this.run(async () => listFolder(this.activeFolder(workbenchId), path));
+  }
+  /** Visible files of the active workbench whose path contains the fragment (first 200). */
+  findFiles(workbenchId: string, query: string) {
+    return this.run(async () => findFiles(this.activeFolder(workbenchId), query));
+  }
+  /** A text file of the active workbench, ignored or not, for the Source tab. */
+  readText(workbenchId: string, path: string) {
+    return this.run(async () => readText(this.activeFolder(workbenchId), path));
+  }
+  /** Type, size and modified time of a file or folder of the active workbench, ignored or not. */
+  statEntry(workbenchId: string, path: string) {
+    return this.run(async () => statEntry(this.activeFolder(workbenchId), path));
+  }
+  /** The absolute path and kind of an entry of the active workbench for the Docs tree's OS actions. */
+  locateEntry(workbenchId: string, path: string) {
+    return this.run(async () => locateEntry(this.activeFolder(workbenchId), path));
+  }
+  private activeFolder(workbenchId: string): string {
+    const state = this.current();
+    if (state.config.id !== workbenchId) throw veraError("CONFLICT");
+    return state.folder;
+  }
+  /** Asks the active workbench's ingest to reconcile, for example after the indexer restarted. */
+  refreshDocuments(): void {
+    this.ingest?.request();
+  }
+  /** The active workbench's last document selection volume; null before its first selection. */
+  documentVolume(workbenchId?: string): DocumentVolume | null {
+    if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
+    return this.ingest?.volume() ?? null;
+  }
   listDocuments(id: string) {
     return this.readDocuments(id, async (_root, db) => new DocumentsRepository(db).list());
   }
@@ -329,10 +375,11 @@ export class WorkbenchService {
           if (!bounds) continue;
           const valid =
             ref.kind === "lines"
-              ? bounds.kind !== "pdf" && ref.end <= bounds.lines
+              ? !isDocumentKindIn(bounds.kind, binaryDocumentKinds) && ref.end <= bounds.lines
               : ref.kind === "heading"
-                ? (bounds.kind === "markdown" || bounds.kind === "html") && bounds.slugs.has(ref.slug)
-                : bounds.kind === "pdf" && (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages;
+                ? isDocumentKindIn(bounds.kind, sectionDocumentKinds) && bounds.slugs.has(ref.slug)
+                : isDocumentKindIn(bounds.kind, pagedDocumentKinds) &&
+                  (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages;
           if (valid) current.push({ ref: hit.ref, path: hit.path, snippet: hit.snippet, score: hit.score });
         }
         if (epoch() !== initialEpoch) throw Error("Document index changed during search.");
@@ -393,12 +440,80 @@ export class WorkbenchService {
       if (code(error) !== "EEXIST") throw error;
     }
   }
-  create(input: string, name: string): Promise<WorkbenchSnapshot> {
+  /** The folder's own ignore rules, as ingest applies them; unreadable or redirected rules hide everything. */
+  private async ignoreRules(folder: string): Promise<(path: string) => boolean> {
+    try {
+      await ordinary(join(folder, ".vera"), true);
+      const path = join(folder, ".vera/.veraignore");
+      if (!(await ordinary(path, false))) return createIgnoreRules();
+      return createIgnoreRules((await this.host.files.read(path)) ?? "");
+    } catch {
+      return () => true;
+    }
+  }
+  // Scans and previews only read directory entries, so they stay outside the lifecycle queue and
+  // never hold up create, open or saves.
+  /** Documentation folders below a chosen folder; reads directory entries only. */
+  async scanDocuments(input: string): Promise<DocumentScan> {
+    const folder = await this.folder(input);
+    return scanDocuments(folder, await this.ignoreRules(folder));
+  }
+  /** What a documentation selection would index in a chosen folder. */
+  async previewDocuments(input: string, docs: WorkbenchConfig["docs"]): Promise<DocumentPreview> {
+    const folder = await this.folder(input);
+    return previewDocuments(folder, docs, await this.ignoreRules(folder));
+  }
+  /** A picked folder as a path relative to a workbench folder; ignored folders are refused. */
+  async relativeFolder(rootInput: string, input: string): Promise<string> {
+    const root = await this.folder(rootInput);
+    const path = await relativeFolder(root, input);
+    const ignored = await this.ignoreRules(root);
+    if (ignored(path) || ignored(`${path}/`)) throw veraError("DENIED");
+    return path;
+  }
+  /** Reads what creation would start from; never writes to the folder. */
+  inspect(input: string): Promise<WorkbenchInspection> {
+    return this.run(async () => {
+      const folder = await this.folder(input);
+      await this.layout(folder);
+      const pinned = join(folder, ".vera/WORKBENCH.md");
+      const instructions = (await ordinary(pinned, false))
+        ? ((await this.host.files.read(pinned)) ?? null)
+        : null;
+      // Skills are an optional part of the draft: an unreadable catalog must not block creating.
+      const skills = await new SkillCatalog({
+        root: folder,
+        ...(this.host.userData ? { userData: this.host.userData } : {}),
+        disabled: () => [],
+      })
+        .list()
+        .catch(() => []);
+      return {
+        folder,
+        name: basename(folder),
+        existing: await ordinary(join(folder, ".vera/workbench.yaml"), false),
+        instructions,
+        skills,
+      };
+    });
+  }
+  create(
+    input: string,
+    name: string,
+    initial: Pick<WorkbenchCreate, "config" | "instructions"> = {},
+  ): Promise<WorkbenchSnapshot> {
     return this.run(async () => {
       const folder = await this.folder(input);
       await this.layout(folder);
       if (await ordinary(join(folder, ".vera/workbench.yaml"), false)) throw veraError("CONFLICT");
-      const config = workbenchSchema.parse({ format: 1, id: `wb_${ulid(this.host.now().getTime())}`, name });
+      const defaults = workbenchSchema.parse({
+        format: 1,
+        id: `wb_${ulid(this.host.now().getTime())}`,
+        name,
+      });
+      const patch = workbenchPatchSchema.omit({ name: true }).safeParse(initial.config ?? {});
+      if (!patch.success) throw veraError("INVALID");
+      const config = mergeWorkbench(defaults, patch.data);
       await this.prepare(folder);
       try {
         await exclusive(join(folder, ".vera/workbench.yaml"), stringify(config));
@@ -408,7 +523,10 @@ export class WorkbenchService {
       }
       await mkdir(join(folder, ".vera/skills"), { recursive: true });
       try {
-        await exclusive(join(folder, ".vera/WORKBENCH.md"), pinnedTemplate(config.name));
+        await exclusive(
+          join(folder, ".vera/WORKBENCH.md"),
+          initial.instructions ?? pinnedTemplate(config.name),
+        );
       } catch (error) {
         if (code(error) !== "EEXIST") throw error;
       }
@@ -441,19 +559,19 @@ export class WorkbenchService {
             : undefined;
       const snapshot = this.host.settings.get();
       if (!snapshot.readOnly) {
-        const previous = snapshot.settings.recentWorkbenches.find((entry) => entry.folder === folder);
-        const recent = snapshot.settings.recentWorkbenches.filter((entry) => entry.folder !== folder);
+        // A listed workbench keeps the place the user gave it; a new one goes first.
+        const recent = snapshot.settings.recentWorkbenches;
+        const index = recent.findIndex((entry) => entry.folder === folder);
+        const entry = {
+          ...recent[index],
+          folder,
+          name: config.name,
+          id: config.id,
+          lastOpened: this.host.now().toISOString(),
+        };
         await this.host.settings.update({
-          recentWorkbenches: [
-            {
-              ...previous,
-              folder,
-              name: config.name,
-              id: config.id,
-              lastOpened: this.host.now().toISOString(),
-            },
-            ...recent,
-          ],
+          recentWorkbenches:
+            index < 0 ? [entry, ...recent] : recent.map((item, at) => (at === index ? entry : item)),
         });
       }
     } catch (error) {
@@ -588,9 +706,23 @@ export class WorkbenchService {
   getPinned(): Promise<{ content: string; oversized: boolean }> {
     return this.run(() => this.pinned(this.current().folder));
   }
-  recent(remove?: string, pin?: { folder: string; value: boolean }): Promise<RecentWorkbenchState[]> {
+  recent(
+    remove?: string,
+    pin?: { folder: string; value: boolean },
+    move?: { folder: string; offset: -1 | 1 },
+  ): Promise<RecentWorkbenchState[]> {
     return this.run(async () => {
       let snapshot = this.host.settings.get();
+      if (move !== undefined) {
+        if (snapshot.readOnly) throw veraError("DENIED");
+        snapshot = await this.host.settings.update({
+          recentWorkbenches: moveRecentWorkbench(
+            snapshot.settings.recentWorkbenches,
+            move.folder,
+            move.offset,
+          ),
+        });
+      }
       if (pin !== undefined) {
         if (snapshot.readOnly) throw veraError("DENIED");
         if (!snapshot.settings.recentWorkbenches.some((entry) => entry.folder === pin.folder))

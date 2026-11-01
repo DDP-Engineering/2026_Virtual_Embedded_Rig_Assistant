@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a2f48847"
+
+title = "Explain @path mentions to the agent"
+
+status = "active"
+
+requirement = "The agent's system instructions shall state that an @path in the user's message names a workbench file or folder the user attached and that the agent reads it with its tools before answering."
+
+verification = "Core prompt test: the built system prompt contains the @path rule naming attached workbench files or folders and reading them with tools."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/prompt.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/prompt.test.ts::explains that @path mentions name attached workbench entries to read with tools"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

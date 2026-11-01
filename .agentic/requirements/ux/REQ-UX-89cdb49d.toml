@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-89cdb49d"
+
+title = "Operate the Docs tree submenus"
+
+status = "active"
+
+requirement = "While a Docs tree menu is open, the desktop app shall open the Open in and Copy submenus by click or pointer hover, and by Enter, Space or ArrowRight with focus on their first item, close them by ArrowLeft or Escape with focus back on the submenu's item, and keep arrow, Home and End navigation within each menu."
+
+verification = "Renderer test: ArrowRight on Copy opens its submenu focused on Absolute path; ArrowDown and End move within it; ArrowLeft closes it and focuses Copy; Enter and Space on Open in open it focused on its first item; Escape in a submenu closes only the submenu; hovering Copy opens it and a following click keeps it open; Escape in the main menu closes it and focuses the row."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::operates the Open in and Copy submenus by keys and pointer"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

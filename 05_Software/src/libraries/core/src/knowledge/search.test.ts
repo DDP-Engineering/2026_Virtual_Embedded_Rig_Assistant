@@ -4,7 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
+import { strToU8, zipSync } from "fflate";
 import { expect, it } from "vitest";
+import { z } from "zod";
 import { validateCitations } from "../agent/citations.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { SessionService } from "../sessions/service.js";
@@ -13,8 +15,9 @@ import { schemaSql } from "../storage/schema.js";
 import { createToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
 import type { EmbeddingPort } from "./embedding.js";
+import { documentKind } from "./ingest.js";
 import { createDocumentProcessor } from "./processor.js";
-import { DocumentKnowledge, fuseRanks } from "./search.js";
+import { DocumentKnowledge, fuseRanks, sectionParts } from "./search.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
 async function harness() {
@@ -65,11 +68,39 @@ async function harness() {
     rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
     return doc;
   };
+  /** Index a committed office fixture with the real in-process office extraction. */
+  const addOffice = async (path: string, source: string | Uint8Array) => {
+    const bytes =
+      typeof source === "string"
+        ? await readFile(join(software, "tests/fixtures/documents/office", source))
+        : source;
+    await writeFile(join(root, path), bytes);
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    const kind = documentKind(path);
+    if (kind === "other") throw Error(`Not an indexable office path: ${path}`);
+    const result = await createDocumentProcessor(async () => {
+      throw Error("No PDF expected.");
+    }, port)({ root, path, kind, sha256, signal, assertWritable: () => {} });
+    if (result.status !== "indexed") throw Error(`${path} ${result.status}`);
+    const doc = rows.save({
+      path,
+      kind,
+      sha256,
+      bytes: bytes.length,
+      mtime: new Date().toISOString(),
+      pages: result.pages ?? null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
+    return doc;
+  };
   const close = async () => {
     db.close();
     await rm(root, { recursive: true, force: true });
   };
-  return { root, db, port, vectors, rows, knowledge, signal, add, close };
+  return { root, db, port, vectors, rows, knowledge, signal, add, addOffice, close };
 }
 // REQ-FUNC-51165496
 it("preserves prior opening-bracket paths in precise read and search refs", async () => {
@@ -318,7 +349,7 @@ it("SessionService persists every issued citation kind and invalid chips through
     ]);
     await h.add("docs/a.md", "# Power\n3.3V\n");
     await h.add("docs/a.html", "<h1>Reset</h1><p>Assert.</p>");
-    await h.add("docs/a.log", "first\nsecond\n");
+    await h.add("docs/a.txt", "first\nsecond\n");
     await mkdir(join(h.root, "scripts"));
     await writeFile(
       join(h.root, "scripts/citations-all.jsonl"),
@@ -359,7 +390,7 @@ it("SessionService persists every issued citation kind and invalid chips through
       kind: "markdown",
       anchor: "power",
     });
-    expect(await service.openCitation(session.id, answer.id, "docs/a.log#L1-L2")).toMatchObject({
+    expect(await service.openCitation(session.id, answer.id, "docs/a.txt#L1-L2")).toMatchObject({
       kind: "text",
       start: 1,
       end: 2,
@@ -389,6 +420,379 @@ it("SessionService persists every issued citation kind and invalid chips through
     });
   } finally {
     await service?.close();
+    await h.close();
+  }
+});
+// REQ-FUNC-724d3fcc
+it("uses the workbench retrieval defaults when search_docs omits k or mode", async () => {
+  const h = await harness();
+  try {
+    for (const name of ["a", "b", "c"]) await h.add(`docs/${name}.txt`, `I2C1_CR1 register ${name}`);
+    const defaults = new DocumentKnowledge(h.root, h.db, undefined, () => ({ results: 2, mode: "keyword" }));
+    // Keyword mode needs no embeddings, so this only succeeds when the default mode applies.
+    expect((await defaults.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(2);
+    expect((await defaults.search({ query: "I2C1_CR1", k: 1 }, h.signal)).results).toHaveLength(1);
+    await expect(defaults.search({ query: "I2C1_CR1", mode: "semantic" }, h.signal)).rejects.toThrow(
+      /Semantic/,
+    );
+    expect((await h.knowledge.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
+    const unset = new DocumentKnowledge(h.root, h.db, h.port, () => undefined);
+    expect((await unset.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
+  } finally {
+    await h.close();
+  }
+});
+
+// REQ-FUNC-56b34eec REQ-FUNC-58cba7fd REQ-FUNC-bc730650
+it("cites, reads and searches office documents by slide number and heading slug only", async () => {
+  const h = await harness();
+  try {
+    await h.addOffice("docs/bringup.pptx", "bringup.pptx");
+    await h.addOffice("docs/review.docx", "review.docx");
+    await h.addOffice("docs/report.xlsx", "test-report.xlsx");
+    const read = (args: Parameters<typeof h.knowledge.read>[0]) => h.knowledge.read(args, h.signal);
+    expect(await read({ path: "docs/bringup.pptx", page: 2 })).toEqual({
+      path: "docs/bringup.pptx",
+      text: "Measurements\nVDD\n3.29 V",
+      truncated: false,
+      ref: "docs/bringup.pptx#p=2",
+    });
+    expect(await read({ path: "docs/bringup.pptx", page: 1, pageEnd: 2 })).toMatchObject({
+      ref: "docs/bringup.pptx#p=1-2",
+    });
+    expect(await read({ path: "docs/review.docx", heading: "reset" })).toMatchObject({
+      ref: "docs/review.docx#h=reset",
+      text: expect.stringContaining("100 nF"),
+    });
+    expect(await read({ path: "docs/report.xlsx", heading: "timing" })).toMatchObject({
+      ref: "docs/report.xlsx#h=timing",
+      text: "Timing\n\nReset pulse\t200",
+    });
+    for (const args of [
+      { path: "docs/bringup.pptx", page: 3 },
+      { path: "docs/bringup.pptx", lineStart: 1 },
+      { path: "docs/bringup.pptx", heading: "measurements" },
+      { path: "docs/review.docx", heading: "absent" },
+      { path: "docs/review.docx", page: 1 },
+      { path: "docs/report.xlsx", lineStart: 1, lineEnd: 2 },
+    ])
+      await expect(read(args)).rejects.toThrow();
+    const valid = [
+      "docs/bringup.pptx#p=2",
+      "docs/bringup.pptx#p=1-2",
+      "docs/review.docx#h=power",
+      "docs/review.docx#h=reset",
+      "docs/report.xlsx#h=rail",
+    ];
+    const invalid = [
+      "docs/bringup.pptx#p=3",
+      "docs/bringup.pptx#p=2-3",
+      "docs/bringup.pptx#h=measurements",
+      "docs/bringup.pptx#L1-L1",
+      "docs/review.docx#h=absent",
+      "docs/review.docx#p=1",
+      "docs/review.docx#L1-L1",
+      "docs/report.xlsx#p=1",
+    ];
+    const messages = [
+      {
+        role: "toolResult" as const,
+        toolName: "search_docs",
+        toolCallId: "c",
+        isError: false,
+        timestamp: 0,
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ results: [...valid, ...invalid].map((ref) => ({ ref })) }),
+          },
+        ],
+      },
+    ];
+    expect(
+      await validateCitations(
+        h.root,
+        [...valid, ...invalid].map((ref) => `[[${ref}]]`).join(" "),
+        messages,
+        undefined,
+        (ref) => h.knowledge.validDocumentRef(ref),
+      ),
+    ).toEqual([
+      ...valid.map((ref) => ({ ref, valid: true })),
+      ...invalid.map((ref) => ({ ref, valid: false })),
+    ]);
+    const search = (query: string) => h.knowledge.search({ query, mode: "keyword", k: 5 }, h.signal);
+    expect((await search("NRST capacitor")).results[0]).toMatchObject({ ref: "docs/review.docx#h=reset" });
+    expect((await search("Measurements")).results[0]).toMatchObject({
+      ref: "docs/bringup.pptx#p=2",
+      locator: { type: "page", page: 2 },
+    });
+    expect((await search("SPEAKER")).results).toEqual([]);
+  } finally {
+    await h.close();
+  }
+});
+
+const R = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+const rels = (target: string, type: string) =>
+  strToU8(
+    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${type}" Target="${target}"/></Relationships>`,
+  );
+/** One worksheet named Timing with `rows` inline-string rows of about 40 characters. */
+const timingWorkbook = (rows: number) =>
+  zipSync({
+    "_rels/.rels": rels("xl/workbook.xml", "officeDocument"),
+    "xl/workbook.xml": strToU8(
+      `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ${R}><sheets><sheet name="Timing" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    ),
+    "xl/_rels/workbook.xml.rels": rels("worksheets/sheet1.xml", "worksheet"),
+    "xl/worksheets/sheet1.xml": strToU8(
+      `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${Array.from(
+        { length: rows },
+        (_, n) =>
+          `<row r="${n + 1}"><c r="A${n + 1}" t="inlineStr"><is><t>signal ${n} ${"x".repeat(24)}</t></is></c><c r="B${n + 1}"><v>${n}</v></c></row>`,
+      ).join("")}</sheetData></worksheet>`,
+    ),
+  });
+const issuedBy = (refs: string[]) => [
+  {
+    role: "toolResult" as const,
+    toolName: "search_docs",
+    toolCallId: "c",
+    isError: false,
+    timestamp: 0,
+    content: [{ type: "text" as const, text: JSON.stringify({ results: refs.map((ref) => ({ ref })) }) }],
+  },
+];
+
+// REQ-FUNC-2a51bc39 REQ-FUNC-845e3114
+it("issues and validates #h= refs for untitled leading sections of HTML and office sources", async () => {
+  const h = await harness();
+  try {
+    await h.add("docs/intro.html", "<p>PREAMBLE_TOKEN intro text.</p><h1>Reset</h1><p>Assert.</p>");
+    await h.add("docs/titled.html", "<h1>Power</h1><p>TITLED_TOKEN text.</p>");
+    await h.add("docs/a.md", "PREFACE_TOKEN line\n# Power\n3.3 V\n");
+    await h.add("docs/a.pdf", "fixture PDF source", [
+      "first page power supply text",
+      "second page reset text",
+    ]);
+    await h.addOffice("docs/plain.docx", "plain.docx");
+    await h.addOffice("docs/bringup.pptx", "bringup.pptx");
+    const first = async (query: string) =>
+      (await h.knowledge.search({ query, mode: "keyword", k: 5 }, h.signal)).results[0]?.ref;
+    expect(await first("PREAMBLE_TOKEN")).toBe("docs/intro.html#h=");
+    expect(await first("SWD clock")).toBe("docs/plain.docx#h=");
+    expect(await first("PREFACE_TOKEN")).toMatch(/^docs\/a\.md#L1-L\d+$/);
+    expect(await first("TITLED_TOKEN")).toBe("docs/titled.html#h=power");
+    for (const args of [{ path: "docs/intro.html", heading: "" }, { path: "docs/intro.html" }])
+      expect(await h.knowledge.read(args, h.signal)).toMatchObject({
+        ref: "docs/intro.html#h=",
+        text: expect.stringContaining("PREAMBLE_TOKEN"),
+      });
+    for (const args of [{ path: "docs/plain.docx", heading: "" }, { path: "docs/plain.docx" }])
+      expect(await h.knowledge.read(args, h.signal)).toMatchObject({
+        ref: "docs/plain.docx#h=",
+        text: expect.stringContaining("4 MHz"),
+      });
+    const valid = ["docs/intro.html#h=", "docs/plain.docx#h="];
+    const invalid = ["docs/titled.html#h=", "docs/a.md#h=", "docs/a.pdf#h=", "docs/bringup.pptx#h="];
+    const check = (refs: string[], issued: string[]) =>
+      validateCitations(
+        h.root,
+        refs.map((ref) => `[[${ref}]]`).join(" "),
+        issuedBy(issued),
+        undefined,
+        (ref) => h.knowledge.validDocumentRef(ref),
+      );
+    expect(await check([...valid, ...invalid], [...valid, ...invalid])).toEqual([
+      ...valid.map((ref) => ({ ref, valid: true })),
+      ...invalid.map((ref) => ({ ref, valid: false })),
+    ]);
+    expect(await check(["docs/intro.html#h="], [])).toEqual([{ ref: "docs/intro.html#h=", valid: false }]);
+  } finally {
+    await h.close();
+  }
+});
+
+// REQ-FUNC-3b70651a
+it("reads sections over the output budget in line-bounded parts that rebuild the section", async () => {
+  const h = await harness();
+  try {
+    await h.addOffice("docs/report.xlsx", timingWorkbook(1000));
+    await h.add("docs/one-line.html", `<p>${"long line words ".repeat(1900)}</p>`);
+    await h.add("docs/short.html", "<h1>Rail</h1><p>3.3 V</p>");
+    const sectionText = (path: string, slug: string) => {
+      const stored = h.db
+        .prepare(
+          "SELECT extraction_json FROM document_extractions WHERE doc_id=(SELECT id FROM documents WHERE path=?)",
+        )
+        .pluck()
+        .get(path) as string;
+      return (JSON.parse(stored).sections as { slug: string; text: string }[]).find((s) => s.slug === slug)
+        ?.text;
+    };
+    type Part = { text: string; part: number; parts: number; truncated: boolean; ref: string };
+    const readAll = async (path: string, heading: string) => {
+      const first = (await h.knowledge.read({ path, heading }, h.signal)) as Part;
+      const parts = [first];
+      for (let part = 2; part <= first.parts; part++)
+        parts.push((await h.knowledge.read({ path, heading, part }, h.signal)) as Part);
+      return parts;
+    };
+    for (const [path, slug, ref] of [
+      ["docs/report.xlsx", "timing", "docs/report.xlsx#h=timing"],
+      ["docs/one-line.html", "", "docs/one-line.html#h="],
+    ] as const) {
+      const parts = await readAll(path, slug);
+      expect(parts.length).toBeGreaterThan(1);
+      expect(parts.map((p) => p.text).join("")).toBe(sectionText(path, slug));
+      parts.forEach((p, i) => {
+        expect(p).toMatchObject({ part: i + 1, parts: parts.length, truncated: i < parts.length - 1, ref });
+        expect(p.text.length).toBeLessThanOrEqual(12000);
+        expect(JSON.stringify({ text: p.text }).length).toBeLessThanOrEqual(28000);
+      });
+      if (path.endsWith(".xlsx")) expect(parts.slice(0, -1).every((p) => p.text.endsWith("\n"))).toBe(true);
+    }
+    expect(await h.knowledge.read({ path: "docs/short.html", heading: "rail" }, h.signal)).toMatchObject({
+      text: "Rail\n\n3.3 V",
+      part: 1,
+      parts: 1,
+      truncated: false,
+      ref: "docs/short.html#h=rail",
+    });
+  } finally {
+    await h.close();
+  }
+});
+
+// REQ-FUNC-91405ce5
+it("rejects parts outside the section or outside heading reads with actionable errors", async () => {
+  const h = await harness();
+  try {
+    await h.addOffice("docs/report.xlsx", timingWorkbook(1000));
+    await h.add("docs/a.pdf", "fixture PDF source", [
+      "first page power supply text",
+      "second page reset text",
+    ]);
+    const { parts } = (await h.knowledge.read({ path: "docs/report.xlsx", heading: "timing" }, h.signal)) as {
+      parts: number;
+    };
+    for (const part of [0, parts + 1])
+      await expect(
+        h.knowledge.read({ path: "docs/report.xlsx", heading: "timing", part }, h.signal),
+      ).rejects.toThrow(`1-${parts}`);
+    for (const args of [
+      { path: "docs/a.pdf", page: 1, part: 1 },
+      { path: "docs/a.pdf", part: 1 },
+      { path: "docs/report.xlsx", lineStart: 1, part: 1 },
+    ])
+      await expect(h.knowledge.read(args, h.signal)).rejects.toThrow(/heading/);
+  } finally {
+    await h.close();
+  }
+});
+
+// REQ-FUNC-3b70651a
+it("splits sections into budgeted parts without stub heading parts, broken surrogates or oversized JSON", () => {
+  const within = (part: string) =>
+    part.length <= 12000 &&
+    JSON.stringify({ text: part }).length <= 28000 &&
+    !/[\uD800-\uDBFF]$|^[\uDC00-\uDFFF]/.test(part);
+  const titled = `Title\n\n${"a".repeat(30000)}`;
+  const twoLines = `${"a".repeat(3000)}\n${"b".repeat(10000)}`;
+  const mixed = `T\n${"x".repeat(11997)}\u{1F600}tail`;
+  const cases = [
+    titled,
+    twoLines,
+    mixed,
+    `${"x".repeat(11999)}\u{1F600}tail`,
+    "\u0001".repeat(10000),
+    `\n${"a".repeat(20000)}`,
+    `${"row\tvalue\n".repeat(3000)}`,
+  ];
+  // A line that fits a part by itself is never cut, even when it ends the window early.
+  expect(sectionParts(twoLines).map((p) => p.length)).toEqual([3001, 10000]);
+  // A rejected newline still leaves the surrogate guard in force.
+  expect(sectionParts(mixed)[0]).toHaveLength(11999);
+  for (const text of cases) {
+    const parts = sectionParts(text);
+    expect(parts.join("")).toBe(text);
+    expect(parts.every(within)).toBe(true);
+  }
+  // A heading line before one long paragraph stays with the paragraph's first part.
+  expect(sectionParts(titled)[0]?.startsWith("Title\n\naaaa")).toBe(true);
+  expect(sectionParts(`${"x".repeat(11999)}\u{1F600}tail`)[0]).toHaveLength(11999);
+  expect(sectionParts("\u0001".repeat(10000))[0]).toHaveLength(4664);
+  // Rows end their parts at a newline.
+  expect(sectionParts("row\tvalue\n".repeat(3000)).every((p) => p.endsWith("\n"))).toBe(true);
+  expect(sectionParts("")).toEqual([""]);
+});
+
+it("guides models that fill every optional argument: per-field descriptions, kind-specific locator errors and glob hints", async () => {
+  const h = await harness();
+  try {
+    await h.addOffice("docs/plain.docx", "plain.docx");
+    await h.add("docs/a.pdf", "fixture PDF source", [
+      "first page power supply text",
+      "second page reset text",
+    ]);
+    const every = { page: 1, pageEnd: 1, heading: "", lineStart: 1, lineEnd: 100, part: 1 };
+    await expect(h.knowledge.read({ path: "docs/plain.docx", ...every }, h.signal)).rejects.toThrow(
+      'Use one locator family. docs/plain.docx is a document read by heading ("" for text before the first heading); remove page, pageEnd, lineStart, lineEnd.',
+    );
+    await expect(h.knowledge.read({ path: "docs/a.pdf", ...every }, h.signal)).rejects.toThrow(
+      "Use one locator family. docs/a.pdf is a PDF read by page; remove heading, lineStart, lineEnd, part.",
+    );
+    expect(
+      await h.knowledge.search({ query: "SWD clock", mode: "keyword", pathGlob: "*" }, h.signal),
+    ).toEqual({
+      results: [],
+      message:
+        'No indexed document matched pathGlob "*". Globs are relative to the workbench root, so "*" matches only top-level files; use a pattern such as "docs/**", or omit pathGlob to search every document.',
+    });
+    expect(
+      (await h.knowledge.search({ query: "SWD clock", mode: "keyword", pathGlob: "docs/**" }, h.signal))
+        .results,
+    ).toHaveLength(1);
+    const { readDocSchema, searchDocsSchema } = await import("./search.js");
+    for (const schema of [readDocSchema, searchDocsSchema]) {
+      const json = z.toJSONSchema(schema) as { properties: Record<string, { description?: string }> };
+      for (const [name, field] of Object.entries(json.properties))
+        expect(field.description, `${name} description`).toMatch(/\w/);
+    }
+  } finally {
+    await h.close();
+  }
+});
+
+// RULING-005 (TASK-f09609fd)
+it("falls back to keyword results when the indexer cannot rank, and still fails other ranking errors", async () => {
+  const h = await harness();
+  try {
+    await h.add("docs/a.md", "# Power\nThe board uses a 3.3 V supply.\n");
+    const failing = (error: Error): EmbeddingPort => ({
+      modelId: "fixture",
+      embed: async () => [],
+      rank: async () => {
+        throw error;
+      },
+      release: async () => {},
+    });
+    const stopped = new DocumentKnowledge(
+      h.root,
+      h.db,
+      failing(Object.assign(Error("Indexing stopped."), { retry: true })),
+    );
+    for (const mode of ["hybrid", "semantic"] as const) {
+      const found = await stopped.search({ query: "supply", mode }, h.signal);
+      expect(found.results.map((r) => r.path)).toEqual(["docs/a.md"]);
+      expect(found.message).toMatch(/semantic ranking is unavailable/i);
+    }
+    const broken = new DocumentKnowledge(h.root, h.db, failing(Error("Embedding worker failed.")));
+    await expect(broken.search({ query: "supply", mode: "hybrid" }, h.signal)).rejects.toThrow(
+      "Embedding worker failed.",
+    );
+  } finally {
     await h.close();
   }
 });

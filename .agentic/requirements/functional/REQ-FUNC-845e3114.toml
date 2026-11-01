@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-845e3114"
+
+title = "Validate leading-section citations"
+
+status = "active"
+
+requirement = "When an assistant message cites an issued path#h= reference, the citation checker shall mark it valid only when the current indexed HTML, document or spreadsheet source's persisted extraction has an untitled leading section."
+
+verification = "Core citation test: an issued #h= ref to an HTML file and a headingless docx validates; the same ref to a document whose first section is titled, to a PDF, to a presentation and to an unissued ref is invalid."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/tests/e2e/office-documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

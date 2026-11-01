@@ -111,7 +111,10 @@ test("chat UI read-then-answer renders two tool rows and one cited answer, ident
     await app.close();
     app = await host.launch();
     page = await app.firstWindow();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
+    // Reopening shows the overview; the engineer opens the restored session from the sidebar.
+    await expect(page.locator(`[data-session="${id}"][aria-current="page"]`)).toBeVisible();
+    await page.locator(`[data-session="${id}"]`).click();
     await expect(page.locator("[data-transcript]")).toHaveText(text as string);
     expect(await snapshot(page, id)).toEqual(before);
     expect(await outboundAttempts(app)).toEqual([]);
@@ -148,6 +151,8 @@ test("renderer reload mid-stream projects final authoritative text exactly once"
     await page.getByRole("textbox", { name: "Message", exact: true }).press("Enter");
     await expect(page.locator('[data-message-kind="assistant"]')).toContainText("SLOW START");
     await page.reload();
+    // A reloaded renderer starts on the overview; reopen the running session from the sidebar.
+    await page.locator(`[data-session="${id}"]`).click();
     await expect(page.locator('[data-message-kind="assistant"]')).toContainText("SLOW END", {
       timeout: 15000,
     });

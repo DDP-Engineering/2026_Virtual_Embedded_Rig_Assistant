@@ -10,6 +10,7 @@ import { App } from "../../App.js";
 import { api } from "../../api/index.js";
 import { useSessionEvents } from "../../hooks/use-session-events.js";
 import i18n from "../../i18n.js";
+import { WorkbenchNavigation } from "../workbench-navigation.js";
 import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
 import { ActivityLog } from "./session-inspector.js";
@@ -93,6 +94,176 @@ test("sidebar action menus are exclusive across session and workbench triggers, 
   expect(bench.open).toBe(true);
   await act(async () => user.click(container.querySelector("main") as HTMLElement));
   expect(bench.open).toBe(false);
+});
+// REQ-UX-ab0d5e61 REQ-FUNC-df70c1c8 REQ-FUNC-7871b582
+test("Move up and Move down reorder workbenches within their pinned group and sessions, by menu and Alt+Shift+Arrow", async () => {
+  for (const name of ["A", "B", "C"])
+    await api.invoke("workbench.create", { folder: `/mock/order-${name}`, name: `Order ${name}` });
+  // Order C is active; pinning Order A puts it in the pinned group above C and B.
+  await api.invoke("workbench.recent", { pin: { folder: "/mock/order-A", value: true } });
+  const created: string[] = [];
+  for (const title of ["First", "Second", "Third", "Stored"]) {
+    const session = await api.invoke("session.create", {});
+    await api.invoke("session.rename", { sessionId: session.id, title });
+    created.push(session.id);
+  }
+  await api.invoke("session.archive.set", { sessionId: created[3] as string, archived: true });
+  await mount();
+  const user = userEvent.setup();
+  const keys = (key: string) => user.keyboard(`{Alt>}{Shift>}{${key}}{/Shift}{/Alt}`);
+  const benches = () =>
+    [...container.querySelectorAll(".workbench-group-name")]
+      .map((b) => (b.textContent ?? "").replace(/^📌\s*/, ""))
+      .filter((n) => n.startsWith("Order "));
+  const heading = (name: string) =>
+    [...container.querySelectorAll<HTMLElement>(".workbench-group-heading")].find((h) =>
+      h.querySelector(".workbench-group-name")?.textContent?.endsWith(name),
+    ) as HTMLElement;
+  const item = (scope: Element, text: string) =>
+    [...scope.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === text);
+  const sessions = () =>
+    [...container.querySelectorAll(".session-list > .session-entry [data-session] strong")].map(
+      (s) => s.textContent,
+    );
+  const entry = (title: string) =>
+    [...container.querySelectorAll<HTMLElement>(".session-entry")].find(
+      (e) => e.querySelector("[data-session] strong")?.textContent === title,
+    ) as HTMLElement;
+  expect(benches().slice(0, 3)).toEqual(["Order A", "Order C", "Order B"]);
+  // The only pinned entry and the first unpinned one cannot move up; C can move down past B.
+  expect(item(heading("Order A"), "Move up")?.disabled).toBe(true);
+  expect(item(heading("Order A"), "Move down")?.disabled).toBe(true);
+  expect(item(heading("Order C"), "Move up")?.disabled).toBe(true);
+  const benchMenu = heading("Order C").querySelector(".workbench-menu") as HTMLDetailsElement;
+  await act(async () => user.click(benchMenu.querySelector("summary") as HTMLElement));
+  await act(async () => user.click(item(benchMenu, "Move down") as HTMLButtonElement));
+  await settle();
+  expect(benches().slice(0, 3)).toEqual(["Order A", "Order B", "Order C"]);
+  expect(heading("Order C").contains(document.activeElement)).toBe(true);
+  // The keyboard moves the focused workbench row back and keeps focus on it.
+  const name = heading("Order C").querySelector<HTMLButtonElement>(
+    ".workbench-group-name",
+  ) as HTMLButtonElement;
+  name.focus();
+  await act(async () => keys("ArrowUp"));
+  await settle();
+  expect(benches().slice(0, 3)).toEqual(["Order A", "Order C", "Order B"]);
+  expect(document.activeElement?.textContent).toBe("Order C");
+  expect((await api.invoke("workbench.recent", {})).map((e) => e.name).slice(0, 3)).toEqual([
+    "Order C",
+    "Order B",
+    "Order A",
+  ]);
+
+  expect(sessions()).toEqual(["First", "Second", "Third"]);
+  expect(item(entry("First"), "Move up")?.disabled).toBe(true);
+  expect(item(entry("Third"), "Move down")?.disabled).toBe(true);
+  // Archived sessions have no move items.
+  expect(item(entry("Stored"), "Move up")).toBeUndefined();
+  const sessionMenu = entry("Third").querySelector(".session-options") as HTMLDetailsElement;
+  await act(async () => user.click(sessionMenu.querySelector("summary") as HTMLElement));
+  await act(async () => user.click(item(sessionMenu, "Move up") as HTMLButtonElement));
+  await settle();
+  expect(sessions()).toEqual(["First", "Third", "Second"]);
+  expect(entry("Third").contains(document.activeElement)).toBe(true);
+  const row = entry("Third").querySelector<HTMLButtonElement>("[data-session]") as HTMLButtonElement;
+  row.focus();
+  await act(async () => keys("ArrowUp"));
+  await settle();
+  expect(sessions()).toEqual(["Third", "First", "Second"]);
+  expect(document.activeElement?.getAttribute("data-session")).toBe(created[2]);
+  // At the top edge the shortcut changes nothing.
+  await act(async () => keys("ArrowUp"));
+  await settle();
+  expect(sessions()).toEqual(["Third", "First", "Second"]);
+  expect((await api.invoke("session.list", {})).map((s) => s.title)).toEqual([
+    "Third",
+    "First",
+    "Second",
+    "Stored",
+  ]);
+});
+// REQ-UX-ab0d5e61
+test("search results get no move items or shortcut, and row menu triggers take Alt+Shift+Arrow, even for a missing workbench", async () => {
+  const bench = await api.invoke("workbench.create", { folder: "/mock/order-search", name: "Order search" });
+  const first = await api.invoke("session.create", { workbenchId: bench.config.id });
+  const second = await api.invoke("session.create", { workbenchId: bench.config.id });
+  const user = userEvent.setup();
+  const keys = (key: string) => user.keyboard(`{Alt>}{Shift>}{${key}}{/Shift}{/Alt}`);
+  const move = vi.fn(async () => true);
+  const list = (search: string) =>
+    createElement(SessionList, {
+      sessions: [first, second],
+      select: vi.fn(),
+      create: vi.fn(),
+      rename: vi.fn(),
+      remove: vi.fn(),
+      archive: vi.fn(),
+      move,
+      disabled: false,
+      search,
+      searchChanged: vi.fn(),
+    });
+  await mount(list("x"));
+  expect(container.querySelector('[data-action^="move-session"]')).toBeNull();
+  (container.querySelector(`[data-session="${second.id}"]`) as HTMLButtonElement).focus();
+  await act(async () => keys("ArrowUp"));
+  const summary = () =>
+    container
+      .querySelector(`[data-session="${second.id}"]`)
+      ?.closest(".session-entry")
+      ?.querySelector<HTMLElement>(".session-options > summary") as HTMLElement;
+  summary().focus();
+  await act(async () => keys("ArrowUp"));
+  expect(move).not.toHaveBeenCalled();
+  await act(async () => root.unmount());
+  container.remove();
+  // Without a search, the row's menu trigger moves it too.
+  await mount(list(""));
+  summary().focus();
+  await act(async () => keys("ArrowUp"));
+  expect(move).toHaveBeenCalledWith(second.id, -1);
+  await act(async () => root.unmount());
+  container.remove();
+  // A missing workbench's toggle and name are disabled; its menu trigger still takes the keys.
+  const moveBench = vi.fn(async () => true);
+  const entries = [
+    {
+      folder: "/mock/kept",
+      id: "wb_01ARZ3NDEKTSV4RRFFQ69G5FA1",
+      name: "Kept",
+      lastOpened: new Date(0).toISOString(),
+      missing: false,
+    },
+    {
+      folder: "/mock/gone",
+      id: "wb_01ARZ3NDEKTSV4RRFFQ69G5FA2",
+      name: "Gone",
+      lastOpened: new Date(0).toISOString(),
+      missing: true,
+    },
+  ];
+  const navigation = {
+    entries,
+    activeId: undefined,
+    disabled: false,
+    settingsReadOnly: false,
+    open: vi.fn(async () => true),
+    pin: vi.fn(),
+    move: moveBench,
+    edit: vi.fn(),
+    reveal: vi.fn(),
+    remove: vi.fn(),
+    children: null,
+  };
+  await mount(createElement(WorkbenchNavigation, navigation));
+  const gone = container.querySelector(
+    '[data-workbench-entry="wb_01ARZ3NDEKTSV4RRFFQ69G5FA2"]',
+  ) as HTMLElement;
+  expect(gone.querySelector<HTMLButtonElement>(".workbench-group-name")?.disabled).toBe(true);
+  (gone.querySelector(".workbench-menu > summary") as HTMLElement).focus();
+  await act(async () => keys("ArrowUp"));
+  expect(moveBench).toHaveBeenCalledWith("/mock/gone", -1);
 });
 test("New session reuses a renamed empty session, preserves its draft and focuses the composer", async () => {
   await api.invoke("workbench.create", { folder: "/mock/reuse-empty", name: "Reuse" });
@@ -319,6 +490,411 @@ test("Welcome creation draft survives Settings navigation while viewer scope cha
     false,
   );
 });
+// REQ-UX-2c674629 REQ-UX-56c8cefc REQ-UX-7f289a2c
+test("New Workbench creates only and submits the configured draft with prefilled name", async () => {
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const page = container.querySelector<HTMLElement>("[data-workbench-create]");
+  if (!page) throw Error("Missing creation page");
+  expect(container.querySelector('[data-action="open-workbench"], [data-action="open-recent"]')).toBeNull();
+  expect(page.querySelector("[data-project-section]")).toBeNull();
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  expect(page.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("new-board");
+  expect(
+    [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
+  ).toEqual(["general", "documents", "instructions", "agent", "tools", "skills", "embeddings", "plugins"]);
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
+  await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
+  await act(async () =>
+    page.querySelector<HTMLButtonElement>('[data-project-section="instructions"]')?.click(),
+  );
+  const instructions = page.querySelector<HTMLTextAreaElement>("#pinned-content");
+  expect(instructions?.value).toContain("# new-board");
+  const user = userEvent.setup();
+  if (instructions) await act(async () => user.type(instructions, "STM32G474 bench"));
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.click());
+  await settle();
+  const created = await api.invoke("workbench.config.get", {});
+  expect(created.config.name).toBe("new-board");
+  expect(created.config.tools.disabled).toEqual(["web_search"]);
+  expect((await api.invoke("workbench.pinned.get", {})).content).toContain("STM32G474 bench");
+  expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("new-board");
+});
+/** Makes the mock folder picker return a test-owned folder, optionally listing extra skills for it. */
+function pickFolder(folder: string, skills: { name: string; description: string }[] = []) {
+  const invoke = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel === "app.chooseFolder") return { folder };
+    const value = await invoke(channel as "app.info", request as never);
+    if (channel !== "workbench.inspect") return value;
+    const found = value as unknown as { skills: object[] };
+    return {
+      ...found,
+      skills: [...found.skills, ...skills.map((s) => ({ ...s, source: "user", enabled: true }))],
+    };
+  }) as typeof api.invoke);
+}
+async function keyDown(target: Element, key: string) {
+  await act(async () => {
+    target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+  });
+}
+// REQ-UX-56c8cefc REQ-UX-68353a4e
+test("New Workbench keeps a typed name and offers Open for an existing workbench folder", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/existing-board", name: "Existing board" });
+  await api.invoke("workbench.close", {});
+  pickFolder("/mock/existing-board");
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const user = userEvent.setup();
+  const name = container.querySelector<HTMLInputElement>("#workbench-name");
+  if (!name) throw Error("Missing name field");
+  await act(async () => user.type(name, "Typed"));
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  expect(name.value).toBe("Typed");
+  expect(container.querySelector("[data-existing-workbench]")).toBeTruthy();
+  expect(container.querySelector("[data-workbench-create] [data-project-section]")).toBeNull();
+  expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(true);
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="open-existing"]')?.click());
+  await settle();
+  expect(container.querySelector('[data-workbench="active"] h3')?.textContent).toBe("Existing board");
+});
+// REQ-UX-7f289a2c REQ-FUNC-3815bacc
+test("New Workbench drafts skills, keeps existing instructions, ignores Enter and resets after Create", async () => {
+  pickFolder("/mock/with-notes", [{ name: "flash-esp32", description: "Flash ESP32 boards" }]);
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const page = container.querySelector<HTMLElement>("[data-workbench-create]");
+  if (!page) throw Error("Missing creation page");
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="skills"]')?.click());
+  const skill = page.querySelector<HTMLInputElement>('[data-create-skill="flash-esp32"] input');
+  expect(skill?.checked).toBe(true);
+  await act(async () => skill?.click());
+  expect(skill?.checked).toBe(false);
+  await act(async () =>
+    page.querySelector<HTMLButtonElement>('[data-project-section="instructions"]')?.click(),
+  );
+  const instructions = page.querySelector<HTMLTextAreaElement>("#pinned-content");
+  expect(instructions?.value).toBe("Existing bench notes\n");
+  expect(instructions?.readOnly).toBe(true);
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="agent"]')?.click());
+  const model = page.querySelector<HTMLInputElement>("[data-project-model]");
+  if (!model) throw Error("Missing model field");
+  const user = userEvent.setup();
+  await act(async () => user.type(model, "openai/gpt-5{Enter}"));
+  await settle();
+  expect(container.querySelector('[data-workbench="active"]')).toBeNull();
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.click());
+  await settle();
+  const created = await api.invoke("workbench.config.get", {});
+  expect(created.config.skills.disabled).toEqual(["flash-esp32"]);
+  expect(created.config.agent.model).toBe("openai/gpt-5");
+  expect((await api.invoke("workbench.pinned.get", {})).content).toBe("Existing bench notes\n");
+  await act(async () => button("New Workbench").click());
+  const fresh = container.querySelector<HTMLElement>("[data-workbench-create]");
+  expect(fresh?.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("");
+  expect(fresh?.querySelector("[data-project-section], [data-selected-folder]")).toBeNull();
+});
+/** Makes the mock folder picker return the given folders in order; returns the requests it got. */
+function pickFolders(...folders: string[]) {
+  const invoke = api.invoke.bind(api);
+  const requests: unknown[] = [];
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel !== "app.chooseFolder") return invoke(channel as "app.info", request as never);
+    requests.push(request);
+    return { folder: folders.shift() ?? null };
+  }) as typeof api.invoke);
+  return requests;
+}
+async function openDocuments(page: HTMLElement) {
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="documents"]')?.click());
+  await settle();
+}
+const docsFolder = (page: HTMLElement, path: string) =>
+  page.querySelector<HTMLInputElement>(`[data-docs-folder="${path}"] input[type="checkbox"]`);
+// REQ-UX-64605f7e REQ-UX-5b390823 REQ-UX-b7002720 REQ-UX-ff645484
+test("New Workbench preselects detected documentation folders and previews what they index", async () => {
+  pickFolders("/mock/docs-board");
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const page = container.querySelector<HTMLElement>("[data-workbench-create]");
+  if (!page) throw Error("Missing creation page");
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  await openDocuments(page);
+  expect(docsFolder(page, "datasheets")?.checked).toBe(true);
+  expect(docsFolder(page, "notes")?.checked).toBe(true);
+  expect(page.querySelector('[data-docs-folder="src"]')).toBeNull();
+  expect(page.querySelector('[data-docs-folder="datasheets"]')?.textContent).toContain("2 PDF");
+  expect(page.querySelector('[data-docs-folder="datasheets"]')?.textContent).toContain("MB");
+  expect(docsFolder(page, "Manuals (RM0440)")?.checked).toBe(true);
+  expect(page.querySelector("[data-docs-preview]")?.textContent).toContain("Documents to index: 5 (");
+  expect(page.querySelector("[data-docs-preview]")?.textContent).toContain(
+    "Legacy Office and RTF files are not indexed: 1",
+  );
+  const advanced = page.querySelector<HTMLDetailsElement>("[data-docs-advanced]");
+  expect(advanced?.open).toBe(false);
+  const includeField = advanced?.querySelector<HTMLTextAreaElement>("[data-project-include]");
+  expect(includeField?.value).toBe("Manuals [(]RM0440[)]/**\ndatasheets/**\nnotes/**");
+  await act(async () => docsFolder(page, "datasheets")?.click());
+  expect(docsFolder(page, "datasheets")?.checked).toBe(false);
+  // The preview recomputes once the selection has been still for its debounce interval.
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 400)));
+  await settle();
+  expect(page.querySelector("[data-docs-preview]")?.textContent).toContain("Documents to index: 3 (");
+  await act(async () => docsFolder(page, "datasheets")?.click());
+  expect(docsFolder(page, "datasheets")?.checked).toBe(true);
+  await act(async () => {
+    if (advanced) advanced.open = true;
+  });
+  if (!includeField) throw Error("Missing include field");
+  await act(async () => {
+    await userEvent.setup().clear(includeField);
+    await userEvent.setup().type(includeField, "datasheets/**");
+  });
+  await settle();
+  expect(docsFolder(page, "notes")?.checked).toBe(false);
+  expect(docsFolder(page, "Manuals (RM0440)")?.checked).toBe(false);
+  expect(docsFolder(page, "datasheets")?.checked).toBe(true);
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  await settle();
+  expect(page.querySelector("[data-docs-preview]")?.textContent).toContain("Documents to index: 2 (");
+  const excludeField = advanced?.querySelectorAll<HTMLTextAreaElement>("textarea")[1];
+  if (!excludeField) throw Error("Missing exclude field");
+  await act(async () => userEvent.setup().type(excludeField, "datasheets/old/**"));
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.click());
+  await settle();
+  const saved = (await api.invoke("workbench.config.get", {})).config.docs;
+  expect(saved.include).toEqual(["datasheets/**"]);
+  expect(saved.exclude).toEqual(["datasheets/old/**"]);
+});
+// REQ-UX-64605f7e REQ-UX-b96730c7
+test("Documents keeps defaults without detections and adds picked folders inside the workbench only", async () => {
+  const picks = pickFolders("/mock/empty-board", "/mock/empty-board/manuals/st", "/mock/elsewhere");
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const page = container.querySelector<HTMLElement>("[data-workbench-create]");
+  if (!page) throw Error("Missing creation page");
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  await openDocuments(page);
+  const include = () => page.querySelector<HTMLTextAreaElement>("[data-project-include]")?.value;
+  expect(include()).toBe("docs/**");
+  expect(page.querySelector("[data-docs-none]")).toBeTruthy();
+  // An undetected listed folder stays listed after unchecking, so it can be checked again.
+  await act(async () => docsFolder(page, "docs")?.click());
+  expect(include()).toBe("");
+  expect(docsFolder(page, "docs")?.checked).toBe(false);
+  await act(async () => docsFolder(page, "docs")?.click());
+  expect(include()).toBe("docs/**");
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="add-docs-folder"]')?.click());
+  await settle();
+  expect(docsFolder(page, "manuals/st")?.checked).toBe(true);
+  expect(include()).toBe("docs/**\nmanuals/st/**");
+  // Choosing the workbench folder starts anywhere; Add folder starts in the workbench root.
+  expect(picks.slice(0, 2)).toEqual([{}, { start: "/mock/empty-board" }]);
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="add-docs-folder"]')?.click());
+  await settle();
+  expect(page.querySelector('[data-docs] [data-i18n="errors.DENIED"]')).toBeTruthy();
+  expect(include()).toBe("docs/**\nmanuals/st/**");
+});
+// REQ-UX-64605f7e
+test("a failing documentation scan keeps the defaults and still allows creation", async () => {
+  pickFolders("/mock/locked-board");
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const page = container.querySelector<HTMLElement>("[data-workbench-create]");
+  if (!page) throw Error("Missing creation page");
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  expect(page.querySelector('[data-workbench-create] > [role="alert"]')).toBeNull();
+  await openDocuments(page);
+  expect(page.querySelector<HTMLTextAreaElement>("[data-project-include]")?.value).toBe("docs/**");
+  expect(page.querySelector('[data-docs] [data-i18n="errors.DENIED"]')).toBeTruthy();
+  expect(page.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(false);
+});
+// REQ-UX-d048dbdd
+test("Indexing offers retrieval defaults that New Workbench creates and the editor saves", async () => {
+  pickFolders("/mock/retrieval-board");
+  await mount();
+  await act(async () => button("New Workbench").click());
+  const page = container.querySelector<HTMLElement>("[data-workbench-create]");
+  if (!page) throw Error("Missing creation page");
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
+  await settle();
+  await act(async () =>
+    page.querySelector<HTMLButtonElement>('[data-project-section="embeddings"]')?.click(),
+  );
+  const results = page.querySelector<HTMLInputElement>("[data-retrieval-results]");
+  const mode = page.querySelector<HTMLSelectElement>("[data-retrieval-mode]");
+  if (!results || !mode) throw Error("Missing retrieval controls");
+  expect(results.value).toBe("8");
+  expect(results.min).toBe("1");
+  expect(results.max).toBe("20");
+  expect(mode.value).toBe("hybrid");
+  expect([...mode.options].map((o) => o.value)).toEqual(["hybrid", "keyword", "semantic"]);
+  const user = userEvent.setup();
+  await act(async () => {
+    await user.clear(results);
+    await user.type(results, "12");
+    await user.selectOptions(mode, "keyword");
+  });
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.click());
+  await settle();
+  expect((await api.invoke("workbench.config.get", {})).config.retrieval).toEqual({
+    results: 12,
+    mode: "keyword",
+  });
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click(),
+  );
+  await settle();
+  const editor = container.querySelector<HTMLElement>(".workbench-editor");
+  if (!editor) throw Error("Missing editor");
+  await act(async () =>
+    editor.querySelector<HTMLButtonElement>('[data-project-section="embeddings"]')?.click(),
+  );
+  const editMode = editor.querySelector<HTMLSelectElement>("[data-retrieval-mode]");
+  expect(editMode?.value).toBe("keyword");
+  if (editMode) await act(async () => user.selectOptions(editMode, "semantic"));
+  await act(async () => editor.querySelector<HTMLButtonElement>("[data-project-save]")?.click());
+  await settle();
+  expect((await api.invoke("workbench.config.get", {})).config.retrieval).toEqual({
+    results: 12,
+    mode: "semantic",
+  });
+});
+// REQ-UX-5b390823 REQ-UX-3d0691bc
+test("workbench editor shows the creation page's sections and the open workbench's documentation folders", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/docs-editor", name: "Docs board" });
+  await api.invoke("workbench.config.update", { patch: { docs: { include: ["datasheets/**"] } } });
+  await mount();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click(),
+  );
+  await settle();
+  const editor = container.querySelector<HTMLElement>(".workbench-editor");
+  if (!editor) throw Error("Missing editor");
+  expect(
+    [...editor.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
+  ).toEqual(["general", "documents", "instructions", "agent", "tools", "skills", "embeddings", "plugins"]);
+  await openDocuments(editor);
+  expect(docsFolder(editor, "datasheets")?.checked).toBe(true);
+  expect(docsFolder(editor, "notes")?.checked).toBe(false);
+  expect(editor.querySelector("[data-docs-preview]")?.textContent).toContain("Documents to index: 2 (");
+});
+// REQ-UX-1d6c940b REQ-UX-efb3e4fb
+test("sidebar Edit of another workbench loads its own values and Close asks before dropping edits", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/edit-a", name: "Edit A" });
+  await api.invoke("workbench.pinned.update", { content: "Context A" });
+  const b = await api.invoke("workbench.create", { folder: "/mock/edit-b", name: "Edit B" });
+  await api.invoke("workbench.pinned.update", { content: "Context B" });
+  await api.invoke("workbench.open", { folder: "/mock/edit-a" });
+  await mount();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click(),
+  );
+  await settle();
+  expect(container.querySelector<HTMLInputElement>("[data-project-name]")?.value).toBe("Edit A");
+  const entry = () => container.querySelector<HTMLElement>(`[data-workbench-entry="${b.config.id}"]`);
+  const menuButton = (text: string) =>
+    [...(entry()?.querySelectorAll<HTMLButtonElement>("button") ?? [])].find((n) => n.textContent === text);
+  await act(async () => menuButton("Edit workbench")?.click());
+  await settle();
+  expect(container.querySelector<HTMLInputElement>("[data-project-name]")?.value).toBe("Edit B");
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-project-section="instructions"]')?.click(),
+  );
+  await settle();
+  expect(container.querySelector<HTMLTextAreaElement>("#pinned-content")?.value).toBe("Context B");
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-project-section="general"]')?.click(),
+  );
+  const name = container.querySelector<HTMLInputElement>("[data-project-name]");
+  if (!name) throw Error("Missing name field");
+  await act(async () => userEvent.setup().type(name, " changed"));
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  await act(async () => menuButton("Close workbench")?.click());
+  await settle();
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expect(container.querySelector<HTMLInputElement>("[data-project-name]")?.value).toBe("Edit B changed");
+  confirm.mockReturnValue(true);
+  await act(async () => menuButton("Close workbench")?.click());
+  await settle();
+  expect(container.querySelector(".workbench-editor")).toBeNull();
+  expect(container.querySelector('[data-workbench="active"]')).toBeNull();
+});
+// REQ-UX-1d6c940b REQ-UX-efb3e4fb
+test("workbench editor page closes on Escape with focus restored and guards unsaved edits", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/editor-page", name: "Editor page" });
+  await mount();
+  const edit = () => container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]');
+  await act(async () => edit()?.focus());
+  await act(async () => edit()?.click());
+  await settle();
+  const editor = container.querySelector<HTMLElement>(".workbench-editor");
+  if (!editor) throw Error("Missing editor page");
+  expect(editor.closest("dialog")).toBeNull();
+  await keyDown(editor, "Escape");
+  await settle();
+  expect(container.querySelector(".workbench-editor")).toBeNull();
+  expect(document.activeElement).toBe(edit());
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  await act(async () => edit()?.click());
+  await settle();
+  await act(async () => button("Settings").click());
+  expect(confirm).not.toHaveBeenCalled();
+  expect(container.querySelector(".workbench-editor")).toBeNull();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="leave-settings"]')?.click(),
+  );
+  await settle();
+  await act(async () => edit()?.click());
+  await settle();
+  const user = userEvent.setup();
+  const name = container.querySelector<HTMLInputElement>("[data-project-name]");
+  if (!name) throw Error("Missing name field");
+  await act(async () => user.type(name, " revised"));
+  await act(async () => button("Settings").click());
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expect(container.querySelector<HTMLInputElement>("[data-project-name]")?.value).toBe("Editor page revised");
+  confirm.mockReturnValue(true);
+  await act(async () => button("Settings").click());
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(container.querySelector(".workbench-editor")).toBeNull();
+  expect(container.querySelector(".page-title")?.textContent).toBe("App settings");
+});
+// REQ-UX-efb3e4fb
+test("New session with unsaved editor edits confirms once and creates nothing when declined", async () => {
+  await api.invoke("workbench.create", { folder: "/mock/editor-session", name: "Editor session" });
+  await mount();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click(),
+  );
+  await settle();
+  const name = container.querySelector<HTMLInputElement>("[data-project-name]");
+  if (!name) throw Error("Missing name field");
+  await act(async () => userEvent.setup().type(name, " draft"));
+  const before = (await api.invoke("session.list", {})).length;
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="new-session"]')?.click());
+  await settle();
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expect((await api.invoke("session.list", {})).length).toBe(before);
+  expect(container.querySelector<HTMLInputElement>("[data-project-name]")?.value).toBe(
+    "Editor session draft",
+  );
+  confirm.mockReturnValue(true);
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="new-session"]')?.click());
+  await settle();
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(container.querySelector(".workbench-editor")).toBeNull();
+  expect(container.querySelector('[data-session][aria-current="page"]')).toBeTruthy();
+});
 test("Welcome restores the active workbench and follows sidebar switches through editor and close", async () => {
   await api.invoke("workbench.create", { folder: "/mock/switch-a", name: "Switch A" });
   await api.invoke("workbench.create", { folder: "/mock/switch-b", name: "Switch B" });
@@ -339,7 +915,9 @@ test("Welcome restores the active workbench and follows sidebar switches through
   );
   await settle();
   expect(container.querySelector<HTMLTextAreaElement>("#pinned-content")?.value).toBe("Context B");
-  await act(async () => container.querySelector<HTMLButtonElement>("dialog button")?.click());
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>(".workbench-editor footer button")?.click(),
+  );
   await act(async () =>
     container.querySelector<HTMLButtonElement>('[data-action="close-workbench"]')?.click(),
   );
@@ -762,6 +1340,36 @@ test.each(["a", "d"])(
   },
 );
 
+test("a page opened while a workbench closes stays open when the close completes", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const original = api.invoke.bind(api);
+  let finish: () => void = () => {};
+  const closing = new Promise<void>((done) => {
+    finish = done;
+  });
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel === "workbench.close") await closing;
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+  await mount();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="close-workbench"]')?.click(),
+  );
+  // The close is still pending when the user opens New Workbench.
+  // The creation page stays mounted while hidden, so only a shown page counts.
+  const shown = () => {
+    const page = container.querySelector("[data-workbench-create]");
+    return !!page && !page.closest("[hidden]");
+  };
+  await act(async () => button("New Workbench").click());
+  expect(shown()).toBe(true);
+  await act(async () => finish());
+  await settle();
+  expect(shown()).toBe(true);
+  // The workbench did close.
+  await expect(api.invoke("workbench.config.get", {})).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
 test("Settings selects one page with vertical tabs, including placeholders and keyboard navigation", async () => {
   await mount();
   await act(async () => container.querySelector<HTMLButtonElement>('[data-toggle="sidebar"]')?.click());
@@ -769,7 +1377,20 @@ test("Settings selects one page with vertical tabs, including placeholders and k
   await settle();
   expect(container.querySelector("#sidebar")?.getAttribute("data-collapsed")).toBe("false");
   const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tablist"] [role="tab"]')];
-  expect(tabs).toHaveLength(10);
+  // Web access joined the pages with the web providers.
+  expect(tabs.map((tab) => tab.dataset.section)).toEqual([
+    "providers",
+    "web",
+    "appearance",
+    "language",
+    "notifications",
+    "shortcuts",
+    "storage",
+    "configuration",
+    "updates",
+    "data",
+    "about",
+  ]);
   function visibleSections() {
     return [...container.querySelectorAll<HTMLElement>("[data-settings-section]")]
       .filter((node) => !node.closest("[hidden]"))
@@ -1013,3 +1634,136 @@ test.each([false, true])(
     expect(selected).toBeNull();
   },
 );
+
+// REQ-UX-712804c9 REQ-UX-b3231a55
+test("citations open in the right panel Source tab beside the conversation, which widens only there", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const list = await api.invoke("session.list", {});
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>(`[data-session="${list.find((s) => s.title === "Tool rows")?.id}"]`)
+      ?.click(),
+  );
+  await settle();
+  const panel = () => container.querySelector<HTMLElement>("#right-panel");
+  const width = () =>
+    container.querySelector<HTMLElement>(".app-shell")?.style.getPropertyValue("--right-width");
+  const resizer = () => container.querySelector<HTMLElement>('[data-resize="right"]');
+  expect(panel()).toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-citation="valid"]')?.click());
+  await settle();
+  // Other app dialogs exist closed; no dialog is shown for the source.
+  expect(container.querySelector("dialog[open], .document-dialog")).toBeNull();
+  expect(panel()?.dataset.tab).toBe("source");
+  expect(container.querySelector("#tab-source")?.getAttribute("aria-selected")).toBe("true");
+  expect(container.querySelector('[data-source-current] [data-line="1"]')?.getAttribute("aria-current")).toBe(
+    "true",
+  );
+  expect(container.querySelector('textarea[aria-label="Message"]')?.hasAttribute("disabled")).toBe(false);
+  expect(width()).toBe("36rem");
+  expect(resizer()?.getAttribute("aria-valuemax")).toBe("90");
+  for (let n = 0; n < 3; n++)
+    await act(async () =>
+      resizer()?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })),
+    );
+  expect(width()).toBe("39rem");
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
+  expect(panel()?.dataset.tab).toBe("docs");
+  expect(width()).toBe("22rem");
+  expect(resizer()?.getAttribute("aria-valuemax")).toBe("28");
+  // REQ-UX-d64f086f: a source opened from Docs returns to Docs and its row on Escape.
+  await settle();
+  // Docs shows a folder tree (TASK-66b7d4aa): open docs, then the document's own row.
+  const docsFolder = container.querySelector<HTMLElement>('[role="treeitem"][data-tree-path="docs"]');
+  if (docsFolder?.getAttribute("aria-expanded") === "false") {
+    await act(async () => docsFolder.click());
+    await settle();
+  }
+  const row = container.querySelector<HTMLElement>('[data-document="docs/a.md"]');
+  row?.focus();
+  await act(async () => row?.click());
+  await settle();
+  expect(panel()?.dataset.tab).toBe("source");
+  expect(container.querySelector("[data-source-panel]")?.contains(document.activeElement)).toBe(true);
+  await act(async () =>
+    document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+  );
+  await settle();
+  expect(panel()?.dataset.tab).toBe("docs");
+  expect(document.activeElement).toBe(row);
+});
+
+// REQ-UX-712804c9 REQ-UX-d64f086f
+test("the Source tab returns to where it was opened from, follows keyboard tab changes and session changes, and never drops focus", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await mount();
+  const list = await api.invoke("session.list", {});
+  const openSession = async (title: string) => {
+    await act(async () =>
+      container
+        .querySelector<HTMLButtonElement>(`[data-session="${list.find((s) => s.title === title)?.id}"]`)
+        ?.click(),
+    );
+    await settle();
+  };
+  const panel = () => container.querySelector<HTMLElement>("#right-panel");
+  const chip = () => container.querySelector<HTMLButtonElement>('[data-citation="valid"]');
+  const pressEscape = async () => {
+    await act(async () =>
+      document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+    );
+    await settle();
+  };
+  await openSession("Tool rows");
+  // A citation opened with the panel collapsed closes back to a collapsed panel and the chip.
+  chip()?.focus();
+  await act(async () => chip()?.click());
+  await settle();
+  expect(panel()?.dataset.tab).toBe("source");
+  await pressEscape();
+  expect(panel()).toBeNull();
+  expect(document.activeElement).toBe(chip());
+  // Arrow keys to another tab end the old return path: the next close returns to that tab.
+  await act(async () => chip()?.click());
+  await settle();
+  await act(async () =>
+    container
+      .querySelector("#tab-source")
+      ?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })),
+  );
+  expect(panel()?.dataset.tab).toBe("changes");
+  chip()?.focus();
+  await act(async () => chip()?.click());
+  await settle();
+  expect(panel()?.dataset.tab).toBe("source");
+  await pressEscape();
+  expect(panel()?.dataset.tab).toBe("changes");
+  expect(document.activeElement).toBe(chip());
+  // A session change closes an open source and restores the panel it came from.
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-context")?.click());
+  await act(async () => chip()?.click());
+  await settle();
+  expect(panel()?.dataset.tab).toBe("source");
+  await openSession("Invalid citation");
+  expect(panel()?.dataset.tab).toBe("context");
+  expect(container.querySelector("[data-source-current]")).toBeNull();
+  // An opener that is gone hands focus to the visible tab instead of the document.
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
+  await settle();
+  // Docs shows a folder tree (TASK-66b7d4aa): open docs, then the document's own row.
+  const docsFolder = container.querySelector<HTMLElement>('[role="treeitem"][data-tree-path="docs"]');
+  if (docsFolder?.getAttribute("aria-expanded") === "false") {
+    await act(async () => docsFolder.click());
+    await settle();
+  }
+  const row = container.querySelector<HTMLElement>('[data-document="docs/a.md"]');
+  row?.focus();
+  await act(async () => row?.click());
+  await settle();
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-docs")?.click());
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-source")?.click());
+  container.querySelector<HTMLElement>("[data-source-current]")?.focus();
+  await pressEscape();
+  expect(document.activeElement).toBe(container.querySelector("#tab-source"));
+});

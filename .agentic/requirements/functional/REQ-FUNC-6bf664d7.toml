@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-6bf664d7"
+
+title = "Start a registered Linux application for a workbench file"
+
+status = "active"
+
+requirement = "When asked on Linux to open a workbench file with a registered application, the desktop app shall run `gio launch` with that application's .desktop file and the file's absolute path, detached and without a shell, only when the application is still registered for the file's type, and shall refuse any other application id, a folder, a link or a path outside the workbench."
+
+verification = "Main unit test with an injected runner and launcher: gimp.desktop for photo.png launches gio with ['launch', '<desktop file>', '<absolute file>']; an id not in the registered list, a hidden or missing one, a folder, a link and ../x are refused with INVALID or DENIED without launching; a launch error maps to INTERNAL; shared contract test for the channel."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/openers.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/openers.test.ts::starts a registered Linux application with gio launch and refuses any other", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::offers the system's Open with dialog and registered applications through strict channels"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

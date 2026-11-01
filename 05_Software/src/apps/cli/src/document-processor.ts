@@ -1,7 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createDocumentProcessor, createPdfExtractor, EmbeddingHost } from "@vera/core";
+import {
+  createDocumentProcessor,
+  createOfficeExtractor,
+  createPdfExtractor,
+  EmbeddingHost,
+} from "@vera/core";
 /** Locate the local models in the source workspace or beside the installed CLI. */
 export function cliResources(): string {
   let path = dirname(fileURLToPath(import.meta.url));
@@ -30,6 +35,7 @@ export function createDocumentServices(
     processDocument: createDocumentProcessor(
       createPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
       embeddings,
+      createOfficeExtractor(new URL("./pdf-worker.js", import.meta.url)),
     ),
   };
 }

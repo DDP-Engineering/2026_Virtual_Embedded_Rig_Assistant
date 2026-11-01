@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-08946818"
+
+title = "Stop restarting the indexer after repeated crashes"
+
+status = "active"
+
+requirement = "If the indexer process exits unexpectedly or fails to start three times within one minute, VERA shall stop restarting it, mark indexing as stopped and fail further indexer calls until the user restarts it."
+
+verification = "Main test with a scripted clock and endpoint: three exits within 60 s stop restarts and report stopped; a third exit after more than 60 s since the first restarts normally; restart() starts a new endpoint and clears the stopped state."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/indexer-host.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/indexer-host.test.ts::stops after three crashes within a minute until restarted, and keeps restarting slower crashes", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts::counts a failed indexer start as a crash and stops after three", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::keeps the index when a reindex cannot obtain the selection"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-98e9d760"
+
+title = "Report the properties of a workbench entry"
+
+status = "active"
+
+requirement = "When asked for the properties of a file or folder of the active workbench, ignored or not, VERA shall return its type, its size in bytes for a file, and its last modified time, and shall refuse linked or outside paths."
+
+verification = "Core test: a file returns type file, its byte size and an ISO modified time; a folder returns type folder without size; .git/config and a .veraignore'd folder return their properties; linked, ../ and Windows alias paths are refused; shared contract test for the channel."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/tree.test.ts::reports the type, size and modified time of an entry, ignored or not, and refuses the rest", "05_Software/src/libraries/core/src/workbench/tree.test.ts::refuses Windows aliases that would reach hidden or ignored entries", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::reports workbench entry properties through a strict docs.stat channel", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

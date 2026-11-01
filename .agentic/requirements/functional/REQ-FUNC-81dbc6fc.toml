@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-81dbc6fc"
+
+title = "Extract spreadsheets sheet by sheet"
+
+status = "active"
+
+requirement = "When ingest processes a .xlsx or .ods file, VERA shall index it as a spreadsheet with one section per sheet named after the sheet, whose text is the sheet name followed by the sheet's non-empty rows with cells joined by tabs, using stored cell values and cached formula results."
+
+verification = "Core extraction test on committed xlsx and ods fixtures: sheet sections in workbook order, shared and inline strings, numbers and a cached formula value, empty rows skipped."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/office.ts", "05_Software/src/libraries/core/src/knowledge/office-format.ts", "05_Software/src/libraries/core/src/knowledge/xmldom.d.ts", "05_Software/src/libraries/core/src/knowledge/extraction.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/knowledge/pdf-worker.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/shared/src/documents.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/office.test.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/tests/e2e/office-documents.spec.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -115,6 +115,79 @@ it("persists registered workbench pinning and rejects unregistered folders", asy
     await h.service.close();
   }
 });
+it("moves a workbench only within its pinned group and keeps its place when opened", async () => {
+  const h = await harness();
+  const folders: string[] = [];
+  for (const n of [0, 1, 2, 3]) {
+    const folder = join(h.root, `move${n}`);
+    await mkdir(folder);
+    await h.service.create(folder, `Move${n}`);
+    folders.push(folder);
+  }
+  await h.service.close();
+  const names = async () => (await h.service.recent()).map((e) => e.name);
+  // Created last first; pin the two oldest so the stored order is Move3, Move2, Move1*, Move0*.
+  await h.service.recent(undefined, { folder: folders[1] as string, value: true });
+  await h.service.recent(undefined, { folder: folders[0] as string, value: true });
+  expect(await names()).toEqual(["Move3", "Move2", "Move1", "Move0"]);
+  const move = (n: number, offset: -1 | 1) =>
+    h.service.recent(undefined, undefined, { folder: folders[n] as string, offset });
+  // The second pinned entry moves up over the first pinned one, across the unpinned ones.
+  expect((await move(0, -1)).map((e) => e.name)).toEqual(["Move3", "Move2", "Move0", "Move1"]);
+  // The first unpinned entry has no unpinned neighbour above it.
+  expect((await move(3, -1)).map((e) => e.name)).toEqual(["Move3", "Move2", "Move0", "Move1"]);
+  expect((await move(3, 1)).map((e) => e.name)).toEqual(["Move2", "Move3", "Move0", "Move1"]);
+  // The last pinned entry cannot move further down.
+  expect((await move(1, 1)).map((e) => e.name)).toEqual(["Move2", "Move3", "Move0", "Move1"]);
+  await expect(h.service.recent(undefined, undefined, { folder: h.root, offset: 1 })).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  // Opening a listed workbench updates it in place; a new folder goes first.
+  h.host.now = () => new Date("2026-10-12T00:00:00Z");
+  await h.service.open(folders[3] as string);
+  await h.service.close();
+  const entries = await h.service.recent();
+  expect(entries.map((e) => e.name)).toEqual(["Move2", "Move3", "Move0", "Move1"]);
+  expect(entries[1]?.lastOpened).toBe("2026-10-12T00:00:00.000Z");
+  await h.service.create(h.folder, "Fresh");
+  await h.service.close();
+  expect(await names()).toEqual(["Fresh", "Move2", "Move3", "Move0", "Move1"]);
+  // The order survives a settings reload.
+  const settings = new SettingsService({
+    files: h.host.files,
+    paths: h.paths,
+    uuid: randomUUID,
+    changed: () => {},
+  });
+  await settings.load();
+  expect((await new WorkbenchService({ ...h.host, settings }).recent()).map((e) => e.name)).toEqual([
+    "Fresh",
+    "Move2",
+    "Move3",
+    "Move0",
+    "Move1",
+  ]);
+});
+it("refuses a workbench move with DENIED when settings are read-only", async () => {
+  const h = await harness();
+  await h.service.create(h.folder, "Only");
+  await h.service.close();
+  const text = await readFile(h.paths.settings, "utf8");
+  const future = JSON.stringify({ ...JSON.parse(text), schemaVersion: 5 });
+  await writeFile(h.paths.settings, future);
+  const settings = new SettingsService({
+    files: h.host.files,
+    paths: h.paths,
+    uuid: randomUUID,
+    changed: () => {},
+  });
+  await settings.load();
+  const service = new WorkbenchService({ ...h.host, settings });
+  await expect(service.recent(undefined, undefined, { folder: h.folder, offset: 1 })).rejects.toMatchObject({
+    code: "DENIED",
+  });
+  expect(await readFile(h.paths.settings, "utf8")).toBe(future);
+});
 it("does not open or migrate root-level project metadata", async () => {
   const h = await harness();
   const content = "format: 1\nid: wb_legacy\nname: Root files\n";
@@ -302,6 +375,50 @@ it("Docs search verifies current source hash/status/kind/locator and rejects edi
     rows.save(doc);
     await writeFile(join(h.folder, ".vera/.veraignore"), `${path}\n`);
     expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+  } finally {
+    await h.service.close();
+  }
+});
+// REQ-FUNC-73136b97
+it("Docs search lists hits from a headingless docx with its #h= ref and drops them once the source changes", async () => {
+  const h = await harness();
+  try {
+    const opened = await h.service.create(h.folder, "Plain docs"),
+      path = "docs/notes.docx";
+    const bytes = await readFile(
+      new URL("../../../../../tests/fixtures/documents/office/plain.docx", import.meta.url),
+    );
+    await mkdir(join(h.folder, "docs"));
+    await writeFile(join(h.folder, path), bytes);
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    const result = await createDocumentProcessor(async () => {
+      throw Error("No PDF expected");
+    })({
+      root: h.folder,
+      path,
+      kind: "document",
+      sha256,
+      signal: new AbortController().signal,
+      assertWritable: () => {},
+    });
+    const rows = new DocumentsRepository(h.service.getDatabase());
+    const doc = rows.save({
+      path,
+      kind: "document",
+      sha256,
+      bytes: bytes.length,
+      mtime: new Date().toISOString(),
+      pages: null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
+    expect(await h.service.searchDocuments(opened.config.id, "SWD clock")).toMatchObject([
+      { ref: "docs/notes.docx#h=", path },
+    ]);
+    await writeFile(join(h.folder, path), bytes.subarray(0, bytes.length - 1));
+    expect(await h.service.searchDocuments(opened.config.id, "SWD clock")).toEqual([]);
   } finally {
     await h.service.close();
   }
@@ -766,7 +883,8 @@ it("retains all unique registered workbenches, derives missing folder and remove
   await h.service.open(join(h.root, "bench5"));
   await h.service.close();
   entries = await h.service.recent();
-  expect(entries[0]?.name).toBe("Board5");
+  // Opening keeps the entry's place (TASK-c99ca08c).
+  expect(entries[5]?.name).toBe("Board5");
   expect(entries).toHaveLength(11);
   await rm(join(h.root, "bench5"), { recursive: true });
   const settings = new SettingsService({
@@ -777,7 +895,7 @@ it("retains all unique registered workbenches, derives missing folder and remove
   });
   await settings.load();
   const service = new WorkbenchService({ ...h.host, settings });
-  expect((await service.recent())[0]).toMatchObject({ name: "Board5", missing: true });
+  expect((await service.recent())[5]).toMatchObject({ name: "Board5", missing: true });
   expect(await service.recent(join(h.root, "bench5"))).toHaveLength(10);
   expect(settings.get().settings.recentWorkbenches.every((e) => e.name !== "Board5")).toBe(true);
 });
@@ -849,4 +967,131 @@ it("rejects non-JSON/circular YAML extensions before runtime or save", async () 
     expect(await readFile(path, "utf8")).toBe(text);
     expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
   }
+});
+// REQ-FUNC-81ce68df
+it("inspects a chosen folder without writing: name, existing workbench, instructions and skills", async () => {
+  const h = await harness();
+  const plain = join(h.root, "esp32-s3-devkit");
+  await mkdir(plain);
+  await mkdir(join(h.root, "skills/flash-esp32"), { recursive: true });
+  await writeFile(
+    join(h.root, "skills/flash-esp32/SKILL.md"),
+    "---\nname: flash-esp32\ndescription: Flash ESP32 boards\n---\nBody",
+  );
+  const empty = await h.service.inspect(plain);
+  expect(empty).toEqual({
+    folder: resolve(plain),
+    name: "esp32-s3-devkit",
+    existing: false,
+    instructions: null,
+    skills: [{ name: "flash-esp32", source: "user", description: "Flash ESP32 boards", enabled: true }],
+  });
+  expect(await readdir(plain)).toEqual([]);
+  await mkdir(join(plain, ".vera/skills/probe"), { recursive: true });
+  await writeFile(join(plain, ".vera/WORKBENCH.md"), "kept notes");
+  await writeFile(join(plain, ".vera/skills/probe/SKILL.md"), "---\nname: probe\ndescription: Probe\n---\n");
+  const seeded = await h.service.inspect(plain);
+  expect(seeded.instructions).toBe("kept notes");
+  expect(seeded.skills.map((s) => [s.name, s.source])).toEqual([
+    ["flash-esp32", "user"],
+    ["probe", "workbench"],
+  ]);
+  expect((await readdir(join(plain, ".vera"))).sort()).toEqual(["WORKBENCH.md", "skills"]);
+  await h.service.create(h.folder, "Board");
+  await h.service.close();
+  expect((await h.service.inspect(h.folder)).existing).toBe(true);
+  await expect(h.service.inspect(join(h.root, "absent"))).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(h.service.inspect("relative")).rejects.toMatchObject({ code: "INVALID" });
+});
+// REQ-FUNC-3815bacc
+it("creates with an initial configuration and instructions, keeping an existing WORKBENCH.md", async () => {
+  const h = await harness();
+  try {
+    const created = await h.service.create(h.folder, "Board", {
+      config: {
+        description: "STM32G4 motor bench",
+        docs: { include: ["datasheets/**", "notes/**"], exclude: ["**/old/**"] },
+        tools: { disabled: ["web_search"] },
+        skills: { disabled: ["flash-esp32"] },
+        agent: { permission_mode: "read-only", model: "openai/gpt-5" },
+        embeddings: { model: "Xenova/bge-small-en-v1.5", chunkSize: 800, overlap: 100 },
+      },
+      instructions: "# Board\n\nDevice under test: STM32G474.\n",
+    });
+    const disk = parseConfig(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8"));
+    expect(disk).toEqual(created.config);
+    expect(disk).toMatchObject({
+      name: "Board",
+      description: "STM32G4 motor bench",
+      docs: { include: ["datasheets/**", "notes/**"], exclude: ["**/old/**"] },
+      tools: { disabled: ["web_search"] },
+      skills: { disabled: ["flash-esp32"] },
+      agent: { permission_mode: "read-only", model: "openai/gpt-5" },
+      embeddings: { chunkSize: 800, overlap: 100 },
+    });
+    expect(await readFile(join(h.folder, ".vera/WORKBENCH.md"), "utf8")).toBe(
+      "# Board\n\nDevice under test: STM32G474.\n",
+    );
+  } finally {
+    await h.service.close();
+  }
+  const other = await harness();
+  try {
+    await writeFile(join(other.folder, ".vera/WORKBENCH.md"), "existing notes");
+    await other.service.create(other.folder, "Other", { instructions: "replacement" });
+    expect(await readFile(join(other.folder, ".vera/WORKBENCH.md"), "utf8")).toBe("existing notes");
+  } finally {
+    await other.service.close();
+  }
+});
+// REQ-FUNC-38107da8
+it("rejects an invalid initial configuration with INVALID before writing workbench.yaml", async () => {
+  const h = await harness();
+  await expect(
+    h.service.create(h.folder, "Board", {
+      config: { embeddings: { model: "Xenova/bge-small-en-v1.5", chunkSize: 400, overlap: 400 } },
+    }),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(existsSync(join(h.folder, ".vera/workbench.yaml"))).toBe(false);
+  expect(existsSync(join(h.folder, ".vera/WORKBENCH.md"))).toBe(false);
+  for (const config of [{ name: "Other" }, { unknown: true }, { tools: { disabled: [""] } }])
+    await expect(
+      h.service.create(h.folder, "Board", { config: config as Record<string, unknown> }),
+    ).rejects.toMatchObject({ code: "INVALID" });
+  expect(await readdir(join(h.folder, ".vera"))).toEqual([]);
+});
+// REQ-FUNC-81ce68df
+it("inspect refuses redirected or non-ordinary management entries without writing", async () => {
+  const h = await harness();
+  await mkdir(join(h.folder, ".vera/WORKBENCH.md"));
+  await expect(h.service.inspect(h.folder)).rejects.toMatchObject({ code: "DENIED" });
+  expect((await readdir(join(h.folder, ".vera"))).sort()).toEqual(["WORKBENCH.md"]);
+  const other = join(h.root, "plain");
+  await mkdir(other);
+  await writeFile(join(other, ".vera"), "not a directory");
+  await expect(h.service.inspect(other)).rejects.toMatchObject({ code: "DENIED" });
+  expect(await readdir(other)).toEqual([".vera"]);
+});
+// REQ-FUNC-4ee03ca8 REQ-FUNC-ad5868a2 REQ-FUNC-03b73d56
+it("documentation scan, preview and relative folders apply the folder's ignore rules and errors", async () => {
+  const h = await harness();
+  await mkdir(join(h.folder, "datasheets"), { recursive: true });
+  await mkdir(join(h.folder, "drafts"), { recursive: true });
+  await writeFile(join(h.folder, "datasheets/a.pdf"), "%PDF");
+  await writeFile(join(h.folder, "drafts/b.pdf"), "%PDF");
+  await writeFile(join(h.folder, ".vera/.veraignore"), "drafts/\n");
+  expect((await h.service.scanDocuments(h.folder)).folders.map((f) => f.path)).toEqual(["datasheets"]);
+  expect(
+    (await h.service.previewDocuments(h.folder, { include: ["datasheets/**", "drafts/**"], exclude: [] }))
+      .files,
+  ).toBe(1);
+  expect(await h.service.relativeFolder(h.folder, join(h.folder, "datasheets"))).toBe("datasheets");
+  await expect(h.service.relativeFolder(h.folder, join(h.folder, "drafts"))).rejects.toMatchObject({
+    code: "DENIED",
+  });
+  await expect(h.service.relativeFolder(h.folder, "datasheets")).rejects.toMatchObject({ code: "INVALID" });
+  await expect(h.service.scanDocuments(join(h.root, "absent"))).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(h.service.previewDocuments("relative", { include: [], exclude: [] })).rejects.toMatchObject({
+    code: "INVALID",
+  });
 });

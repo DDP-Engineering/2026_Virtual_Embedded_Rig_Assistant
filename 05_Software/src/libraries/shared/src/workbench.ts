@@ -17,6 +17,12 @@ export const workbenchEmbeddingsSchema = z
     path: ["overlap"],
   });
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
+/** Defaults for the agent's search_docs when it passes no k or mode of its own. */
+export const workbenchRetrievalSchema = z.looseObject({
+  results: z.number().int().min(1).max(20).default(8),
+  mode: z.enum(["hybrid", "keyword", "semantic"]).default("hybrid"),
+});
+export type WorkbenchRetrieval = Pick<z.infer<typeof workbenchRetrievalSchema>, "results" | "mode">;
 const agent = z.looseObject({
   permission_mode: permissionModeSchema.default("ask"),
   model: z
@@ -36,6 +42,7 @@ export const workbenchSchema = z.looseObject({
     overlap: 200,
   }),
   docs: docs.default({ include: ["docs/**"], exclude: [] }),
+  retrieval: workbenchRetrievalSchema.default({ results: 8, mode: "hybrid" }),
   skills: disabled.default({ disabled: [] }),
   tools: disabled.default({ disabled: [] }),
   agent: agent.default({ permission_mode: "ask", model: null }),
@@ -51,6 +58,12 @@ export const workbenchPatchSchema = z.strictObject({
   description: z.string().optional(),
   docs: z
     .strictObject({ include: z.array(z.string()).optional(), exclude: z.array(z.string()).optional() })
+    .optional(),
+  retrieval: z
+    .strictObject({
+      results: workbenchRetrievalSchema.shape.results.removeDefault(),
+      mode: workbenchRetrievalSchema.shape.mode.removeDefault(),
+    })
     .optional(),
   skills: z.strictObject({ disabled: z.array(z.string().min(1)).optional() }).optional(),
   tools: z.strictObject({ disabled: z.array(z.string().min(1)).optional() }).optional(),
@@ -77,6 +90,48 @@ export const workbenchSnapshotSchema = configSnapshotSchema.extend({
 });
 export type WorkbenchSnapshot = z.infer<typeof workbenchSnapshotSchema>;
 export const pinnedSchema = z.strictObject({ content: z.string(), oversized: z.boolean() });
+const count = z.number().int().nonnegative();
+export const documentScanKindSchema = z.enum(["pdf", "office", "markdown", "html", "text"]);
+export type DocumentScanKind = z.infer<typeof documentScanKindSchema>;
+/** Documentation folders found in a chosen folder: first-level names and counts only, never file names. */
+export const documentScanSchema = z.strictObject({
+  folders: z
+    .array(
+      z.strictObject({
+        path: z.string().min(1),
+        bytes: count,
+        kinds: z.partialRecord(documentScanKindSchema, count),
+      }),
+    )
+    .max(10000),
+  truncated: z.boolean(),
+});
+export type DocumentScan = z.infer<typeof documentScanSchema>;
+export const documentPreviewSchema = z.strictObject({
+  files: count,
+  bytes: count,
+  officePending: count,
+  truncated: z.boolean(),
+});
+export type DocumentPreview = z.infer<typeof documentPreviewSchema>;
+const globSpecial = /[[\](){}*?|]/g;
+/**
+ * The include pattern selecting everything below a literal workbench-relative folder. Glob
+ * metacharacters are bracket-escaped because backslashes are path separators here, and a leading
+ * "!" (an exclusion in include lists) is written as the extglob "@(!)".
+ */
+export function documentFolderPattern(folder: string): string {
+  const escaped = folder.replace(globSpecial, (c) => `[${c}]`);
+  return `${escaped.startsWith("!") ? `@(!)${escaped.slice(1)}` : escaped}/**`;
+}
+/** The literal folder a pattern from documentFolderPattern selects, or undefined for any other glob. */
+export function documentPatternFolder(pattern: string): string | undefined {
+  if (!pattern.endsWith("/**")) return undefined;
+  let body = pattern.slice(0, -3);
+  if (body.startsWith("@(!)")) body = `!${body.slice(4)}`;
+  const folder = body.replace(/\[([[\](){}*?|])\]/g, "$1");
+  return folder && documentFolderPattern(folder) === pattern ? folder : undefined;
+}
 export function configWarnings(
   config: WorkbenchConfig,
   catalogs: { skills: readonly string[]; tools: readonly string[] } = { skills: [], tools: [] },
@@ -89,6 +144,7 @@ export function configWarnings(
     tools: disabled.shape,
     agent: agent.shape,
     embeddings: { model: true, chunkSize: true, overlap: true },
+    retrieval: workbenchRetrievalSchema.shape,
   };
   for (const [prefix, shape] of Object.entries(shapes)) {
     const value = prefix ? config[prefix] : config;
@@ -109,6 +165,7 @@ export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch):
     ...current,
     ...clean,
     docs: { ...current.docs, ...clean.docs },
+    retrieval: { ...current.retrieval, ...clean.retrieval },
     skills: { ...current.skills, ...clean.skills },
     tools: { ...current.tools, ...clean.tools },
     agent: { ...current.agent, ...clean.agent },

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-3815bacc"
+
+title = "Create a workbench with initial configuration and instructions"
+
+status = "active"
+
+requirement = "When creating a workbench with an initial configuration and instructions, VERA shall write workbench.yaml as the defaults merged with that configuration and shall write .vera/WORKBENCH.md with the given instructions unless that file already exists, in which case it shall keep the existing file."
+
+verification = "Core service test: create with tools/skills disabled, docs, agent and embeddings values plus instructions; parse workbench.yaml and read WORKBENCH.md; with a pre-existing WORKBENCH.md assert its bytes are unchanged; create without them keeps defaults and the template."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

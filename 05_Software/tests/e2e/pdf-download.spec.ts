@@ -138,19 +138,17 @@ test("native approved PDF download opens locally, persists offline and rejects f
     expect(requests.every((request) => !request.authorization && !request.cookie)).toBe(true);
     await open.click();
     await expect(page.locator(".pdf-viewer[data-ready=true]")).toBeVisible();
-    await expect(page.locator("dialog[open]")).not.toContainText("Cited pages");
-    const centered = await page.locator("dialog[open]").boundingBox();
-    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
-    expect(centered).not.toBeNull();
-    if (centered) {
-      expect(Math.abs(centered.x + centered.width / 2 - viewport.width / 2)).toBeLessThan(3);
-      expect(Math.abs(centered.y + centered.height / 2 - viewport.height / 2)).toBeLessThan(3);
-    }
+    // Downloads open in the right panel Source tab beside the conversation, like every source.
+    const source = page.locator("[data-source-current]");
+    await expect(source).not.toContainText("Cited pages");
+    await expect(page.locator('#right-panel[data-tab="source"]')).toBeVisible();
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
     await expect(page.locator(".pdf-viewer")).toHaveAttribute("data-page", "1");
     await page.getByRole("button", { name: "Next page", exact: true }).click();
     await expect(page.locator(".pdf-viewer[data-ready=true]")).toHaveAttribute("data-page", "2");
     if (process.env.VERA_PDF_SCREENSHOT) await page.screenshot({ path: process.env.VERA_PDF_SCREENSHOT });
-    await page.locator("dialog[open]").press("Escape");
+    await source.press("Escape");
+    await expect(source).toHaveCount(0);
     await expect(open).toBeFocused();
     if (process.env.VERA_PDF_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_PDF_SCREENSHOT.replace(".png", "-card.png") });

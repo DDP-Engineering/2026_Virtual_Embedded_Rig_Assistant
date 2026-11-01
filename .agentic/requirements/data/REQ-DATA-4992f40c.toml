@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-4992f40c"
+
+title = "Store retrieval defaults in workbench.yaml"
+
+status = "active"
+
+requirement = "The workbench configuration shall hold a retrieval section with results, a whole number from 1 to 20 defaulting to 8, and mode, one of hybrid, keyword or semantic defaulting to hybrid; and if a stored or patched value is outside these, then VERA shall reject it as invalid configuration."
+
+verification = "Shared tests: defaults parse to {results: 8, mode: hybrid}; a patch sets {results: 12, mode: keyword} and merges; results 0 or 21 and mode 'fuzzy' fail; an unknown retrieval key is reported as UNKNOWN_KEY."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/apps/desktop/src/main/events.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

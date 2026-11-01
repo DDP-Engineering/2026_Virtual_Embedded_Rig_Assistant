@@ -13,7 +13,8 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
   test.setTimeout(90000);
   const root = await mkdtemp(join(tmpdir(), "vera-citations-native-"));
   const folder = join(root, "bench");
-  await mkdir(folder);
+  // Workbench creation leaves the user's folders alone; the fixture owns its docs/ folder.
+  await mkdir(join(folder, "docs"), { recursive: true });
   const executable = join(
     desktop,
     "../../../node_modules/electron/dist",
@@ -71,10 +72,23 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     );
     await writeFile(join(folder, "docs/a.md"), "# Power\n3.3 V\n");
     await writeFile(join(folder, "docs/a.html"), "<h1>Reset</h1><p>Assert.</p>");
-    await writeFile(join(folder, "docs/a.log"), "first\nsecond\n");
+    await writeFile(join(folder, "docs/a.txt"), "first\nsecond\n");
     await page.evaluate(async () => {
       await (window as unknown as { vera: VeraBridge }).vera.invoke("docs.reindex", {});
     });
+    // read_doc answers from the index, so the scripted turn must wait for indexing to finish.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(async () => {
+            const vera = (window as unknown as { vera: VeraBridge }).vera;
+            const { config } = await vera.invoke("workbench.config.get", {});
+            const { documents } = await vera.invoke("docs.list", { workbenchId: config.id });
+            return documents.filter((d) => d.status === "indexed").length;
+          }),
+        { timeout: 30000 },
+      )
+      .toBe(4);
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     expect(id).toBeTruthy();
     await page.evaluate(async (id) => {
@@ -89,13 +103,27 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await expect(page.locator('[data-citation="invalid"]')).toHaveCount(7);
     await expect(page.getByRole("textbox", { name: "Message", exact: true })).toBeEnabled();
     const kinds = ["page", "page-range", "heading", "heading", "lines", "artifact"];
-    const labels = ["a.pdf p1", "a.pdf p1–2", "a.md #power", "a.html #reset", "a.log L1–2", "summary.md"];
+    const labels = ["a.pdf p1", "a.pdf p1–2", "a.md #power", "a.html #reset", "a.txt L1–2", "summary.md"];
     for (let n = 0; n < kinds.length; n++) {
       const chip = page.locator('[data-citation="valid"]').nth(n);
       await expect(chip).toHaveAttribute("data-citation-kind", kinds[n]!);
       await expect(chip).toHaveText(labels[n]!);
       expect(await chip.getAttribute("title")).toBe(await chip.getAttribute("aria-label"));
       await expect(chip.locator('svg[aria-hidden="true"]')).toHaveCount(1);
+      // The icon shares the label's line instead of taking one of its own.
+      const line = await chip.evaluate((button) => {
+        const icon = (button.querySelector("svg") as SVGElement).getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(button.lastChild as Node);
+        const text = range.getBoundingClientRect();
+        return {
+          overlaps: icon.bottom > text.top && icon.top < text.bottom,
+          height: icon.height,
+          font: parseFloat(getComputedStyle(button).fontSize),
+        };
+      });
+      expect(line.overlaps, labels[n]).toBe(true);
+      expect(line.height).toBeLessThanOrEqual(line.font + 0.5);
     }
     const warning = page.locator('[data-citation="invalid"]').first();
     await expect(warning).toHaveAttribute("aria-disabled", "true");
@@ -108,7 +136,7 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await warning.focus();
     await page.keyboard.press("Enter");
     await expect(page.locator(".citation-note")).toHaveCount(0);
-    let dialog = page.locator(".document-dialog");
+    let dialog = page.locator("[data-source-current]");
     const openChip = async (n: number) => {
       await page.locator('[data-citation="valid"]').nth(n).focus();
       await page.keyboard.press("Enter");
@@ -127,6 +155,9 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     );
     await dialog.getByLabel("Zoom", { exact: true }).selectOption("1.5");
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
+    // REQ-UX-d64f086f: Ctrl+F inside the Source panel focuses the PDF search.
+    await page.keyboard.press("Control+f");
+    await expect(dialog.getByLabel("Find text", { exact: true })).toBeFocused();
     await dialog.getByLabel("Find text", { exact: true }).fill("page two");
     await dialog.getByLabel("Find text", { exact: true }).press("Enter");
     await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-page", "2");
@@ -158,15 +189,20 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await expect(dialog.locator(".document-body")).toContainText("Summary");
     await closeViewer();
     await page.locator('[data-toggle="right"]').click();
-    await page.getByRole("tab", { name: "Docs", exact: true }).click();
+    await page.getByRole("tab", { name: "Files", exact: true }).click();
     const docs = page.locator("#panel-docs");
+    // Docs shows the workbench as a folder tree (TASK-66b7d4aa).
+    await docs.locator('[role="treeitem"][data-tree-path="docs"]').click();
     await expect(docs.locator("[data-document]")).toHaveCount(4);
     await docs.getByRole("button", { name: "Reindex", exact: true }).click();
     await expect(docs.getByRole("button", { name: "Reindex", exact: true })).toBeEnabled();
     await expect(docs.getByRole("status")).toContainText("0 pending");
-    await docs.getByLabel("Search documents", { exact: true }).fill("power");
+    await docs.locator("[data-docs-search]").fill("power");
     await expect(docs.locator(".documents-list li")).not.toHaveCount(0);
-    await docs.getByRole("button", { name: "Open", exact: true }).first().click();
+    await docs
+      .getByRole("button", { name: /^Open / })
+      .first()
+      .click();
     await expect(dialog).toBeVisible();
     await closeViewer();
     await page.locator('[data-toggle="right"]').click();
@@ -183,8 +219,11 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await app.close();
     app = await launch();
     page = await app.firstWindow();
-    dialog = page.locator(".document-dialog");
-    await page.locator('[data-action="open-recent"]').click();
+    dialog = page.locator("[data-source-current]");
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
+    // Reopening shows the overview; the engineer opens the restored session from the sidebar.
+    await expect(page.locator(`[data-session="${id}"][aria-current="page"]`)).toBeVisible();
+    await page.locator(`[data-session="${id}"]`).click();
     await expect(page.locator('[data-citation="valid"]')).toHaveCount(6);
     await expect(page.locator('[data-citation="invalid"]')).toHaveCount(7);
     await expect(page.locator("[data-transcript]")).toHaveText(transcript!);

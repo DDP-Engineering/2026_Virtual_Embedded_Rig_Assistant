@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-c1a1c758"
+
+title = "Index only document files"
+
+status = "active"
+
+requirement = "When document ingest reconciles a workbench, VERA shall select only ordinary files whose extension is a document type (.pdf .docx .odt .pptx .odp .xlsx .ods .md .markdown .html .htm .txt .csv .tsv, any letter case) and shall neither read, hash nor record files with any other extension."
+
+verification = "Core ingest test with a folder holding board.pdf, notes.md, spec.docx, readme.txt, pinout.csv, registers.tsv, main.c, build.log, data.json, old.doc and tool.exe all matched by '**/*': only the seven document files get rows and events; the other files are never opened (an injected read seam records no access) and have no rows; uppercase BOARD.PDF is indexed."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::selects, reads and records only document files, in any letter case", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/workbench/documents-scan.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

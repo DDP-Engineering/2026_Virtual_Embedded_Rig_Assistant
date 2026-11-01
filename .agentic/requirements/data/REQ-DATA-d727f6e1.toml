@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-d727f6e1"
+
+title = "Drop indexed rows of files that are no longer document types"
+
+status = "active"
+
+requirement = "When reconciliation finds a stored document row whose path is not a document type, VERA shall remove that row with its chunks, embeddings and extraction, and emit an index.document removal event for its path."
+
+verification = "Core ingest test seeds rows for main.c (indexed with chunks and embeddings) and board.pdf, then reconciles: main.c's row, chunks and embeddings are gone and a removal event names it; board.pdf keeps its row and cache without being reprocessed."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::drops a stored row of a non-document file on the next reconciliation and keeps document rows"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

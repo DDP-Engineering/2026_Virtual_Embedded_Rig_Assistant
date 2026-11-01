@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-4761ac1e"
+
+title = "Cancel indexer work when a workbench closes or switches"
+
+status = "active"
+
+requirement = "When the active workbench closes or switches, VERA shall cancel that workbench's pending indexer requests, after which the indexer stops their work on a best-effort basis (a content-addressed extraction cache write already under way may complete), and shall ask the indexer to release the workbench's embedding resources without delaying the close."
+
+verification = "Main tests: an aborted scripted process request sends a cancel for its id, rejects at once and ignores a late answer; release posts a release for the root and resolves without an answer and starts no indexer when none runs; the handler's cancelled request fails its assertWritable; native e2e creates and immediately closes a workbench and the New Workbench flow continues without delay."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/indexer-host.test.ts::cancels an aborted call, ignores its late result and releases a workbench's embeddings", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts::does not start an indexer only to release a workbench", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts::aborts a cancelled request and answers it as aborted", "05_Software/tests/e2e/workbench.spec.ts::New Workbench creates with the configured draft and offers Open for an existing workbench"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

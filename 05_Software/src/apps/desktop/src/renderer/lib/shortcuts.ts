@@ -65,3 +65,16 @@ export function shortcutCommand(
 export function displayBinding(binding: string): string {
   return binding.replace("Mod", "Ctrl");
 }
+/** Alt+Shift+ArrowUp/ArrowDown on a sidebar row moves it one place (TASK-c99ca08c). */
+export function reorderOffset(event: {
+  key: string;
+  altKey: boolean;
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  nativeEvent: KeyboardEvent;
+}): -1 | 1 | undefined {
+  if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing)
+    return;
+  return event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : undefined;
+}

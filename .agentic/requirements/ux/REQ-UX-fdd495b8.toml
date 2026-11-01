@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-fdd495b8"
+
+title = "Navigate the Docs tree with the keyboard"
+
+status = "active"
+
+requirement = "While focus is in the Docs tree, the desktop app shall move between visible items with ArrowUp, ArrowDown, Home and End, expand or enter a folder with ArrowRight, collapse it or go to its parent with ArrowLeft, and open a file with Enter, exposing the tree with ARIA tree roles and a single tab stop."
+
+verification = "Renderer test: role tree with treeitems and aria-expanded/aria-level; arrow keys move focus and expand/collapse as specified, Enter opens a file; only one treeitem has tabindex 0."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::navigates the tree with ARIA roles, one tab stop and arrow keys"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

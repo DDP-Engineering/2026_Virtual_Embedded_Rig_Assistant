@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-64605f7e"
+
+title = "Preselect detected documentation folders on creation"
+
+status = "active"
+
+requirement = "When a folder that is not already a workbench is chosen on the New Workbench page, the desktop app shall set the draft include patterns to the escaped patterns of the detected documentation subfolders, and shall keep the default include patterns when none are detected or the scan fails."
+
+verification = "Renderer test: choosing a mock folder with detected datasheets and notes sets include to ['datasheets/**', 'notes/**']; a folder without detections keeps ['docs/**']; native e2e asserts the created workbench.yaml docs.include."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

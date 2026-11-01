@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-2d9cdf43"
+
+title = "Remember expanded folders and collapse them all"
+
+status = "active"
+
+requirement = "While a workbench is open, the desktop app shall restore the Docs tree's expanded folders saved for that workbench and shall collapse all folders when the user chooses Collapse all."
+
+verification = "Renderer test: expanded folders survive a remount and differ per workbench; Collapse all closes every folder and the saved state is cleared."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::remembers expanded folders per workbench and collapses them all", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::drops saved folders that are gone and says when the top listing is cut off"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

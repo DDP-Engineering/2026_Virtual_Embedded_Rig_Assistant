@@ -342,7 +342,7 @@ test("browser approval keys and mode picker remain accessible at minimum size", 
     await page.setViewportSize({ width: 1024, height: 640 });
     await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await page.locator('[data-action="new-session"]').click();
     const input = page.getByRole("textbox", { name: "Message", exact: true });
     await expect(input).toBeEnabled();

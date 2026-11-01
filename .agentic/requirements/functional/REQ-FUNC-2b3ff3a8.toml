@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-2b3ff3a8"
+
+title = "Keep a workbench's place when it is opened"
+
+status = "active"
+
+requirement = "When a listed workbench is opened, VERA shall update its name, id and last-opened time in place without changing its position, and shall insert a workbench that is not yet listed at the front."
+
+verification = "Core workbench service test: opening a listed workbench that is not first keeps its position with a newer lastOpened; opening a new folder puts it first; native e2e: opening other workbenches leaves the arranged order unchanged across a restart."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts::moves a workbench only within its pinned group and keeps its place when opened", "05_Software/src/libraries/core/src/workbench/service.test.ts::retains all unique registered workbenches, derives missing folder and removes entry across restarts", "05_Software/tests/e2e/sidebar-order.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

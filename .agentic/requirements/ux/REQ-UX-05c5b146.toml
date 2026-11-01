@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-05c5b146"
+
+title = "Warn about a large document selection in Docs"
+
+status = "active"
+
+requirement = "While the selected documents of the active workbench number more than 2,000 files or total more than 2 GiB, the Docs panel shall show a volume warning stating the file count and total size, and indexing shall continue."
+
+verification = "Renderer test with the mock API: 2,001 files or 2 GiB + 1 byte shows the warning with the localized count and size; exactly 2,000 files and 2 GiB shows none; documents keep being listed and indexing progress continues; locales en/ro/de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/volume-warning.tsx", "05_Software/src/apps/desktop/src/renderer/lib/bytes.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::warns about a large selection in Docs and in the Documents section, never at the limits"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

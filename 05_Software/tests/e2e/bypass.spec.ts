@@ -152,6 +152,7 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
     await page.locator('[data-action="close-bypass-warning"]').click();
     await expect(page.locator(".workbench-editor [data-permission-picker]")).toBeFocused();
     await page.locator("[data-project-save]").click();
+    await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await page.locator('[data-action="new-session"]').click();
     let picker = page.locator(".composer [data-permission-picker]");
     await expect(picker).toHaveValue("bypass");
@@ -191,7 +192,7 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
     await installNetworkGuard(app);
     page = await app.firstWindow();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await page.locator(`[data-session="${id}"]`).click();
     picker = page.locator(".composer [data-permission-picker]");
     await expect(picker).toHaveValue("bypass");

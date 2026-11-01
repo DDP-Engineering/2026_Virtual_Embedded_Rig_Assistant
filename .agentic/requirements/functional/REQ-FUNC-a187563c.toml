@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a187563c"
+
+title = "Report the volume of the selected documents"
+
+status = "active"
+
+requirement = "When reconciliation completes its selection, VERA shall make the number of selected document files and their total size in bytes available to the active workbench's renderer, keeping the last reported values until the next selection."
+
+verification = "Core ingest test: a selection of three documents totalling known bytes reports files 3 and that byte total; after one is deleted and the next reconciliation runs, it reports files 2 and the reduced total; shared contract test validates the payload; the renderer receives it through the mock API."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::reports the number and bytes of the selected documents after each selection", "05_Software/tests/e2e/ingest.spec.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::accepts document volumes as non-negative safe integers on docs.volume and index.volume"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -48,6 +48,40 @@ it("scrubs textual document content while retaining exact PDF bytes and locator 
     ref: "docs/a.pdf#p=1",
   });
 });
+// REQ-UX-64738341
+it("scrubs office slides and sections while keeping slide bounds and the document kind", () => {
+  const scrub = (v: string) => v.replaceAll("secret", "[redacted]");
+  const slides = publicViewer(
+    {
+      kind: "presentation",
+      path: "docs/a.pptx",
+      ref: "docs/a.pptx#p=2",
+      snippet: "",
+      slides: ["one", "secret two"],
+      page: 2,
+      pageEnd: 2,
+    },
+    scrub,
+  );
+  expect(viewerContentSchema.parse(slides)).toMatchObject({ slides: ["one", "[redacted] two"], page: 2 });
+  for (const kind of ["document", "spreadsheet"] as const) {
+    const sections = publicViewer(
+      {
+        kind,
+        path: "docs/a.docx",
+        ref: null,
+        snippet: "",
+        anchor: null,
+        sections: [{ slug: "power", path: ["Power"], text: "secret rail", start: 1, end: 1 }],
+      },
+      scrub,
+    );
+    expect(viewerContentSchema.parse(sections)).toMatchObject({
+      kind,
+      sections: [{ text: "[redacted] rail" }],
+    });
+  }
+});
 it("redacts Docs paths/ref/snippets and retains protocol metadata and snippet bounds", () => {
   const scrub = (value: string) => value.replaceAll("secret", "[redacted]");
   const doc = documentSchema.parse({

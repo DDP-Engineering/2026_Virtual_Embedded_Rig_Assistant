@@ -63,17 +63,42 @@ type CompactionView = ContextView & {
   requestViewTokens: number;
 };
 
+/**
+ * Summary passes for one request. A running session compacts a little each turn; a restarted one
+ * meets its whole history at once (the summary is not durable), and one summary request holds only
+ * about a budget of history. Five passes cover a history of roughly five budgets; the bound keeps a
+ * very long session from sending a summary request per exchange.
+ */
+const MAX_PASSES = 5;
+
 export class ContextCompactor {
   private cached:
     | { covered: number; fingerprint: string; note: Message; refs: string[]; retained: Message[] }
     | undefined;
 
+  /**
+   * The request view, compacted when needed: each pass summarizes the previous summary with the
+   * next completed exchanges that fit, until the view fits or five passes have run.
+   */
   async prepare(
     input: ContextInput,
     capabilities: ModelCapabilities,
     policy: ContextPolicy,
     summarize: SummarizeHistory,
     currentStart = input.messages.findLastIndex((message) => message.role === "user"),
+  ): Promise<CompactionView> {
+    let view = await this.pass(input, capabilities, policy, summarize, currentStart);
+    for (let pass = 1; pass < MAX_PASSES && view.compactionStatus === "completed" && !view.fits; pass++)
+      view = await this.pass(input, capabilities, policy, summarize, currentStart);
+    return view;
+  }
+
+  private async pass(
+    input: ContextInput,
+    capabilities: ModelCapabilities,
+    policy: ContextPolicy,
+    summarize: SummarizeHistory,
+    currentStart: number,
   ): Promise<CompactionView> {
     let cached = this.cached;
     if (cached && fingerprint(input.messages.slice(0, cached.covered)) !== cached.fingerprint) {
@@ -122,7 +147,8 @@ export class ContextCompactor {
     if (!candidate) return finish(base, "unavailable");
     let response: AssistantMessage | undefined;
     try {
-      // One attempt, including a provider failure or invalid response. Never recursively compact.
+      // One attempt per pass, including a provider failure or invalid response; `prepare` bounds
+      // the passes and never compacts a summary request itself.
       response = await summarize(candidate.input, candidate.view);
     } catch {
       return finish(base, "failed");

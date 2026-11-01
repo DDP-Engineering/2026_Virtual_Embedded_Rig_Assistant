@@ -43,7 +43,8 @@ function DownloadItem({ download }: { download: WebDownload }) {
           if (isPdf) open?.({ downloadId: download.downloadId });
           else {
             setError(undefined);
-            void api.invoke("app.revealPath", { path: download.path }).catch(setError);
+            // `.vera/` paths are refused by app.revealPath; main locates the managed file by id.
+            void api.invoke("downloads.reveal", { downloadId: download.downloadId }).catch(setError);
           }
         }}
       >

@@ -71,6 +71,9 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
     const fixtures = join(desktop, "../../../tests/fixtures/documents");
     await writeFile(join(folder, "docs/pages.pdf"), await readFile(join(fixtures, "pages.pdf")));
     await writeFile(join(folder, "docs/scanned.pdf"), await readFile(join(fixtures, "scanned.pdf")));
+    // Code and logs beside the documents are not indexed (TASK-e5310cdb).
+    await writeFile(join(folder, "docs/firmware.c"), "int main(void) { return 0; }");
+    await writeFile(join(folder, "docs/build.log"), "build ok");
     await page.evaluate(async () => {
       await (window as unknown as Window & { vera: VeraBridge }).vera.invoke("docs.reindex", {});
     });
@@ -93,6 +96,17 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
           e.type === "index.document" && e.path === "docs/scanned.pdf" && e.document?.status === "needs_ocr",
       ),
     ).toBe(true);
+    expect(
+      pdfEvents.some(
+        (e) => e.type === "index.document" && (e.path === "docs/firmware.c" || e.path === "docs/build.log"),
+      ),
+    ).toBe(false);
+    const volume = await page.evaluate(async () => {
+      const api = (window as unknown as Window & { vera: VeraBridge }).vera;
+      const { config } = await api.invoke("workbench.config.get", {});
+      return (await api.invoke("docs.volume", { workbenchId: config.id })).volume;
+    });
+    expect(volume?.files).toBe(3);
     await page.evaluate(async () => {
       await (window as unknown as Window & { vera: VeraBridge }).vera.invoke("workbench.close", {});
     });

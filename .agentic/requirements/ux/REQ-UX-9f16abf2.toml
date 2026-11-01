@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-9f16abf2"
+
+title = "Filter the Docs tree from the search box"
+
+status = "active"
+
+requirement = "While the Docs search box has text, the desktop app shall show the files whose names match in the tree with their folders expanded and say when more than the shown matches exist."
+
+verification = "Renderer test: typing 'rm0440' in the Docs search box shows the matching manual under its expanded folders and hides unrelated entries; a scripted result with the more-matches flag shows the note; clearing the box restores the previous tree and expansion; the Docs tab has a single search input."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::filters the whole workbench by name, expands matching folders and restores the tree afterwards", "05_Software/tests/e2e/docs-tree.spec.ts", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

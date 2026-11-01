@@ -91,7 +91,7 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `VITE_API=mock npm run dev:renderer` | Full foundation UI using in-memory settings, metadata and app events |
 | `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `src/apps/desktop/out/` |
 | `npm run prepare:model` | Fetch and verify immutable, SHA256-pinned embedding assets; `-- --offline` verifies cached files only |
-| `npm run package` / `npm run package:test` | Build native x64 NSIS + portable ZIP (Windows) or AppImage + deb (Linux), release / labelled test identity, pinned assets and SHA256/budget report |
+| `npm run package` / `npm run package:test` | Build native x64 NSIS + portable ZIP (Windows) or AppImage + deb (Linux), release / labelled test identity, pinned assets and SHA256/size report |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 | `npm run build:cli` | Bundle the headless `vera` bin and isolated grep worker |
 | `npm run vera -- run …` | Build the headless CLI and execute one durable session turn |
@@ -167,8 +167,7 @@ Generated artifacts and `package-report.json` reside in `release_tmp/{test,relea
 selected validated deliverables belong in `../07_Delivery/`.
 The schema2 report includes each artifact's SHA256/bytes, source/config hashes, per-target ASAR and
 executable hashes, prepack outcomes, unpacked/native/model contributions and largest files.
-The NSIS per-user installer fails above250000000bytes after persisting its FAIL report; ZIP size is
-measured. ZIP alone ships `vera.portable`. Native libraries are unpacked; models are real
+Installer and ZIP sizes are measured and reported; there is no size budget (ADR-0017). ZIP alone ships `vera.portable`. Native libraries are unpacked; models are real
 `extraResources` files. Local pdfjs CMaps/standard fonts/WASM ship with the renderer.
 
 Windows also ships five app-local Microsoft VC++14.44.35211.0 DLLs pinned by
@@ -179,8 +178,8 @@ pins. Preparation is build-time only. Generated DLL caches are ignored by Git.
 
 `CSC_LINK`/`WIN_CSC_LINK` and corresponding passwords enable required Authenticode signing;
 certificate-store selectors `VERA_CERTIFICATE_SHA1` or `VERA_CERTIFICATE_SUBJECT` are also supported.
-Requested signing must verify successfully. Without credentials, unsigned builds are permitted and
-About displays localized unsigned identity. Instrumented distributions use VERA Test, a separate
+Requested signing must verify successfully. Without credentials, unsigned builds are permitted; the
+signing state is computed in `app.info` but About does not display it. Instrumented distributions use VERA Test, a separate
 appId/executable/package name and labelled filenames; release excludes all test hooks.
 [Native packaging](../.agentic/knowledge/native-packaging.md) documents the build pipeline. Actual
 clean/offline Windows and VC++ self-containment on that environment remain pending before final
@@ -300,7 +299,7 @@ Use `--provider openai` for the stored OpenAI configuration; omit `--data` to us
 
 The session workspace supports keyboard session CRUD, Enter/Shift+Enter composer, @ path completion, model catalogs, Stop, Markdown/code, tool disclosures, citation chips and usage/context limits. Browser `?mock=chat` adds empty, streaming, tool/citation, invalid citation, provider error and context-limit sessions. Chat component tests live in `src/apps/desktop/src/renderer/components/session/workspace.test.ts`; native Stop/restart/reload/grep acceptance in `tests/e2e/chat-ui.spec.ts`.
 
-The composer permission picker sets the current session to read-only, ask or auto-edit and stays available during an active turn. Ask and protected auto-edit changes show inline cards with the prepared patch, byte count, Approve/Deny and Approve-and-switch actions. Focus the card for A/D. Stop or selecting read-only aborts waiting changes; mismatched/stale decisions conflict. New sessions inherit the workbench mode. Known credential-bearing patches are refused before approval persistence and require a human edit. Approval cards persist across reload/restart with their final decision; the sidebar marks waiting sessions. Focused approval tests: core sessions/approvals.test.ts, workspace.test.ts, CLI prompt/process tests and tests/e2e/approvals.spec.ts.
+The composer permission picker sets the current session to read-only, ask, auto-edit or bypass (full file access with automatic approvals, after a warning) and stays available during an active turn. Ask and protected auto-edit changes show inline cards with the prepared patch, byte count, Approve/Deny and Approve-and-switch actions. Focus the card for A/D. Stop or selecting read-only aborts waiting changes; mismatched/stale decisions conflict. New sessions inherit the workbench mode. Known credential-bearing patches are refused before approval persistence and require a human edit. Approval cards persist across reload/restart with their final decision; the sidebar marks waiting sessions. Focused approval tests: core sessions/approvals.test.ts, workspace.test.ts, CLI prompt/process tests and tests/e2e/approvals.spec.ts.
 
 The repository npm configuration keeps CLI stdout as event-only JSONL by suppressing run-script banners. Replay records decode JSON escapes and scrub registered credentials before temporary staging and durable messages.
 

@@ -16,6 +16,7 @@ import {
   type ViewerContent,
   veraError,
   veraErrorSchema,
+  type WorkbenchRetrieval,
 } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
@@ -60,6 +61,8 @@ export interface SessionHost {
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
   embeddings?: EmbeddingPort;
+  /** Workbench defaults for search_docs; read on every search so saved settings apply at once. */
+  retrieval?: WorkbenchRetrieval | undefined;
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   web?: WebProvider;
@@ -110,7 +113,7 @@ export class SessionService {
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
     this.artifacts = new ArtifactStore(host.root, host.db);
-    this.knowledge = new DocumentKnowledge(host.root, host.db, host.embeddings);
+    this.knowledge = new DocumentKnowledge(host.root, host.db, host.embeddings, () => host.retrieval);
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
     this.approvals = new ApprovalGate({
@@ -483,6 +486,10 @@ export class SessionService {
   openDownload(downloadId: string) {
     if (!this.host.downloads) throw veraError("NOT_FOUND");
     return this.host.downloads.open(downloadId);
+  }
+  locateDownload(downloadId: string) {
+    if (!this.host.downloads) throw veraError("NOT_FOUND");
+    return this.host.downloads.locate(downloadId);
   }
   async openArtifact(id: string) {
     return this.verifiedArtifact(id).artifact;

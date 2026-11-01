@@ -51,13 +51,23 @@ interface Slot {
   tail: Promise<unknown>;
   closed: boolean;
   epoch?: string | undefined;
+  /** Workers detached from this slot that are still finishing a native call. */
+  retiring: Set<Promise<void>>;
 }
 
+/** The stored model identity of a local embedding model: id, revision and a hash of its files. */
+export function embeddingModelId(model: EmbeddingModel): string {
+  return `${model.modelId}@${model.revision}:${createHash("sha256")
+    .update(JSON.stringify({ dtype: model.dtype, embedding: model.embedding, files: model.files }))
+    .digest("hex")}`;
+}
 /** Host-selected local resources; serial persistent worker/cache per workbench, including queue deadlines. */
 export class EmbeddingHost implements EmbeddingPort {
   readonly modelId: string;
   readonly model: EmbeddingModel;
   private readonly slots = new Map<string, Slot>();
+  /** Workers inside a request, from postMessage until their reply or exit. */
+  private readonly busy = new Set<Worker>();
   constructor(
     private readonly entry: URL,
     private readonly models: string,
@@ -75,17 +85,13 @@ export class EmbeddingHost implements EmbeddingPort {
     // ORT 1.30's native uploader starts at initialization, before its API can opt out.
     // Set the real parent process environment before any inference worker is created.
     process.env.ORT_DISABLE_TELEMETRY = "1";
-    this.modelId = `${this.model.modelId}@${this.model.revision}:${createHash("sha256")
-      .update(
-        JSON.stringify({ dtype: this.model.dtype, embedding: this.model.embedding, files: this.model.files }),
-      )
-      .digest("hex")}`;
+    this.modelId = embeddingModelId(this.model);
   }
   private call(root: string, args: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
     signal.throwIfAborted();
     let slot = this.slots.get(root);
     if (!slot) {
-      slot = { tail: Promise.resolve(), closed: false };
+      slot = { tail: Promise.resolve(), closed: false, retiring: new Set() };
       this.slots.set(root, slot);
     }
     const owned = slot;
@@ -117,7 +123,9 @@ export class EmbeddingHost implements EmbeddingPort {
           owned.worker ?? new Worker(this.entry, { workerData: { models: this.models, model: this.model } });
         if (!owned.worker) {
           worker.on("error", () => {});
+          worker.on("message", () => this.busy.delete(worker));
           worker.on("exit", () => {
+            this.busy.delete(worker);
             if (owned.worker === worker) {
               owned.worker = undefined;
               owned.epoch = undefined;
@@ -138,7 +146,9 @@ export class EmbeddingHost implements EmbeddingPort {
             if (error) {
               owned.worker = undefined;
               owned.epoch = undefined;
-              void worker.terminate().then(() => reject(error), reject);
+              // The caller is released now; a worker still inside its native call stops after it.
+              this.retire(owned, worker);
+              reject(error);
             } else {
               if (args.type === "rank") owned.epoch = String(args.epoch);
               resolve(value);
@@ -164,6 +174,7 @@ export class EmbeddingHost implements EmbeddingPort {
           worker.once("exit", exited);
           try {
             worker.postMessage(payload);
+            this.busy.add(worker);
           } catch {
             crash();
           }
@@ -171,7 +182,7 @@ export class EmbeddingHost implements EmbeddingPort {
         });
       });
     owned.tail = task;
-    // Queued requests settle at their own deadline; active requests settle after worker termination.
+    // Queued requests settle at their own deadline; active requests settle when aborted or answered.
     return new Promise((resolve, reject) => {
       const cancel = (error: Error) => {
         if (started) return;
@@ -215,12 +226,38 @@ export class EmbeddingHost implements EmbeddingPort {
       .parse(await this.call(root, { type: "rank", epoch, rows, query }, signal));
     return result;
   }
+  /**
+   * Terminates an idle worker now and a busy one once its current call replies (or after the
+   * deadline): ONNX Runtime brings the whole process down (0xE06D7363) when its worker thread is
+   * terminated inside a native call, for example while switching workbenches during indexing.
+   */
+  private retire(slot: Slot, worker: Worker): void {
+    const retired = new Promise<void>((resolve) => {
+      const stop = () => {
+        clearTimeout(timer);
+        worker.off("message", stop);
+        worker.off("exit", stop);
+        void worker.terminate().then(
+          () => resolve(),
+          () => resolve(),
+        );
+      };
+      const timer = setTimeout(stop, this.busy.has(worker) ? this.deadlineMs : 0);
+      if (this.busy.has(worker)) {
+        worker.once("message", stop);
+        worker.once("exit", stop);
+      }
+    });
+    slot.retiring.add(retired);
+    void retired.then(() => slot.retiring.delete(retired));
+  }
   async release(root: string): Promise<void> {
     const slot = this.slots.get(root);
     if (!slot) return;
     slot.closed = true;
     this.slots.delete(root);
-    await slot.worker?.terminate();
+    if (slot.worker) this.retire(slot, slot.worker);
+    await Promise.all(slot.retiring);
     await slot.tail.catch(() => {});
   }
   cached(root: string, epoch: string): boolean {

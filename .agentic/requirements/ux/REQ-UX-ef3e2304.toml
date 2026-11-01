@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-ef3e2304"
+
+title = "Show a Docs tree item in the file manager"
+
+status = "active"
+
+requirement = "When the user chooses Show in Explorer for a Docs tree item, the desktop app shall show the item selected in the system file manager and show a failure under the tree, the item reading Show in Finder on macOS and Show in folder on Linux."
+
+verification = "Renderer test: Show in Explorer invokes the reveal channel with the row's path; with app.info platform darwin the item reads Show in Finder and with linux Show in folder; an error reply shows under the tree."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::shows a Docs tree item in the file manager under the platform's name"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

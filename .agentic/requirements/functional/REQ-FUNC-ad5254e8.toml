@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-ad5254e8"
+
+title = "List the applications Linux registers for a workbench file"
+
+status = "active"
+
+requirement = "When asked on Linux for the applications registered for a workbench file, the desktop app shall return the id and name of each application that `gio mime` registers for the file's content type, read with LC_ALL=C and named from its .desktop file in the XDG data directories, leaving out applications marked NoDisplay or Hidden, ids without a .desktop file and the detected VS Code and Cursor, and shall return none when gio is missing, older than GLib 2.68, finds no default or registered application, or the platform is not Linux."
+
+verification = "Main unit test with an injected command runner and .desktop files: image/png with org.gnome.eog.desktop and gimp.desktop returns their Name values; a localized Name[ro] is preferred for ro; NoDisplay=true and Hidden=1 entries and an id without a .desktop file are left out; code.desktop is left out while VS Code is detected; the content type is read from the attributes block only; 'No default applications' output, a missing gio, GLib 2.64 and win32 return none; a link, a folder and an outside path are refused; shared contract test for the channel."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/openers.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/documents.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/openers.test.ts::lists the applications Linux registers for a file by their desktop names", "05_Software/src/apps/desktop/src/main/openers.test.ts::runs system tools in the C locale so their output can be parsed", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::offers the system's Open with dialog and registered applications through strict channels"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

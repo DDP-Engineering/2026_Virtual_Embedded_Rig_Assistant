@@ -1,7 +1,7 @@
 # Plugins — implementation plan
 
 PURPOSE: the order in which the plugin system of [architecture.md](architecture.md) and the ESP32
-pack of [packs.md](packs.md) are built: work packages PLG-01…PLG-18, dependencies, verification and
+pack of [packs.md](packs.md) are built: work packages PLG-01…PLG-22, dependencies, verification and
 risks.
 DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user installs the ESP32 pack
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
@@ -18,14 +18,16 @@ permission modes, tool registry. Implementation follows the repository's AEGIS w
 | 1 First ESP32 flash | PLG-01…PLG-05, PLG-08, PLG-09 | with a plugin installed from a folder, the agent identifies and flashes an ESP32 on both systems; the desktop app shows approval cards |
 | 2 Complete ESP32 pack and catalog | PLG-06, PLG-07, PLG-10, PLG-11, PLG-12 | plugins are managed in Settings and installed from the catalog; ESP-IDF builds and eFuse reads work; the agent drafts plugins |
 | 3 Growth | PLG-13…PLG-18 | workbench plugins; first CAN, Wireshark, Microchip and STM32 plugins; optional MCP adapter |
+| Bench tools | PLG-19…PLG-22 | vendor-neutral `probe-rs`, `binutils`, `sigrok` and `git` plugins; each can start once PLG-04 and PLG-05 exist, independently of steps 2 and 3 |
 
 | Gitea epic and milestone | Epic issue | Packages |
 |---|---|---|
 | Plugins - platform | #54 | PLG-01…PLG-07, PLG-12, PLG-13, PLG-18 |
 | Plugins - ESP32 pack | #55 | PLG-08…PLG-11 |
 | Plugins - more ecosystems | #56 | PLG-14…PLG-17 |
+| Plugins - bench tools | #80 | PLG-19…PLG-22 |
 
-Gitea issue of each package: PLG-01…PLG-18 are #57…#74 in order (PLG-n is issue #(56 + n)).
+Gitea issue of each package: PLG-01…PLG-18 are #57…#74 in order (PLG-n is issue #(56 + n)); PLG-19…PLG-22 are #81…#84.
 Created 2026-11-01 without ADORE labels.
 
 ```mermaid
@@ -51,6 +53,14 @@ flowchart LR
   P07 --> P16[16 Microchip]
   P07 --> P17[17 STM32]
   P04 --> P18[18 MCP, optional]
+  P04 --> P19[19 probe-rs]
+  P05 --> P19
+  P04 --> P20[20 binutils]
+  P05 --> P20
+  P04 --> P21[21 sigrok]
+  P05 --> P21
+  P04 --> P22[22 git]
+  P05 --> P22
 ```
 
 PLG-01 and PLG-02 have no mutual dependency and can run in parallel.
@@ -240,6 +250,52 @@ tests prove that every `-ob` write is `irreversible`; no test changes option byt
   ignored.
 **Done when:** a fixture MCP server's tools run with approvals from their rules, and a tool missing
 from `expose` is never offered to the model.
+
+### PLG-19 `probe-rs` plugin
+**Goal:** vendor-neutral flashing, memory access and RTT logs. **Depends on:** PLG-04, PLG-05.
+**Specs:** [probe-rs.md](probe-rs.md).
+- Manifest with pinned v0.32.0 downloads for windows-x64, linux-x64, linux-arm64 and a `find`
+  fallback; rules of probe-rs.md §4 (`write` irreversible; `debug`, `gdb`, `dap-server`, `serve`,
+  `complete` and `--host` blocked); skills `probe-rs-connect`, `probe-rs-flash`, `probe-rs-rtt`,
+  `probe-rs-inspect`.
+**Done when:** matcher tests cover every rule row; on Windows and Linux the agent identifies,
+flashes, verifies and resets an STM32 Nucleo, an RP2040 and an ESP32-C3, reads a register and
+streams RTT in a background run that it stops.
+
+### PLG-20 `binutils` plugin
+**Goal:** firmware image analysis for ARM and RISC-V. **Depends on:** PLG-04, PLG-05.
+**Specs:** [binutils.md](binutils.md).
+- Programs `size`, `nm`, `readelf`, `objdump`, `addr2line` for `arm-none-eabi-` and
+  `riscv-none-elf-`; `find` in known toolchain locations first, pinned xPack downloads second; all
+  rules `safe`; skills `firmware-size`, `crash-decode`, `elf-inspect`; fixture ELFs.
+**Done when:** the agent reports a two-build size diff with the largest growing symbols, decodes a
+HardFault PC/LR to source lines and disassembles one function within the result cap, on both
+systems, with a found and with a downloaded toolchain.
+
+### PLG-21 `sigrok` plugin (DDP fork)
+**Goal:** signal capture, protocol decoding and bench instruments through `sigrok-cli`.
+**Depends on:** PLG-04, PLG-05. **Specs:** [sigrok.md](sigrok.md).
+- A Gitea release of the fork (revision 66540df) with the five packages and `SHA256SUMS`; manifest
+  downloads with `prefix: [--cli]` for the AppImages; rules of sigrok.md §4 (offline decoding safe,
+  captures device-read, `--set` on supplies, loads, generators, relays and the ATK-DL16 PWM
+  irreversible); skills `sigrok-capture`, `sigrok-decode`, `sigrok-instruments` and the two device
+  notes; udev and Zadig hints.
+**Done when:** offline decoding of a recorded capture works on all three platforms; on Windows and
+Linux the agent scans and captures from an ATK-DL16 and a Hantek DSO-3062L, decodes UART and I2C and
+reads a supply; a supply `--set` waits for the typed confirmation in `ask`.
+
+### PLG-22 `git` plugin
+**Goal:** version control of the workbench: inspect freely, change with approval.
+**Depends on:** PLG-04, PLG-05. **Specs:** [git.md](git.md).
+- `find` of the user's Git (≥ 2.40); program-level `prefix` neutralising `core.fsmonitor`, hooks,
+  pager and external diff, plus the environment of git.md §3 (adds `programs.*.prefix` to the
+  manifest schema and runner if PLG-01 and PLG-02 did not); rules of git.md §5 (read-only commands
+  and listings `safe`; changes, remotes and pushes `device-write`; discarding work, `clean`,
+  `checkout`, `restore` and force pushes `irreversible`; `-c`, `-C`, `config`, interactive and
+  program-running commands `blocked`); skills `git-inspect`, `git-commit`, `git-branches`.
+**Done when:** matcher tests cover every rule row, including escalation over listing rules; with a
+fixture repository whose local config and hooks point at a marker script, no command runs it; on
+Windows and Linux the agent explains recent history without approvals and commits after an approval.
 
 ## 3. Verification
 

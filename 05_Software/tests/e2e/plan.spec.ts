@@ -201,6 +201,17 @@ test("Plan follows every replacement live and restores the final list after nati
     ]);
     await expectPlan(panel, [["Board verification complete", "Done"]]);
     await expect(input).toBeEnabled();
+    // The composer stays enabled while a turn runs (steering), so wait for the turn itself to end.
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          async (id) =>
+            (await (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id }))
+              .snapshot.activeTurnId,
+          id,
+        ),
+      )
+      .toBeNull();
     const before = await page.evaluate(
       async (id) => (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id }),
       id,
@@ -224,8 +235,10 @@ test("Plan follows every replacement live and restores the final list after nati
     rig = await launch(root, folder);
     closed = false;
     page = await rig.app.firstWindow();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await expect(page.locator('[data-session][aria-current="page"]')).toHaveAttribute("data-session", id);
+    // Reopening shows the overview; the engineer opens the restored session from the sidebar.
+    await page.locator(`[data-session="${id}"]`).click();
     await page.getByRole("tab", { name: "Plan", exact: true }).click();
     await expect(page.locator("#panel-plan .plan-text")).toHaveText(["Board verification complete"]);
     await expect(page.locator("#panel-plan").getByRole("img", { name: "Done", exact: true })).toHaveCount(1);
@@ -285,13 +298,14 @@ test.describe("browser Plan", () => {
         await page.locator('[data-i18n="nav.settings"]').click();
         await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
         await expect(page.locator("html")).toHaveAttribute("lang", lang);
-        await page.locator('[data-i18n="nav.welcome"]').click();
-        await page.locator('[data-action="open-recent"]').click();
+        // Settings replaces the primary navigation; leave it to reach the workbenches.
+        await page.locator('[data-action="leave-settings"]').click();
+        await page.locator("[data-workbench-entry] .workbench-group-name").click();
         await page.locator('[data-action="new-session"]').click();
         const input = page.locator("textarea");
         await expect(input).toBeEnabled();
         await page.locator('[data-toggle="right"]').click();
-        await page.locator('[role="tab"]').nth(4).focus();
+        await page.locator("#tab-plan").focus();
         await page.keyboard.press("Enter");
         await input.fill("Update the plan");
         await input.press("Enter");

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-b5edf930"
+
+title = "Attach a Docs tree entry to the chat"
+
+status = "active"
+
+requirement = "When the user chooses Attach as context for a Docs tree item, the desktop app shall add the item as a chip above the message box of the chat it shows - the active session's, or a new or reused empty session's when no session is active, opening the chat when it is not shown - and shall disable the item for entries VERA ignores, in a read-only workbench and while 20 entries are attached."
+
+verification = "App-level renderer test with the mock API: on the workbench page, Attach as context on docs/a.pdf shows the active session's chat with an a.pdf chip; attaching it again keeps one chip; the ignored node_modules/pkg/README.md shows the item disabled and choosing it adds nothing; with no session, a session is created and shows the chip; App-level read-only test: the item is disabled and attaches nothing; unit test: the 21st distinct entry is not added; tree test with a stub context: a full chat or no chat disables the item."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/tree-menu.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/lib/attachments.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/session/attachments.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/attachments.test.ts::attaches Docs tree entries to the active chat from the workbench page and sends them as mentions", "05_Software/src/apps/desktop/src/renderer/components/session/attachments.test.ts::creates a session to attach to when the workbench has none", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::attaches an entry to the chat unless VERA ignores it, the chat is full or none can take it", "05_Software/src/apps/desktop/src/renderer/lib/attachments.test.ts::adds each entry once and stops at 20", "05_Software/tests/e2e/docs-tree.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/attachments-read-only.test.ts::a read-only workbench offers Attach as context disabled and attaches nothing"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

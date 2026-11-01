@@ -101,7 +101,7 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
     expect(requests[0]?.messages.find((m) => m.role === "system")?.content).not.toContain("ui-reader:");
     await page.reload();
     await page.locator('[data-action="edit-workbench-overview"]').click();
-    await page.locator('[data-project-section="tools"]').click();
+    await page.locator('[data-project-section="skills"]').click();
     const trigger = page.locator('[data-action="skills-settings"]').first();
     await trigger.focus();
     await page.keyboard.press("Enter");
@@ -236,9 +236,9 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       if (await page.locator('[data-action="leave-settings"]').isVisible())
         await page.locator('[data-action="leave-settings"]').click();
       await page.locator('[data-i18n="nav.welcome"]').click();
-      await page.locator('[data-action="open-recent"]').click();
+      await page.locator("[data-workbench-entry] .workbench-group-name").click();
       await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="tools"]').click();
+      await page.locator('[data-project-section="skills"]').click();
       const trigger = page.locator('[data-action="skills-settings"]').first();
       await trigger.click();
       const dialog = page.locator(".skills-dialog");

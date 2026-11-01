@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-724d3fcc"
+
+title = "Search documents with the workbench retrieval defaults"
+
+status = "active"
+
+requirement = "When the agent calls search_docs without k or mode, VERA shall use the open workbench's retrieval results and mode, and when it passes k or mode, VERA shall use the passed value."
+
+verification = "Core search tests: with defaults {results: 2, mode: keyword} a query without k/mode returns at most 2 keyword results; explicit k: 1 returns 1; explicit mode semantic uses the semantic path; without a defaults provider the built-in 8/hybrid apply."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/tools/documents.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

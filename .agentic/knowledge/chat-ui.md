@@ -37,6 +37,14 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
+- Attached entries (TASK-2fef1397): App keeps per-session lists in `AttachmentsContext`
+  (components/session/attachments.tsx); the Docs tree's Attach as context adds to the active
+  session (or one created with reuseEmpty) and opens its chat. The composer shows them above the
+  message box as chips (name, path as title, "Remove attachment: <path>") and sends
+  `withMentions(text, paths)` (lib/attachments.ts): the text, then `@path` mentions on a new line
+  (`@"path"` with whitespace), or the mentions alone; at most 20, no duplicates; an accepted send
+  clears the sent chips, a failed one keeps text and chips. session.send stays text only
+  (REQ-UX-b5edf930, REQ-UX-f8ec3a43, REQ-FUNC-47287974).
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab queries .vera/WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.

@@ -187,7 +187,7 @@ test("artifact appears live, opens/exports, survives restart and deletion remove
     await expect(invalidCitation).toHaveClass(/\binvalid\b/);
     await invalidCitation.focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator(".document-dialog")).toHaveCount(0);
+    await expect(page.locator("[data-source-current]")).toHaveCount(0);
     await expect(panel.locator(".artifact-viewer h1")).toHaveText("Session summary");
     await expect(page.locator("[data-approval-card]")).toHaveCount(0);
     const exportPath = join(root, "export ă.md");
@@ -219,7 +219,10 @@ test("artifact appears live, opens/exports, survives restart and deletion remove
     rig = await launch(root, folder);
     closed = false;
     page = await rig.app.firstWindow();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
+    // Reopening shows the overview; the engineer opens the restored session from the sidebar.
+    await expect(page.locator(`[data-session="${id}"][aria-current="page"]`)).toBeVisible();
+    await page.locator(`[data-session="${id}"]`).click();
     await page.getByRole("tab", { name: "Artifacts", exact: true }).click();
     await expect(page.locator(".artifact-viewer h1")).toHaveText("Session summary");
     expect(
@@ -292,8 +295,9 @@ test.describe("browser artifacts", () => {
         await page.locator('[data-i18n="nav.settings"]').click();
         await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
         await expect(page.locator("html")).toHaveAttribute("lang", lang);
-        await page.locator('[data-i18n="nav.welcome"]').click();
-        await page.locator('[data-action="open-recent"]').click();
+        // Settings replaces the primary navigation; leave it to reach the workbenches.
+        await page.locator('[data-action="leave-settings"]').click();
+        await page.locator("[data-workbench-entry] .workbench-group-name").click();
         await page.locator('[data-action="new-session"]').click();
         const input = page.locator("textarea");
         await expect(input).toBeEnabled();
@@ -301,7 +305,7 @@ test.describe("browser artifacts", () => {
         await input.press("Enter");
         await expect(input).toBeEnabled();
         await page.locator('[data-toggle="right"]').click();
-        await page.locator('[role="tab"]').nth(3).click();
+        await page.locator("#tab-artifacts").click();
         const panel = page.locator("#panel-artifacts");
         await expect(panel.locator("[data-artifact]")).toHaveCount(1);
         await panel.locator("[data-artifact]").focus();

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-62ed1c20"
+
+title = "Copy the path of a workbench entry"
+
+status = "active"
+
+requirement = "When asked to copy the absolute path, the relative path or the name of a workbench entry, the desktop app shall write it with the platform's path separators to the clipboard, ignored or not, and refuse links and paths outside the workbench."
+
+verification = "Main unit test with an injected clipboard: absolute, relative and name of firmware/main.c are written with the platform separator; .git/config is accepted; ../x and a link are refused without writing; shared contract test refuses an unknown form."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/openers.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/openers.test.ts::copies an entry's absolute path, relative path or name with the platform separator", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::opens, reveals and copies workbench entries through strict docs channels", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

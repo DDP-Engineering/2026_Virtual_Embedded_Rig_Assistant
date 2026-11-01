@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-33b98d33"
+
+title = "Refuse to open non-documents or paths outside the workbench"
+
+status = "active"
+
+requirement = "If a request to open a file in the default application names, or resolves through a link or alias to, an extension outside the document allowlist, a path outside the workbench, an ignored or .vera path, a folder or a missing file, then VERA shall refuse it without invoking the opener, with DENIED, or NOT_FOUND for a missing file."
+
+verification = "Main-process test: .bat, .js, .py, .exe, .html, .png, a file without extension, ../outside.pdf, a path through a junction leaving the workbench, a .vera file, a folder and the workbench root are DENIED, a requested docs/readme.pdf that resolves to tools/run.bat is DENIED, and a missing docs/none.pdf is NOT_FOUND, each with zero opener calls."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/reveal-path.ts", "05_Software/src/libraries/shared/src/documents.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/reveal-path.test.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

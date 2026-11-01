@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-712804c9"
+
+title = "Open sources in the right panel Source tab"
+
+status = "active"
+
+requirement = "When the user opens a source from a valid citation chip, a Docs row or search result, or a download, the desktop app shall show it in the Source tab of the right panel, expanding the panel and selecting that tab, without a modal dialog, so the conversation stays visible and usable."
+
+verification = "Renderer test with the mock API: activating a citation selects an expanded Source tab holding the viewer body with the cited lines current, a Docs row opens its source there too, no dialog is shown and the composer stays enabled; native e2e opens PDF, heading, slide and line citations and a Docs result in the panel."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/components/documents/downloads.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/tests/e2e/citations.spec.ts", "05_Software/tests/e2e/documents.spec.ts", "05_Software/tests/e2e/office-documents.spec.ts", "05_Software/tests/e2e/pdf-download.spec.ts", "05_Software/tests/e2e/artifacts.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

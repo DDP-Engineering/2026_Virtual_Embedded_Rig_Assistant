@@ -13,9 +13,9 @@ title = "Bounded completed-exchange compaction"
 
 status = "active"
 
-requirement = "Above80% of the input budget, the runtime shall attempt at most one model summary of budget-fitting whole completed historical exchanges per normal request, preserving decisions, outstanding work, exact source refs and current instructions in a derived view while retaining the full durable transcript; both requests use current context/output limits and safety margin, and unavailable or failed summaries fall back to M1 reduction and explicit context-limit semantics."
+requirement = "Above 80% of the input budget, the runtime shall attempt at most five model summaries per normal request, each covering the previous summary and the next budget-fitting whole completed historical exchanges, until the derived view fits, preserving decisions, outstanding work, exact source refs and current instructions in that view while retaining the full durable transcript; all requests use current context/output limits and safety margin, and unavailable or failed summaries fall back to M1 reduction and explicit context-limit semantics."
 
-verification = "Replay multiple completed turns in a small window and inspect every normal/summary request budget, preserved decisions/refs/current input and full transcript; first-turn, oversized input, smaller model, invalid/failed summary and abort verify the one-attempt bound and M1 outcomes. Execution deferred by direct user instruction; authored scenarios are not proof."
+verification = "Replay multiple completed turns in a small window and inspect every normal/summary request budget, preserved decisions/refs/current input and full transcript; first-turn, oversized input, smaller model, invalid/failed summary and abort verify the M1 outcomes; a fresh compactor over five long exchanges needs four passes, includes the earlier summary in later passes and then fits; thirty exchanges stop after five passes; a session restarted after compaction continues (sessions/service.test)."
 
 affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
@@ -28,4 +28,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-10-13
+updated = 2026-11-01

@@ -29,7 +29,7 @@ Publication exclusively writes and fsyncs a UUID staging directory, verifies ord
 
 ## Key behaviors
 
-The successful transcript tool shows a compact localized saved status and an Open PDF card with name/source/date. Technical result JSON stays expandable. Completed download approval details collapse to their decision. Docs exposes the same local history. The download modal is centered; direct PDFs have no misleading citation-only label, and retain page/zoom/find, Escape/Close, focus restoration and stale scope handling. en/ro/de translations cover new UI and tool descriptions. Host disclosure scrubs every metadata string, dropping unusable redacted identities while preserving binary PDFs through the existing viewer boundary.
+The successful transcript tool shows a compact localized saved status and an Open PDF card with name/source/date. Technical result JSON stays expandable. Completed download approval details collapse to their decision. Docs exposes the same local history. Downloads open in the right panel Source tab; direct PDFs have no misleading citation-only label, and retain page/zoom/find, Escape/Close, focus restoration and stale scope handling. en/ro/de translations cover new UI and tool descriptions. Host disclosure scrubs every metadata string, dropping unusable redacted identities while preserving binary PDFs through the existing viewer boundary.
 
 ## Files
 

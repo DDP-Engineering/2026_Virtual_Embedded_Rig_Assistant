@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { documentSchema } from "./documents.js";
+import { documentSchema, documentVolumeSchema, indexerStateSchema } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
@@ -25,6 +25,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
     ...updateOfferSchema.pick({ version: true, notes: true }).shape,
   }),
   z.strictObject({ type: z.literal("update.changed"), snapshot: updateSnapshotSchema }),
+  z.strictObject({ type: z.literal("indexer.status"), state: indexerStateSchema }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 export const workbenchEventSchema = z.discriminatedUnion("type", [
@@ -39,6 +40,7 @@ export const workbenchEventSchema = z.discriminatedUnion("type", [
     done: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     failed: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   }),
+  z.strictObject({ type: z.literal("index.volume"), ...documentVolumeSchema.shape }),
   z.strictObject({ type: z.literal("opened"), workbench: workbenchSnapshotSchema }),
   z.strictObject({ type: z.literal("closed") }),
   z.strictObject({

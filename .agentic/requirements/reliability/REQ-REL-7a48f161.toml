@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-7a48f161"
+
+title = "Fail one unreadable office document without stopping ingest"
+
+status = "active"
+
+requirement = "If an office file cannot be parsed, including a corrupt archive, a missing main part or an encrypted file, then VERA shall record that document as failed with PROCESSING and continue ingesting the other documents."
+
+verification = "Core ingest test: a truncated docx, a zip without word/document.xml and an encrypted-container file each end failed with PROCESSING while a valid file in the same folder is indexed."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/office.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/knowledge/pdf-worker.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/office.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

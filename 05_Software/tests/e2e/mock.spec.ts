@@ -137,7 +137,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
             .locator('[data-panel="right"]')
             .evaluate((element) => element.scrollWidth <= element.clientWidth),
         ).toBe(true);
-        for (const tab of ["context", "docs", "changes", "artifacts", "plan"]) {
+        for (const tab of ["context", "docs", "source", "changes", "artifacts", "plan"]) {
           await page.locator(`#tab-${tab}`).click();
           await expect(page.locator(`#panel-${tab}`)).toBeVisible();
         }
@@ -330,18 +330,21 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect(page.locator('[data-action="open-workbench-nav"]')).not.toBeVisible();
     await page.locator('[data-action="leave-settings"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("Browser board");
+    // Below 1280 px the right panel overlays page content; the editor is a page, so close it first.
+    if ((await page.locator('[data-toggle="right"]').getAttribute("aria-expanded")) === "true")
+      await page.locator('[data-toggle="right"]').click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toBeFocused();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.locator(".workbench-editor")).not.toBeVisible();
     await expect(page.locator('[data-action="edit-workbench-overview"]')).toBeFocused();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="instructions"]').click();
     await page.locator("#pinned-content").fill("ă".repeat(9000));
-    await expect(page.getByRole("dialog").getByRole("status")).toBeVisible();
+    await expect(page.locator(".workbench-editor").getByRole("status")).toBeVisible();
     await page.locator("[data-project-save]").click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.locator(".workbench-editor")).not.toBeVisible();
     await page.locator("[data-workbench-entry] .workbench-menu summary").first().click();
     await page.locator('[data-action="close-workbench"]').click();
     // Control the second load to expose stale cached editor data and draft replacement.
@@ -370,13 +373,13 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     if (await page.locator('[data-action="leave-settings"]').isVisible())
       await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toHaveValue("ă".repeat(9000));
     await page.locator("#pinned-content").fill("saved current context");
     await page.locator("[data-project-save]").click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.locator(".workbench-editor")).not.toBeVisible();
     const previousReads = await page.evaluate(() => {
       const state = window as unknown as { pinnedReads: number; blockPinned: boolean };
       state.blockPinned = true;
@@ -387,7 +390,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { pinnedReads: number }).pinnedReads))
       .toBeGreaterThan(previousReads);
-    await expect(page.getByRole("dialog").getByRole("status")).toBeVisible();
+    await expect(page.locator(".workbench-editor").getByRole("status")).toBeVisible();
     await expect(page.locator("#pinned-content")).toBeDisabled();
     await page.evaluate(() => (window as unknown as { releasePinned: () => void }).releasePinned());
     await expect(page.locator("#pinned-content")).toHaveValue("saved current context");
@@ -419,7 +422,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     if (await page.locator('[data-action="leave-settings"]').isVisible())
       await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="open-recent"]').click();
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="instructions"]').click();
     await expect(page.locator("#pinned-content")).toHaveAttribute("readonly", "");
@@ -436,9 +439,12 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     if (await page.locator('[data-action="leave-settings"]').isVisible())
       await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();
-    await expect(page.locator('[data-recent="missing"]')).toBeVisible();
-    await page.locator('[data-action="remove-recent"]').click();
-    await expect(page.locator('[data-recent="missing"]')).toHaveCount(0);
+    const missing = page.locator('[data-workbench-entry][data-missing="true"]');
+    await expect(missing).toBeVisible();
+    await expect(missing.locator(".workbench-group-name")).toBeDisabled();
+    await missing.locator(".workbench-menu > summary").click();
+    await missing.getByRole("button", { name: "Remove from list", exact: true }).click();
+    await expect(missing).toHaveCount(0);
     await context.unroute("**/api/index.*");
     // Replace the API module at the browser network seam; UI must translate a structured failure.
     await context.route("**/api/index.*", (route) =>
@@ -496,7 +502,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         if (await page.locator('[data-action="leave-settings"]').isVisible())
           await page.locator('[data-action="leave-settings"]').click();
         await page.locator('[data-i18n="nav.welcome"]').click();
-        await page.locator('[data-action="open-recent"]').click();
+        await page.locator("[data-workbench-entry] .workbench-group-name").click();
         await page.locator("[data-session]").filter({ hasText: "Tool rows" }).focus();
         await page.keyboard.press("Enter");
         await expect(page.locator("[data-tool-row]")).toHaveCount(2);

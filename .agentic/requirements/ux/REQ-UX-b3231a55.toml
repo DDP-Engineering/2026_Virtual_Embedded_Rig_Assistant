@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-b3231a55"
+
+title = "Widen the right panel for sources"
+
+status = "active"
+
+requirement = "While the Source tab is selected, the desktop app shall let the user resize the right panel up to 60% of the window width with a width stored separately from the other tabs, which keep their 14-28 rem range and 35% limit."
+
+verification = "Renderer test: with Source selected the resizer reports and accepts the wider range, and switching to Docs restores the other width; browser e2e: the widened Source panel measures more than 45vw and at most 60vw of the window while Docs stays within its cap; layout storage round-trips the source width and an old layout without it loads with the default."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/lib/layout.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/lib/preferences.test.ts", "05_Software/tests/e2e/mock.spec.ts", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

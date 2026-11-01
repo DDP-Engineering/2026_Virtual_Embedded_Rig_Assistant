@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
+import { sessionIdSchema } from "./session.js";
 import { updateChannelSchema, updateModeSchema } from "./updates.js";
 import { webAccessDefaults, webAccessSettingsSchema } from "./web-access.js";
 import { workbenchIdSchema } from "./workbench.js";
@@ -46,6 +47,8 @@ const mutable = {
   providers: providerSettingsSchema,
   updates: z.looseObject({ mode: updateModeSchema, channel: updateChannelSchema }),
   recentWorkbenches: z.array(recentWorkbenchSchema),
+  /** Session ids per workbench in the order the user arranged them (TASK-c99ca08c). */
+  sessionOrder: z.record(workbenchIdSchema, z.array(sessionIdSchema)).optional(),
   limits: z.looseObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
 };
 
@@ -105,6 +108,7 @@ export type Settings = z.infer<typeof settingsSchema>;
 export const settingsServicePatchSchema = settingsPatchSchema.extend({
   webAccess: webAccessSettingsSchema.optional(),
   providers: providerSettingsSchema.optional(),
+  sessionOrder: mutable.sessionOrder,
 });
 export type SettingsPatch = z.infer<typeof settingsPatchSchema>;
 export type SettingsServicePatch = z.infer<typeof settingsServicePatchSchema>;

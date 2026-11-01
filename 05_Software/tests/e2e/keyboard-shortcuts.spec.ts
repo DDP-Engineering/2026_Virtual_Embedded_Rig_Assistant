@@ -93,14 +93,17 @@ test("shortcut UI edits aliases, rejects conflicts, removes and resets, with iso
     await section.getByRole("button", { name: "Restore all defaults", exact: true }).click();
     await expect(settings.locator("kbd")).toHaveText("Ctrl+,");
     await expect(newSession.locator("kbd")).toHaveCount(2);
-    // Existing workbench editor owns keys, even an app navigation shortcut.
+    // The workbench editor is a page, not a modal dialog: app navigation shortcuts still route,
+    // and without unsaved edits they leave it without asking.
     await page.locator('[data-action="leave-settings"]').click();
     const wb = page.locator("[data-workbench-entry]").first();
     await wb.getByRole("button", { name: "VERA-DEMO-01", exact: true }).click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
-    await page.keyboard.press("Control+/");
     await expect(page.locator(".workbench-editor")).toBeVisible();
-    await page.keyboard.press("Escape");
+    await page.keyboard.press("Control+/");
+    await expect(page.locator(".workbench-editor")).toHaveCount(0);
+    await expect(section).toBeVisible();
+    await page.locator('[data-action="leave-settings"]').click();
     await page.keyboard.press("Control+b");
     await expect(page.locator('[data-toggle="sidebar"]')).toHaveAttribute("aria-expanded", "false");
     await page.keyboard.press("Control+b");

@@ -17,13 +17,15 @@ outside that queue, allowing close/switch to abort its processor.
 Eligible ordinary files are hashed with SHA-256 using bounded asynchronous reads.
 An unchanged successful/pending/unsupported record is skipped. Failed records
 retry. Changed content invalidates derived rows before becoming pending. PDF
-limit is 100 * 1024 * 1024 bytes and other supported text limit is 20 * 1024 *
-1024 bytes, inclusive. Larger files and unknown extensions become unsupported
-with stable reason codes. Errors become failed with a scrubbed code, never raw
+and office limit is 100 * 1024 * 1024 bytes and the Markdown, HTML and text limit
+is 20 * 1024 * 1024 bytes, inclusive. Larger files become unsupported with stable reason
+codes. Files outside the document type set (.pdf .docx .odt .pptx .odp .xlsx .ods .md
+.markdown .html .htm .txt .csv .tsv) are not selected, read or recorded, and stored rows of such
+paths are removed on reconciliation (TASK-e5310cdb). Errors become failed with a scrubbed code, never raw
 filesystem exception text. The existing first8KiB binary classifier makes
 binary text inputs unsupported with BINARY; PDF bytes remain opaque to ingest.
 
-Supported inputs are classified pdf, markdown, html or text. The processor seam
+Supported inputs are classified pdf, markdown, html, text (.txt, .csv, .tsv) or the office document/presentation/spreadsheet kinds. The processor seam
 receives path/kind/hash and AbortSignal, and returns indexed, failed, unsupported
 or needs_ocr plus optional pages/reason. The initial composition leaves supported
 inputs pending until a processor is supplied. No extraction/search result is

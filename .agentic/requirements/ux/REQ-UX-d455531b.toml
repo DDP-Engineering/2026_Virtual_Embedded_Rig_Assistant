@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-d455531b"
+
+title = "Keep the Docs actions on one row"
+
+status = "active"
+
+requirement = "The Docs panel shall place Reindex and Collapse all side by side on one row under its single search box, wrapping them only when the panel is too narrow for both, and shall disable Collapse all while the search box has text."
+
+verification = "Renderer test: the Docs tab has one search input, and Reindex and Collapse all share one actions row; Collapse all is enabled with an expanded folder, disabled after typing in the search box and enabled again after clearing it; browser e2e: at the default panel width both buttons have the same top in en, ro and de, and no Docs control overflows the panel at the largest type scale."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::keeps Reindex and Collapse all on one row under the search box", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

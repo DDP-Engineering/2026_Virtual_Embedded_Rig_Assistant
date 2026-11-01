@@ -2,9 +2,10 @@
 
 import type { SessionSummary } from "@vera/shared";
 import { Ellipsis } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
+import { reorderOffset } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
 
 export function SessionList({
@@ -15,6 +16,8 @@ export function SessionList({
   rename,
   remove,
   archive,
+  move,
+  moveDisabled = false,
   disabled,
   search = "",
   searchChanged,
@@ -28,6 +31,10 @@ export function SessionList({
   rename: (id: string, title: string) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
   archive: (id: string, archived: boolean) => Promise<boolean>;
+  /** Moves a non-archived session one place; false when nothing moved. */
+  move?: (id: string, offset: -1 | 1) => Promise<boolean>;
+  /** The order cannot be saved, for example while the user settings are read-only. */
+  moveDisabled?: boolean;
   disabled: boolean;
   search?: string;
   searchChanged?: (query: string) => void;
@@ -108,8 +115,45 @@ export function SessionList({
     if (origin.current?.isConnected) origin.current.focus();
     else newButton.current?.focus();
   }
+  const listed = sessions.filter((s) => !s.archived);
+  const section = useRef<HTMLElement>(null);
+  // React may move the focused row's node while reordering, so focus is put back by id once the
+  // list is current and enabled again.
+  const refocus = useRef<{ id: string; menu: boolean } | null>(null);
+  useEffect(() => {
+    void sessions; // runs again once the reordered list arrives
+    const target = refocus.current;
+    if (!target || disabled) return;
+    refocus.current = null;
+    const row = section.current?.querySelector<HTMLElement>(`[data-session="${target.id}"]`);
+    (target.menu ? row?.closest(".session-entry")?.querySelector<HTMLElement>("summary") : row)?.focus();
+  }, [sessions, disabled]);
+  const shift = (s: SessionSummary, offset: -1 | 1, menu: boolean) => {
+    const index = listed.indexOf(s);
+    if (
+      !move ||
+      disabled ||
+      moveDisabled ||
+      index < 0 ||
+      index + offset < 0 ||
+      index + offset >= listed.length
+    )
+      return;
+    // Kept after a failed move too: the row then gets its focus back once it is enabled again.
+    refocus.current = { id: s.id, menu };
+    void move(s.id, offset);
+  };
   const renderSession = (s: SessionSummary) => {
     const date = dateFormatter.format(new Date(s.updatedAt));
+    // Search results and archived sessions keep their order.
+    const movable = !!move && !s.archived && !search.trim();
+    const index = listed.indexOf(s);
+    const rowKeys = (menu: boolean) => (event: KeyboardEvent<HTMLElement>) => {
+      const offset = movable ? reorderOffset(event) : undefined;
+      if (!offset) return;
+      event.preventDefault();
+      shift(s, offset, menu);
+    };
     return (
       <div key={s.id} className="session-entry">
         <button
@@ -117,6 +161,7 @@ export function SessionList({
           data-session={s.id}
           aria-current={s.id === active ? "page" : undefined}
           onClick={() => select(s.id)}
+          onKeyDown={rowKeys(false)}
         >
           <strong>{s.title || t("chat.untitled")}</strong>
           <small>
@@ -137,12 +182,40 @@ export function SessionList({
               event.currentTarget.open = false;
               event.currentTarget.querySelector("summary")?.focus();
             }
+            // The menu trigger and its items move the row as well.
+            rowKeys(true)(event);
           }}
         >
           <summary aria-label={t("chat.actionsNamed", { title: s.title || t("chat.untitled") })}>
             <Ellipsis aria-hidden="true" />
           </summary>
           <div className="session-actions">
+            {movable && (
+              <>
+                <button
+                  type="button"
+                  data-action="move-session-up"
+                  disabled={disabled || moveDisabled || index <= 0}
+                  onClick={(event) => {
+                    closeMenu(event.currentTarget);
+                    shift(s, -1, true);
+                  }}
+                >
+                  {t("chat.moveUp")}
+                </button>
+                <button
+                  type="button"
+                  data-action="move-session-down"
+                  disabled={disabled || moveDisabled || index >= listed.length - 1}
+                  onClick={(event) => {
+                    closeMenu(event.currentTarget);
+                    shift(s, 1, true);
+                  }}
+                >
+                  {t("chat.moveDown")}
+                </button>
+              </>
+            )}
             <button
               type="button"
               disabled={exporting}
@@ -235,7 +308,7 @@ export function SessionList({
     );
   };
   return (
-    <section className="session-list" aria-label={t("chat.sessions")}>
+    <section ref={section} className="session-list" aria-label={t("chat.sessions")}>
       <button ref={newButton} type="button" data-action="new-session" disabled={disabled} onClick={create}>
         {t("chat.new")}
       </button>

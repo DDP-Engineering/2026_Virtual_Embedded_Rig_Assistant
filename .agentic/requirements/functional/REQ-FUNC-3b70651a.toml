@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-3b70651a"
+
+title = "Read long sections in parts"
+
+status = "active"
+
+requirement = "When read_doc reads a heading section whose text exceeds the 12000-character output budget, VERA shall return the requested 1-based part, the first by default, of consecutive line-bounded parts that each fit the budget, with part, parts and truncated fields and the section's own ref."
+
+verification = "Core search test: a 40000-character sheet section read with no part, part 2 and the last part returns texts that concatenate to the section text, each within 12000 characters and the JSON budget, with parts constant, truncated true until the last part and ref #h=<slug>; a section under the budget returns part 1 of 1 with truncated false; a single line longer than the budget is cut inside its part."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/tools/documents.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

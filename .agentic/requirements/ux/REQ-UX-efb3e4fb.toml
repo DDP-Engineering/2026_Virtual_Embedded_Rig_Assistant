@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-efb3e4fb"
+
+title = "Confirm before leaving the workbench editor with unsaved changes"
+
+status = "active"
+
+requirement = "If the engineer leaves the workbench editor page through other navigation while its configuration or instructions differ from the loaded values, then the desktop app shall ask for confirmation and shall stay on the editor with the edits kept when the engineer declines."
+
+verification = "Renderer test: open the editor, change the name, navigate to Settings with confirm declined and assert the editor and edited value remain; accept and assert Settings shows; with no change, navigation asks nothing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/keyboard-shortcuts.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

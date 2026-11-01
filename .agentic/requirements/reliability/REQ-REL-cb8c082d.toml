@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-cb8c082d"
+
+title = "Fail a document that crashed the indexer twice"
+
+status = "active"
+
+requirement = "If the indexer process crashes twice while the same content of a document is being processed, VERA shall store that document as failed with PROCESSING and shall not process that content again while the workbench stays open, processing it again once its content changes."
+
+verification = "Core ingest test: a processor that rejects with a crashed retry error for one document leaves it failed with PROCESSING after the second crash while the other document is indexed; a later reconciliation does not call the processor for it; after its content changes it is processed again."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/apps/desktop/src/main/indexer-host.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::stores a document as failed after two indexer crashes while it was processed, until it changes", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts::fails calls in flight with a retry error and restarts after a crash"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

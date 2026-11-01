@@ -35,6 +35,23 @@ export const mockDocuments: DocumentRecord[] = [
             : null,
     indexedAt: null,
   })),
+  ...(
+    [
+      ["docs/bringup.pptx", "presentation", 2],
+      ["docs/review.docx", "document", null],
+    ] as const
+  ).map(([path, kind, pages], i) => ({
+    id: i + 9,
+    path,
+    kind,
+    sha256: "a".repeat(64),
+    bytes: 100,
+    mtime: "2026-10-13T00:00:00.000Z",
+    pages,
+    status: "indexed" as const,
+    error: null,
+    indexedAt: "2026-10-13T00:00:00.000Z",
+  })),
 ];
 export function mockDocument(target: string, byPath: boolean): ViewerContent {
   const parsed = byPath ? undefined : parseRef(target),
@@ -54,12 +71,24 @@ export function mockDocument(target: string, byPath: boolean): ViewerContent {
       page: parsed?.kind === "page" ? parsed.page : parsed?.kind === "page-range" ? parsed.start : 1,
       pageEnd: parsed?.kind === "page-range" ? parsed.end : parsed?.kind === "page" ? parsed.page : 1,
     };
-  if (path.endsWith(".md") || path.endsWith(".html"))
+  if (path.endsWith(".pptx"))
     return {
       ...base,
-      kind: path.endsWith(".md") ? "markdown" : "html",
+      kind: "presentation",
+      slides: ["Bring-up plan\nPower the 3.3 V rail first", "Measurements\nVDD\n3.29 V"],
+      page: parsed?.kind === "page" ? parsed.page : parsed?.kind === "page-range" ? parsed.start : 1,
+      pageEnd: parsed?.kind === "page-range" ? parsed.end : parsed?.kind === "page" ? parsed.page : 1,
+    };
+  if (path.endsWith(".md") || path.endsWith(".html") || path.endsWith(".docx"))
+    return {
+      ...base,
+      kind: path.endsWith(".md") ? "markdown" : path.endsWith(".docx") ? "document" : "html",
       anchor: parsed?.kind === "heading" ? parsed.slug : null,
       sections: [
+        // Word files often open with text before their first heading: the untitled #h= section.
+        ...(path.endsWith(".docx")
+          ? [{ slug: "", path: [], text: "Review notes for the bench.", start: 1, end: 1 }]
+          : []),
         { slug: "power", path: ["Power"], text: "# Power\n3.3 V supply", start: 1, end: 2 },
         { slug: "reset", path: ["Reset"], text: "# Reset\nAssert reset.", start: 3, end: 4 },
       ],

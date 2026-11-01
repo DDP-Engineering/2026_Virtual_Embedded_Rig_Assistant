@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-775eb693"
+
+title = "Open a file from the Docs tree in Source"
+
+status = "active"
+
+requirement = "When the user activates a file in the Docs tree, the desktop app shall open an indexed document in the Source tab as Open does today and any other file as text in the Source tab."
+
+verification = "Renderer test: clicking or pressing Enter on an indexed document opens it through the existing document open; on main.c it opens the text view through the read channel; native e2e opens one of each."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::opens indexed documents and other text files in Source", "05_Software/tests/e2e/docs-tree.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-6a962d80"
+
+title = "Keep VERA running and resume indexing after an indexer crash"
+
+status = "active"
+
+requirement = "If the indexer process exits unexpectedly or fails to start, VERA shall keep running, fail the indexer calls in flight with a retryable error, start a new indexer process and retry the documents that were in flight on the next reconciliation, except as limited by REQ-REL-cb8c082d."
+
+verification = "Main test with a scripted endpoint that exits during a process request: the request fails without a stored failure for the document, a new endpoint starts, and the next reconciliation indexes the document; native e2e kills the indexer process during indexing, VERA's window stays open and the documents end up indexed."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/indexer-host.test.ts::fails calls in flight with a retry error and restarts after a crash", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts::ignores messages and exits of a replaced indexer and fails a call it cannot post", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts::counts a failed indexer start as a crash and stops after three", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts::keeps a document pending and retries it when the processor reports an interrupted indexer", "05_Software/tests/e2e/indexer.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

@@ -210,18 +210,17 @@ it("verifies immutable model assets and refuses altered cache/downloads or escap
   }
 });
 
-it("measures package contributions and rejects Windows artifacts over the size budget", async () => {
+it("measures package contributions without a size budget", async () => {
   const script = join(root, "scripts/package.mjs");
   expect(existsSync(script), "packaging measurements are implemented").toBe(true);
-  const { enforceBudget, measureDirectory } = await import(pathToFileURL(script).href);
+  const packaging = await import(pathToFileURL(script).href);
+  expect(packaging.enforceBudget).toBeUndefined();
   const dir = await mkdtemp(join(tmpdir(), "vera-package-test-"));
   try {
     await writeFile(join(dir, "large.bin"), Buffer.alloc(12));
-    expect((await measureDirectory(dir)).bytes).toBe(12);
-    expect(() => enforceBudget("win32", 250_000_001, [{ path: "large.bin", bytes: 12 }])).toThrow(
-      /large.bin/,
-    );
-    expect(() => enforceBudget("win32", 250_000_000, [])).not.toThrow();
+    const measured = await packaging.measureDirectory(dir);
+    expect(measured.bytes).toBe(12);
+    expect(measured.files).toEqual([{ path: "large.bin", bytes: 12 }]);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

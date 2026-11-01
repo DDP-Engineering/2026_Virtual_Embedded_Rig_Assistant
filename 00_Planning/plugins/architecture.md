@@ -76,12 +76,13 @@ docs:
 | `version` | Semantic Versioning |
 | `name`, `description` | ≤ 80 and ≤ 1024 characters; the description says what and when, like a skill's |
 | `ecosystem` | grouping tag: `esp32`, `stm32`, `microchip`, `can`, `wireshark`, `general`, … |
-| `platforms` | subset of `windows-x64`, `linux-x64`; elsewhere the plugin is hidden |
+| `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
 | `requires` | plugin IDs installed together with this one |
 | `programs.<name>` | `[a-z0-9._-]{1,64}`; the value the agent passes as `program` |
 | `programs.*.install` | exactly one kind of §5 |
 | `programs.*.version` | probe arguments and a regex with one capture group; shown in the UI and the prompt |
 | `programs.*.launcher` | optional argument prefix for programs that need an activated vendor environment, for example `[eim, run]` (§3.3) |
+| `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
 | `programs.*.env` | extra variables; values are literals, `${workbench}` or `${pluginDir}` |
 | `programs.*.timeout` | default seconds for a foreground run, ≤ 3600 |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
@@ -96,7 +97,9 @@ official `analysis-skills` plugin with `firmware-comparator` and `test-planner`
 
 - The command line is the program name followed by its arguments. For matching only, each token is
   lowercased and `_` becomes `-`. Tools such as esptool and espefuse v5 accept both spellings, so one
-  pattern covers both.
+  pattern covers both. A token of the form `--name=value` is split into `--name` and `value`, so one
+  pattern covers `--driver x` and `--driver=x`. A download `prefix` (§5) is not part of the matched
+  command line.
 - A pattern is space-separated tokens. `*` matches zero or more arguments; `{a,b}` matches either;
   a token ending in `*` is a prefix (`burn-*`).
 - All matching rules apply and the **highest risk wins**:
@@ -159,7 +162,8 @@ line, never the launcher's.
 
 Plugin skills join the skill catalog as a third source, `plugin`
 (`shared/src/skills.ts` `skillSourceSchema`). On a name clash, workbench and user skills win. The
-system prompt gains one block for enabled programs and one rule:
+system prompt gains one block for enabled programs that resolved to an executable (a declared
+program that was not found or installed is listed in Settings, not in the prompt) and one rule:
 
 ```
 <programs>
@@ -219,7 +223,7 @@ needs a new approval.
 |---|---|---|
 | `pip: "<requirement>"` | Python CLIs on PyPI: esptool, pymcuprog, python-can, cantools | `uv tool install` into `<userData>/plugins/runtime/tools/`; records the resolved version |
 | `script: scripts/<file>.py` | helper scripts shipped in the plugin | `uv run --script`; dependencies come from the PEP 723 header and stay in uv's cache |
-| `download: { <platform>: { url, sha256, path } }` | portable binaries: OpenOCD-esp32, espflash, … | downloads, verifies SHA-256, extracts into `runtime/downloads/<sha256>/`, runs `path` inside it |
+| `download: { <platform>: { url, sha256, path?, prefix? } }` | portable binaries: probe-rs, OpenOCD-esp32, the sigrok fork, xPack toolchains, … | downloads, verifies SHA-256, extracts `.zip`, `.tar.gz` and `.tar.xz` into `runtime/downloads/<sha256>/` and runs `path` inside it; a single-file executable (AppImage) is stored as is and made executable. `prefix` lists fixed leading arguments, for example `[--cli]` for the sigrok AppImage |
 | `find: { windows: [...], linux: [...] }` + `hint` | vendor suites the user installs: EIM/ESP-IDF, Wireshark, STM32CubeProgrammer, MPLAB X, PEAK drivers | searches `PATH` and the listed globs; if missing, shows `hint` and its link |
 
 - `uv` ships in the VERA package (`<resources>/uv/`, pinned, one binary per platform). VERA sets

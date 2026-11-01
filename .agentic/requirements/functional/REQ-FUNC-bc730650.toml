@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-bc730650"
+
+title = "Extract presentations slide by slide"
+
+status = "active"
+
+requirement = "When ingest processes a .pptx or .odp file, VERA shall index it as a presentation with one text entry per slide in slide order, including text boxes and tables and excluding speaker notes, so that chunks carry the slide number as their page locator."
+
+verification = "Core extraction test on committed pptx and odp fixtures: slide count and order, table text present, notes text absent; a chunk from slide 2 carries page 2."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/office.ts", "05_Software/src/libraries/core/src/knowledge/office-format.ts", "05_Software/src/libraries/core/src/knowledge/xmldom.d.ts", "05_Software/src/libraries/core/src/knowledge/extraction.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/knowledge/pdf-worker.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/core/src/knowledge/chunk.ts", "05_Software/src/apps/desktop/src/main/document-processor.ts", "05_Software/src/apps/cli/src/document-processor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/office.test.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/tests/e2e/office-documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

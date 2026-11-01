@@ -15,12 +15,19 @@ const sectionSchema = z
 export const extractionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("pdf"), pages: z.array(z.string()).min(1) }).strict(),
   z.object({ kind: z.literal("text"), lines: z.array(z.string()) }).strict(),
-  z.object({ kind: z.enum(["markdown", "html"]), sections: z.array(sectionSchema) }).strict(),
+  z
+    .object({
+      kind: z.enum(["markdown", "html", "document", "spreadsheet"]),
+      sections: z.array(sectionSchema),
+    })
+    .strict(),
+  z.object({ kind: z.literal("presentation"), slides: z.array(z.string()).min(1) }).strict(),
 ]);
 export type Extraction = z.infer<typeof extractionSchema>;
-type Section = z.infer<typeof sectionSchema>;
+export type Section = z.infer<typeof sectionSchema>;
 
-function slugger() {
+/** Unique, stable heading anchors in document order. */
+export function slugger() {
   const used = new Set<string>();
   return (title: string) => {
     const base =

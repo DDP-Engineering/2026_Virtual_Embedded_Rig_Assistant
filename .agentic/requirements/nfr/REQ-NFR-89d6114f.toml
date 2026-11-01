@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-NFR-89d6114f"
+
+title = "Do not walk excluded folders while discovering documents"
+
+status = "active"
+
+requirement = "While discovering documents, VERA shall not list the contents of a folder excluded by docs.exclude, the workbench .veraignore or the permanent .git, node_modules and .vera rules, except that the .vera folder's workbench.yaml and .veraignore stay watched for policy changes."
+
+verification = "Core ingest test: folders excluded by docs.exclude, .veraignore and node_modules each hold files and a nested folder; neither the discovery directory reader nor the file watcher lists or registers those folders or their children, while included folders are listed, watched and their documents indexed."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::lists and watches no folder excluded by docs.exclude, .veraignore or node_modules", "05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::keeps folders that an allowlist .veraignore re-includes", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

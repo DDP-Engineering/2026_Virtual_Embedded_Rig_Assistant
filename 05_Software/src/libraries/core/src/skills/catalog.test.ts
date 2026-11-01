@@ -188,3 +188,30 @@ it("loads body and extra files, rejects escapes, and refreshes invalid shadowing
   expect(await f.catalog.metadata()).toEqual([]);
   await expect(f.catalog.load("reader", "extra.md", new AbortController().signal)).rejects.toThrow();
 });
+it("trusts a user data root redirected above it but still refuses links inside the skills tree", async () => {
+  const f = await fixture();
+  await f.skill("user", "flash-esp32", "Flash ESP32 boards");
+  // A junctioned parent stands in for OS folder redirection or MSIX file virtualization.
+  const alias = join(f.workbench, "..", "alias");
+  try {
+    await symlink(join(f.userData, ".."), alias, process.platform === "win32" ? "junction" : "dir");
+  } catch {
+    return;
+  }
+  const redirected = new SkillCatalog({
+    root: f.workbench,
+    userData: join(alias, "data"),
+    disabled: () => [],
+  });
+  expect((await redirected.list()).map((s) => [s.name, s.error])).toEqual([["flash-esp32", undefined]]);
+  const outside = await mkdtemp(join(tmpdir(), "vera-skills-outside-"));
+  roots.push(outside);
+  await mkdir(join(outside, "linked"));
+  await writeFile(join(outside, "linked", "SKILL.md"), "---\nname: linked\ndescription: Outside\n---\n");
+  await symlink(
+    join(outside, "linked"),
+    join(f.userData, "skills", "linked"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  expect((await redirected.list()).find((s) => s.name === "linked")?.error).toBe("unavailable");
+});

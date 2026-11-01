@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-5e627a51"
+
+title = "Fall back to keyword search when the indexer cannot rank"
+
+status = "active"
+
+requirement = "If semantic ranking for search_docs fails because the indexer is stopped or interrupted, VERA shall return the keyword results for the same query and state that semantic ranking is unavailable, and shall keep failing other ranking errors."
+
+verification = "Core search test: with an embedding port whose rank rejects with a retry error, hybrid and semantic searches return the keyword hit and a message saying semantic ranking is unavailable; a rank error without the retry mark still rejects."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts::falls back to keyword results when the indexer cannot rank, and still fails other ranking errors"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

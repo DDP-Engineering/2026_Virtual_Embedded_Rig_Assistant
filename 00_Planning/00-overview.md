@@ -144,6 +144,13 @@ Primul pachet este ESP32: monitor serial, esptool, ESP-IDF prin EIM, eFuse (deza
 Planul are 18 pachete de lucru, PLG-01…PLG-18, în trei pași; primul pas se încheie cu primul flash pe
 un ESP32. În Gitea: epic-urile #54, #55, #56 și tichetele #57–#74.
 
+**Unelte de banc, independente de furnizor** (epic #80, tichetele #81–#84): `probe-rs` (flash, citire de
+memorie și log-uri RTT pe Cortex-M și RISC-V prin aproape orice sondă de debug), `binutils`
+(mărimea firmware-ului, simboluri, adrese din crash), `sigrok` (analizoare logice, osciloscoape și
+instrumente de laborator, din fork-ul DDP `2026_Pulseview`) și `git` (istoric și diff-uri fără
+aprobare, commit-uri și ramuri cu aprobare). Detalii în `plugins/probe-rs.md`,
+`plugins/binutils.md`, `plugins/sigrok.md` și `plugins/git.md`.
+
 **Capabilități de analiză** (în `capabilities/`, epic #75): două tool-uri interne, `parse_log`
 (log-uri ESP-IDF, Zephyr și cu timestamp ISO, cu evenimente citate) și `decode_register` (decodare
 bit cu bit pe baza unei definiții locale), plus două skill-uri, `firmware-comparator` și

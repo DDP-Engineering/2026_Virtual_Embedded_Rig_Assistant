@@ -21,6 +21,13 @@ it("validates scoped UUID requests and excludes arbitrary paths and launch argum
     { workbenchId, downloadId, external: true },
   ])
     expect(channels["downloads.open"].request.safeParse(request).success).toBe(false);
+  expect(channels["downloads.reveal"].request.safeParse({ downloadId }).success).toBe(true);
+  for (const request of [
+    {},
+    { downloadId: "../escape.zip" },
+    { downloadId, path: `.vera/downloads/${downloadId}/escape.zip` },
+  ])
+    expect(channels["downloads.reveal"].request.safeParse(request).success).toBe(false);
 });
 it("requires a matching immutable managed path and bounded PDF metadata", () => {
   const record = {

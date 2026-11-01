@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-91405ce5"
+
+title = "Reject invalid section parts"
+
+status = "active"
+
+requirement = "If read_doc receives a part outside the section's parts, or a part together with a page or line locator, then VERA shall reject the call with an actionable error naming the valid part range or the heading locator."
+
+verification = "Core search test: part 0, part beyond parts and part with page or lineStart are rejected with an error that names the range or the heading locator; no text is returned."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

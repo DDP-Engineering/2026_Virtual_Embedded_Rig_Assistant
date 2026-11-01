@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-ed65cbbc"
+
+title = "Mark entries ignored by VERA in the Docs tree"
+
+status = "active"
+
+requirement = "The Docs tree shall show entries ignored by VERA, and every entry inside an ignored folder, in italic muted text at AA contrast with faded icons, announced as ignored to screen readers, and shall let them be expanded and opened as text like other entries."
+
+verification = "Renderer test with the mock API: .git and node_modules rows carry the ignored marker and the screen-reader text 'Ignored by VERA'; expanding .git shows its entries marked ignored; clicking .git/config opens it as text through the read channel; browser e2e: ignored row names are italic, at opacity 1 and at least 4.5:1 contrast in light and dark; native e2e lists .git, .vera, node_modules and a .veraignore'd folder marked ignored and opens an ignored text file; locales en/ro/de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::shows entries ignored by VERA in italic with faded icons, announced, expandable and readable", "05_Software/tests/e2e/docs-tree.spec.ts", "05_Software/tests/e2e/documents.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

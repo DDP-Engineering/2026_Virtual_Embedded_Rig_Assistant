@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-fe252a3c"
+
+title = "Detect programs that open workbench entries"
+
+status = "active"
+
+requirement = "When asked which programs can open workbench entries, the desktop app shall report VS Code, Cursor and Notepad++ only when their executables exist in their standard install folders or on PATH, on Windows a terminal, Windows Terminal when installed and otherwise PowerShell, and the Open with dialog when rundll32.exe exists, and on Linux a terminal when x-terminal-emulator is on PATH."
+
+verification = "Main unit test with injected environment and file checks: Code.exe under LOCALAPPDATA is found; code.cmd on PATH resolves to its Code.exe; Cursor is found under Program Files and from the cursor.cmd in resources\\app\\bin on PATH; a missing Cursor is not reported; Notepad++ under Program Files is found; wt.exe in WindowsApps is the terminal, else PowerShell with cmd.exe; rundll32.exe under System32 adds other; on linux code and cursor on PATH are reported and x-terminal-emulator on PATH is the terminal, other never; a link (as an app execution alias is) counts as present; shared contract test for the channel."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/openers.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/documents.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/openers.test.ts::detects installed editors and the terminal on Windows from install folders and PATH", "05_Software/src/apps/desktop/src/main/openers.test.ts::detects code and cursor on PATH elsewhere and no terminal without x-terminal-emulator", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::opens, reveals and copies workbench entries through strict docs channels", "05_Software/src/apps/desktop/src/main/openers.test.ts::counts links and app execution aliases as present and starts real programs detached", "05_Software/src/apps/desktop/src/main/openers.test.ts::adds the Windows Open with dialog and the Linux terminal when they are present", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::offers the system's Open with dialog and registered applications through strict channels", "05_Software/src/apps/desktop/src/main/openers.test.ts::offers only what each platform has: no Open with dialog off Windows, no terminal on macOS"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-01
+updated = 2026-11-01

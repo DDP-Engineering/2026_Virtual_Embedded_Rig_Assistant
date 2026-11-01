@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-ad5868a2"
+
+title = "Preview the documents a selection indexes"
+
+status = "active"
+
+requirement = "When asked to preview a documentation selection for a chosen folder, VERA shall return the number and total bytes of files that the ingest include/exclude matching, ignore rules, document kinds and size limits admit, plus the number of matched legacy Office and RTF documents (.doc, .ppt, .xls, .rtf) that are not indexed, modern office files counting as admitted files, with the same bounds and truncation flag as the scan."
+
+verification = "Core service test: preview of ['datasheets/**'] counts only the PDFs there; adding 'notes/**' adds the Markdown and .docx files and reports the legacy .xls as not indexed; an exclude pattern removes matches; an invalid glob gives INVALID."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/documents-scan.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/workbench.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/documents-scan.test.ts", "05_Software/tests/e2e/workbench.spec.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/shared/src/workbench-create-ipc.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

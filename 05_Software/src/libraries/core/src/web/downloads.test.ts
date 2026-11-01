@@ -156,6 +156,34 @@ it("rechecks authority at the completed rename and removes an unaccepted publica
   await expect(f.store.save(f.target, f.context, new AbortController().signal)).rejects.toThrow(/ownership/i);
   expect(await readdir(join(f.root, ".vera/downloads"))).toEqual([]);
 });
+it("locates a stored non-PDF download for the file manager and refuses unverifiable files", async () => {
+  const f = await fixture();
+  f.transfer.mockResolvedValue({
+    data: Buffer.from("PK\x03\x04\x00\xff"),
+    mime: "application/zip",
+    finalUrl: "https://cdn.example.org/firmware.zip",
+  });
+  const record = await f.store.save(
+    f.store.allocate("https://example.org/firmware.zip"),
+    f.context,
+    new AbortController().signal,
+  );
+  await expect(f.store.locate(record.downloadId)).resolves.toBe(join(f.root, record.path));
+  await expect(f.store.locate("../../outside")).rejects.toMatchObject({ code: "INVALID" });
+  await expect(f.store.locate("00000000-0000-4000-8000-000000000000")).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  await writeFile(join(f.root, record.path), "changed length");
+  await expect(f.store.locate(record.downloadId)).rejects.toMatchObject({ code: "CONFLICT" });
+  await rm(join(f.root, record.path));
+  await expect(f.store.locate(record.downloadId)).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+it("refuses to locate a hard-linked download", async () => {
+  const f = await fixture();
+  const record = await f.store.save(f.target, f.context, new AbortController().signal);
+  await link(join(f.root, record.path), join(f.root, "outside.pdf"));
+  await expect(f.store.locate(record.downloadId)).rejects.toMatchObject({ code: "DENIED" });
+});
 it("reports missing files and corrupt manifests through the current structured error contract", async () => {
   const f = await fixture();
   const record = await f.store.save(f.target, f.context, new AbortController().signal);

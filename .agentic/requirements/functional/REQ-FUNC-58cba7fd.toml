@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-58cba7fd"
+
+title = "Extract word processing documents by heading"
+
+status = "active"
+
+requirement = "When ingest processes a .docx or .odt file, VERA shall index it as a document whose sections follow its headings, with any text before the first heading in a leading section, so that chunks carry heading locators."
+
+verification = "Core extraction test on committed docx and odt fixtures: sections and their order, heading slugs and text, the leading section; search_docs returns a heading ref for a phrase under the second heading."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/office.ts", "05_Software/src/libraries/core/src/knowledge/office-format.ts", "05_Software/src/libraries/core/src/knowledge/xmldom.d.ts", "05_Software/src/libraries/core/src/knowledge/extraction.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/knowledge/pdf-worker.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/core/src/knowledge/chunk.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/workbench/documents-scan.ts", "05_Software/src/libraries/core/package.json", "05_Software/scripts/make-office-fixtures.mjs", "05_Software/src/apps/desktop/src/main/document-processor.ts", "05_Software/src/apps/cli/src/document-processor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/office.test.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/src/libraries/core/src/workbench/documents-scan.test.ts", "05_Software/tests/e2e/office-documents.spec.ts", "05_Software/tests/e2e/workbench.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-10-31
+updated = 2026-10-31

@@ -25,8 +25,9 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
   state inside the serialized queue. ChatGPT default selection and logout use it to retain
   concurrently selected models from another provider; IPC patches cannot supply predicates.
 - Schema 4 persists a stable installation UUID, language/theme/textScale and current non-secret
-  model/provider/update/recent/limit defaults. Exact contract:
-  [data spec](../specs/REQ-DATA-4a030001.md).
+  model/provider/update/recent/limit defaults. Optional sessionOrder (session ids per workbench
+  id, TASK-c99ca08c) is main-owned: only the internal service patch writes it, the IPC settings
+  patch rejects it. Exact contract: [data spec](../specs/REQ-DATA-4a030001.md).
 - app.settings.get({}) and app.settings.update(patch) use validated schemas.
   VeraApi exposes getSettings/updateSettings; mockApi uses the same schemas and event behavior.
 - PathProvider supplies userData/settings/logs; Clock supplies now/sleep; FileAccess supplies

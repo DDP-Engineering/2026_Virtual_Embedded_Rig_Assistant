@@ -46,8 +46,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(page.locator("[data-workbench-overview]")).toBeVisible();
     await expect(page.locator("[data-workbench-overview]")).toContainText("/mock/new-board");
     await page.locator('[data-action="edit-workbench-overview"]').click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(page.locator(".workbench-editor")).toBeVisible();
+    await page.locator(".workbench-editor").getByRole("button", { name: "Cancel", exact: true }).click();
     await group.locator(".workbench-menu > summary").click();
     await group.getByRole("button", { name: "Pin", exact: true }).click();
     await expect(group).toHaveAttribute("data-pinned", "true");
@@ -58,8 +58,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator("[data-project-name]").fill("ESP32 revised");
     await dialog.locator('[data-project-section="tools"]').click();
     const tools = dialog.locator("[data-tool-toggle]");
-    await expect(tools).toHaveCount(13);
-    await expect(dialog.locator("[data-tool-description]")).toHaveCount(13);
+    await expect(tools).toHaveCount(14);
+    await expect(dialog.locator("[data-tool-description]")).toHaveCount(14);
     for (const tool of [
       "read",
       "list",
@@ -80,6 +80,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator('[data-tool-toggle="grep"]').uncheck();
     await dialog.locator('[data-tool-toggle="read"]').uncheck();
     await dialog.locator('[data-tool-toggle="read"]').check();
+    await dialog.locator('[data-project-section="skills"]').click();
     await dialog.locator('[data-action="skills-settings"]').click();
     const skillDialog = page.locator(".skills-dialog");
     await skillDialog.locator("[data-skill-name]").fill("test-reader");
@@ -108,6 +109,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator('[data-project-section="tools"]').click();
     await expect(dialog.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await expect(dialog.locator('[data-tool-toggle="read"]')).toBeChecked();
+    await dialog.locator('[data-project-section="skills"]').click();
     await dialog.locator('[data-action="skills-settings"]').click();
     await expect(skillDialog.locator('input[type="checkbox"]')).not.toBeChecked();
     await page.keyboard.press("Escape");
