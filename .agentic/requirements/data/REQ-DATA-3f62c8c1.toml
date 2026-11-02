@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-3f62c8c1"
+title = "Report irreversible rules in plugin summaries"
+status = "active"
+requirement = "The plugin summaries returned by plugins.list shall carry, for each plugin without issues, its irreversible rules as pattern and optional note in manifest order."
+verification = "PluginStore.list of a plugin with rules safe, irreversible (note N) and irreversible returns irreversible [{match, note N}, {match}]; a plugin with issues has no irreversible field; the plugins.list response schema accepts the field and the mock returns it."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts", "05_Software/src/libraries/shared/src/program-approval-schema.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

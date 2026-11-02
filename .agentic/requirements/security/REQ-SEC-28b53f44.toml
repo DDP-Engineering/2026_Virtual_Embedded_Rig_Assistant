@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-28b53f44"
+title = "Refuse unsafe program arguments before any rule"
+status = "active"
+requirement = "If a program request has an argument that starts with @, an argument that contains NUL, a carriage return or a line feed, more than 64 arguments or an argument longer than 4096 characters, then request preparation shall fail with DENIED and params reason argument-file, control, count or length before any rule is evaluated or any file is read."
+verification = "`esptool @args.txt` fails DENIED {reason argument-file, index 0}; `a\\nb` and `a\\0b` fail {reason control}; 65 arguments fail {reason count}; a 4097-character argument fails {reason length}; boundary: 64 arguments of 4096 characters and an argument `x@y` are accepted."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts", "05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

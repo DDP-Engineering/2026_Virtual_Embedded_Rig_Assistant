@@ -6,8 +6,9 @@ risks.
 DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user installs the ESP32 pack
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
 release smoke covers the approval card, the typed confirmation and process-tree termination.
-STATUS: decisions accepted 2026-11-01. PLG-01 is implemented (manifest schema, plugin store, per-workbench
-enablement; AEGIS TASK-0cb6ef0f); otherwise nothing is implemented yet except PLG-05's removal of the size
+STATUS: decisions accepted 2026-11-01. PLG-01 (manifest schema, plugin store, per-workbench enablement; AEGIS
+TASK-0cb6ef0f), PLG-02 (process host and runner; TASK-50789c10) and PLG-03 (rules, risk levels and approvals;
+TASK-9b39247f) are implemented; otherwise nothing is implemented yet except PLG-05's removal of the size
 checks. Builds on code that already exists: skill catalog, approvals bound to `requestSha256`,
 permission modes, tool registry. Implementation follows the repository's AEGIS workflow
 (CLAUDE.md), one work package per task. Gitea tracks each work package as one issue.
@@ -119,6 +120,12 @@ an approval, a wrong typed word being refused, and a trial plugin's `safe` comma
 approval in `bypass`. Playwright e2e approves a `device-write` run on the card, refuses an
 irreversible run with a wrong typed word and completes it with the right one in `ask`, and shows the
 bypass warning before running the same command without a prompt in `bypass`.
+- Done 2026-11-02: shared `program-rules.ts` (matcher, refusals, policy, typed word), core
+  `program-request.ts` and the ApprovalGate's run_program branch, the card, the bypass warning list and
+  the CLI prompt. The Playwright e2e runs against the browser mock, which decides with the same shared
+  policy; core's gate is proven with real SQLite in unit tests. PLG-04 owes a native replay e2e once
+  `run_program` exists, and should consume the approval right before `runner.start` (a named file can
+  still change between consume and spawn).
 
 ### PLG-04 Agent integration
 **Goal:** the agent sees enabled programs and runs them. **Depends on:** PLG-01, PLG-02, PLG-03.

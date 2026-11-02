@@ -225,11 +225,24 @@ Approval request: a new variant of `ChangeRequest` in `core/src/tools/changes.ts
 existing `requestSha256`:
 
 ```ts
-{ tool: "run_program", sessionId, turnId, callId, pluginId, pluginSha256, program, executable,
-  programVersion, args, cwd, risk, notes: string[], files: { arg: number; path: string; sha256: string }[] }
+{ tool: "run_program", workbench, sessionId, turnId, callId, pluginId, pluginSha256, trial: boolean,
+  program, executable, programVersion: string | null, args, cwd, risk, confirm: string | null,
+  notes: string[], files: { arg: number; path: string; sha256: string }[] }
 ```
 
-`files` lists every argument that resolves, through the path guard, to an existing workbench file.
+`trial` and `confirm` are part of the hashed request, so an approval also binds the trial status and
+the typed word. `confirm` is the command token matched by the first non-wildcard pattern token after the
+program in the first matching irreversible rule (the program name when there is none), null for other
+risks. Safe commands of a non-trial plugin run without an approval record; device-read in `auto-edit`
+and everything but `blocked` in `bypass` are recorded as `decided_by: mode`. A wrong typed word fails
+the decision (INVALID `approval.confirmMismatch`) and the approval stays pending. A program declared by
+two enabled plugins is refused (DENIED `ambiguous`). The bypass warning lists the irreversible rules of
+enabled, issue-free, non-trial plugins and is shown even when the general bypass warning is
+suppressed. The matched command line is the agent's arguments only, never a launcher or prefix. Exact rules:
+`.agentic/specs/REQ-FUNC-80b2033a.md`.
+
+`files` lists every argument (or `--name=value` value) that resolves, relative to `cwd`, through the
+path guard to an existing workbench file.
 Approving `write-flash 0x10000 build/app.bin` therefore approves those exact bytes. A rebuilt image
 needs a new approval.
 

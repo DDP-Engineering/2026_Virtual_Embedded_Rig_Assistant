@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-f40ac584"
+title = "Refuse switching to auto-edit when approving a typed confirmation"
+status = "active"
+requirement = "If an approval that needs a typed confirmation is decided with the switch to auto-edit, then the decision shall fail with INVALID and the session mode shall stay unchanged."
+verification = "Deciding a burn-key approval with the right word and switchToAutoEdit fails INVALID; the session stays in ask and the approval stays pending; a device-write approval in ask still accepts switchToAutoEdit."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

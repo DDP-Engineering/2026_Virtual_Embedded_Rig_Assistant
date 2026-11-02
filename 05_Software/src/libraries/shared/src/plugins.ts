@@ -197,6 +197,13 @@ export const pluginInstalledSchema = z.strictObject({
     .regex(/^[0-9a-f]{64}$/)
     .optional(),
   installedAt: z.iso.datetime().optional(),
+  /** Irreversible rules of a plugin without issues, in manifest order (the bypass warning lists them). */
+  irreversible: z
+    .array(
+      z.strictObject({ match: z.string().min(1).max(1024), note: z.string().min(1).max(512).optional() }),
+    )
+    .max(512)
+    .optional(),
 });
 export type PluginInstalled = z.infer<typeof pluginInstalledSchema>;
 export const pluginSummarySchema = pluginInstalledSchema.extend({ enabled: z.boolean() });

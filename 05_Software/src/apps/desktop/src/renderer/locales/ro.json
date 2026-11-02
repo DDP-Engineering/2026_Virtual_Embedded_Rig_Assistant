@@ -291,7 +291,23 @@
     "mode": "Mod de permisiuni",
     "readOnly": "Doar citire",
     "ask": "Întreabă",
-    "autoEdit": "Editare automată"
+    "autoEdit": "Editare automată",
+    "risk": {
+      "safe": "Sigur",
+      "deviceRead": "Citire dispozitiv",
+      "deviceWrite": "Scriere dispozitiv",
+      "irreversible": "Ireversibil",
+      "blocked": "Blocat"
+    },
+    "trial": "Plugin de probă",
+    "plugin": "Plugin: {{plugin}}",
+    "command": "Linie de comandă",
+    "cwd": "Director de lucru",
+    "executable": "Executabil",
+    "notes": "Note ale regulilor",
+    "files": "Fișierele workbenchului și SHA-256 al lor",
+    "typeToConfirm": "Această modificare este permanentă. Tastați {{word}} pentru a confirma.",
+    "confirmMismatch": "Cuvântul tastat nu se potrivește. Tastați cuvântul afișat pe card."
   },
   "changes": {
     "empty": "Nu există modificări în această sesiune.",
@@ -504,7 +520,8 @@
     "option": "Bypass — acces complet",
     "title": "Bypass: acces complet la fișiere",
     "warning": "Agentul poate citi și modifica fișiere oriunde contul tău are acces, inclusiv în afara workbenchului, fără să mai ceară confirmare. Poate deteriora proiecte, fișiere sau setările aplicațiilor. Sunt disponibile doar tool-urile activate; permisiunile sistemului de operare se păstrează.",
-    "dontShowAgain": "Nu mai afișa acest mesaj data viitoare"
+    "dontShowAgain": "Nu mai afișa acest mesaj data viitoare",
+    "irreversible": "Aceste reguli ale pluginurilor activate fac modificări permanente sau acționează în afara dispozitivului. În Bypass rulează fără să întrebe:"
   },
   "webAccess": {
     "description": "Gestionează accesul la internet separat de providerii AI. Se aplică în continuare permisiunile tool-urilor din workbench.",

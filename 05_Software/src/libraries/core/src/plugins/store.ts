@@ -307,6 +307,13 @@ export class PluginStore {
             platforms: manifest.platforms,
           }
         : {}),
+      ...(manifest && !issues.length
+        ? {
+            irreversible: manifest.rules
+              .filter((rule) => rule.risk === "irreversible")
+              .map(({ match, note }) => (note === undefined ? { match } : { match, note })),
+          }
+        : {}),
       ...(record
         ? {
             tier: record.tier,

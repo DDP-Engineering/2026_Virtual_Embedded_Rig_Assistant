@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-9744e270"
+title = "Show program approvals on the approval card"
+status = "active"
+requirement = "When a run_program approval is requested, the desktop approval card shall show a localised risk badge, the program with its version, the executable, the full command line, every rule note and each named file with its SHA-256, and, when a typed confirmation is needed, a labelled text field naming the word to type."
+verification = "Playwright in browser mock mode: a device-write run shows the device-write badge, `esptool --port COM3 write-flash 0x10000 build/app.bin`, its note and the file hash and is approved with the Approve button; an irreversible run shows the typed field, a wrong word shows the mismatch error and keeps the card pending, the right word approves it; en, ro and de strings pass check:i18n."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/apps/desktop/src/main/events.ts"]
+linked_tests = ["05_Software/tests/e2e/program-approvals.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.test.ts", "05_Software/src/apps/desktop/src/main/events.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

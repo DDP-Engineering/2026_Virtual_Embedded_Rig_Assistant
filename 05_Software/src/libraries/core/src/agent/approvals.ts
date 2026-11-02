@@ -1,7 +1,15 @@
 import { createHash } from "node:crypto";
-import { type PermissionMode, type SessionEvent, veraError } from "@vera/shared";
+import {
+  confirmationMatches,
+  type PermissionMode,
+  type ProgramPolicy,
+  programPolicy,
+  type SessionEvent,
+  veraError,
+} from "@vera/shared";
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
+import { programApproval } from "../plugins/program-request.js";
 import type { ChangeRequest } from "../tools/changes.js";
 
 /** Exact request serialization: object keys sorted recursively, array order preserved. */
@@ -28,6 +36,18 @@ export interface ApprovalDecision {
   requestSha256: string;
   decision: "approved" | "denied";
   switchToAutoEdit?: boolean | undefined;
+  /** The typed confirmation of an irreversible program command. */
+  confirmation?: string | undefined;
+}
+/** The program policy of a run_program request in `mode`; undefined for file and download requests. */
+function policyOf(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
+  return request.tool === "run_program" ? programPolicy(mode, request.risk, request.trial) : undefined;
+}
+/** Whether the current mode approves the request without asking the user. */
+function byMode(request: ChangeRequest, mode: PermissionMode): boolean {
+  return request.tool === "run_program"
+    ? policyOf(request, mode) === "mode"
+    : mode === "bypass" || (mode === "auto-edit" && !request.protected);
 }
 interface Pending {
   request: ChangeRequest;
@@ -54,7 +74,15 @@ export class ApprovalGate {
     this.host.assertWritable();
     if (!this.host.active(request.sessionId, request.turnId)) throw veraError("CONFLICT");
     const mode = this.host.mode(request.sessionId);
-    if (mode === "read-only" || (request.scope === "filesystem" && mode !== "bypass")) return "aborted";
+    const policy = policyOf(request, mode);
+    // Safe program commands run without a record; refused ones never reach the user.
+    if (policy === "run") return "approved";
+    if (policy === "refuse") return "aborted";
+    if (
+      request.tool !== "run_program" &&
+      (mode === "read-only" || (request.scope === "filesystem" && mode !== "bypass"))
+    )
+      return "aborted";
     const id = `apv_${ulid()}`,
       digest = requestSha256(request);
     let resolve!: (decision: Decision) => void;
@@ -88,17 +116,20 @@ export class ApprovalGate {
           callId: request.callId,
           requestSha256: digest,
           tool: request.tool,
-          path: request.path,
-          diff: request.diff,
-          bytes: request.bytes,
-          ...(request.tool === "web_download" ? { download: request.download } : {}),
+          ...(request.tool === "run_program"
+            ? { path: request.program, diff: "", bytes: 0, program: programApproval(request) }
+            : {
+                path: request.path,
+                diff: request.diff,
+                bytes: request.bytes,
+                ...(request.tool === "web_download" ? { download: request.download } : {}),
+              }),
         });
       })();
       signal.addEventListener("abort", abort, { once: true });
       publish();
       if (signal.aborted) abort();
-      else if ((mode === "bypass" || (mode === "auto-edit" && !request.protected)) && this.pending.has(id))
-        this.finish(id, "approved", "mode");
+      else if (byMode(request, mode) && this.pending.has(id)) this.finish(id, "approved", "mode");
       return await result;
     } catch (error) {
       entry.cleanup();
@@ -119,7 +150,18 @@ export class ApprovalGate {
       throw veraError("CONFLICT");
     if (input.decision !== "approved" && input.decision !== "denied") throw veraError("INVALID");
     if (input.switchToAutoEdit && input.decision !== "approved") throw veraError("INVALID");
-    if (this.host.mode(input.sessionId) === "read-only") throw veraError("CONFLICT");
+    const mode = this.host.mode(input.sessionId);
+    if (mode === "read-only") throw veraError("CONFLICT");
+    // Core compares the typed word; a refusal leaves the approval pending for another try.
+    if (
+      input.decision === "approved" &&
+      entry.request.tool === "run_program" &&
+      policyOf(entry.request, mode) === "confirm"
+    ) {
+      if (input.switchToAutoEdit) throw veraError("INVALID");
+      if (!confirmationMatches(entry.request.confirm, input.confirmation))
+        throw { ...veraError("INVALID"), messageKey: "approval.confirmMismatch" };
+    }
     this.finish(input.approvalId, input.decision, "user", input.switchToAutoEdit);
   }
   private finish(id: string, decision: Decision, by: "user" | "mode", switchMode = false): void {
@@ -155,7 +197,8 @@ export class ApprovalGate {
       if (
         this.host.mode(sessionId) === "bypass" &&
         entry.request.sessionId === sessionId &&
-        !entry.signal.aborted
+        !entry.signal.aborted &&
+        byMode(entry.request, "bypass")
       )
         this.finish(id, "approved", "mode");
   }
@@ -175,6 +218,7 @@ export class ApprovalGate {
   }
   consume(request: ChangeRequest): void {
     this.assertGranted(request);
+    if (policyOf(request, this.host.mode(request.sessionId)) === "run") return;
     const changed = this.host.db
       .prepare(
         "UPDATE approvals SET consumed_at=? WHERE session_id=? AND turn_id=? AND tool_call_id=? AND request_sha256=? AND decision='approved' AND consumed_at IS NULL",
@@ -190,11 +234,12 @@ export class ApprovalGate {
   }
   assertGranted(request: ChangeRequest): void {
     this.host.assertWritable();
-    if (
-      !this.host.active(request.sessionId, request.turnId) ||
-      this.host.mode(request.sessionId) === "read-only"
-    )
-      throw veraError("CONFLICT");
+    const mode = this.host.mode(request.sessionId);
+    const policy = policyOf(request, mode);
+    if (!this.host.active(request.sessionId, request.turnId)) throw veraError("CONFLICT");
+    // A safe program command has no record to check; it runs in every mode.
+    if (policy === "run") return;
+    if (mode === "read-only" || policy === "refuse") throw veraError("CONFLICT");
     const row = this.host.db
       .prepare(
         "SELECT decided_by FROM approvals WHERE session_id=? AND turn_id=? AND tool_call_id=? AND request_sha256=? AND decision='approved'",
@@ -202,6 +247,11 @@ export class ApprovalGate {
       .get(request.sessionId, request.turnId, request.callId, requestSha256(request)) as
       | { decided_by: string }
       | undefined;
+    if (request.tool === "run_program") {
+      // A mode decision lasts only while the current mode would still decide it the same way.
+      if (!row || (row.decided_by === "mode" && policy !== "mode")) throw veraError("CONFLICT");
+      return;
+    }
     if (
       !row ||
       (request.scope === "filesystem" && this.host.mode(request.sessionId) !== "bypass") ||

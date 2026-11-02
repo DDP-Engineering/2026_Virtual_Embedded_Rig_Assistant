@@ -16,7 +16,7 @@ import {
 } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
 import { customSettingsSchema, veraError, veraErrorSchema } from "@vera/shared";
-import { promptApproval } from "./approval-prompt.js";
+import { flagDecision, promptApproval } from "./approval-prompt.js";
 import type { RunOptions } from "./args.js";
 import { createDocumentServices } from "./document-processor.js";
 import {
@@ -217,22 +217,23 @@ export async function runTurn(
               null
             )
               return;
-            const decision =
-              options.approve === "all"
-                ? "approved"
-                : options.approve === "none"
-                  ? "denied"
-                  : process.stdin.isTTY && process.stderr.isTTY
-                    ? await promptApproval(event, signal, process.stdin, process.stderr, (text) =>
-                        logger.scrub(text),
-                      )
-                    : "denied";
+            const flagged = flagDecision(
+              event,
+              options.approve,
+              !!(process.stdin.isTTY && process.stderr.isTTY),
+            );
+            const { decision, confirmation } = flagged
+              ? { decision: flagged, confirmation: undefined }
+              : await promptApproval(event, signal, process.stdin, process.stderr, (text) =>
+                  logger.scrub(text),
+                );
             if (decision !== "aborted")
               service.decideApproval({
                 sessionId: id,
                 approvalId: event.approvalId,
                 requestSha256: event.requestSha256,
                 decision,
+                ...(confirmation === undefined ? {} : { confirmation }),
               });
           })
           .catch((error) => {

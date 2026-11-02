@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-ce28991b"
+title = "Revoke a mode-decided program approval after a mode change"
+status = "active"
+requirement = "If a program approval decided by mode is consumed while the session's current mode would not approve that command by mode, then consuming it shall fail with CONFLICT."
+verification = "A device-write approval decided by mode in bypass fails consume with CONFLICT after the session switches to ask; a device-read approval decided by mode in auto-edit still consumes in bypass."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

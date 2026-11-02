@@ -2,6 +2,7 @@ import { z } from "zod";
 import { documentSchema, documentVolumeSchema, indexerStateSchema } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import type { Channel, Request, Response } from "./ipc.js";
+import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
   permissionModeSchema,
@@ -115,13 +116,15 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
       approvalId: z.string(),
       callId: z.string(),
       requestSha256: z.string(),
-      tool: z.enum(["write", "edit", "web_download"]),
+      tool: z.enum(["write", "edit", "web_download", "run_program"]),
       path: z.string(),
       diff: z.string(),
       bytes: count,
       download: downloadApprovalSchema.optional(),
+      program: programApprovalSchema.optional(),
     })
-    .refine(validDownloadApproval),
+    .refine(validDownloadApproval)
+    .refine(validProgramApproval),
   z.strictObject({
     type: z.literal("approval.decided"),
     approvalId: z.string(),

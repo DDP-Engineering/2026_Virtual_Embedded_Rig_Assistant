@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9ca99463"
+title = "Classify an unmatched command as device-write"
+status = "active"
+requirement = "If no rule of the declaring plugin matches a command line, then the matcher shall classify it as device-write with no notes."
+verification = "A plugin whose rules cover `esptool version` only classifies `esptool frobnicate` as device-write with notes []; boundary: a plugin with no rules classifies every command as device-write."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

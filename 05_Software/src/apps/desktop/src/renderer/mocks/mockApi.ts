@@ -120,6 +120,10 @@ export function createMockApi(
   const folderNotes = new Map([["/mock/with-notes", "Existing bench notes\n"]]);
   /** Installed plugins by id; install names the plugin after the chosen folder or zip. */
   const installedPlugins = new Map<string, PluginInstalled>();
+  /** Irreversible rules of mock plugins by id; other ids have none. */
+  const irreversibleRules: Record<string, PluginInstalled["irreversible"]> = {
+    "esp32-efuse": [{ match: "espefuse * burn-key *", note: "Burns a key into eFuse permanently." }],
+  };
   /** Later prefixes shadow earlier ones, as workbench skills shadow user skills. */
   function skillSummaries(prefixes: string[], disabled: readonly string[]) {
     const names = new Map<string, { content: string; source: "user" | "workbench" }>();
@@ -446,6 +450,7 @@ export function createMockApi(
           description: `Mock plugin installed from ${path}.`,
           ecosystem: "general",
           platforms: ["windows-x64", "linux-x64"],
+          irreversible: irreversibleRules[id] ?? [],
           tier: "local",
           source: /\.zip$/i.test(path) ? "zip" : "folder",
           sha256: "0".repeat(64),

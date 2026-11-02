@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-2819a97e"
+title = "Apply the highest risk of all matching rules"
+status = "active"
+requirement = "When several rules of the declaring plugin match a command line, the matcher shall classify it with the highest of their risks in the order blocked, irreversible, device-write, device-read, safe, and shall carry the notes of every matching rule once each in manifest order."
+verification = "With `idf.py * build *` safe (note A) and `idf.py * flash *` device-write (note B), `idf.py build flash` is device-write with notes [A, B]; adding an irreversible rule that also matches makes it irreversible; a duplicated note appears once."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

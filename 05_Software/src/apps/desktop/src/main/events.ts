@@ -2,6 +2,7 @@ import {
   type EventEnvelope,
   eventEnvelopeSchema,
   modelReferenceSchema,
+  type ProgramApproval,
   type SessionState,
   type SessionSummary,
   type TodoItem,
@@ -9,6 +10,17 @@ import {
   type WorkbenchWarning,
 } from "@vera/shared";
 
+/** Redacts a program approval's displayed strings; the confirmation word stays what core compares. */
+function scrubProgram(program: ProgramApproval, scrub: (text: string) => string): ProgramApproval {
+  return {
+    ...program,
+    executable: scrub(program.executable),
+    args: program.args.map(scrub),
+    cwd: scrub(program.cwd),
+    notes: program.notes.map(scrub),
+    files: program.files.map((file) => ({ ...file, path: scrub(file.path) })),
+  };
+}
 function scrubExtra(value: unknown, scrub: (text: string) => string): unknown {
   if (typeof value === "string") return scrub(value);
   if (Array.isArray(value)) return value.map((item) => scrubExtra(item, scrub));
@@ -57,7 +69,12 @@ export function sanitizeSessionSnapshot(
       if (item.preview !== undefined) item.preview = scrub(item.preview);
     }
   }
-  state.approvals = state.approvals.map((a) => ({ ...a, path: scrub(a.path), diff: scrub(a.diff) }));
+  state.approvals = state.approvals.map((a) => ({
+    ...a,
+    path: scrub(a.path),
+    diff: scrub(a.diff),
+    ...(a.program ? { program: scrubProgram(a.program, scrub) } : {}),
+  }));
   state.changes = state.changes.map((c) => ({ ...c, path: scrub(c.path) }));
   state.artifacts = state.artifacts.map((a) => ({ ...a, name: scrub(a.name) }));
   state.todos = sanitizeTodos(state.todos, scrub);
@@ -125,6 +142,8 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       if (event.modelRef !== undefined) Reflect.set(result, "modelRef", scrubModel(event.modelRef, scrub));
     }
     if (event.type === "tool.started") Reflect.set(result, "args", extra(event.args));
+    if (event.type === "approval.requested" && event.program)
+      Reflect.set(result, "program", scrubProgram(event.program, scrub));
     if (event.type === "message.done")
       Reflect.set(
         result,

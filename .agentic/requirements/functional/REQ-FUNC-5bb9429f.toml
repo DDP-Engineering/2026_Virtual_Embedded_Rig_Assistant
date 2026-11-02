@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-5bb9429f"
+title = "Normalise command tokens before rule matching"
+status = "active"
+requirement = "When a command line is matched against plugin rules, the matcher shall compare the program name and each argument lowercased with every underscore replaced by a hyphen and with each argument of the form --name=value split into --name and value, and shall normalise pattern tokens the same way."
+verification = "Rule `esptool * {write-flash} *` classifies `esptool --chip esp32 write_flash 0x0 a.bin` and `esptool WRITE-FLASH` alike; rule `tool * --driver x *` matches both `tool --driver=X` and `tool --driver x`; boundary: `-d=x` (single dash) stays one token and does not match `-d x`."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

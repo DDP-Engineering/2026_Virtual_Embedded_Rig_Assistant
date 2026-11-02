@@ -1,5 +1,11 @@
 // REQ-UX-33b9d601 REQ-UX-bb147586
-import { type UseQueryResult, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  type UseQueryResult,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type PermissionMode, permissionModeSchema, type SettingsSnapshot } from "@vera/shared";
 import { TriangleAlert } from "lucide-react";
 import { type RefObject, useEffect, useId, useRef, useState } from "react";
@@ -8,19 +14,43 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 
+interface IrreversibleRule {
+  plugin: string;
+  match: string;
+  note?: string | undefined;
+}
+/** Irreversible rules of the workbench's enabled, issue-free plugins that are not trials. */
+async function irreversibleRules(client: QueryClient, workbenchId: string): Promise<IrreversibleRule[]> {
+  const plugins = await client.fetchQuery({
+    queryKey: ["plugins.list", workbenchId],
+    queryFn: () => api.invoke("plugins.list", { workbenchId }),
+    staleTime: 0,
+  });
+  return plugins
+    .filter((plugin) => plugin.enabled && !plugin.issues.length && plugin.tier !== "trial")
+    .flatMap((plugin) =>
+      (plugin.irreversible ?? []).map((rule) => ({ plugin: plugin.name ?? plugin.id, ...rule })),
+    );
+}
+
 export function PermissionPicker({
   mode,
   disabled,
   change,
   label,
+  workbenchId,
 }: {
   mode: PermissionMode;
   disabled: boolean;
   change: (mode: PermissionMode) => void | Promise<void>;
   label?: string;
+  /** The session's workbench: switching to bypass lists its plugins' irreversible rules. */
+  workbenchId?: string | undefined;
 }) {
   const { t } = useTranslation();
+  const client = useQueryClient();
   const [warning, setWarning] = useState(false);
+  const [irreversible, setIrreversible] = useState<IrreversibleRule[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
   const picker = useRef<HTMLSelectElement>(null);
@@ -38,7 +68,12 @@ export function PermissionPicker({
     setError(undefined);
     try {
       await change(next);
-      if (alive.current && next === "bypass" && preferences.data?.settings.suppressBypassWarning !== true)
+      if (next !== "bypass") return;
+      // An unreadable plugin list shows the warning even when it is suppressed.
+      const rules = workbenchId ? await irreversibleRules(client, workbenchId).catch(() => null) : [];
+      if (!alive.current) return;
+      setIrreversible(rules ?? []);
+      if (rules === null || rules.length > 0 || preferences.data?.settings.suppressBypassWarning !== true)
         setWarning(true);
     } catch (failure) {
       if (alive.current) setError(failure);
@@ -71,6 +106,7 @@ export function PermissionPicker({
           <BypassWarning
             opener={picker}
             preferences={preferences}
+            irreversible={irreversible}
             close={() => {
               setWarning(false);
             }}
@@ -84,10 +120,12 @@ export function PermissionPicker({
 function BypassWarning({
   opener,
   preferences,
+  irreversible,
   close,
 }: {
   opener: RefObject<HTMLSelectElement | null>;
   preferences: UseQueryResult<SettingsSnapshot, Error>;
+  irreversible: IrreversibleRule[];
   close: () => void;
 }) {
   const { t } = useTranslation();
@@ -139,6 +177,20 @@ function BypassWarning({
         </h2>
       </header>
       <p id={description}>{t("bypass.warning")}</p>
+      {irreversible.length > 0 && (
+        <section className="bypass-irreversible" data-bypass-irreversible>
+          <p>{t("bypass.irreversible")}</p>
+          <ul>
+            {irreversible.map((rule, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Rules are a fixed list for the dialog's lifetime and may repeat.
+              <li key={index}>
+                <strong>{rule.plugin}</strong> <code>{rule.match}</code>
+                {rule.note && <span> — {rule.note}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <label className="bypass-remember">
         <input
           type="checkbox"

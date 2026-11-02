@@ -34,6 +34,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "provider.context": t("provider.context", options),
     "provider.failure": t("provider.failure", options),
     "context.budget_exceeded": t("context.budget_exceeded", options),
+    "approval.confirmMismatch": t("approval.confirmMismatch"),
     "documents.textBinary": t("documents.textBinary"),
     "documents.textTooLarge": t("documents.textTooLarge"),
   };

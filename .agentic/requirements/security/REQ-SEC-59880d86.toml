@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-59880d86"
+title = "Refuse a program that no enabled plugin declares"
+status = "active"
+requirement = "If a requested program name is not declared by any plugin enabled for the workbench, then program lookup shall fail with DENIED and params reason undeclared."
+verification = "With esp32-esptool enabled and declaring esptool, `esptool` resolves to that plugin; `espefuse` fails DENIED {reason undeclared}; boundary: an empty enabled list (the caller passes only the workbench's enabled plugins) fails the same way."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

@@ -6,14 +6,21 @@ Select for plugin.yaml validation, the installed plugin store under `<userData>/
 install.json, the integrity hash ("changed since review"), install from a folder or zip, uninstall,
 plugin listing issues, `plugins.enabled` in workbench.yaml and the `plugins.*` IPC channels; also for
 running plugin programs: the `ProcessHost` port, `ProgramRunner`, run logs in `.vera/runs/`, timeouts,
-Stop and process-tree kills, background runs, the serial-port guard and launcher quoting. Start at
+Stop and process-tree kills, background runs, the serial-port guard and launcher quoting; and for rule
+matching, risk levels, the mode matrix, trial plugins, run_program approval requests, typed
+confirmation and the irreversible rules listed by the bypass warning. Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
-`05_Software/src/libraries/core/src/plugins/store.ts` (store) or
-`05_Software/src/libraries/core/src/plugins/runner.ts` (runner); focused tests sit next to each, and
-real processes run in `05_Software/tests/integration/process-hosts.test.ts`.
+`05_Software/src/libraries/core/src/plugins/store.ts` (store),
+`05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
+`05_Software/src/libraries/shared/src/program-rules.ts` (matcher and policy) or
+`05_Software/src/libraries/core/src/plugins/program-request.ts` (approval requests); focused tests sit
+next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
+and real processes run in `05_Software/tests/integration/process-hosts.test.ts`.
 [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
 owns Agent Skills discovery (plugin skills are not loaded yet); [IPC boundary](ipc-boundary.md)
-owns channel registration and frame authorization.
+owns channel registration and frame authorization; [Sessions](sessions.md) owns the ApprovalGate
+lifecycle, and [Chat UI](chat-ui.md) and [Renderer foundation](renderer-foundation.md) own the
+approval card and the permission picker that show program approvals and the bypass warning.
 
 ## Purpose and boundaries
 
@@ -29,8 +36,17 @@ port (`ports.ts`). `NodeProcessHost` implements the port around an injected `spa
 (`main/process-host.ts`) and the CLI (`cli/src/process-host.ts`) pass `child_process.spawn`, and core
 never imports `child_process` (Biome boundary). The runner owns the policy: guarded cwd, minimal
 environment, decoded output, tail, log, retention, timeout, Stop, tree kill, background limit and
-serial-port guard. Nothing resolves programs, matches rules, asks for approval or provisions tools
-yet; no agent tool calls the runner yet. Desktop main and the CLI each compose one runner and stop
+serial-port guard.
+
+Shared `program-rules.ts` classifies a command line with the declaring plugin's rules and maps
+(permission mode, risk, trial) to a policy; the matcher, policy table and confirmation word are
+specified in `.agentic/specs/REQ-FUNC-80b2033a.md`. Core `program-request.ts` finds the one enabled
+plugin declaring a program and prepares the frozen `run_program` ChangeRequest with the hashes of the
+workbench files its arguments name. The ApprovalGate decides that request by policy: safe commands of
+non-trial plugins run without a record, refused ones return `aborted`, mode decisions are recorded as
+`decided_by: mode`, the rest wait for the user, irreversible ones with the typed word checked in
+core. Nothing resolves executables or provisions tools yet, and no agent tool prepares or runs
+programs yet (PLG-04 composes find, prepare, request, re-prepare, consume and the runner). Desktop main and the CLI each compose one runner and stop
 its runs on session stop, workbench create/open/close and app exit (CLI: on closing resources).
 
 ## Public interface
@@ -57,6 +73,18 @@ its runs on session stop, workbench create/open/close and app exit (CLI: on clos
   {runId, exitCode, signal, error?, durationMs, output, truncated, log, timedOut, stopped}`,
   `get(handle)`, `stopSession(id)`, `stopWorkbench(root)`, `stopAll()`; helpers
   `programEnvironment`, `serialPorts`, `launcherArgs(launcher, command, "argv" | "string")`.
+- Rules (shared): `classifyCommand(rules, program, args)` -> `{risk, notes, confirm}`,
+  `programArgumentRefusal(args)` -> `{reason: count|length|control|argument-file, index?}` or null,
+  `programPolicy(mode, risk, trial)` -> `run|refuse|mode|user|confirm`, `confirmationMatches(word,
+  typed)`, `programCommandLine(program, args)`, `PROGRAM_ARGUMENTS {count 64, length 4096}`,
+  `programApprovalSchema` (the event payload) and `validProgramApproval`.
+- Requests (core): `findProgram(enabled, program)` -> LoadedPlugin, DENIED `{reason: undeclared |
+  ambiguous}`; `prepareProgramRequest({workbench, plugin, program, executable, args, cwd?, sessionId,
+  turnId, callId, signal?})` -> frozen `ProgramChangeRequest {tool "run_program", workbench, sessionId,
+  turnId, callId, pluginId, pluginSha256, trial, program, executable, programVersion, args, cwd, risk,
+  confirm, notes, files[{arg, path, sha256}]}`; `programApproval(request)` -> event payload.
+- Summaries: `pluginInstalledSchema.irreversible` lists `{match, note?}` of a plugin without issues;
+  `plugins.list` carries it.
 
 ## Invariants
 
@@ -97,6 +125,28 @@ its runs on session stop, workbench create/open/close and app exit (CLI: on clos
   the value of `--name=value`) that an unfinished background run also names is BUSY `{handle, port}`.
 - `launcherArgs` in `string` mode wraps each token in double quotes, doubles trailing backslashes and
   refuses (INVALID `{index}`) a token with `" ' & | ; < > ^ % $`, a backtick, NUL or a line break.
+- Matching costs O(pattern tokens × command tokens) per rule (a failed `*` is never retried from a
+  later token). Matching lowercases every token, turns `_` into `-` and splits `--name=value` into two tokens, for
+  the command and the pattern alike; a pattern must cover the whole command line. All matching rules
+  apply, the highest risk wins (blocked > irreversible > device-write > device-read > safe), notes of
+  every matching rule are kept once in manifest order, and an unmatched command is device-write.
+- Before any rule or file: more than 64 arguments, an argument over 4096 characters, NUL/CR/LF or a
+  leading `@` is DENIED with its reason; a program not declared by the plugin is DENIED undeclared.
+- `files` lists each argument (or `--name=value` value) that resolves, relative to cwd or absolute
+  inside the workbench, through the workbench PathGuard to an existing regular file, with its SHA-256;
+  everything else is an ordinary argument. On Windows `app.bin.`, `app.bin ` and `app.bin::$DATA` bind
+  `app.bin`, the file Windows opens. A guard-accepted file that cannot be read fails the request.
+  Limit: on Linux a real file whose name the guard reserves (`aux.bin`, `con.txt`, a trailing dot) is
+  not bound. A changed file changes the digest, so consuming the
+  approval with the re-prepared request is CONFLICT.
+- The confirmation word of an irreversible command is the token matched by the first non-wildcard
+  pattern token after the program in the first matching irreversible rule, else the program name.
+  `decide` under policy `confirm` refuses missing or different typed text with INVALID
+  `approval.confirmMismatch` (still pending) and refuses `switchToAutoEdit` with INVALID.
+- Switching to bypass approves pending non-trial program approvals by mode; trial ones keep waiting.
+  A mode-decided program approval consumes only while the current policy is still `mode`.
+- Desktop main redacts known credentials from the program payload (executable, args, cwd, notes, file
+  paths) of events and snapshots; the confirmation word is not redacted.
 
 ## Change map
 
@@ -111,6 +161,11 @@ its runs on session stop, workbench create/open/close and app exit (CLI: on clos
 | Decoding, ANSI, tail | `core/src/plugins/run-output.ts` | `run-output.test.ts` |
 | Launcher quoting | `core/src/plugins/launcher.ts` | `launcher.test.ts` |
 | Runner lifecycle in the apps | desktop `main/index.ts`, `cli/src/run.ts` | inspection; `process-hosts.test.ts` for the hosts |
+| Matching, policy table, confirmation word | `shared/src/program-rules.ts` | `shared/src/program-rules.test.ts` |
+| Program request, files, lookup | `core/src/plugins/program-request.ts` | `program-request.test.ts` |
+| Gate decisions for run_program | `core/src/agent/approvals.ts` | `core/src/agent/program-approvals.test.ts` |
+| Card, bypass warning, mock | renderer `approval-card.tsx`, `permission-picker.tsx`, `mocks/sessions.ts` | `permission-picker.test.ts`, `mocks/sessions.test.ts`, `tests/e2e/program-approvals.spec.ts` |
+| CLI typed confirmation | `cli/src/approval-prompt.ts`, `run.ts` | `cli/src/approval-prompt.test.ts` |
 
 ## Key behaviors
 
@@ -141,6 +196,17 @@ its runs on session stop, workbench create/open/close and app exit (CLI: on clos
 - `REQ-FUNC-efbc6124` / `REQ-SEC-7b3e7ed4` — launcher composition and metacharacter refusal.
 - `REQ-REL-e594e725` — a program that cannot start reports its error code.
 - `REQ-NFR-d056ff66` — core never imports child_process.
+- `REQ-FUNC-5bb9429f` / `REQ-FUNC-80b2033a` — token normalisation and pattern grammar (spec REQ-FUNC-80b2033a.md).
+- `REQ-FUNC-2819a97e` / `REQ-FUNC-9ca99463` — highest risk wins; unmatched is device-write.
+- `REQ-SEC-28b53f44` — pre-rule argument refusals.
+- `REQ-SEC-59880d86` / `REQ-SEC-a4d1ac21` — undeclared and ambiguous programs refused.
+- `REQ-FUNC-8d305364` / `REQ-SEC-94998c85` / `REQ-SEC-2b4bcdf5` — mode matrix, blocked, trial override.
+- `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` — run_program request with file hashes; a changed file voids it.
+- `REQ-SEC-e8695b28` / `REQ-SEC-08fbf962` / `REQ-SEC-f40ac584` — typed word, mismatch, no switch.
+- `REQ-FUNC-43114b84` / `REQ-SEC-ce28991b` — bypass switch approvals; mode decisions revoked on mode change.
+- `REQ-UX-9744e270` / `REQ-UX-12185f60` — approval card; bypass warning lists irreversible rules.
+- `REQ-DATA-3f62c8c1` — irreversible rules in plugin summaries.
+- `REQ-FUNC-7cf311ae` — CLI typed confirmation.
 
 ## Files
 
@@ -162,3 +228,10 @@ its runs on session stop, workbench create/open/close and app exit (CLI: on clos
 - `05_Software/src/apps/desktop/src/main/process-host.ts`, `05_Software/src/apps/cli/src/process-host.ts` — inject `child_process.spawn`.
 - `05_Software/tests/integration/process-hosts.test.ts` — real runs through both compiled hosts.
 - `05_Software/tests/fixtures/echo-program/echo.mjs` — the echo-program fixture.
+- `05_Software/src/libraries/shared/src/program-rules.ts` — matcher, refusals, policy, typed word, approval payload schema.
+- `05_Software/src/libraries/core/src/plugins/program-request.ts` — findProgram, prepareProgramRequest, programApproval.
+- `05_Software/src/libraries/core/src/plugins/program-fixtures.test-support.ts` — LoadedPlugin fixture for tests.
+- `05_Software/src/libraries/core/src/agent/approvals.ts` — the gate's run_program branch.
+- `05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx` — program card and typed field.
+- `05_Software/src/apps/desktop/src/renderer/components/permission-picker.tsx` — bypass warning rule list.
+- `05_Software/tests/e2e/program-approvals.spec.ts` — browser-mock e2e of the card and the warning.

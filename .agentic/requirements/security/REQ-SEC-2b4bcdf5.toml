@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-2b4bcdf5"
+title = "Require the user's approval for every command of a trial plugin"
+status = "active"
+requirement = "While a program's plugin is a trial plugin, the approval gate shall refuse its commands in read-only and wait for the user's approval of every command in ask, auto-edit and bypass, with the typed confirmation for irreversible commands in all three modes."
+verification = "A trial plugin's safe command in bypass stays pending until decide approves it by user; switching the session to bypass does not approve a pending trial approval; its irreversible command in bypass refuses an approval without the typed word; in read-only the safe command returns aborted."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

@@ -41,7 +41,9 @@ any other version is invalid data, and upgrade/migration safety is deferred unti
 [Plugins](../knowledge/plugins.md) routes plugin.yaml format 1 validation, the integrity-checked plugin store under
 <userData>/plugins (folder/zip install, list with issues, load, uninstall), per-workbench plugins.enabled and the
 ProgramRunner: programs start through the ProcessHost port (no shell, closed stdin, minimal environment, guarded cwd),
-with process-tree kills on timeout/Stop, logs in .vera/runs, background runs and the serial-port guard.
+with process-tree kills on timeout/Stop, logs in .vera/runs, background runs and the serial-port guard; and the program
+rule matcher, risk levels, mode matrix with the trial override, run_program approvals bound to file hashes, the typed
+confirmation checked in core and the bypass warning's list of irreversible rules.
 
 [Skills](../knowledge/skills.md) routes workbench/user discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.

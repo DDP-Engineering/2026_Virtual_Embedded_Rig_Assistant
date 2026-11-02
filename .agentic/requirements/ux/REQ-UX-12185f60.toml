@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-12185f60"
+title = "List irreversible plugin rules in the bypass warning"
+status = "active"
+requirement = "When the user switches a session to bypass in a workbench whose enabled plugins that are not trials have irreversible rules, the bypass warning shall list each of those rules with its plugin, pattern and note, and shall appear even when the user has suppressed the general bypass warning."
+verification = "Playwright in browser mock mode: with a plugin that has `espefuse * burn-key *` enabled, choosing bypass shows the warning listing that pattern and note, and the same command then runs approved by mode without a prompt. permission-picker.test.ts: with `don't show again` saved, choosing bypass still shows the warning listing only the enabled, issue-free, non-trial plugin's rule; with no irreversible rules the suppressed warning stays hidden."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/permission-picker.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/tests/e2e/program-approvals.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

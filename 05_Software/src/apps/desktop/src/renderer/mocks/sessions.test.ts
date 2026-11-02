@@ -97,3 +97,50 @@ it("retains the aborted approval when a waiting mock workbench is closed and reo
   expect(value.snapshot.approvals).toHaveLength(1);
   expect(value.snapshot.approvals[0]?.decision).toBe("aborted");
 });
+
+// REQ-UX-9744e270 REQ-UX-12185f60: the browser mock decides program approvals with the shared policy.
+it("asks for program approvals with the shared policy and checks the typed word", async () => {
+  let mode: "ask" | "bypass" = "ask";
+  const sessions = new MockSessions(() => ({ id: "one", readOnly: false, model: null, mode }));
+  const s = sessions.invoke("session.create", {}) as { id: string };
+  const snapshot = () =>
+    (sessions.invoke("session.get", { sessionId: s.id }) as { snapshot: SessionState }).snapshot;
+  const pending = async () => {
+    await expect.poll(() => snapshot().status).toBe("awaiting_approval");
+    const approval = snapshot().approvals.at(-1);
+    if (!approval?.program) throw Error("program approval missing");
+    return approval;
+  };
+  const decide = (approval: { approvalId: string; requestSha256: string }, confirmation?: string) =>
+    sessions.invoke("session.approval.decide", {
+      sessionId: s.id,
+      approvalId: approval.approvalId,
+      requestSha256: approval.requestSha256,
+      decision: "approved",
+      ...(confirmation === undefined ? {} : { confirmation }),
+    });
+  sessions.invoke("session.send", { sessionId: s.id, text: "flash the board" });
+  const flash = await pending();
+  expect(flash.program).toMatchObject({ risk: "device-write", confirm: null, program: "esptool" });
+  decide(flash);
+  await expect.poll(() => snapshot().status).toBe("idle");
+  sessions.invoke("session.send", { sessionId: s.id, text: "burn the key" });
+  const burn = await pending();
+  expect(burn.program).toMatchObject({ risk: "irreversible", confirm: "burn-key" });
+  expect(() => decide(burn, "burn")).toThrow(
+    expect.objectContaining({ code: "INVALID", messageKey: "approval.confirmMismatch" }),
+  );
+  expect(snapshot().status).toBe("awaiting_approval");
+  decide(burn, "burn-key");
+  await expect.poll(() => snapshot().status).toBe("idle");
+  expect(snapshot().approvals.map((a) => [a.decision, a.by])).toEqual([
+    ["approved", "user"],
+    ["approved", "user"],
+  ]);
+  sessions.invoke("session.mode.set", { sessionId: s.id, mode: "bypass" });
+  mode = "bypass";
+  sessions.invoke("session.send", { sessionId: s.id, text: "burn the key" });
+  await expect.poll(() => snapshot().status).toBe("idle");
+  expect(snapshot().approvals.at(-1)).toMatchObject({ decision: "approved", by: "mode" });
+  expect(snapshot().items.at(-2)).toMatchObject({ kind: "tool", name: "run_program", status: "ok" });
+});

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-8d305364"
+title = "Decide program commands by permission mode and risk"
+status = "active"
+requirement = "For a command of a plugin that is not a trial, the approval gate shall run a safe command in every mode without an approval record, refuse device-read, device-write and irreversible commands in read-only, wait for the user's approval of device-read and device-write commands in ask, approve device-read commands by mode and wait for the user's approval of device-write commands in auto-edit, require the typed confirmation for irreversible commands in ask and auto-edit, and approve device-read, device-write and irreversible commands by mode in bypass."
+verification = "A table-driven gate test over the four modes and four risks checks for each cell the decision (approved, aborted or pending), whether an approval row exists and its decided_by; a pending user cell is approved by decide; boundary: the bypass irreversible row says decided_by mode and its approval.requested event carries risk irreversible."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

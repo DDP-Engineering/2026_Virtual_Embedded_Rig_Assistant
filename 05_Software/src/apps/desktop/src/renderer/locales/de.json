@@ -291,7 +291,23 @@
     "mode": "Berechtigungsmodus",
     "readOnly": "Nur lesen",
     "ask": "Nachfragen",
-    "autoEdit": "Auto-Edit"
+    "autoEdit": "Auto-Edit",
+    "risk": {
+      "safe": "Sicher",
+      "deviceRead": "Gerät lesen",
+      "deviceWrite": "Gerät schreiben",
+      "irreversible": "Irreversibel",
+      "blocked": "Gesperrt"
+    },
+    "trial": "Test-Plugin",
+    "plugin": "Plugin: {{plugin}}",
+    "command": "Befehlszeile",
+    "cwd": "Arbeitsverzeichnis",
+    "executable": "Programmdatei",
+    "notes": "Hinweise der Regeln",
+    "files": "Workbench-Dateien und ihr SHA-256",
+    "typeToConfirm": "Diese Änderung ist dauerhaft. Geben Sie {{word}} zur Bestätigung ein.",
+    "confirmMismatch": "Das eingegebene Wort stimmt nicht überein. Geben Sie das auf der Karte angezeigte Wort ein."
   },
   "changes": {
     "empty": "Keine Änderungen in dieser Sitzung.",
@@ -504,7 +520,8 @@
     "option": "Bypass — voller Zugriff",
     "title": "Bypass: voller Dateizugriff",
     "warning": "Der Agent kann ohne Rückfrage Dateien überall lesen und ändern, wo Ihr Benutzerkonto Zugriff hat, auch außerhalb der Workbench. Dabei können Projekte, Dateien oder Anwendungseinstellungen beschädigt werden. Es stehen nur aktivierte Werkzeuge zur Verfügung; Betriebssystemberechtigungen gelten weiterhin.",
-    "dontShowAgain": "Diese Meldung beim nächsten Mal nicht mehr anzeigen"
+    "dontShowAgain": "Diese Meldung beim nächsten Mal nicht mehr anzeigen",
+    "irreversible": "Diese Regeln aktivierter Plugins nehmen dauerhafte Änderungen vor oder wirken außerhalb des Geräts. Im Bypass laufen sie ohne Rückfrage:"
   },
   "webAccess": {
     "description": "Internetzugriff getrennt von KI-Anbietern verwalten. Die Tool-Berechtigungen des Workbenchs gelten weiterhin.",

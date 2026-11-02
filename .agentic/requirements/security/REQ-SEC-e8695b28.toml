@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-e8695b28"
+title = "Require the typed subcommand for irreversible commands"
+status = "active"
+requirement = "When a program approval needs a typed confirmation, the approval gate shall accept a user approval only when the typed text, trimmed and normalised like a command token, equals the request's confirmation word, which is the command token matched by the first non-wildcard pattern token after the program in the first matching irreversible rule, or the program name when that pattern has none."
+verification = "For `espefuse --port COM3 burn_key BLOCK_KEY0 key.bin` with rule `espefuse * burn-key *` the word is burn-key; decide with ` BURN_KEY ` approves; for rule `espefuse * {burn-efuse,burn-key} *` the word is the token in the command; for rule `danger *` the word is danger; denial needs no typed text."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts", "05_Software/src/libraries/shared/src/program-approval-schema.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

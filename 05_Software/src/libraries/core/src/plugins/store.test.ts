@@ -107,6 +107,7 @@ it("installs a plugin folder with install.json and lists it valid after a restar
     description: manifest.description,
     ecosystem: "esp32",
     platforms: ["windows-x64", "linux-x64"],
+    irreversible: [],
     tier: "local",
     source: "folder",
     sha256,
@@ -381,4 +382,25 @@ it("refuses a zip whose directory hides stored sizes and folder names that colli
     { issue: "yaml" },
   );
   expect(await f.entries()).toEqual([]);
+});
+
+// REQ-DATA-3f62c8c1
+it("lists the irreversible rules of a plugin without issues in manifest order", async () => {
+  const f = await fixture();
+  const rules = [
+    { match: "esptool version", risk: "safe" },
+    { match: "esptool * burn-key *", risk: "irreversible", note: "Burns a key permanently." },
+    { match: "esptool * write-flash *", risk: "device-write", note: "Overwrites firmware." },
+    { match: "esptool * burn-efuse *", risk: "irreversible" },
+  ];
+  await f.store.install(await f.folder(packageFiles({ "plugin.yaml": stringify({ ...manifest, rules }) })));
+  const [summary] = await f.store.list();
+  expect(summary?.irreversible).toEqual([
+    { match: "esptool * burn-key *", note: "Burns a key permanently." },
+    { match: "esptool * burn-efuse *" },
+  ]);
+  await writeFile(join(f.installed, "esp32-esptool", "README.md"), "# edited\n");
+  const [changed] = await f.store.list();
+  expect(changed?.issues).toEqual([{ code: "changed" }]);
+  expect(changed).not.toHaveProperty("irreversible");
 });

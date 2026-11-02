@@ -2,13 +2,46 @@ import {
   type ArtifactContent,
   applySessionEvent,
   type ChangeDetail,
+  confirmationMatches,
   emptySessionState,
   isLiveSessionEvent,
+  type ProgramApproval,
+  programPolicy,
   type SessionEvent,
   type SessionSummary,
   veraError,
 } from "@vera/shared";
 import { sessionFixtures } from "./session-fixtures.js";
+
+/** Mock program commands: a prompt starting with "flash" or "burn" requests one of them. */
+const mockPrograms: Record<"flash" | "burn", ProgramApproval> = {
+  flash: {
+    pluginId: "esp32-esptool",
+    trial: false,
+    program: "esptool",
+    programVersion: "5.1.0",
+    executable: "C:/VERA/plugins/runtime/tools/esptool/esptool.exe",
+    args: ["--port", "COM3", "write-flash", "0x10000", "build/app.bin"],
+    cwd: ".",
+    risk: "device-write",
+    confirm: null,
+    notes: ["Overwrites firmware or data stored on the chip."],
+    files: [{ arg: 4, path: "build/app.bin", sha256: "c".repeat(64) }],
+  },
+  burn: {
+    pluginId: "esp32-efuse",
+    trial: false,
+    program: "espefuse",
+    programVersion: "5.1.0",
+    executable: "C:/VERA/plugins/runtime/tools/esptool/espefuse.exe",
+    args: ["--port", "COM3", "burn-key", "BLOCK_KEY0", "key.bin", "XTS_AES_128_KEY"],
+    cwd: ".",
+    risk: "irreversible",
+    confirm: "burn-key",
+    notes: ["Burns a key into eFuse permanently."],
+    files: [{ arg: 4, path: "key.bin", sha256: "d".repeat(64) }],
+  },
+};
 
 export class MockSessions {
   private number = 0;
@@ -30,6 +63,7 @@ export class MockSessions {
         digest: string;
         turnId: string;
         resolve: (decision: "approved" | "denied" | "aborted") => void;
+        program?: ProgramApproval;
       };
     }
   >();
@@ -103,6 +137,7 @@ export class MockSessions {
       requestSha256: string;
       decision: "approved" | "denied";
       switchToAutoEdit?: boolean;
+      confirmation?: string;
       query: string;
       archived: boolean;
       reasoning: string | null;
@@ -238,6 +273,16 @@ export class MockSessions {
       )
         throw veraError("CONFLICT");
       if (request.switchToAutoEdit && request.decision !== "approved") throw veraError("INVALID");
+      const program = row.approval.program;
+      if (
+        program &&
+        request.decision === "approved" &&
+        programPolicy(row.summary.mode, program.risk, program.trial) === "confirm"
+      ) {
+        if (request.switchToAutoEdit) throw veraError("INVALID");
+        if (!confirmationMatches(program.confirm, request.confirmation))
+          throw { ...veraError("INVALID"), messageKey: "approval.confirmMismatch" };
+      }
       this.decide(id, request.decision, "user");
       if (request.switchToAutoEdit) {
         row.summary.mode = "auto-edit";
@@ -250,7 +295,13 @@ export class MockSessions {
       row.summary.mode = request.mode;
       this.emit(id, { type: "session.updated", mode: request.mode });
       if (request.mode === "read-only" && row.approval) this.decide(id, "aborted", "mode");
-      if (request.mode === "bypass" && row.approval) this.decide(id, "approved", "mode");
+      const program = row.approval?.program;
+      if (
+        request.mode === "bypass" &&
+        row.approval &&
+        (!program || programPolicy("bypass", program.risk, program.trial) === "mode")
+      )
+        this.decide(id, "approved", "mode");
       return row.summary;
     }
     if (channel === "session.send" && row.active) {
@@ -376,6 +427,67 @@ export class MockSessions {
                     : outcome === "denied"
                       ? "The user denied this change."
                       : "Aborted.",
+                durationMs: 0,
+              },
+              key,
+            );
+          }
+          const command = /^(flash|burn)\b/i.exec(request.text)?.[1]?.toLowerCase() as
+            | "flash"
+            | "burn"
+            | undefined;
+          if (command && !row.stop) {
+            const program = mockPrograms[command];
+            const callId = `run_${++this.number}`;
+            this.emit(
+              id,
+              {
+                type: "tool.started",
+                callId,
+                name: "run_program",
+                args: { program: program.program, args: program.args },
+              },
+              key,
+            );
+            const policy = programPolicy(row.summary.mode, program.risk, program.trial);
+            let outcome: "approved" | "denied" | "aborted" = policy === "refuse" ? "aborted" : "approved";
+            if (policy !== "run" && policy !== "refuse") {
+              const approvalId = `apv_${String(++this.number).padStart(26, "0")}`,
+                digest = "b".repeat(64);
+              const decision = new Promise<"approved" | "denied" | "aborted">((resolve) => {
+                row.approval = { id: approvalId, digest, turnId, resolve, program };
+              });
+              row.summary.status = "awaiting_approval";
+              this.emit(
+                id,
+                {
+                  type: "approval.requested",
+                  approvalId,
+                  callId,
+                  requestSha256: digest,
+                  tool: "run_program",
+                  path: program.program,
+                  diff: "",
+                  bytes: 0,
+                  program,
+                },
+                key,
+              );
+              if (policy === "mode" && row.approval) this.decide(id, "approved", "mode");
+              outcome = await decision;
+            }
+            this.emit(
+              id,
+              {
+                type: "tool.done",
+                callId,
+                ok: outcome === "approved",
+                summary:
+                  outcome === "approved"
+                    ? "Mock program finished."
+                    : outcome === "denied"
+                      ? "The user denied this command."
+                      : "Refused or aborted.",
                 durationMs: 0,
               },
               key,

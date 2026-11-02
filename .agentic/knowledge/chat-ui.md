@@ -103,7 +103,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
 | Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
-| Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts |
+| Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts; run_program cards (risk badge, command, notes, file hashes, typed word): tests/e2e/program-approvals.spec.ts |
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Conversation scroll rail | transcript.tsx, transcript-scroll.tsx, styles.css | tests/e2e/session-scroll.spec.ts |

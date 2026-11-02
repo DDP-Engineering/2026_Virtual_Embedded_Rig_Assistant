@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-43114b84"
+title = "Approve pending program commands by mode on switching to bypass"
+status = "active"
+requirement = "When a session switches to bypass, the approval gate shall approve by mode each pending program approval of a plugin that is not a trial, and leave pending approvals of trial plugins waiting for the user."
+verification = "A pending irreversible local approval in ask becomes approved decided_by mode after setMode bypass; a pending trial device-read approval stays pending."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-a4d1ac21"
+title = "Refuse a program declared by two enabled plugins"
+status = "active"
+requirement = "If a requested program name is declared by more than one plugin enabled for the workbench, then program lookup shall fail with DENIED and params reason ambiguous."
+verification = "Two enabled plugins both declaring esptool make `esptool` fail DENIED {reason ambiguous}; disabling one of them resolves it to the other."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

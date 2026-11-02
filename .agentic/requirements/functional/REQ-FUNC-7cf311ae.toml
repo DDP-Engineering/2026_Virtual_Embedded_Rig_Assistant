@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-7cf311ae"
+title = "Ask for the typed confirmation in the CLI"
+status = "active"
+requirement = "When the CLI receives a run_program approval that needs a typed confirmation, it shall show the risk, the command line, the notes and the named files and approve only when the user types the confirmation word at the interactive prompt, denying it under --approve all, --approve none or without a terminal."
+verification = "promptApproval with an irreversible run_program request writes risk, command and files, answers `a` with a request to type burn-key, re-asks after a wrong word, approves after `BURN_KEY` and returns the typed text; flagDecision, which the run command uses, denies such a request under --approve all or none and without a terminal while other approvals keep their flag decisions."
+affected_paths = ["05_Software/src/apps/cli/src/approval-prompt.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/libraries/shared/src/program-rules.ts"]
+linked_tests = ["05_Software/src/apps/cli/src/approval-prompt.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

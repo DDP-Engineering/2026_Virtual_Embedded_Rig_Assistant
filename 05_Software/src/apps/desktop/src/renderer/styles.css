@@ -23,6 +23,60 @@
 .diff-removed {
   color: var(--destructive);
 }
+.approval-card[data-risk="irreversible"] {
+  border-color: var(--destructive);
+}
+.approval-risk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.risk-badge {
+  border: 0.0625rem solid currentColor;
+  border-radius: var(--radius);
+  padding: 0 0.4rem;
+  font-weight: 600;
+}
+.risk-badge[data-risk="device-write"],
+.risk-badge[data-trial] {
+  color: var(--primary);
+}
+.risk-badge[data-risk="irreversible"],
+.risk-badge[data-risk="blocked"] {
+  color: var(--destructive);
+}
+.approval-command {
+  display: block;
+  margin: 0.4rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.approval-program {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.15rem 0.75rem;
+}
+.approval-program dd,
+.approval-files li,
+.bypass-irreversible li {
+  overflow-wrap: anywhere;
+}
+.approval-sha {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono, monospace);
+}
+.approval-notes,
+.approval-files,
+.bypass-irreversible ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.approval-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.5rem 0;
+}
 
 @theme inline {
   --color-background: var(--background);

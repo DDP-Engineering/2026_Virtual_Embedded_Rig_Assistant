@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-08fbf962"
+title = "Refuse a wrong typed confirmation"
+status = "active"
+requirement = "If an approval that needs a typed confirmation is approved with missing or different typed text, then the decision shall fail with INVALID and message key approval.confirmMismatch and the approval shall stay pending."
+verification = "Deciding a burn-key approval with `burn` or no text fails INVALID approval.confirmMismatch, no approval.decided event is recorded, and a later decide with `burn-key` approves it."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

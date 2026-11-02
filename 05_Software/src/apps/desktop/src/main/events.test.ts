@@ -254,3 +254,51 @@ it("retains latest tool update, flushes before terminal and cancels on dispose",
   vi.advanceTimersByTime(100);
   expect(output).toEqual(["done", "terminal"]);
 });
+// REQ-SEC-cf3aa5a4 REQ-UX-9744e270
+it("redacts known credentials from program approval payloads in events and snapshots", () => {
+  const redact = (text: string) => scrub(text, ["s3cr"]);
+  const program = {
+    pluginId: "esp32-efuse",
+    trial: false,
+    program: "espefuse",
+    programVersion: "5.1.0",
+    executable: "/home/s3cr/espefuse",
+    args: ["--token=s3cr", "burn-key", "k"],
+    cwd: "s3cr",
+    risk: "irreversible" as const,
+    confirm: "burn-key",
+    notes: ["Uses s3cr."],
+    files: [{ arg: 2, path: "s3cr/key.bin", sha256: "b".repeat(64) }],
+  };
+  const requested = {
+    type: "approval.requested" as const,
+    approvalId: "a",
+    callId: "c",
+    requestSha256: "a".repeat(64),
+    tool: "run_program" as const,
+    path: "espefuse",
+    diff: "",
+    bytes: 0,
+    program,
+  };
+  const event = sessionOutput.sanitizeEvent(
+    { topic: "session", id: `ses_${"0".repeat(26)}`, event: requested },
+    redact,
+  ).event as typeof requested;
+  const state = sessionOutput.sanitizeSessionSnapshot(
+    {
+      ...emptySessionState(),
+      approvals: [{ ...requested, type: undefined, decision: null }].map(({ type: _, ...a }) => a),
+    },
+    redact,
+  );
+  for (const output of [event.program, state.approvals[0]?.program]) {
+    expect(JSON.stringify(output)).not.toContain("s3cr");
+    expect(output).toMatchObject({
+      confirm: "burn-key",
+      risk: "irreversible",
+      args: ["--token=[REDACTED]", "burn-key", "k"],
+    });
+  }
+  expect(sessionStateSchema.safeParse(state).success).toBe(true);
+});

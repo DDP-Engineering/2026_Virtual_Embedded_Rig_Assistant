@@ -344,6 +344,8 @@ export const channels = {
         requestSha256: z.string().regex(/^[0-9a-f]{64}$/),
         decision: z.enum(["approved", "denied"]),
         switchToAutoEdit: z.boolean().optional(),
+        /** The typed confirmation of an irreversible program command; core compares it. */
+        confirmation: z.string().max(4096).optional(),
       })
       .refine((v) => !v.switchToAutoEdit || v.decision === "approved"),
     z.strictObject({}),

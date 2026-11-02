@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-94998c85"
+title = "Never run a blocked command"
+status = "active"
+requirement = "If a program command is classified blocked, then the approval gate shall refuse it in every permission mode, for trial plugins too, without recording an approval."
+verification = "A blocked command returns aborted from the gate in read-only, ask, auto-edit and bypass, for local and trial plugins, and no approvals row or approval.requested event exists."
+affected_paths = ["05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/program-rules.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+spec = "specs/REQ-FUNC-80b2033a.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

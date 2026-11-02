@@ -210,6 +210,7 @@ export function SessionWorkspace({
       {view && (
         <Composer
           sessionId={id}
+          workbenchId={workbenchId}
           state={view.state}
           inspectorControls={
             <>

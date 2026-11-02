@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join } from "node:path";
 import type Database from "better-sqlite3";
 import { formatPatch, parsePatch, structuredPatch } from "diff";
 import { z } from "zod";
+import type { ProgramChangeRequest } from "../plugins/program-request.js";
 import { type GuardedPath, PathGuard } from "../workbench/path-guard.js";
 import type { WriteQueue } from "../workbench/write-queue.js";
 import { isBinary } from "./binary.js";
@@ -57,7 +58,8 @@ export type ChangeRequest =
       readonly tool: "web_download";
       readonly afterSha256: null;
       readonly download: { readonly url: string; readonly maxBytes: number };
-    });
+    })
+  | ProgramChangeRequest;
 export interface PreparedChange {
   readonly request: ChangeRequest;
   apply(signal: AbortSignal): Promise<Record<string, unknown>>;

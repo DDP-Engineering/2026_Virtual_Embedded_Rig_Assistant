@@ -20,9 +20,11 @@ export function Composer({
   setMode,
   inspectorControls,
   sessionId,
+  workbenchId,
 }: {
   inspectorControls?: ReactNode;
   sessionId?: string;
+  workbenchId?: string;
   state: SessionState;
   disabled: boolean;
   send: (text: string) => Promise<boolean>;
@@ -274,7 +276,12 @@ export function Composer({
               catalogVersion={subscriptionModels.dataUpdatedAt + providers.dataUpdatedAt}
             />
           )}
-          <PermissionPicker mode={state.mode} disabled={disabled} change={setMode} />
+          <PermissionPicker
+            mode={state.mode}
+            disabled={disabled}
+            change={setMode}
+            workbenchId={workbenchId}
+          />
           <div className="composer-tools">
             {inspectorControls}
             <button

@@ -291,7 +291,23 @@
     "mode": "Permission mode",
     "readOnly": "Read-only",
     "ask": "Ask",
-    "autoEdit": "Auto-edit"
+    "autoEdit": "Auto-edit",
+    "risk": {
+      "safe": "Safe",
+      "deviceRead": "Device read",
+      "deviceWrite": "Device write",
+      "irreversible": "Irreversible",
+      "blocked": "Blocked"
+    },
+    "trial": "Trial plugin",
+    "plugin": "Plugin: {{plugin}}",
+    "command": "Command line",
+    "cwd": "Working directory",
+    "executable": "Executable",
+    "notes": "Rule notes",
+    "files": "Workbench files and their SHA-256",
+    "typeToConfirm": "This change is permanent. Type {{word}} to confirm.",
+    "confirmMismatch": "The typed word does not match. Type the word shown on the card."
   },
   "changes": {
     "empty": "No changes in this session.",
@@ -504,7 +520,8 @@
     "option": "Bypass — full access",
     "title": "Bypass: full file access",
     "warning": "The agent can read and change files wherever your account has access, including outside the workbench, without asking for confirmation. It can damage projects, files or application settings. Only enabled tools are available; operating system permissions still apply.",
-    "dontShowAgain": "Don't show this message next time"
+    "dontShowAgain": "Don't show this message next time",
+    "irreversible": "These rules of enabled plugins make permanent changes or act outside the device. In Bypass they run without asking:"
   },
   "webAccess": {
     "description": "Manage Internet access separately from your AI providers. Workbench tool permissions still apply.",

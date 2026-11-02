@@ -10,7 +10,9 @@ import { api } from "../api/index.js";
 import i18n from "../i18n.js";
 import { PermissionPicker } from "./permission-picker.js";
 
-vi.mock("../api/index.js", () => ({ api: { getSettings: vi.fn(), updateSettings: vi.fn() } }));
+vi.mock("../api/index.js", () => ({
+  api: { getSettings: vi.fn(), updateSettings: vi.fn(), invoke: vi.fn() },
+}));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 HTMLDialogElement.prototype.showModal = function () {
   this.setAttribute("open", "");
@@ -73,6 +75,56 @@ it("keeps the warning and a visible error when suppression cannot be saved, then
   await act(async () => {
     await user.selectOptions(picker, "ask");
     await user.selectOptions(picker, "bypass");
+  });
+  expect(document.querySelector(".bypass-warning")).toBeNull();
+});
+
+// REQ-UX-12185f60
+it("lists the irreversible rules of enabled plugins even when the warning is suppressed", async () => {
+  await i18n.changeLanguage("en");
+  const settings = {
+    ...defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
+    suppressBypassWarning: true,
+  };
+  vi.mocked(api.getSettings).mockResolvedValue({ settings });
+  const summary = { issues: [], enabled: true, tier: "local" as const };
+  vi.mocked(api.invoke).mockResolvedValue([
+    {
+      ...summary,
+      id: "esp32-efuse",
+      name: "ESP32 eFuse",
+      irreversible: [{ match: "espefuse * burn-key *", note: "Permanent." }],
+    },
+    { ...summary, id: "off", enabled: false, irreversible: [{ match: "off *" }] },
+    { ...summary, id: "draft", tier: "trial", irreversible: [{ match: "draft *" }] },
+    { ...summary, id: "broken", issues: [{ code: "changed" }], irreversible: [{ match: "broken *" }] },
+  ]);
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  function Bench() {
+    const [mode, change] = useState<PermissionMode>("ask");
+    return createElement(PermissionPicker, { mode, disabled: false, change, workbenchId: "wb_1" });
+  }
+  await act(async () => root.render(createElement(QueryClientProvider, { client }, createElement(Bench))));
+  const user = userEvent.setup();
+  await act(async () => {
+    await user.selectOptions(container.querySelector("select") as HTMLSelectElement, "bypass");
+  });
+  const warning = document.querySelector(".bypass-warning");
+  expect(api.invoke).toHaveBeenCalledWith("plugins.list", { workbenchId: "wb_1" });
+  expect(warning?.querySelectorAll("[data-bypass-irreversible] li")).toHaveLength(1);
+  expect(warning?.textContent).toContain("ESP32 eFuse");
+  expect(warning?.textContent).toContain("espefuse * burn-key *");
+  expect(warning?.textContent).toContain("Permanent.");
+  vi.mocked(api.invoke).mockResolvedValue([]);
+  await act(async () => {
+    await user.click(document.querySelector('[data-action="close-bypass-warning"]') as HTMLElement);
+  });
+  await act(async () => {
+    await user.selectOptions(container.querySelector("select") as HTMLSelectElement, "ask");
+    await user.selectOptions(container.querySelector("select") as HTMLSelectElement, "bypass");
   });
   expect(document.querySelector(".bypass-warning")).toBeNull();
 });
