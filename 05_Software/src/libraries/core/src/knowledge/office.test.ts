@@ -89,6 +89,16 @@ it("refuses archives beyond the entry or uncompressed-size limits before extract
   await expect(extractOffice("docx", big, { entries: 10, bytes: 1000 })).rejects.toBeInstanceOf(
     OfficeLimitError,
   );
+  // A stored entry is copied by its stored size, so a directory claiming 0 bytes must not pass.
+  const hidden = zipSync({ "word/document.xml": strToU8("x".repeat(5000)) }, { level: 0 });
+  const view = new DataView(hidden.buffer, hidden.byteOffset, hidden.byteLength);
+  for (let i = 0; i + 4 <= hidden.length; i++) {
+    if (view.getUint32(i, true) === 0x04034b50) view.setUint32(i + 22, 0, true);
+    if (view.getUint32(i, true) === 0x02014b50) view.setUint32(i + 24, 0, true);
+  }
+  await expect(extractOffice("docx", hidden, { entries: 10, bytes: 1000 })).rejects.toBeInstanceOf(
+    OfficeLimitError,
+  );
 });
 
 // REQ-REL-7a48f161

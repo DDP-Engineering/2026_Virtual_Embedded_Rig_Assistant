@@ -17,7 +17,9 @@ function openArchive(bytes: Uint8Array, limits: OfficeLimits): Unzipped {
   unzipSync(bytes, {
     filter: (file) => {
       entries++;
-      total += file.originalSize;
+      // fflate copies a stored entry by its stored size, whatever the directory declares.
+      if (file.compression === 0 && file.size !== file.originalSize) throw new OfficeLimitError();
+      total += Math.max(file.size, file.originalSize);
       if (entries > limits.entries || total > limits.bytes) throw new OfficeLimitError();
       return false;
     },
