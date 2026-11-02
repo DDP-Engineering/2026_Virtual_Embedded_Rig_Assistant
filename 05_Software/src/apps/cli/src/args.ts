@@ -8,6 +8,7 @@ export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   --provider replay --script <file>
   --provider openai --model <id>
   --provider custom --base-url <url> --model <id>
+  vera plugin install --path <folder|zip> --data <dir>
   vera index --workbench <dir> [--data <dir>]
   vera search --workbench <dir> --query <text> [--mode hybrid|keyword|semantic]
     [--k 1..20] [--path-glob <glob>] [--data <dir>]
@@ -99,10 +100,47 @@ function documentCommand(argv: string[]): DocumentOptions {
     throw new UsageError(error instanceof Error ? error.message : "Invalid arguments.");
   }
 }
-export function parseCommand(argv: string[]): RunOptions | DocumentOptions | undefined {
+/** `vera plugin install --path <folder|zip> --data <dir>`: the plugin and its programs install there. */
+export interface PluginOptions {
+  kind: "plugin-install";
+  path: string;
+  data: string;
+  approve?: never;
+}
+function pluginCommand(argv: string[]): PluginOptions {
+  if (argv[1] !== "install") throw new UsageError("Expected plugin install.");
+  try {
+    const { values, tokens } = parseArgs({
+      args: argv.slice(2),
+      strict: true,
+      allowPositionals: false,
+      tokens: true,
+      options: { path: { type: "string" }, data: { type: "string" } },
+    });
+    const seen = new Set<string>();
+    for (const token of tokens)
+      if (token.kind === "option") {
+        if (seen.has(token.name)) throw new UsageError(`Repeated --${token.name}.`);
+        seen.add(token.name);
+      }
+    const path = values.path,
+      data = values.data;
+    for (const value of [path, data])
+      if (value !== undefined && (!value.trim() || value.includes("\0")))
+        throw new UsageError("Invalid path.");
+    // An explicit data folder: the CLI's default temporary folder would vanish with the installation.
+    if (!path || !data) throw new UsageError("plugin install requires --path and --data.");
+    return { kind: "plugin-install", path: resolve(path), data: resolve(data) };
+  } catch (error) {
+    if (error instanceof UsageError) throw error;
+    throw new UsageError(error instanceof Error ? error.message : "Invalid arguments.");
+  }
+}
+export function parseCommand(argv: string[]): RunOptions | DocumentOptions | PluginOptions | undefined {
   if (argv.length === 1 && ["help", "--help", "-h"].includes(argv[0] ?? "")) return;
   if (argv[0] === "index" || argv[0] === "search") return documentCommand(argv);
-  if (argv[0] !== "run") throw new UsageError("Expected command run, index or search.");
+  if (argv[0] === "plugin") return pluginCommand(argv);
+  if (argv[0] !== "run") throw new UsageError("Expected command run, plugin, index or search.");
   try {
     const { values, tokens } = parseArgs({
       args: argv.slice(1),

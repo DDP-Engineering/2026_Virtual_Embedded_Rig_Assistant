@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "version": "0.13.1",
+  "license": "MIT OR Apache-2.0",
+  "source": "https://github.com/astral-sh/uv/releases/tag/0.13.1",
+  "platforms": {
+    "windows-x64": {
+      "url": "https://github.com/astral-sh/uv/releases/download/0.13.1/uv-x86_64-pc-windows-msvc.zip",
+      "sha256": "3b2661a463a5baea7f5076ea2b25ab71d77f36a6c0d809e5350651792f80a672",
+      "member": "uv.exe",
+      "binary": "uv.exe",
+      "binarySha256": "4075a09490327d2bedfacc807fa48252fb93647c5bd7ef28f00e579160ea3fb5"
+    },
+    "linux-x64": {
+      "url": "https://github.com/astral-sh/uv/releases/download/0.13.1/uv-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "eadd9d27c134ab5ac1ffd4473b97a741407f3ea238288f03121fc4deddf90220",
+      "member": "uv-x86_64-unknown-linux-gnu/uv",
+      "binary": "uv",
+      "binarySha256": "db919fb9428cc8ad04377ba3c898e0ec5fbee83700da5b982b1c9539f1e1b34f"
+    }
+  }
+}

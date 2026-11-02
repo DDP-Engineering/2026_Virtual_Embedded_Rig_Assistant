@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-13ef1c0c"
+title = "List a plugin's program statuses over IPC"
+status = "active"
+requirement = "When the renderer requests plugins.programs for an installed plugin, the desktop shall return one status per declared program in name order with its name, install kind and state ready, missing or unavailable, plus its version, range, hint, link and problem where they apply, without installing anything."
+verification = "Channel schema tests accept the status list and reject unknown states and fields; the browser mock answers plugins.programs; the provisioner statuses test proves name order and that listing spawns no uv and calls no fetch."
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+spec = "specs/REQ-FUNC-714e26bc.md"
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

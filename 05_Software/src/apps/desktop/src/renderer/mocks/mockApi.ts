@@ -120,6 +120,8 @@ export function createMockApi(
   const folderNotes = new Map([["/mock/with-notes", "Existing bench notes\n"]]);
   /** Installed plugins by id; install names the plugin after the chosen folder or zip. */
   const installedPlugins = new Map<string, PluginInstalled>();
+  /** Plugins whose one mock program plugins.provision installed. */
+  const provisionedPlugins = new Set<string>();
   /** Irreversible rules of mock plugins by id; other ids have none. */
   const irreversibleRules: Record<string, PluginInstalled["irreversible"]> = {
     "esp32-efuse": [{ match: "espefuse * burn-key *", note: "Burns a key into eFuse permanently." }],
@@ -460,9 +462,22 @@ export function createMockApi(
         value = plugin;
         break;
       }
+      case "plugins.programs":
+      case "plugins.provision": {
+        const { id } = channels["plugins.programs"].request.parse(input.data);
+        if (!installedPlugins.has(id)) throw veraError("NOT_FOUND");
+        if (channel === "plugins.provision") provisionedPlugins.add(id);
+        value = [
+          provisionedPlugins.has(id)
+            ? { name: id, kind: "pip", state: "ready", version: "1.0.0" }
+            : { name: id, kind: "pip", state: "missing" },
+        ];
+        break;
+      }
       case "plugins.uninstall": {
         const { id } = channels["plugins.uninstall"].request.parse(input.data);
         if (!installedPlugins.delete(id)) throw veraError("NOT_FOUND");
+        provisionedPlugins.delete(id);
         value = {};
         break;
       }

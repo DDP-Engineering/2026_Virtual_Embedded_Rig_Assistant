@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-d30d568c"
+title = "Install a single-file download program"
+status = "active"
+requirement = "When the user installs a download program whose URL names any other file, the provisioner shall store the verified file as runtime/downloads/<sha256>/<path or the last URL path segment>, mark it executable outside Windows and resolve the program to it with the download's prefix as leading arguments."
+verification = "Unit test with an injected fetch serving AppImage bytes and prefix [--cli] on linux-x64: the stored file has mode 0755 (asserted where the file system keeps POSIX modes), the probe and the resolution carry prefix [--cli]; program-tools.test.ts 'joins resolver prefix, manifest prefix and agent arguments' proves run_program puts a resolver prefix before the program prefix and the agent's arguments."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

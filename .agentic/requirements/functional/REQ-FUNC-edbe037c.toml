@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-edbe037c"
+title = "Run an installed script program offline through uv"
+status = "active"
+requirement = "While a script program is installed, the resolver shall resolve it to the bundled uv with the leading arguments run --quiet --offline --script and the installed script path, together with the uv environment."
+verification = "Unit test: resolving the installed script program returns the uv executable, prefix [run, --quiet, --offline, --script, <plugin folder>/scripts/serial.py] and exactly the uv variables of the uv environment; a run_program call spawns uv with that prefix followed by the agent's arguments."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

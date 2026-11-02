@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-e27cda96"
+title = "Report a failed uv install"
+status = "active"
+requirement = "If uv exits with an error or does not start while installing a pip or script program, or the pip entry point named like the program is missing afterwards, the provisioner shall report the program missing with problem install and the last lines of uv's output, and record no version."
+verification = "Scripted process host: uv exiting 1 after printing an error, uv failing to start (ENOENT) and uv exiting 0 without creating the entry point each give state missing, problem install and the output tail, while install.json programs stays {}."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-c9dde429"
+title = "Locate a find program on the machine"
+status = "active"
+requirement = "When a find program is resolved, the provisioner shall search the current system's list in order, where %PATH% on Windows or $PATH on Linux searches each PATH directory for <program>.exe or <program>, and any other entry expands a leading ~ and %NAME% or $NAME variables and matches * globs with the highest name first, taking <match>/<program>[.exe] for a folder match, and using the first regular file found that, outside Windows, the user may execute."
+verification = "Unit tests on temporary folders: $PATH finds the program in the second PATH directory; a glob tool-*/bin with tool-1.2 and tool-1.10 picks tool-1.10; a file entry is used as is; an unset $NAME skips the entry; on Windows %LOCALAPPDATA% expands and only <program>.exe matches; on Linux a non-executable file is skipped for a later executable one (native Linux test)."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/integration/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
+spec = "specs/REQ-FUNC-714e26bc.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

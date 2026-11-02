@@ -22,6 +22,8 @@ import {
   pluginInstalledSchema,
   pluginInstallRequestSchema,
   pluginListRequestSchema,
+  pluginProgramStatusSchema,
+  pluginProgramsRequestSchema,
   pluginSummarySchema,
   pluginToggleRequestSchema,
 } from "./plugins.js";
@@ -169,6 +171,18 @@ export const channels = {
     z.strictObject({}),
   ),
   "plugins.toggle": defineChannel("plugins.toggle", pluginToggleRequestSchema, z.strictObject({})),
+  /** The status of each declared program; never installs anything. */
+  "plugins.programs": defineChannel(
+    "plugins.programs",
+    pluginProgramsRequestSchema,
+    z.array(pluginProgramStatusSchema).max(64),
+  ),
+  /** Installs the programs of an installed plugin that are not ready (a user action), one at a time. */
+  "plugins.provision": defineChannel(
+    "plugins.provision",
+    pluginProgramsRequestSchema,
+    z.array(pluginProgramStatusSchema).max(64),
+  ),
   "docs.list": defineChannel(
     "docs.list",
     docsScopeSchema,

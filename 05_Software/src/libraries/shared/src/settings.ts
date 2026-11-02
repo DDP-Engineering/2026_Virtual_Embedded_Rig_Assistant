@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
+import { urlParts } from "./plugins.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { sessionIdSchema } from "./session.js";
 import { updateChannelSchema, updateModeSchema } from "./updates.js";
@@ -16,6 +17,18 @@ export const recentWorkbenchSchema = z.strictObject({
 export const recentWorkbenchStateSchema = recentWorkbenchSchema.extend({ missing: z.boolean() });
 export type RecentWorkbench = z.infer<typeof recentWorkbenchSchema>;
 export type RecentWorkbenchState = z.infer<typeof recentWorkbenchStateSchema>;
+
+/** An http(s) URL without user name or password; credentials never sit in settings.json. */
+const plainUrl = z
+  .url({ protocol: /^https?$/ })
+  .max(2048)
+  .refine((value) => !urlParts(value)?.authority.includes("@"), "Use a URL without credentials.");
+/** Package index and proxy that uv uses to install plugin programs. */
+export const pluginSettingsSchema = z.strictObject({
+  index: plainUrl.optional(),
+  proxy: plainUrl.optional(),
+});
+export type PluginSettings = z.infer<typeof pluginSettingsSchema>;
 
 /** Optional font-size overrides select these built-in sizes when unset. */
 export const typographyDefaults = { chatFontSize: 14, codeFontSize: 14 } as const;
@@ -50,6 +63,7 @@ const mutable = {
   /** Session ids per workbench in the order the user arranged them (TASK-c99ca08c). */
   sessionOrder: z.record(workbenchIdSchema, z.array(sessionIdSchema)).optional(),
   limits: z.strictObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
+  plugins: pluginSettingsSchema.optional(),
 };
 
 /** The settings format; its version stays 1 during development (AGENTS.md). */
@@ -77,6 +91,7 @@ export const settingsPatchSchema = z.strictObject({
   limits: z
     .strictObject({ maxToolCallsPerTurn: mutable.limits.shape.maxToolCallsPerTurn.optional() })
     .optional(),
+  plugins: mutable.plugins,
 });
 export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema });
 export type Settings = z.infer<typeof settingsSchema>;

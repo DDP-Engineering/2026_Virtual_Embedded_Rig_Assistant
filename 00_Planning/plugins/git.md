@@ -68,7 +68,7 @@ programs:
     install:
       find: { windows: ["%PATH%", "C:/Program Files/Git/cmd/git.exe", "%LOCALAPPDATA%/Programs/Git/cmd/git.exe"], linux: ["$PATH", "/usr/bin/git"] }
       hint: Install Git for Windows or your distribution's git package.
-    version: { args: [--version], match: 'git version (\d+\.\d+\.\d+)' }
+    version: { args: [--version], match: 'git version (\d+\.\d+\.\d+)', range: ">=2.40" }
     prefix: [-c, core.fsmonitor=false, -c, "core.hooksPath=${pluginDir}/no-hooks", -c, core.pager=cat, -c, diff.external=, -c, core.quotePath=false, -c, protocol.ext.allow=never]
     env: { GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: never, GIT_PAGER: cat, PAGER: cat, GIT_EDITOR: ":", GIT_SEQUENCE_EDITOR: ":", GIT_OPTIONAL_LOCKS: "0" }
     timeout: 60

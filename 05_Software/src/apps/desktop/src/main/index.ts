@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
@@ -10,9 +10,10 @@ import {
   modelSchema,
   PluginStore,
   ProgramRunner,
+  Provisioner,
+  pluginPlatform,
   SettingsService,
   splitModelReference,
-  unresolvedPrograms,
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
@@ -25,6 +26,7 @@ import {
   ipcMain,
   Menu,
   nativeTheme,
+  net,
   protocol,
   safeStorage,
   screen,
@@ -174,8 +176,27 @@ const workbench = new WorkbenchService(
 );
 /** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
+const processHost = createDesktopProcessHost();
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
-const programs = new ProgramRunner({ host: createDesktopProcessHost(), clock: systemClock });
+const programs = new ProgramRunner({ host: processHost, clock: systemClock });
+/** The pinned uv of the package, or the one prepare:uv placed in the source tree for development. */
+const uvBinary = join(
+  app.isPackaged
+    ? join(process.resourcesPath, "uv")
+    : join(here, "../../../../../src/uv", pluginPlatform(process.platform, process.arch) ?? "unsupported"),
+  process.platform === "win32" ? "uv.exe" : "uv",
+);
+/** Installs programs only on plugins.provision; resolves them for sessions without installing anything. */
+const provisioner = new Provisioner({
+  store: plugins,
+  root: join(dataLocations.paths.userData, "plugins", "runtime"),
+  ...(existsSync(uvBinary) ? { uv: { executable: uvBinary } } : {}),
+  host: processHost,
+  clock: systemClock,
+  platform: pluginPlatform(process.platform, process.arch),
+  fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
+  settings: () => settings.get().settings.plugins,
+});
 /** Runs of the open workbench stop before it closes or another workbench replaces it. */
 async function stopWorkbenchPrograms(): Promise<void> {
   let folder: string;
@@ -219,10 +240,13 @@ const sessions = new SessionsHost({
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
   emit: emitAppEvent,
-  // Provisioning (PLG-05) supplies executables; instrumented builds resolve fixture plugins for e2e.
+  // Instrumented builds may resolve fixture plugins from VERA_TEST_PROGRAMS for e2e; otherwise provisioning does.
   programs: {
     runner: programs,
-    resolver: __VERA_TEST__ ? testProgramResolver(process.env.VERA_TEST_PROGRAMS) : unresolvedPrograms,
+    resolver:
+      __VERA_TEST__ && process.env.VERA_TEST_PROGRAMS
+        ? testProgramResolver(process.env.VERA_TEST_PROGRAMS)
+        : provisioner,
   },
   ...(__VERA_TEST__ && process.env.VERA_TEST_ALLOW_WRITES === "1"
     ? { permissions: { allow: () => true } }
@@ -231,6 +255,11 @@ const sessions = new SessionsHost({
 ipcMain.handle("vera:subscription", (event, action, payload) =>
   sessions.subscription(event, action, payload),
 );
+/** A plugin was installed, removed, toggled or provisioned: resolve programs and prompt entries again. */
+function pluginsChanged(): void {
+  provisioner.invalidate();
+  sessions.invalidatePrograms();
+}
 
 // Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).
 let detected: Map<OpenerId, Opener> | undefined;
@@ -296,12 +325,29 @@ ipcMain.handle(
         const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
         return (await plugins.list()).map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
       },
-      "plugins.install": ({ path }) => plugins.install(path),
+      "plugins.install": async ({ path }) => {
+        const installed = await plugins.install(path);
+        pluginsChanged();
+        return installed;
+      },
       "plugins.uninstall": async ({ id }) => {
         await plugins.uninstall(id);
+        pluginsChanged();
         return {};
       },
-      "plugins.toggle": ({ workbenchId, id, enabled }) => workbench.togglePlugin(workbenchId, id, enabled),
+      "plugins.toggle": async ({ workbenchId, id, enabled }) => {
+        const result = await workbench.togglePlugin(workbenchId, id, enabled);
+        pluginsChanged();
+        return result;
+      },
+      "plugins.programs": ({ id }) => provisioner.statuses(id),
+      "plugins.provision": async ({ id }) => {
+        try {
+          return await provisioner.install(id);
+        } finally {
+          pluginsChanged();
+        }
+      },
       "docs.list": async ({ workbenchId }) => ({
         workbenchId,
         documents: (await workbench.listDocuments(workbenchId))
@@ -737,6 +783,8 @@ if (!app.requestSingleInstanceLock()) {
     }
     if (draining) return;
     draining = true;
+    // Installs and probes stop with the app; their uv and tar process trees are killed.
+    provisioner.close();
     void programs
       .stopAll()
       .then(() => sessions.close())

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-c12941f3"
+title = "Pass the package index and proxy settings to uv"
+status = "active"
+requirement = "Where the settings name a package index or a proxy under plugins, the provisioner shall pass the index to uv as UV_DEFAULT_INDEX and the proxy as HTTPS_PROXY and HTTP_PROXY."
+verification = "Scripted process host: with settings plugins {index: https://mirror.example/simple, proxy: http://proxy.example:3128} the uv tool install environment carries UV_DEFAULT_INDEX and both proxy variables; without settings none of them is set."
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

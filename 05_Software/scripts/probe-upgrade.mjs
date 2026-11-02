@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { parse, stringify } from "yaml";
 import { distributionConfig, stageRuntime } from "./package.mjs";
 import { checkStagedPayload } from "./package-checks.mjs";
+import { prepareBundledUv } from "./prepare-uv.mjs";
 import { startUpdateFeed } from "./update-feed.mjs";
 
 // Probes the update feature on real installed builds. Data migration and upgrade safety are not
@@ -274,6 +275,7 @@ try {
   if (!previous) {
     const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js");
     await run([process.execPath, vite, "build", "src/apps/desktop"], software, env, "compile");
+    await prepareBundledUv();
     const staged = await stageRuntime("test", scratch);
     const manifest = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
     report.prepack = await checkStagedPayload(staged.stage, process.platform, manifest);

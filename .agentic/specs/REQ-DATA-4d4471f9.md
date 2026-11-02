@@ -26,11 +26,11 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `requires` | optional, at most 64 unique plugin ids, default `[]` |
 | `programs` | optional map; key `^[a-z0-9._-]{1,64}$`, at most 64 programs |
 | `programs.*.install` | exactly one of `{pip}`, `{script}`, `{download}`, `{find, hint?}` |
-| `install.pip` | requirement string, 1–256 characters |
+| `install.pip` | requirement string, 1–256 characters after trimming, starting with a letter or digit |
 | `install.script` | plugin-relative `.py` path that exists in the package |
-| `install.download` | map of platform → `{url: https URL ≤ 2048 characters, sha256: 64 hex, path?: relative path, prefix?: args}`, at least one platform |
-| `install.find` | `{windows?: globs, linux?: globs}` with at least one list of 1–64 globs of 1–1024 characters; optional `hint` 1–1024 characters |
-| `programs.*.version` | `{args: args, match: regex}`; the JavaScript regex, 1–512 characters, compiles and has exactly one capture group |
+| `install.download` | map of platform → `{url: https URL ≤ 2048 characters, sha256: 64 hex, path?: relative path, prefix?: args}`, at least one platform; a URL whose path ends in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` (any case) needs `path`; any other URL without `path` needs a last path segment that is a valid relative path |
+| `install.find` | `{windows?: globs, linux?: globs}` with at least one list of 1–64 entries of 1–1024 characters without control characters; each entry is `%PATH%`, `$PATH`, or an absolute local path (`/x`, not `//x`; `X:/` or `X:\`), possibly starting with `~`, `%NAME%`, `$NAME` or `${NAME}`; `*` may appear in at most two `/`- or `\`-separated segments and `**` never; optional `hint` 1–1024 characters |
+| `programs.*.version` | `{args: args, match: regex, range?}`; the JavaScript regex, 1–512 characters, compiles and has exactly one capture group; `range` is 1–128 characters of comma-separated comparators `>=`, `>`, `<=`, `<`, `==`, `!=` each followed by dotted decimal numbers (`>=5,<6`), spaces allowed around commas |
 | `programs.*.launcher` | optional non-empty args |
 | `programs.*.prefix` | optional args; `${pluginDir}` is the only placeholder |
 | `programs.*.env` | optional map `^[A-Za-z_][A-Za-z0-9_]{0,127}$` → value ≤ 4096 characters; placeholders `${workbench}`, `${pluginDir}` only |
@@ -62,8 +62,9 @@ segment. Rule pattern syntax is not interpreted here.
 
 `{format: 1, id, version, tier, source: {kind: "folder" | "zip", path}, sha256, installedAt, programs}`.
 `tier` is `official`, `community`, `local` or `trial`; folder and zip installs record `local`.
-`installedAt` is an ISO 8601 UTC timestamp. `programs` maps a program name to its resolved version
-and is `{}` until provisioning fills it.
+`installedAt` is an ISO 8601 UTC timestamp. `programs` maps a program name to the version probed
+when provisioning installed it; it is `{}` after every (re)install of the plugin. Provisioning rewrites
+the file atomically and only while its `sha256` still equals the installed plugin's.
 
 ### Integrity hash
 
@@ -112,6 +113,6 @@ The linked requirements' verification passes in `core/src/plugins/store.test.ts`
 
 ## Current limits
 
-`install.json.programs` stays `{}`: no program is provisioned yet. `requires` is validated as a
+`requires` is validated as a
 list of plugin ids but is not checked against the installed plugins at install, list or enable.
 Staging folders left by a crash during install are not removed automatically.

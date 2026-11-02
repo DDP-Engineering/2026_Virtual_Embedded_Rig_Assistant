@@ -160,6 +160,14 @@ background run read with `until`, and the prompt snapshot shows the block only f
   the CLI in place of `unresolvedPrograms`; the `<programs>` block then lists the resolved programs.
 **Done when:** on clean Windows and Ubuntu machines without Python, `esptool` and a PEP 723 script
 install and run; a `download` with a wrong hash is refused; a missing `find` program shows its hint.
+- Done 2026-11-02: pinned uv 0.13.1 (`src/uv/uv-manifest.json`, `npm run prepare:uv`, `<resources>/uv/`),
+  core `Provisioner` (all four kinds, version probe and `version.range`, statuses), `plugins.programs` and
+  `plugins.provision` IPC, settings `plugins.index`/`plugins.proxy`, `vera plugin install`, the provisioner as
+  resolver in desktop and the CLI, and cached `<programs>` entries in desktop sessions. Manifest additions:
+  `version.range`, archive downloads need `path`, `pip` requirements start with a letter or digit, `find`
+  entries are `%PATH%`/`$PATH` or absolute without `**`. One managed CPython is pinned to 3.13. esptool and a
+  PEP 723 script installed and ran on Windows x64 through the CLI; the Ubuntu run, its sizes and the native
+  Linux branches (GNU tar, exec bits) are owed. The Settings UI that calls `plugins.provision` is PLG-06.
 
 ### PLG-06 Plugins UI
 **Goal:** users manage plugins and watch runs. **Depends on:** PLG-04, PLG-05.

@@ -409,6 +409,35 @@ export class PluginStore {
       return this.summary(manifest.id);
     });
   }
+  /**
+   * Adds program versions to install.json after provisioning, atomically and only while the installed
+   * plugin is the one the versions were probed for (its hash); a reinstall in between is CONFLICT.
+   */
+  recordPrograms(id: string, sha256: string, programs: Readonly<Record<string, string>>): Promise<void> {
+    return this.serial(async () => {
+      if (!pluginIdSchema.safeParse(id).success || !(await this.ids()).includes(id)) throw fails("NOT_FOUND");
+      const path = join(this.installed, id, RECORD);
+      const record = await readRecord(path);
+      if (!record || record.sha256 !== sha256) throw fails("CONFLICT");
+      const next = pluginRecordSchema.parse({ ...record, programs: { ...record.programs, ...programs } });
+      // Written beside the plugins, never inside one: a stray file there would fail its integrity hash.
+      await mkdir(this.staging, { recursive: true });
+      const temporary = join(this.staging, `${this.uuid()}.json`);
+      try {
+        await writeFile(
+          temporary,
+          `${JSON.stringify(next, null, 2)}
+`,
+          { flag: "wx" },
+        );
+        await rename(temporary, path).catch((error) => {
+          throw busy(error);
+        });
+      } finally {
+        await rm(temporary, { force: true });
+      }
+    });
+  }
   uninstall(id: string): Promise<void> {
     return this.serial(async () => {
       if (!pluginIdSchema.safeParse(id).success || !(await this.ids()).includes(id)) throw fails("NOT_FOUND");

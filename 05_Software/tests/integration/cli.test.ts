@@ -253,7 +253,7 @@ it("CLI loads a separately authorized user skill and extra file", async () => {
   expect(records.filter((r) => r.event.type === "message.done").at(-1)?.event.text).toBe("CLI EXTRA");
 });
 // REQ-FUNC-59308834
-it("CLI offers the enabled plugin's skill and program tools and prints their events", async () => {
+it("CLI offers the enabled plugin's skill and program tools and runs a resolved program", async () => {
   const { workbench } = await fixture();
   const data = join(workbench, "user-data"),
     script = join(workbench, "plugin-replay.jsonl");
@@ -272,13 +272,78 @@ it("CLI offers the enabled plugin's skill and program tools and prints their eve
       .map((s) => JSON.stringify(s))
       .join("\n"),
   );
-  const result = await launch([...replay(workbench, script), "--data", data]).result;
+  // REQ-FUNC-565e908d: the find program resolves through provisioning to this Node executable.
+  const result = await launch([...replay(workbench, script), "--data", data], {
+    VERA_TEST_NODE: process.execPath,
+  }).result;
   expect(result.code).toBe(0);
   const tools = events(result.stdout).filter((r) => r.event.type === "tool.done");
-  expect(tools.map((r) => r.event.ok)).toEqual([true, false]);
+  expect(tools.map((r) => r.event.ok)).toEqual([true, true]);
   expect(String(tools[0]?.event.summary)).toContain("Run `echo version` first.");
-  // Without provisioning (PLG-05) the CLI resolves no executable, so the program is not available yet.
-  expect(String(tools[1]?.event.summary)).toMatch(/Program echo is not available/);
+  const summary = String(tools[1]?.event.summary);
+  expect(summary).toContain('"exitCode":0');
+  expect(summary).toContain('"risk":"safe"');
+  // echo-tools' echo.mjs reports the command it received.
+  expect(summary).toContain('{\\"command\\":\\"version\\"');
+  // Without the variable the program is not found, so it is not available to the agent.
+  const missing = await launch([...replay(workbench, script), "--data", data]).result;
+  const failed = events(missing.stdout).filter((r) => r.event.type === "tool.done");
+  expect(String(failed[1]?.event.summary)).toMatch(/Program echo is not available/);
+});
+// REQ-FUNC-c44675ed, REQ-UX-46085ddf
+it("CLI installs a plugin and its programs and prints their statuses", async () => {
+  const { dir } = await fixture();
+  const data = join(dir, "user-data"),
+    plugin = join(dir, "bench-tools");
+  await mkdir(plugin);
+  await writeFile(
+    join(plugin, "plugin.yaml"),
+    [
+      "format: 1",
+      "id: bench-tools",
+      "version: 1.0.0",
+      "name: Bench tools",
+      "description: Node and a missing analyser.",
+      "ecosystem: general",
+      "platforms: [windows-x64, linux-x64]",
+      "programs:",
+      "  node:",
+      '    install: { find: { windows: ["%VERA_TEST_NODE%"], linux: ["$VERA_TEST_NODE"] } }',
+      "    version: { args: [--version], match: 'v(\\d+\\.\\d+\\.\\d+)', range: '>=20' }",
+      "  tshark:",
+      '    install: { find: { windows: ["C:/nonexistent/tshark.exe"], linux: ["/nonexistent/tshark"] }, hint: "Install Wireshark from https://www.wireshark.org/download.html." }',
+      "    version: { args: [--version], match: 'TShark (\\S+)' }",
+      "",
+    ].join("\n"),
+  );
+  const result = await launch(["plugin", "install", "--path", plugin, "--data", data], {
+    VERA_TEST_NODE: process.execPath,
+  }).result;
+  expect(result.code).toBe(1);
+  const lines = result.stdout
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => JSON.parse(line));
+  expect(lines).toEqual([
+    { name: "node", kind: "find", state: "ready", version: process.versions.node, range: ">=20" },
+    {
+      name: "tshark",
+      kind: "find",
+      state: "missing",
+      problem: "notFound",
+      hint: "Install Wireshark from https://www.wireshark.org/download.html.",
+      link: "https://www.wireshark.org/download.html",
+    },
+  ]);
+  expect(existsSync(join(data, "plugins", "installed", "bench-tools", "install.json"))).toBe(true);
+  for (const args of [
+    ["plugin", "install", "--data", data],
+    ["plugin", "install", "--path", plugin],
+    ["plugin", "remove"],
+  ]) {
+    const usage = await launch(args).result;
+    expect(usage.code, args.join(" ")).toBe(2);
+  }
 });
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {

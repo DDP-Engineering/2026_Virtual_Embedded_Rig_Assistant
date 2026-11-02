@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-714e26bc"
+title = "Install a pip program with the bundled uv"
+status = "active"
+requirement = "When the user installs a plugin's programs and a program declares pip, the provisioner shall run uv tool install with the requirement, take the entry point named like the program from runtime/tools/<plugin id>/bin, probe its version and record that version in the plugin's install.json programs."
+verification = "Scripted process host on Linux and Windows: installing esptool with pip esptool>=5,<6 spawns uv with [tool, install, esptool>=5,<6]; the fake uv creates bin/esptool (bin/esptool.exe on Windows); the probe prints esptool v5.6.0; install.json programs is {esptool: 5.6.0}, the status is ready with version 5.6.0 and the resolver returns the entry point."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = "specs/REQ-FUNC-714e26bc.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

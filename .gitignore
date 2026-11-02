@@ -14,6 +14,8 @@ __pycache__/
 !/05_Software/src/models/model-manifest.json
 /05_Software/src/windows_runtime/*
 !/05_Software/src/windows_runtime/windows-runtime-manifest.json
+/05_Software/src/uv/*
+!/05_Software/src/uv/uv-manifest.json
 *.tsbuildinfo
 
 # Ignore explicitly requested coverage/reports and any legacy Playwright output.

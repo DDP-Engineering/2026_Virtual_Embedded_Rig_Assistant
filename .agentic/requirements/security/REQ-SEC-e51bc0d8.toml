@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-e51bc0d8"
+title = "Refuse an archive that leaves its folder"
+status = "active"
+requirement = "If a download archive holds an absolute, drive-qualified or parent-escaping entry path, or after extraction a link whose target resolves outside the extraction folder or an entry that is neither a file, a folder nor such a link, the provisioner shall refuse the program with problem archive and keep nothing of the extraction."
+verification = "Unit tests with zips holding ../evil, /abs, C:/abs and ..\\evil, a tree check over a folder holding a link to ../outside, and an integration test with a tar.gz whose link points outside: each status is missing with problem archive, nothing is written outside the staging folder and runtime/downloads holds no folder for the hash."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/archive.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/archive.test.ts", "05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/integration/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

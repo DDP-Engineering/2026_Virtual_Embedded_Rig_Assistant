@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-86daf060"
+title = "Install a plugin's programs on the user's request"
+status = "active"
+requirement = "When the renderer requests plugins.provision for an installed plugin without issues, the desktop shall install every program of the plugin that is not ready, one install at a time with one deadline per program, record each version as soon as it is probed and return the resulting statuses, answering NOT_FOUND for an id that is not installed and INVALID for a plugin with issues."
+verification = "Provisioner tests: two programs install one after the other (the second uv spawn starts after the first exits) and the statuses come back ready; an unknown id is NOT_FOUND, a plugin whose files changed is INVALID; closing the provisioner kills a running uv, rejects the install and keeps the version recorded before it; channel schema and mock tests cover plugins.provision."
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/core/src/plugins/store.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

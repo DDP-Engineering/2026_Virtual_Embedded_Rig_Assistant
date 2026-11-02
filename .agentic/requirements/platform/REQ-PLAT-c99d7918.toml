@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-c99d7918"
+title = "Prepare the pinned uv binary for the build platform"
+status = "active"
+requirement = "When the uv preparation runs on a Windows x64 or Linux x64 build host, it shall write the uv binary named by the uv manifest for that platform to 05_Software/src/uv/<platform>/ only after the cached or downloaded archive and the extracted binary both match the SHA-256 values of the manifest."
+verification = "Packaging test with a fixture manifest whose archives (a zip and a tar.gz built in the test) are served by an injected fetch: the binary appears under src/uv/<platform>/ with the manifest hash; a second run with the verified archive cached does not fetch."
+affected_paths = ["05_Software/scripts/prepare-uv.mjs", "05_Software/src/uv/uv-manifest.json", "05_Software/package.json"]
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

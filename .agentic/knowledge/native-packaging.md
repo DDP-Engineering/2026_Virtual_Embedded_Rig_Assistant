@@ -23,6 +23,8 @@ The package delivers the BGE q8 assets selected in [ADR0015](../../00_Planning/d
 Already-built artifact functional/egress acceptance belongs to [release smoke](release-smoke.md).
 
 From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only),
+`npm run prepare:uv` (pinned uv 0.13.1 from `src/uv/uv-manifest.json`: archive and binary SHA-256 verified,
+binary written to `src/uv/<platform>/`, archive cached in `src/uv/.cache/`; `-- --offline` uses the cache only),
 `npm run package` (compiled release) and `npm run package:test` (compiled instrumented).
 Outputs are `release_tmp/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.
 The instrumented packaged app accepts `--packaging-probe=<absolute JSON path>` and exits 0/1
@@ -58,6 +60,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 | Change requested | Start with | Focused verification |
 |---|---|---|
 | Model delivery/pins | `src/models/model-manifest.json`, `prepare-model.mjs` | packaging asset integrity tests, actual offline cached verification |
+| uv delivery/pins | `src/uv/uv-manifest.json`, `prepare-uv.mjs`, `stageUv` in `package.mjs` | `tests/packaging/packaging.test.ts` (prepare and stage uv) |
 | Native collection/budget | `package.mjs`, `electron-builder.yml` | packaging budget/ASAR tests, native OS artifact inspections |
 | SQLite SQL/fallback | `main/packaging/sqlite-probe.ts` | real SQLite test, packaged probe |
 | Embedding lifecycle | `embedding-worker.ts`, `probe.ts` | actual packaged offline worker, build-mode exclusion |
@@ -112,6 +115,9 @@ builds omit the probe branch and worker entry while retaining bundled runtime/mo
 - `05_Software/src/windows_runtime/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
 - `main/app-info.ts`, shared ipc.ts, renderer Metadata/locales — immutable build/signature identity in About.
 - `05_Software/src/models/model-manifest.json` — immutable model provenance/pins.
+- `05_Software/src/uv/uv-manifest.json`, `05_Software/scripts/prepare-uv.mjs` — pinned uv per platform; `package.mjs`
+  prepares it, stages `resources/uv/` (extraResources `uv`) and re-checks the packaged binary hash; the package report
+  records `uv {version, platform, bytes, sha256}`.
 - `05_Software/src/apps/desktop/electron-builder.yml` — targets, unpacking and real resource delivery.
 - `05_Software/src/apps/desktop/electron.vite.config.ts`, `src/main/index.ts` — compiled boundary and test hook.
 - `05_Software/src/apps/desktop/src/main/packaging/{probe,sqlite-probe,embedding-worker}.ts` — actual packaged checks.

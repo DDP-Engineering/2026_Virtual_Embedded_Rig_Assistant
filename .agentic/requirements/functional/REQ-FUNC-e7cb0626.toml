@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-e7cb0626"
+title = "Install a PEP 723 script program"
+status = "active"
+requirement = "When the user installs a plugin's programs and a program declares script, the provisioner shall run uv sync --script on the installed plugin's script, probe the version through the script run and record that version in the plugin's install.json programs."
+verification = "Scripted process host: installing program serial with script scripts/serial.py spawns uv [sync, --script, <plugin folder>/scripts/serial.py] then the probe uv [run, --quiet, --offline, --script, <path>, <version args>]; install.json programs records the captured version."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

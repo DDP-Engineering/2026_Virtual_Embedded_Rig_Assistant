@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-aa09d82e"
+title = "Install a download archive program"
+status = "active"
+requirement = "When the user installs a download program whose URL path ends in .zip, .tar.gz, .tgz or .tar.xz, the provisioner shall download the file for the current platform, verify its SHA-256, extract it into runtime/downloads/<sha256>/ and resolve the program to the manifest path inside that folder, reusing an existing folder of the same hash without downloading."
+verification = "Unit test with an injected fetch serving a zip built in the test, and an integration test extracting a tar.gz and a tar.xz built with the system tar: the program resolves to downloads/<sha256>/<path>; a second install with the folder present does not call fetch."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/archive.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/core/src/plugins/archive.test.ts", "05_Software/tests/integration/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
+spec = "specs/REQ-FUNC-714e26bc.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

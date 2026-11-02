@@ -7,7 +7,8 @@ ecosystem: general
 platforms: [windows-x64, linux-x64]
 programs:
   echo:
-    install: { find: { windows: [node.exe], linux: [node] }, hint: Install Node.js. }
+    # Tests name the Node executable in VERA_TEST_NODE; without it the program is not found.
+    install: { find: { windows: ["%VERA_TEST_NODE%"], linux: ["$VERA_TEST_NODE"] }, hint: Install Node.js. }
     version: { args: [--version], match: 'v(\d+\.\d+\.\d+)' }
     prefix: ["${pluginDir}/echo.mjs"]
     timeout: 60

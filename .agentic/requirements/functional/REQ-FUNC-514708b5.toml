@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-514708b5"
+title = "Probe a program's version and check its supported range"
+status = "active"
+requirement = "When the provisioner probes a program, it shall run the executable with its leading arguments and the manifest's version arguments, take the first capture of version.match from the output as the program's version and report the program ready when that version satisfies version.range or no range is declared."
+verification = "Unit tests: probe output 'git version 2.44.0' with match 'git version (\\d+\\.\\d+\\.\\d+)' and range >=2.40 gives ready 2.44.0; the same without a range gives ready; range checks compare dotted numbers numerically (2.10 > 2.9)."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/tests/integration/provisioning.test.ts"]
+spec = "specs/REQ-FUNC-714e26bc.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

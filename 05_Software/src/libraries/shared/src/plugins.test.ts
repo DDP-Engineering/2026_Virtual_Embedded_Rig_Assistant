@@ -65,7 +65,7 @@ it("accepts the canonical manifest, a skills-only plugin and every install kind"
         },
       },
     },
-    { find: { windows: ["C:/Espressif/**/eim.exe"], linux: ["~/.espressif/**/eim"] }, hint: "Install EIM." },
+    { find: { windows: ["C:/Espressif/*/eim.exe"], linux: ["~/.espressif/*/eim"] }, hint: "Install EIM." },
   ];
   for (const install of kinds)
     expect(

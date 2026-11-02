@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-e068dcd7"
+title = "Report a failed download"
+status = "active"
+requirement = "If a download fails, answers with an HTTP error status, exceeds 2 GiB, does not finish before the program's install deadline, or the manifest path is not a file after extraction, the provisioner shall report the program missing with problem download for a transfer failure or archive for a content failure and keep nothing of the download."
+verification = "Unit tests: fetch rejecting, a 404 response, a declared length over 2 GiB and an archive without the manifest path give state missing with problem download, download, download and archive, and runtime/downloads holds nothing for the hash; a body that stalls ends at a 50 ms deadline with problem download and its staging folder removed, an hour-old leftover staging folder removed and a younger one kept."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

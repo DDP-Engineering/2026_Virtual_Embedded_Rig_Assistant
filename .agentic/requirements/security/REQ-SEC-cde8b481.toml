@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-cde8b481"
+title = "Refuse a download with the wrong hash"
+status = "active"
+requirement = "If a downloaded file's SHA-256 differs from the hash the manifest declares, the provisioner shall refuse the program with problem sha256, delete the downloaded bytes and record no version."
+verification = "Unit test: an injected fetch serves bytes whose hash differs from the manifest; the status is missing with problem sha256, runtime/downloads holds no file or folder for either hash and install.json programs stays {}."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

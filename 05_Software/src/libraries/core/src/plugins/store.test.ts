@@ -404,3 +404,26 @@ it("lists the irreversible rules of a plugin without issues in manifest order", 
   expect(changed?.issues).toEqual([{ code: "changed" }]);
   expect(changed).not.toHaveProperty("irreversible");
 });
+
+// REQ-FUNC-86daf060
+it("records program versions in install.json only while the installed hash still matches", async () => {
+  const { store, folder, installed } = await fixture();
+  const installedPlugin = await store.install(await folder(packageFiles()));
+  const sha256 = installedPlugin.sha256 as string;
+  await store.recordPrograms("esp32-esptool", sha256, { esptool: "5.6.0" });
+  await store.recordPrograms("esp32-esptool", sha256, { helper: "1.0" });
+  const loaded = await store.load("esp32-esptool");
+  expect(loaded.record.programs).toEqual({ esptool: "5.6.0", helper: "1.0" });
+  expect((await store.list())[0]?.issues).toEqual([]);
+  expect(
+    (await readdir(join(installed, "esp32-esptool"))).filter((name) => name.includes("install")),
+  ).toEqual(["install.json"]);
+  await expect(store.recordPrograms("esp32-esptool", "f".repeat(64), { esptool: "1" })).rejects.toMatchObject(
+    {
+      code: "CONFLICT",
+    },
+  );
+  await expect(store.recordPrograms("missing", sha256, {})).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await store.install(await folder(packageFiles()));
+  expect((await store.load("esp32-esptool")).record.programs).toEqual({});
+});

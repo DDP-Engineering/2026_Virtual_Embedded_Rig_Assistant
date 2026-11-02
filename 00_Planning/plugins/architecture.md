@@ -79,8 +79,8 @@ docs:
 | `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
 | `requires` | plugin IDs installed together with this one (at most 64; not checked at install or enable until the catalog work) |
 | `programs.<name>` | `[a-z0-9._-]{1,64}`; the value the agent passes as `program` |
-| `programs.*.install` | exactly one kind of §5; a `script` path must exist in the package; `find` takes an optional `hint` |
-| `programs.*.version` | probe arguments and a regex with one capture group; shown in the UI and the prompt |
+| `programs.*.install` | exactly one kind of §5; a `script` path must exist in the package; a `pip` requirement starts with a letter or digit (never an option); a `download` URL ending in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` needs `path`; `find` entries are `%PATH%`/`$PATH` or absolute paths (optionally starting with `~` or a variable) with `*` inside one segment, in at most two segments, and no `**`; `find` takes an optional `hint` |
+| `programs.*.version` | probe arguments, a regex with one capture group and an optional supported `range` (comma-separated `>=`, `>`, `<=`, `<`, `==`, `!=` with dotted numbers, e.g. `>=5,<6`); shown in the UI and the prompt |
 | `programs.*.launcher` | optional argument prefix for programs that need an activated vendor environment, for example `[eim, run]` (§3.3) |
 | `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
 | `programs.*.env` | extra variables; values are literals, `${workbench}` or `${pluginDir}` |
@@ -140,8 +140,9 @@ the output read during the call with a 100 ms limit per attempt, and reports `ma
 returns `{exitCode, stopped, timedOut, durationMs, output, truncated, log}`. Handles belong to the
 session that started them (at most 32 kept). Undeclared, ambiguous, unresolved and `launcher` programs
 (launchers wait for PLG-10) and policy refusals end the call before any approval, naming the reason.
-Executables come from a `ProgramResolver` port that provisioning (PLG-05) implements; until then
-desktop and the CLI resolve nothing, and instrumented desktop builds read `VERA_TEST_PROGRAMS`.
+Executables come from a `ProgramResolver` port that provisioning (§5) implements in desktop and the CLI;
+instrumented desktop builds read `VERA_TEST_PROGRAMS` instead when it is set. A resolution may add
+environment variables (uv's, for script programs), applied after the program's own `env`.
 Session stop aborts the foreground run and stops the session's background runs.
 
 ### 3.2 Runner
@@ -277,25 +278,43 @@ moment is not detected.
 
 | `install` kind | For | VERA does |
 |---|---|---|
-| `pip: "<requirement>"` | Python CLIs on PyPI: esptool, pymcuprog, python-can, cantools | `uv tool install` into `<userData>/plugins/runtime/tools/`; records the resolved version |
-| `script: scripts/<file>.py` | helper scripts shipped in the plugin | `uv run --script`; dependencies come from the PEP 723 header and stay in uv's cache |
-| `download: { <platform>: { url, sha256, path?, prefix? } }` | portable binaries: probe-rs, OpenOCD-esp32, the sigrok fork, xPack toolchains, … | downloads, verifies SHA-256, extracts `.zip`, `.tar.gz` and `.tar.xz` into `runtime/downloads/<sha256>/` and runs `path` inside it; a single-file executable (AppImage) is stored as is and made executable. `prefix` lists fixed leading arguments, for example `[--cli]` for the sigrok AppImage |
-| `find: { windows: [...], linux: [...] }` + `hint` | vendor suites the user installs: EIM/ESP-IDF, Wireshark, STM32CubeProgrammer, MPLAB X, PEAK drivers | searches `PATH` and the listed globs; if missing, shows `hint` and its link |
+| `pip: "<requirement>"` | Python CLIs on PyPI: esptool, pymcuprog, python-can, cantools | `uv tool install <requirement>` into `<userData>/plugins/runtime/tools/<plugin id>/`; the program is the entry point named like it in that folder's `bin/`; records the probed version |
+| `script: scripts/<file>.py` | helper scripts shipped in the plugin | install: `uv sync --script`; run: uv with `run --quiet --offline --script <file>`, so a run never installs dependencies; they stay in uv's cache |
+| `download: { <platform>: { url, sha256, path?, prefix? } }` | portable binaries: probe-rs, OpenOCD-esp32, the sigrok fork, xPack toolchains, … | downloads (at most 2 GiB), verifies SHA-256, extracts `.zip` (in VERA, as a stream; a zip never creates a link) or `.tar.gz`, `.tgz` and `.tar.xz` (the system tar: bsdtar from System32 on Windows, GNU tar on Linux) into `runtime/downloads/<sha256>/` and runs `path` inside it; any other URL is a single file (AppImage) stored as is under `path` or the URL's last segment and made executable. `prefix` lists fixed leading arguments, for example `[--cli]` for the sigrok AppImage. Links that leave the folder and special files are refused; a failure keeps nothing |
+| `find: { windows: [...], linux: [...] }` + `hint` | vendor suites the user installs: EIM/ESP-IDF, Wireshark, STM32CubeProgrammer, MPLAB X, PEAK drivers | entry by entry: `%PATH%`/`$PATH` searches PATH for `<program>.exe`/`<program>`; other entries expand `~` and variables and match `*` globs, highest name first, a folder meaning `<folder>/<program>[.exe]` (on Windows only `.exe` files, on Linux only executable ones); the first such file is probed. If missing, shows `hint` and its link |
 
-- `uv` ships in the VERA package (`<resources>/uv/`, pinned, one binary per platform). VERA sets
-  `UV_CACHE_DIR`, `UV_PYTHON_INSTALL_DIR` and `UV_TOOL_DIR` under `<userData>/plugins/runtime/` and
-  never changes the user's own Python. uv fetches one managed CPython that all plugins share.
-- Only the user installs. The agent cannot install programs; it can only propose a plugin.
+- `uv` 0.13.1 ships in the VERA package (`<resources>/uv/`, pinned by `05_Software/src/uv/uv-manifest.json`,
+  one binary per platform, archive and binary SHA-256 checked by `npm run prepare:uv` and again in the
+  packaged app). Every uv call gets `UV_CACHE_DIR`, `UV_PYTHON_INSTALL_DIR`, `UV_PYTHON_BIN_DIR`,
+  `UV_TOOL_DIR` and `UV_TOOL_BIN_DIR` under `<userData>/plugins/runtime/`, `UV_MANAGED_PYTHON=1`,
+  `UV_PYTHON=3.13`, `UV_PYTHON_INSTALL_BIN=0`, `UV_PYTHON_INSTALL_REGISTRY=0`, `UV_NO_CONFIG=1` and
+  `UV_NO_PROGRESS=1` (exact rules: `.agentic/specs/REQ-FUNC-714e26bc.md`). VERA never uses or changes the
+  user's own Python, `~/.local/bin`, the Windows registry or the user's uv configuration. uv fetches one
+  managed CPython 3.13 that all plugins share; the minor version is pinned because uv otherwise takes the
+  newest CPython, for which common packages may have no wheels yet (seen with 3.15.0 and pyyaml).
+- Only the user installs: Settings (PLG-06) through `plugins.provision {id}`, the CLI through
+  `vera plugin install --path <folder|zip> --data <dir>`. Resolving for the prompt and `run_program` never
+  downloads, installs or synchronises anything. The agent cannot install programs; it can only propose a
+  plugin.
+- A program is installed when `install.json.programs` records its probed version; a plugin reinstall
+  starts again from `{}`. The version probe runs the program with `version.args` (30 s, first 64 KiB of
+  output, any exit code); a version outside `range` or no match makes the program unavailable with the
+  reason. Each program's install has one 15-minute deadline (transfer, extraction, uv, probe); quitting the
+  app stops running installs. `plugins.programs {id}` lists `{name, kind, state: ready | missing | unavailable, version?, range?,
+  hint?, link?, problem?, detail?}` per program.
 - VERA never runs vendor installers, `sudo` or elevation. Driver and permission steps are hints.
-- Settings: optional package index URL and proxy for company mirrors, passed to uv.
+- Settings: optional package index URL and proxy (`plugins.index`, `plugins.proxy`, http(s) without
+  credentials), passed to uv as `UV_DEFAULT_INDEX` and `HTTPS_PROXY`/`HTTP_PROXY`. VERA's own downloads use
+  the app's network stack (Electron honours the system proxy; the CLI does not).
 
-Approximate disk use, measured in PLG-05:
+Disk use, measured 2026-11-02 on Windows x64 (apparent bytes; Ubuntu still to measure):
 
 | Item | Location | Size |
 |---|---|---|
-| `uv` binary | VERA package | tens of MB |
-| Managed CPython | `<userData>`, once | ≈ 50–120 MB |
-| One pip program environment (esptool with dependencies) | `<userData>` | ≈ 20–50 MB; uv hard-links shared files from its cache |
+| `uv` binary 0.13.1 | VERA package | 30.6 MiB (Windows `uv.exe`); 36.1 MiB (Linux `uv`, from the pinned archive) |
+| Managed CPython 3.13.16 | `<userData>`, once | 59.9 MB |
+| One pip program environment (esptool 5.6.0 with dependencies) | `<userData>` | 24.6 MB; uv hard-links shared files from its cache |
+| uv cache after esptool and one pyserial PEP 723 script | `<userData>` | 11.9 MB |
 | Plugin folders | `<userData>` | KB |
 | ESP-IDF through EIM (user-installed) | EIM folders | ≈ 3–5 GB per version + 2–3 GB tools, outside VERA |
 
@@ -304,7 +323,7 @@ Approximate disk use, measured in PLG-05:
 | Data | Location |
 |---|---|
 | Installed plugin | `<userData>/plugins/installed/<id>/`, plus `install.json` (format 1): id, version, tier, source kind and path, sha256, install time, resolved program versions (`{}` until provisioning) |
-| Runtime | `<userData>/plugins/runtime/{cache,python,tools,downloads}` |
+| Runtime | `<userData>/plugins/runtime/{cache,python,tools/<plugin id>,downloads/<sha256>}` |
 | Draft | any workbench folder, for example `plugins/<id>/`; ordinary files the agent can write |
 | Enabled for a workbench | `.vera/workbench.yaml` → `plugins: { enabled: [<id>…] }` |
 | Run logs | `.vera/runs/` |
@@ -414,4 +433,4 @@ NOTES:
 - Spawn reference: `09_Others/benchpilot-reference/apps/server/src/tshark.ts` (argument array, no
   shell, timeout, output cap).
 - Verify while implementing: how `eim run` takes its command (one string or argv); that esptool and
-  espefuse v5 accept both `_` and `-`; espefuse `--virt` for tests without hardware; the sizes of §5.
+  espefuse v5 accept both `_` and `-`; espefuse `--virt` for tests without hardware; the sizes of §5 on Ubuntu.

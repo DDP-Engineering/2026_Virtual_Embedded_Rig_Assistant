@@ -7,13 +7,13 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  PluginStore,
   type ProgramHost,
   ProgramRunner,
   programPromptEntries,
   SessionService,
   SettingsService,
   unavailableWebTools,
-  unresolvedPrograms,
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
@@ -30,6 +30,7 @@ import {
   nodeClock,
 } from "./host-ports.js";
 import { createCliProcessHost } from "./process-host.js";
+import { createCliProvisioner } from "./provisioning.js";
 import { scrubReplayOutput } from "./replay-output.js";
 import { createCliWorkerPool } from "./worker-pool.js";
 
@@ -166,11 +167,15 @@ export async function runTurn(
     const skillMetadata = skillList
       .filter((skill) => skill.enabled && !skill.error)
       .map(({ name, description }) => ({ name, description }));
-    // Provisioning (PLG-05) will resolve executables; until then no program of an enabled plugin resolves.
+    // Programs resolve through provisioning; a run never installs one (vera plugin install does).
     const programHost: ProgramHost = {
       runner: programs,
       clock: nodeClock,
-      resolver: unresolvedPrograms,
+      resolver: createCliProvisioner(
+        new PluginStore({ root: join(location.paths.userData, "plugins") }),
+        location.paths.userData,
+        () => config.plugins,
+      ),
       plugins: () => workbench.loadPlugins(snapshot.config.id),
     };
     const programEntries = await programPromptEntries(programHost, skillList);

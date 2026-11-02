@@ -78,6 +78,20 @@ it("mock plugins install, list per workbench, toggle and uninstall in memory", a
     code: "NOT_FOUND",
   });
 });
+// REQ-FUNC-13ef1c0c, REQ-FUNC-86daf060
+it("mock plugins list and install their programs", async () => {
+  const { api } = createMockApi();
+  await api.invoke("plugins.install", { path: "C:/plugins/esp32-esptool.zip" });
+  expect(await api.invoke("plugins.programs", { id: "esp32-esptool" })).toEqual([
+    { name: "esp32-esptool", kind: "pip", state: "missing" },
+  ]);
+  expect(await api.invoke("plugins.provision", { id: "esp32-esptool" })).toEqual([
+    { name: "esp32-esptool", kind: "pip", state: "ready", version: "1.0.0" },
+  ]);
+  expect(await api.invoke("plugins.programs", { id: "esp32-esptool" })).toMatchObject([{ state: "ready" }]);
+  await expect(api.invoke("plugins.programs", { id: "other" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(api.invoke("plugins.provision", { id: "other" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
 it("mock reindex obeys active-workbench ownership and strict empty request", async () => {
   const { api } = createMockApi();
   await expect(api.invoke("docs.reindex", {})).rejects.toMatchObject({ code: "NOT_FOUND" });

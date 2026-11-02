@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-c44675ed"
+title = "Install a plugin and its programs from the CLI"
+status = "active"
+requirement = "When the user runs vera plugin install --path <folder or zip> --data <folder>, the CLI shall install the plugin into <data>/plugins, install its programs and print one JSON status line per program, exiting 0 when every program is ready and 1 otherwise."
+verification = "CLI integration test: installing a fixture plugin with a find program that resolves to node and one missing find program prints two JSON lines, ready with the node version and missing with the hint, and exits 1; a missing --path, a missing --data or another plugin subcommand exits 2."
+affected_paths = ["05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/plugin.ts", "05_Software/src/apps/cli/src/index.ts", "05_Software/src/apps/cli/src/provisioning.ts"]
+linked_tests = ["05_Software/tests/integration/cli.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

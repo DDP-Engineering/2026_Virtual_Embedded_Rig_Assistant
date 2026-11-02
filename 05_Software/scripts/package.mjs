@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +13,7 @@ import {
   validateNativeFiles,
 } from "./package-checks.mjs";
 import { prepareBundledModel } from "./prepare-model.mjs";
+import { checkUvBinary, prepareBundledUv, uvEntry, uvPlatform } from "./prepare-uv.mjs";
 import { prepareBundledWindowsRuntime } from "./prepare-windows-runtime.mjs";
 import { updatePublish } from "./update-config.mjs";
 
@@ -138,6 +139,21 @@ function signatureStatus(file) {
   return result.status === 0 ? result.stdout.trim() : "unavailable";
 }
 
+/** Copies the prepared uv binary into `<stage>/resources/uv/`, which extraResources ships as `<resources>/uv/`. */
+export async function stageUv(stage, entry, platform = uvPlatform(), source = join(root, "src/uv")) {
+  const binary = join(source, platform, entry.binary);
+  const target = join(stage, "resources", "uv", entry.binary);
+  await mkdir(dirname(target), { recursive: true });
+  try {
+    await cp(binary, target);
+  } catch (error) {
+    if (error.code === "ENOENT") throw new Error(`uv binary missing for ${platform}; run npm run prepare:uv`);
+    throw error;
+  }
+  await chmod(target, 0o755);
+  return target;
+}
+
 export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp")) {
   const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
@@ -151,6 +167,8 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
     filter: (source) => source !== join(root, "src/models/model-manifest.json"),
   });
   await cp(join(root, "src/models/model-manifest.json"), join(stage, "resources/model-manifest.json"));
+  const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
+  await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
   await cp(
     join(root, "src/windows_runtime/windows-runtime-manifest.json"),
     join(stage, "resources/windows-runtime-manifest.json"),
@@ -250,12 +268,14 @@ async function packageApp() {
     "scripts/package.mjs",
     "scripts/package-checks.mjs",
     "scripts/prepare-windows-runtime.mjs",
+    "scripts/prepare-uv.mjs",
     "scripts/update-config.mjs",
     "src/apps/desktop/electron-builder.yml",
     "src/apps/desktop/electron.vite.config.ts",
     "package-lock.json",
     "src/models/model-manifest.json",
     "src/windows_runtime/windows-runtime-manifest.json",
+    "src/uv/uv-manifest.json",
   ];
   const fingerprintInputs = () =>
     Promise.all(
@@ -278,6 +298,8 @@ async function packageApp() {
     VERA_SIGNED_BUILD: distribution.forceCodeSigning ? "1" : "0",
   };
   await prepareBundledModel();
+  const uv = await prepareBundledUv();
+  const uvBinary = uvEntry(uv.manifest, uv.platform);
   const windowsRuntime = process.platform === "win32" ? await prepareBundledWindowsRuntime() : undefined;
   run(
     join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js"),
@@ -345,6 +367,7 @@ async function packageApp() {
       if (bytes.length !== file.bytes || createHash("sha256").update(bytes).digest("hex") !== file.sha256)
         throw new Error(`packaged model integrity: ${file.path}`);
     }
+    await checkUvBinary(join(unpacked, "resources/uv", uvBinary.binary), uvBinary);
     for (const file of windowsRuntime?.files ?? []) {
       const bytes = await readFile(
         join(
@@ -460,6 +483,12 @@ async function packageApp() {
     unpackedBytes: measured.bytes,
     onnxruntimeBytes,
     modelBytes: sum("resources/models/"),
+    uv: {
+      version: uv.version,
+      platform: uv.platform,
+      bytes: sum("resources/uv/"),
+      sha256: uvBinary.binarySha256,
+    },
     largestContributors: measured.files.slice(0, 15),
     appCodeBoundary: "passed",
     nativeArchitecture: "passed",

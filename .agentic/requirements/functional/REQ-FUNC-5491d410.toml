@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-5491d410"
+title = "Report programs the current platform cannot run"
+status = "active"
+requirement = "If the plugin does not list the current platform, a download program has no entry for it, or a find program has no list for the current system, the provisioner shall report the program unavailable with problem platform and install nothing for it."
+verification = "Unit tests on linux-x64: a plugin listing only windows-x64, a download with only a windows-x64 entry and a find with only a windows list each give unavailable with problem platform, no spawn and no fetch."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

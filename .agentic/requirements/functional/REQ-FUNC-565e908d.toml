@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-565e908d"
+title = "Resolve plugin programs through provisioning in the apps"
+status = "active"
+requirement = "The desktop app outside instrumented test builds and the CLI shall resolve plugin programs through the provisioner of <userData>/plugins/runtime with the bundled uv, so that run_program runs a resolved program with the resolver's leading arguments and its environment applied after the program's own env."
+verification = "CLI integration test: a workbench with an enabled plugin whose find program resolves to the Node executable runs run_program from a replay script and prints exit code 0 and the program's output; a program-tools test shows a resolver variable overriding a manifest env value of the same name; a CLI unit test shows uv taken only from 05_Software/src/uv/<platform>/ relative to the CLI build, never from another ancestor folder."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/apps/cli/src/provisioning.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/tests/integration/cli.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/apps/cli/src/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

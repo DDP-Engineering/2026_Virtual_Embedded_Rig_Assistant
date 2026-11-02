@@ -29,6 +29,11 @@ extraResources:
       - '**/*'
   - from: resources/model-manifest.json
     to: model-manifest.json
+  # The pinned uv that installs plugin programs (prepare-uv.mjs verifies it).
+  - from: resources/uv
+    to: uv
+    filter:
+      - '**/*'
 win:
   target:
     - target: nsis

@@ -45,7 +45,90 @@ const arg = z
 const args = z.array(arg).max(64);
 const placeholders = (allowed: readonly string[]) => (value: string) =>
   !value.replace(new RegExp(`\\$\\{(?:${allowed.join("|")})\\}`, "g"), "").includes("${");
-const globs = z.array(z.string().min(1).max(1024)).min(1).max(64);
+/**
+ * find patterns: PATH (`%PATH%`, `$PATH`), or an absolute local path, possibly starting with `~` or a
+ * variable; `*` within one segment only and in at most two segments (more, or `**`, would walk whole
+ * drives). Relative and share paths have no place to search from, or would reach the network.
+ */
+const findAnchor =
+  /^(?:%PATH%|\$PATH|~(?:[\\/].*)?|%[A-Za-z_][A-Za-z0-9_]*%.*|\$\{?[A-Za-z_][A-Za-z0-9_]*\}?.*|\/(?!\/).*|[A-Za-z]:[\\/].*)$/;
+const globs = z
+  .array(
+    z
+      .string()
+      .min(1)
+      .max(1024)
+      .refine(
+        (value) =>
+          findAnchor.test(value) &&
+          !value.includes("**") &&
+          value.split(/[\\/]/).filter((segment) => segment.includes("*")).length <= 2 &&
+          !/\p{Cc}/u.test(value),
+        "Use PATH or an absolute path with * in at most two segments.",
+      ),
+  )
+  .min(1)
+  .max(64);
+const comparator = String.raw`\s*(?:>=|<=|>|<|==|!=)\s*\d+(?:\.\d+)*\s*`;
+/** A supported version range: comma-separated comparators with dotted decimal numbers (`>=5,<6`). */
+const versionRange = new RegExp(`^${comparator}(?:,${comparator})*$`);
+/** Authority and path of an absolute URL (shared code has no URL class); undefined for anything else. */
+export function urlParts(url: string): { authority: string; path: string } | undefined {
+  const match = /^[A-Za-z][A-Za-z0-9+.-]*:\/\/([^/?#]*)([^?#]*)/.exec(url);
+  return match ? { authority: match[1] ?? "", path: match[2] ?? "" } : undefined;
+}
+/** Archive downloads by the file name of their URL path; anything else is stored as a single file. */
+export function downloadForm(url: string): "zip" | "tar" | "file" {
+  const path = urlParts(url)?.path.toLowerCase() ?? "";
+  if (path.endsWith(".zip")) return "zip";
+  return /\.(?:tar\.gz|tgz|tar\.xz)$/.test(path) ? "tar" : "file";
+}
+/** The package-relative name a download installs: `path`, else the URL's last path segment, if valid. */
+export function downloadName(entry: { url: string; path?: string | undefined }): string | undefined {
+  if (entry.path !== undefined) return entry.path;
+  let name: string;
+  try {
+    name = decodeURIComponent(urlParts(entry.url)?.path.split("/").at(-1) ?? "");
+  } catch {
+    return undefined;
+  }
+  return isPluginRelativePath(name) ? name : undefined;
+}
+/** Leading dotted decimal numbers of a version (`2.44.0` of `2.44.0rc1`), compared component-wise. */
+function versionNumbers(version: string): number[] | undefined {
+  return /^\d+(?:\.\d+)*/.exec(version)?.[0].split(".").map(Number);
+}
+function compareVersions(left: readonly number[], right: readonly number[]): number {
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const difference = (left[i] ?? 0) - (right[i] ?? 0);
+    if (difference) return Math.sign(difference);
+  }
+  return 0;
+}
+/** Whether a version satisfies every comparator of a supported range; a non-numeric version never does. */
+export function versionInRange(version: string, range: string): boolean {
+  const numbers = versionNumbers(version);
+  if (!numbers) return false;
+  return range.split(",").every((part) => {
+    const match = /^\s*(>=|<=|>|<|==|!=)\s*(\d+(?:\.\d+)*)\s*$/.exec(part);
+    if (!match) return false;
+    const order = compareVersions(numbers, match[2]?.split(".").map(Number) ?? []);
+    switch (match[1]) {
+      case ">=":
+        return order >= 0;
+      case "<=":
+        return order <= 0;
+      case ">":
+        return order > 0;
+      case "<":
+        return order < 0;
+      case "==":
+        return order === 0;
+      default:
+        return order !== 0;
+    }
+  });
+}
 function captureGroups(source: string): number | undefined {
   try {
     return (new RegExp(`${source}|`).exec("")?.length ?? 1) - 1;
@@ -54,18 +137,33 @@ function captureGroups(source: string): number | undefined {
   }
 }
 const installSchema = z.union([
-  z.strictObject({ pip: z.string().trim().min(1).max(256) }),
+  // A requirement, never an option such as `-e` or `--index-url=`.
+  z.strictObject({
+    pip: z
+      .string()
+      .trim()
+      .min(1)
+      .max(256)
+      .regex(/^[A-Za-z0-9]/),
+  }),
   z.strictObject({ script: relativePath.refine((path) => path.endsWith(".py"), "Use a .py script.") }),
   z.strictObject({
     download: z
       .partialRecord(
         pluginPlatformSchema,
-        z.strictObject({
-          url: z.url({ protocol: /^https$/ }).max(2048),
-          sha256: z.string().regex(/^[0-9a-f]{64}$/),
-          path: relativePath.optional(),
-          prefix: args.optional(),
-        }),
+        z
+          .strictObject({
+            url: z.url({ protocol: /^https$/ }).max(2048),
+            sha256: z.string().regex(/^[0-9a-f]{64}$/),
+            path: relativePath.optional(),
+            prefix: args.optional(),
+          })
+          .superRefine((entry, ctx) => {
+            // An archive names the executable inside it; a single file needs a usable name.
+            const named = downloadForm(entry.url) === "file" ? downloadName(entry) : entry.path;
+            if (named === undefined)
+              ctx.addIssue({ code: "custom", path: ["path"], message: "Name the executable with path." });
+          }),
       )
       .refine((value) => Object.keys(value).length > 0, "Name at least one platform."),
   }),
@@ -85,6 +183,7 @@ const programSchema = z.strictObject({
       .min(1)
       .max(512)
       .refine((source) => captureGroups(source) === 1, "Use a regular expression with one capture group."),
+    range: z.string().min(1).max(128).regex(versionRange).optional(),
   }),
   launcher: args.min(1).optional(),
   prefix: z
@@ -221,3 +320,32 @@ export const pluginToggleRequestSchema = z.strictObject({
   id: pluginIdSchema,
   enabled: z.boolean(),
 });
+export const pluginProgramsRequestSchema = z.strictObject({ id: pluginIdSchema });
+export const pluginProgramKindSchema = z.enum(["pip", "script", "download", "find"]);
+/** Why a program is not ready (provisioning spec). */
+export const pluginProgramProblemSchema = z.enum([
+  "notFound",
+  "install",
+  "download",
+  "sha256",
+  "archive",
+  "platform",
+  "launcher",
+  "uv",
+  "version",
+  "range",
+]);
+export type PluginProgramProblem = z.infer<typeof pluginProgramProblemSchema>;
+/** One declared program as provisioning sees it: ready to run, installable or found later, or unavailable. */
+export const pluginProgramStatusSchema = z.strictObject({
+  name: pluginProgramNameSchema,
+  kind: pluginProgramKindSchema,
+  state: z.enum(["ready", "missing", "unavailable"]),
+  version: z.string().min(1).max(128).optional(),
+  range: z.string().min(1).max(128).optional(),
+  hint: z.string().min(1).max(1024).optional(),
+  link: z.string().min(1).max(1024).optional(),
+  problem: pluginProgramProblemSchema.optional(),
+  detail: z.string().max(2000).optional(),
+});
+export type PluginProgramStatus = z.infer<typeof pluginProgramStatusSchema>;

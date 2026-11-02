@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-46085ddf"
+title = "Show the hint of a missing find program"
+status = "active"
+requirement = "If no entry of a find program names an existing file, the provisioner shall report the program missing with problem notFound, the manifest's hint and the first http or https link of the hint."
+verification = "Unit test: a find program with hint 'Install Wireshark from https://www.wireshark.org/download.html.' and no matching file reports state missing, problem notFound, the hint text and link https://www.wireshark.org/download.html; the CLI prints the same status."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/cli/src/plugin.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/integration/cli.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

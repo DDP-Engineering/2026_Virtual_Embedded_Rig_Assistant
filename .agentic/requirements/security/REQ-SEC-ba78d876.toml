@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-ba78d876"
+title = "Make out-of-range or unreadable versions unavailable"
+status = "active"
+requirement = "If a program's probed or recorded version is outside version.range, or its probe fails, times out or does not match version.match, the provisioner shall report the program unavailable with problem range naming the version and the range, or problem version, and resolve nothing for it."
+verification = "Unit tests: git 2.39.1 with range >=2.40 is unavailable with problem range, version 2.39.1 and range >=2.40, and resolve returns undefined; a probe that cannot start, a probe killed after its timeout and output without a match give problem version, while a matching probe that exits 1 is accepted."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/tests/integration/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

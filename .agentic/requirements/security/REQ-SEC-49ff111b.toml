@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-49ff111b"
+title = "Never install programs while resolving"
+status = "active"
+requirement = "The resolver shall resolve only programs that are already installed or found on the machine, without downloading, installing or synchronising anything, so a pip, script or download program that is not installed stays unavailable to run_program."
+verification = "Unit test: resolving a pip, a script and a download program before install spawns nothing, calls no fetch and returns undefined for each, and their statuses are missing; the CLI test without VERA_TEST_NODE shows run_program of an unresolved program ending with the not-available message."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/integration/cli.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

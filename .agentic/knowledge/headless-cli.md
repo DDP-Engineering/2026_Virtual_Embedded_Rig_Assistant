@@ -16,6 +16,10 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
   userData (`--data` or its owned temporary data root), includes fresh enabled
   metadata in the prompt and binds load_skill through the production registry.
 
+- `vera plugin install --path <folder|zip> --data <dir>` installs the plugin into `<data>/plugins`, then its programs
+  through the provisioner (`src/apps/cli/src/{plugin,provisioning}.ts`; uv only from `05_Software/src/uv/<platform>/`
+  relative to the CLI build), and prints one JSON status per program; exit 0 when all are ready, 1 otherwise, 2
+  for usage. `vera run` resolves enabled plugins' programs through the same provisioner and never installs.
 - `vera index --workbench <dir>` rebuilds documents through owned local extraction/embedding and reports statuses; `vera search --workbench <dir> --query <text>` supplies hybrid/k8 with mode/k/path-glob options. Search uses the current protected snapshot; index requires writable ownership. Both close all owned resources on exits. [Document search](document-search.md) owns retrieval/read contracts and the eval gate.
 
 - `npm run vera -- run --workbench <dir> --prompt <text>` with explicit provider options. OpenAI(default) requires model; custom requires base-url/model; replay requires script. Optional --approve all|none supplies explicit user decisions for ask/protected requests. Without it, stdin+stderr TTY opens an abortable A/D prompt on stderr; non-TTY denies safely. A run_program approval shows risk, command, notes and file hashes; one that needs the typed word approves only after the prompt receives it, and flags or a non-TTY deny it (REQ-FUNC-7cf311ae). Ordinary auto-edit uses mode decisions. Optional session/data/key-file/format follow the [CLI spec](../specs/REQ-FUNC-1ed659ec.md). Unknown/duplicate/missing/incompatible flags return usage and2.

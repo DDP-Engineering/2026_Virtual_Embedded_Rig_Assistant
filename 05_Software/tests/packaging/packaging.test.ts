@@ -4,7 +4,9 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { gzipSync } from "node:zlib";
 import { createPackage } from "@electron/asar";
+import { zipSync } from "fflate";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
 
@@ -266,4 +268,129 @@ it("ships runtime resources without fictional workbench fixtures", async () => {
   expect(shipped).toContain("resources/models");
   expect(shipped).toContain("resources/model-manifest.json");
   expect(shipped.some((path: string) => /demo-board|fixtures/.test(path))).toBe(false);
+});
+
+/** A one-file ustar archive, gzip-compressed, like uv's Linux release. */
+function tarGz(name: string, data: Buffer): Buffer {
+  const header = Buffer.alloc(512);
+  header.write(name, 0, 100);
+  header.write("0000755\0", 100);
+  header.write("0000000\0", 108);
+  header.write("0000000\0", 116);
+  header.write(`${data.length.toString(8).padStart(11, "0")}\0`, 124);
+  header.write("00000000000\0", 136);
+  header.write("        ", 148);
+  header.write("0", 156);
+  header.write("ustar\0", 257);
+  header.write("00", 263);
+  header.write(
+    `${header
+      .reduce((sum, byte) => sum + byte, 0)
+      .toString(8)
+      .padStart(6, "0")}\0 `,
+    148,
+  );
+  const padding = Buffer.alloc((512 - (data.length % 512)) % 512);
+  return gzipSync(Buffer.concat([header, data, padding, Buffer.alloc(1024)]));
+}
+
+// REQ-PLAT-c99d7918, REQ-SEC-1a151052
+it("prepares the pinned uv for the build platform and refuses altered archives or binaries", async () => {
+  const { prepareUv } = await import(pathToFileURL(join(root, "scripts/prepare-uv.mjs")).href);
+  const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+  const binary = Buffer.from("uv-binary");
+  const zip = Buffer.from(zipSync({ "uv.exe": binary, "uvx.exe": Buffer.from("uvx") }));
+  const tgz = tarGz("uv-x86_64-unknown-linux-gnu/uv", binary);
+  const release = "https://github.com/astral-sh/uv/releases/download/0.13.1/";
+  const manifest = {
+    version: "0.13.1",
+    platforms: {
+      "windows-x64": {
+        url: `${release}uv-x86_64-pc-windows-msvc.zip`,
+        sha256: sha(zip),
+        member: "uv.exe",
+        binary: "uv.exe",
+        binarySha256: sha(binary),
+      },
+      "linux-x64": {
+        url: `${release}uv-x86_64-unknown-linux-gnu.tar.gz`,
+        sha256: sha(tgz),
+        member: "uv-x86_64-unknown-linux-gnu/uv",
+        binary: "uv",
+        binarySha256: sha(binary),
+      },
+    },
+  };
+  const served = new Map([
+    [manifest.platforms["windows-x64"].url, zip],
+    [manifest.platforms["linux-x64"].url, tgz],
+  ]);
+  let requests = 0;
+  const fetchImpl = async (url: string) => {
+    requests += 1;
+    return new Response(new Uint8Array(served.get(url) ?? Buffer.from("missing")));
+  };
+  const dir = await mkdtemp(join(tmpdir(), "vera-uv-test-"));
+  try {
+    for (const [platform, file] of [
+      ["windows-x64", "uv.exe"],
+      ["linux-x64", "uv"],
+    ] as const) {
+      await prepareUv(manifest, dir, { fetchImpl, platform });
+      expect(await readFile(join(dir, platform, file))).toEqual(binary);
+    }
+    expect(requests).toBe(2);
+    await rm(join(dir, "windows-x64", "uv.exe"));
+    await prepareUv(manifest, dir, { fetchImpl, platform: "windows-x64", offline: true });
+    expect(requests).toBe(2);
+    const fresh = await mkdtemp(join(tmpdir(), "vera-uv-bad-"));
+    try {
+      const wrongArchive = structuredClone(manifest);
+      wrongArchive.platforms["windows-x64"].sha256 = "f".repeat(64);
+      await expect(prepareUv(wrongArchive, fresh, { fetchImpl, platform: "windows-x64" })).rejects.toThrow(
+        /uv archive integrity mismatch: uv-x86_64-pc-windows-msvc\.zip/,
+      );
+      const wrongBinary = structuredClone(manifest);
+      wrongBinary.platforms["linux-x64"].binarySha256 = "e".repeat(64);
+      await expect(prepareUv(wrongBinary, fresh, { fetchImpl, platform: "linux-x64" })).rejects.toThrow(
+        /uv binary integrity mismatch: uv$/,
+      );
+      expect(existsSync(join(fresh, "windows-x64", "uv.exe"))).toBe(false);
+      expect(existsSync(join(fresh, "linux-x64", "uv"))).toBe(false);
+      const foreign = structuredClone(manifest);
+      foreign.platforms["linux-x64"].url = "https://example.com/uv.tar.gz";
+      await expect(prepareUv(foreign, fresh, { fetchImpl, platform: "linux-x64" })).rejects.toThrow(
+        /Invalid pinned uv/,
+      );
+    } finally {
+      await rm(fresh, { recursive: true, force: true });
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+// REQ-PLAT-1ecf3d4f
+it("stages the uv binary as a package resource and verifies the packaged bytes", async () => {
+  const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));
+  expect(config.extraResources).toContainEqual({ from: "resources/uv", to: "uv", filter: ["**/*"] });
+  const { stageUv } = await import(pathToFileURL(join(root, "scripts/package.mjs")).href);
+  const { checkUvBinary } = await import(pathToFileURL(join(root, "scripts/prepare-uv.mjs")).href);
+  const dir = await mkdtemp(join(tmpdir(), "vera-uv-stage-"));
+  try {
+    const binary = Buffer.from("uv-binary");
+    const entry = { binary: "uv", binarySha256: createHash("sha256").update(binary).digest("hex") };
+    await mkdir(join(dir, "source", "linux-x64"), { recursive: true });
+    await writeFile(join(dir, "source", "linux-x64", "uv"), binary);
+    const staged = await stageUv(join(dir, "stage"), entry, "linux-x64", join(dir, "source"));
+    expect(staged).toBe(join(dir, "stage", "resources", "uv", "uv"));
+    await expect(checkUvBinary(staged, entry)).resolves.toBeUndefined();
+    await writeFile(staged, "tampered");
+    await expect(checkUvBinary(staged, entry)).rejects.toThrow(/Packaged uv integrity mismatch: uv/);
+    await expect(stageUv(join(dir, "other"), entry, "windows-x64", join(dir, "source"))).rejects.toThrow(
+      /prepare:uv/,
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });

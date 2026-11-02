@@ -111,3 +111,59 @@ it("denies foreign and detached subscription frames and malformed requests befor
     await host.subscription({ sender: target.webContents, senderFrame: frame }, "subscribe", payload),
   ).toMatchObject({ ok: false, error: { code: "DENIED" } });
 });
+
+// REQ-NFR-a881a281
+it("computes the program prompt entries once until plugins or plugin skills change", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-host-programs-"));
+  await mkdir(join(root, ".vera"));
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const plugin = {
+    manifest: { id: "tools", description: "Tools.", programs: { tool: {} } },
+    record: { programs: {} },
+  };
+  const skills = [{ name: "tool-guide", description: "d", source: "plugin", plugin: "tools", enabled: true }];
+  let resolved = 0;
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getConfig: async () => ({ config }),
+      getPinned: async () => ({ content: "" }),
+      skillCatalog: () => ({ list: async () => skills.map((skill) => ({ ...skill })) }),
+      loadPlugins: async () => [plugin],
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+    gateway: () => ({ api: gateway }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (s: string) => s },
+    programs: {
+      runner: {},
+      resolver: {
+        resolve: async () => {
+          resolved++;
+          return { executable: "/bin/tool", version: "1.0" };
+        },
+      },
+    },
+  } as never);
+  try {
+    for (let i = 0; i < 3; i++) await host.run(() => undefined);
+    expect(resolved).toBe(1);
+    host.invalidatePrograms();
+    await host.run(() => undefined);
+    expect(resolved).toBe(2);
+    skills.push({ name: "tool-more", description: "d", source: "plugin", plugin: "tools", enabled: true });
+    await host.run(() => undefined);
+    expect(resolved).toBe(3);
+    await host.run(() => undefined);
+    expect(resolved).toBe(3);
+  } finally {
+    await host.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});

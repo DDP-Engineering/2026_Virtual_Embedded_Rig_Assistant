@@ -10,15 +10,20 @@ Stop and process-tree kills, background runs, the serial-port guard and launcher
 matching, risk levels, the mode matrix, trial plugins, run_program approval requests, typed
 confirmation and the irreversible rules listed by the bypass warning; and for the agent's program
 tools run_program/program_output/program_stop, the ProgramHost and executable resolver seam, the
-`<programs>` prompt entries and the timeout cap. Start at
+`<programs>` prompt entries and the timeout cap; and for provisioning: the bundled uv, install kinds
+pip/script/download/find, the runtime folder, version probes and supported ranges, program statuses,
+`plugins.programs`/`plugins.provision`, `vera plugin install` and the package index/proxy settings. Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
 `05_Software/src/libraries/core/src/plugins/store.ts` (store),
 `05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
 `05_Software/src/libraries/shared/src/program-rules.ts` (matcher and policy) or
 `05_Software/src/libraries/core/src/plugins/program-request.ts` (approval requests) or
-`05_Software/src/libraries/core/src/plugins/program-tools.ts` (agent tools); focused tests sit
+`05_Software/src/libraries/core/src/plugins/program-tools.ts` (agent tools) or
+`05_Software/src/libraries/core/src/plugins/provisioning.ts` (provisioning, with `archive.ts`); focused tests sit
 next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
-and real processes run in `05_Software/tests/integration/process-hosts.test.ts`.
+and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
+`05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
+and the `<resources>/uv/` payload; [Headless CLI](headless-cli.md) owns the `vera plugin install` command.
 [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
 owns Agent Skills discovery, plugin skills included; [IPC boundary](ipc-boundary.md)
 owns channel registration and frame authorization; [Sessions](sessions.md) owns the ApprovalGate
@@ -52,10 +57,18 @@ core. Core `program-tools.ts` gives the agent run_program (class `program`), pro
 program_stop over a `ProgramHost {runner, clock, plugins(), resolver}`: find the program, refuse a
 launcher or unresolved program, prepare the request, let the session ask the gate, then at execution
 prepare again, consume the approval and start the runner, whose `beforeSpawn` re-hashes the approved
-files. Provisioning (PLG-05) implements the `ProgramResolver`; until then desktop and the CLI compose
-`unresolvedPrograms`, and instrumented desktop builds read `VERA_TEST_PROGRAMS`. Desktop main and the
-CLI each compose one runner; session stop (core), workbench create/open/close and app exit (CLI: on
+files. Desktop main (outside instrumented builds that set `VERA_TEST_PROGRAMS`) and the CLI compose
+the `Provisioner` as the `ProgramResolver`. Desktop main and the CLI each compose one runner; session stop (core), workbench create/open/close and app exit (CLI: on
 closing resources) stop its runs.
+
+Core's `Provisioner` (`provisioning.ts`) installs and locates declared programs under
+`<userData>/plugins/runtime/` (spec `.agentic/specs/REQ-FUNC-714e26bc.md`): `install(id)` is the user's action
+(desktop `plugins.provision`, CLI `vera plugin install`), `statuses(id)` and `resolve(plugin, program)` never
+install. pip and script programs run the bundled uv (pinned by `src/uv/uv-manifest.json`) with every uv folder
+inside the runtime and one managed CPython 3.13; downloads are verified, extracted (zip in core through
+`archive.ts`, tar archives through the system tar) and kept per SHA-256; find programs are searched on PATH and
+absolute globs. Versions come from probes, are recorded in install.json and checked against `version.range`.
+Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
 ## Public interface
 
@@ -102,6 +115,18 @@ closing resources) stop its runs.
   skills)` -> `{name, version, plugin, description, skills}[]`; `DEFAULT_PROGRAM_TIMEOUT` 600.
 - `verifyProgramFiles(request, signal?)` re-hashes a request's files (CONFLICT on any difference);
   `RunRequest.beforeSpawn` runs it after the log opens, right before spawn.
+- Provisioning (core): `new Provisioner({store, root, uv?, host, clock, platform, fetch, settings, timeouts?})`
+  with `install(id, signal?)`, `close()` and `statuses(id, signal?)` -> `PluginProgramStatus[]` (name order),
+  `resolve(plugin, program, signal?)` -> `{executable, prefix?, env?, version}` or undefined, `invalidate()`,
+  `uvEnvironment(plugin)`; `pluginPlatform(platform, arch)`; `UV_PYTHON` "3.13"; `PluginStore.recordPrograms(id,
+  sha256, versions)` (CONFLICT when the hash changed); `extractZip`, `checkTree`, `tarCommand`, `ArchiveError`.
+- Shared: `pluginProgramStatusSchema` `{name, kind, state: ready|missing|unavailable, version?, range?, hint?,
+  link?, problem?, detail?}`, `pluginProgramProblemSchema` (notFound, install, download, sha256, archive,
+  platform, launcher, uv, version, range), `downloadForm(url)`, `downloadName(entry)`, `versionInRange(version,
+  range)`, `urlParts(url)`; settings `pluginSettingsSchema {index?, proxy?}`.
+- IPC: `plugins.programs {id}` and `plugins.provision {id}` -> statuses (NOT_FOUND unknown id, INVALID plugin
+  with issues); the browser mock answers both. CLI: `vera plugin install --path <folder|zip> --data <dir>`.
+- `ResolvedProgram` carries `env` (applied after the manifest env by run_program) and `version` (prompt).
 - WorkbenchService `loadPlugins(id)` -> the enabled plugins that load (installed, issue-free,
   unchanged), in plugins.enabled order.
 - Summaries: `pluginInstalledSchema.irreversible` lists `{match, note?}` of a plugin without issues;
@@ -203,6 +228,41 @@ closing resources) stop its runs.
   line to its run log.
 - The prompt lists programs of enabled, issue-free plugins that resolve and declare no launcher, in
   plugin id then name order; the run rule joins the rules only with such programs.
+- Provisioning writes only below `<userData>/plugins/runtime/`: `cache/`, `python/` (+ `python/bin`),
+  `tools/<plugin id>/` (+ `bin/`), `downloads/<sha256>/`, `downloads/.staging/<uuid>/` (always removed). Every
+  uv call carries the minimal program environment plus `UV_CACHE_DIR`, `UV_PYTHON_INSTALL_DIR`,
+  `UV_PYTHON_BIN_DIR`, `UV_TOOL_DIR`, `UV_TOOL_BIN_DIR`, `UV_MANAGED_PYTHON=1`, `UV_PYTHON=3.13`,
+  `UV_PYTHON_INSTALL_BIN=0`, `UV_PYTHON_INSTALL_REGISTRY=0`, `UV_NO_CONFIG=1`, `UV_NO_PROGRESS=1`, and
+  `UV_DEFAULT_INDEX`/`HTTPS_PROXY`/`HTTP_PROXY` from settings; no uv variable of VERA's own environment passes.
+- A program is installed when `install.json.programs` records its version (a reinstall resets it). Platform
+  (plugin, download entry, find list) and launcher exclusions are decided before any spawn or fetch. Installs
+  run one at a time per provisioner; each failure is a status, store errors throw. Each program has one
+  deadline (15 min) over transfer, extraction, uv and probe; each version is recorded as soon as it is probed;
+  `close()` (desktop `before-quit`) aborts running installs and probes and refuses new ones; each install first
+  removes staging folders older than the install deadline (younger ones may be another process's). Cached inspections run under the provisioner's lifetime and each caller only
+  races its own signal against them.
+- Resolve never fetches or runs uv: pip -> `tools/<id>/bin/<program>[.exe]`; script -> uv with `run --quiet
+  --offline --script <file>` and the uv environment; download -> `downloads/<sha256>/<path>` with its prefix;
+  find -> the first file of the search, probed. Results are cached per plugin id, hash, recorded versions and
+  program until `install` or `invalidate` (desktop main invalidates after plugins.install, uninstall, toggle and
+  provision).
+- Downloads: at most 2 GiB, hashed while streamed; another SHA-256 is `sha256`; transfer failures and HTTP
+  errors are `download`; zip entries must be plugin-relative after `\` -> `/` and are written as plain files
+  (no links), tar archives go through `%SystemRoot%\System32\tar.exe` or `/usr/bin/tar` (`/bin/tar`), then every
+  link must resolve inside the tree and every other entry be a file or folder (`archive`); the declared path must
+  be a file (`archive`); single files and, off Windows, the archive's executable get mode 0755. Any failure
+  removes the staging folder, so nothing of it remains. Limit: extraction is bounded only by the pinned download.
+- find: `%PATH%` (Windows) or `$PATH` (Linux) searches PATH for `<program>.exe`/`<program>`; other entries
+  expand a leading `~` and `%NAME%` or `$NAME`/`${NAME}` (an unset variable skips the entry), then match `*`
+  within one segment, highest name first (numeric-aware); only absolute local patterns are searched; a folder
+  match means `<folder>/<program>[.exe]`; on Windows only `.exe` files count, on Linux only files the user may
+  execute (`access X_OK`). The schema allows `*` in at most two segments, so a search reads few folders.
+- Probes: 30 s, first 64 KiB of output with ANSI removed, any exit code; `version.match` evaluated with a 100 ms
+  bound; no match, a start failure or a timeout is `version`; a version outside `range` (dotted numbers,
+  component-wise, missing components 0, non-numeric versions never in range) is `range`.
+- Desktop `SessionsHost` recomputes `<programs>` entries only when the workbench, its plugin skill list or the
+  generation (`invalidatePrograms()`) changes. A plugin edited after install still lists until then, but
+  run_program loads plugins on every call and refuses it.
 - Desktop main redacts known credentials from the program payload (executable, args, cwd, notes, file
   paths) of events and snapshots; the confirmation word is not redacted.
 
@@ -228,6 +288,11 @@ closing resources) stop its runs.
 | Session wiring, modes end to end, stop | `core/src/sessions/service.ts`, `agent/runtime.ts` | `core/src/sessions/programs.test.ts` |
 | Desktop composition, test resolver | `main/sessions.ts`, `main/index.ts`, `main/program-resolver.ts` | `program-resolver.test.ts`, `tests/e2e/program-runs.spec.ts` |
 | CLI composition | `cli/src/run.ts` | `tests/integration/cli.test.ts` |
+| Install kinds, probes, ranges, statuses, uv environment | `core/src/plugins/provisioning.ts` | `provisioning.test.ts`, `tests/integration/provisioning.test.ts` |
+| Zip extraction, tree check, system tar | `core/src/plugins/archive.ts` | `archive.test.ts`, `tests/integration/provisioning.test.ts` |
+| Program status schema, range grammar, download form | shared `plugins.ts` | `shared/src/plugin-provisioning.test.ts` |
+| plugins.programs / plugins.provision, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
+| `vera plugin install` | `cli/src/{args,plugin,provisioning}.ts` | `tests/integration/cli.test.ts` |
 
 ## Key behaviors
 
@@ -280,6 +345,13 @@ closing resources) stop its runs.
 - `REQ-FUNC-59308834` / `REQ-FUNC-83ad0f58` — CLI composition; native card-driven run.
 - `REQ-SEC-0e45a496` / `REQ-SEC-13954028` / `REQ-SEC-43a0b743` / `REQ-SEC-aaeae5cb` — drive-relative,
   aliases, streams, unbindable files outside Windows.
+- `REQ-SEC-e0567486` / `REQ-PLAT-c99d7918` / `REQ-SEC-1a151052` / `REQ-PLAT-1ecf3d4f` — uv runs inside the runtime; pinned uv prepared, refused when altered, shipped and re-checked.
+- `REQ-FUNC-714e26bc` / `REQ-REL-e27cda96` / `REQ-FUNC-e7cb0626` / `REQ-FUNC-edbe037c` — pip and script installs, uv failures, offline script runs.
+- `REQ-FUNC-aa09d82e` / `REQ-FUNC-d30d568c` / `REQ-SEC-cde8b481` / `REQ-SEC-e51bc0d8` / `REQ-REL-e068dcd7` — downloads: archives, single files, wrong hash, escaping archives, failed transfers.
+- `REQ-FUNC-c9dde429` / `REQ-UX-46085ddf` / `REQ-FUNC-514708b5` / `REQ-SEC-ba78d876` — find search, missing hint and link, version probe and range.
+- `REQ-SEC-49ff111b` / `REQ-FUNC-5491d410` / `REQ-FUNC-06eaa9a5` — resolve never installs; platform and launcher exclusions.
+- `REQ-FUNC-13ef1c0c` / `REQ-FUNC-86daf060` / `REQ-FUNC-c44675ed` / `REQ-FUNC-c12941f3` / `REQ-SEC-0bc97768` — statuses and installs over IPC and the CLI; index and proxy settings.
+- `REQ-FUNC-565e908d` / `REQ-NFR-a881a281` / `REQ-PLAT-8b3408cb` — provisioner composed in the apps; cached prompt entries; clean-machine run (manual).
 
 ## Files
 
@@ -314,3 +386,10 @@ closing resources) stop its runs.
 - `05_Software/src/apps/desktop/src/main/program-resolver.ts` — `VERA_TEST_PROGRAMS` resolver of instrumented builds.
 - `05_Software/tests/fixtures/plugins/echo-tools/` — the fixture plugin (program `echo`, skill `echo-guide`).
 - `05_Software/tests/e2e/program-runs.spec.ts` — native Electron run through the approval card.
+- `05_Software/src/libraries/core/src/plugins/provisioning.ts` — Provisioner, uv environment, probes, find search, downloads.
+- `05_Software/src/libraries/core/src/plugins/archive.ts` — streaming zip extraction, tree check, system tar command.
+- `05_Software/src/libraries/core/src/plugins/provisioning.test.ts`, `archive.test.ts` — scripted-host and file-system tests.
+- `05_Software/src/libraries/shared/src/plugin-provisioning.test.ts` — range, download form, statuses, channels, settings.
+- `05_Software/tests/integration/provisioning.test.ts` — real system tar and a real probed program.
+- `05_Software/src/apps/cli/src/plugin.ts`, `provisioning.ts` — `vera plugin install` and the CLI provisioner.
+- `05_Software/src/uv/uv-manifest.json`, `05_Software/scripts/prepare-uv.mjs` — the pinned uv.

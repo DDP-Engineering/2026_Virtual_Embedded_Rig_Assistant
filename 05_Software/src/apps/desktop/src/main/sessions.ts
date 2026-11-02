@@ -39,6 +39,9 @@ export class SessionsHost {
   private skillMetadata: { name: string; description: string }[] = [];
   private programHost: ProgramHost | undefined;
   private programEntries: ProgramPromptEntry[] = [];
+  /** The prompt entries are reused until this key changes: workbench, generation and plugin skills. */
+  private programKey = "";
+  private programGeneration = 0;
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
   private pending = 0;
@@ -89,7 +92,19 @@ export class SessionsHost {
         clock: this.options.clock,
         plugins: () => this.options.workbench.loadPlugins(snapshot.config.id),
       };
-      this.programEntries = this.programHost ? await programPromptEntries(this.programHost, skills) : [];
+      // Resolving loads and hashes every enabled plugin and may probe programs: reuse the entries
+      // until a plugin changes (invalidatePrograms) or the workbench or its plugin skills do.
+      const key = JSON.stringify([
+        snapshot.config.id,
+        this.programGeneration,
+        skills
+          .filter((skill) => skill.source === "plugin")
+          .map((skill) => [skill.plugin, skill.name, skill.enabled, Boolean(skill.error)]),
+      ]);
+      if (key !== this.programKey) {
+        this.programEntries = this.programHost ? await programPromptEntries(this.programHost, skills) : [];
+        this.programKey = key;
+      }
       if (this.db !== db) {
         await this.drain();
         const options = this.options;
@@ -155,6 +170,10 @@ export class SessionsHost {
     }).finally(() => {
       this.pending--;
     });
+  }
+  /** Recomputes the program prompt entries on the next session call: a plugin was installed, removed, toggled or provisioned. */
+  invalidatePrograms(): void {
+    this.programGeneration++;
   }
   async lifecycle<T>(operation: () => Promise<T>): Promise<T> {
     if (this.shutdown) throw veraError("BUSY");

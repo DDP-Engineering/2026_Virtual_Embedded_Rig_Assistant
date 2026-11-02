@@ -25,6 +25,10 @@ import type { LoadedPlugin } from "./store.js";
 export interface ResolvedProgram {
   readonly executable: string;
   readonly prefix?: readonly string[] | undefined;
+  /** Variables the executable needs (uv's for a script program); applied after the manifest's env. */
+  readonly env?: Readonly<Record<string, string>> | undefined;
+  /** The program's version as provisioning knows it, for the prompt. */
+  readonly version?: string | undefined;
 }
 /** Finds the executable of a declared program; provisioning (install kinds) implements it. */
 export interface ProgramResolver {
@@ -261,12 +265,15 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
             ...(args.args ?? []),
           ],
           cwd: current.prepared.cwd,
-          env: Object.fromEntries(
-            Object.entries(current.declared.env ?? {}).map(([name, value]) => [
-              name,
-              value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
-            ]),
-          ),
+          env: {
+            ...Object.fromEntries(
+              Object.entries(current.declared.env ?? {}).map(([name, value]) => [
+                name,
+                value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
+              ]),
+            ),
+            ...current.resolved.env,
+          },
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
           background,
           ...(background ? {} : { signal: applySignal }),
@@ -410,10 +417,15 @@ export async function programPromptEntries(
       .filter((skill) => skill.source === "plugin" && skill.plugin === id && skill.enabled && !skill.error)
       .map((skill) => skill.name);
     for (const name of Object.keys(programs).sort()) {
-      if (programs[name]?.launcher || !(await host.resolver.resolve(plugin, name, signal))) continue;
+      const resolved = programs[name]?.launcher
+        ? undefined
+        : await host.resolver.resolve(plugin, name, signal);
+      if (!resolved) continue;
       entries.push({
         name,
-        version: Object.hasOwn(plugin.record.programs, name) ? (plugin.record.programs[name] ?? null) : null,
+        version:
+          resolved.version ??
+          (Object.hasOwn(plugin.record.programs, name) ? (plugin.record.programs[name] ?? null) : null),
         plugin: id,
         description,
         skills: names,

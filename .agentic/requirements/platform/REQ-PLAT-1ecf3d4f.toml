@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-1ecf3d4f"
+title = "Ship the uv binary in the package resources"
+status = "active"
+requirement = "The package build shall ship the prepared uv binary as <resources>/uv/uv.exe on Windows and <resources>/uv/uv on Linux through extraResources, failing the build when the packaged binary's SHA-256 differs from the uv manifest."
+verification = "Packaging test: staging copies src/uv/<platform>/ to resources/uv/ of the staging folder; electron-builder.yml maps resources/uv to uv; the packaged-uv check passes for the manifest bytes and throws for altered bytes."
+affected_paths = ["05_Software/scripts/package.mjs", "05_Software/scripts/probe-upgrade.mjs", "05_Software/scripts/prepare-uv.mjs", "05_Software/src/apps/desktop/electron-builder.yml"]
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-e0567486"
+title = "Run uv only inside the VERA plugin runtime"
+status = "active"
+requirement = "Whenever VERA runs uv, it shall pass UV_CACHE_DIR, UV_PYTHON_INSTALL_DIR and UV_PYTHON_BIN_DIR under <userData>/plugins/runtime/, UV_TOOL_DIR and UV_TOOL_BIN_DIR under runtime/tools/<plugin id>/, UV_MANAGED_PYTHON=1, UV_PYTHON=3.13, UV_PYTHON_INSTALL_BIN=0, UV_PYTHON_INSTALL_REGISTRY=0, UV_NO_CONFIG=1 and UV_NO_PROGRESS=1 on top of the minimal program environment, and no other uv variable of its own environment."
+verification = "Scripted process host with a host environment carrying UV_TOOL_DIR=/home/u/.local/share/uv/tools and UV_INDEX_URL: the uv tool install environment contains every listed variable and neither host variable, and the uv variables of the uv sync --script call, its probe and the resolved script run equal exactly the listed set."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = "specs/REQ-FUNC-714e26bc.md"
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

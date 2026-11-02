@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-NFR-a881a281"
+title = "Cache the program prompt entries of the desktop sessions"
+status = "active"
+requirement = "The desktop shall compute the program prompt entries of a workbench once and reuse them for later session calls until a plugin is installed, uninstalled, enabled, disabled or its programs are installed, or the open workbench or its plugin skills change."
+verification = "Desktop sessions test with a counting resolver: three session calls resolve programs once; after invalidatePrograms() the next call resolves again; a changed plugin skill list recomputes and an unchanged one does not. Inspection: desktop main calls invalidatePrograms() after plugins.install, plugins.uninstall, plugins.toggle and plugins.provision."
+affected_paths = ["05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/sessions.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

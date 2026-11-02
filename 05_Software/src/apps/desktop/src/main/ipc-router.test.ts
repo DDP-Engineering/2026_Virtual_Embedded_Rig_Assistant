@@ -32,6 +32,8 @@ const workbenchHandlers = {
   "plugins.install": unused,
   "plugins.uninstall": unused,
   "plugins.toggle": unused,
+  "plugins.programs": unused,
+  "plugins.provision": unused,
   "docs.list": unused,
   "downloads.list": unused,
   "downloads.open": unused,

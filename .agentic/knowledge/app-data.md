@@ -46,7 +46,9 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 - Selected directories preserve existing contents; creation errors propagate before setPath with
   the previous host path intact. Installed defaults are resolved without eager creation.
 - installationId/schemaVersion are immutable through strict nested patches. The stored schema is
-  strict: unknown keys are invalid. webAccess is required. Providers reject credentials.
+  strict: unknown keys are invalid. webAccess is required. Providers reject credentials. The optional
+  `plugins {index?, proxy?}` holds http(s) URLs without user name or password (plugin program installs
+  pass them to uv); renderer patches may set it.
 - The only valid schemaVersion is 1; it is never incremented during development (root AGENTS.md
   development compatibility policy). There are no migrations, backups or read-only mode.
   [Providers](providers.md) owns strict provider writes, non-secret configurations and credential persistence.

@@ -91,6 +91,7 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 | `VITE_API=mock npm run dev:renderer` | Full foundation UI using in-memory settings, metadata and app events |
 | `npm run build` | Build main ESM, preload CommonJS and bundled renderer into `src/apps/desktop/out/` |
 | `npm run prepare:model` | Fetch and verify immutable, SHA256-pinned embedding assets; `-- --offline` verifies cached files only |
+| `npm run prepare:uv` | Fetch and verify the pinned uv for this platform into `src/uv/<platform>/` (archive and binary SHA-256 from `src/uv/uv-manifest.json`); `-- --offline` uses the cached archive only. Plugin programs (pip, script) install with it |
 | `npm run package` / `npm run package:test` | Build native x64 NSIS + portable ZIP (Windows) or AppImage + deb (Linux), release / labelled test identity, pinned assets and SHA256/size report |
 | `npm run test:e2e` | Build, then Playwright Electron and Chromium mock acceptance; uses `xvfb-run -a` on Linux |
 | `npm run build:cli` | Bundle the headless `vera` bin and isolated grep worker |

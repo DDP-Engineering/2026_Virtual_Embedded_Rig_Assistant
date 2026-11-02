@@ -427,7 +427,40 @@ describe("background runs", () => {
   });
 });
 
+describe("resolver environment (REQ-FUNC-565e908d)", () => {
+  it("applies the resolver's variables after the program's own env", async () => {
+    plugins = [
+      loaded("echo-tools", { echo: program({ env: { UV_CACHE_DIR: "from-manifest", KEEP: "kept" } }) }, [
+        { match: "echo *", risk: "safe" },
+      ]),
+    ];
+    resolver = {
+      resolve: async () => ({ executable: "uv", prefix: ["run"], env: { UV_CACHE_DIR: "/runtime/cache" } }),
+    };
+    const result = (await prepare({ program: "echo", args: ["status"] })).apply(signal());
+    const process = await spawned(1);
+    expect(process.args).toEqual(["run", "status"]);
+    expect(process.options.env).toMatchObject({ UV_CACHE_DIR: "/runtime/cache", KEEP: "kept" });
+    process.finish({ code: 0, signal: null });
+    await result;
+  });
+});
+
 describe("prompt entries (REQ-FUNC-fa6222a5)", () => {
+  it("takes the version the resolver reports before the recorded one", async () => {
+    plugins = [loaded("echo-tools", { echo: program(), found: program() }, [], { echo: "1.2.3" })];
+    resolver = {
+      resolve: async (_plugin, name) => ({
+        executable: name,
+        ...(name === "found" ? { version: "2.44.0" } : {}),
+      }),
+    };
+    const entries = await programPromptEntries(ctx.programs?.host as ProgramHost, []);
+    expect(entries.map((entry) => [entry.name, entry.version])).toEqual([
+      ["echo", "1.2.3"],
+      ["found", "2.44.0"],
+    ]);
+  });
   it("lists resolved programs of enabled plugins in id and name order, with versions and skills", async () => {
     plugins = [
       loaded("zeta-tools", { zed: program() }),

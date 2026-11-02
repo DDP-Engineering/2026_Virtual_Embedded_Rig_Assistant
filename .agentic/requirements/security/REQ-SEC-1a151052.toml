@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-1a151052"
+title = "Refuse a uv archive or binary with the wrong hash"
+status = "active"
+requirement = "If the uv archive or the uv binary differs from the SHA-256 recorded in the uv manifest, the uv preparation shall fail with an error naming the file and leave no binary at the target path."
+verification = "Packaging test: an archive whose bytes differ from the manifest hash and a manifest whose binary hash differs from the extracted binary each make the preparation throw an error naming the archive or binary, and the target binary does not exist afterwards."
+affected_paths = ["05_Software/scripts/prepare-uv.mjs"]
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

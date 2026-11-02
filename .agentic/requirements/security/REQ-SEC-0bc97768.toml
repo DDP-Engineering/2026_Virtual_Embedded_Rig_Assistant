@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-0bc97768"
+title = "Refuse plugin index and proxy settings with credentials"
+status = "active"
+requirement = "If a settings patch names a plugins index or proxy that is not an http or https URL or that carries a user name or password, the settings schema shall refuse it as invalid."
+verification = "Shared settings tests: index ftp://x, proxy http://user:pw@proxy:3128 and index https://u@mirror/simple fail the patch schema; https://mirror.example/simple and http://proxy.example:3128 pass."
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02
