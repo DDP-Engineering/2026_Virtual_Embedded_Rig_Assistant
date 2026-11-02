@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-85bf8a14"
+title = "Return a capped tail with the run result"
+status = "active"
+requirement = "When a run finishes, the runner shall return the exit code, the duration, the workbench-relative log path and the last 12 000 characters of the interleaved stdout and stderr output, with truncated set when earlier output was left out."
+verification = "Run the echo fixture printing 50 000 characters ending in a marker through a real host; output is exactly 12 000 characters ending in the marker, truncated is true and the log holds all 50 000 characters. A run printing 100 characters has truncated false and the full text."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/run-output.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/tests/integration/process-hosts.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

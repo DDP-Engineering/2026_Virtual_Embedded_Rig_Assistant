@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-c76610c6"
+title = "Kill a Linux process group with SIGTERM then SIGKILL"
+status = "active"
+requirement = "On Linux, the runner shall start each program in its own process group and kill the tree by sending SIGTERM to the group, then SIGKILL to the group 3 seconds later."
+verification = "With a fake linux host and a manual clock, start a run and stop it; the spawn requested a process group, the host receives signal(-pid, SIGTERM) at once and signal(-pid, SIGKILL) only after the clock's 3000 ms sleep completes."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/process-tree.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/process-tree.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

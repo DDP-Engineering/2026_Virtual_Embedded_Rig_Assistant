@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-7a6c3f5f"
+title = "Refuse a working directory outside the workbench"
+status = "active"
+requirement = "If a run's working directory leaves the workbench, is ignored by the workbench or is not a directory, or the run log folder .vera/runs is a link, then the runner shall refuse the run with DENIED and start no process."
+verification = "Start runs with cwd `..`, an absolute path outside the workbench, a path ignored by .vera/.veraignore and a file; each rejects with code DENIED and the fake host records no spawn; a refused run is forgotten, so it counts against no limit. A .vera/runs folder that is a link (junction) is refused with DENIED too."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

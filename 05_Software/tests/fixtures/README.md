@@ -11,6 +11,10 @@ into isolated workspaces before opening or modifying it.
 `npm run make:demo-pdfs`, run from `05_Software`, regenerates the three fixture PDFs
 from `workbenches/demo-board/sources/`.
 
+`echo-program/echo.mjs` is the program the plugin runner tests start through each compiled
+ProcessHost; `ECHO_MODE` selects echoing its arguments and working directory, its environment,
+reading stdin, flooding output, ANSI output, or starting a grandchild that runs until killed.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

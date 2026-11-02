@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-6491c211"
+title = "Write the full output of every run to a run log"
+status = "active"
+requirement = "The runner shall write the complete decoded output of every run to .vera/runs/<run-id>.log in the workbench, where the run id is a ULID."
+verification = "After a run whose output exceeds the result tail, .vera/runs/<runId>.log exists, its name matches a 26-character ULID and its content equals the full decoded output."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

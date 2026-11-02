@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-39d5e6d9"
+title = "Stop runs on session stop, workbench close and app exit"
+status = "active"
+requirement = "When a session is stopped, a workbench is closed or the application exits, the runner shall stop every run of that session, of that workbench, or every run, respectively, and the desktop app and the CLI shall invoke these stops."
+verification = "Unit: runs in two sessions and two workbenches; stopSession, stopWorkbench and stopAll stop exactly the matching runs and leave the others running. Inspection of desktop main index.ts shows stopSession in the session.stop handler, stopWorkbench of the open folder before workbench.create, open and close, and stopAll first in the before-quit drain; CLI run.ts registers stopAll among its closing resources."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

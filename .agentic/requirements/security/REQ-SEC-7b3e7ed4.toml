@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-7b3e7ed4"
+title = "Refuse shell metacharacters in a one-string launcher command"
+status = "active"
+requirement = "If a launcher takes one command string and a command token contains a double or single quote, &, |, ;, <, >, ^, %, $, a backtick, NUL or a line break, then the runner shall refuse the command with INVALID naming the token index."
+verification = "For each listed character, a token containing it rejects with INVALID and params.index of that token; the same tokens in argv mode are accepted unchanged."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/launcher.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/launcher.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

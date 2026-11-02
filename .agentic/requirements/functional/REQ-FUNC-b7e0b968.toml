@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b7e0b968"
+title = "Start a background run and read its output incrementally"
+status = "active"
+requirement = "When a background run is started, the runner shall return its handle without waiting for the program and, on each read, return the output produced since the previous read, whether the run is still running and its exit code once finished."
+verification = "Start a background run on a fake host, emit two chunks with a read between them; each read returns only the new text with running true; after exit a read returns running false and the exit code."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

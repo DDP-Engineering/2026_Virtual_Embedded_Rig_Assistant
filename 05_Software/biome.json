@@ -46,6 +46,32 @@
               "options": {
                 "paths": {
                   "electron": "src/libraries/core never imports electron (01 §1 L1); use a port from ports.ts.",
+                  "react": "src/libraries/core never imports react (01 §4).",
+                  "node:child_process": "src/libraries/core never starts processes itself; use the ProcessHost port from ports.ts.",
+                  "child_process": "src/libraries/core never starts processes itself; use the ProcessHost port from ports.ts."
+                },
+                "patterns": [
+                  {
+                    "group": ["@vera/desktop*", "@vera/cli*", "**/apps/**"],
+                    "message": "src/libraries/core never imports src/apps/* (01 §4)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/libraries/core/**/*.test.ts", "src/libraries/core/**/*.test-support.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "src/libraries/core never imports electron (01 §1 L1); use a port from ports.ts.",
                   "react": "src/libraries/core never imports react (01 §4)."
                 },
                 "patterns": [

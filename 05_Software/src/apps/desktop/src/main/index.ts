@@ -9,6 +9,7 @@ import {
   type LlmGateway,
   modelSchema,
   PluginStore,
+  ProgramRunner,
   SettingsService,
   splitModelReference,
   WebDownloads,
@@ -59,6 +60,7 @@ import {
   type SystemAppDeps,
   systemApps,
 } from "./openers.js";
+import { createDesktopProcessHost } from "./process-host.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { openPath, revealPath } from "./reveal-path.js";
@@ -170,6 +172,18 @@ const workbench = new WorkbenchService(
 );
 /** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
+/** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
+const programs = new ProgramRunner({ host: createDesktopProcessHost(), clock: systemClock });
+/** Runs of the open workbench stop before it closes or another workbench replaces it. */
+async function stopWorkbenchPrograms(): Promise<void> {
+  let folder: string;
+  try {
+    folder = workbench.getSnapshot().folder;
+  } catch {
+    return;
+  }
+  await programs.stopWorkbench(folder);
+}
 const providers = new ProviderSettings(settings, credentials);
 const webAccess = new WebAccessService({
   settings,
@@ -516,7 +530,10 @@ ipcMain.handle(
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return s.send(sessionId, text);
         }),
-      "session.stop": ({ sessionId }) => sessions.run((s) => ({ stopped: s.stop(sessionId) })),
+      "session.stop": ({ sessionId }) => {
+        void programs.stopSession(sessionId);
+        return sessions.run((s) => ({ stopped: s.stop(sessionId) }));
+      },
       "session.approval.decide": (request) =>
         sessions.run((s) => {
           s.decideApproval(request);
@@ -588,15 +605,23 @@ ipcMain.handle(
         path: await workbench.relativeFolder(root, folder),
       }),
       "workbench.create": ({ folder, name, config, instructions }) =>
-        sessions.lifecycle(() =>
-          workbench.create(folder, name, {
+        sessions.lifecycle(async () => {
+          await stopWorkbenchPrograms();
+          return workbench.create(folder, name, {
             ...(config ? { config } : {}),
             ...(instructions !== undefined ? { instructions } : {}),
-          }),
-        ),
-      "workbench.open": ({ folder }) => sessions.lifecycle(() => workbench.open(folder)),
+          });
+        }),
+      "workbench.open": ({ folder }) =>
+        sessions.lifecycle(async () => {
+          await stopWorkbenchPrograms();
+          return workbench.open(folder);
+        }),
       "workbench.close": async () => {
-        await sessions.lifecycle(() => workbench.close());
+        await sessions.lifecycle(async () => {
+          await stopWorkbenchPrograms();
+          await workbench.close();
+        });
         return {};
       },
       "workbench.recent": async ({ remove, pin, move, reveal }) => {
@@ -706,8 +731,9 @@ if (!app.requestSingleInstanceLock()) {
     }
     if (draining) return;
     draining = true;
-    void sessions
-      .close()
+    void programs
+      .stopAll()
+      .then(() => sessions.close())
       .then(() => workbench.close())
       .then(() => fileWorkers.dispose())
       .then(() => indexer.close())

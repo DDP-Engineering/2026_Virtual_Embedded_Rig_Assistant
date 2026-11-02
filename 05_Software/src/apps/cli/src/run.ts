@@ -7,6 +7,7 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  ProgramRunner,
   SessionService,
   SettingsService,
   unavailableWebTools,
@@ -25,6 +26,7 @@ import {
   MemoryCredentials,
   nodeClock,
 } from "./host-ports.js";
+import { createCliProcessHost } from "./process-host.js";
 import { scrubReplayOutput } from "./replay-output.js";
 import { createCliWorkerPool } from "./worker-pool.js";
 
@@ -149,6 +151,9 @@ export async function runTurn(
       documents.processDocument,
     );
     resources.push(() => workbench.close());
+    // Plugin program runs end with the CLI run: closing resources stops every run's process tree.
+    const programs = new ProgramRunner({ host: createCliProcessHost(), clock: nodeClock });
+    resources.push(() => programs.stopAll());
     const snapshot = await workbench.open(options.workbench);
     signal.throwIfAborted();
     const db = workbench.getDatabase(),

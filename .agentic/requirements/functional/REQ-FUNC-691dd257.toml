@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-691dd257"
+title = "Kill the process tree on Stop or abort"
+status = "active"
+requirement = "When Stop is requested for a run or the caller's abort signal fires, the runner shall kill the program's whole process tree and finish the run with stopped set."
+verification = "A fake child that exits while its pipes stay open settles the host exit after the close grace and destroys the pipes, so timeout and Stop always finish. Start the echo fixture in grandchild mode as a background run through each compiled host, wait for its grandchild id, call stop; the result has stopped true and the grandchild no longer exists. A foreground run whose abort signal fires, an already aborted signal and a Stop that arrives before the spawn all finish with stopped true; the last two spawn nothing."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/process-tree.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/tests/integration/process-hosts.test.ts", "05_Software/src/libraries/core/src/plugins/node-process-host.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

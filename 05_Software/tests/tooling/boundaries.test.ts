@@ -41,6 +41,11 @@ describe("import boundaries (01-system.md §4)", () => {
       "src/libraries/core/src/x.ts",
       'import { app } from "../../../apps/desktop/src/main/index.js";\nexport const a = app;\n',
     ],
+    ["src/libraries/core/src/x.ts", 'import { spawn } from "node:child_process";\nexport const s = spawn;\n'],
+    [
+      "src/libraries/core/src/plugins/x.ts",
+      'import { exec } from "child_process";\nexport const e = exec;\n',
+    ],
     ["src/libraries/shared/src/x.ts", 'import { readFile } from "node:fs";\nexport const r = readFile;\n'],
     [
       "src/apps/desktop/src/renderer/x.ts",
@@ -59,6 +64,15 @@ describe("import boundaries (01-system.md §4)", () => {
   it.each([
     ["src/libraries/core/src/x.ts", 'import { z } from "zod";\nexport const s = z.string();\n'],
     ["src/apps/desktop/src/main/x.ts", 'import { app } from "electron";\nexport const a = app;\n'],
+    [
+      "src/apps/desktop/src/main/x.ts",
+      'import { spawn } from "node:child_process";\nexport const s = spawn;\n',
+    ],
+    ["src/apps/cli/src/x.ts", 'import { spawn } from "node:child_process";\nexport const s = spawn;\n'],
+    [
+      "src/libraries/core/src/x.test.ts",
+      'import { spawn } from "node:child_process";\nexport const s = spawn;\n',
+    ],
     [
       "src/apps/desktop/src/preload/x.ts",
       'import { contextBridge } from "electron";\nexport const b = contextBridge;\n',

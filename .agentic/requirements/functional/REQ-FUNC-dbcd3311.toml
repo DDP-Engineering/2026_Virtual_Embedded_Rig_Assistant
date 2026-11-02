@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-dbcd3311"
+title = "Close standard input of every run"
+status = "active"
+requirement = "When a run starts, the process host shall give the program a closed standard input, so that a program reading standard input receives end of input at once instead of waiting."
+verification = "Run the echo-program fixture in read-stdin mode through each compiled host with a 10 s timeout; it reports 0 bytes read and exits 0 well before the timeout, so the run is not timed out."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/node-process-host.ts", "05_Software/src/apps/desktop/src/main/process-host.ts", "05_Software/src/apps/cli/src/process-host.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/tests/integration/process-hosts.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-f678fbd7"
+title = "Refuse a fifth background run in a session"
+status = "active"
+requirement = "If a session already has 4 running background runs, then the runner shall refuse another background run in that session with BUSY and start no process."
+verification = "Start four background runs in session A, the fifth rejects with code BUSY and params.limit 4 and no spawn; a background run in session B still starts; after one of A's runs exits, A can start another."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

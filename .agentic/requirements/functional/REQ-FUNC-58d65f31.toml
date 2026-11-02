@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-58d65f31"
+title = "Kill the process tree on timeout"
+status = "active"
+requirement = "When a run exceeds its timeout, the runner shall kill the program's whole process tree and finish the run with timedOut set."
+verification = "A fake child that exits while its pipes stay open settles the host exit after the close grace and destroys the pipes, so timeout and Stop always finish. Run the echo fixture in grandchild mode with a 3 s timeout through each compiled host on Windows; the result has timedOut true, and the grandchild process id it reported no longer exists. A unit test with a fake host and fake clock shows the kill starts when the timeout elapses and not before."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/process-tree.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/tests/integration/process-hosts.test.ts", "05_Software/src/libraries/core/src/plugins/node-process-host.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

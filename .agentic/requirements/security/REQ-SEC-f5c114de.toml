@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-f5c114de"
+title = "Give programs a minimal environment"
+status = "active"
+requirement = "The runner shall give a program only these variables from VERA's environment: PATH (managed tool directories first, then the system PATH), SystemRoot, HOME, USERPROFILE, TEMP, TMP, TMPDIR, LANG, LANGUAGE and LC_*, then the program's declared variables, then PYTHONUTF8=1 and NO_COLOR=1, with names compared case-insensitively on Windows."
+verification = "With a fake host whose environment holds OPENAI_API_KEY, VERA_TOKEN, a lowercase Path, SystemRoot, LANG and LC_ALL, start a run with two managed directories and a program variable; the spawned environment equals exactly the allowlisted values, PATH begins with the managed directories, Windows yields one PATH key, a program PYTHONUTF8=0 is overridden to 1, and no credential variable is present. The echo fixture's printed environment through a real host omits OPENAI_API_KEY."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/tests/integration/process-hosts.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

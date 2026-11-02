@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-2871462b"
+title = "Decode output as UTF-8 without ANSI escapes"
+status = "active"
+requirement = "The runner shall decode program output as UTF-8, replacing invalid bytes with the replacement character, and remove ANSI escape sequences, including multi-byte characters and escape sequences split across output chunks."
+verification = "Feed chunks that split a 3-byte UTF-8 character and a CSI colour sequence across chunk boundaries, an OSC title sequence and the invalid byte 0xFF; the decoded text has the character intact, U+FFFD for 0xFF and no escape bytes. The echo fixture's ANSI mode through a real host yields clean text."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/run-output.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/run-output.test.ts", "05_Software/tests/integration/process-hosts.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

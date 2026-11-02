@@ -1,0 +1,377 @@
+import { type FileHandle, lstat, mkdir, open, readdir, rm, stat } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { performance } from "node:perf_hooks";
+import { veraError } from "@vera/shared";
+import { monotonicFactory } from "ulid";
+import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
+import { PathGuard } from "../workbench/path-guard.js";
+import { hostVariable, killProcessTree } from "./process-tree.js";
+import { OutputDecoder, TailBuffer } from "./run-output.js";
+
+export interface RunRequest {
+  sessionId: string;
+  /** Absolute workbench root. */
+  workbench: string;
+  /** Resolved executable path; the runner never looks a program up by name. */
+  executable: string;
+  args: readonly string[];
+  /** Workbench-relative working directory; the workbench root when absent. */
+  cwd?: string;
+  /** The program's own variables, already resolved. */
+  env?: Readonly<Record<string, string>>;
+  /** Kill the process tree after this many milliseconds; no limit when absent. */
+  timeoutMs?: number;
+  background?: boolean;
+  signal?: AbortSignal;
+}
+export interface RunResult {
+  runId: string;
+  exitCode: number | null;
+  signal: string | null;
+  /** System error code when the executable could not start. */
+  error?: string;
+  durationMs: number;
+  /** The last `tailChars` characters of interleaved stdout and stderr. */
+  output: string;
+  truncated: boolean;
+  /** Workbench-relative path of the full output. */
+  log: string;
+  timedOut: boolean;
+  stopped: boolean;
+}
+export interface RunRead {
+  /** Output since the previous read, at most `tailChars` characters. */
+  output: string;
+  truncated: boolean;
+  running: boolean;
+  exitCode?: number | null;
+}
+export interface ProgramRun {
+  /** Run id and background handle; also the log file name. */
+  readonly id: string;
+  readonly done: Promise<RunResult>;
+  read(): RunRead;
+  stop(): Promise<RunResult>;
+}
+export interface ProgramRunnerOptions {
+  host: ProcessHost;
+  clock: Pick<Clock, "sleep">;
+  /** Managed tool directories, placed before the system PATH. */
+  toolPaths?: readonly string[];
+  tailChars?: number;
+  maxBackground?: number;
+  logsKept?: number;
+  killGraceMs?: number;
+  /** Run id factory; ULIDs by default, so log names sort by age. */
+  id?: () => string;
+}
+
+/** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
+const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LANGUAGE"];
+const RUN_LOG = /^[0-9A-HJKMNP-TV-Z]{26}\.log$/;
+const COM_PORT = /^(?:\\\\\.\\)?(com\d+)$/i;
+const DEVICE_PORT = /^\/dev\/(?:tty\S*|serial\/by-id\/.+)$/;
+const thrown = (code: "BUSY" | "DENIED", params: Record<string, string | number>) => ({
+  ...veraError(code),
+  params,
+});
+
+/** Serial ports an argument list names, alone or as the value of `--name=value`; COM names upper-cased. */
+export function serialPorts(args: readonly string[]): string[] {
+  const ports = new Set<string>();
+  for (const arg of args) {
+    const equals = arg.indexOf("=");
+    for (const value of arg.startsWith("-") && equals > 0 ? [arg, arg.slice(equals + 1)] : [arg]) {
+      const com = COM_PORT.exec(value)?.[1];
+      if (com) ports.add(com.toUpperCase());
+      else if (DEVICE_PORT.test(value)) ports.add(value);
+    }
+  }
+  return [...ports];
+}
+
+/** The minimal environment of a run: allowlisted host variables, the program's own, then the fixed two. */
+export function programEnvironment(
+  host: ProcessHost,
+  toolPaths: readonly string[],
+  own: Readonly<Record<string, string>> = {},
+): Record<string, string> {
+  const windows = host.platform === "win32";
+  const same = (left: string, right: string) =>
+    windows ? left.toUpperCase() === right.toUpperCase() : left === right;
+  const env: Record<string, string> = {};
+  const set = (name: string, value: string) => {
+    for (const key of Object.keys(env)) if (same(key, name)) delete env[key];
+    env[name] = value;
+  };
+  const path = [...toolPaths, hostVariable(host, "PATH")].filter(Boolean).join(windows ? ";" : ":");
+  if (path) set("PATH", path);
+  for (const [name, value] of Object.entries(host.env)) {
+    if (value === undefined) continue;
+    const inherited = INHERITED.find((candidate) => same(candidate, name));
+    if (inherited) set(inherited, value);
+    else if ((windows ? name.toUpperCase() : name).startsWith("LC_")) set(name, value);
+  }
+  for (const [name, value] of Object.entries(own)) set(name, value);
+  set("PYTHONUTF8", "1");
+  set("NO_COLOR", "1");
+  return env;
+}
+
+class Run implements ProgramRun {
+  readonly done: Promise<RunResult>;
+  readonly background: boolean;
+  readonly workbench: string;
+  readonly ports: string[];
+  private settle!: (result: RunResult) => void;
+  private result: RunResult | undefined;
+  private reason: "timedOut" | "stopped" | undefined;
+  private pid: number | undefined;
+  /** Set once the host reports the exit, so a late timeout never signals a reused pid. */
+  private exited = false;
+  private started = 0;
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private file: FileHandle | undefined;
+  private writing = Promise.resolve();
+  private readonly decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
+  private readonly tail: TailBuffer;
+  private unread: TailBuffer;
+  private readonly abort = () => this.kill("stopped");
+
+  constructor(
+    readonly id: string,
+    readonly request: RunRequest,
+    private readonly runner: ProgramRunner,
+    private readonly settings: Required<Omit<ProgramRunnerOptions, "id">>,
+  ) {
+    this.background = request.background === true;
+    this.workbench = runner.key(request.workbench);
+    this.ports = serialPorts(request.args);
+    this.tail = new TailBuffer(settings.tailChars);
+    this.unread = new TailBuffer(settings.tailChars);
+    this.done = new Promise((resolve) => {
+      this.settle = resolve;
+    });
+  }
+
+  get log(): string {
+    return `.vera/runs/${this.id}.log`;
+  }
+
+  /** Guards the working directory, opens the log, prunes old logs and starts the program. */
+  async begin(): Promise<void> {
+    const { host } = this.settings;
+    const guard = await PathGuard.create(this.request.workbench);
+    let cwd: string;
+    try {
+      cwd = (await guard.resolve(this.request.cwd ?? ".")).absolute;
+      if (!(await stat(cwd)).isDirectory()) throw Error("Not a directory.");
+    } catch {
+      throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
+    }
+    const runs = join(guard.root, ".vera", "runs");
+    await mkdir(runs, { recursive: true });
+    const info = await lstat(runs);
+    if (!info.isDirectory() || info.isSymbolicLink()) throw thrown("DENIED", { path: ".vera/runs" });
+    this.file = await open(join(runs, `${this.id}.log`), "w");
+    await this.runner.prune(runs);
+    this.request.signal?.addEventListener("abort", this.abort, { once: true });
+    if (this.request.signal?.aborted) this.reason = "stopped";
+    if (this.reason) {
+      await this.finish({ code: null, signal: null });
+      return;
+    }
+    this.started = performance.now();
+    const child = host.spawn(this.request.executable, this.request.args, {
+      cwd,
+      env: programEnvironment(host, this.settings.toolPaths, this.request.env),
+      group: host.platform !== "win32",
+      output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
+    });
+    this.pid = child.pid;
+    if (this.request.timeoutMs !== undefined)
+      this.timer = setTimeout(() => this.kill("timedOut"), this.request.timeoutMs);
+    void child.exit.then((exit) => this.finish(exit));
+  }
+
+  /** Settles a run that never started because `begin` failed. */
+  abandon(): void {
+    this.request.signal?.removeEventListener("abort", this.abort);
+    void this.file?.close().catch(() => {});
+    this.settle(this.snapshot({ code: null, signal: null }));
+  }
+
+  read(): RunRead {
+    const output = this.unread.text();
+    const truncated = this.unread.total > output.length;
+    this.unread = new TailBuffer(this.settings.tailChars);
+    return {
+      output,
+      truncated,
+      running: !this.result,
+      ...(this.result ? { exitCode: this.result.exitCode } : {}),
+    };
+  }
+
+  stop(): Promise<RunResult> {
+    this.kill("stopped");
+    return this.done;
+  }
+
+  private kill(reason: "timedOut" | "stopped"): void {
+    if (this.exited || this.reason) return;
+    this.reason = reason;
+    if (this.pid === undefined) return;
+    const { host, clock, killGraceMs } = this.settings;
+    void killProcessTree(host, this.pid, clock, killGraceMs).catch(() => {});
+  }
+
+  private append(text: string): void {
+    if (!text) return;
+    this.tail.push(text);
+    this.unread.push(text);
+    this.write(text);
+  }
+
+  private write(text: string): void {
+    const file = this.file;
+    if (!file) return;
+    this.writing = this.writing
+      .then(() => file.write(text))
+      .then(
+        () => {},
+        () => {},
+      );
+  }
+
+  private async finish(exit: ProcessExit): Promise<void> {
+    this.exited = true;
+    clearTimeout(this.timer);
+    this.request.signal?.removeEventListener("abort", this.abort);
+    this.append(this.decoders.stdout.end());
+    this.append(this.decoders.stderr.end());
+    if (exit.error) this.write(`\n[VERA] The program could not start: ${exit.error}\n`);
+    await this.writing;
+    await this.file?.close().catch(() => {});
+    this.result = this.snapshot(exit);
+    this.runner.release(this.id);
+    this.settle(this.result);
+  }
+
+  private snapshot(exit: ProcessExit): RunResult {
+    const output = this.tail.text();
+    return {
+      runId: this.id,
+      exitCode: exit.code,
+      signal: exit.signal,
+      ...(exit.error === undefined ? {} : { error: exit.error }),
+      durationMs: this.started ? Math.round(performance.now() - this.started) : 0,
+      output,
+      truncated: this.tail.total > output.length,
+      log: this.log,
+      timedOut: this.reason === "timedOut",
+      stopped: this.reason === "stopped",
+    };
+  }
+}
+
+/**
+ * Runs resolved executables for plugins (plugins architecture §3.2) through the host's ProcessHost:
+ * guarded working directory, minimal environment, decoded output with a capped tail and a full log in
+ * `.vera/runs/`, timeouts and Stop that kill the whole process tree, at most `maxBackground` background
+ * runs per session and a serial-port guard against ports held by background runs.
+ */
+export class ProgramRunner {
+  private readonly active = new Map<string, Run>();
+  private readonly settings: Required<Omit<ProgramRunnerOptions, "id">>;
+  private readonly nextId: () => string;
+
+  constructor(options: ProgramRunnerOptions) {
+    this.settings = {
+      host: options.host,
+      clock: options.clock,
+      toolPaths: options.toolPaths ?? [],
+      tailChars: options.tailChars ?? 12_000,
+      maxBackground: options.maxBackground ?? 4,
+      logsKept: options.logsKept ?? 200,
+      killGraceMs: options.killGraceMs ?? 3000,
+    };
+    this.nextId = options.id ?? monotonicFactory();
+  }
+
+  /**
+   * Starts a run. Refuses with BUSY `{limit}` a background run beyond the session's limit, with BUSY
+   * `{handle, port}` a run naming a serial port that a running background run names, and with DENIED a
+   * working directory outside the workbench; none of these starts a process.
+   */
+  async start(request: RunRequest): Promise<ProgramRun> {
+    const run = new Run(this.nextId(), request, this, this.settings);
+    const runs = [...this.active.values()];
+    if (
+      run.background &&
+      runs.filter((other) => other.background && other.request.sessionId === request.sessionId).length >=
+        this.settings.maxBackground
+    )
+      throw thrown("BUSY", { limit: this.settings.maxBackground });
+    for (const port of run.ports) {
+      const holder = runs.find((other) => other.background && other.ports.includes(port));
+      if (holder) throw thrown("BUSY", { handle: holder.id, port });
+    }
+    this.active.set(run.id, run);
+    try {
+      await run.begin();
+    } catch (error) {
+      this.active.delete(run.id);
+      run.abandon();
+      throw error;
+    }
+    return run;
+  }
+
+  async run(request: RunRequest): Promise<RunResult> {
+    return (await this.start(request)).done;
+  }
+
+  /** A run that has not finished yet. */
+  get(handle: string): ProgramRun | undefined {
+    return this.active.get(handle);
+  }
+
+  stopSession(sessionId: string): Promise<void> {
+    return this.stopWhere((run) => run.request.sessionId === sessionId);
+  }
+
+  stopWorkbench(workbench: string): Promise<void> {
+    const key = this.key(workbench);
+    return this.stopWhere((run) => run.workbench === key);
+  }
+
+  stopAll(): Promise<void> {
+    return this.stopWhere(() => true);
+  }
+
+  /** @internal Comparable form of a workbench root. */
+  key(workbench: string): string {
+    const absolute = resolve(workbench);
+    return this.settings.host.platform === "win32" ? absolute.toLowerCase() : absolute;
+  }
+
+  /**
+   * @internal Deletes the oldest run logs beyond `logsKept`, never the log of an unfinished run.
+   * Best effort: a log another program holds or that cannot be removed never blocks a run.
+   */
+  async prune(folder: string): Promise<void> {
+    const logs = (await readdir(folder)).filter((name) => RUN_LOG.test(name)).sort();
+    for (const name of logs.slice(0, Math.max(0, logs.length - this.settings.logsKept)))
+      if (!this.active.has(name.slice(0, -4))) await rm(join(folder, name), { force: true }).catch(() => {});
+  }
+
+  /** @internal */
+  release(id: string): void {
+    this.active.delete(id);
+  }
+
+  private async stopWhere(match: (run: Run) => boolean): Promise<void> {
+    await Promise.all([...this.active.values()].filter(match).map((run) => run.stop()));
+  }
+}

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-e594e725"
+title = "Report a program that cannot start"
+status = "active"
+requirement = "If the executable cannot be started, then the runner shall finish the run with no exit code and the system error code in its result and in its run log."
+verification = "Run a missing executable path through a real host; the result has exitCode null, error ENOENT and the log names ENOENT; the runner keeps no active run afterwards. A spawn function that throws EINVAL yields the same result shape from NodeProcessHost."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/node-process-host.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/process-host.ts", "05_Software/src/apps/cli/src/process-host.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/tests/integration/process-hosts.test.ts", "05_Software/src/libraries/core/src/plugins/node-process-host.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

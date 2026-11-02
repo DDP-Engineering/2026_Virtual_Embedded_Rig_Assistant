@@ -30,6 +30,8 @@ which owns verified assets, native staging and artifact measurements.
 - The tooling TypeScript project references shared/core before compiling e2e contracts and worker-host test consumers.
 - All four workspaces extend the strict base and participate in the root TypeScript solution.
 - Core's Electron prohibition and the existing layer/import rules remain enforced by Biome regression tests.
+- Core sources never import `node:child_process` or `child_process` (core tests and test-support files may);
+  processes start through the ProcessHost port that desktop main and the CLI compose.
 - E2e uses temporary userData and explicit Chromium sandboxing; non-loopback Node and Chromium requests are blocked.
 - Linux acceptance runs through xvfb-run with platform-specific dependencies separate from Windows.
 

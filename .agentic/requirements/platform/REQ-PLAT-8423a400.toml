@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-8423a400"
+title = "Kill a Windows process tree with taskkill"
+status = "active"
+requirement = "On Windows, the runner shall kill a process tree by running taskkill.exe from the System32 folder of SystemRoot with the arguments /T /F /PID and the program's process id."
+verification = "With a fake win32 host, stop a run; the host records a spawn of <SystemRoot>\\System32\\taskkill.exe with exactly [/T, /F, /PID, <pid>] and the program spawn used no process group. The real Windows grandchild tests of the timeout and Stop requirements exercise it end to end."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/process-tree.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/process-tree.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

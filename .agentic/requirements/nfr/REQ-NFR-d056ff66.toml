@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-NFR-d056ff66"
+title = "Keep child_process out of core sources"
+status = "active"
+requirement = "Core library sources shall not import node:child_process; desktop main and the CLI implement the ProcessHost port."
+verification = "The import-boundary lint probe rejects `import { spawn } from \"node:child_process\"` in src/libraries/core/src/x.ts with noRestrictedImports and accepts it in a core test file and in desktop main."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/node-process-host.ts", "05_Software/biome.json", "05_Software/src/libraries/core/src/ports.ts", "05_Software/src/apps/desktop/src/main/process-host.ts", "05_Software/src/apps/cli/src/process-host.ts"]
+linked_tests = ["05_Software/tests/tooling/boundaries.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

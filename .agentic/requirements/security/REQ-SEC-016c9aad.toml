@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-016c9aad"
+title = "Refuse a run that names a serial port held by a background run"
+status = "active"
+requirement = "If a run's argument names a serial port (COM followed by digits, /dev/tty*, or /dev/serial/by-id/*), alone or as the value of a --name=value argument, that a running background run also names, then the runner shall refuse the run with BUSY, naming that run's handle and the port, and start no process."
+verification = "Start a background run with `--port COM3`; a run with `--port=com3` rejects with BUSY and params {handle, port COM3}; a run with COM4 starts; after the background run is stopped, a run with COM3 starts; /dev/ttyUSB0 and /dev/serial/by-id/usb-x behave the same."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

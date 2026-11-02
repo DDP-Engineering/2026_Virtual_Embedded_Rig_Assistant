@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-e08c858b"
+title = "Pass program arguments unchanged without a shell"
+status = "active"
+requirement = "When the runner starts a program with an argument array, the process host shall start the executable without a shell and pass every argument unchanged, including spaces, double quotes, non-ASCII characters and shell metacharacters."
+verification = "Run the echo-program fixture through each compiled host (desktop main and CLI) with arguments containing a space, a double quote, Polish and CJK characters, an empty string and the shell fragments `&echo x`, `%PATH%` and `$HOME`; the fixture's JSON argv equals the input array exactly, and no fragment is expanded."
+affected_paths = ["05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/src/plugins/node-process-host.ts", "05_Software/src/libraries/core/src/ports.ts", "05_Software/src/apps/desktop/src/main/process-host.ts", "05_Software/src/apps/cli/src/process-host.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/tests/integration/process-hosts.test.ts", "05_Software/src/libraries/core/src/plugins/node-process-host.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

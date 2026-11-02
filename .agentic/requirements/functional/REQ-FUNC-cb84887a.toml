@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-cb84887a"
+title = "Run in a guarded working directory"
+status = "active"
+requirement = "When a run names a workbench-relative working directory, the runner shall start the program in that directory resolved through the workbench path guard, and in the workbench root when none is named."
+verification = "In a temporary workbench with a sub folder, run the echo fixture with cwd `sub` and with no cwd; the fixture reports the canonical sub folder and the canonical workbench root respectively."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/tests/fixtures/echo-program/echo.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/tests/integration/process-hosts.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

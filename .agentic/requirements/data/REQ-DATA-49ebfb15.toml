@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-49ebfb15"
+title = "Keep the newest 200 run logs per workbench"
+status = "active"
+requirement = "When a run starts, the runner shall delete the oldest run logs of the workbench so that at most the newest 200 remain, never deleting the log of an active run and starting the run even when an old log cannot be deleted."
+verification = "Seed .vera/runs with 205 ULID-named logs, one belonging to a running background run with the oldest id; start a run; 200 logs remain, the newest ones by id, plus the active run's log; files that are not .log are untouched; with logsKept 1 and an undeletable old log (a directory with a log name), the next run still starts and finishes."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

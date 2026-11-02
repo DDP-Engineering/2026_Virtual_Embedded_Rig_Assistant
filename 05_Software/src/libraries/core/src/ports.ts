@@ -24,6 +24,36 @@ export interface WorkerPool {
   dispose(): Promise<void>;
 }
 
+/** Host-owned process execution; core never imports child_process (plugins architecture §3.2). */
+export interface ProcessExit {
+  code: number | null;
+  signal: string | null;
+  /** System error code (ENOENT, EACCES, …) when the executable could not start. */
+  error?: string;
+}
+export interface SpawnedProcess {
+  readonly pid: number | undefined;
+  /** Settles once the process has exited and both pipes have closed, or it failed to start. */
+  readonly exit: Promise<ProcessExit>;
+}
+export interface ProcessSpawnOptions {
+  cwd: string;
+  env: Record<string, string>;
+  /** Start the program as the leader of its own process group (Linux tree kill). */
+  group: boolean;
+  /** Raw output bytes in arrival order. */
+  output: (stream: "stdout" | "stderr", chunk: Uint8Array) => void;
+}
+export interface ProcessHost {
+  readonly platform: string;
+  /** The host's own environment; the runner copies only allowlisted names from it. */
+  readonly env: Readonly<Record<string, string | undefined>>;
+  /** No shell, hidden window, closed stdin, piped stdout and stderr. */
+  spawn(executable: string, args: readonly string[], options: ProcessSpawnOptions): SpawnedProcess;
+  /** Signals a process (pid > 0) or a process group (pid < 0); false when none exists. */
+  signal(pid: number, signal: "SIGTERM" | "SIGKILL"): boolean;
+}
+
 /** Structural pi-ai 1.1.0 auth/types contract; no Electron or model runtime dependency. */
 export type Credential =
   | { type: "api_key"; key?: string; env?: Record<string, string> }

@@ -133,34 +133,46 @@ Its permission comes from §4, not from the class.
 
 ### 3.2 Runner
 
-A new host port `ProcessHost` in `core/src/ports.ts`, implemented by the desktop main process and by
-the CLI. Core stays free of `child_process`.
+A host port `ProcessHost` in `core/src/ports.ts`. `NodeProcessHost` (core) implements it around a
+`spawn` function that desktop main and the CLI inject from `child_process`, so core never imports
+`child_process` (a Biome boundary). Core's `ProgramRunner` (`core/src/plugins/runner.ts`) owns the
+policy below; it receives a resolved executable and the program's resolved variables.
 
 - `spawn(executable, args, { shell: false, windowsHide: true, cwd, env, stdio: ["ignore", "pipe", "pipe"] })`.
   Stdin is closed, so an interactive program fails instead of hanging. `blocked` rules name the
   known interactive subcommands.
 - Environment: a minimal base (`PATH` = managed tool directories + system `PATH`; `SystemRoot`,
-  `HOME`, `TEMP`, locale variables), then the program's `env`, `PYTHONUTF8=1` and `NO_COLOR=1`.
-  Credentials from the VERA store never enter it.
-- `cwd` passes the workbench path guard. The program itself is not confined: it can reach any file
-  the user can. Risk rules and approvals are the control; VERA does not sandbox programs.
-- Timeout and Stop kill the whole process tree. On Windows: `taskkill /T /F /PID`. On Linux: the run
-  starts in its own process group and receives SIGTERM, then SIGKILL after 3 s.
-- The full output goes to `.vera/runs/<run-id>.log`; the newest 200 logs per workbench are kept.
-  Output is decoded as UTF-8 with replacement characters and ANSI escape codes are removed. Output
-  is untrusted data, like file and web content.
-- Background runs: at most 4 per session. Session stop, workbench close and app exit kill them.
-- Serial-port guard: if an argument names a serial port (`COM\d+`, `/dev/tty*`,
-  `/dev/serial/by-id/*`) that a running background run uses, the call fails and names that handle.
-  Windows opens COM ports exclusively, so without this a flasher would fail with an obscure error.
+  `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`), then the program's
+  `env`, then `PYTHONUTF8=1` and `NO_COLOR=1`. Names compare case-insensitively on Windows.
+  Credentials from the VERA store and VERA's own environment never enter it.
+- `cwd` passes the workbench path guard and must be a directory, else DENIED. The program itself is
+  not confined: it can reach any file the user can. Risk rules and approvals are the control; VERA
+  does not sandbox programs.
+- Timeout, Stop and the caller's abort kill the whole process tree. On Windows:
+  `%SystemRoot%\System32\taskkill.exe /T /F /PID`. On Linux: the run starts in its own process group
+  and receives SIGTERM, then SIGKILL after 3 s.
+- The full output goes to `.vera/runs/<run-id>.log` (the run id is a ULID); the newest 200 logs per
+  workbench are kept, never deleting the log of an unfinished run. Output is decoded as UTF-8 with
+  replacement characters and ANSI escape codes are removed, also when split across chunks. The
+  result carries the last 12 000 characters. Output is untrusted data, like file and web content.
+- Background runs: at most 4 per session (BUSY). Session stop, workbench create/open/close and app
+  exit kill them; the CLI stops all runs when its run ends.
+- Serial-port guard: if an argument, or the value of a `--name=value` argument, names a serial port
+  (`COM\d+`, `/dev/tty*`, `/dev/serial/by-id/*`) that a running background run uses, the call fails
+  with BUSY and names that handle and port. Windows opens COM ports exclusively, so without this a
+  flasher would fail with an obscure error.
+- A program that cannot start finishes with no exit code and its system error code (`ENOENT`, …).
 
 ### 3.3 Launchers
 
 Some vendor programs run only inside an activated environment; ESP-IDF's `idf.py` is one. A
 `launcher` prefix such as `[eim, run]` runs the command through the vendor's activation tool.
-When the launcher takes one command string, VERA quotes each argument and refuses any argument
-that contains quotes, `& | ; < > ^ % $` or a backtick. Rules still match the program's own command
-line, never the launcher's.
+When the launcher takes one command string, VERA quotes each argument (double quotes, trailing
+backslashes doubled) and refuses (INVALID) any argument that contains quotes, `& | ; < > ^ % $`, a
+backtick, NUL or a line break. Rules still match the program's own command line, never the
+launcher's. `launcherArgs(launcher, command, "argv" | "string")` in `core/src/plugins/launcher.ts`
+implements both modes; the manifest field that selects the mode is added by PLG-10 once `eim run`
+is verified (R-P5).
 
 ### 3.4 Prompt and skills
 

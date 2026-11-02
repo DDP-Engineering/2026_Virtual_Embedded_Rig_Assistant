@@ -92,6 +92,12 @@ after a file changes, and enabling it for one workbench does not enable it for a
 **Done when:** tests with the `echo-program` fixture prove argument fidelity (spaces, quotes,
 Unicode), timeout and Stop killing a grandchild process on both systems, output capping, log
 retention and the serial-port refusal.
+- Done 2026-11-02: `ProgramRunner` and `NodeProcessHost` in core, injected `spawn` in desktop main and
+  the CLI, `tests/fixtures/echo-program`. Real-process tests ran on Windows x64; the Linux process
+  group and SIGTERM/SIGKILL branches are unit-tested, and `tests/integration/process-hosts.test.ts`
+  still needs a native Linux x64 run. The manifest field for the launcher mode moves to PLG-10.
+  The serial-port guard reads `RunRequest.args`; with a one-string launcher the ports sit inside one
+  quoted argument, so PLG-04/PLG-10 must check the program's own arguments, not the launcher's.
 
 ### PLG-03 Rules, risk levels and approvals
 **Goal:** every command gets a risk level and the matching approval behaviour, in core and in the
@@ -300,8 +306,8 @@ Windows and Linux the agent explains recent history without approvals and commit
 
 ## 3. Verification
 
-- Fixture `05_Software/tests/fixtures/plugins/echo-program/`: a small program that echoes its
-  arguments, prints large output, sleeps and spawns a child. It proves the runner without hardware.
+- Fixture `05_Software/tests/fixtures/echo-program/echo.mjs`: a small program that echoes its
+  arguments, prints large output, reads stdin and spawns a child. It proves the runner without hardware.
 - Agent tests use the replay provider; no test calls a real model.
 - Hardware smoke, manual and recorded per release: ESP32-S3 (USB-Serial-JTAG) and ESP32 with CP210x,
   on Windows 11 and Ubuntu LTS.
