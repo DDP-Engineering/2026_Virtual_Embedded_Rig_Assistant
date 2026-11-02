@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-59308834"
+title = "Offer program tools and plugin skills in the CLI"
+status = "active"
+requirement = "The CLI vera run shall compose the session's program host and skill catalog from the opened workbench's enabled plugins and print the resulting skill, approval and program tool events as session events."
+verification = "CLI integration: data folder with the echo-tools fixture plugin installed and enabled in workbench.yaml, replay script calling load_skill echo-guide then run_program echo: the JSONL output has a successful load_skill tool.done with the plugin skill text and a run_program tool.done error naming the program as not available, because the CLI resolves no executable before provisioning."
+affected_paths = ["05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/tests/integration/cli.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

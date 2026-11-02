@@ -10,12 +10,23 @@ export interface PromptEnvironment {
   indexedDocuments: number;
 }
 
+/** One enabled program of the `<programs>` block. */
+export interface ProgramPromptEntry {
+  name: string;
+  version: string | null;
+  plugin: string;
+  description: string;
+  skills: readonly string[];
+}
+
 export interface SystemPromptInput {
   workbench: Pick<WorkbenchConfig, "name">;
   /** Decoded .vera/WORKBENCH.md; whitespace is significant. */
   pinned: string;
   /** Already resolved available metadata, in display order. */
   skills: readonly { name: string; description: string }[];
+  /** Enabled programs that resolve to an executable, in display order. */
+  programs?: readonly ProgramPromptEntry[];
   env: PromptEnvironment;
 }
 
@@ -37,6 +48,13 @@ const rules = [
   "When documents are in English, search in English even if the conversation is not.",
   "Answer in the user's language.",
 ];
+const programRule =
+  "Run external programs only with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.";
+function programLine({ name, version, plugin, description, skills }: ProgramPromptEntry): string {
+  const skill =
+    skills.length === 0 ? "" : ` ${skills.length === 1 ? "Skill" : "Skills"}: ${skills.join(", ")}.`;
+  return `- ${name}${version ? ` ${version}` : ""} (plugin ${plugin}): ${description}${skill}`;
+}
 
 function pinnedContext(pinned: string): string {
   if (Buffer.byteLength(pinned, "utf8") <= PINNED_BYTES) return pinned;
@@ -52,10 +70,17 @@ function pinnedContext(pinned: string): string {
 }
 
 /** Canonical engineering context (architecture03 §3); host ports supply all environment data. */
-export function buildSystemPrompt({ workbench, pinned, skills, env }: SystemPromptInput): SystemPrompt {
+export function buildSystemPrompt({
+  workbench,
+  pinned,
+  skills,
+  programs = [],
+  env,
+}: SystemPromptInput): SystemPrompt {
+  const active = programs.length > 0 ? [...rules, programRule] : rules;
   const blocks = [
     `You are VERA, an engineering assistant for electronics and embedded work on the workbench "${workbench.name}".`,
-    `Rules:\n${rules.map((rule) => `- ${rule}`).join("\n")}`,
+    `Rules:\n${active.map((rule) => `- ${rule}`).join("\n")}`,
     `<workbench>\n${pinnedContext(pinned)}\n</workbench>`,
   ];
   if (skills.length > 0) {
@@ -63,6 +88,7 @@ export function buildSystemPrompt({ workbench, pinned, skills, env }: SystemProm
       `<skills>\n${skills.map((skill) => `- ${skill.name}: ${skill.description}`).join("\n")}\n</skills>`,
     );
   }
+  if (programs.length > 0) blocks.push(`<programs>\n${programs.map(programLine).join("\n")}\n</programs>`);
   blocks.push(
     [
       "Environment:",

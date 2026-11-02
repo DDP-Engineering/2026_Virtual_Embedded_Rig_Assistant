@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9b38f5a8"
+title = "Start a background program run and return its handle"
+status = "active"
+requirement = "When the agent calls run_program with background true and the approval gate lets the command run, the session shall start the program without waiting for it, return its handle, risk and log path, and keep the run going after the turn ends."
+verification = "Replay session: a background echo run returns {handle, risk, log} while the scripted process is still running; after turn.done a later turn reads the same handle with program_output and sees the output printed after the first turn ended."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

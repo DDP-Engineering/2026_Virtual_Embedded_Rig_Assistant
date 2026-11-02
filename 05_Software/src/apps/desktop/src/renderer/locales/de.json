@@ -451,7 +451,8 @@
       "unavailable": "Skill kann nicht sicher gelesen werden; Pfad, Format und Größe prüfen."
     },
     "enabledNamed": "Aktiviert: {{name}}",
-    "openNamed": "{{name}} öffnen / bearbeiten"
+    "openNamed": "{{name}} öffnen / bearbeiten",
+    "plugin": "Plugin {{plugin}}"
   },
   "updates": {
     "mode": "Aktualisierungsmodus",
@@ -585,7 +586,10 @@
     "load_skill": "Anweisungen und ergänzende Textdateien eines aktivierten Skills laden.",
     "web_search": "Das öffentliche Web mit dem unter Einstellungen → Webzugriff ausgewählten Anbieter durchsuchen. Zugangsbedingungen und Dienstlimits hängen vom Anbieter ab.",
     "web_read": "Text aus öffentlichen Webseiten und unterstützten Dokumenten mit dem ausgewählten Webanbieter abrufen. Es wird keine lokale Datei gespeichert.",
-    "web_download": "Öffentliche Dateien (PDF, ZIP, CSV, Text, Bilder oder andere Formate) gemäß den Sitzungsberechtigungen nach .vera/downloads herunterladen. PDFs in VERA anzeigen oder andere Dateien im Explorer finden. Downloads werden nicht automatisch indexiert."
+    "web_download": "Öffentliche Dateien (PDF, ZIP, CSV, Text, Bilder oder andere Formate) gemäß den Sitzungsberechtigungen nach .vera/downloads herunterladen. PDFs in VERA anzeigen oder andere Dateien im Explorer finden. Downloads werden nicht automatisch indexiert.",
+    "run_program": "Programme der für diese Workbench aktivierten Plugins ausführen, mit den Risikoregeln des Plugins und deinen Freigaben.",
+    "program_output": "Die Ausgabe eines Programmlaufs im Hintergrund lesen.",
+    "program_stop": "Einen Programmlauf im Hintergrund stoppen."
   },
   "projects": {
     "new": "Neue Workbench",

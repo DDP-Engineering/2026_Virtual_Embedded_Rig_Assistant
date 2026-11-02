@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-08f730b3"
+title = "End refused program commands with their risk and mode"
+status = "active"
+requirement = "If the permission policy refuses a program command (a blocked rule in any mode, or a command that is not safe, or any command of a trial plugin, in read-only), then run_program shall end with an error naming the risk and the session mode, without an approval record or process start."
+verification = "Unit and replay tests: device-write in read-only ends with an error naming device-write and read-only; a blocked command in bypass ends with an error naming blocked and bypass; a safe command of a trial plugin in read-only ends with an error naming safe, the trial plugin and read-only; all leave the approvals table empty and the scripted host never spawns; a safe command of a non-trial plugin in read-only runs."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

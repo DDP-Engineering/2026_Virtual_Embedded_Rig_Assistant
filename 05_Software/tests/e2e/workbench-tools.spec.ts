@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, expect, type Page, test } from "@playwright/test";
-import type { VeraBridge } from "@vera/shared";
+import { builtinToolNames, type VeraBridge } from "@vera/shared";
 import { parse } from "yaml";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
@@ -41,7 +41,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await openTools(page);
-    await expect(page.locator("[data-tool-toggle]")).toHaveCount(14);
+    await expect(page.locator("[data-tool-toggle]")).toHaveCount(builtinToolNames.length);
     await page.locator('[data-tool-toggle="grep"]').uncheck();
     await page.locator('[data-tool-toggle="write"]').uncheck();
     await page.locator("[data-project-save]").click();

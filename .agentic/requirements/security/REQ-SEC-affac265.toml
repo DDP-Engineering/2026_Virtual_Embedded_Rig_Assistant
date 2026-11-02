@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-affac265"
+title = "Refuse a program the agent cannot run"
+status = "active"
+requirement = "If the agent names a program that no enabled plugin declares, that two enabled plugins declare, that does not resolve to an executable or that declares a launcher, then run_program shall end with an error naming the reason before any approval request or process start."
+verification = "Unit tests and a replay session: an unknown program, a program declared by two enabled plugins, a program the resolver does not resolve and a program with a launcher each end the tool call with an error naming undeclared, ambiguous or not available; the approvals table stays empty and the scripted host never spawns."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

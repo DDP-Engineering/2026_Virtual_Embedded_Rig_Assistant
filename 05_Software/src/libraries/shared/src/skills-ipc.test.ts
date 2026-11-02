@@ -25,3 +25,21 @@ it("validates strict skill scope/source/name/content/hash without renderer path 
     ]),
   ).toHaveLength(1);
 });
+it("lists plugin skills but refuses plugin targets for open, create and save (REQ-SEC-f7e4f258)", () => {
+  expect(
+    channels["skills.list"].response.parse([
+      { name: "echo-guide", source: "plugin", plugin: "echo-tools", description: "Guide.", enabled: true },
+    ]),
+  ).toHaveLength(1);
+  for (const channel of ["skills.open", "skills.create"] as const) {
+    expect(
+      channels[channel].request.safeParse({ ...scope, name: "echo-guide", source: "plugin" }).success,
+    ).toBe(false);
+    expect(
+      channels[channel].request.safeParse({ ...scope, name: "echo-guide", source: "workbench" }).success,
+    ).toBe(true);
+  }
+  const save = { ...scope, name: "echo-guide", content: "x", sha256: "a".repeat(64) };
+  expect(channels["skills.save"].request.safeParse({ ...save, source: "plugin" }).success).toBe(false);
+  expect(channels["skills.save"].request.safeParse({ ...save, source: "user" }).success).toBe(true);
+});

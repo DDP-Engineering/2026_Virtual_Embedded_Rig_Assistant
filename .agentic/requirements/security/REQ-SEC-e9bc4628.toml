@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-e9bc4628"
+title = "Bound the until regular expression of program_output"
+status = "active"
+requirement = "If the until value of program_output is not a valid regular expression or one match attempt runs longer than 100 milliseconds, then program_output shall end with an error."
+verification = "program_output with until `(` ends with an invalid pattern error; until `(a|a)*b` over 40 `a` characters ends with a pattern time error within one second and a later call still works."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

@@ -369,7 +369,8 @@ export class ReferenceRuntime implements AgentRuntime {
           const tool = init.tools.find((t) => t.name === call.name);
           if (!tool) throw Error("Unknown tool");
           const args = tool.params.parse(call.arguments);
-          if (tool.class === "write") {
+          // Program commands ask the gate per command line, like file changes.
+          if (tool.class === "write" || tool.class === "program") {
             const prepared = structuredClone({ ...call, arguments: args as ToolCall["arguments"] });
             this.emit({ type: "approval.requested", call: prepared });
             const decision = await this.host.approve(prepared, signal);

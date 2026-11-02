@@ -43,9 +43,11 @@ any other version is invalid data, and upgrade/migration safety is deferred unti
 ProgramRunner: programs start through the ProcessHost port (no shell, closed stdin, minimal environment, guarded cwd),
 with process-tree kills on timeout/Stop, logs in .vera/runs, background runs and the serial-port guard; and the program
 rule matcher, risk levels, mode matrix with the trial override, run_program approvals bound to file hashes, the typed
-confirmation checked in core and the bypass warning's list of irreversible rules.
+confirmation checked in core and the bypass warning's list of irreversible rules; and the agent's program tools
+(run_program, program_output, program_stop) over a ProgramHost whose executable resolver provisioning fills, with the
+`<programs>` prompt block and plugin skills joining the skill catalog.
 
-[Skills](../knowledge/skills.md) routes workbench/user discovery, validated metadata
+[Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
 
 [Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-48cc01a9"
+title = "Render enabled programs and the program rule in the system prompt"
+status = "active"
+requirement = "Where program entries are given, the system prompt shall contain a <programs> block with one line per program giving its name, its version when known, its plugin id, the plugin description and the plugin's skills, and the rule to run external programs only with run_program; without entries it shall contain neither."
+verification = "Prompt snapshot with one entry `echo 1.2.3 (plugin echo-tools)` and skill echo-guide shows the block and the rule; the snapshot without entries is unchanged from the prompt before program support."
+affected_paths = ["05_Software/src/libraries/core/src/agent/prompt.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/prompt.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

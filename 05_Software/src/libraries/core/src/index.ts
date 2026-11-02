@@ -23,6 +23,7 @@ export * from "./llm/scrub.js";
 export * from "./plugins/launcher.js";
 export * from "./plugins/node-process-host.js";
 export * from "./plugins/program-request.js";
+export * from "./plugins/program-tools.js";
 export * from "./plugins/runner.js";
 export * from "./plugins/store.js";
 export * from "./ports.js";

@@ -7,10 +7,13 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  type ProgramHost,
   ProgramRunner,
+  programPromptEntries,
   SessionService,
   SettingsService,
   unavailableWebTools,
+  unresolvedPrograms,
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
@@ -159,7 +162,18 @@ export async function runTurn(
     const db = workbench.getDatabase(),
       pinned = (await workbench.getPinned()).content;
     const skills = workbench.skillCatalog(snapshot.config.id);
-    const skillMetadata = await skills.metadata();
+    const skillList = await skills.list();
+    const skillMetadata = skillList
+      .filter((skill) => skill.enabled && !skill.error)
+      .map(({ name, description }) => ({ name, description }));
+    // Provisioning (PLG-05) will resolve executables; until then no program of an enabled plugin resolves.
+    const programHost: ProgramHost = {
+      runner: programs,
+      clock: nodeClock,
+      resolver: unresolvedPrograms,
+      plugins: () => workbench.loadPlugins(snapshot.config.id),
+    };
+    const programEntries = await programPromptEntries(programHost, skillList);
     const service = new SessionService({
       db,
       root: snapshot.folder,
@@ -173,6 +187,7 @@ export async function runTurn(
       clock: nodeClock,
       workers,
       skills,
+      programs: programHost,
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
@@ -187,6 +202,7 @@ export async function runTurn(
           workbench: snapshot.config,
           pinned,
           skills: skillMetadata,
+          programs: programEntries,
           env: {
             clock: nodeClock,
             osFamily: process.platform === "win32" ? "windows" : "linux",

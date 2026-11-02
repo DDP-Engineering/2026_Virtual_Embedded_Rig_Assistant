@@ -7,6 +7,7 @@ import { createServer, type RequestListener, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { PluginStore } from "@vera/core";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
 import { afterAll, beforeAll, expect, it } from "vitest";
@@ -250,6 +251,34 @@ it("CLI loads a separately authorized user skill and extra file", async () => {
       .join("\n"),
   ).toContain("CLI BODY");
   expect(records.filter((r) => r.event.type === "message.done").at(-1)?.event.text).toBe("CLI EXTRA");
+});
+// REQ-FUNC-59308834
+it("CLI offers the enabled plugin's skill and program tools and prints their events", async () => {
+  const { workbench } = await fixture();
+  const data = join(workbench, "user-data"),
+    script = join(workbench, "plugin-replay.jsonl");
+  await new PluginStore({ root: join(data, "plugins") }).install(
+    join(root, "tests/fixtures/plugins/echo-tools"),
+  );
+  const config = join(workbench, ".vera/workbench.yaml");
+  await writeFile(config, `${await readFile(config, "utf8")}plugins:\n  enabled: [echo-tools]\n`);
+  await writeFile(
+    script,
+    [
+      { toolCalls: [{ name: "load_skill", args: { name: "echo-guide" } }] },
+      { toolCalls: [{ name: "run_program", args: { program: "echo", args: ["version"] } }] },
+      { text: "Done" },
+    ]
+      .map((s) => JSON.stringify(s))
+      .join("\n"),
+  );
+  const result = await launch([...replay(workbench, script), "--data", data]).result;
+  expect(result.code).toBe(0);
+  const tools = events(result.stdout).filter((r) => r.event.type === "tool.done");
+  expect(tools.map((r) => r.event.ok)).toEqual([true, false]);
+  expect(String(tools[0]?.event.summary)).toContain("Run `echo version` first.");
+  // Without provisioning (PLG-05) the CLI resolves no executable, so the program is not available yet.
+  expect(String(tools[1]?.event.summary)).toMatch(/Program echo is not available/);
 });
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SkillSource, SkillSummary } from "@vera/shared";
+import type { SkillSummary } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -16,6 +16,9 @@ const errorKeys = defineTranslationKeys([
   "skills.errors.unavailable",
 ]);
 const errorIndex = { name: 0, description: 1, frontmatter: 2, unavailable: 3 } as const;
+/** Workbench and user skills open in the editor; plugin skills belong to the installed plugin. */
+type EditableSkill = SkillSummary & { source: "workbench" | "user" };
+const editable = (skill: SkillSummary): skill is EditableSkill => skill.source !== "plugin";
 
 export function SkillSettings({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
   const { t } = useTranslation();
@@ -58,8 +61,8 @@ function SkillsDialog({
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState("");
-  const [source, setSource] = useState<SkillSource>("workbench");
-  const [editing, setEditing] = useState<SkillSummary>();
+  const [source, setSource] = useState<"workbench" | "user">("workbench");
+  const [editing, setEditing] = useState<EditableSkill>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   const editorTrigger = useRef<HTMLButtonElement | null>(null);
@@ -110,7 +113,12 @@ function SkillsDialog({
       <ul className="skills-list">
         {skills.data?.map((skill) => (
           <li key={skill.name}>
-            <strong>{skill.name}</strong> <span>{t(sourceKeys[skill.source === "workbench" ? 0 : 1])}</span>
+            <strong>{skill.name}</strong>{" "}
+            <span>
+              {skill.source === "plugin"
+                ? t("skills.plugin", { plugin: skill.plugin ?? "" })
+                : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
+            </span>
             {skill.description && <p>{skill.description}</p>}
             {skill.error && <p role="status">{t(errorKeys[errorIndex[skill.error]])}</p>}
             <label>
@@ -131,18 +139,20 @@ function SkillsDialog({
               />
               {t("skills.enabled")}
             </label>
-            <button
-              type="button"
-              disabled={busy}
-              data-action="open-skill"
-              aria-label={t("skills.openNamed", { name: skill.name })}
-              onClick={(event) => {
-                editorTrigger.current = event.currentTarget;
-                setEditing(skill);
-              }}
-            >
-              {t("skills.open")}
-            </button>
+            {editable(skill) && (
+              <button
+                type="button"
+                disabled={busy}
+                data-action="open-skill"
+                aria-label={t("skills.openNamed", { name: skill.name })}
+                onClick={(event) => {
+                  editorTrigger.current = event.currentTarget;
+                  setEditing(skill);
+                }}
+              >
+                {t("skills.open")}
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -172,7 +182,7 @@ function SkillsDialog({
           id={`${titleId}-source`}
           value={source}
           disabled={busy || readOnly}
-          onChange={(event) => setSource(event.target.value as SkillSource)}
+          onChange={(event) => setSource(event.target.value as "workbench" | "user")}
         >
           <option value="workbench">{t("skills.workbench")}</option>
           <option value="user">{t("skills.user")}</option>
@@ -210,7 +220,7 @@ function SkillEditor({
   readOnly,
   close,
 }: {
-  skill: SkillSummary;
+  skill: EditableSkill;
   workbenchId: string;
   readOnly: boolean;
   close: () => void;

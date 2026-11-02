@@ -38,7 +38,7 @@ import { LineCounter, parseDocument, stringify } from "yaml";
 import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
-import { PluginStore } from "../plugins/store.js";
+import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
@@ -145,6 +145,8 @@ export class WorkbenchService {
       root: state.folder,
       ...(this.host.userData ? { userData: this.host.userData } : {}),
       disabled: () => this.current().config.skills.disabled,
+      plugins: async () =>
+        (await this.loadPlugins(id)).map((plugin) => ({ id: plugin.manifest.id, folder: plugin.folder })),
       refresh: async () => {
         const config = await this.config(state.folder);
         if (
@@ -184,6 +186,23 @@ export class WorkbenchService {
         ? await new PluginStore({ root: join(this.host.userData, "plugins") }).ids()
         : [],
     });
+  }
+  /**
+   * The enabled plugins of the open workbench that load: installed, issue-free and unchanged since
+   * review, in plugins.enabled order. Others never load and are skipped.
+   */
+  async loadPlugins(id: string): Promise<LoadedPlugin[]> {
+    const ids = this.enabledPlugins(id);
+    if (!this.host.userData || ids.length === 0) return [];
+    const store = new PluginStore({ root: join(this.host.userData, "plugins") });
+    const loaded: LoadedPlugin[] = [];
+    for (const plugin of ids)
+      try {
+        loaded.push(await store.load(plugin));
+      } catch {
+        // Not installed, invalid or changed since review: the plugin stays unavailable.
+      }
+    return loaded;
   }
   /** Plugins enabled in the current configuration of the open workbench. */
   enabledPlugins(id: string): string[] {

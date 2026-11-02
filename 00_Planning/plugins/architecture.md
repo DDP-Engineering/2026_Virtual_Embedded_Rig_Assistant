@@ -131,6 +131,19 @@ official `analysis-skills` plugin with `firmware-comparator` and `test-planner`
 `program` is a new tool class next to `read`, `write` and `session` in `core/src/tools/context.ts`.
 Its permission comes from §4, not from the class.
 
+As built (PLG-04): the command line is the resolver's executable and leading arguments, then the
+program's `prefix`, then the agent's arguments. `timeout` is clamped to a cap: the largest `timeout` of
+the matching rules, else the program's, else 600 s; a foreground run without one uses the cap and a
+background run has none. Foreground results add `timedOut`, `stopped`, `signal` or `error` when set and
+background results add `log`. `program_output` defaults to `waitMs` 0, tests `until` (flag `m`) against
+the output read during the call with a 100 ms limit per attempt, and reports `matched`; `program_stop`
+returns `{exitCode, stopped, timedOut, durationMs, output, truncated, log}`. Handles belong to the
+session that started them (at most 32 kept). Undeclared, ambiguous, unresolved and `launcher` programs
+(launchers wait for PLG-10) and policy refusals end the call before any approval, naming the reason.
+Executables come from a `ProgramResolver` port that provisioning (PLG-05) implements; until then
+desktop and the CLI resolve nothing, and instrumented desktop builds read `VERA_TEST_PROGRAMS`.
+Session stop aborts the foreground run and stops the session's background runs.
+
 ### 3.2 Runner
 
 A host port `ProcessHost` in `core/src/ports.ts`. `NodeProcessHost` (core) implements it around a
@@ -244,7 +257,21 @@ suppressed. The matched command line is the agent's arguments only, never a laun
 `files` lists every argument (or `--name=value` value) that resolves, relative to `cwd`, through the
 path guard to an existing workbench file.
 Approving `write-flash 0x10000 build/app.bin` therefore approves those exact bytes. A rebuilt image
-needs a new approval.
+needs a new approval. On Windows, alias spellings (`app.bin.`, `app.bin::$DATA.`,
+`dir::$INDEX_ALLOCATION/app.bin`) bind the file Windows opens and a drive-relative `X:rest` resolves
+from the working directory on its drive and from the drive root elsewhere; an argument naming a stream
+of a workbench file (`app.bin:payload`) is refused (DENIED `stream`). `\\.\X:` spellings bind like the
+plain path and `\\?\X:` names are taken literally. Without reading them, share paths on this machine and
+paths below a volume or device (`\\?\Volume{…}\…`) are refused (DENIED `unbound`), and share paths on
+other hosts stay ordinary arguments that VERA never opens. "This machine" means localhost, loopback
+addresses, the host name with or without a domain and the interface addresses; a DNS alias of this
+machine reads as another host and stays unbound. An existing workbench file whose name the path guard
+reserves (`aux.bin` on Linux, a literal `app.bin.` on Windows) is refused (DENIED `unbound`). The resolver's
+leading arguments are part of the approved request. After the approval,
+run_program prepares the request again and consumes the approval with it, and the runner hashes the
+files once more right before spawning (CONFLICT on any change). A program still opens its files after
+it starts; VERA cannot lock them, so a write by the user, another session or a background run in that
+moment is not detected.
 
 ## 5. Provisioning (ADR-0017)
 

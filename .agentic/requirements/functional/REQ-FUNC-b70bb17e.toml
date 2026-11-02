@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b70bb17e"
+title = "Stop a background program run with program_stop"
+status = "active"
+requirement = "When the agent calls program_stop with a handle its session started, the tool shall stop the run's process tree and return its exit code, the stopped flag, its duration, the output not read yet and the log path."
+verification = "Scripted background run that never exits: program_stop makes the host kill the tree and returns stopped true, the unread output and the log path; a later program_output on the handle is unknown."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

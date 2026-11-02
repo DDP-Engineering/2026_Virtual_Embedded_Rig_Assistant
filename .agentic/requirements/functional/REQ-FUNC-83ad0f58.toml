@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-83ad0f58"
+title = "Run an approved program from the desktop approval card"
+status = "active"
+requirement = "When the user approves a run_program approval card in the desktop app, the approved program shall run as a real process and its result shall reach the transcript."
+verification = "Native Electron e2e with the replay provider, the echo-tools fixture plugin installed and enabled through IPC and VERA_TEST_PROGRAMS resolving echo to Node and echo.mjs: the device-write card shows the command and the file hash, Approve runs the program, the run_program tool result holds exitCode 0 and the echoed arguments, the run log exists under .vera/runs, and Deny on a second card runs nothing."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/program-resolver.ts"]
+linked_tests = ["05_Software/tests/e2e/program-runs.spec.ts", "05_Software/src/apps/desktop/src/main/program-resolver.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

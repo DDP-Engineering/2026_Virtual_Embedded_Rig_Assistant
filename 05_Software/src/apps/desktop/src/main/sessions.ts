@@ -3,6 +3,11 @@ import {
   type Clock,
   type EmbeddingPort,
   type PermissionEngine,
+  type ProgramHost,
+  type ProgramPromptEntry,
+  type ProgramResolver,
+  type ProgramRunner,
+  programPromptEntries,
   SessionService,
   type SettingsService,
   type SkillCatalog,
@@ -32,6 +37,8 @@ export class SessionsHost {
   private pinned = "";
   private skills: SkillCatalog | undefined;
   private skillMetadata: { name: string; description: string }[] = [];
+  private programHost: ProgramHost | undefined;
+  private programEntries: ProgramPromptEntry[] = [];
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
   private pending = 0;
@@ -51,6 +58,8 @@ export class SessionsHost {
       permissions?: PermissionEngine;
       web?: WebProvider;
       downloads?: (root: string) => WebDownloads;
+      /** Plugin program runs; each workbench supplies its enabled plugins. */
+      programs?: { runner: ProgramRunner; resolver: ProgramResolver };
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
@@ -70,7 +79,17 @@ export class SessionsHost {
       this.config = (await this.options.workbench.getConfig()).config;
       this.pinned = (await this.options.workbench.getPinned()).content;
       this.skills = this.options.workbench.skillCatalog(snapshot.config.id);
-      this.skillMetadata = await this.skills.metadata();
+      const skills = await this.skills.list();
+      this.skillMetadata = skills
+        .filter((skill) => skill.enabled && !skill.error)
+        .map(({ name, description }) => ({ name, description }));
+      const programs = this.options.programs;
+      this.programHost = programs && {
+        ...programs,
+        clock: this.options.clock,
+        plugins: () => this.options.workbench.loadPlugins(snapshot.config.id),
+      };
+      this.programEntries = this.programHost ? await programPromptEntries(this.programHost, skills) : [];
       if (this.db !== db) {
         await this.drain();
         const options = this.options;
@@ -96,6 +115,7 @@ export class SessionsHost {
           },
           writeQueue: options.workbench.getWriteQueue(),
           ...(options.permissions ? { permissions: options.permissions } : {}),
+          ...(this.programHost ? { programs: this.programHost } : {}),
           get maxToolCallsPerTurn() {
             return options.settings.get().settings.limits.maxToolCallsPerTurn;
           },
@@ -111,6 +131,7 @@ export class SessionsHost {
               workbench: this.config ?? snapshot.config,
               pinned: this.pinned,
               skills: this.skillMetadata,
+              programs: this.programEntries,
               env: {
                 clock: options.clock,
                 osFamily: process.platform === "win32" ? "windows" : "linux",

@@ -178,3 +178,40 @@ it("explains that @path mentions name attached workbench entries to read with to
   expect(text).toContain("names a workbench file or folder the user attached");
   expect(text).toContain("read it with your file or document tools before answering");
 });
+
+describe("programs block (REQ-FUNC-48cc01a9)", () => {
+  const rule =
+    "Run external programs only with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.";
+  it("snapshots enabled programs with versions, plugins, descriptions, skills and the run rule", () => {
+    const result = prompt.buildSystemPrompt({
+      ...input(),
+      skills: [{ name: "echo-guide", description: "Use the echo tools." }],
+      programs: [
+        {
+          name: "echo",
+          version: "1.2.3",
+          plugin: "echo-tools",
+          description: "Echo things.",
+          skills: ["echo-guide"],
+        },
+        { name: "zed", version: null, plugin: "zeta-tools", description: "Zeta.", skills: ["a", "b"] },
+        { name: "bare", version: null, plugin: "bare-tools", description: "Bare.", skills: [] },
+      ],
+    });
+    expect(result).toMatchSnapshot();
+    expect(result.text).toContain(
+      "<programs>\n- echo 1.2.3 (plugin echo-tools): Echo things. Skill: echo-guide.\n- zed (plugin zeta-tools): Zeta. Skills: a, b.\n- bare (plugin bare-tools): Bare.\n</programs>",
+    );
+    expect(result.text).toContain(`- ${rule}`);
+    expect(result.text.indexOf("</skills>")).toBeLessThan(result.text.indexOf("<programs>"));
+    expect(result.text.indexOf("</programs>")).toBeLessThan(result.text.indexOf("Environment:"));
+  });
+  it("adds neither block nor rule without programs", () => {
+    for (const programs of [undefined, []]) {
+      const result = prompt.buildSystemPrompt({ ...input(), ...(programs ? { programs } : {}) });
+      expect(result.text).not.toContain("<programs>");
+      expect(result.text).not.toContain("run_program");
+      expect(result.text).toBe(prompt.buildSystemPrompt(input()).text);
+    }
+  });
+});

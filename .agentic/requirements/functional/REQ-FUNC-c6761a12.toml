@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-c6761a12"
+title = "Refuse unknown program handles"
+status = "active"
+requirement = "If program_output or program_stop names a handle that its session did not start or has already stopped, then the tool shall end with an error naming the handle as unknown."
+verification = "A handle started by another session and an invented ULID end both program_output and program_stop with an unknown handle error and the other session's run keeps running; after program_stop the handle is unknown to both tools."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

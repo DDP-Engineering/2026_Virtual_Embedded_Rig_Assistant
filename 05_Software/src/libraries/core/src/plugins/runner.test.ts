@@ -2,67 +2,8 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ProcessExit, ProcessHost, ProcessSpawnOptions } from "../ports.js";
-import { ProgramRunner, type ProgramRunnerOptions, type RunRequest } from "./runner.js";
-
-class FakeProcess {
-  exited = false;
-  private settle!: (exit: ProcessExit) => void;
-  readonly exit = new Promise<ProcessExit>((resolve) => {
-    this.settle = resolve;
-  });
-  constructor(
-    readonly pid: number | undefined,
-    readonly executable: string,
-    readonly args: readonly string[],
-    readonly options: ProcessSpawnOptions,
-  ) {}
-  print(text: string, stream: "stdout" | "stderr" = "stdout") {
-    this.options.output(stream, Buffer.from(text));
-  }
-  finish(exit: ProcessExit) {
-    if (this.exited) return;
-    this.exited = true;
-    this.settle(exit);
-  }
-}
-
-class FakeHost implements ProcessHost {
-  readonly processes: FakeProcess[] = [];
-  readonly signals: [number, string][] = [];
-  failNext: string | undefined;
-  private nextPid = 100;
-  constructor(
-    readonly platform = "linux",
-    readonly env: Record<string, string> = { PATH: "/usr/bin" },
-  ) {}
-  get programs() {
-    return this.processes.filter((process) => !process.executable.endsWith("taskkill.exe"));
-  }
-  spawn(executable: string, args: readonly string[], options: ProcessSpawnOptions) {
-    if (this.failNext) {
-      const error = this.failNext;
-      this.failNext = undefined;
-      const failed = new FakeProcess(undefined, executable, args, options);
-      this.processes.push(failed);
-      failed.finish({ code: null, signal: null, error });
-      return failed;
-    }
-    const process = new FakeProcess(this.nextPid++, executable, args, options);
-    this.processes.push(process);
-    if (executable.endsWith("taskkill.exe")) {
-      this.programs.find((program) => String(program.pid) === args[3])?.finish({ code: 1, signal: null });
-      process.finish({ code: 0, signal: null });
-    }
-    return process;
-  }
-  signal(pid: number, signal: "SIGTERM" | "SIGKILL") {
-    this.signals.push([pid, signal]);
-    const target = this.programs.find((process) => process.pid === -pid && !process.exited);
-    target?.finish({ code: null, signal });
-    return Boolean(target);
-  }
-}
+import { FakeHost } from "./fake-process-host.test-support.js";
+import { ProgramRunner, type ProgramRunnerOptions, programEnvironment, type RunRequest } from "./runner.js";
 
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 let root = "";
@@ -410,5 +351,35 @@ describe("settlement", () => {
     await runner.stopAll();
     for (let index = 0; index < 4; index++) await runner.start(request({ background: true }));
     expect(host.programs).toHaveLength(4);
+  });
+});
+
+describe("beforeSpawn (REQ-SEC-370f2d9b)", () => {
+  it("runs after the log opens and right before spawn; a failure starts nothing", async () => {
+    const logs: string[][] = [];
+    await expect(
+      runner.start(
+        request({
+          beforeSpawn: async () => {
+            logs.push(await readdir(join(root, ".vera/runs")));
+            throw { code: "CONFLICT", messageKey: "errors.CONFLICT" };
+          },
+        }),
+      ),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(logs[0]?.[0]).toMatch(/\.log$/);
+    expect(host.programs).toHaveLength(0);
+    const run = await runner.start(request({ beforeSpawn: async () => {} }));
+    expect(host.programs).toHaveLength(1);
+    host.programs[0]?.finish({ code: 0, signal: null });
+    expect((await run.done).exitCode).toBe(0);
+  });
+});
+
+describe("per-drive directories (REQ-SEC-0e45a496)", () => {
+  it("never pass =X: variables, so drive-relative paths resolve from the run's cwd or the drive root", () => {
+    const host = new FakeHost("win32", { "=C:": "C:/Users/me", "=F:": "F:/x", Path: "C:/bin" });
+    const env = programEnvironment(host, []);
+    expect(Object.keys(env).filter((name) => name.startsWith("="))).toEqual([]);
   });
 });

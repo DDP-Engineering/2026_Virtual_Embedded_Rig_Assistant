@@ -137,6 +137,13 @@ bypass warning before running the same command without a prompt in `bypass`.
 - Session stop aborts runs; the CLI `vera run` prints the same events.
 **Done when:** replay-provider tests run a fixture plugin end to end in each mode, including a
 background run read with `until`, and the prompt snapshot shows the block only for enabled plugins.
+- Done 2026-11-02: core `program-tools.ts` (run_program, program_output, program_stop, ProgramHost and the
+  `ProgramResolver` seam), the `<programs>` block, plugin skills in `SkillCatalog`, session wiring, desktop
+  and CLI composition, fixture plugin `tests/fixtures/plugins/echo-tools`. PLG-03's limits are closed:
+  Windows drive-relative and alias spellings bind, streams and unbindable Linux files are refused, the
+  runner re-hashes approved files right before spawn, and `tests/e2e/program-runs.spec.ts` drives a real
+  run from the card in Electron. No executable resolves in production until PLG-05 implements the
+  resolver, so the CLI cannot run a real program yet. Launcher programs stay unavailable until PLG-10.
 
 ### PLG-05 Provisioning and packaging
 **Goal:** programs install without touching the user's system. **Depends on:** PLG-01, PLG-02.
@@ -149,6 +156,8 @@ background run read with `until`, and the prompt snapshot shows the block only f
 - Done 2026-11-01: the 250 MB checks are gone from `05_Software/scripts/package.mjs` and
   `scripts/probe-upgrade.mjs`, and from `architecture/07-packaging-updates.md` §1.
 - Measure and record the sizes of architecture §5 on both systems.
+- Implement core's `ProgramResolver` (PLG-04) for the install kinds and compose it in desktop main and
+  the CLI in place of `unresolvedPrograms`; the `<programs>` block then lists the resolved programs.
 **Done when:** on clean Windows and Ubuntu machines without Python, `esptool` and a PEP 723 script
 install and run; a `download` with a wrong hash is refused; a missing `find` program shows its hint.
 

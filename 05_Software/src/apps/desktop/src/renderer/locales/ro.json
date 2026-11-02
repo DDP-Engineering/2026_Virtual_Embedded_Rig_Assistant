@@ -451,7 +451,8 @@
       "unavailable": "Skill-ul nu poate fi citit în siguranță; verifică locația, formatul și dimensiunea."
     },
     "enabledNamed": "Activ: {{name}}",
-    "openNamed": "Deschide / editează {{name}}"
+    "openNamed": "Deschide / editează {{name}}",
+    "plugin": "Plugin {{plugin}}"
   },
   "updates": {
     "mode": "Mod de actualizare",
@@ -585,7 +586,10 @@
     "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ.",
     "web_search": "Caută pe internet folosind furnizorul selectat în Setări → Acces web. Cerințele de acces și limitele serviciului depind de furnizor.",
     "web_read": "Extrage textul paginilor web publice și al documentelor acceptate folosind furnizorul web selectat. Nu salvează un fișier local.",
-    "web_download": "Descarcă un fișier public (PDF, ZIP, CSV, text, imagini sau alte formate) în .vera/downloads, conform permisiunilor sesiunii. Previzualizează PDF-urile în VERA sau găsește celelalte fișiere în Explorer. Descărcările nu sunt indexate automat."
+    "web_download": "Descarcă un fișier public (PDF, ZIP, CSV, text, imagini sau alte formate) în .vera/downloads, conform permisiunilor sesiunii. Previzualizează PDF-urile în VERA sau găsește celelalte fișiere în Explorer. Descărcările nu sunt indexate automat.",
+    "run_program": "Rulează programele pluginurilor activate pentru acest workbench, cu regulile de risc ale pluginului și aprobările tale.",
+    "program_output": "Citește ieșirea unei rulări de program în fundal.",
+    "program_stop": "Oprește o rulare de program în fundal."
   },
   "projects": {
     "new": "Workbench nou",

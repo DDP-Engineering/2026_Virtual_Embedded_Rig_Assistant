@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-29dd2b92"
+title = "Offer the program tools only with a program host"
+status = "active"
+requirement = "The session service shall offer run_program (tool class program, in every permission mode), program_output and program_stop only when its host composes a program host, and shall leave out any of them the workbench disables."
+verification = "Gateway tool catalogs: with a program host the three tools are offered in ask and run_program is still offered in read-only (write tools are not); without a program host none is offered; tools.disabled [run_program] leaves out only run_program."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/shared/src/tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

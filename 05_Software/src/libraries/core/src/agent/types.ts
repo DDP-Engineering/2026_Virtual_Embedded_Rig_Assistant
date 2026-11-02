@@ -8,7 +8,7 @@ import type { ContextPolicy, ContextView } from "./context.js";
 export type StopReason = "end" | "aborted" | "error" | "limit";
 export interface ToolDef {
   name: string;
-  class: "read" | "write" | "session";
+  class: "read" | "write" | "session" | "program";
   description: string;
   params: z.ZodType;
   execute(args: unknown, signal: AbortSignal): Promise<string>;

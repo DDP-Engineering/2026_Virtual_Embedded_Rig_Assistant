@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-43a0b743"
+title = "Refuse program arguments naming alternate data streams"
+status = "active"
+requirement = "While running on Windows, if a program argument names a named stream of an existing workbench file or folder, such as app.bin:payload, then preparing the program request shall fail with DENIED and params {reason: stream, index}."
+verification = "Windows test: with build/app.bin present, `build/app.bin:payload`, `--image=build/app.bin:payload:$DATA` and `\\\\\\\\?\\\\<root>\\\\build\\\\app.bin:payload` are DENIED stream with their argument index; `missing.bin:payload` and `host:1234` stay ordinary arguments."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

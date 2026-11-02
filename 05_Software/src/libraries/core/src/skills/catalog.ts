@@ -37,7 +37,16 @@ export function parseSkill(content: string, folder: string) {
     throw Error("description");
   return { name: folder, description: data.description.trim(), body: match[2] ?? "" };
 }
-/** Separately authorized roots; callers supply names rather than filesystem authority. */
+/** The installed folder of an enabled plugin whose skills/<name>/SKILL.md folders join the catalog. */
+export interface SkillPluginRoot {
+  id: string;
+  folder: string;
+}
+const byId = (a: SkillPluginRoot, b: SkillPluginRoot) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+/**
+ * Separately authorized roots; callers supply names rather than filesystem authority. A name resolves
+ * to the workbench skill, else the user skill, else the skill of the enabled plugin with the lowest id.
+ */
 export class SkillCatalog {
   constructor(
     private readonly options: {
@@ -46,6 +55,8 @@ export class SkillCatalog {
       disabled: () => readonly string[];
       assertCurrent?: () => void;
       refresh?: () => Promise<void>;
+      /** Enabled, issue-free plugins of the workbench. */
+      plugins?: () => Promise<readonly SkillPluginRoot[]>;
     },
   ) {}
   check(signal?: AbortSignal) {
@@ -53,16 +64,44 @@ export class SkillCatalog {
     this.options.assertCurrent?.();
   }
   root(source: SkillSource): string {
-    const root = source === "workbench" ? join(this.options.root, ".vera") : this.options.userData;
+    const root =
+      source === "workbench"
+        ? join(this.options.root, ".vera")
+        : source === "user"
+          ? this.options.userData
+          : undefined;
     if (!root) throw veraError("DENIED");
     return root;
   }
+  private async plugins(): Promise<SkillPluginRoot[]> {
+    return [...((await this.options.plugins?.()) ?? [])].sort(byId);
+  }
+  /** The enabled plugin with the lowest id that has a skills/<name> entry. */
+  private async pluginOf(name: string): Promise<SkillPluginRoot | undefined> {
+    for (const plugin of await this.plugins()) {
+      try {
+        await lstat(join(plugin.folder, "skills", name));
+        return plugin;
+      } catch (error) {
+        if (!missing(error)) throw error;
+      }
+    }
+    return undefined;
+  }
   async path(source: SkillSource, name: string, file = "SKILL.md") {
+    if (source !== "plugin") return this.pathAt(this.root(source), name, file);
+    if (!name || name === "." || name === ".." || /[\\/:\0]/.test(name)) throw veraError("INVALID");
+    validateRelativePath(name);
+    const plugin = await this.pluginOf(name);
+    if (!plugin) throw veraError("NOT_FOUND");
+    return this.pathAt(plugin.folder, name, file);
+  }
+  private async pathAt(base: string, name: string, file: string) {
     if (!name || name === "." || name === ".." || /[\\/:\0]/.test(name)) throw veraError("INVALID");
     validateRelativePath(name);
     const slash = validateRelativePath(file);
     if (slash.split("/").some((p) => !p || p === "." || p === "..")) throw veraError("DENIED");
-    const root = resolve(this.root(source));
+    const root = resolve(base);
     const parts = ["skills", name, ...slash.split("/")];
     let target = root;
     // The host-chosen root may live behind an OS redirection above it (folder redirection, an MSIX
@@ -127,12 +166,12 @@ export class SkillCatalog {
       await handle.close();
     }
   }
-  private async discover(source: SkillSource): Promise<string[]> {
-    await this.path(source, "placeholder");
+  private async discover(root: string): Promise<string[]> {
+    await this.pathAt(root, "placeholder", "SKILL.md");
     const names: string[] = [];
     let scanned = 0;
     try {
-      const dir = await opendir(join(this.root(source), "skills"));
+      const dir = await opendir(join(root, "skills"));
       for await (const entry of dir) {
         if (++scanned > 4096) throw veraError("INVALID");
         if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
@@ -146,9 +185,14 @@ export class SkillCatalog {
     return names;
   }
   private async selection() {
-    const selected = new Map<string, SkillSource>();
-    if (this.options.userData) for (const name of await this.discover("user")) selected.set(name, "user");
-    for (const name of await this.discover("workbench")) selected.set(name, "workbench");
+    const selected = new Map<string, { source: SkillSource; plugin?: string }>();
+    for (const plugin of (await this.plugins()).reverse())
+      for (const name of await this.discover(plugin.folder))
+        selected.set(name, { source: "plugin", plugin: plugin.id });
+    if (this.options.userData)
+      for (const name of await this.discover(this.root("user"))) selected.set(name, { source: "user" });
+    for (const name of await this.discover(this.root("workbench")))
+      selected.set(name, { source: "workbench" });
     return selected;
   }
   async names() {
@@ -169,8 +213,14 @@ export class SkillCatalog {
     this.check();
     const selected = await this.selection();
     const results: SkillSummary[] = [];
-    for (const [name, source] of [...selected].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
-      const base = { name, source, description: "", enabled: !this.options.disabled().includes(name) };
+    for (const [name, { source, plugin }] of [...selected].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+      const base = {
+        name,
+        source,
+        ...(plugin ? { plugin } : {}),
+        description: "",
+        enabled: !this.options.disabled().includes(name),
+      };
       try {
         const loaded = await this.read(source, name);
         const { description } = parseSkill(loaded.content, name);
@@ -196,7 +246,11 @@ export class SkillCatalog {
       .map(({ name, description }) => ({ name, description }));
   }
   private async source(name: string): Promise<SkillSource> {
-    for (const source of ["workbench", "user"] as const) {
+    for (const source of ["workbench", "user", "plugin"] as const) {
+      if (source === "plugin") {
+        if (await this.pluginOf(name)) return source;
+        continue;
+      }
       if (source === "user" && !this.options.userData) continue;
       // An existing workbench folder shadows the user skill even if its content is invalid.
       await this.path(source, name);

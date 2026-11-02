@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-e54f89a4"
+title = "Return background program output since the previous read"
+status = "active"
+requirement = "When the agent calls program_output with a handle its session started, the tool shall return the output produced since the previous read of that handle (at most the last 12 000 characters, with truncated), whether the run is still running and, once it has finished, its exit code."
+verification = "Replay session with a scripted background run: two program_output calls return disjoint output pieces; after the scripted exit the result has running false and exitCode; more than 12 000 unread characters return truncated true."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

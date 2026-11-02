@@ -15,6 +15,10 @@ from `workbenches/demo-board/sources/`.
 ProcessHost; `ECHO_MODE` selects echoing its arguments and working directory, its environment,
 reading stdin, flooding output, ANSI output, or starting a grandchild that runs until killed.
 
+`plugins/echo-tools/` is an installable plugin for the agent's program tools: program `echo` runs
+`echo.mjs` (prefix `${pluginDir}/echo.mjs`), its rules cover every risk level, and it ships the skill
+`echo-guide`. Core session tests, the CLI integration test and the native e2e install it.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-b9d4244f"
+title = "Refuse program requests that contain known credentials"
+status = "active"
+requirement = "If a prepared run_program request contains a known credential, then the session shall end the call with an error before requesting approval or starting the program."
+verification = "Replay session whose host scrub masks `s3cret`: run_program with args [\"--token\", \"s3cret\"] ends with a protected credential data error, the approvals table stays empty and nothing spawns; the same call without the secret runs."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

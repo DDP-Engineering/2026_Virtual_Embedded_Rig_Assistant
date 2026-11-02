@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-f7e4f258"
+title = "Refuse editing plugin skills"
+status = "active"
+requirement = "If skills.open, skills.create or skills.save names the source plugin, then the request shall fail with INVALID."
+verification = "Shared IPC schema test: skills.open, skills.create and skills.save requests with source plugin fail validation (INVALID at the router), and the same requests with workbench or user pass."
+affected_paths = ["05_Software/src/libraries/shared/src/skills.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/skills-ipc.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

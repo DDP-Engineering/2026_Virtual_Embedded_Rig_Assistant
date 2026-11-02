@@ -2,6 +2,7 @@ import type { PermissionMode } from "@vera/shared";
 import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
 import type { DocumentKnowledge } from "../knowledge/search.js";
+import type { ProgramContext } from "../plugins/program-tools.js";
 import type { WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
 import type { WebDownloads } from "../web/downloads.js";
@@ -27,10 +28,13 @@ export interface ToolContext {
   web?: WebProvider;
   downloads?: WebDownloads;
   skills?: SkillCatalog;
+  /** Plugin programs of the session; absent when the host composes no program host. */
+  programs?: ProgramContext;
 }
 export interface ToolDefinition {
   name: string;
-  class: "read" | "write" | "session";
+  /** `program` tools ask the approval gate per command line, in every permission mode. */
+  class: "read" | "write" | "session" | "program";
   description: string;
   params: z.ZodType;
   prepare?(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<PreparedChange>;

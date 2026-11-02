@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-90a95bef"
+title = "Cap the program run timeout by the rule or program timeout"
+status = "active"
+requirement = "The run_program tool shall stop a run after the agent's timeout clamped to the cap, where the cap is the largest timeout of the matching rules, else the program's timeout, else 600 seconds; a foreground run without an agent timeout uses the cap, and a background run without one has no timeout."
+verification = "Unit tests of the timeout: matching rule 30 s, program 120 s, agent 500 s gives 30 s; no rule timeout, program 120 s and no agent value gives 120 s; nothing declared gives 600 s; a background run without an agent timeout gives none and with 5000 s gives the cap; a scripted foreground run past its timeout returns timedOut true."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/shared/src/program-rules.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/shared/src/program-rules.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

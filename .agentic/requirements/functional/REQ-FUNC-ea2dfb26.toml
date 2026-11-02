@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-ea2dfb26"
+title = "Stop a session's program runs when the session stops"
+status = "active"
+requirement = "When a session is stopped or deleted, the session service shall abort the session's foreground program run and stop every background run the session started."
+verification = "Replay sessions: stopping during a foreground run kills the scripted process and the turn ends aborted; after a stop, the session's background run is done and program_stop reports stopped true, while another session's background run keeps running; deleting a session stops its background run."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

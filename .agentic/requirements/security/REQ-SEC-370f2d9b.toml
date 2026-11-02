@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-370f2d9b"
+title = "Re-check approved file hashes right before the program starts"
+status = "active"
+requirement = "When a program run whose approved request names workbench files is about to start, the runner shall hash those files again after opening the run log and immediately before spawning, and if any hash differs from the approved request it shall fail with CONFLICT without starting a process."
+verification = "Runner unit test: a beforeSpawn check that throws CONFLICT after the log opened rejects the start and the host's spawn is never called; program-tools test: a file rewritten after consume and before spawn ends the tool with a changed-after-approval error, nothing spawns and the run log says the program did not start; an unchanged file starts the process."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-request.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

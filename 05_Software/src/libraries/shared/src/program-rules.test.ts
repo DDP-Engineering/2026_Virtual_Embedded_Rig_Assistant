@@ -93,6 +93,7 @@ describe("highest risk wins (REQ-FUNC-2819a97e)", () => {
       risk: "device-write",
       notes: ["A", "B"],
       confirm: null,
+      timeout: null,
     });
     expect(classifyCommand(idf, "idf.py", ["build", "flash", "monitor"]).risk).toBe("blocked");
   });
@@ -132,8 +133,23 @@ describe("unmatched (REQ-FUNC-9ca99463)", () => {
       risk: "device-write",
       notes: [],
       confirm: null,
+      timeout: null,
     });
     expect(classifyCommand([], "esptool", ["version"]).risk).toBe("device-write");
+  });
+});
+
+describe("rule timeout (REQ-FUNC-90a95bef)", () => {
+  it("is the largest timeout of the matching rules, else null", () => {
+    const rules: ProgramRule[] = [
+      { match: "idf.py * build *", risk: "safe", timeout: 600 },
+      { match: "idf.py * flash *", risk: "device-write", timeout: 120 },
+      { match: "idf.py *", risk: "safe" },
+    ];
+    expect(classifyCommand(rules, "idf.py", ["build", "flash"]).timeout).toBe(600);
+    expect(classifyCommand(rules, "idf.py", ["flash"]).timeout).toBe(120);
+    expect(classifyCommand(rules, "idf.py", ["size"]).timeout).toBeNull();
+    expect(classifyCommand([], "idf.py", ["build"]).timeout).toBeNull();
   });
 });
 

@@ -1,6 +1,7 @@
 import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
+import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolSignal } from "./context.js";
@@ -31,7 +32,12 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   web_search: webSearchTool,
   web_read: webReadTool,
   web_download: webDownloadTool,
+  run_program: runProgramTool,
+  program_output: programOutputTool,
+  program_stop: programStopTool,
 };
+/** Tools offered only when the host composes a program host. */
+export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];
 
 export const TOOL_RESULT_CAP = 32000;
 export function capToolResult(value: Record<string, unknown>) {
@@ -109,7 +115,7 @@ export class ToolRegistry {
   ) {
     signal.throwIfAborted();
     const tool = this.available(disabled).find((definition) => definition.name === name);
-    if (!tool?.prepare) throw Error("Prepared write tool is unavailable.");
+    if (!tool?.prepare) throw Error("Prepared tool is unavailable.");
     return tool.prepare(ctx, tool.params.parse(raw), toolSignal(ctx, signal));
   }
   async execute(

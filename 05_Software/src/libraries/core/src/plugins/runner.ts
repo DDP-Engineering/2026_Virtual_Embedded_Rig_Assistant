@@ -23,6 +23,11 @@ export interface RunRequest {
   timeoutMs?: number;
   background?: boolean;
   signal?: AbortSignal;
+  /**
+   * Awaited after the log opens and immediately before the process starts; a throw abandons the run
+   * without starting a process (callers re-check what an approval covered here).
+   */
+  beforeSpawn?: () => Promise<void>;
 }
 export interface RunResult {
   runId: string;
@@ -176,6 +181,18 @@ class Run implements ProgramRun {
     this.file = await open(join(runs, `${this.id}.log`), "w");
     await this.runner.prune(runs);
     this.request.signal?.addEventListener("abort", this.abort, { once: true });
+    if (this.request.signal?.aborted) this.reason = "stopped";
+    if (this.reason) {
+      await this.finish({ code: null, signal: null });
+      return;
+    }
+    try {
+      await this.request.beforeSpawn?.();
+    } catch (error) {
+      this.write("[VERA] The program did not start: a check before starting it failed.\n");
+      await this.writing;
+      throw error;
+    }
     if (this.request.signal?.aborted) this.reason = "stopped";
     if (this.reason) {
       await this.finish({ code: null, signal: null });

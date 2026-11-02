@@ -1,0 +1,19 @@
+format: 1
+id: echo-tools
+version: 1.0.0
+name: Echo tools
+description: Echo arguments and print test output. Use to exercise plugin program runs.
+ecosystem: general
+platforms: [windows-x64, linux-x64]
+programs:
+  echo:
+    install: { find: { windows: [node.exe], linux: [node] }, hint: Install Node.js. }
+    version: { args: [--version], match: 'v(\d+\.\d+\.\d+)' }
+    prefix: ["${pluginDir}/echo.mjs"]
+    timeout: 60
+rules:
+  - { match: "echo version", risk: safe }
+  - { match: "echo serve *", risk: safe }
+  - { match: "echo write *", risk: device-write, note: Writes the device. }
+  - { match: "echo burn *", risk: irreversible, note: Burns a fuse. }
+  - { match: "echo monitor *", risk: blocked }

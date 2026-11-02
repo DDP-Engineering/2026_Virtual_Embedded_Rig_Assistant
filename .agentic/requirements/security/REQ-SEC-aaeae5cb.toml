@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-aaeae5cb"
+title = "Refuse workbench files the path guard cannot bind"
+status = "active"
+requirement = "If a program argument names an existing regular workbench file whose name the path guard reserves (a Windows device name such as aux.bin, or a name ending in a dot or space), or, on Windows, a share path whose host is this machine (localhost, a loopback address, the host name with or without a domain, or an address of its network interfaces) or a path below a volume or device, then preparing the program request shall fail with DENIED and params {reason: unbound, index}, deciding share, volume and device paths without any file-system access."
+verification = "Test with the platform set to linux: an existing `image.bin.` is DENIED unbound with its index and a missing `aux.bin` stays an ordinary argument; Windows tests: an existing literal `build/app.bin.` reached through `build/app.bin.::$DATA`, `\\\\\\\\localhost\\\\X$\\\\...\\\\build\\\\app.bin` (also with a stream suffix), the missing `\\\\\\\\localhost\\\\share\\\\missing.bin`, shares on `<hostname>.localdomain`, `127.0.0.1`, `[::1]`, `0--1.ipv6-literal.net` and every IPv4 interface address, `\\\\\\\\?\\\\Volume{…}\\\\build\\\\app.bin` (also with `:payload`) and `\\\\\\\\?\\\\GLOBALROOT\\\\Device\\\\HarddiskVolume1\\\\…` are DENIED unbound; `\\\\\\\\attacker.invalid\\\\s\\\\x.bin` and `\\\\??\\\\UNC\\\\attacker.invalid\\\\s\\\\x` stay ordinary arguments and return at once without being opened; `\\\\\\\\.\\\\COM10` stays ordinary; a native Linux run with an existing `aux.bin` is DENIED unbound (skipped on Windows)."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

@@ -21,7 +21,7 @@ import {
 import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
 import { ulid } from "ulid";
-import { type ApprovalDecision, ApprovalGate } from "../agent/approvals.js";
+import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
 import { validateCitations } from "../agent/citations.js";
 import { ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
@@ -33,6 +33,7 @@ import type { EmbeddingPort } from "../knowledge/embedding.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
+import { type ProgramHost, ProgramSession } from "../plugins/program-tools.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
 import { EventsRepository } from "../storage/repos/events.js";
@@ -41,7 +42,7 @@ import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.j
 import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
-import { ToolRegistry } from "../tools/registry.js";
+import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
@@ -75,6 +76,8 @@ export interface SessionHost {
   scrub?: (text: string) => string;
   disabledTools?: readonly string[];
   writeQueue?: WriteQueue;
+  /** Plugin programs of the workbench; without it the program tools are not offered. */
+  programs?: ProgramHost;
 }
 interface ActiveTurn {
   runtime: AgentRuntime;
@@ -99,6 +102,7 @@ export class SessionService {
   private readonly active = new Map<string, ActiveTurn>();
   private readonly last = new Map<string, { stopReason: StopReason }>();
   private readonly contexts = new Map<string, ToolContext>();
+  private readonly programSessions = new Map<string, ProgramSession>();
   private readonly bypassScopes = new Map<string, AbortController>();
   private readonly reasonings = new Map<string, string | null>();
   private readonly compactors = new Map<string, ContextCompactor>();
@@ -505,6 +509,8 @@ export class SessionService {
     this.idle(id);
     this.deleting.add(id);
     try {
+      // Background runs of a deleted session would hold ports no session can stop any more.
+      await this.host.programs?.runner.stopSession(id);
       await this.writeQueue.run(async () => {
         this.writable();
         this.artifacts.removeSession(id);
@@ -513,6 +519,7 @@ export class SessionService {
       });
       this.hub.clear(id);
       this.contexts.delete(id);
+      this.programSessions.delete(id);
       this.bypassScopes.get(id)?.abort();
       this.bypassScopes.delete(id);
       this.compactors.delete(id);
@@ -630,6 +637,14 @@ export class SessionService {
     else delete ctx.downloads;
     if (this.host.skills) ctx.skills = this.host.skills;
     else delete ctx.skills;
+    if (this.host.programs) {
+      let programSession = this.programSessions.get(id);
+      if (!programSession) {
+        programSession = new ProgramSession();
+        this.programSessions.set(id, programSession);
+      }
+      ctx.programs = { host: this.host.programs, session: programSession, sessionId: id };
+    } else delete ctx.programs;
     ctx.todos = {
       db: this.host.db,
       repository: new TodosRepository(this.host.db),
@@ -669,10 +684,26 @@ export class SessionService {
       .bind(ctx, this.host.disabledTools)
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
+      .filter((tool) => !programToolNames.includes(tool.name) || !!this.host.programs)
       .map((tool) => ({
         ...tool,
         execute: async (args: unknown, signal: AbortSignal) => {
           await durable();
+          if (tool.class === "program") {
+            const run = prepared.get(tool.name);
+            prepared.delete(tool.name);
+            if (!run) throw Error("Program run permission is missing.");
+            try {
+              // The run consumes its approval itself, with the request prepared again right before it starts.
+              const { text } = capToolResult(await run.apply(signal));
+              return this.host.scrub?.(text) ?? text;
+            } catch (error) {
+              throw Error(
+                this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
+                  (error instanceof Error ? error.message : "Tool failed."),
+              );
+            }
+          }
           if (tool.class === "write") {
             if (this.row(id).permission_mode === "read-only") throw Error("Tool permission denied.");
             const change = prepared.get(tool.name);
@@ -743,11 +774,31 @@ export class SessionService {
         try {
           await durable();
           const tool = tools.find((candidate) => candidate.name === call.name);
-          if (tool?.class !== "write" || this.row(id).permission_mode === "read-only") return "denied";
+          if (
+            (tool?.class !== "write" && tool?.class !== "program") ||
+            (tool.class === "write" && this.row(id).permission_mode === "read-only")
+          )
+            return "denied";
           let grantedRequest: ChangeRequest | undefined;
           const change = await registry.prepare(
             {
               ...ctx,
+              ...(ctx.programs
+                ? {
+                    programs: {
+                      ...ctx.programs,
+                      turnId: this.active.get(id)?.turnId ?? "",
+                      callId: call.id,
+                      consume: (request) => {
+                        this.writable();
+                        if (!permissions) this.approvals.consume(request);
+                        // A host permission engine allowed one exact request; a different one is not covered.
+                        else if (!grantedRequest || requestSha256(request) !== requestSha256(grantedRequest))
+                          throw veraError("CONFLICT");
+                      },
+                    },
+                  }
+                : {}),
               change: {
                 db: this.host.db,
                 queue: this.writeQueue,
@@ -775,7 +826,11 @@ export class SessionService {
           );
           const exact = JSON.stringify(change.request);
           if (this.host.scrub && this.host.scrub(exact) !== exact)
-            throw Error("This change contains protected credential data.");
+            throw Error(
+              tool.class === "program"
+                ? "This command contains protected credential data."
+                : "This change contains protected credential data.",
+            );
           const decision = permissions
             ? (await permissions.allow(
                 {
@@ -958,6 +1013,8 @@ export class SessionService {
     const turn = this.active.get(id);
     if (turn) turn.accepting = false;
     turn?.runtime.abort();
+    // Background program runs of the session end with it; the foreground run ends with the turn's abort.
+    void this.host.programs?.runner.stopSession(id);
     return !!turn;
   }
   async waitIdle(id: string): Promise<{ stopReason: StopReason } | null> {

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-13954028"
+title = "Bind Windows alias spellings of named files"
+status = "active"
+requirement = "While running on Windows, the program request shall bind an argument that names a workbench file through trailing dots or spaces, a ::$DATA suffix followed by trailing dots or spaces, folders spelled with trailing dots, ::$INDEX_ALLOCATION or :$I30:$INDEX_ALLOCATION, the \\\\.\\ device namespace or a rooted path without a drive (on the working directory's drive), to the file Windows opens, and shall take names under \\\\?\\ and the NT prefix \\??\\ literally, without trimming."
+verification = "Windows table tests: `dir/app.bin::$DATA.`, `dir/app.bin::$DATA `, `dir/app.bin. .`, `dir./app.bin`, `dir::$INDEX_ALLOCATION/app.bin`, `dir:$I30:$INDEX_ALLOCATION\\\\app.bin`, `\\\\\\\\?\\\\<root>\\\\build\\\\app.bin`, `\\\\\\\\.\\\\<root>\\\\build\\\\app.bin`, `\\\\\\\\.\\\\<root>\\\\build\\\\app.bin.` and the rooted `\\\\<root without drive>\\\\build\\\\app.bin` each bind build/app.bin with its SHA-256; with a literal `build/app.bin.` present, `\\\\\\\\?\\\\<root>\\\\build\\\\app.bin.` is DENIED unbound and `dir/app.bin.::$DATA` does not bind dir/app.bin. NT `\\??\\<root>\\build\\app.bin` and `//?/<root>/build/app.bin.` bind build/app.bin; `\\??\\<root>\\build\\app.bin:payload` is DENIED stream."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

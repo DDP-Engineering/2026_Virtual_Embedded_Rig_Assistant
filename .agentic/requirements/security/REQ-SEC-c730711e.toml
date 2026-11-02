@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-c730711e"
+title = "Run only the program request the approval covers"
+status = "active"
+requirement = "When an approved run_program call is about to run, the session shall prepare the request again from the current enabled plugins, resolver and files and consume the approval with that request, and if preparing again or consuming fails, the tool shall end with an error and start nothing."
+verification = "Replay session in ask: rewriting build/app.bin while the device-write approval is pending, then approving, ends the tool with a changed-after-approval error, leaves the approval unconsumed and spawns nothing; with a host permission engine that allows the call and then the file changes, the run is refused the same way; disabling the plugin while pending ends it with an undeclared error; an unchanged request consumes the approval once and runs."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

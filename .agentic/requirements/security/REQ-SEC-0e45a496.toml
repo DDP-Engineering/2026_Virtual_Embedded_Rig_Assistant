@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-0e45a496"
+title = "Bind Windows drive-relative program arguments"
+status = "active"
+requirement = "While running on Windows, when a program argument or the value of a --name=value argument has the form <drive>:<path> without a separator after the colon, the program request shall bind the file it names relative to the working directory when the drive is the working directory's drive and relative to the drive's root otherwise."
+verification = "Windows tests with the workbench on its temp drive X: `X:build/app.bin` binds build/app.bin with its hash; with cwd build, `--image=x:app.bin` binds build/app.bin; a drive-relative path on another drive resolves from that drive's root and stays unbound; rewriting the file bound through `X:build/app.bin` makes verifyProgramFiles fail with CONFLICT; the program environment never carries `=X:` variables."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

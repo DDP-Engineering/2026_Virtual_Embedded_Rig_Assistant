@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-da3adc80"
+title = "Wait for background program output with waitMs and until"
+status = "active"
+requirement = "When program_output is called with waitMs (default 0, at most 30 000), the tool shall wait until the run ends, until the output gathered during the call matches the until regular expression when one is given, or until waitMs has passed, and report whether until matched."
+verification = "Scripted background run printing `boot`, then `READY`: program_output with until READY and waitMs 5000 returns matched true with both lines; until NEVER with waitMs 50 returns matched false after the wait; waitMs 30001 is an invalid argument; without until it returns when the run exits."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

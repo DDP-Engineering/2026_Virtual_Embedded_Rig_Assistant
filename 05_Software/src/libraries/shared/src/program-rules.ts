@@ -7,6 +7,8 @@ export interface ProgramRule {
   readonly match: string;
   readonly risk: PluginRisk;
   readonly note?: string | undefined;
+  /** Seconds a run of a matching command may take. */
+  readonly timeout?: number | undefined;
 }
 export interface ProgramClassification {
   risk: PluginRisk;
@@ -14,6 +16,8 @@ export interface ProgramClassification {
   notes: string[];
   /** The word the user types to approve an irreversible command; null for every other risk. */
   confirm: string | null;
+  /** The largest timeout of the matching rules, in seconds; null when none declares one. */
+  timeout: number | null;
 }
 /**
  * What the approval gate does with a program command: run it without a record, refuse it, approve
@@ -116,12 +120,14 @@ export function classifyCommand(
   const line = tokens(program, args);
   let risk: PluginRisk | undefined;
   let confirm: string | undefined;
+  let timeout: number | null = null;
   const notes: string[] = [];
   for (const rule of rules) {
     const taken = cover(pattern(rule.match), line);
     if (!taken) continue;
     if (risk === undefined || RANK[rule.risk] > RANK[risk]) risk = rule.risk;
     if (rule.note !== undefined && !notes.includes(rule.note)) notes.push(rule.note);
+    if (rule.timeout !== undefined && (timeout === null || rule.timeout > timeout)) timeout = rule.timeout;
     if (rule.risk === "irreversible" && confirm === undefined) {
       const index = taken.find((t) => t !== null && (line[t] as Token).arg >= 0);
       confirm = (line[index ?? 0] as Token).text;
@@ -131,6 +137,7 @@ export function classifyCommand(
     risk: risk ?? "device-write",
     notes,
     confirm: risk === "irreversible" ? (confirm ?? null) : null,
+    timeout,
   };
 }
 /** Refusals checked on the raw arguments before any rule. */

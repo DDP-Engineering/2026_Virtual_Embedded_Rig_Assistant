@@ -215,3 +215,66 @@ it("trusts a user data root redirected above it but still refuses links inside t
   );
   expect((await redirected.list()).find((s) => s.name === "linked")?.error).toBe("unavailable");
 });
+async function pluginSkill(base: string, id: string, name: string, body: string) {
+  const folder = join(base, "plugins", id);
+  await mkdir(join(folder, "skills", name), { recursive: true });
+  await writeFile(
+    join(folder, "skills", name, "SKILL.md"),
+    `---\nname: ${name}\ndescription: Plugin ${id} skill.\n---\n${body}\n`,
+  );
+  return folder;
+}
+it("lists and loads skills of enabled plugins as source plugin (REQ-FUNC-6d88d2ec)", async () => {
+  const f = await fixture();
+  const enabled: { id: string; folder: string }[] = [];
+  const catalog = new SkillCatalog({
+    root: f.workbench,
+    userData: f.userData,
+    disabled: () => f.disabled,
+    plugins: async () => enabled,
+  });
+  const folder = await pluginSkill(f.userData, "echo-tools", "echo-guide", "PLUGIN BODY");
+  await writeFile(join(folder, "skills/echo-guide/ports.md"), "PORTS");
+  expect(await catalog.list()).toEqual([]);
+  enabled.push({ id: "echo-tools", folder });
+  expect(await catalog.list()).toEqual([
+    {
+      name: "echo-guide",
+      source: "plugin",
+      plugin: "echo-tools",
+      description: "Plugin echo-tools skill.",
+      enabled: true,
+    },
+  ]);
+  const signal = new AbortController().signal;
+  expect(await catalog.load("echo-guide", undefined, signal)).toMatchObject({ text: "PLUGIN BODY\n" });
+  expect(await catalog.load("echo-guide", "ports.md", signal)).toMatchObject({ text: "PORTS" });
+  await expect(catalog.load("echo-guide", "../../plugin.yaml", signal)).rejects.toThrow();
+  enabled.length = 0;
+  expect(await catalog.list()).toEqual([]);
+  await expect(catalog.load("echo-guide", undefined, signal)).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+it("shadows plugin skills by workbench and user skills; the lower plugin id wins (REQ-FUNC-a5eff6c9)", async () => {
+  const f = await fixture();
+  const enabled = [
+    { id: "b-tools", folder: await pluginSkill(f.userData, "b-tools", "shared", "B BODY") },
+    { id: "a-tools", folder: await pluginSkill(f.userData, "a-tools", "shared", "A BODY") },
+  ];
+  const catalog = new SkillCatalog({
+    root: f.workbench,
+    userData: f.userData,
+    disabled: () => [],
+    plugins: async () => enabled,
+  });
+  const signal = new AbortController().signal;
+  expect(await catalog.list()).toMatchObject([{ name: "shared", source: "plugin", plugin: "a-tools" }]);
+  expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "A BODY\n" });
+  await f.skill("user", "shared", "User copy", "USER BODY");
+  expect(await catalog.list()).toEqual([
+    { name: "shared", source: "user", description: "User copy", enabled: true },
+  ]);
+  expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "USER BODY\n" });
+  await f.skill("workbench", "shared", "Bench copy", "BENCH BODY");
+  expect(await catalog.list()).toMatchObject([{ name: "shared", source: "workbench" }]);
+  expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "BENCH BODY\n" });
+});

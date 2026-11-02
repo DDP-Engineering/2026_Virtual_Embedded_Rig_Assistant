@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-a5eff6c9"
+title = "Shadow plugin skills by workbench and user skills"
+status = "active"
+requirement = "If a workbench or user skill has the same name as a plugin skill, then the skill catalog shall list and load the workbench or user skill, and between two plugins the plugin with the lower id shall win."
+verification = "Catalog test: a workbench skill echo-guide shadows the plugin's (source workbench, workbench body loaded); a user skill shadows it likewise; two plugins a-tools and b-tools with the same skill name list and load a-tools'."
+affected_paths = ["05_Software/src/libraries/core/src/skills/catalog.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/skills/catalog.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

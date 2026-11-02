@@ -451,7 +451,8 @@
       "unavailable": "Skill cannot be read safely; check its path, format and size."
     },
     "enabledNamed": "Enabled: {{name}}",
-    "openNamed": "Open / edit {{name}}"
+    "openNamed": "Open / edit {{name}}",
+    "plugin": "Plugin {{plugin}}"
   },
   "updates": {
     "mode": "Update mode",
@@ -585,7 +586,10 @@
     "load_skill": "Load instructions and supporting text from an enabled skill.",
     "web_search": "Search the public web using the provider selected in Settings → Web access. Access requirements and service limits depend on the provider.",
     "web_read": "Retrieve text from public web pages and supported documents using the selected web provider. No local file is saved.",
-    "web_download": "Download a public file (PDF, ZIP, CSV, text, images or other formats) to .vera/downloads, subject to session permissions. Preview PDFs in VERA or locate other files in Explorer. Downloads are not automatically indexed."
+    "web_download": "Download a public file (PDF, ZIP, CSV, text, images or other formats) to .vera/downloads, subject to session permissions. Preview PDFs in VERA or locate other files in Explorer. Downloads are not automatically indexed.",
+    "run_program": "Run programs of the plugins enabled for this workbench, with the plugin's risk rules and your approvals.",
+    "program_output": "Read the output of a background program run.",
+    "program_stop": "Stop a background program run."
   },
   "projects": {
     "new": "New Workbench",

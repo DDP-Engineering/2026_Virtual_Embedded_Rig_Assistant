@@ -1,0 +1,2 @@
+{"match":"(?i)flash","toolCalls":[{"name":"run_program","args":{"program":"echo","args":["write","build/app.bin"]}}]}
+{"text":"The program run has been processed."}

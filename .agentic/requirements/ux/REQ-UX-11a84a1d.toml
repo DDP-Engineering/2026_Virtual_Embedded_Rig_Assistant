@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-11a84a1d"
+title = "Show plugin skills read-only in Skills settings"
+status = "active"
+requirement = "Skills settings shall label a plugin skill with its plugin id as a plugin skill in en, ro and de and offer its enable toggle but no editor."
+verification = "Renderer test: a plugin skill row shows the localized plugin label with the plugin id, an enabled checkbox and no open button; workbench and user rows keep their open buttons; i18n check passes for en, ro and de."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/skills.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/skills.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-02
+updated = 2026-11-02

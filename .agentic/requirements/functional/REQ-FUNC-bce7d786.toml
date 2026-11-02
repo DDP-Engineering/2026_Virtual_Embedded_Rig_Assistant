@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-bce7d786"
+title = "Run a declared program in the foreground with run_program"
+status = "active"
+requirement = "When the agent calls run_program for a program declared by exactly one enabled plugin and the approval gate lets the command run, the session shall run the program to its end and return its exit code, duration, risk, the last 12 000 characters of its interleaved output, whether that output was truncated and the workbench-relative path of the full log, as a tool result within the 32 000-character result cap."
+verification = "Replay session with the echo-tools fixture plugin and a scripted process host: a safe `echo version` in ask returns exitCode 0, durationMs, risk safe, the output and log `.vera/runs/<ULID>.log`; a run that prints 50 000 characters returns truncated true with 12 000 output characters; a non-zero exit code is returned as exitCode in a successful tool result."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/registry.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

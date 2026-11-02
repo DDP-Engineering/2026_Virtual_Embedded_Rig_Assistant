@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-6d88d2ec"
+title = "Load plugin skills through the skill catalog"
+status = "active"
+requirement = "The skill catalog shall list the skills/<name>/SKILL.md folders of the workbench's enabled, issue-free plugins as source plugin with the plugin id, and load_skill shall load such a skill and its extra files."
+verification = "Catalog test with an installed, enabled fixture plugin: list shows echo-guide with source plugin and plugin echo-tools; load returns its body and an extra file; after the plugin is disabled the skill is no longer listed and load is NOT_FOUND."
+affected_paths = ["05_Software/src/libraries/core/src/skills/catalog.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/skills.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/skills/catalog.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-02
+updated = 2026-11-02

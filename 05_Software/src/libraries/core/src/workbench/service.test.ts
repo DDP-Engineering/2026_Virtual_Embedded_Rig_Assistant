@@ -4,10 +4,12 @@ import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it } from "vitest";
 import { createDocumentProcessor } from "../knowledge/processor.js";
+import { PluginStore } from "../plugins/store.js";
 import { SettingsService } from "../settings/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
@@ -1064,6 +1066,29 @@ it("enables a plugin for one workbench only and warns about plugins that are not
     expect(h.service.enabledPlugins(b.config.id)).toEqual(["esp32-esptool"]);
     await h.service.close();
     expect((await h.service.open(h.folder)).config.plugins).toEqual({ enabled: ["esp32-esptool"] });
+  } finally {
+    await h.service.close();
+  }
+});
+
+// REQ-FUNC-6d88d2ec, REQ-FUNC-fa6222a5
+it("loads the enabled, installed plugins and lists their skills", async () => {
+  const h = await harness();
+  const fixture = join(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../../../tests/fixtures/plugins/echo-tools",
+  );
+  await new PluginStore({ root: join(h.root, "plugins") }).install(fixture);
+  try {
+    const wb = await h.service.create(h.folder, "Bench A");
+    expect(await h.service.loadPlugins(wb.config.id)).toEqual([]);
+    expect((await h.service.listSkills(wb.config.id)).map((s) => s.name)).toEqual([]);
+    await h.service.togglePlugin(wb.config.id, "ghost", true);
+    await h.service.togglePlugin(wb.config.id, "echo-tools", true);
+    expect((await h.service.loadPlugins(wb.config.id)).map((p) => p.manifest.id)).toEqual(["echo-tools"]);
+    expect(await h.service.listSkills(wb.config.id)).toEqual([
+      expect.objectContaining({ name: "echo-guide", source: "plugin", plugin: "echo-tools", enabled: true }),
+    ]);
   } finally {
     await h.service.close();
   }

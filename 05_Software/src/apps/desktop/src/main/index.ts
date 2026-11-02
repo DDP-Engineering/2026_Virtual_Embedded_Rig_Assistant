@@ -12,6 +12,7 @@ import {
   ProgramRunner,
   SettingsService,
   splitModelReference,
+  unresolvedPrograms,
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
@@ -61,6 +62,7 @@ import {
   systemApps,
 } from "./openers.js";
 import { createDesktopProcessHost } from "./process-host.js";
+import { testProgramResolver } from "./program-resolver.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { openPath, revealPath } from "./reveal-path.js";
@@ -217,6 +219,11 @@ const sessions = new SessionsHost({
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
   emit: emitAppEvent,
+  // Provisioning (PLG-05) supplies executables; instrumented builds resolve fixture plugins for e2e.
+  programs: {
+    runner: programs,
+    resolver: __VERA_TEST__ ? testProgramResolver(process.env.VERA_TEST_PROGRAMS) : unresolvedPrograms,
+  },
   ...(__VERA_TEST__ && process.env.VERA_TEST_ALLOW_WRITES === "1"
     ? { permissions: { allow: () => true } }
     : {}),
@@ -531,7 +538,6 @@ ipcMain.handle(
           return s.send(sessionId, text);
         }),
       "session.stop": ({ sessionId }) => {
-        void programs.stopSession(sessionId);
         return sessions.run((s) => ({ stopped: s.stop(sessionId) }));
       },
       "session.approval.decide": (request) =>
