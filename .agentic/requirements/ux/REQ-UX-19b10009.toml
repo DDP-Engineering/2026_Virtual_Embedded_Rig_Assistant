@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-19b10009"
+title = "Guide bounded background RTT"
+status = "active"
+requirement = "The probe-rs-rtt skill shall guide background run or attach with closed stdin, bounded program_output until a log pattern, and program_stop cleanup."
+verification = "Load skill and replay background attach/run with incremental output and stop; separately document source/real CLI evidence and hardware limits."
+affected_paths = ["05_Software/plugins/probe-rs/", "05_Software/tests/fixtures/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

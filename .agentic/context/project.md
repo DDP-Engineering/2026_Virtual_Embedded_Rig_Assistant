@@ -60,7 +60,7 @@ reset and sends one line (program serial, a PEP 723 pyserial script; list safe, 
 esp32-esptool (requires serial-monitor) installs esptool v5 from PyPI and identifies, flashes, verifies and erases ESP32
 chips under rules that classify every esptool 5.6.0 command, with skill esp32-flash; esp32-idf detects EIM/ESP-IDF,
 runs idf.py through verified string activation and supplies Xtensa/RISC-V addr2line plus build-fix/panic skills.
-Its real vendor build/flash/panic acceptance remains pending toolchain and board availability. The binutils plugin supplies ten ARM/RISC-V analysis programs through ordered toolchain discovery and user-triggered pinned xPack fallback, with size/crash/ELF inspection skills and genuine debug ELF fixtures.
+Its real vendor build/flash/panic acceptance remains pending toolchain and board availability. The binutils plugin supplies ten ARM/RISC-V analysis programs through ordered toolchain discovery and user-triggered pinned xPack fallback, with size/crash/ELF inspection skills and genuine debug ELF fixtures. The probe-rs plugin supplies exact 0.32.0 local probe operations through PATH/cargo discovery and pinned portable archives, highest-risk rules and connect/flash/RTT/inspect skills. Its real three-board Windows/Linux and closed-stdin down-channel RTT acceptance remains outstanding.
 
 [Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.

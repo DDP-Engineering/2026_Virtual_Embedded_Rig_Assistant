@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-19b1000a"
+title = "Guide register and fault inspection"
+status = "active"
+requirement = "The probe-rs-inspect skill shall guide bounded b8/b16/b32/b64 reads with 0.32.0 output formats, SVD-based decode_register only when available, and exact-build PC/LR analysis through binutils."
+verification = "Load skill; check word-count syntax, hex-table and simple-hex, read side effects, absent CAP-02 behavior and ARM/RISC-V decoder names."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

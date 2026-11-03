@@ -1,0 +1,54 @@
+The probe-rs CLI
+
+Usage: probe-rs.exe [OPTIONS] <COMMAND>
+
+Commands:
+  dap-server  Debug Adapter Protocol (DAP) server. See <https://probe.rs/docs/tools/debugger/>
+  list        List all connected debug probes
+  info        Gets info about the selected debug probe and connected target
+  reset       Resets the target attached to the selected debug probe
+  gdb         Run a GDB server
+  debug       Basic command line debugger
+  download    Download memory to attached target
+  verify      Compare memory to attached target
+  erase       Erase all nonvolatile memory of attached target
+  run         Flash and run an ELF program
+  attach      Attach to rtt logging
+  trace       Trace a memory location on the target
+  itm         Configure and monitor ITM trace packets from the target
+  chip        Inspect internal registry of supported chips
+  benchmark   Measure the throughput of the selected debug probe
+  profile     Profile on-target runtime performance of target ELF program
+  read        Read from target memory address
+  write       Write to target memory address
+  complete    Install and complete autocomplete scripts
+  mi          
+  help        Print this message or the help of the given subcommand(s)
+
+Options:
+      --preset <PRESET>
+          A configuration preset to apply.
+          
+          A preset is a list of command line arguments, that can be defined in the configuration file. Presets can be used as a shortcut to specify any number of options, e.g. they can be used to assign a name to a specific probe-chip pair.
+          
+          Manually specified command line arguments take overwrite presets, but presets take precedence over environment variables.
+          
+          [env: PROBE_RS_CONFIG_PRESET=]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+DEBUG LOG CONFIGURATION:
+      --log-file <LOG_FILE>
+          Location for log file for probe-rs's own debug output
+          
+          If no location is specified, the behaviour depends on `--log-to-folder`.
+
+      --log-to-folder
+          Enable logging of probe-rs's own debug data to the default folder. This option is ignored if `--log-file` is specified
+
+LOG CONFIGURATION:
+  -r, --report[=<PATH>]

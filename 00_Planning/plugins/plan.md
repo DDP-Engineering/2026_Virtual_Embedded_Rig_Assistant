@@ -332,6 +332,12 @@ from `expose` is never offered to the model.
 **Done when:** matcher tests cover every rule row; on Windows and Linux the agent identifies,
 flashes, verifies and resets an STM32 Nucleo, an RP2040 and an ESP32-C3, reads a register and
 streams RTT in a background run that it stops.
+- Implementation candidate 2026-11-03 (TASK-bc643d04): official 0.32.0 package, three verified archive
+  pins/member layouts, PATH/cargo discovery with explicit portable fallback, exhaustive highest-risk
+  matcher tests and four skills. Offline real-CLI tests and deterministic replay cover provisioning,
+  hash-bound ELF approvals, changed-image refusal and background attach/run output/stop. Real acceptance
+  on the three boards on Windows/Linux, including closed-stdin RTT with down channels, remains open;
+  no suitable probe was identified. Linux ARM64 archive/header inspection is not execution proof.
 
 ### PLG-20 `binutils` plugin
 **Goal:** firmware image analysis for ARM and RISC-V. **Depends on:** PLG-04, PLG-05.

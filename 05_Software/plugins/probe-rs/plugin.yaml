@@ -1,0 +1,42 @@
+format: 1
+id: probe-rs
+version: 1.0.0
+name: probe-rs
+description: Identify, flash, verify, reset, read memory and stream RTT on ARM, RISC-V and supported Xtensa targets through local debug probes.
+ecosystem: general
+platforms: [windows-x64, linux-x64, linux-arm64]
+programs:
+  probe-rs:
+    install:
+      find:
+        windows: ["%PATH%", "~/.cargo/bin"]
+        linux: ["$PATH", "~/.cargo/bin"]
+      hint: Install programs for the pinned portable release, or put probe-rs 0.32.0 on PATH or in ~/.cargo/bin. See https://probe.rs/docs/getting-started/probe-setup/ for user-managed drivers and device permissions.
+      download:
+        windows-x64:
+          url: https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/probe-rs-tools-x86_64-pc-windows-msvc.zip
+          sha256: 56fc0564cc23d604b27dc2d57606194159c49f951999f3e47bd2cbffcba64103
+          path: probe-rs.exe
+        linux-x64:
+          url: https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/probe-rs-tools-x86_64-unknown-linux-gnu.tar.xz
+          sha256: c2ccc46049e52a5d403ef212078cd637ecda55b662708327960558f83e851ff5
+          path: probe-rs-tools-x86_64-unknown-linux-gnu/probe-rs
+        linux-arm64:
+          url: https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/probe-rs-tools-aarch64-unknown-linux-gnu.tar.xz
+          sha256: 7c818cfd77808e806bf8f4d108c9137910b4fb28e0fe5c464d39782dbbc8af31
+          path: probe-rs-tools-aarch64-unknown-linux-gnu/probe-rs
+    version: { args: [--version], match: 'probe-rs (\d+\.\d+\.\d+)', range: '==0.32.0' }
+    timeout: 120
+rules:
+  - { match: "probe-rs * {--version,-V,--help,-h,help} *", risk: safe }
+  - { match: "probe-rs * chip *", risk: safe, note: Lists or describes supported targets; no hardware. }
+  - { match: "probe-rs * list *", risk: safe, note: Lists attached probes without connecting to a target. }
+  - { match: "probe-rs * {info,mi,read,verify,attach,profile,trace} *", risk: device-read, note: Connects to the target; may halt it briefly. }
+  - { match: "probe-rs * reset *", risk: device-read, note: Resets the target; stored firmware is unchanged. }
+  - { match: "probe-rs * {download,run,erase,benchmark} *", risk: device-write, note: Overwrites flash or RAM on the target. }
+  - { match: "probe-rs * itm *", risk: device-write, note: Connects to the target and configures its trace hardware. }
+  - match: "probe-rs * write *"
+    risk: irreversible
+    note: Writes arbitrary memory. A write to a flash controller or option register can enable permanent read protection, and a write to a GPIO register drives pins.
+  - { match: "probe-rs * {debug,gdb,dap-server,serve,complete} *", risk: blocked, note: "Interactive, opens a server or changes shell configuration." }
+  - { match: "probe-rs * --host *", risk: blocked, note: Remote probe servers are not supported by this plugin. }

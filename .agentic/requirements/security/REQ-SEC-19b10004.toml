@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-19b10004"
+title = "Classify probe-rs flashing"
+status = "active"
+requirement = "The probe-rs plugin shall classify download, run, erase, benchmark and itm as device-write with notes describing overwritten target flash or RAM or configured trace hardware."
+verification = "Test every write command and escalation over safe help/version rules, including itm with safe command names used as log-file values; recorded CLI help requires an explicit rule for every shipped command."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

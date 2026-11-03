@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-19b10005"
+title = "Gate arbitrary probe-rs memory writes"
+status = "active"
+requirement = "The probe-rs plugin shall classify write as irreversible with typed confirmation write and an explanation of arbitrary memory, option-register and GPIO effects."
+verification = "Test all width forms, leading options and safe help overlap; no real memory writes are performed."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

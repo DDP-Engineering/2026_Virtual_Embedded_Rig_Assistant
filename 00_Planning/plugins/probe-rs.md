@@ -6,7 +6,9 @@ reset, read memory and stream RTT logs.
 DONE-WHEN: on Windows x64 and Linux x64 the agent identifies, flashes, verifies and resets an STM32
 Nucleo (ST-Link), an RP2040 (CMSIS-DAP) and an ESP32-C3 (built-in USB-JTAG), reads a peripheral
 register and streams RTT output in a background run.
-STATUS: proposed 2026-11-01; not implemented. Plugin format and rules: [architecture.md](architecture.md).
+STATUS: implementation candidate 2026-11-03 (TASK-bc643d04); manifest, four skills and offline/replay
+regressions implemented. Real three-board acceptance on both systems remains outstanding. Plugin format
+and rules: [architecture.md](architecture.md).
 Work package: PLG-19 in [plan.md](plan.md).
 
 ## 1. Why this plugin
@@ -101,3 +103,23 @@ NOTES:
   coverage, which decides whether `esp32-openocd` stays.
 - Sources: probe.rs/docs/tools/probe-rs, probe.rs/docs/getting-started/probe-setup, GitHub releases
   of probe-rs/probe-rs (v0.32.0), read 2026-11-01.
+
+## 7. Implementation evidence (2026-11-03)
+
+The package is `05_Software/plugins/probe-rs/`; its README records measured archive hashes/member paths,
+CLI syntax, default hex-table format and pinned source links. The existing combined provisioner searches
+PATH then `~/.cargo/bin` first; only an explicit user install downloads the pinned portable fallback.
+An incompatible found version is unavailable and takes precedence over the fallback. Version is exactly
+0.32.0. Rules include options before the command and every `--host`, including `--host=value`; highest risk
+wins even over help. The catalog includes the official package and the general Debug probes and RTT group.
+The additional shipped `itm` command has an explicit device-write rule for trace configuration,
+preserving the unmatched hardware-operation floor even when option values contain `list`, `chip` or `help`.
+
+Source 0.32.0 includes Xtensa ESP32/S2/S3 sequences; the registry names are `esp32`, `esp32s2`, `esp32s3`
+and RISC-V `esp32c3`. This does not establish vendor-debugger feature parity or remove esp32-openocd.
+Read syntax is `read b32 <address> <word-count>`; write takes values instead of a count and stays
+irreversible despite stale RAM-only help prose. The monitor uses an output-only UI until down channels
+appear; then readline initialization/error/EOF paths vary. Real closed-stdin down-channel RTT is still
+unverified; tests of VERA's fixture process do not settle it. No hardware was identified by the Windows
+CLI/USB inventory; the checked Ubuntu WSL host exposes no USB bus. Task journal retains the exact
+outstanding Windows/Linux Nucleo, RP2040 and ESP32-C3 workflow, including register read and RTT.

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-19b10006"
+title = "Block interactive and remote probe-rs access"
+status = "active"
+requirement = "The probe-rs plugin shall classify debug, gdb, dap-server, serve, complete and every --host argument as blocked regardless of lower risk matches."
+verification = "Test all blocked commands, option positions, --host=value and overlap with safe/read/write/irreversible rules."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

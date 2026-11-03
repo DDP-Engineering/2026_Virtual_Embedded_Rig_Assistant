@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-19b10002"
+title = "Classify offline probe-rs commands"
+status = "active"
+requirement = "The probe-rs plugin shall classify version, help, chip and list commands as safe under highest-risk-wins matching."
+verification = "Test each command and options before/after command; a safe match combined with write or blocked tokens escalates."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-19b10003"
+title = "Classify probe-rs target reads"
+status = "active"
+requirement = "The probe-rs plugin shall classify info, mi, read, verify, attach, profile, trace and reset as device-read with notes describing target access and reset effects."
+verification = "Test each command and notes including overlap with safe help and blocked host."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

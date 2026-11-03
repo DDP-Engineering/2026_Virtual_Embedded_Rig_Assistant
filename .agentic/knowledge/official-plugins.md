@@ -7,7 +7,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -17,7 +17,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32 Core and ESP-IDF build groups, default on), `catalog.yaml` (all four plugins
+source: `packs.yaml` (ESP32 Core and ESP-IDF build groups, default on), `catalog.yaml` (all five plugins
 `official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -29,6 +29,16 @@ from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
+
+- `probe-rs` 1.0.0, general, Windows x64/Linux x64/Linux arm64: probe-rs exactly 0.32.0,
+  PATH then ~/.cargo/bin discovery, explicit user-triggered SHA-256-pinned portable fallback.
+  A found unsupported version reports range/unavailable and takes precedence over the download.
+  All three official archive hashes/member layouts and Linux host headers are inspected. Four
+  skills select probes/chips, flash/verify/reset the exact build ELF with approval hashes, stream
+  background RTT and inspect SVD-defined registers/fault addresses. CAP-02 decode_register is used
+  only if present; no such built-in tool is currently implemented. README carries CLI/source evidence.
+  Hardware acceptance on Nucleo/ST-Link, RP2040/CMSIS-DAP and ESP32-C3/USB-JTAG on both systems and
+  real RTT with closed stdin/down channels remains outstanding. Replay is explicitly simulated.
 
 - `binutils` 1.0.0, general, windows-x64/linux-x64/linux-arm64: ten `arm-none-eabi-` and
   `riscv-none-elf-` programs (`size`, `nm`, `readelf`, `objdump`, `addr2line`), all safe. Per-program
@@ -59,6 +69,16 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
   boot log with `serial capture --port P --reset`.
 
 ## Invariants
+
+- probe-rs rules use highest-risk-wins, including command tokens after global options. Version/help,
+  chip/list safe; info/mi/read/verify/attach/profile/trace/reset device-read; download/run/erase/benchmark
+  device-write; itm explicitly device-write for trace configuration; every write irreversible;
+  debug/gdb/dap-server/serve/complete and every --host blocked.
+  Help does not lower a dangerous match; --host=value is blocked. Unknown commands default device-write.
+  Memory widths are b8/b16/b32/b64, read takes word count, write takes values, default hex-table.
+  Background run/attach use existing program_output until and program_stop, closed stdin and tree kill.
+  The package neither installs drivers/udev rules nor elevates. Xtensa ESP32/S2/S3 is in upstream
+  0.32.0; vendor tooling remains for unverified features.
 
 - esp32-idf is format 1, requires serial-monitor and detects user-installed EIM/IDF (`>=5.4,<7`).
   Its idf.py find search locates eim and invokes `run` with `launcherMode: string`. Official EIM 0.20.1
@@ -104,6 +124,7 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
+| probe-rs pins, risk rows, device guidance or RTT | `plugins/probe-rs/` | `probe-rs.test.ts`; real archive opt-in plus separately recorded bench acceptance |
 | IDF rules, launcher detection or decoder paths | `plugins/esp32-idf/plugin.yaml` | `esp32-idf.test.ts`, core `provisioning.test.ts` |
 | Build repair or panic guidance | `plugins/esp32-idf/skills/` and README | `esp32-idf.test.ts` skill and replay cases |
 | Risk rules or notes | `plugins/serial-monitor/plugin.yaml` `rules` | `serial-monitor.test.ts` "risk rules" |
@@ -117,6 +138,11 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
 
 ## Key behaviors
+
+- `REQ-FUNC-19b10001` — exact 0.32.0 official package, ordered discovery and pinned portable fallback.
+- `REQ-SEC-19b10002` through `REQ-SEC-19b10006` — all five risk levels and blocked-host escalation.
+- `REQ-UX-19b10007` through `REQ-UX-19b1000a` — connect/flash/RTT/register skills.
+- `REQ-PLAT-19b1000b` — real three-board workflow on Windows/Linux (pending hardware acceptance).
 
 - `REQ-FUNC-20b10003` / `REQ-SEC-20b10004` — official binutils package, pinned find-first sources and safe analysis.
 - `REQ-UX-20b10005` / `REQ-UX-20b10006` / `REQ-UX-20b10007` — size, crash and ELF inspection skills.
@@ -147,6 +173,11 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
+
+- `05_Software/plugins/probe-rs/` — manifest, four skills and measured upstream evidence/limits.
+- `05_Software/tests/integration/probe-rs.test.ts`, `tests/fixtures/probe-rs/replay.mjs` — exhaustive
+  risk matrix, discovery/range, installed skills, exact-ELF approval/refusal, real closed-stdin
+  fixture RTT and optional real local-archive CLI acceptance.
 
 - `05_Software/plugins/binutils/` — manifest, measured source pins README and three skills.
 - `05_Software/tests/integration/binutils.test.ts`, `tests/fixtures/elf/` — genuine cross-architecture corpus, fake-root discovery and real offline archive/replay acceptance.

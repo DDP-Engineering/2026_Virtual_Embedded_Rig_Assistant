@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-19b10001"
+title = "Ship pinned probe-rs tools"
+status = "active"
+requirement = "The official probe-rs plugin shall declare probe-rs 0.32.0 with ordered PATH and ~/.cargo/bin discovery and SHA-256-pinned Windows x64, Linux x64 and Linux arm64 official archive fallbacks installed only by explicit user action."
+verification = "Manifest and isolated find tests check precedence and version rejection; offline archive acceptance checks downloaded/found x64 binaries; inspect arm64 hash/member/header without claiming execution."
+affected_paths = ["05_Software/plugins/probe-rs/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

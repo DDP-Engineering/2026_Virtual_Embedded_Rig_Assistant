@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-19b10007"
+title = "Guide probe and target selection"
+status = "active"
+requirement = "The probe-rs-connect skill shall guide explicit probe/chip selection and platform permission/driver remedies without installing drivers, system rules or elevating privileges."
+verification = "Load installed skill and check commands, --non-interactive, platform hints and no guessed target."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

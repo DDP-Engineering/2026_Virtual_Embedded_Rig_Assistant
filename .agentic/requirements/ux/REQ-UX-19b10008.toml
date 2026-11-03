@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-19b10008"
+title = "Guide exact-build flashing"
+status = "active"
+requirement = "The probe-rs-flash skill shall guide download, verify and reset with an identified target and the exact build ELF and image hashes shown by approval."
+verification = "Load skill; replay flashing approval checks exact ELF hash and runner arguments, including rejection of a rebuilt ELF."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = ["05_Software/tests/integration/probe-rs.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

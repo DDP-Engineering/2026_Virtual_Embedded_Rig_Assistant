@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-19b1000b"
+title = "Operate three real probe families"
+status = "active"
+requirement = "On Windows x64 and Linux x64 the probe-rs plugin shall support agent identification, flashing, verification, reset, peripheral-register read and background RTT start/read/stop on STM32 Nucleo with ST-Link, RP2040 with CMSIS-DAP and ESP32-C3 with USB-JTAG."
+verification = "Manual: identify available boards without guessing, run the workflow on each board/system with its correct build ELF and register definition; record actual output and approvals, never use replay as real-board proof."
+affected_paths = ["05_Software/plugins/probe-rs/"]
+linked_tests = []
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03
