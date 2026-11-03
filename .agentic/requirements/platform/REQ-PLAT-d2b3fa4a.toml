@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-d2b3fa4a"
+title = "Identify and flash real ESP32 boards on both systems"
+status = "active"
+requirement = "On Windows 11 and Ubuntu LTS, with an ESP32-S3 on its USB-Serial-JTAG port and an ESP32 behind a CP210x connected, the agent shall identify each chip with esptool chip-id, flash a prebuilt image from flasher_args.json after an approval that shows the image hashes, confirm the verification and capture the boot log through the serial-monitor plugin."
+verification = "Manual: on each system install serial-monitor and esp32-esptool with vera plugin install --path, enable both, ask the agent to identify the boards and flash a prebuilt hello_world build; confirm the chip types, the hashes on each write-flash card, the Hash of data verified lines and the boot logs, then rebuild and confirm a new approval is needed (steps in the task journal)."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml", "05_Software/plugins/esp32-esptool/skills/esp32-flash/SKILL.md"]
+linked_tests = []
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

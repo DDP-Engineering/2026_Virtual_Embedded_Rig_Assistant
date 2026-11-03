@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-a69bbfc4"
+title = "Report an esptool outside version 5 as unavailable"
+status = "active"
+requirement = "If the provisioned esptool reports a version outside >=5,<6, then VERA shall show the program as unavailable with the problem range and the reported version, and shall not resolve it for runs."
+verification = "Provision with a stub that prints esptool.py v4.8.1: the status is unavailable, problem range, version 4.8.1, range >=5,<6, and resolve returns undefined. Boundary: 6.0.0 is unavailable too; 5.0.0 is ready."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

@@ -14,7 +14,7 @@ November 2026; the plugin owner rechecks them when writing the manifest.
 | Area | Programs | Plugin | Risk of typical commands |
 |---|---|---|---|
 | Ports and console | pyserial (in a plugin script) | `serial-monitor` | list: `safe`; capture, reset by DTR/RTS: `device-read`; write a line: `device-write` |
-| Flashing and chip info | esptool v5 (`chip-id`, `read-mac`, `flash-id`, `read-flash`, `verify-flash`, `write-flash`, `erase-flash`, `erase-region`, `merge-bin`, `image-info`, `elf2image`) | `esp32-esptool` | see the canonical example in architecture §2.1 |
+| Flashing and chip info | esptool v5 (`chip-id`, `read-mac`, `flash-id`, `read-flash`, `verify-flash`, `write-flash`, `erase-flash`, `erase-region`, `merge-bin`, `image-info`, `elf2image`, and the advanced commands of `esptool --help`) | `esp32-esptool` | files only (`merge-bin`, `image-info`, `elf2image`): `safe`; commands that connect: `device-read`; `write-flash`, `erase-flash`, `erase-region`, `load-ram`: `device-write`; `write-mem`, `write-flash-status`, any `--force`: `irreversible` (architecture §2.1) |
 | Build and project | ESP-IDF `idf.py` through EIM (`set-target`, `build`, `size*`, `fullclean`, `flash`, `erase-flash`, `app-flash`, `coredump-info`), component manager | `esp32-idf` | build, size, set-target: `safe`; flash, erase: `device-write`; coredump-info: `device-read`; `monitor`, `menuconfig`: `blocked` |
 | Crash analysis | toolchain `addr2line` (from EIM), `esp-coredump` | `esp32-idf` (programs `xtensa-addr2line`, `riscv-addr2line`) | `safe` |
 | Partitions and data images | `parttool.py`, `gen_esp32part.py`, `otatool.py`, `nvs_partition_gen`, `spiffsgen.py` / `mklittlefs` | `esp32-idf` | generate: `safe`; write to the chip: `device-write` |

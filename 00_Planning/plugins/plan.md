@@ -215,6 +215,12 @@ agent lists both boards with their family and captures a boot log after a reset.
 **Done when:** on both boards and both systems the agent identifies the chip, flashes a prebuilt
 image from `flasher_args.json`, verifies it and captures the boot log; each approval shows the image
 hashes.
+- Done 2026-11-03: `05_Software/plugins/esp32-esptool/` (installed from the folder), program `esptool` from
+  `pip: esptool>=5,<6`, probed with `esptool version` in range `>=5,<6`; rules classify every command esptool 5.6.0
+  lists (architecture §2.1), including `write-mem`, `write-flash-status` and `--force` as `irreversible`; skill
+  `esp32-flash`. Tests use a stub esptool installed by a fake uv, the real provisioner, runner and a replay session
+  with serial-monitor. Owed: the real-board check on Windows and Ubuntu (TASK-10445e04 journal) and a native Linux
+  run of the test. With it, step 1 "First ESP32 flash" is complete pending those manual checks.
 
 ### PLG-10 `esp32-idf`
 **Goal:** build, flash and analyse crashes through ESP-IDF. **Depends on:** PLG-08.

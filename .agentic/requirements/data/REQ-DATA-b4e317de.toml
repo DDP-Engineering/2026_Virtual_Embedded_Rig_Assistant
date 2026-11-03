@@ -5,8 +5,8 @@ status = "active"
 requirement = "The run_program approval request shall carry the workbench, session, turn and call ids, plugin id, plugin hash, trial flag, program, executable, the resolver's leading arguments, program version, arguments, working directory, risk, confirmation word, rule notes and, for every argument or --name=value value that resolves through the workbench path guard relative to the working directory to an existing regular file, its argument index, workbench-relative path and SHA-256, and shall be identified by its requestSha256 digest."
 verification = "Preparing `esptool write-flash 0x10000 build/app.bin` in a workbench with build/app.bin lists files [{arg 2, path build/app.bin, sha256 of its bytes}]; `--file=build/app.bin` lists the value; on Windows `build\\app.bin.`, `build/app.bin ` and `build/app.bin::$DATA` bind build/app.bin; arguments naming a directory, a missing file, an ignored path or a path outside the workbench are not listed; the same inputs give the same digest."
 affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/core/src/tools/changes.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts"]
-linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts", "05_Software/src/libraries/shared/src/program-approval-schema.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-request.test.ts", "05_Software/src/libraries/shared/src/program-approval-schema.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts", "05_Software/tests/integration/esp32-esptool.test.ts"]
 spec = ""
 priority = "high"
 created = 2026-11-02
-updated = 2026-11-02
+updated = 2026-11-03

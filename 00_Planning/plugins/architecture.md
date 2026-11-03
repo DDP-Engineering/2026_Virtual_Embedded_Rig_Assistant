@@ -45,29 +45,46 @@ esp32-esptool/
 ```yaml
 format: 1
 id: esp32-esptool
-version: 1.2.0
+version: 1.0.0
 name: ESP32 esptool
-description: Identify, flash, erase and read Espressif chips over a serial port. Use for any ESP32 programming task.
+description: Identify, flash, erase and read Espressif chips over a serial port with esptool v5. Use for any ESP32 programming task, such as confirming the chip type, writing the images of an ESP-IDF build, verifying them or erasing the flash.
 ecosystem: esp32
 platforms: [windows-x64, linux-x64]
 requires: [serial-monitor]
 programs:
   esptool:
     install: { pip: "esptool>=5,<6" }
-    version: { args: [version], match: 'v(\d+\.\d+\.\d+)' }
+    version: { args: [version], match: 'v(\d+\.\d+\.\d+)', range: ">=5,<6" }
     timeout: 120
 rules:
-  - { match: "esptool version", risk: safe }
+  - { match: "esptool {version,--help,-h}", risk: safe }
   - { match: "esptool * {merge-bin,image-info,elf2image} *", risk: safe }
-  - match: "esptool * {chip-id,read-mac,flash-id,read-flash,verify-flash} *"
+  - match: "esptool * {chip-id,read-mac,flash-id,read-mem,read-flash-status,read-flash-sfdp,get-security-info,read-sdc-chip-info,verify-sdc-certificate,run} *"
     risk: device-read
+    note: Resets the chip into its bootloader.
+  - match: "esptool * {read-flash,verify-flash,dump-mem} *"
+    risk: device-read
+    timeout: 1800
     note: Resets the chip into its bootloader.
   - match: "esptool * {write-flash,erase-flash,erase-region} *"
     risk: device-write
+    timeout: 1800
     note: Overwrites firmware or data stored on the chip.
+  - match: "esptool * load-ram *"
+    risk: device-write
+    note: Runs code loaded into the chip's RAM instead of its firmware until the next reset; the approval binds that image's hash.
+  - match: "esptool * {write-mem,write-flash-status} *"
+    risk: irreversible
+    note: Writes chip registers or the flash status register directly; eFuse bits set this way can never be cleared, and some flash chips have one-time lock bits.
+  - match: "esptool * --force *"
+    risk: irreversible
+    note: --force skips esptool's security checks; on a chip with secure boot or flash encryption the write or erase can make it unbootable for good.
 docs:
   - https://docs.espressif.com/projects/esptool/en/latest/
 ```
+
+This is the shipped manifest (`05_Software/plugins/esp32-esptool/plugin.yaml`, PLG-09): its rules classify every command
+esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 
 | Field | Rule |
 |---|---|
@@ -197,7 +214,7 @@ program that was not found or installed is listed in Settings, not in the prompt
 
 ```
 <programs>
-- esptool 5.1.0 (plugin esp32-esptool): Identify, flash, erase and read Espressif chips over a serial port. Skill: esp32-flash.
+- esptool 5.6.0 (plugin esp32-esptool): Identify, flash, erase and read Espressif chips over a serial port with esptool v5. Use for any ESP32 programming task, such as confirming the chip type, writing the images of an ESP-IDF build, verifying them or erasing the flash. Skill: esp32-flash.
 </programs>
 ```
 

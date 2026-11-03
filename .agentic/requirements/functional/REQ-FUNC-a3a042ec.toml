@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-a3a042ec"
+title = "Allow long flash transfers to finish"
+status = "active"
+requirement = "The esp32-esptool rules shall give write-flash, erase-flash, erase-region, read-flash, verify-flash and dump-mem a run timeout of 1800 seconds, while other esptool commands keep the program timeout of 120 seconds."
+verification = "classifyCommand returns timeout 1800 for write-flash, erase-flash, erase-region, read-flash, verify-flash and dump-mem, and null for chip-id; the manifest's program timeout is 120."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

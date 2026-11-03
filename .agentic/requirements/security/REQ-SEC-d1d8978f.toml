@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-d1d8978f"
+title = "Classify permanent esptool writes as irreversible"
+status = "active"
+requirement = "The esp32-esptool rules shall classify the esptool commands write-mem and write-flash-status and any esptool command with --force as irreversible, with a note that they can set one-time bits or skip esptool's security checks, and with the command or --force as the typed confirmation word."
+verification = "classifyCommand: [write-mem, 0x6000801c, 1] confirms write-mem; [write_flash_status, --non-volatile, 0] confirms write-flash-status; [write-flash, --force, 0x0, a.bin], [erase-flash, --force] and [erase-region, --force, 0x0, 0x1000] are irreversible and confirm --force. Boundary: write-flash without --force stays device-write."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

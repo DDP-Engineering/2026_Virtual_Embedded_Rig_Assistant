@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-bfed58fa"
+title = "Classify esptool commands that touch no chip as safe"
+status = "active"
+requirement = "The esp32-esptool rules shall classify esptool version, esptool --help, esptool -h and the commands merge-bin, image-info and elf2image with any options as safe."
+verification = "classifyCommand: [version], [--help], [-h], [merge-bin, -o, merged.bin, 0x0, a.bin], [--chip, esp32s3, merge_bin, ...], [image-info, build/app.bin] and [elf2image, build/app.elf] are safe. Boundary: [version, --port, COM7] and [write-flash, --help] are not safe."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

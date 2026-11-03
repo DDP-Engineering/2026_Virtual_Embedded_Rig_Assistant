@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b0d7c102"
+title = "Install the esp32-esptool plugin and resolve esptool from pip"
+status = "active"
+requirement = "When the user installs the esp32-esptool plugin folder and provisions it, VERA shall install esptool with uv tool install esptool>=5,<6 and resolve the program esptool to the esptool entry point in the plugin's tool folder at the version its probe reported."
+verification = "Install 05_Software/plugins/esp32-esptool into a temporary plugin store: list shows it without issues and its manifest requires serial-monitor. Provision it with the real Provisioner and a fake uv: uv receives tool install esptool>=5,<6 with UV_TOOL_BIN_DIR below the runtime folder, the status is esptool pip ready 5.6.0, and resolve returns <runtime>/tools/esp32-esptool/bin/esptool (esptool.exe on Windows). Before provisioning the program is missing."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml", "05_Software/plugins/esp32-esptool/README.md", "05_Software/tests/fixtures/esp32-esptool/fake_esptool.py"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

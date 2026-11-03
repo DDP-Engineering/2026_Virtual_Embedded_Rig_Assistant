@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-fe972de0"
+title = "Identify, flash and capture through an agent session"
+status = "active"
+requirement = "When a replay agent session in ask mode with serial-monitor and esp32-esptool enabled runs chip-id, write-flash with the images of a build and a serial capture with reset, VERA shall wait for an approval for each, show the write-flash approval with each image's SHA-256, run the provisioned esptool with the approved arguments and return the chip type, the verification lines and the boot log."
+verification = "Replay session in ask mode with the real Provisioner (fake uv), runner and approval gate: chip-id is a device-read card, write-flash is a device-write card whose files list bootloader, partition table and app with their SHA-256, the stub esptool records the approved arguments, and the capture output holds main_task: Calling app_main. Boundary: in read-only the chip-id run is refused without starting esptool."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml", "05_Software/plugins/esp32-esptool/skills/esp32-flash/SKILL.md", "05_Software/tests/fixtures/esp32-esptool/flasher_args.json", "05_Software/tests/fixtures/esp32-esptool/fake_esptool.py"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

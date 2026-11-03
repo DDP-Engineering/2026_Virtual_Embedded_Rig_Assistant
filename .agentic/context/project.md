@@ -52,7 +52,9 @@ run only on a user action (plugins.provision IPC, vera plugin install).
 
 [Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/, installed
 from the folder: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS
-reset and sends one line (program serial, a PEP 723 pyserial script; list safe, capture device-read, send device-write).
+reset and sends one line (program serial, a PEP 723 pyserial script; list safe, capture device-read, send device-write);
+esp32-esptool (requires serial-monitor) installs esptool v5 from PyPI and identifies, flashes, verifies and erases ESP32
+chips under rules that classify every esptool 5.6.0 command, with skill esp32-flash.
 
 [Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.

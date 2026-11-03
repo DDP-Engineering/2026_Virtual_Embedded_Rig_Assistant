@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-3b4c7274"
+title = "Read the esptool version from esptool version"
+status = "active"
+requirement = "The esp32-esptool plugin shall probe esptool with the arguments version and read the version from the first v<major>.<minor>.<patch> in its output."
+verification = "The recorded output of esptool 5.6.0 version (esptool v5.6.0 then 5.6.0) yields 5.6.0 through the manifest's version.match; a provisioned stub printing that output is ready at 5.6.0."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml", "05_Software/tests/fixtures/esp32-esptool/fake_esptool.py"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

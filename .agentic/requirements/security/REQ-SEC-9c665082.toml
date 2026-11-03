@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-9c665082"
+title = "Classify every command esptool 5 lists"
+status = "active"
+requirement = "The esp32-esptool rules shall name only commands that esptool 5.6.0 lists in its help, and every command esptool 5.6.0 lists shall match a rule of the plugin."
+verification = "Parse the command names from the recorded esptool 5.6.0 --help (tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt): every command matches at least one rule, and every command name in a rule pattern appears in the help. Boundary: a rule naming a command missing from the help (a v4 name such as write_flash_status spelled differently) fails."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml", "05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

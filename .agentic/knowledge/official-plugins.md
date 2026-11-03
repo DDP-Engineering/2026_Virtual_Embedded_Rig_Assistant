@@ -5,9 +5,10 @@
 Select for the plugin packages VERA maintainers ship in `05_Software/plugins/<id>/`: their `plugin.yaml`
 programs and rules, helper scripts, Agent Skills and README; today `serial-monitor` (program `serial`: list
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
-`serial-console` and `esp32-identify`). Start at `05_Software/plugins/serial-monitor/plugin.yaml` and
-`scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` with fixtures in
-`05_Software/tests/fixtures/serial-monitor/`. The platform that installs, classifies, approves and runs these
+`serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
+verify, erase and read ESP32 chips; skill `esp32-flash`). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
+`esp32-esptool.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/` and `esp32-esptool/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
 plugin skill discovery is [Skills](skills.md).
 
@@ -16,7 +17,9 @@ plugin skill discovery is [Skills](skills.md).
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) and enables per workbench; nothing bundles them into the VERA package or
 installs them automatically yet (catalog and bundling: PLG-07). A package holds content only: a manifest, PEP 723
-scripts that the provisioner runs with the bundled uv, and Markdown skills. Platform behaviour such as risk
+scripts that the provisioner runs with the bundled uv, and Markdown skills; a pip program such as esptool comes from
+PyPI at install time and is not part of the folder. `requires` is declarative: esp32-esptool lists `serial-monitor`, and
+nothing checks or installs it yet. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
@@ -31,6 +34,12 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
   [--eol crlf|lf|cr|none] [--duration 1] ...` writes one line, then reads like capture.
 - Exit codes: 0 done, 2 invalid arguments (no port opened), 3 port failure (EACCES adds the `dialout`/`uucp`
   instruction, others a list-again hint), 4 `--until` never matched.
+- `esp32-esptool` 1.0.0, ecosystem `esp32`, `requires: [serial-monitor]`, program `esptool` with
+  `install: { pip: "esptool>=5,<6" }`, resolved to `<runtime>/tools/esp32-esptool/bin/esptool[.exe]`, probed with
+  `esptool version` (`v(\d+\.\d+\.\d+)`, range `>=5,<6`; any other version is unavailable with problem `range`),
+  program timeout 120 s. Skill `esp32-flash`: port and chip first, offsets and images from `build/flasher_args.json`
+  as explicit pairs, stop for encrypted or secure-boot builds, `Hash of data verified.` per file or `verify-flash`,
+  boot log with `serial capture --port P --reset`.
 
 ## Invariants
 
@@ -47,6 +56,15 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - Console bytes reach stdout unchanged and flushed per read, so background runs stream to `program_output`.
 - `--until` is searched in each complete line and the current partial line (at most its last 4096 characters),
   decoded as UTF-8 with replacement characters and without a trailing CR.
+- esp32-esptool rules (every command esptool 5.6.0 lists matches one; recorded help in
+  `tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt`): `esptool {version,--help,-h}` and `merge-bin`, `image-info`,
+  `elf2image` safe; `chip-id`, `read-mac`, `flash-id`, `read-mem`, `read-flash-status`, `read-flash-sfdp`,
+  `get-security-info`, `read-sdc-chip-info`, `verify-sdc-certificate`, `run`, and with a 1800 s timeout `read-flash`,
+  `verify-flash`, `dump-mem` device-read ("Resets the chip into its bootloader."); `write-flash`, `erase-flash`,
+  `erase-region` device-write with a 1800 s timeout, `load-ram` device-write; `write-mem`, `write-flash-status` and any
+  `--force` irreversible (confirm word: the command, or `--force`). Global options may precede the command; the
+  matcher's lowercase and `_`→`-` cover esptool v4 spellings. Other lines keep the default `device-write`.
+- Safe esptool commands write host files (`merge-bin -o`, `elf2image -o`) without approval, like other safe programs.
 - The script is not named `serial.py`: that name would make `import serial` load the script itself.
 - The installed copy must not change after install (integrity hash): tests run installed copies with
   `PYTHONDONTWRITEBYTECODE=1`, and `uv run --script` executes the file as `__main__` without a bytecode cache.
@@ -60,6 +78,10 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 | Capture/send stop conditions, reset, exit codes | `serial_monitor.py` `read`, `reset`, `main`, `fail` | "capture", "send", "failures" tests |
 | Agent guidance | `skills/serial-console/SKILL.md`, `skills/esp32-identify/SKILL.md` | "offers the plugin's skills" test |
 | Fake port behaviour for tests | `fixtures/serial-monitor/fake-pyserial/serial/` | the whole file |
+| esptool rules, notes, timeouts | `plugins/esp32-esptool/plugin.yaml` `rules` | `esp32-esptool.test.ts` "risk rules" |
+| A new esptool release | re-record `fixtures/esp32-esptool/esptool-<v>-help.txt`, then rules and `version.range` | "names only esptool 5.6.0 commands" |
+| Flashing guidance | `plugins/esp32-esptool/skills/esp32-flash/SKILL.md` | "offers esp32-flash" test |
+| Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
 
 ## Key behaviors
 
@@ -73,6 +95,14 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `REQ-UX-7dc52524` — skills `serial-console` and `esp32-identify`.
 - `REQ-TEST-4041b893` — a replay session lists without approval and captures after approval through the real runner.
 - `REQ-PLAT-f215472a` — real ESP32-S3 and ESP32+CP210x boards on Windows 11 and Ubuntu (manual).
+- `REQ-FUNC-b0d7c102` / `REQ-FUNC-3b4c7274` / `REQ-REL-a69bbfc4` — esptool installs from pip, its version probe, versions outside 5.x unavailable.
+- `REQ-SEC-bfed58fa` / `REQ-SEC-c8cf4a75` / `REQ-SEC-b3fe3c10` / `REQ-SEC-d1d8978f` — esptool safe, device-read, device-write and irreversible rules.
+- `REQ-SEC-9c665082` — the rules name only esptool 5.6.0 commands and classify all of them.
+- `REQ-FUNC-a3a042ec` — flash transfers may run 1800 s.
+- `REQ-UX-6a22c4dc` — skill `esp32-flash`.
+- `REQ-TEST-fe972de0` — a replay session identifies, flashes with image hashes on the card and captures the boot log.
+- `REQ-PLAT-d2b3fa4a` — real boards on Windows 11 and Ubuntu (manual).
+- `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` (Plugins) — write-flash approvals list each image's SHA-256; a rebuilt image fails CONFLICT.
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
@@ -86,3 +116,10 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `05_Software/tests/fixtures/serial-monitor/fake-pyserial/` — fake `serial` package driven by `FAKE_SERIAL_SCENARIO`, recording to `FAKE_SERIAL_RECORD`.
 - `05_Software/tests/fixtures/serial-monitor/by_id.py` — runs `list` with a test by-id folder.
 - `05_Software/tests/fixtures/serial-monitor/esp32s3-boot.log` — sample ESP32-S3 boot log.
+- `05_Software/plugins/esp32-esptool/plugin.yaml` — manifest: program `esptool` (pip), version probe, rules, docs.
+- `05_Software/plugins/esp32-esptool/skills/esp32-flash/SKILL.md` — identify, flash from flasher_args.json, verify, boot log.
+- `05_Software/plugins/esp32-esptool/README.md` — catalog description.
+- `05_Software/tests/integration/esp32-esptool.test.ts` — package, provisioning, rules, replay session, skill.
+- `05_Software/tests/fixtures/esp32-esptool/fake_esptool.py` — stub esptool a fake uv installs as the pip entry point (distlib `.exe` launcher on Windows); records arguments and file hashes.
+- `05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt` — recorded `esptool --help` of 5.6.0.
+- `05_Software/tests/fixtures/esp32-esptool/flasher_args.json` — ESP-IDF esp32s3 hello_world flash layout.

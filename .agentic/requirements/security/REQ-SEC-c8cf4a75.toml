@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-c8cf4a75"
+title = "Classify esptool commands that read the chip as device-read"
+status = "active"
+requirement = "The esp32-esptool rules shall classify the esptool commands chip-id, read-mac, flash-id, read-flash, verify-flash, read-mem, dump-mem, read-flash-status, read-flash-sfdp, get-security-info, read-sdc-chip-info, verify-sdc-certificate and run, in either the hyphen or underscore spelling and after any global options, as device-read with a note that they reset the chip into its bootloader."
+verification = "classifyCommand: each listed command after [--chip, esp32s3, --port, COM7] and with --port=COM7 is device-read and its notes include the bootloader note; chip_id and READ_MAC give the same result. Boundary: verify-flash with --force is not device-read."
+affected_paths = ["05_Software/plugins/esp32-esptool/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-esptool.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03
