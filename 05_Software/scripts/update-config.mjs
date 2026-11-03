@@ -19,6 +19,14 @@ export function updateFeed(value = "", testBuild = false) {
   if (!url.pathname.endsWith("/")) url.pathname += "/";
   return url.href;
 }
+/** Build input only: the default plugin catalog folder, under the same rule as the update feed. */
+export function pluginCatalogFeed(value = "", testBuild = false) {
+  try {
+    return updateFeed(value, testBuild);
+  } catch {
+    throw new Error("Invalid plugin catalog build setting");
+  }
+}
 export function updatePublish(value, testBuild = false) {
   const url = updateFeed(value, testBuild);
   return url ? [{ provider: "generic", url, channel: "latest" }] : null;

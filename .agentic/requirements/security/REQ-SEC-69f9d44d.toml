@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-69f9d44d"
+
+title = "Refuse a catalog downgrade"
+
+status = "active"
+
+requirement = "If a catalog review or install would replace an installed plugin with a lower version, then the catalog shall refuse it with CONFLICT `plugins.catalogError.downgrade` and leave the installed plugin unchanged."
+
+verification = "Core catalog test: with version 1.1.0 installed from a folder and the catalog offering 1.0.0, review refuses with CONFLICT plugins.catalogError.downgrade and the installed version stays 1.1.0; the same version is accepted."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/libraries/shared/src/plugin-catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

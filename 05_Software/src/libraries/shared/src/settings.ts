@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
+import { catalogUrlSchema } from "./plugin-catalog.js";
 import { urlParts } from "./plugins.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { sessionIdSchema } from "./session.js";
@@ -23,10 +24,11 @@ const plainUrl = z
   .url({ protocol: /^https?$/ })
   .max(2048)
   .refine((value) => !urlParts(value)?.authority.includes("@"), "Use a URL without credentials.");
-/** Package index and proxy that uv uses to install plugin programs. */
+/** Package index and proxy that uv uses to install plugin programs, and the plugin catalog folder. */
 export const pluginSettingsSchema = z.strictObject({
   index: plainUrl.optional(),
   proxy: plainUrl.optional(),
+  catalog: catalogUrlSchema.optional(),
 });
 export type PluginSettings = z.infer<typeof pluginSettingsSchema>;
 

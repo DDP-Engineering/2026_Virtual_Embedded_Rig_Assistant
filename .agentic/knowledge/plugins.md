@@ -14,7 +14,10 @@ tools run_program/program_output/program_stop, the ProgramHost and executable re
 pip/script/download/find, the runtime folder, version probes and supported ranges, program statuses,
 `plugins.programs`/`plugins.provision`, `vera plugin install` and the package index/proxy settings; and for the
 desktop UI: the Plugins page (pickers, review screen, install bound to the reviewed hash, enable switch,
-program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`). Start at
+program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`); and for the
+plugin catalog client: index read with the bundled fallback, verified zip downloads, the review decision, installs
+with the catalog tier, update marks, `plugins.catalog*` IPC, the catalog URL setting, the 24 h checks and the
+Plugins page catalog section (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
 `05_Software/src/libraries/core/src/plugins/store.ts` (store),
 `05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
@@ -22,13 +25,15 @@ program installs, uninstall), run records beside run logs and the right panel's 
 `05_Software/src/libraries/core/src/plugins/program-request.ts` (approval requests) or
 `05_Software/src/libraries/core/src/plugins/program-tools.ts` (agent tools) or
 `05_Software/src/libraries/core/src/plugins/provisioning.ts` (provisioning, with `archive.ts`) or
-`05_Software/src/apps/desktop/src/renderer/components/plugins.tsx` and `runs-tab.tsx` (UI); focused tests sit
+`05_Software/src/apps/desktop/src/renderer/components/plugins.tsx` and `runs-tab.tsx` (UI) or
+`05_Software/src/libraries/core/src/plugins/catalog.ts` (catalog client), `catalog-source.ts` (catalog check and
+build), shared `plugin-catalog.ts` (formats) and renderer `plugin-catalog.tsx` (catalog section); focused tests sit
 next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
 and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
 and the `<resources>/uv/` payload; [Headless CLI](headless-cli.md) owns the `vera plugin install` command.
 [Official plugins](official-plugins.md) owns the shipped plugin packages in `05_Software/plugins/` (today
-`serial-monitor` and `esp32-esptool`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
+`serial-monitor` and `esp32-esptool`) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
 owns Agent Skills discovery, plugin skills included; [IPC boundary](ipc-boundary.md)
 owns channel registration and frame authorization; [Sessions](sessions.md) owns the ApprovalGate
 lifecycle, and [Chat UI](chat-ui.md) and [Renderer foundation](renderer-foundation.md) own the
@@ -82,6 +87,19 @@ workbench (`plugins.toggle`, saved at once), installs programs (`plugins.provisi
 confirmation. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
 (`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second), shows a log (`runs.log`) and
 stops a run (`runs.stop`). The workbench form's Plugins section only points to the page.
+
+The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, ADR-0019): core `catalog-source.ts` checks a catalog
+source (plugin folders, `packs.yaml`, `catalog.yaml`) with the store's own package reader and builds its release
+(`<id>-<version>.zip` per plugin and `index.json` format 1); the CLI's `vera catalog check|build` are the catalog's CI
+and release steps. Core `PluginCatalog` (`catalog.ts`) is the client: it reads `index.json` from the catalog folder URL
+(settings `plugins.catalog`, else the build input `VERA_PLUGIN_CATALOG_URL`), else from the bundled release of the
+official plugins, verifies each zip's size and SHA-256 against the index, keeps it for the review, decides whether the
+review must be shown, and installs it bound to the reviewed integrity hash with the entry's tier and source
+`catalog` (the zip URL, or the bundled zip's file path). Desktop main
+composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` and `plugins.catalogInstall`, and its
+`CatalogChecks` (`main/catalog-checks.ts`) reads the index after the window opens and every 24 h. The Plugins page
+shows the catalog section (`renderer/components/plugin-catalog.tsx`) below the installed list. The index is not
+signed (ADR-0019 defers it).
 
 ## Public interface
 
@@ -154,6 +172,20 @@ stops a run (`runs.stop`). The workbench form's Plugins section only points to t
   {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id
   is CONFLICT, a run id without a log or not running there is NOT_FOUND. The browser mock seeds one running
   and one ended run per workbench and answers the review with an echo-tools-like manifest.
+- Catalog (shared `plugin-catalog.ts`): `catalogIndexSchema` (index.json format 1 `{format, plugins, packs}`),
+  `catalogEntrySchema`, `catalogPackSchema`, `catalogPacksSchema` (packs.yaml), `catalogMaintainersSchema`
+  (catalog.yaml `{format, official, reviewed}`), `CATALOG_LIMITS`, `DANGEROUS_TOKENS`, `dangerousToken(match)`,
+  `compareVersions(a, b)` (semantic version precedence), `catalogUrl(value)` (normalised folder URL or undefined),
+  `catalogUrlSchema`, `pluginCatalogViewSchema`, `pluginCatalogReviewSchema`; `ruleNamesProgram(match, program)` in
+  `program-rules.ts`; settings `plugins.catalog?`.
+- Catalog (core): `checkCatalogSource(folder)` -> `CatalogIssue[] {where, code, detail}`;
+  `buildCatalogRelease(folder, out)` -> `{issues, index?}`; `new PluginCatalog({store, root, location, bundled?, fetch,
+  now?, uuid?})` with `view({refresh?, signal?})`, `review(id, signal?)`, `install(id, sha256)`; store
+  `readPluginPackage(path)` and `install(path, sha256?, origin?: {tier, url})` (source kind `catalog`).
+- IPC: `plugins.catalog {refresh}` -> view `{source: remote|bundled|none, url?, problem?: unreachable|invalid,
+  checkedAt?, plugins (entries + installed? + update), packs}`; `plugins.catalogReview {id}` -> `{review, id, version,
+  tier, required}`; `plugins.catalogInstall {id, sha256}` -> installed summary; app event `plugins.catalog`. The
+  browser mock serves an ESP32 pack and a community plugin.
 - Renderer: `Plugins({workbench?})` (`renderer/components/plugins.tsx`), `RunsTab({workbenchId})`
   (`renderer/components/runs-tab.tsx`), a `runs` slot in `Shell`.
 
@@ -301,6 +333,30 @@ stops a run (`runs.stop`). The workbench form's Plugins section only points to t
   log use `staleTime: 0`, so opening the page or a log reads disk state (integrity is rechecked per list).
 - The enable switch shows the new state at once and writes the saved state into the list cache before a
   refetch, so a list fetch started before the toggle cannot flip it back.
+- Catalog check: every plugin folder (not starting with `.`) must pass the store's import checks and examination
+  (folder name = id, so ids are unique); every program needs a rule whose first pattern token names it; a `safe` or
+  `device-read` rule whose pattern contains a dangerous token as a case-insensitive substring is an issue unless
+  `catalog.yaml` lists `{plugin, match}` under `reviewed`; packs, `requires`, `official` and `reviewed` must name
+  existing plugins and rules. The build writes nothing with any issue or a non-empty output folder; zips are
+  deterministic (sorted entries under `<id>/`, dated 1980-01-01).
+- Catalog URL: https, or http on localhost/127.0.0.1/[::1], no credentials, query or fragment; an invalid setting
+  counts as none. A read whose final redirected URL is neither https nor loopback http is unreachable. A failed or
+  invalid remote index falls back to the bundled release with `problem`; the bundled release's own failures leave
+  the view `none`. The view is cached per location; `refresh` or a changed location reads again.
+- Catalog downloads: an index above 4 MiB is invalid; a zip is read with its entry's `bytes` as the cap and refused
+  INVALID `plugins.catalogError.sha256` unless its size and SHA-256 match; a transfer failure is OFFLINE
+  `plugins.catalogError.download`; a package whose id or version differs from its entry, or with any issue, is
+  INVALID `plugins.catalogError.mismatch`; a lower version than the installed one is CONFLICT
+  `plugins.catalogError.downgrade`. A review empties `<userData>/plugins/catalog/` first and keeps only its verified
+  zip; install re-hashes it against the entry (CONFLICT when missing or changed) and removes it.
+- Catalog reviews and installs run one at a time per `PluginCatalog`, since they share the kept-zip folder. The catalog
+  URL form saves only after the settings have loaded: its patch replaces the whole `plugins` object (index, proxy).
+- `npm run prepare:plugins` builds a private CLI bundle in `node_modules/.cache` and never rewrites `src/apps/cli/dist`.
+- A catalog review is required for a plugin that is not installed, an installed plugin with an issue, or a manifest
+  whose `programs` or `rules` (canonical JSON) differ from the installed one; otherwise the page installs at once.
+- Catalog checks run at start and every 24 h only while a catalog location is set and the update mode is not Off;
+  they read the index only and never install. Install selected reviews the checked groups' plugins that are not
+  installed, each after its catalog requirements, one by one; Cancel drops the rest.
 
 ## Change map
 
@@ -332,6 +388,11 @@ stops a run (`runs.stop`). The workbench form's Plugins section only points to t
 | Review, picker, hash-bound install | `PluginStore.review`/`install` in `store.ts`, `plugins.choose`/`review`/`install` in `main/index.ts` | `store.test.ts`, `plugins-ipc.test.ts`, `mockApi.test.ts` |
 | Run records, list, log, stop | `ProgramRunner` in `runner.ts`, `runs.*` in `main/index.ts`, label in `program-tools.ts` | `runner.test.ts`, `program-tools.test.ts` |
 | Plugins page or Runs tab | renderer `plugins.tsx`, `runs-tab.tsx`, `shell.tsx`, `App.tsx`, locales | `plugins.test.ts`, `runs-tab.test.ts`, `tests/e2e/plugins-ui.spec.ts` (native), `plugins-mock.spec.ts` (languages, themes, sizes) |
+| Catalog formats, token lint, URL rule, version order | shared `plugin-catalog.ts` | `plugin-catalog.test.ts` |
+| Catalog check or release build, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts` | `catalog-source.test.ts`, `tests/integration/cli.test.ts` |
+| Catalog client: sources, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server) |
+| Catalog IPC, checks, build-time URL | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `scripts/update-config.mjs` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
+| Catalog section, review queue, update buttons | renderer `plugin-catalog.tsx`, `plugins.tsx`, `mocks/mockApi.ts`, locales | `plugin-catalog.test.ts`, `mockApi.test.ts`, `tests/e2e/plugins-catalog.spec.ts`, `plugins-mock.spec.ts` |
 
 ## Key behaviors
 
@@ -395,6 +456,14 @@ stops a run (`runs.stop`). The workbench form's Plugins section only points to t
 - `REQ-DATA-f563074f` / `REQ-FUNC-39617f81` / `REQ-FUNC-f024d73c` / `REQ-FUNC-8c38d223` — run records, runs list, log tail, stop (spec REQ-DATA-f563074f.md).
 - `REQ-UX-28503c97` / `REQ-UX-41c19e62` / `REQ-UX-e6056763` / `REQ-UX-8904f319` / `REQ-UX-acc04fbc` / `REQ-UX-fd6bc95d` / `REQ-UX-d51c6e3c` / `REQ-UX-c1de1651` / `REQ-UX-e07790cb` — Plugins page.
 - `REQ-UX-e0e51891` / `REQ-UX-25921e97` / `REQ-UX-93fd56dc` — Runs tab: list, log dialog, Stop.
+- `REQ-DATA-b40d3f9b` — catalog source and release formats (spec REQ-DATA-b40d3f9b.md).
+- `REQ-FUNC-3b9f62f8` / `REQ-SEC-dfc6a26d` / `REQ-SEC-5fa5cd5e` / `REQ-FUNC-f4381792` — catalog check, programs without
+  rules, dangerous tokens, release build.
+- `REQ-FUNC-98ded47a` / `REQ-SEC-a3c31442` — catalog location with the bundled fallback; URL rule.
+- `REQ-SEC-449e334b` / `REQ-SEC-6305d7b7` / `REQ-SEC-69f9d44d` — wrong size or hash, entry mismatch, downgrade refused.
+- `REQ-FUNC-f244f8f6` / `REQ-FUNC-46079512` / `REQ-FUNC-ce542246` — install with tier, review decision, 24 h checks.
+- `REQ-UX-72a349a1` / `REQ-UX-c55a0fe1` / `REQ-UX-9207423e` — pack browser, catalog list and updates, catalog URL field.
+- `REQ-PLAT-720aa4f2` — official plugins shipped as a bundled catalog release.
 
 ## Files
 
@@ -441,3 +510,10 @@ stops a run (`runs.stop`). The workbench form's Plugins section only points to t
 - `05_Software/tests/e2e/plugins-ui.spec.ts` — native install through the review, enable, Runs log and Stop, broken plugin.
 - `05_Software/tests/e2e/plugins-mock.spec.ts` — browser mock flow and overflow in every language, theme and size.
 - `05_Software/tests/fixtures/llm-scripts/program-serve.jsonl` — replay script starting `echo serve` in the background.
+- `05_Software/src/libraries/shared/src/plugin-catalog.ts`, `plugin-catalog.test.ts` — catalog formats and rules.
+- `05_Software/src/libraries/core/src/plugins/catalog-source.ts`, `catalog-source.test.ts` — catalog check and build.
+- `05_Software/src/libraries/core/src/plugins/catalog.ts`, `catalog.test.ts` — catalog client.
+- `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build`.
+- `05_Software/src/apps/desktop/src/main/catalog-checks.ts`, `catalog-checks.test.ts` — start and 24 h checks.
+- `05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx`, `plugin-catalog.test.ts` — catalog section.
+- `05_Software/tests/e2e/plugins-catalog.spec.ts` — native install and rule-changing update from a loopback catalog.

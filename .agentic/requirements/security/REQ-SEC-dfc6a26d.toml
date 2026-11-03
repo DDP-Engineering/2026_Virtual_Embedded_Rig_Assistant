@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-dfc6a26d"
+
+title = "Catalog check rejects programs without rules"
+
+status = "active"
+
+requirement = "If a catalog plugin declares a program that no rule names with its first pattern token, then the catalog check shall report a `rules` issue for that program."
+
+verification = "Core test: a fixture plugin with programs `a` and `b` and rules only for `a` reports one `rules` issue naming `b`; a rule `* x` or `{a,b} x` counts as naming both."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/shared/src/program-rules.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/src/libraries/shared/src/plugin-catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -804,6 +804,37 @@
       "script": "Script din plugin: {{path}}",
       "download": "Descărcare pentru {{platform}}:",
       "find": "Găsit pe acest computer:"
+    },
+    "catalog": {
+      "title": "Catalog",
+      "remote": "Pluginuri din {{url}}",
+      "bundled": "Pluginuri incluse în VERA (pluginuri oficiale, disponibile offline).",
+      "none": "Nu este configurat niciun catalog, iar această versiune nu include pluginuri.",
+      "problemUnreachable": "Catalogul nu a putut fi accesat.",
+      "problemInvalid": "Indexul catalogului nu este valid.",
+      "check": "Caută actualizări",
+      "checking": "Se caută…",
+      "url": "URL-ul catalogului",
+      "urlPlaceholder": "https://example.com/vera-plugins/",
+      "urlHint": "Lasă câmpul gol pentru catalogul implicit sau introdu oglinda companiei tale.",
+      "urlInvalid": "Folosește un URL https sau http pe acest calculator.",
+      "save": "Salvează",
+      "useDefault": "Folosește implicitul",
+      "packs": "Pachete",
+      "installSelected": "Instalează selecția",
+      "plugins": "Toate pluginurile din catalog",
+      "installed": "Instalat: {{version}}",
+      "installAction": "Instalează",
+      "update": "Actualizează la {{version}}",
+      "updateAvailable": "Actualizare disponibilă: {{version}}",
+      "reviewFrom": "Din catalog: {{tier}}, versiunea {{version}}.",
+      "reviewChanges": "Această actualizare schimbă programe, surse de instalare sau reguli; verifică-le înainte de instalare."
+    },
+    "catalogError": {
+      "sha256": "Pluginul descărcat nu corespunde dimensiunii și SHA-256 din catalog. Nu s-a instalat nimic.",
+      "mismatch": "Pluginul descărcat nu este pluginul sau versiunea din catalog. Nu s-a instalat nimic.",
+      "downgrade": "Catalogul oferă o versiune mai veche decât cea instalată; versiunea instalată rămâne.",
+      "download": "Pluginul nu a putut fi descărcat. Verifică conexiunea și încearcă din nou."
     }
   },
   "runs": {

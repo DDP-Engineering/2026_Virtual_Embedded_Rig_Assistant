@@ -1,0 +1,31 @@
+# Workflow template for the hosted vera-plugins repository (GitHub Actions syntax, which Gitea Actions
+# also runs); copy it to .github/workflows/catalog.yml there. The catalog source sits under plugins/.
+#
+# Open until the hosting is decided (PLG-07 open items): the VERA repository URL the CLI is built from
+# (repository variable VERA_REPOSITORY), and the step that publishes the release files.
+name: catalog
+on:
+  pull_request:
+  push:
+    tags: ["v*"]
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.VERA_REPOSITORY }}
+          path: vera
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Build the VERA CLI
+        working-directory: vera/05_Software
+        run: npm ci && npm run build:cli
+      - name: Check the catalog
+        run: node vera/05_Software/src/apps/cli/dist/index.js catalog check --source plugins
+      - name: Build the release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: node vera/05_Software/src/apps/cli/dist/index.js catalog build --source plugins --out release
+      # Publish every file of release/ (index.json and the zips) as the assets of this tag's release.

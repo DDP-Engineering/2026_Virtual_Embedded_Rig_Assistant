@@ -21,6 +21,8 @@ export * from "./llm/gateway.js";
 export * from "./llm/providers.js";
 export * from "./llm/scrub.js";
 export * from "./plugins/archive.js";
+export * from "./plugins/catalog.js";
+export * from "./plugins/catalog-source.js";
 export * from "./plugins/launcher.js";
 export * from "./plugins/node-process-host.js";
 export * from "./plugins/program-request.js";

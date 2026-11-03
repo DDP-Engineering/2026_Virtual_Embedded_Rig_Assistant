@@ -1,4 +1,5 @@
 // REQ-UX-28503c97 REQ-UX-e6056763 REQ-UX-acc04fbc REQ-UX-fd6bc95d REQ-UX-e0e51891 REQ-UX-25921e97 REQ-UX-93fd56dc
+// REQ-UX-72a349a1 REQ-UX-c55a0fe1 REQ-UX-9207423e
 import { expect, type Page, test } from "@playwright/test";
 import { resolveConfig } from "electron-vite";
 import { createServer, type ViteDevServer } from "vite";
@@ -72,6 +73,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
           await page.locator('[data-action="leave-settings"]').click();
           await page.locator('[data-action="plugins-nav"]').click();
           await expect(card.locator('[data-program="echo"]')).toBeVisible();
+          await expect(page.locator('[data-pack="esp32"] [data-group]')).toHaveCount(2);
           expect(await overflow(page), `list ${language}/${theme}/${scale}`).toEqual({
             page: false,
             elements: [],
@@ -79,6 +81,13 @@ test("installs through the review screen, enables the plugin and stops a run, wi
           await page.locator('[data-action="plugin-install-folder"]').click();
           await expect(review.locator("[data-rule]")).toHaveCount(5);
           expect(await overflow(page), `review ${language}/${theme}/${scale}`).toEqual({
+            page: false,
+            elements: [],
+          });
+          await review.locator('[data-action="plugin-review-cancel"]').click();
+          await page.locator('[data-action="catalog-install-selected"]').click();
+          await expect(review.locator("[data-catalog-review]")).toBeVisible();
+          expect(await overflow(page), `catalog review ${language}/${theme}/${scale}`).toEqual({
             page: false,
             elements: [],
           });
@@ -111,6 +120,19 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     const id = (await running.getAttribute("data-run")) as string;
     await running.locator('[data-action="run-stop"]').click();
     await expect(page.locator(`[data-run="${id}"]`)).toContainText("Stopped");
+
+    // Install selected reviews the Core group's plugins in order and installs them as official plugins.
+    await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-action="catalog-install-selected"]').click();
+    await expect(review.locator("[data-catalog-review]")).toContainText("Official");
+    await review.locator('[data-action="plugin-install"]').click();
+    await expect(review).toContainText("esp32-esptool");
+    await review.locator('[data-action="plugin-install"]').click();
+    await expect(page.locator('[data-plugin="serial-monitor"]')).toContainText("Official");
+    await expect(page.locator('[data-plugin="esp32-esptool"]')).toContainText("Official");
+    await expect(page.locator('[data-catalog-plugin="serial-monitor"] [data-installed]')).toContainText(
+      "1.0.0",
+    );
     expect(errors).toEqual([]);
   } finally {
     await server.close();

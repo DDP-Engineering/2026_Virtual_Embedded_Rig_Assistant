@@ -1,0 +1,7 @@
+# Ecosystem packs: the Plugins page shows each pack as checkable groups (spec REQ-DATA-b40d3f9b §1.1).
+# Groups for esp32-idf (ESP-IDF build), esp32-openocd (JTAG debug) and esp32-efuse (Security) join when
+# those plugins exist here (plugins plan PLG-10, PLG-11; packs.md §1).
+- id: esp32
+  name: ESP32 (Espressif)
+  groups:
+    - { name: Core, plugins: [serial-monitor, esp32-esptool], default: true }

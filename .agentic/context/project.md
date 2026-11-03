@@ -48,10 +48,14 @@ confirmation checked in core and the bypass warning's list of irreversible rules
 `<programs>` prompt block and plugin skills joining the skill catalog; and provisioning: a pinned bundled uv installs pip
 and PEP 723 script programs under <userData>/plugins/runtime with one managed CPython, SHA-256-pinned downloads extract
 there, find programs are located on PATH and absolute globs, versions are probed against supported ranges, and installs
-run only on a user action (plugins.provision IPC, vera plugin install).
+run only on a user action (plugins.provision IPC, vera plugin install); and the plugin catalog: `vera catalog check|build`
+validate a catalog source and build its release (index.json format 1 and one zip per plugin), and the desktop client
+reads the catalog URL setting (else the build default, else the bundled official plugins), verifies each zip's size
+and SHA-256, shows the review screen before a first install and before updates that change programs or rules, installs
+with the catalog tier and checks for updates at start and every 24 h without installing them.
 
-[Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/, installed
-from the folder: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS
+[Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/ (also a
+catalog source that the package bundles as <resources>/plugins), installed from the folder or the catalog: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS
 reset and sends one line (program serial, a PEP 723 pyserial script; list safe, capture device-read, send device-write);
 esp32-esptool (requires serial-monitor) installs esptool v5 from PyPI and identifies, flashes, verifies and erases ESP32
 chips under rules that classify every esptool 5.6.0 command, with skill esp32-flash.

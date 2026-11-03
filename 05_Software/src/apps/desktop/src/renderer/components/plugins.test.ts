@@ -16,7 +16,7 @@ import i18n from "../i18n.js";
 import { Plugins } from "./plugins.js";
 import { WorkbenchConfigForm } from "./workbench-config-form.js";
 
-vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn() } }));
+vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 let root: Root;
 let container: HTMLDivElement;
@@ -123,6 +123,11 @@ function stub(options: {
       case "plugins.install":
         state.installed.push(echo);
         return echo;
+      // The catalog section is covered by plugin-catalog.test.ts; here it has nothing to offer.
+      case "plugins.catalog":
+        return { source: "none", plugins: [], packs: [] };
+      case "app.settings.get":
+        return { settings: { plugins: {} } };
       default:
         throw new Error(`Unexpected ${channel}`);
     }

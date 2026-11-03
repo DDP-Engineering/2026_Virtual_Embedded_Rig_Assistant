@@ -804,6 +804,37 @@
       "script": "Skript im Plugin: {{path}}",
       "download": "Download für {{platform}}:",
       "find": "Auf diesem Computer gefunden:"
+    },
+    "catalog": {
+      "title": "Katalog",
+      "remote": "Plugins von {{url}}",
+      "bundled": "Mit VERA ausgelieferte Plugins (offizielle Plugins, offline verfügbar).",
+      "none": "Es ist kein Katalog eingerichtet, und dieser Build enthält keine Plugins.",
+      "problemUnreachable": "Der Katalog war nicht erreichbar.",
+      "problemInvalid": "Der Index des Katalogs ist ungültig.",
+      "check": "Nach Updates suchen",
+      "checking": "Suche läuft…",
+      "url": "Katalog-URL",
+      "urlPlaceholder": "https://example.com/vera-plugins/",
+      "urlHint": "Leer lassen für den Standardkatalog oder den Spiegel Ihres Unternehmens eintragen.",
+      "urlInvalid": "Verwenden Sie eine https-URL oder http auf diesem Computer.",
+      "save": "Speichern",
+      "useDefault": "Standard verwenden",
+      "packs": "Pakete",
+      "installSelected": "Auswahl installieren",
+      "plugins": "Alle Katalog-Plugins",
+      "installed": "Installiert: {{version}}",
+      "installAction": "Installieren",
+      "update": "Auf {{version}} aktualisieren",
+      "updateAvailable": "Update verfügbar: {{version}}",
+      "reviewFrom": "Aus dem Katalog: {{tier}}, Version {{version}}.",
+      "reviewChanges": "Dieses Update ändert Programme, Installationsquellen oder Regeln; prüfen Sie sie vor der Installation."
+    },
+    "catalogError": {
+      "sha256": "Das heruntergeladene Plugin entspricht nicht der Größe und dem SHA-256 aus dem Katalog. Es wurde nichts installiert.",
+      "mismatch": "Das heruntergeladene Plugin ist nicht das Plugin oder die Version aus dem Katalog. Es wurde nichts installiert.",
+      "downgrade": "Der Katalog bietet eine ältere Version als die installierte an; die installierte Version bleibt.",
+      "download": "Das Plugin konnte nicht heruntergeladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut."
     }
   },
   "runs": {

@@ -8,6 +8,7 @@ import {
   embeddingModelId,
   type LlmGateway,
   modelSchema,
+  PluginCatalog,
   PluginStore,
   ProgramRunner,
   Provisioner,
@@ -36,6 +37,7 @@ import {
 } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
+import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
@@ -83,6 +85,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
 declare const __VERA_TEST__: boolean;
 declare const __VERA_UPDATE_URL__: string;
+/** The default plugin catalog folder (build input VERA_PLUGIN_CATALOG_URL); empty when none. */
+declare const __VERA_PLUGIN_CATALOG_URL__: string;
 declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
 // Datasheet CDNs can reject Chromium HTTP/2 streams. Keep its anonymous download transport on HTTP/1.1.
@@ -196,6 +200,32 @@ const provisioner = new Provisioner({
   platform: pluginPlatform(process.platform, process.arch),
   fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
   settings: () => settings.get().settings.plugins,
+});
+/** The official plugins as a catalog release: <resources>/plugins, or prepare:plugins in development. */
+const bundledPlugins =
+  __VERA_TEST__ && process.env.VERA_TEST_BUNDLED_PLUGINS !== undefined
+    ? process.env.VERA_TEST_BUNDLED_PLUGINS || undefined
+    : app.isPackaged
+      ? join(process.resourcesPath, "plugins")
+      : join(here, "../../../../../src/bundled-plugins");
+/** The catalog folder from settings, else the build default; the bundled release stands in without one. */
+const catalogLocation = () =>
+  settings.get().settings.plugins?.catalog ?? (__VERA_PLUGIN_CATALOG_URL__ || undefined);
+/** The plugin catalog: verified downloads for review, installs only on the user's action. */
+const catalog = new PluginCatalog({
+  store: plugins,
+  root: join(dataLocations.paths.userData, "plugins", "catalog"),
+  location: catalogLocation,
+  ...(bundledPlugins ? { bundled: bundledPlugins } : {}),
+  fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
+});
+/** Update checks at start and every 24 h read the index only, while the update mode is not Off. */
+const catalogChecks = new CatalogChecks({
+  enabled: () => settings.get().settings.updates.mode !== "off" && Boolean(catalogLocation()),
+  check: async () => {
+    await catalog.view({ refresh: true });
+    emitAppEvent({ topic: "app", id: "app", event: { type: "plugins.catalog" } });
+  },
 });
 /** Runs of the open workbench stop before it closes or another workbench replaces it. */
 async function stopWorkbenchPrograms(): Promise<void> {
@@ -358,6 +388,13 @@ ipcMain.handle(
         const result = await workbench.togglePlugin(workbenchId, id, enabled);
         pluginsChanged();
         return result;
+      },
+      "plugins.catalog": ({ refresh }) => catalog.view({ refresh }),
+      "plugins.catalogReview": ({ id }) => catalog.review(id),
+      "plugins.catalogInstall": async ({ id, sha256 }) => {
+        const installed = await catalog.install(id, sha256);
+        pluginsChanged();
+        return installed;
       },
       "plugins.programs": ({ id }) => provisioner.statuses(id),
       "plugins.provision": async ({ id }) => {
@@ -821,6 +858,7 @@ if (!app.requestSingleInstanceLock()) {
     draining = true;
     // Installs and probes stop with the app; their uv and tar process trees are killed.
     provisioner.close();
+    catalogChecks.close();
     void programs
       .stopAll()
       .then(() => sessions.close())
@@ -980,6 +1018,7 @@ if (!app.requestSingleInstanceLock()) {
       }
       await createWindow();
       updates.start();
+      catalogChecks.start();
     })
     .catch(async () => {
       logger.log("error", "app.startup.failed");

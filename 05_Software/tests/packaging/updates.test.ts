@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 
 // @ts-expect-error Native ESM build helpers.
-import { updateFeed, updatePublish } from "../../scripts/update-config.mjs";
+import { pluginCatalogFeed, updateFeed, updatePublish } from "../../scripts/update-config.mjs";
 // @ts-expect-error Native ESM feed server.
 import { startUpdateFeed } from "../../scripts/update-feed.mjs";
 
@@ -24,6 +24,14 @@ it("fixes HTTPS feed at build time and permits HTTP loopback only in test builds
   }
   expect(updateFeed("http://127.0.0.1:1234", true)).toBe("http://127.0.0.1:1234/");
   expect(() => updateFeed("http://192.168.1.2", true)).toThrow();
+});
+// REQ-SEC-a3c31442
+it("fixes the default plugin catalog at build time under the update feed rule", () => {
+  expect(pluginCatalogFeed()).toBe("");
+  expect(pluginCatalogFeed("https://catalog.test/vera")).toBe("https://catalog.test/vera/");
+  expect(pluginCatalogFeed("http://127.0.0.1:8123/c", true)).toBe("http://127.0.0.1:8123/c/");
+  for (const url of ["http://catalog.test/", "http://127.0.0.1/", "https://catalog.test/?t=1"])
+    expect(() => pluginCatalogFeed(url)).toThrow("Invalid plugin catalog build setting");
 });
 it("serves only explicit local feed files and records metadata/artifact requests with range support", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-update-feed-"));

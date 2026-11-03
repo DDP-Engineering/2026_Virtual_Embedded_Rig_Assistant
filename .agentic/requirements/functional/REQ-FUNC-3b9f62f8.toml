@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-3b9f62f8"
+
+title = "Catalog check reports package and reference issues"
+
+status = "active"
+
+requirement = "When the catalog check runs on a catalog source, it shall print one line per issue with its place and code (source files that are missing or invalid, plugin folders that fail the store's import checks or manifest validation including a manifest id that differs from its folder name, and pack, requires, official or reviewed entries that name no plugin or rule) and exit with 1, or exit with 0 when there is no issue."
+
+verification = "Core test on fixture sources: the official plugins folder has no issue; a folder whose manifest id duplicates another plugin's id reports `manifest` with `id`; an invalid plugin.yaml, a missing packs.yaml and a pack naming an unknown plugin each report their code. CLI integration test: `vera catalog check` exits 0 on a clean source and 1 with the issue lines on a broken one."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/apps/cli/src/catalog.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/index.ts", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml", "05_Software/plugins/CONTRIBUTING.md", "05_Software/plugins/.ci/catalog.yml"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/tests/integration/cli.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

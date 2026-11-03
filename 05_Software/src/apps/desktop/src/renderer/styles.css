@@ -2530,6 +2530,37 @@ legend {
   align-items: center;
   gap: 0.5rem;
 }
+/* Plugin catalog: source, URL setting, packs and catalog plugins (REQ-UX-72a349a1, REQ-UX-9207423e). */
+.plugin-catalog,
+.catalog-url {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.plugin-catalog h3,
+.plugin-catalog h4,
+.catalog-url p {
+  margin: 0;
+}
+.catalog-url input {
+  width: 100%;
+  min-width: 0;
+}
+.catalog-pack {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem 0.75rem;
+  min-width: 0;
+}
+.catalog-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
 /* Runs tab (REQ-UX-e0e51891). */
 .runs-tab {
   display: grid;

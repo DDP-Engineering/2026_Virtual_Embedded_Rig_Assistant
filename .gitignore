@@ -16,6 +16,8 @@ __pycache__/
 !/05_Software/src/windows_runtime/windows-runtime-manifest.json
 /05_Software/src/uv/*
 !/05_Software/src/uv/uv-manifest.json
+# The official plugins as a catalog release, built by npm run prepare:plugins.
+/05_Software/src/bundled-plugins/
 *.tsbuildinfo
 
 # Ignore explicitly requested coverage/reports and any legacy Playwright output.

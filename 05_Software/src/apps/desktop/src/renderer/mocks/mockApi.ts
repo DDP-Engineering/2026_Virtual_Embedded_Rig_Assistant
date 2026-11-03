@@ -2,9 +2,12 @@ import {
   type AppEvent,
   type AppInfo,
   appEventSchema,
+  type CatalogEntry,
+  type CatalogPack,
   type Channel,
   type ChatgptStatus,
   channels,
+  compareVersions,
   configWarnings,
   defaultSettings,
   documentPatternFolder,
@@ -125,6 +128,37 @@ export function createMockApi(
   const installedPlugins = new Map<string, PluginInstalled>();
   /** Declared programs of installed mock plugins, from their manifests. */
   const pluginPrograms = new Map<string, { name: string; kind: "pip" | "script" | "download" | "find" }[]>();
+  /** The mock catalog: the ESP32 pack's official plugins and one community plugin. */
+  const catalogEntry = (id: string, name: string, more: Partial<CatalogEntry> = {}): CatalogEntry => ({
+    id,
+    version: "1.0.0",
+    tier: "official",
+    ecosystem: "esp32",
+    platforms: ["windows-x64", "linux-x64"],
+    name,
+    description: `${name}: a plugin of the mock catalog.`,
+    requires: [],
+    url: `${id}-1.0.0.zip`,
+    sha256: packageHash(`/mock/catalog/${id}.zip`),
+    bytes: 4096,
+    ...more,
+  });
+  const catalogEntries: CatalogEntry[] = [
+    catalogEntry("esp32-efuse", "ESP32 eFuse", { requires: ["esp32-esptool"] }),
+    catalogEntry("esp32-esptool", "ESP32 esptool", { requires: ["serial-monitor"] }),
+    catalogEntry("can-logger", "CAN logger", { tier: "community", ecosystem: "can" }),
+    catalogEntry("serial-monitor", "Serial monitor", { ecosystem: "general" }),
+  ];
+  const catalogPacks: CatalogPack[] = [
+    {
+      id: "esp32",
+      name: "ESP32 (Espressif)",
+      groups: [
+        { name: "Core", plugins: ["serial-monitor", "esp32-esptool"], default: true },
+        { name: "Security (irreversible)", plugins: ["esp32-efuse"], default: false },
+      ],
+    },
+  ];
   /** Plugins whose mock programs plugins.provision installed. */
   const provisionedPlugins = new Set<string>();
   /** Program runs and their logs by workbench id, seeded with one running and one ended run. */
@@ -175,6 +209,48 @@ export function createMockApi(
     let hash = 2166136261;
     for (const char of path) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
     return hash.toString(16).padStart(8, "0").repeat(8);
+  }
+  /** Installs a mock package (folder, zip, or a catalog entry's zip with its tier). */
+  function installPackage(path: string, sha256: string, entry?: CatalogEntry): PluginInstalled {
+    const { manifest, issues, sha256: current } = mockPackage(path);
+    if (sha256 !== current) throw veraError("CONFLICT");
+    const first = issues[0];
+    if (first || !manifest)
+      throw {
+        ...veraError("INVALID"),
+        params: { issue: first?.code ?? "manifest", path: first?.path ?? "id" },
+      };
+    const id = manifest.id;
+    const plugin: PluginInstalled = {
+      id,
+      issues: [],
+      version: manifest.version,
+      name: manifest.name,
+      description: manifest.description,
+      ecosystem: manifest.ecosystem,
+      platforms: manifest.platforms,
+      irreversible: irreversibleRules[id] ?? [],
+      tier: entry?.tier ?? "local",
+      source: entry ? "catalog" : /\.zip$/i.test(path) ? "zip" : "folder",
+      sha256,
+      installedAt: new Date().toISOString(),
+    };
+    installedPlugins.set(id, plugin);
+    pluginPrograms.set(
+      id,
+      Object.entries(manifest.programs).map(([name, program]) => ({
+        name,
+        kind:
+          "pip" in program.install
+            ? "pip"
+            : "script" in program.install
+              ? "script"
+              : "download" in program.install
+                ? "download"
+                : "find",
+      })),
+    );
+    return plugin;
   }
   function mockPackage(path: string): PluginReview {
     const id = (path.split(/[\\/]/).pop() ?? "").replace(/\.zip$/i, "");
@@ -569,45 +645,48 @@ export function createMockApi(
       }
       case "plugins.install": {
         const { path, sha256 } = channels["plugins.install"].request.parse(input.data);
-        const { manifest, issues, sha256: current } = mockPackage(path);
-        if (sha256 !== current) throw veraError("CONFLICT");
-        const first = issues[0];
-        if (first || !manifest)
-          throw {
-            ...veraError("INVALID"),
-            params: { issue: first?.code ?? "manifest", path: first?.path ?? "id" },
-          };
-        const id = manifest.id;
-        const plugin: PluginInstalled = {
-          id,
-          issues: [],
-          version: manifest.version,
-          name: manifest.name,
-          description: manifest.description,
-          ecosystem: manifest.ecosystem,
-          platforms: manifest.platforms,
-          irreversible: irreversibleRules[id] ?? [],
-          tier: "local",
-          source: /\.zip$/i.test(path) ? "zip" : "folder",
-          sha256,
-          installedAt: new Date().toISOString(),
+        value = installPackage(path, sha256);
+        break;
+      }
+      case "plugins.catalog": {
+        channels["plugins.catalog"].request.parse(input.data);
+        value = {
+          source: "remote",
+          url: "https://catalog.mock/vera/",
+          checkedAt: new Date().toISOString(),
+          plugins: catalogEntries.map((entry) => {
+            const installed = installedPlugins.get(entry.id);
+            return {
+              ...entry,
+              ...(installed
+                ? {
+                    installed: {
+                      ...(installed.version ? { version: installed.version } : {}),
+                      ...(installed.tier ? { tier: installed.tier } : {}),
+                    },
+                  }
+                : {}),
+              update:
+                installed?.version !== undefined && compareVersions(entry.version, installed.version) > 0,
+            };
+          }),
+          packs: catalogPacks,
         };
-        installedPlugins.set(id, plugin);
-        pluginPrograms.set(
-          id,
-          Object.entries(manifest.programs).map(([name, program]) => ({
-            name,
-            kind:
-              "pip" in program.install
-                ? "pip"
-                : "script" in program.install
-                  ? "script"
-                  : "download" in program.install
-                    ? "download"
-                    : "find",
-          })),
-        );
-        value = plugin;
+        break;
+      }
+      case "plugins.catalogReview": {
+        const { id } = channels["plugins.catalogReview"].request.parse(input.data);
+        const entry = catalogEntries.find((item) => item.id === id);
+        if (!entry) throw veraError("NOT_FOUND");
+        const review = mockPackage(`/mock/catalog/${id}.zip`);
+        value = { review, id, version: entry.version, tier: entry.tier, required: !installedPlugins.has(id) };
+        break;
+      }
+      case "plugins.catalogInstall": {
+        const { id, sha256 } = channels["plugins.catalogInstall"].request.parse(input.data);
+        const entry = catalogEntries.find((item) => item.id === id);
+        if (!entry) throw veraError("NOT_FOUND");
+        value = installPackage(`/mock/catalog/${id}.zip`, sha256, entry);
         break;
       }
       case "plugins.programs":

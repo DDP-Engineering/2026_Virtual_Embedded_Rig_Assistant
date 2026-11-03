@@ -56,6 +56,10 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
   fails on size; `package-report.json` lists the 15 largest files. A pinned `uv` binary for plugins is
   planned (ADR-0017, plugin work package PLG-05); not implemented as of 2026-11-01 — nothing in
   `package.mjs` or `electron-builder.yml` ships it.
+- The official plugins ship as a plugin catalog release in `<resources>/plugins/` (`npm run prepare:plugins`,
+  run by `package`; each zip is checked against its index before and after packing). The default plugin
+  catalog folder is the build input `VERA_PLUGIN_CATALOG_URL`, under the update feed's URL rule; it is empty
+  until the official catalog hosting exists (plugins architecture §7).
 - `npm run package` produces release artifacts with test switches compiled out (`VERA_TEST=0`).
   `package:test` (`VERA_TEST=1`) produces separately labelled instrumented artifacts for debugging;
   they are never delivered: app id `engineering.ddp.vera.test`, product "VERA Test", executable

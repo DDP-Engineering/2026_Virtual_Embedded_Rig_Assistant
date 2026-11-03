@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-9207423e"
+
+title = "Catalog URL field on the Plugins page"
+
+status = "active"
+
+requirement = "When the user saves a catalog URL on the Plugins page, the page shall store it in settings and read the catalog from it, show its invalid-URL message without saving when the URL is not https or loopback http, and Use default shall remove the setting."
+
+verification = "Component test: saving https://mirror.test/vera/ sends a settings update with plugins.catalog and keeps the package index and proxy values; an http URL on a remote host shows the invalid-URL message and sends nothing; nothing can be saved before the settings have loaded; Use default sends the plugins settings without catalog. Native e2e sets a loopback URL through the field."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/libraries/shared/src/settings.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/tests/e2e/plugins-catalog.spec.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -27,6 +27,7 @@
     "package:test": "node scripts/package.mjs --test",
     "prepare:model": "node scripts/prepare-model.mjs",
     "prepare:uv": "node scripts/prepare-uv.mjs",
+    "prepare:plugins": "node scripts/prepare-plugins.mjs",
     "prepare:windows-runtime": "node scripts/prepare-windows-runtime.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
     "smoke:package": "node scripts/smoke-package.mjs",

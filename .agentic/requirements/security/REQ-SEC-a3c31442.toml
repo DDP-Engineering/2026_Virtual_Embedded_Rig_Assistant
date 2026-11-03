@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-a3c31442"
+
+title = "Accept only HTTPS or loopback catalog URLs"
+
+status = "active"
+
+requirement = "If a catalog URL is not an absolute https URL or an http URL on localhost, 127.0.0.1 or [::1], or carries a user name, password, query or fragment, then VERA shall refuse it as a setting with INVALID and treat a catalog read whose final redirected URL is neither https nor http on such a loopback host as unreachable."
+
+verification = "Shared tests: https://example.test/catalog, http://127.0.0.1:8080/c/ are accepted (a trailing slash added); http://example.test/, ftp://, https://u:p@host/, ?q and #f are rejected by the settings schema. Core test: a loopback index whose final URL is a non-loopback http URL reads as unreachable, one whose final URL is https with a query (a signed storage link) reads; an http setting on a remote host counts as no catalog."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/scripts/update-config.mjs", "05_Software/src/apps/desktop/electron.vite.config.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-catalog.test.ts", "05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/tests/packaging/updates.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

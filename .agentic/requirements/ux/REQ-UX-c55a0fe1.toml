@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-c55a0fe1"
+
+title = "Catalog list and updates on the Plugins page"
+
+status = "active"
+
+requirement = "When the Plugins page shows the catalog, it shall show its source, the unreachable or invalid notice, every catalog plugin with its tier, version and installed state with an Install action, and on installed plugins with an update an Update action that opens the review screen when the review is required and installs directly otherwise."
+
+verification = "Component test: a community plugin shows its tier badge; an update with required review opens the review screen, one without installs without it; the bundled source with problem unreachable shows the notice. Native e2e: after the loopback catalog publishes a version that changes a rule, Check for updates shows Update and Update opens the review screen."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/tests/e2e/plugins-catalog.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

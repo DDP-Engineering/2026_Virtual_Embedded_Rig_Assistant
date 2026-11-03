@@ -297,6 +297,34 @@ it("mock plugins review a package and install only its reviewed hash", async () 
     { code: "id", path: "id" },
   ]);
 });
+// REQ-FUNC-f244f8f6, REQ-UX-72a349a1
+it("mock catalog lists packs and tiers, reviews and installs a catalog plugin with its tier", async () => {
+  const { api } = createMockApi();
+  const view = await api.invoke("plugins.catalog", { refresh: false });
+  expect(view.source).toBe("remote");
+  expect(view.packs[0]?.groups.map((group) => [group.name, group.default])).toEqual([
+    ["Core", true],
+    ["Security (irreversible)", false],
+  ]);
+  expect(view.plugins.find((plugin) => plugin.id === "can-logger")?.tier).toBe("community");
+  const reviewed = await api.invoke("plugins.catalogReview", { id: "serial-monitor" });
+  expect(reviewed).toMatchObject({ id: "serial-monitor", tier: "official", required: true });
+  await expect(
+    api.invoke("plugins.catalogInstall", { id: "serial-monitor", sha256: "f".repeat(64) }),
+  ).rejects.toMatchObject({ code: "CONFLICT" });
+  expect(
+    await api.invoke("plugins.catalogInstall", { id: "serial-monitor", sha256: reviewed.review.sha256 }),
+  ).toMatchObject({ id: "serial-monitor", tier: "official", source: "catalog" });
+  const after = await api.invoke("plugins.catalog", { refresh: true });
+  expect(after.plugins.find((plugin) => plugin.id === "serial-monitor")).toMatchObject({
+    installed: { version: "1.0.0", tier: "official" },
+    update: false,
+  });
+  expect((await api.invoke("plugins.catalogReview", { id: "serial-monitor" })).required).toBe(false);
+  await expect(api.invoke("plugins.catalogReview", { id: "ghost" })).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+});
 // REQ-FUNC-39617f81, REQ-FUNC-f024d73c, REQ-FUNC-8c38d223
 it("mock runs list, read a log and stop a running run of the open workbench", async () => {
   const { api } = createMockApi();

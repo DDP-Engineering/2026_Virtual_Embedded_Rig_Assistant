@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-f244f8f6"
+
+title = "Install a reviewed catalog plugin with its tier"
+
+status = "active"
+
+requirement = "When the user installs a catalog plugin with the integrity hash its review returned, the catalog shall re-verify the kept zip against the index entry, install it bound to that hash with the entry's tier and source `catalog` naming the zip URL, and remove the kept zip, refusing with CONFLICT when the kept zip is missing or changed."
+
+verification = "Core catalog test against a loopback server serving a release built by the catalog build: review then install of serial-monitor gives an installed plugin with tier official, source catalog and the reviewed hash; a second install without a new review is CONFLICT; a kept zip altered between review and install is CONFLICT. Native e2e installs from a loopback catalog through the review screen."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/e2e/plugins-catalog.spec.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  CatalogPlugin,
+  PluginCatalogReview,
   PluginIssue,
   PluginProgram,
   PluginProgramStatus,
@@ -7,10 +9,11 @@ import type {
   PluginRisk,
   PluginSummary,
 } from "@vera/shared";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { CatalogSection, catalogKey } from "./plugin-catalog.js";
 
 /** The open workbench, when there is one: plugins are enabled per workbench. */
 export interface PluginsWorkbench {
@@ -122,10 +125,13 @@ function InstallSource({ program }: { program: PluginProgram }) {
 
 function Review({
   review,
+  catalog,
   installed,
   cancel,
 }: {
   review: PluginReview;
+  /** A catalog package: installed through the catalog with its tier. */
+  catalog?: PluginCatalogReview | undefined;
   installed: () => void;
   cancel: () => void;
 }) {
@@ -139,7 +145,8 @@ function Review({
     setBusy(true);
     setError(undefined);
     try {
-      await api.invoke("plugins.install", { path: review.path, sha256: review.sha256 });
+      if (catalog) await api.invoke("plugins.catalogInstall", { id: catalog.id, sha256: review.sha256 });
+      else await api.invoke("plugins.install", { path: review.path, sha256: review.sha256 });
       installed();
     } catch (failure) {
       setError(failure);
@@ -151,6 +158,15 @@ function Review({
     <section className="plugin-review" aria-labelledby={title} data-plugin-review>
       <h3 id={title}>{t("plugins.reviewTitle", { name: manifest?.name ?? review.path })}</h3>
       <p className="muted">{t("plugins.reviewIntro")}</p>
+      {catalog && (
+        <p data-catalog-review>
+          {t("plugins.catalog.reviewFrom", {
+            tier: catalog.tier === "official" ? labels.tier.official : labels.tier.community,
+            version: catalog.version,
+          })}
+          {review.installed && <> {t("plugins.catalog.reviewChanges")}</>}
+        </p>
+      )}
       {review.installed && (
         <p role="status">{t("plugins.replaces", { version: review.installed.version ?? "?" })}</p>
       )}
@@ -274,10 +290,13 @@ function PluginCard({
   plugin,
   workbench,
   changed,
+  update,
 }: {
   plugin: PluginSummary;
   workbench: PluginsWorkbench | undefined;
   changed: () => Promise<void>;
+  /** The catalog entry when it offers a higher version, and the action that reviews it. */
+  update?: { entry: CatalogPlugin; start: () => void; busy: boolean } | undefined;
 }) {
   const { t } = useTranslation();
   const labels = useLabels();
@@ -320,6 +339,11 @@ function PluginCard({
         {plugin.ecosystem && <span> · {plugin.ecosystem}</span>}
       </p>
       {plugin.description && <p>{plugin.description}</p>}
+      {update && (
+        <p role="status" data-plugin-update>
+          {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
+        </p>
+      )}
       {!healthy && (
         <div role="alert" data-plugin-issues>
           <p>{t("plugins.broken")}</p>
@@ -358,6 +382,16 @@ function PluginCard({
       )}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="workbench-actions">
+        {update && (
+          <button
+            type="button"
+            data-action="plugin-update"
+            disabled={busy !== undefined || update.busy}
+            onClick={update.start}
+          >
+            {t("plugins.catalog.update", { version: update.entry.version })}
+          </button>
+        )}
         {healthy && programs.data?.some((status) => status.state !== "ready") && (
           <button
             type="button"
@@ -399,7 +433,9 @@ function PluginCard({
 export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefined }) {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const [review, setReview] = useState<PluginReview>();
+  const [review, setReview] = useState<{ review: PluginReview; catalog?: PluginCatalogReview }>();
+  /** Catalog plugins still to review after the one on screen (Install selected). */
+  const [queue, setQueue] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   const list = useQuery({
@@ -408,13 +444,59 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     // Listing re-checks every plugin's files, so the page shows what is on disk whenever it opens.
     staleTime: 0,
   });
+  // The last catalog read (an update check, or the first opening); Check for updates reads it again.
+  const catalog = useQuery({
+    queryKey: catalogKey,
+    queryFn: () => api.invoke("plugins.catalog", { refresh: false }),
+    staleTime: 0,
+  });
+  useEffect(
+    () =>
+      api.subscribe("app", (event) => {
+        if (event.type === "plugins.catalog") void client.invalidateQueries({ queryKey: catalogKey });
+      }),
+    [client],
+  );
   const changed = () => client.invalidateQueries({ queryKey: ["plugins"] });
+  /**
+   * Reviews catalog plugins one after another: a review that is required stops on the review screen
+   * (Install continues the queue, Cancel drops it); an update that changes no program or rule installs
+   * at once. The first failure stops the queue and shows its error.
+   */
+  async function reviewCatalog(ids: readonly string[]) {
+    setError(undefined);
+    setBusy(true);
+    let rest = [...ids];
+    try {
+      while (rest.length) {
+        const [id = "", ...after] = rest;
+        const reviewed = await api.invoke("plugins.catalogReview", { id });
+        if (reviewed.required) {
+          setQueue(after);
+          setReview({ review: reviewed.review, catalog: reviewed });
+          return;
+        }
+        await api.invoke("plugins.catalogInstall", { id, sha256: reviewed.review.sha256 });
+        void changed();
+        rest = after;
+      }
+      setQueue([]);
+    } catch (failure) {
+      setError(failure);
+      setQueue([]);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const updates = new Map(
+    (catalog.data?.plugins ?? []).filter((entry) => entry.update).map((entry) => [entry.id, entry]),
+  );
   async function choose(kind: "folder" | "zip") {
     setBusy(true);
     setError(undefined);
     try {
       const { path } = await api.invoke("plugins.choose", { kind });
-      if (path) setReview(await api.invoke("plugins.review", { path }));
+      if (path) setReview({ review: await api.invoke("plugins.review", { path }) });
     } catch (failure) {
       setError(failure);
     } finally {
@@ -425,11 +507,16 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     <section className="surface plugins-page" data-plugins>
       {review ? (
         <Review
-          review={review}
-          cancel={() => setReview(undefined)}
+          review={review.review}
+          catalog={review.catalog}
+          cancel={() => {
+            setReview(undefined);
+            setQueue([]);
+          }}
           installed={() => {
             setReview(undefined);
             void changed();
+            if (queue.length) void reviewCatalog(queue);
           }}
         />
       ) : (
@@ -461,10 +548,20 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
           {list.isError && <ErrorMessage error={list.error} />}
           {list.data?.length === 0 && <p>{t("plugins.none")}</p>}
           <ul className="plugin-list">
-            {list.data?.map((plugin) => (
-              <PluginCard key={plugin.id} plugin={plugin} workbench={workbench} changed={changed} />
-            ))}
+            {list.data?.map((plugin) => {
+              const entry = updates.get(plugin.id);
+              return (
+                <PluginCard
+                  key={plugin.id}
+                  plugin={plugin}
+                  workbench={workbench}
+                  changed={changed}
+                  update={entry && { entry, busy, start: () => void reviewCatalog([plugin.id]) }}
+                />
+              );
+            })}
           </ul>
+          <CatalogSection catalog={catalog} busy={busy} install={(ids) => void reviewCatalog(ids)} />
         </>
       )}
     </section>

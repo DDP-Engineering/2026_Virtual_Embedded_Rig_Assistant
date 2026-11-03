@@ -9,6 +9,8 @@ export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   --provider openai --model <id>
   --provider custom --base-url <url> --model <id>
   vera plugin install --path <folder|zip> --data <dir>
+  vera catalog check --source <dir>
+  vera catalog build --source <dir> --out <dir>
   vera index --workbench <dir> [--data <dir>]
   vera search --workbench <dir> --query <text> [--mode hybrid|keyword|semantic]
     [--k 1..20] [--path-glob <glob>] [--data <dir>]
@@ -136,11 +138,56 @@ function pluginCommand(argv: string[]): PluginOptions {
     throw new UsageError(error instanceof Error ? error.message : "Invalid arguments.");
   }
 }
-export function parseCommand(argv: string[]): RunOptions | DocumentOptions | PluginOptions | undefined {
+/**
+ * `vera catalog check --source <dir>` (the catalog's CI) and `vera catalog build --source <dir> --out
+ * <dir>` (its release job).
+ */
+export type CatalogOptions = { source: string; approve?: never } & (
+  | { kind: "catalog-check" }
+  | { kind: "catalog-build"; out: string }
+);
+function catalogCommand(argv: string[]): CatalogOptions {
+  const action = argv[1];
+  if (action !== "check" && action !== "build") throw new UsageError("Expected catalog check or build.");
+  try {
+    const { values, tokens } = parseArgs({
+      args: argv.slice(2),
+      strict: true,
+      allowPositionals: false,
+      tokens: true,
+      options:
+        action === "check"
+          ? { source: { type: "string" } }
+          : { source: { type: "string" }, out: { type: "string" } },
+    });
+    const seen = new Set<string>();
+    for (const token of tokens)
+      if (token.kind === "option") {
+        if (seen.has(token.name)) throw new UsageError(`Repeated --${token.name}.`);
+        seen.add(token.name);
+      }
+    const source = values.source as string | undefined,
+      out = (values as { out?: string }).out;
+    for (const value of [source, out])
+      if (value !== undefined && (!value.trim() || value.includes("\0")))
+        throw new UsageError("Invalid path.");
+    if (!source) throw new UsageError(`catalog ${action} requires --source.`);
+    if (action === "check") return { kind: "catalog-check", source: resolve(source) };
+    if (!out) throw new UsageError("catalog build requires --out.");
+    return { kind: "catalog-build", source: resolve(source), out: resolve(out) };
+  } catch (error) {
+    if (error instanceof UsageError) throw error;
+    throw new UsageError(error instanceof Error ? error.message : "Invalid arguments.");
+  }
+}
+export function parseCommand(
+  argv: string[],
+): RunOptions | DocumentOptions | PluginOptions | CatalogOptions | undefined {
   if (argv.length === 1 && ["help", "--help", "-h"].includes(argv[0] ?? "")) return;
   if (argv[0] === "index" || argv[0] === "search") return documentCommand(argv);
   if (argv[0] === "plugin") return pluginCommand(argv);
-  if (argv[0] !== "run") throw new UsageError("Expected command run, plugin, index or search.");
+  if (argv[0] === "catalog") return catalogCommand(argv);
+  if (argv[0] !== "run") throw new UsageError("Expected command run, plugin, catalog, index or search.");
   try {
     const { values, tokens } = parseArgs({
       args: argv.slice(1),

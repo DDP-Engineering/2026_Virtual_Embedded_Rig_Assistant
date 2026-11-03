@@ -804,6 +804,37 @@
       "script": "Script in the plugin: {{path}}",
       "download": "Download for {{platform}}:",
       "find": "Found on this computer:"
+    },
+    "catalog": {
+      "title": "Catalog",
+      "remote": "Plugins from {{url}}",
+      "bundled": "Plugins bundled with VERA (official plugins, available offline).",
+      "none": "No catalog is configured, and this build bundles no plugins.",
+      "problemUnreachable": "The catalog could not be reached.",
+      "problemInvalid": "The catalog's index is not valid.",
+      "check": "Check for updates",
+      "checking": "Checking…",
+      "url": "Catalog URL",
+      "urlPlaceholder": "https://example.com/vera-plugins/",
+      "urlHint": "Leave it empty for the default catalog, or enter your company's mirror.",
+      "urlInvalid": "Use an https URL, or http on this computer.",
+      "save": "Save",
+      "useDefault": "Use default",
+      "packs": "Packs",
+      "installSelected": "Install selected",
+      "plugins": "All catalog plugins",
+      "installed": "Installed: {{version}}",
+      "installAction": "Install",
+      "update": "Update to {{version}}",
+      "updateAvailable": "Update available: {{version}}",
+      "reviewFrom": "From the catalog: {{tier}}, version {{version}}.",
+      "reviewChanges": "This update changes programs, install sources or rules; review them before installing."
+    },
+    "catalogError": {
+      "sha256": "The downloaded plugin does not match the size and SHA-256 the catalog lists. Nothing was installed.",
+      "mismatch": "The downloaded plugin is not the plugin or version the catalog lists. Nothing was installed.",
+      "downgrade": "The catalog offers an older version than the installed one; the installed version stays.",
+      "download": "The plugin could not be downloaded. Check the connection and try again."
     }
   },
   "runs": {

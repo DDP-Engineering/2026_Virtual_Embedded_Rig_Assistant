@@ -27,6 +27,8 @@ export const appEventSchema = z.discriminatedUnion("type", [
   }),
   z.strictObject({ type: z.literal("update.changed"), snapshot: updateSnapshotSchema }),
   z.strictObject({ type: z.literal("indexer.status"), state: indexerStateSchema }),
+  /** The plugin catalog was read again (an update check); the Plugins page reloads its view. */
+  z.strictObject({ type: z.literal("plugins.catalog") }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 export const workbenchEventSchema = z.discriminatedUnion("type", [

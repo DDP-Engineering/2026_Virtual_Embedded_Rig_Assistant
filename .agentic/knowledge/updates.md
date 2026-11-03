@@ -13,6 +13,7 @@ Main owns scheduling/capabilities and payload lifecycle. ElectronUpdateBackend d
 metadata, downloads, SHA512/publisher verification and installation to electron-updater.
 SessionsHost closes admission atomically at core quiescence. Main drains persistence before
 installation. Renderer presents strict snapshots, plain text notes and portable confirmation. The native confirmation closes on disposal and restores its connected opener.
+The update mode also gates the plugin catalog's 24 h checks ([Plugins](plugins.md)): mode Off stops them.
 
 ## Public interface
 

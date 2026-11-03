@@ -26,7 +26,8 @@ export const pluginRecordSchema = z.strictObject({
   id: pluginIdSchema,
   version: z.string().min(1).max(128),
   tier: pluginTierSchema,
-  source: z.strictObject({ kind: z.enum(["folder", "zip"]), path: z.string().min(1).max(4096) }),
+  /** Where the package came from: a folder or zip path, or the catalog zip URL. */
+  source: z.strictObject({ kind: z.enum(["folder", "zip", "catalog"]), path: z.string().min(1).max(4096) }),
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   installedAt: z.iso.datetime(),
   programs: z.record(pluginProgramNameSchema, z.string().min(1).max(128)),
@@ -43,6 +44,18 @@ interface Package {
   files: Files;
   folder?: string;
   kind: "folder" | "zip";
+}
+/** A package read with the import checks and examined, as review, install and the catalog see it. */
+export interface PluginPackage extends Package {
+  manifest?: PluginManifest;
+  issues: PluginIssue[];
+  /** The integrity hash install.json would record. */
+  sha256: string;
+}
+/** A catalog install: the entry's tier and the zip URL recorded as the source. */
+export interface PluginOrigin {
+  tier: "official" | "community";
+  url: string;
 }
 const RECORD = "install.json";
 const MANIFEST = "plugin.yaml";
@@ -247,6 +260,36 @@ async function readRecord(path: string): Promise<PluginRecord | undefined> {
 }
 
 /**
+ * Reads a package folder or .zip file with the install checks and examines its manifest; nothing is
+ * written. A folder or one top zip folder must be named as the manifest id.
+ */
+export async function readPluginPackage(path: string): Promise<PluginPackage> {
+  const source = resolve(path);
+  let info: Awaited<ReturnType<typeof lstat>>;
+  try {
+    info = await lstat(source);
+  } catch (error) {
+    if (errno(error) === "ENOENT") throw fails("NOT_FOUND");
+    throw error;
+  }
+  if (info.isSymbolicLink()) throw fails("DENIED");
+  let pkg: Package;
+  if (info.isDirectory())
+    pkg = { source, files: await readFolder(source, false), folder: basename(source), kind: "folder" };
+  else if (info.isFile() && /\.zip$/i.test(source)) {
+    if (info.size > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
+    pkg = { source, ...readZip(await readFile(source)), kind: "zip" };
+  } else throw fails("INVALID");
+  const { manifest, issues } = examine(pkg.files, pkg.folder);
+  return {
+    ...pkg,
+    ...(manifest ? { manifest } : {}),
+    issues: issues.slice(0, PLUGIN_LIMITS.issues),
+    sha256: pluginIntegrity(pkg.files),
+  };
+}
+
+/**
  * Installed plugins under `<root>/installed/<id>/`, each with install.json. Nothing is cached:
  * every list and load re-reads the files and recomputes the integrity hash, so an edit after
  * install shows as "changed" and a restart sees exactly what is on disk.
@@ -347,40 +390,20 @@ export class PluginStore {
     if (issues.length || !record || !manifest) throw fails("INVALID");
     return { folder, record, manifest };
   }
-  /** Reads a package folder or .zip file with the install checks; nothing is written. */
-  private async readPackage(path: string): Promise<Package> {
-    const source = resolve(path);
-    let info: Awaited<ReturnType<typeof lstat>>;
-    try {
-      info = await lstat(source);
-    } catch (error) {
-      if (errno(error) === "ENOENT") throw fails("NOT_FOUND");
-      throw error;
-    }
-    if (info.isSymbolicLink()) throw fails("DENIED");
-    if (info.isDirectory())
-      return { source, files: await readFolder(source, false), folder: basename(source), kind: "folder" };
-    if (info.isFile() && /\.zip$/i.test(source)) {
-      if (info.size > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
-      return { source, ...readZip(await readFile(source)), kind: "zip" };
-    }
-    throw fails("INVALID");
-  }
   /**
    * What installing a folder or .zip file would install, without installing it: the integrity hash
    * install.json would record, the manifest whenever it parses, every issue and the version of an
    * installed plugin with the same id.
    */
   async review(path: string): Promise<PluginReview> {
-    const pkg = await this.readPackage(path);
-    const { manifest, issues } = examine(pkg.files, pkg.folder);
+    const { manifest, issues, ...pkg } = await readPluginPackage(path);
     const installed =
       manifest && (await this.ids()).includes(manifest.id) ? await this.summary(manifest.id) : undefined;
     return {
       path: pkg.source,
       kind: pkg.kind,
-      sha256: pluginIntegrity(pkg.files),
-      issues: issues.slice(0, PLUGIN_LIMITS.issues),
+      sha256: pkg.sha256,
+      issues,
       ...(manifest ? { manifest } : {}),
       ...(installed
         ? { installed: installed.version === undefined ? {} : { version: installed.version } }
@@ -388,15 +411,15 @@ export class PluginStore {
     };
   }
   /**
-   * Installs a folder or a .zip file as a local plugin, replacing an installed one of the same id.
-   * With `sha256` (the hash the user reviewed), a package whose files differ is CONFLICT.
+   * Installs a folder or a .zip file, replacing an installed one of the same id: a local plugin, or
+   * with `origin` a catalog plugin of that tier. With `sha256` (the hash the user reviewed), a package
+   * whose files differ is CONFLICT.
    */
-  install(path: string, sha256?: string): Promise<PluginInstalled> {
+  install(path: string, sha256?: string, origin?: PluginOrigin): Promise<PluginInstalled> {
     return this.serial(async () => {
-      const pkg = await this.readPackage(path);
-      const source = pkg.source;
-      if (sha256 !== undefined && pluginIntegrity(pkg.files) !== sha256) throw fails("CONFLICT");
-      const { manifest, issues } = examine(pkg.files, pkg.folder);
+      const pkg = await readPluginPackage(path);
+      if (sha256 !== undefined && pkg.sha256 !== sha256) throw fails("CONFLICT");
+      const { manifest, issues } = pkg;
       const first = issues[0];
       if (first || !manifest)
         throw {
@@ -407,9 +430,9 @@ export class PluginStore {
         format: 1,
         id: manifest.id,
         version: manifest.version,
-        tier: "local",
-        source: { kind: pkg.kind, path: source },
-        sha256: pluginIntegrity(pkg.files),
+        tier: origin?.tier ?? "local",
+        source: origin ? { kind: "catalog", path: origin.url } : { kind: pkg.kind, path: pkg.source },
+        sha256: pkg.sha256,
         installedAt: (this.options.now?.() ?? new Date()).toISOString(),
         programs: {},
       };

@@ -345,6 +345,47 @@ it("CLI installs a plugin and its programs and prints their statuses", async () 
     expect(usage.code, args.join(" ")).toBe(2);
   }
 });
+// REQ-FUNC-3b9f62f8 REQ-SEC-5fa5cd5e REQ-FUNC-f4381792
+it("CLI checks a catalog source and builds its release", async () => {
+  const { dir } = await fixture();
+  const source = join(dir, "catalog"),
+    out = join(dir, "release");
+  await cp(join(root, "plugins"), source, { recursive: true });
+  const clean = await launch(["catalog", "check", "--source", source]).result;
+  expect(clean.code).toBe(0);
+  expect(clean.stdout).toBe("");
+  const built = await launch(["catalog", "build", "--source", source, "--out", out]).result;
+  expect(built.code).toBe(0);
+  expect(built.stdout.trim()).toBe(`2 plugins written to ${out}`);
+  const index = JSON.parse(await readFile(join(out, "index.json"), "utf8"));
+  expect(index.plugins.map((plugin: { url: string }) => plugin.url)).toEqual([
+    "esp32-esptool-1.0.0.zip",
+    "serial-monitor-1.0.0.zip",
+  ]);
+  const manifest = join(source, "serial-monitor", "plugin.yaml");
+  await writeFile(
+    manifest,
+    (await readFile(manifest, "utf8")).replace(
+      /^rules:\r?\n/m,
+      'rules:\n  - { match: "serial * burn *", risk: device-read }\n',
+    ),
+  );
+  const burn = await launch(["catalog", "check", "--source", source]).result;
+  expect(burn.code).toBe(1);
+  expect(burn.stdout.trim()).toBe('serial-monitor: token: burn in "serial * burn *" at device-read');
+  const refused = await launch(["catalog", "build", "--source", source, "--out", join(dir, "other")]).result;
+  expect(refused.code).toBe(1);
+  expect(existsSync(join(dir, "other"))).toBe(false);
+  for (const args of [
+    ["catalog", "check"],
+    ["catalog", "build", "--source", source],
+    ["catalog", "publish"],
+  ]) {
+    const usage = await launch(args).result;
+    expect(usage.code, args.join(" ")).toBe(2);
+  }
+  // Seven CLI processes: under a full parallel suite they outlast the default 5 s.
+}, 30000);
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {
   const { workbench } = await fixture();

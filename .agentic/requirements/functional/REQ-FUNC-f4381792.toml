@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-f4381792"
+
+title = "Catalog build writes zips and the index"
+
+status = "active"
+
+requirement = "When the catalog build runs on a source without issues and an empty or missing output folder, it shall write one deterministic zip per plugin named `<id>-<version>.zip` with the package under one `<id>/` folder and an index.json whose entries carry each zip's byte size, SHA-256 and the tier from catalog.yaml, and if the source has an issue or the output folder is not empty, it shall write nothing and exit with 1."
+
+verification = "Core test: building the fixture source twice gives identical zip bytes; the index lists each plugin with tier official or community, bytes and sha256 of its zip; the PluginStore installs each zip. A source with a token issue and a non-empty output folder write nothing. CLI integration test runs the build."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/apps/cli/src/catalog.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/tests/integration/cli.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -37,6 +37,10 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "approval.confirmMismatch": t("approval.confirmMismatch"),
     "documents.textBinary": t("documents.textBinary"),
     "documents.textTooLarge": t("documents.textTooLarge"),
+    "plugins.catalogError.sha256": t("plugins.catalogError.sha256"),
+    "plugins.catalogError.mismatch": t("plugins.catalogError.mismatch"),
+    "plugins.catalogError.downgrade": t("plugins.catalogError.downgrade"),
+    "plugins.catalogError.download": t("plugins.catalogError.download"),
   };
   return (
     <p role="alert" data-i18n={Object.hasOwn(messages, key) ? key : "errors.INTERNAL"}>

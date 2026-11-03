@@ -29,3 +29,11 @@ Signing the index is deferred until review by maintainers no longer scales.
 - Maintainers review rules and install sources, not only code.
 - CI owns the dangerous-token lint (`burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`,
   `secure`, `encrypt`, `transmit`, `send` at a level below `device-write`).
+
+## Implementation status (2026-11-03)
+- PLG-07 (AEGIS TASK-1a519115): `vera catalog check|build` (core `catalog-source.ts`) are the CI and
+  release steps; the maintainers' `catalog.yaml` lists official plugins and reviewed rules. The desktop
+  client (core `catalog.ts`) verifies size and SHA-256 per zip, shows the tier and reviews first installs
+  and changing updates. The official plugins ship bundled as `<resources>/plugins/`.
+- Open: the official catalog URL and hosting (build input `VERA_PLUGIN_CATALOG_URL` is empty), the hosted
+  repository and its CI platform, and index signing, still deferred.

@@ -111,6 +111,13 @@ function cover(parts: Part[], line: Token[]): (number | null)[] | null {
   return walk(0, 0) ? taken.slice(0, parts.length) : null;
 }
 
+/** Whether a rule's first pattern token matches the program name, so the rule can apply to it. */
+export function ruleNamesProgram(match: string, program: string): boolean {
+  if (!match.trim()) return false;
+  const first = pattern(match)[0];
+  return first !== undefined && cover([first], tokens(program, [])) !== null;
+}
+
 /** Classifies a command line with the declaring plugin's rules (architecture §2.2). */
 export function classifyCommand(
   rules: readonly ProgramRule[],

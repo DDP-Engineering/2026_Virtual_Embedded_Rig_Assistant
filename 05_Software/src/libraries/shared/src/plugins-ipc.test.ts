@@ -131,3 +131,67 @@ it("validates the runs list, log and stop channels", () => {
   ).toBeTruthy();
   expect(channels["runs.stop"].response.parse({})).toEqual({});
 });
+
+// REQ-FUNC-f244f8f6, REQ-FUNC-98ded47a
+it("validates the catalog view, review and install channels and the catalog app event", async () => {
+  const { appEventSchema } = await import("./events.js");
+  const sha256 = "c".repeat(64);
+  expect(channels["plugins.catalog"].request.parse({ refresh: true })).toEqual({ refresh: true });
+  expect(channels["plugins.catalog"].request.safeParse({}).success).toBe(false);
+  const view = {
+    source: "remote",
+    url: "https://catalog.test/vera/",
+    checkedAt: "2026-11-03T12:00:00.000Z",
+    plugins: [
+      {
+        id: "serial-monitor",
+        version: "1.0.1",
+        tier: "official",
+        ecosystem: "general",
+        platforms: ["windows-x64", "linux-x64"],
+        name: "Serial monitor",
+        description: "Lists ports.",
+        requires: [],
+        url: "serial-monitor-1.0.1.zip",
+        sha256,
+        bytes: 900,
+        installed: { version: "1.0.0", tier: "official" },
+        update: true,
+      },
+    ],
+    packs: [
+      { id: "esp32", name: "ESP32", groups: [{ name: "Core", plugins: ["serial-monitor"], default: true }] },
+    ],
+  };
+  expect(channels["plugins.catalog"].response.parse(view)).toEqual(view);
+  expect(channels["plugins.catalog"].response.safeParse({ ...view, source: "mirror" }).success).toBe(false);
+  expect(channels["plugins.catalog"].response.parse({ source: "none", plugins: [], packs: [] }).source).toBe(
+    "none",
+  );
+  expect(channels["plugins.catalogReview"].request.parse({ id: "serial-monitor" })).toEqual({
+    id: "serial-monitor",
+  });
+  expect(channels["plugins.catalogReview"].request.safeParse({ id: "../x" }).success).toBe(false);
+  const review = {
+    review: { path: "C:/data/plugins/catalog/x.zip", kind: "zip", sha256, issues: [] },
+    id: "serial-monitor",
+    version: "1.0.1",
+    tier: "official",
+    required: false,
+  };
+  expect(channels["plugins.catalogReview"].response.parse(review)).toEqual(review);
+  expect(channels["plugins.catalogInstall"].request.parse({ id: "serial-monitor", sha256 })).toEqual({
+    id: "serial-monitor",
+    sha256,
+  });
+  expect(channels["plugins.catalogInstall"].request.safeParse({ id: "serial-monitor" }).success).toBe(false);
+  expect(
+    channels["plugins.catalogInstall"].response.parse({
+      id: "serial-monitor",
+      issues: [],
+      tier: "official",
+      source: "catalog",
+    }).source,
+  ).toBe("catalog");
+  expect(appEventSchema.parse({ type: "plugins.catalog" })).toEqual({ type: "plugins.catalog" });
+});

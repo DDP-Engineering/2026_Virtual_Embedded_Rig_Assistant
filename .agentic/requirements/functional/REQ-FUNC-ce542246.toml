@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-ce542246"
+
+title = "Check the catalog for updates at start and every 24 hours"
+
+status = "active"
+
+requirement = "While a remote catalog location is set and the VERA update mode is not off, the desktop app shall read the catalog index after the window opens and every 24 hours, mark installed plugins whose catalog version is higher as having an update and emit the `plugins.catalog` app event, without downloading or installing any plugin."
+
+verification = "Main unit test with fake timers: the check runs once at start and again after 24 h, not while `enabled()` is false, and stops on close; inspection of main/index.ts: `enabled()` is the update mode not off and a catalog location set. Core catalog test: an installed 1.0.0 with the index at 1.0.1 lists update true, 1.0.0 lists update false, and no zip is fetched by a check."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/catalog-checks.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/shared/src/events.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/catalog-checks.test.ts", "05_Software/src/libraries/core/src/plugins/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

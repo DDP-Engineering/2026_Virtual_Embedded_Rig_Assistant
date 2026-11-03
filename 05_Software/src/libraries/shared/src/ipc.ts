@@ -18,6 +18,13 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  pluginCatalogIdRequestSchema,
+  pluginCatalogInstallRequestSchema,
+  pluginCatalogRequestSchema,
+  pluginCatalogReviewSchema,
+  pluginCatalogViewSchema,
+} from "./plugin-catalog.js";
+import {
   pluginIdSchema,
   pluginInstalledSchema,
   pluginInstallRequestSchema,
@@ -195,6 +202,20 @@ export const channels = {
     "plugins.provision",
     pluginProgramsRequestSchema,
     z.array(pluginProgramStatusSchema).max(64),
+  ),
+  /** The plugin catalog (spec REQ-DATA-b40d3f9b §5): the last read, or a new one with `refresh`. */
+  "plugins.catalog": defineChannel("plugins.catalog", pluginCatalogRequestSchema, pluginCatalogViewSchema),
+  /** Downloads and verifies a catalog plugin and reviews it; installs nothing. */
+  "plugins.catalogReview": defineChannel(
+    "plugins.catalogReview",
+    pluginCatalogIdRequestSchema,
+    pluginCatalogReviewSchema,
+  ),
+  /** Installs the reviewed catalog plugin bound to the integrity hash its review showed. */
+  "plugins.catalogInstall": defineChannel(
+    "plugins.catalogInstall",
+    pluginCatalogInstallRequestSchema,
+    pluginInstalledSchema,
   ),
   /** Program runs of the open workbench, newest first (spec REQ-DATA-f563074f). */
   "runs.list": defineChannel(

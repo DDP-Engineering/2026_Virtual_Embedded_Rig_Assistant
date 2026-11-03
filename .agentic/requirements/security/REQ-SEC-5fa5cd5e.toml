@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-5fa5cd5e"
+
+title = "Catalog check rejects dangerous tokens below device-write"
+
+status = "active"
+
+requirement = "If a catalog rule at `safe` or `device-read` has a pattern that contains burn, efuse, fuse, otp, rdp, lock, protect, secure, encrypt, transmit or send in any letter case and catalog.yaml does not list that plugin and pattern as reviewed, then the catalog check shall report a `token` issue naming the token."
+
+verification = "Core test: a rule `tool * burn *` at device-read reports `token` burn; the same rule at device-write, or listed under reviewed, reports nothing; `tool * BLOCK *` at safe reports lock. CLI integration test: the check exits 1 on that source."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/src/libraries/shared/src/plugin-catalog.test.ts", "05_Software/tests/integration/cli.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

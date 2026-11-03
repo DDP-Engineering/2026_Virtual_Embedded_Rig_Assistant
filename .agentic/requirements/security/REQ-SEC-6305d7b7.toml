@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-6305d7b7"
+
+title = "Refuse a catalog zip that does not match its entry"
+
+status = "active"
+
+requirement = "If a verified catalog zip holds a package whose manifest id or version differs from its index entry or that has any review issue, then the catalog shall refuse it with INVALID `plugins.catalogError.mismatch` and remove the kept zip."
+
+verification = "Core catalog test: an index entry `serial-monitor` 9.9.9 whose zip contains version 1.0.0 is refused with INVALID plugins.catalogError.mismatch and the kept zip is gone."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

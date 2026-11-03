@@ -201,6 +201,16 @@ background run from the panel.
   package for offline first install.
 **Done when:** a tagged catalog release is installed by VERA; an update that changes a rule shows the
 review screen; a zip with a wrong hash is refused.
+- Done 2026-11-03 (AEGIS TASK-1a519115): the catalog source is a folder of plugin folders with `packs.yaml` and the
+  maintainers' `catalog.yaml` (`official`, `reviewed`); `05_Software/plugins/` is one, with `CONTRIBUTING.md` and a CI
+  template (`.ci/catalog.yml`) for the hosted repository, which is not created yet. CI and release are `vera catalog
+  check` and `vera catalog build` (index.json format 1 with entries and packs; `url` is the bare zip name beside the
+  index). The client reads the folder URL from settings `plugins.catalog`, else the build input
+  `VERA_PLUGIN_CATALOG_URL` (empty), else the bundled official release (`npm run prepare:plugins`, shipped as
+  `<resources>/plugins/`); it verifies size and SHA-256, refuses entry mismatches and downgrades, reviews first installs
+  and updates that change programs or rules, and checks at start and every 24 h while the update mode is not Off.
+  Spec `.agentic/specs/REQ-DATA-b40d3f9b.md`. Open: the official catalog URL and hosting, the hosted repository's CI
+  platform and release upload, index signing (deferred by ADR-0019).
 
 ### PLG-08 `serial-monitor`
 **Goal:** list ports and capture consoles on both systems. **Depends on:** PLG-04, PLG-05.

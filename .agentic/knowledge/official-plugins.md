@@ -15,11 +15,16 @@ plugin skill discovery is [Skills](skills.md).
 ## Purpose and boundaries
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
-install --path`, IPC `plugins.install`) and enables per workbench; nothing bundles them into the VERA package or
-installs them automatically yet (catalog and bundling: PLG-07). A package holds content only: a manifest, PEP 723
+install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
+source: `packs.yaml` (the ESP32 pack, group Core with both plugins, default on), `catalog.yaml` (both plugins
+`official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
+catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
+catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
+an offline first install. Nothing installs them automatically. A package holds content only: a manifest, PEP 723
 scripts that the provisioner runs with the bundled uv, and Markdown skills; a pip program such as esptool comes from
-PyPI at install time and is not part of the folder. `requires` is declarative: esp32-esptool lists `serial-monitor`, and
-nothing checks or installs it yet. Platform behaviour such as risk
+PyPI at install time and is not part of the folder. `requires`: esp32-esptool lists `serial-monitor`; `vera catalog check`
+reports a `requires` that names no catalog plugin, and catalog installs review required plugins first, while installs
+from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
@@ -119,6 +124,9 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `05_Software/plugins/esp32-esptool/plugin.yaml` — manifest: program `esptool` (pip), version probe, rules, docs.
 - `05_Software/plugins/esp32-esptool/skills/esp32-flash/SKILL.md` — identify, flash from flasher_args.json, verify, boot log.
 - `05_Software/plugins/esp32-esptool/README.md` — catalog description.
+- `05_Software/plugins/packs.yaml`, `catalog.yaml` — packs and the maintainers' file of the catalog source.
+- `05_Software/plugins/CONTRIBUTING.md`, `.ci/catalog.yml` — contribution guide and CI template for `vera-plugins`.
+- `05_Software/scripts/prepare-plugins.mjs` — builds and checks the bundled catalog release.
 - `05_Software/tests/integration/esp32-esptool.test.ts` — package, provisioning, rules, replay session, skill.
 - `05_Software/tests/fixtures/esp32-esptool/fake_esptool.py` — stub esptool a fake uv installs as the pip entry point (distlib `.exe` launcher on Windows); records arguments and file hashes.
 - `05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt` — recorded `esptool --help` of 5.6.0.

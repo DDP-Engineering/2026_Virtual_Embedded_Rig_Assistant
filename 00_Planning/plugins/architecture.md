@@ -94,7 +94,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `name`, `description` | ≤ 80 and ≤ 1024 characters; the description says what and when, like a skill's |
 | `ecosystem` | grouping tag: `esp32`, `stm32`, `microchip`, `can`, `wireshark`, `general`, … |
 | `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
-| `requires` | plugin IDs installed together with this one (at most 64; not checked at install or enable until the catalog work) |
+| `requires` | plugin IDs installed together with this one (at most 64): catalog installs review the required catalog plugins first and the catalog check rejects unknown ids; installs from a folder or zip and enabling do not check it |
 | `programs.<name>` | `[a-z0-9._-]{1,64}`; the value the agent passes as `program` |
 | `programs.*.install` | exactly one kind of §5; a `script` path must exist in the package; a `pip` requirement starts with a letter or digit (never an option); a `download` URL ending in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` needs `path`; `find` entries are `%PATH%`/`$PATH` or absolute paths (optionally starting with `~` or a variable) with `*` inside one segment, in at most two segments, and no `**`; `find` takes an optional `hint` |
 | `programs.*.version` | probe arguments, a regex with one capture group and an optional supported `range` (comma-separated `>=`, `>`, `<=`, `<`, `==`, `!=` with dotted numbers, e.g. `>=5,<6`); shown in the UI and the prompt |
@@ -369,26 +369,35 @@ Disk use, measured 2026-11-02 on Windows x64 (apparent bytes; Ubuntu still to me
 
 ```
 vera-plugins/                    # one Git repository
-  plugins/<id>/…                 # §2 format
-  packs.yaml                     # ecosystem packs
-  CONTRIBUTING.md
-  .github/workflows/             # validate on PR; on tag publish index.json and <id>-<version>.zip
+  plugins/                       # the catalog source (05_Software/plugins/ has the same layout)
+    <id>/…                       # §2 format; the folder name is the id
+    packs.yaml                   # ecosystem packs
+    catalog.yaml                 # maintainers only: official plugins, reviewed rules
+    CONTRIBUTING.md
+  .github/workflows/             # vera catalog check on PR; on tag vera catalog build, publish its files
 ```
 
-- `index.json` entry: `{id, version, tier, ecosystem, platforms, name, description, requires, url, sha256, bytes}`.
+- `index.json` format 1 is `{format, plugins, packs}`; an entry is `{id, version, tier, ecosystem, platforms, name,
+  description, requires, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
+  so a mirror is a plain copy. Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
 - Tiers: `official` (VERA maintainers own it), `community` (merged by PR after CI and a
   maintainer's review of programs, install sources and rules). A plugin installed from a folder or
   zip is `local`.
-- CI rejects schema errors and duplicate IDs. It also rejects a program without rules, and a rule
-  whose pattern contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`,
-  `encrypt`, `transmit` or `send` at a level below `device-write`, unless a maintainer marks it
-  reviewed.
-- VERA reads the index from a catalog URL setting (default: the official one; companies may point
-  to a mirror), verifies each zip's SHA-256 and shows a review screen before the first install and
-  before any update that changes programs, rules or install sources. Update checks run at start
-  and every 24 h when enabled; updates are never installed automatically.
-- Official plugins also ship inside the VERA package, so a first install works offline. The catalog
-  updates them later.
+- CI (`vera catalog check`) rejects schema errors and a folder whose manifest id differs from its name
+  (so ids are unique), references to missing plugins, a program without rules, and a rule whose
+  pattern contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`,
+  `transmit` or `send` (case-insensitive substring) at `safe` or `device-read`, unless `catalog.yaml`
+  marks it reviewed.
+- VERA reads the index from the catalog folder URL setting (default: the build input
+  `VERA_PLUGIN_CATALOG_URL`, empty until the official hosting exists; companies may point to a
+  mirror; https, or http on loopback). It verifies each zip's size and SHA-256 against the index,
+  refuses a package that is not the entry's id and version and a downgrade, and shows a review
+  screen before the first install and before any update that changes programs (install sources
+  included) or rules. Update checks run after the window opens and every 24 h while the VERA update
+  mode is not Off; updates are never installed automatically. The index is not signed (ADR-0019).
+- Official plugins also ship inside the VERA package as a catalog release (`<resources>/plugins/`,
+  built by `npm run prepare:plugins`), which VERA uses when no catalog is set or it is unreachable,
+  so a first install works offline. The catalog updates them later.
 
 ```yaml
 # packs.yaml

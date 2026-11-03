@@ -1,0 +1,7 @@
+# Maintainers' file of the catalog (spec REQ-DATA-b40d3f9b §1.2). Only maintainers change it.
+format: 1
+# Plugins maintained by the VERA maintainers; every other catalog plugin is community.
+official: [serial-monitor, esp32-esptool]
+# Rules below device-write whose pattern contains a dangerous token, accepted after review:
+# - { plugin: <id>, match: "<the rule's exact match>" }
+reviewed: []

@@ -13,6 +13,7 @@ import {
   validateNativeFiles,
 } from "./package-checks.mjs";
 import { prepareBundledModel } from "./prepare-model.mjs";
+import { checkBundledPlugins, prepareBundledPlugins } from "./prepare-plugins.mjs";
 import { checkUvBinary, prepareBundledUv, uvEntry, uvPlatform } from "./prepare-uv.mjs";
 import { prepareBundledWindowsRuntime } from "./prepare-windows-runtime.mjs";
 import { updatePublish } from "./update-config.mjs";
@@ -154,6 +155,17 @@ export async function stageUv(stage, entry, platform = uvPlatform(), source = jo
   return target;
 }
 
+/** Copies the bundled catalog release (prepare:plugins) to `<stage>/resources/plugins/` (`<resources>/plugins/`). */
+export async function stageBundledPlugins(stage, source = join(root, "src/bundled-plugins")) {
+  try {
+    await checkBundledPlugins(source);
+  } catch (error) {
+    if (error.code === "ENOENT") throw new Error("bundled plugins missing; run npm run prepare:plugins");
+    throw error;
+  }
+  await cp(source, join(stage, "resources", "plugins"), { recursive: true });
+}
+
 export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp")) {
   const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
@@ -169,6 +181,7 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
   await cp(join(root, "src/models/model-manifest.json"), join(stage, "resources/model-manifest.json"));
   const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
   await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
+  await stageBundledPlugins(stage);
   await cp(
     join(root, "src/windows_runtime/windows-runtime-manifest.json"),
     join(stage, "resources/windows-runtime-manifest.json"),
@@ -269,6 +282,7 @@ async function packageApp() {
     "scripts/package-checks.mjs",
     "scripts/prepare-windows-runtime.mjs",
     "scripts/prepare-uv.mjs",
+    "scripts/prepare-plugins.mjs",
     "scripts/update-config.mjs",
     "src/apps/desktop/electron-builder.yml",
     "src/apps/desktop/electron.vite.config.ts",
@@ -298,6 +312,7 @@ async function packageApp() {
     VERA_SIGNED_BUILD: distribution.forceCodeSigning ? "1" : "0",
   };
   await prepareBundledModel();
+  await prepareBundledPlugins();
   const uv = await prepareBundledUv();
   const uvBinary = uvEntry(uv.manifest, uv.platform);
   const windowsRuntime = process.platform === "win32" ? await prepareBundledWindowsRuntime() : undefined;
@@ -368,6 +383,7 @@ async function packageApp() {
         throw new Error(`packaged model integrity: ${file.path}`);
     }
     await checkUvBinary(join(unpacked, "resources/uv", uvBinary.binary), uvBinary);
+    await checkBundledPlugins(join(unpacked, "resources/plugins"));
     for (const file of windowsRuntime?.files ?? []) {
       const bytes = await readFile(
         join(

@@ -290,7 +290,7 @@ export const pluginInstalledSchema = z.strictObject({
   ecosystem: z.string().max(64).optional(),
   platforms: z.array(pluginPlatformSchema).max(3).optional(),
   tier: pluginTierSchema.optional(),
-  source: z.enum(["folder", "zip"]).optional(),
+  source: z.enum(["folder", "zip", "catalog"]).optional(),
   sha256: z
     .string()
     .regex(/^[0-9a-f]{64}$/)

@@ -34,6 +34,11 @@ extraResources:
     to: uv
     filter:
       - '**/*'
+  # The official plugins as a catalog release for an offline first install (prepare-plugins.mjs).
+  - from: resources/plugins
+    to: plugins
+    filter:
+      - '**/*'
 win:
   target:
     - target: nsis

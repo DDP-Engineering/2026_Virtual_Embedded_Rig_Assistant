@@ -2,6 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { parseCommand, USAGE, UsageError } from "./args.js";
+import { runCatalog } from "./catalog.js";
 import { runDocuments } from "./documents.js";
 import { ConsoleLogger } from "./host-ports.js";
 import { runPluginInstall } from "./plugin.js";
@@ -37,6 +38,8 @@ try {
   if (!options) process.stdout.write(`${logger.scrub(USAGE)}\n`);
   else if (options.kind === "index" || options.kind === "search")
     process.exitCode = await runDocuments(options, logger, controller.signal);
+  else if (options.kind === "catalog-check" || options.kind === "catalog-build")
+    process.exitCode = await runCatalog(options);
   else if (options.kind === "plugin-install")
     process.exitCode = await runPluginInstall(options, logger, controller.signal);
   else {
