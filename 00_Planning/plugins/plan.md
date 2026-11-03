@@ -195,15 +195,23 @@ review screen; a zip with a wrong hash is refused.
 ### PLG-08 `serial-monitor`
 **Goal:** list ports and capture consoles on both systems. **Depends on:** PLG-04, PLG-05.
 **Specs:** packs §1.1.
-- `scripts/serial.py` (pyserial): `list` (port, VID:PID, serial number, family name), `capture`
+- `scripts/serial_monitor.py` (pyserial), program `serial`: `list` (port, VID:PID, serial number, family name), `capture`
   (port, baud, duration, `until` regex, max bytes, optional DTR/RTS reset), `send` (one line).
 - EACCES on Linux returns the `dialout`/`uucp` instruction.
 **Done when:** on both systems, with an ESP32-S3 (USB-Serial-JTAG) and an ESP32 behind a CP210x, the
 agent lists both boards with their family and captures a boot log after a reset.
+- Done 2026-11-03: `05_Software/plugins/serial-monitor/` (installed from the folder; bundling official plugins
+  stays with PLG-07), program `serial` = `scripts/serial_monitor.py` (the name `serial.py` would shadow
+  pyserial), rules list/help `safe`, capture `device-read`, send `device-write`, skills `serial-console` and
+  `esp32-identify` (packs §1.4). CLI contract, JSON fields, reset sequence and exit codes:
+  `.agentic/specs/REQ-FUNC-42818bb7.md`. Tests run the installed script under the toolchain Python with a fake
+  pyserial and through the real provisioner, runner and a replay session. Owed: the real-board check on Windows
+  and Ubuntu (TASK-5cdbba96 journal) and a native Linux run of the by-id, EACCES and lock branches.
 
 ### PLG-09 `esp32-esptool`
 **Goal:** identify and flash ESP32 chips. **Depends on:** PLG-08. **Specs:** packs §1.2, §1.4.
-- Manifest of architecture §2.1; skills `esp32-identify` and `esp32-flash`.
+- Manifest of architecture §2.1 (`requires: [serial-monitor]`, folder `05_Software/plugins/esp32-esptool/`);
+  skill `esp32-flash`. `esp32-identify` ships with `serial-monitor` (PLG-08) and already calls `esptool chip-id`.
 **Done when:** on both boards and both systems the agent identifies the chip, flashes a prebuilt
 image from `flasher_args.json`, verifies it and captures the boot log; each approval shows the image
 hashes.

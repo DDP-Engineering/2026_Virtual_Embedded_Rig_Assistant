@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-4013192c"
+title = "Explain the serial group on a Linux permission error"
+status = "active"
+requirement = "If opening the port fails with permission denied (EACCES), then the serial-monitor script shall exit with code 3 and print the instruction to add the user to the dialout group on Debian, Ubuntu and Fedora or the uucp group on Arch with sudo usermod -aG, and to log out and in again."
+verification = "Fake pyserial raising SerialException with errno 13 for /dev/ttyUSB0: exit 3, stderr holds 'sudo usermod -aG dialout $USER', 'sudo usermod -aG uucp $USER' and the log-in-again step. Boundary: another errno (2) prints no group instruction."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

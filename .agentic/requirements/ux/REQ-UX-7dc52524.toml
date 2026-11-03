@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-7dc52524"
+title = "Teach the agent the serial-monitor workflow"
+status = "active"
+requirement = "Where the serial-monitor plugin is enabled, the agent shall be offered its skills serial-console and esp32-identify, whose instructions say to list the ports before using one, to prefer /dev/serial/by-id paths on Linux, to map VID:PID to a family, and to confirm the chip with esptool chip-id when the esp32-esptool plugin is enabled."
+verification = "SkillCatalog with the installed plugin lists serial-console and esp32-identify with source plugin and no issues; programPromptEntries names both skills for serial; the skill bodies contain serial list, /dev/serial/by-id, the family table and esptool chip-id. Boundary: with the plugin disabled neither skill is listed."
+affected_paths = ["05_Software/plugins/serial-monitor/skills/serial-console/SKILL.md", "05_Software/plugins/serial-monitor/skills/esp32-identify/SKILL.md"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

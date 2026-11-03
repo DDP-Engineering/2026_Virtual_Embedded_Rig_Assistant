@@ -50,6 +50,10 @@ and PEP 723 script programs under <userData>/plugins/runtime with one managed CP
 there, find programs are located on PATH and absolute globs, versions are probed against supported ranges, and installs
 run only on a user action (plugins.provision IPC, vera plugin install).
 
+[Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/, installed
+from the folder: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS
+reset and sends one line (program serial, a PEP 723 pyserial script; list safe, capture device-read, send device-write).
+
 [Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
 

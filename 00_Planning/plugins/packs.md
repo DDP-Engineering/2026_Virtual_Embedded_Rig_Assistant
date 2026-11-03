@@ -39,7 +39,7 @@ USB identifiers used by `serial-monitor` to name the board family:
 
 | Group | Plugin | Install kind | Default |
 |---|---|---|---|
-| Core | `serial-monitor` | `script` (`scripts/serial.py`, pyserial) | on |
+| Core | `serial-monitor` | `script` (`scripts/serial_monitor.py`, pyserial 3.5; a file named `serial.py` would shadow pyserial's `serial` package) | on |
 | Core | `esp32-esptool` | `pip: esptool>=5,<6` | on |
 | ESP-IDF build | `esp32-idf` | `find` EIM and ESP-IDF ≥ 5.4; `hint` links the EIM installer | on |
 | JTAG debug | `esp32-openocd` | `download` OpenOCD-esp32 release per platform | off |

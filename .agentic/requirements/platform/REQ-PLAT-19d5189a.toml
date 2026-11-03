@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-19d5189a"
+title = "Report the stable by-id name of a Linux port"
+status = "active"
+requirement = "Where the folder /dev/serial/by-id exists, the serial-monitor script shall report as by_id the link in that folder that resolves to the listed port's device, and null for a port no link resolves to."
+verification = "With the by-id folder pointed at a test folder whose entries resolve (patched realpath) to /dev/ttyACM0 and /dev/ttyUSB0, list reports the link paths for those ports and null for /dev/ttyS0. Boundary: without the folder (Windows) every by_id is null."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py", "05_Software/tests/fixtures/serial-monitor/by_id.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

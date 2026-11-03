@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-4041b893"
+title = "Run the plugin through an agent session"
+status = "active"
+requirement = "When an agent session in ask mode runs serial list and then serial capture with --reset through run_program, VERA shall run list without an approval and capture only after the user approves it, returning each command's output to the agent."
+verification = "Replay session with the installed plugin, a real NodeProcessHost runner and a resolver running the test Python with the fake pyserial: the first tool result holds both families and no approval row exists; capture waits with risk device-read and the reset note, and after approval its result holds the boot log. Boundary: in read-only mode capture is refused without opening the port."
+affected_paths = ["05_Software/plugins/serial-monitor/plugin.yaml", "05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-f215472a"
+title = "List and capture real ESP32 boards on both systems"
+status = "active"
+requirement = "On Windows 11 and Ubuntu LTS, with an ESP32-S3 on its USB-Serial-JTAG port and an ESP32 behind a CP210x connected, the agent shall list both boards with their family and capture each board's boot log after a DTR/RTS reset through the serial-monitor plugin."
+verification = "Manual: on each system install the plugin with vera plugin install --path 05_Software/plugins/serial-monitor, enable it, ask the agent to identify the boards and capture a boot log after a reset; confirm both families and both boot logs, and on Ubuntu with the user outside dialout confirm the group instruction (steps in the task journal)."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py", "05_Software/plugins/serial-monitor/plugin.yaml"]
+linked_tests = []
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-3c25e5c0"
+title = "Report other port failures with a hint"
+status = "active"
+requirement = "If the port cannot be opened for another reason than permission denied, or fails while reading, then the serial-monitor script shall exit with code 3 after writing the bytes already read, printing the port error and a hint to list the ports again and to free a port that another program or a background capture holds."
+verification = "Fake raising SerialException('could not open port COM9: FileNotFoundError') on open: exit 3, stderr names COM9 and the hint. Fake failing on the third read: stdout holds the first two chunks, exit 3. Fake whose in_waiting raises OSError (an unplugged Linux device): stdout keeps the first chunk, exit 3 with the hint."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

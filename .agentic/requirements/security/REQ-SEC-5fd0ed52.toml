@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-5fd0ed52"
+title = "Classify sending a line as device-write"
+status = "active"
+requirement = "The serial-monitor rules shall classify serial send with any arguments as device-write with a note saying that the device's firmware decides what the line does."
+verification = "classifyCommand: [send, --port, COM7, --text, reboot] is device-write with the note. Boundary: an undeclared subcommand such as [flash, --port, COM7] is device-write without a note (the platform default)."
+affected_paths = ["05_Software/plugins/serial-monitor/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-742426ac"
+title = "Name the board family from the USB IDs"
+status = "active"
+requirement = "When a listed port's USB vendor and product IDs appear in the serial-monitor family table, the script shall report that table's family name for the port, and null for any other or missing ID."
+verification = "List ports with 303A:1001, 303A:0002, 10C4:EA60, 1A86:7523, 1A86:55D4, 0403:6001, 0403:6010, 0403:6014, 10C4:EA70 and no IDs: families equal the spec table, the last two null."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-0a001d5d"
+title = "Refuse invalid arguments before opening a port"
+status = "active"
+requirement = "If the serial-monitor script receives invalid arguments, including an unknown command, a non-positive duration, byte limit or baud rate, or an until expression that does not compile, then it shall exit with code 2 without opening a port."
+verification = "Runs with [flash], [capture, --port, COM7, --duration, 0], [capture, --port, COM7, --max-bytes, -1], [capture, --port, COM7, --baud, 0] and [capture, --port, COM7, --until, '(']: each exits 2 and the fake records no open. Boundary: capture without --port exits 2."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-22dd5e18"
+title = "Classify console capture as device-read"
+status = "active"
+requirement = "The serial-monitor rules shall classify serial capture with any arguments, a DTR/RTS reset included, as device-read with a note saying that the command reads the console and restarts the board when --reset is given."
+verification = "classifyCommand: [capture, --port, COM7] and [capture, --port, /dev/serial/by-id/usb-x, --reset, --until, boot:] are device-read with the reset note. Boundary: [CAPTURE, --port, COM7] (case) is also device-read."
+affected_paths = ["05_Software/plugins/serial-monitor/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

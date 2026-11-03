@@ -1,0 +1,22 @@
+format: 1
+id: serial-monitor
+version: 1.0.0
+name: Serial monitor
+description: List serial ports with their USB IDs and board family, capture a board's console (optionally after a DTR/RTS reset) and send it one line. Use to find a board's port and to read its boot log or console output.
+ecosystem: general
+platforms: [windows-x64, linux-x64]
+programs:
+  serial:
+    install: { script: scripts/serial_monitor.py }
+    version: { args: [--version], match: 'serial-monitor (\d+\.\d+\.\d+)' }
+rules:
+  - { match: "serial {--version,--help,-h}", risk: safe }
+  - { match: "serial list *", risk: safe }
+  - match: "serial capture *"
+    risk: device-read
+    note: Opens the port and reads the console; with --reset it restarts the board through DTR/RTS.
+  - match: "serial send *"
+    risk: device-write
+    note: Writes one line to the device's console; the device's firmware decides what the line does.
+docs:
+  - https://pyserial.readthedocs.io/en/latest/

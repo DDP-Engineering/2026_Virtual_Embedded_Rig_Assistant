@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b7ceddbc"
+title = "Install the serial-monitor plugin and resolve its script program"
+status = "active"
+requirement = "When the user installs the folder 05_Software/plugins/serial-monitor, the plugin store shall accept it without issues and the provisioner shall resolve its program serial to the bundled uv with the arguments run --quiet --offline --script and the installed plugin's scripts/serial_monitor.py."
+verification = "Install the folder into a temporary PluginStore: list reports the plugin with no issues and validatePluginManifest returns no issues. A Provisioner with a scripted process host installs it (uv sync --script, then a probe printing serial-monitor 1.0.0) and resolves serial to [uv, run, --quiet, --offline, --script, <installed folder>/scripts/serial_monitor.py]. Boundary: before any install the program is missing and resolves to nothing."
+affected_paths = ["05_Software/plugins/serial-monitor/plugin.yaml", "05_Software/plugins/serial-monitor/README.md"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

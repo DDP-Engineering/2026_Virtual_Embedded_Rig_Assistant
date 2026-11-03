@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-3e33dbe8"
+title = "Report the script version for the probe"
+status = "active"
+requirement = "When the serial-monitor script runs with --version, it shall print serial-monitor followed by the plugin manifest's version, which the manifest's version.match captures."
+verification = "Run the installed script with --version under the test Python and the fake pyserial: stdout matches the manifest version.match and the captured group equals plugin.yaml version. Boundary: exit code 0 and nothing else on stdout."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py", "05_Software/plugins/serial-monitor/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

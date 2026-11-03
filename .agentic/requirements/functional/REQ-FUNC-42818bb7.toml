@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-42818bb7"
+title = "Capture a serial console until a stop condition"
+status = "active"
+requirement = "When the serial-monitor script runs with capture, it shall open the port at the given baud rate with RTS released and DTR released once the port is open, copy every byte it reads to standard output as it arrives, stop at the first of the duration elapsing, a line matching the until expression or the byte limit being reached, and print one summary line naming the reason to standard error."
+verification = "Fake pyserial delivering a recorded ESP32 boot log in chunks: capture --until main_task stops after the chunk holding that line, stdout holds the bytes up to it, stderr's summary names until, and the fake recorded open at 115200 with dtr True and rts False followed by dtr False. A line anchored with $ matches although the device ends it with CR LF. Boundaries: --max-bytes 10 stops after exactly 10 bytes (max-bytes); a silent port stops after --duration 0.3 (duration); a match inside a line split across chunks still stops."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py", "05_Software/tests/fixtures/serial-monitor/esp32s3-boot.log", "05_Software/tests/fixtures/serial-monitor/fake-pyserial/serial/__init__.py", "05_Software/tests/fixtures/serial-monitor/fake-pyserial/serial/tools/__init__.py", "05_Software/tests/fixtures/serial-monitor/fake-pyserial/serial/tools/list_ports.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

@@ -46,6 +46,7 @@ source = [
     "05_Software/src/models/",
     "05_Software/src/windows_runtime/",
     "05_Software/tests/fixtures/",
+    "05_Software/plugins/",
 ]
 tests = [
     "05_Software/tests/e2e/",

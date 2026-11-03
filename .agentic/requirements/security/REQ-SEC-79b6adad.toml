@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-79b6adad"
+title = "Classify listing and help as safe"
+status = "active"
+requirement = "The serial-monitor rules shall classify serial list with any arguments, and serial --version, --help or -h alone, as safe."
+verification = "classifyCommand with the installed manifest's rules: [list], [list, --verbose], [--version], [--help] and [-h] are safe. Boundary: [--version, capture, --port, COM3] is not safe (it falls to device-write)."
+affected_paths = ["05_Software/plugins/serial-monitor/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

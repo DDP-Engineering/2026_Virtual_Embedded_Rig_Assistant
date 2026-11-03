@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-46027e04"
+title = "Exit 4 when the until expression never matched"
+status = "active"
+requirement = "If a serial-monitor capture or send was given --until and no line matched before it stopped, then the script shall exit with code 4, and it shall exit with code 0 after any other normal stop."
+verification = "Fake port delivering a boot log without the expression and --duration 0.3: exit code 4, summary names duration, stdout holds the log. Boundary: the same capture without --until exits 0."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

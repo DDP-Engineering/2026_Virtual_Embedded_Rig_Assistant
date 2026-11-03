@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-6f7569e2"
+title = "Send one line and read the reply"
+status = "active"
+requirement = "When the serial-monitor script runs with send, it shall write the text followed by the chosen line ending, CR LF by default, to the port once and then read the reply as a capture does, for one second unless a duration is given."
+verification = "The fake records one write of 'help' plus CR LF for --text help, and 'help' alone for --eol none; stdout holds the fake's reply and the summary names duration or until. Boundary: send opens like capture (dtr True, rts False, then dtr False) and never asserts RTS."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-3ee59f30"
+title = "Restart the board through DTR/RTS before a capture"
+status = "active"
+requirement = "When the serial-monitor script runs capture with --reset, it shall restart the board before reading by asserting RTS with DTR released for 200 ms and then releasing RTS, applying the DTR state again after each RTS change, and discard the input received before RTS is released."
+verification = "The fake records after open (and its DTR release): dtr False, rts True, dtr False, reset_input_buffer, rts False, dtr False, then close. Boundary: without --reset no rts True is recorded."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

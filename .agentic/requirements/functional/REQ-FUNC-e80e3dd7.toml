@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-e80e3dd7"
+title = "List serial ports as JSON without opening them"
+status = "active"
+requirement = "When the serial-monitor script runs with list, it shall print a JSON array with one object per serial port the operating system reports, each with port, vid_pid, serial_number, family, description and by_id, without opening any port."
+verification = "Fake pyserial reporting COM7 (303A:1001, serial F4:12), COM4 (10C4:EA60) and COM1 (no USB IDs): stdout parses as a three-element array with the fields and values of the spec (vid_pid 303A:1001, null for COM1) and the fake records no open. Boundary: no ports prints []."
+affected_paths = ["05_Software/plugins/serial-monitor/scripts/serial_monitor.py"]
+linked_tests = ["05_Software/tests/integration/serial-monitor.test.ts"]
+spec = "specs/REQ-FUNC-42818bb7.md"
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03
