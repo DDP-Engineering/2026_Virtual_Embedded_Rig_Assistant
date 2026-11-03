@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-41c19e62"
+
+title = "Show a broken plugin's errors"
+
+status = "active"
+
+requirement = "While an installed plugin has issues, the Plugins page shall show each issue as a translated message with its field path or line and shall offer neither its workbench switch nor its program install."
+
+verification = "Component test and both e2e runs: a mock plugin with a field issue at rules.0.risk shows the manifest field message naming rules.0.risk and has no enable switch or Install programs button; the native e2e edits the installed fixture's plugin.yaml and the page shows the changed-since-review and field messages."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-d51c6e3c"
+
+title = "Install a plugin's programs from the Plugins page"
+
+status = "active"
+
+requirement = "When the user chooses Install programs for a plugin, the Plugins page shall call plugins.provision for it, show that the install is running, and then show the returned program states."
+
+verification = "Component test against the browser mock: a plugin whose program is missing shows Install programs; clicking it disables the button while pending and afterwards the program reads Ready with its version."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -63,7 +63,8 @@ test("an approved run_program card runs the real program and a denied one runs n
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
-    await invoke(page, "plugins.install", { path: plugin });
+    const { sha256 } = await invoke<{ sha256: string }>(page, "plugins.review", { path: plugin });
+    await invoke(page, "plugins.install", { path: plugin, sha256 });
     await invoke(page, "plugins.toggle", { workbenchId: config.id, id: "echo-tools", enabled: true });
     await page.locator('[data-action="new-session"]').click();
     const input = page.getByRole("textbox", { name: "Message", exact: true });

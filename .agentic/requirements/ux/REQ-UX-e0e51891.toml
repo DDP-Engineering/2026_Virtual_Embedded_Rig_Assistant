@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-e0e51891"
+
+title = "Show program runs in the Runs tab"
+
+status = "active"
+
+requirement = "While a workbench is open, the right panel's Runs tab shall list that workbench's program runs with the command line, plugin, state, start time and exit code, refreshing the list every second while the tab is shown."
+
+verification = "Component test with a stubbed API in en, ro and de: a running background run shows its command line echo serve, the plugin echo-tools and Running; after it ends the next refresh shows Ended and its exit code; with no runs the tab says there are none. The browser-mock e2e opens the Runs tab in every language, theme and text size without overflow, and the mock e2e tab loop includes Runs."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/runs-tab.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts", "05_Software/tests/e2e/mock.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

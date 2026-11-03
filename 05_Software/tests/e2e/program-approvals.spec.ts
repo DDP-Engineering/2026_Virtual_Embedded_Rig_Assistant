@@ -91,7 +91,9 @@ test("lists irreversible plugin rules in the bypass warning, then runs the comma
     await page.evaluate(async () => {
       const { api } = await import(/* @vite-ignore */ `${"/api/index.ts"}`);
       const { config } = (await api.invoke("workbench.config.get", {})) as { config: { id: string } };
-      await api.invoke("plugins.install", { path: "C:/plugins/esp32-efuse" });
+      const path = "C:/plugins/esp32-efuse";
+      const { sha256 } = (await api.invoke("plugins.review", { path })) as { sha256: string };
+      await api.invoke("plugins.install", { path, sha256 });
       await api.invoke("plugins.toggle", { workbenchId: config.id, id: "esp32-efuse", enabled: true });
     });
     await page.locator(".composer [data-permission-picker]").selectOption("bypass");

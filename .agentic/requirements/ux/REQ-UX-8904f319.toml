@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-8904f319"
+
+title = "Refuse installing a package with issues"
+
+status = "active"
+
+requirement = "If the reviewed package has issues, then the review screen shall list each issue as a translated message and disable Install."
+
+verification = "Component test and native e2e: reviewing a folder whose manifest has risk: dangerous lists the field issue at rules.0.risk and its Install button is disabled."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

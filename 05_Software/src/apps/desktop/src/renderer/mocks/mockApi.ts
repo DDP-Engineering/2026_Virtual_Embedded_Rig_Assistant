@@ -19,6 +19,9 @@ import {
   opensExternally,
   orderSessions,
   type PluginInstalled,
+  type PluginManifest,
+  type PluginReview,
+  type ProgramRunInfo,
   providerSlug,
   type Request,
   type Response,
@@ -120,8 +123,123 @@ export function createMockApi(
   const folderNotes = new Map([["/mock/with-notes", "Existing bench notes\n"]]);
   /** Installed plugins by id; install names the plugin after the chosen folder or zip. */
   const installedPlugins = new Map<string, PluginInstalled>();
-  /** Plugins whose one mock program plugins.provision installed. */
+  /** Declared programs of installed mock plugins, from their manifests. */
+  const pluginPrograms = new Map<string, { name: string; kind: "pip" | "script" | "download" | "find" }[]>();
+  /** Plugins whose mock programs plugins.provision installed. */
   const provisionedPlugins = new Set<string>();
+  /** Program runs and their logs by workbench id, seeded with one running and one ended run. */
+  const runs = new Map<string, { run: ProgramRunInfo; log: string }[]>();
+  function workbenchRuns(workbenchId: string) {
+    if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+    let list = runs.get(workbenchId);
+    if (!list) {
+      const run = (id: string, rest: Partial<ProgramRunInfo>): ProgramRunInfo => ({
+        id,
+        sessionId: "mock-session",
+        plugin: "echo-tools",
+        program: "echo",
+        args: [],
+        background: false,
+        startedAt: new Date().toISOString(),
+        state: "running",
+        log: `.vera/runs/${id}.log`,
+        ...rest,
+      });
+      list = [
+        {
+          run: run("01JC00000000000000000000R2", { args: ["serve"], background: true }),
+          log: "boot\nREADY\n",
+        },
+        {
+          run: run("01JC00000000000000000000R1", {
+            args: ["version"],
+            state: "exited",
+            end: "exited",
+            exitCode: 0,
+            durationMs: 41,
+          }),
+          log: '{"command":"version","args":[]}\n',
+        },
+      ];
+      runs.set(workbenchId, list);
+    }
+    return list;
+  }
+  function workbenchRun(workbenchId: string, id: string) {
+    const entry = workbenchRuns(workbenchId).find((item) => item.run.id === id);
+    if (!entry) throw veraError("NOT_FOUND");
+    return entry;
+  }
+  /** Mock packages are named by their folder or zip; the hash stands in for the integrity hash. */
+  function packageHash(path: string) {
+    let hash = 2166136261;
+    for (const char of path) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+    return hash.toString(16).padStart(8, "0").repeat(8);
+  }
+  function mockPackage(path: string): PluginReview {
+    const id = (path.split(/[\\/]/).pop() ?? "").replace(/\.zip$/i, "");
+    const review = {
+      path,
+      kind: /\.zip$/i.test(path) ? ("zip" as const) : ("folder" as const),
+      sha256: packageHash(path),
+    };
+    if (!/^[a-z0-9-]{1,64}$/.test(id)) return { ...review, issues: [{ code: "id", path: "id" }] };
+    const manifest: PluginManifest =
+      id === "echo-tools"
+        ? {
+            format: 1,
+            id,
+            version: "1.0.0",
+            name: "Echo tools",
+            description: "Echo arguments and print test output. Use to exercise plugin program runs.",
+            ecosystem: "general",
+            platforms: ["windows-x64", "linux-x64"],
+            requires: [],
+            programs: {
+              echo: {
+                install: {
+                  find: { windows: ["%VERA_TEST_NODE%"], linux: ["$VERA_TEST_NODE"] },
+                  hint: "Install Node.js.",
+                },
+                version: { args: ["--version"], match: "v(\\d+\\.\\d+\\.\\d+)" },
+                timeout: 60,
+              },
+            },
+            rules: [
+              { match: "echo version", risk: "safe" },
+              { match: "echo serve *", risk: "safe" },
+              { match: "echo write *", risk: "device-write", note: "Writes the device." },
+              { match: "echo burn *", risk: "irreversible", note: "Burns a fuse." },
+              { match: "echo monitor *", risk: "blocked" },
+            ],
+            docs: [],
+          }
+        : {
+            format: 1,
+            id,
+            version: "1.0.0",
+            name: id,
+            description: `Mock plugin installed from ${path}.`,
+            ecosystem: "general",
+            platforms: ["windows-x64", "linux-x64"],
+            requires: [],
+            programs: {
+              [id]: { install: { pip: `${id}>=1` }, version: { args: ["--version"], match: "(\\S+)" } },
+            },
+            rules: [
+              { match: `${id} --help`, risk: "safe" },
+              ...(irreversibleRules[id] ?? []).map((rule) => ({ ...rule, risk: "irreversible" as const })),
+            ],
+            docs: [],
+          };
+    const installed = installedPlugins.get(id);
+    return {
+      ...review,
+      issues: [],
+      manifest,
+      ...(installed ? { installed: installed.version ? { version: installed.version } : {} } : {}),
+    };
+  }
   /** Irreversible rules of mock plugins by id; other ids have none. */
   const irreversibleRules: Record<string, PluginInstalled["irreversible"]> = {
     "esp32-efuse": [{ match: "espefuse * burn-key *", note: "Burns a key into eFuse permanently." }],
@@ -439,26 +557,56 @@ export function createMockApi(
         }));
         break;
       }
+      case "plugins.choose": {
+        const { kind } = channels["plugins.choose"].request.parse(input.data);
+        value = { path: kind === "zip" ? "/mock/plugins/echo-tools.zip" : "/mock/plugins/echo-tools" };
+        break;
+      }
+      case "plugins.review": {
+        const { path } = channels["plugins.review"].request.parse(input.data);
+        value = mockPackage(path);
+        break;
+      }
       case "plugins.install": {
-        const { path } = channels["plugins.install"].request.parse(input.data);
-        const id = (path.split(/[\\/]/).pop() ?? "").replace(/\.zip$/i, "");
-        if (!/^[a-z0-9-]{1,64}$/.test(id))
-          throw { ...veraError("INVALID"), params: { issue: "id", path: "id" } };
+        const { path, sha256 } = channels["plugins.install"].request.parse(input.data);
+        const { manifest, issues, sha256: current } = mockPackage(path);
+        if (sha256 !== current) throw veraError("CONFLICT");
+        const first = issues[0];
+        if (first || !manifest)
+          throw {
+            ...veraError("INVALID"),
+            params: { issue: first?.code ?? "manifest", path: first?.path ?? "id" },
+          };
+        const id = manifest.id;
         const plugin: PluginInstalled = {
           id,
           issues: [],
-          version: "1.0.0",
-          name: id,
-          description: `Mock plugin installed from ${path}.`,
-          ecosystem: "general",
-          platforms: ["windows-x64", "linux-x64"],
+          version: manifest.version,
+          name: manifest.name,
+          description: manifest.description,
+          ecosystem: manifest.ecosystem,
+          platforms: manifest.platforms,
           irreversible: irreversibleRules[id] ?? [],
           tier: "local",
           source: /\.zip$/i.test(path) ? "zip" : "folder",
-          sha256: "0".repeat(64),
+          sha256,
           installedAt: new Date().toISOString(),
         };
         installedPlugins.set(id, plugin);
+        pluginPrograms.set(
+          id,
+          Object.entries(manifest.programs).map(([name, program]) => ({
+            name,
+            kind:
+              "pip" in program.install
+                ? "pip"
+                : "script" in program.install
+                  ? "script"
+                  : "download" in program.install
+                    ? "download"
+                    : "find",
+          })),
+        );
         value = plugin;
         break;
       }
@@ -467,11 +615,30 @@ export function createMockApi(
         const { id } = channels["plugins.programs"].request.parse(input.data);
         if (!installedPlugins.has(id)) throw veraError("NOT_FOUND");
         if (channel === "plugins.provision") provisionedPlugins.add(id);
-        value = [
+        value = (pluginPrograms.get(id) ?? []).map((program) =>
           provisionedPlugins.has(id)
-            ? { name: id, kind: "pip", state: "ready", version: "1.0.0" }
-            : { name: id, kind: "pip", state: "missing" },
-        ];
+            ? { ...program, state: "ready", version: "1.0.0" }
+            : { ...program, state: "missing" },
+        );
+        break;
+      }
+      case "runs.list": {
+        const { workbenchId } = channels["runs.list"].request.parse(input.data);
+        value = { runs: workbenchRuns(workbenchId).map((entry) => entry.run) };
+        break;
+      }
+      case "runs.log": {
+        const { workbenchId, id } = channels["runs.log"].request.parse(input.data);
+        const entry = workbenchRun(workbenchId, id);
+        value = { id, text: entry.log, truncated: false, running: entry.run.state === "running" };
+        break;
+      }
+      case "runs.stop": {
+        const { workbenchId, id } = channels["runs.stop"].request.parse(input.data);
+        const entry = workbenchRun(workbenchId, id);
+        if (entry.run.state !== "running") throw veraError("NOT_FOUND");
+        entry.run = { ...entry.run, state: "stopped", end: "stopped", exitCode: null, durationMs: 1500 };
+        value = {};
         break;
       }
       case "plugins.uninstall": {

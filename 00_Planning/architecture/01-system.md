@@ -161,7 +161,7 @@ src/libraries/core/src/          # Electron-agnostic (L1)
   storage/                  # SQLite connection, current-schema check, repositories (no migration runner)
   sessions/                 # session service, event hub, snapshots, resume, export
   agent/                    # runtime, context policy and compaction, system prompt, permissions, approvals, citations
-  tools/                    # registry, the 14 built-in tools (03 §4), recorded changes, grep worker
+  tools/                    # registry, the 17 built-in tools (03 §4), recorded changes, grep worker
   knowledge/                # ingest and watcher, selection, extraction, chunking, embedding host and worker,
                             # keyword and hybrid search, viewer, refs
   llm/                      # pi-ai providers and gateway, ChatGPT catalog, replay provider, connection test, secret scrubber

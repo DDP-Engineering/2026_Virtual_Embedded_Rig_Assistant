@@ -12,14 +12,17 @@ confirmation and the irreversible rules listed by the bypass warning; and for th
 tools run_program/program_output/program_stop, the ProgramHost and executable resolver seam, the
 `<programs>` prompt entries and the timeout cap; and for provisioning: the bundled uv, install kinds
 pip/script/download/find, the runtime folder, version probes and supported ranges, program statuses,
-`plugins.programs`/`plugins.provision`, `vera plugin install` and the package index/proxy settings. Start at
+`plugins.programs`/`plugins.provision`, `vera plugin install` and the package index/proxy settings; and for the
+desktop UI: the Plugins page (pickers, review screen, install bound to the reviewed hash, enable switch,
+program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`). Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
 `05_Software/src/libraries/core/src/plugins/store.ts` (store),
 `05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
 `05_Software/src/libraries/shared/src/program-rules.ts` (matcher and policy) or
 `05_Software/src/libraries/core/src/plugins/program-request.ts` (approval requests) or
 `05_Software/src/libraries/core/src/plugins/program-tools.ts` (agent tools) or
-`05_Software/src/libraries/core/src/plugins/provisioning.ts` (provisioning, with `archive.ts`); focused tests sit
+`05_Software/src/libraries/core/src/plugins/provisioning.ts` (provisioning, with `archive.ts`) or
+`05_Software/src/apps/desktop/src/renderer/components/plugins.tsx` and `runs-tab.tsx` (UI); focused tests sit
 next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
 and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
@@ -71,6 +74,15 @@ inside the runtime and one managed CPython 3.13; downloads are verified, extract
 absolute globs. Versions come from probes, are recorded in install.json and checked against `version.range`.
 Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
+The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page
+(`renderer/components/plugins.tsx`) installs in two steps, `plugins.choose` (native picker) and `plugins.review`
+(the store reads and validates the package, installs nothing), then `plugins.install {path, sha256}` with the
+reviewed hash. It lists installed plugins with their program statuses and issues, enables a plugin for the open
+workbench (`plugins.toggle`, saved at once), installs programs (`plugins.provision`) and uninstalls after a
+confirmation. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
+(`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second), shows a log (`runs.log`) and
+stops a run (`runs.stop`). The workbench form's Plugins section only points to the page.
+
 ## Public interface
 
 - Shared: `pluginManifestSchema`, `validatePluginManifest(data)` → `{manifest?, issues}`,
@@ -78,22 +90,27 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
   `pluginIssueSchema` (`manifest`, `yaml`, `field`, `id`, `record`, `changed`, `unavailable`),
   `pluginInstalledSchema`, `pluginSummarySchema` (adds `enabled`), `PLUGIN_LIMITS`,
   `isPluginRelativePath`.
-- Core: `new PluginStore({ root, now?, uuid? })` with `install(path)`, `list()`, `load(id)` →
+- Core: `new PluginStore({ root, now?, uuid? })` with `review(path)` → `PluginReview`, `install(path, sha256?)`
+  (CONFLICT when the package's hash differs from `sha256`), `list()`, `load(id)` →
   `{manifest, record, folder}`, `uninstall(id)`, `ids()`; `pluginIntegrity(files)`;
   `pluginRecordSchema` (install.json format 1).
 - WorkbenchService: `togglePlugin(workbenchId, pluginId, enabled)`, `enabledPlugins(workbenchId)`;
   `configWarnings` takes `catalogs.plugins`, filled from `PluginStore.ids()` of
   `<userData>/plugins`.
-- IPC: `plugins.list {workbenchId?}` → summaries with `enabled`; `plugins.install {path}` (absolute
-  folder or .zip) → installed summary; `plugins.uninstall {id}`; `plugins.toggle {workbenchId, id,
+- IPC: `plugins.list {workbenchId?}` → summaries with `enabled`; `plugins.choose {kind: folder|zip}` →
+  `{path|null}` (instrumented builds: `VERA_TEST_PLUGIN_PATH`); `plugins.review {path}` → `pluginReviewSchema`
+  `{path, kind, sha256, issues, manifest?, installed?}`; `plugins.install {path, sha256}` (absolute
+  folder or .zip, the reviewed hash) → installed summary; `plugins.uninstall {id}`; `plugins.toggle {workbenchId, id,
   enabled}`. The browser mock keeps installed plugins in memory.
 
 - Runner: `ProcessHost {platform, env, spawn(executable, args, {cwd, env, group, output}) ->
   {pid, exit}, signal(pid, name)}`; `new NodeProcessHost(spawn)`; `new ProgramRunner({host, clock,
-  toolPaths?, tailChars=12000, maxBackground=4, logsKept=200, killGraceMs=3000, id?})` with
+  toolPaths?, tailChars=12000, maxBackground=4, logsKept=200, killGraceMs=3000, id?, now?})` with
   `start(request)` -> `ProgramRun {id, done, read(), stop()}`, `run(request)` -> `RunResult
   {runId, exitCode, signal, error?, durationMs, output, truncated, log, timedOut, stopped}`,
-  `get(handle)`, `stopSession(id)`, `stopWorkbench(root)`, `stopAll()`; helpers
+  `get(handle)`, `stopSession(id)`, `stopWorkbench(root)`, `stopAll()`, `list(root)` → `ProgramRunInfo[]`
+  (newest 50), `log(root, id, maxBytes=RUN_LOG_BYTES)` → `{id, text, truncated, running}`, `stopRun(root, id)`;
+  `RunRequest.label {plugin, program, args}` names a run in its record; helpers
   `programEnvironment`, `serialPorts`, `launcherArgs(launcher, command, "argv" | "string")`.
 - Rules (shared): `classifyCommand(rules, program, args)` -> `{risk, notes, confirm, timeout}` (timeout:
   the largest timeout of the matching rules, or null),
@@ -132,6 +149,13 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
   unchanged), in plugins.enabled order.
 - Summaries: `pluginInstalledSchema.irreversible` lists `{match, note?}` of a plugin without issues;
   `plugins.list` carries it.
+- Runs (shared): `programRunIdSchema` (ULID), `programRunRecordSchema` (format 1), `programRunSchema` (adds
+  `state: running|exited|stopped|timedOut|interrupted` and `log`), `programRunLogSchema`. IPC `runs.list
+  {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id
+  is CONFLICT, a run id without a log or not running there is NOT_FOUND. The browser mock seeds one running
+  and one ended run per workbench and answers the review with an echo-tools-like manifest.
+- Renderer: `Plugins({workbench?})` (`renderer/components/plugins.tsx`), `RunsTab({workbenchId})`
+  (`renderer/components/runs-tab.tsx`), a `runs` slot in `Shell`.
 
 ## Invariants
 
@@ -266,6 +290,17 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
   run_program loads plugins on every call and refuses it.
 - Desktop main redacts known credentials from the program payload (executable, args, cwd, notes, file
   paths) of events and snapshots; the confirmation word is not redacted.
+- The desktop app installs only a package with the hash its review showed; `plugins.review` never writes.
+- `runs.list` arguments and errors and `runs.log` text reach the renderer with known credentials redacted; a
+  truncated log tail starts after its first line break.
+- A run record holds the agent's arguments only, never the executable, download prefix or program prefix.
+  It is written right before spawn and rewritten at the end before `done` settles (through a temporary file
+  and a rename), so a list after Stop reads `stopped`; the last stop check follows the first write. Record writes are best effort; pruning removes a run's log and record
+  together and never an unfinished run's. A run that never spawned (a failed `beforeSpawn`) has a log only.
+- The app's QueryClient defaults to `staleTime: Infinity`; the plugin list, program statuses, runs list and run
+  log use `staleTime: 0`, so opening the page or a log reads disk state (integrity is rechecked per list).
+- The enable switch shows the new state at once and writes the saved state into the list cache before a
+  refetch, so a list fetch started before the toggle cannot flip it back.
 
 ## Change map
 
@@ -294,6 +329,9 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 | Program status schema, range grammar, download form | shared `plugins.ts` | `shared/src/plugin-provisioning.test.ts` |
 | plugins.programs / plugins.provision, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
 | `vera plugin install` | `cli/src/{args,plugin,provisioning}.ts` | `tests/integration/cli.test.ts` |
+| Review, picker, hash-bound install | `PluginStore.review`/`install` in `store.ts`, `plugins.choose`/`review`/`install` in `main/index.ts` | `store.test.ts`, `plugins-ipc.test.ts`, `mockApi.test.ts` |
+| Run records, list, log, stop | `ProgramRunner` in `runner.ts`, `runs.*` in `main/index.ts`, label in `program-tools.ts` | `runner.test.ts`, `program-tools.test.ts` |
+| Plugins page or Runs tab | renderer `plugins.tsx`, `runs-tab.tsx`, `shell.tsx`, `App.tsx`, locales | `plugins.test.ts`, `runs-tab.test.ts`, `tests/e2e/plugins-ui.spec.ts` (native), `plugins-mock.spec.ts` (languages, themes, sizes) |
 
 ## Key behaviors
 
@@ -353,6 +391,10 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 - `REQ-SEC-49ff111b` / `REQ-FUNC-5491d410` / `REQ-FUNC-06eaa9a5` — resolve never installs; platform and launcher exclusions.
 - `REQ-FUNC-13ef1c0c` / `REQ-FUNC-86daf060` / `REQ-FUNC-c44675ed` / `REQ-FUNC-c12941f3` / `REQ-SEC-0bc97768` — statuses and installs over IPC and the CLI; index and proxy settings.
 - `REQ-FUNC-565e908d` / `REQ-NFR-a881a281` / `REQ-PLAT-8b3408cb` — provisioner composed in the apps; cached prompt entries; clean-machine run (manual).
+- `REQ-FUNC-a5be5e53` / `REQ-SEC-8e281f52` / `REQ-FUNC-6c76f25a` — review without installing, install bound to the reviewed hash, native pickers.
+- `REQ-DATA-f563074f` / `REQ-FUNC-39617f81` / `REQ-FUNC-f024d73c` / `REQ-FUNC-8c38d223` — run records, runs list, log tail, stop (spec REQ-DATA-f563074f.md).
+- `REQ-UX-28503c97` / `REQ-UX-41c19e62` / `REQ-UX-e6056763` / `REQ-UX-8904f319` / `REQ-UX-acc04fbc` / `REQ-UX-fd6bc95d` / `REQ-UX-d51c6e3c` / `REQ-UX-c1de1651` / `REQ-UX-e07790cb` — Plugins page.
+- `REQ-UX-e0e51891` / `REQ-UX-25921e97` / `REQ-UX-93fd56dc` — Runs tab: list, log dialog, Stop.
 
 ## Files
 
@@ -394,3 +436,8 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 - `05_Software/tests/integration/provisioning.test.ts` — real system tar and a real probed program.
 - `05_Software/src/apps/cli/src/plugin.ts`, `provisioning.ts` — `vera plugin install` and the CLI provisioner.
 - `05_Software/src/uv/uv-manifest.json`, `05_Software/scripts/prepare-uv.mjs` — the pinned uv.
+- `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx`, `plugins.test.ts` — the Plugins page and its tests.
+- `05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx`, `runs-tab.test.ts` — the Runs tab and its tests.
+- `05_Software/tests/e2e/plugins-ui.spec.ts` — native install through the review, enable, Runs log and Stop, broken plugin.
+- `05_Software/tests/e2e/plugins-mock.spec.ts` — browser mock flow and overflow in every language, theme and size.
+- `05_Software/tests/fixtures/llm-scripts/program-serve.jsonl` — replay script starting `echo serve` in the background.

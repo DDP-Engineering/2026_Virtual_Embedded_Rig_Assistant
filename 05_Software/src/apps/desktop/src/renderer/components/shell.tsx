@@ -46,6 +46,7 @@ export function Shell({
   artifacts,
   plan,
   docs,
+  runs,
 }: {
   children?: ReactNode;
   navigation: ReactNode;
@@ -61,6 +62,7 @@ export function Shell({
   artifacts?: ReactNode;
   plan?: ReactNode;
   docs?: ReactNode;
+  runs?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [layout, setLayout] = useState(initialLayout);
@@ -194,6 +196,7 @@ export function Shell({
     { id: "changes", label: t("panel.changes") },
     { id: "artifacts", label: t("panel.artifacts") },
     { id: "plan", label: t("panel.plan") },
+    { id: "runs", label: t("panel.runs") },
   ];
   const style = {
     "--sidebar-width": `${layout.sidebar}rem`,
@@ -450,7 +453,9 @@ export function Shell({
                         ? changes
                         : id === "artifacts"
                           ? artifacts
-                          : plan) ?? <p className="muted">{t("panel.placeholder")}</p>)}
+                          : id === "plan"
+                            ? plan
+                            : runs) ?? <p className="muted">{t("panel.placeholder")}</p>)}
               </div>
             ))}
           </aside>

@@ -278,6 +278,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
           background,
           ...(background ? {} : { signal: applySignal }),
           beforeSpawn: () => verifyProgramFiles(current.prepared, applySignal),
+          label: { plugin: current.plugin.manifest.id, program: args.program, args: args.args ?? [] },
         });
       } catch (error) {
         if ((error as Error | undefined)?.name === "AbortError") throw error;

@@ -96,7 +96,8 @@
     "changes": "Änderungen",
     "artifacts": "Artefakte",
     "plan": "Plan",
-    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein."
+    "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein.",
+    "runs": "Läufe"
   },
   "workbench": {
     "name": "Name des Arbeitsbereichs",
@@ -619,10 +620,6 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "empty": "Keine Workbenches. Erstellen oder öffnen Sie eine Workbench.",
-    "pluginTitle": "Plugin-Bibliothek",
-    "pluginIntro": "Integrationen für Ihre Embedded-Werkzeuge verwalten.",
-    "pluginFuture": "Installation, Import und Erstellung von Plugins sind noch nicht verfügbar.",
-    "pluginPlanned": "Geplante Integrationen: ESP32, STM32, SEGGER und Wireshark.",
     "embeddingInfo": "Embeddings laufen lokal. BGE Small EN v1.5 ist das derzeit installierte unterstützte Modell. Eingaben bleiben unter 512 Tokens.",
     "sourceInfo": "Muster beziehen sich auf den Workbench-Ordner. Unabhängige externe Ordner werden noch nicht unterstützt. VERA speichert ihre Daten in .vera und behält Ihre Dokumentordner bei.",
     "changed": "Die aktive Workbench wurde geändert. Öffnen Sie den Editor erneut.",
@@ -735,5 +732,96 @@
     "hybrid": "Hybrid (Schlüsselwörter und Bedeutung)",
     "keyword": "Nur Schlüsselwörter",
     "semantic": "Nur Bedeutung"
+  },
+  "plugins": {
+    "intro": "Installieren Sie Plugins aus einem Ordner oder einer ZIP-Datei, prüfen Sie, was sie ausführen, und aktivieren Sie sie für eine Workbench.",
+    "installFolder": "Aus Ordner installieren…",
+    "installZip": "Aus ZIP installieren…",
+    "enabledFor": "Die Schalter aktivieren Plugins für die Workbench {{name}}.",
+    "noWorkbench": "Öffnen Sie eine Workbench, um Plugins dafür zu aktivieren.",
+    "none": "Es sind keine Plugins installiert.",
+    "enable": "Aktiv in {{name}}",
+    "broken": "Dieses Plugin hat Fehler und wird nicht geladen:",
+    "programs": "Programme",
+    "noPrograms": "Keine Programme: Dieses Plugin fügt nur Skills hinzu.",
+    "rules": "Regeln",
+    "noRules": "Keine Regeln.",
+    "docs": "Dokumente",
+    "range": "unterstützt {{range}}",
+    "timeout": "Zeitlimit {{seconds}} s",
+    "installPrograms": "Programme installieren",
+    "installingPrograms": "Programme werden installiert…",
+    "uninstall": "Deinstallieren",
+    "uninstallConfirm": "{{name}} deinstallieren? Workbenches, die es aktivieren, können seine Programme nicht mehr ausführen.",
+    "reviewTitle": "{{name}} prüfen",
+    "reviewIntro": "Prüfen Sie vor der Installation, was dieses Plugin ausführt und wie jeder Befehl eingestuft ist.",
+    "reviewIssues": "Dieses Paket hat Fehler und kann nicht installiert werden:",
+    "replaces": "Die Installation ersetzt die installierte Version {{version}}.",
+    "install": "Installieren",
+    "cancel": "Abbrechen",
+    "id": "ID",
+    "version": "Version",
+    "platforms": "Plattformen",
+    "requires": "Benötigt",
+    "nothing": "Keine",
+    "configPointer": "Installieren Sie Plugins und aktivieren Sie sie für die geöffnete Workbench auf der Seite Plugins.",
+    "tier": {
+      "official": "Offiziell",
+      "community": "Community",
+      "local": "Lokal",
+      "trial": "Test"
+    },
+    "state": {
+      "ready": "Bereit",
+      "missing": "Nicht installiert",
+      "unavailable": "Nicht verfügbar"
+    },
+    "problem": {
+      "notFound": "Auf diesem Computer nicht gefunden.",
+      "install": "Die Installation ist fehlgeschlagen.",
+      "download": "Der Download ist fehlgeschlagen.",
+      "sha256": "Der Download hat die falsche SHA-256.",
+      "archive": "Das Archiv konnte nicht entpackt werden.",
+      "platform": "Für dieses System nicht verfügbar.",
+      "launcher": "Programme mit einem Launcher werden noch nicht unterstützt.",
+      "uv": "Das mitgelieferte uv fehlt.",
+      "version": "Die Version konnte nicht gelesen werden.",
+      "range": "Die installierte Version liegt außerhalb des unterstützten Bereichs."
+    },
+    "issue": {
+      "manifest": "plugin.yaml fehlt, ist zu groß oder nicht UTF-8.",
+      "yaml": "plugin.yaml ist kein gültiges YAML.",
+      "yamlLine": "plugin.yaml ist kein gültiges YAML (Zeile {{line}}).",
+      "field": "Ungültiger Manifestwert ({{issue}}):",
+      "id": "Die Manifest-ID weicht vom Ordnernamen ab:",
+      "record": "install.json fehlt oder passt nicht zum Plugin.",
+      "changed": "Die Dateien des Plugins haben sich seit der Prüfung geändert; installieren Sie es erneut.",
+      "unavailable": "Die Dateien des Plugins können nicht gelesen werden."
+    },
+    "source": {
+      "label": "Quelle",
+      "pip": "PyPI-Paket {{requirement}}",
+      "script": "Skript im Plugin: {{path}}",
+      "download": "Download für {{platform}}:",
+      "find": "Auf diesem Computer gefunden:"
+    }
+  },
+  "runs": {
+    "none": "In dieser Workbench gab es noch keine Programmläufe.",
+    "plugin": "Plugin {{plugin}}",
+    "background": "im Hintergrund",
+    "exitCode": "Exit-Code {{code}}",
+    "openLog": "Protokoll öffnen",
+    "stop": "Stoppen",
+    "logTitle": "Laufprotokoll",
+    "truncated": "Es wird das letzte 1 MiB des Protokolls angezeigt.",
+    "close": "Schließen",
+    "state": {
+      "running": "Läuft",
+      "exited": "Beendet",
+      "stopped": "Gestoppt",
+      "timedOut": "Zeitüberschreitung",
+      "interrupted": "Unterbrochen"
+    }
   }
 }

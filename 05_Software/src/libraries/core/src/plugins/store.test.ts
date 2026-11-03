@@ -427,3 +427,49 @@ it("records program versions in install.json only while the installed hash still
   await store.install(await folder(packageFiles()));
   expect((await store.load("esp32-esptool")).record.programs).toEqual({});
 });
+
+// REQ-FUNC-a5be5e53
+it("reviews a package without installing it and reports its hash, manifest, issues and installed version", async () => {
+  const f = await fixture();
+  const files = packageFiles();
+  const source = await f.folder(files);
+  const review = await f.store.review(source);
+  expect(review).toMatchObject({
+    path: source,
+    kind: "folder",
+    sha256: pluginIntegrity(bytes(files)),
+    issues: [],
+    manifest: { id: "esp32-esptool", version: "1.2.0", rules: manifest.rules },
+  });
+  expect(review.manifest?.programs.esptool?.install).toEqual({ pip: "esptool>=5,<6" });
+  expect(review.installed).toBeUndefined();
+  expect(await f.entries()).toEqual([]);
+  const installed = await f.store.install(source, review.sha256);
+  expect((await f.store.review(source)).installed).toEqual({ version: "1.2.0" });
+  expect(installed.sha256).toBe(review.sha256);
+
+  const broken = await f.folder(
+    packageFiles({
+      "plugin.yaml": stringify({ ...manifest, rules: [{ match: "esptool x", risk: "dangerous" }] }),
+    }),
+  );
+  const refused = await f.store.review(broken);
+  expect(refused.issues).toEqual([{ code: "field", path: "rules.0.risk", issue: "invalid_value" }]);
+  expect(refused.manifest).toBeUndefined();
+  const zipped = await f.store.review(await f.zip(files));
+  expect(zipped).toMatchObject({ kind: "zip", sha256: review.sha256, issues: [] });
+  await expect(f.store.review(join(f.root, "missing"))).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(await f.entries()).toEqual(["esp32-esptool"]);
+});
+
+// REQ-SEC-8e281f52
+it("refuses to install a package that changed since its review", async () => {
+  const f = await fixture();
+  const source = await f.folder(packageFiles());
+  const { sha256 } = await f.store.review(source);
+  await writeFile(join(source, "README.md"), "# changed\n");
+  await expect(f.store.install(source, sha256)).rejects.toMatchObject({ code: "CONFLICT" });
+  expect(await f.entries()).toEqual([]);
+  const current = await f.store.review(source);
+  expect((await f.store.install(source, current.sha256)).sha256).toBe(current.sha256);
+});

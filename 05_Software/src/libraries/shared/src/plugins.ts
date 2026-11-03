@@ -305,15 +305,32 @@ export const pluginInstalledSchema = z.strictObject({
     .optional(),
 });
 export type PluginInstalled = z.infer<typeof pluginInstalledSchema>;
+/**
+ * A package the user reviews before installing it: what install would record (its integrity hash), the
+ * manifest whenever it parses, every issue and the version of an installed plugin with the same id.
+ */
+export const pluginReviewSchema = z.strictObject({
+  path: z.string().min(1).max(4096),
+  kind: z.enum(["folder", "zip"]),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  issues: z.array(pluginIssueSchema).max(PLUGIN_LIMITS.issues),
+  manifest: pluginManifestSchema.optional(),
+  installed: z.strictObject({ version: z.string().max(128).optional() }).optional(),
+});
+export type PluginReview = z.infer<typeof pluginReviewSchema>;
 export const pluginSummarySchema = pluginInstalledSchema.extend({ enabled: z.boolean() });
 export type PluginSummary = z.infer<typeof pluginSummarySchema>;
 export const pluginListRequestSchema = z.strictObject({ workbenchId: workbenchIdSchema.optional() });
 /** The renderer names a folder or zip the user chose; main reads it, as workbench.open does. */
-export const pluginInstallRequestSchema = z.strictObject({
+export const pluginPathRequestSchema = z.strictObject({
   path: z
     .string()
     .max(4096)
     .regex(/^(?:[A-Za-z]:[\\/]|\\\\|\/)/, "Use an absolute path."),
+});
+/** An install names the integrity hash the user reviewed; a package that changed since is CONFLICT. */
+export const pluginInstallRequestSchema = pluginPathRequestSchema.extend({
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
 });
 export const pluginToggleRequestSchema = z.strictObject({
   workbenchId: workbenchIdSchema,
@@ -349,3 +366,36 @@ export const pluginProgramStatusSchema = z.strictObject({
   detail: z.string().max(2000).optional(),
 });
 export type PluginProgramStatus = z.infer<typeof pluginProgramStatusSchema>;
+
+/** Run ids are ULIDs, so their order is their start order. */
+export const programRunIdSchema = z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+/** `.vera/runs/<run id>.json` format 1: a plugin program run beside its log (spec REQ-DATA-f563074f). */
+export const programRunRecordSchema = z.strictObject({
+  format: z.literal(1),
+  id: programRunIdSchema,
+  sessionId: z.string().min(1).max(255),
+  plugin: pluginIdSchema.optional(),
+  program: pluginProgramNameSchema.optional(),
+  /** The agent's arguments, never the executable or prefixes. */
+  args: z.array(z.string().max(4096)).max(64),
+  background: z.boolean(),
+  startedAt: z.iso.datetime(),
+  end: z.enum(["exited", "stopped", "timedOut"]).optional(),
+  exitCode: z.number().int().nullable().optional(),
+  error: z.string().min(1).max(256).optional(),
+  durationMs: z.number().int().min(0).optional(),
+});
+export type ProgramRunRecord = z.infer<typeof programRunRecordSchema>;
+/** A run as the Runs tab lists it: running, ended, or interrupted (a record the app never finished). */
+export const programRunSchema = programRunRecordSchema.omit({ format: true }).extend({
+  state: z.enum(["running", "exited", "stopped", "timedOut", "interrupted"]),
+  log: z.string().min(1).max(64),
+});
+export type ProgramRunInfo = z.infer<typeof programRunSchema>;
+export const programRunLogSchema = z.strictObject({
+  id: programRunIdSchema,
+  text: z.string(),
+  truncated: z.boolean(),
+  running: z.boolean(),
+});
+export type ProgramRunLog = z.infer<typeof programRunLogSchema>;

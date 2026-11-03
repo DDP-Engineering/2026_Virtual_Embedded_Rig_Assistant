@@ -22,10 +22,15 @@ import {
   pluginInstalledSchema,
   pluginInstallRequestSchema,
   pluginListRequestSchema,
+  pluginPathRequestSchema,
   pluginProgramStatusSchema,
   pluginProgramsRequestSchema,
+  pluginReviewSchema,
   pluginSummarySchema,
   pluginToggleRequestSchema,
+  programRunIdSchema,
+  programRunLogSchema,
+  programRunSchema,
 } from "./plugins.js";
 import {
   providerDiscoveryRequestSchema,
@@ -164,6 +169,14 @@ export const channels = {
     pluginListRequestSchema,
     z.array(pluginSummarySchema).max(1024),
   ),
+  /** The native folder picker, or a picker limited to .zip files; null when the user cancels. */
+  "plugins.choose": defineChannel(
+    "plugins.choose",
+    z.strictObject({ kind: z.enum(["folder", "zip"]) }),
+    z.strictObject({ path: z.string().min(1).max(4096).nullable() }),
+  ),
+  /** Reads and validates a package without installing it (the review screen). */
+  "plugins.review": defineChannel("plugins.review", pluginPathRequestSchema, pluginReviewSchema),
   "plugins.install": defineChannel("plugins.install", pluginInstallRequestSchema, pluginInstalledSchema),
   "plugins.uninstall": defineChannel(
     "plugins.uninstall",
@@ -182,6 +195,22 @@ export const channels = {
     "plugins.provision",
     pluginProgramsRequestSchema,
     z.array(pluginProgramStatusSchema).max(64),
+  ),
+  /** Program runs of the open workbench, newest first (spec REQ-DATA-f563074f). */
+  "runs.list": defineChannel(
+    "runs.list",
+    z.strictObject({ workbenchId: workbenchIdSchema }),
+    z.strictObject({ runs: z.array(programRunSchema).max(50) }),
+  ),
+  "runs.log": defineChannel(
+    "runs.log",
+    z.strictObject({ workbenchId: workbenchIdSchema, id: programRunIdSchema }),
+    programRunLogSchema,
+  ),
+  "runs.stop": defineChannel(
+    "runs.stop",
+    z.strictObject({ workbenchId: workbenchIdSchema, id: programRunIdSchema }),
+    z.strictObject({}),
   ),
   "docs.list": defineChannel(
     "docs.list",

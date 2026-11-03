@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a5be5e53"
+
+title = "Review a plugin package without installing it"
+
+status = "active"
+
+requirement = "When the user reviews a plugin folder or .zip file, the plugin store shall read and validate the package without installing anything and return its path, kind, integrity SHA-256, the manifest whenever it parses, every manifest issue and the version of an installed plugin with the same id."
+
+verification = "Store unit test with a plugin package (esp32-esptool): reviewing its folder returns kind folder, the hash install later records, the manifest with programs and rules, no issues, and no installed folder exists afterwards; reviewing it again after installing reports the installed version; its zip reviews to the same hash; a package with risk: dangerous returns its field issue at rules.0.risk and installs nothing; a missing path is NOT_FOUND."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/libraries/core/src/plugins/store.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+
+
+spec = "specs/REQ-DATA-f563074f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

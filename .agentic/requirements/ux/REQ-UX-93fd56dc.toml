@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-93fd56dc"
+
+title = "Stop a background run from the Runs tab"
+
+status = "active"
+
+requirement = "When the user chooses Stop on a running program run in the Runs tab, the desktop app shall stop the run and the tab shall show it as stopped."
+
+verification = "Component test and native e2e: Stop on the running echo serve run calls runs.stop and the row then reads Stopped with no Stop button; the native run reads end stopped from the run's .vera/runs/<id>.json record."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx", "05_Software/tests/fixtures/llm-scripts/program-serve.jsonl"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

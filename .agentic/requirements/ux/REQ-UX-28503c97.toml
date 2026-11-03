@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-28503c97"
+
+title = "List installed plugins with their programs"
+
+status = "active"
+
+requirement = "The Plugins page shall list every installed plugin with its name, version, tier, id, description and each declared program's state, version, supported range, hint and problem."
+
+verification = "Component test with a stubbed API in en, ro and de: an installed plugin shows its name, version, the Local tier, its id and its description, and its program reads Not installed with its hint; with no plugin installed the page says none is installed. The browser-mock e2e shows the list without overflow in every language, theme and text size."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

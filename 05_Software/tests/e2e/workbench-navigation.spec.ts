@@ -58,8 +58,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator("[data-project-name]").fill("ESP32 revised");
     await dialog.locator('[data-project-section="tools"]').click();
     const tools = dialog.locator("[data-tool-toggle]");
-    await expect(tools).toHaveCount(14);
-    await expect(dialog.locator("[data-tool-description]")).toHaveCount(14);
+    await expect(tools).toHaveCount(17);
+    await expect(dialog.locator("[data-tool-description]")).toHaveCount(17);
     for (const tool of [
       "read",
       "list",
@@ -143,7 +143,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(page.locator('[data-action="open-workbench-nav"]')).toBeVisible();
     await page.locator('[data-action="plugins-nav"]').click();
     await expect(page.locator("[data-plugins]")).toBeVisible();
-    await expect(page.locator("[data-plugins]")).toContainText("not available yet");
+    await expect(page.locator('[data-action="plugin-install-folder"]')).toBeVisible();
     await page.locator('[data-i18n="nav.welcome"]').click();
     await expect(page.locator("#workbench-name")).toBeVisible();
     expect(errors).toEqual([]);

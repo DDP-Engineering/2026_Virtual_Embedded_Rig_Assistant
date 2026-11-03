@@ -96,7 +96,8 @@
     "changes": "Modificări",
     "artifacts": "Artefacte",
     "plan": "Plan",
-    "placeholder": "Conținutul panoului va fi disponibil aici."
+    "placeholder": "Conținutul panoului va fi disponibil aici.",
+    "runs": "Rulări"
   },
   "workbench": {
     "name": "Numele spațiului de lucru",
@@ -619,10 +620,6 @@
     "save": "Salvează",
     "cancel": "Anulează",
     "empty": "Niciun workbench. Creează sau deschide unul pentru a începe.",
-    "pluginTitle": "Biblioteca de pluginuri",
-    "pluginIntro": "Gestionează integrările pentru instrumentele embedded.",
-    "pluginFuture": "Instalarea, importul și crearea pluginurilor nu sunt disponibile încă.",
-    "pluginPlanned": "Integrări planificate: ESP32, STM32, SEGGER și Wireshark.",
     "embeddingInfo": "Embeddings rulează local. BGE Small EN v1.5 este modelul instalat și suportat în prezent. Intrările rămân sub 512 tokenuri.",
     "sourceInfo": "Regulile sunt relative la folderul workbenchului. Folderele externe independente nu sunt încă suportate. VERA își păstrează datele în .vera și păstrează folderele tale de documente.",
     "changed": "Workbenchul activ s-a schimbat. Redeschide editorul.",
@@ -735,5 +732,96 @@
     "hybrid": "Hibrid (cuvinte cheie și sens)",
     "keyword": "Doar cuvinte cheie",
     "semantic": "Doar după sens"
+  },
+  "plugins": {
+    "intro": "Instalează pluginuri dintr-un dosar sau dintr-o arhivă zip, verifică ce rulează și activează-le pentru un workbench.",
+    "installFolder": "Instalează din dosar…",
+    "installZip": "Instalează din zip…",
+    "enabledFor": "Comutatoarele activează pluginurile pentru workbench-ul {{name}}.",
+    "noWorkbench": "Deschide un workbench pentru a activa pluginuri în el.",
+    "none": "Nu este instalat niciun plugin.",
+    "enable": "Activat în {{name}}",
+    "broken": "Acest plugin are erori și nu se încarcă:",
+    "programs": "Programe",
+    "noPrograms": "Fără programe: acest plugin adaugă doar abilități.",
+    "rules": "Reguli",
+    "noRules": "Nicio regulă.",
+    "docs": "Documente",
+    "range": "suportat {{range}}",
+    "timeout": "limită {{seconds}} s",
+    "installPrograms": "Instalează programele",
+    "installingPrograms": "Se instalează programele…",
+    "uninstall": "Dezinstalează",
+    "uninstallConfirm": "Dezinstalezi {{name}}? Workbench-urile care îl activează nu îi mai pot rula programele.",
+    "reviewTitle": "Verifică {{name}}",
+    "reviewIntro": "Verifică ce rulează acest plugin și cum este evaluată fiecare comandă înainte de a-l instala.",
+    "reviewIssues": "Acest pachet are erori și nu poate fi instalat:",
+    "replaces": "Instalarea înlocuiește versiunea instalată {{version}}.",
+    "install": "Instalează",
+    "cancel": "Anulează",
+    "id": "ID",
+    "version": "Versiune",
+    "platforms": "Platforme",
+    "requires": "Necesită",
+    "nothing": "Nimic",
+    "configPointer": "Instalează pluginuri și activează-le pentru workbench-ul deschis din pagina Pluginuri.",
+    "tier": {
+      "official": "Oficial",
+      "community": "Comunitate",
+      "local": "Local",
+      "trial": "Probă"
+    },
+    "state": {
+      "ready": "Pregătit",
+      "missing": "Neinstalat",
+      "unavailable": "Indisponibil"
+    },
+    "problem": {
+      "notFound": "Nu a fost găsit pe acest computer.",
+      "install": "Instalarea a eșuat.",
+      "download": "Descărcarea a eșuat.",
+      "sha256": "Descărcarea are un SHA-256 greșit.",
+      "archive": "Arhiva nu a putut fi extrasă.",
+      "platform": "Nu este disponibil pentru acest sistem.",
+      "launcher": "Programele cu lansator nu sunt încă suportate.",
+      "uv": "uv inclus lipsește.",
+      "version": "Versiunea nu a putut fi citită.",
+      "range": "Versiunea instalată este în afara intervalului suportat."
+    },
+    "issue": {
+      "manifest": "plugin.yaml lipsește, este prea mare sau nu este UTF-8.",
+      "yaml": "plugin.yaml nu este YAML valid.",
+      "yamlLine": "plugin.yaml nu este YAML valid (linia {{line}}).",
+      "field": "Valoare invalidă în manifest ({{issue}}):",
+      "id": "ID-ul din manifest diferă de numele dosarului:",
+      "record": "install.json lipsește sau nu corespunde pluginului.",
+      "changed": "Fișierele pluginului s-au schimbat după verificare; instalează-l din nou.",
+      "unavailable": "Fișierele pluginului nu pot fi citite."
+    },
+    "source": {
+      "label": "Sursă",
+      "pip": "Pachet PyPI {{requirement}}",
+      "script": "Script din plugin: {{path}}",
+      "download": "Descărcare pentru {{platform}}:",
+      "find": "Găsit pe acest computer:"
+    }
+  },
+  "runs": {
+    "none": "Nicio rulare de program în acest workbench încă.",
+    "plugin": "plugin {{plugin}}",
+    "background": "în fundal",
+    "exitCode": "cod de ieșire {{code}}",
+    "openLog": "Deschide jurnalul",
+    "stop": "Oprește",
+    "logTitle": "Jurnalul rulării",
+    "truncated": "Se afișează ultimul 1 MiB din jurnal.",
+    "close": "Închide",
+    "state": {
+      "running": "Rulează",
+      "exited": "Încheiat",
+      "stopped": "Oprit",
+      "timedOut": "Timp expirat",
+      "interrupted": "Întrerupt"
+    }
   }
 }

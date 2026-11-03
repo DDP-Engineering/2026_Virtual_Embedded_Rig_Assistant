@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-8c38d223"
+
+title = "Stop a program run from the desktop app"
+
+status = "active"
+
+requirement = "When the user stops a running program run of the open workbench, the program runner shall kill the run's process tree and the run shall end as stopped, and a run id that is not running in that workbench shall be NOT_FOUND."
+
+verification = "Runner unit test with a fake process host: stopping an active background run kills its tree and its record ends stopped; stopping it again, or stopping it through another workbench, is NOT_FOUND."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = "specs/REQ-DATA-f563074f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

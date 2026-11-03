@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-8e281f52"
+
+title = "Install only the reviewed package"
+
+status = "active"
+
+requirement = "If the package named by a desktop install request no longer has the integrity SHA-256 the user reviewed, then the plugin store shall refuse the install with CONFLICT and leave the installed plugins unchanged."
+
+verification = "Store unit test with a plugin package (esp32-esptool): review it, change one of its files, install with the reviewed hash: CONFLICT and no installed folder; installing with the current hash succeeds. The IPC schema rejects an install request without sha256."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+
+spec = "specs/REQ-DATA-f563074f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

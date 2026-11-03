@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-39617f81"
+
+title = "List a workbench's program runs"
+
+status = "active"
+
+requirement = "When the program runs of a workbench are requested, the program runner shall return that workbench's runs from .vera/runs newest first, at most 50, reporting an unfinished run as running and a record without an end whose run is not active as interrupted."
+
+verification = "Runner unit test: two workbenches each with runs; listing one returns only its runs, newest first; an active background run is running; a hand-written record without an end and no active run is interrupted; with 55 records only the newest 50 return; a malformed record is skipped."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = "specs/REQ-DATA-f563074f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

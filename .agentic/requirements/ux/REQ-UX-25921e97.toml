@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-25921e97"
+
+title = "Open a run log from the Runs tab"
+
+status = "active"
+
+requirement = "When the user opens a run's log in the Runs tab, the desktop app shall show the log text in a dialog that refreshes while the run is running and closes on Close or Escape."
+
+verification = "Component test and native e2e: opening the log of a running echo serve run shows boot and then READY; Close returns focus to the Open log button; the native run reads the real log."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -383,3 +383,187 @@ describe("per-drive directories (REQ-SEC-0e45a496)", () => {
     expect(Object.keys(env).filter((name) => name.startsWith("="))).toEqual([]);
   });
 });
+
+describe("run records, list, log and stop (spec REQ-DATA-f563074f)", () => {
+  const label = { plugin: "echo-tools", program: "echo", args: ["serve", "--port", "COM3"] };
+  const now = () => new Date("2026-11-03T10:00:00.000Z");
+  const record = async (id: string) =>
+    JSON.parse(await readFile(join(root, ".vera", "runs", `${id}.json`), "utf8")) as Record<string, unknown>;
+
+  // REQ-DATA-f563074f
+  it("records the plugin, program, agent arguments and start, then the end of each run", async () => {
+    runner = make({ host, clock: { sleep: async () => {} }, now });
+    const run = await runner.start(request({ label, background: true, executable: "/opt/node" }));
+    expect(await record(run.id)).toEqual({
+      format: 1,
+      id: run.id,
+      sessionId: "s1",
+      plugin: "echo-tools",
+      program: "echo",
+      args: ["serve", "--port", "COM3"],
+      background: true,
+      startedAt: "2026-11-03T10:00:00.000Z",
+    });
+    host.programs[0]?.finish({ code: 3, signal: null });
+    await run.done;
+    expect(await record(run.id)).toMatchObject({
+      end: "exited",
+      exitCode: 3,
+      durationMs: expect.any(Number),
+    });
+
+    const stopped = await runner.start(request({ label, background: true }));
+    await stopped.stop();
+    expect(await record(stopped.id)).toMatchObject({ end: "stopped", exitCode: null });
+
+    host.failNext = "ENOENT";
+    const failed = await runner.start(request({ label }));
+    await failed.done;
+    expect(await record(failed.id)).toMatchObject({ end: "exited", exitCode: null, error: "ENOENT" });
+
+    const timed = await runner.start(request({ label, timeoutMs: 10 }));
+    await timed.done;
+    expect(await record(timed.id)).toMatchObject({ end: "timedOut" });
+  });
+
+  // REQ-DATA-f563074f
+  it("prunes a run's record together with its log", async () => {
+    runner = make({ host, clock: { sleep: async () => {} }, logsKept: 2 });
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const run = await runner.start(request({ label }));
+      host.programs.at(-1)?.finish({ code: 0, signal: null });
+      await run.done;
+      ids.push(run.id);
+    }
+    await runner.start(request({ label }));
+    const names = await readdir(join(root, ".vera", "runs"));
+    expect(names.filter((name) => name.startsWith(ids[0] as string))).toEqual([]);
+    expect(names).toContain(`${ids[2]}.json`);
+  });
+
+  // REQ-FUNC-39617f81
+  it("lists one workbench's runs newest first, running, ended or interrupted, at most 50", async () => {
+    const other = await realpath(await mkdtemp(join(tmpdir(), "vera-runner-other-")));
+    await mkdir(join(other, ".vera"));
+    runner = make({ host, clock: { sleep: async () => {} }, now });
+    const ended = await runner.start(request({ label }));
+    host.programs[0]?.finish({ code: 0, signal: null });
+    await ended.done;
+    const running = await runner.start(request({ label, background: true }));
+    await runner.start(request({ label, background: true, workbench: other, sessionId: "s2" }));
+    const runs = join(root, ".vera", "runs");
+    const interrupted = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+    await writeFile(
+      join(runs, `${interrupted}.json`),
+      JSON.stringify({
+        format: 1,
+        id: interrupted,
+        sessionId: "s0",
+        args: [],
+        background: true,
+        startedAt: "2026-11-01T00:00:00.000Z",
+      }),
+    );
+    await writeFile(join(runs, "01ARZ3NDEKTSV4RRFFQ69G5FAW.json"), "{not json");
+    const listed = await runner.list(root);
+    expect(listed.map((run) => [run.id, run.state])).toEqual([
+      [running.id, "running"],
+      [ended.id, "exited"],
+      [interrupted, "interrupted"],
+    ]);
+    expect(listed[0]).toMatchObject({
+      program: "echo",
+      args: label.args,
+      log: `.vera/runs/${running.id}.log`,
+    });
+    expect((await runner.list(other)).map((run) => run.sessionId)).toEqual(["s2"]);
+
+    for (let i = 0; i < 55; i++) {
+      const id = `01ARZ3NDEKTSV4RRFFQ69G${String(i).padStart(4, "0")}`;
+      await writeFile(
+        join(runs, `${id}.json`),
+        JSON.stringify({
+          format: 1,
+          id,
+          sessionId: "s0",
+          args: [],
+          background: false,
+          startedAt: "2026-11-01T00:00:00.000Z",
+          end: "exited",
+          exitCode: 0,
+          durationMs: 1,
+        }),
+      );
+    }
+    expect(await runner.list(root)).toHaveLength(50);
+    expect(await runner.list(join(root, "missing"))).toEqual([]);
+    await runner.stopAll();
+    await rm(other, { recursive: true, force: true });
+  });
+
+  // REQ-FUNC-f024d73c
+  it("reads the tail of a run log with whether it was truncated and is running", async () => {
+    runner = make({ host, clock: { sleep: async () => {} } });
+    const run = await runner.start(request({ label, background: true }));
+    host.programs[0]?.print("boot\nREADY\n");
+    await vi.waitFor(async () =>
+      expect(await runner.log(root, run.id)).toEqual({
+        id: run.id,
+        text: "boot\nREADY\n",
+        truncated: false,
+        running: true,
+      }),
+    );
+    host.programs[0]?.print("x".repeat(30));
+    await run.stop();
+    const tail = await runner.log(root, run.id, 16);
+    expect(tail).toMatchObject({ truncated: true, running: false });
+    expect(tail.text).toHaveLength(16);
+    await expect(runner.log(root, "01ARZ3NDEKTSV4RRFFQ69G5FAV")).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(runner.log(root, "../secret")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  // REQ-FUNC-8c38d223
+  it("stops a running run of the workbench and refuses a run that is not running there", async () => {
+    const other = await realpath(await mkdtemp(join(tmpdir(), "vera-runner-other-")));
+    runner = make({ host, clock: { sleep: async () => {} } });
+    const run = await runner.start(request({ label, background: true }));
+    await expect(runner.stopRun(other, run.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await runner.stopRun(root, run.id);
+    expect(host.signals[0]).toEqual([-100, "SIGTERM"]);
+    expect(await record(run.id)).toMatchObject({ end: "stopped" });
+    expect((await runner.list(root))[0]?.state).toBe("stopped");
+    await expect(runner.stopRun(root, run.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await rm(other, { recursive: true, force: true });
+  });
+});
+
+describe("review round 1 (spec REQ-DATA-f563074f)", () => {
+  // REQ-FUNC-8c38d223: a stop that lands while the record is written before spawn still prevents the spawn.
+  it("never spawns a run stopped during its pre-spawn record write", async () => {
+    runner = make({ host, clock: { sleep: async () => {} } });
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const run = await runner.start(
+        request({
+          background: true,
+          beforeSpawn: async () => {
+            setImmediate(() => void runner.stopSession("s1"));
+          },
+        }),
+      );
+      expect(await run.done).toMatchObject({ stopped: true });
+    }
+    expect(host.programs).toEqual([]);
+  });
+
+  // REQ-FUNC-f024d73c: a truncated tail starts at a line boundary, never inside a line.
+  it("starts a truncated log tail after its first line break", async () => {
+    runner = make({ host, clock: { sleep: async () => {} } });
+    const run = await runner.start(request({ background: true }));
+    host.programs[0]?.print("aaaa\nbbbb\ncccc\n");
+    await run.stop();
+    expect(await runner.log(root, run.id, 7)).toMatchObject({ text: "cccc\n", truncated: true });
+    expect(await runner.log(root, run.id)).toMatchObject({ text: "aaaa\nbbbb\ncccc\n", truncated: false });
+  });
+});

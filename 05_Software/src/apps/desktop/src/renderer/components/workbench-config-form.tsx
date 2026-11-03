@@ -2,7 +2,6 @@ import type { WorkbenchConfig } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PermissionPicker } from "./permission-picker.js";
-import { Plugins } from "./plugins.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
@@ -260,7 +259,11 @@ export function WorkbenchConfigForm({
           )}
         </fieldset>
         {section === "skills" && skills}
-        {section === "plugins" && <Plugins />}
+        {section === "plugins" && (
+          <p className="muted" data-plugins-pointer>
+            {t("plugins.configPointer")}
+          </p>
+        )}
       </div>
     </div>
   );

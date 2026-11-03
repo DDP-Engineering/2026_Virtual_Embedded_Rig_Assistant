@@ -8,6 +8,7 @@ import {
   type PluginInstalled,
   type PluginIssue,
   type PluginManifest,
+  type PluginReview,
   pluginIdSchema,
   pluginProgramNameSchema,
   pluginTierSchema,
@@ -37,6 +38,12 @@ export interface LoadedPlugin {
   folder: string;
 }
 type Files = Map<string, Uint8Array>;
+interface Package {
+  source: string;
+  files: Files;
+  folder?: string;
+  kind: "folder" | "zip";
+}
 const RECORD = "install.json";
 const MANIFEST = "plugin.yaml";
 const RECORD_BYTES = 64 * 1024;
@@ -340,25 +347,55 @@ export class PluginStore {
     if (issues.length || !record || !manifest) throw fails("INVALID");
     return { folder, record, manifest };
   }
-  /** Installs a folder or a .zip file as a local plugin, replacing an installed one of the same id. */
-  install(path: string): Promise<PluginInstalled> {
+  /** Reads a package folder or .zip file with the install checks; nothing is written. */
+  private async readPackage(path: string): Promise<Package> {
+    const source = resolve(path);
+    let info: Awaited<ReturnType<typeof lstat>>;
+    try {
+      info = await lstat(source);
+    } catch (error) {
+      if (errno(error) === "ENOENT") throw fails("NOT_FOUND");
+      throw error;
+    }
+    if (info.isSymbolicLink()) throw fails("DENIED");
+    if (info.isDirectory())
+      return { source, files: await readFolder(source, false), folder: basename(source), kind: "folder" };
+    if (info.isFile() && /\.zip$/i.test(source)) {
+      if (info.size > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
+      return { source, ...readZip(await readFile(source)), kind: "zip" };
+    }
+    throw fails("INVALID");
+  }
+  /**
+   * What installing a folder or .zip file would install, without installing it: the integrity hash
+   * install.json would record, the manifest whenever it parses, every issue and the version of an
+   * installed plugin with the same id.
+   */
+  async review(path: string): Promise<PluginReview> {
+    const pkg = await this.readPackage(path);
+    const { manifest, issues } = examine(pkg.files, pkg.folder);
+    const installed =
+      manifest && (await this.ids()).includes(manifest.id) ? await this.summary(manifest.id) : undefined;
+    return {
+      path: pkg.source,
+      kind: pkg.kind,
+      sha256: pluginIntegrity(pkg.files),
+      issues: issues.slice(0, PLUGIN_LIMITS.issues),
+      ...(manifest ? { manifest } : {}),
+      ...(installed
+        ? { installed: installed.version === undefined ? {} : { version: installed.version } }
+        : {}),
+    };
+  }
+  /**
+   * Installs a folder or a .zip file as a local plugin, replacing an installed one of the same id.
+   * With `sha256` (the hash the user reviewed), a package whose files differ is CONFLICT.
+   */
+  install(path: string, sha256?: string): Promise<PluginInstalled> {
     return this.serial(async () => {
-      const source = resolve(path);
-      let info: Awaited<ReturnType<typeof lstat>>;
-      try {
-        info = await lstat(source);
-      } catch (error) {
-        if (errno(error) === "ENOENT") throw fails("NOT_FOUND");
-        throw error;
-      }
-      let pkg: { files: Files; folder?: string; kind: "folder" | "zip" };
-      if (info.isSymbolicLink()) throw fails("DENIED");
-      if (info.isDirectory())
-        pkg = { files: await readFolder(source, false), folder: basename(source), kind: "folder" };
-      else if (info.isFile() && /\.zip$/i.test(source)) {
-        if (info.size > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
-        pkg = { ...readZip(await readFile(source)), kind: "zip" };
-      } else throw fails("INVALID");
+      const pkg = await this.readPackage(path);
+      const source = pkg.source;
+      if (sha256 !== undefined && pluginIntegrity(pkg.files) !== sha256) throw fails("CONFLICT");
       const { manifest, issues } = examine(pkg.files, pkg.folder);
       const first = issues[0];
       if (first || !manifest)

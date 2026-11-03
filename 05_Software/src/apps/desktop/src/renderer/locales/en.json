@@ -96,7 +96,8 @@
     "changes": "Changes",
     "artifacts": "Artifacts",
     "plan": "Plan",
-    "placeholder": "Panel content will be available here."
+    "placeholder": "Panel content will be available here.",
+    "runs": "Runs"
   },
   "workbench": {
     "name": "Workbench name",
@@ -619,10 +620,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "empty": "No workbenches yet. Create or open one to begin.",
-    "pluginTitle": "Plugin library",
-    "pluginIntro": "Manage integrations for your embedded tools.",
-    "pluginFuture": "Plugin installation, import and authoring are not available yet.",
-    "pluginPlanned": "Planned integrations: ESP32, STM32, SEGGER and Wireshark.",
     "embeddingInfo": "Embeddings run locally. BGE Small EN v1.5 is the currently installed supported model. Inputs remain below 512 tokens.",
     "sourceInfo": "Patterns are relative to this workbench folder. External independent folders are not supported yet. VERA stores its data in .vera and preserves your document folders.",
     "changed": "The active workbench changed. Reopen this editor.",
@@ -735,5 +732,96 @@
     "hybrid": "Hybrid (keywords and meaning)",
     "keyword": "Keywords only",
     "semantic": "Meaning only"
+  },
+  "plugins": {
+    "intro": "Install plugins from a folder or zip, review what they run, and enable them for a workbench.",
+    "installFolder": "Install from folder…",
+    "installZip": "Install from zip…",
+    "enabledFor": "The switches enable plugins for the workbench {{name}}.",
+    "noWorkbench": "Open a workbench to enable plugins for it.",
+    "none": "No plugins are installed.",
+    "enable": "Enabled in {{name}}",
+    "broken": "This plugin has errors and does not load:",
+    "programs": "Programs",
+    "noPrograms": "No programs: this plugin only adds skills.",
+    "rules": "Rules",
+    "noRules": "No rules.",
+    "docs": "Documents",
+    "range": "supported {{range}}",
+    "timeout": "timeout {{seconds}} s",
+    "installPrograms": "Install programs",
+    "installingPrograms": "Installing programs…",
+    "uninstall": "Uninstall",
+    "uninstallConfirm": "Uninstall {{name}}? Workbenches that enable it can no longer run its programs.",
+    "reviewTitle": "Review {{name}}",
+    "reviewIntro": "Check what this plugin runs and how each command is rated before you install it.",
+    "reviewIssues": "This package has errors and cannot be installed:",
+    "replaces": "Installing replaces the installed version {{version}}.",
+    "install": "Install",
+    "cancel": "Cancel",
+    "id": "ID",
+    "version": "Version",
+    "platforms": "Platforms",
+    "requires": "Requires",
+    "nothing": "None",
+    "configPointer": "Install plugins and enable them for the open workbench on the Plugins page.",
+    "tier": {
+      "official": "Official",
+      "community": "Community",
+      "local": "Local",
+      "trial": "Trial"
+    },
+    "state": {
+      "ready": "Ready",
+      "missing": "Not installed",
+      "unavailable": "Unavailable"
+    },
+    "problem": {
+      "notFound": "Not found on this computer.",
+      "install": "The install failed.",
+      "download": "The download failed.",
+      "sha256": "The download has the wrong SHA-256.",
+      "archive": "The archive could not be extracted.",
+      "platform": "Not available for this system.",
+      "launcher": "Programs with a launcher are not supported yet.",
+      "uv": "The bundled uv is missing.",
+      "version": "The version could not be read.",
+      "range": "The installed version is outside the supported range."
+    },
+    "issue": {
+      "manifest": "plugin.yaml is missing, too large or not UTF-8.",
+      "yaml": "plugin.yaml is not valid YAML.",
+      "yamlLine": "plugin.yaml is not valid YAML (line {{line}}).",
+      "field": "Invalid manifest value ({{issue}}):",
+      "id": "The manifest id differs from the folder name:",
+      "record": "install.json is missing or does not match the plugin.",
+      "changed": "The plugin's files changed since it was reviewed; install it again.",
+      "unavailable": "The plugin's files cannot be read."
+    },
+    "source": {
+      "label": "Source",
+      "pip": "PyPI package {{requirement}}",
+      "script": "Script in the plugin: {{path}}",
+      "download": "Download for {{platform}}:",
+      "find": "Found on this computer:"
+    }
+  },
+  "runs": {
+    "none": "No program runs in this workbench yet.",
+    "plugin": "plugin {{plugin}}",
+    "background": "background",
+    "exitCode": "exit code {{code}}",
+    "openLog": "Open log",
+    "stop": "Stop",
+    "logTitle": "Run log",
+    "truncated": "Showing the last 1 MiB of the log.",
+    "close": "Close",
+    "state": {
+      "running": "Running",
+      "exited": "Ended",
+      "stopped": "Stopped",
+      "timedOut": "Timed out",
+      "interrupted": "Interrupted"
+    }
   }
 }

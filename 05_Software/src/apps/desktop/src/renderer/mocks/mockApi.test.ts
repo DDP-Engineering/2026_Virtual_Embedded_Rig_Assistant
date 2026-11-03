@@ -59,7 +59,9 @@ it("mock skills create/edit/toggle isolate workbenches and reject stale or read-
 it("mock plugins install, list per workbench, toggle and uninstall in memory", async () => {
   const { api } = createMockApi();
   const a = await api.invoke("workbench.create", { folder: "C:/mock/plugins-a", name: "A" });
-  const installed = await api.invoke("plugins.install", { path: "C:/plugins/esp32-esptool.zip" });
+  const path = "C:/plugins/esp32-esptool.zip";
+  const { sha256 } = await api.invoke("plugins.review", { path });
+  const installed = await api.invoke("plugins.install", { path, sha256 });
   expect(installed).toMatchObject({ id: "esp32-esptool", issues: [], source: "zip", tier: "local" });
   await api.invoke("plugins.toggle", { workbenchId: a.config.id, id: "esp32-esptool", enabled: true });
   expect(await api.invoke("plugins.list", { workbenchId: a.config.id })).toMatchObject([
@@ -81,7 +83,11 @@ it("mock plugins install, list per workbench, toggle and uninstall in memory", a
 // REQ-FUNC-13ef1c0c, REQ-FUNC-86daf060
 it("mock plugins list and install their programs", async () => {
   const { api } = createMockApi();
-  await api.invoke("plugins.install", { path: "C:/plugins/esp32-esptool.zip" });
+  const path = "C:/plugins/esp32-esptool.zip";
+  await api.invoke("plugins.install", {
+    path,
+    sha256: (await api.invoke("plugins.review", { path })).sha256,
+  });
   expect(await api.invoke("plugins.programs", { id: "esp32-esptool" })).toEqual([
     { name: "esp32-esptool", kind: "pip", state: "missing" },
   ]);
@@ -267,4 +273,48 @@ it("mock read-only/missing/warnings fixtures expose UI states and deny saves", a
     folder: "/mock/demo-board",
   });
   expect(warnings.warnings).toContainEqual({ code: "NETWORK_SHARE_UNSUPPORTED" });
+});
+
+// REQ-FUNC-a5be5e53, REQ-SEC-8e281f52
+it("mock plugins review a package and install only its reviewed hash", async () => {
+  const { api } = createMockApi();
+  const { path } = await api.invoke("plugins.choose", { kind: "folder" });
+  expect(path).toBe("/mock/plugins/echo-tools");
+  const review = await api.invoke("plugins.review", { path: path ?? "" });
+  expect(review.manifest?.rules).toHaveLength(5);
+  expect(review.installed).toBeUndefined();
+  await expect(
+    api.invoke("plugins.install", { path: path ?? "", sha256: "f".repeat(64) }),
+  ).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
+  expect(await api.invoke("plugins.install", { path: path ?? "", sha256: review.sha256 })).toMatchObject({
+    id: "echo-tools",
+    name: "Echo tools",
+  });
+  expect((await api.invoke("plugins.review", { path: path ?? "" })).installed).toEqual({ version: "1.0.0" });
+  expect((await api.invoke("plugins.review", { path: "/mock/plugins/Bad Name" })).issues).toEqual([
+    { code: "id", path: "id" },
+  ]);
+});
+// REQ-FUNC-39617f81, REQ-FUNC-f024d73c, REQ-FUNC-8c38d223
+it("mock runs list, read a log and stop a running run of the open workbench", async () => {
+  const { api } = createMockApi();
+  const wb = await api.invoke("workbench.create", { folder: "C:/mock/runs", name: "Runs" });
+  const workbenchId = wb.config.id;
+  const { runs } = await api.invoke("runs.list", { workbenchId });
+  expect(runs.map((run) => run.state)).toEqual(["running", "exited"]);
+  const id = runs[0]?.id ?? "";
+  expect(await api.invoke("runs.log", { workbenchId, id })).toMatchObject({
+    text: "boot\nREADY\n",
+    running: true,
+  });
+  await api.invoke("runs.stop", { workbenchId, id });
+  expect((await api.invoke("runs.list", { workbenchId })).runs[0]?.state).toBe("stopped");
+  await expect(api.invoke("runs.stop", { workbenchId, id })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(
+    api.invoke("runs.list", { workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" }),
+  ).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
 });

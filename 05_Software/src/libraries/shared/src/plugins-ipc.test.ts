@@ -30,9 +30,19 @@ it("validates strict plugin list, install, uninstall and toggle requests and res
       },
     ]),
   ).toHaveLength(2);
-  for (const path of ["C:\\plugins\\esp32-esptool", "C:/p/x.zip", "/home/u/p", "\\\\server\\share\\p"])
-    expect(channels["plugins.install"].request.parse({ path })).toEqual({ path });
-  for (const request of [{ path: "relative/folder" }, { path: "" }, { path: "/x", extra: 1 }])
+  const sha256 = "a".repeat(64);
+  for (const path of ["C:\\plugins\\esp32-esptool", "C:/p/x.zip", "/home/u/p", "\\\\server\\share\\p"]) {
+    expect(channels["plugins.install"].request.parse({ path, sha256 })).toEqual({ path, sha256 });
+    expect(channels["plugins.review"].request.parse({ path })).toEqual({ path });
+  }
+  for (const request of [
+    { path: "relative/folder", sha256 },
+    { path: "", sha256 },
+    { path: "/x", sha256, extra: 1 },
+    // REQ-SEC-8e281f52: an install names the hash the user reviewed.
+    { path: "/x" },
+    { path: "/x", sha256: "A".repeat(64) },
+  ])
     expect(channels["plugins.install"].request.safeParse(request).success).toBe(false);
   expect(channels["plugins.uninstall"].request.parse({ id: "esp32-esptool" })).toBeTruthy();
   expect(channels["plugins.uninstall"].request.safeParse({ id: "../x" }).success).toBe(false);
@@ -45,4 +55,79 @@ it("validates strict plugin list, install, uninstall and toggle requests and res
     { workbenchId, id: "esp32-esptool", enabled: true, extra: 1 },
   ])
     expect(channels["plugins.toggle"].request.safeParse(request).success).toBe(false);
+});
+
+// REQ-FUNC-a5be5e53, REQ-FUNC-6c76f25a
+it("validates the plugin picker and review", () => {
+  for (const kind of ["folder", "zip"])
+    expect(channels["plugins.choose"].request.parse({ kind })).toEqual({ kind });
+  expect(channels["plugins.choose"].request.safeParse({ kind: "file" }).success).toBe(false);
+  expect(channels["plugins.choose"].response.parse({ path: null })).toEqual({ path: null });
+  expect(channels["plugins.choose"].response.parse({ path: "C:/p/x.zip" })).toEqual({ path: "C:/p/x.zip" });
+  const review = {
+    path: "C:/plugins/echo-tools",
+    kind: "folder",
+    sha256: "b".repeat(64),
+    issues: [],
+    manifest: {
+      format: 1,
+      id: "echo-tools",
+      version: "1.0.0",
+      name: "Echo tools",
+      description: "Echo arguments.",
+      ecosystem: "general",
+      platforms: ["windows-x64"],
+      programs: {
+        echo: { install: { find: { windows: ["%PATH%"] } }, version: { args: [], match: "v(\\d+)" } },
+      },
+      rules: [{ match: "echo burn *", risk: "irreversible", note: "Burns a fuse." }],
+    },
+    installed: { version: "0.9.0" },
+  };
+  expect(channels["plugins.review"].response.parse(review).manifest?.requires).toEqual([]);
+  expect(
+    channels["plugins.review"].response.parse({
+      path: "/p/broken",
+      kind: "zip",
+      sha256: "c".repeat(64),
+      issues: [{ code: "field", path: "rules.0.risk", issue: "invalid_value" }],
+    }).manifest,
+  ).toBeUndefined();
+  expect(channels["plugins.review"].response.safeParse({ ...review, sha256: "x" }).success).toBe(false);
+});
+
+// REQ-FUNC-39617f81, REQ-FUNC-f024d73c, REQ-FUNC-8c38d223
+it("validates the runs list, log and stop channels", () => {
+  const id = "01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  expect(channels["runs.list"].request.parse({ workbenchId })).toEqual({ workbenchId });
+  expect(channels["runs.list"].request.safeParse({}).success).toBe(false);
+  const run = {
+    id,
+    sessionId: "s1",
+    plugin: "echo-tools",
+    program: "echo",
+    args: ["serve"],
+    background: true,
+    startedAt: "2026-11-03T10:00:00.000Z",
+    state: "running",
+    log: `.vera/runs/${id}.log`,
+  };
+  expect(channels["runs.list"].response.parse({ runs: [run] }).runs).toHaveLength(1);
+  expect(
+    channels["runs.list"].response.parse({
+      runs: [{ ...run, state: "exited", end: "exited", exitCode: 0, durationMs: 12 }],
+    }).runs[0]?.exitCode,
+  ).toBe(0);
+  expect(channels["runs.list"].response.safeParse({ runs: [{ ...run, state: "paused" }] }).success).toBe(
+    false,
+  );
+  for (const name of ["runs.log", "runs.stop"] as const) {
+    expect(channels[name].request.parse({ workbenchId, id })).toEqual({ workbenchId, id });
+    for (const bad of ["../x", "01jb8z6q4m7n2k5r9t3v8x1y0c", ""])
+      expect(channels[name].request.safeParse({ workbenchId, id: bad }).success).toBe(false);
+  }
+  expect(
+    channels["runs.log"].response.parse({ id, text: "boot\n", truncated: false, running: true }),
+  ).toBeTruthy();
+  expect(channels["runs.stop"].response.parse({})).toEqual({});
 });

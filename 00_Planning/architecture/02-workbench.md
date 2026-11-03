@@ -71,7 +71,7 @@ Every block except `format`, `id` and `name` is optional and takes the defaults 
 | `embeddings` | strict object: unknown keys are an error, not a warning; chunking is in `05-knowledge-rag.md` |
 | `docs.include`, `docs.exclude` | glob arrays; selection rules in §4 |
 | `retrieval` | used when `search_docs` passes no `k` or `mode` |
-| `skills.disabled`, `tools.disabled` | non-empty names; unknown names produce an `UNKNOWN_NAME` warning, not an error; tools are the 14 built-ins of `shared/src/tools.ts` |
+| `skills.disabled`, `tools.disabled` | non-empty names; unknown names produce an `UNKNOWN_NAME` warning, not an error; tools are the 17 built-ins of `shared/src/tools.ts` |
 | `agent.permission_mode` | enum above; default `ask` |
 | `agent.model` | `null` or `"<providerId>/<modelId>"` (syntax only); a session's own model wins, then this, then the app default |
 

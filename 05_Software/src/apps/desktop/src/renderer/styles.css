@@ -2462,3 +2462,109 @@ legend {
   background: var(--accent);
   border-color: var(--primary);
 }
+/* Plugins page and review screen (REQ-UX-28503c97, REQ-UX-e6056763). */
+.plugins-page,
+.plugin-review {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.plugin-list,
+.plugin-review-list,
+.plugin-programs,
+.plugin-issues {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+.plugin-card {
+  display: grid;
+  gap: 0.4rem;
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.plugin-card p {
+  margin: 0;
+}
+.plugin-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.plugin-review-list li,
+.plugin-programs li,
+.plugin-issues li {
+  overflow-wrap: anywhere;
+}
+.plugin-review-list > li {
+  border-bottom: 0.0625rem solid var(--border);
+  padding-bottom: 0.4rem;
+}
+.plugin-review-list ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
+.plugin-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.15rem 0.75rem;
+  margin: 0;
+}
+.plugin-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.plugin-sha {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono, monospace);
+}
+.plugin-enable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Runs tab (REQ-UX-e0e51891). */
+.runs-tab {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.runs-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.runs-list > li {
+  display: grid;
+  gap: 0.25rem;
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.runs-list p {
+  margin: 0;
+}
+.run-command {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.run-log {
+  max-height: 60vh;
+  overflow: auto;
+  margin: 0.75rem 0;
+  font-size: var(--code-font-size, 14px);
+  font-family: ui-monospace, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

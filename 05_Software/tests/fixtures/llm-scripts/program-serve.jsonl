@@ -1,0 +1,2 @@
+{"match":"(?i)serve","toolCalls":[{"name":"run_program","args":{"program":"echo","args":["serve"],"background":true}}]}
+{"text":"The echo server runs in the background."}

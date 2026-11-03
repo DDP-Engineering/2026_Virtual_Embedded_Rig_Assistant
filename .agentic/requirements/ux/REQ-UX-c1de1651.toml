@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-c1de1651"
+
+title = "Uninstall a plugin after confirmation"
+
+status = "active"
+
+requirement = "When the user chooses Uninstall for a plugin and confirms, the Plugins page shall uninstall it and remove it from the list, and when the user declines nothing changes."
+
+verification = "Component test: declining the confirmation keeps the plugin and calls no uninstall; accepting calls plugins.uninstall with the id and the plugin disappears from the list."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

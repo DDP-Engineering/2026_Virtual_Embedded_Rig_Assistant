@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-6c76f25a"
+
+title = "Choose a plugin folder or zip in a native picker"
+
+status = "active"
+
+requirement = "When the user chooses Install from folder or Install from zip, the desktop app shall open the native folder picker or a picker limited to .zip files and return the chosen absolute path, or null when the user cancels."
+
+verification = "Inspection: main's plugins.choose handler passes openDirectory for folder and openFile with a zip filter for zip and maps a cancelled dialog to null; the native e2e drives the handler through the instrumented VERA_TEST_PLUGIN_PATH override. Manual: on Windows and Linux both pickers open and Cancel leaves the page unchanged."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

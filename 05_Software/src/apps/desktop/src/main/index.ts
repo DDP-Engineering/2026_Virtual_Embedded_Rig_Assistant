@@ -255,6 +255,12 @@ const sessions = new SessionsHost({
 ipcMain.handle("vera:subscription", (event, action, payload) =>
   sessions.subscription(event, action, payload),
 );
+/** The folder of the open workbench when `workbenchId` names it; CONFLICT otherwise. */
+function openWorkbenchFolder(workbenchId: string): string {
+  const snapshot = workbench.getSnapshot();
+  if (snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+  return snapshot.folder;
+}
 /** A plugin was installed, removed, toggled or provisioned: resolve programs and prompt entries again. */
 function pluginsChanged(): void {
   provisioner.invalidate();
@@ -325,8 +331,21 @@ ipcMain.handle(
         const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
         return (await plugins.list()).map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
       },
-      "plugins.install": async ({ path }) => {
-        const installed = await plugins.install(path);
+      "plugins.choose": async ({ kind }) => {
+        if (__VERA_TEST__ && process.env.VERA_TEST_PLUGIN_PATH)
+          return { path: process.env.VERA_TEST_PLUGIN_PATH };
+        if (!window || window.isDestroyed()) return { path: null };
+        const result = await dialog.showOpenDialog(
+          window,
+          kind === "folder"
+            ? { properties: ["openDirectory"] }
+            : { properties: ["openFile"], filters: [{ name: "Zip", extensions: ["zip"] }] },
+        );
+        return { path: result.canceled ? null : (result.filePaths[0] ?? null) };
+      },
+      "plugins.review": ({ path }) => plugins.review(path),
+      "plugins.install": async ({ path, sha256 }) => {
+        const installed = await plugins.install(path, sha256);
         pluginsChanged();
         return installed;
       },
@@ -347,6 +366,23 @@ ipcMain.handle(
         } finally {
           pluginsChanged();
         }
+      },
+      // Runs of the open workbench only; another workbench id is CONFLICT like the other workbench channels.
+      // Arguments and output cross to the renderer redacted, like program approval payloads and documents.
+      "runs.list": async ({ workbenchId }) => ({
+        runs: (await programs.list(openWorkbenchFolder(workbenchId))).map((run) => ({
+          ...run,
+          args: run.args.map((arg) => credentials.scrub(arg)),
+          ...(run.error === undefined ? {} : { error: credentials.scrub(run.error) }),
+        })),
+      }),
+      "runs.log": async ({ workbenchId, id }) => {
+        const log = await programs.log(openWorkbenchFolder(workbenchId), id);
+        return { ...log, text: credentials.scrub(log.text) };
+      },
+      "runs.stop": async ({ workbenchId, id }) => {
+        await programs.stopRun(openWorkbenchFolder(workbenchId), id);
+        return {};
       },
       "docs.list": async ({ workbenchId }) => ({
         workbenchId,

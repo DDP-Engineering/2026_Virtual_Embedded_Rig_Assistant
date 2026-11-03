@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-e07790cb"
+
+title = "Point the workbench Plugins section to the Plugins page"
+
+status = "active"
+
+requirement = "The Plugins section of New Workbench and the workbench editor shall say that plugins are installed and enabled for the open workbench on the Plugins page."
+
+verification = "Component test: rendering the configuration form's Plugins section shows the pointer text and no placeholder text."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "low"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

@@ -182,7 +182,10 @@ policy below; it receives a resolved executable and the program's resolved varia
 - Timeout, Stop and the caller's abort kill the whole process tree. On Windows:
   `%SystemRoot%\System32\taskkill.exe /T /F /PID`. On Linux: the run starts in its own process group
   and receives SIGTERM, then SIGKILL after 3 s.
-- The full output goes to `.vera/runs/<run-id>.log` (the run id is a ULID); the newest 200 logs per
+- The full output goes to `.vera/runs/<run-id>.log` (the run id is a ULID), and a run record
+  `.vera/runs/<run-id>.json` beside it names the plugin, the program, the agent's arguments, the session and
+  the start, then the end (`exited`, `stopped`, `timedOut`), exit code and duration (spec
+  `.agentic/specs/REQ-DATA-f563074f.md`); the newest 200 runs (log and record) per
   workbench are kept, never deleting the log of an unfinished run. Output is decoded as UTF-8 with
   replacement characters and ANSI escape codes are removed, also when split across chunks. The
   result carries the last 12 000 characters. Output is untrusted data, like file and web content.
@@ -309,7 +312,7 @@ moment is not detected.
   user's own Python, `~/.local/bin`, the Windows registry or the user's uv configuration. uv fetches one
   managed CPython 3.13 that all plugins share; the minor version is pinned because uv otherwise takes the
   newest CPython, for which common packages may have no wheels yet (seen with 3.15.0 and pyyaml).
-- Only the user installs: Settings (PLG-06) through `plugins.provision {id}`, the CLI through
+- Only the user installs: the Plugins page (PLG-06) through `plugins.provision {id}`, the CLI through
   `vera plugin install --path <folder|zip> --data <dir>`. Resolving for the prompt and `run_program` never
   downloads, installs or synchronises anything. The agent cannot install programs; it can only propose a
   plugin.
@@ -343,13 +346,17 @@ Disk use, measured 2026-11-02 on Windows x64 (apparent bytes; Ubuntu still to me
 | Runtime | `<userData>/plugins/runtime/{cache,python,tools/<plugin id>,downloads/<sha256>}` |
 | Draft | any workbench folder, for example `plugins/<id>/`; ordinary files the agent can write |
 | Enabled for a workbench | `.vera/workbench.yaml` → `plugins: { enabled: [<id>…] }` |
-| Run logs | `.vera/runs/` |
+| Run logs and run records | `.vera/runs/<run id>.log`, `.vera/runs/<run id>.json`; the Runs tab lists the newest 50, opens a log (last 1 MiB) and stops a running run |
 
 - Enablement is opt-in, unlike skills, because plugins execute programs.
 - Integrity: `install.json.sha256` covers the sorted relative paths and bytes of every plugin file
   (each file as path NUL length NUL bytes; the root `install.json` excluded). VERA recomputes it at every
   list and load. A mismatch disables the plugin with "changed since review", the same
   rule `SkillCatalog` applies to skills that change after being read.
+- The desktop app installs in two steps: `plugins.review {path}` reads and validates the package and returns
+  its integrity hash, manifest and issues without installing; the review screen shows every program, install
+  source and rule with its risk and note; `plugins.install {path, sha256}` installs only a package that still
+  has the reviewed hash (CONFLICT otherwise). The CLI installs without a review.
 - Install accepts a folder named as the id, or a zip with the package at its root or in one top folder
   named as the id. It refuses links, unsafe or case-colliding paths, a root `install.json`, more than 4096
   files, 64 MiB of content, a 64 MiB zip or a 256 KiB manifest, and an invalid manifest (INVALID with the

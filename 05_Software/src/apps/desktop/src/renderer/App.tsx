@@ -9,6 +9,7 @@ import { DocumentTabs } from "./components/documents/document-tabs.js";
 import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { Plugins } from "./components/plugins.js";
+import { RunsTab } from "./components/runs-tab.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
 import { type Attachments, AttachmentsContext } from "./components/session/attachments.js";
 import { ChangesTab } from "./components/session/changes-tab.js";
@@ -541,6 +542,7 @@ export function App() {
                 <PlanTab workbenchId={benchId} sessionId={activeSession} />
               ) : undefined
             }
+            runs={benchId && !settings ? <RunsTab key={benchId} workbenchId={benchId} /> : undefined}
           >
             <UpdateBanner />
             <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
@@ -631,7 +633,19 @@ export function App() {
                   />
                 )}
               </div>
-              {plugins && <Plugins />}
+              {plugins && (
+                <Plugins
+                  workbench={
+                    activeWorkbench
+                      ? {
+                          id: activeWorkbench.config.id,
+                          name: activeWorkbench.config.name,
+                          readOnly: activeWorkbench.readOnly,
+                        }
+                      : undefined
+                  }
+                />
+              )}
             </div>
             {emptyCanvas && (
               <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">

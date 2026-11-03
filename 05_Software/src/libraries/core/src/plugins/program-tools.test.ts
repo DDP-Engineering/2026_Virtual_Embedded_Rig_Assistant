@@ -195,7 +195,13 @@ describe("command line (REQ-FUNC-8e22989a)", () => {
     expect(process.options.env).toMatchObject({ ROOT: root, DIR: "/plugins/echo-tools" });
     expect(process.options.cwd).toBe(join(root, "build"));
     process.finish({ code: 0, signal: null });
-    await result;
+    const { log } = (await result) as { log: string };
+    // REQ-DATA-f563074f: the run record names the plugin, program and only the agent's arguments.
+    expect(JSON.parse(await readFile(join(root, log.replace(/\.log$/, ".json")), "utf8"))).toMatchObject({
+      plugin: "echo-tools",
+      program: "echo",
+      args: ["status", "a b"],
+    });
   });
 });
 

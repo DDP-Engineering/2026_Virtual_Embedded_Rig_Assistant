@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-f563074f"
+
+title = "Record each plugin program run next to its log"
+
+status = "active"
+
+requirement = "When a plugin program run starts, the program runner shall write .vera/runs/<run id>.json with the plugin, program, agent arguments, session, background flag and start time, and when the run ends shall add its end (exited, stopped or timed out), exit code, start error and duration; pruning deletes a run's record together with its log."
+
+verification = "Runner unit test with a fake process host: a started run's record parses with its plugin, program, arguments, session and start time and no end; after exit 3 it records exited, exitCode 3 and a duration; a stopped run records stopped; a run that cannot start records its error; with logsKept 2 and three runs the oldest .log and .json are both deleted."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+
+
+spec = "specs/REQ-DATA-f563074f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

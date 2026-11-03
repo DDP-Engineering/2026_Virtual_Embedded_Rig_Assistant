@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-acc04fbc"
+
+title = "Install the reviewed plugin"
+
+status = "active"
+
+requirement = "When the user confirms Install on the review screen, the Plugins page shall install the reviewed package with its reviewed SHA-256 and return to the list showing the plugin, or keep the review screen open with the translated error when the install fails."
+
+verification = "Component test and both e2e runs: Install calls plugins.install with the path and the reviewed sha256 and the list shows Echo tools; a mock install answering CONFLICT keeps the review screen with the conflict message."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

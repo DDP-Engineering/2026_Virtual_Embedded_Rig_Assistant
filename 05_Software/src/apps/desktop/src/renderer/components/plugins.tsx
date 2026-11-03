@@ -1,13 +1,472 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type {
+  PluginIssue,
+  PluginProgram,
+  PluginProgramStatus,
+  PluginReview,
+  PluginRisk,
+  PluginSummary,
+} from "@vera/shared";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../api/index.js";
+import { ErrorMessage } from "./error-message.js";
 
-export function Plugins() {
+/** The open workbench, when there is one: plugins are enabled per workbench. */
+export interface PluginsWorkbench {
+  id: string;
+  name: string;
+  readOnly: boolean;
+}
+
+function useLabels() {
   const { t } = useTranslation();
+  const risk: Record<PluginRisk, string> = {
+    safe: t("approval.risk.safe"),
+    "device-read": t("approval.risk.deviceRead"),
+    "device-write": t("approval.risk.deviceWrite"),
+    irreversible: t("approval.risk.irreversible"),
+    blocked: t("approval.risk.blocked"),
+  };
+  const issue = (item: PluginIssue): string => {
+    switch (item.code) {
+      case "manifest":
+        return t("plugins.issue.manifest");
+      case "yaml":
+        return item.line === undefined
+          ? t("plugins.issue.yaml")
+          : t("plugins.issue.yamlLine", { line: item.line });
+      case "field":
+        return t("plugins.issue.field", { issue: item.issue ?? "" });
+      case "id":
+        return t("plugins.issue.id");
+      case "record":
+        return t("plugins.issue.record");
+      case "changed":
+        return t("plugins.issue.changed");
+      default:
+        return t("plugins.issue.unavailable");
+    }
+  };
+  const tier = {
+    official: t("plugins.tier.official"),
+    community: t("plugins.tier.community"),
+    local: t("plugins.tier.local"),
+    trial: t("plugins.tier.trial"),
+  };
+  const state = {
+    ready: t("plugins.state.ready"),
+    missing: t("plugins.state.missing"),
+    unavailable: t("plugins.state.unavailable"),
+  };
+  const problem: Record<NonNullable<PluginProgramStatus["problem"]>, string> = {
+    notFound: t("plugins.problem.notFound"),
+    install: t("plugins.problem.install"),
+    download: t("plugins.problem.download"),
+    sha256: t("plugins.problem.sha256"),
+    archive: t("plugins.problem.archive"),
+    platform: t("plugins.problem.platform"),
+    launcher: t("plugins.problem.launcher"),
+    uv: t("plugins.problem.uv"),
+    version: t("plugins.problem.version"),
+    range: t("plugins.problem.range"),
+  };
+  return { risk, issue, tier, state, problem };
+}
+
+function Issues({ issues }: { issues: readonly PluginIssue[] }) {
+  const labels = useLabels();
   return (
-    <section className="surface" data-plugins>
-      <h2>{t("projects.pluginTitle")}</h2>
-      <p>{t("projects.pluginIntro")}</p>
-      <p role="status">{t("projects.pluginFuture")}</p>
-      <p className="muted">{t("projects.pluginPlanned")}</p>
+    <ul className="plugin-issues">
+      {issues.map((item, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: issues have no identity and never reorder.
+        <li key={index} data-issue={item.code}>
+          {labels.issue(item)}
+          {item.path && (
+            <>
+              {" "}
+              <code>{item.path}</code>
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Where a program comes from, as the review screen lists it. */
+function InstallSource({ program }: { program: PluginProgram }) {
+  const { t } = useTranslation();
+  const { install } = program;
+  if ("pip" in install) return <span>{t("plugins.source.pip", { requirement: install.pip })}</span>;
+  if ("script" in install) return <span>{t("plugins.source.script", { path: install.script })}</span>;
+  if ("download" in install)
+    return (
+      <ul>
+        {Object.entries(install.download).map(([platform, entry]) => (
+          <li key={platform}>
+            {t("plugins.source.download", { platform })} <code>{entry?.url}</code>{" "}
+            <span className="plugin-sha">SHA-256 {entry?.sha256}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  return (
+    <>
+      <span>{t("plugins.source.find")}</span>{" "}
+      <code>{[...(install.find.windows ?? []), ...(install.find.linux ?? [])].join(", ")}</code>
+      {install.hint && <span className="muted"> {install.hint}</span>}
+    </>
+  );
+}
+
+function Review({
+  review,
+  installed,
+  cancel,
+}: {
+  review: PluginReview;
+  installed: () => void;
+  cancel: () => void;
+}) {
+  const { t } = useTranslation();
+  const labels = useLabels();
+  const title = useId();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>();
+  const { manifest } = review;
+  async function install() {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await api.invoke("plugins.install", { path: review.path, sha256: review.sha256 });
+      installed();
+    } catch (failure) {
+      setError(failure);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="plugin-review" aria-labelledby={title} data-plugin-review>
+      <h3 id={title}>{t("plugins.reviewTitle", { name: manifest?.name ?? review.path })}</h3>
+      <p className="muted">{t("plugins.reviewIntro")}</p>
+      {review.installed && (
+        <p role="status">{t("plugins.replaces", { version: review.installed.version ?? "?" })}</p>
+      )}
+      {review.issues.length > 0 && (
+        <div role="alert">
+          <p>{t("plugins.reviewIssues")}</p>
+          <Issues issues={review.issues} />
+        </div>
+      )}
+      <dl className="plugin-facts">
+        {manifest && (
+          <>
+            <dt>{t("plugins.id")}</dt>
+            <dd>
+              <code>{manifest.id}</code>
+            </dd>
+            <dt>{t("plugins.version")}</dt>
+            <dd>{manifest.version}</dd>
+            <dt>{t("plugins.platforms")}</dt>
+            <dd>{manifest.platforms.join(", ")}</dd>
+            <dt>{t("plugins.requires")}</dt>
+            <dd>{manifest.requires.length ? manifest.requires.join(", ") : t("plugins.nothing")}</dd>
+          </>
+        )}
+        <dt>{t("plugins.source.label")}</dt>
+        <dd>
+          <code>{review.path}</code>
+        </dd>
+      </dl>
+      {manifest && (
+        <>
+          <p>{manifest.description}</p>
+          <h4>{t("plugins.programs")}</h4>
+          {Object.keys(manifest.programs).length === 0 && <p>{t("plugins.noPrograms")}</p>}
+          <ul className="plugin-review-list">
+            {Object.entries(manifest.programs).map(([name, program]) => (
+              <li key={name} data-program={name}>
+                <code>{name}</code> <InstallSource program={program} />
+                {program.version.range && (
+                  <span className="muted"> {t("plugins.range", { range: program.version.range })}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <h4>{t("plugins.rules")}</h4>
+          {manifest.rules.length === 0 && <p>{t("plugins.noRules")}</p>}
+          <ul className="plugin-review-list">
+            {manifest.rules.map((rule, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: rules keep manifest order and may repeat.
+              <li key={index} data-rule={rule.risk}>
+                <code>{rule.match}</code>{" "}
+                <span className="risk-badge" data-risk={rule.risk}>
+                  {labels.risk[rule.risk]}
+                </span>
+                {rule.note && <span> {rule.note}</span>}
+                {rule.timeout !== undefined && (
+                  <span className="muted"> {t("plugins.timeout", { seconds: rule.timeout })}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {manifest.docs.length > 0 && (
+            <>
+              <h4>{t("plugins.docs")}</h4>
+              <ul className="plugin-review-list">
+                {manifest.docs.map((doc) => (
+                  <li key={doc}>
+                    <code>{doc}</code>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+      {error !== undefined && <ErrorMessage error={error} />}
+      <div className="workbench-actions">
+        <button
+          type="button"
+          data-action="plugin-install"
+          disabled={busy || review.issues.length > 0 || !manifest}
+          onClick={() => void install()}
+        >
+          {t("plugins.install")}
+        </button>
+        <button type="button" data-action="plugin-review-cancel" disabled={busy} onClick={cancel}>
+          {t("plugins.cancel")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Programs({ statuses }: { statuses: readonly PluginProgramStatus[] }) {
+  const { t } = useTranslation();
+  const labels = useLabels();
+  if (statuses.length === 0) return <p className="muted">{t("plugins.noPrograms")}</p>;
+  return (
+    <ul className="plugin-programs" aria-label={t("plugins.programs")}>
+      {statuses.map((status) => (
+        <li key={status.name} data-program={status.name} data-state={status.state}>
+          <code>{status.name}</code> <strong>{labels.state[status.state]}</strong>
+          {status.version && <span> {status.version}</span>}
+          {status.range && <span className="muted"> {t("plugins.range", { range: status.range })}</span>}
+          {status.problem && <span> {labels.problem[status.problem]}</span>}
+          {status.detail && <span className="muted"> {status.detail}</span>}
+          {status.hint && <span> {status.hint}</span>}
+          {status.link && (
+            <>
+              {" "}
+              <code>{status.link}</code>
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PluginCard({
+  plugin,
+  workbench,
+  changed,
+}: {
+  plugin: PluginSummary;
+  workbench: PluginsWorkbench | undefined;
+  changed: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const labels = useLabels();
+  const client = useQueryClient();
+  const [busy, setBusy] = useState<"provision" | "toggle" | "uninstall">();
+  const [error, setError] = useState<unknown>();
+  const [switching, setSwitching] = useState<boolean>();
+  const healthy = plugin.issues.length === 0;
+  const programs = useQuery({
+    queryKey: ["plugin-programs", plugin.id, plugin.sha256],
+    queryFn: () => api.invoke("plugins.programs", { id: plugin.id }),
+    enabled: healthy,
+    staleTime: 0,
+  });
+  const name = plugin.name ?? plugin.id;
+  async function perform(kind: NonNullable<typeof busy>, action: () => Promise<unknown>) {
+    setBusy(kind);
+    setError(undefined);
+    try {
+      await action();
+    } catch (failure) {
+      setError(failure);
+    } finally {
+      setBusy(undefined);
+    }
+  }
+  return (
+    <li className="plugin-card" data-plugin={plugin.id}>
+      <p className="plugin-heading">
+        <strong>{name}</strong>
+        {plugin.version && <span> {plugin.version}</span>}
+        {plugin.tier && (
+          <span className="risk-badge" data-tier={plugin.tier}>
+            {labels.tier[plugin.tier]}
+          </span>
+        )}
+      </p>
+      <p className="muted">
+        <code>{plugin.id}</code>
+        {plugin.ecosystem && <span> · {plugin.ecosystem}</span>}
+      </p>
+      {plugin.description && <p>{plugin.description}</p>}
+      {!healthy && (
+        <div role="alert" data-plugin-issues>
+          <p>{t("plugins.broken")}</p>
+          <Issues issues={plugin.issues} />
+        </div>
+      )}
+      {healthy && programs.isPending && <p role="status">{t("home.loading")}</p>}
+      {healthy && programs.isError && <ErrorMessage error={programs.error} />}
+      {healthy && programs.data && <Programs statuses={programs.data} />}
+      {healthy && workbench && (
+        <label className="plugin-enable">
+          <input
+            type="checkbox"
+            checked={switching ?? plugin.enabled}
+            disabled={busy !== undefined || workbench.readOnly}
+            onChange={(event) => {
+              const enabled = event.target.checked;
+              // Shows the new state at once; the reloaded list confirms it, a failure restores it.
+              setSwitching(enabled);
+              void perform("toggle", async () => {
+                try {
+                  await api.invoke("plugins.toggle", { workbenchId: workbench.id, id: plugin.id, enabled });
+                  // A list fetch still in flight may predate the toggle; the saved state wins, then a refetch.
+                  client.setQueryData<PluginSummary[]>(["plugins", workbench.id], (list) =>
+                    list?.map((item) => (item.id === plugin.id ? { ...item, enabled } : item)),
+                  );
+                  void changed();
+                } finally {
+                  setSwitching(undefined);
+                }
+              });
+            }}
+          />
+          {t("plugins.enable", { name: workbench.name })}
+        </label>
+      )}
+      {error !== undefined && <ErrorMessage error={error} />}
+      <div className="workbench-actions">
+        {healthy && programs.data?.some((status) => status.state !== "ready") && (
+          <button
+            type="button"
+            data-action="plugin-provision"
+            disabled={busy !== undefined}
+            onClick={() =>
+              void perform("provision", async () => {
+                const statuses = await api.invoke("plugins.provision", { id: plugin.id });
+                client.setQueryData(["plugin-programs", plugin.id, plugin.sha256], statuses);
+              })
+            }
+          >
+            {busy === "provision" ? t("plugins.installingPrograms") : t("plugins.installPrograms")}
+          </button>
+        )}
+        <button
+          type="button"
+          data-action="plugin-uninstall"
+          disabled={busy !== undefined}
+          onClick={() => {
+            if (!window.confirm(t("plugins.uninstallConfirm", { name }))) return;
+            void perform("uninstall", async () => {
+              await api.invoke("plugins.uninstall", { id: plugin.id });
+              await changed();
+            });
+          }}
+        >
+          {t("plugins.uninstall")}
+        </button>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * The plugin manager: installed plugins with their programs and issues, install from a folder or zip
+ * through the review screen, program installs, uninstall and the switch for the open workbench.
+ */
+export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefined }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const [review, setReview] = useState<PluginReview>();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>();
+  const list = useQuery({
+    queryKey: ["plugins", workbench?.id ?? null],
+    queryFn: () => api.invoke("plugins.list", workbench ? { workbenchId: workbench.id } : {}),
+    // Listing re-checks every plugin's files, so the page shows what is on disk whenever it opens.
+    staleTime: 0,
+  });
+  const changed = () => client.invalidateQueries({ queryKey: ["plugins"] });
+  async function choose(kind: "folder" | "zip") {
+    setBusy(true);
+    setError(undefined);
+    try {
+      const { path } = await api.invoke("plugins.choose", { kind });
+      if (path) setReview(await api.invoke("plugins.review", { path }));
+    } catch (failure) {
+      setError(failure);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="surface plugins-page" data-plugins>
+      {review ? (
+        <Review
+          review={review}
+          cancel={() => setReview(undefined)}
+          installed={() => {
+            setReview(undefined);
+            void changed();
+          }}
+        />
+      ) : (
+        <>
+          <p className="muted">{t("plugins.intro")}</p>
+          <div className="workbench-actions">
+            <button
+              type="button"
+              data-action="plugin-install-folder"
+              disabled={busy}
+              onClick={() => void choose("folder")}
+            >
+              {t("plugins.installFolder")}
+            </button>
+            <button
+              type="button"
+              data-action="plugin-install-zip"
+              disabled={busy}
+              onClick={() => void choose("zip")}
+            >
+              {t("plugins.installZip")}
+            </button>
+          </div>
+          {error !== undefined && <ErrorMessage error={error} />}
+          <p className="muted">
+            {workbench ? t("plugins.enabledFor", { name: workbench.name }) : t("plugins.noWorkbench")}
+          </p>
+          {list.isPending && <p role="status">{t("home.loading")}</p>}
+          {list.isError && <ErrorMessage error={list.error} />}
+          {list.data?.length === 0 && <p>{t("plugins.none")}</p>}
+          <ul className="plugin-list">
+            {list.data?.map((plugin) => (
+              <PluginCard key={plugin.id} plugin={plugin} workbench={workbench} changed={changed} />
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 }

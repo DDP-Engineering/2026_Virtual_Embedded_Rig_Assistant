@@ -18,7 +18,7 @@ permission modes, tool registry. Implementation follows the repository's AEGIS w
 | Step | Packages | Result |
 |---|---|---|
 | 1 First ESP32 flash | PLG-01…PLG-05, PLG-08, PLG-09 | with a plugin installed from a folder, the agent identifies and flashes an ESP32 on both systems; the desktop app shows approval cards |
-| 2 Complete ESP32 pack and catalog | PLG-06, PLG-07, PLG-10, PLG-11, PLG-12 | plugins are managed in Settings and installed from the catalog; ESP-IDF builds and eFuse reads work; the agent drafts plugins |
+| 2 Complete ESP32 pack and catalog | PLG-06, PLG-07, PLG-10, PLG-11, PLG-12 | plugins are managed on the Plugins page and installed from the catalog; ESP-IDF builds and eFuse reads work; the agent drafts plugins |
 | 3 Growth | PLG-13…PLG-18 | workbench plugins; first CAN, Wireshark, Microchip and STM32 plugins; optional MCP adapter |
 | Bench tools | PLG-19…PLG-22 | vendor-neutral `probe-rs`, `binutils`, `sigrok` and `git` plugins; each can start once PLG-04 and PLG-05 exist, independently of steps 2 and 3 |
 
@@ -167,18 +167,28 @@ install and run; a `download` with a wrong hash is refused; a missing `find` pro
   `version.range`, archive downloads need `path`, `pip` requirements start with a letter or digit, `find`
   entries are `%PATH%`/`$PATH` or absolute without `**`. One managed CPython is pinned to 3.13. esptool and a
   PEP 723 script installed and ran on Windows x64 through the CLI; the Ubuntu run, its sizes and the native
-  Linux branches (GNU tar, exec bits) are owed. The Settings UI that calls `plugins.provision` is PLG-06.
+  Linux branches (GNU tar, exec bits) are owed. The Plugins page (PLG-06) calls `plugins.provision`.
 
 ### PLG-06 Plugins UI
 **Goal:** users manage plugins and watch runs. **Depends on:** PLG-04, PLG-05.
-- Settings → Plugins: installed list with tier, version, program versions and errors; enable per
-  workbench; install from folder or zip; review screen (programs, install sources, every rule with
-  its risk and note); uninstall.
+- Plugins page (the sidebar's Plugins entry): installed list with tier, version, program versions and
+  errors; enable per workbench; install from folder or zip; review screen (programs, install sources,
+  every rule with its risk and note); uninstall.
 - Runs panel: running and recent runs, open log, stop.
 - All strings through i18n (`en`, `ro`, `de`).
 **Done when:** Playwright e2e installs the fixture plugin from a folder through the review screen,
 enables it for one workbench, shows a manifest error for a broken plugin, opens a run log and stops a
 background run from the panel.
+- Done 2026-11-03 (AEGIS TASK-98ecbd0a): the manager is the sidebar's Plugins page, not a Settings section
+  (the page already existed for plugins); the workbench form's Plugins section points to it. Channels
+  `plugins.choose` (native folder or zip picker), `plugins.review` (reads and validates a package, installs
+  nothing) and `plugins.install {path, sha256}` (CONFLICT when the package changed since its review). The
+  Runs panel is a sixth right-panel tab, polling `runs.list` every second; `runs.log` returns the last 1 MiB
+  and `runs.stop` stops a run of the open workbench. The runner writes `.vera/runs/<run id>.json` beside each
+  log (plugin, program, agent arguments, start, end, exit code), so recent runs survive a restart; formats in
+  `.agentic/specs/REQ-DATA-f563074f.md`. Playwright: `tests/e2e/plugins-ui.spec.ts` (native) and
+  `plugins-mock.spec.ts` (browser mock, every language, theme and text size). Owed: the native pickers and
+  the native e2e on Linux.
 
 ### PLG-07 Catalog
 **Goal:** plugins ship and update without a VERA release. **Depends on:** PLG-06.

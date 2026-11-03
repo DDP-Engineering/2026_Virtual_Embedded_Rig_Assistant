@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-f024d73c"
+
+title = "Read a program run log"
+
+status = "active"
+
+requirement = "When the user opens a program run's log, the desktop app shall return the last 1 MiB of that workbench's .vera/runs/<run id>.log as text, starting after the first line break when the log is longer, with whether it was truncated and whether the run is still running, and NOT_FOUND for a run id without a log."
+
+verification = "Runner unit test: a run that printed boot and READY returns text containing both with truncated false and running true while active; a log longer than the limit returns its tail after the first line break with truncated true; an unknown or malformed run id is NOT_FOUND."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = "specs/REQ-DATA-f563074f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-03
+updated = 2026-11-03

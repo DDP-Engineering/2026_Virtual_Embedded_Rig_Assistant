@@ -1,7 +1,26 @@
-import { type FileHandle, lstat, mkdir, open, readdir, rm, stat } from "node:fs/promises";
+import { constants } from "node:fs";
+import {
+  type FileHandle,
+  lstat,
+  mkdir,
+  open,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
-import { veraError } from "@vera/shared";
+import {
+  type ProgramRunInfo,
+  type ProgramRunLog,
+  type ProgramRunRecord,
+  programRunIdSchema,
+  programRunRecordSchema,
+  veraError,
+} from "@vera/shared";
 import { monotonicFactory } from "ulid";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
@@ -28,6 +47,8 @@ export interface RunRequest {
    * without starting a process (callers re-check what an approval covered here).
    */
   beforeSpawn?: () => Promise<void>;
+  /** What the Runs list shows: the plugin, the program and the agent's arguments (never the executable). */
+  label?: { plugin: string; program: string; args: readonly string[] };
 }
 export interface RunResult {
   runId: string;
@@ -69,11 +90,21 @@ export interface ProgramRunnerOptions {
   killGraceMs?: number;
   /** Run id factory; ULIDs by default, so log names sort by age. */
   id?: () => string;
+  /** Start time of run records; the system time by default. */
+  now?: () => Date;
 }
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
 const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LANGUAGE"];
-const RUN_LOG = /^[0-9A-HJKMNP-TV-Z]{26}\.log$/;
+const RUN_FILE = /^([0-9A-HJKMNP-TV-Z]{26})\.(?:log|json)$/;
+const RUN_RECORD = /^[0-9A-HJKMNP-TV-Z]{26}\.json$/;
+/** Runs the Runs list returns, newest first. */
+const LISTED = 50;
+const RECORD_BYTES = 512 * 1024;
+/** Default tail of a run log read for the Runs tab. */
+export const RUN_LOG_BYTES = 1024 * 1024;
+/** Opening a log never follows a link (where the system supports it) and never blocks on a FIFO. */
+const READ_FLAGS = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
 const COM_PORT = /^(?:\\\\\.\\)?(com\d+)$/i;
 const DEVICE_PORT = /^\/dev\/(?:tty\S*|serial\/by-id\/.+)$/;
 const thrown = (code: "BUSY" | "DENIED", params: Record<string, string | number>) => ({
@@ -137,6 +168,8 @@ class Run implements ProgramRun {
   private started = 0;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private file: FileHandle | undefined;
+  private folder: string | undefined;
+  private startedAt: string | undefined;
   private writing = Promise.resolve();
   private readonly decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
   private readonly tail: TailBuffer;
@@ -178,6 +211,7 @@ class Run implements ProgramRun {
     await mkdir(runs, { recursive: true });
     const info = await lstat(runs);
     if (!info.isDirectory() || info.isSymbolicLink()) throw thrown("DENIED", { path: ".vera/runs" });
+    this.folder = runs;
     this.file = await open(join(runs, `${this.id}.log`), "w");
     await this.runner.prune(runs);
     this.request.signal?.addEventListener("abort", this.abort, { once: true });
@@ -193,6 +227,8 @@ class Run implements ProgramRun {
       await this.writing;
       throw error;
     }
+    await this.record();
+    // The last stop check stays right before the spawn: a stop during any await above ends the run here.
     if (this.request.signal?.aborted) this.reason = "stopped";
     if (this.reason) {
       await this.finish({ code: null, signal: null });
@@ -271,8 +307,43 @@ class Run implements ProgramRun {
     await this.writing;
     await this.file?.close().catch(() => {});
     this.result = this.snapshot(exit);
+    await this.record(this.result);
     this.runner.release(this.id);
     this.settle(this.result);
+  }
+
+  /** Writes `<id>.json` beside the log; best effort, like the log, so it never fails the run. */
+  private async record(result?: RunResult): Promise<void> {
+    if (!this.folder) return;
+    this.startedAt ??= this.settings.now().toISOString();
+    const { label } = this.request;
+    const record: ProgramRunRecord = {
+      format: 1,
+      id: this.id,
+      sessionId: this.request.sessionId,
+      ...(label ? { plugin: label.plugin, program: label.program } : {}),
+      args: [...(label?.args ?? [])],
+      background: this.background,
+      startedAt: this.startedAt,
+      ...(result
+        ? {
+            end: result.stopped ? "stopped" : result.timedOut ? "timedOut" : "exited",
+            exitCode: result.exitCode,
+            ...(result.error === undefined ? {} : { error: result.error.slice(0, 256) }),
+            durationMs: result.durationMs,
+          }
+        : {}),
+    };
+    // Replaced through a temporary file so a concurrent list never reads half a record.
+    const path = join(this.folder, `${this.id}.json`);
+    const temporary = `${path}.tmp`;
+    try {
+      await writeFile(temporary, JSON.stringify(record));
+      await rename(temporary, path);
+    } catch {
+      await rm(temporary, { force: true }).catch(() => {});
+      await writeFile(path, JSON.stringify(record)).catch(() => {});
+    }
   }
 
   private snapshot(exit: ProcessExit): RunResult {
@@ -289,6 +360,28 @@ class Run implements ProgramRun {
       timedOut: this.reason === "timedOut",
       stopped: this.reason === "stopped",
     };
+  }
+}
+
+/** `.vera/runs` of a workbench when it is a real directory. */
+async function runsFolder(workbench: string): Promise<string | undefined> {
+  const folder = join(resolve(workbench), ".vera", "runs");
+  try {
+    const info = await lstat(folder);
+    return info.isDirectory() && !info.isSymbolicLink() ? folder : undefined;
+  } catch {
+    return undefined;
+  }
+}
+/** A run record named after its id; undefined when missing, linked, oversized or malformed. */
+async function readRecord(path: string, id: string): Promise<ProgramRunRecord | undefined> {
+  try {
+    const info = await lstat(path);
+    if (!info.isFile() || info.size > RECORD_BYTES) return undefined;
+    const parsed = programRunRecordSchema.safeParse(JSON.parse(await readFile(path, "utf8")));
+    return parsed.success && parsed.data.id === id ? parsed.data : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -312,6 +405,7 @@ export class ProgramRunner {
       maxBackground: options.maxBackground ?? 4,
       logsKept: options.logsKept ?? 200,
       killGraceMs: options.killGraceMs ?? 3000,
+      now: options.now ?? (() => new Date()),
     };
     this.nextId = options.id ?? monotonicFactory();
   }
@@ -374,13 +468,87 @@ export class ProgramRunner {
   }
 
   /**
-   * @internal Deletes the oldest run logs beyond `logsKept`, never the log of an unfinished run.
-   * Best effort: a log another program holds or that cannot be removed never blocks a run.
+   * @internal Deletes the logs and records of the oldest runs beyond `logsKept`, never those of an
+   * unfinished run. Best effort: a file another program holds or that cannot be removed never blocks a run.
    */
   async prune(folder: string): Promise<void> {
-    const logs = (await readdir(folder)).filter((name) => RUN_LOG.test(name)).sort();
-    for (const name of logs.slice(0, Math.max(0, logs.length - this.settings.logsKept)))
-      if (!this.active.has(name.slice(0, -4))) await rm(join(folder, name), { force: true }).catch(() => {});
+    const names = await readdir(folder);
+    const ids = [...new Set(names.flatMap((name) => RUN_FILE.exec(name)?.[1] ?? []))].sort();
+    for (const id of ids.slice(0, Math.max(0, ids.length - this.settings.logsKept)))
+      if (!this.active.has(id))
+        for (const name of [`${id}.log`, `${id}.json`])
+          if (names.includes(name)) await rm(join(folder, name), { force: true }).catch(() => {});
+  }
+
+  /**
+   * The runs of a workbench from its run records, newest first and at most 50: `running` while this runner
+   * holds the run unfinished, else how it ended, else `interrupted`. Malformed records are skipped.
+   */
+  async list(workbench: string): Promise<ProgramRunInfo[]> {
+    const folder = await runsFolder(workbench);
+    if (!folder) return [];
+    const ids = (await readdir(folder))
+      .filter((name) => RUN_RECORD.test(name))
+      .map((name) => name.slice(0, -5))
+      .sort()
+      .reverse();
+    const runs: ProgramRunInfo[] = [];
+    for (const id of ids) {
+      if (runs.length >= LISTED) break;
+      const record = await readRecord(join(folder, `${id}.json`), id);
+      if (!record) continue;
+      const { format: _format, ...rest } = record;
+      runs.push({
+        ...rest,
+        state: this.running(workbench, id) ? "running" : (record.end ?? "interrupted"),
+        log: `.vera/runs/${id}.log`,
+      });
+    }
+    return runs;
+  }
+
+  /** The last `maxBytes` of a run's log as UTF-8 text; NOT_FOUND for a run id without a log. */
+  async log(workbench: string, id: string, maxBytes = RUN_LOG_BYTES): Promise<ProgramRunLog> {
+    const folder = programRunIdSchema.safeParse(id).success ? await runsFolder(workbench) : undefined;
+    if (!folder) throw veraError("NOT_FOUND");
+    const path = join(folder, `${id}.log`);
+    let file: FileHandle;
+    try {
+      // Windows has no O_NOFOLLOW: a link in place of a log is refused before opening it.
+      if (!(await lstat(path)).isFile()) throw veraError("NOT_FOUND");
+      file = await open(path, READ_FLAGS);
+    } catch {
+      throw veraError("NOT_FOUND");
+    }
+    try {
+      const info = await file.stat();
+      if (!info.isFile()) throw veraError("NOT_FOUND");
+      const length = Math.min(info.size, maxBytes);
+      const buffer = Buffer.alloc(length);
+      const { bytesRead } = await file.read(buffer, 0, length, info.size - length);
+      let bytes = buffer.subarray(0, bytesRead);
+      // A cut tail starts after its first line break, never inside a line (a character or a secret).
+      if (info.size > length) bytes = bytes.subarray(bytes.indexOf(10) + 1);
+      return {
+        id,
+        text: new TextDecoder().decode(bytes),
+        truncated: info.size > length,
+        running: this.running(workbench, id),
+      };
+    } finally {
+      await file.close().catch(() => {});
+    }
+  }
+
+  /** Stops an unfinished run of the workbench and waits for it to end; NOT_FOUND otherwise. */
+  async stopRun(workbench: string, id: string): Promise<void> {
+    const run = this.active.get(id);
+    if (!run || !this.running(workbench, id)) throw veraError("NOT_FOUND");
+    await run.stop();
+  }
+
+  private running(workbench: string, id: string): boolean {
+    return this.active.get(id)?.workbench === this.key(workbench);
   }
 
   /** @internal */
