@@ -31,7 +31,8 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `install.download` | map of platform → `{url: https URL ≤ 2048 characters, sha256: 64 hex, path?: relative path, prefix?: args}`, at least one platform; a URL whose path ends in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` (any case) needs `path`; any other URL without `path` needs a last path segment that is a valid relative path |
 | `install.find` | `{windows?: globs, linux?: globs}` with at least one list of 1–64 entries of 1–1024 characters without control characters; each entry is `%PATH%`, `$PATH`, or an absolute local path (`/x`, not `//x`; `X:/` or `X:\`), possibly starting with `~`, `%NAME%`, `$NAME` or `${NAME}`; `*` may appear in at most two `/`- or `\`-separated segments and `**` never; optional `hint` 1–1024 characters |
 | `programs.*.version` | `{args: args, match: regex, range?}`; the JavaScript regex, 1–512 characters, compiles and has exactly one capture group; `range` is 1–128 characters of comma-separated comparators `>=`, `>`, `<=`, `<`, `==`, `!=` each followed by dotted decimal numbers (`>=5,<6`), spaces allowed around commas |
-| `programs.*.launcher` | optional non-empty args |
+| `programs.*.launcher` | optional non-empty args; only with find, whose search locates launcher[0] |
+| `programs.*.launcherMode` | argv or string, required iff launcher is present; string uses the verified Bash/PowerShell command transport |
 | `programs.*.prefix` | optional args; `${pluginDir}` is the only placeholder |
 | `programs.*.env` | optional map `^[A-Za-z_][A-Za-z0-9_]{0,127}$` → value ≤ 4096 characters; placeholders `${workbench}`, `${pluginDir}` only |
 | `programs.*.timeout` | optional integer seconds, 1–3600 |

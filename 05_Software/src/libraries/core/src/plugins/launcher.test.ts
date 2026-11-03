@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest";
 import { launcherArgs } from "./launcher.js";
 
 describe("launcherArgs", () => {
+  // REQ-FUNC-10e10004, REQ-SEC-10e10003
+  it("renders the measured Bash and PowerShell EIM transports", () => {
+    const command = ["idf.py", "spaced path", "", "tail\\", "two\\\\slashes"];
+    expect(launcherArgs(["run"], command, "string", "win32")).toEqual([
+      "run",
+      '& "idf.py" "spaced path" "" "tail\\" "two\\\\slashes"',
+    ]);
+    expect(launcherArgs(["run"], command, "string", "linux")).toEqual([
+      "run",
+      '"idf.py" "spaced path" "" "tail\\\\" "two\\\\\\\\slashes"',
+    ]);
+  });
   it("places the launcher arguments before the command tokens in argv mode", () => {
     expect(launcherArgs(["run"], ["idf.py", "build"], "argv")).toEqual(["run", "idf.py", "build"]);
   });
@@ -15,7 +27,10 @@ describe("launcherArgs", () => {
   });
 
   it("doubles trailing backslashes so the closing quote stays a quote", () => {
-    expect(launcherArgs(["run"], ["C:\\dir\\", "a\\b"], "string")).toEqual(["run", '"C:\\dir\\\\" "a\\b"']);
+    expect(launcherArgs(["run"], ["C:\\dir\\", "a\\b"], "string")).toEqual([
+      "run",
+      '"C:\\\\dir\\\\" "a\\\\b"',
+    ]);
   });
 
   it.each(['"', "'", "&", "|", ";", "<", ">", "^", "%", "$", "`", "\0", "\n", "\r"])(

@@ -104,6 +104,12 @@ start, runs past 30 seconds or prints no match. `version.range` is a comma-separ
 satisfies it when its leading dotted numbers satisfy every comparator, comparing component by component
 with missing components as 0. A version that does not start with dotted numbers fails any range.
 
+For a find launcher, search locates launcher[0] and its remaining tokens are fixed leading arguments.
+Both probe and run invoke the declared program through the selected launcherMode. The probe uses
+the program prefix (pluginDir substituted) followed by version.args. String mode uses the platform
+transport measured for EIM: quoted Bash tokens with escaped backslashes; PowerShell quoted tokens
+with literal backslashes and a generated call operator. Metacharacters in input tokens are INVALID.
+
 ### Status
 
 `{name, kind: pip | script | download | find, state: ready | missing | unavailable, version?, range?,
@@ -119,7 +125,6 @@ hint?, link?, problem?, detail?}`, one per declared program in name order.
 | `missing` | `sha256` | the downloaded bytes have another hash |
 | `missing` | `archive` | unsafe or unreadable archive, or `path` is not a file |
 | `unavailable` | `platform` | the plugin, the download or the find lists exclude this platform |
-| `unavailable` | `launcher` | the program declares a launcher (until launchers are supported) |
 | `unavailable` | `uv` | pip or script program and no bundled uv |
 | `unavailable` | `version` | the probe failed, timed out or did not match |
 | `unavailable` | `range` | the version is outside `range`; `version` and `range` set |

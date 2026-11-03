@@ -33,7 +33,7 @@ and real processes run in `05_Software/tests/integration/process-hosts.test.ts` 
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
 and the `<resources>/uv/` payload; [Headless CLI](headless-cli.md) owns the `vera plugin install` command.
 [Official plugins](official-plugins.md) owns the shipped plugin packages in `05_Software/plugins/` (today
-`serial-monitor` and `esp32-esptool`) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
+`serial-monitor`, `esp32-esptool` and `esp32-idf`) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
 owns Agent Skills discovery, plugin skills included; [IPC boundary](ipc-boundary.md)
 owns channel registration and frame authorization; [Sessions](sessions.md) owns the ApprovalGate
 lifecycle, and [Chat UI](chat-ui.md) and [Renderer foundation](renderer-foundation.md) own the
@@ -64,7 +64,7 @@ non-trial plugins run without a record, refused ones return `aborted`, mode deci
 `decided_by: mode`, the rest wait for the user, irreversible ones with the typed word checked in
 core. Core `program-tools.ts` gives the agent run_program (class `program`), program_output and
 program_stop over a `ProgramHost {runner, clock, plugins(), resolver}`: find the program, refuse a
-launcher or unresolved program, prepare the request, let the session ask the gate, then at execution
+unresolved program, prepare the request, let the session ask the gate, then at execution
 prepare again, consume the approval and start the runner, whose `beforeSpawn` re-hashes the approved
 files. Desktop main (outside instrumented builds that set `VERA_TEST_PROGRAMS`) and the CLI compose
 the `Provisioner` as the `ProgramResolver`. Desktop main and the CLI each compose one runner; session stop (core), workbench create/open/close and app exit (CLI: on
@@ -150,7 +150,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `get(handle)`, `stopSession(id)`, `stopWorkbench(root)`, `stopAll()`, `list(root)` → `ProgramRunInfo[]`
   (newest 50), `log(root, id, maxBytes=RUN_LOG_BYTES)` → `{id, text, truncated, running}`, `stopRun(root, id)`;
   `RunRequest.label {plugin, program, args}` names a run in its record; helpers
-  `programEnvironment`, `serialPorts`, `launcherArgs(launcher, command, "argv" | "string")`.
+  `programEnvironment`, `serialPorts`, `launcherArgs(launcher, command, "argv" | "string", platform?)`
+  and `programInvocation(resolved, args)`. `RunRequest.programArgs` carries original tokens for serial locking.
 - Rules (shared): `classifyCommand(rules, program, args)` -> `{risk, notes, confirm, timeout}` (timeout:
   the largest timeout of the matching rules, or null),
   `programArgumentRefusal(args)` -> `{reason: count|length|control|argument-file, index?}` or null,
@@ -167,7 +168,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   signal?, error?}` or background `{handle, risk, log}`; `program_output {handle, waitMs? 0..30000,
   until? 1..512}` -> `{output, truncated, running, exitCode?, matched?}`; `program_stop {handle}` ->
   `{exitCode, stopped, timedOut, durationMs, output, truncated, log}`. `ProgramResolver.resolve(plugin,
-  program)` -> `{executable, prefix?}` or undefined; `unresolvedPrograms`; `ProgramHost`;
+  program)` -> `{executable, prefix?, launcher?, env?, version?}` or undefined; `unresolvedPrograms`; `ProgramHost`;
   `ProgramSession` (per-session handles); `programTimeout`; `programError`; `programPromptEntries(host,
   skills)` -> `{name, version, plugin, description, skills}[]`; `DEFAULT_PROGRAM_TIMEOUT` 600.
 - `verifyProgramFiles(request, signal?)` re-hashes a request's files (CONFLICT on any difference);
@@ -179,7 +180,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   sha256, versions)` (CONFLICT when the hash changed); `extractZip`, `checkTree`, `tarCommand`, `ArchiveError`.
 - Shared: `pluginProgramStatusSchema` `{name, kind, state: ready|missing|unavailable, version?, range?, hint?,
   link?, problem?, detail?}`, `pluginProgramProblemSchema` (notFound, install, download, sha256, archive,
-  platform, launcher, uv, version, range), `downloadForm(url)`, `downloadName(entry)`, `versionInRange(version,
+  platform, uv, version, range), `downloadForm(url)`, `downloadName(entry)`, `versionInRange(version,
   range)`, `urlParts(url)`; settings `pluginSettingsSchema {index?, proxy?}`.
 - IPC: `plugins.programs {id}` and `plugins.provision {id}` -> statuses (NOT_FOUND unknown id, INVALID plugin
   with issues); the browser mock answers both. CLI: `vera plugin install --path <folder|zip> --data <dir>`.
@@ -247,7 +248,12 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - At most 4 unfinished background runs per session (BUSY `{limit}`). A run naming a serial port
   (`COM<n>` with optional `\\.\`, upper-cased; `/dev/tty*`; `/dev/serial/by-id/*`; whole argument or
   the value of `--name=value`) that an unfinished background run also names is BUSY `{handle, port}`.
-- `launcherArgs` in `string` mode wraps each token in double quotes, doubles trailing backslashes and
+- Format 1 requires `launcherMode: argv|string` iff `launcher` is present, with a find installation.
+  Find locates launcher[0]; the resolver carries its remaining prefix and `{command, mode, platform}`.
+  `programInvocation` builds probe and run argv. String launchers bind the generated invocation in
+  `executableArgs`; original agent args still drive risk rules, file hashes and serial-port locking.
+- `launcherArgs` in `string` mode wraps each token in double quotes, escapes all backslashes for Bash,
+  keeps them literal for PowerShell with a generated call operator before the quoted executable, and
   refuses (INVALID `{index}`) a token with `" ' & | ; < > ^ % $`, a backtick, NUL or a line break.
 - Matching costs O(pattern tokens × command tokens) per rule (a failed `*` is never retried from a
   later token). Matching lowercases every token, turns `_` into `-` and splits `--name=value` into two tokens, for
@@ -290,9 +296,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   background runs; delete also drops its handles.
 - run_program: the command line is the resolver prefix, the manifest prefix (`${pluginDir}` = the
   installed folder) and the agent's arguments; env values replace `${workbench}` and `${pluginDir}`;
-  rules see only the agent's arguments. A launcher or unresolved program, an undeclared or ambiguous
+  rules see only the agent's arguments. An unresolved program, an undeclared or ambiguous
   one and a policy refusal end the call before any approval or spawn, with a message naming the reason
-  (risk and mode for refusals). After approval the request is prepared again from the current plugins,
+  (risk and mode for refusals; matching notes for blocked commands). After approval the request is prepared again from the current plugins,
   resolver and files and consumed; any difference ends the call and starts nothing. Right before spawn
   the runner re-hashes the approved files. Remaining window: a program opens its files after it starts
   and Node cannot hold share-deny handles on Windows; during a run the agent's own tools wait, so only
@@ -304,7 +310,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   gathered in the call (its last 12 000 characters), in one node:vm context per call with a 100 ms limit
   per attempt (invalid or slow -> error). A refused start writes a `[VERA] The program did not start`
   line to its run log.
-- The prompt lists programs of enabled, issue-free plugins that resolve and declare no launcher, in
+- The prompt lists programs of enabled, issue-free plugins that resolve, including launcher programs, in
   plugin id then name order; the run rule joins the rules only with such programs.
 - Provisioning writes only below `<userData>/plugins/runtime/`: `cache/`, `python/` (+ `python/bin`),
   `tools/<plugin id>/` (+ `bin/`), `downloads/<sha256>/`, `downloads/.staging/<uuid>/` (always removed). Every
@@ -313,7 +319,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `UV_PYTHON_INSTALL_BIN=0`, `UV_PYTHON_INSTALL_REGISTRY=0`, `UV_NO_CONFIG=1`, `UV_NO_PROGRESS=1`, and
   `UV_DEFAULT_INDEX`/`HTTPS_PROXY`/`HTTP_PROXY` from settings; no uv variable of VERA's own environment passes.
 - A program is installed when `install.json.programs` records its version (a reinstall resets it). Platform
-  (plugin, download entry, find list) and launcher exclusions are decided before any spawn or fetch. Installs
+  (plugin, download entry, find list) exclusions are decided before any spawn or fetch. Installs
   run one at a time per provisioner; each failure is a status, store errors throw. Each program has one
   deadline (15 min) over transfer, extraction, uv and probe; each version is recorded as soon as it is probed;
   `close()` (desktop `before-quit`) aborts running installs and probes and refuses new ones; each install first
@@ -470,7 +476,10 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - `REQ-FUNC-714e26bc` / `REQ-REL-e27cda96` / `REQ-FUNC-e7cb0626` / `REQ-FUNC-edbe037c` — pip and script installs, uv failures, offline script runs.
 - `REQ-FUNC-aa09d82e` / `REQ-FUNC-d30d568c` / `REQ-SEC-cde8b481` / `REQ-SEC-e51bc0d8` / `REQ-REL-e068dcd7` — downloads: archives, single files, wrong hash, escaping archives, failed transfers.
 - `REQ-FUNC-c9dde429` / `REQ-UX-46085ddf` / `REQ-FUNC-514708b5` / `REQ-SEC-ba78d876` — find search, missing hint and link, version probe and range.
-- `REQ-SEC-49ff111b` / `REQ-FUNC-5491d410` / `REQ-FUNC-06eaa9a5` — resolve never installs; platform and launcher exclusions.
+- `REQ-SEC-49ff111b` / `REQ-FUNC-5491d410` — resolve never installs; platform exclusions.
+- `REQ-DATA-10e10001` / `REQ-FUNC-10e10002` / `REQ-FUNC-10e10004` — explicit vendor launcher transport, probes and prompt/run support.
+- `REQ-SEC-10e10003` / `REQ-SEC-10e10005` / `REQ-SEC-10e10006` — string refusals, generated invocation approvals and original-argument serial locking.
+- `REQ-FUNC-10e10009` — blocked refusals include explanatory notes.
 - `REQ-FUNC-13ef1c0c` / `REQ-FUNC-86daf060` / `REQ-FUNC-c44675ed` / `REQ-FUNC-c12941f3` / `REQ-SEC-0bc97768` — statuses and installs over IPC and the CLI; index and proxy settings.
 - `REQ-FUNC-565e908d` / `REQ-NFR-a881a281` / `REQ-PLAT-8b3408cb` — provisioner composed in the apps; cached prompt entries; clean-machine run (manual).
 - `REQ-FUNC-a5be5e53` / `REQ-SEC-8e281f52` / `REQ-FUNC-6c76f25a` — review without installing, install bound to the reviewed hash, native pickers.

@@ -15,11 +15,15 @@ import {
 } from "@vera/shared";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
 import { ArchiveError, checkTree, extractZip, tarCommand } from "./archive.js";
+import { programInvocation } from "./launcher.js";
 import { hostVariable, killProcessTree } from "./process-tree.js";
 import type { ProgramResolver, ResolvedProgram } from "./program-tools.js";
 import { OutputDecoder, TailBuffer } from "./run-output.js";
 import { programEnvironment } from "./runner.js";
 import type { LoadedPlugin } from "./store.js";
+
+// biome-ignore lint/suspicious/noTemplateCurlyInString: literal manifest placeholder.
+const PLUGIN_DIR = "${pluginDir}";
 
 /** The plugin platform of a host, or undefined where VERA has no build. */
 export function pluginPlatform(platform: string, arch: string): PluginPlatform | undefined {
@@ -340,13 +344,12 @@ export class Provisioner implements ProgramResolver {
     });
     const { platform } = this.options;
     if (!platform || !plugin.manifest.platforms.includes(platform)) return not("unavailable", "platform");
-    if (program.launcher) return not("unavailable", "launcher");
     const { install } = program;
     const recorded = Object.hasOwn(plugin.record.programs, name) ? plugin.record.programs[name] : undefined;
     if ("find" in install) {
       const list = this.windows ? install.find.windows : install.find.linux;
       if (!list) return not("unavailable", "platform");
-      const found = await this.search(name, list);
+      const found = await this.search(program.launcher?.[0] ?? name, list);
       if (!found) {
         const link = install.hint ? linkOf(install.hint) : undefined;
         return not(
@@ -355,8 +358,26 @@ export class Provisioner implements ProgramResolver {
           install.hint ? { hint: install.hint, ...(link ? { link } : {}) } : {},
         );
       }
-      const resolved = { executable: found };
-      return this.check(name, kind, program, resolved, await this.probe(resolved, program, signal));
+      const resolved: ResolvedProgram = {
+        executable: found,
+        ...(program.launcher
+          ? {
+              prefix: program.launcher.slice(1),
+              launcher: {
+                command: name,
+                mode: program.launcherMode as "argv" | "string",
+                platform: this.windows ? "win32" : "linux",
+              },
+            }
+          : {}),
+      };
+      return this.check(
+        name,
+        kind,
+        program,
+        resolved,
+        await this.probe(resolved, program, signal, plugin.folder),
+      );
     }
     if ("download" in install) {
       const entry = install.download[platform];
@@ -522,10 +543,16 @@ export class Provisioner implements ProgramResolver {
     resolved: ResolvedProgram,
     program: PluginProgram,
     signal?: AbortSignal,
+    pluginDir = "",
   ): Promise<string | undefined> {
     const result = await this.execute(
       resolved.executable,
-      [...(resolved.prefix ?? []), ...program.version.args],
+      programInvocation(resolved, [
+        ...(resolved.launcher
+          ? (program.prefix ?? []).map((arg) => arg.replaceAll(PLUGIN_DIR, pluginDir))
+          : []),
+        ...program.version.args,
+      ]),
       resolved.env ?? {},
       this.options.timeouts?.probeMs ?? PROBE_MS,
       signal,

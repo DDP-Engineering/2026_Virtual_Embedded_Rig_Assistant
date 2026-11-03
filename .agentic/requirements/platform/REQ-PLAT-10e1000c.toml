@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-10e1000c"
+title = "Verify EIM command transport"
+status = "active"
+requirement = "Before publishing ESP-IDF launcher support, maintainers shall record actual Windows and Linux EIM command argument semantics and their verification limits in the plugin README."
+verification = "Manual: run official EIM help/parser and isolated activation probes on Windows and native Ubuntu, compare single string vs extra argv, record versions/source/quoting and distinguish fixture activation from vendor build."
+affected_paths = ["05_Software/plugins/esp32-idf/README.md"]
+linked_tests = []
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

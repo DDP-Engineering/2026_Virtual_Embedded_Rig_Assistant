@@ -6,9 +6,10 @@ Select for the plugin packages VERA maintainers ship in `05_Software/plugins/<id
 programs and rules, helper scripts, Agent Skills and README; today `serial-monitor` (program `serial`: list
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
-verify, erase and read ESP32 chips; skill `esp32-flash`). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
+skills `esp32-build-fix` and `esp32-panic`). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
-`esp32-esptool.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/` and `esp32-esptool/`. The platform that installs, classifies, approves and runs these
+`esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
 plugin skill discovery is [Skills](skills.md).
 
@@ -16,7 +17,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (the ESP32 pack, group Core with both plugins, default on), `catalog.yaml` (both plugins
+source: `packs.yaml` (ESP32 Core and ESP-IDF build groups, default on), `catalog.yaml` (all three plugins
 `official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -48,6 +49,20 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 
 ## Invariants
 
+- esp32-idf is format 1, requires serial-monitor and detects user-installed EIM/IDF (`>=5.4,<7`).
+  Its idf.py find search locates eim and invokes `run` with `launcherMode: string`. Official EIM 0.20.1
+  on Windows and native Ubuntu takes one COMMAND string through PowerShell/Bash; the README records
+  the measured platform quoting and its limits. VERA starts the launcher without a shell.
+- Xtensa/RISC-V addr2line are local binaries found under IDF_TOOLS_PATH/default EIM roots; selection
+  must match the target and exact flashed ELF. VERA never installs the vendor suite or drivers.
+- idf.py build/size/configure commands are safe; coredump-info device-read; flash/app-flash/erase
+  device-write; efuse-* and secure-* irreversible; monitor/menuconfig/gdb/gdbtui blocked with an
+  explanatory note. Mixed flash+monitor is blocked. Skills change sdkconfig.defaults, never sdkconfig directly,
+  verify effective generated values and require an agreed project regeneration workflow for already-set values.
+- esp32-idf replay repairs a fixture compile error, rebuilds, performs fixture flash, captures Guru
+  Meditation via serial-monitor/fake pyserial and decodes fixture addresses. Real ESP-IDF compile,
+  flash, panic and source-line acceptance on both systems remains unverified without vendor tools/board.
+
 - Rules: `serial {--version,--help,-h}` and `serial list *` are `safe`, `serial capture *` is `device-read` with a
   reset note, `serial send *` is `device-write` with a firmware note; any other command line keeps the platform's
   unmatched default `device-write`.
@@ -78,6 +93,8 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
+| IDF rules, launcher detection or decoder paths | `plugins/esp32-idf/plugin.yaml` | `esp32-idf.test.ts`, core `provisioning.test.ts` |
+| Build repair or panic guidance | `plugins/esp32-idf/skills/` and README | `esp32-idf.test.ts` skill and replay cases |
 | Risk rules or notes | `plugins/serial-monitor/plugin.yaml` `rules` | `serial-monitor.test.ts` "risk rules" |
 | Family table, list fields, by-id | `serial_monitor.py` `FAMILIES`, `list_command`, `by_id_links` | "list" tests; `fixtures/serial-monitor/by_id.py` |
 | Capture/send stop conditions, reset, exit codes | `serial_monitor.py` `read`, `reset`, `main`, `fail` | "capture", "send", "failures" tests |
@@ -89,6 +106,10 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
 
 ## Key behaviors
+
+- `REQ-FUNC-10e10007` / `REQ-SEC-10e10008` — ESP-IDF package, vendor hints and risk rules.
+- `REQ-UX-10e1000a` / `REQ-UX-10e1000b` — build-fix/panic skills and deterministic replay.
+- `REQ-PLAT-10e1000c` — executed EIM transport; `REQ-PLAT-10e1000d` — outstanding real-board workflow.
 
 - `REQ-FUNC-b7ceddbc` — the folder installs without issues; `serial` resolves to `uv run --quiet --offline --script <installed>/scripts/serial_monitor.py`.
 - `REQ-FUNC-3e33dbe8` — `--version` prints the manifest version for the probe.
@@ -111,6 +132,9 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
+
+- `05_Software/plugins/esp32-idf/` — manifest, measured EIM transport README, build-fix and panic skills.
+- `05_Software/tests/integration/esp32-idf.test.ts`, `tests/fixtures/esp32-idf/` — deterministic vendor executable/parser and session replay; no hardware or network.
 
 - `05_Software/plugins/serial-monitor/plugin.yaml` — manifest: program `serial`, version probe, rules, docs.
 - `05_Software/plugins/serial-monitor/scripts/serial_monitor.py` — PEP 723 script: list, capture, send.

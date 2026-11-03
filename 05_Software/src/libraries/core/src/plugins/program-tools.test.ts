@@ -234,11 +234,9 @@ describe("refusals before approval", () => {
     ["undeclared", { program: "other" }, /not declared/],
     ["ambiguous", { program: "echo" }, /more than one enabled plugin/],
     ["unresolved", { program: "echo" }, /not available/],
-    ["launcher", { program: "idf" }, /not available/],
   ])("refuses a %s program (REQ-SEC-affac265)", async (label, args, message) => {
     if (label === "ambiguous") plugins.push(loaded("echo-more", { echo: program() }));
     if (label === "unresolved") resolver = { resolve: async () => undefined };
-    if (label === "launcher") plugins = [loaded("idf-tools", { idf: program({ launcher: ["eim", "run"] }) })];
     await expect(runProgramTool.prepare?.(ctx, { ...args, args: ["version"] }, signal())).rejects.toThrow(
       message,
     );
@@ -470,9 +468,18 @@ describe("prompt entries (REQ-FUNC-fa6222a5)", () => {
   it("lists resolved programs of enabled plugins in id and name order, with versions and skills", async () => {
     plugins = [
       loaded("zeta-tools", { zed: program() }),
-      loaded("echo-tools", { echo: program(), beta: program(), idf: program({ launcher: ["eim"] }) }, [], {
-        echo: "1.2.3",
-      }),
+      loaded(
+        "echo-tools",
+        {
+          echo: program(),
+          beta: program(),
+          idf: program({ install: { find: { linux: ["$PATH"] } }, launcher: ["eim"], launcherMode: "argv" }),
+        },
+        [],
+        {
+          echo: "1.2.3",
+        },
+      ),
     ];
     resolver = { resolve: async (_plugin, name) => (name === "beta" ? undefined : { executable: name }) };
     const host = ctx.programs?.host as ProgramHost;
@@ -490,8 +497,122 @@ describe("prompt entries (REQ-FUNC-fa6222a5)", () => {
         description: "echo-tools tools.",
         skills: ["echo-guide"],
       },
+      {
+        name: "idf",
+        version: null,
+        plugin: "echo-tools",
+        description: "echo-tools tools.",
+        skills: ["echo-guide"],
+      },
       { name: "zed", version: null, plugin: "zeta-tools", description: "zeta-tools tools.", skills: [] },
     ]);
+  });
+});
+
+describe("launcher tools (REQ-FUNC-10e10004, REQ-SEC-10e10005)", () => {
+  it("keeps direct-program resolver-prefix serial locks", async () => {
+    resolver = { resolve: async () => ({ executable: "/opt/direct", prefix: ["--port", "COM3"] }) };
+    const held = await prepare({ program: "echo", args: ["version"], background: true });
+    const started = await held.apply(signal());
+    const next = await prepare({ program: "echo", args: ["write"], background: true });
+    await expect(next.apply(signal())).rejects.toThrow(
+      new RegExp(`Port COM3 is held by background run ${started.handle}`),
+    );
+    expect(host.programs).toHaveLength(1);
+  });
+  function launcher(mode: "string" | "argv" = "string") {
+    plugins = [
+      loaded(
+        "idf-tools",
+        {
+          "idf.py": program({
+            install: { find: { linux: ["$PATH"] } },
+            launcher: ["eim", "run"],
+            launcherMode: mode,
+          }),
+        },
+        [{ match: "idf.py * flash *", risk: "device-write" }],
+      ),
+    ];
+    resolver = {
+      resolve: async () => ({
+        executable: "/opt/eim",
+        prefix: ["run"],
+        launcher: { command: "idf.py", mode, platform: "linux" },
+      }),
+    };
+  }
+  it.each(["argv", "string"] as const)(
+    "runs %s launcher with original args and file hashes",
+    async (mode) => {
+      launcher(mode);
+      const args = ["-p", "COM3", "flash", "build/app.bin", "spaced path", ""];
+      const prepared = await prepare({ program: "idf.py", args });
+      const request = prepared.request as ProgramChangeRequest;
+      expect(request.args).toEqual(args);
+      expect(request.files).toMatchObject([{ arg: 3, path: "build/app.bin" }]);
+      const run = prepared.apply(signal());
+      const p = await spawned(1);
+      expect(p.args).toEqual(
+        mode === "argv"
+          ? ["run", "idf.py", ...args]
+          : ["run", '"idf.py" "-p" "COM3" "flash" "build/app.bin" "spaced path" ""'],
+      );
+      expect(request.executableArgs).toEqual(p.args);
+      p.finish({ code: 0, signal: null });
+      expect(await run).toMatchObject({ risk: "device-write", exitCode: 0 });
+    },
+  );
+  it("refuses changed launcher transport after approval", async () => {
+    launcher();
+    const prepared = await prepare({ program: "idf.py", args: ["flash", "build/app.bin"] });
+    resolver = {
+      resolve: async () => ({
+        executable: "/opt/eim",
+        prefix: ["run"],
+        launcher: { command: "idf.py", mode: "argv", platform: "linux" },
+      }),
+    };
+    await expect(prepared.apply(signal())).rejects.toThrow(/changed after approval/);
+    expect(host.programs).toHaveLength(0);
+  });
+  it("rehashes original file arguments immediately before a launcher spawn", async () => {
+    launcher();
+    const prepared = await prepare({ program: "idf.py", args: ["flash", "build/app.bin"] });
+    const start = runner.start.bind(runner);
+    vi.spyOn(runner, "start").mockImplementation(async (request) => {
+      await writeFile(join(root, "build/app.bin"), "rebuilt");
+      return start(request);
+    });
+    await expect(prepared.apply(signal())).rejects.toThrow(/changed after approval/);
+    expect(host.programs).toHaveLength(0);
+  });
+  it("refuses metacharacters before approval or process spawn", async () => {
+    launcher();
+    await expect(prepare({ program: "idf.py", args: ["build", "a;injection"] })).rejects.toThrow(
+      /launcher|Argument/,
+    );
+    expect(host.programs).toHaveLength(0);
+  });
+  it("refuses metacharacters in the fixed program prefix", async () => {
+    launcher();
+    const plugin = plugins[0];
+    if (!plugin) throw Error("Fixture plugin missing");
+    const declared = plugin.manifest.programs["idf.py"];
+    if (!declared) throw Error("Fixture program missing");
+    declared.prefix = ["a;injection"];
+    await expect(prepare({ program: "idf.py", args: ["build"] })).rejects.toThrow(/launcher/);
+    expect(host.programs).toHaveLength(0);
+  });
+  it("passes original program arguments to the runner's serial guard", async () => {
+    launcher();
+    const background = await prepare({ program: "idf.py", args: ["-p", "COM3", "flash"], background: true });
+    const started = await background.apply(signal());
+    const next = await prepare({ program: "idf.py", args: ["-p", "COM3", "flash"] });
+    await expect(next.apply(signal())).rejects.toThrow(
+      new RegExp(`Port COM3 is held by background run ${started.handle}`),
+    );
+    expect(host.programs).toHaveLength(1);
   });
 });
 

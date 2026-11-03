@@ -251,6 +251,12 @@ hashes.
   `esp32-panic` (`addr2line` and `coredump-info`).
 **Done when:** the agent fixes a seeded compile error, builds, flashes, captures a seeded panic and
 decodes its backtrace to a source line, on both systems.
+- Implementation candidate 2026-11-03 (TASK-f00f64cb): official esp32-idf manifest/skills/catalog group;
+  launcherMode plus resolver/probe/run support, original-argument serial locking and blocked notes.
+  EIM 0.20.1's one-string Bash/PowerShell transport executed on Windows and native Ubuntu, documented
+  in the plugin README. Deterministic replay repairs a fixture build, captures a fixture panic through
+  serial-monitor and decodes fixture addresses on both systems. Real toolchain build/board flash/panic
+  acceptance is still open: neither vendor installation nor serial board was found on the checked hosts.
 
 ### PLG-11 `esp32-efuse`
 **Goal:** read eFuses safely and gate burns. **Depends on:** PLG-09.

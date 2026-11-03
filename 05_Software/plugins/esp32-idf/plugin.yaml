@@ -1,0 +1,47 @@
+format: 1
+id: esp32-idf
+version: 1.0.0
+name: ESP32 ESP-IDF
+description: Build and repair ESP-IDF projects, flash firmware, and analyse ESP32 panic backtraces and core dumps with the matching toolchain and ELF. Requires a user-installed EIM and ESP-IDF toolchain.
+ecosystem: esp32
+platforms: [windows-x64, linux-x64]
+requires: [serial-monitor]
+programs:
+  idf.py:
+    launcher: [eim, run]
+    launcherMode: string
+    install:
+      find:
+        windows: ['%PATH%', '%USERPROFILE%/.espressif/tools/eim/eim.exe', 'C:/Espressif/tools/eim/eim.exe']
+        linux: ['$PATH', '~/.espressif/tools/eim/eim', '~/.espressif/eim_cli/eim']
+      hint: Install ESP-IDF with ESP-IDF Installation Manager (EIM), select an installed version with eim select, put eim on PATH, then detect again. https://docs.espressif.com/projects/idf-im-ui/en/latest/
+    version: { args: [--version], match: 'ESP-IDF v(\d+\.\d+(?:\.\d+)?)', range: '>=5.4,<7' }
+    timeout: 1200
+  xtensa-addr2line:
+    install:
+      find:
+        windows: ['%PATH%', '%IDF_TOOLS_PATH%/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin/xtensa-esp-elf-addr2line.exe', '%USERPROFILE%/.espressif/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin/xtensa-esp-elf-addr2line.exe', 'C:/Espressif/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin/xtensa-esp-elf-addr2line.exe', 'C:/Espressif/tools/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin/xtensa-esp-elf-addr2line.exe']
+        linux: ['$PATH', '$IDF_TOOLS_PATH/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin/xtensa-esp-elf-addr2line', '~/.espressif/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin/xtensa-esp-elf-addr2line']
+      hint: Install the ESP-IDF Xtensa toolchain with EIM. For a custom tools root, start VERA with IDF_TOOLS_PATH set to that root. https://docs.espressif.com/projects/idf-im-ui/en/latest/
+    version: { args: [--version], match: 'GNU addr2line[^\r\n]* (\d+\.\d+(?:\.\d+)?)' }
+  riscv-addr2line:
+    install:
+      find:
+        windows: ['%PATH%', '%IDF_TOOLS_PATH%/tools/riscv32-esp-elf/*/riscv32-esp-elf/bin/riscv32-esp-elf-addr2line.exe', '%USERPROFILE%/.espressif/tools/riscv32-esp-elf/*/riscv32-esp-elf/bin/riscv32-esp-elf-addr2line.exe', 'C:/Espressif/tools/riscv32-esp-elf/*/riscv32-esp-elf/bin/riscv32-esp-elf-addr2line.exe', 'C:/Espressif/tools/tools/riscv32-esp-elf/*/riscv32-esp-elf/bin/riscv32-esp-elf-addr2line.exe']
+        linux: ['$PATH', '$IDF_TOOLS_PATH/tools/riscv32-esp-elf/*/riscv32-esp-elf/bin/riscv32-esp-elf-addr2line', '~/.espressif/tools/riscv32-esp-elf/*/riscv32-esp-elf/bin/riscv32-esp-elf-addr2line']
+      hint: Install the ESP-IDF RISC-V toolchain with EIM. For a custom tools root, start VERA with IDF_TOOLS_PATH set to that root. https://docs.espressif.com/projects/idf-im-ui/en/latest/
+    version: { args: [--version], match: 'GNU addr2line[^\r\n]* (\d+\.\d+(?:\.\d+)?)' }
+rules:
+  - { match: 'idf.py {--version,--help,-h}', risk: safe }
+  - { match: 'idf.py * {set-target,build,size,size-components,size-files,fullclean,reconfigure} *', risk: safe, note: Works on host build files; set-target and fullclean remove generated build output. }
+  - { match: 'idf.py * coredump-info *', risk: device-read, note: Reads the core dump partition from the chip; may reset it. }
+  - { match: 'idf.py * {flash,app-flash,erase-flash,erase-otadata} *', risk: device-write, note: Overwrites firmware or data on the chip; erasing OTA data changes the selected app. }
+  - { match: 'idf.py * {efuse-*,secure-*} *', risk: irreversible, note: Security or eFuse operations can permanently change the chip and make it unusable. }
+  - { match: 'idf.py * {monitor,menuconfig,gdb,gdbtui} *', risk: blocked, note: Interactive. Use serial-monitor for bounded console capture; edit sdkconfig.defaults and reconfigure for configuration. Interactive GDB and terminal interfaces are unavailable. }
+  - { match: 'xtensa-addr2line *', risk: safe, note: Decodes local ELF addresses without connecting to hardware. }
+  - { match: 'riscv-addr2line *', risk: safe, note: Decodes local ELF addresses without connecting to hardware. }
+docs:
+  - README.md
+  - https://docs.espressif.com/projects/idf-im-ui/en/latest/cli_commands.html
+  - https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/tools/idf-py.html
+  - https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/core_dump.html

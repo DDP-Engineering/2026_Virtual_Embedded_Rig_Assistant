@@ -29,7 +29,7 @@ rules:
 docs: []
 \x60\x60\x60
 
-Choose install pip, PEP 723 script (scripts/<file>.py), pinned HTTPS download with SHA-256, or find plus a user installation hint. Version match has exactly one capture group; bound a supported version range when documented. The program name must be the real entry point. Use argv arrays, never a shell or an arbitrary executable path.
+Choose install pip, PEP 723 script (scripts/<file>.py), pinned HTTPS download with SHA-256, or find plus a user installation hint. Version match has exactly one capture group; bound a supported version range when documented. The program name must be the real entry point. Use argv arrays, never a shell or an arbitrary executable path. For vendor activation, find locates launcher[0]; declare launcher: [eim, run] and launcherMode: string only after verifying its one-string transport on both platforms (otherwise use the verified argv mode). A launcher requires find and an explicit mode. String mode refuses quotes and shell metacharacters; do not embed shell syntax or quoting in arguments. VERA generates the platform quoting. Vendor suites and drivers are installed by the user.
 
 Rules match the program plus the agent arguments. The highest matching risk wins; unmatched commands are device-write. Classify documented commands as safe (no hardware effects), device-read (may reset/halt), device-write (reflash can restore), irreversible (OTP/eFuse/protection or physical actuation/transmit), or blocked (interactive commands). Never lower a risk to avoid approvals; describe side effects in notes. Avoid broad low-risk wildcards covering unknown subcommands. Never test irreversible operations on real hardware.
 

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-10e10004"
+title = "Run launcher commands"
+status = "active"
+requirement = "When an enabled launcher program resolves, VERA shall expose it in the program prompt and execute its declared program with literal arguments through the resolved launcher."
+verification = "Run argv and string programs through real program tools; preserve spaced, empty and trailing backslash tokens on each platform."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts","05_Software/src/libraries/core/src/plugins/launcher.ts","05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

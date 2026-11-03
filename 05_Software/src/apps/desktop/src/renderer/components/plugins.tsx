@@ -69,7 +69,6 @@ function useLabels() {
     sha256: t("plugins.problem.sha256"),
     archive: t("plugins.problem.archive"),
     platform: t("plugins.problem.platform"),
-    launcher: t("plugins.problem.launcher"),
     uv: t("plugins.problem.uv"),
     version: t("plugins.problem.version"),
     range: t("plugins.problem.range"),

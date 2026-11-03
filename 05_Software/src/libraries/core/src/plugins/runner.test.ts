@@ -299,6 +299,25 @@ describe("background runs", () => {
 });
 
 describe("serial-port guard", () => {
+  // REQ-SEC-10e10006
+  it.each(["COM3", "/dev/ttyUSB0", "/dev/serial/by-id/usb-probe"])(
+    "locks original program arguments behind string launchers: %s",
+    async (port) => {
+      const run = await runner.start(
+        request({
+          args: ["run", `"serial" "--port=${port}"`],
+          programArgs: [`--port=${port}`],
+          background: true,
+        }),
+      );
+      await expect(
+        runner.start(
+          request({ args: ["run", `"idf.py" "-p" "${port}" "flash"`], programArgs: ["-p", port, "flash"] }),
+        ),
+      ).rejects.toMatchObject({ code: "BUSY", params: { port, handle: run.id } });
+      expect(host.programs).toHaveLength(1);
+    },
+  );
   it.each([
     [["--port", "COM3"], ["--port=com3"], "COM3", ["--port", "COM4"]],
     [["-p", "\\\\.\\COM12"], ["COM12"], "COM12", ["COM1"]],

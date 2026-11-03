@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-10e10002"
+title = "Resolve vendor launcher"
+status = "active"
+requirement = "When a find program declares a launcher, VERA shall find the launcher executable and probe the declared program through that launcher using the selected transport."
+verification = "Use deterministic process hosts on both platforms: EIM path resolves, idf.py version is probed through run, missing EIM carries installer hint, unsupported IDF version stays unavailable."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts","05_Software/src/libraries/core/src/plugins/provisioning.test.ts","05_Software/src/apps/desktop/src/renderer/components/plugins.tsx","05_Software/src/apps/desktop/src/renderer/locales/en.json","05_Software/src/apps/desktop/src/renderer/locales/ro.json","05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

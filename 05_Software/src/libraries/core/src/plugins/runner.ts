@@ -34,6 +34,8 @@ export interface RunRequest {
   /** Resolved executable path; the runner never looks a program up by name. */
   executable: string;
   args: readonly string[];
+  /** Original program tokens for serial-port locking when args contains a launcher command string. */
+  programArgs?: readonly string[];
   /** Workbench-relative working directory; the workbench root when absent. */
   cwd?: string;
   /** The program's own variables, already resolved. */
@@ -184,7 +186,7 @@ class Run implements ProgramRun {
   ) {
     this.background = request.background === true;
     this.workbench = runner.key(request.workbench);
-    this.ports = serialPorts(request.args);
+    this.ports = serialPorts(request.programArgs ?? request.args);
     this.tail = new TailBuffer(settings.tailChars);
     this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {

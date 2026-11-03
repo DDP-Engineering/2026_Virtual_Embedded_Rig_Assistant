@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-10e10003"
+title = "Refuse launcher metacharacters"
+status = "active"
+requirement = "When a string launcher command token contains quotes, shell metacharacters, NUL or line breaks, VERA shall refuse the run with INVALID before spawning."
+verification = "Exercise every forbidden character in agent and fixed program arguments; argv mode preserves literal tokens."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/launcher.ts","05_Software/src/libraries/core/src/plugins/launcher.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/launcher.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

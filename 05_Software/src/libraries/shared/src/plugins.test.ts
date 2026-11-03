@@ -75,13 +75,24 @@ it("accepts the canonical manifest, a skills-only plugin and every install kind"
           tool: {
             ...program,
             install,
-            launcher: ["eim", "run"],
             prefix: ["-c", `${ph("pluginDir")}/cfg`],
             env: { IDF_PATH: `${ph("workbench")}/idf`, PLAIN: "x" },
           },
         },
       }),
     ).toEqual([]);
+});
+
+// REQ-DATA-10e10001
+it("requires an explicit transport for find launchers and refuses orphan modes", () => {
+  const found = { ...program, install: { find: { linux: ["$PATH"] } } };
+  const check = (p: object) => paths({ ...canonical, programs: { idf: p } });
+  for (const launcherMode of ["argv", "string"])
+    expect(check({ ...found, launcher: ["eim", "run"], launcherMode })).toEqual([]);
+  expect(check({ ...found, launcher: ["eim"] })).toContain("programs.idf.launcherMode");
+  expect(check({ ...found, launcherMode: "string" })).toContain("programs.idf.launcherMode");
+  expect(check({ ...found, launcher: ["eim"], launcherMode: "auto" })).toContain("programs.idf.launcherMode");
+  expect(check({ ...program, launcher: ["eim"], launcherMode: "argv" })).toContain("programs.idf.install");
 });
 
 // REQ-DATA-4d4471f9

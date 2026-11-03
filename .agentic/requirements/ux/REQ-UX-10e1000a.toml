@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-10e1000a"
+title = "Guide ESP32 build repair"
+status = "active"
+requirement = "When the agent loads esp32-build-fix, VERA shall supply guidance to build, inspect diagnostics, edit source and rebuild while changing configuration through sdkconfig.defaults instead of sdkconfig."
+verification = "Discover/load installed skill and replay seeded compile failure, source correction and successful rebuild with deterministic fixtures."
+affected_paths = ["05_Software/plugins/esp32-idf/skills/esp32-build-fix/SKILL.md","05_Software/tests/integration/esp32-idf.test.ts"]
+linked_tests = ["05_Software/tests/integration/esp32-idf.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

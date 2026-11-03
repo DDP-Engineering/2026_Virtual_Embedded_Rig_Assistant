@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-10e10006"
+title = "Guard launcher serial ports"
+status = "active"
+requirement = "When a launcher run names a port held by a background run, VERA shall return BUSY using the declared program arguments even when the launch transport is one string."
+verification = "Background capture then string launcher flash naming same COM or Linux serial path returns BUSY; different port runs."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts","05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

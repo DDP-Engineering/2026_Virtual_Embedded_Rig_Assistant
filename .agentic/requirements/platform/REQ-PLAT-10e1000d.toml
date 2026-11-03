@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-10e1000d"
+title = "Accept real ESP-IDF hardware workflow"
+status = "active"
+requirement = "For ESP-IDF acceptance on Windows and Linux, the agent shall repair a seeded compile error, build, flash a board, capture its seeded panic and decode its backtrace to a source line."
+verification = "Manual: actual ESP-IDF toolchain and board on each OS; retain build diagnostics, successful rebuild/flash, captured panic, matching ELF and addr2line source result; fixtures are insufficient."
+affected_paths = ["05_Software/plugins/esp32-idf/README.md"]
+linked_tests = []
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

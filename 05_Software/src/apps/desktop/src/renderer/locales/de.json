@@ -786,7 +786,6 @@
       "sha256": "Der Download hat die falsche SHA-256.",
       "archive": "Das Archiv konnte nicht entpackt werden.",
       "platform": "Für dieses System nicht verfügbar.",
-      "launcher": "Programme mit einem Launcher werden noch nicht unterstützt.",
       "uv": "Das mitgelieferte uv fehlt.",
       "version": "Die Version konnte nicht gelesen werden.",
       "range": "Die installierte Version liegt außerhalb des unterstützten Bereichs."

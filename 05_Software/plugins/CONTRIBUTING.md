@@ -11,6 +11,11 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
    `<id>/skills/<name>/SKILL.md` and helper scripts under `<id>/scripts/`, and a short `<id>/README.md`.
 2. Declare every program with a reproducible install source: a pinned pip requirement range, a PEP 723
    script in the package, a download with its SHA-256 per platform, or a `find` search with a `hint`.
+   Vendor activation uses `launcher: [eim, run]` and an explicit `launcherMode: string` or `argv`.
+   Verify the actual transport on both platforms and document the evidence in README. With a launcher,
+   `find` locates its first token; version probes and runs invoke the declared program through it.
+   String mode refuses quotes and shell metacharacters and generates platform quoting; never put
+   shell syntax in program arguments. Vendor suites and drivers remain user-installed.
 3. Give every program rules. Every command line the agent may run should match a rule with the right risk
    level: `safe` (no effect on hardware), `device-read`, `device-write`, `irreversible` or `blocked`. A
    command no rule matches runs as `device-write`, and the highest risk of all matching rules applies.

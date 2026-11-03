@@ -786,7 +786,6 @@
       "sha256": "Descărcarea are un SHA-256 greșit.",
       "archive": "Arhiva nu a putut fi extrasă.",
       "platform": "Nu este disponibil pentru acest sistem.",
-      "launcher": "Programele cu lansator nu sunt încă suportate.",
       "uv": "uv inclus lipsește.",
       "version": "Versiunea nu a putut fi citită.",
       "range": "Versiunea instalată este în afara intervalului suportat."

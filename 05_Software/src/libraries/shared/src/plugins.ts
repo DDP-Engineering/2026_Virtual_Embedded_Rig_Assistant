@@ -174,37 +174,53 @@ const installSchema = z.union([
     hint: z.string().trim().min(1).max(1024).optional(),
   }),
 ]);
-const programSchema = z.strictObject({
-  install: installSchema,
-  version: z.strictObject({
-    args,
-    match: z
-      .string()
-      .min(1)
-      .max(512)
-      .refine((source) => captureGroups(source) === 1, "Use a regular expression with one capture group."),
-    range: z.string().min(1).max(128).regex(versionRange).optional(),
-  }),
-  launcher: args.min(1).optional(),
-  prefix: z
-    .array(arg.refine(placeholders(["pluginDir"]), "Only the pluginDir placeholder is substituted."))
-    .max(64)
-    .optional(),
-  env: z
-    .record(
-      z.string().regex(/^[A-Za-z_][A-Za-z0-9_]{0,127}$/),
-      z
+const programSchema = z
+  .strictObject({
+    install: installSchema,
+    version: z.strictObject({
+      args,
+      match: z
         .string()
-        .max(4096)
-        .regex(/^[^\0]*$/)
-        .refine(
-          placeholders(["workbench", "pluginDir"]),
-          "Only the workbench and pluginDir placeholders are substituted.",
-        ),
-    )
-    .optional(),
-  timeout: z.number().int().min(1).max(3600).optional(),
-});
+        .min(1)
+        .max(512)
+        .refine((source) => captureGroups(source) === 1, "Use a regular expression with one capture group."),
+      range: z.string().min(1).max(128).regex(versionRange).optional(),
+    }),
+    launcher: args.min(1).optional(),
+    launcherMode: z.enum(["argv", "string"]).optional(),
+    prefix: z
+      .array(arg.refine(placeholders(["pluginDir"]), "Only the pluginDir placeholder is substituted."))
+      .max(64)
+      .optional(),
+    env: z
+      .record(
+        z.string().regex(/^[A-Za-z_][A-Za-z0-9_]{0,127}$/),
+        z
+          .string()
+          .max(4096)
+          .regex(/^[^\0]*$/)
+          .refine(
+            placeholders(["workbench", "pluginDir"]),
+            "Only the workbench and pluginDir placeholders are substituted.",
+          ),
+      )
+      .optional(),
+    timeout: z.number().int().min(1).max(3600).optional(),
+  })
+  .superRefine((program, ctx) => {
+    if (Boolean(program.launcher) !== Boolean(program.launcherMode))
+      ctx.addIssue({
+        code: "custom",
+        path: ["launcherMode"],
+        message: "A launcher requires an explicit launcherMode; a mode requires a launcher.",
+      });
+    if (program.launcher && !("find" in program.install))
+      ctx.addIssue({
+        code: "custom",
+        path: ["install"],
+        message: "A launcher uses find to locate its executable.",
+      });
+  });
 const ruleSchema = z.strictObject({
   match: z
     .string()
@@ -347,7 +363,6 @@ export const pluginProgramProblemSchema = z.enum([
   "sha256",
   "archive",
   "platform",
-  "launcher",
   "uv",
   "version",
   "range",

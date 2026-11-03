@@ -11,6 +11,7 @@ import type { ProgramPromptEntry } from "../agent/prompt.js";
 import type { Clock } from "../ports.js";
 import type { PreparedChange } from "../tools/changes.js";
 import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type LauncherMode, programInvocation } from "./launcher.js";
 import {
   findProgram,
   type ProgramChangeRequest,
@@ -25,6 +26,10 @@ import type { LoadedPlugin } from "./store.js";
 export interface ResolvedProgram {
   readonly executable: string;
   readonly prefix?: readonly string[] | undefined;
+  /** The vendor activation tool takes this declared command in argv or a platform command string. */
+  readonly launcher?:
+    | Readonly<{ command: string; mode: LauncherMode; platform: "win32" | "linux" }>
+    | undefined;
   /** Variables the executable needs (uv's for a script program); applied after the manifest's env. */
   readonly env?: Readonly<Record<string, string>> | undefined;
   /** The program's version as provisioning knows it, for the prompt. */
@@ -113,6 +118,8 @@ export function programError(error: unknown, program?: string): Error {
   const index = params.index;
   const name = program ? `Program ${program}` : "The program";
   switch (parsed.data.code) {
+    case "INVALID":
+      return Error(`Argument ${index} contains a character refused by the string launcher.`);
     case "DENIED":
       switch (params.reason) {
         case "undeclared":
@@ -163,7 +170,7 @@ function programContext(ctx: ToolContext): ProgramContext {
   if (!ctx.programs) throw Error("Plugin programs are unavailable.");
   return ctx.programs;
 }
-/** The one enabled plugin declaring the program, and its executable; refuses launcher programs (PLG-10). */
+/** The one enabled plugin declaring the program, and its resolved executable/transport. */
 async function locate(ctx: ProgramContext, program: string, signal: AbortSignal) {
   let plugin: LoadedPlugin;
   try {
@@ -172,8 +179,7 @@ async function locate(ctx: ProgramContext, program: string, signal: AbortSignal)
     throw programError(error, program);
   }
   const declared = plugin.manifest.programs[program];
-  const resolved =
-    declared && !declared.launcher ? await ctx.host.resolver.resolve(plugin, program, signal) : undefined;
+  const resolved = declared ? await ctx.host.resolver.resolve(plugin, program, signal) : undefined;
   if (!declared || !resolved)
     throw Error(`Program ${program} is not available: it is not installed or not supported yet.`);
   return { plugin, declared, resolved };
@@ -181,12 +187,17 @@ async function locate(ctx: ProgramContext, program: string, signal: AbortSignal)
 async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs, signal: AbortSignal) {
   const { plugin, declared, resolved } = await locate(programs, args.program, signal);
   try {
+    const programArgs = [
+      ...(declared.prefix ?? []).map((value) => value.replaceAll(PLUGIN_DIR, plugin.folder)),
+      ...(args.args ?? []),
+    ];
+    const invocation = programInvocation(resolved, programArgs);
     const prepared = await prepareProgramRequest({
       workbench: ctx.root,
       plugin,
       program: args.program,
       executable: resolved.executable,
-      executableArgs: resolved.prefix ?? [],
+      executableArgs: resolved.launcher ? invocation : (resolved.prefix ?? []),
       args: args.args ?? [],
       cwd: args.cwd,
       sessionId: programs.sessionId,
@@ -194,7 +205,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
       callId: programs.callId ?? "",
       signal,
     });
-    return { prepared, plugin, declared, resolved };
+    return { prepared, plugin, declared, resolved, programArgs, invocation };
   } catch (error) {
     if ((error as Error | undefined)?.name === "AbortError") throw error;
     throw programError(error, args.program);
@@ -203,7 +214,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
 const refusal = (request: ProgramChangeRequest, mode: string) =>
   Error(
     request.risk === "blocked"
-      ? `Refused: plugin ${request.pluginId} rates this command blocked; it never runs, in ${mode} mode or any other.`
+      ? `Refused: plugin ${request.pluginId} rates this command blocked; it never runs, in ${mode} mode or any other. ${request.notes.join(" ")}`.trim()
       : `Refused: ${request.risk} commands${request.trial ? ` of trial plugin ${request.pluginId}` : ""} do not run in ${mode} mode.`,
   );
 function foreground(result: RunResult, risk: string): Record<string, unknown> {
@@ -259,11 +270,8 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
           sessionId: programs.sessionId,
           workbench: ctx.root,
           executable: current.resolved.executable,
-          args: [
-            ...(current.resolved.prefix ?? []),
-            ...(current.declared.prefix ?? []).map((value) => value.replaceAll(PLUGIN_DIR, pluginDir)),
-            ...(args.args ?? []),
-          ],
+          args: current.invocation,
+          ...(current.resolved.launcher ? { programArgs: current.programArgs } : {}),
           cwd: current.prepared.cwd,
           env: {
             ...Object.fromEntries(
@@ -401,7 +409,7 @@ export const programStopTool: ToolDefinition = {
 
 /**
  * The `<programs>` prompt entries: programs of the enabled, issue-free plugins that resolve to an
- * executable and declare no launcher, in plugin id and program name order, with their plugin's skills.
+ * executable, in plugin id and program name order, with their plugin's skills.
  */
 export async function programPromptEntries(
   host: ProgramHost,
@@ -418,9 +426,7 @@ export async function programPromptEntries(
       .filter((skill) => skill.source === "plugin" && skill.plugin === id && skill.enabled && !skill.error)
       .map((skill) => skill.name);
     for (const name of Object.keys(programs).sort()) {
-      const resolved = programs[name]?.launcher
-        ? undefined
-        : await host.resolver.resolve(plugin, name, signal);
+      const resolved = await host.resolver.resolve(plugin, name, signal);
       if (!resolved) continue;
       entries.push({
         name,

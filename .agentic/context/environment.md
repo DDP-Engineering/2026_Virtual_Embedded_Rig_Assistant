@@ -126,7 +126,12 @@ tests/integration/serial-monitor.test.ts runs the serial-monitor script under th
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a
 stub esptool as the pip entry point (on Windows an .exe launcher made with pip's vendored distlib, so that Python needs
-pip) and needs no board, uv or network. `npm run smoke:live -- --provider <openai|custom:slug> [--data <userData>]` builds release and runs a manual real-provider test through the ordinary main credential host. It prints scrubbed four-step results and exits nonzero for incomplete required steps. See [LLM gateway](../knowledge/llm-gateway.md) for configuration and replay fixtures.
+pip) and needs no board, uv or network. `tests/integration/esp32-idf.test.ts` uses the same Python and distlib on
+Windows for deterministic vendor entry points, the platform string parser, provisioner, runner, session
+and serial-monitor/fake pyserial. Set VERA_TEST_EVIDENCE_DIR to retain replay run logs and tool results.
+These tests do not establish actual ESP-IDF compilation or real-board acceptance. EIM 0.20.1 transport
+was separately executed with isolated activation on both hosts; see the plugin README.
+`npm run smoke:live -- --provider <openai|custom:slug> [--data <userData>]` builds release and runs a manual real-provider test through the ordinary main credential host. It prints scrubbed four-step results and exits nonzero for incomplete required steps. See [LLM gateway](../knowledge/llm-gateway.md) for configuration and replay fixtures.
 
 Plan acceptance uses shared todos.test.ts, core sessions/todos.test.ts, registry.test.ts and renderer plan-tab.test.ts; tests/e2e/plan.spec.ts observes every replacement live plus final list after native restart and localized browser status/geometry. CLI process proof covers the same fixture. Final selections include affected session/runtime/storage/IPC/panel/tooling consumers under the verification policy.
 

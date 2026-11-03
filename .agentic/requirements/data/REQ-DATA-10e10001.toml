@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-10e10001"
+title = "Explicit launcher transport"
+status = "active"
+requirement = "When a plugin declares a launcher, VERA shall require launcherMode argv or string with a find installation and reject a mode without a launcher."
+verification = "Validate both modes and reject missing/unknown modes, orphan modes and non-find launcher declarations."
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts","05_Software/src/libraries/shared/src/plugins.test.ts","05_Software/plugins/CONTRIBUTING.md","05_Software/src/libraries/core/src/skills/create-plugin.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

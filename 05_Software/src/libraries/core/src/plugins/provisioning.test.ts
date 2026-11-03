@@ -368,7 +368,7 @@ it("reports failed transfers and archives without the declared path", async () =
 
 async function executable(path: string) {
   await mkdir(join(path, ".."), { recursive: true });
-  await writeFile(path, "");
+  await writeFile(path, "", { mode: 0o755 });
 }
 const find = (lists: Record<string, string[]>, extra: Record<string, unknown> = {}) => ({
   install: { find: lists, ...extra },
@@ -548,7 +548,7 @@ it("resolves and lists programs without installing anything", async () => {
 });
 
 // REQ-FUNC-5491d410, REQ-FUNC-06eaa9a5
-it("reports programs this platform cannot run and launcher programs as unavailable", async () => {
+it("reports programs this platform cannot run and missing launchers", async () => {
   const s = await setup({
     programs: {
       a: {
@@ -556,13 +556,13 @@ it("reports programs this platform cannot run and launcher programs as unavailab
         install: { download: { "windows-x64": { url: "https://h.test/a.exe", sha256: "a".repeat(64) } } },
       },
       b: find({ windows: ["%PATH%"] }),
-      c: { ...find({ linux: ["$PATH"] }), launcher: ["eim", "run"] },
+      c: { ...find({ linux: ["$PATH"] }), launcher: ["eim", "run"], launcherMode: "string" },
     },
   });
   expect(await s.provisioner.install("tools")).toEqual([
     { name: "a", kind: "download", state: "unavailable", problem: "platform" },
     { name: "b", kind: "find", state: "unavailable", problem: "platform" },
-    { name: "c", kind: "find", state: "unavailable", problem: "launcher" },
+    { name: "c", kind: "find", state: "missing", problem: "notFound" },
   ]);
   const other = await setup({ programs: { esptool: pip("esptool") }, platforms: ["windows-x64"] });
   expect(await other.provisioner.install("tools")).toEqual([
@@ -577,6 +577,48 @@ it("reports programs this platform cannot run and launcher programs as unavailab
     expect(each.fetches).toEqual([]);
   }
 });
+
+// REQ-FUNC-10e10002
+it.each(["linux", "win32"] as const)(
+  "finds EIM and probes idf.py through its %s string launcher",
+  async (platform) => {
+    const base = await mkdtemp(join(tmpdir(), "vera-eim-"));
+    roots.push(base);
+    const eim = join(base, platform === "win32" ? "eim.exe" : "eim");
+    await executable(eim);
+    const s = await setup({
+      hostPlatform: platform,
+      env: { PATH: base },
+      programs: {
+        "idf.py": {
+          install: { find: { windows: [eim], linux: [eim] } },
+          launcher: ["eim", "run"],
+          launcherMode: "string",
+          version: { args: ["--version"], match: "v(\\d+\\.\\d+\\.\\d+)", range: ">=5.4" },
+        },
+      },
+    });
+    s.host.handle = (p) => {
+      p.print("ESP-IDF v5.4.2\n");
+      p.finish(ok);
+    };
+    expect(await s.provisioner.statuses("tools")).toEqual([
+      { name: "idf.py", kind: "find", state: "ready", version: "5.4.2", range: ">=5.4" },
+    ]);
+    expect(s.host.programs[0]?.executable).toBe(eim);
+    expect(s.host.programs[0]?.args).toEqual([
+      "run",
+      `${platform === "win32" ? "& " : ""}"idf.py" "--version"`,
+    ]);
+    expect(await s.provisioner.resolve(await s.store.load("tools"), "idf.py")).toMatchObject({
+      executable: eim,
+      prefix: ["run"],
+      launcher: { command: "idf.py", mode: "string", platform },
+      version: "5.4.2",
+    });
+    expect(s.fetches).toEqual([]);
+  },
+);
 
 // REQ-FUNC-86daf060
 it("installs one program at a time and refuses unknown or changed plugins", async () => {

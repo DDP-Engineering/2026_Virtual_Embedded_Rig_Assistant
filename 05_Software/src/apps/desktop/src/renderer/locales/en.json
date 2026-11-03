@@ -786,7 +786,6 @@
       "sha256": "The download has the wrong SHA-256.",
       "archive": "The archive could not be extracted.",
       "platform": "Not available for this system.",
-      "launcher": "Programs with a launcher are not supported yet.",
       "uv": "The bundled uv is missing.",
       "version": "The version could not be read.",
       "range": "The installed version is outside the supported range."

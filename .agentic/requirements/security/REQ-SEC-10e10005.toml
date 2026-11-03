@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-10e10005"
+title = "Bind launcher approval"
+status = "active"
+requirement = "When a launcher program is approved, VERA shall bind its actual invocation and named workbench files to the approval and revalidate the files immediately before spawn."
+verification = "Change launcher invocation and named image after preparation; approval conflicts or final hash guard refuses; unchanged invocation starts."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts","05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

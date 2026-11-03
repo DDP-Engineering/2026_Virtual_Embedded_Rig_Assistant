@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-10e10007"
+title = "Ship ESP-IDF plugin"
+status = "active"
+requirement = "When the esp32-idf plugin is installed, VERA shall provide idf.py through EIM and Xtensa and RISC-V addr2line programs with vendor detection hints."
+verification = "Install shipped folder, validate catalog, resolve deterministic EIM fixture; require serial-monitor and support Windows/Linux; missing vendor produces hint link."
+affected_paths = ["05_Software/plugins/esp32-idf/plugin.yaml","05_Software/plugins/packs.yaml","05_Software/plugins/catalog.yaml","05_Software/tests/integration/esp32-idf.test.ts","05_Software/tests/fixtures/esp32-idf/make_vendor.py","05_Software/tests/fixtures/esp32-idf/vendor.py"]
+linked_tests = ["05_Software/tests/integration/esp32-idf.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

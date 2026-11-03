@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-10e1000b"
+title = "Guide ESP32 panic analysis"
+status = "active"
+requirement = "When the agent loads esp32-panic, VERA shall supply guidance to capture Guru Meditation with serial-monitor, decode addresses using the matching architecture tool and flashed ELF, and inspect core dumps."
+verification = "Discover/load installed skill; deterministic replay captures fixture panic and decodes source line while retaining exact matching ELF."
+affected_paths = ["05_Software/plugins/esp32-idf/skills/esp32-panic/SKILL.md","05_Software/tests/integration/esp32-idf.test.ts"]
+linked_tests = ["05_Software/tests/integration/esp32-idf.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

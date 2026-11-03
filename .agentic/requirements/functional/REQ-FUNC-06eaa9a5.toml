@@ -1,12 +1,12 @@
 schema = 1
 id = "REQ-FUNC-06eaa9a5"
 title = "Report launcher programs as unavailable"
-status = "active"
-requirement = "If a program declares a launcher, the provisioner shall report it unavailable with problem launcher and install nothing for it."
+status = "retired"
+requirement = "If a program declares a launcher, the provisioner shall report it unavailable with problem launcher and install nothing for it. Retired 2026-11-03: verified vendor launchers are now supported under the explicit launcher transport contract."
 verification = "Unit test: a find program with launcher [eim, run] gives unavailable with problem launcher; installing the plugin spawns nothing for it."
 affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
 spec = ""
 priority = "low"
 created = 2026-11-02
-updated = 2026-11-02
+updated = 2026-11-03

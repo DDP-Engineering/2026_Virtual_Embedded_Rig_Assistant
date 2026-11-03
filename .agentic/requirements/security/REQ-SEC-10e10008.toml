@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-10e10008"
+title = "Classify IDF commands"
+status = "active"
+requirement = "When idf.py is requested, VERA shall classify the planned build and size commands safe, coredump-info device-read, flash and erase commands device-write, efuse-* and secure-* irreversible, and monitor/menuconfig/gdb/gdbtui blocked."
+verification = "Table covers every planned command, option placement, mixed build/flash, normalized spellings, irreversible confirmation and default device-write."
+affected_paths = ["05_Software/plugins/esp32-idf/plugin.yaml","05_Software/tests/integration/esp32-idf.test.ts"]
+linked_tests = ["05_Software/tests/integration/esp32-idf.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03

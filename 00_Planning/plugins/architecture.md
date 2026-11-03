@@ -201,12 +201,16 @@ policy below; it receives a resolved executable and the program's resolved varia
 
 Some vendor programs run only inside an activated environment; ESP-IDF's `idf.py` is one. A
 `launcher` prefix such as `[eim, run]` runs the command through the vendor's activation tool.
-When the launcher takes one command string, VERA quotes each argument (double quotes, trailing
-backslashes doubled) and refuses (INVALID) any argument that contains quotes, `& | ; < > ^ % $`, a
+When the launcher takes one command string, VERA quotes each argument for its platform executor
+(Bash doubles literal backslashes; PowerShell keeps them and uses a generated call operator before
+the quoted executable) and refuses (INVALID) any argument that contains quotes, `& | ; < > ^ % $`, a
 backtick, NUL or a line break. Rules still match the program's own command line, never the
 launcher's. `launcherArgs(launcher, command, "argv" | "string")` in `core/src/plugins/launcher.ts`
-implements both modes; the manifest field that selects the mode is added by PLG-10 once `eim run`
-is verified (R-P5).
+implements both modes. `launcherMode: argv | string` is required with `launcher`, which uses a `find`
+installation to locate launcher[0]. PLG-10 verified EIM 0.20.1 on Windows and native Ubuntu: `run`
+takes one COMMAND string, interpreted by PowerShell/Bash after activation. The plugin README records
+the exact evidence and limits. VERA itself still spawns without a shell. Rules, file hashes and
+serial locking use original program arguments; approvals also bind the generated invocation.
 
 ### 3.4 Prompt and skills
 

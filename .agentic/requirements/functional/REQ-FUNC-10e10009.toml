@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-10e10009"
+title = "Explain blocked program refusal"
+status = "active"
+requirement = "When a plugin blocks a command, VERA shall include its matching explanatory rule notes in the agent refusal."
+verification = "Request idf.py monitor in every mode and observe blocked plus interactive/serial-monitor guidance with no process spawn."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts","05_Software/tests/integration/esp32-idf.test.ts"]
+linked_tests = ["05_Software/tests/integration/esp32-idf.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-03
+updated = 2026-11-03
