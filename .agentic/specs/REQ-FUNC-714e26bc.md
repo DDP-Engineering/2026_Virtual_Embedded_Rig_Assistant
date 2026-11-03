@@ -58,6 +58,13 @@ writes a new `install.json` with `programs: {}`, so its programs install again.
 | `script: <path>` | `uv sync --script <plugin folder>/<path>` | installed → uv with leading arguments `run --quiet --offline --script <plugin folder>/<path>` and the uv environment |
 | `download: {<platform>: {url, sha256, path?, prefix?}}` | the entry of the current platform: reuse `downloads/<sha256>/` when it exists, else download, verify, extract or store, rename into place | installed and `downloads/<sha256>/<path>` is a file → that file with `prefix` as leading arguments |
 | `find: {windows?, linux?}` | nothing to install; the statuses report it | the first file the search finds (below), probed |
+| `find: {windows?, linux?}, download: {...}` | when find misses, install the current platform download as above | find and probe first; otherwise use the recorded download; status kind is download |
+
+Combined declarations stay format 1. Find returning an executable with an unreadable or unsupported
+version reports the existing unavailable version/range status, without replacement. A missing find
+system list also permits the declared download fallback. An unavailable download platform reports
+platform; discovery never fetches. Every entry point sharing a SHA-256 reuses the same extracted tree,
+but each program's version is probed and recorded separately. Launchers use find without fallback.
 
 After a pip, script or download install, VERA probes the version; a version that matches is recorded,
 and the status then reports `range` when it is outside the supported range. Installs of one provisioner

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-20b10006"
+title = "Guide matching-ELF crash decoding"
+status = "active"
+requirement = "When crash-decode is loaded, the binutils plugin shall guide the agent to decode PC and LR with addr2line -f -C -i using the exact build ELF and record unresolved addresses and build identity explicitly."
+verification = "SkillCatalog checks PC/LR, matching ELF and inline-frame guidance; real ELF replay verifies known ARM and RISC-V addresses resolve to documented source lines."
+affected_paths = ["05_Software/plugins/binutils/skills/crash-decode/SKILL.md"]
+linked_tests = ["05_Software/tests/integration/binutils.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

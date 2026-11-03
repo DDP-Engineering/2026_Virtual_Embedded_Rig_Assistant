@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-20b10002"
+title = "Install the fallback after discovery misses"
+status = "active"
+requirement = "When the user provisions a find-and-download program with no discovered executable, the provisioner shall install its pinned platform download through the existing verified archive lifecycle and reuse a common SHA-256 folder for all programs sharing that archive."
+verification = "Offline zip transport asserts two entry points share one fetch, each is probed and recorded, subsequent resolve/install is cached, and SHA-256 failure leaves no installed version."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

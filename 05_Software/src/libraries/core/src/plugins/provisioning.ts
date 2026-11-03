@@ -79,7 +79,7 @@ const kindOf = (program: PluginProgram): Kind =>
     ? "pip"
     : "script" in program.install
       ? "script"
-      : "download" in program.install
+      : "download" in program.install && program.install.download !== undefined
         ? "download"
         : "find";
 const isFile = async (path: string) => (await stat(path).catch(() => undefined))?.isFile() === true;
@@ -348,9 +348,9 @@ export class Provisioner implements ProgramResolver {
     const recorded = Object.hasOwn(plugin.record.programs, name) ? plugin.record.programs[name] : undefined;
     if ("find" in install) {
       const list = this.windows ? install.find.windows : install.find.linux;
-      if (!list) return not("unavailable", "platform");
-      const found = await this.search(program.launcher?.[0] ?? name, list);
-      if (!found) {
+      const found = list && (await this.search(program.launcher?.[0] ?? name, list));
+      if (!found && !install.download) {
+        if (!list) return not("unavailable", "platform");
         const link = install.hint ? linkOf(install.hint) : undefined;
         return not(
           "missing",
@@ -358,28 +358,30 @@ export class Provisioner implements ProgramResolver {
           install.hint ? { hint: install.hint, ...(link ? { link } : {}) } : {},
         );
       }
-      const resolved: ResolvedProgram = {
-        executable: found,
-        ...(program.launcher
-          ? {
-              prefix: program.launcher.slice(1),
-              launcher: {
-                command: name,
-                mode: program.launcherMode as "argv" | "string",
-                platform: this.windows ? "win32" : "linux",
-              },
-            }
-          : {}),
-      };
-      return this.check(
-        name,
-        kind,
-        program,
-        resolved,
-        await this.probe(resolved, program, signal, plugin.folder),
-      );
+      if (found) {
+        const resolved: ResolvedProgram = {
+          executable: found,
+          ...(program.launcher
+            ? {
+                prefix: program.launcher.slice(1),
+                launcher: {
+                  command: name,
+                  mode: program.launcherMode as "argv" | "string",
+                  platform: this.windows ? "win32" : "linux",
+                },
+              }
+            : {}),
+        };
+        return this.check(
+          name,
+          kind,
+          program,
+          resolved,
+          await this.probe(resolved, program, signal, plugin.folder),
+        );
+      }
     }
-    if ("download" in install) {
+    if ("download" in install && install.download) {
       const entry = install.download[platform];
       const file = entry && downloadName(entry);
       if (!entry || !file) return not("unavailable", "platform");
@@ -393,6 +395,7 @@ export class Provisioner implements ProgramResolver {
         recorded,
       );
     }
+    if ("find" in install || "download" in install) return not("unavailable", "platform");
     if (!this.options.uv) return not("unavailable", "uv");
     if (recorded === undefined) return not("missing");
     if ("pip" in install) {
@@ -602,7 +605,7 @@ export class Provisioner implements ProgramResolver {
         return failed("install", result.tail || `uv installed no ${name} entry point.`);
       return probed({ executable });
     }
-    if ("download" in install) {
+    if ("download" in install && install.download) {
       const entry = install.download[this.options.platform as PluginPlatform];
       const file = entry && downloadName(entry);
       if (!entry || !file) return failed("download");

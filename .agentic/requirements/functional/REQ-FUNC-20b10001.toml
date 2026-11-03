@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-20b10001"
+title = "Prefer discovered tools before downloads"
+status = "active"
+requirement = "When a program declares find and download, the provisioner shall resolve the first discovered executable with its probed version before considering the managed download, without downloading during discovery."
+verification = "Fake toolchain folders assert ordered PATH and roots, --version arguments, no fetch on statuses/resolve/install when found, and unavailable on failed version/range rather than silently replacing an existing tool."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

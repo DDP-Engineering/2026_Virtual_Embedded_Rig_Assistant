@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-20b10005"
+title = "Guide firmware size comparisons"
+status = "active"
+requirement = "When firmware-size is loaded, the binutils plugin shall guide the agent to compare section sizes and rank symbol size deltas across two matching-architecture builds, passing the results to firmware-comparator when available."
+verification = "Load installed skill through SkillCatalog and inspect comparison/delta guidance; real replay asserts measured section differences and largest symbol growth for both architectures."
+affected_paths = ["05_Software/plugins/binutils/skills/firmware-size/SKILL.md"]
+linked_tests = ["05_Software/tests/integration/binutils.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

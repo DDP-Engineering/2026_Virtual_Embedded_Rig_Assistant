@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-20b10004"
+title = "Classify local ELF analysis as safe"
+status = "active"
+requirement = "When any declared binutils program is run on a local ELF, the plugin rules shall classify its command as safe under the existing argument refusals and runner limits."
+verification = "Enumerate ten programs and representative arguments, asserting safe classification and @file refusal; replay verifies safe executions in read-only with full logs and bounded disassembly."
+affected_paths = ["05_Software/plugins/binutils/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/binutils.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

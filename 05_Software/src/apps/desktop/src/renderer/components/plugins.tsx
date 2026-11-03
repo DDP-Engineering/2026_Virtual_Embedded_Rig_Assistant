@@ -102,22 +102,25 @@ function InstallSource({ program }: { program: PluginProgram }) {
   const { install } = program;
   if ("pip" in install) return <span>{t("plugins.source.pip", { requirement: install.pip })}</span>;
   if ("script" in install) return <span>{t("plugins.source.script", { path: install.script })}</span>;
-  if ("download" in install)
-    return (
-      <ul>
-        {Object.entries(install.download).map(([platform, entry]) => (
-          <li key={platform}>
-            {t("plugins.source.download", { platform })} <code>{entry?.url}</code>{" "}
-            <span className="plugin-sha">SHA-256 {entry?.sha256}</span>
-          </li>
-        ))}
-      </ul>
-    );
   return (
     <>
-      <span>{t("plugins.source.find")}</span>{" "}
-      <code>{[...(install.find.windows ?? []), ...(install.find.linux ?? [])].join(", ")}</code>
-      {install.hint && <span className="muted"> {install.hint}</span>}
+      {"find" in install && (
+        <>
+          <span>{t("plugins.source.find")}</span>{" "}
+          <code>{[...(install.find.windows ?? []), ...(install.find.linux ?? [])].join(", ")}</code>
+          {install.hint && <span className="muted"> {install.hint}</span>}
+        </>
+      )}
+      {"download" in install && install.download && (
+        <ul>
+          {Object.entries(install.download).map(([platform, entry]) => (
+            <li key={platform}>
+              {t("plugins.source.download", { platform })} <code>{entry?.url}</code>{" "}
+              <span className="plugin-sha">SHA-256 {entry?.sha256}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

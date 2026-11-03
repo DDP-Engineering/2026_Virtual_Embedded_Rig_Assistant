@@ -136,6 +136,23 @@ function captureGroups(source: string): number | undefined {
     return undefined;
   }
 }
+const downloadSchema = z
+  .partialRecord(
+    pluginPlatformSchema,
+    z
+      .strictObject({
+        url: z.url({ protocol: /^https$/ }).max(2048),
+        sha256: z.string().regex(/^[0-9a-f]{64}$/),
+        path: relativePath.optional(),
+        prefix: args.optional(),
+      })
+      .superRefine((entry, ctx) => {
+        const named = downloadForm(entry.url) === "file" ? downloadName(entry) : entry.path;
+        if (named === undefined)
+          ctx.addIssue({ code: "custom", path: ["path"], message: "Name the executable with path." });
+      }),
+  )
+  .refine((value) => Object.keys(value).length > 0, "Name at least one platform.");
 const installSchema = z.union([
   // A requirement, never an option such as `-e` or `--index-url=`.
   z.strictObject({
@@ -148,30 +165,14 @@ const installSchema = z.union([
   }),
   z.strictObject({ script: relativePath.refine((path) => path.endsWith(".py"), "Use a .py script.") }),
   z.strictObject({
-    download: z
-      .partialRecord(
-        pluginPlatformSchema,
-        z
-          .strictObject({
-            url: z.url({ protocol: /^https$/ }).max(2048),
-            sha256: z.string().regex(/^[0-9a-f]{64}$/),
-            path: relativePath.optional(),
-            prefix: args.optional(),
-          })
-          .superRefine((entry, ctx) => {
-            // An archive names the executable inside it; a single file needs a usable name.
-            const named = downloadForm(entry.url) === "file" ? downloadName(entry) : entry.path;
-            if (named === undefined)
-              ctx.addIssue({ code: "custom", path: ["path"], message: "Name the executable with path." });
-          }),
-      )
-      .refine((value) => Object.keys(value).length > 0, "Name at least one platform."),
+    download: downloadSchema,
   }),
   z.strictObject({
     find: z
       .strictObject({ windows: globs.optional(), linux: globs.optional() })
       .refine((value) => value.windows || value.linux, "Name at least one system."),
     hint: z.string().trim().min(1).max(1024).optional(),
+    download: downloadSchema.optional(),
   }),
 ]);
 const programSchema = z
@@ -214,11 +215,11 @@ const programSchema = z
         path: ["launcherMode"],
         message: "A launcher requires an explicit launcherMode; a mode requires a launcher.",
       });
-    if (program.launcher && !("find" in program.install))
+    if (program.launcher && (!("find" in program.install) || "download" in program.install))
       ctx.addIssue({
         code: "custom",
         path: ["install"],
-        message: "A launcher uses find to locate its executable.",
+        message: "A launcher uses find without a download fallback to locate its executable.",
       });
   });
 const ruleSchema = z.strictObject({

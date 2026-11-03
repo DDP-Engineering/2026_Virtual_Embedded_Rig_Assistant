@@ -105,7 +105,9 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   expect(remote).toMatchObject({ source: "remote", url: `${url}/`, checkedAt: "2026-11-03T12:00:00.000Z" });
   expect(remote.problem).toBeUndefined();
   expect(remote.plugins.map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
+    ["binutils", "1.0.0", "official"],
     ["esp32-esptool", "1.0.0", "official"],
+    ["esp32-idf", "1.0.0", "official"],
     ["serial-monitor", "1.0.1", "official"],
   ]);
   expect(remote.packs[0]?.groups[0]).toEqual({

@@ -7,7 +7,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -17,7 +17,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32 Core and ESP-IDF build groups, default on), `catalog.yaml` (all three plugins
+source: `packs.yaml` (ESP32 Core and ESP-IDF build groups, default on), `catalog.yaml` (all four plugins
 `official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -29,6 +29,17 @@ from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
+
+- `binutils` 1.0.0, general, windows-x64/linux-x64/linux-arm64: ten `arm-none-eabi-` and
+  `riscv-none-elf-` programs (`size`, `nm`, `readelf`, `objdump`, `addr2line`), all safe. Per-program
+  `--version` probes, timeout 60 s. Ordered PATH/ST/PlatformIO/Arduino/Zephyr/xPack discovery;
+  only a user action installs a missing tool from SHA-256-pinned xPack ARM 15.2.1-1.1 or RISC-V
+  15.2.0-1 archives, five entry points sharing each archive. Zephyr uses explicit alternate names;
+  Espressif remains in esp32-idf. Three skills compare sections/symbol deltas, decode exact-build
+  PC/LR with inline frames and inspect linker/flash mapping with bounded disassembly.
+  Fixture source, linker script, DWARF4 ELFs and reproduction instructions are in tests/fixtures/elf.
+  Windows/native Ubuntu x64 acceptance uses real local archives via VERA_BINUTILS_ARCHIVES;
+  linux-arm64 archive hashes/members/AArch64 host headers are inspected, not executed.
 
 - `serial-monitor` 1.0.0, ecosystem `general`, platforms `windows-x64`, `linux-x64`, program `serial` with
   `install: { script: scripts/serial_monitor.py }` (pyserial 3.5), probed with `--version`
@@ -107,6 +118,10 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 
 ## Key behaviors
 
+- `REQ-FUNC-20b10003` / `REQ-SEC-20b10004` — official binutils package, pinned find-first sources and safe analysis.
+- `REQ-UX-20b10005` / `REQ-UX-20b10006` / `REQ-UX-20b10007` — size, crash and ELF inspection skills.
+- `REQ-TEST-20b10008` — reproducible genuine ARM/RISC-V ELF corpus.
+
 - `REQ-FUNC-10e10007` / `REQ-SEC-10e10008` — ESP-IDF package, vendor hints and risk rules.
 - `REQ-UX-10e1000a` / `REQ-UX-10e1000b` — build-fix/panic skills and deterministic replay.
 - `REQ-PLAT-10e1000c` — executed EIM transport; `REQ-PLAT-10e1000d` — outstanding real-board workflow.
@@ -132,6 +147,9 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
+
+- `05_Software/plugins/binutils/` — manifest, measured source pins README and three skills.
+- `05_Software/tests/integration/binutils.test.ts`, `tests/fixtures/elf/` — genuine cross-architecture corpus, fake-root discovery and real offline archive/replay acceptance.
 
 - `05_Software/plugins/esp32-idf/` — manifest, measured EIM transport README, build-fix and panic skills.
 - `05_Software/tests/integration/esp32-idf.test.ts`, `tests/fixtures/esp32-idf/` — deterministic vendor executable/parser and session replay; no hardware or network.

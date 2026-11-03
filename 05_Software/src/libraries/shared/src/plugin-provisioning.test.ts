@@ -23,6 +23,25 @@ const paths = (data: unknown) => [...new Set(validatePluginManifest(data).issues
 const sha256 = "b".repeat(64);
 
 // REQ-DATA-4d4471f9
+it("accepts a strict find with pinned download fallback in format 1", () => {
+  const download = { "linux-x64": { url: "https://h.test/t.zip", sha256, path: "bin/tool" } };
+  const install = { find: { linux: ["$PATH"] }, download, hint: "Install from Plugins." };
+  expect(paths(manifest(install))).toEqual([]);
+  expect(paths(manifest({ ...install, pip: "tool" }))).toEqual(["programs.tool.install"]);
+  expect(paths(manifest({ ...install, download: {} }))).not.toEqual([]);
+  expect(
+    paths(manifest({ ...install, download: { "linux-x64": { ...download["linux-x64"], sha256: "bad" } } })),
+  ).not.toEqual([]);
+  const data = manifest(install);
+  expect(
+    paths({
+      ...data,
+      programs: { tool: { ...data.programs.tool, launcher: ["tool"], launcherMode: "argv" } },
+    }),
+  ).toContain("programs.tool.install");
+});
+
+// REQ-DATA-4d4471f9
 it("validates supported ranges, pip requirements, find patterns and archive paths", () => {
   expect(paths(manifest({ pip: "esptool>=5,<6" }, { range: ">=5,<6" }))).toEqual([]);
   expect(paths(manifest({ pip: "esptool" }, { range: ">= 2.40 , != 2.41.1" }))).toEqual([]);

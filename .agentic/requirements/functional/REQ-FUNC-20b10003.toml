@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-20b10003"
+title = "Ship ARM and RISC-V ELF utilities"
+status = "active"
+requirement = "The official binutils plugin shall declare size, nm, readelf, objdump and addr2line for arm-none-eabi and riscv-none-elf with ordered PATH, STM32, PlatformIO, Arduino, Zephyr and xPack find locations and SHA-256-pinned Windows x64, Linux x64 and Linux arm64 xPack fallbacks."
+verification = "Manifest/catalog tests check ten programs, ordered roots and valid pins; real archive acceptance verifies x64 member paths and commands on both systems; arm64 archive headers and hash are inspected without claiming execution."
+affected_paths = ["05_Software/plugins/binutils/"]
+linked_tests = ["05_Software/tests/integration/binutils.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

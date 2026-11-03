@@ -5,3 +5,7 @@
   groups:
     - { name: Core, plugins: [serial-monitor, esp32-esptool], default: true }
     - { name: ESP-IDF build, plugins: [esp32-idf], default: true }
+- id: general
+  name: Firmware analysis
+  groups:
+    - { name: ELF analysis, plugins: [binutils], default: true }

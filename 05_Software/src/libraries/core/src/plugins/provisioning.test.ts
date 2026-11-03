@@ -18,6 +18,118 @@ afterEach(async () => {
 const ok = { code: 0, signal: null };
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
+// REQ-FUNC-20b10001, REQ-FUNC-20b10002
+it("prefers a found tool and installs one shared fallback archive only after find misses", async () => {
+  const base = await mkdtemp(join(tmpdir(), "vera-find-fallback-"));
+  roots.push(base);
+  const windows = process.platform === "win32";
+  const name = (n: string) => (windows ? `${n}.exe` : n);
+  await executable(join(base, "bin", name("size")));
+  const bytes = zipSync({
+    [`tools/bin/${name("size")}`]: strToU8("size"),
+    [`tools/bin/${name("nm")}`]: strToU8("nm"),
+  });
+  const entry = (tool: string) => ({
+    install: {
+      find: { windows: ["%PATH%"], linux: ["$PATH"] },
+      download: {
+        [windows ? "windows-x64" : "linux-x64"]: {
+          url: "https://h.test/tools.zip",
+          sha256: sha(bytes),
+          path: `tools/bin/${name(tool)}`,
+        },
+      },
+    },
+    version: { args: ["--version"], match: "GNU binutils (\\d+\\.\\d+)", range: ">=2.40" },
+  });
+  const s = await setup({
+    programs: { size: entry("size"), nm: entry("nm") },
+    hostPlatform: windows ? "win32" : "linux",
+    env: { PATH: join(base, "bin") },
+  });
+  s.host.handle = (p) => {
+    p.print("GNU binutils 2.46\n");
+    p.finish(ok);
+  };
+  s.served.set("https://h.test/tools.zip", () => new Response(bytes));
+  expect(await s.provisioner.statuses("tools")).toEqual([
+    { name: "nm", kind: "download", state: "missing" },
+    { name: "size", kind: "download", state: "ready", version: "2.46", range: ">=2.40" },
+  ]);
+  expect(s.fetches).toEqual([]);
+  const plugin = await s.store.load("tools");
+  expect((await s.provisioner.resolve(plugin, "size"))?.executable).toBe(join(base, "bin", name("size")));
+  // The explicit action downloads only nm; size is still taken from PATH.
+  expect((await s.provisioner.install("tools")).every((p) => p.state === "ready")).toBe(true);
+  expect(s.fetches).toEqual(["https://h.test/tools.zip"]);
+  expect(s.host.programs.every((p) => p.args.join(" ") === "--version")).toBe(true);
+  await rm(join(base, "bin"), { recursive: true });
+  s.provisioner.invalidate();
+  expect((await s.provisioner.statuses("tools"))[1]?.state).toBe("missing");
+  await s.provisioner.install("tools");
+  expect(s.fetches).toHaveLength(1);
+  expect((await s.record()).programs).toEqual({ nm: "2.46", size: "2.46" });
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "size"))?.executable).toContain(
+    sha(bytes),
+  );
+});
+
+it("does not replace a discovered tool whose probe is unsupported or unreadable", async () => {
+  const base = await mkdtemp(join(tmpdir(), "vera-find-bad-"));
+  roots.push(base);
+  await executable(join(base, "tool"));
+  const s = await setup({
+    programs: {
+      tool: {
+        install: {
+          find: { linux: [join(base, "tool")] },
+          download: { "linux-x64": { url: "https://h.test/tool", sha256: "a".repeat(64) } },
+        },
+        version: { args: ["--version"], match: "(\\d+\\.\\d+)", range: ">=2.40" },
+      },
+    },
+  });
+  s.host.handle = (p) => {
+    p.print("2.39\n");
+    p.finish(ok);
+  };
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "unavailable", problem: "range" });
+  s.host.handle = (p) => p.finish(ok);
+  s.provisioner.invalidate();
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({
+    state: "unavailable",
+    problem: "version",
+  });
+  expect(s.fetches).toEqual([]);
+});
+
+// REQ-FUNC-20b10002
+it("verifies the fallback hash and permits a fallback without a find list for this host", async () => {
+  const bytes = strToU8("tool");
+  const s = await setup({
+    programs: {
+      tool: {
+        install: {
+          find: { windows: ["%PATH%"] },
+          download: { "linux-x64": { url: "https://h.test/tool", sha256: sha(bytes) } },
+        },
+        version: { args: ["--version"], match: "(\\d+\\.\\d+)" },
+      },
+    },
+  });
+  s.served.set("https://h.test/tool", () => new Response("corrupt"));
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "missing", problem: "sha256" });
+  expect((await s.record()).programs).toEqual({});
+  expect(await readdir(join(s.root, "plugins/runtime/downloads/.staging"))).toEqual([]);
+  s.served.set("https://h.test/tool", () => new Response(bytes));
+  s.host.handle = (p) => {
+    p.print("2.46\n");
+    p.finish(ok);
+  };
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready", version: "2.46" });
+  expect(s.fetches).toHaveLength(2);
+});
+
 /** A FakeHost whose processes act on their own: `handle` decides what each spawned program does. */
 class ScriptedHost extends FakeHost {
   running = 0;

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-20b10008"
+title = "Retain reproducible cross-architecture ELF fixtures"
+status = "active"
+requirement = "The ELF test corpus shall contain small source-built ARM and RISC-V before/after images with debug information, source/linker inputs, reproducible commands and documented fault addresses and source lines."
+verification = "Rebuild with pinned xPack compilers and compare bytes; inspect ELF magic/machine/debug line info; size/nm/addr2line/objdump acceptance uses the committed binaries without a board."
+affected_paths = ["05_Software/tests/fixtures/elf/"]
+linked_tests = ["05_Software/tests/integration/binutils.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

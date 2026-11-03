@@ -129,7 +129,7 @@ stub esptool as the pip entry point (on Windows an .exe launcher made with pip's
 pip) and needs no board, uv or network. `tests/integration/esp32-idf.test.ts` uses the same Python and distlib on
 Windows for deterministic vendor entry points, the platform string parser, provisioner, runner, session
 and serial-monitor/fake pyserial. Set VERA_TEST_EVIDENCE_DIR to retain replay run logs and tool results.
-These tests do not establish actual ESP-IDF compilation or real-board acceptance. EIM 0.20.1 transport
+These tests do not establish actual ESP-IDF compilation or real-board acceptance. Binutils acceptance is `tests/integration/binutils.test.ts`: ordinary tests inspect the real ELF corpus and fake-root discovery without network; setting VERA_BINUTILS_ARCHIVES to locally prepared official archives enables real x64 extraction/probes and downloaded/PATH-found replay on each native host. VERA_TEST_EVIDENCE_DIR retains original run logs/events. This does not establish linux-arm64 execution. EIM 0.20.1 transport
 was separately executed with isolated activation on both hosts; see the plugin README.
 `npm run smoke:live -- --provider <openai|custom:slug> [--data <userData>]` builds release and runs a manual real-provider test through the ordinary main credential host. It prints scrubbed four-step results and exits nonzero for incomplete required steps. See [LLM gateway](../knowledge/llm-gateway.md) for configuration and replay fixtures.
 

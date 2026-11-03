@@ -11,7 +11,7 @@ matching, risk levels, the mode matrix, trial plugins, run_program approval requ
 confirmation and the irreversible rules listed by the bypass warning; and for the agent's program
 tools run_program/program_output/program_stop, the ProgramHost and executable resolver seam, the
 `<programs>` prompt entries and the timeout cap; and for provisioning: the bundled uv, install kinds
-pip/script/download/find, the runtime folder, version probes and supported ranges, program statuses,
+pip/script/download/find (including find with a pinned download fallback), the runtime folder, version probes and supported ranges, program statuses,
 `plugins.programs`/`plugins.provision`, `vera plugin install` and the package index/proxy settings; and for the
 desktop UI: the Plugins page (pickers, review screen, install bound to the reviewed hash, enable switch,
 program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`); and for the
@@ -33,7 +33,7 @@ and real processes run in `05_Software/tests/integration/process-hosts.test.ts` 
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
 and the `<resources>/uv/` payload; [Headless CLI](headless-cli.md) owns the `vera plugin install` command.
 [Official plugins](official-plugins.md) owns the shipped plugin packages in `05_Software/plugins/` (today
-`serial-monitor`, `esp32-esptool` and `esp32-idf`) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
+`serial-monitor`, `esp32-esptool`, `esp32-idf` and `binutils`) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
 owns Agent Skills discovery, plugin skills included; [IPC boundary](ipc-boundary.md)
 owns channel registration and frame authorization; [Sessions](sessions.md) owns the ApprovalGate
 lifecycle, and [Chat UI](chat-ui.md) and [Renderer foundation](renderer-foundation.md) own the
@@ -76,7 +76,7 @@ Core's `Provisioner` (`provisioning.ts`) installs and locates declared programs 
 install. pip and script programs run the bundled uv (pinned by `src/uv/uv-manifest.json`) with every uv folder
 inside the runtime and one managed CPython 3.13; downloads are verified, extracted (zip in core through
 `archive.ts`, tar archives through the system tar) and kept per SHA-256; find programs are searched on PATH and
-absolute globs. Versions come from probes, are recorded in install.json and checked against `version.range`.
+absolute globs. Format-1 find may include a download fallback: a found executable is probed first; a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. Combined statuses use kind download; the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
 Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
 The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page
@@ -423,6 +423,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 ## Key behaviors
 
+- `REQ-FUNC-20b10001` / `REQ-FUNC-20b10002` — find-first combined provisioning and shared verified fallback; `REQ-DATA-4d4471f9` accepts the format-1 declaration.
+
 - `REQ-DATA-4d4471f9` — plugin.yaml format 1 validation with field paths (spec REQ-DATA-4d4471f9.md).
 - `REQ-FUNC-6dd00f25` — install from a folder, install.json, valid after restart.
 - `REQ-FUNC-6db9dc8f` — install from a zip with the package at the root or in one top folder.
@@ -496,6 +498,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - `REQ-PLAT-720aa4f2` — official plugins shipped as a bundled catalog release.
 
 ## Files
+
+- `tests/integration/binutils.test.ts` — ordered find roots, prompt filtering and optional offline real-archive acceptance of combined provisioning.
 
 - `05_Software/src/libraries/shared/src/plugins.ts` — manifest, issue, summary and request schemas; limits.
 - `05_Software/src/libraries/shared/src/plugins.test.ts` — manifest validity and field paths.

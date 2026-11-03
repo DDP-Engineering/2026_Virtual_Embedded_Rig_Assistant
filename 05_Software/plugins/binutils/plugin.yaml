@@ -1,0 +1,223 @@
+format: 1
+id: binutils
+version: 1.0.0
+name: GNU binutils (ARM, RISC-V)
+description: Inspect local ARM and RISC-V firmware ELF files for section and symbol size growth, memory layout, targeted disassembly and crash PC/LR source lines. Use the ELF from the exact build.
+ecosystem: general
+platforms: [windows-x64, linux-x64, linux-arm64]
+programs:
+  arm-none-eabi-size:
+    install:
+      find:
+        windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "C:/ST/STM32CubeIDE*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-size.exe", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+        linux: ["$PATH", "/opt/st/stm32cubeclt*/GNU-tools-for-STM32/bin", "/opt/st/stm32cubeide*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-size", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-win32-x64.zip
+          sha256: bae6a3d1667697ce750c3b13d6d26d80973ecedc2cc87bf04869e83447fd93ea
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-size.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+          sha256: da6a49ad4003944b823c6c93702a8787c922ab34bd7e918ec0eaf6933a9b1ff6
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-size
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-arm64.tar.gz
+          sha256: 67980c7990eba7bb7ffdf39699102effd70889f5ac427be19a8c8a6c5fab2972
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-size
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  arm-none-eabi-nm:
+    install:
+      find:
+        windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "C:/ST/STM32CubeIDE*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-nm.exe", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+        linux: ["$PATH", "/opt/st/stm32cubeclt*/GNU-tools-for-STM32/bin", "/opt/st/stm32cubeide*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-nm", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-win32-x64.zip
+          sha256: bae6a3d1667697ce750c3b13d6d26d80973ecedc2cc87bf04869e83447fd93ea
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-nm.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+          sha256: da6a49ad4003944b823c6c93702a8787c922ab34bd7e918ec0eaf6933a9b1ff6
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-nm
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-arm64.tar.gz
+          sha256: 67980c7990eba7bb7ffdf39699102effd70889f5ac427be19a8c8a6c5fab2972
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-nm
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  arm-none-eabi-readelf:
+    install:
+      find:
+        windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "C:/ST/STM32CubeIDE*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-readelf.exe", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+        linux: ["$PATH", "/opt/st/stm32cubeclt*/GNU-tools-for-STM32/bin", "/opt/st/stm32cubeide*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-readelf", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-win32-x64.zip
+          sha256: bae6a3d1667697ce750c3b13d6d26d80973ecedc2cc87bf04869e83447fd93ea
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-readelf.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+          sha256: da6a49ad4003944b823c6c93702a8787c922ab34bd7e918ec0eaf6933a9b1ff6
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-readelf
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-arm64.tar.gz
+          sha256: 67980c7990eba7bb7ffdf39699102effd70889f5ac427be19a8c8a6c5fab2972
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-readelf
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  arm-none-eabi-objdump:
+    install:
+      find:
+        windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "C:/ST/STM32CubeIDE*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump.exe", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+        linux: ["$PATH", "/opt/st/stm32cubeclt*/GNU-tools-for-STM32/bin", "/opt/st/stm32cubeide*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-win32-x64.zip
+          sha256: bae6a3d1667697ce750c3b13d6d26d80973ecedc2cc87bf04869e83447fd93ea
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-objdump.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+          sha256: da6a49ad4003944b823c6c93702a8787c922ab34bd7e918ec0eaf6933a9b1ff6
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-objdump
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-arm64.tar.gz
+          sha256: 67980c7990eba7bb7ffdf39699102effd70889f5ac427be19a8c8a6c5fab2972
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-objdump
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  arm-none-eabi-addr2line:
+    install:
+      find:
+        windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "C:/ST/STM32CubeIDE*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-addr2line.exe", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+        linux: ["$PATH", "/opt/st/stm32cubeclt*/GNU-tools-for-STM32/bin", "/opt/st/stm32cubeide*/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.arduino15/packages/*/tools/arm-none-eabi-gcc/*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin/arm-zephyr-eabi-addr2line", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-win32-x64.zip
+          sha256: bae6a3d1667697ce750c3b13d6d26d80973ecedc2cc87bf04869e83447fd93ea
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-addr2line.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+          sha256: da6a49ad4003944b823c6c93702a8787c922ab34bd7e918ec0eaf6933a9b1ff6
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-addr2line
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-arm64.tar.gz
+          sha256: 67980c7990eba7bb7ffdf39699102effd70889f5ac427be19a8c8a6c5fab2972
+          path: xpack-arm-none-eabi-gcc-15.2.1-1.1/bin/arm-none-eabi-addr2line
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  riscv-none-elf-size:
+    install:
+      find:
+        windows: ["%PATH%", "~/.platformio/packages/toolchain-riscv*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-size.exe", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+        linux: ["$PATH", "~/.platformio/packages/toolchain-riscv*/bin", "~/.arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-size", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-win32-x64.zip
+          sha256: 85ef714dacd273b1dadf4af4892774520ac01915bfa6da816a56e7e41591e09e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-size.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
+          sha256: aaaa8060c914851a3e5ee1ba82cc3d6f80972f90638a05c6e823a37557a33758
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-size
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-arm64.tar.gz
+          sha256: 4e60e2a54c16385e4e2476d08240f857495d5a61609d97e1ee49f72875a6ec1e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-size
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  riscv-none-elf-nm:
+    install:
+      find:
+        windows: ["%PATH%", "~/.platformio/packages/toolchain-riscv*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-nm.exe", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+        linux: ["$PATH", "~/.platformio/packages/toolchain-riscv*/bin", "~/.arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-nm", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-win32-x64.zip
+          sha256: 85ef714dacd273b1dadf4af4892774520ac01915bfa6da816a56e7e41591e09e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-nm.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
+          sha256: aaaa8060c914851a3e5ee1ba82cc3d6f80972f90638a05c6e823a37557a33758
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-nm
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-arm64.tar.gz
+          sha256: 4e60e2a54c16385e4e2476d08240f857495d5a61609d97e1ee49f72875a6ec1e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-nm
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  riscv-none-elf-readelf:
+    install:
+      find:
+        windows: ["%PATH%", "~/.platformio/packages/toolchain-riscv*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-readelf.exe", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+        linux: ["$PATH", "~/.platformio/packages/toolchain-riscv*/bin", "~/.arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-readelf", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-win32-x64.zip
+          sha256: 85ef714dacd273b1dadf4af4892774520ac01915bfa6da816a56e7e41591e09e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-readelf.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
+          sha256: aaaa8060c914851a3e5ee1ba82cc3d6f80972f90638a05c6e823a37557a33758
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-readelf
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-arm64.tar.gz
+          sha256: 4e60e2a54c16385e4e2476d08240f857495d5a61609d97e1ee49f72875a6ec1e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-readelf
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  riscv-none-elf-objdump:
+    install:
+      find:
+        windows: ["%PATH%", "~/.platformio/packages/toolchain-riscv*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-objdump.exe", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+        linux: ["$PATH", "~/.platformio/packages/toolchain-riscv*/bin", "~/.arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-objdump", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-win32-x64.zip
+          sha256: 85ef714dacd273b1dadf4af4892774520ac01915bfa6da816a56e7e41591e09e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-objdump.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
+          sha256: aaaa8060c914851a3e5ee1ba82cc3d6f80972f90638a05c6e823a37557a33758
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-objdump
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-arm64.tar.gz
+          sha256: 4e60e2a54c16385e4e2476d08240f857495d5a61609d97e1ee49f72875a6ec1e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-objdump
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+  riscv-none-elf-addr2line:
+    install:
+      find:
+        windows: ["%PATH%", "~/.platformio/packages/toolchain-riscv*/bin", "%LOCALAPPDATA%/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/AppData/Local/Arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-addr2line.exe", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+        linux: ["$PATH", "~/.platformio/packages/toolchain-riscv*/bin", "~/.arduino15/packages/*/tools/riscv-none-elf-gcc/*/bin", "~/zephyr-sdk-*/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-addr2line", "~/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/*/.content/bin", "~/.local/xPacks/xpack-riscv-none-elf-gcc-*/bin"]
+      hint: Add an existing toolchain to PATH, or choose Install programs for the verified xPack fallback.
+      download:
+        windows-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-win32-x64.zip
+          sha256: 85ef714dacd273b1dadf4af4892774520ac01915bfa6da816a56e7e41591e09e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-addr2line.exe
+        linux-x64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
+          sha256: aaaa8060c914851a3e5ee1ba82cc3d6f80972f90638a05c6e823a37557a33758
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-addr2line
+        linux-arm64:
+          url: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-arm64.tar.gz
+          sha256: 4e60e2a54c16385e4e2476d08240f857495d5a61609d97e1ee49f72875a6ec1e
+          path: xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-addr2line
+    version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
+    timeout: 60
+rules:
+  - { match: "{arm-none-eabi-*,riscv-none-elf-*} *", risk: safe, note: Reads a local ELF file; no hardware. }
+docs:
+  - README.md
+  - https://sourceware.org/binutils/docs/binutils/

@@ -314,6 +314,25 @@ it("reviews a picked folder, then installs exactly the reviewed package", async 
 });
 
 // REQ-UX-e6056763
+it("reviews both find roots and pinned fallback downloads", async () => {
+  const combined = structuredClone(review);
+  const program = combined.manifest?.programs.echo;
+  if (!program) throw Error("missing fixture");
+  program.install = {
+    find: { windows: ["%PATH%"], linux: ["$PATH"] },
+    download: {
+      "linux-x64": { url: "https://example.test/tool.zip", sha256: "c".repeat(64), path: "bin/tool" },
+    },
+  };
+  stub({ review: combined });
+  await render();
+  await click('[data-action="plugin-install-folder"]');
+  expect(container.textContent).toContain("%PATH%");
+  expect(container.textContent).toContain("https://example.test/tool.zip");
+  expect(container.textContent).toContain("c".repeat(64));
+  expect(calls("plugins.provision")).toEqual([]);
+});
+
 it("cancels a review without installing", async () => {
   await i18n.changeLanguage("en");
   stub({ review });

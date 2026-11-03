@@ -6,7 +6,7 @@ disassembly and crash-address decoding.
 DONE-WHEN: on Windows x64 and Linux x64 the agent reports the size of two builds side by side with
 the largest growing symbols, decodes a HardFault PC/LR to source lines, and disassembles one
 function, using an ARM and a RISC-V toolchain that VERA found or installed.
-STATUS: proposed 2026-11-01; not implemented. Plugin format and rules: [architecture.md](architecture.md).
+STATUS: implemented in PLG-20 (TASK-bb6f2f0e). Plugin format and rules: [architecture.md](architecture.md).
 Work package: PLG-20 in [plan.md](plan.md).
 
 ## 1. Scope
@@ -50,6 +50,7 @@ programs:
   arm-none-eabi-size:
     install:
       find: { windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin"], linux: ["$PATH", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/zephyr-sdk-*/arm-zephyr-eabi/bin"] }
+      # download: per-platform pinned fallback; exact URLs and SHA-256 in the shipped manifest
       hint: Install the xPack GNU Arm Embedded GCC from Plugins, or point VERA at an existing toolchain.
     version: { args: [--version], match: '(\d+\.\d+(?:\.\d+)?)' }
     timeout: 60
@@ -63,6 +64,9 @@ rules:
 
 - `download` is chosen per program only when `find` fails, and installs one toolchain archive shared
   by the five programs of that prefix.
+- The shipped manifest uses explicit Zephyr file names (`arm-zephyr-eabi-<tool>` and
+  `riscv64-zephyr-elf-<tool>`); Arduino searches fix the tool directory name and wildcard only the
+  package/version, preserving the two-wildcard-segment limit.
 - Response files (`@file`) are refused before rules (architecture §2.2).
 
 ## 4. Skills

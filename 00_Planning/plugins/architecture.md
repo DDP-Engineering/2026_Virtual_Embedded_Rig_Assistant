@@ -96,7 +96,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
 | `requires` | plugin IDs installed together with this one (at most 64): catalog installs review the required catalog plugins first and the catalog check rejects unknown ids; installs from a folder or zip and enabling do not check it |
 | `programs.<name>` | `[a-z0-9._-]{1,64}`; the value the agent passes as `program` |
-| `programs.*.install` | exactly one kind of §5; a `script` path must exist in the package; a `pip` requirement starts with a letter or digit (never an option); a `download` URL ending in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` needs `path`; `find` entries are `%PATH%`/`$PATH` or absolute paths (optionally starting with `~` or a variable) with `*` inside one segment, in at most two segments, and no `**`; `find` takes an optional `hint` |
+| `programs.*.install` | one kind of §5, with an optional `download` fallback on `find`; a `script` path must exist in the package; a `pip` requirement starts with a letter or digit (never an option); a `download` URL ending in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` needs `path`; `find` entries are `%PATH%`/`$PATH` or absolute paths (optionally starting with `~` or a variable) with `*` inside one segment, in at most two segments, and no `**`; `find` takes an optional `hint` |
 | `programs.*.version` | probe arguments, a regex with one capture group and an optional supported `range` (comma-separated `>=`, `>`, `<=`, `<`, `==`, `!=` with dotted numbers, e.g. `>=5,<6`); shown in the UI and the prompt |
 | `programs.*.launcher` | optional argument prefix for programs that need an activated vendor environment, for example `[eim, run]` (§3.3) |
 | `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
@@ -299,6 +299,12 @@ it starts; VERA cannot lock them, so a write by the user, another session or a b
 moment is not detected.
 
 ## 5. Provisioning (ADR-0017)
+
+`install: {find: {...}, download: {...}, hint?: ...}` searches first and, only after no executable is
+found, uses the managed download. Discovery never installs; the user's provision action installs it.
+An existing binary with an invalid version remains unavailable. Combined programs use status kind
+`download`; all entry points sharing the SHA-256 reuse one archive. The review screen lists both
+sources. Launchers require find without fallback.
 
 | `install` kind | For | VERA does |
 |---|---|---|

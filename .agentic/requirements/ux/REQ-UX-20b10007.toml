@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-20b10007"
+title = "Guide bounded ELF inspection"
+status = "active"
+requirement = "When elf-inspect is loaded, the binutils plugin shall guide the agent to inspect readelf -h -S -l against linker scripts and flash offsets and restrict disassembly to a symbol or explicit address interval."
+verification = "Read installed skill and assert flags, linker and offset guidance; real replay inspects genuine ELF headers/segments and targeted function output below the existing cap."
+affected_paths = ["05_Software/plugins/binutils/skills/elf-inspect/SKILL.md"]
+linked_tests = ["05_Software/tests/integration/binutils.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-03
+updated = 2026-11-03

@@ -3,10 +3,10 @@ id = "REQ-DATA-4d4471f9"
 title = "Validate plugin manifest format 1"
 status = "active"
 requirement = "The plugin manifest schema shall accept a plugin.yaml document only when it is format 1 with the id, version, name, description, ecosystem, platforms, requires, programs, rules and docs fields and limits of the plugin manifest specification, and shall reject any other document with an issue naming the path of each offending field."
-verification = "Unit tests parse the canonical esp32-esptool manifest and a skills-only manifest as valid; mutate each field past its limit (id Bad_ID, version 1.2, name of 81 characters, unknown platform, two install kinds, version regex without a capture group, timeout 3601, env placeholder ${home}, unknown key, format 2, pip requirement -e x, find glob C:/**/git.exe, a relative find entry node.exe, a find pattern /*/*/*/x, a .tar.xz download without path, version range >=x) and assert the reported issue path for each; a range >=5,<6 and an AppImage URL without path are valid."
+verification = "Unit tests parse the canonical esp32-esptool manifest and a skills-only manifest as valid; mutate each field past its limit (id Bad_ID, version 1.2, name of 81 characters, unknown platform, unsupported mixed install kinds (find plus download is accepted), version regex without a capture group, timeout 3601, env placeholder ${home}, unknown key, format 2, pip requirement -e x, find glob C:/**/git.exe, a relative find entry node.exe, a find pattern /*/*/*/x, a .tar.xz download without path, version range >=x) and assert the reported issue path for each; a range >=5,<6 and an AppImage URL without path are valid."
 affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts"]
 linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
 spec = "specs/REQ-DATA-4d4471f9.md"
 priority = "high"
 created = 2026-11-01
-updated = 2026-11-02
+updated = 2026-11-03
