@@ -453,7 +453,8 @@
     },
     "enabledNamed": "Activ: {{name}}",
     "openNamed": "Deschide / editează {{name}}",
-    "plugin": "Plugin {{plugin}}"
+    "plugin": "Plugin {{plugin}}",
+    "official": "Oficial"
   },
   "updates": {
     "mode": "Mod de actualizare",
@@ -590,7 +591,9 @@
     "web_download": "Descarcă un fișier public (PDF, ZIP, CSV, text, imagini sau alte formate) în .vera/downloads, conform permisiunilor sesiunii. Previzualizează PDF-urile în VERA sau găsește celelalte fișiere în Explorer. Descărcările nu sunt indexate automat.",
     "run_program": "Rulează programele pluginurilor activate pentru acest workbench, cu regulile de risc ale pluginului și aprobările tale.",
     "program_output": "Citește ieșirea unei rulări de program în fundal.",
-    "program_stop": "Oprește o rulare de program în fundal."
+    "program_stop": "Oprește o rulare de program în fundal.",
+    "plugin_validate": "Validează un draft de plugin și raportează erori și avertismente.",
+    "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă."
   },
   "projects": {
     "new": "Workbench nou",
@@ -835,7 +838,12 @@
       "mismatch": "Pluginul descărcat nu este pluginul sau versiunea din catalog. Nu s-a instalat nimic.",
       "downgrade": "Catalogul oferă o versiune mai veche decât cea instalată; versiunea instalată rămâne.",
       "download": "Pluginul nu a putut fi descărcat. Verifică conexiunea și încearcă din nou."
-    }
+    },
+    "trialReview": "Verifică draftul înainte de instalarea ca probă. Fiecare comandă necesită aprobare, inclusiv în bypass. După instalare, activează pluginul și instalează programele din pagina Pluginuri. Numai tu îl poți promova ca local.",
+    "promote": "Promovează ca local",
+    "promoteConfirm": "Ai încredere în regulile pentru {{name}}? După promovare, comenzile urmează modul sesiunii, inclusiv rularea fără aprobare în bypass.",
+    "export": "Exportă zip",
+    "exported": "Exportat în {{path}}"
   },
   "runs": {
     "none": "Nicio rulare de program în acest workbench încă.",

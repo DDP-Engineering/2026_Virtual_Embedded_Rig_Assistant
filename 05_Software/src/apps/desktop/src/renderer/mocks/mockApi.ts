@@ -322,7 +322,16 @@ export function createMockApi(
   };
   /** Later prefixes shadow earlier ones, as workbench skills shadow user skills. */
   function skillSummaries(prefixes: string[], disabled: readonly string[]) {
-    const names = new Map<string, { content: string; source: "user" | "workbench" }>();
+    const names = new Map<string, { content: string; source: "user" | "workbench" | "official" }>([
+      [
+        "create-plugin",
+        {
+          source: "official",
+          content:
+            "---\nname: create-plugin\ndescription: Research a CLI and draft a reviewed trial plugin.\n---\n",
+        },
+      ],
+    ]);
     for (const prefix of prefixes)
       for (const [key, content] of skillFiles)
         if (key.startsWith(`${prefix}:`))
@@ -718,6 +727,24 @@ export function createMockApi(
         if (entry.run.state !== "running") throw veraError("NOT_FOUND");
         entry.run = { ...entry.run, state: "stopped", end: "stopped", exitCode: null, durationMs: 1500 };
         value = {};
+        break;
+      }
+      case "plugins.promote": {
+        const { id, sha256 } = channels["plugins.promote"].request.parse(input.data);
+        const plugin = installedPlugins.get(id);
+        if (!plugin) throw veraError("NOT_FOUND");
+        if (plugin.sha256 !== sha256 || plugin.issues.length) throw veraError("CONFLICT");
+        if (plugin.tier !== "trial") throw veraError("DENIED");
+        value = { ...plugin, tier: "local" };
+        installedPlugins.set(id, value as PluginInstalled);
+        break;
+      }
+      case "plugins.export": {
+        const { id, sha256 } = channels["plugins.export"].request.parse(input.data);
+        const plugin = installedPlugins.get(id);
+        if (!plugin) throw veraError("NOT_FOUND");
+        if (plugin.sha256 !== sha256 || plugin.issues.length) throw veraError("CONFLICT");
+        value = { path: `/exports/${id}.zip` };
         break;
       }
       case "plugins.uninstall": {

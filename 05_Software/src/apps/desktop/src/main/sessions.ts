@@ -3,6 +3,7 @@ import {
   type Clock,
   type EmbeddingPort,
   type PermissionEngine,
+  type PluginStore,
   type ProgramHost,
   type ProgramPromptEntry,
   type ProgramResolver,
@@ -63,6 +64,8 @@ export class SessionsHost {
       downloads?: (root: string) => WebDownloads;
       /** Plugin program runs; each workbench supplies its enabled plugins. */
       programs?: { runner: ProgramRunner; resolver: ProgramResolver };
+      pluginBuilder?: PluginStore;
+      managedRoots?: readonly string[];
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
@@ -119,6 +122,8 @@ export class SessionsHost {
           gateway: options.gateway().api,
           ...(options.web ? { web: options.web } : {}),
           ...(options.downloads ? { downloads: options.downloads(snapshot.folder) } : {}),
+          ...(options.pluginBuilder ? { pluginBuilder: options.pluginBuilder } : {}),
+          ...(options.managedRoots ? { managedRoots: options.managedRoots } : {}),
           clock: options.clock,
           workers: options.workers,
           get skills() {

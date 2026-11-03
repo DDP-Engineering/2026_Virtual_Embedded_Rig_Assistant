@@ -453,7 +453,8 @@
     },
     "enabledNamed": "Enabled: {{name}}",
     "openNamed": "Open / edit {{name}}",
-    "plugin": "Plugin {{plugin}}"
+    "plugin": "Plugin {{plugin}}",
+    "official": "Official"
   },
   "updates": {
     "mode": "Update mode",
@@ -590,7 +591,9 @@
     "web_download": "Download a public file (PDF, ZIP, CSV, text, images or other formats) to .vera/downloads, subject to session permissions. Preview PDFs in VERA or locate other files in Explorer. Downloads are not automatically indexed.",
     "run_program": "Run programs of the plugins enabled for this workbench, with the plugin's risk rules and your approvals.",
     "program_output": "Read the output of a background program run.",
-    "program_stop": "Stop a background program run."
+    "program_stop": "Stop a background program run.",
+    "plugin_validate": "Validate a plugin draft and report schema issues and warnings.",
+    "plugin_install": "Request review and install a draft as a trial plugin."
   },
   "projects": {
     "new": "New Workbench",
@@ -835,7 +838,12 @@
       "mismatch": "The downloaded plugin is not the plugin or version the catalog lists. Nothing was installed.",
       "downgrade": "The catalog offers an older version than the installed one; the installed version stays.",
       "download": "The plugin could not be downloaded. Check the connection and try again."
-    }
+    },
+    "trialReview": "Review this draft before installing it as trial. Every trial command needs your approval, including in bypass. After installation, enable the plugin and install its programs on the Plugins page. Only you can promote it to local.",
+    "promote": "Promote to local",
+    "promoteConfirm": "Trust the rules of {{name}}? After promotion, commands follow the session mode, including running without approval in bypass.",
+    "export": "Export zip",
+    "exported": "Exported to {{path}}"
   },
   "runs": {
     "none": "No program runs in this workbench yet.",

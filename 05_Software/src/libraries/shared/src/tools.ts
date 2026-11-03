@@ -17,6 +17,8 @@ export const builtinToolNames = [
   "run_program",
   "program_output",
   "program_stop",
+  "plugin_validate",
+  "plugin_install",
 ] as const;
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];

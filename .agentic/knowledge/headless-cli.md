@@ -32,6 +32,14 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 - Resume subscribes after the stored sequence and uses explicit invocation model; core preserves the historical transcript. New sessions include creation metadata from sequence0.
 - PathProvider points to preserved supplied data or an owned temporary folder. Node Clock and atomic FileAccess supply settings/workbench operations. MemoryCredentials serializes mutations, clones values and honors abort. ConsoleLogger retains all registered raw/escaped secrets through exit.
 
+## Plugin drafts
+
+`vera run` composes the same draft validator and prepared trial installer as desktop, using its
+owned plugin store and application-data write exclusions. A plugin_install approval prints the full
+manifest and uses the interactive CLI user decision (or denies without a TTY); bypass cannot
+approve it by mode. `--approve all` cannot preapprove a draft install or trial command; a TTY still asks and non-TTY denies. It neither enables nor provisions. The official create-plugin skill is in the
+same catalog. Promotion/export controls remain user actions on the desktop Plugins page.
+
 ## Invariants
 
 - Credentials load from ambient OPENAI_API_KEY or a single-read UTF8 key-file override; successful key-file reads register before parser diagnostics. Credentials stay in memory; settings store non-secret fields. Known-secret invocation fields are rejected before persistence. Event/tool outputs are scrubbed through the core host, and each serialized output line passes shared scrub again.
@@ -57,22 +65,6 @@ Replay output passes through the CLI scrubReplayOutput adapter after bindings/in
 ## Key behaviors
 
 REQ-FUNC-1ed659ec session; FUNCe0645fcd output; REL88dd69b2 exits; SEC25008e88 redaction; PLAT83f14f47 ports/cleanup; NFR3d884630 policy parity.
-
-## Architecture
-
-```mermaid
-flowchart LR
- index[CLI index/args] --> ports[Node host ports + retained secrets]
- ports --> workbench[WorkbenchService]
- workbench --> session[SessionService]
- session --> gateway[createPiAiGateway / scrubReplayOutput]
- scrubReplayOutput --> replay[ReplayGateway]
- session --> workers[createCliWorkerPool]
- session --> output[scrubbed event lines]
- session --> approval[ApprovalGate requested]
- approval --> decision[flag / abortable TTY prompt / non-TTY denial]
- decision --> session
-```
 
 ## Files
 

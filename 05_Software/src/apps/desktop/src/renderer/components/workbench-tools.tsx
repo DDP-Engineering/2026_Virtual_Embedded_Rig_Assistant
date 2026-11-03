@@ -30,6 +30,8 @@ export function WorkbenchTools({
     run_program: t("workbenchTools.run_program"),
     program_output: t("workbenchTools.program_output"),
     program_stop: t("workbenchTools.program_stop"),
+    plugin_validate: t("workbenchTools.plugin_validate"),
+    plugin_install: t("workbenchTools.plugin_install"),
   };
   return (
     <div className="workbench-tools">

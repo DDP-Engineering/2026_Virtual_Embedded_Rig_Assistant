@@ -88,6 +88,8 @@ it("infers registry types and returns validated metadata", async () => {
     | "skills.toggle"
     | "plugins.list"
     | "plugins.install"
+    | "plugins.promote"
+    | "plugins.export"
     | "plugins.uninstall"
     | "plugins.toggle"
     | "plugins.programs"

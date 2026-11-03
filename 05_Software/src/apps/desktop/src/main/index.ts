@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
@@ -252,6 +253,8 @@ let chatgpt = new ChatgptAuth({
 });
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
 const sessions = new SessionsHost({
+  pluginBuilder: plugins,
+  managedRoots: [dataLocations.paths.userData],
   web: webAccess.provider,
   downloads: (root) =>
     new WebDownloads(root, {
@@ -378,6 +381,22 @@ ipcMain.handle(
         const installed = await plugins.install(path, sha256);
         pluginsChanged();
         return installed;
+      },
+      "plugins.promote": async ({ id, sha256 }) => {
+        const installed = await plugins.promote(id, sha256);
+        pluginsChanged();
+        return installed;
+      },
+      "plugins.export": async ({ id, sha256 }) => {
+        const bytes = await plugins.export(id, sha256);
+        if (!window || window.isDestroyed()) return { path: null };
+        const selected = await dialog.showSaveDialog(window, {
+          defaultPath: `${id}.zip`,
+          filters: [{ name: "Zip", extensions: ["zip"] }],
+        });
+        if (selected.canceled || !selected.filePath) return { path: null };
+        await writeFile(selected.filePath, bytes);
+        return { path: selected.filePath };
       },
       "plugins.uninstall": async ({ id }) => {
         await plugins.uninstall(id);

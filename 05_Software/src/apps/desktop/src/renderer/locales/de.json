@@ -453,7 +453,8 @@
     },
     "enabledNamed": "Aktiviert: {{name}}",
     "openNamed": "{{name}} öffnen / bearbeiten",
-    "plugin": "Plugin {{plugin}}"
+    "plugin": "Plugin {{plugin}}",
+    "official": "Offiziell"
   },
   "updates": {
     "mode": "Aktualisierungsmodus",
@@ -590,7 +591,9 @@
     "web_download": "Öffentliche Dateien (PDF, ZIP, CSV, Text, Bilder oder andere Formate) gemäß den Sitzungsberechtigungen nach .vera/downloads herunterladen. PDFs in VERA anzeigen oder andere Dateien im Explorer finden. Downloads werden nicht automatisch indexiert.",
     "run_program": "Programme der für diese Workbench aktivierten Plugins ausführen, mit den Risikoregeln des Plugins und deinen Freigaben.",
     "program_output": "Die Ausgabe eines Programmlaufs im Hintergrund lesen.",
-    "program_stop": "Einen Programmlauf im Hintergrund stoppen."
+    "program_stop": "Einen Programmlauf im Hintergrund stoppen.",
+    "plugin_validate": "Plugin-Entwurf prüfen und Schemafehler und Warnungen melden.",
+    "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren."
   },
   "projects": {
     "new": "Neue Workbench",
@@ -835,7 +838,12 @@
       "mismatch": "Das heruntergeladene Plugin ist nicht das Plugin oder die Version aus dem Katalog. Es wurde nichts installiert.",
       "downgrade": "Der Katalog bietet eine ältere Version als die installierte an; die installierte Version bleibt.",
       "download": "Das Plugin konnte nicht heruntergeladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut."
-    }
+    },
+    "trialReview": "Prüfe den Entwurf vor der Testinstallation. Jeder Testbefehl benötigt deine Freigabe, auch im Bypass-Modus. Aktiviere danach das Plugin und installiere seine Programme auf der Plugin-Seite. Nur du kannst es als lokal einstufen.",
+    "promote": "Als lokal einstufen",
+    "promoteConfirm": "Den Regeln von {{name}} vertrauen? Danach folgen Befehle dem Sitzungsmodus und laufen im Bypass-Modus ohne Freigabe.",
+    "export": "Zip exportieren",
+    "exported": "Exportiert nach {{path}}"
   },
   "runs": {
     "none": "In dieser Workbench gab es noch keine Programmläufe.",

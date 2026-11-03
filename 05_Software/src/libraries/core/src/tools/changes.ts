@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, mkdir, open, readFile, rename, stat, unlink } from "node:fs/promises";
-import { dirname, isAbsolute, join } from "node:path";
+import { lstat, mkdir, open, readFile, realpath, rename, stat, unlink } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type Database from "better-sqlite3";
 import { formatPatch, parsePatch, structuredPatch } from "diff";
 import { z } from "zod";
@@ -59,7 +59,11 @@ export type ChangeRequest =
       readonly afterSha256: null;
       readonly download: { readonly url: string; readonly maxBytes: number };
     })
-  | ProgramChangeRequest;
+  | ProgramChangeRequest
+  | PluginInstallRequest;
+export interface PluginInstallRequest extends Omit<FileChangeRequest, "tool"> {
+  readonly tool: "plugin_install";
+}
 export interface PreparedChange {
   readonly request: ChangeRequest;
   apply(signal: AbortSignal): Promise<Record<string, unknown>>;
@@ -79,6 +83,32 @@ export function protectedPath(path: string): boolean {
   const key = process.platform === "win32" ? path.toLowerCase() : path;
   return key === ".vera" || key.startsWith(".vera/");
 }
+/** Agent writes cannot exercise the user's plugin/settings/session management authority. */
+async function assertAgentWritable(ctx: ToolContext, target: GuardedPath): Promise<void> {
+  const identity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
+  const path = identity(target.absolute);
+  if (/(?:^|[\\/])\.vera[\\/]workbench\.yaml$/.test(path))
+    throw Error("Workbench configuration is managed by the user.");
+  for (const managed of [
+    ...(ctx.managedRoots ?? []),
+    ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : []),
+  ]) {
+    const root = identity(
+      await realpath(managed).catch((error) => {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+        return resolve(managed);
+      }),
+    );
+    const rel = relative(root, path);
+    if (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel))
+      throw Error("Application and installed plugin files are managed by the user.");
+  }
+  try {
+    if ((await lstat(target.absolute)).nlink > 1) throw Error("Linked files cannot be changed by the agent.");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+}
 /** Output bytes live only in this closure, never in an observer-mutable request. */
 export async function prepareChange(
   ctx: ToolContext,
@@ -93,6 +123,7 @@ export async function prepareChange(
   host.assertWritable?.();
   const guard = await toolPathGuard(ctx);
   const target = await guard.resolve(args.path);
+  await assertAgentWritable(ctx, target);
   if (target.relative === ".") throw Error("Choose a workbench file.");
   const before = await contents(target);
   const beforeSha256 = before === null ? null : hash(before);
@@ -163,6 +194,7 @@ export async function prepareChange(
           applySignal.throwIfAborted();
           host.assertWritable?.();
           const current = await (await toolPathGuard(ctx)).resolve(args.path);
+          await assertAgentWritable(ctx, current);
           if (current.key !== target.key || current.relative !== target.relative) throw conflict();
           const currentBytes = await contents(current);
           if ((currentBytes === null ? null : hash(currentBytes)) !== beforeSha256) throw conflict();

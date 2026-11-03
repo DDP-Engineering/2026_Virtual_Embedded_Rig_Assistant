@@ -25,6 +25,33 @@ const commands: Record<Exclude<PluginRisk, "blocked">, string[]> = {
   "device-write": ["write", "build/app.bin"],
   irreversible: ["burn", "key.bin"],
 };
+it("plugin installation waits for a user even in bypass and cannot switch mode", async () => {
+  const t = await setup("bypass");
+  const request = {
+    tool: "plugin_install" as const,
+    workbench: t.root,
+    sessionId: "ses_1",
+    turnId: "turn_1",
+    callId: "install",
+    path: "plugins/fixture",
+    args: {},
+    existed: false,
+    beforeSha256: null,
+    afterSha256: "a".repeat(64),
+    diff: "all manifest fields",
+    bytes: 0,
+    protected: true,
+  };
+  const result = t.gate.request(request, new AbortController().signal);
+  expect(await settled(result)).toBe("pending");
+  t.gate.approveBypass("ses_1");
+  expect(await settled(result)).toBe("pending");
+  expect(() => decide(t, { switchToAutoEdit: true })).toThrow();
+  decide(t);
+  expect(await result).toBe("approved");
+  t.gate.consume(request);
+  expect(() => t.gate.consume(request)).toThrow();
+});
 async function setup(initial: PermissionMode = "ask") {
   const root = await mkdtemp(join(tmpdir(), "vera-program-gate-"));
   closes.push(() => rm(root, { recursive: true, force: true }));

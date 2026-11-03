@@ -20,6 +20,15 @@ React reads metadata and settings through TanStack Query, applies confirmed pref
 
 createDeltaCoalescer is a separately tested utility whose callers supply merge policy and flush ordering.
 
+## Plugin authoring controls
+
+Shared channels include strict `plugins.promote {id,sha256}` and `plugins.export {id,sha256}`.
+They are available only through the authorized renderer bridge; they are not agent tools. Promotion
+returns the installed summary; export returns the native save path or null on cancellation.
+Session approval event/state variants include `plugin_install`, with its full manifest review in
+`diff`, the draft path and exact request digest. It never receives a mode-only decision or mode-switch
+shortcut. Existing persisted event format remains 1.
+
 ## Public interface
 
 downloads.list/open are strict workbench-scoped channels; open takes only a UUID identifier, never an arbitrary path or external-launch option. Download approval events require source/budget and reject invented text diffs/byte counts. See [PDF downloads](pdf-downloads.md).

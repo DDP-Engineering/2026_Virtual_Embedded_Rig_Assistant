@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-72b2eb0b"
+title = "Protect plugin management from agent mutation"
+status = "active"
+requirement = "When the agent attempts to promote or enable plugins, change session mode or write managed plugin files, VERA shall refuse the operation in every session mode."
+verification = "Assert absent management tools and strict argument rejection; attempt write/edit in bypass against managed plugin files and configuration authority."
+affected_paths = ["05_Software/src/libraries/core/src/agent/", "05_Software/tests/fixtures/plugin-builder/", "05_Software/plugins/CONTRIBUTING.md", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/skills/", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/", "05_Software/src/apps/cli/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/write-edit.test.ts", "05_Software/tests/integration/plugin-builder.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

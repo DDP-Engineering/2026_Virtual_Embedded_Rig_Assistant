@@ -24,6 +24,8 @@ it("converts every tool schema and validates samples while filtering disabled na
     web_download: { url: "https://example.com/chip.pdf" },
     run_program: { program: "esptool", args: ["version"] },
     program_output: { handle: "01JB8Z6Q4M7N2K5R9T3V8X1Y0C", until: "READY", waitMs: 1000 },
+    plugin_validate: { path: "plugins/fixture" },
+    plugin_install: { path: "plugins/fixture" },
     program_stop: { handle: "01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
   };
   for (const tool of registry.available()) {
@@ -51,6 +53,8 @@ it("converts every tool schema and validates samples while filtering disabled na
     "run_program",
     "program_output",
     "program_stop",
+    "plugin_validate",
+    "plugin_install",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

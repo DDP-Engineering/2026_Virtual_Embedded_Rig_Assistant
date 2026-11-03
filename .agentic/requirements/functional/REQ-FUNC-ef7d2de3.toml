@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-ef7d2de3"
+title = "Review and install plugin drafts as trial"
+status = "active"
+requirement = "When the agent requests installation of a valid workbench draft, VERA shall wait for explicit user review in every writable permission mode and install only the exact reviewed package as trial."
+verification = "Replay a draft install in bypass; assert pending review, denial/abort without install, changed bytes CONFLICT and approved trial tier."
+affected_paths = ["05_Software/src/libraries/core/src/agent/", "05_Software/tests/fixtures/plugin-builder/", "05_Software/plugins/CONTRIBUTING.md", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/skills/", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/", "05_Software/src/apps/cli/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts", "05_Software/tests/integration/plugin-builder.test.ts", "05_Software/tests/e2e/plugin-builder.spec.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

@@ -118,7 +118,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
       approvalId: z.string(),
       callId: z.string(),
       requestSha256: z.string(),
-      tool: z.enum(["write", "edit", "web_download", "run_program"]),
+      tool: z.enum(["write", "edit", "web_download", "run_program", "plugin_install"]),
       path: z.string(),
       diff: z.string(),
       bytes: count,

@@ -78,6 +78,8 @@ export interface SessionHost {
   writeQueue?: WriteQueue;
   /** Plugin programs of the workbench; without it the program tools are not offered. */
   programs?: ProgramHost;
+  pluginBuilder?: import("../plugins/store.js").PluginStore;
+  managedRoots?: readonly string[];
 }
 interface ActiveTurn {
   runtime: AgentRuntime;
@@ -631,6 +633,8 @@ export class SessionService {
       return scope.signal;
     };
     ctx.knowledge = this.knowledge;
+    if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
+    if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
     if (this.host.web) ctx.web = this.host.web;
     else delete ctx.web;
     if (this.host.downloads) ctx.downloads = this.host.downloads;
@@ -684,6 +688,9 @@ export class SessionService {
       .bind(ctx, this.host.disabledTools)
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
+      .filter(
+        (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,
+      )
       .filter((tool) => !programToolNames.includes(tool.name) || !!this.host.programs)
       .map((tool) => ({
         ...tool,
@@ -695,6 +702,7 @@ export class SessionService {
             if (!run) throw Error("Program run permission is missing.");
             try {
               // The run consumes its approval itself, with the request prepared again right before it starts.
+              if (run.request.tool === "plugin_install") this.approvals.consume(run.request);
               const { text } = capToolResult(await run.apply(signal));
               return this.host.scrub?.(text) ?? text;
             } catch (error) {
@@ -810,7 +818,8 @@ export class SessionService {
                   this.writable();
                   if (this.row(id).permission_mode === "read-only") throw Error("Tool permission denied.");
                   if (this.host.disabledTools?.includes(call.name)) throw Error("Tool is unavailable.");
-                  if (!permissions && grantedRequest) this.approvals.assertGranted(grantedRequest);
+                  if ((!permissions || call.name === "plugin_install") && grantedRequest)
+                    this.approvals.assertGranted(grantedRequest);
                 },
                 recorded: (event) => {
                   this.writable();
@@ -831,20 +840,21 @@ export class SessionService {
                 ? "This command contains protected credential data."
                 : "This change contains protected credential data.",
             );
-          const decision = permissions
-            ? (await permissions.allow(
-                {
-                  sessionId: id,
-                  mode: this.row(id).permission_mode,
-                  tool,
-                  args: call.arguments,
-                  prepared: change.request,
-                },
-                signal,
-              ))
-              ? "approved"
-              : "denied"
-            : await this.approvals.request(change.request, signal);
+          const decision =
+            permissions && call.name !== "plugin_install"
+              ? (await permissions.allow(
+                  {
+                    sessionId: id,
+                    mode: this.row(id).permission_mode,
+                    tool,
+                    args: call.arguments,
+                    prepared: change.request,
+                  },
+                  signal,
+                ))
+                ? "approved"
+                : "denied"
+              : await this.approvals.request(change.request, signal);
           signal.throwIfAborted();
           if (decision !== "approved") return decision;
           grantedRequest = change.request;

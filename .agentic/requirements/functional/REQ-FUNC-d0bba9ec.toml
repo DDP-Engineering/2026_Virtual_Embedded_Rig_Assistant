@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-d0bba9ec"
+title = "Export installed plugin packages"
+status = "active"
+requirement = "When the user exports a healthy installed plugin whose generated zip fits the 64 MiB archive cap, VERA shall provide a zip of its reviewed package files without install.json."
+verification = "Export and reinstall the zip; assert identical integrity and absent machine-local record; changed plugin refused; a generated archive above 64 MiB returns INVALID without saving."
+affected_paths = ["05_Software/src/libraries/core/src/agent/", "05_Software/tests/fixtures/plugin-builder/", "05_Software/plugins/CONTRIBUTING.md", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/skills/", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/", "05_Software/src/apps/cli/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

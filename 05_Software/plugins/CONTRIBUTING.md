@@ -25,7 +25,25 @@ The check rejects schema errors, a folder whose manifest id differs from its nam
 that do not exist, a program without any rule, and a rule at `safe` or `device-read` whose pattern contains
 `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send`.
 
-## Review
+## Draft with the agent
+
+Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the
+operations you need. Drafts live in the workbench under `plugins/<id>/`; `plugin_validate` reports
+schema errors and lint warnings. `plugin_install` asks you to review the manifest and installs its
+exact bytes as **trial**, without enabling it or installing its programs. Enable it and install its
+programs on the Plugins page. Every trial command asks for approval, including in bypass; irreversible
+commands also need the typed word. Test with virtual fixtures before any real hardware.
+
+Edit and reinstall the draft while it is trial. Only you can use **Promote to local** on the Plugins
+page to trust the rules. After promotion the session mode applies normally, including unattended
+bypass commands. The agent cannot enable, promote, change mode or edit installed files.
+
+Use **Export zip** to share a healthy plugin. The zip omits `install.json`, resolved program versions
+and machine-local runtime files. Include manual links, supported versions/platforms, command/risk
+coverage, fixture tests and explicit hardware evidence or limitations with a catalog pull request.
+An exported local/trial package does not carry catalog trust; maintainers still review it.
+
+## Maintainer review
 
 A maintainer reviews every pull request before it merges: the programs and their install sources, every
 rule and its risk level, and what the skills tell the agent to run. A rule that the token check flags but

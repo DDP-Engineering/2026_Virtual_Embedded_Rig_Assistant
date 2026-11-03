@@ -301,7 +301,8 @@ function PluginCard({
   const { t } = useTranslation();
   const labels = useLabels();
   const client = useQueryClient();
-  const [busy, setBusy] = useState<"provision" | "toggle" | "uninstall">();
+  const [busy, setBusy] = useState<"provision" | "toggle" | "uninstall" | "promote" | "export">();
+  const [exported, setExported] = useState<string>();
   const [error, setError] = useState<unknown>();
   const [switching, setSwitching] = useState<boolean>();
   const healthy = plugin.issues.length === 0;
@@ -382,6 +383,40 @@ function PluginCard({
       )}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="workbench-actions">
+        {healthy && plugin.tier === "trial" && plugin.sha256 && (
+          <button
+            type="button"
+            data-action="plugin-promote"
+            disabled={busy !== undefined}
+            onClick={() => {
+              if (!window.confirm(t("plugins.promoteConfirm", { name }))) return;
+              void perform("promote", async () => {
+                await api.invoke("plugins.promote", { id: plugin.id, sha256: plugin.sha256 ?? "" });
+                await changed();
+              });
+            }}
+          >
+            {t("plugins.promote")}
+          </button>
+        )}
+        {healthy && plugin.sha256 && (
+          <button
+            type="button"
+            data-action="plugin-export"
+            disabled={busy !== undefined}
+            onClick={() =>
+              void perform("export", async () => {
+                const result = await api.invoke("plugins.export", {
+                  id: plugin.id,
+                  sha256: plugin.sha256 ?? "",
+                });
+                if (result.path) setExported(result.path);
+              })
+            }
+          >
+            {t("plugins.export")}
+          </button>
+        )}
         {update && (
           <button
             type="button"
@@ -422,6 +457,7 @@ function PluginCard({
           {t("plugins.uninstall")}
         </button>
       </div>
+      {exported && <p role="status">{t("plugins.exported", { path: exported })}</p>}
     </li>
   );
 }

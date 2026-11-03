@@ -209,16 +209,28 @@ it("manages skills exclusively with stale hash, ownership and current workbench 
     ).rejects.toMatchObject({ code: "CONFLICT" });
     expect(await h.service.openSkill(wb.config.id, "workbench", "reader")).toEqual(edited);
     await h.service.saveSkill(wb.config.id, "user", "personal");
-    expect((await h.service.listSkills(wb.config.id)).map((s) => s.source)).toEqual(["user", "workbench"]);
+    expect(
+      (await h.service.listSkills(wb.config.id))
+        .filter((s) => s.name !== "create-plugin")
+        .map((s) => s.source),
+    ).toEqual(["user", "workbench"]);
     await h.service.toggleSkill(wb.config.id, "reader", false);
     expect((await h.service.getConfig()).warnings).not.toContainEqual({
       code: "UNKNOWN_NAME",
       path: "skills.disabled.reader",
     });
-    expect((await h.service.skillCatalog(wb.config.id).metadata()).map((s) => s.name)).toEqual(["personal"]);
+    expect(
+      (await h.service.skillCatalog(wb.config.id).metadata())
+        .filter((s) => s.name !== "create-plugin")
+        .map((s) => s.name),
+    ).toEqual(["personal"]);
     const external = await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8");
     await writeFile(join(h.folder, ".vera/workbench.yaml"), external.replace("- reader", "- personal"));
-    expect((await h.service.skillCatalog(wb.config.id).metadata()).map((s) => s.name)).toEqual(["reader"]);
+    expect(
+      (await h.service.skillCatalog(wb.config.id).metadata())
+        .filter((s) => s.name !== "create-plugin")
+        .map((s) => s.name),
+    ).toEqual(["reader"]);
     await expect(h.service.listSkills("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C")).rejects.toMatchObject({
       code: "CONFLICT",
     });
@@ -919,7 +931,10 @@ it("inspects a chosen folder without writing: name, existing workbench, instruct
     name: "esp32-s3-devkit",
     existing: false,
     instructions: null,
-    skills: [{ name: "flash-esp32", source: "user", description: "Flash ESP32 boards", enabled: true }],
+    skills: [
+      expect.objectContaining({ name: "create-plugin", source: "official", enabled: true }),
+      { name: "flash-esp32", source: "user", description: "Flash ESP32 boards", enabled: true },
+    ],
   });
   expect(await readdir(plain)).toEqual([]);
   await mkdir(join(plain, ".vera/skills/probe"), { recursive: true });
@@ -928,6 +943,7 @@ it("inspects a chosen folder without writing: name, existing workbench, instruct
   const seeded = await h.service.inspect(plain);
   expect(seeded.instructions).toBe("kept notes");
   expect(seeded.skills.map((s) => [s.name, s.source])).toEqual([
+    ["create-plugin", "official"],
     ["flash-esp32", "user"],
     ["probe", "workbench"],
   ]);
@@ -1082,11 +1098,13 @@ it("loads the enabled, installed plugins and lists their skills", async () => {
   try {
     const wb = await h.service.create(h.folder, "Bench A");
     expect(await h.service.loadPlugins(wb.config.id)).toEqual([]);
-    expect((await h.service.listSkills(wb.config.id)).map((s) => s.name)).toEqual([]);
+    expect(
+      (await h.service.listSkills(wb.config.id)).filter((s) => s.name !== "create-plugin").map((s) => s.name),
+    ).toEqual([]);
     await h.service.togglePlugin(wb.config.id, "ghost", true);
     await h.service.togglePlugin(wb.config.id, "echo-tools", true);
     expect((await h.service.loadPlugins(wb.config.id)).map((p) => p.manifest.id)).toEqual(["echo-tools"]);
-    expect(await h.service.listSkills(wb.config.id)).toEqual([
+    expect((await h.service.listSkills(wb.config.id)).filter((s) => s.name !== "create-plugin")).toEqual([
       expect.objectContaining({ name: "echo-guide", source: "plugin", plugin: "echo-tools", enabled: true }),
     ]);
   } finally {

@@ -45,6 +45,7 @@ function policyOf(request: ChangeRequest, mode: PermissionMode): ProgramPolicy |
 }
 /** Whether the current mode approves the request without asking the user. */
 function byMode(request: ChangeRequest, mode: PermissionMode): boolean {
+  if (request.tool === "plugin_install") return false;
   return request.tool === "run_program"
     ? policyOf(request, mode) === "mode"
     : mode === "bypass" || (mode === "auto-edit" && !request.protected);
@@ -149,7 +150,8 @@ export class ApprovalGate {
     )
       throw veraError("CONFLICT");
     if (input.decision !== "approved" && input.decision !== "denied") throw veraError("INVALID");
-    if (input.switchToAutoEdit && input.decision !== "approved") throw veraError("INVALID");
+    if (input.switchToAutoEdit && (input.decision !== "approved" || entry.request.tool === "plugin_install"))
+      throw veraError("INVALID");
     const mode = this.host.mode(input.sessionId);
     if (mode === "read-only") throw veraError("CONFLICT");
     // Core compares the typed word; a refusal leaves the approval pending for another try.
@@ -247,6 +249,10 @@ export class ApprovalGate {
       .get(request.sessionId, request.turnId, request.callId, requestSha256(request)) as
       | { decided_by: string }
       | undefined;
+    if (request.tool === "plugin_install") {
+      if (row?.decided_by !== "user") throw veraError("CONFLICT");
+      return;
+    }
     if (request.tool === "run_program") {
       // A mode decision lasts only while the current mode would still decide it the same way.
       if (!row || (row.decided_by === "mode" && policy !== "mode")) throw veraError("CONFLICT");

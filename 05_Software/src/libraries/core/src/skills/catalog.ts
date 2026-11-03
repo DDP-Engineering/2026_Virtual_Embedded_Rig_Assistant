@@ -6,6 +6,7 @@ import { parseDocument } from "yaml";
 import { isBinary } from "../tools/binary.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard, validateRelativePath } from "../workbench/path-guard.js";
+import { createPluginSkill } from "./create-plugin.js";
 
 const identity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 const missing = (error: unknown) => (error as NodeJS.ErrnoException).code === "ENOENT";
@@ -130,6 +131,11 @@ export class SkillCatalog {
   }
   async read(source: SkillSource, name: string, file = "SKILL.md", signal?: AbortSignal) {
     this.check(signal);
+    if (source === "official") {
+      if (name !== createPluginSkill.name || file !== "SKILL.md") throw veraError("NOT_FOUND");
+      const content = `---\nname: ${createPluginSkill.name}\ndescription: ${createPluginSkill.description}\n---\n${createPluginSkill.body}`;
+      return { content, sha256: createHash("sha256").update(content).digest("hex") };
+    }
     const target = await this.path(source, name, file);
     const handle = await open(target, "r");
     try {
@@ -185,7 +191,9 @@ export class SkillCatalog {
     return names;
   }
   private async selection() {
-    const selected = new Map<string, { source: SkillSource; plugin?: string }>();
+    const selected = new Map<string, { source: SkillSource; plugin?: string }>([
+      [createPluginSkill.name, { source: "official" }],
+    ]);
     for (const plugin of (await this.plugins()).reverse())
       for (const name of await this.discover(plugin.folder))
         selected.set(name, { source: "plugin", plugin: plugin.id });
@@ -261,6 +269,7 @@ export class SkillCatalog {
         if (!missing(error)) throw error;
       }
     }
+    if (name === createPluginSkill.name) return "official";
     throw veraError("NOT_FOUND");
   }
   async load(name: string, file: string | undefined, signal: AbortSignal): Promise<Record<string, unknown>> {

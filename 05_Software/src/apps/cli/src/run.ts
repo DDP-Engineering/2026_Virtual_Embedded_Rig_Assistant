@@ -193,6 +193,8 @@ export async function runTurn(
       workers,
       skills,
       programs: programHost,
+      pluginBuilder: new PluginStore({ root: join(location.paths.userData, "plugins") }),
+      managedRoots: [location.paths.userData],
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,

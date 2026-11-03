@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
 import type { DocumentKnowledge } from "../knowledge/search.js";
 import type { ProgramContext } from "../plugins/program-tools.js";
+import type { PluginStore } from "../plugins/store.js";
 import type { WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
 import type { WebDownloads } from "../web/downloads.js";
@@ -30,6 +31,9 @@ export interface ToolContext {
   skills?: SkillCatalog;
   /** Plugin programs of the session; absent when the host composes no program host. */
   programs?: ProgramContext;
+  pluginBuilder?: PluginStore;
+  /** Host-owned application data: never writable by agent file tools, even in bypass. */
+  managedRoots?: readonly string[];
 }
 export interface ToolDefinition {
   name: string;

@@ -116,6 +116,14 @@ function stub(options: {
       case "plugins.uninstall":
         state.installed = state.installed.filter((plugin) => plugin.id !== request.id);
         return {};
+      case "plugins.promote": {
+        state.installed = state.installed.map((plugin) =>
+          plugin.id === request.id ? { ...plugin, tier: "local" } : plugin,
+        );
+        return state.installed.find((plugin) => plugin.id === request.id);
+      }
+      case "plugins.export":
+        return { path: "/exports/echo-tools.zip" };
       case "plugins.choose":
         return { path: options.review?.path ?? null };
       case "plugins.review":
@@ -150,6 +158,26 @@ const click = async (selector: string) => {
   });
 };
 const calls = (channel: string) => vi.mocked(api.invoke).mock.calls.filter(([name]) => name === channel);
+
+it.each(["en", "ro", "de"])(
+  "promotes a trial only on user confirmation and exports its reviewed hash (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    stub({ installed: [{ ...echo, tier: "trial" }] });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    await render();
+    await vi.waitFor(() => expect($('[data-action="plugin-promote"]')).not.toBeNull());
+    await click('[data-action="plugin-promote"]');
+    expect(calls("plugins.promote")).toHaveLength(0);
+    confirm.mockReturnValue(true);
+    await click('[data-action="plugin-promote"]');
+    expect(calls("plugins.promote")).toEqual([["plugins.promote", { id: echo.id, sha256: echo.sha256 }]]);
+    await vi.waitFor(() => expect($('[data-action="plugin-promote"]')).toBeNull());
+    await click('[data-action="plugin-export"]');
+    expect(calls("plugins.export")).toEqual([["plugins.export", { id: echo.id, sha256: echo.sha256 }]]);
+    await vi.waitFor(() => expect(container.textContent).toContain("/exports/echo-tools.zip"));
+  },
+);
 
 // REQ-UX-28503c97
 it.each(["en", "ro", "de"])(

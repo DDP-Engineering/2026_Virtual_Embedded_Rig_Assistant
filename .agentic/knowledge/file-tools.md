@@ -41,6 +41,16 @@ The registry also exposes web_download as a prepared write operation with its ow
 - recoverChanges resolves pending rows by guarded current hash: after marks applied and records the recovered event, before removes the row, otherwise conflict. It never changes file bytes. Session hosts await waitReady before exposing recovered state.
 - Bypass prepared requests mark filesystem scope and record canonical absolute change paths, including internal metadata changes. Recovery reconciles those recorded targets by hash only. Scope signal, current-mode guard and grant checks revoke queued writes/in-flight reads or grep on downgrade.
 
+## Agent management boundary
+
+Write/edit preparation and every apply recheck refuse `.vera/workbench.yaml` and host-managed
+application-data roots, including the installed plugin store and runtime. This applies in bypass too.
+Multiply linked file write targets are refused so a hard-link alias cannot modify installed bytes.
+Drafts under ordinary workbench `plugins/<id>/` retain normal write approvals. `ToolContext` carries
+`pluginBuilder` and `managedRoots`; desktop and CLI compose them, never model arguments.
+`plugin_validate` is read-class and `plugin_install` is program-class, both strict path-only tools;
+SessionService offers them only with a builder store. The install requires its prepared gate approval.
+
 ## Invariants
 
 - Outside explicitly selected Bypass, model-selected paths cannot leave root, select absolute/drive/UNC/device/reserved/NUL paths or ignored aliases. Windows native case aliases share a canonical fingerprint key. Bypass accepts ordinary filesystem paths with OS rights and retains canonical fingerprint identity.

@@ -89,6 +89,15 @@ const burn = {
     files: [{ arg: 4, path: "my key.bin", sha256: "b".repeat(64) }],
   },
 };
+it("never preapproves draft installations or trial commands through --approve all", () => {
+  const install = { ...request, tool: "plugin_install" as const };
+  const trial = { ...burn, program: { ...burn.program, trial: true, risk: "safe" as const, confirm: null } };
+  for (const pending of [install, trial]) {
+    expect(flagDecision(pending, "all", true)).toBeUndefined();
+    expect(flagDecision(pending, "all", false)).toBe("denied");
+    expect(flagDecision(pending, "none", true)).toBe("denied");
+  }
+});
 // REQ-FUNC-7cf311ae
 it("asks for the typed word before approving an irreversible program command", async () => {
   const input = new PassThrough(),

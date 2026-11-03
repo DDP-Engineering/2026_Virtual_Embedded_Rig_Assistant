@@ -30,6 +30,8 @@ const workbenchHandlers = {
   "skills.toggle": unused,
   "plugins.list": unused,
   "plugins.install": unused,
+  "plugins.promote": unused,
+  "plugins.export": unused,
   "plugins.uninstall": unused,
   "plugins.toggle": unused,
   "plugins.programs": unused,

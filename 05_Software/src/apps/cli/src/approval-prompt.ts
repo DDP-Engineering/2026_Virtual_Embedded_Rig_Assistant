@@ -20,6 +20,8 @@ export function flagDecision(
   approve: "all" | "none" | undefined,
   tty: boolean,
 ): "approved" | "denied" | undefined {
+  if (request.tool === "plugin_install" || request.program?.trial)
+    return approve === "none" || !tty ? "denied" : undefined;
   if (needsWord(request)) return approve === undefined && tty ? undefined : "denied";
   if (approve === "all") return "approved";
   if (approve === "none" || !tty) return "denied";

@@ -1193,7 +1193,7 @@ test("context-limit retains full history and accepts another instruction; Contex
     await settle();
   }
   expect(container.querySelector(".context-tab")?.textContent).toContain(".vera/WORKBENCH.md");
-  expect(container.querySelector(".context-tab")?.textContent).toContain("No skills are available");
+  expect(container.querySelector(".context-tab")?.textContent).toContain("create-plugin");
   const code = container.querySelector("code.language-c .hljs-type");
   expect(code?.textContent).toBe("int");
 });

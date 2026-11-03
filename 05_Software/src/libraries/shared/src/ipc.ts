@@ -185,6 +185,16 @@ export const channels = {
   /** Reads and validates a package without installing it (the review screen). */
   "plugins.review": defineChannel("plugins.review", pluginPathRequestSchema, pluginReviewSchema),
   "plugins.install": defineChannel("plugins.install", pluginInstallRequestSchema, pluginInstalledSchema),
+  "plugins.promote": defineChannel(
+    "plugins.promote",
+    z.strictObject({ id: pluginIdSchema, sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
+    pluginInstalledSchema,
+  ),
+  "plugins.export": defineChannel(
+    "plugins.export",
+    z.strictObject({ id: pluginIdSchema, sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
+    z.strictObject({ path: z.string().nullable() }),
+  ),
   "plugins.uninstall": defineChannel(
     "plugins.uninstall",
     z.strictObject({ id: pluginIdSchema }),

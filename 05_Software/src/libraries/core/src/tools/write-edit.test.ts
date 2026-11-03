@@ -43,6 +43,15 @@ function context(queue = new api.WriteQueue()) {
     },
   };
 }
+it("refuses agent writes to installed plugin files and workbench authority even in bypass", async () => {
+  const ctx = { ...context(), permissionMode: () => "bypass" as const, managedRoots: [join(root, "data")] };
+  for (const path of ["data/plugins/installed/fixture/plugin.yaml", ".vera/workbench.yaml"]) {
+    await expect(api.writeTool.prepare?.(ctx, { path, content: "changed" }, signal())).rejects.toThrow();
+  }
+  expect(
+    await api.writeTool.prepare?.(ctx, { path: "plugins/draft/plugin.yaml", content: "draft" }, signal()),
+  ).toBeDefined();
+});
 const read = (ctx: api.ToolContext, path = "file.txt") => api.readTool.execute(ctx, { path }, signal());
 const edit = (ctx: api.ToolContext, oldString: string, newString: string, replaceAll = false) =>
   api.editTool.execute(ctx, { path: "file.txt", oldString, newString, replaceAll }, signal());

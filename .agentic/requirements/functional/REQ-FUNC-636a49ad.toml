@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-636a49ad"
+title = "Provide the official plugin authoring skill"
+status = "active"
+requirement = "When the agent loads the official create-plugin skill, VERA shall provide instructions for documented research, operation selection, normal approved draft writes, validation, trial review and user-only promotion and sharing."
+verification = "Load the shipped skill with no user plugin installation; inspect required workflow and ensure disabled and shadowed skills retain catalog policy."
+affected_paths = ["05_Software/src/libraries/core/src/agent/", "05_Software/tests/fixtures/plugin-builder/", "05_Software/plugins/CONTRIBUTING.md", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/skills/", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/", "05_Software/src/apps/cli/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/libraries/core/src/skills/catalog.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

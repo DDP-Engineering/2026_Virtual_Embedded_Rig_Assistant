@@ -9,7 +9,7 @@ it("uses only .vera project skills and denies a redirected metadata root", async
   const f = await fixture();
   await mkdir(join(f.workbench, "skills/old"), { recursive: true });
   await writeFile(join(f.workbench, "skills/old/SKILL.md"), "old root content");
-  expect(await f.catalog.list()).toEqual([]);
+  expect((await f.catalog.list()).filter((s) => s.source !== "official")).toEqual([]);
   await rm(join(f.workbench, ".vera"), { recursive: true });
   await symlink(f.userData, join(f.workbench, ".vera"), process.platform === "win32" ? "junction" : "dir");
   await expect(f.catalog.list()).rejects.toMatchObject({ code: "DENIED" });
@@ -44,9 +44,13 @@ it("applies permanent ignores to both roots and workbench exclusions with negati
     text: "ALLOWED",
   });
   await writeFile(join(f.workbench, ".vera/.veraignore"), "skills/reader/**\n");
-  expect((await f.catalog.metadata()).map((s) => s.name)).toEqual(["personal"]);
+  expect((await f.catalog.metadata()).filter((s) => s.name !== "create-plugin").map((s) => s.name)).toEqual([
+    "personal",
+  ]);
   await expect(f.catalog.load("reader", undefined, new AbortController().signal)).rejects.toThrow();
-  expect((await f.catalog.list()).find((s) => s.name === "reader")?.error).toBe("unavailable");
+  expect(
+    (await f.catalog.list()).filter((s) => s.source !== "official").find((s) => s.name === "reader")?.error,
+  ).toBe("unavailable");
 });
 it("rejects catalog overflow explicitly and rechecks disabled state after late async refresh", async () => {
   const f = await fixture();
@@ -88,7 +92,7 @@ it("bounds UTF8 reads and rejects binary, hardlinks, abort and obsolete ownershi
   await writeFile(join(dir, "binary.txt"), Buffer.from([0, 1, 2]));
   await writeFile(join(dir, "invalid.txt"), Buffer.from([0xc3, 0x28]));
   await link(join(dir, "SKILL.md"), join(dir, "linked.md"));
-  expect((await f.catalog.list())[0]?.error).toBe("unavailable");
+  expect((await f.catalog.list()).filter((s) => s.source !== "official")[0]?.error).toBe("unavailable");
   await rm(join(dir, "linked.md"));
   for (const file of ["large.txt", "binary.txt", "invalid.txt"])
     await expect(f.catalog.load("reader", file, new AbortController().signal)).rejects.toThrow();
@@ -113,13 +117,17 @@ it.runIf(process.platform !== "win32")("rejects extra-file and directory symlink
   await symlink(external, join(dir, "extra.txt"));
   await expect(f.catalog.load("reader", "extra.txt", new AbortController().signal)).rejects.toThrow();
   await symlink(dir, join(f.workbench, ".vera/skills", "redirect"));
-  expect((await f.catalog.list()).find((s) => s.name === "redirect")?.error).toBe("unavailable");
+  expect(
+    (await f.catalog.list()).filter((s) => s.source !== "official").find((s) => s.name === "redirect")?.error,
+  ).toBe("unavailable");
 });
 it.runIf(process.platform === "win32")("rejects Windows junctions at skill roots", async () => {
   const f = await fixture(),
     dir = await f.skill("workbench", "reader");
   await symlink(dir, join(f.workbench, ".vera/skills", "redirect"), "junction");
-  expect((await f.catalog.list()).find((s) => s.name === "redirect")?.error).toBe("unavailable");
+  expect(
+    (await f.catalog.list()).filter((s) => s.source !== "official").find((s) => s.name === "redirect")?.error,
+  ).toBe("unavailable");
 });
 afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
@@ -152,7 +160,7 @@ it("discovers metadata only, resolves workbench clash, validates and disables", 
   await f.skill("workbench", "board-reader", "Bench description");
   await f.skill("user", "other");
   await f.skill("workbench", "INVALID");
-  const list = await f.catalog.list();
+  const list = (await f.catalog.list()).filter((s) => s.source !== "official");
   expect(list.map((s) => s.name)).toEqual(["INVALID", "board-reader", "other"]);
   expect(list.find((s) => s.name === "INVALID")?.error).toBeTruthy();
   expect(list.find((s) => s.name === "board-reader")).toMatchObject({
@@ -161,7 +169,9 @@ it("discovers metadata only, resolves workbench clash, validates and disables", 
   });
   expect(JSON.stringify(list)).not.toContain("BODY ONLY");
   f.disabled.push("board-reader");
-  expect((await f.catalog.metadata()).map((s) => s.name)).toEqual(["other"]);
+  expect((await f.catalog.metadata()).filter((s) => s.name !== "create-plugin").map((s) => s.name)).toEqual([
+    "other",
+  ]);
   await expect(f.catalog.load("board-reader", undefined, new AbortController().signal)).rejects.toThrow();
 });
 it("loads body and extra files, rejects escapes, and refreshes invalid shadowing", async () => {
@@ -185,7 +195,7 @@ it("loads body and extra files, rejects escapes, and refreshes invalid shadowing
   ])
     await expect(f.catalog.load("reader", file, new AbortController().signal)).rejects.toThrow();
   await writeFile(join(dir, "SKILL.md"), "broken");
-  expect(await f.catalog.metadata()).toEqual([]);
+  expect((await f.catalog.metadata()).filter((s) => s.name !== "create-plugin")).toEqual([]);
   await expect(f.catalog.load("reader", "extra.md", new AbortController().signal)).rejects.toThrow();
 });
 it("trusts a user data root redirected above it but still refuses links inside the skills tree", async () => {
@@ -203,7 +213,9 @@ it("trusts a user data root redirected above it but still refuses links inside t
     userData: join(alias, "data"),
     disabled: () => [],
   });
-  expect((await redirected.list()).map((s) => [s.name, s.error])).toEqual([["flash-esp32", undefined]]);
+  expect(
+    (await redirected.list()).filter((s) => s.source !== "official").map((s) => [s.name, s.error]),
+  ).toEqual([["flash-esp32", undefined]]);
   const outside = await mkdtemp(join(tmpdir(), "vera-skills-outside-"));
   roots.push(outside);
   await mkdir(join(outside, "linked"));
@@ -213,7 +225,9 @@ it("trusts a user data root redirected above it but still refuses links inside t
     join(f.userData, "skills", "linked"),
     process.platform === "win32" ? "junction" : "dir",
   );
-  expect((await redirected.list()).find((s) => s.name === "linked")?.error).toBe("unavailable");
+  expect(
+    (await redirected.list()).filter((s) => s.source !== "official").find((s) => s.name === "linked")?.error,
+  ).toBe("unavailable");
 });
 async function pluginSkill(base: string, id: string, name: string, body: string) {
   const folder = join(base, "plugins", id);
@@ -235,9 +249,9 @@ it("lists and loads skills of enabled plugins as source plugin (REQ-FUNC-6d88d2e
   });
   const folder = await pluginSkill(f.userData, "echo-tools", "echo-guide", "PLUGIN BODY");
   await writeFile(join(folder, "skills/echo-guide/ports.md"), "PORTS");
-  expect(await catalog.list()).toEqual([]);
+  expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([]);
   enabled.push({ id: "echo-tools", folder });
-  expect(await catalog.list()).toEqual([
+  expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([
     {
       name: "echo-guide",
       source: "plugin",
@@ -251,7 +265,7 @@ it("lists and loads skills of enabled plugins as source plugin (REQ-FUNC-6d88d2e
   expect(await catalog.load("echo-guide", "ports.md", signal)).toMatchObject({ text: "PORTS" });
   await expect(catalog.load("echo-guide", "../../plugin.yaml", signal)).rejects.toThrow();
   enabled.length = 0;
-  expect(await catalog.list()).toEqual([]);
+  expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([]);
   await expect(catalog.load("echo-guide", undefined, signal)).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
 it("shadows plugin skills by workbench and user skills; the lower plugin id wins (REQ-FUNC-a5eff6c9)", async () => {
@@ -267,14 +281,18 @@ it("shadows plugin skills by workbench and user skills; the lower plugin id wins
     plugins: async () => enabled,
   });
   const signal = new AbortController().signal;
-  expect(await catalog.list()).toMatchObject([{ name: "shared", source: "plugin", plugin: "a-tools" }]);
+  expect((await catalog.list()).filter((s) => s.source !== "official")).toMatchObject([
+    { name: "shared", source: "plugin", plugin: "a-tools" },
+  ]);
   expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "A BODY\n" });
   await f.skill("user", "shared", "User copy", "USER BODY");
-  expect(await catalog.list()).toEqual([
+  expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([
     { name: "shared", source: "user", description: "User copy", enabled: true },
   ]);
   expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "USER BODY\n" });
   await f.skill("workbench", "shared", "Bench copy", "BENCH BODY");
-  expect(await catalog.list()).toMatchObject([{ name: "shared", source: "workbench" }]);
+  expect((await catalog.list()).filter((s) => s.source !== "official")).toMatchObject([
+    { name: "shared", source: "workbench" },
+  ]);
   expect(await catalog.load("shared", undefined, signal)).toMatchObject({ text: "BENCH BODY\n" });
 });

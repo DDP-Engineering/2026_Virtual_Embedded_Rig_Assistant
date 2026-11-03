@@ -22,6 +22,16 @@ returns validated metadata and localized diagnostic codes; bodies reach the agen
 through load_skill. Main composes fresh metadata before session operations/turns;
 CLI composes the same catalog. Renderer uses strict named/source/scoped IPC only.
 
+## Official authoring skill
+
+SkillCatalog also supplies the immutable built-in `create-plugin` skill with source `official`.
+It is available offline without installing a plugin. Workbench, user and enabled plugin skills
+shadow it in that order; disabled names are refused through the same policy. It has no extra files
+or editor IPC source. Skills settings labels it Official and exposes only its enable toggle.
+Its instructions cover documented CLI research, operation selection, normal draft writes, validation,
+user-reviewed trial installation, trial approvals, user-only promotion and contribution/export.
+Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loading and disabling.
+
 ## Public interface
 
 - SkillCatalog.list/metadata/load/read/path use current roots and admission callback.
@@ -81,20 +91,6 @@ REQ-UX-a285bfa2 skills management; REQ-FUNC-6d88d2ec plugin skills; REQ-FUNC-a5e
 plugin shadowing; REQ-UX-11a84a1d plugin skills read-only in settings; REQ-SEC-f7e4f258 plugin
 targets refused. Native acceptance captures loopback model requests
 before creation and after creation, disabling and editing in the same session.
-
-## Architecture
-
-```mermaid
-flowchart LR
- Roots[Project .vera / host userData] --> Catalog[SkillCatalog]
- Catalog --> Metadata[Validated enabled metadata]
- Metadata --> Prompt[buildSystemPrompt]
- Catalog --> Loader[load_skill]
- Loader --> Registry[ToolRegistry / existing result cap]
- UI[Skills dialog / Context] --> IPC[Typed authorized IPC]
- IPC --> Workbench[Lifecycle + write admission]
- Workbench --> Catalog
-```
 
 ## Files
 

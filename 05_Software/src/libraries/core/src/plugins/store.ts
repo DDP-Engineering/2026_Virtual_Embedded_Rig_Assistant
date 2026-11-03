@@ -16,7 +16,7 @@ import {
   validatePluginManifest,
   veraError,
 } from "@vera/shared";
-import { unzipSync } from "fflate";
+import { unzipSync, zipSync } from "fflate";
 import { LineCounter, parseDocument } from "yaml";
 import { z } from "zod";
 
@@ -298,6 +298,9 @@ export class PluginStore {
   private queue: Promise<unknown> = Promise.resolve();
   private readonly installed: string;
   private readonly staging: string;
+  get root(): string {
+    return this.options.root;
+  }
   constructor(private readonly options: { root: string; now?: () => Date; uuid?: () => string }) {
     this.installed = join(options.root, "installed");
     this.staging = join(options.root, "staging");
@@ -415,9 +418,16 @@ export class PluginStore {
    * with `origin` a catalog plugin of that tier. With `sha256` (the hash the user reviewed), a package
    * whose files differ is CONFLICT.
    */
-  install(path: string, sha256?: string, origin?: PluginOrigin): Promise<PluginInstalled> {
+  install(
+    path: string,
+    sha256?: string,
+    origin?: PluginOrigin,
+    trial = false,
+    assertCurrent?: () => void,
+  ): Promise<PluginInstalled> {
     return this.serial(async () => {
       const pkg = await readPluginPackage(path);
+      assertCurrent?.();
       if (sha256 !== undefined && pkg.sha256 !== sha256) throw fails("CONFLICT");
       const { manifest, issues } = pkg;
       const first = issues[0];
@@ -426,11 +436,16 @@ export class PluginStore {
           ...fails("INVALID"),
           params: { issue: first?.code ?? "manifest", ...(first?.path ? { path: first.path } : {}) },
         };
+      // The agent may iterate on trials, but cannot replace a plugin the user already trusts.
+      if (trial && (await this.ids()).includes(manifest.id)) {
+        const previous = await this.inspect(manifest.id);
+        if (previous.record?.tier !== "trial") throw fails("DENIED");
+      }
       const record: PluginRecord = {
         format: 1,
         id: manifest.id,
         version: manifest.version,
-        tier: origin?.tier ?? "local",
+        tier: trial ? "trial" : (origin?.tier ?? "local"),
         source: origin ? { kind: "catalog", path: origin.url } : { kind: pkg.kind, path: pkg.source },
         sha256: pkg.sha256,
         installedAt: (this.options.now?.() ?? new Date()).toISOString(),
@@ -448,6 +463,7 @@ export class PluginStore {
         await mkdir(this.installed, { recursive: true });
         const target = join(this.installed, manifest.id);
         const previous = join(this.staging, this.uuid());
+        assertCurrent?.();
         let replaced = false;
         try {
           await rename(target, previous);
@@ -467,6 +483,43 @@ export class PluginStore {
         await rm(stage, { recursive: true, force: true });
       }
       return this.summary(manifest.id);
+    });
+  }
+  /** Agent installation path; trust can only be raised by the separate user action. */
+  installTrial(path: string, sha256: string, assertCurrent?: () => void): Promise<PluginInstalled> {
+    return this.install(path, sha256, undefined, true, assertCurrent);
+  }
+  /** User action bound to the healthy trial package displayed on the Plugins page. */
+  promote(id: string, sha256: string): Promise<PluginInstalled> {
+    return this.serial(async () => {
+      const plugin = await this.load(id);
+      if (plugin.record.sha256 !== sha256) throw fails("CONFLICT");
+      if (plugin.record.tier !== "trial") throw fails("DENIED");
+      const path = join(plugin.folder, RECORD);
+      await mkdir(this.staging, { recursive: true });
+      const temporary = join(this.staging, `.promote-${this.uuid()}.tmp`);
+      try {
+        await writeFile(temporary, `${JSON.stringify({ ...plugin.record, tier: "local" }, null, 2)}\n`, {
+          flag: "wx",
+        });
+        await rename(temporary, path);
+      } finally {
+        await rm(temporary, { force: true });
+      }
+      return this.summary(id);
+    });
+  }
+  /** Export only the verified portable package, excluding the machine-local installation record. */
+  export(id: string, sha256: string): Promise<Uint8Array> {
+    return this.serial(async () => {
+      const plugin = await this.load(id);
+      const files = await readFolder(plugin.folder, true);
+      if (plugin.record.sha256 !== sha256 || pluginIntegrity(files) !== sha256) throw fails("CONFLICT");
+      const bytes = zipSync(Object.fromEntries([...files].sort(([a], [b]) => order(a, b))), {
+        mtime: new Date(1980, 0, 1),
+      });
+      if (bytes.length > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
+      return bytes;
     });
   }
   /**

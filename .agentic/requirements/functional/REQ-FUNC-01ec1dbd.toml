@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-01ec1dbd"
+title = "Promote reviewed trial plugins through user controls"
+status = "active"
+requirement = "When the user promotes an unchanged trial plugin through its button, VERA shall change its tier to local bound to the displayed package hash."
+verification = "Promote installed trial with correct hash; assert local tier and bypass policy without prompt, and refuse stale hash or nontrial promotion."
+affected_paths = ["05_Software/src/libraries/core/src/agent/", "05_Software/tests/fixtures/plugin-builder/", "05_Software/plugins/CONTRIBUTING.md", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/skills/", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/", "05_Software/src/apps/cli/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugin-builder.spec.ts"]
+created = 2026-11-03
+updated = 2026-11-03

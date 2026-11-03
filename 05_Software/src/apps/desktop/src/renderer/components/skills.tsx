@@ -18,7 +18,8 @@ const errorKeys = defineTranslationKeys([
 const errorIndex = { name: 0, description: 1, frontmatter: 2, unavailable: 3 } as const;
 /** Workbench and user skills open in the editor; plugin skills belong to the installed plugin. */
 type EditableSkill = SkillSummary & { source: "workbench" | "user" };
-const editable = (skill: SkillSummary): skill is EditableSkill => skill.source !== "plugin";
+const editable = (skill: SkillSummary): skill is EditableSkill =>
+  skill.source === "workbench" || skill.source === "user";
 
 export function SkillSettings({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
   const { t } = useTranslation();
@@ -117,7 +118,9 @@ function SkillsDialog({
             <span>
               {skill.source === "plugin"
                 ? t("skills.plugin", { plugin: skill.plugin ?? "" })
-                : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
+                : skill.source === "official"
+                  ? t("skills.official")
+                  : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
             </span>
             {skill.description && <p>{skill.description}</p>}
             {skill.error && <p role="status">{t(errorKeys[errorIndex[skill.error]])}</p>}

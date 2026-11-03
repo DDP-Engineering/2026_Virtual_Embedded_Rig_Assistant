@@ -32,7 +32,9 @@ it("mock skills create/edit/toggle isolate workbenches and reject stale or read-
   const wb = await api.invoke("workbench.create", { folder: "C:/mock/skills", name: "Skills" });
   const target = { workbenchId: wb.config.id, source: "workbench" as const, name: "reader" };
   const created = await api.invoke("skills.create", target);
-  expect((await api.invoke("skills.list", { workbenchId: wb.config.id }))[0]).toMatchObject({
+  expect(
+    (await api.invoke("skills.list", { workbenchId: wb.config.id })).find((s) => s.name === "reader"),
+  ).toMatchObject({
     name: "reader",
     enabled: true,
   });
@@ -40,16 +42,23 @@ it("mock skills create/edit/toggle isolate workbenches and reject stale or read-
   await expect(
     api.invoke("skills.save", { ...target, content: "stale", sha256: created.sha256 }),
   ).rejects.toMatchObject({ code: "CONFLICT" });
-  expect((await api.invoke("skills.list", { workbenchId: wb.config.id }))[0]?.error).toBeTruthy();
+  expect(
+    (await api.invoke("skills.list", { workbenchId: wb.config.id })).find((s) => s.name === "reader")?.error,
+  ).toBeTruthy();
   await api.invoke("skills.toggle", { workbenchId: wb.config.id, name: "reader", enabled: false });
-  expect((await api.invoke("skills.list", { workbenchId: wb.config.id }))[0]?.enabled).toBe(false);
+  expect(
+    (await api.invoke("skills.list", { workbenchId: wb.config.id })).find((s) => s.name === "reader")
+      ?.enabled,
+  ).toBe(false);
   await api.invoke("workbench.create", { folder: "C:/mock/other-skills", name: "Other" });
   await expect(api.invoke("skills.open", target)).rejects.toMatchObject({ code: "CONFLICT" });
   const readOnly = createMockApi(undefined, "read-only").api;
   const recent = await readOnly.invoke("workbench.recent", {});
   const locked = await readOnly.invoke("workbench.open", { folder: recent[0]?.folder ?? "" });
   const lockedTarget = { workbenchId: locked.config.id, source: "user" as const, name: "reader" };
-  expect(await readOnly.invoke("skills.list", { workbenchId: locked.config.id })).toEqual([]);
+  expect(await readOnly.invoke("skills.list", { workbenchId: locked.config.id })).toMatchObject([
+    { name: "create-plugin", source: "official" },
+  ]);
   await expect(readOnly.invoke("skills.create", lockedTarget)).rejects.toMatchObject({ code: "DENIED" });
   await expect(
     readOnly.invoke("skills.toggle", { workbenchId: locked.config.id, name: "reader", enabled: false }),

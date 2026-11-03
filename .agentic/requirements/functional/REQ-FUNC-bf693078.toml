@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-bf693078"
+title = "Validate plugin drafts"
+status = "active"
+requirement = "When the agent validates a workbench plugin draft, VERA shall return schema issues and lint warnings for dangerous tokens below device-write, programs without rules and find without hint."
+verification = "Create valid and invalid temporary draft packages; assert issues and all warning kinds, with a non-dangerous high-risk boundary."
+affected_paths = ["05_Software/src/libraries/core/src/agent/", "05_Software/tests/fixtures/plugin-builder/", "05_Software/plugins/CONTRIBUTING.md", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/skills/", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/", "05_Software/src/apps/cli/src/"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

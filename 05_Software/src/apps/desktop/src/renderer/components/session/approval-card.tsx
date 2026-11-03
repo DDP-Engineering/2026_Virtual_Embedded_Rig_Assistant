@@ -143,7 +143,14 @@ export function ApprovalCard({
           ? `${approval.tool} · ${program.program}${program.programVersion ? ` ${program.programVersion}` : ""}`
           : `${approval.tool} · ${approval.path}`}
       </h4>
-      {program ? (
+      {approval.tool === "plugin_install" ? (
+        <>
+          <p>{t("plugins.trialReview")}</p>
+          <pre className="approval-command" data-plugin-install-review>
+            {approval.diff}
+          </pre>
+        </>
+      ) : program ? (
         <ProgramDetails program={program} />
       ) : approval.download ? (
         <>
@@ -200,7 +207,7 @@ export function ApprovalCard({
             <button type="button" disabled={locked} onClick={() => void decide("denied")}>
               {t("approval.deny")}
             </button>
-            {approval.tool !== "web_download" && !word && (
+            {approval.tool !== "web_download" && approval.tool !== "plugin_install" && !word && (
               <button type="button" disabled={locked} onClick={() => void decide("approved", true)}>
                 {t("approval.switch")}
               </button>
