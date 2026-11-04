@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0400003"
+title = "Ground planning in inspected evidence"
+status = "active"
+requirement = "When test-planner prepares cases, the procedure shall inspect WORKBENCH.md, named sources, searched requirements, setup and release notes and any comparison report cited lines using exact successful tool references."
+verification = "Manual: sourced-plan and incompatible-comparison cases; inspect search/read events and every emitted ref against successful returned provenance, including report sources."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/tests/fixtures/test-planner/", "05_Software/scripts/test-planner-rubric.mjs"]
+linked_tests = ["05_Software/tests/fixtures/test-planner/harness.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

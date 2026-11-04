@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0400004"
+title = "Keep incompatible conditions explicit"
+status = "active"
+requirement = "If comparison conditions are incompatible, test-planner shall preserve the incompatibility as a limitation or blocker instead of presenting the experiment as comparable without sources."
+verification = "Manual: incompatible-comparison fixture changes board revision; verify original report lines inspected, mismatch disclosed, no firmware-only comparison or comparable experiment invented."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/tests/fixtures/test-planner/", "05_Software/scripts/test-planner-rubric.mjs"]
+linked_tests = ["05_Software/tests/fixtures/test-planner/harness.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

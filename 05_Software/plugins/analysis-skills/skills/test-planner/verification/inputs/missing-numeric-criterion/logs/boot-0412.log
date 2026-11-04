@@ -1,0 +1,4 @@
+2026-04-12T08:00:00Z INFO VERA-DEMO-01 revision=A boot=demo
+2026-04-12T08:00:01Z INFO supply=3.30V oscillator=internal
+2026-04-12T08:00:02Z WARN i2c initialization delayed 20ms
+2026-04-12T08:00:03Z INFO i2c SDA=PB7 SCL=PB6 ready

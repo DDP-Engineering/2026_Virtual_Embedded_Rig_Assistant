@@ -13,6 +13,14 @@ enabled plugin offering an applicable safe size/symbol command.
 Load the procedure through `load_skill {"name":"firmware-comparator"}` and its template through
 `load_skill {"name":"firmware-comparator","file":"templates/comparison.md"}`.
 
-Verification instructions, prompts and real-model results live beside the skill under `verification/`.
-Replay verifies integration and saved evidence, not model semantics. The future test-planner capability
-is not supplied by this package yet.
+`test-planner` turns a firmware change or captured failure into one to five sourced manual cases,
+including a baseline control when available. Missing identity, setup or criteria blocks readiness;
+the plan records preparation and results to collect without executing anything. Enabled plugin
+commands appear only as optional future steps with their risk levels.
+
+Load `load_skill {"name":"test-planner"}` and
+`load_skill {"name":"test-planner","file":"templates/test-plan.md"}`.
+Its six-section plan is saved as a unique bounded `test-plan-<target>.md` session artifact.
+
+Verification instructions, prompts and real-model results live beside each skill under `verification/`.
+Replay verifies integration and saved evidence, not model semantics.

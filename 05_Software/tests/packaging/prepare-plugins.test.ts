@@ -56,6 +56,17 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   expect(
     await skills.load("firmware-comparator", "templates/comparison.md", new AbortController().signal),
   ).toMatchObject({ text: expect.stringContaining("## Recommended checks") });
+  expect(await skills.list()).toContainEqual(
+    expect.objectContaining({ name: "test-planner", source: "plugin" }),
+  );
+  expect(await skills.load("test-planner", undefined, new AbortController().signal)).toMatchObject({
+    text: expect.stringContaining("observation-only"),
+  });
+  expect(
+    await skills.load("test-planner", "templates/test-plan.md", new AbortController().signal),
+  ).toMatchObject({
+    text: expect.stringContaining("## Results to collect"),
+  });
   const zip = join(target, index.plugins[0].url);
   await writeFile(zip, Buffer.concat([await readFile(zip), Buffer.from([0])]));
   await expect(checkBundledPlugins(target)).rejects.toThrow(/bundled plugin integrity/);

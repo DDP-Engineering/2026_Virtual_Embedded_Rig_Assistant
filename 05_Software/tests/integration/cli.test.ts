@@ -10,11 +10,15 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { NodeWorkerPool, openDb, PluginStore, SessionService, SkillCatalog } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
-import type { SessionEvent } from "@vera/shared";
+import { builtinToolNames, type SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { prepareCase, sections, sha256 } from "../fixtures/firmware-comparator/harness.js";
+import {
+  sections as planSections,
+  prepareCase as preparePlanCase,
+} from "../fixtures/test-planner/harness.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 let compiled: string;
@@ -351,6 +355,191 @@ it("firmware-comparator loads from a folder plugin and saves the cited compariso
     await workers.dispose();
   }
 }, 120000);
+// CAP04 replay validates real tool/citation/storage wiring, not generated model semantics.
+it("test-planner loads its plugin template and persists a sourced manual plan through SessionService and CLI", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "vera-cap04-replay-"));
+  cleanup.push(dir);
+  const workbench = await preparePlanCase(root, dir, "sourced-plan");
+  // Replay's fixed32KiB context needs only this scenario's tool schemas. Keep unrelated
+  // plugin builder/program tools out of the request rather than changing runtime budgets.
+  const disabledTools = builtinToolNames.filter(
+    (name) => !["load_skill", "search_docs", "read_doc", "read", "todo", "artifact_save"].includes(name),
+  );
+  const configPath = join(workbench, ".vera/workbench.yaml");
+  await writeFile(
+    configPath,
+    (await readFile(configPath, "utf8")).replace(
+      "tools:\n  disabled: []",
+      `tools:\n  disabled: ${JSON.stringify(disabledTools)}`,
+    ),
+  );
+  const data = join(dir, "data"),
+    scripts = join(dir, "scripts");
+  await mkdir(scripts);
+  const indexed = await launch(["index", "--workbench", workbench, "--data", data], {}, "npm").result;
+  expect(indexed.code, indexed.stderr).toBe(0);
+  const name = "test-plan-VERA-DEMO-01.md";
+  const plan = `# Manual test plan
+
+## Target and objective
+VERA-DEMO-01 revision A, DEMO-001; candidate1.1.0 I2C failure, baseline1.0.0. [[docs/runs.md#L1-L10]] [[logs/boot-0413.log#L1-L4]]
+
+## Readiness
+ready_for_review: documented bench@1 setup and boot@1 criterion; no execution. [[docs/setup.md#h=manual-boot-setup-bench1]] [[docs/boot-test.md#h=boot-criterion-boot1]]
+
+## Setup and prerequisites
+Operator verifies board, image identity and unchanged bench@1 for boot@1; missing prerequisites stop work. [[docs/setup.md#h=manual-boot-setup-bench1]]
+
+## Test cases
+### TP-01 — baseline control1.0.0
+Rationale: captured baseline control. [[docs/runs.md#L1-L10]]
+### TP-02 — candidate1.1.0
+Rationale: I2C failure and changed initialization timing; cause unknown. [[logs/boot-0413.log#L1-L4]] [[docs/release-notes.md#h=firmware-110-release-notes]]
+For each case: Setup bench@1/boot@1 and verified case firmware. Manual steps: 1. Confirm setup and firmware. 2. Boot manually. 3. Capture whole log with identity/setup/procedure labels. Stop for missing prerequisite or mismatched identity/setup. [[docs/setup.md#h=manual-boot-setup-bench1]] Criterion: i2c ready and no ERROR. [[docs/boot-test.md#h=boot-criterion-boot1]]
+Optional future step only: enabled esp32-esptool program esptool command write-flash, risk device-write; separate request needs verified port/image/offsets. [[docs/enabled-plugins.md#h=enabled-plugin-metadata-for-fictional-acceptance-session]]
+
+## Stop conditions and exclusions
+Stop for unverified identity/setup/image. Numeric timing and electrical stress excluded: no criteria supplied. [[docs/setup.md#h=manual-boot-setup-bench1]]
+
+## Results to collect
+| Case | Run | Firmware | Log path | Measurement | Value | Unit | Met / not met | Source reference |
+|---|---|---|---|---|---|---|---|---|
+| TP-01 | pending | 1.0.0 | pending | ready/ERROR | unmeasured | log events | pending | [[docs/boot-test.md#h=boot-criterion-boot1]] |
+| TP-02 | pending | 1.1.0 | pending | ready/ERROR | unmeasured | log events | pending | [[docs/boot-test.md#h=boot-criterion-boot1]] |
+`;
+  const script = join(scripts, "plan.jsonl");
+  const steps = [
+    { toolCalls: [{ name: "load_skill", args: { name: "test-planner" } }] },
+    { toolCalls: [{ name: "load_skill", args: { name: "test-planner", file: "templates/test-plan.md" } }] },
+    {
+      toolCalls: [
+        {
+          name: "search_docs",
+          args: { query: "boot requirements setup I2C release", mode: "keyword", k: 1 },
+        },
+      ],
+    },
+    {
+      toolCalls: ["WORKBENCH.md", "docs/runs.md", "logs/boot-0413.log"].map((path) => ({
+        name: "read",
+        args: { path },
+      })),
+    },
+    {
+      toolCalls: [
+        ["docs/boot-test.md", "boot-criterion-boot1"],
+        ["docs/setup.md", "manual-boot-setup-bench1"],
+        ["docs/release-notes.md", "firmware-110-release-notes"],
+        ["docs/enabled-plugins.md", "enabled-plugin-metadata-for-fictional-acceptance-session"],
+      ].map(([path, heading]) => ({ name: "read_doc", args: { path, heading } })),
+    },
+    {
+      toolCalls: [
+        {
+          name: "todo",
+          args: {
+            items: [
+              {
+                text: "Confirm target/setup and obtain verified firmware preparation evidence",
+                status: "pending",
+              },
+            ],
+          },
+        },
+      ],
+    },
+    { toolCalls: [{ name: "artifact_save", args: { name, content: plan } }] },
+    { text: plan },
+  ];
+  await writeFile(script, steps.map((step) => JSON.stringify(step)).join("\n"));
+  const workers = new NodeWorkerPool(pathToFileURL(join(compiled, "grep-worker.js")));
+  const handle = await openDb(join(workbench, ".vera/vera.db"), {
+    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    appVersion: "0",
+  });
+  const plugin = await new PluginStore({ root: join(data, "plugins") }).load("analysis-skills");
+  const skills = new SkillCatalog({
+    root: workbench,
+    disabled: () => [],
+    plugins: async () => [{ id: "analysis-skills", folder: plugin.folder }],
+  });
+  let service = new SessionService({
+    db: handle.db,
+    root: workbench,
+    skills,
+    workers,
+    disabledTools,
+    gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
+    clock: { now: () => new Date(123), sleep: async () => {} },
+    model: () => "replay/plan",
+    prompt: () => "CAP04 integration replay",
+  });
+  const agent: SessionEvent[] = [];
+  try {
+    const session = service.create();
+    service.subscribe(session.id, 0, (_seq, event) => agent.push(event));
+    service.send(session.id, "Plan the fictional I2C checks");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const summaries = service.listArtifacts(session.id);
+    expect(summaries).toHaveLength(1);
+    const artifact = await service.openArtifact(summaries[0]?.artifactId ?? "");
+    expect(artifact).toMatchObject({ name, content: plan });
+    expect(artifact.content.match(/^## .+$/gm)).toEqual(planSections.map((section) => `## ${section}`));
+    expect(service.verifiedArtifact(artifact.artifactId).path).toBeTruthy();
+    const cli = await launch([...replay(workbench, script), "--data", data], {}, "npm").result;
+    expect(cli.code, cli.stderr).toBe(0);
+    const records: SessionEvent[] = events(cli.stdout).map((record) => record.event);
+    for (const output of [agent, records]) {
+      const done = output.filter((event) => event.type === "tool.done");
+      expect(done).toHaveLength(12);
+      expect(
+        done.every((event) => event.ok),
+        JSON.stringify(done),
+      ).toBe(true);
+      expect(
+        output.filter((event) => event.type === "tool.started").map((event) => event.name),
+      ).not.toContain("run_program");
+      expect(output.find((event) => event.type === "todo.updated")).toMatchObject({
+        items: [{ text: expect.stringContaining("Confirm target"), status: "pending" }],
+      });
+      const final = output.filter((event) => event.type === "message.done").at(-1);
+      expect(final?.citations?.length).toBeGreaterThan(5);
+      expect(final?.citations?.every((citation) => citation.valid)).toBe(true);
+    }
+    await service.close();
+    service = new SessionService({
+      db: handle.db,
+      root: workbench,
+      skills,
+      workers,
+      gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
+      clock: { now: () => new Date(123), sleep: async () => {} },
+      model: () => "replay/plan",
+      prompt: () => "CAP04 reopen",
+    });
+    expect(await service.openArtifact(artifact.artifactId)).toMatchObject({ content: plan });
+    expect(
+      service.get(session.id).snapshot.items.some((item) => item.kind === "assistant" && item.text === plan),
+    ).toBe(true);
+    const stored = handle.db.prepare("SELECT name,sha256 FROM artifacts WHERE name=?").all(name);
+    expect(stored).toEqual([
+      { name, sha256: sha256(plan) },
+      { name, sha256: sha256(plan) },
+    ]);
+    if (evidence) {
+      await writeFile(
+        join(evidence, "test-plan-agent.json"),
+        JSON.stringify({ events: agent, artifact, reopened: service.get(session.id).snapshot }, null, 2),
+        { flag: "wx" },
+      );
+      await writeFile(join(evidence, name), artifact.content, { flag: "wx" });
+    }
+  } finally {
+    await service.close();
+    handle.close();
+    await workers.dispose();
+  }
+}, 120000);
 it("parse_log returns identical cited evidence through agent sessions and vera run", async () => {
   const { dir, workbench } = await fixture();
   await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z INFO ready\n\u0000\n");
@@ -670,12 +859,22 @@ it("CLI checks a catalog source and builds its release", async () => {
   expect(clean.stdout).toBe("");
   const built = await launch(["catalog", "build", "--source", source, "--out", out]).result;
   expect(built.code).toBe(0);
-  expect(built.stdout.trim()).toBe(`2 plugins written to ${out}`);
+  const officialIds = [
+    "analysis-skills",
+    "binutils",
+    "esp32-efuse",
+    "esp32-esptool",
+    "esp32-idf",
+    "git",
+    "probe-rs",
+    "serial-monitor",
+    "sigrok",
+  ];
+  expect(built.stdout.trim()).toBe(`${officialIds.length} plugins written to ${out}`);
   const index = JSON.parse(await readFile(join(out, "index.json"), "utf8"));
-  expect(index.plugins.map((plugin: { url: string }) => plugin.url)).toEqual([
-    "esp32-esptool-1.0.0.zip",
-    "serial-monitor-1.0.0.zip",
-  ]);
+  expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual(
+    officialIds.map((id) => [id, `${id}-1.0.0.zip`]),
+  );
   const manifest = join(source, "serial-monitor", "plugin.yaml");
   await writeFile(
     manifest,

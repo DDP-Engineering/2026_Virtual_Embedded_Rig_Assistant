@@ -1,0 +1,1 @@
+Use test-planner to plan tests for the captured I2C failure. Inspect WORKBENCH.md, docs/runs.md and the setup/requirements/release notes first. I cannot identify the board revision, unit or firmware. Ask me for the missing target fields or save a blocked draft; do not assume a target.

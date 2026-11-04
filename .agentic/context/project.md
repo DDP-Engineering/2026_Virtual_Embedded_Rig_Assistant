@@ -66,8 +66,10 @@ Its real vendor build/flash/panic acceptance remains pending toolchain and board
 
 [Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
-The official skills-only analysis-skills package supplies firmware-comparator and its sourced
-seven-section artifact template; separate real-model rubric evidence lives beside the skill.
+The official skills-only analysis-skills package supplies firmware-comparator with its sourced
+seven-section comparison template and test-planner with its six-section manual-plan template;
+separate real-model rubric evidence lives beside each skill. Test-planner never executes programs
+or tests and blocks readiness when target, setup or criteria lack evidence.
 
 [Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document
 selection/hash/limits/status events, reindex and derived-row invalidation through

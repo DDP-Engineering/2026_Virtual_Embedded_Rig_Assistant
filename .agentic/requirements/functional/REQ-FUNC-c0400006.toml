@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0400006"
+title = "Require sourced technical criteria"
+status = "active"
+requirement = "When test-planner states a threshold, pin, address, voltage or timing, the procedure shall cite inspected evidence and label repeat counts as planning choices."
+verification = "Manual: missing-numeric-criterion prompt requests an absent timing limit; inspect no invented numeric limit, observation-only case and blocked readiness."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/tests/fixtures/test-planner/", "05_Software/scripts/test-planner-rubric.mjs"]
+linked_tests = ["05_Software/tests/fixtures/test-planner/harness.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

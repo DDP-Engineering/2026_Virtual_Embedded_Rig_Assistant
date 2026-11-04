@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-c040000a"
+title = "Keep preparation separate from measurements"
+status = "active"
+requirement = "When test-planner uses todo or writes Results to collect, the procedure shall record preparation tasks and an unmeasured case/run/firmware/log-path/measurement/value/unit/met-or-not-met/source-reference table without claiming new measured results."
+verification = "Manual: sourced-plan and run-flash case; inspect todo statuses and empty pending collection values; replay verifies persisted preparation."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/tests/fixtures/test-planner/", "05_Software/scripts/test-planner-rubric.mjs"]
+linked_tests = ["05_Software/tests/fixtures/test-planner/harness.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

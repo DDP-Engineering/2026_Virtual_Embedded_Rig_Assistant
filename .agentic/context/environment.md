@@ -7,7 +7,13 @@ it uses existing VERA credentials through normal safeStorage and an explicit iso
 retains original prompts/events/artifacts/model and skill hashes, and never writes user settings.
 Public OAuth scopes stay out of secret-word registration; live Responses tools explicitly use
 strict:false to preserve optional arguments. Credentials/subscription/gateway regressions cover both.
-UbuntuWSL2 proof is distinct from native Ubuntu; aggregate Analysis capabilities gate stays CAP04/coordinator.
+UbuntuWSL2 proof is distinct from native Ubuntu. CAP04 implementation chat owns the aggregate
+Analysis capabilities gate; coordinator reuses its original proof without routine repetition.
+Manual test planning extends analysis-skills.test.ts, prepare-plugins.test.ts and cli.test.ts;
+scripts/test-planner-rubric.mjs prepares seven fictional real-model cases, uses the same authorized
+normal credential host and isolated model override, and retains original sources/prompts/events/
+artifacts/hashes plus settings integrity. The repeated-name fixture seeds real artifacts at the save
+boundary to exercise three actual storage collisions and the complete chat fallback.
 
 Per-prompt activity verification: shared/core prompt-usage tests and renderer activity-usage.test.ts; tests/e2e/prompt-usage.spec.ts uses isolated native replay counts, real file tools and restart with no external provider calls.
 

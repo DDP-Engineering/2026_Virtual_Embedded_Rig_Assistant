@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0400002"
+title = "Identify one planning target"
+status = "active"
+requirement = "When test-planner receives a planning request, the procedure shall resolve one board, revision, unit, firmware and objective from inspected sources or ask about missing or ambiguous identity."
+verification = "Manual: real-model sourced-plan and missing-target prompts; inspect actual tool events and plan/question; missing identity never silently selected."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/tests/fixtures/test-planner/", "05_Software/scripts/test-planner-rubric.mjs"]
+linked_tests = ["05_Software/tests/fixtures/test-planner/harness.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -109,15 +109,18 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
     await expect(dialog).toBeVisible();
     await dialog.locator("[data-skill-name]").fill("ui-reader");
     await dialog.locator('[data-action="create-skill"]').click();
-    await expect(dialog.locator(".skills-list li")).toHaveCount(1);
-    await dialog.locator('[data-action="open-skill"]').click();
+    await expect(dialog.locator(".skills-list li")).toHaveCount(2);
+    await expect(dialog.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
+    const createdSkill = dialog.locator(".skills-list li").filter({ hasText: "ui-reader" });
+    await expect(createdSkill).toHaveCount(1);
+    await createdSkill.locator('[data-action="open-skill"]').click();
     const content = page.locator("[data-skill-content]");
     await expect(content).toBeFocused();
     await content.fill(
       "---\nname: ui-reader\ndescription: Use for UI-created board reviews.\n---\nBODY NOT IN PROMPT\n",
     );
     await page.locator('[data-action="save-skill"]').click();
-    await expect(dialog.locator('[data-action="open-skill"]')).toBeFocused();
+    await expect(createdSkill.locator('[data-action="open-skill"]')).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();
@@ -127,15 +130,15 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
     expect(prompt).not.toContain("BODY NOT IN PROMPT");
     expect(requests[1]?.tools.some((tool) => tool.function.name === "load_skill")).toBe(true);
     await trigger.click();
-    await dialog.locator('input[type="checkbox"]').click();
-    await expect(dialog.locator('input[type="checkbox"]')).not.toBeChecked();
+    await createdSkill.locator('input[type="checkbox"]').click();
+    await expect(createdSkill.locator('input[type="checkbox"]')).not.toBeChecked();
     await page.keyboard.press("Escape");
     await turn("After disabling");
     expect(requests[2]?.messages.find((m) => m.role === "system")?.content).not.toContain("ui-reader:");
     await trigger.click();
-    await dialog.locator('input[type="checkbox"]').click();
-    await expect(dialog.locator('input[type="checkbox"]')).toBeChecked();
-    await dialog.locator('[data-action="open-skill"]').click();
+    await createdSkill.locator('input[type="checkbox"]').click();
+    await expect(createdSkill.locator('input[type="checkbox"]')).toBeChecked();
+    await createdSkill.locator('[data-action="open-skill"]').click();
     await expect(content).toBeFocused();
     await content.fill(
       "---\nname: ui-reader\ndescription: Updated metadata for next turn.\n---\nEDITED BODY\n",
@@ -244,7 +247,9 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       const dialog = page.locator(".skills-dialog");
       await dialog.locator("[data-skill-name]").fill("browser-reader");
       await dialog.locator('[data-action="create-skill"]').click();
-      await expect(dialog.locator(".skills-list li")).toHaveCount(1);
+      await expect(dialog.locator(".skills-list li")).toHaveCount(2);
+      await expect(dialog.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
+      await expect(dialog.locator(".skills-list li").filter({ hasText: "browser-reader" })).toHaveCount(1);
       await page.keyboard.press("Escape");
       for (const theme of ["light", "dark"])
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {

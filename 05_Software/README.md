@@ -34,6 +34,12 @@ node_modules/         Ignored installed dependencies
 
 Unit and component tests remain beside the implementation in `src/`.
 
+The bundled official `analysis-skills` plugin supplies captured `firmware-comparator` and sourced
+manual `test-planner` procedures with on-demand templates. Install from its folder or local catalog,
+then enable it per workbench. Test plans include readiness, one to five cases and future results to
+collect; they execute no programs or hardware operations. See [plugin instructions](plugins/analysis-skills/README.md)
+and the separate real-model verification beside each skill.
+
 The desktop uses one compact title/menu row with native window controls. The sidebar
 toggle switches between full project/session navigation and a compact icon rail; Home,
 project navigation and Settings remain reachable. Collapse and panel sizes persist.

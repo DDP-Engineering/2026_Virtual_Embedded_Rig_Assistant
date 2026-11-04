@@ -86,9 +86,12 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     const skillDialog = page.locator(".skills-dialog");
     await skillDialog.locator("[data-skill-name]").fill("test-reader");
     await skillDialog.locator('[data-action="create-skill"]').click();
-    await expect(skillDialog.locator(".skills-list li")).toHaveCount(1);
-    await skillDialog.locator('input[type="checkbox"]').uncheck();
-    await expect(skillDialog.locator('input[type="checkbox"]')).not.toBeChecked();
+    await expect(skillDialog.locator(".skills-list li")).toHaveCount(2);
+    await expect(skillDialog.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
+    const createdSkill = skillDialog.locator(".skills-list li").filter({ hasText: "test-reader" });
+    await expect(createdSkill).toHaveCount(1);
+    await createdSkill.locator('input[type="checkbox"]').uncheck();
+    await expect(createdSkill.locator('input[type="checkbox"]')).not.toBeChecked();
     const skillBounds = await skillDialog.boundingBox();
     expect(Math.abs((skillBounds?.x ?? 0) + (skillBounds?.width ?? 0) / 2 - 640)).toBeLessThan(2);
     await page.keyboard.press("Escape");
@@ -112,7 +115,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(dialog.locator('[data-tool-toggle="read"]')).toBeChecked();
     await dialog.locator('[data-project-section="skills"]').click();
     await dialog.locator('[data-action="skills-settings"]').click();
-    await expect(skillDialog.locator('input[type="checkbox"]')).not.toBeChecked();
+    await expect(createdSkill.locator('input[type="checkbox"]')).not.toBeChecked();
     await page.keyboard.press("Escape");
 
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();

@@ -9,7 +9,7 @@
 - id: general
   name: Firmware analysis
   groups:
-    - { name: Captured firmware comparison, plugins: [analysis-skills], default: true }
+    - { name: Captured firmware comparison and manual test planning, plugins: [analysis-skills], default: true }
     - { name: ELF analysis, plugins: [binutils], default: true }
     - { name: Debug probes and RTT, plugins: [probe-rs], default: true }
     - { name: Signal capture and bench instruments, plugins: [sigrok], default: true }

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0400007"
+title = "Block unsourced readiness"
+status = "active"
+requirement = "If target identity or any included case setup or criterion lacks sources, test-planner shall mark readiness blocked with missing evidence and questions and label criterion-free cases observation-only."
+verification = "Manual: missing-target and missing-numeric-criterion cases; inspect blocked state and actionable questions; sourced-plan alone may be ready_for_review."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/tests/fixtures/test-planner/", "05_Software/scripts/test-planner-rubric.mjs"]
+linked_tests = ["05_Software/tests/fixtures/test-planner/harness.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

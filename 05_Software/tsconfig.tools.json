@@ -12,6 +12,7 @@
     "tests/tooling/**/*.ts",
     "tests/integration/**/*.ts",
     "tests/fixtures/firmware-comparator/**/*.ts",
+    "tests/fixtures/test-planner/**/*.ts",
     "tests/packaging/**/*.ts",
     "playwright.config.ts",
     "tests/e2e/**/*.ts",

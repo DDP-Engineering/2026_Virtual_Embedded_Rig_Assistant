@@ -87,6 +87,14 @@ Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loa
 
 ## Key behaviors
 
+The official analysis-skills plugin supplies firmware-comparator and test-planner with separately
+loaded comparison/manual-plan templates. Test-planner selects one to five sourced manual cases,
+requires identified target and sourced setup/criterion for ready_for_review, keeps numeric gaps
+observation-only/blocked, names enabled plugin operations only as optional future steps, and saves
+unique bounded session artifacts with at most three attempts and no overwrite. Seven real-model
+rubrics cover semantic behavior separately from source/ZIP loading and SessionService/CLI replay.
+REQ-FUNC-c0400001..7, REQ-SEC-c0400008..9 and REQ-DATA-c040000a..b govern that procedure.
+
 REQ-FUNC-e728c8bf metadata/discovery; REQ-FUNC-f06e9051 content admission;
 REQ-UX-a285bfa2 skills management; REQ-FUNC-6d88d2ec plugin skills; REQ-FUNC-a5eff6c9
 plugin shadowing; REQ-UX-11a84a1d plugin skills read-only in settings; REQ-SEC-f7e4f258 plugin

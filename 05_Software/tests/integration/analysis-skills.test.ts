@@ -50,6 +50,38 @@ it("installs the official skills-only source and loads the body and seven-sectio
     expect(template).toMatchObject({ name: "firmware-comparator", file: "templates/comparison.md" });
     const headings = String(template.text).match(/^## .+$/gm);
     expect(headings).toEqual(sections.map((section) => `## ${section}`));
+    expect(await catalog.list()).toContainEqual(
+      expect.objectContaining({ name: "test-planner", source: "plugin", plugin: "analysis-skills" }),
+    );
+    expect(await catalog.load("test-planner", undefined, signal)).toMatchObject({
+      name: "test-planner",
+      text: expect.stringContaining("observation-only"),
+    });
+    const plan = await catalog.load("test-planner", "templates/test-plan.md", signal);
+    expect(String(plan.text).match(/^## .+$/gm)).toEqual(
+      [
+        "Target and objective",
+        "Readiness",
+        "Setup and prerequisites",
+        "Test cases",
+        "Stop conditions and exclusions",
+        "Results to collect",
+      ].map((section) => `## ${section}`),
+    );
+    for (const field of [
+      "TP-01",
+      "Rationale",
+      "Setup",
+      "Manual steps",
+      "Capture",
+      "Criterion",
+      "Stop conditions",
+      "Optional plugin step",
+    ])
+      expect(plan.text).toContain(field);
+    expect(plan.text).toContain(
+      "| Case | Run | Firmware | Log path | Measurement | Value | Unit | Met / not met | Source reference |",
+    );
     expect(await checkCatalogSource(join(software, "plugins"))).toEqual([]);
   } finally {
     await rm(scratch, { recursive: true, force: true });
