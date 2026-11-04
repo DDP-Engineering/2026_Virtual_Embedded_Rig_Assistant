@@ -19,6 +19,10 @@ export const workbenchEmbeddingsSchema = z
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
 /** Plugins run programs, so a workbench enables each one explicitly. */
 const plugins = z.looseObject({ enabled: z.array(z.string().min(1)).default([]) });
+/** Presentation only: execution, permissions and stored session history are unchanged. */
+export const chatDetailSchema = z.enum(["verbose", "normal", "minimal"]);
+export type ChatDetail = z.infer<typeof chatDetailSchema>;
+const chat = z.looseObject({ detail: chatDetailSchema.default("normal") });
 /** Defaults for the agent's search_docs when it passes no k or mode of its own. */
 export const workbenchRetrievalSchema = z.looseObject({
   results: z.number().int().min(1).max(20).default(8),
@@ -48,6 +52,7 @@ export const workbenchSchema = z.looseObject({
   skills: disabled.default({ disabled: [] }),
   tools: disabled.default({ disabled: [] }),
   plugins: plugins.default({ enabled: [] }),
+  chat: chat.default({ detail: "normal" }),
   agent: agent.default({ permission_mode: "ask", model: null }),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;
@@ -56,6 +61,7 @@ export function workbenchTemplate(name: string): string {
   return `# ${name}\n\n## Device under test\nBoard, MCU, revision, key parts.\n\n## Bench setup\nPower, probes, programmers, interfaces and where they connect.\n\n## Conventions\nHow results, logs and notes are named and where they go.\n\n## Known issues\nLab or hardware quirks the agent should check first.\n`;
 }
 export const workbenchPatchSchema = z.strictObject({
+  chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),
   embeddings: workbenchEmbeddingsSchema.optional(),
   name: z.string().trim().min(1).max(80).optional(),
   description: z.string().optional(),
@@ -150,6 +156,7 @@ export function configWarnings(
     skills: disabled.shape,
     tools: disabled.shape,
     plugins: plugins.shape,
+    chat: chat.shape,
     agent: agent.shape,
     embeddings: { model: true, chunkSize: true, overlap: true },
     retrieval: workbenchRetrievalSchema.shape,
@@ -179,6 +186,7 @@ export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch):
     skills: { ...current.skills, ...clean.skills },
     tools: { ...current.tools, ...clean.tools },
     plugins: { ...current.plugins, ...clean.plugins },
+    chat: { ...current.chat, ...clean.chat },
     agent: { ...current.agent, ...clean.agent },
   });
 }

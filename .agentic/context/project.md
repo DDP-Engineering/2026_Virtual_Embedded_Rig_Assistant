@@ -137,3 +137,5 @@ Web access supports Exa/Tavily/Brave with isolated credentials and CLI EXA_API_K
 Managed PDF downloads: web_download is a provider-neutral approved write tool saving exact binary PDFs and provenance under .vera/downloads; local Open PDF actions reuse the viewer and remain offline-readable. Downloads share live Web access/permissions, never search-provider credentials, and are not automatically indexed for RAG. See [PDF downloads](../knowledge/pdf-downloads.md).
 
 Plugin authoring: the built-in official create-plugin skill researches CLI manuals and writes workbench drafts; plugin_validate reports schema/lint issues, and plugin_install always waits for user review then installs trial without enablement/provisioning. The Plugins page promotes a hash-bound trial to local and exports portable zips; agent file writes cannot mutate managed plugin/application data or workbench.yaml, including in bypass. See [Plugins](../knowledge/plugins.md).
+
+Workbench Chat settings select Verbose, Normal (default) or Minimal transcript detail per workbench. Full Activity/history and essential approval/error/download interactions remain available at every level.

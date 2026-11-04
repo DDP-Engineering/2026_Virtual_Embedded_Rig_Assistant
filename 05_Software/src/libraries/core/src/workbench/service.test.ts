@@ -65,6 +65,23 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+// REQ-DATA-4a830b9a
+it("persists chat detail independently across workbench save and reopen", async () => {
+  const h = await harness();
+  try {
+    const created = await h.service.create(h.folder, "Chat bench");
+    expect(created.config.chat.detail).toBe("normal");
+    await h.service.updateConfig({ chat: { detail: "minimal" } });
+    await h.service.updateConfig({ name: "Renamed" });
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.chat.detail).toBe("minimal");
+    await h.service.updateConfig({ chat: { detail: "verbose" } });
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.chat.detail).toBe("verbose");
+  } finally {
+    await h.service.close();
+  }
+});
 it("creates project metadata only inside .vera and reopens it", async () => {
   const h = await harness();
   try {

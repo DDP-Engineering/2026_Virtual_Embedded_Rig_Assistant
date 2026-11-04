@@ -91,6 +91,7 @@ export function WorkbenchEditor({
         agent: { permission_mode: config.agent.permission_mode, model: config.agent.model },
         tools: { disabled: config.tools.disabled },
         plugins: { enabled: config.plugins.enabled },
+        chat: { detail: config.chat.detail },
       });
       const updated = await api.invoke("workbench.config.update", {
         patch,

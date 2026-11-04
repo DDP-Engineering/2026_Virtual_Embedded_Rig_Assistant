@@ -70,6 +70,7 @@ export function WorkbenchCreate({
           tools: { disabled: config.tools.disabled },
           skills: { disabled: skillsDisabled },
           plugins: { enabled: config.plugins.enabled },
+          chat: { detail: config.chat.detail },
         },
         ...(kept === null ? { instructions: shownInstructions } : {}),
       });

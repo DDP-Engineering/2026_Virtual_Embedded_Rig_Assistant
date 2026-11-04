@@ -175,6 +175,19 @@
     "context": "The provider rejected the context size. Reduce input or check the configured window.",
     "failure": "Provider error: {{message}}"
   },
+  "chatDetail": {
+    "section": "Chat",
+    "label": "Detail level",
+    "verbose": "Verbose",
+    "normal": "Normal",
+    "minimal": "Minimal",
+    "info": "Applies to all sessions in this workbench. Full details remain in Activity. This does not change answer length or command permissions.",
+    "verboseInfo": "Show each operation with expandable arguments and results.",
+    "normalInfo": "Group routine operations into expandable activity summaries.",
+    "minimalInfo": "Hide routine operations and show a working indicator. Approvals, errors and downloads remain visible.",
+    "stopped": "Stopped or interrupted turn.",
+    "operations": "Operations: {{count}}"
+  },
   "chat": {
     "attachments": "Attached files",
     "removeAttachment": "Remove attachment: {{path}}",

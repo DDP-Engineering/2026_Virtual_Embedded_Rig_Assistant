@@ -189,3 +189,14 @@ New/Open/Plugins navigation with settings categories and Back to workbenches.
 Nested Skills dialogs are centered; their Escape returns to the editor page.
 
 REQ-UX-0f1a32c4 covers the described tool catalog; REQ-FUNC-37261edc covers saved checkbox availability. Runtime permissions remain independent. `shared/src/tools.ts` defines the ordered catalog consumed by `core/src/tools/registry.ts` and `renderer/components/workbench-tools.tsx`; the editor owns draft/save state. `tests/e2e/workbench-tools.spec.ts` covers native persistence/restart/cancel, YAML and translated descriptions; renderer workbench-tools.test.ts covers read-only controls, and registry/workbench service tests cover catalog parity and known-name validation.
+
+## Chat display preference
+
+New/Edit Workbench → Chat edits `chat.detail` (`verbose`, `normal`, `minimal`, default
+`normal`) as part of the same unsaved configuration draft and create/update payload.
+Cancel leaves the saved value unchanged; read-only workbenches disable editing. Shared
+schema/patch/merge/warnings recognize chat, and main configuration events preserve the
+protocol enum while scrubbing extensions. Format remains 1 with no migration logic.
+Chat detail controls renderer presentation only; full session history and Activity remain
+available. `workbench-chat.test.ts`, shared workbench tests, core service reopen tests,
+main event redaction tests and native chat-detail.spec.ts verify these seams.

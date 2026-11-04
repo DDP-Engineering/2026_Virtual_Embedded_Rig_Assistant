@@ -660,6 +660,7 @@ export function App() {
                     key={`${benchId}/${activeSession}`}
                     id={activeSession}
                     workbenchId={benchId}
+                    detail={bench.data?.config.chat.detail ?? "normal"}
                     changed={changed}
                     readOnly={readOnly}
                     composerFocusRequest={

@@ -175,6 +175,19 @@
     "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
     "failure": "Eroare furnizor: {{message}}"
   },
+  "chatDetail": {
+    "section": "Chat",
+    "label": "Nivel de detaliu",
+    "verbose": "Verbose",
+    "normal": "Normal",
+    "minimal": "Minimal",
+    "info": "Se aplică tuturor sesiunilor din acest workbench. Detaliile complete rămân în Activitate. Nu schimbă lungimea răspunsurilor sau permisiunile comenzilor.",
+    "verboseInfo": "Afișează fiecare operație, cu argumente și rezultate extensibile.",
+    "normalInfo": "Grupează operațiile obișnuite în rezumate de activitate extensibile.",
+    "minimalInfo": "Ascunde operațiile obișnuite și afișează un indicator de lucru. Aprobările, erorile și descărcările rămân vizibile.",
+    "stopped": "Execuție oprită sau întreruptă.",
+    "operations": "Operații: {{count}}"
+  },
   "chat": {
     "attachments": "Fișiere atașate",
     "removeAttachment": "Elimină atașamentul: {{path}}",

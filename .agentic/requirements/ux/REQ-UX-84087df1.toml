@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-84087df1"
+title = "Keep essential interactions visible at every detail level"
+status = "active"
+requirement = "At every chat detail level, VERA shall keep approval interactions, failed tool details, localized errors with Retry, interruption status and useful download actions visible outside collapsed routine activity."
+verification = "Render approvals, failed tools, errors, stopped turns and successful downloads in minimal and normal, act on exact approvals and retry, and verify read-only protection."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-projection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts", "05_Software/tests/e2e/chat-detail.spec.ts"]

@@ -1,5 +1,6 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
 
+import type { ChatDetail } from "@vera/shared";
 import { Activity } from "lucide-react";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +19,7 @@ export function SessionWorkspace({
   workbenchId,
   changed,
   readOnly,
+  detail = "normal",
   composerFocusRequest = 0,
   composerFocused,
 }: {
@@ -25,6 +27,7 @@ export function SessionWorkspace({
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
+  detail?: ChatDetail;
   composerFocusRequest?: number;
   /** Called once a focus request is taken, so the app drops it and never replays it. */
   composerFocused?: () => void;
@@ -194,6 +197,7 @@ export function SessionWorkspace({
       )}
       {view && (
         <Transcript
+          detail={detail}
           state={view.state}
           reasoning={view.reasoning}
           updates={view.updates}

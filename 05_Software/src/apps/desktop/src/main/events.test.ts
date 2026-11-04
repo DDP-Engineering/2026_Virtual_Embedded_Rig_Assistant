@@ -181,9 +181,22 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
     description: privateKey,
     docs: { include: [`docs/${privateKey}/**`] },
     agent: { permission_mode: "ask", model: "provider/model" },
+    chat: { detail: "minimal", extension: privateKey },
     [privateKey]: { detail: privateKey },
   });
-  for (const short of ["t", "type", "config", "warnings", "name", "/", "ask", "UNKNOWN_KEY"]) {
+  for (const short of [
+    "t",
+    "type",
+    "config",
+    "warnings",
+    "name",
+    "/",
+    "ask",
+    "UNKNOWN_KEY",
+    "chat",
+    "detail",
+    "minimal",
+  ]) {
     const send = vi.fn();
     const emit = createEventEmitter(
       () => ({ isDestroyed: () => false, send }),
@@ -206,6 +219,7 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
       expect(eventEnvelopeSchema.safeParse(envelope).success).toBe(true);
       expect(JSON.stringify(envelope)).not.toContain(privateKey);
     }
+    expect(send.mock.calls[1]?.[1].event.config.chat.detail).toBe("minimal");
     expect(send.mock.calls[0]?.[1]).toEqual({ topic: "app", id: "app", event: { type: "settings.changed" } });
   }
 });

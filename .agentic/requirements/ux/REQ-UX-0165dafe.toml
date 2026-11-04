@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-0165dafe"
+title = "Project transcript detail levels"
+status = "active"
+requirement = "When rendering a session, VERA shall apply its workbench chat detail with individual expandable technical rows in verbose, expandable contiguous same-turn routine tool groups in normal, and routine technical rows hidden with a working indicator during active execution in minimal, while preserving conversation texts and chronological order."
+verification = "Render the same mixed session at every level, expand groups by keyboard, check ongoing updates, separate turns, empty and historical states, and retained conversation/search content."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-projection.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts", "05_Software/tests/e2e/chat-detail.spec.ts"]

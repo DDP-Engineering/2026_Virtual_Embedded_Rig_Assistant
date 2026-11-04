@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-b94a613e"
+title = "Edit workbench chat detail as a draft"
+status = "active"
+requirement = "When an engineer opens New or Edit Workbench, VERA shall offer the localized Chat detail selector as a saveable draft that Cancel leaves unchanged and read-only workbenches cannot edit."
+verification = "Select levels in New/Edit, save, cancel, retry a failed save and exercise read-only controls and independent workbenches."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-chat.test.ts", "05_Software/tests/e2e/chat-detail.spec.ts"]

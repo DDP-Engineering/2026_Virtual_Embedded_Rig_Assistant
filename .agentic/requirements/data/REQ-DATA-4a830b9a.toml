@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-DATA-4a830b9a"
+title = "Persist workbench chat detail"
+status = "active"
+requirement = "When a workbench configuration is created or patched, VERA shall persist chat.detail as verbose, normal or minimal with normal as its default in format 1."
+verification = "Parse defaults, save and reopen all values, reject invalid values and verify unrelated patches preserve detail."
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/apps/desktop/src/main/events.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/apps/desktop/src/main/events.test.ts", "05_Software/tests/e2e/chat-detail.spec.ts"]

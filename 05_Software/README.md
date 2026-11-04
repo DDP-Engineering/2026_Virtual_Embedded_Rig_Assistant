@@ -410,3 +410,14 @@ an account-scoped short memory cache. VERA keeps no static model/effort table. L
 the model capabilities discovered for the connection. Endpoints without declared capabilities
 offer no reasoning override. Codex Ultra is a client orchestration mode and is not sent as
 a native Responses reasoning effort. Catalog discovery and inference retain separate routes.
+
+### Chat detail per workbench
+
+Open **Edit workbench → Chat → Detail level** (also available in New Workbench).
+**Normal** is the default: routine operations appear in expandable groups.
+**Verbose** shows each operation separately, with expandable arguments/results.
+**Minimal** hides routine technical activity and shows when VERA is working.
+Approvals, errors, stopped-turn notices and useful download actions remain visible.
+Full details are always available through **Activity**. Save applies the preference
+across the workbench's sessions; Cancel discards the draft. The setting controls display,
+without changing model answer length, tool permissions or stored history.

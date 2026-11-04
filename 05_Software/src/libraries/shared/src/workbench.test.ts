@@ -6,6 +6,25 @@ import {
   workbenchPatchSchema,
 } from "./workbench.js";
 
+// REQ-DATA-4a830b9a
+it("defaults chat detail to normal, merges independently and rejects invalid levels", () => {
+  const base = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
+  expect(base.chat).toEqual({ detail: "normal" });
+  for (const detail of ["verbose", "normal", "minimal"] as const) {
+    const config = mergeWorkbench(base, workbenchPatchSchema.parse({ chat: { detail } }));
+    expect(config.chat).toEqual({ detail });
+    expect(mergeWorkbench(config, { name: "Other" }).chat).toEqual({ detail });
+    expect(warnings(config)).toEqual([]);
+  }
+  for (const detail of ["invalid", null, 1]) {
+    expect(schema.safeParse({ ...base, chat: { detail } }).success).toBe(false);
+    expect(workbenchPatchSchema.safeParse({ chat: { detail } }).success).toBe(false);
+  }
+  const extended = schema.parse({ ...base, chat: { detail: "normal", extra: true } });
+  expect(warnings(extended)).toContainEqual({ code: "UNKNOWN_KEY", path: "chat.extra" });
+  expect(workbenchPatchSchema.safeParse({ chat: { extra: true } }).success).toBe(false);
+});
+
 it("validates format1, defaults and retains nested extensions with warning paths", () => {
   const config = schema.parse({
     format: 1,

@@ -1,0 +1,8 @@
+schema = 1
+id = "REQ-UX-91b1b112"
+title = "Retain full Activity independently of transcript detail"
+status = "active"
+requirement = "When chat detail changes, VERA shall retain the complete Activity inspector and durable session history independently of transcript presentation."
+verification = "Change detail without changing session state, open Activity to inspect all tool arguments/results and supplied reasoning, and reopen the session."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts", "05_Software/tests/e2e/chat-detail.spec.ts"]

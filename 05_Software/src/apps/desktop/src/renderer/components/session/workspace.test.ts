@@ -76,6 +76,7 @@ test("sidebar action menus are exclusive across session and workbench triggers, 
   await api.invoke("session.create", {});
   await mount();
   const user = userEvent.setup();
+  await vi.waitFor(() => expect(container.querySelectorAll(".session-options")).toHaveLength(2));
   const menus = [...container.querySelectorAll<HTMLDetailsElement>(".session-options")];
   const bench = container.querySelector<HTMLDetailsElement>(".workbench-menu") as HTMLDetailsElement;
   const trigger = (menu: HTMLDetailsElement) => menu.querySelector("summary") as HTMLElement;
@@ -503,7 +504,17 @@ test("New Workbench creates only and submits the configured draft with prefilled
   expect(page.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("new-board");
   expect(
     [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual(["general", "documents", "instructions", "agent", "tools", "skills", "embeddings", "plugins"]);
+  ).toEqual([
+    "general",
+    "documents",
+    "instructions",
+    "agent",
+    "chat",
+    "tools",
+    "skills",
+    "embeddings",
+    "plugins",
+  ]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
   await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
   await act(async () =>
@@ -781,7 +792,17 @@ test("workbench editor shows the creation page's sections and the open workbench
   if (!editor) throw Error("Missing editor");
   expect(
     [...editor.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual(["general", "documents", "instructions", "agent", "tools", "skills", "embeddings", "plugins"]);
+  ).toEqual([
+    "general",
+    "documents",
+    "instructions",
+    "agent",
+    "chat",
+    "tools",
+    "skills",
+    "embeddings",
+    "plugins",
+  ]);
   await openDocuments(editor);
   expect(docsFolder(editor, "datasheets")?.checked).toBe(true);
   expect(docsFolder(editor, "notes")?.checked).toBe(false);
@@ -1053,6 +1074,7 @@ test("chat fixtures render tool arguments, invalid citations, provider Retry and
 });
 test("composer completes paths with keyboard, preserves Shift+Enter and Stop restores usability", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  await api.invoke("workbench.config.update", { patch: { chat: { detail: "verbose" } } });
   await mount();
   const sessions = await api.invoke("session.list", {});
   await act(async () =>
