@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-0ab3122a"
+title = "Keep eFuse security disabled in the official pack"
+status = "active"
+requirement = "When presenting the official ESP32 pack, VERA shall list esp32-efuse in Security (irreversible) with default false."
+verification = "Read the catalog source, assert the exact Security group and disabled default; build the catalog zip and assert official tier."
+affected_paths = ["05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-efuse.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

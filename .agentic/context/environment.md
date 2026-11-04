@@ -4,6 +4,14 @@ Per-prompt activity verification: shared/core prompt-usage tests and renderer ac
 
 ## Toolchain
 
+eFuse acceptance: tests/integration/esp32-efuse.test.ts checks the official package/risk/skill
+offline. Explicit VERA_EFUSE_UV uses pinned uv and real managed esptool v5 through the provisioner,
+runner and replay SessionService/ApprovalGate. All burns carry --chip esp32 --virt and explicit
+--do-not-confirm; --path-efuse-file persists a task-owned virtual state file. Require tool success,
+process exitCode 0, changed virtual bytes and read-back False/0b0 to True/0b1. VERA_TEST_EVIDENCE_DIR
+retains argv/output/process exits, events and durable approvals; VERA_EFUSE_SCRATCH selects owned
+scratch. No physical burn is permitted. Identify Ubuntu WSL2 separately from native Ubuntu/ARM64.
+
 The repository toolchain is defined by [02_Tools/toolchain.json](../../02_Tools/toolchain.json). [02_Tools/README.md](../../02_Tools/README.md) documents Python, Git and the local Node runtime.
 
 ## Setup

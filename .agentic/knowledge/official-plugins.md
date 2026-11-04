@@ -2,6 +2,10 @@
 
 ## Routing
 
+For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
+tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
+and opt-in real virtual acceptance through the unchanged plugin platform.
+
 Select for the plugin packages VERA maintainers ship in `05_Software/plugins/<id>/`: their `plugin.yaml`
 programs and rules, helper scripts, Agent Skills and README; today `serial-monitor` (program `serial`: list
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
@@ -29,6 +33,20 @@ from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
+
+- `esp32-efuse` 1.0.0, ESP32, Windows x64/Linux x64: the official Security (irreversible)
+  group defaults off. Both espefuse and espsecure use pip esptool>=5,<6 and help-based version
+  probes. summary/dump/check-error/get-custom-mac/adc-info are device-read; every burn-* plus
+  write/read-protect-efuse and set-flash-voltage are irreversible with the OTP/brick note.
+  espsecure file crypto is safe (hardware risk, no file sandbox); HSM flags are blocked.
+  Three exact catalog lint exceptions cover program-name efuse/secure tokens at low risk.
+  Skill esp32-efuse-review requires a summary, explanation, one explicitly requested operation
+  and an artifact_save session plan before any irreversible call; no batch or implicit burns.
+  Actual closed-stdin virtual argv includes --chip esp32 --virt --path-efuse-file FILE
+  --do-not-confirm burn-efuse JTAG_DISABLE 1. The upstream BURN prompt is separate from VERA's
+  burn-efuse confirmation; bypass creates mode decisions. tests/integration/esp32-efuse.test.ts
+  optionally provisions real v5 using VERA_EFUSE_UV and records raw process output/exit codes,
+  replay events, durable approvals and persistent virtual-state effects. No hardware burn runs.
 
 - `git` 1.0.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/integration/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
 

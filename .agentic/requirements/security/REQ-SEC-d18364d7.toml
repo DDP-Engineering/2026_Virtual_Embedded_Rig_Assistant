@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-d18364d7"
+title = "Classify eFuse reads and permanent writes"
+status = "active"
+requirement = """When classifying espefuse arguments, VERA shall assign summary, dump, check-error, get-custom-mac and adc-info device-read and every burn-*, write-protect-efuse, read-protect-efuse and set-flash-voltage irreversible with the one-time-programmable, never-undone, possible-brick warning."""
+verification = """Table tests cover actual v5 commands, global options, underscores/hyphens and case normalization, equals, token boundaries, mixed read/burn/help and unknown burn prefixes; irreversible wins collisions and confirmation names the matched burn."""
+affected_paths = ["05_Software/plugins/esp32-efuse/", "05_Software/tests/fixtures/esp32-efuse/", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-efuse.test.ts"]
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

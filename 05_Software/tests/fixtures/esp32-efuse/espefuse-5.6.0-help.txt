@@ -1,0 +1,48 @@
+NOTE: Chip not specified, showing commands for ESP32 by default. Specify the --chip option to get chip-specific help.
+                                                                                                                        
+ Usage: espefuse [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...                                                   
+                                                                                                                        
+ espefuse v5.6.0 - Utility for eFuse configuration in Espressif SoCs.                                                   
+                                                                                                                        
++- Options ------------------------------------------------------------------------------------------------------------+
+| --chip                    -c                                               |
+| --baud                    -b  BAUD-RATE                                   Serial port baud rate used when            |
+|                                                                           flashing/reading.                          |
+| --port                    -p  SERIAL-PORT                                 Serial port device.                        |
+| --before                                                         to the chip.                               |
+| --after                   -a                                         finished.                                  |
+| --debug                   -d                                              Show debugging information                 |
+|                                                                           (loglevel=DEBUG).                          |
+| --virt                                                                    For host tests, work in virtual mode (no   |
+|                                                                           chip connection).                          |
+| --token                       TEXT                                        eFuse token dump (format example:          |
+|                                                                           EFSR:esp32:000:...).                       |
+| --path-efuse-file             PATH                                        For host tests, save eFuse memory to file. |
+| --do-not-confirm                                                          Do not pause for confirmation before       |
+|                                                                           permanently writing eFuses. Use with       |
+|                                                                           caution!                                   |
+| --postpone/--no-postpone                                                  Postpone burning some eFuses from BLOCK0   |
+|                                                                           at the end (enabled by default, can be     |
+|                                                                           disabled with --no-postpone).              |
+| --extend-efuse-table          FILENAME                                    CSV file from ESP-IDF                      |
+|                                                                           (esp_efuse_custom_table.csv).              |
+| --help                    -h                                              Show this message and exit.                |
++----------------------------------------------------------------------------------------------------------------------+
++- Burn commands ------------------------------------------------------------------------------------------------------+
+| read-protect-efuse            Disable readback for the eFuse.                                                        |
+| write-protect-efuse           Disable writing to the eFuse.                                                          |
+| burn-efuse                    Burn the eFuse with the specified name.                                                |
+| burn-block-data               Burn non-key data to EFUSE blocks.                                                     |
+| burn-bit                      Burn bit in the eFuse block.                                                           |
+| burn-key                      Burn a 256-bit key to EFUSE.                                                           |
+| burn-key-digest               Parse a RSA public key and burn the digest.                                            |
+| burn-custom-mac               Burn a 48-bit Custom MAC address.                                                      |
+| set-flash-voltage             Permanently set the internal flash voltage regulator.                                  |
++----------------------------------------------------------------------------------------------------------------------+
++- Read commands ------------------------------------------------------------------------------------------------------+
+| summary                       Print human-readable summary of eFuse values.                                          |
+| dump                          Dump raw hex values of all eFuses.                                                     |
+| get-custom-mac                Get the 48-bit Custom MAC Address.                                                     |
+| adc-info                      Display information about ADC calibration data stored in eFuse.                        |
+| check-error                   Checks eFuse errors.                                                                   |
++----------------------------------------------------------------------------------------------------------------------+

@@ -28,6 +28,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   ).toBe(before);
   expect(index.plugins.map((plugin: { id: string; tier: string }) => [plugin.id, plugin.tier])).toEqual([
     ["binutils", "official"],
+    ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],
     ["git", "official"],

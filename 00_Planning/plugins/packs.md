@@ -74,10 +74,14 @@ rules:
   - { match: "espefuse * {summary,dump,check-error,get-custom-mac,adc-info} *", risk: device-read, note: Resets the chip into its bootloader. }
   - { match: "espefuse * {burn-*,write-protect-efuse,read-protect-efuse,set-flash-voltage} *", risk: irreversible, note: eFuse bits are one-time programmable. The change can never be undone and may brick the chip. }
   - { match: "espsecure *", risk: safe, note: Works on local key and image files only. }
+  - { match: "espsecure * {--hsm,--hsm-config} *", risk: blocked, note: External HSM operations are outside the local-file scope. }
 ```
 
 Tests run irreversible paths with `espefuse --virt` (virtual eFuses, no chip) wherever the
 installed version supports it.
+In v5.6.0 virtual mode also specifies `--chip`; `--path-efuse-file` persists virtual state.
+With closed stdin, explicit global `--do-not-confirm` skips the vendor's `BURN` prompt;
+VERA's typed command approval remains enforced. `safe` describes hardware risk, not a file sandbox.
 
 ### 1.4 Skills of the pack
 

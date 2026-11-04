@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-2bd7e52f"
+title = "Provision official eFuse programs from esptool v5"
+status = "active"
+requirement = """When the engineer installs esp32-efuse programs, VERA shall provision espefuse and espsecure from esptool>=5,<6 with help-based version probes in range >=5,<6."""
+verification = """Install catalog zip through PluginStore and actual uv Provisioner, assert both ready and resolved at v5; uninstalled binaries are missing. Check official ESP32 Security group default false."""
+affected_paths = ["05_Software/plugins/esp32-efuse/", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-efuse.test.ts"]
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

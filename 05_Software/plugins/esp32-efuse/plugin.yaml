@@ -1,0 +1,33 @@
+format: 1
+id: esp32-efuse
+version: 1.0.0
+name: ESP32 eFuses and image security
+description: Review Espressif eFuses and explicitly requested permanent changes with esp32-efuse-review. Read summaries and raw eFuses with espefuse; prepare local keys, signatures and encrypted images with espsecure. Burns are irreversible and can brick a chip. Enable this Security plugin only when needed.
+ecosystem: esp32
+platforms: [windows-x64, linux-x64]
+programs:
+  espefuse:
+    install: { pip: "esptool>=5,<6" }
+    version: { args: [--help], match: 'espefuse v(\d+\.\d+\.\d+)', range: ">=5,<6" }
+    timeout: 120
+  espsecure:
+    install: { pip: "esptool>=5,<6" }
+    version: { args: [--help], match: 'espsecure v(\d+\.\d+\.\d+)', range: ">=5,<6" }
+    timeout: 120
+rules:
+  - { match: "espefuse {--help,-h}", risk: safe }
+  - match: "espefuse * {summary,dump,check-error,get-custom-mac,adc-info} *"
+    risk: device-read
+    note: Resets the chip into its bootloader when connecting to hardware; --virt uses virtual eFuses without a chip connection.
+  - match: "espefuse * {burn-*,write-protect-efuse,read-protect-efuse,set-flash-voltage} *"
+    risk: irreversible
+    note: eFuse bits are one-time programmable. The change can never be undone and may brick the chip.
+  - match: "espsecure *"
+    risk: safe
+    note: Works on local key and image files only; safe describes hardware risk, not filesystem confinement.
+  - match: "espsecure * {--hsm,--hsm-config} *"
+    risk: blocked
+    note: This plugin supports local key and image files only. External HSM operations are outside its scope.
+docs:
+  - https://docs.espressif.com/projects/esptool/en/latest/esp32/espefuse/index.html
+  - https://docs.espressif.com/projects/esptool/en/latest/esp32/espsecure/index.html

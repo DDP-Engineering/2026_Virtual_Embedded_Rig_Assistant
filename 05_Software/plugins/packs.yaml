@@ -1,10 +1,11 @@
 # Ecosystem packs: the Plugins page shows each pack as checkable groups (spec REQ-DATA-b40d3f9b §1.1).
-# JTAG debug and Security groups join when those plugins exist here.
+# JTAG debug joins when its plugin exists here.
 - id: esp32
   name: ESP32 (Espressif)
   groups:
     - { name: Core, plugins: [serial-monitor, esp32-esptool], default: true }
     - { name: ESP-IDF build, plugins: [esp32-idf], default: true }
+    - { name: Security (irreversible), plugins: [esp32-efuse], default: false }
 - id: general
   name: Firmware analysis
   groups:

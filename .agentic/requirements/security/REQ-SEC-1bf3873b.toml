@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-1bf3873b"
+title = "Restrict espsecure workflows to local files"
+status = "active"
+requirement = """When classifying espsecure arguments, VERA shall assign local key/image file workflows safe and HSM options blocked with an explanatory note."""
+verification = """Test all actual help commands as safe and --hsm/--hsm-config variants as blocked including underscores, equals and help collisions; run actual local key generation and verify file bytes. Document that safe is a hardware-risk label, not filesystem confinement."""
+affected_paths = ["05_Software/plugins/esp32-efuse/", "05_Software/tests/fixtures/esp32-efuse/", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-efuse.test.ts"]
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

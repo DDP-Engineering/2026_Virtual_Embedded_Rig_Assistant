@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-20e1f26f"
+title = "Gate virtual eFuse burns with durable approvals"
+status = "active"
+requirement = """When an enabled esp32-efuse virtual burn-efuse is requested, VERA shall launch it in ask and auto-edit only after the burn-efuse confirmation matches, and launch it in bypass without a prompt with durable decided_by=mode."""
+verification = """Replay real virtual burns via SessionService/ApprovalGate and NodeProcessHost with closed stdin: no initial spawn or state change, wrong word rejected and pending, exact word launches exitCode 0, persisted JTAG_DISABLE 0->1 and read-back summary True; inspect durable approvals. Read-only refuses. No physical burn command is allowed in fixtures."""
+affected_paths = ["05_Software/plugins/esp32-efuse/", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/tests/integration/esp32-efuse.test.ts"]
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04
