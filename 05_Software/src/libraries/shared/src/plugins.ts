@@ -167,13 +167,19 @@ const installSchema = z.union([
   z.strictObject({
     download: downloadSchema,
   }),
-  z.strictObject({
-    find: z
-      .strictObject({ windows: globs.optional(), linux: globs.optional() })
-      .refine((value) => value.windows || value.linux, "Name at least one system."),
-    hint: z.string().trim().min(1).max(1024).optional(),
-    download: downloadSchema.optional(),
-  }),
+  z
+    .strictObject({
+      find: z
+        .strictObject({ windows: globs.optional(), linux: globs.optional() })
+        .refine((value) => value.windows || value.linux, "Name at least one system."),
+      hint: z.string().trim().min(1).max(1024).optional(),
+      download: downloadSchema.optional(),
+      preferDownload: z.literal(true).optional(),
+    })
+    .refine((install) => !install.preferDownload || install.download !== undefined, {
+      path: ["preferDownload"],
+      message: "Declare a managed download to prefer it.",
+    }),
 ]);
 const programSchema = z
   .strictObject({
@@ -189,6 +195,7 @@ const programSchema = z
     }),
     launcher: args.min(1).optional(),
     launcherMode: z.enum(["argv", "string"]).optional(),
+    optionSyntax: z.literal("sigrok-cli").optional(),
     prefix: z
       .array(arg.refine(placeholders(["pluginDir"]), "Only the pluginDir placeholder is substituted."))
       .max(64)
@@ -380,6 +387,8 @@ export const pluginProgramStatusSchema = z.strictObject({
   link: z.string().min(1).max(1024).optional(),
   problem: pluginProgramProblemSchema.optional(),
   detail: z.string().max(2000).optional(),
+  /** This platform has a preferred managed download while a discovered CLI is selected. */
+  downloadAvailable: z.literal(true).optional(),
 });
 export type PluginProgramStatus = z.infer<typeof pluginProgramStatusSchema>;
 

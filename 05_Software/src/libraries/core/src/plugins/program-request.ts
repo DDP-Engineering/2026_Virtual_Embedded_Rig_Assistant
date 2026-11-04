@@ -249,7 +249,12 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
   if (refusal) throw denied(refusal);
   if (!declares(input.plugin, input.program)) throw denied({ reason: "undeclared" });
   const { manifest, record } = input.plugin;
-  const classification = classifyCommand(manifest.rules, input.program, input.args);
+  const classification = classifyCommand(
+    manifest.rules,
+    input.program,
+    input.args,
+    manifest.programs[input.program]?.optionSyntax,
+  );
   const guard = await PathGuard.create(input.workbench);
   const directory = await guard.resolve(input.cwd ?? ".");
   const cwd = directory.relative;

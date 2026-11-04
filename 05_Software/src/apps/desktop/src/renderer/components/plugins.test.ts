@@ -210,19 +210,25 @@ it("says when no plugin is installed", async () => {
 });
 
 // REQ-UX-d51c6e3c
-it("installs a plugin's programs and shows their new states", async () => {
-  await i18n.changeLanguage("en");
-  stub({ installed: [echo] });
-  await render();
-  await vi.waitFor(() => expect($('[data-action="plugin-provision"]')).not.toBeNull());
-  await click('[data-action="plugin-provision"]');
-  expect(calls("plugins.provision")).toEqual([["plugins.provision", { id: "echo-tools" }]]);
-  await vi.waitFor(() =>
-    expect($('[data-program="echo"]').textContent).toContain(i18n.t("plugins.state.ready")),
-  );
-  expect($('[data-program="echo"]').textContent).toContain("22.11.0");
-  expect($('[data-action="plugin-provision"]')).toBeNull();
-});
+it.each([
+  { name: "echo", kind: "find", state: "missing" },
+  { name: "echo", kind: "download", state: "ready", downloadAvailable: true },
+] satisfies PluginProgramStatus[])(
+  "installs a plugin's programs with initial state $state",
+  async (status) => {
+    await i18n.changeLanguage("en");
+    stub({ installed: [echo], programs: [status] });
+    await render();
+    await vi.waitFor(() => expect($('[data-action="plugin-provision"]')).not.toBeNull());
+    await click('[data-action="plugin-provision"]');
+    expect(calls("plugins.provision")).toEqual([["plugins.provision", { id: "echo-tools" }]]);
+    await vi.waitFor(() =>
+      expect($('[data-program="echo"]').textContent).toContain(i18n.t("plugins.state.ready")),
+    );
+    expect($('[data-program="echo"]').textContent).toContain("22.11.0");
+    expect($('[data-action="plugin-provision"]')).toBeNull();
+  },
+);
 
 // REQ-UX-41c19e62
 it("shows a broken plugin's issues and offers no switch or program install", async () => {

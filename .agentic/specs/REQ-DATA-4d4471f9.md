@@ -25,7 +25,7 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `platforms` | non-empty, unique subset of `windows-x64`, `linux-x64`, `linux-arm64` |
 | `requires` | optional, at most 64 unique plugin ids, default `[]` |
 | `programs` | optional map; key `^[a-z0-9._-]{1,64}$`, at most 64 programs |
-| `programs.*.install` | one of `{pip}`, `{script}`, `{download}`, `{find, hint?, download?}`; only find may have a pinned download fallback |
+| `programs.*.install` | one of `{pip}`, `{script}`, `{download}`, `{find, hint?, download?, preferDownload?}`; `preferDownload: true` requires both find and download |
 | `install.pip` | requirement string, 1–256 characters after trimming, starting with a letter or digit |
 | `install.script` | plugin-relative `.py` path that exists in the package |
 | `install.download` | map of platform → `{url: https URL ≤ 2048 characters, sha256: 64 hex, path?: relative path, prefix?: args}`, at least one platform; a URL whose path ends in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` (any case) needs `path`; any other URL without `path` needs a last path segment that is a valid relative path |
@@ -33,6 +33,7 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `programs.*.version` | `{args: args, match: regex, range?}`; the JavaScript regex, 1–512 characters, compiles and has exactly one capture group; `range` is 1–128 characters of comma-separated comparators `>=`, `>`, `<=`, `<`, `==`, `!=` each followed by dotted decimal numbers (`>=5,<6`), spaces allowed around commas |
 | `programs.*.launcher` | optional non-empty args; only with find without download fallback, whose search locates launcher[0] |
 | `programs.*.launcherMode` | argv or string, required iff launcher is present; string uses the verified Bash/PowerShell command transport |
+| `programs.*.optionSyntax` | optional `sigrok-cli`; projects GLib option roles for rule matching while execution and approval retain the exact original arguments |
 | `programs.*.prefix` | optional args; `${pluginDir}` is the only placeholder |
 | `programs.*.env` | optional map `^[A-Za-z_][A-Za-z0-9_]{0,127}$` → value ≤ 4096 characters; placeholders `${workbench}`, `${pluginDir}` only |
 | `programs.*.timeout` | optional integer seconds, 1–3600 |

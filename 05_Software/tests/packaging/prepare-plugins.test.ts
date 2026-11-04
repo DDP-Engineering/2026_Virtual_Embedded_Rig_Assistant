@@ -32,6 +32,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["esp32-idf", "official"],
     ["probe-rs", "official"],
     ["serial-monitor", "official"],
+    ["sigrok", "official"],
   ]);
   expect(JSON.parse(await readFile(join(target, "index.json"), "utf8"))).toEqual(index);
   await expect(checkBundledPlugins(target)).resolves.toEqual(index);

@@ -429,7 +429,7 @@ function PluginCard({
             {t("plugins.catalog.update", { version: update.entry.version })}
           </button>
         )}
-        {healthy && programs.data?.some((status) => status.state !== "ready") && (
+        {healthy && programs.data?.some((status) => status.state !== "ready" || status.downloadAvailable) && (
           <button
             type="button"
             data-action="plugin-provision"

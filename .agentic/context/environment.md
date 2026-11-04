@@ -199,3 +199,9 @@ PDF downloads verification: focused core web/pdf-transfer.test.ts, web/pdf-downl
 Plugin-builder acceptance uses core authoring/gate/write/skill units, real-process/SQLite replay tests/integration/plugin-builder.test.ts, renderer promotion/export tests and tests/e2e/plugin-builder.spec.ts in sandboxed Electron. The help-only documentation fixture is tests/fixtures/plugin-builder/cli.mjs; all commands use virtual hardware.
 
 Probe-rs acceptance: tests/integration/probe-rs.test.ts uses an installed official package, isolated find/version probes, real NodeProcessHost fixture replay and optional verified local official archives via VERA_PROBE_RS_ARCHIVES (no test network). VERA_TEST_EVIDENCE_DIR retains original CLI/replay output; use a task-owned TMP/TEMP directory on Windows, and allow taskkill to terminate the owned background process tree. Native Ubuntu uses the pinned Linux Node runtime and its own dependencies. Replay does not validate real probes; three-board and closed-stdin down-channel RTT bench acceptance is pending (TASK-bc643d04).
+
+Sigrok acceptance: tests/integration/sigrok.test.ts covers the installed package and
+typed Ask with a simulated process. VERA_SIGROK_ARCHIVES enables real x64
+provisioning through local transport, demo acquisition and offline UART/I2C
+decoding of a generated srzip trace. VERA_TEST_EVIDENCE_DIR retains output.
+ARM64 inspection, hosted downloads and physical bench verification are separate.

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-e47bbb9a"
+title = "Expose five sigrok bench workflow skills"
+status = "active"
+requirement = "When sigrok is enabled for a workbench, VERA shall expose the capture, decode, instrument, Hantek and ATK-DL16 skills."
+verification = "Install and enable sigrok, then check skill catalog and read all five entries for the workflow examples and capability checks."
+affected_paths = ["05_Software/plugins/sigrok/skills/"]
+linked_tests = ["05_Software/tests/integration/sigrok.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

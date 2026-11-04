@@ -58,10 +58,13 @@ writes a new `install.json` with `programs: {}`, so its programs install again.
 | `script: <path>` | `uv sync --script <plugin folder>/<path>` | installed → uv with leading arguments `run --quiet --offline --script <plugin folder>/<path>` and the uv environment |
 | `download: {<platform>: {url, sha256, path?, prefix?}}` | the entry of the current platform: reuse `downloads/<sha256>/` when it exists, else download, verify, extract or store, rename into place | installed and `downloads/<sha256>/<path>` is a file → that file with `prefix` as leading arguments |
 | `find: {windows?, linux?}` | nothing to install; the statuses report it | the first file the search finds (below), probed |
-| `find: {windows?, linux?}, download: {...}` | when find misses, install the current platform download as above | find and probe first; otherwise use the recorded download; status kind is download |
+| `find: {windows?, linux?}, download: {...}` | when find misses, install the current platform download as above | find and probe first, then use the recorded download on a miss. Status kind is download |
+| `find: {windows?, linux?}, download: {...}, preferDownload: true` | install the current platform download as above when no managed executable is installed, even when find succeeds | select the recorded managed executable when present, else find and probe. Report `downloadAvailable: true` on a discovered result when the platform has a managed entry |
 
 Combined declarations stay format 1. Find returning an executable with an unreadable or unsupported
-version reports the existing unavailable version/range status, without replacement. A missing find
+version reports the existing unavailable version/range status. With `preferDownload`, an explicit
+install attempt can still provision the managed entry. A failed attempt reports the download failure
+to the caller. Normal status and resolution still use the discovered fallback when available. A missing find
 system list also permits the declared download fallback. An unavailable download platform reports
 platform; discovery never fetches. Every entry point sharing a SHA-256 reuses the same extracted tree,
 but each program's version is probed and recorded separately. Launchers use find without fallback.
@@ -120,7 +123,7 @@ with literal backslashes and a generated call operator. Metacharacters in input 
 ### Status
 
 `{name, kind: pip | script | download | find, state: ready | missing | unavailable, version?, range?,
-hint?, link?, problem?, detail?}`, one per declared program in name order.
+hint?, link?, problem?, detail?, downloadAvailable?: true}`, one per declared program in name order.
 
 | State | Problem | When |
 |---|---|---|

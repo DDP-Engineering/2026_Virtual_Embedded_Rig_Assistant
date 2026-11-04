@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-PLAT-193f7af3"
+title = "Offer the official pinned sigrok tool and its local fallback"
+status = "active"
+requirement = "When an operator enables the official sigrok plugin, VERA shall use the provisioned SHA-256-pinned fork in preference to a version-probed system CLI while allowing the user to install the pinned package with or without a discovered fallback."
+verification = "Install the catalog source with a simulated system CLI, verify direct discovery and the install action, provision an exact asset through local transport, and check that the pinned CLI is selected while the system CLI remains discoverable."
+affected_paths = ["05_Software/plugins/sigrok/plugin.yaml", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+linked_tests = ["05_Software/tests/integration/sigrok.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

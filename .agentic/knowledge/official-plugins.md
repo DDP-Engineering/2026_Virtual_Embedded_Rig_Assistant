@@ -7,7 +7,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -17,7 +17,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32 Core and ESP-IDF build groups, default on), `catalog.yaml` (all five plugins
+source: `packs.yaml` (ESP32 and Firmware analysis groups, default on), `catalog.yaml` (all six plugins
 `official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -29,6 +29,15 @@ from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
+
+- `sigrok` 1.0.0, general, Windows x64/Linux x64/Linux arm64: provision the
+  SHA-256-pinned DDP PulseView 66540df asset or use a local sigrok-cli fallback.
+  An installed pinned executable takes precedence. AppImage arguments apply
+  to managed downloads only and force extraction before CLI launch. The LAN HTTPS
+  release is a proposed endpoint. Check the full `-L` log or the driver's
+  `--show` output for fork-only drivers before a hardware
+  workflow. Skills cover bounded srzip capture, background streaming, offline
+  decoding, instrument reads and approved changes, and the Hantek/ATK drivers.
 
 - `probe-rs` 1.0.0, general, Windows x64/Linux x64/Linux arm64: probe-rs exactly 0.32.0,
   PATH then ~/.cargo/bin discovery, explicit user-triggered SHA-256-pinned portable fallback.
@@ -69,6 +78,13 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
   boot log with `serial capture --port P --reset`.
 
 ## Invariants
+
+- Sigrok rules use the `sigrok-cli` option syntax to distinguish flags and values and
+  classify output settings regardless of argument order. The CLI applies `--config`
+  on reads and captures, so the manifest protects output-driving drivers and PWM
+  groups in these forms as well as `--set`. An implicit driver with configuration is
+  irreversible. Ask uses the typed approval gate. Exact raw argv is retained for
+  the approval and launch.
 
 - probe-rs rules use highest-risk-wins, including command tokens after global options. Version/help,
   chip/list safe; info/mi/read/verify/attach/profile/trace/reset device-read; download/run/erase/benchmark

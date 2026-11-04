@@ -76,7 +76,7 @@ Core's `Provisioner` (`provisioning.ts`) installs and locates declared programs 
 install. pip and script programs run the bundled uv (pinned by `src/uv/uv-manifest.json`) with every uv folder
 inside the runtime and one managed CPython 3.13; downloads are verified, extracted (zip in core through
 `archive.ts`, tar archives through the system tar) and kept per SHA-256; find programs are searched on PATH and
-absolute globs. Format-1 find may include a download fallback: a found executable is probed first; a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. Combined statuses use kind download; the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
+absolute globs. Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
 Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
 The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page

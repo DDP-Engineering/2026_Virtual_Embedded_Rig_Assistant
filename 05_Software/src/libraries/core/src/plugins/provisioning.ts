@@ -278,7 +278,12 @@ export class Provisioner implements ProgramResolver {
         for (const name of Object.keys(plugin.manifest.programs).sort()) {
           outer.throwIfAborted();
           const current = await this.inspect(plugin, name, outer);
-          if (current?.status.state !== "missing" || current.status.kind === "find") continue;
+          if (
+            !current ||
+            current.status.kind === "find" ||
+            (current.status.state !== "missing" && !current.status.downloadAvailable)
+          )
+            continue;
           const deadline = AbortSignal.timeout(this.options.timeouts?.installMs ?? INSTALL_MS);
           let outcome: string | PluginProgramStatus;
           try {
@@ -346,6 +351,24 @@ export class Provisioner implements ProgramResolver {
     if (!platform || !plugin.manifest.platforms.includes(platform)) return not("unavailable", "platform");
     const { install } = program;
     const recorded = Object.hasOwn(plugin.record.programs, name) ? plugin.record.programs[name] : undefined;
+    const download = "download" in install && install.download;
+    const entry = download ? download[platform] : undefined;
+    const preferDownload = "preferDownload" in install && install.preferDownload === true;
+    const downloaded = async () => {
+      const file = entry && downloadName(entry);
+      if (!entry || !file || recorded === undefined) return undefined;
+      const executable = join(this.downloads, entry.sha256, ...file.split("/"));
+      if (!(await isFile(executable))) return undefined;
+      return this.check(
+        name,
+        kind,
+        program,
+        { executable, ...(entry.prefix ? { prefix: entry.prefix } : {}) },
+        recorded,
+      );
+    };
+    const preferred = preferDownload ? await downloaded() : undefined;
+    if (preferred) return preferred;
     if ("find" in install) {
       const list = this.windows ? install.find.windows : install.find.linux;
       const found = list && (await this.search(program.launcher?.[0] ?? name, list));
@@ -372,28 +395,20 @@ export class Provisioner implements ProgramResolver {
               }
             : {}),
         };
-        return this.check(
+        const foundProgram = this.check(
           name,
           kind,
           program,
           resolved,
           await this.probe(resolved, program, signal, plugin.folder),
         );
+        if (preferDownload && entry) foundProgram.status.downloadAvailable = true;
+        return foundProgram;
       }
     }
-    if ("download" in install && install.download) {
-      const entry = install.download[platform];
-      const file = entry && downloadName(entry);
-      if (!entry || !file) return not("unavailable", "platform");
-      const executable = join(this.downloads, entry.sha256, ...file.split("/"));
-      if (recorded === undefined || !(await isFile(executable))) return not("missing");
-      return this.check(
-        name,
-        kind,
-        program,
-        { executable, ...(entry.prefix ? { prefix: entry.prefix } : {}) },
-        recorded,
-      );
+    if (download) {
+      if (!entry) return not("unavailable", "platform");
+      return (preferDownload ? undefined : await downloaded()) ?? not("missing");
     }
     if ("find" in install || "download" in install) return not("unavailable", "platform");
     if (!this.options.uv) return not("unavailable", "uv");

@@ -10,3 +10,4 @@
   groups:
     - { name: ELF analysis, plugins: [binutils], default: true }
     - { name: Debug probes and RTT, plugins: [probe-rs], default: true }
+    - { name: Signal capture and bench instruments, plugins: [sigrok], default: true }

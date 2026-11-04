@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-f8d84877"
+title = "Classify sigrok hardware actions from parsed option roles"
+status = "active"
+requirement = "When the agent submits a sigrok-cli command, VERA shall apply the highest applicable risk to the parsed option roles, including typed confirmation in ask for irreversible output changes."
+verification = "Exercise every manifest rule and accepted option spelling, combine offline, capture and actuation options, and verify no process starts on missing or wrong confirmation."
+affected_paths = ["05_Software/plugins/sigrok/plugin.yaml", "05_Software/src/libraries/shared/src/sigrok-options.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/tests/integration/sigrok.test.ts"]
+created = 2026-11-03
+updated = 2026-11-03

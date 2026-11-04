@@ -1,0 +1,48 @@
+format: 1
+id: sigrok
+version: 1.0.0
+name: sigrok (DDP fork)
+description: Capture and decode digital and analog signals and read or configure bench instruments through sigrok-cli.
+ecosystem: general
+platforms: [windows-x64, linux-x64, linux-arm64]
+docs: [README.md]
+programs:
+  sigrok-cli:
+    optionSyntax: sigrok-cli
+    install:
+      find:
+        windows: ["%PATH%"]
+        linux: ["$PATH", "/usr/bin/sigrok-cli"]
+      preferDownload: true
+      hint: Install the pinned DDP package when available, or put sigrok-cli on PATH. Check the full -L log or targeted --show for atk-dl16 and hantek-dso3062l. See README.md for user-managed USB access.
+      download:
+        windows-x64:
+          url: https://192.168.1.15/dpasare/2026_Pulseview/releases/download/sigrok-66540df/pulseview-20260831-66540df-windows-x64.zip
+          sha256: aa1bff062e25d09ec5e6c634c0def3b21cd7da90e700886fdbf6fdde361d4688
+          path: pulseview-windows-x86_64/sigrok-cli.exe
+        linux-x64:
+          url: https://192.168.1.15/dpasare/2026_Pulseview/releases/download/sigrok-66540df/PulseView-x86_64.AppImage
+          sha256: d8bc80b138d559253b1dc25c4b02ae2b91d65865598b72adc37911ce73cab3a3
+          prefix: [--appimage-extract-and-run, --cli]
+        linux-arm64:
+          url: https://192.168.1.15/dpasare/2026_Pulseview/releases/download/sigrok-66540df/PulseView-aarch64.AppImage
+          sha256: 45d12f22b02dac4455038867714f6e52b1b674ca1e0796166146435750e64bd3
+          prefix: [--appimage-extract-and-run, --cli]
+    version: { args: [--version], match: '^sigrok-cli (\d+\.\d+\.\d+)' }
+    timeout: 120
+rules:
+  - { match: "sigrok-cli * {--version,--list-supported,--help,--help-all,--list-supported-wiki} *", risk: safe }
+  - { match: "sigrok-cli * --input-file *", risk: safe, note: Loads a saved capture without requiring hardware. }
+  - { match: "sigrok-cli * {--scan,--list-serial,--show,--get} *", risk: device-read }
+  - { match: "sigrok-cli --driver * {--samples,--time,--frames,--continuous} *", risk: device-read, note: Acquires samples from the selected instrument. }
+  - { match: "sigrok-cli * --set *", risk: device-write, note: Changes instrument settings. }
+  - { match: "sigrok-cli * --get * --config *", risk: device-write, note: sigrok-cli applies settings before it reads them. }
+  - match: "sigrok-cli --driver {scpi-pps*,korad-*,rdtech-dps*,rdtech-rd*,manson-*,gwinstek-gpd*,gwinstek-psp*,atten-pps*,motech-*,itech-*,maynuo-*,siglent-sdl*,arachnid-labs-*,zketech-*,rigol-dg*,juntek-*,usbrelay,devantech-eth*,hpib-pps*,hp-59306a*,atorch,conrad-digi-35-cpu,rohde-schwarz-sme-*} * {--set,--config} *"
+    risk: irreversible
+    note: Can drive a physical output or change a load connected to the bench.
+  - match: "sigrok-cli --driver <auto> * {--set,--config} *"
+    risk: irreversible
+    note: Without an explicit driver sigrok-cli can select a connected output-driving instrument.
+  - match: "sigrok-cli --driver {atk-dl16,kingst-la2016} * --config pwm *"
+    risk: irreversible
+    note: Changes the logic analyzer's PWM generator output.

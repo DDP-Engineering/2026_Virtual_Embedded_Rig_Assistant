@@ -259,7 +259,12 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       const background = args.background === true;
       const pluginDir = current.plugin.folder;
       const timeoutMs = programTimeout({
-        rule: classifyCommand(current.plugin.manifest.rules, args.program, args.args ?? []).timeout,
+        rule: classifyCommand(
+          current.plugin.manifest.rules,
+          args.program,
+          args.args ?? [],
+          current.declared.optionSyntax,
+        ).timeout,
         program: current.declared.timeout,
         requested: args.timeout,
         background,

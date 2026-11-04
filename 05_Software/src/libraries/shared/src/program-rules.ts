@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { type PluginRisk, pluginIdSchema, pluginProgramNameSchema, pluginRiskSchema } from "./plugins.js";
 import type { PermissionMode } from "./session.js";
+import { sigrokRuleArguments } from "./sigrok-options.js";
 
 /** A plugin rule as matching reads it: a space-separated pattern, its risk and an optional note. */
 export interface ProgramRule {
@@ -123,8 +124,9 @@ export function classifyCommand(
   rules: readonly ProgramRule[],
   program: string,
   args: readonly string[],
+  optionSyntax?: "sigrok-cli",
 ): ProgramClassification {
-  const line = tokens(program, args);
+  const line = tokens(program, optionSyntax === "sigrok-cli" ? sigrokRuleArguments(args) : args);
   let risk: PluginRisk | undefined;
   let confirm: string | undefined;
   let timeout: number | null = null;
