@@ -1,0 +1,13 @@
+# Register decoding contract
+
+STATED: authoritative sources are 00_Planning/capabilities/tools/decode_register/SPEC.md sections2-5, shared contracts sections1-5 and live issue77 (read2026-11-04).
+
+Definition: linear structural preflight bounds depth<=8, object keys<=8 and array entries<=512 before any YAML processing (valid definitions need at most7 containers and5 keys per object). Strict JSON object parsed with yaml parseDocument uniqueKeys:true plus JSON grammar validation. schemaVersion1; device{id,revision}; sourceRefs1..8 valid workbench line refs; registers1..512 unique names, widthBits8/16/32/64, optional address and sourceRefs; fields0..64 unique names, integer lsb/width bounded by the register, nonoverlapping masks; optional description<=256 and enum0..16 unique integral values fitting the field. Enum values can be unsigned decimal/hex strings (precision-safe at64bits) or safe unsigned JSON integers. No numbers exceeding safe integer precision are admitted.
+
+Arguments/result follow the planning SPEC. Every decoded field additionally carries ref=source.ref, satisfying shared contracts section2; it cites the complete inspected definition. Values are strictly unsigned decimal or0x/0X hex strings<=80 with no whitespace, signs or expressions. Optional device revision only constrains when supplied. Hex strings for both register and fields are padded to register width. Source hash uses exact bytes including BOM/CRLF; source.ref uses logical file lines (terminal newline ends last line). Register refs override device-level refs when present. A complete serialized result exceeding32000characters fails INVALID/result_too_large; no field or citation is silently dropped.
+
+Stable errors: missing file NOT_FOUND/not_found; refused path DENIED/path_denied; disabled DENIED/tool_disabled; invalid args INVALID/invalid_arguments; syntax/schema INVALID/invalid_definition; duplicate keys INVALID/duplicate_keys; bad UTF8 INVALID/invalid_utf8; >1MiB INVALID/file_too_large; absent register INVALID/unknown_register; overflow INVALID/value_out_of_range; wrong device CONFLICT/device_mismatch; changed identity/stats/expected hash CONFLICT/source_changed. No retries.
+
+OBSERVED: existing citation provenance collects structured ref properties, not arrays. The decode_register-specific validated result adds sourceRefs to issued refs; current guards and line bounds still validate them and openCitation uses the same source provenance.
+
+Constraints: confined in Bypass, no workers/devices, no mutation, format1, no migrations. Full epic gate remains with79/coordinator. Linux WSL2 proof is labelled separately from native Ubuntu.

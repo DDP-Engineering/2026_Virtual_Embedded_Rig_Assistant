@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-b86a7502"
+title = "Refuse disabled register decoding"
+status = "active"
+requirement = "When decode_register is in tools.disabled, VERA shall omit it from offered tools and refuse direct execution with DENIED and reason tool_disabled."
+verification = "Check registry specs/bind and direct disabled execute, plus session disabled catalog."
+affected_paths = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

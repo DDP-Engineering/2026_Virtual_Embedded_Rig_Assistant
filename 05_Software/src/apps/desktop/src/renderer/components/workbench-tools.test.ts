@@ -52,6 +52,15 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
   });
   const toggles = [...container.querySelectorAll<HTMLInputElement>("[data-tool-toggle]")];
   expect(toggles).toHaveLength(builtinToolNames.length);
+  for (const language of ["en", "ro", "de"]) {
+    await act(async () => {
+      await i18n.changeLanguage(language);
+    });
+    const description = container.querySelector('[data-tool-description="decode_register"]')?.textContent;
+    expect(description).toBeTruthy();
+    expect(description).not.toContain("workbenchTools.");
+    expect(description).toBe(i18n.t("workbenchTools.decode_register"));
+  }
   expect(container.querySelector('[data-action="skills-settings"]')).toBeNull();
   const grep = container.querySelector<HTMLInputElement>('[data-tool-toggle="grep"]') as HTMLInputElement;
   expect(grep.checked).toBe(false);

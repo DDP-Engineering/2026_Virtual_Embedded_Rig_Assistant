@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-c3aceaf8"
+title = "Describe register decoding in the shared tool catalog"
+status = "active"
+requirement = "When editing workbench tools in English, Romanian or German, VERA shall show decode_register from the canonical builtinToolNames catalog with a localized description and persisted enabled selection."
+verification = "Render en/ro/de descriptions, verify catalog counts from builtinToolNames.length and exercise native save/cancel/restart with decode_register excluded."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/tests/e2e/workbench-tools.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/tests/e2e/workbench-tools.spec.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

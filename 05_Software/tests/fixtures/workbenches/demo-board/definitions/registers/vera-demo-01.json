@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "device": {
+    "id": "VERA-DEMO-01",
+    "revision": "A"
+  },
+  "sourceRefs": ["sources/reference-manual.md#L7-L7"],
+  "registers": [
+    {
+      "name": "I2C1_CR1",
+      "widthBits": 32,
+      "address": "0x40005400",
+      "fields": [
+        {
+          "name": "PE",
+          "lsb": 0,
+          "width": 1
+        },
+        {
+          "name": "TXIE",
+          "lsb": 1,
+          "width": 1
+        },
+        {
+          "name": "RXIE",
+          "lsb": 2,
+          "width": 1
+        },
+        {
+          "name": "ERRIE",
+          "lsb": 7,
+          "width": 1
+        }
+      ]
+    }
+  ]
+}

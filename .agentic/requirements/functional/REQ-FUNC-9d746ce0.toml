@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-9d746ce0"
+title = "Report missing register definition files"
+status = "active"
+requirement = "When an allowed definitionPath does not exist, decode_register shall return NOT_FOUND with reason not_found."
+verification = "Call a missing ordinary path and distinguish ignored missing path denial."
+affected_paths = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

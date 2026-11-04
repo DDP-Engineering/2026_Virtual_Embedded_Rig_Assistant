@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-e2659125"
+title = "Expose cited register evidence in sessions and CLI"
+status = "active"
+requirement = "When an enabled decode_register succeeds in SessionService or vera run, VERA shall return identical complete bounded evidence including the exact definition hash, whole-file line ref and sourceRefs that successful replay answers can cite and open."
+verification = "Compare actual vera run process and SessionService outputs; validate and open definition and manual refs, restart replay, reject invented/unissued/ignored refs and oversized complete results."
+affected_paths = ["05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/src/libraries/core/src/agent/citations.ts", "05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts", "05_Software/tests/fixtures/workbenches/demo-board.json", "05_Software/tests/fixtures/workbenches/demo-board/definitions/registers/vera-demo-01.json", "05_Software/tests/integration/cli.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/tests/integration/cli.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

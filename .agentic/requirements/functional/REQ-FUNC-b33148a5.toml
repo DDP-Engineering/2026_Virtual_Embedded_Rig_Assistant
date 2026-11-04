@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-b33148a5"
+title = "Decode captured register values exactly"
+status = "active"
+requirement = "When a valid definition, register and unsigned decimal or hexadecimal string are supplied, decode_register shall return exact width-padded lowercase hexadecimal and decimal strings, fields sorted by lsb with nullable enum labels and definition line refs, and unmapped masks using BigInt arithmetic."
+verification = "Decode0x81 and129; compare results, all four widths, bit63 and max64 through JSON, enums and unmapped bits."
+affected_paths = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

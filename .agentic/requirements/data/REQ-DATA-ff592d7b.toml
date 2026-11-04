@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-ff592d7b"
+title = "Validate bounded register definitions"
+status = "active"
+requirement = "When loading a structurally bounded UTF-8 JSON definition of at most1MiB, decode_register shall reject invalid schemaVersion1 data, duplicate keys, nonunique register or field names, overlapping or out-of-width fields, invalid source line refs, more than512 registers or64 fields per register, descriptions over256 characters and more than16 duplicate or out-of-field enum values as INVALID with a stable reason."
+verification = "Before the YAML pass refuse30000-key and10000-depth JSON using a linear structural preflight; mutate one valid definition per boundary; assert INVALID and stable invalid_definition, duplicate_keys, invalid_utf8 or file_too_large reasons."
+affected_paths = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

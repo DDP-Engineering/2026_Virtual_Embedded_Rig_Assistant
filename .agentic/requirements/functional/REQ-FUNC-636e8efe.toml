@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-636e8efe"
+title = "Refuse invalid register decode requests"
+status = "active"
+requirement = "When arguments, a selected register or a captured value are invalid, decode_register shall return INVALID with stable invalid_arguments, unknown_register or value_out_of_range reason."
+verification = "Reject signs/fractions/expressions/non-string/over80-character values, invalid args and unknown register; refuse register overflow at each width."
+affected_paths = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

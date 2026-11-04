@@ -298,6 +298,108 @@ it("parse_log returns identical cited evidence through agent sessions and vera r
     await workers.dispose();
   }
 }, 60000);
+it("decode_register returns identical complete cited evidence through agent sessions and vera run", async () => {
+  const { dir, workbench } = await fixture();
+  const definitionPath = "definitions/registers/vera-demo-01.json";
+  const bytes = await readFile(join(workbench, definitionPath));
+  const definitionRef = `${definitionPath}#L1-L${bytes.toString().trimEnd().split("\n").length}`;
+  const manualRef = "sources/reference-manual.md#L7-L7";
+  const scripts = join(dir, "scripts");
+  await mkdir(scripts);
+  const script = join(scripts, "decode-register.jsonl");
+  await writeFile(
+    script,
+    [
+      {
+        toolCalls: [
+          { name: "decode_register", args: { definitionPath, register: "I2C1_CR1", value: "0x81" } },
+        ],
+      },
+      { text: `Captured value129 [[${definitionRef}]]. Field meanings [[${manualRef}]].` },
+    ]
+      .map((step) => JSON.stringify(step))
+      .join("\n"),
+  );
+  const handle = await openDb(join(dir, "agent.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const options = {
+    db: handle.db,
+    root: workbench,
+    gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
+    clock: { now: () => new Date(123), sleep: async () => {} },
+    model: () => "replay/decode-register",
+    prompt: () => "Cite captured register evidence.",
+  };
+  let service = new SessionService(options);
+  const agent: SessionEvent[] = [];
+  try {
+    const session = service.create();
+    service.subscribe(session.id, 0, (_seq, event) => agent.push(event));
+    service.send(session.id, "Decode the captured register");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const cli = await launch([...replay(workbench, script), "--data", join(dir, "cli-data")], {}, "npm")
+      .result;
+    expect(cli.code).toBe(0);
+    const cliEvents = events(cli.stdout).map((record) => record.event);
+    const outputs = (records: SessionEvent[]) =>
+      records.flatMap((event) => (event.type === "tool.done" ? [JSON.parse(event.summary)] : []));
+    expect(outputs(cliEvents)).toEqual(outputs(agent));
+    expect(outputs(agent)).toHaveLength(1);
+    expect(outputs(agent)[0]).toMatchObject({
+      valueDec: "129",
+      unmappedMaskHex: "0xffffff78",
+      unmappedSetBitsHex: "0x00000000",
+      source: { ref: definitionRef, sha256: createHash("sha256").update(bytes).digest("hex") },
+      sourceRefs: [manualRef],
+    });
+    for (const records of [agent, cliEvents]) {
+      expect(
+        records
+          .filter((event: SessionEvent) => event.type === "tool.done")
+          .every((event: SessionEvent) => event.type === "tool.done" && event.ok),
+      ).toBe(true);
+      expect(records.filter((event: SessionEvent) => event.type === "message.done").at(-1)).toMatchObject({
+        citations: [
+          { ref: definitionRef, valid: true },
+          { ref: manualRef, valid: true },
+        ],
+      });
+    }
+    const answer = service
+      .get(session.id)
+      .snapshot.items.filter((item) => item.kind === "assistant")
+      .at(-1);
+    if (answer?.kind !== "assistant") throw Error("Missing cited answer.");
+    for (const ref of [definitionRef, manualRef])
+      expect(await service.openCitation(session.id, answer.id, ref)).toMatchObject({ kind: "text" });
+    await service.close();
+    service = new SessionService(options);
+    expect(
+      service
+        .get(session.id)
+        .snapshot.items.filter((item) => item.kind === "assistant")
+        .at(-1),
+    ).toMatchObject({
+      citations: [
+        { ref: definitionRef, valid: true },
+        { ref: manualRef, valid: true },
+      ],
+    });
+    expect(await service.openCitation(session.id, answer.id, manualRef)).toMatchObject({
+      kind: "text",
+      start: 7,
+      end: 7,
+    });
+    if (evidence)
+      await writeFile(
+        join(evidence, "decode-register-agent.json"),
+        JSON.stringify({ events: agent, snapshot: service.get(session.id).snapshot }, null, 2),
+        { flag: "wx" },
+      );
+  } finally {
+    await service.close();
+    handle.close();
+  }
+}, 60000);
 it("CLI loads a separately authorized user skill and extra file", async () => {
   const { workbench } = await fixture();
   const data = join(workbench, "user-data"),

@@ -1,9 +1,54 @@
-import { mkdtemp, open, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Message } from "@earendil-works/pi-ai";
 import { expect, it } from "vitest";
 import { validateCitations } from "./citations.js";
+
+it("issues sourceRefs only from validated successful decode_register evidence and keeps current path bounds", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-register-citations-"));
+  try {
+    await writeFile(join(root, "manual.md"), "meaning\n");
+    await mkdir(join(root, ".vera"));
+    await writeFile(join(root, ".vera/.veraignore"), "ignored.md\n");
+    await writeFile(join(root, "ignored.md"), "ignored\n");
+    const refs = ["manual.md#L1-L1", "manual.md#L2-L2", "ignored.md#L1-L1", ".vera/.veraignore#L1-L1"];
+    const value = {
+      device: { id: "x", revision: "A" },
+      register: "R",
+      widthBits: 8,
+      valueHex: "0x00",
+      valueDec: "0",
+      fields: [],
+      unmappedMaskHex: "0xff",
+      unmappedSetBitsHex: "0x00",
+      source: { path: "definition.json", sha256: "0".repeat(64), ref: "definition.json#L1-L1" },
+      sourceRefs: refs,
+    };
+    const message: Message = {
+      role: "toolResult",
+      toolName: "decode_register",
+      toolCallId: "c",
+      isError: false,
+      timestamp: 0,
+      content: [{ type: "text", text: JSON.stringify(value) }],
+    };
+    const text = refs.map((ref) => `[[${ref}]]`).join(" ");
+    expect(await validateCitations(root, text, [message])).toEqual(
+      refs.map((ref, i) => ({ ref, valid: i === 0 })),
+    );
+    for (const other of [
+      { ...message, toolName: "read" },
+      { ...message, isError: true },
+      { ...message, content: [{ type: "text" as const, text: JSON.stringify({ sourceRefs: refs }) }] },
+    ])
+      expect(await validateCitations(root, text, [other])).toEqual(
+        refs.map((ref) => ({ ref, valid: false })),
+      );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("validates control-byte UTF8 only for successful parse_log provenance", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-log-citations-"));

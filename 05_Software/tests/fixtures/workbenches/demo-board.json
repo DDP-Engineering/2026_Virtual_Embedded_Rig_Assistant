@@ -17,6 +17,7 @@
     "logs/boot-0413.log",
     "docs/runs.md",
     "docs/boot-test.md",
-    "docs/release-notes.md"
+    "docs/release-notes.md",
+    "definitions/registers/vera-demo-01.json"
   ]
 }

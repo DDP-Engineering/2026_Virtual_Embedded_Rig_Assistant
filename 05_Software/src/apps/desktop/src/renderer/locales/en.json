@@ -607,7 +607,8 @@
     "program_output": "Read the output of a background program run.",
     "program_stop": "Stop a background program run.",
     "plugin_validate": "Validate a plugin draft and report schema issues and warnings.",
-    "plugin_install": "Request review and install a draft as a trial plugin."
+    "plugin_install": "Request review and install a draft as a trial plugin.",
+    "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device."
   },
   "projects": {
     "new": "New Workbench",

@@ -2,13 +2,15 @@
 
 ## Routing
 
-Select for PathGuard, binary detection, read/list/glob/grep/parse_log/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
+Select for PathGuard, binary detection, read/list/glob/grep/parse_log/decode_register/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
 
 ## Purpose and boundaries
 
 Core supplies context-bound tool definitions, canonical confinement, ignored discovery, streaming text reads and prepared atomic file changes. NodeWorkerPool hosts isolated grep and parse_log tasks through the WorkerPool port; desktop/CLI adapters choose independently compiled entrypoints. Shared owns pure line reference parsing/formatting. Callers own session contexts and host disposal. WorkbenchService owns the shared WriteQueue; sessions supply identities, ownership/permission checks and change-event persistence. Changes reuse the SQLite schema1 table.
 
 ## Public interface
+
+- decode_register is an always-confined read tool running in the main process with no device access or workers. A<=1MiB UTF8 JSON definition uses schemaVersion1,512registers maximum,8/16/32/64bit widths,64 nonoverlapping fields per register and bounded descriptions/enums/source line refs. Linear depth/key/array preflight before yaml uniqueKeys plus JSON grammar validation refuse duplicate keys and non-JSON content. Exact captured unsigned string arithmetic uses BigInt; results preserve every field in lsb order, nullable enum labels, register-width padded lowercase hex, decimal strings and unmapped masks/setbits without inferred faults. Every field carries the whole-definition ref. Exact byte SHA and a whole-definition line ref accompany the selected register sourceRefs (else device refs). Results above32000characters fail explicitly rather than losing fields. Device mismatch and source identity/stat/expected SHA changes are CONFLICT; invalid definitions/arguments/register/overflow are INVALID; paths remain guarded in Bypass. Stable reasons live in shared/core decode-register schemas/loader/decoder and focused tests.
 
 - parse_log is a confined read tool, including in Bypass: strict path/profile-or-pattern arguments, ESP-IDF/Zephyr/ISO profiles, ANSI removal, normalized levels and complete scanned counts independent of event filters. Source SHA256 hashes exact UTF8 LF/CRLF/BOM bytes; events/samples carry verified line refs. Limits are50MiB per file,16KiB per line,256 characters per message/optional capture/sample,5 samples,200 events and32000 serialized characters. Preview omitted/truncated fields describe bounded eligible events. Optional expectedSha256 is verified before regex evaluation; BOM-only logs have zero lines and a null source ref while hashing all3bytes. Stable errors distinguish INVALID/NOT_FOUND/DENIED/CONFLICT, including source_changed for changed identity/stats or expected SHA mismatch.
 - WorkerPool tasks have kind grep|parse_log and unknown partial callbacks. The independently bundled grep-worker dispatches parse_log to its worker-only scanner. Initialization and every1000 complete lines publish checkpoints; timeout retains the last checkpoint with null SHA and incomplete/timeout scan. CLI and desktop share absolute10s admission/execution deadlines, termination-before-resolution, abort and capacity replacement. No main-thread fallback exists.
@@ -74,6 +76,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 | Read/fingerprint/line semantics | readTool,readWindow,refs | read/shared refs tests |
 | Ignored sorted discovery | discoverFiles,listTool,globTool | discovery tests |
 | Regex/options/worker protocol | grepTool,grep-worker.ts | grep/node-host tests |
+| Captured register definitions/decoding/citations | shared/tools/decode-register.ts; tools/decode-register.ts,decode-register/{definition,decode}.ts; agent/citations.ts | decode-register.test.ts; citation tests; real CLI parity; native workbench-tools |
 | Captured log contracts/scanning/citations | shared/tools/parse-log.ts; tools/parse-log.ts,parse-log-worker.ts,log-failure.ts | parse-log.test.ts; CLI parity; native file-tools |
 | Host deadlines/abort/capacity | NodeWorkerPool,app adapters | node-host/worker-hosts/native file-tools acceptance |
 | Prepared writes/diff/recovery | tools/changes.ts,write.ts,edit.ts | tools/write-edit.test.ts,sessions/write-edit.test.ts,native write-edit acceptance |
@@ -82,6 +85,17 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 | Bypass filesystem scope and revocation | context.ts, PathGuard, worker task scope, changes.ts | sessions/bypass.test.ts, tests/e2e/bypass.spec.ts |
 
 ## Key behaviors
+
+- REQ-DATA-ff592d7b — captured register decoding contract; see specs/decode-register.md.
+- REQ-FUNC-41a37137 — captured register decoding contract; see specs/decode-register.md.
+- REQ-FUNC-636e8efe — captured register decoding contract; see specs/decode-register.md.
+- REQ-FUNC-9d746ce0 — captured register decoding contract; see specs/decode-register.md.
+- REQ-FUNC-b33148a5 — captured register decoding contract; see specs/decode-register.md.
+- REQ-FUNC-e2659125 — captured register decoding contract; see specs/decode-register.md.
+- REQ-REL-eb597740 — captured register decoding contract; see specs/decode-register.md.
+- REQ-SEC-57d4df1d — captured register decoding contract; see specs/decode-register.md.
+- REQ-SEC-b86a7502 — captured register decoding contract; see specs/decode-register.md.
+- REQ-UX-c3aceaf8 — captured register decoding contract; see specs/decode-register.md.
 
 - REQ-SEC-c370e45b — Confine tool paths.
 - REQ-FUNC-f558632e — Detect binary samples.
@@ -104,6 +118,8 @@ REQ-FUNC-9aa789af create; REQ-DATA-8c71b990 freshness; REQ-FUNC-d5b5be90 exact r
 The host controls lifetime; the worker owns all grep discovery/read/matching and captured-log scanning. The registry adapts these tools to the runtime without importing an app.
 
 ## Files
+
+- shared/src/tools/decode-register.ts; core/src/tools/decode-register.ts and decode-register/{definition,decode}.ts; tools/decode-register.test.ts; agent/citations.ts/test; CLI parity and native workbench-tools acceptance.
 
 - shared/src/tools.ts — canonical built-in names and type; renderer components/workbench-tools.tsx presents localized selection. tools/registry.test.ts verifies runtime parity; renderer workbench-tools.test.ts and tests/e2e/workbench-tools.spec.ts cover selection/save/permissions.
 

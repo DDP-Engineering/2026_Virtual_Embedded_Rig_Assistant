@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-eb597740"
+title = "Refuse changed register definition sources"
+status = "active"
+requirement = "When definition identity or metadata changes during reading or expectedSha256 differs from the exact bytes read, decode_register shall return CONFLICT with reason source_changed."
+verification = "Hash exact LF/CRLF/BOM bytes, match expected hash case-insensitively, change bytes and replace file during read using deterministic barriers."
+affected_paths = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.ts", "05_Software/src/libraries/core/src/tools/decode-register/decode.ts", "05_Software/src/libraries/core/src/tools/decode-register/definition.ts", "05_Software/src/libraries/shared/src/tools/decode-register.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/decode-register.test.ts"]
+spec = "specs/decode-register.md"
+created = 2026-11-04
+updated = 2026-11-04

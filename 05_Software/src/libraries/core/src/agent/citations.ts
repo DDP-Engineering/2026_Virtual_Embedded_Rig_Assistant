@@ -1,5 +1,5 @@
 import type { Message } from "@earendil-works/pi-ai";
-import { parseRef } from "@vera/shared";
+import { decodeRegisterResultSchema, parseRef } from "@vera/shared";
 import { readWindow } from "../tools/read-window.js";
 import { PathGuard } from "../workbench/path-guard.js";
 
@@ -40,7 +40,12 @@ export async function validateCitations(
       for (const block of message.content)
         if (block.type === "text") {
           try {
-            refs(JSON.parse(block.text), issued);
+            const value: unknown = JSON.parse(block.text);
+            refs(value, issued);
+            if (message.toolName === "decode_register") {
+              const decoded = decodeRegisterResultSchema.safeParse(value);
+              if (decoded.success) for (const ref of decoded.data.sourceRefs) issued.add(ref);
+            }
           } catch {
             /* refs originate structured tool fields */
           }

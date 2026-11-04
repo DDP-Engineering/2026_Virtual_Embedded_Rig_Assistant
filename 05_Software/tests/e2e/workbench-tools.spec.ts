@@ -44,15 +44,16 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await expect(page.locator("[data-tool-toggle]")).toHaveCount(builtinToolNames.length);
     await page.locator('[data-tool-toggle="grep"]').uncheck();
     await page.locator('[data-tool-toggle="write"]').uncheck();
+    await page.locator('[data-tool-toggle="decode_register"]').uncheck();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
     const saved = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.config.get", {}),
     );
-    expect(saved.config.tools.disabled).toEqual(["grep", "write"]);
+    expect(saved.config.tools.disabled).toEqual(["grep", "write", "decode_register"]);
     expect(saved.warnings.filter((warning) => warning.code === "UNKNOWN_NAME")).toEqual([]);
     const yaml = await readFile(join(folder, ".vera/workbench.yaml"), "utf8");
-    expect(parse(yaml).tools.disabled).toEqual(["grep", "write"]);
+    expect(parse(yaml).tools.disabled).toEqual(["grep", "write", "decode_register"]);
     await openTools(page);
     await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await page.locator('[data-tool-toggle="grep"]').check();
@@ -69,6 +70,14 @@ test("native tool checkbox configuration persists, cancels drafts and translates
       await page.locator('[data-action="leave-settings"]').click();
       await openTools(page);
       await expect(page.locator('[data-tool-description="grep"]')).toContainText(description as string);
+      await expect(page.locator('[data-tool-description="decode_register"]')).toContainText(
+        language === "ro"
+          ? "Decodează o valoare"
+          : language === "de"
+            ? "Registerwert"
+            : "Decode a captured register",
+      );
+      await expect(page.locator('[data-tool-toggle="decode_register"]')).not.toBeChecked();
       await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
       if (language === "de") {
         await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1024, 640));
@@ -94,9 +103,11 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await openTools(page);
     await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await expect(page.locator('[data-tool-toggle="write"]')).not.toBeChecked();
+    await expect(page.locator('[data-tool-toggle="decode_register"]')).not.toBeChecked();
     await expect(page.locator('[data-tool-toggle="read"]')).toBeChecked();
     await page.locator('[data-tool-toggle="grep"]').check();
     await page.locator('[data-tool-toggle="write"]').check();
+    await page.locator('[data-tool-toggle="decode_register"]').check();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
     const enabled = await page.evaluate(() =>

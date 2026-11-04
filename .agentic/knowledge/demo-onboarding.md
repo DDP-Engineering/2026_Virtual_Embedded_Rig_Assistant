@@ -21,6 +21,7 @@ starts with ordinary user-selected workbenches and explicit session input.
 - Ordinary workbench and session IPC contracts support those user actions.
 - `makeDemoPdfs(destination)` generates the three fixture PDFs from fixture Markdown.
 - `demo-board.json` is a test-only identity and finite asset inventory.
+- definitions/registers/vera-demo-01.json supplies I2C1_CR1 for VERA-DEMO-01 revisionA with PE0/TXIE1/RXIE2/ERRIE7 and sources/reference-manual.md#L7-L7; it is inventoried and used on isolated test copies for exact register decoding and real CLI/session citation parity.
 - Baseline boot-0412.log has three INFO events and a WARN at line3; candidate boot-0413.log has an ERROR at line4. docs/runs.md identifies firmware1.0.0/1.1.0, board/unit/setup/test; boot-test.md defines boot@1 (i2c ready and no ERROR); release-notes.md records the timing change without a root-cause claim. parse_log/CLI tests cite the events and eval:retrieval covers the indexed notes.
 
 ## Invariants

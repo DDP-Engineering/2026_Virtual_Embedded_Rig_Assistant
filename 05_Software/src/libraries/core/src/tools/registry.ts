@@ -6,6 +6,7 @@ import { programOutputTool, programStopTool, runProgramTool } from "../plugins/p
 import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolSignal } from "./context.js";
+import { decodeRegisterTool } from "./decode-register.js";
 import { readDocTool, searchDocsTool } from "./documents.js";
 import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
@@ -25,6 +26,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   glob: globTool,
   grep: grepTool,
   parse_log: parseLogTool,
+  decode_register: decodeRegisterTool,
   write: writeTool,
   edit: editTool,
   artifact_save: artifactSaveTool,
@@ -137,13 +139,13 @@ export class ToolRegistry {
       signal.throwIfAborted();
       const tool = this.available(disabled).find((definition) => definition.name === name);
       if (!tool) {
-        if (name === "parse_log")
+        if (name === "parse_log" || name === "decode_register")
           return {
             text: JSON.stringify({
               isError: true,
               code: "DENIED",
               reason: "tool_disabled",
-              error: "Enable parse_log in the workbench tools.",
+              error: `Enable ${name} in the workbench tools.`,
             }),
             isError: true,
             truncated: false,
@@ -151,13 +153,16 @@ export class ToolRegistry {
         throw Error(`Tool ${name} is unavailable. Choose an enabled tool.`);
       }
       const parsed = tool.params.safeParse(raw);
-      if (!parsed.success && name === "parse_log")
+      if (!parsed.success && (name === "parse_log" || name === "decode_register"))
         return {
           text: JSON.stringify({
             isError: true,
             code: "INVALID",
             reason: "invalid_arguments",
-            error: "Use a relative path and exactly one profile or pattern; check argument limits.",
+            error:
+              name === "parse_log"
+                ? "Use a relative path and exactly one profile or pattern; check argument limits."
+                : "Supply definitionPath, register and an unsigned decimal/hex string; check argument limits.",
           }),
           isError: true,
           truncated: false,

@@ -607,7 +607,8 @@
     "program_output": "Die Ausgabe eines Programmlaufs im Hintergrund lesen.",
     "program_stop": "Einen Programmlauf im Hintergrund stoppen.",
     "plugin_validate": "Plugin-Entwurf prüfen und Schemafehler und Warnungen melden.",
-    "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren."
+    "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren.",
+    "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus."
   },
   "projects": {
     "new": "Neue Workbench",

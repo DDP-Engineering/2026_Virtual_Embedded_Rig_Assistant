@@ -607,7 +607,8 @@
     "program_output": "Citește ieșirea unei rulări de program în fundal.",
     "program_stop": "Oprește o rulare de program în fundal.",
     "plugin_validate": "Validează un draft de plugin și raportează erori și avertismente.",
-    "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă."
+    "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă.",
+    "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive."
   },
   "projects": {
     "new": "Workbench nou",
