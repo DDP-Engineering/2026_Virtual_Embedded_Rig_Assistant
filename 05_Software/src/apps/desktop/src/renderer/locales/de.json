@@ -737,13 +737,10 @@
     "semantic": "Nur Bedeutung"
   },
   "plugins": {
-    "intro": "Installieren Sie Plugins aus einem Ordner oder einer ZIP-Datei, prüfen Sie, was sie ausführen, und aktivieren Sie sie für eine Workbench.",
+    "intro": "Hier installieren und verwalten Sie Plugin-Pakete. Welche Plugins eine Workbench verwendet, wählen Sie in ihrer Konfiguration aus.",
     "installFolder": "Aus Ordner installieren…",
     "installZip": "Aus ZIP installieren…",
-    "enabledFor": "Die Schalter aktivieren Plugins für die Workbench {{name}}.",
-    "noWorkbench": "Öffnen Sie eine Workbench, um Plugins dafür zu aktivieren.",
     "none": "Es sind keine Plugins installiert.",
-    "enable": "Aktiv in {{name}}",
     "broken": "Dieses Plugin hat Fehler und wird nicht geladen:",
     "programs": "Programme",
     "noPrograms": "Keine Programme: Dieses Plugin fügt nur Skills hinzu.",
@@ -767,7 +764,7 @@
     "platforms": "Plattformen",
     "requires": "Benötigt",
     "nothing": "Keine",
-    "configPointer": "Installieren Sie Plugins und aktivieren Sie sie für die geöffnete Workbench auf der Seite Plugins.",
+    "configPointer": "Um Plugins für eine Workbench zu aktivieren oder zu deaktivieren, öffnen Sie Workbench bearbeiten → Plugins.",
     "tier": {
       "official": "Offiziell",
       "community": "Community",
@@ -849,7 +846,8 @@
     "reviewScoped": "Workbench-Plugin prüfen",
     "trust": "Diesem Paket vertrauen",
     "scopedTrustIntro": "Diesem genauen Paket für diese Workbench auf diesem Computer vertrauen. Vertrauen aktiviert das Plugin nicht und installiert keine Programme. Jede Paketänderung erfordert eine neue Prüfung.",
-    "refresh": "Plugins aktualisieren"
+    "refresh": "Plugins aktualisieren",
+    "selectionHint": "Wählen Sie die installierten Plugins für diese Workbench aus. Neue Workbenches beginnen ohne Auswahl. Übernehmen Sie die Auswahl mit Speichern; Pakete installieren und prüfen Sie auf der Seite Plugins."
   },
   "runs": {
     "none": "In dieser Workbench gab es noch keine Programmläufe.",

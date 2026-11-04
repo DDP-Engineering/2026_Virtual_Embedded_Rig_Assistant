@@ -737,13 +737,10 @@
     "semantic": "Meaning only"
   },
   "plugins": {
-    "intro": "Install plugins from a folder or zip, review what they run, and enable them for a workbench.",
+    "intro": "Install and manage plugin packages here. Select which plugins a workbench uses in its configuration.",
     "installFolder": "Install from folder…",
     "installZip": "Install from zip…",
-    "enabledFor": "The switches enable plugins for the workbench {{name}}.",
-    "noWorkbench": "Open a workbench to enable plugins for it.",
     "none": "No plugins are installed.",
-    "enable": "Enabled in {{name}}",
     "broken": "This plugin has errors and does not load:",
     "programs": "Programs",
     "noPrograms": "No programs: this plugin only adds skills.",
@@ -767,7 +764,7 @@
     "platforms": "Platforms",
     "requires": "Requires",
     "nothing": "None",
-    "configPointer": "Install plugins and enable them for the open workbench on the Plugins page.",
+    "configPointer": "To enable or disable plugins for a workbench, open Edit workbench → Plugins.",
     "tier": {
       "official": "Official",
       "community": "Community",
@@ -849,7 +846,8 @@
     "reviewScoped": "Review workbench plugin",
     "trust": "Trust this package",
     "scopedTrustIntro": "Trust this exact package for this workbench on this machine. Trust does not enable the plugin or install its programs. Any package change requires another review.",
-    "refresh": "Refresh plugins"
+    "refresh": "Refresh plugins",
+    "selectionHint": "Select the installed plugins this workbench can use. New workbenches start with none selected. Save to apply your selection; install and review packages on the Plugins page."
   },
   "runs": {
     "none": "No program runs in this workbench yet.",

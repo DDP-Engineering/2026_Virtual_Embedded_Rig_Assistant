@@ -80,7 +80,7 @@ function useLabels() {
   return { risk, issue, tier, state, problem };
 }
 
-function Issues({ issues }: { issues: readonly PluginIssue[] }) {
+export function Issues({ issues }: { issues: readonly PluginIssue[] }) {
   const labels = useLabels();
   return (
     <ul className="plugin-issues">
@@ -316,10 +316,9 @@ function PluginCard({
   const { t } = useTranslation();
   const labels = useLabels();
   const client = useQueryClient();
-  const [busy, setBusy] = useState<"provision" | "toggle" | "uninstall" | "promote" | "export">();
+  const [busy, setBusy] = useState<"provision" | "uninstall" | "promote" | "export">();
   const [exported, setExported] = useState<string>();
   const [error, setError] = useState<unknown>();
-  const [switching, setSwitching] = useState<boolean>();
   const healthy = plugin.issues.length === 0;
   const programs = useQuery({
     queryKey: ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256],
@@ -371,33 +370,6 @@ function PluginCard({
       {healthy && programs.isPending && <p role="status">{t("home.loading")}</p>}
       {healthy && programs.isError && <ErrorMessage error={programs.error} />}
       {healthy && programs.data && <Programs statuses={programs.data} />}
-      {(healthy || plugin.source === "workbench") && workbench && (
-        <label className="plugin-enable">
-          <input
-            type="checkbox"
-            checked={switching ?? plugin.enabled}
-            disabled={busy !== undefined || workbench.readOnly || (!healthy && !plugin.enabled)}
-            onChange={(event) => {
-              const enabled = event.target.checked;
-              // Shows the new state at once; the reloaded list confirms it, a failure restores it.
-              setSwitching(enabled);
-              void perform("toggle", async () => {
-                try {
-                  await api.invoke("plugins.toggle", { workbenchId: workbench.id, id: plugin.id, enabled });
-                  // A list fetch still in flight may predate the toggle; the saved state wins, then a refetch.
-                  client.setQueryData<PluginSummary[]>(["plugins", workbench.id], (list) =>
-                    list?.map((item) => (item.id === plugin.id ? { ...item, enabled } : item)),
-                  );
-                  void changed();
-                } finally {
-                  setSwitching(undefined);
-                }
-              });
-            }}
-          />
-          {t("plugins.enable", { name: workbench.name })}
-        </label>
-      )}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="workbench-actions">
         {plugin.source === "workbench" && workbench && (
@@ -620,9 +592,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
             </button>
           </div>
           {error !== undefined && <ErrorMessage error={error} />}
-          <p className="muted">
-            {workbench ? t("plugins.enabledFor", { name: workbench.name }) : t("plugins.noWorkbench")}
-          </p>
+          <p className="muted">{t("plugins.configPointer")}</p>
           {list.isPending && <p role="status">{t("home.loading")}</p>}
           {list.isError && <ErrorMessage error={list.error} />}
           {list.data?.length === 0 && <p>{t("plugins.none")}</p>}

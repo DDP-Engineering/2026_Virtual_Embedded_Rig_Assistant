@@ -38,6 +38,8 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Workbench plugin draft selection: renderer workbench-plugins.test.ts and plugins.test.ts plus the native workbench draft case in tests/e2e/plugins-ui.spec.ts cover empty defaults, Save/Cancel, readonly/trust, failed-save retry, two-workbench isolation and reopening. Existing plugin-builder and browser plugin flows select packages through Edit workbench → Plugins.
+
 Scoped plugin acceptance uses core/plugins/scoped-store.test.ts and program-tools.test.ts plus the scoped
 case in tests/integration/cli.test.ts (compiled CLI, local Git clone/pull, real program exits/output,
 actual loopback system prompts, no external provider). tests/integration/scoped-programs.test.ts executes an actual approval while a deterministic post-verification barrier trusts a new helper hash; the old process must print only old-hash code. Native plugins-ui.spec.ts covers real probe shutdown cancellation, user review/trust,

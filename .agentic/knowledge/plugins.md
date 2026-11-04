@@ -14,7 +14,7 @@ tools run_program/program_output/program_stop, the ProgramHost and executable re
 `<programs>` prompt entries and the timeout cap; and for provisioning: the bundled uv, install kinds
 pip/script/download/find (including find with a pinned download fallback), the runtime folder, version probes and supported ranges, program statuses,
 `plugins.programs`/`plugins.provision`, `vera plugin install` and the package index/proxy settings; and for the
-desktop UI: the Plugins page (pickers, review screen, install bound to the reviewed hash, enable switch,
+desktop UI: the Plugins page (pickers, review screen, install bound to the reviewed hash, workbench draft selection,
 program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`); and for the
 plugin catalog client: index read with the bundled fallback, verified zip downloads, the review decision, installs
 with the catalog tier, update marks, `plugins.catalog*` IPC, the catalog URL setting, the 24 h checks and the
@@ -105,11 +105,10 @@ Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page
 (`renderer/components/plugins.tsx`) installs in two steps, `plugins.choose` (native picker) and `plugins.review`
 (the store reads and validates the package, installs nothing), then `plugins.install {path, sha256}` with the
-reviewed hash. It lists installed plugins with their program statuses and issues, enables a plugin for the open
-workbench (`plugins.toggle`, saved at once), installs programs (`plugins.provision`) and uninstalls after a
+reviewed hash. It lists installed plugins with their program statuses and issues, installs programs (`plugins.provision`) and uninstalls after a
 confirmation. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
 (`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second), shows a log (`runs.log`) and
-stops a run (`runs.stop`). The workbench form's Plugins section only points to the page.
+stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds WorkbenchPlugins: installed packages are draft checkboxes saved through workbench.create or workbench.config.update with plugins.enabled. New workbenches default to none; existing choices are retained. Missing/invalid selected entries can be removed; invalid or untrusted packages cannot be newly selected. Read-only/pending forms disable controls; list failures show retry and do not clear the draft. Cancel performs no activation write. The global manager has no enable switches and points to Edit workbench → Plugins. Scoped package trust remains a separate action.
 
 The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, ADR-0019): core `catalog-source.ts` checks a catalog
 source (plugin folders, `packs.yaml`, `catalog.yaml`) with the store's own package reader and builds its release
@@ -381,8 +380,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   together and never an unfinished run's. A run that never spawned (a failed `beforeSpawn`) has a log only.
 - The app's QueryClient defaults to `staleTime: Infinity`; the plugin list, program statuses, runs list and run
   log use `staleTime: 0`, so opening the page or a log reads disk state (integrity is rechecked per list).
-- The enable switch shows the new state at once and writes the saved state into the list cache before a
-  refetch, so a list fetch started before the toggle cannot flip it back.
+- Workbench plugin checkboxes read config.plugins.enabled from the draft, not the list response's enabled flags; a package-list refresh cannot overwrite draft choices. Save persists the whole selected list with the other workbench fields; Cancel leaves the saved list unchanged.
 - Catalog check: every plugin folder (not starting with `.`) must pass the store's import checks and examination
   (folder name = id, so ids are unique); every program needs a rule whose first pattern token names it; a `safe` or
   `device-read` rule whose pattern contains a dangerous token as a case-insensitive substring is an issue unless
@@ -415,6 +413,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Scoped discovery/trust/isolation | `PluginStore` scoped methods, `WorkbenchService.loadPlugins` | `scoped-store.test.ts`, scoped CLI Git fixture in `cli.test.ts`, native scoped `plugins-ui.spec.ts` |
 | Manifest field or limit | `pluginManifestSchema` in shared `plugins.ts` | `shared/src/plugins.test.ts` |
 | Import, limits, hash, list, load, uninstall | `PluginStore`, `readFolder`, `readZip`, `examine` in `core/src/plugins/store.ts` | `core/src/plugins/store.test.ts` |
+| Workbench selection UI | renderer `workbench-plugins.tsx`, `workbench-config-form.tsx`, `workbench-create.tsx`, `workbench-editor.tsx` | `workbench-plugins.test.ts`, native workbench draft case in `plugins-ui.spec.ts` |
 | Workbench enablement or warnings | `workbench.ts` (`plugins`, `configWarnings`), `WorkbenchService.togglePlugin` | `shared/src/workbench.test.ts`, `core/src/workbench/service.test.ts` |
 | IPC or mock | `ipc.ts` `plugins.*`, desktop `main/index.ts`, `renderer/mocks/mockApi.ts` | `shared/src/plugins-ipc.test.ts`, `renderer/mocks/mockApi.test.ts` |
 | Run policy: env, cwd, log, retention, background, serial guard | `core/src/plugins/runner.ts` | `core/src/plugins/runner.test.ts` |
@@ -578,3 +577,5 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - `05_Software/tests/e2e/plugins-catalog.spec.ts` — native install and rule-changing update from a loopback catalog.
 
 Scoped request lifetime is implemented by desktop `main/provisioner-hosts.ts` and verified by the real hanging-probe quit case in `tests/e2e/plugins-ui.spec.ts`; content-addressed approval/spawn binding is verified by `tests/integration/scoped-programs.test.ts`.
+
+Workbench selection UI: `05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx` and `workbench-plugins.test.ts` own draft selection. Package-level controls remain in plugins.tsx.

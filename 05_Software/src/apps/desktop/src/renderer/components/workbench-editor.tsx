@@ -90,6 +90,7 @@ export function WorkbenchEditor({
         retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },
         agent: { permission_mode: config.agent.permission_mode, model: config.agent.model },
         tools: { disabled: config.tools.disabled },
+        plugins: { enabled: config.plugins.enabled },
       });
       const updated = await api.invoke("workbench.config.update", {
         patch,
@@ -136,6 +137,7 @@ export function WorkbenchEditor({
         instructions={instructions}
         setInstructions={setInstructions}
         folder={workbench.folder}
+        workbenchId={workbench.config.id}
         readOnly={workbench.readOnly}
         disabled={pending || !loaded}
         notices={

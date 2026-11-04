@@ -143,7 +143,13 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     await page.locator('[data-action="plugins-nav"]').click();
     const card = page.locator('[data-plugin="fixture-cli"]');
     await expect(card).toContainText("Trial");
-    await card.getByRole("checkbox").check();
+    await expect(card.getByRole("checkbox")).toHaveCount(0);
+    await page.locator("[data-workbench-entry] .workbench-group-name").first().click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="plugins"]').click();
+    await page.locator('[data-workbench-plugin="fixture-cli"] input').check();
+    await page.locator("[data-project-save]").click();
+    await page.locator('[data-action="plugins-nav"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();
     await send("inspect");
     const run = page.locator('[data-approval-card][data-risk="safe"]');

@@ -2,17 +2,17 @@ schema = 1
 
 id = "REQ-UX-e07790cb"
 
-title = "Point the workbench Plugins section to the Plugins page"
+title = "Select plugins in the workbench configuration"
 
 status = "active"
 
-requirement = "The Plugins section of New Workbench and the workbench editor shall say that plugins are installed and enabled for the open workbench on the Plugins page."
+requirement = "When the user opens the Plugins section of New Workbench or the workbench editor, VERA shall display installed plugins as a workbench-local draft selection, initially empty for a new workbench, retaining existing choices and permitting removal of unavailable selections while preventing new activation of untrusted or invalid packages."
 
-verification = "Component test: rendering the configuration form's Plugins section shows the pointer text and no placeholder text."
+verification = "Renderer and native tests select and deselect packages in create/edit, verify unchecked new defaults, selected invalid/missing removal, read-only/loading/error handling, Save persistence and Cancel without writes, and isolation between two workbenches."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "low"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-04

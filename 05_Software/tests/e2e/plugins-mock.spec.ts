@@ -54,8 +54,13 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await expect(review.locator("[data-rule]")).toHaveCount(5);
     await review.locator('[data-action="plugin-install"]').click();
     const card = page.locator('[data-plugin="echo-tools"]');
-    await card.getByRole("checkbox").click();
-    await expect(card.getByRole("checkbox")).toBeChecked();
+    await expect(card.getByRole("checkbox")).toHaveCount(0);
+    await page.locator("[data-workbench-entry] .workbench-group-name").first().click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="plugins"]').click();
+    await page.locator('[data-workbench-plugin="echo-tools"] input').check();
+    await page.locator("[data-project-save]").click();
+    await page.locator('[data-action="plugins-nav"]').click();
     await card.locator('[data-action="plugin-provision"]').click();
     await expect(card.locator('[data-program="echo"]')).toHaveAttribute("data-state", "ready");
 

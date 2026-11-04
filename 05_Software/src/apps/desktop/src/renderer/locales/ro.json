@@ -737,13 +737,10 @@
     "semantic": "Doar după sens"
   },
   "plugins": {
-    "intro": "Instalează pluginuri dintr-un dosar sau dintr-o arhivă zip, verifică ce rulează și activează-le pentru un workbench.",
+    "intro": "Instalează și administrează pachetele de pluginuri aici. Selectează pluginurile folosite de un workbench în configurarea lui.",
     "installFolder": "Instalează din dosar…",
     "installZip": "Instalează din zip…",
-    "enabledFor": "Comutatoarele activează pluginurile pentru workbench-ul {{name}}.",
-    "noWorkbench": "Deschide un workbench pentru a activa pluginuri în el.",
     "none": "Nu este instalat niciun plugin.",
-    "enable": "Activat în {{name}}",
     "broken": "Acest plugin are erori și nu se încarcă:",
     "programs": "Programe",
     "noPrograms": "Fără programe: acest plugin adaugă doar abilități.",
@@ -767,7 +764,7 @@
     "platforms": "Platforme",
     "requires": "Necesită",
     "nothing": "Nimic",
-    "configPointer": "Instalează pluginuri și activează-le pentru workbench-ul deschis din pagina Pluginuri.",
+    "configPointer": "Pentru a activa sau dezactiva pluginuri pentru un workbench, deschide Editează workbench → Pluginuri.",
     "tier": {
       "official": "Oficial",
       "community": "Comunitate",
@@ -849,7 +846,8 @@
     "reviewScoped": "Revizuiește pluginul workbench",
     "trust": "Acordă încredere pachetului",
     "scopedTrustIntro": "Acordă încredere acestui pachet exact pentru acest workbench pe această mașină. Încrederea nu activează pluginul și nu instalează programele. Orice modificare cere o nouă revizuire.",
-    "refresh": "Reîmprospătează pluginurile"
+    "refresh": "Reîmprospătează pluginurile",
+    "selectionHint": "Selectează pluginurile instalate pe care le poate folosi acest workbench. Workbench-urile noi pornesc fără pluginuri selectate. Salvează pentru a aplica selecția; instalează și revizuiește pachetele pe pagina Pluginuri."
   },
   "runs": {
     "none": "Nicio rulare de program în acest workbench încă.",

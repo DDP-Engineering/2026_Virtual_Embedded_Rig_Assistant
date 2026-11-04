@@ -1,20 +1,13 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import {
-  type PluginProgramStatus,
-  type PluginReview,
-  type PluginSummary,
-  veraError,
-  workbenchSchema,
-} from "@vera/shared";
+import { type PluginProgramStatus, type PluginReview, type PluginSummary, veraError } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
 import { Plugins } from "./plugins.js";
-import { WorkbenchConfigForm } from "./workbench-config-form.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -247,26 +240,18 @@ it("shows a broken plugin's issues and offers no switch or program install", asy
 });
 
 // REQ-UX-fd6bc95d
-it("enables a plugin for the open workbench, and asks for a workbench without one", async () => {
-  await i18n.changeLanguage("en");
-  stub({ installed: [echo] });
-  await render();
-  await vi.waitFor(() => expect($('[data-plugin="echo-tools"] input[type="checkbox"]')).not.toBeNull());
-  await click('[data-plugin="echo-tools"] input[type="checkbox"]');
-  expect(calls("plugins.toggle")).toEqual([
-    ["plugins.toggle", { workbenchId: workbench.id, id: "echo-tools", enabled: true }],
-  ]);
-  await vi.waitFor(() =>
-    expect(($('[data-plugin="echo-tools"] input[type="checkbox"]') as HTMLInputElement).checked).toBe(true),
-  );
-  await act(async () => root.unmount());
-  container.remove();
-  await render({});
-  await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
-  expect(container.textContent).toContain(i18n.t("plugins.noWorkbench"));
-  expect(container.querySelector('input[type="checkbox"]')).toBeNull();
-  expect(calls("plugins.list").at(-1)).toEqual(["plugins.list", {}]);
-});
+it.each([true, false])(
+  "keeps activation out of global package management; open workbench=%s",
+  async (open) => {
+    await i18n.changeLanguage("en");
+    stub({ installed: [{ ...echo, enabled: true }] });
+    await render(open ? { workbench } : {});
+    await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
+    expect(container.textContent).toContain(i18n.t("plugins.configPointer"));
+    expect($('[data-plugin="echo-tools"] input[type="checkbox"]')).toBeNull();
+    expect(calls("plugins.toggle")).toHaveLength(0);
+  },
+);
 
 // REQ-UX-c1de1651
 it("uninstalls only after confirmation", async () => {
@@ -397,28 +382,4 @@ it("does nothing when the picker is cancelled", async () => {
   await click('[data-action="plugin-install-folder"]');
   expect(calls("plugins.review")).toEqual([]);
   expect($("[data-plugin-review]")).toBeNull();
-});
-
-// REQ-UX-e07790cb
-it("points the workbench form's Plugins section to the Plugins page", async () => {
-  await i18n.changeLanguage("en");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-  await act(async () => {
-    root.render(
-      createElement(WorkbenchConfigForm, {
-        label: "Workbench",
-        config: workbenchSchema.parse({ format: 1, id: workbench.id, name: "Board" }),
-        setConfig: () => {},
-        instructions: "",
-        setInstructions: () => {},
-        folder: "C:/board",
-        skills: null,
-      }),
-    );
-  });
-  await click('[data-project-section="plugins"]');
-  expect(container.textContent).toContain(i18n.t("plugins.configPointer"));
-  expect(container.textContent).not.toContain("not available yet");
 });

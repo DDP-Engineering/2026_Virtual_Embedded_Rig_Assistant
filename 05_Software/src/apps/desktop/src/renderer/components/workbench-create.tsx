@@ -69,6 +69,7 @@ export function WorkbenchCreate({
           agent: config.agent,
           tools: { disabled: config.tools.disabled },
           skills: { disabled: skillsDisabled },
+          plugins: { enabled: config.plugins.enabled },
         },
         ...(kept === null ? { instructions: shownInstructions } : {}),
       });

@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-UX-fd6bc95d"
 
-title = "Enable a plugin for the open workbench"
+title = "Separate plugin installation from workbench selection"
 
 status = "active"
 
-requirement = "While a workbench is open, the Plugins page shall offer an enable switch for each plugin without issues that saves the plugin into or out of that workbench's plugins.enabled immediately, and without an open workbench it shall say that a workbench must be open to enable plugins."
+requirement = "When the global Plugins page is displayed, VERA shall keep package installation and management there and direct activation to the workbench configuration without offering workbench enable switches on the global page."
 
-verification = "Component test and both e2e runs: switching Echo tools on calls plugins.toggle with the open workbench id and the switch stays checked after the list reloads; the native run reads plugins.enabled [echo-tools] from .vera/workbench.yaml; with no workbench the note is shown and no switch exists."
+verification = "Component/native/browser regression verifies global package cards have no activation checkbox, install/provision/review still operate, and the workbench editor saves selection separately."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-04

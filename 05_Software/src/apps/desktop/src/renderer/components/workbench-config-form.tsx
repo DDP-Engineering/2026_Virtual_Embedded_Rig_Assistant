@@ -3,6 +3,7 @@ import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, 
 import { useTranslation } from "react-i18next";
 import { PermissionPicker } from "./permission-picker.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
+import { WorkbenchPlugins } from "./workbench-plugins.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
 export const configSections = [
@@ -35,6 +36,7 @@ export function WorkbenchConfigForm({
   notices,
   instructionsNotice,
   skills,
+  workbenchId,
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -49,6 +51,7 @@ export function WorkbenchConfigForm({
   notices?: ReactNode;
   instructionsNotice?: ReactNode;
   skills: ReactNode;
+  workbenchId?: string | undefined;
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -257,13 +260,25 @@ export function WorkbenchConfigForm({
               </label>
             </>
           )}
+          {section === "plugins" && (
+            <WorkbenchPlugins
+              workbenchId={workbenchId}
+              enabled={config.plugins.enabled}
+              toggle={(id, selected) =>
+                setConfig((current) => ({
+                  ...current,
+                  plugins: {
+                    ...current.plugins,
+                    enabled: selected
+                      ? [...new Set([...current.plugins.enabled, id])]
+                      : current.plugins.enabled.filter((entry) => entry !== id),
+                  },
+                }))
+              }
+            />
+          )}
         </fieldset>
         {section === "skills" && skills}
-        {section === "plugins" && (
-          <p className="muted" data-plugins-pointer>
-            {t("plugins.configPointer")}
-          </p>
-        )}
       </div>
     </div>
   );

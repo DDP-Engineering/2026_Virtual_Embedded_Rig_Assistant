@@ -249,13 +249,15 @@ Plugins installs packages from folders, zips or the catalog through a review scr
 A workbench can carry portable packages in `.vera/plugins/<id>/` (commit these folders to Git).
 These start untrusted at each new workbench location and on each machine. On the Plugins page, choose
 **Review workbench plugin**, inspect the source, programs, risks and SHA-256, then **Trust this package**.
-Trust is separate from the enable switch and **Install programs**. Refresh plugins after a pull;
+Trust is separate from workbench selection and **Install programs**. Refresh plugins after a pull;
 any changed helper, skill or other package file needs a new review before use, including in Bypass.
 The verified copy and trust record live only under application userData, never in `.vera` or exports.
 An id colliding with a globally installed plugin blocks both in that workbench; rename/remove one
 package or uninstall the global plugin. Program-name collisions retain the ambiguous-program refusal.
 `requires` is descriptive: install, review and enable dependencies separately; no automatic installs.
 The agent drafts plugins outside `.vera/plugins`; only the user manages portable installed packages.
+
+To choose plugins for a project, open **Edit workbench → Plugins**, select or deselect installed packages, then **Save**. The same section is available in New Workbench; every new workbench starts with no plugins selected. Cancel leaves existing choices unchanged, and choices apply only to that workbench. Installation and program setup remain on the global Plugins page.
 
 CLI users inspect and trust the same packages with a persistent application data directory:
 

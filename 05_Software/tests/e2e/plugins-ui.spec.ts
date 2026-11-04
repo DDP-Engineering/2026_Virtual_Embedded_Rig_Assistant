@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { _electron, type ElectronApplication, expect, type Page, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { parse } from "yaml";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -48,6 +49,14 @@ const invoke = <T>(page: Page, channel: string, payload: unknown) =>
       (window as unknown as { vera: VeraBridge }).vera.invoke(channel as never, payload as never),
     { channel, payload },
   ) as Promise<T>;
+
+async function editPlugins(page: Page, id = "echo-tools") {
+  const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
+  await page.locator(`[data-workbench-entry="${config.id}"] .workbench-group-name`).click();
+  await page.locator('[data-action="edit-workbench-overview"]').click();
+  await page.locator('[data-project-section="plugins"]').click();
+  return page.locator(`[data-workbench-plugin="${id}"] input`);
+}
 
 test("installs a plugin through the review screen, enables it, and stops its background run from the Runs tab", async () => {
   test.setTimeout(90_000);
@@ -106,8 +115,11 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     await expect(card).toContainText("Local");
 
     // Enabled for this workbench only.
-    await card.getByRole("checkbox", { name: "Enabled in Board" }).click();
-    await expect(card.getByRole("checkbox", { name: "Enabled in Board" })).toBeChecked();
+    await expect(card.getByRole("checkbox")).toHaveCount(0);
+    const selected = await editPlugins(page);
+    await expect(selected).not.toBeChecked();
+    await selected.check();
+    await page.locator("[data-project-save]").click();
     await expect
       .poll(async () => readFile(join(folder, ".vera/workbench.yaml"), "utf8"))
       .toMatch(/plugins:\s*\n\s*enabled:\s*\n\s*- echo-tools/);
@@ -202,7 +214,10 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     let card = page.locator('[data-plugin="echo-tools"]');
     await expect(card.locator('[data-issue="untrusted"]')).toBeVisible();
     await expect(card.locator('[data-action="plugin-provision"]')).toHaveCount(0);
-    await expect(card.getByRole("checkbox")).toBeDisabled();
+    await expect(card.getByRole("checkbox")).toHaveCount(0);
+    await expect(await editPlugins(page)).toBeDisabled();
+    await page.locator(".workbench-editor footer button").first().click();
+    await page.locator('[data-action="plugins-nav"]').click();
     await card.locator('[data-action="plugin-scoped-review"]').click();
     const review = page.locator("[data-plugin-review]");
     await expect(review).toContainText("SHA-256");
@@ -211,7 +226,10 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await expect(review).toHaveCount(0);
     await expect(card).toBeVisible();
     await expect(card.locator("[data-plugin-issues]")).toHaveCount(0);
-    await card.getByRole("checkbox").check();
+    await (await editPlugins(page)).check();
+    await page.locator("[data-project-save]").click();
+    await expect(page.locator(".workbench-editor")).toHaveCount(0);
+    await page.locator('[data-action="plugins-nav"]').click();
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
     const helper = join(folder, ".vera/plugins/echo-tools/echo.mjs");
     await writeFile(helper, `${await readFile(helper, "utf8")}\n// changed helper\n`);
@@ -255,7 +273,9 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     await page.locator('[data-action="plugins-nav"]').click();
     card = page.locator('[data-plugin="echo-tools"]');
-    await expect(card.getByRole("checkbox")).toBeChecked();
+    await expect(await editPlugins(page)).toBeChecked();
+    await page.locator(".workbench-editor footer button").first().click();
+    await page.locator('[data-action="plugins-nav"]').click();
     await writeFile(join(folder, ".vera/plugins/echo-tools/skills/echo-guide/SKILL.md"), "changed skill");
     await page.locator('[data-action="plugin-refresh"]').click();
     await expect(card.locator('[data-issue="changed"]')).toBeVisible();
@@ -383,6 +403,66 @@ test("scoped program status probes are cancelled when the app quits", async () =
       }
     }
     await app?.close().catch(() => {});
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-UX-e07790cb REQ-FUNC-41f5c03b
+test("workbench plugin draft save and cancel persist independently with empty new defaults", async () => {
+  test.setTimeout(90000);
+  const root = await mkdtemp(join(tmpdir(), "vera-workbench-plugins-"));
+  const a = join(root, "A"),
+    b = join(root, "B");
+  await mkdir(a);
+  await mkdir(b);
+  let app = await launch(root, a);
+  const config = async (folder: string) =>
+    parse(await readFile(join(folder, ".vera/workbench.yaml"), "utf8"));
+  try {
+    let page = await app.firstWindow();
+    const review = await invoke<{ sha256: string }>(page, "plugins.review", { path: fixture });
+    await invoke(page, "plugins.install", { path: fixture, sha256: review.sha256 });
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await page.locator('[data-action="choose-create"]').click();
+    await page.locator("#workbench-name").fill("A");
+    await page.locator('[data-project-section="plugins"]').click();
+    await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).not.toBeChecked();
+    await page.locator('[data-action="create-workbench"]').click();
+    await expect(page.locator('[data-workbench="active"]')).toContainText("A");
+    expect((await config(a)).plugins.enabled).toEqual([]);
+    const selected = await editPlugins(page);
+    await selected.check();
+    expect((await config(a)).plugins.enabled).toEqual([]);
+    await page.locator(".workbench-editor footer button").first().click();
+    await expect(await editPlugins(page)).not.toBeChecked();
+    await page.locator('[data-workbench-plugin="echo-tools"] input').check();
+    await page.locator("[data-project-save]").click();
+    await expect.poll(async () => (await config(a)).plugins.enabled).toEqual(["echo-tools"]);
+    await app.evaluate((_electron, folder) => {
+      process.env.VERA_TEST_DIALOG_PATH = folder;
+    }, b);
+    await page.locator('[data-i18n="nav.welcome"]').click();
+    await page.locator('[data-action="choose-create"]').click();
+    await page.locator("#workbench-name").fill("B");
+    await page.locator('[data-project-section="plugins"]').click();
+    await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).not.toBeChecked();
+    await page.locator('[data-action="create-workbench"]').click();
+    await expect(page.locator('[data-workbench="active"]')).toContainText("B");
+    expect((await config(b)).plugins.enabled).toEqual([]);
+    expect((await config(a)).plugins.enabled).toEqual(["echo-tools"]);
+    await app.close();
+    app = await launch(root, a);
+    page = await app.firstWindow();
+    await page.locator('[data-action="open-workbench-nav"]').click();
+    await expect(page.locator('[data-workbench="active"]')).toContainText("A");
+    await expect(await editPlugins(page)).toBeChecked();
+    await page.locator('[data-workbench-plugin="echo-tools"] input').uncheck();
+    await page.locator("[data-project-save]").click();
+    await expect.poll(async () => (await config(a)).plugins.enabled).toEqual([]);
+    expect((await config(b)).plugins.enabled).toEqual([]);
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await app.close();
     await rm(root, { recursive: true, force: true });
   }
 });
