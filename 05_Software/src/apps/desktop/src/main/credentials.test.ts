@@ -97,6 +97,38 @@ describe("main encrypted credential store", () => {
     for (const key of [secret, "fake-access-private", "fake-refresh-private", "fake-extension-private"])
       expect(h.logger.registerSecret).toHaveBeenCalledWith(key);
   });
+  it("keeps public OAuth scope words usable as tool keys while redacting tokens and unknown metadata", async () => {
+    const h = harness();
+    await h.store.modify("chatgpt", async () => ({
+      type: "oauth",
+      access: "private-access-CAP03",
+      refresh: "private-refresh-CAP03",
+      expires: 42,
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "offline_access",
+        "resource.invoke",
+        "chatgpt.tokens.use.direct",
+        "private-custom-scope-CAP03",
+      ],
+      extra: { token: "private-extension-CAP03" },
+    }));
+    const input = '{"profile":"iso","email":"not a credential"}';
+    for (const store of [h.store, h.reload()]) {
+      await store.load();
+      expect(store.scrub(input)).toBe(input);
+      expect(store.knownSecrets()).not.toContain("profile");
+      for (const secret of [
+        "private-access-CAP03",
+        "private-refresh-CAP03",
+        "private-custom-scope-CAP03",
+        "private-extension-CAP03",
+      ])
+        expect(store.scrub(secret)).toBe("[REDACTED]");
+    }
+  });
   it("serializes async modify and delete, undefined leaves unchanged, failures recover", async () => {
     const h = harness();
     await h.store.modify("openai", async () => ({ type: "api_key", key: "0" }));

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0300004"
+title = "Compare cited captured evidence"
+status = "active"
+requirement = "When parsing the two runs, firmware-comparator shall use one profile and retain source SHA/ref while comparing level counts, new errors/warnings, one-sided messages and timings only for identical messages."
+verification = "Manual: comparable real-model report cites ERROR L4, error0->1, notes any bounded preview and restricts timing comparisons; replay proves wiring only."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-c0300006"
+title = "Pin additional event reads"
+status = "active"
+requirement = "When requesting additional events, firmware-comparator shall supply the prior source SHA as expectedSha256 and treat source_changed conflicts as a reported limitation without repeated retries."
+verification = "Manual: changed-log real-model case mutates the fixture after initial parse; inspect pinned call, CONFLICT and honest limitation."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

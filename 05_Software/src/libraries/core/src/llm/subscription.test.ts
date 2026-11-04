@@ -29,6 +29,7 @@ describe("ChatGPT subscription collection", () => {
     h.entries.set("openai", { type: "api_key", key: "fictional-api-not-used" });
     const settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
     let captured: Headers | undefined;
+    let payload: { tools: { strict?: boolean; parameters: { required: string[] } }[] } | undefined;
     const item = {
       type: "message",
       id: "msg-fake",
@@ -66,6 +67,7 @@ describe("ChatGPT subscription collection", () => {
           ],
         });
       captured = new Headers(init?.headers);
+      payload = JSON.parse(String(init?.body));
       return new Response(events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(""), {
         headers: { "content-type": "text/event-stream" },
       });
@@ -83,11 +85,28 @@ describe("ChatGPT subscription collection", () => {
       model: "chatgpt/gpt-4.1",
       system: "test",
       messages: [{ role: "user", content: "hi", timestamp: 0 }],
-      tools: [],
+      tools: [
+        {
+          name: "parse_log",
+          description: "Captured log",
+          parameters: {
+            type: "object",
+            properties: {
+              path: { type: "string" },
+              profile: { type: "string" },
+              pattern: { type: "string" },
+            },
+            required: ["path"],
+            additionalProperties: false,
+          },
+        },
+      ],
       signal: new AbortController().signal,
     }))
       output.push(e);
     expect(captured?.get("authorization")).toBe(`Bearer ${access}`);
+    expect(payload?.tools[0]?.strict).toBe(false);
+    expect(payload?.tools[0]?.parameters.required).toEqual(["path"]);
     expect(output.at(-1)?.type).toBe("done");
     expect(JSON.stringify(output)).not.toContain(access);
     expect(JSON.stringify(output)).not.toContain(refresh);

@@ -1,0 +1,1 @@
+Use firmware-comparator to compare firmware1.0.0 against1.1.0. Find the logs and run notes first.

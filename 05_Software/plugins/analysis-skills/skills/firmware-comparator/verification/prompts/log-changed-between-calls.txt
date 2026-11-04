@@ -1,0 +1,1 @@
+Compare baseline logs/boot-0412.log with candidate logs/boot-0413.log using firmware-comparator. Obtain enough candidate events to inspect all one-sided messages, including beyond the bounded first preview. Save a report and preserve source identity on additional event requests.

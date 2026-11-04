@@ -8,12 +8,13 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { NodeWorkerPool, openDb, PluginStore, SessionService } from "@vera/core";
+import { NodeWorkerPool, openDb, PluginStore, SessionService, SkillCatalog } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
 import type { SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
 import { afterAll, beforeAll, expect, it } from "vitest";
+import { prepareCase, sections, sha256 } from "../fixtures/firmware-comparator/harness.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 let compiled: string;
@@ -220,6 +221,136 @@ const replay = (
   "--script",
   script,
 ];
+// CAP03 replay proves real wiring/persistence only; it does not grade model semantics.
+it("firmware-comparator loads from a folder plugin and saves the cited comparison through SessionService and CLI", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "vera-cap03-replay-"));
+  cleanup.push(dir);
+  const workbench = await prepareCase(root, dir, "comparable-pair");
+  const data = join(dir, "data"),
+    scripts = join(dir, "scripts");
+  await mkdir(scripts);
+  const index = await launch(["index", "--workbench", workbench, "--data", data], {}, "npm").result;
+  expect(index.code, index.stderr).toBe(0);
+  const name = "firmware-comparison-boot-0412-boot-0413.md";
+  const baselineSHA = sha256(await readFile(join(workbench, "logs/boot-0412.log")));
+  const candidateSHA = sha256(await readFile(join(workbench, "logs/boot-0413.log")));
+  const report = `# Firmware comparison\n\n## Scope and sources\nBaseline firmware1.0.0 logs/boot-0412.log SHA256 ${baselineSHA}; candidate firmware1.1.0 logs/boot-0413.log SHA256 ${candidateSHA}; profile iso. [[logs/boot-0412.log#L1-L4]] [[logs/boot-0413.log#L1-L4]]\n\n## Comparability\ncomparable documented conditions: VERA-DEMO-01 revisionA, DEMO-001, boot@1, bench@1. Firmware is the intentional variable; image hashes unknown. Notes do not establish actual bench equivalence. [[docs/runs.md#L1-L10]]\n\n## Observed differences\nComplete scans. error0->1, warn1->1, info3->2. Candidate first new ERROR i2c initialization failed [[logs/boot-0413.log#L4-L4]]. Baseline-only ready event [[logs/boot-0412.log#L4-L4]]. No timing delta for those different messages.\n\n## Criterion\nboot@1: reaches i2c ready and no ERROR. Baseline criterion met; candidate not met. [[docs/boot-test.md#h=boot-criterion-boot1]] [[logs/boot-0412.log#L4-L4]] [[logs/boot-0413.log#L4-L4]]\n\n## Binary differences\nskipped: two build folders not supplied; no program plugin enabled.\n\n## Interpretation\nFact: firmware1.1.0 documents I2C initialization timing change. [[docs/release-notes.md#h=firmware-110-release-notes]] Cause remains unknown. Hypothesis: changed timing may contribute; reject by reviewing initialization ordering against the exact source/build and controlled manual evidence.\n\n## Recommended checks\n1. Confirm actual bench conditions against notes before attributing a firmware regression.\n2. Review I2C ordering and obtain a sourced manual test plan; no checks executed.\n`;
+  const script = join(scripts, "comparison.jsonl");
+  await writeFile(
+    script,
+    [
+      { toolCalls: [{ name: "load_skill", args: { name: "firmware-comparator" } }] },
+      {
+        toolCalls: [
+          { name: "load_skill", args: { name: "firmware-comparator", file: "templates/comparison.md" } },
+        ],
+      },
+      { toolCalls: [{ name: "read", args: { path: "docs/runs.md" } }] },
+      {
+        toolCalls: [
+          { name: "parse_log", args: { path: "logs/boot-0412.log", profile: "iso" } },
+          { name: "parse_log", args: { path: "logs/boot-0413.log", profile: "iso" } },
+        ],
+      },
+      { toolCalls: [{ name: "search_docs", args: { query: "I2C initialization timing", mode: "keyword" } }] },
+      {
+        toolCalls: [
+          {
+            name: "read_doc",
+            args: { path: "docs/release-notes.md", heading: "firmware-110-release-notes" },
+          },
+          { name: "read_doc", args: { path: "docs/boot-test.md", heading: "boot-criterion-boot1" } },
+        ],
+      },
+      { toolCalls: [{ name: "artifact_save", args: { name, content: report } }] },
+      { text: report },
+    ]
+      .map((step) => JSON.stringify(step))
+      .join("\n"),
+  );
+  const workers = new NodeWorkerPool(pathToFileURL(join(compiled, "grep-worker.js")));
+  const handle = await openDb(join(workbench, ".vera/vera.db"), {
+    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    appVersion: "0",
+  });
+  const plugin = await new PluginStore({ root: join(data, "plugins") }).load("analysis-skills");
+  const skills = new SkillCatalog({
+    root: workbench,
+    disabled: () => [],
+    plugins: async () => [{ id: "analysis-skills", folder: plugin.folder }],
+  });
+  const service = new SessionService({
+    db: handle.db,
+    root: workbench,
+    skills,
+    workers,
+    gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
+    clock: { now: () => new Date(123), sleep: async () => {} },
+    model: () => "replay/comparison",
+    prompt: () => "CAP03 integration replay",
+  });
+  const agent: SessionEvent[] = [];
+  try {
+    const session = service.create();
+    service.subscribe(session.id, 0, (_seq, event) => agent.push(event));
+    service.send(session.id, "Compare selected fictional captures");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const summaries = service.listArtifacts(session.id);
+    expect(summaries).toHaveLength(1);
+    const artifact = await service.openArtifact(summaries[0]?.artifactId ?? "");
+    expect(artifact).toMatchObject({ name, content: report });
+    expect(artifact.content.match(/^## .+$/gm)).toEqual(sections.map((section) => `## ${section}`));
+    expect(service.verifiedArtifact(artifact.artifactId).path).toBeTruthy();
+    const cli = await launch([...replay(workbench, script), "--data", data], {}, "npm").result;
+    expect(cli.code).toBe(0);
+    const records: SessionEvent[] = events(cli.stdout).map((record) => record.event);
+    for (const output of [agent, records]) {
+      const tools = output.filter((event) => event.type === "tool.done");
+      expect(tools).toHaveLength(9);
+      expect(tools.every((event) => event.ok)).toBe(true);
+      const values = tools.map((event) => JSON.parse(event.summary));
+      expect(values.find((value) => value.source?.path === "logs/boot-0412.log")).toMatchObject({
+        counts: { error: 0, warn: 1, info: 3 },
+        scan: { complete: true },
+        source: { sha256: baselineSHA },
+      });
+      expect(values.find((value) => value.source?.path === "logs/boot-0413.log")).toMatchObject({
+        counts: { error: 1, warn: 1, info: 2 },
+        scan: { complete: true },
+        source: { sha256: candidateSHA },
+        events: expect.arrayContaining([
+          expect.objectContaining({ ref: "logs/boot-0413.log#L4-L4", level: "error" }),
+        ]),
+      });
+      const last = output.filter((event) => event.type === "message.done").at(-1);
+      expect(last?.citations?.length).toBeGreaterThan(5);
+      expect(last?.citations?.every((citation) => citation.valid)).toBe(true);
+    }
+    const cliDb = new Database(join(workbench, ".vera/vera.db"), { readonly: true });
+    try {
+      const artifacts = cliDb.prepare("SELECT name,sha256 FROM artifacts WHERE name=?").all(name);
+      expect(artifacts).toHaveLength(2);
+      expect(artifacts).toEqual([
+        { name, sha256: sha256(report) },
+        { name, sha256: sha256(report) },
+      ]);
+    } finally {
+      cliDb.close();
+    }
+    if (evidence) {
+      await writeFile(
+        join(evidence, "firmware-comparison-agent.json"),
+        JSON.stringify({ events: agent, artifact }, null, 2),
+        { flag: "wx" },
+      );
+      await writeFile(join(evidence, name), artifact.content, { flag: "wx" });
+    }
+  } finally {
+    await service.close();
+    handle.close();
+    await workers.dispose();
+  }
+}, 120000);
 it("parse_log returns identical cited evidence through agent sessions and vera run", async () => {
   const { dir, workbench } = await fixture();
   await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z INFO ready\n\u0000\n");

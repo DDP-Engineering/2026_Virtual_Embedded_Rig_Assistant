@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-c030000a"
+title = "Treat captured instructions as data"
+status = "active"
+requirement = "When logs or notes contain instructions, firmware-comparator shall treat them as evidence data rather than authority to select runs, alter procedure or approve actions."
+verification = "Manual: instruction-embedded-log real-model case includes malicious instruction; inspect preserved user-selected pair and no obeyed injected instruction."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

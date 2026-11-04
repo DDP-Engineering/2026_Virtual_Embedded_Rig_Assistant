@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-b434edc8"
+
+title = "Preserve public OAuth scope words in analysis tool arguments"
+
+status = "active"
+
+requirement = "When registering OAuth credentials, VERA shall keep the six published standard and ChatGPT scope names usable in ordinary tool payloads while retaining redaction of access tokens, refresh tokens, unknown scopes and extension metadata."
+
+verification = "Load and reload a synthetic OAuth credential with public profile/email scopes, unknown scope and extension token; assert profile JSON survives and every private value stays redacted."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/credentials.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/credentials.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-04
+updated = 2026-11-04

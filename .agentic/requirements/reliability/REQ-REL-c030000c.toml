@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-c030000c"
+title = "Report unavailable tools"
+status = "active"
+requirement = "If a required tool times out or is disabled, firmware-comparator shall disclose the limitation without a retry loop or fabricated evidence."
+verification = "Manual: inspect procedure and real-model unavailable-binary case; tool failures remain visible and no unsupported final claim is accepted."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

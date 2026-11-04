@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-c0300009"
+title = "Limit binary inspection"
+status = "active"
+requirement = "When optional binary comparison lacks two build folders or an enabled plugin with a safe size or symbol command, firmware-comparator shall explain the skip without flashing, capturing or executing tests."
+verification = "Manual: esp32-idf-disabled real-model case explains skip and transcript contains no device/test execution; inspect tool allowlist."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

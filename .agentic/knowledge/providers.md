@@ -44,6 +44,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
   fails INVALID before decryption. Invalid files and failed atomic saves retain source bytes. Accepted queues drain before logs.
 - Every loaded/submitted/replaced/deleted secret remains registered through process exit. Logger scrubs
   content at capture/write; IPC error params and event user text are scrubbed before transport.
+  The six published OAuth scopes openid/profile/email/offline_access/resource.invoke/chatgpt.tokens.use.direct
+  are public permission names, not registered secrets; ordinary profile tool keys remain usable.
+  Unknown scopes, extension metadata and all access/refresh values retain conservative redaction.
 - Public metadata contains no credential value. Keys up to7 Unicode characters have null hints;
   longer keys disclose first3/last4 with at least one hidden character; hints reconstructing a complete current or registered secret are null. Known-secret configuration
   text is rejected; low-entropy known keys match whole text values for this guard.

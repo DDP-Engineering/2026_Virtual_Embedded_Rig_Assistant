@@ -1,0 +1,1 @@
+Compare baseline logs/boot-0412.log with candidate logs/boot-0413.log using firmware-comparator, with build folders builds/baseline and builds/candidate. esp32-idf is disabled in this workbench and no other binary plugin is enabled. Save the report and explain the binary comparison outcome.

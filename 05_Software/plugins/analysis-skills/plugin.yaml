@@ -1,0 +1,9 @@
+format: 1
+id: analysis-skills
+version: 1.0.0
+name: Analysis skills
+description: Compare captured firmware runs using cited logs, documented conditions and acceptance criteria. Analysis procedures only; no programs or device operations.
+ecosystem: general
+platforms: [windows-x64, linux-x64]
+docs:
+  - README.md

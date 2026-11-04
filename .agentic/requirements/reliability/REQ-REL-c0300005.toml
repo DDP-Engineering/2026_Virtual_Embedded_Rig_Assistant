@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-c0300005"
+title = "Preserve partial scan limits"
+status = "active"
+requirement = "If a captured log scan is incomplete, firmware-comparator shall label its observations partial and its criterion not evaluable where missing coverage prevents evaluation."
+verification = "Manual: incomplete-scan real-model case returns scan.complete=false; inspect visible partial limits and absence of a complete-scan verdict."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0300002"
+title = "Resolve the comparison runs explicitly"
+status = "active"
+requirement = "When baseline or candidate identity is ambiguous, firmware-comparator shall ask the user to select the runs before comparing them."
+verification = "Manual: real-model ambiguous-runs case presents several matching captures; inspect transcript for question and absence of silently selected comparison."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

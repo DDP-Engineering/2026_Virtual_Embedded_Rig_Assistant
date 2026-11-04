@@ -34,6 +34,14 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 
 ## Public interface
 
+- `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
+  programs or rules. Its firmware-comparator procedure and seven-section comparison template load
+  through source plugin. It compares explicit captured runs with parse_log, documented conditions,
+  release notes and criterion evidence, saves a session artifact and never operates hardware/tests.
+  Folder and bundled-catalog zip installation are covered by analysis-skills.test.ts and
+  prepare-plugins.test.ts; actual SessionService/npm CLI replay lives in cli.test.ts. Separate
+  opt-in real-model rubric/hashes/results live beside the skill under verification/.
+
 - `esp32-efuse` 1.0.0, ESP32, Windows x64/Linux x64: the official Security (irreversible)
   group defaults off. Both espefuse and espsecure use pip esptool>=5,<6 and help-based version
   probes. summary/dump/check-error/get-custom-mac/adc-info are device-read; every burn-* plus

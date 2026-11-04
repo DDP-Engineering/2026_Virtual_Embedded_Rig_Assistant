@@ -1,0 +1,1 @@
+Compare baseline logs/boot-0412.log with candidate logs/boot-0413.log using firmware-comparator. Inspect docs/runs.md and the criterion; save a report, including any blockers.

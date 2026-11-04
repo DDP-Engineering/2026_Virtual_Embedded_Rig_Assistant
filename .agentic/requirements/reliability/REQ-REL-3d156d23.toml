@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-3d156d23"
+
+title = "Preserve optional arguments for live ChatGPT tools"
+
+status = "active"
+
+requirement = "When offering tools to a live ChatGPT Responses model, VERA shall explicitly preserve optional tool arguments through the provider strict flag so first log parses can omit both pattern and expectedSha256 and Markdown reads can omit page and line locators."
+
+verification = "Inspect actual SDK request payload in a subscription stream fixture: strict:false is present and required contains only path; real-model rubric then exercises valid minimal parse_log and read_doc arguments."
+
+affected_paths = ["05_Software/src/libraries/core/src/llm/chatgpt-catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/llm/subscription.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-04
+updated = 2026-11-04

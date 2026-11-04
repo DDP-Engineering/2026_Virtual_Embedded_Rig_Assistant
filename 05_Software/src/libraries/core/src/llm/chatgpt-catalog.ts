@@ -20,7 +20,7 @@ const entry = z.object({
 });
 const catalog = z.object({ models: z.array(entry).max(1000) });
 export function parseChatGptCatalog(value: unknown, known: (id: string) => Model<string> | undefined) {
-  const models = new Map<string, { model: Model<string>; reasoningOptions: string[] }>();
+  const models = new Map<string, { model: Model<"openai-responses">; reasoningOptions: string[] }>();
   for (const item of catalog.parse(value).models) {
     if (item.visibility !== "list") continue;
     const previous = known(item.slug);
@@ -44,6 +44,10 @@ export function parseChatGptCatalog(value: unknown, known: (id: string) => Model
         reasoning: options.length > 0,
         // Default must let the server choose, rather than the SDK inserting effort=none.
         thinkingLevelMap: { off: null },
+        // Responses defaults omitted strict to true and makes every parameter required.
+        // Tell pi this endpoint supports the flag so it explicitly sends strict:false,
+        // preserving the optional fields of VERA's zod tool contracts.
+        compat: { supportsStrictMode: true },
         input: input.length ? input : ["text"],
         contextWindow: item.context_window,
         maxTokens: previous?.maxTokens ?? 16384,

@@ -1,0 +1,1 @@
+Compare baseline logs/boot-0412.log with candidate logs/boot-0413.log using firmware-comparator and save the report. The captured-log worker may hit its deadline; honor returned scan completeness.

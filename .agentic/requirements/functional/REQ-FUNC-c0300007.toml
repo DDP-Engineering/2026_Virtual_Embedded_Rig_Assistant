@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0300007"
+title = "Constrain register interpretation"
+status = "active"
+requirement = "When a log contains a register value, firmware-comparator shall decode it only with a matching device definition and report the decoded flags as observations without inferring a cause."
+verification = "Manual: inspect procedure and any real-model decoding for matching device/definition, cited fields and separated cause hypotheses."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

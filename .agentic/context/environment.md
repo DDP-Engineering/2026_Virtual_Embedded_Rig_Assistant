@@ -1,5 +1,14 @@
 # Environment guide
 
+Captured firmware comparison uses tests/integration/analysis-skills.test.ts, the installed catalog zip
+in prepare-plugins.test.ts and the actual SessionService/npm CLI replay in cli.test.ts. The opt-in
+scripts/firmware-comparator-rubric.mjs prepares seven fictional cases before any real model access;
+it uses existing VERA credentials through normal safeStorage and an explicit isolated model override,
+retains original prompts/events/artifacts/model and skill hashes, and never writes user settings.
+Public OAuth scopes stay out of secret-word registration; live Responses tools explicitly use
+strict:false to preserve optional arguments. Credentials/subscription/gateway regressions cover both.
+UbuntuWSL2 proof is distinct from native Ubuntu; aggregate Analysis capabilities gate stays CAP04/coordinator.
+
 Per-prompt activity verification: shared/core prompt-usage tests and renderer activity-usage.test.ts; tests/e2e/prompt-usage.spec.ts uses isolated native replay counts, real file tools and restart with no external provider calls.
 
 ## Toolchain

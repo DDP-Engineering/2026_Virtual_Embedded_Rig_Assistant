@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0300001"
+title = "Distribute the captured comparison skill"
+status = "active"
+requirement = "When the official plugin catalog is built, VERA shall include the format1 skills-only analysis-skills package with firmware-comparator and its comparison template."
+verification = "Install the source folder and built catalog zip; validate the manifest and load body/template through load_skill from source plugin; seven template sections are present."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = ["05_Software/tests/integration/analysis-skills.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts", "05_Software/tests/integration/cli.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

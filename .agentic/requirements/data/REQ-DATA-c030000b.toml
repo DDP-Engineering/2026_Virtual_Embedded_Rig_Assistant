@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-c030000b"
+title = "Save the sourced comparison report"
+status = "active"
+requirement = "When completing a comparison, firmware-comparator shall save the seven-section report with separate facts, rejectable hypotheses and ordered checks using an ASCII firmware-comparison-baseline-candidate.md name of at most100 characters, collision suffixes without overwrite and at most three save attempts before returning the report and error in chat."
+verification = "Manual: inspect skill save procedure, real-model artifact and seven sections; replay asserts actual stored bytes and citations; collision/terminal instructions inspected."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

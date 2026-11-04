@@ -78,7 +78,22 @@ export class CredentialFile implements CredentialStore {
       else if (Array.isArray(item)) item.forEach(walk);
       else if (object(item)) Object.values(item).forEach(walk);
     };
-    const { type: _type, ...fields } = value;
+    const { type: _type, ...rest } = value;
+    const fields: Record<string, unknown> = rest;
+    // These published OAuth permission names are not credentials. Registering "profile" or
+    // "email" would redact ordinary protocol/tool keys. Unknown scopes and all other metadata
+    // retain conservative scrubbing, including extension tokens.
+    if (value.type === "oauth" && Array.isArray(fields.scopes)) {
+      const publicScopes = new Set([
+        "openid",
+        "profile",
+        "email",
+        "offline_access",
+        "resource.invoke",
+        "chatgpt.tokens.use.direct",
+      ]);
+      fields.scopes = fields.scopes.filter((scope) => typeof scope !== "string" || !publicScopes.has(scope));
+    }
     walk(fields);
   }
   scrub(text: string): string {

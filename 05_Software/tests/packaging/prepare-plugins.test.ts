@@ -1,6 +1,7 @@
 import { readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { PluginStore, SkillCatalog } from "@vera/core";
 import { afterAll, expect, it } from "vitest";
 
 // @ts-expect-error Native ESM build helper.
@@ -27,6 +28,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ),
   ).toBe(before);
   expect(index.plugins.map((plugin: { id: string; tier: string }) => [plugin.id, plugin.tier])).toEqual([
+    ["analysis-skills", "official"],
     ["binutils", "official"],
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
@@ -38,6 +40,22 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   ]);
   expect(JSON.parse(await readFile(join(target, "index.json"), "utf8"))).toEqual(index);
   await expect(checkBundledPlugins(target)).resolves.toEqual(index);
+  const analysis = index.plugins.find((plugin: { id: string }) => plugin.id === "analysis-skills");
+  expect(analysis).toBeDefined();
+  const store = new PluginStore({ root: join(target, "installed") });
+  await store.install(join(target, analysis.url));
+  const installed = await store.load("analysis-skills");
+  const skills = new SkillCatalog({
+    root: target,
+    disabled: () => [],
+    plugins: async () => [{ id: "analysis-skills", folder: installed.folder }],
+  });
+  expect(await skills.list()).toContainEqual(
+    expect.objectContaining({ name: "firmware-comparator", source: "plugin" }),
+  );
+  expect(
+    await skills.load("firmware-comparator", "templates/comparison.md", new AbortController().signal),
+  ).toMatchObject({ text: expect.stringContaining("## Recommended checks") });
   const zip = join(target, index.plugins[0].url);
   await writeFile(zip, Buffer.concat([await readFile(zip), Buffer.from([0])]));
   await expect(checkBundledPlugins(target)).rejects.toThrow(/bundled plugin integrity/);

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0300003"
+title = "Qualify run comparability"
+status = "active"
+requirement = "When comparing captured firmware runs, firmware-comparator shall mark comparability blocked for every missing or different comparison condition other than the intentionally compared firmware identity, recording known image hashes and the limits of bench notes."
+verification = "Manual: comparable fixture1.0.0/1.1.0 and different-board-revision real-model cases; inspect sourced A/B conditions and blocked revision."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

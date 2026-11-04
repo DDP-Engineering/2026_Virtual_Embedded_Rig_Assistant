@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c0300008"
+title = "Evaluate sourced criteria"
+status = "active"
+requirement = "When a criterion document is available, firmware-comparator shall use inspected document evidence and captured logs to mark each run criterion met, not met or not evaluable."
+verification = "Manual: comparable real-model report cites boot@1 source and supporting log lines for met->not met, plus I2C timing release note with cause open; replay checks refs/artifact."
+affected_paths = ["05_Software/plugins/analysis-skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = []
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

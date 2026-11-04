@@ -1,0 +1,1 @@
+Compare baseline logs/boot-0412.log (firmware1.0.0) with candidate logs/boot-0413.log (firmware1.1.0) using firmware-comparator. Use docs/runs.md conditions, release notes and boot criterion. Save the report. No build folders are supplied.

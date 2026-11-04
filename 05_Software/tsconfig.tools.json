@@ -11,12 +11,16 @@
     "vitest.config.ts",
     "tests/tooling/**/*.ts",
     "tests/integration/**/*.ts",
+    "tests/fixtures/firmware-comparator/**/*.ts",
     "tests/packaging/**/*.ts",
     "playwright.config.ts",
     "tests/e2e/**/*.ts",
     "tests/network*.ts"
   ],
   "references": [
+    {
+      "path": "./src/apps/desktop"
+    },
     {
       "path": "./src/libraries/core"
     },
