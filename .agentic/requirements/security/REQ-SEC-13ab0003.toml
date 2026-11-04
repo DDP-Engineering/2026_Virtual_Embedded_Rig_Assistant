@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-13ab0003"
+title = "Invalidate changed scoped packages"
+status = "active"
+requirement = "If any scoped package file changes, is replaced or disappears after review, VERA shall refuse its consumption and previous run approvals until a new user review accepts the current hash."
+verification = "Edit helper and skill files, remove package, submit stale review hash and mutate between preparation and spawn; assert conflict/no process and new review required."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/tests/integration/scoped-programs.test.ts", "05_Software/src/libraries/core/src/plugins/scoped-store.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/apps/desktop/src/main/sessions.test.ts", "05_Software/tests/integration/cli.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

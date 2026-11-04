@@ -291,7 +291,10 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
           background,
           ...(background ? {} : { signal: applySignal }),
-          beforeSpawn: () => verifyProgramFiles(current.prepared, applySignal),
+          beforeSpawn: async () => {
+            await verifyProgramFiles(current.prepared, applySignal);
+            await current.plugin.verify?.();
+          },
           label: { plugin: current.plugin.manifest.id, program: args.program, args: args.args ?? [] },
         });
       } catch (error) {
@@ -434,6 +437,7 @@ export async function programPromptEntries(
     for (const name of Object.keys(programs).sort()) {
       const resolved = await host.resolver.resolve(plugin, name, signal);
       if (!resolved) continue;
+      await plugin.verify?.();
       entries.push({
         name,
         version:

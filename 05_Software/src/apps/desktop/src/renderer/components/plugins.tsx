@@ -45,6 +45,10 @@ function useLabels() {
         return t("plugins.issue.id");
       case "record":
         return t("plugins.issue.record");
+      case "untrusted":
+        return t("plugins.issue.untrusted");
+      case "collision":
+        return t("plugins.issue.collision");
       case "changed":
         return t("plugins.issue.changed");
       default:
@@ -128,12 +132,14 @@ function InstallSource({ program }: { program: PluginProgram }) {
 function Review({
   review,
   catalog,
+  scoped,
   installed,
   cancel,
 }: {
   review: PluginReview;
   /** A catalog package: installed through the catalog with its tier. */
   catalog?: PluginCatalogReview | undefined;
+  scoped?: { workbenchId: string; id: string } | undefined;
   installed: () => void;
   cancel: () => void;
 }) {
@@ -147,7 +153,8 @@ function Review({
     setBusy(true);
     setError(undefined);
     try {
-      if (catalog) await api.invoke("plugins.catalogInstall", { id: catalog.id, sha256: review.sha256 });
+      if (scoped) await api.invoke("plugins.scopedTrust", { ...scoped, sha256: review.sha256 });
+      else if (catalog) await api.invoke("plugins.catalogInstall", { id: catalog.id, sha256: review.sha256 });
       else await api.invoke("plugins.install", { path: review.path, sha256: review.sha256 });
       installed();
     } catch (failure) {
@@ -160,6 +167,10 @@ function Review({
     <section className="plugin-review" aria-labelledby={title} data-plugin-review>
       <h3 id={title}>{t("plugins.reviewTitle", { name: manifest?.name ?? review.path })}</h3>
       <p className="muted">{t("plugins.reviewIntro")}</p>
+      {scoped && <p>{t("plugins.scopedTrustIntro")}</p>}
+      <p className="plugin-sha">
+        SHA-256 <code>{review.sha256}</code>
+      </p>
       {catalog && (
         <p data-catalog-review>
           {t("plugins.catalog.reviewFrom", {
@@ -252,7 +263,7 @@ function Review({
           disabled={busy || review.issues.length > 0 || !manifest}
           onClick={() => void install()}
         >
-          {t("plugins.install")}
+          {scoped ? t("plugins.trust") : t("plugins.install")}
         </button>
         <button type="button" data-action="plugin-review-cancel" disabled={busy} onClick={cancel}>
           {t("plugins.cancel")}
@@ -293,8 +304,10 @@ function PluginCard({
   workbench,
   changed,
   update,
+  reviewScoped,
 }: {
   plugin: PluginSummary;
+  reviewScoped: () => void;
   workbench: PluginsWorkbench | undefined;
   changed: () => Promise<void>;
   /** The catalog entry when it offers a higher version, and the action that reviews it. */
@@ -309,8 +322,9 @@ function PluginCard({
   const [switching, setSwitching] = useState<boolean>();
   const healthy = plugin.issues.length === 0;
   const programs = useQuery({
-    queryKey: ["plugin-programs", plugin.id, plugin.sha256],
-    queryFn: () => api.invoke("plugins.programs", { id: plugin.id }),
+    queryKey: ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256],
+    queryFn: () =>
+      api.invoke("plugins.programs", { id: plugin.id, ...(workbench ? { workbenchId: workbench.id } : {}) }),
     enabled: healthy,
     staleTime: 0,
   });
@@ -342,6 +356,7 @@ function PluginCard({
         {plugin.ecosystem && <span> · {plugin.ecosystem}</span>}
       </p>
       {plugin.description && <p>{plugin.description}</p>}
+      {plugin.source === "workbench" && <p data-plugin-scope>{t("plugins.workbenchSource")}</p>}
       {update && (
         <p role="status" data-plugin-update>
           {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
@@ -356,12 +371,12 @@ function PluginCard({
       {healthy && programs.isPending && <p role="status">{t("home.loading")}</p>}
       {healthy && programs.isError && <ErrorMessage error={programs.error} />}
       {healthy && programs.data && <Programs statuses={programs.data} />}
-      {healthy && workbench && (
+      {(healthy || plugin.source === "workbench") && workbench && (
         <label className="plugin-enable">
           <input
             type="checkbox"
             checked={switching ?? plugin.enabled}
-            disabled={busy !== undefined || workbench.readOnly}
+            disabled={busy !== undefined || workbench.readOnly || (!healthy && !plugin.enabled)}
             onChange={(event) => {
               const enabled = event.target.checked;
               // Shows the new state at once; the reloaded list confirms it, a failure restores it.
@@ -385,6 +400,16 @@ function PluginCard({
       )}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="workbench-actions">
+        {plugin.source === "workbench" && workbench && (
+          <button
+            type="button"
+            data-action="plugin-scoped-review"
+            disabled={busy !== undefined}
+            onClick={reviewScoped}
+          >
+            {t("plugins.reviewScoped")}
+          </button>
+        )}
         {healthy && plugin.tier === "trial" && plugin.sha256 && (
           <button
             type="button"
@@ -401,7 +426,7 @@ function PluginCard({
             {t("plugins.promote")}
           </button>
         )}
-        {healthy && plugin.sha256 && (
+        {healthy && plugin.sha256 && plugin.source !== "workbench" && (
           <button
             type="button"
             data-action="plugin-export"
@@ -436,28 +461,36 @@ function PluginCard({
             disabled={busy !== undefined}
             onClick={() =>
               void perform("provision", async () => {
-                const statuses = await api.invoke("plugins.provision", { id: plugin.id });
-                client.setQueryData(["plugin-programs", plugin.id, plugin.sha256], statuses);
+                const statuses = await api.invoke("plugins.provision", {
+                  id: plugin.id,
+                  ...(workbench ? { workbenchId: workbench.id } : {}),
+                });
+                client.setQueryData(
+                  ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256],
+                  statuses,
+                );
               })
             }
           >
             {busy === "provision" ? t("plugins.installingPrograms") : t("plugins.installPrograms")}
           </button>
         )}
-        <button
-          type="button"
-          data-action="plugin-uninstall"
-          disabled={busy !== undefined}
-          onClick={() => {
-            if (!window.confirm(t("plugins.uninstallConfirm", { name }))) return;
-            void perform("uninstall", async () => {
-              await api.invoke("plugins.uninstall", { id: plugin.id });
-              await changed();
-            });
-          }}
-        >
-          {t("plugins.uninstall")}
-        </button>
+        {plugin.source !== "workbench" && (
+          <button
+            type="button"
+            data-action="plugin-uninstall"
+            disabled={busy !== undefined}
+            onClick={() => {
+              if (!window.confirm(t("plugins.uninstallConfirm", { name }))) return;
+              void perform("uninstall", async () => {
+                await api.invoke("plugins.uninstall", { id: plugin.id });
+                await changed();
+              });
+            }}
+          >
+            {t("plugins.uninstall")}
+          </button>
+        )}
       </div>
       {exported && <p role="status">{t("plugins.exported", { path: exported })}</p>}
     </li>
@@ -471,7 +504,11 @@ function PluginCard({
 export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefined }) {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const [review, setReview] = useState<{ review: PluginReview; catalog?: PluginCatalogReview }>();
+  const [review, setReview] = useState<{
+    review: PluginReview;
+    catalog?: PluginCatalogReview;
+    scoped?: { workbenchId: string; id: string };
+  }>();
   /** Catalog plugins still to review after the one on screen (Install selected). */
   const [queue, setQueue] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -547,6 +584,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
         <Review
           review={review.review}
           catalog={review.catalog}
+          scoped={review.scoped}
           cancel={() => {
             setReview(undefined);
             setQueue([]);
@@ -561,6 +599,9 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
         <>
           <p className="muted">{t("plugins.intro")}</p>
           <div className="workbench-actions">
+            <button type="button" data-action="plugin-refresh" disabled={busy} onClick={() => void changed()}>
+              {t("plugins.refresh")}
+            </button>
             <button
               type="button"
               data-action="plugin-install-folder"
@@ -587,13 +628,24 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
           {list.data?.length === 0 && <p>{t("plugins.none")}</p>}
           <ul className="plugin-list">
             {list.data?.map((plugin) => {
-              const entry = updates.get(plugin.id);
+              const entry = plugin.source === "workbench" ? undefined : updates.get(plugin.id);
               return (
                 <PluginCard
                   key={plugin.id}
                   plugin={plugin}
                   workbench={workbench}
                   changed={changed}
+                  reviewScoped={() => {
+                    if (!workbench) return;
+                    setBusy(true);
+                    setError(undefined);
+                    const scoped = { workbenchId: workbench.id, id: plugin.id };
+                    void api
+                      .invoke("plugins.scopedReview", scoped)
+                      .then((review) => setReview({ review, scoped }))
+                      .catch(setError)
+                      .finally(() => setBusy(false));
+                  }}
                   update={entry && { entry, busy, start: () => void reviewCatalog([plugin.id]) }}
                 />
               );

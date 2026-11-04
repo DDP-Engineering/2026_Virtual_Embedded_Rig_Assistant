@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-13ab0007"
+title = "Review scoped plugins through CLI"
+status = "active"
+requirement = "When the user invokes the scoped plugin CLI commands, VERA shall list or review the workbench package and accept trust only with an explicit matching reviewed hash and persistent data directory."
+verification = "Compiled CLI list/review/trust with local Git clone, stale hash and isolated machine data; use ordinary run replay to prove execution only after trust."
+affected_paths = ["05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/index.ts", "05_Software/src/apps/cli/src/plugin.ts", "05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/tests/integration/cli.test.ts", "05_Software/src/apps/cli/src/scoped-plugin.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

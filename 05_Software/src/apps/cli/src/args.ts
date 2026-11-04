@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { customConfigSchema, modelReferenceSchema, sessionIdSchema } from "@vera/shared";
+import { customConfigSchema, modelReferenceSchema, pluginIdSchema, sessionIdSchema } from "@vera/shared";
 
 export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   [--session <id>] [--data <dir>] [--key-file <file>] [--format jsonl|pretty]
@@ -9,6 +9,10 @@ export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   --provider openai --model <id>
   --provider custom --base-url <url> --model <id>
   vera plugin install --path <folder|zip> --data <dir>
+  vera plugin list --workbench <dir> --data <dir>
+  vera plugin review --id <id> --workbench <dir> --data <dir>
+  vera plugin trust --id <id> --sha256 <reviewed-hash> --workbench <dir> --data <dir>
+  vera plugin provision --id <id> --workbench <dir> --data <dir>
   vera catalog check --source <dir>
   vera catalog build --source <dir> --out <dir>
   vera index --workbench <dir> [--data <dir>]
@@ -109,8 +113,69 @@ export interface PluginOptions {
   data: string;
   approve?: never;
 }
-function pluginCommand(argv: string[]): PluginOptions {
-  if (argv[1] !== "install") throw new UsageError("Expected plugin install.");
+export type ScopedPluginOptions = {
+  workbench: string;
+  data: string;
+  id?: string;
+  sha256?: string;
+  approve?: never;
+} & (
+  | { kind: "plugin-list" }
+  | { kind: "plugin-review" }
+  | { kind: "plugin-trust" }
+  | { kind: "plugin-provision" }
+);
+function scopedPluginCommand(argv: string[]): ScopedPluginOptions {
+  const action = argv[1];
+  if (!["list", "review", "trust", "provision"].includes(action ?? ""))
+    throw new UsageError("Expected plugin install, list, review, trust or provision.");
+  try {
+    const { values, tokens } = parseArgs({
+      args: argv.slice(2),
+      strict: true,
+      allowPositionals: false,
+      tokens: true,
+      options: Object.fromEntries(
+        [
+          "workbench",
+          "data",
+          ...(action === "list" ? [] : ["id"]),
+          ...(action === "trust" ? ["sha256"] : []),
+        ].map((name) => [name, { type: "string" as const }]),
+      ),
+    });
+    const seen = new Set<string>();
+    for (const token of tokens)
+      if (token.kind === "option") {
+        if (seen.has(token.name)) throw new UsageError(`Repeated --${token.name}.`);
+        seen.add(token.name);
+      }
+    const { workbench, data, id, sha256 } = values;
+    if (
+      !workbench?.trim() ||
+      !data?.trim() ||
+      workbench.includes("\0") ||
+      data.includes("\0") ||
+      (action !== "list" && !pluginIdSchema.safeParse(id).success) ||
+      (action === "trust" && !/^[0-9a-f]{64}$/.test(sha256 ?? ""))
+    )
+      throw new UsageError(
+        "Scoped plugin commands require --workbench, --data, review/trust --id and trust --sha256.",
+      );
+    return {
+      kind: `plugin-${action}` as ScopedPluginOptions["kind"],
+      workbench: resolve(workbench),
+      data: resolve(data),
+      ...(id ? { id } : {}),
+      ...(sha256 ? { sha256 } : {}),
+    };
+  } catch (error) {
+    if (error instanceof UsageError) throw error;
+    throw new UsageError(error instanceof Error ? error.message : "Invalid arguments.");
+  }
+}
+function pluginCommand(argv: string[]): PluginOptions | ScopedPluginOptions {
+  if (argv[1] !== "install") return scopedPluginCommand(argv);
   try {
     const { values, tokens } = parseArgs({
       args: argv.slice(2),
@@ -182,7 +247,7 @@ function catalogCommand(argv: string[]): CatalogOptions {
 }
 export function parseCommand(
   argv: string[],
-): RunOptions | DocumentOptions | PluginOptions | CatalogOptions | undefined {
+): RunOptions | DocumentOptions | PluginOptions | ScopedPluginOptions | CatalogOptions | undefined {
   if (argv.length === 1 && ["help", "--help", "-h"].includes(argv[0] ?? "")) return;
   if (argv[0] === "index" || argv[0] === "search") return documentCommand(argv);
   if (argv[0] === "plugin") return pluginCommand(argv);

@@ -98,7 +98,11 @@ export class SessionsHost {
       // Resolving loads and hashes every enabled plugin and may probe programs: reuse the entries
       // until a plugin changes (invalidatePrograms) or the workbench or its plugin skills do.
       const key = JSON.stringify([
+        snapshot.folder,
         snapshot.config.id,
+        (this.programHost ? await this.options.workbench.loadPlugins(snapshot.config.id) : []).map(
+          (plugin) => [plugin.manifest.id, plugin.record.sha256],
+        ),
         this.programGeneration,
         skills
           .filter((skill) => skill.source === "plugin")

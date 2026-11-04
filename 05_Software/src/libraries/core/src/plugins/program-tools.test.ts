@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type PermissionMode, pluginManifestSchema, veraError } from "@vera/shared";
@@ -19,7 +19,7 @@ import {
   runProgramTool,
 } from "./program-tools.js";
 import { ProgramRunner } from "./runner.js";
-import type { LoadedPlugin } from "./store.js";
+import { type LoadedPlugin, PluginStore } from "./store.js";
 
 const program = (extra: Record<string, unknown> = {}) => ({
   install: { pip: "echo" },
@@ -663,3 +663,44 @@ describe("ProgramSession", () => {
     expect(session.get("last")).toBeDefined();
   });
 });
+
+// REQ-SEC-13ab0003: actual scoped packages plus the normal prepare/apply/runner boundary.
+it("scoped trust invalidates pending approvals and rechecks after consumption immediately before spawn", async () => {
+  const source = join(root, ".vera/plugins/echo-tools");
+  await mkdir(join(root, ".vera/plugins"));
+  await cp("tests/fixtures/plugins/echo-tools", source, { recursive: true });
+  const store = new PluginStore({ root: join(root, "machine/plugins"), workbench: root });
+  const review = await store.reviewScoped("echo-tools");
+  await store.trustScoped("echo-tools", review.sha256);
+  const programs = ctx.programs;
+  if (!programs) throw Error("missing programs");
+  programs.host.plugins = async () => {
+    try {
+      return [await store.load("echo-tools")];
+    } catch {
+      return [];
+    }
+  };
+  const prepared = await prepare({ program: "echo", args: ["write", "build/app.bin"] });
+  await writeFile(join(source, "helper.txt"), "pulled");
+  await expect(prepared.apply(signal())).rejects.toThrow(/not declared/);
+  expect(host.programs).toHaveLength(0);
+  const changed = await store.reviewScoped("echo-tools");
+  await store.trustScoped("echo-tools", changed.sha256);
+  const next = await runProgramTool.prepare?.(
+    ctx,
+    { program: "echo", args: ["write", "build/app.bin"] },
+    signal(),
+  );
+  if (!next) throw Error("missing prepare");
+  // The old request digest still has the previous whole-package hash.
+  await expect(next.apply(signal())).rejects.toThrow(/changed after approval/);
+  expect(host.programs).toHaveLength(0);
+  programs.consume = (request) => {
+    consumed.push(request);
+    writeFileSync(join(source, "helper.txt"), "changed after consume");
+  };
+  const final = await prepare({ program: "echo", args: ["version"] });
+  await expect(final.apply(signal())).rejects.toThrow(/changed after approval/);
+  expect(host.programs).toHaveLength(0);
+}, 30000);

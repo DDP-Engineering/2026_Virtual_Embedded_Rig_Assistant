@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-13ab0001"
+title = "Discover scoped packages"
+status = "active"
+requirement = "When a workbench is opened or refreshed, VERA shall list packages under its .vera/plugins/<id> with their workbench source, integrity hash and trust issues."
+verification = "Create and locally clone a Git workbench; list both locations and observe untrusted source metadata, including malformed packages."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/scoped-store.test.ts", "05_Software/tests/integration/cli.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

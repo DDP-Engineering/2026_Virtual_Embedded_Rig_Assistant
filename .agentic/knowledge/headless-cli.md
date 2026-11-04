@@ -20,6 +20,12 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
   through the provisioner (`src/apps/cli/src/{plugin,provisioning}.ts`; uv only from `05_Software/src/uv/<platform>/`
   relative to the CLI build), and prints one JSON status per program; exit 0 when all are ready, 1 otherwise, 2
   for usage. `vera run` resolves enabled plugins' programs through the same provisioner and never installs.
+- `vera plugin list|review|trust|provision --workbench <dir> --data <dir>` uses portable packages
+  in `.vera/plugins` and the machine-local scoped store. review/trust/provision name `--id`; trust also
+  requires the exact `--sha256` from review. Trust never enables or provisions. list/review/trust return
+  JSON and 0 on success, 1 for operational errors, 2 for usage; provision returns 0 only when all programs
+  are ready. The scoped Git clone/pull case in tests/integration/cli.test.ts observes real process output,
+  refusal in Bypass and actual loopback system prompts before and after trust/invalidation.
 - `vera catalog check --source <dir>` prints one `<where>: <code>: <detail>` line per issue of a plugin catalog source
   and exits 1 with issues, 0 without; `vera catalog build --source <dir> --out <dir>` writes the release (zips and
   `index.json`) only without issues into a missing or empty folder and prints `<n> plugins written to <out>`

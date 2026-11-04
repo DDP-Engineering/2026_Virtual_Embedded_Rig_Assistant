@@ -172,7 +172,7 @@ export async function runTurn(
       runner: programs,
       clock: nodeClock,
       resolver: createCliProvisioner(
-        new PluginStore({ root: join(location.paths.userData, "plugins") }),
+        new PluginStore({ root: join(location.paths.userData, "plugins"), workbench: snapshot.folder }),
         location.paths.userData,
         () => config.plugins,
       ),

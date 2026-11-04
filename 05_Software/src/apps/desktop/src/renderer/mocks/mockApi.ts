@@ -647,6 +647,12 @@ export function createMockApi(
         value = { path: kind === "zip" ? "/mock/plugins/echo-tools.zip" : "/mock/plugins/echo-tools" };
         break;
       }
+      case "plugins.scopedReview":
+        channels["plugins.scopedReview"].request.parse(input.data);
+        throw veraError("NOT_FOUND");
+      case "plugins.scopedTrust":
+        channels["plugins.scopedTrust"].request.parse(input.data);
+        throw veraError("NOT_FOUND");
       case "plugins.review": {
         const { path } = channels["plugins.review"].request.parse(input.data);
         value = mockPackage(path);

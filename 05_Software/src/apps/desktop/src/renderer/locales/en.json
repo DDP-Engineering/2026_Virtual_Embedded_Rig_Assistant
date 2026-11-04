@@ -798,7 +798,9 @@
       "id": "The manifest id differs from the folder name:",
       "record": "install.json is missing or does not match the plugin.",
       "changed": "The plugin's files changed since it was reviewed; install it again.",
-      "unavailable": "The plugin's files cannot be read."
+      "unavailable": "The plugin's files cannot be read.",
+      "untrusted": "Not trusted on this machine. Review this package before using it.",
+      "collision": "This id also belongs to an installed plugin. Resolve the collision before using either package."
     },
     "source": {
       "label": "Source",
@@ -842,7 +844,12 @@
     "promote": "Promote to local",
     "promoteConfirm": "Trust the rules of {{name}}? After promotion, commands follow the session mode, including running without approval in bypass.",
     "export": "Export zip",
-    "exported": "Exported to {{path}}"
+    "exported": "Exported to {{path}}",
+    "workbenchSource": "Workbench package · trust is stored only on this machine",
+    "reviewScoped": "Review workbench plugin",
+    "trust": "Trust this package",
+    "scopedTrustIntro": "Trust this exact package for this workbench on this machine. Trust does not enable the plugin or install its programs. Any package change requires another review.",
+    "refresh": "Refresh plugins"
   },
   "runs": {
     "none": "No program runs in this workbench yet.",

@@ -175,6 +175,7 @@ export class Provisioner implements ProgramResolver {
   private readonly cache = new Map<string, Promise<Inspection | undefined>>();
   /** Aborted by close(): stops installs and probes when the app quits. */
   private readonly lifetime = new AbortController();
+  private readonly executions = new Set<Promise<unknown>>();
   private queue: Promise<unknown> = Promise.resolve();
   constructor(private readonly options: ProvisionerOptions) {}
 
@@ -188,7 +189,12 @@ export class Provisioner implements ProgramResolver {
     return this.windows ? `${program}.exe` : program;
   }
   private tools(plugin: LoadedPlugin) {
-    return join(this.options.root, "tools", plugin.manifest.id);
+    return join(
+      this.options.root,
+      "tools",
+      ...(plugin.runtimeKey ? [plugin.runtimeKey] : []),
+      plugin.manifest.id,
+    );
   }
   /** The uv variables of every call (spec REQ-FUNC-714e26bc.md): nothing outside the runtime folder. */
   uvEnvironment(plugin: LoadedPlugin): Record<string, string> {
@@ -227,7 +233,10 @@ export class Provisioner implements ProgramResolver {
     program: string,
     signal?: AbortSignal,
   ): Promise<ResolvedProgram | undefined> {
-    return (await this.inspect(plugin, program, signal))?.resolved;
+    await plugin.verify?.();
+    const resolved = (await this.inspect(plugin, program, signal))?.resolved;
+    await plugin.verify?.();
+    return resolved;
   }
 
   /** One status per declared program in name order; never installs anything. */
@@ -259,6 +268,12 @@ export class Provisioner implements ProgramResolver {
   close(): void {
     this.lifetime.abort();
   }
+  /** Cancels admission and waits for process exits and asynchronous tree termination at host shutdown. */
+  drain(): Promise<void> {
+    this.close();
+    // Shutdown must retain the host until both child exits and asynchronous tree kills finish.
+    return Promise.allSettled([...this.executions]).then(() => {});
+  }
 
   /**
    * Installs every program of the plugin that is not ready, one install at a time (a user action). Each
@@ -276,6 +291,7 @@ export class Provisioner implements ProgramResolver {
       const failures = new Map<string, PluginProgramStatus>();
       try {
         for (const name of Object.keys(plugin.manifest.programs).sort()) {
+          await plugin.verify?.();
           outer.throwIfAborted();
           const current = await this.inspect(plugin, name, outer);
           if (
@@ -311,6 +327,7 @@ export class Provisioner implements ProgramResolver {
   ): Promise<PluginProgramStatus[]> {
     const statuses: PluginProgramStatus[] = [];
     for (const name of Object.keys(plugin.manifest.programs).sort()) {
+      await plugin.verify?.();
       const status = overrides.get(name) ?? (await this.inspect(plugin, name, signal))?.status;
       if (status) statuses.push(status);
     }
@@ -318,9 +335,13 @@ export class Provisioner implements ProgramResolver {
   }
 
   private inspect(plugin: LoadedPlugin, name: string, signal?: AbortSignal): Promise<Inspection | undefined> {
-    const key = [plugin.manifest.id, plugin.record.sha256, JSON.stringify(plugin.record.programs), name].join(
-      "\0",
-    );
+    const key = [
+      plugin.runtimeKey ?? "",
+      plugin.manifest.id,
+      plugin.record.sha256,
+      JSON.stringify(plugin.record.programs),
+      name,
+    ].join("\0");
     let inspection = this.cache.get(key);
     if (!inspection) {
       // Shared by every caller, so it runs under the provisioner's lifetime, never one caller's signal.
@@ -400,7 +421,7 @@ export class Provisioner implements ProgramResolver {
           kind,
           program,
           resolved,
-          await this.probe(resolved, program, signal, plugin.folder),
+          await this.probe(resolved, program, signal, plugin.folder, plugin.verify),
         );
         if (preferDownload && entry) foundProgram.status.downloadAvailable = true;
         return foundProgram;
@@ -518,6 +539,7 @@ export class Provisioner implements ProgramResolver {
     own: Readonly<Record<string, string>>,
     timeoutMs: number,
     signal?: AbortSignal,
+    verify?: () => Promise<void>,
   ): Promise<Executed> {
     signal?.throwIfAborted();
     const { host, clock, root } = this.options;
@@ -529,15 +551,27 @@ export class Provisioner implements ProgramResolver {
       if (head.length < PROBE_TEXT) head += text.slice(0, PROBE_TEXT - head.length);
       tail.push(text);
     };
+    await verify?.();
+    signal?.throwIfAborted();
     const child = host.spawn(executable, args, {
       cwd: root,
       env: programEnvironment(host, [], own),
       group: true,
       output: (stream, chunk) => push(decoders[stream].write(chunk)),
     });
+    this.executions.add(child.exit);
+    void child.exit.then(
+      () => this.executions.delete(child.exit),
+      () => this.executions.delete(child.exit),
+    );
     let timedOut = false;
+    let killing: Promise<void> | undefined;
     const kill = () => {
-      if (child.pid !== undefined) void killProcessTree(host, child.pid, clock).catch(() => {});
+      if (child.pid === undefined || killing) return;
+      const task = killProcessTree(host, child.pid, clock).catch(() => {});
+      killing = task;
+      this.executions.add(task);
+      void task.then(() => this.executions.delete(task));
     };
     const timer = setTimeout(() => {
       timedOut = true;
@@ -562,6 +596,7 @@ export class Provisioner implements ProgramResolver {
     program: PluginProgram,
     signal?: AbortSignal,
     pluginDir = "",
+    verify?: () => Promise<void>,
   ): Promise<string | undefined> {
     const result = await this.execute(
       resolved.executable,
@@ -574,6 +609,7 @@ export class Provisioner implements ProgramResolver {
       resolved.env ?? {},
       this.options.timeouts?.probeMs ?? PROBE_MS,
       signal,
+      verify,
     );
     if (result.exit.error || result.timedOut) return undefined;
     return boundedMatch(program.version.match, result.head);
@@ -585,6 +621,7 @@ export class Provisioner implements ProgramResolver {
     name: string,
     signal?: AbortSignal,
   ): Promise<string | PluginProgramStatus> {
+    await plugin.verify?.();
     const program = plugin.manifest.programs[name] as PluginProgram;
     const kind = kindOf(program);
     const failed = (problem: PluginProgramProblem, detail?: string): PluginProgramStatus => ({
@@ -595,7 +632,7 @@ export class Provisioner implements ProgramResolver {
       ...(detail ? { detail: detail.slice(-DETAIL) } : {}),
     });
     const probed = async (resolved: ResolvedProgram) =>
-      (await this.probe(resolved, program, signal)) ??
+      (await this.probe(resolved, program, signal, plugin.folder, plugin.verify)) ??
       ({ name, kind, state: "unavailable", problem: "version" } satisfies PluginProgramStatus);
     const { install } = program;
     const installMs = this.options.timeouts?.installMs ?? INSTALL_MS;
@@ -611,6 +648,7 @@ export class Provisioner implements ProgramResolver {
         this.uvEnvironment(plugin),
         installMs,
         signal,
+        plugin.verify,
       );
       if (result.exit.error) return failed("install", result.exit.error);
       if (result.timedOut || result.exit.code !== 0) return failed("install", result.tail);

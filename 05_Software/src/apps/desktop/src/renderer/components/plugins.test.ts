@@ -221,7 +221,9 @@ it.each([
     await render();
     await vi.waitFor(() => expect($('[data-action="plugin-provision"]')).not.toBeNull());
     await click('[data-action="plugin-provision"]');
-    expect(calls("plugins.provision")).toEqual([["plugins.provision", { id: "echo-tools" }]]);
+    expect(calls("plugins.provision")).toEqual([
+      ["plugins.provision", { id: "echo-tools", workbenchId: workbench.id }],
+    ]);
     await vi.waitFor(() =>
       expect($('[data-program="echo"]').textContent).toContain(i18n.t("plugins.state.ready")),
     );

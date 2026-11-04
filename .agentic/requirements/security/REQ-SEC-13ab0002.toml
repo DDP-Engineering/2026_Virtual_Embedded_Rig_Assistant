@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-13ab0002"
+title = "Require machine local hash trust"
+status = "active"
+requirement = "Until the user explicitly accepts the current package hash for that workbench location on that machine, VERA shall exclude a scoped plugin from programs, skills, provisioning and execution in every permission mode."
+verification = "Clone with enablement and forged trust metadata; assert no prompt entries, skills or process; accept hash and observe ordinary consumption; use separate workbench and userData roots."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/tools/changes.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/tests/integration/scoped-programs.test.ts", "05_Software/src/libraries/core/src/plugins/scoped-store.test.ts", "05_Software/src/libraries/core/src/tools/write-edit.test.ts", "05_Software/tests/integration/cli.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

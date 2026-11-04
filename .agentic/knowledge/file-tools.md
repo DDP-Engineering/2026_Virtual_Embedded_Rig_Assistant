@@ -51,6 +51,10 @@ Drafts under ordinary workbench `plugins/<id>/` retain normal write approvals. `
 `plugin_validate` is read-class and `plugin_install` is program-class, both strict path-only tools;
 SessionService offers them only with a builder store. The install requires its prepared gate approval.
 
+Agent write/edit protects `.vera/plugins` package sources as user-managed installed files, including
+in Bypass and through canonical aliases, alongside application managed roots and workbench.yaml.
+Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.ts).
+
 ## Invariants
 
 - Outside explicitly selected Bypass, model-selected paths cannot leave root, select absolute/drive/UNC/device/reserved/NUL paths or ignored aliases. Windows native case aliases share a canonical fingerprint key. Bypass accepts ordinary filesystem paths with OS rights and retains canonical fingerprint identity.

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-13ab0004"
+title = "Confine scoped packages"
+status = "active"
+requirement = "If a scoped package path or any package entry violates the existing plugin store path and link policy, VERA shall refuse trust and consumption."
+verification = "Exercise junction/symlink ancestors and package entries plus invalid ids and cloned install.json; assert rejection without reading/executing external package."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/scoped-store.test.ts", "05_Software/src/libraries/core/src/plugins/store.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

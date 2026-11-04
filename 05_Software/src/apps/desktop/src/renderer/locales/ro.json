@@ -798,7 +798,9 @@
       "id": "ID-ul din manifest diferă de numele dosarului:",
       "record": "install.json lipsește sau nu corespunde pluginului.",
       "changed": "Fișierele pluginului s-au schimbat după verificare; instalează-l din nou.",
-      "unavailable": "Fișierele pluginului nu pot fi citite."
+      "unavailable": "Fișierele pluginului nu pot fi citite.",
+      "untrusted": "Fără încredere pe această mașină. Revizuiește pachetul înainte de utilizare.",
+      "collision": "Acest ID aparține și unui plugin instalat. Rezolvă coliziunea înainte de a utiliza oricare pachet."
     },
     "source": {
       "label": "Sursă",
@@ -842,7 +844,12 @@
     "promote": "Promovează ca local",
     "promoteConfirm": "Ai încredere în regulile pentru {{name}}? După promovare, comenzile urmează modul sesiunii, inclusiv rularea fără aprobare în bypass.",
     "export": "Exportă zip",
-    "exported": "Exportat în {{path}}"
+    "exported": "Exportat în {{path}}",
+    "workbenchSource": "Pachet workbench · încrederea se păstrează doar pe această mașină",
+    "reviewScoped": "Revizuiește pluginul workbench",
+    "trust": "Acordă încredere pachetului",
+    "scopedTrustIntro": "Acordă încredere acestui pachet exact pentru acest workbench pe această mașină. Încrederea nu activează pluginul și nu instalează programele. Orice modificare cere o nouă revizuire.",
+    "refresh": "Reîmprospătează pluginurile"
   },
   "runs": {
     "none": "Nicio rulare de program în acest workbench încă.",

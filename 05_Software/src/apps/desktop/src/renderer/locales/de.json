@@ -798,7 +798,9 @@
       "id": "Die Manifest-ID weicht vom Ordnernamen ab:",
       "record": "install.json fehlt oder passt nicht zum Plugin.",
       "changed": "Die Dateien des Plugins haben sich seit der Prüfung geändert; installieren Sie es erneut.",
-      "unavailable": "Die Dateien des Plugins können nicht gelesen werden."
+      "unavailable": "Die Dateien des Plugins können nicht gelesen werden.",
+      "untrusted": "Auf diesem Computer nicht vertrauenswürdig. Prüfen Sie das Paket vor der Verwendung.",
+      "collision": "Diese ID gehört auch zu einem installierten Plugin. Beheben Sie den Konflikt, bevor Sie eines der Pakete verwenden."
     },
     "source": {
       "label": "Quelle",
@@ -842,7 +844,12 @@
     "promote": "Als lokal einstufen",
     "promoteConfirm": "Den Regeln von {{name}} vertrauen? Danach folgen Befehle dem Sitzungsmodus und laufen im Bypass-Modus ohne Freigabe.",
     "export": "Zip exportieren",
-    "exported": "Exportiert nach {{path}}"
+    "exported": "Exportiert nach {{path}}",
+    "workbenchSource": "Workbench-Paket · Vertrauen wird nur auf diesem Computer gespeichert",
+    "reviewScoped": "Workbench-Plugin prüfen",
+    "trust": "Diesem Paket vertrauen",
+    "scopedTrustIntro": "Diesem genauen Paket für diese Workbench auf diesem Computer vertrauen. Vertrauen aktiviert das Plugin nicht und installiert keine Programme. Jede Paketänderung erfordert eine neue Prüfung.",
+    "refresh": "Plugins aktualisieren"
   },
   "runs": {
     "none": "In dieser Workbench gab es noch keine Programmläufe.",

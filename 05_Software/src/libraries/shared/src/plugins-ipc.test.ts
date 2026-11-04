@@ -195,3 +195,15 @@ it("validates the catalog view, review and install channels and the catalog app 
   ).toBe("catalog");
   expect(appEventSchema.parse({ type: "plugins.catalog" })).toEqual({ type: "plugins.catalog" });
 });
+
+// REQ-UX-13ab0006
+it("binds scoped review and trust to a workbench id and exact hash", () => {
+  const review = channels["plugins.scopedReview"];
+  const trust = channels["plugins.scopedTrust"];
+  expect(review.request.parse({ workbenchId, id: "echo-tools" })).toEqual({ workbenchId, id: "echo-tools" });
+  expect(trust.request.safeParse({ workbenchId, id: "echo-tools" }).success).toBe(false);
+  expect(trust.request.parse({ workbenchId, id: "echo-tools", sha256: "a".repeat(64) })).toBeTruthy();
+  expect(trust.request.safeParse({ workbenchId, id: "../escape", sha256: "a".repeat(64) }).success).toBe(
+    false,
+  );
+});

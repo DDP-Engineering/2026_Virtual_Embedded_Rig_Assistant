@@ -183,7 +183,7 @@ export class WorkbenchService {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
       tools: this.host.catalogs?.tools ?? builtinToolNames,
       plugins: this.host.userData
-        ? await new PluginStore({ root: join(this.host.userData, "plugins") }).ids()
+        ? await new PluginStore({ root: join(this.host.userData, "plugins"), workbench: root }).ids()
         : [],
     });
   }
@@ -194,7 +194,10 @@ export class WorkbenchService {
   async loadPlugins(id: string): Promise<LoadedPlugin[]> {
     const ids = this.enabledPlugins(id);
     if (!this.host.userData || ids.length === 0) return [];
-    const store = new PluginStore({ root: join(this.host.userData, "plugins") });
+    const store = new PluginStore({
+      root: join(this.host.userData, "plugins"),
+      workbench: this.current().folder,
+    });
     const loaded: LoadedPlugin[] = [];
     for (const plugin of ids)
       try {

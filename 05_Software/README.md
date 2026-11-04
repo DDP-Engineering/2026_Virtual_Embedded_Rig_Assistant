@@ -245,7 +245,30 @@ sessions, edited, or opened in Explorer. Pinning is an application preference.
 Selecting a workbench opens its overview with folder, configuration and dated session count/list; selecting a session opens its conversation. The overview provides a single Edit action for project settings. Tools/skills management and WORKBENCH.md editing are accessed inside that editor; Close is in the workbench sidebar menu. Settings replaces primary New/Open/Plugins actions with its categories and a Back to workbenches action. The sidebar shows workbench/session groups without search inputs. With no selected workbench, the main canvas shows VERA branding; New/Open are explicit actions.
 The project editor saves name, description, document include/exclude patterns,
 agent model/permissions, disabled tools/skills, instructions and embedding chunk settings.
-Plugins presents the availability of future installation/import and embedded integrations.
+Plugins installs packages from folders, zips or the catalog through a review screen.
+A workbench can carry portable packages in `.vera/plugins/<id>/` (commit these folders to Git).
+These start untrusted at each new workbench location and on each machine. On the Plugins page, choose
+**Review workbench plugin**, inspect the source, programs, risks and SHA-256, then **Trust this package**.
+Trust is separate from the enable switch and **Install programs**. Refresh plugins after a pull;
+any changed helper, skill or other package file needs a new review before use, including in Bypass.
+The verified copy and trust record live only under application userData, never in `.vera` or exports.
+An id colliding with a globally installed plugin blocks both in that workbench; rename/remove one
+package or uninstall the global plugin. Program-name collisions retain the ambiguous-program refusal.
+`requires` is descriptive: install, review and enable dependencies separately; no automatic installs.
+The agent drafts plugins outside `.vera/plugins`; only the user manages portable installed packages.
+
+CLI users inspect and trust the same packages with a persistent application data directory:
+
+```sh
+npm run vera -- plugin list --workbench /path/to/bench --data /path/to/data
+npm run vera -- plugin review --id bench-tools --workbench /path/to/bench --data /path/to/data
+npm run vera -- plugin trust --id bench-tools --sha256 <reviewed-hash> --workbench /path/to/bench --data /path/to/data
+npm run vera -- plugin provision --id bench-tools --workbench /path/to/bench --data /path/to/data
+```
+
+Review prints the exact hash and manifest; trust refuses stale hashes and never enables or provisions.
+`vera run --data` uses reviewed, enabled packages. list/review/trust print JSON and exit 0 on success;
+operational errors exit 1, usage errors 2. provision exits 0 only when every program is ready.
 
 Each workbench uses one root with user-owned subfolders. The `embeddings` block in
 `.vera/workbench.yaml` selects the installed `Xenova/bge-small-en-v1.5` model and

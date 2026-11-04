@@ -70,6 +70,7 @@ import { createDesktopProcessHost } from "./process-host.js";
 import { testProgramResolver } from "./program-resolver.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
+import { ProvisionerHosts } from "./provisioner-hosts.js";
 import { openPath, revealPath } from "./reveal-path.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
 import { exportSession } from "./session-export.js";
@@ -192,16 +193,20 @@ const uvBinary = join(
   process.platform === "win32" ? "uv.exe" : "uv",
 );
 /** Installs programs only on plugins.provision; resolves them for sessions without installing anything. */
-const provisioner = new Provisioner({
-  store: plugins,
-  root: join(dataLocations.paths.userData, "plugins", "runtime"),
-  ...(existsSync(uvBinary) ? { uv: { executable: uvBinary } } : {}),
-  host: processHost,
-  clock: systemClock,
-  platform: pluginPlatform(process.platform, process.arch),
-  fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
-  settings: () => settings.get().settings.plugins,
-});
+function createProvisioner(store: PluginStore): Provisioner {
+  return new Provisioner({
+    store,
+    root: join(dataLocations.paths.userData, "plugins", "runtime"),
+    ...(existsSync(uvBinary) ? { uv: { executable: uvBinary } } : {}),
+    host: processHost,
+    clock: systemClock,
+    platform: pluginPlatform(process.platform, process.arch),
+    fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
+    settings: () => settings.get().settings.plugins,
+  });
+}
+const provisioner = createProvisioner(plugins);
+const scopedProvisioners = new ProvisionerHosts(createProvisioner);
 /** The official plugins as a catalog release: <resources>/plugins, or prepare:plugins in development. */
 const bundledPlugins =
   __VERA_TEST__ && process.env.VERA_TEST_BUNDLED_PLUGINS !== undefined
@@ -294,6 +299,15 @@ function openWorkbenchFolder(workbenchId: string): string {
   if (snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
   return snapshot.folder;
 }
+/** Workbench-bound view for user plugin actions; explicit ids reject stale windows. */
+function activePluginStore(workbenchId?: string): PluginStore {
+  if (workbenchId) return plugins.forWorkbench(openWorkbenchFolder(workbenchId));
+  try {
+    return plugins.forWorkbench(workbench.getSnapshot().folder);
+  } catch {
+    return plugins;
+  }
+}
 /** A plugin was installed, removed, toggled or provisioned: resolve programs and prompt entries again. */
 function pluginsChanged(): void {
   provisioner.invalidate();
@@ -362,7 +376,10 @@ ipcMain.handle(
       "skills.toggle": ({ workbenchId, name, enabled }) => workbench.toggleSkill(workbenchId, name, enabled),
       "plugins.list": async ({ workbenchId }) => {
         const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
-        return (await plugins.list()).map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
+        return (await (workbenchId ? activePluginStore(workbenchId) : plugins).list()).map((plugin) => ({
+          ...plugin,
+          enabled: enabled.includes(plugin.id),
+        }));
       },
       "plugins.choose": async ({ kind }) => {
         if (__VERA_TEST__ && process.env.VERA_TEST_PLUGIN_PATH)
@@ -377,6 +394,12 @@ ipcMain.handle(
         return { path: result.canceled ? null : (result.filePaths[0] ?? null) };
       },
       "plugins.review": ({ path }) => plugins.review(path),
+      "plugins.scopedReview": ({ workbenchId, id }) => activePluginStore(workbenchId).reviewScoped(id),
+      "plugins.scopedTrust": async ({ workbenchId, id, sha256 }) => {
+        const installed = await activePluginStore(workbenchId).trustScoped(id, sha256);
+        pluginsChanged();
+        return installed;
+      },
       "plugins.install": async ({ path, sha256 }) => {
         const installed = await plugins.install(path, sha256);
         pluginsChanged();
@@ -415,10 +438,15 @@ ipcMain.handle(
         pluginsChanged();
         return installed;
       },
-      "plugins.programs": ({ id }) => provisioner.statuses(id),
-      "plugins.provision": async ({ id }) => {
+      "plugins.programs": ({ id, workbenchId }) =>
+        workbenchId
+          ? scopedProvisioners.run(activePluginStore(workbenchId), (host) => host.statuses(id))
+          : provisioner.statuses(id),
+      "plugins.provision": async ({ id, workbenchId }) => {
         try {
-          return await provisioner.install(id);
+          return await (workbenchId
+            ? scopedProvisioners.run(activePluginStore(workbenchId), (host) => host.install(id))
+            : provisioner.install(id));
         } finally {
           pluginsChanged();
         }
@@ -876,10 +904,9 @@ if (!app.requestSingleInstanceLock()) {
     if (draining) return;
     draining = true;
     // Installs and probes stop with the app; their uv and tar process trees are killed.
-    provisioner.close();
+    const stopped = Promise.all([provisioner.drain(), scopedProvisioners.close(), programs.stopAll()]);
     catalogChecks.close();
-    void programs
-      .stopAll()
+    void stopped
       .then(() => sessions.close())
       .then(() => workbench.close())
       .then(() => fileWorkers.dispose())

@@ -15,7 +15,8 @@ owns registry/result limits; [Sessions](sessions.md) owns turns and persistence;
 
 SkillCatalog discovers workbench/.vera/skills, separately host-authorized userData/skills and
 the skills/ folders of the workbench's enabled, issue-free plugins (source `plugin`, with the
-plugin id; WorkbenchService.loadPlugins supplies them). Workbench folders shadow matching user
+plugin id; WorkbenchService.loadPlugins supplies them). Scoped plugin skills use the verified machine-local
+snapshot and are absent until explicit hash review; source edits invalidate discovery and body reads. Workbench folders shadow matching user
 folders including invalid ones, user folders shadow plugin folders, and between plugins the
 lowest plugin id wins. Discovery
 returns validated metadata and localized diagnostic codes; bodies reach the agent

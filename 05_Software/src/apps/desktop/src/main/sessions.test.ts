@@ -121,7 +121,7 @@ it("computes the program prompt entries once until plugins or plugin skills chan
   const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
   const plugin = {
     manifest: { id: "tools", description: "Tools.", programs: { tool: {} } },
-    record: { programs: {} },
+    record: { programs: {}, sha256: "a".repeat(64) },
   };
   const skills = [{ name: "tool-guide", description: "d", source: "plugin", plugin: "tools", enabled: true }];
   let resolved = 0;
@@ -161,6 +161,9 @@ it("computes the program prompt entries once until plugins or plugin skills chan
     expect(resolved).toBe(3);
     await host.run(() => undefined);
     expect(resolved).toBe(3);
+    plugin.record.sha256 = "b".repeat(64);
+    await host.run(() => undefined);
+    expect(resolved).toBe(4);
   } finally {
     await host.close();
     storage.close();

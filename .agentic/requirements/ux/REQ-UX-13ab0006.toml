@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-13ab0006"
+title = "Review scoped plugins in desktop"
+status = "active"
+requirement = "When the user reviews a scoped plugin on the Plugins page, VERA shall display the verified package identity, hash, programs, rules and risks and offer a hash-bound trust action."
+verification = "Native Electron flow lists a cloned plugin as untrusted, reviews and trusts, then refreshes a changed helper and rejects a stale review."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

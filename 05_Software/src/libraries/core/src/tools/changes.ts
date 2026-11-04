@@ -89,6 +89,8 @@ async function assertAgentWritable(ctx: ToolContext, target: GuardedPath): Promi
   const path = identity(target.absolute);
   if (/(?:^|[\\/])\.vera[\\/]workbench\.yaml$/.test(path))
     throw Error("Workbench configuration is managed by the user.");
+  if (/(?:^|[\\/])\.vera[\\/]plugins(?:[\\/]|$)/.test(path))
+    throw Error("Workbench plugins are managed by the user. Draft plugins outside .vera/plugins.");
   for (const managed of [
     ...(ctx.managedRoots ?? []),
     ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : []),

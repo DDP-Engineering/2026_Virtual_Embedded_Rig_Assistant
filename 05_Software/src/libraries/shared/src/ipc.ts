@@ -33,6 +33,8 @@ import {
   pluginProgramStatusSchema,
   pluginProgramsRequestSchema,
   pluginReviewSchema,
+  pluginScopedRequestSchema,
+  pluginScopedTrustRequestSchema,
   pluginSummarySchema,
   pluginToggleRequestSchema,
   programRunIdSchema,
@@ -184,6 +186,16 @@ export const channels = {
   ),
   /** Reads and validates a package without installing it (the review screen). */
   "plugins.review": defineChannel("plugins.review", pluginPathRequestSchema, pluginReviewSchema),
+  "plugins.scopedReview": defineChannel(
+    "plugins.scopedReview",
+    pluginScopedRequestSchema,
+    pluginReviewSchema,
+  ),
+  "plugins.scopedTrust": defineChannel(
+    "plugins.scopedTrust",
+    pluginScopedTrustRequestSchema,
+    pluginInstalledSchema,
+  ),
   "plugins.install": defineChannel("plugins.install", pluginInstallRequestSchema, pluginInstalledSchema),
   "plugins.promote": defineChannel(
     "plugins.promote",

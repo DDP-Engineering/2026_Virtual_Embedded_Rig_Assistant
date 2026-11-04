@@ -278,6 +278,8 @@ export const pluginIssueCodeSchema = z.enum([
   "record",
   "changed",
   "unavailable",
+  "untrusted",
+  "collision",
 ]);
 export const pluginIssueSchema = z.strictObject({
   code: pluginIssueCodeSchema,
@@ -314,7 +316,7 @@ export const pluginInstalledSchema = z.strictObject({
   ecosystem: z.string().max(64).optional(),
   platforms: z.array(pluginPlatformSchema).max(3).optional(),
   tier: pluginTierSchema.optional(),
-  source: z.enum(["folder", "zip", "catalog"]).optional(),
+  source: z.enum(["folder", "zip", "catalog", "workbench"]).optional(),
   sha256: z
     .string()
     .regex(/^[0-9a-f]{64}$/)
@@ -361,7 +363,17 @@ export const pluginToggleRequestSchema = z.strictObject({
   id: pluginIdSchema,
   enabled: z.boolean(),
 });
-export const pluginProgramsRequestSchema = z.strictObject({ id: pluginIdSchema });
+export const pluginProgramsRequestSchema = z.strictObject({
+  id: pluginIdSchema,
+  workbenchId: workbenchIdSchema.optional(),
+});
+export const pluginScopedRequestSchema = z.strictObject({
+  id: pluginIdSchema,
+  workbenchId: workbenchIdSchema,
+});
+export const pluginScopedTrustRequestSchema = pluginScopedRequestSchema.extend({
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+});
 export const pluginProgramKindSchema = z.enum(["pip", "script", "download", "find"]);
 /** Why a program is not ready (provisioning spec). */
 export const pluginProgramProblemSchema = z.enum([

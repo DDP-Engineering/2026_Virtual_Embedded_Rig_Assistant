@@ -38,6 +38,8 @@ const workbenchHandlers = {
   "plugins.provision": unused,
   "plugins.choose": unused,
   "plugins.review": unused,
+  "plugins.scopedReview": unused,
+  "plugins.scopedTrust": unused,
   "plugins.catalog": unused,
   "plugins.catalogReview": unused,
   "plugins.catalogInstall": unused,

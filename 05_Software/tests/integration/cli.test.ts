@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
@@ -7,6 +7,7 @@ import { createServer, type RequestListener, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import { PluginStore } from "@vera/core";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
@@ -898,3 +899,149 @@ it("cleans owned temporary data/scripts on success and startup failure while ret
   expect(await readFile(join(supplied, "settings.json"), "utf8")).not.toContain("api_key");
   expect(await readdir(temporary)).toEqual([]);
 });
+
+// REQ-FUNC-13ab0001 REQ-SEC-13ab0002 REQ-SEC-13ab0003 REQ-FUNC-13ab0007
+it("scoped CLI local Git clone and pulled helper require explicit machine hash review before real execution", async () => {
+  const { dir, workbench: source } = await fixture(),
+    bench = join(dir, "clone"),
+    data = join(dir, "machine"),
+    other = join(dir, "other-machine");
+  await mkdir(join(source, ".vera/plugins"), { recursive: true });
+  await cp(join(root, "tests/fixtures/plugins/echo-tools"), join(source, ".vera/plugins/echo-tools"), {
+    recursive: true,
+  });
+  const config = join(source, ".vera/workbench.yaml");
+  await writeFile(
+    config,
+    `${(await readFile(config, "utf8")).replace("permission_mode: ask", "permission_mode: bypass")}plugins:\n  enabled: [echo-tools]\n`,
+  );
+  const script = join(dir, "scoped.jsonl");
+  await writeFile(
+    script,
+    [
+      { toolCalls: [{ name: "load_skill", args: { name: "echo-guide" } }] },
+      { toolCalls: [{ name: "run_program", args: { program: "echo", args: ["version"] } }] },
+      { text: "Done" },
+    ]
+      .map((row) => JSON.stringify(row))
+      .join("\n"),
+  );
+  const git = async (cwd: string, ...args: string[]) =>
+    promisify(execFile)("git", ["-c", "core.hooksPath=", "-c", "commit.gpgsign=false", ...args], {
+      cwd,
+      env: {
+        ...process.env,
+        GIT_CONFIG_NOSYSTEM: "1",
+        GIT_CONFIG_GLOBAL: process.platform === "win32" ? "NUL" : "/dev/null",
+      },
+    });
+  await git(source, "init");
+  await git(source, "add", ".");
+  await git(
+    source,
+    "-c",
+    "user.name=Fixture",
+    "-c",
+    "user.email=fixture@invalid",
+    "commit",
+    "-m",
+    "portable package",
+  );
+  await git(dir, "clone", "--local", source, bench);
+  const command = async (action: string, extra: string[] = [], machine = data) =>
+    launch(["plugin", action, "--workbench", bench, "--data", machine, ...extra], {
+      VERA_TEST_NODE: process.execPath,
+    }).result;
+  const requests: string[] = [];
+  const url = await endpoint((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      const payload = JSON.parse(body) as { messages: { role: string; content: unknown }[] };
+      requests.push(JSON.stringify(payload.messages.filter((message) => message.role === "system")));
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.end(
+        `data: ${JSON.stringify({ id: "scoped", choices: [{ index: 0, delta: { content: "Ready" }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ id: "scoped", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`,
+      );
+    });
+  });
+  const prompt = async () => {
+    const result = await launch([...custom(bench, url), "--data", data], {
+      OPENAI_API_KEY: "fixture-scoped-local-only",
+      VERA_TEST_NODE: process.execPath,
+    }).result;
+    expect(result.code).toBe(0);
+    return requests.at(-1) ?? "";
+  };
+  const listed = await command("list");
+  expect(listed.code).toBe(0);
+  expect(JSON.parse(listed.stdout)).toMatchObject([
+    { id: "echo-tools", source: "workbench", issues: [{ code: "untrusted" }] },
+  ]);
+  const run = async () =>
+    launch([...replay(bench, script), "--data", data, "--approve", "all"], {
+      VERA_TEST_NODE: process.execPath,
+    }).result;
+  const denied = await run();
+  expect(denied.code).toBe(0);
+  const deniedTools = events(denied.stdout).filter((row) => row.event.type === "tool.done");
+  expect(deniedTools.map((row) => row.event.ok)).toEqual([false, false]);
+  expect((await command("provision", ["--id", "echo-tools"])).code).toBe(1);
+  const untrustedPrompt = await prompt();
+  expect(untrustedPrompt).not.toContain("echo-guide");
+  expect(untrustedPrompt).not.toContain("<programs>");
+  const review = await command("review", ["--id", "echo-tools"]);
+  expect(review.code).toBe(0);
+  const hash = JSON.parse(review.stdout).sha256;
+  expect((await command("trust", ["--id", "echo-tools", "--sha256", hash])).code).toBe(0);
+  expect((await command("provision", ["--id", "echo-tools"])).code).toBe(0);
+  const used = await run();
+  expect(used.code).toBe(0);
+  const trustedPrompt = await prompt();
+  expect(trustedPrompt).toContain("echo-guide");
+  expect(trustedPrompt).toContain("<programs>");
+  const tools = events(used.stdout).filter((row) => row.event.type === "tool.done");
+  expect(tools.map((row) => row.event.ok)).toEqual([true, true]);
+  expect(String(tools[1]?.event.summary)).toContain('"exitCode":0');
+  expect(String(tools[1]?.event.summary)).toContain("command");
+  expect(JSON.parse((await command("list", [], other)).stdout)[0].issues).toContainEqual({
+    code: "untrusted",
+  });
+  const helper = join(source, ".vera/plugins/echo-tools/echo.mjs");
+  await writeFile(helper, `${await readFile(helper, "utf8")}\nconsole.log('PULLED-HELPER');\n`);
+  await git(source, "add", ".");
+  await git(
+    source,
+    "-c",
+    "user.name=Fixture",
+    "-c",
+    "user.email=fixture@invalid",
+    "commit",
+    "-m",
+    "helper change",
+  );
+  await git(bench, "pull", "--ff-only");
+  expect(JSON.parse((await command("list")).stdout)[0].issues).toContainEqual({ code: "changed" });
+  expect((await command("trust", ["--id", "echo-tools", "--sha256", hash])).code).toBe(1);
+  const pulledDenied = await run();
+  expect(
+    events(pulledDenied.stdout)
+      .filter((row) => row.event.type === "tool.done")
+      .map((row) => row.event.ok),
+  ).toEqual([false, false]);
+  const changedPrompt = await prompt();
+  expect(changedPrompt).not.toContain("echo-guide");
+  expect(changedPrompt).not.toContain("<programs>");
+  const nextHash = JSON.parse((await command("review", ["--id", "echo-tools"])).stdout).sha256;
+  expect(nextHash).not.toBe(hash);
+  expect((await command("trust", ["--id", "echo-tools", "--sha256", nextHash])).code).toBe(0);
+  const after = await run();
+  expect(
+    events(after.stdout)
+      .filter((row) => row.event.type === "tool.done")
+      .at(-1)?.event.summary,
+  ).toContain("PULLED-HELPER");
+  expect((await git(bench, "status", "--porcelain", "--untracked-files=no")).stdout).toBe("");
+}, 120000);

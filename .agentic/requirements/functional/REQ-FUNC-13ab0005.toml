@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-13ab0005"
+title = "Resolve scoped collisions deterministically"
+status = "active"
+requirement = "When a scoped plugin id collides with an installed plugin id, VERA shall display a collision issue and refuse either package for that id in the workbench."
+verification = "Install global package with same id; list collision, check no loaded plugin, programs or skills; retain existing ambiguous-program refusal."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/scoped-store.test.ts", "05_Software/src/libraries/core/src/plugins/program-request.test.ts"]
+spec = "specs/REQ-SEC-13ab0002.md"
+priority = "high"
+created = 2026-11-04
+updated = 2026-11-04

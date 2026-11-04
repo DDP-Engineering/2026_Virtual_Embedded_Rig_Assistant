@@ -1,6 +1,17 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { lstat, mkdir, open, opendir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  open,
+  opendir,
+  readdir,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import {
   isPluginRelativePath,
@@ -37,6 +48,10 @@ export interface LoadedPlugin {
   manifest: PluginManifest;
   record: PluginRecord;
   folder: string;
+  /** Scoped packages recheck their portable source and machine snapshot before consumption. */
+  verify?: () => Promise<void>;
+  /** Separates managed environments for portable packages with the same id in different workbenches. */
+  runtimeKey?: string;
 }
 type Files = Map<string, Uint8Array>;
 interface Package {
@@ -301,9 +316,158 @@ export class PluginStore {
   get root(): string {
     return this.options.root;
   }
-  constructor(private readonly options: { root: string; now?: () => Date; uuid?: () => string }) {
+  constructor(
+    private readonly options: { root: string; workbench?: string; now?: () => Date; uuid?: () => string },
+  ) {
     this.installed = join(options.root, "installed");
     this.staging = join(options.root, "staging");
+  }
+  /** A view of the same global store plus the selected workbench's portable packages. */
+  forWorkbench(workbench: string): PluginStore {
+    return new PluginStore({ ...this.options, workbench });
+  }
+  private global(): PluginStore {
+    return new PluginStore({ root: this.root });
+  }
+  private async scopedRoot(): Promise<string> {
+    if (!this.options.workbench) throw fails("DENIED");
+    // The host selects the workbench. Below its canonical root no redirected ancestor is accepted.
+    const root = await realpath(this.options.workbench);
+    let path = root;
+    for (const part of [".vera", "plugins"]) {
+      path = join(path, part);
+      try {
+        const info = await lstat(path);
+        if (info.isSymbolicLink() || !info.isDirectory() || (await realpath(path)) !== path)
+          throw fails("DENIED");
+      } catch (error) {
+        if (errno(error) !== "ENOENT") throw error;
+      }
+    }
+    return path;
+  }
+  private async scopedCache(sha256?: string): Promise<PluginStore> {
+    const path = await realpath(this.options.workbench ?? "");
+    const key = createHash("sha256")
+      .update(process.platform === "win32" ? path.toLowerCase() : path)
+      .digest("hex");
+    return new PluginStore({
+      root: join(this.root, "workbenches", key, ...(sha256 ? ["snapshots", sha256] : [])),
+      ...(this.options.now ? { now: this.options.now } : {}),
+    });
+  }
+  private async scopedIds(): Promise<string[]> {
+    const root = await this.scopedRoot();
+    let entries: string[];
+    try {
+      entries = await readdir(root);
+    } catch (error) {
+      if (errno(error) !== "ENOENT") throw error;
+      entries = [];
+    }
+    // Reservations are machine-local names, not trust: load still needs a verified hash snapshot.
+    let reserved: string[];
+    try {
+      reserved = await readdir(join((await this.scopedCache()).root, "reserved"));
+    } catch (error) {
+      if (errno(error) !== "ENOENT") throw error;
+      reserved = [];
+    }
+    const ids = [...new Set([...entries, ...reserved])].sort(order);
+    if (ids.length > 1024) throw fails("INVALID");
+    return ids;
+  }
+  async reviewScoped(id: string): Promise<PluginReview> {
+    if (!pluginIdSchema.safeParse(id).success) throw fails("INVALID");
+    const root = await this.scopedRoot();
+    // A case alias on Windows is not a correctly named portable package.
+    if (!(await readdir(root)).includes(id)) throw fails("NOT_FOUND");
+    const review = await this.global().review(join(root, id));
+    // Collision checks cannot depend on the bounded global presentation list.
+    const installed = await lstat(join(this.installed, id)).catch((error) => {
+      if (errno(error) !== "ENOENT") throw error;
+      return undefined;
+    });
+    if (installed) review.issues.push({ code: "collision" });
+    return review;
+  }
+  private async scopedTrust(id: string): Promise<PluginRecord | undefined> {
+    const record = await readRecord(join((await this.scopedCache()).root, "reserved", id));
+    return record?.id === id && record.tier === "local" ? record : undefined;
+  }
+  /** User-only action. Never exposed by the agent tool registry; does not enable or provision. */
+  trustScoped(id: string, sha256: string): Promise<PluginInstalled> {
+    return this.serial(async () => {
+      const review = await this.reviewScoped(id);
+      if (review.sha256 !== sha256) throw fails("CONFLICT");
+      if (review.issues.length) throw fails("INVALID");
+      const cache = await this.scopedCache(sha256);
+      // A new hash always has a new code and managed-runtime path. Never replace old reviewed bytes.
+      const existing = await cache.load(id).catch(() => undefined);
+      if (!existing) await cache.install(review.path, sha256);
+      const snapshot = await cache.load(id);
+      const current = await this.reviewScoped(id);
+      if (current.sha256 !== sha256 || current.issues.length) throw fails("CONFLICT");
+      const root = (await this.scopedCache()).root;
+      await mkdir(join(root, "reserved"), { recursive: true });
+      await mkdir(join(root, "staging"), { recursive: true });
+      const temporary = join(root, "staging", `${this.uuid()}.json`);
+      try {
+        // Reuse the validated format-1 install record as the selected hash; retained bytes alone grant no trust.
+        await writeFile(temporary, JSON.stringify(snapshot.record), { flag: "wx" });
+        await rename(temporary, join(root, "reserved", id));
+      } finally {
+        await rm(temporary, { force: true });
+      }
+      if ((await this.load(id)).record.sha256 !== sha256) throw fails("CONFLICT");
+      return this.scopedSummary(id);
+    });
+  }
+  private async scopedSummary(id: string): Promise<PluginInstalled> {
+    let review: PluginReview;
+    try {
+      review = await this.reviewScoped(id);
+    } catch {
+      return { id, source: "workbench", issues: [{ code: "unavailable" }] };
+    }
+    const { manifest, sha256 } = review;
+    const issues = [...review.issues];
+    let trusted: LoadedPlugin | undefined;
+    try {
+      trusted = await (await this.scopedCache(sha256)).load(id);
+    } catch {}
+    const selected = await this.scopedTrust(id);
+    if (!trusted || selected?.sha256 !== sha256) {
+      const reserved = await lstat(join((await this.scopedCache()).root, "reserved", id)).catch(
+        () => undefined,
+      );
+      issues.push({ code: reserved ? "changed" : "untrusted" });
+    } else if (trusted.record.sha256 !== sha256) issues.push({ code: "changed" });
+    return {
+      id,
+      source: "workbench",
+      sha256,
+      issues,
+      ...(manifest
+        ? {
+            name: manifest.name,
+            version: manifest.version,
+            description: manifest.description,
+            ecosystem: manifest.ecosystem,
+            platforms: manifest.platforms,
+          }
+        : {}),
+      ...(trusted && !issues.length
+        ? {
+            tier: trusted.record.tier,
+            installedAt: trusted.record.installedAt,
+            irreversible:
+              manifest?.rules
+                .filter((rule) => rule.risk === "irreversible")
+                .map(({ match, note }) => ({ match, ...(note ? { note } : {}) })) ?? [],
+          }
+        : {}),
+    };
   }
   private serial<T>(task: () => Promise<T>): Promise<T> {
     const run = this.queue.then(task, task);
@@ -315,6 +479,11 @@ export class PluginStore {
   }
   /** Installed folder names, including invalid ones. */
   async ids(): Promise<string[]> {
+    if (this.options.workbench) {
+      const ids = [...new Set([...(await this.global().ids()), ...(await this.scopedIds())])].sort(order);
+      if (ids.length > 1024) throw fails("INVALID");
+      return ids;
+    }
     try {
       const entries = await readdir(this.installed, { withFileTypes: true });
       return entries
@@ -382,16 +551,59 @@ export class PluginStore {
    * unavailable for a moment, never as valid with mixed files.
    */
   async list(): Promise<PluginInstalled[]> {
+    if (this.options.workbench) {
+      await this.ids(); // Refuse an oversized combined IPC view before inspecting any partial list.
+      const scoped = new Set(await this.scopedIds());
+      const global = await this.global().list();
+      const result = global.filter((plugin) => ![...scoped].some((id) => this.sameId(id, plugin.id)));
+      for (const id of scoped) result.push(await this.scopedSummary(id));
+      if (result.length > 1024) throw fails("INVALID");
+      return result.sort((a, b) => order(a.id, b.id));
+    }
     const result: PluginInstalled[] = [];
     for (const id of await this.ids()) result.push(await this.summary(id));
     return result;
   }
   /** The manifest of an installed plugin without any issue; a plugin with issues never loads. */
   async load(id: string): Promise<LoadedPlugin> {
+    if (this.options.workbench) {
+      if (!(await this.scopedIds()).some((scoped) => this.sameId(scoped, id))) return this.global().load(id);
+      const review = await this.reviewScoped(id);
+      if (review.issues.length) throw fails("DENIED");
+      if ((await this.scopedTrust(id))?.sha256 !== review.sha256) throw fails("DENIED");
+      const cache = await this.scopedCache(review.sha256);
+      const plugin = await cache.load(id).catch(() => {
+        throw fails("DENIED");
+      });
+      if (plugin.record.sha256 !== review.sha256) throw fails("DENIED");
+      return {
+        ...plugin,
+        runtimeKey: createHash("sha256").update(cache.root).digest("hex"),
+        verify: async () => {
+          try {
+            if ((await this.scopedCache(review.sha256)).root !== cache.root) throw fails("CONFLICT");
+            if ((await this.scopedTrust(id))?.sha256 !== review.sha256) throw fails("CONFLICT");
+            const current = await this.reviewScoped(id);
+            const snapshot = await cache.load(id);
+            if (
+              current.issues.length ||
+              current.sha256 !== review.sha256 ||
+              snapshot.record.sha256 !== review.sha256
+            )
+              throw fails("CONFLICT");
+          } catch {
+            throw fails("CONFLICT");
+          }
+        },
+      };
+    }
     if (!pluginIdSchema.safeParse(id).success || !(await this.ids()).includes(id)) throw fails("NOT_FOUND");
     const { folder, record, manifest, issues } = await this.inspect(id);
     if (issues.length || !record || !manifest) throw fails("INVALID");
     return { folder, record, manifest };
+  }
+  private sameId(a: string, b: string): boolean {
+    return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
   }
   /**
    * What installing a folder or .zip file would install, without installing it: the integrity hash
@@ -527,6 +739,13 @@ export class PluginStore {
    * plugin is the one the versions were probed for (its hash); a reinstall in between is CONFLICT.
    */
   recordPrograms(id: string, sha256: string, programs: Readonly<Record<string, string>>): Promise<void> {
+    if (this.options.workbench)
+      return this.serial(async () => {
+        const plugin = await this.load(id);
+        if (plugin.record.sha256 !== sha256) throw fails("CONFLICT");
+        const store = plugin.verify ? await this.scopedCache(sha256) : this.global();
+        await store.recordPrograms(id, sha256, programs);
+      });
     return this.serial(async () => {
       if (!pluginIdSchema.safeParse(id).success || !(await this.ids()).includes(id)) throw fails("NOT_FOUND");
       const path = join(this.installed, id, RECORD);

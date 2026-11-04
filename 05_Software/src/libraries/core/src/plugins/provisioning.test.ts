@@ -808,7 +808,7 @@ it("stops running installs when it closes and records versions installed before 
   const installing = s.provisioner.install("tools");
   for (let i = 0; i < 200 && !s.host.programs.some((p) => p.args[2] === "b-tool"); i++)
     await new Promise((done) => setTimeout(done, 5));
-  s.provisioner.close();
+  await s.provisioner.drain();
   await expect(installing).rejects.toMatchObject({ name: "AbortError" });
   expect(s.host.signals.some(([pid, signal]) => pid < 0 && signal === "SIGTERM")).toBe(true);
   expect((await s.record()).programs).toEqual({ a: "1.0.0" });

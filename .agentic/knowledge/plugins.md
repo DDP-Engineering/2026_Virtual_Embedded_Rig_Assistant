@@ -3,6 +3,7 @@
 ## Routing
 
 Select for plugin.yaml validation, the installed plugin store under `<userData>/plugins`,
+workbench-scoped packages under `.vera/plugins`, machine-local hash trust,
 install.json, the integrity hash ("changed since review"), install from a folder or zip, uninstall,
 plugin listing issues, `plugins.enabled` in workbench.yaml and the `plugins.*` IPC channels; also for
 running plugin programs: the `ProcessHost` port, `ProgramRunner`, run logs in `.vera/runs/`, timeouts,
@@ -46,7 +47,29 @@ Core's `PluginStore` imports a package (folder or zip) into `installed/<id>/` wi
 lists installed plugins with every issue, loads only issue-free ones and uninstalls them. Every
 list and load re-reads the files and recomputes the hash; nothing is cached. Enablement is a list
 in each workbench's `.vera/workbench.yaml`, written by `WorkbenchService.togglePlugin`. Desktop main
-composes one store at `<userData>/plugins`.
+composes one global store at `<userData>/plugins` and workbench-bound views.
+
+A bound `PluginStore` discovers immediate `.vera/plugins/<id>` packages, including invalid entries,
+and combines them with global installations. Scoped ids reserve the name; a global/scoped collision
+lists `collision` and blocks both. Case aliases reserve names on Windows. Source paths refuse
+linked/junction ancestors and package entries through the existing package reader.
+`reviewScoped(id)` reuses the package review; user-only `trustScoped(id, sha256)` copies the verified
+package into `<userData>/plugins/workbenches/<canonical-workbench-path-hash>/snapshots/<package-hash>/installed/<id>` using
+format-1 install records. A machine-local reserved/<id> install record selects the current trusted hash. No trust is read from or written to workbench files. Different locations
+and userData roots need separate trust. `load` verifies source plus snapshot and returns the snapshot
+folder with a final `verify` callback and workbench-specific managed-runtime key. Changed files,
+deleted sources or corrupt snapshots prevent consumption; restoring bytes of the currently selected trusted hash at the same
+location restores consumption. An older retained hash requires a new explicit user review. One current reviewed hash per id is selected; earlier hash-addressed code is retained for prepared/running processes, but those bytes alone grant no trust. Source/reserved and combined views exceeding 1024 ids fail with INVALID; collision checks use physical installed entries independently of presentation limits.
+No mode grants trust. The agent cannot call scoped trust or edit `.vera/plugins`; drafts live elsewhere.
+Enablement remains explicit `plugins.enabled`; `requires` remains descriptive with no dependency action.
+Program ambiguity and skill precedence retain existing rules. Desktop `plugins.scopedReview/scopedTrust`
+bind the open workbench id and hash; full review shows SHA and risks. Refresh rehashes source;
+session prompt caches include fresh plugin hashes. CLI `plugin list/review/trust/provision` shares this
+boundary and requires persistent `--data`. Provisioner checks integrity before resolution/probes and
+installs; ProgramTools rechecks after approval consumption and before spawn. Package code runs from the
+machine snapshot. Source changes after that last check cannot alter snapshot bytes; already running
+processes continue. Managed pip environments are partitioned by workbench and package hash, download blobs by content hash.
+Portable exports exclude install records. Desktop ProvisionerHosts tracks request-bound hosts, closes active probes/installs at quit, awaits their operations/process exits/tree kills and rejects new admission.
 
 Core's `ProgramRunner` runs a resolved executable with an argument array through the `ProcessHost`
 port (`ports.ts`). `NodeProcessHost` implements the port around an injected `spawn`: desktop main
@@ -126,7 +149,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 - Shared: `pluginManifestSchema`, `validatePluginManifest(data)` → `{manifest?, issues}`,
   `pluginIdSchema`, `pluginRiskSchema`, `pluginTierSchema`, `pluginPlatformSchema`,
-  `pluginIssueSchema` (`manifest`, `yaml`, `field`, `id`, `record`, `changed`, `unavailable`),
+  `pluginIssueSchema` (`manifest`, `yaml`, `field`, `id`, `record`, `changed`, `unavailable`, `untrusted`, `collision`),
   `pluginInstalledSchema`, `pluginSummarySchema` (adds `enabled`), `PLUGIN_LIMITS`,
   `isPluginRelativePath`.
 - Core: `new PluginStore({ root, now?, uuid? })` with `review(path)` → `PluginReview`, `install(path, sha256?)`
@@ -174,7 +197,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - `verifyProgramFiles(request, signal?)` re-hashes a request's files (CONFLICT on any difference);
   `RunRequest.beforeSpawn` runs it after the log opens, right before spawn.
 - Provisioning (core): `new Provisioner({store, root, uv?, host, clock, platform, fetch, settings, timeouts?})`
-  with `install(id, signal?)`, `close()` and `statuses(id, signal?)` -> `PluginProgramStatus[]` (name order),
+  with `install(id, signal?)`, `close()`, awaited `drain()` and `statuses(id, signal?)` -> `PluginProgramStatus[]` (name order),
   `resolve(plugin, program, signal?)` -> `{executable, prefix?, env?, version}` or undefined, `invalidate()`,
   `uvEnvironment(plugin)`; `pluginPlatform(platform, arch)`; `UV_PYTHON` "3.13"; `PluginStore.recordPrograms(id,
   sha256, versions)` (CONFLICT when the hash changed); `extractZip`, `checkTree`, `tarCommand`, `ArchiveError`.
@@ -322,7 +345,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   (plugin, download entry, find list) exclusions are decided before any spawn or fetch. Installs
   run one at a time per provisioner; each failure is a status, store errors throw. Each program has one
   deadline (15 min) over transfer, extraction, uv and probe; each version is recorded as soon as it is probed;
-  `close()` (desktop `before-quit`) aborts running installs and probes and refuses new ones; each install first
+  `close()` aborts running installs and probes and refuses new ones; `drain()` also waits for process exits/tree kills at desktop `before-quit`; each install first
   removes staging folders older than the install deadline (younger ones may be another process's). Cached inspections run under the provisioner's lifetime and each caller only
   races its own signal against them.
 - Resolve never fetches or runs uv: pip -> `tools/<id>/bin/<program>[.exe]`; script -> uv with `run --quiet
@@ -389,6 +412,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
+| Scoped discovery/trust/isolation | `PluginStore` scoped methods, `WorkbenchService.loadPlugins` | `scoped-store.test.ts`, scoped CLI Git fixture in `cli.test.ts`, native scoped `plugins-ui.spec.ts` |
 | Manifest field or limit | `pluginManifestSchema` in shared `plugins.ts` | `shared/src/plugins.test.ts` |
 | Import, limits, hash, list, load, uninstall | `PluginStore`, `readFolder`, `readZip`, `examine` in `core/src/plugins/store.ts` | `core/src/plugins/store.test.ts` |
 | Workbench enablement or warnings | `workbench.ts` (`plugins`, `configWarnings`), `WorkbenchService.togglePlugin` | `shared/src/workbench.test.ts`, `core/src/workbench/service.test.ts` |
@@ -552,3 +576,5 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - `05_Software/src/apps/desktop/src/main/catalog-checks.ts`, `catalog-checks.test.ts` — start and 24 h checks.
 - `05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx`, `plugin-catalog.test.ts` — catalog section.
 - `05_Software/tests/e2e/plugins-catalog.spec.ts` — native install and rule-changing update from a loopback catalog.
+
+Scoped request lifetime is implemented by desktop `main/provisioner-hosts.ts` and verified by the real hanging-probe quit case in `tests/e2e/plugins-ui.spec.ts`; content-addressed approval/spawn binding is verified by `tests/integration/scoped-programs.test.ts`.

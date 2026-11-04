@@ -38,6 +38,12 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Scoped plugin acceptance uses core/plugins/scoped-store.test.ts and program-tools.test.ts plus the scoped
+case in tests/integration/cli.test.ts (compiled CLI, local Git clone/pull, real program exits/output,
+actual loopback system prompts, no external provider). tests/integration/scoped-programs.test.ts executes an actual approval while a deterministic post-verification barrier trusts a new helper hash; the old process must print only old-hash code. Native plugins-ui.spec.ts covers real probe shutdown cancellation, user review/trust,
+stale hash refusal, refresh and reopen. Windows covers junctions/case aliases; identify Ubuntu WSL2
+separately. VERA_CLI_EVIDENCE_DIR retains original CLI process receipts and outputs.
+
 Web search: core/web/exa.test.ts exercises the real SDK over scripted fetch; native web-search.spec.ts routes only fixed Exa requests to an owned loopback MCP fixture and checks activity/source links/en-ro-de/disabled-tool persistence. Separate manual live ExaWebProvider smoke uses public query/URL without LLM spend. Automated tests retain network guards.
 
 Sidebar navigation proof uses workspace.test.ts, focused service creation cases and native navigation-actions.spec.ts (owned two-workbench replay profile, keyboard/mouse menus, concurrent reuse and restart). Stop live development before rebuilding shared desktop/out and restart normal development after native verification. A pre-existing service compaction/restart limit assertion is separately reproduced with the baseline service; it does not validate this navigation feature.
