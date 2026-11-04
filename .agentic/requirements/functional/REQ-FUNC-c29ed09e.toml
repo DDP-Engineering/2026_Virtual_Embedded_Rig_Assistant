@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c29ed09e"
+title = "Count complete log contents"
+status = "active"
+requirement = "When filters or event limits select a preview, parse_log shall preserve counts of every scanned normalized, unparsed and blank line and report omitted eligible events."
+verification = "Filter a multi-level log by levels/contains/fromLine with maxEvents 1 and assert unchanged counts."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -7,11 +7,90 @@ import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 interface Probe {
-  start(root: string, args: unknown, deadlineMs?: number): Promise<void>;
+  start(root: string, args: unknown, deadlineMs?: number, kind?: "grep" | "parse_log"): Promise<void>;
   partials(): number;
   result(): Promise<{ matches: unknown[]; truncated: boolean; reason?: string }>;
   abort(): void;
 }
+test("parse_log keeps IPC responsive at its production deadline and after Stop", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-cap01-native-"));
+  await writeFile(join(root, "log.txt"), `${"I ok\n".repeat(1000)}I ${"a".repeat(12000)}!`);
+  const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter((x): x is [string, string] => typeof x[1] === "string"),
+  );
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await _electron.launch({
+    executablePath: join(
+      desktop,
+      "../../../node_modules/electron/dist",
+      process.platform === "win32" ? "electron.exe" : "electron",
+    ),
+    chromiumSandbox: true,
+    args: [desktop, `--user-data-dir=${join(root, "data")}`],
+    env,
+  });
+  try {
+    await installNetworkGuard(app);
+    const page = await app.firstWindow();
+    const start = () =>
+      app.evaluate(async (_, root) => {
+        await (Reflect.get(globalThis, "veraTestFileTools") as Probe).start(
+          root,
+          { path: "log.txt", pattern: "^(?<level>I) (?<message>ok|(a+)+)$" },
+          undefined,
+          "parse_log",
+        );
+      }, root);
+    const started = Date.now();
+    await start();
+    await expect
+      .poll(() => app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).partials()))
+      .toBeGreaterThanOrEqual(2);
+    const ping = Date.now();
+    expect(
+      (await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {})))
+        .platform,
+    ).toBe(process.platform);
+    expect(Date.now() - ping).toBeLessThan(1000);
+    const result = await app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).result());
+    expect(Date.now() - started).toBeGreaterThanOrEqual(9900);
+    expect(Date.now() - started).toBeLessThan(14000);
+    expect(result).toMatchObject({
+      reason: "timeout",
+      value: {
+        source: { sha256: null, ref: "log.txt#L1-L1000" },
+        counts: { info: 1000 },
+        scan: { lines: 1000, complete: false, stopReason: "timeout" },
+      },
+    });
+    await start();
+    await expect
+      .poll(() => app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).partials()))
+      .toBeGreaterThanOrEqual(2);
+    await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {}));
+    await app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).abort());
+    expect(
+      await app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).result()),
+    ).toMatchObject({ reason: "aborted" });
+    await writeFile(join(root, "log.txt"), "2026-04-12T08:00:00Z INFO recovered\n");
+    await app.evaluate(async (_, root) => {
+      await (Reflect.get(globalThis, "veraTestFileTools") as Probe).start(
+        root,
+        { path: "log.txt", profile: "iso" },
+        undefined,
+        "parse_log",
+      );
+    }, root);
+    expect(
+      await app.evaluate(() => (Reflect.get(globalThis, "veraTestFileTools") as Probe).result()),
+    ).toMatchObject({ value: { scan: { complete: true }, events: [{ message: "recovered" }] } });
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await app.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
 test("pathological desktop grep leaves app.info responsive, times out/aborts and replaces capacity", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-wp11-native-"));
   await writeFile(join(root, "00-good.txt"), "ok");

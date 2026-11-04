@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-9efa1fee"
+title = "Validate log arguments"
+status = "active"
+requirement = "When parse_log receives arguments, VERA shall accept only a strict object with a path of 1..256 characters, exactly one built-in profile or pattern of 1..512 characters, optional normalized levels, contains up to 200 characters, fromLine >=1, maxEvents 1..200 and optional SHA256."
+verification = "Check defaults, exclusive selectors, unknown fields and all boundary values."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-70caaf8b"
+title = "Refuse invalid custom log patterns"
+status = "active"
+requirement = "If a custom pattern has invalid JavaScript syntax or lacks a named level or message group, parse_log shall return INVALID with a stable reason."
+verification = "Invoke malformed and missing-group expressions and assert code/reason."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

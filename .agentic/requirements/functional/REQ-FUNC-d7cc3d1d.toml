@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-d7cc3d1d"
+title = "Bound structured log results"
+status = "active"
+requirement = "When returning log results, parse_log shall fit 32000 serialized characters by removing final preview events with accurate omitted/truncated metadata, message/sample limits of 256 characters and at most five unparsed samples."
+verification = "Parse 200 escaped long events plus unparsed samples; assert serialization cap, full counts and exact omitted."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

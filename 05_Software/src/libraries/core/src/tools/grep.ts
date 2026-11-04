@@ -21,6 +21,7 @@ export const grepTool: ToolDefinition = {
     if (!ctx.workers) throw Error("Grep worker host is unavailable.");
     const result = await ctx.workers.run(
       {
+        kind: "grep",
         root: ctx.root,
         args,
         ...(ctx.permissionMode?.() === "bypass" ? { scope: "filesystem" as const } : {}),

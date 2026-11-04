@@ -12,6 +12,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     list: {},
     glob: { pattern: "**/*.md" },
     grep: { pattern: "hello" },
+    parse_log: { path: "logs/boot-0412.log", profile: "iso" },
     write: { path: "notes.txt", content: "hello" },
     edit: { path: "notes.txt", oldString: "hello", newString: "world" },
     artifact_save: { name: "summary.md", content: "hello" },
@@ -40,6 +41,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "list",
     "glob",
     "grep",
+    "parse_log",
     "write",
     "edit",
     "artifact_save",
@@ -120,4 +122,10 @@ it("contains serialization failures and honors explicit tool error results", asy
       isError: true,
     });
   }
+});
+
+it("exposes parse_log as a read tool and excludes it when disabled", () => {
+  const registry = new api.ToolRegistry();
+  expect(registry.available().find((tool) => tool.name === "parse_log")?.class).toBe("read");
+  expect(registry.specs(["parse_log"]).map((tool) => tool.name)).not.toContain("parse_log");
 });

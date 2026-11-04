@@ -1,9 +1,10 @@
 // REQ-FUNC-28ad0001
+import { createHash } from "node:crypto";
 import { binaryDocumentKinds, isDocumentKindIn, parseRef, type ViewerContent, veraError } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { isBinary } from "../tools/binary.js";
-import { textLines } from "../tools/files.js";
+import { readGuardedFile, textLines } from "../tools/files.js";
 import { readWindow } from "../tools/read-window.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { extractionSchema } from "./extraction.js";
@@ -15,38 +16,43 @@ export class DocumentViewer {
     private readonly root: string,
     private readonly db: Database.Database,
   ) {}
-  async open(target: string, snippet = "", byPath = false): Promise<ViewerContent> {
+  async open(target: string, snippet = "", byPath = false, utf8Log = false): Promise<ViewerContent> {
     try {
       const parsed = byPath ? undefined : parseRef(target);
       if (!byPath && (!parsed || parsed.kind === "artifact")) throw Error("Invalid document ref.");
       const path = byPath ? target : parsed && "path" in parsed ? parsed.path : "";
       const guard = await PathGuard.create(this.root);
       const current = await guard.resolve(path);
-      if (current.relative !== path) throw Error("Noncanonical source.");
+      if (current.relative !== path && !utf8Log) throw Error("Noncanonical source.");
       const rows = new DocumentsRepository(this.db),
         doc = rows.get(path);
       const signal = new AbortController().signal;
       const base = { path, ref: byPath ? null : target, snippet: snippet.slice(0, 12000) };
       if (parsed?.kind === "lines") {
         // File-tool refs also cover ordinary unindexed source files.
-        const window = await readWindow(guard, path, parsed.start, 1, signal);
+        const window = await readWindow(guard, path, parsed.start, 1, signal, { utf8Log });
         if (parsed.end > window.totalLines) throw Error("Line bounds.");
-        if (doc && (doc.status !== "indexed" || doc.sha256 !== window.sha256)) throw Error("Stale index.");
-        const bytes = await verifyDocumentSource({
-          root: this.root,
-          path,
-          kind: "text",
-          sha256: window.sha256,
-          signal,
-          assertWritable: () => {},
-        });
-        if (isBinary(bytes)) throw Error("Binary.");
+        if (!utf8Log && doc && (doc.status !== "indexed" || doc.sha256 !== window.sha256))
+          throw Error("Stale index.");
+        const bytes = utf8Log
+          ? (await readGuardedFile(guard, path, 50 * 1024 * 1024, signal)).bytes
+          : await verifyDocumentSource({
+              root: this.root,
+              path,
+              kind: "text",
+              sha256: window.sha256,
+              signal,
+              assertWritable: () => {},
+            });
+        if (utf8Log ? createHash("sha256").update(bytes).digest("hex") !== window.sha256 : isBinary(bytes))
+          throw Error("Changed or binary source.");
         const lines = textLines(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
         const after = rows.get(path);
         if (
-          doc
+          !utf8Log &&
+          (doc
             ? after?.id !== doc.id || after.sha256 !== doc.sha256 || after.status !== doc.status
-            : after !== undefined
+            : after !== undefined)
         )
           throw Error("Index changed.");
         if (parsed.end > lines.length) throw Error("Line bounds.");

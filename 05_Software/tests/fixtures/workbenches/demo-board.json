@@ -13,6 +13,10 @@
     "logs/boot-0412.log",
     "sources/datasheet.md",
     "sources/reference-manual.md",
-    "sources/application-note.md"
+    "sources/application-note.md",
+    "logs/boot-0413.log",
+    "docs/runs.md",
+    "docs/boot-test.md",
+    "docs/release-notes.md"
   ]
 }

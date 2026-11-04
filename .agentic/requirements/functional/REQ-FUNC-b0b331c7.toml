@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-b0b331c7"
+title = "Report missing logs"
+status = "active"
+requirement = "If the requested log is absent, parse_log shall return NOT_FOUND with a stable reason."
+verification = "Request missing file and assert code/reason."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-2c7415fe"
+title = "Parse captured log profiles"
+status = "active"
+requirement = "When a log line matches ESP-IDF, Zephyr, ISO or a custom JavaScript pattern with required named level/message groups, parse_log shall strip ANSI colours and return normalized error/warn/info/debug/verbose/other events with optional time/source and full-line references."
+verification = "Run both ESP timestamp forms, ANSI, Zephyr, ISO and custom unknown levels; check exact event refs."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

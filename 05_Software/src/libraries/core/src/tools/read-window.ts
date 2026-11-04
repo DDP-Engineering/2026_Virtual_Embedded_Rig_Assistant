@@ -10,6 +10,7 @@ export async function readWindow(
   offset: number,
   limit: number,
   signal: AbortSignal,
+  options: { utf8Log?: boolean } = {},
 ) {
   signal.throwIfAborted();
   const target = await guard.resolve(path);
@@ -18,7 +19,7 @@ export async function readWindow(
     const before = await handle.stat();
     if (!before.isFile()) throw Error("Read an ordinary file.");
     const hash = createHash("sha256");
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder("utf-8", { fatal: options.utf8Log === true });
     const buffer = Buffer.alloc(64 * 1024);
     const selected: { line: number; text: string }[] = [];
     let totalLines = 0;
@@ -73,8 +74,11 @@ export async function readWindow(
       signal.throwIfAborted();
       const { bytesRead } = await handle.read(buffer, 0, buffer.length, position);
       if (!bytesRead) break;
+      if (options.utf8Log && position + bytesRead > 50 * 1024 * 1024)
+        throw Error("Log exceeds the 50 MiB source limit.");
       const bytes = buffer.subarray(0, bytesRead);
-      if (!position && isBinary(bytes)) throw Error("Cannot read a binary file. Choose a text file.");
+      if (!position && !options.utf8Log && isBinary(bytes))
+        throw Error("Cannot read a binary file. Choose a text file.");
       hash.update(bytes);
       consume(decoder.decode(bytes, { stream: true }));
       position += bytesRead;

@@ -11,6 +11,21 @@ function refs(value: unknown, out: Set<string>): void {
       refs(child, out);
     }
 }
+/** Only successful parse_log provenance admits UTF8 logs containing control bytes. */
+export function issuedLogRefs(messages: readonly Message[]): Set<string> {
+  const issued = new Set<string>();
+  for (const message of messages)
+    if (message.role === "toolResult" && message.toolName === "parse_log" && !message.isError)
+      for (const block of message.content)
+        if (block.type === "text") {
+          try {
+            refs(JSON.parse(block.text), issued);
+          } catch {
+            /* plain text issues no refs */
+          }
+        }
+  return issued;
+}
 export async function validateCitations(
   root: string,
   text: string,
@@ -19,6 +34,7 @@ export async function validateCitations(
   validDocumentRef?: (ref: string) => Promise<boolean>,
 ) {
   const issued = new Set<string>();
+  const logs = issuedLogRefs(messages);
   for (const message of messages)
     if (message.role === "toolResult" && !message.isError)
       for (const block of message.content)
@@ -50,6 +66,7 @@ export async function validateCitations(
               parsed.start,
               1,
               new AbortController().signal,
+              { utf8Log: logs.has(ref) },
             );
             valid = parsed.end <= window.totalLines;
           } else valid = !!(await validDocumentRef?.(ref));

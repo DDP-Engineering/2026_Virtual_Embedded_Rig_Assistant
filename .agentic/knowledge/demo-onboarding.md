@@ -21,6 +21,7 @@ starts with ordinary user-selected workbenches and explicit session input.
 - Ordinary workbench and session IPC contracts support those user actions.
 - `makeDemoPdfs(destination)` generates the three fixture PDFs from fixture Markdown.
 - `demo-board.json` is a test-only identity and finite asset inventory.
+- Baseline boot-0412.log has three INFO events and a WARN at line3; candidate boot-0413.log has an ERROR at line4. docs/runs.md identifies firmware1.0.0/1.1.0, board/unit/setup/test; boot-test.md defines boot@1 (i2c ready and no ERROR); release-notes.md records the timing change without a root-cause claim. parse_log/CLI tests cite the events and eval:retrieval covers the indexed notes.
 
 ## Invariants
 
@@ -44,19 +45,6 @@ starts with ordinary user-selected workbenches and explicit session input.
 
 - User-selected workbenches and explicit session composition.
 - Fictional verification data is separate from the distributed application.
-
-## Architecture
-
-```mermaid
-flowchart LR
- Welcome --> CreateOpen[Explicit user folder selection]
- CreateOpen --> Lifecycle[Workbench lifecycle]
- Lifecycle --> Sessions[Ordinary user-composed sessions]
- Fixtures[tests/fixtures] --> Tests[Tests and evaluation/smoke harnesses]
- Tests --> Copies[Owned isolated workbench copies]
- Build[Compiled application] --> Package[Installer payload]
- Resources[Real model/runtime resources] --> Package
-```
 
 ## Files
 

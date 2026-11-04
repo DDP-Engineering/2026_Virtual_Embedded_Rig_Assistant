@@ -22,7 +22,7 @@ import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
-import { validateCitations } from "../agent/citations.js";
+import { issuedLogRefs, validateCitations } from "../agent/citations.js";
 import { ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import type { PermissionEngine } from "../agent/permissions.js";
@@ -337,7 +337,12 @@ export class SessionService {
         mime: artifact.mime,
       };
     }
-    const content = await new DocumentViewer(this.host.root, this.host.db).open(ref, snippet);
+    const content = await new DocumentViewer(this.host.root, this.host.db).open(
+      ref,
+      snippet,
+      false,
+      issuedLogRefs(messages).has(ref),
+    );
     this.row(id);
     return content;
   }

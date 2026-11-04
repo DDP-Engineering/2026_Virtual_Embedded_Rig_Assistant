@@ -601,6 +601,7 @@
     "load_skill": "Încarcă instrucțiunile și fișierele text auxiliare ale unui skill activ.",
     "web_search": "Caută pe internet folosind furnizorul selectat în Setări → Acces web. Cerințele de acces și limitele serviciului depind de furnizor.",
     "web_read": "Extrage textul paginilor web publice și al documentelor acceptate folosind furnizorul web selectat. Nu salvează un fișier local.",
+    "parse_log": "Analizează jurnale ESP-IDF, Zephyr sau ISO și returnează totaluri și evenimente citabile.",
     "web_download": "Descarcă un fișier public (PDF, ZIP, CSV, text, imagini sau alte formate) în .vera/downloads, conform permisiunilor sesiunii. Previzualizează PDF-urile în VERA sau găsește celelalte fișiere în Explorer. Descărcările nu sunt indexate automat.",
     "run_program": "Rulează programele pluginurilor activate pentru acest workbench, cu regulile de risc ale pluginului și aprobările tale.",
     "program_output": "Citește ieșirea unei rulări de program în fundal.",

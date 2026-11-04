@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { builtinToolNames } from "@vera/shared";
 import { resolveConfig } from "electron-vite";
 import { createServer } from "vite";
 
@@ -58,8 +59,8 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator("[data-project-name]").fill("ESP32 revised");
     await dialog.locator('[data-project-section="tools"]').click();
     const tools = dialog.locator("[data-tool-toggle]");
-    await expect(tools).toHaveCount(17);
-    await expect(dialog.locator("[data-tool-description]")).toHaveCount(17);
+    await expect(tools).toHaveCount(builtinToolNames.length);
+    await expect(dialog.locator("[data-tool-description]")).toHaveCount(builtinToolNames.length);
     for (const tool of [
       "read",
       "list",

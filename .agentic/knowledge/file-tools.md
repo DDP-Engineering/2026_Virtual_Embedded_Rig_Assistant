@@ -2,13 +2,16 @@
 
 ## Routing
 
-Select for PathGuard, binary detection, read/list/glob/grep/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
+Select for PathGuard, binary detection, read/list/glob/grep/parse_log/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
 
 ## Purpose and boundaries
 
-Core supplies context-bound tool definitions, canonical confinement, ignored discovery, streaming text reads and prepared atomic file changes. NodeWorkerPool hosts isolated grep tasks through the WorkerPool port; desktop/CLI adapters choose independently compiled entrypoints. Shared owns pure line reference parsing/formatting. Callers own session contexts and host disposal. WorkbenchService owns the shared WriteQueue; sessions supply identities, ownership/permission checks and change-event persistence. Changes reuse the SQLite schema1 table.
+Core supplies context-bound tool definitions, canonical confinement, ignored discovery, streaming text reads and prepared atomic file changes. NodeWorkerPool hosts isolated grep and parse_log tasks through the WorkerPool port; desktop/CLI adapters choose independently compiled entrypoints. Shared owns pure line reference parsing/formatting. Callers own session contexts and host disposal. WorkbenchService owns the shared WriteQueue; sessions supply identities, ownership/permission checks and change-event persistence. Changes reuse the SQLite schema1 table.
 
 ## Public interface
+
+- parse_log is a confined read tool, including in Bypass: strict path/profile-or-pattern arguments, ESP-IDF/Zephyr/ISO profiles, ANSI removal, normalized levels and complete scanned counts independent of event filters. Source SHA256 hashes exact UTF8 LF/CRLF/BOM bytes; events/samples carry verified line refs. Limits are50MiB per file,16KiB per line,256 characters per message/optional capture/sample,5 samples,200 events and32000 serialized characters. Preview omitted/truncated fields describe bounded eligible events. Optional expectedSha256 is verified before regex evaluation; BOM-only logs have zero lines and a null source ref while hashing all3bytes. Stable errors distinguish INVALID/NOT_FOUND/DENIED/CONFLICT, including source_changed for changed identity/stats or expected SHA mismatch.
+- WorkerPool tasks have kind grep|parse_log and unknown partial callbacks. The independently bundled grep-worker dispatches parse_log to its worker-only scanner. Initialization and every1000 complete lines publish checkpoints; timeout retains the last checkpoint with null SHA and incomplete/timeout scan. CLI and desktop share absolute10s admission/execution deadlines, termination-before-resolution, abort and capacity replacement. No main-thread fallback exists.
 
 The registry also exposes web_download as a prepared write operation with its own narrow binary store; it does not widen write/edit text formats or their .vera restrictions. ChangeRequest distinguishes a download approval (unknown final SHA, explicit source/budget) from text-file hashes/diffs. See [PDF downloads](pdf-downloads.md).
 
@@ -71,6 +74,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 | Read/fingerprint/line semantics | readTool,readWindow,refs | read/shared refs tests |
 | Ignored sorted discovery | discoverFiles,listTool,globTool | discovery tests |
 | Regex/options/worker protocol | grepTool,grep-worker.ts | grep/node-host tests |
+| Captured log contracts/scanning/citations | shared/tools/parse-log.ts; tools/parse-log.ts,parse-log-worker.ts,log-failure.ts | parse-log.test.ts; CLI parity; native file-tools |
 | Host deadlines/abort/capacity | NodeWorkerPool,app adapters | node-host/worker-hosts/native file-tools acceptance |
 | Prepared writes/diff/recovery | tools/changes.ts,write.ts,edit.ts | tools/write-edit.test.ts,sessions/write-edit.test.ts,native write-edit acceptance |
 | Shared app/session queue | workbench/write-queue.ts,service.ts | workbench/service.test.ts,desktop sessions startup recovery |
@@ -97,10 +101,10 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 
 REQ-FUNC-9aa789af create; REQ-DATA-8c71b990 freshness; REQ-FUNC-d5b5be90 exact replacement/counts; REQ-DATA-cf979c63 CRLF/BOM; REQ-REL-d2437b70 shared immutable admission; REQ-DATA-f44069c2 atomic recording; REQ-DATA-60e025f4 event/fingerprint; REQ-REL-50217071 recovery; REQ-SEC-294dcab2 sequential write classification and internal metadata denial.
 
-The host controls lifetime; the worker owns all grep discovery/read/matching. The registry adapts these tools to the runtime without importing an app.
+The host controls lifetime; the worker owns all grep discovery/read/matching and captured-log scanning. The registry adapts these tools to the runtime without importing an app.
 
 ## Files
 
 - shared/src/tools.ts — canonical built-in names and type; renderer components/workbench-tools.tsx presents localized selection. tools/registry.test.ts verifies runtime parity; renderer workbench-tools.test.ts and tests/e2e/workbench-tools.spec.ts cover selection/save/permissions.
 
-Under05_Software: core/src/tools/{changes,write,edit,context,registry,read,read-window,files,binary,discovery,list,glob,grep,grep-worker}.ts and corresponding tests; core/src/workbench/path-guard.ts/test; core/src/workers/{node-host,worker.test-support}.ts and node-host.test.ts; core/src/{ports,index}.ts. shared/src/refs.ts/test/index.ts. src/apps/{cli/src,desktop/src/main}/{worker-pool,grep-worker}.ts; desktop/main/file-tool-probe.ts/index.ts and electron.vite.config.ts. tests/integration/worker-hosts.test.ts and tests/tooling/build-mode.test.ts and tests/e2e/file-tools.spec.ts. WriteQueue is core/src/workbench/write-queue.ts; write/edit tests and tests/fixtures/llm-scripts/read-then-edit.jsonl/tests/e2e/write-edit.spec.ts prove changes. diff9.0.0 is pinned in root/core package manifests and lockfile.
+Under05_Software: core/src/tools/{parse-log,parse-log-worker,log-failure,changes,write,edit,context,registry,read,read-window,files,binary,discovery,list,glob,grep,grep-worker}.ts and corresponding tests; core/src/workbench/path-guard.ts/test; core/src/workers/{node-host,worker.test-support}.ts and node-host.test.ts; core/src/{ports,index}.ts. shared/src/refs.ts/test/index.ts. src/apps/{cli/src,desktop/src/main}/{worker-pool,grep-worker}.ts; desktop/main/file-tool-probe.ts/index.ts and electron.vite.config.ts. tests/integration/worker-hosts.test.ts and tests/tooling/build-mode.test.ts and tests/e2e/file-tools.spec.ts. WriteQueue is core/src/workbench/write-queue.ts; write/edit tests and tests/fixtures/llm-scripts/read-then-edit.jsonl/tests/e2e/write-edit.spec.ts prove changes. diff9.0.0 is pinned in root/core package manifests and lockfile.

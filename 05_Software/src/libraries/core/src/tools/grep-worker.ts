@@ -1,17 +1,26 @@
 import { parentPort } from "node:worker_threads";
 import { formatLineRef, parseLineRef } from "@vera/shared";
-import type { GrepMatch } from "../ports.js";
+import type { GrepMatch, WorkerTask } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
 import { discoverFiles } from "./discovery.js";
 import { readGuardedFile, textLines } from "./files.js";
 import { grepParams } from "./grep.js";
+import { LogFailure } from "./log-failure.js";
 
 /** Dedicated task entry, bundled independently by each host; never called by main-thread tools. */
-async function execute(task: { root: string; args: unknown; scope?: "filesystem" }) {
+async function execute(task: WorkerTask) {
   const port = parentPort;
   if (!port) throw Error("Grep requires a dedicated worker.");
   try {
+    if (task.kind === "parse_log") {
+      const { scanLog } = await import("./parse-log-worker.js");
+      const value = await scanLog(task.root, task.args, (value) =>
+        port.postMessage({ type: "checkpoint", value }),
+      );
+      port.postMessage({ type: "done", value });
+      return;
+    }
     const args = grepParams.parse(task.args);
     let regex: RegExp;
     try {
@@ -73,10 +82,16 @@ async function execute(task: { root: string; args: unknown; scope?: "filesystem"
     }
     port.postMessage({ type: "done", truncated });
   } catch (error) {
-    port.postMessage({ type: "error", error: error instanceof Error ? error.message : "Grep task failed." });
+    port.postMessage({
+      type: "error",
+      error: error instanceof Error ? error.message : "Worker task failed.",
+      ...(error instanceof LogFailure
+        ? { failure: { code: error.code, reason: error.reason, message: error.message } }
+        : {}),
+    });
   }
 }
 if (parentPort)
-  parentPort.once("message", (task: { root: string; args: unknown; scope?: "filesystem" }) => {
+  parentPort.once("message", (task: WorkerTask) => {
     void execute(task);
   });

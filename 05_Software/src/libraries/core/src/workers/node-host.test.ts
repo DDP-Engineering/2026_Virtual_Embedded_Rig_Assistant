@@ -25,7 +25,7 @@ function host(deadlineMs = 1000, capacity = 1) {
   pool = new api.NodeWorkerPool(bundle.url, { deadlineMs, capacity });
   return pool;
 }
-const task = (pattern = "ok|(a+)+$") => ({ root, args: { pattern } });
+const task = (pattern = "ok|(a+)+$") => ({ kind: "grep" as const, root, args: { pattern } });
 it("owns an absolute deadline, terminates pathological matching with partial results and replaces capacity", async () => {
   const hostPool = host();
   expect(hostPool.deadlineMs).toBe(1000);
@@ -37,7 +37,7 @@ it("owns an absolute deadline, terminates pathological matching with partial res
   });
   expect(hostPool.activeCount).toBe(0);
   const next = await hostPool.run(
-    { root, args: { pattern: "ok", glob: "00*" } },
+    { kind: "grep" as const, root, args: { pattern: "ok", glob: "00*" } },
     new AbortController().signal,
   );
   expect(next).toMatchObject({ truncated: false, matches: [{ path: "00-good.txt" }] });
@@ -59,8 +59,12 @@ it("aborts during matching and queued work, waits for termination and permits re
   expect(await running).toMatchObject({ reason: "aborted", matches: [{ path: "00-good.txt" }] });
   expect(hostPool.activeCount).toBe(0);
   expect(
-    (await hostPool.run({ root, args: { pattern: "ok", glob: "00*" } }, new AbortController().signal))
-      .matches,
+    (
+      await hostPool.run(
+        { kind: "grep" as const, root, args: { pattern: "ok", glob: "00*" } },
+        new AbortController().signal,
+      )
+    ).matches,
   ).toHaveLength(1);
 });
 it("isolates one task per worker and a busy worker does not prevent another task", async () => {
@@ -68,7 +72,7 @@ it("isolates one task per worker and a busy worker does not prevent another task
   const controller = new AbortController();
   const busy = hostPool.run(task(), controller.signal);
   const ordinary = await hostPool.run(
-    { root, args: { pattern: "ok", glob: "00*" } },
+    { kind: "grep" as const, root, args: { pattern: "ok", glob: "00*" } },
     new AbortController().signal,
   );
   expect(ordinary.matches).toHaveLength(1);
@@ -88,7 +92,7 @@ it("reports invalid regex errors and defaults to the production10 second deadlin
 it("stops at the result ceiling before a later pathological match", async () => {
   const hostPool = host();
   const result = await hostPool.run(
-    { root, args: { pattern: "ok|(a+)+$", maxResults: 1 } },
+    { kind: "grep" as const, root, args: { pattern: "ok|(a+)+$", maxResults: 1 } },
     new AbortController().signal,
   );
   expect(result.truncated).toBe(true);
@@ -111,7 +115,10 @@ it("contains synchronous worker startup failure and restores capacity for real m
   // The host owns this URL; correcting it keeps the same pool rather than constructing another.
   entry.href = bundle.url.href;
   expect(
-    await pool.run({ root, args: { pattern: "ok", glob: "00*" } }, new AbortController().signal),
+    await pool.run(
+      { kind: "grep" as const, root, args: { pattern: "ok", glob: "00*" } },
+      new AbortController().signal,
+    ),
   ).toEqual({
     truncated: false,
     matches: [{ path: "00-good.txt", line: 1, text: "ok", ref: "00-good.txt#L1-L1" }],

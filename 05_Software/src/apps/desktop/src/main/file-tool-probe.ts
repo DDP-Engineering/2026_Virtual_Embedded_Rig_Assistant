@@ -7,7 +7,7 @@ export function createFileToolProbe() {
   let outcome: Promise<WorkerResult> | undefined;
   let partials = 0;
   return {
-    async start(root: string, args: unknown, deadlineMs?: number) {
+    async start(root: string, args: unknown, deadlineMs?: number, kind: "grep" | "parse_log" = "grep") {
       if (outcome) await outcome;
       if (deadlineMs !== undefined) {
         await pool.dispose();
@@ -15,7 +15,7 @@ export function createFileToolProbe() {
       }
       controller = new AbortController();
       partials = 0;
-      outcome = pool.run({ root, args }, controller.signal, () => {
+      outcome = pool.run({ kind, root, args }, controller.signal, () => {
         partials++;
       });
     },

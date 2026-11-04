@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-d7d7a18a"
+title = "Confine log reads"
+status = "active"
+requirement = "If a log path traverses outside the workbench, resolves to ignored metadata or another refused location, parse_log shall return DENIED with a stable reason even in Bypass."
+verification = "Attempt traversal, ignored paths, .vera and redirected paths on owned fixtures."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

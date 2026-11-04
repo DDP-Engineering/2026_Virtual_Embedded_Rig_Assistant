@@ -10,6 +10,8 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 
 ## Public interface
 
+- parse_log exposes the same read-tool contract, full scanned counts, source SHA and cited filtered events as desktop agents. tests/integration/cli.test.ts compares replay SessionService results against real npm-built vera run and validates baseline WARN and candidate ERROR citations. The common grep-worker entry dispatches kind parse_log to its isolated scanner.
+
 - CLI supplies anonymous ExaWebProvider to SessionService; enabled web_search/web_read use the shared port and existing read-tool events/errors, without account configuration or startup egress. [Web search](web-search.md) owns this boundary.
 
 - run composes [skills](skills.md) from the selected workbench and authorized CLI
@@ -49,7 +51,7 @@ same catalog. Promotion/export controls remain user actions on the desktop Plugi
 ## Invariants
 
 - Credentials load from ambient OPENAI_API_KEY or a single-read UTF8 key-file override; successful key-file reads register before parser diagnostics. Credentials stay in memory; settings store non-secret fields. Known-secret invocation fields are rejected before persistence. Event/tool outputs are scrubbed through the core host, and each serialized output line passes shared scrub again.
-- ContextPolicy and SessionService limits use desktop defaults/settings. CLI supplies WorkbenchService.getWriteQueue and awaits SessionService.waitReady before session operations. Grep runs through the existing host-owned worker adapter with10000ms absolute admission/execution deadline, termination and fresh-worker capacity; main thread performs no regex matching.
+- ContextPolicy and SessionService limits use desktop defaults/settings. CLI supplies WorkbenchService.getWriteQueue and awaits SessionService.waitReady before session operations. Grep and parse_log run through the shared host-owned worker adapter with10000ms absolute admission/execution deadline, termination and fresh-worker capacity; main thread performs no regex matching.
 - `run` composes a plugin ProgramRunner over `createCliProcessHost()`; its `stopAll` is a closing resource, so every program run's process tree ends with the CLI run. The session's ProgramHost uses the workbench's enabled plugins (`loadPlugins`) and `unresolvedPrograms` until provisioning exists, so run_program reports programs as not available while plugin skills load and every event prints like other session events (REQ-FUNC-59308834).
 - SIGINT/SIGTERM request active-turn abort; reverse cleanup drains session before SQLite/workbench close and disposes workers, credentials/settings and owned temporary locations. Provided data survives. Cleanup attempts all owned resources even after a close error.
 - CLI bundle uses exact installed esbuild and external dependencies/native addon; shared/core source aliases build without previous library output. Independent grep-worker entry resides beside index. Workspace bin points to dist/index.js.

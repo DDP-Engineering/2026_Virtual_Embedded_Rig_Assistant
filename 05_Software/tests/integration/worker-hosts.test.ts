@@ -51,7 +51,7 @@ it.each(["cli", "desktop"])(
         ready = resolve;
       });
       const pending = pool.run(
-        { root: temporary, args: { pattern: "ok|(a+)+$", glob: "*.txt" } },
+        { kind: "grep", root: temporary, args: { pattern: "ok|(a+)+$", glob: "*.txt" } },
         controller.signal,
         () => ready(),
       );
@@ -64,7 +64,7 @@ it.each(["cli", "desktop"])(
       });
       expect(
         await pool.run(
-          { root: temporary, args: { pattern: "ok", glob: "00*" } },
+          { kind: "grep", root: temporary, args: { pattern: "ok", glob: "00*" } },
           new AbortController().signal,
         ),
       ).toMatchObject({ truncated: false, matches: [{ path: "00-good.txt" }] });
@@ -100,7 +100,7 @@ parentPort.once("message", () => { ${failure === "crash" ? 'throw Error("determi
       );
     const controller = new AbortController();
     const failed = await pool.run(
-      { root: temporary, args: { pattern: "ok", glob: "*.txt" } },
+      { kind: "grep", root: temporary, args: { pattern: "ok", glob: "*.txt" } },
       controller.signal,
     );
     expect(failed).toEqual({
@@ -125,10 +125,11 @@ parentPort.once("message", () => { ${failure === "crash" ? 'throw Error("determi
     const matches: string[] = [];
     expect(
       await pool.run(
-        { root: temporary, args: { pattern: "ok", glob: "*.txt" } },
+        { kind: "grep", root: temporary, args: { pattern: "ok", glob: "*.txt" } },
         nextController.signal,
         (match) => {
-          if (match.ref) matches.push(match.ref);
+          if (match && typeof match === "object" && "ref" in match && typeof match.ref === "string")
+            matches.push(match.ref);
         },
       ),
     ).toEqual({

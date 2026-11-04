@@ -4,6 +4,7 @@ export const builtinToolNames = [
   "list",
   "glob",
   "grep",
+  "parse_log",
   "write",
   "edit",
   "artifact_save",

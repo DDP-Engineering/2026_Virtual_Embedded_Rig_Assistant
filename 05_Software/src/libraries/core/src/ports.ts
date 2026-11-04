@@ -1,7 +1,7 @@
 /** Host-owned data locations; core does not resolve Electron paths. */
-import type { EventEnvelope, SettingsPatch, SettingsSnapshot } from "@vera/shared";
+import type { EventEnvelope, ParseLogResult, SettingsPatch, SettingsSnapshot, VeraError } from "@vera/shared";
 
-/** Host-owned task isolation; grep discovery, reads and matching execute only in a worker. */
+/** Host-owned isolated file analysis; matching never executes on the main thread. */
 export interface GrepMatch {
   path: string;
   line: number;
@@ -9,18 +9,22 @@ export interface GrepMatch {
   ref?: string;
   context?: { line: number; text: string }[];
 }
+export interface WorkerTask {
+  kind: "grep" | "parse_log";
+  root: string;
+  args: unknown;
+  scope?: "filesystem";
+}
 export interface WorkerResult {
+  value?: ParseLogResult;
+  failure?: { code: VeraError["code"]; reason: string; message: string };
   matches: GrepMatch[];
   truncated: boolean;
   reason?: "timeout" | "aborted";
   error?: string;
 }
 export interface WorkerPool {
-  run(
-    task: { root: string; args: unknown; scope?: "filesystem" },
-    signal: AbortSignal,
-    onPartial?: (match: GrepMatch) => void,
-  ): Promise<WorkerResult>;
+  run(task: WorkerTask, signal: AbortSignal, onPartial?: (value: unknown) => void): Promise<WorkerResult>;
   dispose(): Promise<void>;
 }
 

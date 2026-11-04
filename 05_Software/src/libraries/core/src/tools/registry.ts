@@ -12,6 +12,7 @@ import { globTool } from "./glob.js";
 import { grepTool } from "./grep.js";
 import { listTool } from "./list.js";
 import { loadSkillTool } from "./load-skill.js";
+import { parseLogTool } from "./parse-log.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
 import { webReadTool, webSearchTool } from "./web.js";
@@ -23,6 +24,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   list: listTool,
   glob: globTool,
   grep: grepTool,
+  parse_log: parseLogTool,
   write: writeTool,
   edit: editTool,
   artifact_save: artifactSaveTool,
@@ -134,8 +136,32 @@ export class ToolRegistry {
     try {
       signal.throwIfAborted();
       const tool = this.available(disabled).find((definition) => definition.name === name);
-      if (!tool) throw Error(`Tool ${name} is unavailable. Choose an enabled tool.`);
+      if (!tool) {
+        if (name === "parse_log")
+          return {
+            text: JSON.stringify({
+              isError: true,
+              code: "DENIED",
+              reason: "tool_disabled",
+              error: "Enable parse_log in the workbench tools.",
+            }),
+            isError: true,
+            truncated: false,
+          };
+        throw Error(`Tool ${name} is unavailable. Choose an enabled tool.`);
+      }
       const parsed = tool.params.safeParse(raw);
+      if (!parsed.success && name === "parse_log")
+        return {
+          text: JSON.stringify({
+            isError: true,
+            code: "INVALID",
+            reason: "invalid_arguments",
+            error: "Use a relative path and exactly one profile or pattern; check argument limits.",
+          }),
+          isError: true,
+          truncated: false,
+        };
       if (!parsed.success)
         throw Error(
           `Invalid arguments for ${name}: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message}`).join("; ")}`,

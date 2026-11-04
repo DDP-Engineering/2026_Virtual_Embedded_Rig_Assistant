@@ -17,6 +17,7 @@ export function WorkbenchTools({
     list: t("workbenchTools.list"),
     glob: t("workbenchTools.glob"),
     grep: t("workbenchTools.grep"),
+    parse_log: t("workbenchTools.parse_log"),
     write: t("workbenchTools.write"),
     edit: t("workbenchTools.edit"),
     artifact_save: t("workbenchTools.artifact_save"),

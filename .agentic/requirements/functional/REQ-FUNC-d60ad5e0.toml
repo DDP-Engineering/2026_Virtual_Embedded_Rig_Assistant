@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-d60ad5e0"
+title = "Terminate isolated log tasks"
+status = "active"
+requirement = "When the absolute 10 second worker deadline expires, VERA shall terminate the isolated parse_log task before restoring capacity and return the last checkpoint with incomplete timeout scan and null SHA256."
+verification = "Use catastrophic regex, observe host responsiveness, timeout checkpoint and successful next grep/log task; check queued deadline and abort."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/ports.ts", "05_Software/src/libraries/core/src/workers/node-host.ts", "05_Software/src/libraries/core/src/tools/grep-worker.ts", "05_Software/src/libraries/core/src/tools/grep.ts", "05_Software/src/apps/desktop/src/main/file-tool-probe.ts", "05_Software/src/libraries/core/src/tools/parse-log.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/workers/node-host.test.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts", "05_Software/tests/e2e/file-tools.spec.ts", "05_Software/tests/integration/worker-hosts.test.ts", "05_Software/src/libraries/core/src/tools/grep.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -8,7 +8,9 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { PluginStore } from "@vera/core";
+import { NodeWorkerPool, openDb, PluginStore, SessionService } from "@vera/core";
+import { ReplayGateway } from "@vera/core/replay";
+import type { SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
 import { afterAll, beforeAll, expect, it } from "vitest";
@@ -218,6 +220,84 @@ const replay = (
   "--script",
   script,
 ];
+it("parse_log returns identical cited evidence through agent sessions and vera run", async () => {
+  const { dir, workbench } = await fixture();
+  await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z INFO ready\n\u0000\n");
+  const scripts = join(dir, "scripts");
+  await mkdir(scripts);
+  const script = join(scripts, "parse-log.jsonl");
+  await writeFile(
+    script,
+    [
+      { toolCalls: [{ name: "parse_log", args: { path: "logs/boot-0412.log", profile: "iso" } }] },
+      {
+        toolCalls: [
+          { name: "parse_log", args: { path: "logs/boot-0413.log", profile: "iso", levels: ["error"] } },
+        ],
+      },
+      { toolCalls: [{ name: "parse_log", args: { path: "logs/control.log", profile: "iso" } }] },
+      {
+        text: "Baseline WARN [[logs/boot-0412.log#L3-L3]]. Candidate ERROR [[logs/boot-0413.log#L4-L4]]. UTF8 log [[logs/control.log#L1-L1]].",
+      },
+    ]
+      .map((step) => JSON.stringify(step))
+      .join("\n"),
+  );
+  const workers = new NodeWorkerPool(pathToFileURL(join(compiled, "grep-worker.js")));
+  const handle = await openDb(join(dir, "agent.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const service = new SessionService({
+    db: handle.db,
+    root: workbench,
+    workers,
+    gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
+    clock: { now: () => new Date(123), sleep: async () => {} },
+    model: () => "replay/parse-log",
+    prompt: () => "Cite inspected events.",
+  });
+  const agent: SessionEvent[] = [];
+  try {
+    const session = service.create();
+    service.subscribe(session.id, 0, (_seq, event) => agent.push(event));
+    service.send(session.id, "Parse the captured boot logs");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    const cli = await launch([...replay(workbench, script), "--data", join(dir, "cli-data")], {}, "npm")
+      .result;
+    expect(cli.code).toBe(0);
+    const cliEvents = events(cli.stdout).map((record) => record.event);
+    const outputs = (records: SessionEvent[]) =>
+      records.flatMap((event) => (event.type === "tool.done" ? [JSON.parse(event.summary)] : []));
+    expect(outputs(cliEvents)).toEqual(outputs(agent));
+    expect(outputs(agent)[0]).toMatchObject({ counts: { info: 3, warn: 1, error: 0 } });
+    expect(outputs(agent)[1]).toMatchObject({
+      counts: { error: 1 },
+      events: [{ ref: "logs/boot-0413.log#L4-L4" }],
+    });
+    expect(outputs(agent)[2]).toMatchObject({ counts: { info: 1, unparsed: 1 } });
+    for (const records of [agent, cliEvents])
+      expect(records.filter((event: SessionEvent) => event.type === "message.done").at(-1)).toMatchObject({
+        citations: [
+          { ref: "logs/boot-0412.log#L3-L3", valid: true },
+          { ref: "logs/boot-0413.log#L4-L4", valid: true },
+          { ref: "logs/control.log#L1-L1", valid: true },
+        ],
+      });
+    const answer = service
+      .get(session.id)
+      .snapshot.items.filter((item) => item.kind === "assistant")
+      .at(-1);
+    if (answer?.kind !== "assistant") throw Error("Missing cited answer.");
+    expect(await service.openCitation(session.id, answer.id, "logs/control.log#L1-L1")).toMatchObject({
+      kind: "text",
+      lines: ["2026-04-12T08:00:00Z INFO ready", "\u0000"],
+      start: 1,
+      end: 1,
+    });
+  } finally {
+    await service.close();
+    handle.close();
+    await workers.dispose();
+  }
+}, 60000);
 it("CLI loads a separately authorized user skill and extra file", async () => {
   const { workbench } = await fixture();
   const data = join(workbench, "user-data"),

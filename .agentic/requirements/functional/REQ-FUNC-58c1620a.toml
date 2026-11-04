@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-58c1620a"
+title = "Refuse invalid log content"
+status = "active"
+requirement = "If a log contains invalid UTF8 or exceeds 50 MiB or 16 KiB per line, parse_log shall return INVALID with a stable reason."
+verification = "Test malformed UTF8, oversize file and line including multi-byte input boundaries."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

@@ -1,9 +1,40 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Message } from "@earendil-works/pi-ai";
 import { expect, it } from "vitest";
 import { validateCitations } from "./citations.js";
+
+it("validates control-byte UTF8 only for successful parse_log provenance", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-log-citations-"));
+  try {
+    await writeFile(join(root, "log.txt"), "INFO ready\n\u0000\n");
+    const ref = "log.txt#L1-L1";
+    const message: Message = {
+      role: "toolResult",
+      toolName: "parse_log",
+      toolCallId: "log",
+      content: [{ type: "text", text: JSON.stringify({ events: [{ ref }] }) }],
+      isError: false,
+      timestamp: 0,
+    };
+    expect(await validateCitations(root, `[[${ref}]]`, [message])).toEqual([{ ref, valid: true }]);
+    expect(await validateCitations(root, `[[${ref}]]`, [{ ...message, toolName: "read" }])).toEqual([
+      { ref, valid: false },
+    ]);
+    const grown = await open(join(root, "log.txt"), "r+");
+    try {
+      await grown.truncate(50 * 1024 * 1024 + 1);
+    } finally {
+      await grown.close();
+    }
+    expect(await validateCitations(root, `[[${ref}]]`, [message])).toEqual([{ ref, valid: false }]);
+    await writeFile(join(root, "log.txt"), Buffer.from([0xff, 10]));
+    expect(await validateCitations(root, `[[${ref}]]`, [message])).toEqual([{ ref, valid: false }]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("validates issued confined line refs and rejects fabricated, absent, binary and out-of-range sources", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-citations-"));

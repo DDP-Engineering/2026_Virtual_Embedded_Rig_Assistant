@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-2a3be72f"
+title = "Refuse changed log versions"
+status = "active"
+requirement = "If source identity changes during scan or expectedSha256 differs, parse_log shall return CONFLICT with reason source_changed."
+verification = "Mutate source during worker checkpoint and request stale expected hash; assert no successful result."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04

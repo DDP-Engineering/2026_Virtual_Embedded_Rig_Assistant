@@ -1,22 +1,23 @@
 import { performance } from "node:perf_hooks";
 import { Worker } from "node:worker_threads";
-import type { GrepMatch, WorkerPool, WorkerResult } from "../ports.js";
+import type { GrepMatch, WorkerPool, WorkerResult, WorkerTask } from "../ports.js";
 
 export interface WorkerHostOptions {
   capacity?: number;
   deadlineMs?: number;
 }
 interface Pending {
-  task: { root: string; args: unknown; scope?: "filesystem" };
+  task: WorkerTask;
   signal: AbortSignal;
   deadline: number;
   matches: GrepMatch[];
+  value?: WorkerResult["value"];
   worker?: Worker;
   terminal: boolean;
   timer: ReturnType<typeof setTimeout>;
   abort: () => void;
   resolve: (result: WorkerResult) => void;
-  onPartial?: (match: GrepMatch) => void;
+  onPartial?: (value: unknown) => void;
 }
 
 /** Absolute deadlines belong to this host, including queue time. One task per worker. */
@@ -44,11 +45,7 @@ export class NodeWorkerPool implements WorkerPool {
     )
       throw Error("Invalid worker host limits.");
   }
-  run(
-    task: { root: string; args: unknown; scope?: "filesystem" },
-    signal: AbortSignal,
-    onPartial?: (match: GrepMatch) => void,
-  ): Promise<WorkerResult> {
+  run(task: WorkerTask, signal: AbortSignal, onPartial?: (value: unknown) => void): Promise<WorkerResult> {
     if (signal.aborted || this.closed)
       return Promise.resolve({ matches: [], truncated: true, reason: "aborted" });
     return new Promise((resolve) => {
@@ -86,7 +83,14 @@ export class NodeWorkerPool implements WorkerPool {
         job.worker = worker;
         worker.on(
           "message",
-          (message: { type: string; match?: GrepMatch; truncated?: boolean; error?: string }) => {
+          (message: {
+            type: string;
+            match?: GrepMatch;
+            truncated?: boolean;
+            error?: string;
+            value?: WorkerResult["value"];
+            failure?: WorkerResult["failure"];
+          }) => {
             if (job.terminal) return;
             if (performance.now() >= job.deadline) {
               this.finish(job, { truncated: true, reason: "timeout" });
@@ -99,9 +103,24 @@ export class NodeWorkerPool implements WorkerPool {
               } catch {
                 /* observers cannot strand tasks */
               }
-            } else if (message.type === "done") this.finish(job, { truncated: message.truncated ?? false });
+            } else if (message.type === "checkpoint" && message.value) {
+              job.value = message.value;
+              try {
+                job.onPartial?.(structuredClone(message.value));
+              } catch {
+                /* observers cannot strand tasks */
+              }
+            } else if (message.type === "done")
+              this.finish(job, {
+                truncated: message.truncated ?? false,
+                ...(message.value ? { value: message.value } : {}),
+              });
             else if (message.type === "error")
-              this.finish(job, { truncated: false, error: message.error ?? "Grep task failed." });
+              this.finish(job, {
+                truncated: false,
+                error: message.error ?? "Worker task failed.",
+                ...(message.failure ? { failure: message.failure } : {}),
+              });
           },
         );
         worker.on("error", () => {
@@ -132,7 +151,7 @@ export class NodeWorkerPool implements WorkerPool {
         await job.worker?.terminate();
       } finally {
         this.active.delete(job);
-        job.resolve({ matches: job.matches, ...result });
+        job.resolve({ matches: job.matches, ...(job.value ? { value: job.value } : {}), ...result });
         this.pump();
       }
     };

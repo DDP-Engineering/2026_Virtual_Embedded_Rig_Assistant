@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-226dc9b4"
+title = "Hash stable UTF8 log source"
+status = "active"
+requirement = "When scanning completes, parse_log shall hash exact UTF8 LF/CRLF/BOM source bytes and return source path, SHA256, scanned line reference and complete eof metrics."
+verification = "Compare newline/BOM variants for identical events and different independently computed hashes; check empty file."
+affected_paths = ["05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/tools/parse-log-worker.ts", "05_Software/src/libraries/core/src/tools/log-failure.ts", "05_Software/src/libraries/shared/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/agent/citations.ts", "05_Software/src/libraries/core/src/tools/read-window.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/knowledge/viewer.ts", "05_Software/src/libraries/core/src/tools/parse-log.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/workers/node-host.test.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/parse-log.test.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/src/libraries/core/src/knowledge/viewer.test.ts"]
+priority = "normal"
+created = 2026-11-04
+updated = 2026-11-04
