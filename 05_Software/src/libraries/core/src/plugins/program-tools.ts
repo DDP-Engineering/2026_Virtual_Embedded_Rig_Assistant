@@ -1,6 +1,7 @@
 import { createContext, Script } from "node:vm";
 import {
   classifyCommand,
+  gitExecutionArguments,
   pluginProgramNameSchema,
   programPolicy,
   type SkillSummary,
@@ -189,7 +190,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
   try {
     const programArgs = [
       ...(declared.prefix ?? []).map((value) => value.replaceAll(PLUGIN_DIR, plugin.folder)),
-      ...(args.args ?? []),
+      ...(declared.optionSyntax === "git" ? gitExecutionArguments(args.args ?? []) : (args.args ?? [])),
     ];
     const invocation = programInvocation(resolved, programArgs);
     const prepared = await prepareProgramRequest({

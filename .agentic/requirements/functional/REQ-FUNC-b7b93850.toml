@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-b7b93850"
+title = "Provide Git inspection commit and branch workflows"
+status = "active"
+requirement = "When the Git plugin skills are discovered, VERA shall offer git-inspect, git-commit and git-branches with bounded cited inspection, explicit-path reviewed message commits and noninteractive conflict-preserving branch workflows."
+verification = "Read all installed skills through SkillCatalog, assert required workflows and limitations, and validate official catalog membership."
+affected_paths = ["05_Software/plugins/git/skills/", "05_Software/plugins/git/README.md", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/tests/integration/git.test.ts"]
+created = 2026-11-04
+updated = 2026-11-04

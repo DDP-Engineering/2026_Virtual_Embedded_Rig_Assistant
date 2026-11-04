@@ -7,7 +7,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -17,7 +17,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32 and Firmware analysis groups, default on), `catalog.yaml` (all six plugins
+source: `packs.yaml` (ESP32 and Firmware analysis groups, default on), `catalog.yaml` (all packaged plugins
 `official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -29,6 +29,8 @@ from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
 ## Public interface
+
+- `git` 1.0.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/integration/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
 
 - `sigrok` 1.0.0, general, Windows x64/Linux x64/Linux arm64: provision the
   SHA-256-pinned DDP PulseView 66540df asset or use a local sigrok-cli fallback.

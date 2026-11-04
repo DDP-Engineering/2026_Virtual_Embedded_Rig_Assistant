@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-bf50e98d"
+title = "Discover the user-managed Git executable"
+status = "active"
+requirement = "When the official Git plugin is provisioned, VERA shall find the user-managed Git executable on the declared Windows or Linux search paths and accept versions at least 2.40 without downloading Git."
+verification = "Install the package, resolve a real Git through PATH and assert its version and no fetch; reject a simulated version below 2.40 and show the missing-program hint."
+affected_paths = ["05_Software/plugins/git/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/git.test.ts"]
+created = 2026-11-04
+updated = 2026-11-04

@@ -2,11 +2,11 @@ schema = 1
 id = "REQ-FUNC-8e22989a"
 title = "Compose the program command line from resolver, prefix and arguments"
 status = "active"
-requirement = "The run_program tool shall start the resolver's executable with the resolver's leading arguments, then the program's manifest prefix with ${pluginDir} replaced by the installed plugin folder, then the agent's arguments, with the program's env values after ${workbench} and ${pluginDir} replacement and in the requested workbench-relative working directory."
-verification = "Scripted process host records the spawn: a program resolved to `node` with leading argument `--no-warnings`, prefix `${pluginDir}/echo.mjs` and env `ROOT=${workbench}` called with args [\"a b\"] and cwd `build` spawns node with [--no-warnings, <plugin folder>/echo.mjs, a b], ROOT equal to the workbench root and cwd <workbench>/build; a rule matching the prefix token does not change the risk."
+requirement = "The run_program tool shall start the resolver's executable with the resolver's leading arguments, then the program's manifest prefix with ${pluginDir} replaced by the installed plugin folder, then the agent's arguments with the mandatory no-ext-diff guard inserted at the read-command boundary when the program declares Git option syntax, with the program's env values after ${workbench} and ${pluginDir} replacement and in the requested workbench-relative working directory."
+verification = "Scripted process host records the spawn: a program resolved to `node` with leading argument `--no-warnings`, prefix `${pluginDir}/echo.mjs` and env `ROOT=${workbench}` called with args [\"a b\"] and cwd `build` spawns node with [--no-warnings, <plugin folder>/echo.mjs, a b], ROOT equal to the workbench root and cwd <workbench>/build; a rule matching the prefix token does not change the risk; Git execution includes its fixed guard before original options/delimiters while approval and run-record arguments remain raw."
 affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
 spec = ""
 priority = "normal"
 created = 2026-11-02
-updated = 2026-11-02
+updated = 2026-11-04

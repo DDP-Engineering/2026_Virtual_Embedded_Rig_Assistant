@@ -1,0 +1,30 @@
+format: 1
+id: git
+version: 1.0.0
+name: Git
+description: Inspect and change the workbench Git repository. Read history, diffs and blame freely; stage, commit, manage branches and contact remotes with approval. Use for version-control questions and tasks.
+ecosystem: general
+platforms: [windows-x64, linux-x64, linux-arm64]
+docs: [README.md]
+programs:
+  git:
+    optionSyntax: git
+    install:
+      find:
+        windows: ["%PATH%", "C:/Program Files/Git/cmd/git.exe", "%LOCALAPPDATA%/Programs/Git/cmd/git.exe"]
+        linux: ["$PATH", "/usr/bin/git"]
+      hint: Install Git for Windows or your distribution's git package.
+    version: { args: [--version], match: 'git version (\d+\.\d+\.\d+)', range: ">=2.40" }
+    prefix: [-c, core.fsmonitor=false, -c, "core.hooksPath=${pluginDir}/no-hooks", -c, core.pager=cat, -c, diff.external=, -c, core.quotePath=false, -c, protocol.ext.allow=never]
+    env: { GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: never, GIT_PAGER: cat, PAGER: cat, GIT_EDITOR: ":", GIT_SEQUENCE_EDITOR: ":", GIT_OPTIONAL_LOCKS: "0" }
+    timeout: 60
+# Git syntax projects risk roles and inserts fixed execution-only read guards; approvals retain raw argv.
+# Unknown options on known commands require approval. Unknown command names may be executable aliases.
+rules:
+  - { match: "git {version,help,status,log,diff,show,blame,shortlog,describe,rev-parse,rev-list,ls-files,ls-tree,cat-file,grep,reflog,merge-base,name-rev} *", risk: safe }
+  - { match: "git {branch,tag,remote,stash} <list> *", risk: safe, note: Lists repository state without changing it. }
+  - { match: "git {add,commit,switch,merge,rebase,cherry-pick,revert,reset,mv,rm,apply,am,init,fetch,pull,clone,ls-remote,push,gc,submodule} *", risk: device-write, note: Changes stored state or contacts a remote. Tracked .vera configuration and skills can change. }
+  - { match: "git * <write> *", risk: device-write, note: Changes repository state or writes command output; listing flags never lower this risk. }
+  - { match: "git {clean,restore,checkout} *", risk: irreversible, note: Can discard work or delete untracked files. Prefer switch for branches and reset -- path to unstage. }
+  - { match: "git * <discard> *", risk: irreversible, note: Discards work or can delete or rewrite history including a force or deletion push. }
+  - { match: "git * <execute> *", risk: blocked, note: "Configuration overrides, executable aliases or helpers, interactive commands and explicit program execution are unavailable. Use cwd to select the repository." }

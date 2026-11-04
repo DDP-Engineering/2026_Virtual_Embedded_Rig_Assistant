@@ -7,7 +7,7 @@ DONE-WHEN: on Windows x64 and Linux x64 the agent answers "what changed since th
 from `git log` and `git diff` without approvals, commits a reviewed change after an approval, and
 cannot run a repository-configured program (fsmonitor, hook, pager, external diff) or a blocked
 command in any mode.
-STATUS: proposed 2026-11-01; not implemented. Plugin format and rules: [architecture.md](architecture.md).
+STATUS: implementation candidate 2026-11-04, AEGIS TASK-951445ca. Plugin format and rules: [architecture.md](architecture.md).
 Work package: PLG-22 in [plan.md](plan.md).
 
 ## 1. Why a plugin and not a shell
@@ -43,7 +43,7 @@ env:    { GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: never, GIT_PAGER: cat, PAGE
           GIT_EDITOR: ":", GIT_SEQUENCE_EDITOR: ":", GIT_OPTIONAL_LOCKS: "0" }
 ```
 
-- `no-hooks/` is an empty folder shipped with the plugin, so repository hooks never run.
+- `no-hooks/` ships an inert README.txt (no hook names) so the directory survives catalog zip packaging and Git hooks are disabled.
 - Content filters (`filter.*`, used by Git LFS) stay enabled: LFS repositories need them, and their
   commands come from the user's global configuration.
 - Credentials: prompts are disabled, so `fetch`, `pull` and `push` work only with a configured
@@ -52,6 +52,8 @@ env:    { GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: never, GIT_PAGER: cat, PAGE
   repository-local config still run when `.gitattributes` names that driver, and `-c` cannot switch
   off every driver name. Git's `safe.directory` check refuses repositories owned by another user; a
   workbench copied from an untrusted source should be treated like any untrusted repository.
+
+The literal `diff.external=` prefix alone is a fail-closed empty command and makes nonempty ordinary diffs fail. Implementation adds mandatory `--no-ext-diff` after diff/log/show and stash/reflog read subcommands, before original options and delimiters. It constructs the guarded invocation through the same parsed command boundary used by classification; raw agent values/order remain intact for approvals/logs. Bare stash show consequently uses Git's patch fallback; use --stat/-p to select an explicit shape. Native verification requires successful Git exit codes and actual reviewed patch text, not only transport success.
 
 ## 4. Manifest
 
@@ -95,6 +97,8 @@ flag: the escalation rules below catch the flag wherever it appears.
   changes.
 - `push` without force flags is `device-write`: every push waits for approval outside `bypass`,
   because it publishes outside the machine.
+
+The shipped `optionSyntax: git` projects case-sensitive command/option roles before generic matching while preserving original argv in approvals and run-record labels; execution inserts a mandatory no-ext-diff guard at the actual read-command boundary. Unknown command names are potential executable aliases/helpers and are blocked; unfamiliar options on known commands require approval. Listing options cannot lower a mutation. Explicit output files require approval; helper/viewer/signature/filter options, including accepted abbreviations, are blocked. Help listing is safe; opening a help topic launches a viewer and is blocked. Git's remaining user configuration (signing, merge/transport/credential helpers and implicit lazy fetch) is not sandboxed, alongside the textconv/filter residual risk above.
 
 ## 6. Skills
 

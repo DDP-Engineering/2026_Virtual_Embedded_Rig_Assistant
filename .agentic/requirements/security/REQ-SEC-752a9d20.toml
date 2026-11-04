@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-752a9d20"
+title = "Neutralise Git repository hooks and background helpers"
+status = "active"
+requirement = "When the Git plugin starts a program, VERA shall apply the fixed Git configuration, noninteractive environment and packaged no-hooks directory together with the mandatory no-ext-diff execution guard at diff-producing read-command boundaries while preserving original argument values and order in risk classification, approvals and run-record labels."
+verification = "Install from a built catalog zip, run real status/diff/log and an approved commit against configured marker helpers and pre-commit hook, and require Git exit code zero plus actual patch content before commit approval, assert no marker execution and no override of the fixed policy."
+affected_paths = ["05_Software/plugins/git/plugin.yaml", "05_Software/plugins/git/no-hooks/README.txt", "05_Software/src/libraries/shared/src/git-options.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/shared/src/git-options.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+linked_tests = ["05_Software/tests/integration/git.test.ts", "05_Software/src/libraries/shared/src/git-options.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+created = 2026-11-04
+updated = 2026-11-04

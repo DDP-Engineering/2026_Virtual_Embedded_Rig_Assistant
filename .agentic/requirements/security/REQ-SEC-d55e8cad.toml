@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-d55e8cad"
+title = "Classify Git command argument roles before approval"
+status = "active"
+requirement = "When the Git program is classified, VERA shall apply the highest risk from the command and its actual option roles according to the Git classification spec, retaining case, attached values and argument boundaries before generic matching."
+verification = "Exercise each git.md section 5 row and collisions, global overrides, aliases/helpers, short bundles, long abbreviations, equals/separate values, output writes, deletion refspecs and the -- boundary."
+affected_paths = ["05_Software/src/libraries/shared/src/git-options.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/plugins/git/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/git.test.ts"]
+spec = "specs/REQ-SEC-d55e8cad.md"
+created = 2026-11-04
+updated = 2026-11-04

@@ -365,7 +365,7 @@ reads a supply; a supply `--set` waits for the typed confirmation in `ask`.
 **Goal:** version control of the workbench: inspect freely, change with approval.
 **Depends on:** PLG-04, PLG-05. **Specs:** [git.md](git.md).
 - `find` of the user's Git (≥ 2.40); program-level `prefix` neutralising `core.fsmonitor`, hooks,
-  pager and external diff, plus the environment of git.md §3 (adds `programs.*.prefix` to the
+  pager and fail-closing external diff, together with the mandatory no-ext-diff execution guard for working diffs and the environment of git.md §3 (adds `programs.*.prefix` to the
   manifest schema and runner if PLG-01 and PLG-02 did not); rules of git.md §5 (read-only commands
   and listings `safe`; changes, remotes and pushes `device-write`; discarding work, `clean`,
   `checkout`, `restore` and force pushes `irreversible`; `-c`, `-C`, `config`, interactive and
@@ -373,6 +373,8 @@ reads a supply; a supply `--set` waits for the typed confirmation in `ask`.
 **Done when:** matcher tests cover every rule row, including escalation over listing rules; with a
 fixture repository whose local config and hooks point at a marker script, no command runs it; on
 Windows and Linux the agent explains recent history without approvals and commits after an approval.
+
+- Implementation candidate 2026-11-04 (TASK-951445ca): official find-only Git package, fixed prefix/env and packaged inert hooks directory, command-specific option roles with highest-risk rules, catalog group and three workflow skills. Real fixture receipts distinguish Git for Windows and Ubuntu WSL2 from bare-metal Ubuntu or ARM64; no remote publication.
 
 ## 3. Verification
 

@@ -167,6 +167,33 @@ describe("run_program foreground (REQ-FUNC-bce7d786)", () => {
 });
 
 describe("command line (REQ-FUNC-8e22989a)", () => {
+  it("guards opt-in Git diff execution while retaining raw classification, approval and run-record args", async () => {
+    plugins = [
+      loaded("git", { git: program({ optionSyntax: "git", prefix: ["-c", "diff.external="] }) }, [
+        { match: "git diff *", risk: "safe" },
+      ]),
+    ];
+    const raw = ["-P", "diff", "--staged", "--", "build/app.bin"];
+    const prepared = await prepare({ program: "git", args: raw });
+    expect(prepared.request).toMatchObject({ args: raw, risk: "safe" });
+    const result = prepared.apply(signal());
+    const process = await spawned(1);
+    expect(process.args).toEqual([
+      "-c",
+      "diff.external=",
+      "-P",
+      "diff",
+      "--no-ext-diff",
+      "--staged",
+      "--",
+      "build/app.bin",
+    ]);
+    process.finish({ code: 0, signal: null });
+    const { log } = (await result) as { log: string };
+    expect(JSON.parse(await readFile(join(root, log.replace(/\.log$/, ".json")), "utf8"))).toMatchObject({
+      args: raw,
+    });
+  });
   it("joins resolver prefix, manifest prefix and agent arguments with expanded env and cwd", async () => {
     plugins = [
       loaded(

@@ -398,6 +398,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Decoding, ANSI, tail | `core/src/plugins/run-output.ts` | `run-output.test.ts` |
 | Launcher quoting | `core/src/plugins/launcher.ts` | `launcher.test.ts` |
 | Runner lifecycle in the apps | desktop `main/index.ts`, `cli/src/run.ts` | inspection; `process-hosts.test.ts` for the hosts |
+| Git option roles, helpers, listings and destructive escalation | `shared/src/git-options.ts`, `ProgramTools.request`, manifest `optionSyntax: git` | `tests/integration/git.test.ts` |
 | Matching, policy table, confirmation word | `shared/src/program-rules.ts` | `shared/src/program-rules.test.ts` |
 | Program request, files, lookup | `core/src/plugins/program-request.ts` | `program-request.test.ts` |
 | Gate decisions for run_program | `core/src/agent/approvals.ts` | `core/src/agent/program-approvals.test.ts` |
@@ -438,7 +439,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - `REQ-FUNC-41f5c03b` — plugins.enabled per workbench.
 - `REQ-FUNC-0c4bc419` — UNKNOWN_NAME/UNKNOWN_KEY warnings for plugins.
 - `REQ-FUNC-9dd7413b` — plugins.* IPC channels and browser mock.
-- `REQ-FUNC-e08c858b` — arguments reach the program unchanged, no shell.
+- `REQ-FUNC-e08c858b` — original argument values reach the process host unchanged, no shell.
 - `REQ-FUNC-dbcd3311` — stdin is closed.
 - `REQ-SEC-f5c114de` — minimal environment without VERA's credentials.
 - `REQ-FUNC-cb84887a` / `REQ-SEC-7a6c3f5f` — guarded cwd; DENIED outside, ignored or not a directory.

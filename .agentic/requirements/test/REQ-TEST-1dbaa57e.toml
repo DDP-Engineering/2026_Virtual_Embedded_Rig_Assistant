@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-TEST-1dbaa57e"
+title = "Exercise Git inspection and approved commits on fixture repositories"
+status = "active"
+requirement = "When Git acceptance is exercised on Windows x64 and Linux x64, the fixture harness shall prove history and tag inspection without approvals, a commit only after approval and unauthenticated fetch failure within its timeout using controlled repositories and remotes."
+verification = "Use real Git and the installed official package with ReplayGateway and SessionService: parse every safe tool process result and require exitCode 0 plus expected reviewed patch content before approving commit; observe no safe approvals, commit pending before approval, post-approval history, and a loopback 401 fetch that exits without prompting; retain original platform evidence."
+affected_paths = ["05_Software/tests/integration/git.test.ts"]
+linked_tests = ["05_Software/tests/integration/git.test.ts"]
+created = 2026-11-04
+updated = 2026-11-04
