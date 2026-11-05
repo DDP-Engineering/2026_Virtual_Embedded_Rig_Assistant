@@ -984,7 +984,23 @@ if (!app.requestSingleInstanceLock()) {
         },
       });
       if (__VERA_TEST__ && ["1", "startup"].includes(process.env.VERA_TEST_CHATGPT ?? "")) {
-        const { scriptedSubscription } = await import("./chatgpt-probe.js");
+        const { scriptedSubscription, scriptedGateway } = await import("./chatgpt-probe.js");
+        if (process.env.VERA_TEST_CHATGPT === "1") {
+          await modelGateway.close();
+          modelGateway = new ProviderGateway(
+            settings,
+            credentials,
+            providers,
+            systemClock,
+            scriptedGateway({
+              settings: () => settings.get().settings,
+              credentials,
+              scrub: (text) => credentials.scrub(text),
+              knownSecrets: () => credentials.knownSecrets(),
+              now: () => systemClock.now().getTime(),
+            }),
+          );
+        }
         chatgpt = new ChatgptAuth({
           settings,
           credentials,

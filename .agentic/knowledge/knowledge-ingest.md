@@ -75,7 +75,7 @@ while .vera content stays permanently excluded from indexed documents.
   explicit nested targets stop at existing symlink ancestors. Invalid globs keep only
   policy monitoring and are rejected by reconciliation. Changed roots close the old
   watcher and create a replacement through a serialized queue; readiness reconciles
-  any registration gap. Cancelled readiness settles before a watcher closes; waitIdle
+  any registration gap. The generation key includes each target's lstat kind/existence; queued background work refreshes and awaits that generation before scanning, so roots appearing during registration or after ready are watched before their first result is published. Ordinary mtime/ctime changes do not change this key. Cancelled readiness settles before a watcher closes; waitIdle
   follows the current watcher generation. Close cancels replacements and releases
   the current watcher.
 - documentKind maps .pdf, Markdown, HTML, .txt/.csv/.tsv text and the modern office

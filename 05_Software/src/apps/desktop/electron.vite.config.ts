@@ -11,6 +11,8 @@ import { pluginCatalogFeed, updateFeed } from "../../../scripts/update-config.mj
 import { productionCsp } from "./src/main/content-policy.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
+// Build-time isolation for verification; ordinary development and release output is unchanged.
+const buildRoot = process.env.VERA_BUILD_ROOT ? resolve(process.env.VERA_BUILD_ROOT) : resolve(root, "out");
 const shared = resolve(root, "../../libraries/shared/src/index.ts");
 const testBuild = process.env.VERA_TEST === "1";
 const updateUrl = updateFeed(process.env.VERA_UPDATE_URL, testBuild);
@@ -95,6 +97,7 @@ export default defineConfig(({ command }) => ({
       __VERA_PLUGIN_CATALOG_URL__: JSON.stringify(pluginCatalogUrl),
     },
     build: {
+      outDir: resolve(buildRoot, "main"),
       rollupOptions: {
         external: [
           "better-sqlite3",
@@ -121,6 +124,7 @@ export default defineConfig(({ command }) => ({
   preload: {
     resolve: { alias: { "@vera/shared": shared } },
     build: {
+      outDir: resolve(buildRoot, "preload"),
       rollupOptions: {
         input: resolve(root, "src/preload/index.ts"),
         output: { format: "cjs", entryFileNames: "index.cjs" },
@@ -137,6 +141,9 @@ export default defineConfig(({ command }) => ({
     resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },
     server: { host: "127.0.0.1", port: 5173, strictPort: true },
     plugins: [react(), tailwindcss(), developmentCsp(), pdfResources()],
-    build: { rollupOptions: { input: resolve(root, "src/renderer/index.html") } },
+    build: {
+      outDir: resolve(buildRoot, "renderer"),
+      rollupOptions: { input: resolve(root, "src/renderer/index.html") },
+    },
   },
 }));

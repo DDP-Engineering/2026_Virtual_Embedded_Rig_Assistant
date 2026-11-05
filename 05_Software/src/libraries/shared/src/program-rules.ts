@@ -67,11 +67,15 @@ function tokens(program: string, args: readonly string[]): Token[] {
   ];
 }
 function pattern(match: string): Part[] {
-  return match
-    .trim()
-    .split(/\s+/)
-    .flatMap(split)
-    .map((token) => part(normalise(token)));
+  return (
+    match
+      .trim()
+      .split(/\s+/)
+      .flatMap(split)
+      .map((token) => part(normalise(token)))
+      // Adjacent sequence wildcards consume exactly the same language as one wildcard.
+      .filter((current, index, parts) => !current.any || !parts[index - 1]?.any)
+  );
 }
 /**
  * The token index each part consumed (null for `*`) when the pattern covers every token, else null.

@@ -1,4 +1,5 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -474,74 +475,115 @@ test("window geometry survives a process restart", async () => {
   }
 });
 
-test("development React and HMR load with sandbox and bounded CSP", async () => {
-  const userData = await mkdtemp(join(tmpdir(), "vera-dev-"));
-  const server = spawn(process.execPath, ["scripts/dev-test-server.mjs"], {
-    cwd: join(desktop, "../../.."),
-    env: environment,
-    stdio: ["ignore", "pipe", "pipe"],
+test.describe("isolated development shell", () => {
+  let buildRoot: string;
+  let originalEntryHash: string;
+  const entryHash = () =>
+    createHash("sha256")
+      .update(readFileSync(join(desktop, "out/main/index.js")))
+      .digest("hex");
+  test.beforeAll(async () => {
+    // Main/preload compilation is preparation, independently bounded like the build-mode check.
+    test.setTimeout(60000);
+    buildRoot = await mkdtemp(join(desktop, "out-dev-test-"));
+    originalEntryHash = entryHash();
+    const preparation = spawnSync(process.execPath, ["scripts/dev-test-server.mjs", "--prepare"], {
+      cwd: join(desktop, "../../.."),
+      env: { ...environment, VERA_BUILD_ROOT: buildRoot },
+      encoding: "utf8",
+      timeout: 55000,
+    });
+    expect(preparation.error, preparation.stderr).toBeUndefined();
+    expect(preparation.status, `${preparation.stdout}\n${preparation.stderr}`).toBe(0);
+    expect(preparation.stdout).toContain("VERA_DEV_BUILT");
+    expect(entryHash(), "development preparation preserves the native acceptance entrypoint").toBe(
+      originalEntryHash,
+    );
   });
-  let app: ElectronApplication | undefined;
-  let output = "";
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`Dev server startup timed out: ${output}`)), 20_000);
-      const read = (chunk: Buffer) => {
-        output += chunk.toString();
-        if (output.includes("VERA_DEV_READY")) {
+  test.afterAll(async () => {
+    try {
+      expect(entryHash(), "development probe preserves the native acceptance entrypoint").toBe(
+        originalEntryHash,
+      );
+    } finally {
+      if (buildRoot) await rm(buildRoot, { recursive: true, force: true });
+    }
+  });
+  test("development React and HMR load with sandbox and bounded CSP", async () => {
+    const userData = await mkdtemp(join(tmpdir(), "vera-dev-"));
+    const server = spawn(process.execPath, ["scripts/dev-test-server.mjs", "--serve"], {
+      cwd: join(desktop, "../../.."),
+      env: { ...environment, VERA_BUILD_ROOT: buildRoot },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let app: ElectronApplication | undefined;
+    let output = "";
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`Dev server startup timed out: ${output}`)), 20_000);
+        const read = (chunk: Buffer) => {
+          output += chunk.toString();
+          if (output.includes("VERA_DEV_READY")) {
+            clearTimeout(timer);
+            resolve();
+          }
+        };
+        server.stdout.on("data", read);
+        server.stderr.on("data", read);
+        server.once("error", (error) => {
           clearTimeout(timer);
-          resolve();
-        }
-      };
-      server.stdout.on("data", read);
-      server.stderr.on("data", read);
-      server.once("error", (error) => {
-        clearTimeout(timer);
-        reject(error);
+          reject(error);
+        });
+        server.once("exit", (code) => {
+          clearTimeout(timer);
+          reject(new Error(`Dev server exit ${code}: ${output}`));
+        });
       });
-      server.once("exit", (code) => {
-        clearTimeout(timer);
-        reject(new Error(`Dev server exit ${code}: ${output}`));
+      app = await _electron.launch({
+        executablePath: executable,
+        chromiumSandbox: true,
+        args: [join(buildRoot, "main/index.js"), `--user-data-dir=${userData}`],
+        env: { ...environment, ELECTRON_RENDERER_URL: "http://127.0.0.1:5173" },
       });
-    });
-    app = await launch(userData, { ELECTRON_RENDERER_URL: "http://127.0.0.1:5173" });
-    const page = await app.firstWindow();
-    const errors: string[] = [];
-    page.on("pageerror", (error) => errors.push(error.message));
-    await page.waitForURL("http://127.0.0.1:5173/");
-    await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
-    expect(await page.evaluate(() => [typeof require, typeof process, typeof module])).toEqual([
-      "undefined",
-      "undefined",
-      "undefined",
-    ]);
-    const policy = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
-    expect(policy).toContain("default-src 'self'");
-    expect(policy).toContain("'sha256-");
-    expect(policy).toContain("ws://127.0.0.1:5173");
-    expect(
-      await page.evaluate(async () => {
-        const script = document.createElement("script");
-        script.textContent = "document.documentElement.dataset.inlineExecuted = 'yes'";
-        document.body.append(script);
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        return document.documentElement.dataset.inlineExecuted;
-      }),
-    ).toBeUndefined();
-    await page.reload();
-    await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
-    expect(
-      await page.evaluate(() => getComputedStyle(document.querySelector("h1") ?? document.body).fontSize),
-    ).toBe("21px");
-    expect(errors).toEqual([]);
-    expect(await outboundAttempts(app)).toEqual([]);
-  } finally {
-    await app?.close();
-    server.kill();
-    await new Promise<void>((resolve) => {
-      if (server.exitCode !== null) resolve();
-      else server.once("exit", () => resolve());
-    });
-    await rm(userData, { recursive: true, force: true });
-  }
+      await installNetworkGuard(app);
+      const page = await app.firstWindow();
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.waitForURL("http://127.0.0.1:5173/");
+      await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
+      expect(await page.evaluate(() => [typeof require, typeof process, typeof module])).toEqual([
+        "undefined",
+        "undefined",
+        "undefined",
+      ]);
+      const policy = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
+      expect(policy).toContain("default-src 'self'");
+      expect(policy).toContain("'sha256-");
+      expect(policy).toContain("ws://127.0.0.1:5173");
+      expect(
+        await page.evaluate(async () => {
+          const script = document.createElement("script");
+          script.textContent = "document.documentElement.dataset.inlineExecuted = 'yes'";
+          document.body.append(script);
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          return document.documentElement.dataset.inlineExecuted;
+        }),
+      ).toBeUndefined();
+      await page.reload();
+      await expect(page.getByRole("heading", { name: "VERA" })).toBeVisible();
+      expect(
+        await page.evaluate(() => getComputedStyle(document.querySelector("h1") ?? document.body).fontSize),
+      ).toBe("21px");
+      expect(errors).toEqual([]);
+      expect(await outboundAttempts(app)).toEqual([]);
+    } finally {
+      await app?.close();
+      server.kill();
+      await new Promise<void>((resolve) => {
+        if (server.exitCode !== null) resolve();
+        else server.once("exit", () => resolve());
+      });
+      await rm(userData, { recursive: true, force: true });
+    }
+  });
 });

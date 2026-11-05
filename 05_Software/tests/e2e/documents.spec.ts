@@ -5,97 +5,97 @@ import { expect, test } from "@playwright/test";
 import { changeSetting } from "./settings-navigation.js";
 
 test.use({ viewport: { width: 1024, height: 640 } });
-test("browser Docs and offline PDF/Markdown/text viewer fit all languages, themes and type scales", async ({
-  page,
-  context,
-}) => {
-  test.setTimeout(90000);
-  const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
-    env: { ...process.env, VITE_API: "mock" },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  let output = "";
-  const errors: string[] = [],
-    attempts: string[] = [];
-  server.stdout.on("data", (b) => {
-    output += b.toString();
-  });
-  server.stderr.on("data", (b) => {
-    output += b.toString();
-  });
-  page.on("pageerror", (error) => errors.push(error.message));
-  await context.route("**/*", async (route) => {
-    if (new URL(route.request().url()).hostname === "127.0.0.1") await route.continue();
-    else {
-      attempts.push(route.request().url());
-      await route.abort();
-    }
-  });
-  try {
-    await new Promise<void>((done, fail) => {
-      const timer = setTimeout(() => fail(Error(output)), 20000);
-      const ready = () => {
-        if (output.includes("VERA_RENDERER_READY")) {
-          clearTimeout(timer);
-          done();
+for (const lang of ["en", "ro", "de"])
+  for (const theme of ["light", "dark"])
+    test(`browser Docs and offline PDF/Markdown/text viewer fit every type scale (${lang}, ${theme})`, async ({
+      page,
+      context,
+    }) => {
+      test.setTimeout(90000);
+      const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+        env: { ...process.env, VITE_API: "mock" },
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let output = "";
+      const errors: string[] = [],
+        attempts: string[] = [];
+      server.stdout.on("data", (b) => {
+        output += b.toString();
+      });
+      server.stderr.on("data", (b) => {
+        output += b.toString();
+      });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await context.route("**/*", async (route) => {
+        if (new URL(route.request().url()).hostname === "127.0.0.1") await route.continue();
+        else {
+          attempts.push(route.request().url());
+          await route.abort();
         }
-      };
-      server.stdout.on("data", ready);
-      server.stderr.on("data", ready);
-      server.once("error", fail);
-    });
-    for (const lang of ["en", "ro", "de"]) {
-      await page.goto("http://127.0.0.1:5173/?mock=chat");
-      await page.evaluate(() => localStorage.clear());
-      await page.reload();
-      await page.locator('[data-i18n="nav.settings"]').click();
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
-      await expect(page.locator("html")).toHaveAttribute("lang", lang);
-      // Settings replaces the primary navigation; leave it to reach the workbenches.
-      await page.locator('[data-action="leave-settings"]').click();
-      await page.locator("[data-workbench-entry] .workbench-group-name").click();
-      await page.locator('[data-toggle="right"]').click();
-      await page.locator("#tab-docs").click();
-      const docs = page.locator("#panel-docs"),
-        dialog = page.locator("[data-source-current]");
-      // Docs shows the workbench as a folder tree (TASK-66b7d4aa); its expansion persists.
-      const folder = docs.locator('[role="treeitem"][data-tree-path="docs"]');
-      if ((await folder.getAttribute("aria-expanded")) === "false") await folder.click();
-      await expect(docs.locator("[data-document]")).toHaveCount(10);
-      await expect(docs.locator('[data-document="docs/pending.pdf"]')).toHaveAttribute(
-        "data-status",
-        "pending",
-      );
-      // REQ-UX-d455531b: one search box; Reindex and Collapse all share a row.
-      await expect(docs.locator("input")).toHaveCount(1);
-      const reindexTop = (await docs.locator('[data-action="reindex"]').boundingBox())?.y;
-      const collapseTop = (await docs.locator('[data-action="collapse-all"]').boundingBox())?.y;
-      expect(reindexTop).toBeDefined();
-      expect(Math.abs((reindexTop ?? 0) - (collapseTop ?? Number.NaN))).toBeLessThan(2);
-      // REQ-UX-2504362b: document hits are listed under the filtered tree.
-      await docs.locator("[data-docs-search]").fill("power");
-      await expect(docs.locator("[data-docs-hits] .documents-list li")).toHaveCount(1);
-      // No file is named after the query: the tree stays, empty, and says so.
-      await expect(docs.locator('[role="tree"]')).toHaveCount(1);
-      await expect(docs.locator('.docs-tree [role="status"]')).toBeVisible();
-      await expect(docs).toContainText("docs/a.md#h=power");
-      await docs.locator(".documents-list button").click();
-      // Documents open as tabs of the chat area (TASK-79f6ffd3).
-      await expect(page.locator('[data-document-tabs] [role="tab"][aria-selected="true"]')).toHaveText(
-        "a.md",
-      );
-      await expect(dialog.locator('[data-heading="power"]')).toBeFocused();
-      await page.keyboard.press("Escape");
-      await expect(dialog).toHaveCount(0);
-      // The right panel keeps its cap; documents no longer widen it.
-      const right = page.locator("#right-panel");
-      const viewport = await page.evaluate(() => innerWidth);
-      await page.locator('[data-resize="right"]').focus();
-      await page.keyboard.press("End");
-      expect((await right.boundingBox())?.width ?? 0).toBeLessThanOrEqual(viewport * 0.45 + 1);
-      await docs.locator("[data-docs-search]").fill("");
-      await expect(docs.locator("[data-document]")).toHaveCount(10);
-      for (const theme of ["light", "dark"])
+      });
+      try {
+        await new Promise<void>((done, fail) => {
+          const timer = setTimeout(() => fail(Error(output)), 20000);
+          const ready = () => {
+            if (output.includes("VERA_RENDERER_READY")) {
+              clearTimeout(timer);
+              done();
+            }
+          };
+          server.stdout.on("data", ready);
+          server.stderr.on("data", ready);
+          server.once("error", fail);
+        });
+        await page.goto("http://127.0.0.1:5173/?mock=chat");
+        await page.evaluate(() => localStorage.clear());
+        await page.reload();
+        await page.locator('[data-i18n="nav.settings"]').click();
+        await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
+        await expect(page.locator("html")).toHaveAttribute("lang", lang);
+        // Settings replaces the primary navigation; leave it to reach the workbenches.
+        await page.locator('[data-action="leave-settings"]').click();
+        await page.locator("[data-workbench-entry] .workbench-group-name").click();
+        await page.locator('[data-toggle="right"]').click();
+        await page.locator("#tab-docs").click();
+        const docs = page.locator("#panel-docs"),
+          dialog = page.locator("[data-source-current]");
+        // Docs shows the workbench as a folder tree (TASK-66b7d4aa); its expansion persists.
+        const folder = docs.locator('[role="treeitem"][data-tree-path="docs"]');
+        if ((await folder.getAttribute("aria-expanded")) === "false") await folder.click();
+        await expect(docs.locator("[data-document]")).toHaveCount(10);
+        await expect(docs.locator('[data-document="docs/pending.pdf"]')).toHaveAttribute(
+          "data-status",
+          "pending",
+        );
+        // REQ-UX-d455531b: one search box; Reindex and Collapse all share a row.
+        await expect(docs.locator("input")).toHaveCount(1);
+        const reindexTop = (await docs.locator('[data-action="reindex"]').boundingBox())?.y;
+        const collapseTop = (await docs.locator('[data-action="collapse-all"]').boundingBox())?.y;
+        expect(reindexTop).toBeDefined();
+        expect(Math.abs((reindexTop ?? 0) - (collapseTop ?? Number.NaN))).toBeLessThan(2);
+        // REQ-UX-2504362b: document hits are listed under the filtered tree.
+        await docs.locator("[data-docs-search]").fill("power");
+        await expect(docs.locator("[data-docs-hits] .documents-list li")).toHaveCount(1);
+        // No file is named after the query: the tree stays, empty, and says so.
+        await expect(docs.locator('[role="tree"]')).toHaveCount(1);
+        await expect(docs.locator('.docs-tree [role="status"]')).toBeVisible();
+        await expect(docs).toContainText("docs/a.md#h=power");
+        await docs.locator(".documents-list button").click();
+        // Documents open as tabs of the chat area (TASK-79f6ffd3).
+        await expect(page.locator('[data-document-tabs] [role="tab"][aria-selected="true"]')).toHaveText(
+          "a.md",
+        );
+        await expect(dialog.locator('[data-heading="power"]')).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(dialog).toHaveCount(0);
+        // The right panel keeps its cap; documents no longer widen it.
+        const right = page.locator("#right-panel");
+        const viewport = await page.evaluate(() => innerWidth);
+        await page.locator('[data-resize="right"]').focus();
+        await page.keyboard.press("End");
+        expect((await right.boundingBox())?.width ?? 0).toBeLessThanOrEqual(viewport * 0.45 + 1);
+        await docs.locator("[data-docs-search]").fill("");
+        await expect(docs.locator("[data-document]")).toHaveCount(10);
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
           await page.evaluate(
             async ([theme, scale]) => {
@@ -171,18 +171,17 @@ test("browser Docs and offline PDF/Markdown/text viewer fit all languages, theme
             await expect(docs.locator(`[data-document="${path}"]`)).toBeFocused();
           }
         }
-      await docs.locator("button").first().click();
-      await expect(docs.locator('[role="status"]')).not.toHaveCount(0);
-      await page.screenshot({ path: test.info().outputPath(`documents-${lang}.png`) });
-      await page.locator('[data-toggle="right"]').click();
-    }
-    expect(errors).toEqual([]);
-    expect(attempts).toEqual([]);
-  } finally {
-    if (server.exitCode === null) {
-      const stopped = once(server, "exit");
-      server.kill("SIGTERM");
-      await stopped;
-    }
-  }
-});
+        await docs.locator("button").first().click();
+        await expect(docs.locator('[role="status"]')).not.toHaveCount(0);
+        await page.screenshot({ path: test.info().outputPath(`documents-${lang}.png`) });
+        await page.locator('[data-toggle="right"]').click();
+        expect(errors).toEqual([]);
+        expect(attempts).toEqual([]);
+      } finally {
+        if (server.exitCode === null) {
+          const stopped = once(server, "exit");
+          server.kill("SIGTERM");
+          await stopped;
+        }
+      }
+    });

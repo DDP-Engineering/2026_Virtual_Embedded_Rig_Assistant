@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,19 @@ import Database from "better-sqlite3";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
+type IngestWindow = Window & {
+  vera: VeraBridge;
+  indexEvents: WorkbenchEvent[];
+  indexTimings: {
+    elapsed: number;
+    type: string;
+    status?: string;
+    path?: string;
+    pending?: number;
+    done?: number;
+    failed?: number;
+  }[];
+};
 test("native hosts ingest and reindex through confined IPC/events, then close and reopen", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-ingest-native-"));
   const folder = join(root, "bench");
@@ -40,16 +53,31 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
     node: process.versions.node,
   }));
   try {
-    expect(loaded.execPath).toBe(executable);
+    expect(await realpath(loaded.execPath)).toBe(await realpath(executable));
     expect(loaded.electron).toBe("44.7.0");
     await installNetworkGuard(app);
     const page = await app.firstWindow();
     await page.waitForFunction(() => !!(window as unknown as Window & { vera?: VeraBridge }).vera);
     await page.evaluate(async (folder) => {
-      const host = window as unknown as Window & { vera: VeraBridge; indexEvents: WorkbenchEvent[] };
+      const host = window as unknown as IngestWindow;
       const bench = await host.vera.invoke("workbench.create", { folder, name: "Native ingest" });
       host.indexEvents = [];
-      host.vera.subscribe("workbench", bench.config.id, (event) => host.indexEvents.push(event));
+      host.indexTimings = [];
+      const start = performance.now();
+      host.vera.subscribe("workbench", bench.config.id, (event) => {
+        host.indexEvents.push(event);
+        if (event.type.startsWith("index."))
+          host.indexTimings.push({
+            elapsed: performance.now() - start,
+            type: event.type,
+            ...(event.type === "index.document"
+              ? { path: event.path, ...(event.document ? { status: event.document.status } : {}) }
+              : {}),
+            ...(event.type === "index.progress"
+              ? { pending: event.pending, done: event.done, failed: event.failed }
+              : {}),
+          });
+      });
     }, folder);
     await mkdir(join(folder, "docs"));
     await writeFile(join(folder, "docs/board.md"), "board one");
@@ -60,7 +88,54 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
             e.type === "index.document" && e.path === "docs/board.md" && e.document?.status === "indexed",
         ),
       );
-    await expect.poll(records).toHaveLength(1);
+    try {
+      await expect.poll(records).toHaveLength(1);
+    } catch (error) {
+      // Preserve phase evidence on failure without changing the assertion or its deadline.
+      const evidence: Record<string, unknown> = {};
+      let diagnosticTimer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        evidence.renderer = await Promise.race([
+          page.evaluate(async () => {
+            const host = window as unknown as IngestWindow;
+            const start = performance.now();
+            const info = await host.vera.invoke("app.info", {});
+            const { config } = await host.vera.invoke("workbench.config.get", {});
+            const volume = await host.vera.invoke("docs.volume", { workbenchId: config.id });
+            return { phases: host.indexTimings, info, volume, responsivenessMs: performance.now() - start };
+          }),
+          new Promise((resolve) => {
+            diagnosticTimer = setTimeout(() => resolve({ unresponsive: true }), 1000);
+          }),
+        ]);
+        const db = new Database(join(folder, ".vera/vera.db"), { readonly: true, timeout: 0 });
+        try {
+          evidence.documents = db.prepare("SELECT path,status,error FROM documents").all();
+        } finally {
+          db.close();
+        }
+        const json = JSON.stringify(evidence, null, 2);
+        if (process.env.VERA_E2E_EVIDENCE_DIR) {
+          await mkdir(process.env.VERA_E2E_EVIDENCE_DIR, { recursive: true });
+          await writeFile(
+            join(
+              process.env.VERA_E2E_EVIDENCE_DIR,
+              `ingest-first-index-failure-${process.pid}-${Date.now()}.json`,
+            ),
+            json,
+            { flag: "wx" },
+          );
+        } else console.error("Native ingest first-index failure evidence:", json);
+      } catch (diagnosticError) {
+        console.error(
+          "Native ingest diagnostic unavailable:",
+          diagnosticError instanceof Error ? diagnosticError.name : "unknown",
+        );
+      } finally {
+        clearTimeout(diagnosticTimer);
+      }
+      throw error;
+    }
     const first = (await records())[0];
     expect(first).toMatchObject({ path: "docs/board.md", document: { status: "indexed", kind: "markdown" } });
     const firstHash = first?.type === "index.document" ? first.document?.sha256 : null;

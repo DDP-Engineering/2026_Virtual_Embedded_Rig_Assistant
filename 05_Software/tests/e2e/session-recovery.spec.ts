@@ -42,6 +42,10 @@ test("native session recovers missed completion, error and cancellation without 
     const page = await app.firstWindow();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    // firstWindow can precede the initial document's load; wait for the application UI before
+    // creating the workbench and deliberately reloading its authoritative state.
+    await expect(page.locator('[data-i18n="nav.settings"]')).toBeVisible();
+    await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {}));
     await page.evaluate(async (folder) => {
       await (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.create", {
         folder,

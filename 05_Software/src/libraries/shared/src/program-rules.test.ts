@@ -72,6 +72,17 @@ describe("pattern grammar (REQ-FUNC-80b2033a)", () => {
 });
 
 describe("matching cost (REQ-FUNC-80b2033a)", () => {
+  it.each(
+    [[], ["burn-key"], ["before", "burn-key", "after"], ["erase", "--port=COM3"]].map((args) => [args]),
+  )(
+    "preserves risk, notes, timeout and the first irreversible word across adjacent wildcards: %j",
+    (args) => {
+      const classify = (match: string) =>
+        classifyCommand([{ match, risk: "irreversible", note: "Permanent", timeout: 7 }], "tool", args);
+      expect(classify("tool * * {burn-*,erase} * *")).toEqual(classify("tool * {burn-*,erase} *"));
+      expect(classify("tool * * *")).toEqual(classify("tool *"));
+    },
+  );
   it("stays linear in pattern tokens times command tokens for wildcard-heavy rules", () => {
     const match = `tool ${"* ".repeat(510)}never`;
     const rules: ProgramRule[] = Array.from({ length: 50 }, () => ({ match, risk: "safe" }));

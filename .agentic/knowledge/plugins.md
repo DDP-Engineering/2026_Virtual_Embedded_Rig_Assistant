@@ -447,6 +447,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 ## Key behaviors
 
+Rule parsing canonicalizes adjacent sequence wildcards to one before whole-command matching; risk, notes, timeout and the first irreversible confirmation word retain their original semantics. The wildcard-heavy regression keeps its existing 300 ms bound.
+
 - `REQ-FUNC-20b10001` / `REQ-FUNC-20b10002` — find-first combined provisioning and shared verified fallback; `REQ-DATA-4d4471f9` accepts the format-1 declaration.
 
 - `REQ-DATA-4d4471f9` — plugin.yaml format 1 validation with field paths (spec REQ-DATA-4d4471f9.md).

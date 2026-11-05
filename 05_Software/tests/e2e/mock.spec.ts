@@ -503,8 +503,15 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         await expect(page.locator('[data-citation="valid"]')).toHaveCount(1);
         await expect(page.locator("html")).toHaveAttribute("lang", language);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        // Normal chat detail keeps successful tool rows inside a closed activity group.
+        const group = page.locator("[data-tool-group] > section > .disclosure-toggle");
+        await group.focus();
+        await page.keyboard.press("Space");
+        await expect(group).toHaveAttribute("aria-expanded", "true");
         const detail = page.locator("[data-tool-row]").first();
+        await expect(detail.locator("button")).toBeVisible();
         await detail.locator("button").focus();
+        await expect(detail.locator("button")).toBeFocused();
         await page.keyboard.press("Space");
         await expect(detail.locator("button")).toHaveAttribute("aria-expanded", "true");
         await expect(detail.locator("pre").last()).toContainText("Source line");

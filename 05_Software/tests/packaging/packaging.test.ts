@@ -228,39 +228,44 @@ it("measures package contributions without a size budget", async () => {
   }
 });
 
-it("inspects real ASAR app code through native file separators in both build modes", async () => {
-  const { inspectAppArchive, probeMarkers, documentWorkerMarkers } = await import(
-    pathToFileURL(join(root, "scripts/package.mjs")).href
-  );
-  const dir = await mkdtemp(join(tmpdir(), "vera-asar-test-"));
-  const source = join(dir, "source");
-  const archive = join(dir, "app.asar");
-  try {
-    await mkdir(join(source, "out/main"), { recursive: true });
-    for (const directory of ["cmaps", "standard_fonts", "wasm"])
-      await cp(
-        join(root, "node_modules/pdfjs-dist", directory),
-        join(source, "out/renderer/pdfjs", directory),
-        {
-          recursive: true,
-          filter: (path) => !path.split(/[\\/]/).at(-1)?.startsWith("LICENSE"),
-        },
-      );
-    await writeFile(join(source, "out/main/index.js"), [...probeMarkers, ...documentWorkerMarkers].join(";"));
-    await createPackage(source, archive);
-    expect((await inspectAppArchive(archive, true)).entries).toContain("/out/main/index.js");
-    await expect(inspectAppArchive(archive, false)).rejects.toThrow(/Build boundary/);
-    await writeFile(join(source, "out/main/index.js"), documentWorkerMarkers.join(";"));
-    await createPackage(source, archive);
-    await expect(inspectAppArchive(archive, false)).resolves.toBeDefined();
-    await expect(inspectAppArchive(archive, true)).rejects.toThrow(/Build boundary/);
-    await rm(join(source, "out/renderer/pdfjs/standard_fonts/FoxitSerif.pfb"));
-    await createPackage(source, archive);
-    await expect(inspectAppArchive(archive, false)).rejects.toThrow(/missing PDF resource/);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-});
+it.each(["instrumented", "release", "missing-pdf-resource"] as const)(
+  "inspects real ASAR app code through native file separators (%s)",
+  async (scenario) => {
+    const { inspectAppArchive, probeMarkers, documentWorkerMarkers } = await import(
+      pathToFileURL(join(root, "scripts/package.mjs")).href
+    );
+    const dir = await mkdtemp(join(tmpdir(), "vera-asar-test-"));
+    const source = join(dir, "source");
+    const archive = join(dir, "app.asar");
+    try {
+      await mkdir(join(source, "out/main"), { recursive: true });
+      for (const directory of ["cmaps", "standard_fonts", "wasm"])
+        await cp(
+          join(root, "node_modules/pdfjs-dist", directory),
+          join(source, "out/renderer/pdfjs", directory),
+          {
+            recursive: true,
+            filter: (path) => !path.split(/[\\/]/).at(-1)?.startsWith("LICENSE"),
+          },
+        );
+      const markers =
+        scenario === "instrumented" ? [...probeMarkers, ...documentWorkerMarkers] : documentWorkerMarkers;
+      await writeFile(join(source, "out/main/index.js"), markers.join(";"));
+      if (scenario === "missing-pdf-resource")
+        await rm(join(source, "out/renderer/pdfjs/standard_fonts/FoxitSerif.pfb"));
+      await createPackage(source, archive);
+      if (scenario === "instrumented") {
+        expect((await inspectAppArchive(archive, true)).entries).toContain("/out/main/index.js");
+        await expect(inspectAppArchive(archive, false)).rejects.toThrow(/Build boundary/);
+      } else if (scenario === "release") {
+        await expect(inspectAppArchive(archive, false)).resolves.toBeDefined();
+        await expect(inspectAppArchive(archive, true)).rejects.toThrow(/Build boundary/);
+      } else await expect(inspectAppArchive(archive, false)).rejects.toThrow(/missing PDF resource/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  },
+);
 
 it("ships runtime resources without fictional workbench fixtures", async () => {
   const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));

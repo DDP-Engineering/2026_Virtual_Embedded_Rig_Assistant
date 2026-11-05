@@ -11,7 +11,15 @@ if (build.status !== 0) process.exit(build.status ?? 1);
 const args = [process.execPath, playwright, "test", ...process.argv.slice(2)];
 const result =
   process.platform === "linux"
-    ? spawnSync("xvfb-run", ["-a", ...args], { stdio: "inherit" })
+    ? spawnSync(
+        "xvfb-run",
+        [
+          "-a",
+          ...(process.env.VERA_E2E_SESSION_WRAPPER ? [process.env.VERA_E2E_SESSION_WRAPPER] : []),
+          ...args,
+        ],
+        { stdio: "inherit" },
+      )
     : spawnSync(args[0], args.slice(1), { stdio: "inherit" });
 if (result.error) throw result.error;
 process.exit(result.status ?? 1);

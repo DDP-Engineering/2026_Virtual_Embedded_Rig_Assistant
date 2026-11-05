@@ -1,4 +1,4 @@
-import { execFile, spawn } from "node:child_process";
+import { type ChildProcess, execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
@@ -13,7 +13,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { builtinToolNames, type SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
-import { afterAll, beforeAll, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, it } from "vitest";
 import { prepareCase, sections, sha256 } from "../fixtures/firmware-comparator/harness.js";
 import {
   sections as planSections,
@@ -26,6 +26,48 @@ let evidence: string | undefined;
 let invocation = 0;
 const cleanup: string[] = [];
 const servers: Server[] = [];
+const children = new Set<{
+  child: ChildProcess;
+  closed: Promise<void>;
+  result: Promise<unknown>;
+}>();
+
+async function drainChildren() {
+  await Promise.all(
+    [...children].map(async (run) => {
+      const { child } = run;
+      let terminationError: unknown;
+      if (child.pid && child.exitCode === null && child.signalCode === null) {
+        if (process.platform === "win32") {
+          const taskkill = join(
+            process.env.SystemRoot ?? process.env.SYSTEMROOT ?? "C:\\Windows",
+            "System32",
+            "taskkill.exe",
+          );
+          await promisify(execFile)(taskkill, ["/T", "/F", "/PID", String(child.pid)]).catch((error) => {
+            // A process can finish between the ownership check and taskkill.
+            terminationError = error;
+          });
+        } else {
+          try {
+            // launch() gives this owned child its own group, including npm descendants.
+            process.kill(-child.pid, "SIGKILL");
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+          }
+        }
+      }
+      await run.closed;
+      await Promise.allSettled([run.result]);
+      children.delete(run);
+      // taskkill can report a descendant's exit race even after the owned root closes.
+      // Await close and evidence first; a genuinely live process still fails the hook deadline.
+      if (terminationError && child.exitCode === null && child.signalCode === null) throw terminationError;
+    }),
+  );
+}
+
+afterEach(drainChildren);
 beforeAll(async () => {
   await mkdir(join(root, "node_modules/.cache"), { recursive: true });
   compiled = await mkdtemp(join(root, "node_modules/.cache/vera-cli-test-"));
@@ -68,6 +110,7 @@ process.stdout.write = (...args) => { const result = original(...args); if (!sen
   }
 });
 afterAll(async () => {
+  await drainChildren();
   for (const server of servers) {
     server.closeAllConnections();
     await new Promise<void>((done) => server.close(() => done()));
@@ -126,7 +169,9 @@ function launch(
     cwd: root,
     env: environment,
     stdio: ["pipe", "pipe", "pipe"],
+    detached: process.platform !== "win32",
   });
+  const closed = new Promise<void>((done) => child.once("close", () => done()));
   if (mode !== "pty") child.stdin.end();
   let stdout = "",
     stderr = "";
@@ -203,6 +248,10 @@ function launch(
       }
     });
   });
+  const run = { child, closed, result };
+  children.add(run);
+  // Keep rejection observed even if Vitest has already timed out the awaiting test.
+  void Promise.allSettled([closed, result]).then(() => children.delete(run));
   return { child, result, output: () => stdout };
 }
 const events = (text: string) =>
@@ -839,15 +888,24 @@ it("CLI installs a plugin and its programs and prints their statuses", async () 
     },
   ]);
   expect(existsSync(join(data, "plugins", "installed", "bench-tools", "install.json"))).toBe(true);
-  for (const args of [
-    ["plugin", "install", "--data", data],
-    ["plugin", "install", "--path", plugin],
-    ["plugin", "remove"],
-  ]) {
+  expect(await readFile(join(data, "plugins", "installed", "bench-tools", "plugin.yaml"))).toEqual(
+    await readFile(join(plugin, "plugin.yaml")),
+  );
+});
+it.each(["missing-path", "missing-data", "unsupported-action"] as const)(
+  "CLI rejects an invalid plugin invocation (%s) with usage exit2",
+  async (problem) => {
+    const { workbench } = await fixture();
+    const args =
+      problem === "missing-path"
+        ? ["plugin", "install", "--data", workbench]
+        : problem === "missing-data"
+          ? ["plugin", "install", "--path", workbench]
+          : ["plugin", "remove"];
     const usage = await launch(args).result;
     expect(usage.code, args.join(" ")).toBe(2);
-  }
-});
+  },
+);
 // REQ-FUNC-3b9f62f8 REQ-SEC-5fa5cd5e REQ-FUNC-f4381792
 it("CLI checks a catalog source and builds its release", async () => {
   const { dir } = await fixture();
@@ -1128,11 +1186,30 @@ it.each(["literal", "unicode", "template", "keyfile-template"])(
     }
   },
 );
-it("the public npm run vera command emits parsable JSONL and scrubs raw usage arguments", async () => {
+it("drains an owned CLI process before its temporary bundle and workbench are removed", async () => {
+  const preload = join(compiled, "hold-process.mjs");
+  await writeFile(preload, 'setInterval(() => {}, 1000); process.stdout.write("owned-process-ready\\n");');
+  const launched = launch(["wrong"], { NODE_OPTIONS: `--import=${pathToFileURL(preload).href}` });
+  await new Promise<void>((done) => {
+    if (launched.output().includes("owned-process-ready")) done();
+    else
+      launched.child.stdout.on("data", () => {
+        if (launched.output().includes("owned-process-ready")) done();
+      });
+  });
+  expect(launched.child.exitCode).toBeNull();
+  await drainChildren();
+  await launched.result;
+  expect(launched.child.exitCode !== null || launched.child.signalCode !== null).toBe(true);
+  expect(children.size).toBe(0);
+});
+it("the public npm run vera command emits parsable JSONL", async () => {
   const { workbench } = await fixture();
   const result = await launch(replay(workbench), {}, "npm").result;
   expect(result.code).toBe(0);
   expect(events(result.stdout).find((row) => row.event.type === "turn.done").event.stopReason).toBe("end");
+});
+it("the public npm run vera command scrubs raw usage arguments", async () => {
   const key = "fictional-npm-reflected-key-15";
   const invalid = await launch(["run", `--${key}`], { OPENAI_API_KEY: key }, "npm").result;
   expect(invalid.code).toBe(2);

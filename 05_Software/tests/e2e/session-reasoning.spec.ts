@@ -66,14 +66,16 @@ test("native reasoning persists per session and sends selected or provider-defau
             name: "Reasoning fixture",
             baseUrl: `http://127.0.0.1:${port}/v1`,
             model: "org/reasoner",
-            contextWindow: 16384,
+            // This fixture exercises reasoning transport with the complete current tool catalog.
+            // Context-limit refusal has separate coverage; do not make this a small-context model.
+            contextWindow: 131072,
             maxOutputTokens: 1024,
             protocol: "lmstudio",
             models: [
               {
                 id: "org/reasoner",
                 name: "Reasoning model",
-                contextWindow: 16384,
+                contextWindow: 131072,
                 maxOutputTokens: 1024,
                 reasoningOptions: ["off", "low", "high"],
                 reasoning: "low",
@@ -81,7 +83,7 @@ test("native reasoning persists per session and sends selected or provider-defau
               {
                 id: "org/plain",
                 name: "Plain model",
-                contextWindow: 16384,
+                contextWindow: 131072,
                 maxOutputTokens: 1024,
                 reasoningOptions: [],
               },

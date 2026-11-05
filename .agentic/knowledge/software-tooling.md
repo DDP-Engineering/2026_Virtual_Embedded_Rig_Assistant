@@ -10,13 +10,13 @@ to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Too
 ## Purpose and boundaries
 
 The software root supplies four ESM workspaces, strict compilation, Biome boundaries,
-Vitest projects and Playwright acceptance launchers. Shared publishes zod IPC/settings/workbench schemas; core
+Vitest projects and Playwright acceptance launchers. Shared tests are collected only from src/**/*.test.ts; generated dist copies are excluded. Files run serially because native CLI/build fixtures share generated outputs. Shared publishes zod IPC/settings/workbench schemas; core
 publishes host ports, settings and workbench services; [Headless CLI](headless-cli.md) composes durable sessions and bounded workers through Node ports. Desktop owns the running Electron shell and renderer-only dev mode.
 
 ## Public interface
 
 From `05_Software`, use `npm run verify`, `check:i18n`, `lint`, `format`, `typecheck`, `build`, `dev`, `dev:renderer`
-and `test:e2e`. The repository-local `python ../02_Tools/npmw.py` wrapper selects pinned Node.
+and `test:e2e`. VERA_BUILD_ROOT is an optional build-time absolute output directory with main/preload/renderer children; omitted builds use desktop/out. The repository-local `python ../02_Tools/npmw.py` wrapper selects pinned Node.
 See [software README](../../05_Software/README.md) for setup and command details.
 `prepare:model`, `package` and `package:test` route to [native packaging](native-packaging.md),
 which owns verified assets, native staging and artifact measurements.
@@ -33,7 +33,8 @@ which owns verified assets, native staging and artifact measurements.
 - Core sources never import `node:child_process` or `child_process` (core tests and test-support files may);
   processes start through the ProcessHost port that desktop main and the CLI compose.
 - E2e uses temporary userData and explicit Chromium sandboxing; non-loopback Node and Chromium requests are blocked.
-- Linux acceptance runs through xvfb-run with platform-specific dependencies separate from Windows.
+- Native ingest retains its original first-index assertion/deadline. On failure only, its fixture captures timestamped index phases, document statuses, volume and IPC responsiveness as JSON under VERA_E2E_EVIDENCE_DIR (or in the failed-test output when no directory is supplied); no diagnostic is emitted on success.
+- Linux acceptance runs through xvfb-run with platform-specific dependencies separate from Windows. VERA_E2E_SESSION_WRAPPER optionally names an executable that starts a window manager on that same display and then runs the supplied Node/Playwright argv; maximize/restore checks require that real manager.
 
 ## Change map
 
@@ -53,35 +54,6 @@ Catalog audit scans renderer TypeScript AST for literal and finite registered tr
 - `REQ-TEST-21b726d6` — development, build and isolated acceptance commands are reproducible.
 - `REQ-TEST-2308561a` — actual builds emit the configured test identity, unaffected by runtime overrides.
 
-## Architecture
-
-```mermaid
-flowchart LR
-  setup([02_Tools/npmw.py]) --> npm[package.json scripts]
-  npm --> biome[Biome boundaries + formatting]
-  npm --> tsc[tsc -b root solution]
-  tsc --> shared[src/libraries/shared]
-  tsc --> core[src/libraries/core]
-  tsc --> cli[src/apps/cli]
-  tsc --> desktop[src/apps/desktop process configs]
-  core -. manifest dependency .-> shared
-  cli -. manifest dependency .-> core
-  cli -. manifest dependency .-> shared
-  desktop --> shared
-  npm --> browser[VITE_API=mock browser renderer]
-  desktop -. manifest dependency .-> core
-  desktop -. manifest dependency .-> shared
-  npm --> unit[Vitest projects]
-  npm --> launcher[test-e2e.mjs]
-  launcher --> build[electron-vite build]
-  launcher --> acceptance[Playwright Electron]
-  acceptance --> guard[network-guard.ts]
-```
-
-Dashed arrows describe npm dependency declarations, while solid arrows describe command
-execution and compilation ownership. Core exports ports/settings/workbench/LLM gateway and confined file tools; shared publishes IPC/settings/workbench types/schemas;
-CLI supplies the vera bin and run command over the same core services.
-
 ## Files
 
 All paths are under `05_Software/`.
@@ -89,7 +61,7 @@ All paths are under `05_Software/`.
 - `package.json`, `package-lock.json`, `.npmrc`, `README.md` — installation and commands.
 - `biome.json`, `tsconfig.base.json`, `tsconfig.json`, `tsconfig.tools.json` — checks and compilation.
 - `vitest.config.ts`, `playwright.config.ts` — test projects and acceptance settings.
-- `tests/tooling/{boundaries,skeleton,build-mode}.test.ts` — boundary, layout and emitted-build regression tests, with compiled shared entry hidden during builds.
+- `tests/tooling/{boundaries,skeleton,build-mode}.test.ts` — boundary, layout and emitted-build regression tests, with private VERA_BUILD_ROOT output directories so verification leaves the running native acceptance output intact.
 - `src/libraries/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library definitions and public exports.
 - src/libraries/core/vitest.config.ts — core Node tests with shared source resolution.
 - `src/apps/cli/{package.json,tsconfig.json,src/index.ts}` — headless CLI.

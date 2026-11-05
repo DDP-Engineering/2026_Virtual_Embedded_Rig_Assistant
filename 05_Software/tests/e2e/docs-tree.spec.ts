@@ -99,7 +99,7 @@ test("native Docs tree browses the workbench, marks what VERA ignores, opens fil
       "Open",
       "Attach as context",
       "Open in",
-      "Show in Explorer",
+      process.platform === "win32" ? "Show in Explorer" : "Show in folder",
       "Copy",
       "Properties",
     ]);

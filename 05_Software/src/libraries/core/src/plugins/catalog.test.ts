@@ -29,10 +29,25 @@ type Manifest = Record<string, unknown> & {
   rules: Record<string, unknown>[];
   programs: Record<string, never>;
 };
-/** A release of the official plugins, serial-monitor changed by `edit`. */
+/** A small real two-plugin catalog; full official inventory is verified by packaging tests. */
 async function release(edit: (manifest: Manifest) => void = () => {}) {
   const source = await temp("source");
-  await cp(official, source, { recursive: true });
+  for (const id of ["serial-monitor", "esp32-esptool"])
+    await cp(join(official, id), join(source, id), { recursive: true });
+  await writeFile(
+    join(source, "catalog.yaml"),
+    stringify({ format: 1, official: ["serial-monitor", "esp32-esptool"], reviewed: [] }),
+  );
+  await writeFile(
+    join(source, "packs.yaml"),
+    stringify([
+      {
+        id: "esp32",
+        name: "ESP32",
+        groups: [{ name: "Core", plugins: ["serial-monitor", "esp32-esptool"], default: true }],
+      },
+    ]),
+  );
   const path = join(source, "serial-monitor", "plugin.yaml");
   const manifest = parse(await readFile(path, "utf8")) as Manifest;
   edit(manifest);
@@ -105,9 +120,7 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   expect(remote).toMatchObject({ source: "remote", url: `${url}/`, checkedAt: "2026-11-03T12:00:00.000Z" });
   expect(remote.problem).toBeUndefined();
   expect(remote.plugins.map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
-    ["binutils", "1.0.0", "official"],
     ["esp32-esptool", "1.0.0", "official"],
-    ["esp32-idf", "1.0.0", "official"],
     ["serial-monitor", "1.0.1", "official"],
   ]);
   expect(remote.packs[0]?.groups[0]).toEqual({

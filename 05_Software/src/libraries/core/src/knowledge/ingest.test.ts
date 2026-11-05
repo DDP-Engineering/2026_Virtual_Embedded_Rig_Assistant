@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, open, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -578,6 +578,22 @@ it("rebuilds chunks when workbench embedding settings change without source edit
   const after = h.db.prepare("SELECT count(*) FROM chunks").pluck().get() as number;
   expect(after).toBeGreaterThan(before);
   expect(h.db.prepare("SELECT max(chars) FROM chunks").pluck().get()).toBeLessThanOrEqual(400);
+});
+
+// REQ-REL-2512a455: a root created after readiness must keep real change listeners too.
+it("observes rewrites when the selected source directory appears after watcher readiness", async () => {
+  const h = await harness(undefined, undefined, false);
+  await latestWatcher().ready;
+  await mkdir(join(h.folder, "docs"));
+  const path = join(h.folder, "docs/board.md");
+  await writeFile(path, "before");
+  await expect.poll(h.row, { timeout: 7000 }).toMatchObject({ status: "pending" });
+  expect(h.row()?.sha256).toBe(createHash("sha256").update("before").digest("hex"));
+  await writeFile(path, "after");
+  await expect.poll(h.row, { timeout: 7000 }).toMatchObject({
+    status: "pending",
+    sha256: createHash("sha256").update("after").digest("hex"),
+  });
 });
 
 it("does not traverse SDK siblings when the selected docs root is initially missing", async () => {

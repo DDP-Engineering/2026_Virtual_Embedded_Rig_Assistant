@@ -207,7 +207,18 @@ export class Ingester {
   private watchKey = "";
   /** Targets plus the pruning policy: a policy change re-registers newly allowed folders. */
   private watcherKey(targets: string[]): string {
-    return JSON.stringify([targets, this.ignoreText, this.patterns]);
+    // A root can appear after Chokidar's initial stat but before its parent listener is ready.
+    // Its ready reconciliation then sees files without having registered their change listeners.
+    // Rebinding when target kinds change closes that gap through the existing readiness queue.
+    const roots = targets.map((target) => {
+      try {
+        const info = lstatSync(target);
+        return [target, info.isSymbolicLink() ? "link" : info.isDirectory() ? "directory" : "file"];
+      } catch {
+        return [target, "missing"];
+      }
+    });
+    return JSON.stringify([roots, this.ignoreText, this.patterns]);
   }
   private refreshWatcher(): void {
     const next = watchTargets(this.options.root, this.options.config().docs);
@@ -259,6 +270,10 @@ export class Ingester {
     void this.queue.run(async () => {
       this.requested = false;
       try {
+        // A missing root can appear after the ready event, while this debounce is pending.
+        // Register it and await that generation before publishing rows from its first scan.
+        this.refreshWatcher();
+        await this.waitForWatcher();
         await this.reconcile();
       } catch {
         this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 });
@@ -282,7 +297,7 @@ export class Ingester {
       await this.reconcile(selection);
     });
   }
-  async waitIdle(): Promise<void> {
+  private async waitForWatcher(): Promise<void> {
     while (!this.closed) {
       const updates = this.watcherUpdates;
       await updates;
@@ -290,6 +305,9 @@ export class Ingester {
       await ready;
       if (updates === this.watcherUpdates && ready === this.ready) break;
     }
+  }
+  async waitIdle(): Promise<void> {
+    await this.waitForWatcher();
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = undefined;

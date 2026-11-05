@@ -307,6 +307,26 @@ test.describe("browser Plan", () => {
         await page.locator('[data-toggle="right"]').click();
         await page.locator("#tab-plan").focus();
         await page.keyboard.press("Enter");
+        // Record committed DOM replacements before the fixture starts. A Playwright round trip
+        // may take longer than an intermediate fixture state on a loaded host.
+        await page.locator("#panel-plan").evaluate((panel) => {
+          const snapshots: string[][][] = [];
+          const capture = () => {
+            const rows = [...panel.querySelectorAll(".plan-list > li")].map((item) => [
+              item.querySelector(".plan-text")?.textContent ?? "",
+              ...Array.from(
+                item.querySelectorAll('[role="img"]'),
+                (icon) => icon.getAttribute("aria-label") ?? "",
+              ),
+            ]);
+            if (rows.length && JSON.stringify(rows) !== JSON.stringify(snapshots.at(-1)))
+              snapshots.push(rows);
+          };
+          const observer = new MutationObserver(capture);
+          observer.observe(panel, { childList: true, subtree: true, characterData: true, attributes: true });
+          Object.assign(window, { veraPlanSnapshots: snapshots, veraPlanObserver: observer });
+          capture();
+        });
         await input.fill("Update the plan");
         await input.press("Enter");
         const panel = page.locator("#panel-plan");
@@ -315,15 +335,26 @@ test.describe("browser Plan", () => {
           ro: ["În curs", "În așteptare", "Finalizat"] as const,
           de: ["In Bearbeitung", "Ausstehend", "Erledigt"] as const,
         }[lang as "en" | "ro" | "de"];
-        await expectPlan(panel, [
-          ["Inspect the board", statusLabels[0]],
-          ["Verify the pins", statusLabels[1]],
-        ]);
-        await expectPlan(panel, [
-          ["Verify the pins", statusLabels[0]],
-          ["Inspect the board", statusLabels[2]],
-        ]);
         await expectPlan(panel, [["Board verification complete", statusLabels[2]]]);
+        const replacements = await page.evaluate(() => {
+          const observed = window as unknown as {
+            veraPlanSnapshots: string[][][];
+            veraPlanObserver: MutationObserver;
+          };
+          observed.veraPlanObserver.disconnect();
+          return observed.veraPlanSnapshots;
+        });
+        expect(replacements).toEqual([
+          [
+            ["Inspect the board", statusLabels[0]],
+            ["Verify the pins", statusLabels[1]],
+          ],
+          [
+            ["Verify the pins", statusLabels[0]],
+            ["Inspect the board", statusLabels[2]],
+          ],
+          [["Board verification complete", statusLabels[2]]],
+        ]);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         for (const theme of ["light", "dark"])
           for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {

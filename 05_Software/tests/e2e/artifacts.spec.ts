@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -79,7 +79,7 @@ async function launch(root: string, folder: string) {
     execPath: process.execPath,
     cwd: process.cwd(),
   }));
-  expect(loaded.execPath).toBe(executable);
+  expect(await realpath(loaded.execPath)).toBe(await realpath(executable));
   let target: string | undefined;
   const hashes: Record<string, string> = {};
   if (process.env.VERA_E2E_EVIDENCE_DIR) {
@@ -250,45 +250,45 @@ test("artifact appears live, opens/exports, survives restart and deletion remove
 });
 test.describe("browser artifacts", () => {
   test.use({ viewport: { width: 1024, height: 640 } });
-  test("translated live artifact viewer, keyboard and actions fit minimum geometry", async ({
-    page,
-    context,
-  }) => {
-    const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
-      env: { ...process.env, VITE_API: "mock" },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let output = "";
-    const attempts: string[] = [],
-      errors: string[] = [];
-    server.stdout.on("data", (b) => {
-      output += b.toString();
-    });
-    server.stderr.on("data", (b) => {
-      output += b.toString();
-    });
-    page.on("pageerror", (e) => errors.push(e.message));
-    await context.route("**/*", async (route) => {
-      if (new URL(route.request().url()).hostname === "127.0.0.1") await route.continue();
-      else {
-        attempts.push(route.request().url());
-        await route.abort();
-      }
-    });
-    try {
-      await new Promise<void>((done, fail) => {
-        const timer = setTimeout(() => fail(Error(output)), 20000);
-        const ready = () => {
-          if (output.includes("VERA_RENDERER_READY")) {
-            clearTimeout(timer);
-            done();
-          }
-        };
-        server.stdout.on("data", ready);
-        server.stderr.on("data", ready);
-        server.once("error", fail);
+  for (const lang of ["en", "ro", "de"])
+    test(`translated live artifact viewer, keyboard and actions fit minimum geometry (${lang})`, async ({
+      page,
+      context,
+    }) => {
+      const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+        env: { ...process.env, VITE_API: "mock" },
+        stdio: ["ignore", "pipe", "pipe"],
       });
-      for (const lang of ["en", "ro", "de"]) {
+      let output = "";
+      const attempts: string[] = [],
+        errors: string[] = [];
+      server.stdout.on("data", (b) => {
+        output += b.toString();
+      });
+      server.stderr.on("data", (b) => {
+        output += b.toString();
+      });
+      page.on("pageerror", (e) => errors.push(e.message));
+      await context.route("**/*", async (route) => {
+        if (new URL(route.request().url()).hostname === "127.0.0.1") await route.continue();
+        else {
+          attempts.push(route.request().url());
+          await route.abort();
+        }
+      });
+      try {
+        await new Promise<void>((done, fail) => {
+          const timer = setTimeout(() => fail(Error(output)), 20000);
+          const ready = () => {
+            if (output.includes("VERA_RENDERER_READY")) {
+              clearTimeout(timer);
+              done();
+            }
+          };
+          server.stdout.on("data", ready);
+          server.stderr.on("data", ready);
+          server.once("error", fail);
+        });
         await page.goto("http://127.0.0.1:5173/?mock=chat");
         await page.evaluate(() => localStorage.clear());
         await page.reload();
@@ -334,16 +334,15 @@ test.describe("browser artifacts", () => {
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
           }
         await page.locator('[data-toggle="right"]').click();
+        expect(attempts).toEqual([]);
+        expect(errors).toEqual([]);
+        await page.screenshot({ path: test.info().outputPath("artifacts-browser-minimum.png") });
+      } finally {
+        if (server.exitCode === null) {
+          const stopped = once(server, "exit");
+          server.kill("SIGTERM");
+          await stopped;
+        }
       }
-      expect(attempts).toEqual([]);
-      expect(errors).toEqual([]);
-      await page.screenshot({ path: test.info().outputPath("artifacts-browser-minimum.png") });
-    } finally {
-      if (server.exitCode === null) {
-        const stopped = once(server, "exit");
-        server.kill("SIGTERM");
-        await stopped;
-      }
-    }
-  });
+    });
 });

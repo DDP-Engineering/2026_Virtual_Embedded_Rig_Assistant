@@ -1151,6 +1151,7 @@ test("session list creation, rename, confirmed delete and tool details work by k
   row.querySelector<HTMLButtonElement>('[aria-label^="Rename"]')?.focus();
   await act(async () => user.keyboard("{Enter}"));
   expect(document.activeElement?.tagName).toBe("INPUT");
+  await act(async () => user.keyboard("{Control>}a{/Control}"));
   await act(async () => user.keyboard("Keyboard Session{Enter}"));
   await settle();
   expect((await api.invoke("session.list", {})).find((s) => s.id === id)?.title).toBe("Keyboard Session");

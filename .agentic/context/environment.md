@@ -166,7 +166,7 @@ was separately executed with isolated activation on both hosts; see the plugin R
 
 Plan acceptance uses shared todos.test.ts, core sessions/todos.test.ts, registry.test.ts and renderer plan-tab.test.ts; tests/e2e/plan.spec.ts observes every replacement live plus final list after native restart and localized browser status/geometry. CLI process proof covers the same fixture. Final selections include affected session/runtime/storage/IPC/panel/tooling consumers under the verification policy.
 
-Compact chrome acceptance uses main/window-chrome.test.ts, shared/window-ipc.test.ts, renderer components/shell.test.ts and tests/e2e/compact-shell.spec.ts with immediate shell/mock consumers. Native Linux maximize/restore and persisted-position checks require a real window manager alongside Xvfb; WSLg alone does not provide those semantics.
+Compact chrome acceptance uses main/window-chrome.test.ts, shared/window-ipc.test.ts, renderer components/shell.test.ts and tests/e2e/compact-shell.spec.ts with immediate shell/mock consumers. Native Linux maximize/restore and persisted-position checks require a real window manager alongside Xvfb; WSLg alone does not provide those semantics. Set VERA_E2E_SESSION_WRAPPER to an executable that starts the manager, executes its supplied argv on the inherited display and cleans up when that command exits. test:e2e invokes this wrapper inside xvfb-run.
 
 ## Platform details
 

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-fa9a50c1"
+title = "Source-only deterministic workspace verification"
+status = "active"
+requirement = "When workspace tests are collected, the verification runner shall select each authored source test once without collecting generated build-output copies."
+verification = "Collect shared source tests with compiled dist tests present and confirm only src test paths are selected; run the shared project to preserve its real assertions."
+affected_paths = ["05_Software/src/libraries/shared/vitest.config.ts", "05_Software/vitest.config.ts"]
+linked_tests = ["05_Software/tests/tooling/test-discovery.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-05
+updated = 2026-11-05

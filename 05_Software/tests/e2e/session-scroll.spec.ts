@@ -134,6 +134,24 @@ test("fixed viewport and independent left conversation rail retain composer and 
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(beforeTouch);
     await cdp.detach();
+    // A CDP touchEnd starts inertial scrolling. Capture the reading position only after it settles.
+    await transcript.evaluate(
+      (node) =>
+        new Promise<void>((resolve, reject) => {
+          let previous = node.scrollTop;
+          let stable = 0;
+          const limit = performance.now() + 5000;
+          const measure = () => {
+            const top = node.scrollTop;
+            stable = top === previous ? stable + 1 : 0;
+            previous = top;
+            if (stable >= 12) resolve();
+            else if (performance.now() >= limit) reject(Error("Touch scrolling did not settle"));
+            else requestAnimationFrame(measure);
+          };
+          requestAnimationFrame(measure);
+        }),
+    );
     const reading = await transcript.evaluate((node) => node.scrollTop);
     await input.fill("Another short question");
     await input.press("Enter");

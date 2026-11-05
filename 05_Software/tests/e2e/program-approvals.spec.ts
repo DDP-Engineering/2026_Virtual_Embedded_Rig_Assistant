@@ -75,7 +75,12 @@ test("approves a device-write run on the card and an irreversible run only with 
     await word.fill("burn-key");
     await approve.click();
     await expect(burn.getByRole("status")).toHaveText("Approved · user");
-    await expect(page.locator("strong", { hasText: /^run_program$/ })).toHaveCount(2);
+    // The normal transcript keeps successful operations compact; approved cards remain exact.
+    await expect(page.locator('[data-approval-card] [role="status"]')).toHaveText([
+      "Approved · user",
+      "Approved · user",
+    ]);
+    await expect(page.locator('[data-message-kind="tool"]')).toHaveCount(2);
     await expect(input).toBeEnabled();
   } finally {
     await server.close();
