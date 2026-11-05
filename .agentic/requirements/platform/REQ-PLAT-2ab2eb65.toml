@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-2ab2eb65"
+title = "Preserve Windows executable discovery for plugin launchers"
+status = "active"
+requirement = "When a plugin program starts on Windows, the runner shall include the host PATHEXT in its case-insensitive allowlisted environment while excluding unrelated host variables."
+verification = "Configure mixed-case PathExt and a secret host variable, start a Windows launcher, and assert PATHEXT survives exactly once while the secret does not; Linux does not inherit PATHEXT. Real Windows EIM/SDK version probing confirms the launcher."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

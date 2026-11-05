@@ -348,6 +348,18 @@ it("prepares the pinned uv for the build platform and refuses altered archives o
     await rm(join(dir, "windows-x64", "uv.exe"));
     await prepareUv(manifest, dir, { fetchImpl, platform: "windows-x64", offline: true });
     expect(requests).toBe(2);
+    // REQ-REL-21eeae69: pin changes reuse neither an older filename cache nor its binary.
+    const newer = structuredClone(manifest);
+    newer.version = "0.13.7";
+    const newBinary = Buffer.from("new-uv-binary");
+    const newZip = Buffer.from(zipSync({ "uv.exe": newBinary }));
+    newer.platforms["windows-x64"].url = newer.platforms["windows-x64"].url.replace("0.13.1", "0.13.7");
+    newer.platforms["windows-x64"].sha256 = sha(newZip);
+    newer.platforms["windows-x64"].binarySha256 = sha(newBinary);
+    served.set(newer.platforms["windows-x64"].url, newZip);
+    await prepareUv(newer, dir, { fetchImpl, platform: "windows-x64" });
+    expect(await readFile(join(dir, "windows-x64", "uv.exe"))).toEqual(newBinary);
+    expect(requests).toBe(3);
     const fresh = await mkdtemp(join(tmpdir(), "vera-uv-bad-"));
     try {
       const wrongArchive = structuredClone(manifest);

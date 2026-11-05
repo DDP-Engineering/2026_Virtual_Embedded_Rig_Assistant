@@ -110,6 +110,7 @@ export default defineConfig(({ command }) => ({
           index: resolve(root, "src/main/index.ts"),
           "build-mode": resolve(root, "src/main/build-mode.ts"),
           "grep-worker": resolve(root, "src/main/grep-worker.ts"),
+          "plugin-list-worker": resolve(root, "src/main/plugin-list-worker.ts"),
           "pdf-worker": resolve(root, "src/main/pdf-worker.ts"),
           "document-embedding-worker": resolve(root, "src/main/document-embedding-worker.ts"),
           "indexer-process": resolve(root, "src/main/indexer-process.ts"),

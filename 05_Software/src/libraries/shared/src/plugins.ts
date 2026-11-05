@@ -367,6 +367,10 @@ export const pluginProgramsRequestSchema = z.strictObject({
   id: pluginIdSchema,
   workbenchId: workbenchIdSchema.optional(),
 });
+export const pluginArchiveRequestSchema = pluginProgramsRequestSchema.extend({
+  program: pluginProgramNameSchema,
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+});
 export const pluginScopedRequestSchema = z.strictObject({
   id: pluginIdSchema,
   workbenchId: workbenchIdSchema,
@@ -401,6 +405,8 @@ export const pluginProgramStatusSchema = z.strictObject({
   detail: z.string().max(2000).optional(),
   /** This platform has a preferred managed download while a discovered CLI is selected. */
   downloadAvailable: z.literal(true).optional(),
+  /** A combined find/download declaration is currently using a discovered external executable. */
+  external: z.literal(true).optional(),
 });
 export type PluginProgramStatus = z.infer<typeof pluginProgramStatusSchema>;
 

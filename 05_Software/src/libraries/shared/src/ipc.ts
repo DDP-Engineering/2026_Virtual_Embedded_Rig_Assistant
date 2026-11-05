@@ -25,6 +25,7 @@ import {
   pluginCatalogViewSchema,
 } from "./plugin-catalog.js";
 import {
+  pluginArchiveRequestSchema,
   pluginIdSchema,
   pluginInstalledSchema,
   pluginInstallRequestSchema,
@@ -218,6 +219,16 @@ export const channels = {
     "plugins.programs",
     pluginProgramsRequestSchema,
     z.array(pluginProgramStatusSchema).max(64),
+  ),
+  "plugins.check": defineChannel(
+    "plugins.check",
+    pluginProgramsRequestSchema,
+    pluginProgramStatusSchema.array().max(128),
+  ),
+  "plugins.installArchive": defineChannel(
+    "plugins.installArchive",
+    pluginArchiveRequestSchema,
+    pluginProgramStatusSchema.array().max(128).nullable(),
   ),
   /** Installs the programs of an installed plugin that are not ready (a user action), one at a time. */
   "plugins.provision": defineChannel(

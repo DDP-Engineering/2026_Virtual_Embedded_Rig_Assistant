@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-22ef3dca"
+title = "Refuse invalid local dependency archives without installation"
+status = "active"
+requirement = "If a selected local dependency archive is missing, linked, oversized, has a different hash or fails safe extraction, the provisioner shall report an actionable failure without publishing an extracted installation or recording a program version."
+verification = "Exercise missing/link/size/wrong-SHA/unsafe archive cases, assert no published version/tree and empty owned staging; valid installed cache does not excuse a wrong selected archive."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

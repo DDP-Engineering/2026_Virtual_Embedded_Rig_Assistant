@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-27a41e3d"
+title = "Compact plugin management with grouped controls"
+status = "active"
+requirement = "The Plugins page shall present grouped top catalog and installation actions with compact expandable installed rows containing dependency summaries, explicit checks, stable install-or-installed controls and secondary export/uninstall actions in English, Romanian and German."
+verification = "Render populated, empty, checking and error cases; assert top action order, collapsed descriptions, accessible expand/collapse, installed disabled state, error details and no implicit workbench selection; inspect actual native app layout and keyboard operation."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

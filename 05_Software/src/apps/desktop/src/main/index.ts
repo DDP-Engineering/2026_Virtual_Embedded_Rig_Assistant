@@ -19,7 +19,7 @@ import {
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
-import { eventEnvelopeSchema, veraError, workbenchPatchSchema } from "@vera/shared";
+import { eventEnvelopeSchema, type PluginProgramStatus, veraError, workbenchPatchSchema } from "@vera/shared";
 import {
   app,
   BrowserWindow,
@@ -66,8 +66,10 @@ import {
   type SystemAppDeps,
   systemApps,
 } from "./openers.js";
+import { PluginListingHost } from "./plugin-list-host.js";
 import { createDesktopProcessHost } from "./process-host.js";
 import { testProgramResolver } from "./program-resolver.js";
+import { scrubProgramStatuses } from "./program-statuses.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { ProvisionerHosts } from "./provisioner-hosts.js";
@@ -109,6 +111,7 @@ nativeTheme.on("updated", () => {
     window.setTitleBarOverlay(titleBarOverlay(nativeTheme.shouldUseDarkColors));
 });
 const fileWorkers = createDesktopWorkerPool();
+const pluginListings = new PluginListingHost(join(dataLocations.paths.userData, "plugins"));
 const downloadTransfer = createDesktopDownloadTransfer();
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
@@ -309,6 +312,9 @@ function activePluginStore(workbenchId?: string): PluginStore {
   }
 }
 /** A plugin was installed, removed, toggled or provisioned: resolve programs and prompt entries again. */
+function programStatuses(statuses: PluginProgramStatus[]): PluginProgramStatus[] {
+  return scrubProgramStatuses(statuses, (value) => credentials.scrub(value));
+}
 function pluginsChanged(): void {
   provisioner.invalidate();
   sessions.invalidatePrograms();
@@ -375,11 +381,19 @@ ipcMain.handle(
         workbench.saveSkill(workbenchId, source, name, content, sha256),
       "skills.toggle": ({ workbenchId, name, enabled }) => workbench.toggleSkill(workbenchId, name, enabled),
       "plugins.list": async ({ workbenchId }) => {
+        const snapshot = workbenchId ? workbench.getSnapshot() : undefined;
+        if (workbenchId && snapshot?.config.id !== workbenchId) throw veraError("CONFLICT");
+        const database = snapshot ? workbench.getDatabase() : undefined;
+        const list = await pluginListings.list(snapshot?.folder);
+        if (
+          snapshot &&
+          (workbench.getSnapshot().config.id !== snapshot.config.id ||
+            workbench.getSnapshot().folder !== snapshot.folder ||
+            workbench.getDatabase() !== database)
+        )
+          throw veraError("CONFLICT");
         const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
-        return (await (workbenchId ? activePluginStore(workbenchId) : plugins).list()).map((plugin) => ({
-          ...plugin,
-          enabled: enabled.includes(plugin.id),
-        }));
+        return list.map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
       },
       "plugins.choose": async ({ kind }) => {
         if (__VERA_TEST__ && process.env.VERA_TEST_PLUGIN_PATH)
@@ -438,15 +452,84 @@ ipcMain.handle(
         pluginsChanged();
         return installed;
       },
-      "plugins.programs": ({ id, workbenchId }) =>
-        workbenchId
-          ? scopedProvisioners.run(activePluginStore(workbenchId), (host) => host.statuses(id))
-          : provisioner.statuses(id),
+      "plugins.programs": async ({ id, workbenchId }) =>
+        programStatuses(
+          await (workbenchId
+            ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                host.statuses(id, undefined, provisioner),
+              )
+            : provisioner.statuses(id)),
+        ),
+      "plugins.check": async ({ id, workbenchId }) => {
+        const statuses = await (workbenchId
+          ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+              host.check(id, undefined, provisioner),
+            )
+          : provisioner.check(id));
+        sessions.invalidatePrograms();
+        return programStatuses(statuses);
+      },
+      "plugins.installArchive": async ({ id, program, sha256, workbenchId }) => {
+        const before = workbenchId ? workbench.getSnapshot() : undefined;
+        const beforeDb = workbenchId ? workbench.getDatabase() : undefined;
+        const store = workbenchId ? activePluginStore(workbenchId) : plugins;
+        const validate = async () => {
+          if (
+            before &&
+            (workbench.getSnapshot().config.id !== before.config.id ||
+              workbench.getSnapshot().folder !== before.folder ||
+              workbench.getDatabase() !== beforeDb)
+          )
+            throw veraError("CONFLICT");
+          const current = await store.load(id).catch(() => {
+            throw veraError("CONFLICT");
+          });
+          if (current.record.sha256 !== sha256) throw veraError("CONFLICT");
+          const item = current.manifest.programs[program];
+          const platform = pluginPlatform(process.platform, process.arch);
+          if (!item || !("download" in item.install) || !platform || !item.install.download?.[platform])
+            throw veraError("INVALID");
+          await current.verify?.();
+        };
+        await validate();
+        if (!window || window.isDestroyed()) return null;
+        const selected =
+          __VERA_TEST__ && process.env.VERA_TEST_DEPENDENCY_ARCHIVE
+            ? { canceled: false, filePaths: [process.env.VERA_TEST_DEPENDENCY_ARCHIVE] }
+            : await dialog.showOpenDialog(window, {
+                properties: ["openFile"],
+                filters: [{ name: "Dependency archive", extensions: ["*"] }],
+              });
+        if (selected.canceled || !selected.filePaths[0]) return null;
+        await validate();
+        try {
+          return programStatuses(
+            await (workbenchId
+              ? scopedProvisioners.run(store, (host) =>
+                  host.installArchive(
+                    id,
+                    program,
+                    selected.filePaths[0] as string,
+                    sha256,
+                    undefined,
+                    provisioner,
+                  ),
+                )
+              : provisioner.installArchive(id, program, selected.filePaths[0], sha256)),
+          );
+        } finally {
+          pluginsChanged();
+        }
+      },
       "plugins.provision": async ({ id, workbenchId }) => {
         try {
-          return await (workbenchId
-            ? scopedProvisioners.run(activePluginStore(workbenchId), (host) => host.install(id))
-            : provisioner.install(id));
+          return programStatuses(
+            await (workbenchId
+              ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                  host.install(id, undefined, provisioner),
+                )
+              : provisioner.install(id)),
+          );
         } finally {
           pluginsChanged();
         }
@@ -629,13 +712,21 @@ ipcMain.handle(
         sessions.run(() =>
           openPath(workbench.getSnapshot().folder, path, (absolute) => shell.openPath(absolute)),
         ),
-      "session.list": ({ workbenchId }) =>
-        sessions.run((s) => {
-          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return sessionOrder
-            .list(workbench.getSnapshot().config.id, s.list())
-            .map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text)));
-        }),
+      "session.list": async ({ workbenchId }) => {
+        const current = workbench.getSnapshot(),
+          db = workbench.getDatabase();
+        const rows = await sessions.list(workbenchId);
+        if (
+          workbench.getSnapshot().config.id !== current.config.id ||
+          workbench.getSnapshot().folder !== current.folder ||
+          workbench.getDatabase() !== db
+        )
+          throw veraError("CONFLICT");
+        return sessionOrder.list(
+          current.config.id,
+          rows.map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
+        );
+      },
       "session.move": ({ workbenchId, sessionId, offset }) =>
         sessions.run(async (s) => {
           if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
@@ -904,7 +995,12 @@ if (!app.requestSingleInstanceLock()) {
     if (draining) return;
     draining = true;
     // Installs and probes stop with the app; their uv and tar process trees are killed.
-    const stopped = Promise.all([provisioner.drain(), scopedProvisioners.close(), programs.stopAll()]);
+    const stopped = Promise.all([
+      provisioner.drain(),
+      scopedProvisioners.close(),
+      pluginListings.close(),
+      programs.stopAll(),
+    ]);
     catalogChecks.close();
     void stopped
       .then(() => sessions.close())

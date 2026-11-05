@@ -9,11 +9,12 @@ import type {
   PluginRisk,
   PluginSummary,
 } from "@vera/shared";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { CatalogSection, catalogKey } from "./plugin-catalog.js";
+import { ExternalSourceLink } from "./session/external-source-link.js";
 
 /** The open workbench, when there is one: plugins are enabled per workbench. */
 export interface PluginsWorkbench {
@@ -273,29 +274,57 @@ function Review({
   );
 }
 
-function Programs({ statuses }: { statuses: readonly PluginProgramStatus[] }) {
+function Programs({
+  statuses,
+  archive,
+  busy,
+}: {
+  statuses: readonly PluginProgramStatus[];
+  archive?: (name: string) => void;
+  busy?: boolean;
+}) {
   const { t } = useTranslation();
   const labels = useLabels();
-  if (statuses.length === 0) return <p className="muted">{t("plugins.noPrograms")}</p>;
+  if (!statuses.length) return <p className="muted">{t("plugins.noPrograms")}</p>;
   return (
-    <ul className="plugin-programs" aria-label={t("plugins.programs")}>
-      {statuses.map((status) => (
-        <li key={status.name} data-program={status.name} data-state={status.state}>
-          <code>{status.name}</code> <strong>{labels.state[status.state]}</strong>
-          {status.version && <span> {status.version}</span>}
-          {status.range && <span className="muted"> {t("plugins.range", { range: status.range })}</span>}
-          {status.problem && <span> {labels.problem[status.problem]}</span>}
-          {status.detail && <span className="muted"> {status.detail}</span>}
-          {status.hint && <span> {status.hint}</span>}
-          {status.link && (
-            <>
-              {" "}
-              <code>{status.link}</code>
-            </>
-          )}
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="plugin-programs" aria-label={t("plugins.programs")}>
+        {statuses.map((status) => (
+          <li key={status.name} data-program={status.name} data-state={status.state}>
+            <div className="plugin-program-heading">
+              <code>{status.name}</code>
+              <strong>{labels.state[status.state]}</strong>
+              {status.version && <span>{status.version}</span>}
+              {status.range && <span className="muted">{t("plugins.range", { range: status.range })}</span>}
+            </div>
+            {status.problem && <p className="plugin-problem">{labels.problem[status.problem]}</p>}
+            {(status.kind === "find" || status.external) && (
+              <p className="muted">{t("plugins.externalManaged")}</p>
+            )}
+            {status.hint && <p>{status.link ? status.hint.replace(status.link, "").trim() : status.hint}</p>}
+            {status.link && (
+              <ExternalSourceLink href={status.link}>{t("plugins.vendorGuide")}</ExternalSourceLink>
+            )}
+            {status.detail && (
+              <details className="plugin-technical">
+                <summary>{t("plugins.technicalDetails")}</summary>
+                <pre>{status.detail}</pre>
+              </details>
+            )}
+            {archive && status.kind === "download" && status.problem !== "platform" && (
+              <button
+                type="button"
+                data-action="plugin-install-archive"
+                disabled={busy}
+                onClick={() => archive(status.name)}
+              >
+                {t("plugins.installArchive")}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -305,165 +334,269 @@ function PluginCard({
   changed,
   update,
   reviewScoped,
+  checking = false,
 }: {
   plugin: PluginSummary;
   reviewScoped: () => void;
   workbench: PluginsWorkbench | undefined;
   changed: () => Promise<void>;
-  /** The catalog entry when it offers a higher version, and the action that reviews it. */
+  checking?: boolean;
   update?: { entry: CatalogPlugin; start: () => void; busy: boolean } | undefined;
 }) {
   const { t } = useTranslation();
-  const labels = useLabels();
-  const client = useQueryClient();
-  const [busy, setBusy] = useState<"provision" | "uninstall" | "promote" | "export">();
+  const labels = useLabels(),
+    client = useQueryClient();
+  const [expanded, setExpanded] = useState(false);
+  const [busy, setBusy] = useState<"check" | "provision" | "archive" | "uninstall" | "promote" | "export">();
   const [exported, setExported] = useState<string>();
   const [error, setError] = useState<unknown>();
+  const [checkedAt, setCheckedAt] = useState<string>();
+  const detailsId = useId();
+  const operation = useRef(0),
+    alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      operation.current++;
+    };
+  }, []);
   const healthy = plugin.issues.length === 0;
+  const queryKey = ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256, plugin.installedAt];
+  const request = { id: plugin.id, ...(workbench ? { workbenchId: workbench.id } : {}) };
   const programs = useQuery({
-    queryKey: ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256],
-    queryFn: () =>
-      api.invoke("plugins.programs", { id: plugin.id, ...(workbench ? { workbenchId: workbench.id } : {}) }),
-    enabled: healthy,
-    staleTime: 0,
+    queryKey,
+    queryFn: () => api.invoke("plugins.programs", request),
+    enabled: healthy && expanded,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
-  const name = plugin.name ?? plugin.id;
-  async function perform(kind: NonNullable<typeof busy>, action: () => Promise<unknown>) {
+  const name = plugin.name ?? plugin.id,
+    working = busy !== undefined || checking;
+  const ready = programs.data?.filter((status) => status.state === "ready").length ?? 0;
+  const allReady = programs.data !== undefined && ready === programs.data.length;
+  const installable = programs.data?.some(
+    (status) =>
+      status.kind !== "find" &&
+      (!status.external || status.downloadAvailable) &&
+      status.problem !== "platform" &&
+      status.problem !== "uv" &&
+      (status.state === "missing" ||
+        (status.state === "unavailable" && ["version", "range"].includes(status.problem ?? "")) ||
+        status.downloadAvailable),
+  );
+  const summary =
+    checking || busy === "check"
+      ? t("plugins.checking")
+      : busy === "provision" || busy === "archive"
+        ? t("plugins.installingPrograms")
+        : programs.isFetching
+          ? t("plugins.checking")
+          : programs.data
+            ? programs.data.length
+              ? t("plugins.dependencySummary", { ready, total: programs.data.length })
+              : t("plugins.noPrograms")
+            : t("plugins.notChecked");
+  async function perform(kind: NonNullable<typeof busy>, action: () => Promise<void>) {
+    const generation = ++operation.current;
     setBusy(kind);
     setError(undefined);
     try {
       await action();
     } catch (failure) {
-      setError(failure);
+      if (alive.current && operation.current === generation) setError(failure);
     } finally {
-      setBusy(undefined);
+      if (alive.current && operation.current === generation) setBusy(undefined);
     }
+  }
+  async function dependencyAction(kind: "check" | "provision" | "archive", program?: string) {
+    await perform(kind, async () => {
+      await client.cancelQueries({ queryKey, exact: true });
+      const statuses =
+        kind === "archive"
+          ? await api.invoke("plugins.installArchive", {
+              ...request,
+              program: program as string,
+              sha256: plugin.sha256 ?? "",
+            })
+          : kind === "check"
+            ? await api.invoke("plugins.check", request)
+            : await api.invoke("plugins.provision", request);
+      if (statuses) {
+        client.setQueryData(queryKey, statuses);
+        if (alive.current) setCheckedAt(new Date().toLocaleTimeString());
+      }
+    });
   }
   return (
     <li className="plugin-card" data-plugin={plugin.id}>
-      <p className="plugin-heading">
-        <strong>{name}</strong>
-        {plugin.version && <span> {plugin.version}</span>}
+      <div className="plugin-card-header">
+        <button
+          type="button"
+          className="plugin-expand"
+          data-action="plugin-expand"
+          aria-expanded={expanded}
+          aria-controls={detailsId}
+          aria-label={expanded ? t("plugins.collapse", { name }) : t("plugins.expand", { name })}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          <span aria-hidden="true">{expanded ? "\u2212" : "+"}</span>
+          <strong>{name}</strong>
+          {plugin.version && <span>{plugin.version}</span>}
+        </button>
         {plugin.tier && (
           <span className="risk-badge" data-tier={plugin.tier}>
             {labels.tier[plugin.tier]}
           </span>
         )}
-      </p>
-      <p className="muted">
-        <code>{plugin.id}</code>
-        {plugin.ecosystem && <span> · {plugin.ecosystem}</span>}
-      </p>
-      {plugin.description && <p>{plugin.description}</p>}
-      {plugin.source === "workbench" && <p data-plugin-scope>{t("plugins.workbenchSource")}</p>}
-      {update && (
-        <p role="status" data-plugin-update>
-          {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
-        </p>
-      )}
+        {healthy && (
+          <span
+            className="plugin-dependency-summary"
+            role="status"
+            data-dependency-summary
+            data-ready={allReady}
+          >
+            {summary}
+          </span>
+        )}
+      </div>
       {!healthy && (
         <div role="alert" data-plugin-issues>
           <p>{t("plugins.broken")}</p>
           <Issues issues={plugin.issues} />
         </div>
       )}
-      {healthy && programs.isPending && <p role="status">{t("home.loading")}</p>}
-      {healthy && programs.isError && <ErrorMessage error={programs.error} />}
-      {healthy && programs.data && <Programs statuses={programs.data} />}
+      {update && (
+        <p role="status" data-plugin-update>
+          {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
+        </p>
+      )}
+      {healthy && programs.data?.some((status) => status.state !== "ready") && !expanded && (
+        <p className="plugin-problem">{t("plugins.dependenciesNeedAttention")}</p>
+      )}
+      {programs.isError && <ErrorMessage error={programs.error} />}
       {error !== undefined && <ErrorMessage error={error} />}
-      <div className="workbench-actions">
+      <div className="plugin-actions">
+        {healthy && (
+          <>
+            <button
+              type="button"
+              data-action="plugin-check"
+              disabled={working}
+              onClick={() => void dependencyAction("check")}
+            >
+              {checking || busy === "check" ? t("plugins.checking") : t("plugins.checkDependencies")}
+            </button>
+            <button
+              type="button"
+              data-action="plugin-provision"
+              disabled={working || !installable}
+              title={
+                !programs.data
+                  ? t("plugins.checkFirst")
+                  : !installable && !allReady
+                    ? t("plugins.externalManaged")
+                    : undefined
+              }
+              onClick={() => void dependencyAction("provision")}
+            >
+              {busy === "provision"
+                ? t("plugins.installingPrograms")
+                : allReady && !installable
+                  ? t("plugins.installed")
+                  : t("plugins.installDependencies")}
+            </button>
+          </>
+        )}
         {plugin.source === "workbench" && workbench && (
-          <button
-            type="button"
-            data-action="plugin-scoped-review"
-            disabled={busy !== undefined}
-            onClick={reviewScoped}
-          >
+          <button type="button" data-action="plugin-scoped-review" disabled={working} onClick={reviewScoped}>
             {t("plugins.reviewScoped")}
-          </button>
-        )}
-        {healthy && plugin.tier === "trial" && plugin.sha256 && (
-          <button
-            type="button"
-            data-action="plugin-promote"
-            disabled={busy !== undefined}
-            onClick={() => {
-              if (!window.confirm(t("plugins.promoteConfirm", { name }))) return;
-              void perform("promote", async () => {
-                await api.invoke("plugins.promote", { id: plugin.id, sha256: plugin.sha256 ?? "" });
-                await changed();
-              });
-            }}
-          >
-            {t("plugins.promote")}
-          </button>
-        )}
-        {healthy && plugin.sha256 && plugin.source !== "workbench" && (
-          <button
-            type="button"
-            data-action="plugin-export"
-            disabled={busy !== undefined}
-            onClick={() =>
-              void perform("export", async () => {
-                const result = await api.invoke("plugins.export", {
-                  id: plugin.id,
-                  sha256: plugin.sha256 ?? "",
-                });
-                if (result.path) setExported(result.path);
-              })
-            }
-          >
-            {t("plugins.export")}
           </button>
         )}
         {update && (
           <button
             type="button"
             data-action="plugin-update"
-            disabled={busy !== undefined || update.busy}
+            disabled={working || update.busy}
             onClick={update.start}
           >
             {t("plugins.catalog.update", { version: update.entry.version })}
           </button>
         )}
-        {healthy && programs.data?.some((status) => status.state !== "ready" || status.downloadAvailable) && (
-          <button
-            type="button"
-            data-action="plugin-provision"
-            disabled={busy !== undefined}
-            onClick={() =>
-              void perform("provision", async () => {
-                const statuses = await api.invoke("plugins.provision", {
-                  id: plugin.id,
-                  ...(workbench ? { workbenchId: workbench.id } : {}),
-                });
-                client.setQueryData(
-                  ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256],
-                  statuses,
-                );
-              })
-            }
-          >
-            {busy === "provision" ? t("plugins.installingPrograms") : t("plugins.installPrograms")}
-          </button>
-        )}
-        {plugin.source !== "workbench" && (
-          <button
-            type="button"
-            data-action="plugin-uninstall"
-            disabled={busy !== undefined}
-            onClick={() => {
-              if (!window.confirm(t("plugins.uninstallConfirm", { name }))) return;
-              void perform("uninstall", async () => {
-                await api.invoke("plugins.uninstall", { id: plugin.id });
-                await changed();
-              });
-            }}
-          >
-            {t("plugins.uninstall")}
-          </button>
-        )}
+        <details className="plugin-more">
+          <summary>{t("plugins.moreActions")}</summary>
+          <div>
+            {healthy && plugin.tier === "trial" && plugin.sha256 && (
+              <button
+                type="button"
+                data-action="plugin-promote"
+                disabled={working}
+                onClick={() => {
+                  if (window.confirm(t("plugins.promoteConfirm", { name })))
+                    void perform("promote", async () => {
+                      await api.invoke("plugins.promote", { id: plugin.id, sha256: plugin.sha256 ?? "" });
+                      await changed();
+                    });
+                }}
+              >
+                {t("plugins.promote")}
+              </button>
+            )}
+            {healthy && plugin.sha256 && plugin.source !== "workbench" && (
+              <button
+                type="button"
+                data-action="plugin-export"
+                disabled={working}
+                onClick={() =>
+                  void perform("export", async () => {
+                    const result = await api.invoke("plugins.export", {
+                      id: plugin.id,
+                      sha256: plugin.sha256 ?? "",
+                    });
+                    if (result.path && alive.current) setExported(result.path);
+                  })
+                }
+              >
+                {t("plugins.export")}
+              </button>
+            )}
+            {plugin.source !== "workbench" && (
+              <button
+                type="button"
+                data-action="plugin-uninstall"
+                disabled={working}
+                onClick={() => {
+                  if (window.confirm(t("plugins.uninstallConfirm", { name })))
+                    void perform("uninstall", async () => {
+                      await api.invoke("plugins.uninstall", { id: plugin.id });
+                      await changed();
+                    });
+                }}
+              >
+                {t("plugins.uninstall")}
+              </button>
+            )}
+          </div>
+        </details>
       </div>
+      {expanded && (
+        <div id={detailsId} className="plugin-expanded">
+          <p className="muted">
+            <code>{plugin.id}</code>
+            {plugin.ecosystem && <span> · {plugin.ecosystem}</span>}
+          </p>
+          {plugin.description && <p>{plugin.description}</p>}
+          {plugin.source === "workbench" && <p data-plugin-scope>{t("plugins.workbenchSource")}</p>}
+          {healthy && programs.data && (
+            <Programs
+              statuses={programs.data}
+              archive={(program) => void dependencyAction("archive", program)}
+              busy={working}
+            />
+          )}
+          {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
+        </div>
+      )}
       {exported && <p role="status">{t("plugins.exported", { path: exported })}</p>}
     </li>
   );
@@ -484,6 +617,15 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
   /** Catalog plugins still to review after the one on screen (Install selected). */
   const [queue, setQueue] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [checkingAll, setCheckingAll] = useState<string>();
+  const live = useRef(true);
+  useEffect(() => {
+    live.current = true;
+    return () => {
+      live.current = false;
+    };
+  }, []);
   const [error, setError] = useState<unknown>();
   const list = useQuery({
     queryKey: ["plugins", workbench?.id ?? null],
@@ -494,6 +636,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
   // The last catalog read (an update check, or the first opening); Check for updates reads it again.
   const catalog = useQuery({
     queryKey: catalogKey,
+    enabled: showCatalog,
     queryFn: () => api.invoke("plugins.catalog", { refresh: false }),
     staleTime: 0,
   });
@@ -505,6 +648,28 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     [client],
   );
   const changed = () => client.invalidateQueries({ queryKey: ["plugins"] });
+  async function checkAll() {
+    setError(undefined);
+    try {
+      for (const plugin of list.data ?? []) {
+        if (!live.current) break;
+        if (plugin.issues.length) continue;
+        setCheckingAll(plugin.id);
+        const key = ["plugin-programs", workbench?.id ?? null, plugin.id, plugin.sha256, plugin.installedAt];
+        await client.cancelQueries({ queryKey: key, exact: true });
+        const statuses = await api.invoke("plugins.check", {
+          id: plugin.id,
+          ...(workbench ? { workbenchId: workbench.id } : {}),
+        });
+        client.setQueryData(key, statuses);
+      }
+    } catch (failure) {
+      if (live.current) setError(failure);
+    } finally {
+      if (live.current) setCheckingAll(undefined);
+    }
+  }
+
   /**
    * Reviews catalog plugins one after another: a review that is required stops on the review screen
    * (Install continues the queue, Cancel drops it); an update that changes no program or rule installs
@@ -562,6 +727,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
             setQueue([]);
           }}
           installed={() => {
+            client.removeQueries({ queryKey: ["plugin-programs"] });
             setReview(undefined);
             void changed();
             if (queue.length) void reviewCatalog(queue);
@@ -570,7 +736,24 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
       ) : (
         <>
           <p className="muted">{t("plugins.intro")}</p>
-          <div className="workbench-actions">
+          <section className="workbench-actions plugin-toolbar" aria-label={t("plugins.managementActions")}>
+            <button
+              type="button"
+              data-action="plugin-catalog"
+              aria-expanded={showCatalog}
+              aria-controls="plugin-catalog-content"
+              onClick={() => setShowCatalog((value) => !value)}
+            >
+              {t("plugins.catalog.title")}
+            </button>
+            <button
+              type="button"
+              data-action="plugin-check-all"
+              disabled={checkingAll !== undefined || !list.data?.length}
+              onClick={() => void checkAll()}
+            >
+              {checkingAll ? t("plugins.checkingAll") : t("plugins.checkAll")}
+            </button>
             <button type="button" data-action="plugin-refresh" disabled={busy} onClick={() => void changed()}>
               {t("plugins.refresh")}
             </button>
@@ -590,18 +773,24 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
             >
               {t("plugins.installZip")}
             </button>
-          </div>
+          </section>
           {error !== undefined && <ErrorMessage error={error} />}
           <p className="muted">{t("plugins.configPointer")}</p>
           {list.isPending && <p role="status">{t("home.loading")}</p>}
           {list.isError && <ErrorMessage error={list.error} />}
           {list.data?.length === 0 && <p>{t("plugins.none")}</p>}
+          {showCatalog && (
+            <div id="plugin-catalog-content">
+              <CatalogSection catalog={catalog} busy={busy} install={(ids) => void reviewCatalog(ids)} />
+            </div>
+          )}
           <ul className="plugin-list">
             {list.data?.map((plugin) => {
               const entry = plugin.source === "workbench" ? undefined : updates.get(plugin.id);
               return (
                 <PluginCard
-                  key={plugin.id}
+                  key={`${workbench?.id ?? "global"}/${plugin.id}/${plugin.sha256 ?? ""}/${plugin.installedAt ?? ""}`}
+                  checking={checkingAll === plugin.id}
                   plugin={plugin}
                   workbench={workbench}
                   changed={changed}
@@ -621,7 +810,6 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
               );
             })}
           </ul>
-          <CatalogSection catalog={catalog} busy={busy} install={(ids) => void reviewCatalog(ids)} />
         </>
       )}
     </section>

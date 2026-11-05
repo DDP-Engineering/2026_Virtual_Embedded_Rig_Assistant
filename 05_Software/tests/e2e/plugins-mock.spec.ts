@@ -61,7 +61,10 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await page.locator('[data-workbench-plugin="echo-tools"] input').check();
     await page.locator("[data-project-save]").click();
     await page.locator('[data-action="plugins-nav"]').click();
-    await card.locator('[data-action="plugin-provision"]').click();
+    await card.locator('[data-action="plugin-expand"]').focus();
+    await page.keyboard.press("Enter");
+    await card.locator('[data-action="plugin-check"]').click();
+    await expect(card.locator('[data-action="plugin-provision"]')).toBeDisabled();
     await expect(card.locator('[data-program="echo"]')).toHaveAttribute("data-state", "ready");
 
     for (const language of ["en", "ro", "de"]) {
@@ -77,7 +80,10 @@ test("installs through the review screen, enables the plugin and stops a run, wi
           );
           await page.locator('[data-action="leave-settings"]').click();
           await page.locator('[data-action="plugins-nav"]').click();
+          await card.locator('[data-action="plugin-expand"]').focus();
+          await page.keyboard.press("Enter");
           await expect(card.locator('[data-program="echo"]')).toBeVisible();
+          await page.locator('[data-action="plugin-catalog"]').click();
           await expect(page.locator('[data-pack="esp32"] [data-group]')).toHaveCount(2);
           expect(await overflow(page), `list ${language}/${theme}/${scale}`).toEqual({
             page: false,
@@ -126,8 +132,12 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await running.locator('[data-action="run-stop"]').click();
     await expect(page.locator(`[data-run="${id}"]`)).toContainText("Stopped");
 
+    // Finish the Runs task before returning to global package management.
+    if (await page.locator('[data-panel="right"]').count())
+      await page.locator('[data-toggle="right"]').click();
     // Install selected reviews the Core group's plugins in order and installs them as official plugins.
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-action="plugin-catalog"]').click();
     await page.locator('[data-action="catalog-install-selected"]').click();
     await expect(review.locator("[data-catalog-review]")).toContainText("Official");
     await review.locator('[data-action="plugin-install"]').click();
@@ -138,6 +148,10 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await expect(page.locator('[data-catalog-plugin="serial-monitor"] [data-installed]')).toContainText(
       "1.0.0",
     );
+    const serial = page.locator('[data-plugin="serial-monitor"]');
+    await serial.locator('[data-action="plugin-expand"]').click();
+    await serial.locator('[data-action="plugin-provision"]').click();
+    await expect(serial.locator('[data-action="plugin-provision"]')).toBeDisabled();
     expect(errors).toEqual([]);
   } finally {
     await server.close();

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-ed2e8564"
+title = "Explicit plugin dependency recheck"
+status = "active"
+requirement = "When the user checks a plugin dependencies, the provisioner shall return fresh actual program probes without downloading or installing software, with concurrent checks shared and installation results protected from older checks."
+verification = "Start from a missing or cached program, change the externally installed executable, explicitly check, and observe its current version; concurrent checks share work and an older pending result cannot replace a newer install result."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/provisioner-hosts.ts", "05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/apps/desktop/src/main/program-statuses.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/apps/desktop/src/main/provisioner-hosts.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/apps/desktop/src/main/program-statuses.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

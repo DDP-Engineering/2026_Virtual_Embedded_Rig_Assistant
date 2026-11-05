@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-21eeae69"
+title = "Recover managed Python provisioning from a broken minor alias"
+status = "active"
+requirement = "If a user-triggered managed Python program install fails at its runtime-owned CPython minor-version link, the provisioner shall retry once after removing only a validated alias to an existing real managed patch interpreter beneath the same runtime."
+verification = "Arrange the uv failure plus a runtime-owned minor alias and valid patch interpreter, install, and assert one retry and preserved target; aliases pointing outside runtime and ordinary directories remain untouched; exercise actual fresh Windows uv provisioning."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/uv/uv-manifest.json", "05_Software/scripts/prepare-uv.mjs"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/packaging/packaging.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

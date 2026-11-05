@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-7a5afebb"
+title = "Provision pinned dependencies from a verified local archive"
+status = "active"
+requirement = "When the user selects a local dependency archive for a current plugin program and platform, the provisioner shall install only staged bytes whose SHA-256 equals that manifest entry while retaining package identity, confinement, extraction and version-probe checks."
+verification = "Choose a matching local archive with network disabled, verify recorded version and executable; change the package hash or platform after selection and assert refusal before writes; check input bytes before any existing-cache reuse."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

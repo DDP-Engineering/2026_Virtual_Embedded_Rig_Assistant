@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-NFR-2b7fe7ab"
+title = "Keep plugin navigation and session listing responsive"
+status = "active"
+requirement = "While plugin listing or dependency probing is pending, the desktop shall keep unrelated navigation and lightweight current-workbench session listing independent of plugin integrity computation and program initialization."
+verification = "Hold an EIM-style probe pending, request current session list and navigate away, assert the list completes without waiting, redaction/order/workbench identity remain correct and a late result cannot redirect navigation; validate package-list work is off the desktop main thread."
+affected_paths = ["05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/main/plugin-list-host.ts", "05_Software/src/apps/desktop/src/main/plugin-list-worker.ts", "05_Software/src/apps/desktop/electron.vite.config.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/sessions.test.ts", "05_Software/src/apps/desktop/src/main/plugin-list-host.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

@@ -12,6 +12,9 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- Desktop `SessionsHost.list` uses the recovered current database without rebuilding prompts, skills or program probes. First open still constructs SessionService and waits for durable recovery; subsequent polling can complete while program preparation is pending. Current database/workbench and shutdown guards, title redaction and main-process order remain authoritative. A lightweight first list on a new workbench binds its program host to that workbench.
+
+
 - Successful schema-validated decode_register results issue sourceRefs as line-citation provenance alongside source.ref; other tool arrays and failed/malformed decode results issue no sourceRefs. Existing confined path/current line bounds validate them; openCitation revalidates after restart before the text viewer opens the source.
 
 - Successful parse_log provenance permits verifying and opening valid UTF8 log line refs containing control bytes; ordinary file-tool refs keep binary refusal. openCitation derives this mode from preceding successful tool results, never renderer input.

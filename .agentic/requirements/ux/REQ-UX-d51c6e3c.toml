@@ -6,9 +6,9 @@ title = "Install a plugin's programs from the Plugins page"
 
 status = "active"
 
-requirement = "When the user chooses Install programs for a plugin, the Plugins page shall call plugins.provision for it, show that the install is running, and then show the returned program states."
+requirement = "After dependency statuses are checked, when the user chooses Install dependencies for a plugin with a managed installer, the Plugins page shall call plugins.provision for it, show that the install is running, and then show the returned program states."
 
-verification = "Component test against the browser mock: a plugin whose program is missing shows Install programs; clicking it disables the button while pending and afterwards the program reads Ready with its version."
+verification = "Component test against the browser mock: a missing managed program enables Install dependencies after a check or expansion; clicking disables it while pending and afterwards the program reads Ready with its version. Find-only tools show external guidance and cannot be auto-installed; Ready without a managed fallback disables Installed."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-05

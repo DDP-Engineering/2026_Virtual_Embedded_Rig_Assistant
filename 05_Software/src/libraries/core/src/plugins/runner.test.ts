@@ -5,6 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeHost } from "./fake-process-host.test-support.js";
 import { ProgramRunner, type ProgramRunnerOptions, programEnvironment, type RunRequest } from "./runner.js";
 
+// REQ-PLAT-2ab2eb65: EIM/PowerShell needs executable extensions even for a known launcher.
+it("preserves only Windows PATHEXT case-insensitively for plugin launchers", () => {
+  const env = { PathExt: ".COM;.EXE;.BAT;.CMD", OPENAI_API_KEY: "secret" };
+  expect(programEnvironment(new FakeHost("win32", env), [])).toEqual({
+    PATHEXT: env.PathExt,
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+  expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("PATHEXT");
+});
+
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 let root = "";
 let host: FakeHost;

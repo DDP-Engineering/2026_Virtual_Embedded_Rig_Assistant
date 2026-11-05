@@ -2,10 +2,144 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openDb, SessionService, SkillCatalog, WriteQueue } from "@vera/core";
+import { openDb, type ProgramHost, SessionService, SkillCatalog, WriteQueue } from "@vera/core";
 import { workbenchSchema } from "@vera/shared";
 import { expect, it } from "vitest";
 import { SessionsHost } from "./sessions.js";
+
+// REQ-NFR-2b7fe7ab: exercise the host captured by each service, including light-first workbench B.
+it("binds a lightweight first session list to the newly opened workbench program host", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-light-switch-"));
+  const stores: Array<
+    Awaited<ReturnType<typeof openDb>> & { folder: string; config: ReturnType<typeof workbenchSchema.parse> }
+  > = [];
+  for (const name of ["a", "b"]) {
+    const folder = join(root, name);
+    await mkdir(folder);
+    stores.push({
+      folder,
+      ...(await openDb(join(folder, "vera.db"), { workbenchId: name, appVersion: "0" })),
+      config: workbenchSchema.parse({
+        format: 1,
+        id: `wb_01J0000000000000000000000${name === "a" ? "0" : "1"}`,
+        name,
+      }),
+    });
+  }
+  let current = stores[0] as (typeof stores)[number];
+  const loaded: string[] = [];
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: current.folder, config: current.config, readOnly: false }),
+      getDatabase: () => current.db,
+      getConfig: async () => ({ config: current.config }),
+      getPinned: async () => ({ content: "" }),
+      skillCatalog: () => new SkillCatalog({ root: current.folder, disabled: () => [] }),
+      getWriteQueue: () => new WriteQueue(),
+      loadPlugins: async (id: string) => {
+        expect(id).toBe(current.config.id);
+        loaded.push(id);
+        return [];
+      },
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    gateway: () => ({ api: gateway }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (s: string) => s },
+    programs: { runner: { stopSession: async () => {} }, resolver: { resolve: async () => undefined } },
+  } as never);
+  const captured = (service: SessionService) =>
+    (service as unknown as { host: { programs: ProgramHost } }).host.programs;
+  try {
+    await host.run((service) => captured(service).plugins());
+    await host.lifecycle(async () => {
+      current = stores[1] as (typeof stores)[number];
+    });
+    expect(await host.list(current.config.id)).toEqual([]);
+    await host.run((service) => captured(service).plugins());
+    expect(loaded.at(-1)).toBe(current.config.id);
+  } finally {
+    await host.close();
+    for (const store of stores) store.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-NFR-2b7fe7ab
+it("lists recovered current-workbench sessions without awaiting pending program preparation", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-light-list-"));
+  await mkdir(join(root, ".vera"));
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const clock = { now: () => new Date(), sleep: async () => {} };
+  const core = new SessionService({
+    root,
+    db: storage.db,
+    gateway,
+    clock,
+    model: () => "replay/test",
+    prompt: () => "test",
+  } as never);
+  const session = core.create();
+  await core.close();
+  storage.db.prepare("UPDATE sessions SET title='secret',status='running' WHERE id=?").run(session.id);
+  let hold = false,
+    release = () => {},
+    entered = () => {},
+    configCalls = 0;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getConfig: async () => {
+        configCalls++;
+        if (hold) {
+          entered();
+          await held;
+        }
+        return { config };
+      },
+      getPinned: async () => ({ content: "" }),
+      skillCatalog: () => new SkillCatalog({ root, disabled: () => [] }),
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    gateway: () => ({ api: gateway }),
+    clock,
+    credentials: { scrub: (s: string) => s.replace("secret", "redacted") },
+  } as never);
+  try {
+    const initial = await host.list(config.id);
+    expect(initial[0]?.title).toBe("redacted");
+    expect(initial[0]?.status).not.toBe("running");
+    expect(configCalls).toBe(0);
+    hold = true;
+    const preparing = host.run(() => undefined);
+    await started;
+    const listed = await host.list(config.id);
+    expect(listed[0]?.id).toBe(session.id);
+    await expect(host.list("wb_other")).rejects.toMatchObject({ code: "CONFLICT" });
+    release();
+    await preparing;
+    expect(host.beginShutdown()).toBe(true);
+    await expect(host.list(config.id)).rejects.toMatchObject({ code: "BUSY" });
+  } finally {
+    release();
+    await host.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("locks update shutdown admission only after already accepted host work completes", async () => {
   const host = new SessionsHost({} as never);

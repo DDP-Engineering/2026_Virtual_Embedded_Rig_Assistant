@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-35b1e6b5"
+title = "Explain externally managed plugin dependencies"
+status = "active"
+requirement = "When a dependency is externally managed, the Plugins page shall offer re-detection and available vendor guidance rather than automatic installation, including actionable version/range failures and expandable technical details."
+verification = "Render missing, unavailable-version, unsupported-range and ready find-only programs, assert no automatic install action and vendor guidance remains available; cancellation of a local archive picker changes no installation."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+spec = "specs/REQ-FUNC-ed2e8564.md"
+priority = "high"
+created = 2026-11-05
+updated = 2026-11-05

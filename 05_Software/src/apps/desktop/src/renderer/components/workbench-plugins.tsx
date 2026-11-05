@@ -56,9 +56,18 @@ export function WorkbenchPlugins({
                 />
                 <span>
                   <strong>{plugin.name ?? plugin.id}</strong>
-                  {plugin.description && <span className="muted"> — {plugin.description}</span>}
+                  {plugin.version && <span className="muted"> {plugin.version}</span>}
+                  <span className="risk-badge">
+                    {plugin.issues.length ? t("plugins.state.unavailable") : t("plugins.installed")}
+                  </span>
                 </span>
               </label>
+              {plugin.description && (
+                <details className="workbench-plugin-description">
+                  <summary>{t("plugins.description")}</summary>
+                  <p>{plugin.description}</p>
+                </details>
+              )}
               {plugin.issues.length > 0 && <Issues issues={plugin.issues} />}
             </li>
           );

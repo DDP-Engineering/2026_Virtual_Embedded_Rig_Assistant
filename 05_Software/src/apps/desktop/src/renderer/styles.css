@@ -2498,6 +2498,72 @@ legend {
   align-items: baseline;
   gap: 0.5rem;
 }
+.plugin-toolbar {
+  padding-bottom: 0.75rem;
+  border-bottom: 0.0625rem solid var(--border);
+}
+.plugin-card-header,
+.plugin-actions,
+.plugin-program-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.plugin-expand {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  text-align: left;
+  border: 0;
+  padding: 0.25rem;
+  background: transparent;
+  min-width: 0;
+}
+.plugin-dependency-summary {
+  margin-inline-start: auto;
+  color: var(--muted-foreground);
+}
+.plugin-actions {
+  margin-top: 0.25rem;
+}
+.plugin-more {
+  margin-inline-start: auto;
+  min-width: 0;
+}
+.plugin-more summary,
+.plugin-technical summary {
+  cursor: pointer;
+  padding: 0.4rem;
+}
+.plugin-more > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.4rem;
+}
+.plugin-expanded {
+  display: grid;
+  gap: 0.6rem;
+  border-top: 0.0625rem solid var(--border);
+  padding-top: 0.65rem;
+}
+.plugin-programs > li {
+  padding: 0.65rem;
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.35rem;
+  display: grid;
+  gap: 0.4rem;
+}
+.plugin-technical pre {
+  margin: 0.25rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 15rem;
+  overflow: auto;
+}
 .plugin-review-list li,
 .plugin-programs li,
 .plugin-issues li {
@@ -2598,4 +2664,18 @@ legend {
   font-family: ui-monospace, monospace;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+[data-workbench-plugins] .workbench-tool-option > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.6rem;
+}
+[data-workbench-plugins] .workbench-tool-option {
+  align-items: center;
+  padding: 0.6rem;
+}
+[data-workbench-plugins] .risk-badge {
+  flex: 0 0 auto;
 }

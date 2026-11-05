@@ -705,15 +705,21 @@ export function createMockApi(
         break;
       }
       case "plugins.programs":
+      case "plugins.check":
       case "plugins.provision": {
         const { id } = channels["plugins.programs"].request.parse(input.data);
         if (!installedPlugins.has(id)) throw veraError("NOT_FOUND");
         if (channel === "plugins.provision") provisionedPlugins.add(id);
         value = (pluginPrograms.get(id) ?? []).map((program) =>
-          provisionedPlugins.has(id)
+          program.kind === "find" || provisionedPlugins.has(id)
             ? { ...program, state: "ready", version: "1.0.0" }
             : { ...program, state: "missing" },
         );
+        break;
+      }
+      case "plugins.installArchive": {
+        channels["plugins.installArchive"].request.parse(input.data);
+        value = null;
         break;
       }
       case "runs.list": {

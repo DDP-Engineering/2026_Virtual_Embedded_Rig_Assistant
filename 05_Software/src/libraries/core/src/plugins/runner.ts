@@ -148,6 +148,7 @@ export function programEnvironment(
     if (value === undefined) continue;
     const inherited = INHERITED.find((candidate) => same(candidate, name));
     if (inherited) set(inherited, value);
+    else if (windows && same(name, "PATHEXT")) set("PATHEXT", value);
     else if ((windows ? name.toUpperCase() : name).startsWith("LC_")) set(name, value);
   }
   for (const [name, value] of Object.entries(own)) set(name, value);

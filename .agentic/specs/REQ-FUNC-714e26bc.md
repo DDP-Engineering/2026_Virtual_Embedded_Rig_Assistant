@@ -23,7 +23,7 @@ Python, runs no vendor installer and never elevates.
 ### uv environment
 
 Every uv call (install, sync, probe, and the run of a script program) uses the minimal program
-environment of the runner (PATH, SystemRoot, HOME, USERPROFILE, TEMP, TMP, TMPDIR, LANG, LANGUAGE,
+environment of the runner (PATH, Windows-only PATHEXT, SystemRoot, HOME, USERPROFILE, TEMP, TMP, TMPDIR, LANG, LANGUAGE,
 LC_*, PYTHONUTF8=1, NO_COLOR=1) plus:
 
 | Variable | Value |
@@ -42,7 +42,7 @@ LC_*, PYTHONUTF8=1, NO_COLOR=1) plus:
 | `HTTPS_PROXY`, `HTTP_PROXY` | settings `plugins.proxy`, when set |
 
 uv runs with the runtime folder as its working directory. Each program's install (transfer, extraction,
-uv and probe) has one 15-minute deadline and each probe 30 seconds; a deadline kills the process tree and
+uv and probe) has one 15-minute deadline and each ordinary probe30 seconds (declared activation launchers120 seconds); a deadline kills the process tree and
 ends a transfer. `close()` (desktop: when the app quits) stops running installs and probes and refuses new
 ones. Each install first removes the folders in `downloads/.staging/` older than the install deadline,
 which only a crash leaves; younger ones may belong to a running install of another VERA process.
@@ -109,7 +109,7 @@ For the current system's list (`windows` on Windows, `linux` on Linux), entry by
 The probe runs the resolved executable with its leading arguments and `version.args`, reads at most
 64 KiB of stdout and stderr with ANSI codes removed, and applies `version.match` (one capture group;
 evaluation bounded to 100 ms). The exit code does not matter: a probe fails when the program cannot
-start, runs past 30 seconds or prints no match. `version.range` is a comma-separated list of comparators `>=`, `>`,
+start, runs past its bounded30s ordinary/120s activation deadline or prints no match. `version.range` is a comma-separated list of comparators `>=`, `>`,
 `<=`, `<`, `==`, `!=`, each followed by dotted decimal numbers (`>=2.40`, `>=5,<6`); a version
 satisfies it when its leading dotted numbers satisfy every comparator, comparing component by component
 with missing components as 0. A version that does not start with dotted numbers fails any range.

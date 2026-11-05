@@ -316,6 +316,10 @@ export class PluginStore {
   get root(): string {
     return this.options.root;
   }
+  /** Request-bound hosts may share pending operations only for the same global/scoped identity. */
+  get scopeKey(): string {
+    return JSON.stringify([this.options.root, this.options.workbench ?? ""]);
+  }
   constructor(
     private readonly options: { root: string; workbench?: string; now?: () => Date; uuid?: () => string },
   ) {

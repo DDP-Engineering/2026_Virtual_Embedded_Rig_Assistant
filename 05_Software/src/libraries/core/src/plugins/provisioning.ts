@@ -1,7 +1,20 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { access, chmod, mkdir, open, readdir, rename, rm, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import {
+  access,
+  chmod,
+  lstat,
+  mkdir,
+  open,
+  readdir,
+  readlink,
+  realpath,
+  rename,
+  rm,
+  stat,
+  unlink,
+} from "node:fs/promises";
+import { basename, dirname, join, resolve } from "node:path";
 import { createContext, Script } from "node:vm";
 import {
   downloadForm,
@@ -11,6 +24,7 @@ import {
   type PluginProgramProblem,
   type PluginProgramStatus,
   type PluginSettings,
+  veraError,
   versionInRange,
 } from "@vera/shared";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
@@ -60,6 +74,8 @@ const DETAIL = 2000;
 const MATCH_MS = 100;
 const INSTALL_MS = 15 * 60_000;
 const PROBE_MS = 30_000;
+// Vendor activation launchers may start PowerShell and initialize an SDK before printing a version.
+const ACTIVATION_PROBE_MS = 120_000;
 
 type Kind = PluginProgramStatus["kind"];
 interface Inspection {
@@ -169,14 +185,21 @@ async function* globMatches(pattern: string, ignoreCase: boolean): AsyncGenerato
 /**
  * Installs and locates plugin programs (plugins architecture §5). `install` is the user's action;
  * `resolve` and `statuses` never download, install or synchronise anything. Results are cached per
- * plugin hash, recorded versions and program until an install or `invalidate`.
+ * plugin hash, installation, recorded versions and program until an install or `invalidate`.
+ * Explicitly checked failures remain authoritative across unrelated invalidation until a new actual
+ * check/install supersedes them or the package/installation/program record identity changes.
  */
 export class Provisioner implements ProgramResolver {
+  private static nextIdentity = 0;
+  private readonly identity = ++Provisioner.nextIdentity;
   private readonly cache = new Map<string, Promise<Inspection | undefined>>();
+  /** Known failures survive unrelated invalidation; ready resolutions still recheck file/discovery state. */
+  private readonly checked = new Map<string, { identity: string; inspection: Inspection | undefined }>();
   /** Aborted by close(): stops installs and probes when the app quits. */
   private readonly lifetime = new AbortController();
   private readonly executions = new Set<Promise<unknown>>();
   private queue: Promise<unknown> = Promise.resolve();
+  private readonly checks = new Map<string, Promise<PluginProgramStatus[]>>();
   constructor(private readonly options: ProvisionerOptions) {}
 
   private get windows() {
@@ -224,7 +247,9 @@ export class Provisioner implements ProgramResolver {
   }
 
   /** Forgets every cached resolution, for example after a plugin is enabled or reinstalled. */
+  private generation = 0;
   invalidate(): void {
+    this.generation++;
     this.cache.clear();
   }
 
@@ -239,9 +264,165 @@ export class Provisioner implements ProgramResolver {
     return resolved;
   }
 
-  /** One status per declared program in name order; never installs anything. */
-  async statuses(id: string, signal?: AbortSignal): Promise<PluginProgramStatus[]> {
-    return this.list(await this.options.store.load(id), new Map(), signal);
+  /** Load through the caller's store and read the same observations as the runtime resolver. */
+  async statuses(id: string, signal?: AbortSignal, authority?: Provisioner): Promise<PluginProgramStatus[]> {
+    const plugin = await this.options.store.load(id);
+    if (!authority) return this.list(plugin, new Map(), signal);
+    const scopedSignal = signal ? AbortSignal.any([signal, this.lifetime.signal]) : this.lifetime.signal;
+    return authority.list(plugin, new Map(), scopedSignal);
+  }
+
+  /** Explicit fresh version checks, shared while pending and ordered with installs. Never installs. */
+  async check(id: string, signal?: AbortSignal, authority?: Provisioner): Promise<PluginProgramStatus[]> {
+    const authorityGeneration = authority?.generation;
+    this.lifetime.signal.throwIfAborted();
+    const identity = await this.options.store.load(id);
+    const key = JSON.stringify([
+      id,
+      identity.runtimeKey ?? "",
+      identity.record.sha256,
+      authority?.identity,
+      authorityGeneration,
+    ]);
+    let pending = this.checks.get(key);
+    if (!pending) {
+      pending = this.serial(async () => {
+        this.lifetime.signal.throwIfAborted();
+        const plugin = await this.options.store.load(id);
+        if (plugin.record.sha256 !== identity.record.sha256 || plugin.runtimeKey !== identity.runtimeKey)
+          throw veraError("CONFLICT");
+        this.invalidate();
+        // Populate every fresh cache entry before yielding, so a passive read cannot seed a later
+        // recorded program with its old version while this check awaits an earlier probe.
+        await Promise.all(
+          Object.keys(plugin.manifest.programs).map((name) =>
+            this.inspect(plugin, name, this.lifetime.signal, true),
+          ),
+        );
+        const current = await this.options.store.load(id).catch(() => {
+          throw veraError("CONFLICT");
+        });
+        if (current.record.sha256 !== identity.record.sha256 || current.runtimeKey !== identity.runtimeKey)
+          throw veraError("CONFLICT");
+        const statuses = await this.list(current, new Map(), this.lifetime.signal, true);
+        // Publish while this checked operation still owns the scoped queue. An intervening runtime
+        // install/invalidation supersedes these observations and requires a new explicit check.
+        const observations = await Promise.all(
+          Object.keys(current.manifest.programs).map(
+            async (name) => [name, await this.cache.get(this.inspectionKey(current, name))] as const,
+          ),
+        );
+        if (authority && authority.generation !== authorityGeneration) throw veraError("CONFLICT");
+        for (const [name, observed] of observations) {
+          this.observe(current, name, observed);
+          authority?.observe(current, name, observed);
+        }
+        return statuses;
+      });
+      this.checks.set(key, pending);
+      const current = pending;
+      void current
+        .finally(() => {
+          if (this.checks.get(key) === current) this.checks.delete(key);
+        })
+        .catch(() => {});
+    }
+    return untilAborted(pending, signal);
+  }
+
+  /** The native picker chooses bytes; the manifest alone supplies their identity and entry point. */
+  installArchive(
+    id: string,
+    name: string,
+    path: string,
+    packageSha: string,
+    signal?: AbortSignal,
+    authority?: Provisioner,
+  ): Promise<PluginProgramStatus[]> {
+    const outer = signal ? AbortSignal.any([signal, this.lifetime.signal]) : this.lifetime.signal;
+    return this.serial(async () => {
+      outer.throwIfAborted();
+      const plugin = await this.options.store.load(id);
+      if (plugin.record.sha256 !== packageSha) throw veraError("CONFLICT");
+      const program = plugin.manifest.programs[name];
+      const entry =
+        program && "download" in program.install && this.options.platform
+          ? program.install.download?.[this.options.platform]
+          : undefined;
+      if (!program || !entry) throw veraError("INVALID");
+      await plugin.verify?.();
+      const deadline = AbortSignal.timeout(this.options.timeouts?.installMs ?? INSTALL_MS);
+      const scopedSignal = AbortSignal.any([outer, deadline]);
+      const failures = new Map<string, PluginProgramStatus>();
+      let probed = false;
+      const verifyIdentity = async () => {
+        const current = await this.options.store.load(id).catch(() => {
+          throw veraError("CONFLICT");
+        });
+        if (current.record.sha256 !== packageSha) throw veraError("CONFLICT");
+        await current.verify?.();
+      };
+      try {
+        const file = downloadName(entry);
+        const folder = join(this.downloads, entry.sha256);
+        const failure = file
+          ? await this.download(entry, file, folder, scopedSignal, path, verifyIdentity)
+          : "archive";
+        const current = await this.options.store.load(id);
+        if (current.record.sha256 !== packageSha) throw veraError("CONFLICT");
+        await current.verify?.();
+        if (failure)
+          failures.set(name, {
+            name,
+            kind: "download",
+            state: "missing",
+            problem: failure,
+            detail: "The selected file must be the exact dependency archive declared by this plugin.",
+          });
+        else {
+          probed = true;
+          const measured = await this.probe(
+            {
+              executable: join(folder, ...(file as string).split("/")),
+              ...(entry.prefix ? { prefix: entry.prefix } : {}),
+            },
+            program,
+            scopedSignal,
+            plugin.folder,
+            plugin.verify,
+          );
+          if (measured.version)
+            await this.options.store.recordPrograms(id, packageSha, { [name]: measured.version });
+          else
+            failures.set(name, {
+              name,
+              kind: "download",
+              state: "unavailable",
+              problem: "version",
+              ...(measured.detail ? { detail: measured.detail } : {}),
+            });
+        }
+      } finally {
+        this.invalidate();
+      }
+      const current = await this.options.store.load(id);
+      if (current.record.sha256 !== packageSha) throw veraError("CONFLICT");
+      await current.verify?.();
+      if (probed)
+        this.publishInstall(
+          current,
+          new Map([
+            [
+              name,
+              failures.has(name)
+                ? { status: failures.get(name) as PluginProgramStatus }
+                : await this.examine(current, name, outer),
+            ],
+          ]),
+          authority,
+        );
+      return this.list(current, failures, outer);
+    });
   }
 
   /**
@@ -280,7 +461,7 @@ export class Provisioner implements ProgramResolver {
    * program has one deadline for its transfer, extraction, uv run and probe; its version is recorded as
    * soon as it is probed, so a later failure or a stop keeps it.
    */
-  install(id: string, signal?: AbortSignal): Promise<PluginProgramStatus[]> {
+  install(id: string, signal?: AbortSignal, authority?: Provisioner): Promise<PluginProgramStatus[]> {
     const outer = signal ? AbortSignal.any([signal, this.lifetime.signal]) : this.lifetime.signal;
     return this.serial(async () => {
       outer.throwIfAborted();
@@ -289,34 +470,58 @@ export class Provisioner implements ProgramResolver {
       this.invalidate();
       await this.sweepStaging();
       const failures = new Map<string, PluginProgramStatus>();
+      const observed = new Map<string, Inspection | undefined>();
+      const installed = new Set<string>();
       try {
         for (const name of Object.keys(plugin.manifest.programs).sort()) {
           await plugin.verify?.();
           outer.throwIfAborted();
-          const current = await this.inspect(plugin, name, outer);
+          const current = await this.inspect(plugin, name, outer, true);
+          observed.set(name, current);
           if (
             !current ||
             current.status.kind === "find" ||
-            (current.status.state !== "missing" && !current.status.downloadAvailable)
+            (current.status.external && !current.status.downloadAvailable) ||
+            (current.status.state !== "missing" &&
+              !(
+                current.status.state === "unavailable" &&
+                ["version", "range"].includes(current.status.problem ?? "")
+              ) &&
+              !current.status.downloadAvailable)
           )
             continue;
           const deadline = AbortSignal.timeout(this.options.timeouts?.installMs ?? INSTALL_MS);
           let outcome: string | PluginProgramStatus;
           try {
-            outcome = await this.installOne(plugin, name, AbortSignal.any([outer, deadline]));
+            outcome = await this.installOne(
+              plugin,
+              name,
+              AbortSignal.any([outer, deadline]),
+              current.status.state === "unavailable",
+            );
           } catch (error) {
             if (outer.aborted || !deadline.aborted) throw error;
             const kind = current.status.kind;
             outcome = { name, kind, state: "missing", problem: kind === "download" ? "download" : "install" };
           }
-          if (typeof outcome === "string")
+          if (typeof outcome === "string") {
             await store.recordPrograms(id, plugin.record.sha256, { [name]: outcome });
-          else failures.set(name, outcome);
+            installed.add(name);
+          } else {
+            failures.set(name, outcome);
+            observed.set(name, { status: outcome });
+          }
         }
       } finally {
         this.invalidate();
       }
-      return this.list(await store.load(id), failures, outer);
+      const current = await store.load(id);
+      if (current.record.sha256 !== plugin.record.sha256 || current.runtimeKey !== plugin.runtimeKey)
+        throw veraError("CONFLICT");
+      for (const name of installed) observed.set(name, await this.examine(current, name, outer));
+      await current.verify?.();
+      this.publishInstall(current, observed, authority);
+      return this.list(current, failures, outer);
     });
   }
 
@@ -324,32 +529,78 @@ export class Provisioner implements ProgramResolver {
     plugin: LoadedPlugin,
     overrides: ReadonlyMap<string, PluginProgramStatus>,
     signal?: AbortSignal,
+    fresh = false,
   ): Promise<PluginProgramStatus[]> {
     const statuses: PluginProgramStatus[] = [];
     for (const name of Object.keys(plugin.manifest.programs).sort()) {
       await plugin.verify?.();
-      const status = overrides.get(name) ?? (await this.inspect(plugin, name, signal))?.status;
+      const status = overrides.get(name) ?? (await this.inspect(plugin, name, signal, fresh))?.status;
       if (status) statuses.push(status);
     }
     return statuses;
   }
 
-  private inspect(plugin: LoadedPlugin, name: string, signal?: AbortSignal): Promise<Inspection | undefined> {
-    const key = [
-      plugin.runtimeKey ?? "",
-      plugin.manifest.id,
-      plugin.record.sha256,
-      JSON.stringify(plugin.record.programs),
-      name,
-    ].join("\0");
+  private inspect(
+    plugin: LoadedPlugin,
+    name: string,
+    signal?: AbortSignal,
+    fresh = false,
+  ): Promise<Inspection | undefined> {
+    const observed = this.checked.get(this.observationKey(plugin, name));
+    if (!fresh && observed?.identity === this.observationIdentity(plugin, name))
+      return untilAborted(Promise.resolve(observed.inspection), signal);
+    const key = this.inspectionKey(plugin, name);
     let inspection = this.cache.get(key);
     if (!inspection) {
       // Shared by every caller, so it runs under the provisioner's lifetime, never one caller's signal.
-      inspection = this.examine(plugin, name, this.lifetime.signal);
+      inspection = this.examine(plugin, name, this.lifetime.signal, fresh);
       this.cache.set(key, inspection);
-      inspection.catch(() => this.cache.delete(key));
+      const current = inspection;
+      inspection.catch(() => {
+        if (this.cache.get(key) === current) this.cache.delete(key);
+      });
     }
     return untilAborted(inspection, signal);
+  }
+
+  private inspectionKey(plugin: LoadedPlugin, name: string): string {
+    return [
+      plugin.runtimeKey ?? "",
+      plugin.manifest.id,
+      plugin.record.sha256,
+      plugin.record.installedAt,
+      JSON.stringify(plugin.record.programs),
+      name,
+    ].join("\0");
+  }
+
+  private observationKey(plugin: LoadedPlugin, name: string): string {
+    return JSON.stringify([plugin.runtimeKey ?? "", plugin.manifest.id, name]);
+  }
+  private observationIdentity(plugin: LoadedPlugin, name: string): string {
+    return JSON.stringify([
+      plugin.record.sha256,
+      plugin.record.installedAt,
+      plugin.record.programs[name] ?? null,
+    ]);
+  }
+  private observe(plugin: LoadedPlugin, name: string, inspection: Inspection | undefined): void {
+    const key = this.observationKey(plugin, name);
+    if (!inspection || inspection.status.state === "ready") this.checked.delete(key);
+    else this.checked.set(key, { identity: this.observationIdentity(plugin, name), inspection });
+    this.cache.set(this.inspectionKey(plugin, name), Promise.resolve(inspection));
+  }
+  private publishInstall(
+    plugin: LoadedPlugin,
+    observed: ReadonlyMap<string, Inspection | undefined>,
+    authority?: Provisioner,
+  ): void {
+    // A completed, actually probed install supersedes older pending runtime checks.
+    authority?.invalidate();
+    for (const [name, inspection] of observed) {
+      this.observe(plugin, name, inspection);
+      authority?.observe(plugin, name, inspection);
+    }
   }
 
   /** The status and resolution of one program, from files and, for find programs, a probe. */
@@ -357,6 +608,7 @@ export class Provisioner implements ProgramResolver {
     plugin: LoadedPlugin,
     name: string,
     signal?: AbortSignal,
+    fresh = false,
   ): Promise<Inspection | undefined> {
     const program = plugin.manifest.programs[name];
     if (!program) return undefined;
@@ -380,13 +632,11 @@ export class Provisioner implements ProgramResolver {
       if (!entry || !file || recorded === undefined) return undefined;
       const executable = join(this.downloads, entry.sha256, ...file.split("/"));
       if (!(await isFile(executable))) return undefined;
-      return this.check(
-        name,
-        kind,
-        program,
-        { executable, ...(entry.prefix ? { prefix: entry.prefix } : {}) },
-        recorded,
-      );
+      const resolved = { executable, ...(entry.prefix ? { prefix: entry.prefix } : {}) };
+      const measured = fresh
+        ? await this.probe(resolved, program, signal, plugin.folder, plugin.verify)
+        : { version: recorded };
+      return this.versionCheck(name, kind, program, resolved, measured.version, measured.detail);
     };
     const preferred = preferDownload ? await downloaded() : undefined;
     if (preferred) return preferred;
@@ -416,14 +666,22 @@ export class Provisioner implements ProgramResolver {
               }
             : {}),
         };
-        const foundProgram = this.check(
+        const measured = await this.probe(resolved, program, signal, plugin.folder, plugin.verify);
+        const foundProgram = this.versionCheck(
           name,
           kind,
           program,
           resolved,
-          await this.probe(resolved, program, signal, plugin.folder, plugin.verify),
+          measured.version,
+          measured.detail,
         );
+        if (install.hint) {
+          foundProgram.status.hint = install.hint;
+          const link = linkOf(install.hint);
+          if (link) foundProgram.status.link = link;
+        }
         if (preferDownload && entry) foundProgram.status.downloadAvailable = true;
+        if (download) foundProgram.status.external = true;
         return foundProgram;
       }
     }
@@ -437,21 +695,32 @@ export class Provisioner implements ProgramResolver {
     if ("pip" in install) {
       const executable = join(this.tools(plugin), "bin", this.executableName(name));
       if (!(await isFile(executable))) return not("missing");
-      return this.check(name, kind, program, { executable }, recorded);
+      const measured = fresh
+        ? await this.probe({ executable }, program, signal, plugin.folder, plugin.verify)
+        : { version: recorded };
+      return this.versionCheck(name, kind, program, { executable }, measured.version, measured.detail);
     }
-    return this.check(name, kind, program, this.scriptProgram(plugin, install.script), recorded);
+    const resolved = this.scriptProgram(plugin, install.script);
+    const measured = fresh
+      ? await this.probe(resolved, program, signal, plugin.folder, plugin.verify)
+      : { version: recorded };
+    return this.versionCheck(name, kind, program, resolved, measured.version, measured.detail);
   }
 
   /** Ready with its version when the version is known and in range; unavailable otherwise. */
-  private check(
+  private versionCheck(
     name: string,
     kind: Kind,
     program: PluginProgram,
     resolved: ResolvedProgram,
     version: string | undefined,
+    detail?: string,
   ): Inspection {
     const { range } = program.version;
-    if (version === undefined) return { status: { name, kind, state: "unavailable", problem: "version" } };
+    if (version === undefined)
+      return {
+        status: { name, kind, state: "unavailable", problem: "version", ...(detail ? { detail } : {}) },
+      };
     if (range !== undefined && !versionInRange(version, range))
       return { status: { name, kind, state: "unavailable", problem: "range", version, range } };
     return {
@@ -597,7 +866,7 @@ export class Provisioner implements ProgramResolver {
     signal?: AbortSignal,
     pluginDir = "",
     verify?: () => Promise<void>,
-  ): Promise<string | undefined> {
+  ): Promise<{ version?: string; detail?: string }> {
     const result = await this.execute(
       resolved.executable,
       programInvocation(resolved, [
@@ -607,12 +876,17 @@ export class Provisioner implements ProgramResolver {
         ...program.version.args,
       ]),
       resolved.env ?? {},
-      this.options.timeouts?.probeMs ?? PROBE_MS,
+      this.options.timeouts?.probeMs ?? (resolved.launcher ? ACTIVATION_PROBE_MS : PROBE_MS),
       signal,
       verify,
     );
-    if (result.exit.error || result.timedOut) return undefined;
-    return boundedMatch(program.version.match, result.head);
+    const version =
+      result.exit.error || result.timedOut ? undefined : boundedMatch(program.version.match, result.head);
+    if (version) return { version };
+    const reason =
+      result.exit.error ??
+      (result.timedOut ? "Version check timed out." : "No matching version was printed.");
+    return { detail: `${reason}\n${result.tail}`.slice(-DETAIL) };
   }
 
   /** Installs one program; the probed version, or the status that explains the failure. */
@@ -620,6 +894,7 @@ export class Provisioner implements ProgramResolver {
     plugin: LoadedPlugin,
     name: string,
     signal?: AbortSignal,
+    repair = false,
   ): Promise<string | PluginProgramStatus> {
     await plugin.verify?.();
     const program = plugin.manifest.programs[name] as PluginProgram;
@@ -631,18 +906,33 @@ export class Provisioner implements ProgramResolver {
       problem,
       ...(detail ? { detail: detail.slice(-DETAIL) } : {}),
     });
-    const probed = async (resolved: ResolvedProgram) =>
-      (await this.probe(resolved, program, signal, plugin.folder, plugin.verify)) ??
-      ({ name, kind, state: "unavailable", problem: "version" } satisfies PluginProgramStatus);
+    const probed = async (resolved: ResolvedProgram) => {
+      const measured = await this.probe(resolved, program, signal, plugin.folder, plugin.verify);
+      return (
+        measured.version ??
+        ({
+          name,
+          kind,
+          state: "unavailable",
+          problem: "version",
+          ...(measured.detail ? { detail: measured.detail } : {}),
+        } satisfies PluginProgramStatus)
+      );
+    };
     const { install } = program;
     const installMs = this.options.timeouts?.installMs ?? INSTALL_MS;
     if ("pip" in install || "script" in install) {
       const uv = this.options.uv as ResolvedProgram;
       const args =
         "pip" in install
-          ? ["tool", "install", install.pip]
-          : ["sync", "--script", join(plugin.folder, ...install.script.split("/"))];
-      const result = await this.execute(
+          ? ["tool", "install", ...(repair ? ["--reinstall"] : []), install.pip]
+          : [
+              "sync",
+              ...(repair ? ["--reinstall"] : []),
+              "--script",
+              join(plugin.folder, ...install.script.split("/")),
+            ];
+      let result = await this.execute(
         uv.executable,
         [...(uv.prefix ?? []), ...args],
         this.uvEnvironment(plugin),
@@ -650,6 +940,16 @@ export class Provisioner implements ProgramResolver {
         signal,
         plugin.verify,
       );
+      if (result.exit.code !== 0 && !result.timedOut && (await this.repairPythonAlias(result.tail))) {
+        result = await this.execute(
+          uv.executable,
+          [...(uv.prefix ?? []), ...args],
+          this.uvEnvironment(plugin),
+          installMs,
+          signal,
+          plugin.verify,
+        );
+      }
       if (result.exit.error) return failed("install", result.exit.error);
       if (result.timedOut || result.exit.code !== 0) return failed("install", result.tail);
       if ("script" in install) return probed(this.scriptProgram(plugin, install.script));
@@ -674,6 +974,36 @@ export class Provisioner implements ProgramResolver {
     return failed("notFound");
   }
 
+  /** A uv cache repair during explicit install, never a recursive deletion or an outside target. */
+  private async repairPythonAlias(detail: string): Promise<boolean> {
+    if (!this.windows || !detail.includes("Missing expected target directory for Python minor version link"))
+      return false;
+    const python = resolve(this.options.root, "python");
+    const alias = join(python, "cpython-3.13-windows-x86_64-none");
+    try {
+      // The configured runtime may itself be redirected. Its nested Python directory may not
+      // redirect outside that canonical root, or unlink would mutate an unrelated installation.
+      const canonicalRoot = await realpath(this.options.root);
+      if ((await realpath(python)).toLowerCase() !== join(canonicalRoot, "python").toLowerCase())
+        return false;
+      if (!(await lstat(alias)).isSymbolicLink()) return false;
+      const target = resolve(python, (await readlink(alias)).replace(/^\\\\\?\\/, ""));
+      if (
+        dirname(target).toLowerCase() !== python.toLowerCase() ||
+        !/^cpython-3\.13\.\d+-windows-x86_64-none$/.test(basename(target))
+      )
+        return false;
+      const folder = await lstat(target),
+        exe = await lstat(join(target, "python.exe"));
+      if (!folder.isDirectory() || folder.isSymbolicLink() || !exe.isFile() || exe.isSymbolicLink())
+        return false;
+      await unlink(alias);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Downloads, verifies and unpacks one entry into `folder` through a staging folder that is always
    * removed; returns the problem when it fails, so nothing of a failed download remains.
@@ -683,40 +1013,34 @@ export class Provisioner implements ProgramResolver {
     file: string,
     folder: string,
     signal?: AbortSignal,
+    localPath?: string,
+    verifyIdentity?: () => Promise<void>,
   ): Promise<PluginProgramProblem | undefined> {
     const staging = join(this.downloads, ".staging", randomUUID());
     await mkdir(staging, { recursive: true });
     try {
       const part = join(staging, "download");
-      let response: Response;
-      try {
-        response = await this.options.fetch(entry.url, { signal });
-      } catch (error) {
-        if (aborted(error)) throw error;
-        return "download";
-      }
-      const body = response.body;
-      if (!response.ok || !body || Number(response.headers.get("content-length") ?? 0) > DOWNLOAD_LIMIT) {
-        await body?.cancel().catch(() => {});
-        return "download";
-      }
       const hash = createHash("sha256");
       const handle = await open(part, "wx");
       try {
         let total = 0;
-        for await (const chunk of chunks(body, signal)) {
+        const source = localPath ? this.localBytes(localPath, signal) : this.remoteBytes(entry.url, signal);
+        for await (const chunk of source) {
           total += chunk.length;
-          if (total > DOWNLOAD_LIMIT) return "download";
+          if (total > DOWNLOAD_LIMIT) return localPath ? "archive" : "download";
           hash.update(chunk);
           await handle.write(chunk);
         }
       } catch (error) {
         if (aborted(error)) throw error;
-        return "download";
+        return localPath ? "archive" : "download";
       } finally {
         await handle.close();
       }
       if (hash.digest("hex") !== entry.sha256) return "sha256";
+      await verifyIdentity?.();
+      // Local bytes are always verified first, including when a prior extraction already exists.
+      if (localPath && (await exists(folder))) return undefined;
       const tree = join(staging, "tree");
       await mkdir(tree);
       const form = downloadForm(entry.url);
@@ -745,6 +1069,7 @@ export class Provisioner implements ProgramResolver {
       const executable = join(tree, ...file.split("/"));
       if (!(await isFile(executable))) return "archive";
       if (!this.windows) await chmod(executable, 0o755);
+      await verifyIdentity?.();
       try {
         await rename(tree, folder);
       } catch (error) {
@@ -754,6 +1079,45 @@ export class Provisioner implements ProgramResolver {
       return undefined;
     } finally {
       await rm(staging, { recursive: true, force: true });
+    }
+  }
+
+  private async *remoteBytes(url: string, signal?: AbortSignal): AsyncGenerator<Uint8Array> {
+    const response = await this.options.fetch(url, { signal });
+    if (
+      !response.ok ||
+      !response.body ||
+      Number(response.headers.get("content-length") ?? 0) > DOWNLOAD_LIMIT
+    ) {
+      await response.body?.cancel().catch(() => {});
+      throw new ArchiveError("The download could not be read.");
+    }
+    yield* chunks(response.body, signal);
+  }
+
+  private async *localBytes(path: string, signal?: AbortSignal): AsyncGenerator<Uint8Array> {
+    const seen = await lstat(path);
+    if (!seen.isFile() || seen.isSymbolicLink() || seen.size > DOWNLOAD_LIMIT)
+      throw new ArchiveError("Choose an ordinary dependency archive within the size limit.");
+    const handle = await open(
+      path,
+      constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
+    );
+    try {
+      const opened = await handle.stat();
+      if (
+        !opened.isFile() ||
+        opened.ino !== seen.ino ||
+        opened.dev !== seen.dev ||
+        opened.size > DOWNLOAD_LIMIT
+      )
+        throw new ArchiveError("The selected archive changed.");
+      for await (const chunk of handle.createReadStream({ autoClose: false })) {
+        signal?.throwIfAborted();
+        yield chunk as Uint8Array;
+      }
+    } finally {
+      await handle.close();
     }
   }
 }

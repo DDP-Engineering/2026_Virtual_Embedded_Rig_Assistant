@@ -18,12 +18,40 @@ SQLite and real local CPU embeddings; external host evidence binds results to ar
 and records actual connectivity or isolation.
 The package delivers the BGE q8 assets selected in [ADR0015](../../00_Planning/decisions/ADR-0015-embedding-model-selection.md). The model descriptor supplies dimensions, token limit, pooling, normalization and query/passage prefixes. [Retrieval evaluation](retrieval-evaluation.md) owns comparative evidence; production indexing consumes the selected descriptor.
 
+
+```mermaid
+flowchart LR
+  manifest[(model-manifest.json)] --> prepare[prepare-model.mjs]
+  prepare --> models[(src/models)]
+  command([package / package:test]) --> package[package.mjs]
+  package --> prepare
+  package --> build[Vite compiled identity]
+  build --> output[(desktop/out)]
+  output --> stage[stageRuntime locked closure]
+  models --> stage
+  crtManifest[(windows-runtime-manifest.json)] --> crtPrepare[Microsoft source signature + pin verification]
+  crtPrepare --> crtCache[(Windows runtime cache)]
+  crtCache --> crtNative[VC++ beside ORT addon, Windows only]
+  crtNative --> stage
+  stage --> builder[electron-builder.yml]
+  builder --> artifact[(NSIS / portableZIP / AppImage / deb)]
+  package --> inspection[ASAR / native / size inspection]
+  artifact --> host([external VM harness])
+  host --> probe[test main packaging probe]
+  probe --> sqlite[temporary SQLite primary and fallback]
+  probe --> worker[embedding-worker local CPU model]
+  host --> evidence[(isolation + hashes + results)]
+```
+
+The external harness owns machine isolation; the probe owns native runtime assertions. Windows retains upstream ORT DirectML/dxcompiler/dxil companions while the worker selects CPU. Release
+builds omit the probe branch and worker entry while retaining bundled runtime/model resources.
+
 ## Public interface
 
 Already-built artifact functional/egress acceptance belongs to [release smoke](release-smoke.md).
 
 From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only),
-`npm run prepare:uv` (pinned uv 0.13.1 from `src/uv/uv-manifest.json`: archive and binary SHA-256 verified,
+`npm run prepare:uv` (pinned uv 0.13.7 from `src/uv/uv-manifest.json`: archive and binary SHA-256 verified, archive cache addressed by its SHA rather than a reused release filename,
 binary written to `src/uv/<platform>/`, archive cached in `src/uv/.cache/`; `-- --offline` uses the cache only),
 `npm run prepare:plugins` (the official plugins of `plugins/` built with `vera catalog build` into the catalog
 release `src/bundled-plugins/`, each zip checked against its index),
@@ -82,35 +110,6 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 - `REQ-TEST-7fea1dd0` — complete release app-code exclusion of probes.
 
 Native acceptance exercises real SQLite, local CPU indexing/search and PDF through ordinary release IPC. External launch evidence names artifact/executable hashes, processes, vera://app and real native dialog pass-through with hostile test env. Clean/offline Windows and actual VC++ self-containment remain required before final release; static app-local closure/current-host loaded paths supplement that manual criterion.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  manifest[(model-manifest.json)] --> prepare[prepare-model.mjs]
-  prepare --> models[(src/models)]
-  command([package / package:test]) --> package[package.mjs]
-  package --> prepare
-  package --> build[Vite compiled identity]
-  build --> output[(desktop/out)]
-  output --> stage[stageRuntime locked closure]
-  models --> stage
-  crtManifest[(windows-runtime-manifest.json)] --> crtPrepare[Microsoft source signature + pin verification]
-  crtPrepare --> crtCache[(Windows runtime cache)]
-  crtCache --> crtNative[VC++ beside ORT addon, Windows only]
-  crtNative --> stage
-  stage --> builder[electron-builder.yml]
-  builder --> artifact[(NSIS / portableZIP / AppImage / deb)]
-  package --> inspection[ASAR / native / size inspection]
-  artifact --> host([external VM harness])
-  host --> probe[test main packaging probe]
-  probe --> sqlite[temporary SQLite primary and fallback]
-  probe --> worker[embedding-worker local CPU model]
-  host --> evidence[(isolation + hashes + results)]
-```
-
-The external harness owns machine isolation; the probe owns native runtime assertions. Windows retains upstream ORT DirectML/dxcompiler/dxil companions while the worker selects CPU. Release
-builds omit the probe branch and worker entry while retaining bundled runtime/model resources.
 
 ## Files
 

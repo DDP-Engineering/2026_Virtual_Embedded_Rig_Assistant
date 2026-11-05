@@ -141,6 +141,7 @@ async function render() {
   await act(async () => {
     root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, {})));
   });
+  await click('[data-action="plugin-catalog"]');
 }
 const $ = (selector: string) => container.querySelector(selector) as HTMLElement;
 const click = async (selector: string) => {

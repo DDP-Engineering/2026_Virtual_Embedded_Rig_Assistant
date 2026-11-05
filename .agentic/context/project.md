@@ -18,6 +18,8 @@ The desktop shell occupies a fixed viewport without document scrolling; long pag
 
 The architecture laws in [01-system](../../00_Planning/architecture/01-system.md) govern process boundaries, local assets, credentials and test isolation. Versions are pinned exactly. Core remains independent of Electron; renderer access to main uses shared contracts.
 
+Plugin management uses compact package rows and explicit dependency checks; selection remains per workbench and defaults to none. Verified local dependency archives support offline provisioning without publishing a release. Desktop listing performs integrity work off main; session-list polling avoids program initialization while retaining recovery and current-workbench ownership.
+
 ## Implementation orientation
 
 General web research uses enabled web_search/web_read over vendor-neutral WebProvider with default anonymous Exa MCP with selectable Tavily and Brave Search. [Web search](../knowledge/web-search.md) routes bounded calls, public source extraction and confirmed source links; no mandatory account/key or startup egress.

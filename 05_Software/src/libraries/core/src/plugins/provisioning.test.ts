@@ -1,11 +1,24 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { appendFile, mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
+import {
+  appendFile,
+  lstat,
+  mkdir,
+  mkdtemp,
+  open,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PluginSettings } from "@vera/shared";
 import { strToU8, zipSync } from "fflate";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { stringify } from "yaml";
 import { FakeHost, type FakeProcess } from "./fake-process-host.test-support.js";
 import { Provisioner, pluginPlatform } from "./provisioning.js";
@@ -17,6 +30,407 @@ afterEach(async () => {
 });
 const ok = { code: 0, signal: null };
 const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+
+it("supersedes checked authority on a fresh check and same-hash installation identity", async () => {
+  const s = await setup({ programs: { esptool: pip("esptool>=5,<6", { range: ">=5,<6" }) } });
+  uvActs(s.host, s.uv, "esptool");
+  await s.provisioner.install("tools");
+  s.host.handle = (p) => {
+    p.print("v99.0.0");
+    p.finish(ok);
+  };
+  await s.provisioner.check("tools");
+  s.provisioner.invalidate();
+  expect(await s.provisioner.resolve(await s.store.load("tools"), "esptool")).toBeUndefined();
+  s.host.handle = (p) => {
+    p.print("v5.6.0");
+    p.finish(ok);
+  };
+  expect((await s.provisioner.check("tools"))[0]?.state).toBe("ready");
+  s.provisioner.invalidate();
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "esptool"))?.version).toBe("5.6.0");
+  s.host.handle = (p) => {
+    p.print("v99.0.0");
+    p.finish(ok);
+  };
+  await s.provisioner.check("tools");
+  const original = await s.store.load("tools");
+  const reinstalled = new PluginStore({
+    root: join(s.root, "plugins"),
+    now: () => new Date("2027-01-01T00:00:00Z"),
+  });
+  await reinstalled.install(s.source);
+  expect((await reinstalled.load("tools")).record.sha256).toBe(original.record.sha256);
+  expect((await reinstalled.load("tools")).record.installedAt).not.toBe(original.record.installedAt);
+  expect((await s.provisioner.statuses("tools"))[0]?.state).toBe("missing");
+  // Current provisioning metadata with the same version still belongs to a distinct installation.
+  await reinstalled.recordPrograms("tools", original.record.sha256, { esptool: "5.6.0" });
+  expect((await s.provisioner.resolve(await reinstalled.load("tools"), "esptool"))?.version).toBe("5.6.0");
+  const passive = s.create(reinstalled);
+  expect((await passive.statuses("tools", undefined, s.provisioner))[0]?.state).toBe("ready");
+  await passive.drain();
+});
+
+it("allows bounded SDK activation past30s and still times out at120s", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-launcher-timeout-"));
+  roots.push(root);
+  const eim = join(root, "eim.exe");
+  await executable(eim);
+  const s = await setup({
+    hostPlatform: "win32",
+    probeMs: null,
+    programs: {
+      "idf.py": {
+        launcher: ["eim", "run"],
+        launcherMode: "string",
+        install: { find: { windows: [eim] } },
+        version: { args: ["--version"], match: "ESP-IDF v(\\d+\\.\\d+\\.\\d+)" },
+      },
+    },
+  });
+  let pending: FakeProcess | undefined;
+  s.host.handle = (p) => {
+    pending = p;
+  };
+  vi.useFakeTimers();
+  try {
+    let finished = false;
+    const first = s.provisioner.check("tools").then((result) => {
+      finished = true;
+      return result;
+    });
+    await vi.waitFor(() => expect(pending).toBeDefined());
+    await vi.advanceTimersByTimeAsync(30_001);
+    expect(finished).toBe(false);
+    pending?.print("ESP-IDF v5.5.2");
+    pending?.finish(ok);
+    expect((await first)[0]?.state).toBe("ready");
+    pending = undefined;
+    const second = s.provisioner.check("tools");
+    await vi.waitFor(() => expect(pending).toBeDefined());
+    await vi.advanceTimersByTimeAsync(123_000);
+    expect((await second)[0]).toMatchObject({ state: "unavailable", problem: "version" });
+  } finally {
+    vi.useRealTimers();
+    await s.provisioner.drain();
+  }
+});
+
+it.each(["missing", "linked", "oversize", "unsafe"] as const)(
+  "refuses a %s local archive without publication, network or probe",
+  async (kind) => {
+    const bytes = zipSync(
+      kind === "unsafe"
+        ? { "../escape": strToU8("bad"), "bin/tool": strToU8("tool") }
+        : { "bin/tool": strToU8("tool") },
+    );
+    const s = await setup({
+      programs: {
+        tool: {
+          install: {
+            download: {
+              "linux-x64": { url: "https://h.test/tool.zip", sha256: sha(bytes), path: "bin/tool" },
+            },
+          },
+          version: { args: ["--version"], match: "(\\d+\\.\\d+)" },
+        },
+      },
+    });
+    const identity = (await s.store.load("tools")).record.sha256;
+    const archive = join(s.root, "selected.zip");
+    if (kind === "linked") {
+      const directory = join(s.root, "target");
+      await mkdir(directory);
+      await symlink(directory, archive, "junction");
+    } else if (kind === "oversize") {
+      const handle = await open(archive, "w");
+      try {
+        await handle.truncate(2 * 1024 * 1024 * 1024 + 1);
+      } finally {
+        await handle.close();
+      }
+    } else if (kind !== "missing") await writeFile(archive, bytes);
+    const result = await s.provisioner.installArchive("tools", "tool", archive, identity);
+    expect(result[0]).toMatchObject({ state: "missing", problem: "archive" });
+    expect(s.host.programs).toHaveLength(0);
+    expect(s.fetches).toEqual([]);
+    expect(existsSync(join(s.root, "plugins/runtime/downloads", sha(bytes)))).toBe(false);
+    expect(await readdir(join(s.root, "plugins/runtime/downloads/.staging"))).toEqual([]);
+    expect((await s.record()).programs).toEqual({});
+    expect(existsSync(join(s.root, "plugins/runtime/downloads/escape"))).toBe(false);
+  },
+);
+
+it("propagates a scoped negative fresh check to the singleton runtime resolver and repairs a managed tool", async () => {
+  const s = await setup({ programs: { esptool: pip("esptool>=5,<6", { range: ">=5,<6" }) } });
+  uvActs(s.host, s.uv, "esptool");
+  await s.provisioner.install("tools");
+  const loaded = await s.store.load("tools");
+  expect((await s.provisioner.resolve(loaded, "esptool"))?.version).toBe("5.6.0");
+  await mkdir(join(s.root, "workbench"));
+  const scoped = s.create(s.store.forWorkbench(join(s.root, "workbench")));
+  s.host.handle = (p) => {
+    p.print("v99.0.0");
+    p.finish(ok);
+  };
+  expect((await scoped.check("tools", undefined, s.provisioner))[0]).toMatchObject({
+    state: "unavailable",
+    problem: "range",
+  });
+  await scoped.drain();
+  expect(await s.provisioner.resolve(await s.store.load("tools"), "esptool")).toBeUndefined();
+  s.provisioner.invalidate();
+  expect(await s.provisioner.resolve(await s.store.load("tools"), "esptool")).toBeUndefined();
+  const passive = s.create(s.store.forWorkbench(join(s.root, "workbench")));
+  const processes = s.host.programs.length;
+  expect((await passive.statuses("tools", undefined, s.provisioner))[0]).toMatchObject({
+    state: "unavailable",
+    problem: "range",
+  });
+  expect(s.host.programs).toHaveLength(processes);
+  await passive.drain();
+  let repaired = false;
+  s.host.handle = (p) => {
+    if (p.executable === s.uv && p.args[0] === "tool") repaired = true;
+    else p.print(repaired ? "v5.6.0" : "v99.0.0");
+    p.finish(ok);
+  };
+  const repair = s.create(s.store.forWorkbench(join(s.root, "workbench")));
+  expect((await repair.install("tools", undefined, s.provisioner))[0]).toMatchObject({
+    state: "ready",
+    version: "5.6.0",
+  });
+  await repair.drain();
+  s.provisioner.invalidate();
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "esptool"))?.version).toBe("5.6.0");
+  expect(repaired).toBe(true);
+  const afterRepair = s.create(s.store.forWorkbench(join(s.root, "workbench")));
+  expect((await afterRepair.statuses("tools", undefined, s.provisioner))[0]?.state).toBe("ready");
+  await afterRepair.drain();
+  const oldCheck = s.create(s.store.forWorkbench(join(s.root, "workbench")));
+  let held: FakeProcess | undefined;
+  let holdNext = true,
+    secondRepair = false;
+  s.host.handle = (p) => {
+    if (holdNext) {
+      holdNext = false;
+      held = p;
+      return;
+    }
+    if (p.executable === s.uv && p.args[0] === "tool") secondRepair = true;
+    else p.print(secondRepair ? "v5.6.0" : "v99.0.0");
+    p.finish(ok);
+  };
+  const pending = oldCheck.check("tools", undefined, s.provisioner);
+  await vi.waitFor(() => expect(held).toBeDefined());
+  expect((await s.provisioner.install("tools"))[0]?.state).toBe("ready");
+  expect(secondRepair).toBe(true);
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "esptool"))?.version).toBe("5.6.0");
+  held?.print("v99.0.0");
+  held?.finish(ok);
+  await expect(pending).rejects.toMatchObject({ code: "CONFLICT" });
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "esptool"))?.version).toBe("5.6.0");
+  await oldCheck.drain();
+});
+
+// REQ-REL-21eeae69
+it("does not repair an alias reached through a redirected nested Python directory", async () => {
+  const s = await setup({ hostPlatform: "win32", programs: { esptool: pip("esptool") } });
+  const outside = join(s.root, "outside"),
+    target = join(outside, "cpython-3.13.16-windows-x86_64-none");
+  await mkdir(target, { recursive: true });
+  await writeFile(join(target, "python.exe"), "outside");
+  const alias = join(outside, "cpython-3.13-windows-x86_64-none");
+  await symlink(target, alias, "junction");
+  await mkdir(join(s.root, "plugins/runtime"), { recursive: true });
+  await symlink(outside, join(s.root, "plugins/runtime/python"), "junction");
+  let attempts = 0;
+  s.host.handle = (p) => {
+    attempts++;
+    p.print("Missing expected target directory for Python minor version link");
+    p.finish({ code: 1, signal: null });
+  };
+  expect((await s.provisioner.install("tools"))[0]?.state).toBe("missing");
+  expect(attempts).toBe(1);
+  expect((await lstat(alias)).isSymbolicLink()).toBe(true);
+  expect(await readFile(join(target, "python.exe"), "utf8")).toBe("outside");
+});
+
+// REQ-FUNC-ed2e8564
+it("freshly probes every recorded program even when passive reads interleave", async () => {
+  const s = await setup({ programs: { a: pip("a-tool"), b: pip("b-tool") } });
+  s.host.handle = (p) => {
+    if (p.args[0] === "tool") {
+      const bin = p.options.env.UV_TOOL_BIN_DIR as string;
+      mkdirSync(bin, { recursive: true });
+      writeFileSync(join(bin, p.args[2] === "a-tool" ? "a" : "b"), "");
+    } else p.print("v1.0.0");
+    p.finish(ok);
+  };
+  await s.provisioner.install("tools");
+  let release = () => {},
+    entered = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  s.host.handle = (p) => {
+    if (p.executable.endsWith("a")) {
+      entered();
+      void held.then(() => {
+        p.print("v2.0.0");
+        p.finish(ok);
+      });
+    } else {
+      p.print("v2.0.0");
+      p.finish(ok);
+    }
+  };
+  const checking = s.provisioner.check("tools");
+  await started;
+  const passive = s.provisioner.statuses("tools");
+  release();
+  expect((await checking).map((status) => status.version)).toEqual(["2.0.0", "2.0.0"]);
+  expect((await passive).map((status) => status.version)).toEqual(["2.0.0", "2.0.0"]);
+});
+
+// REQ-REL-21eeae69
+it("retries a failed managed Python install after unlinking only its validated minor alias", async () => {
+  const s = await setup({ hostPlatform: "win32", programs: { esptool: pip("esptool") } });
+  const python = join(s.root, "plugins/runtime/python");
+  const target = join(python, "cpython-3.13.16-windows-x86_64-none");
+  const alias = join(python, "cpython-3.13-windows-x86_64-none");
+  await mkdir(target, { recursive: true });
+  await writeFile(join(target, "python.exe"), "python");
+  await symlink(target, alias, "junction");
+  let attempts = 0;
+  s.host.handle = (p) => {
+    if (p.executable === s.uv && p.args[0] === "tool" && ++attempts === 1) {
+      p.print(
+        "error: Missing expected target directory for Python minor version link at python/cpython-3.13.16-windows-x86_64-none",
+      );
+      p.finish({ code: 1, signal: null });
+      return;
+    }
+    if (p.args[0] === "tool") {
+      mkdirSync(join(s.root, "plugins/runtime/tools/tools/bin"), { recursive: true });
+      writeFileSync(join(s.root, "plugins/runtime/tools/tools/bin/esptool.exe"), "");
+    } else p.print("esptool v5.6.0");
+    p.finish(ok);
+  };
+  expect((await s.provisioner.install("tools"))[0]?.state).toBe("ready");
+  expect(attempts).toBe(2);
+  await expect(lstat(alias)).rejects.toMatchObject({ code: "ENOENT" });
+  expect(await readFile(join(target, "python.exe"), "utf8")).toBe("python");
+});
+
+// REQ-FUNC-ed2e8564
+it("explicitly rechecks cached external programs without installing and shares concurrent checks", async () => {
+  const base = await mkdtemp(join(tmpdir(), "vera-recheck-"));
+  roots.push(base);
+  const tool = join(base, "tool");
+  await executable(tool);
+  const s = await setup({
+    programs: {
+      tool: {
+        install: { find: { linux: [tool] } },
+        version: { args: ["--version"], match: "(\\d+\\.\\d+)" },
+      },
+    },
+  });
+  let version = "1.0";
+  s.host.handle = (p) => {
+    p.print(version);
+    p.finish(ok);
+  };
+  expect((await s.provisioner.statuses("tools"))[0]?.version).toBe("1.0");
+  version = "2.0";
+  const checked = await Promise.all([s.provisioner.check("tools"), s.provisioner.check("tools")]);
+  expect(checked.map((statuses) => statuses[0]?.version)).toEqual(["2.0", "2.0"]);
+  expect(s.host.programs).toHaveLength(2);
+  expect(s.fetches).toEqual([]);
+});
+
+// REQ-SEC-7a5afebb, REQ-REL-22ef3dca
+it("installs exact local dependency bytes without network and rejects wrong selected bytes before cache reuse", async () => {
+  const bytes = zipSync({ "bin/tool": strToU8("tool") });
+  const s = await setup({
+    programs: {
+      tool: {
+        install: {
+          download: { "linux-x64": { url: "https://h.test/tool.zip", sha256: sha(bytes), path: "bin/tool" } },
+        },
+        version: { args: ["--version"], match: "(\\d+\\.\\d+)" },
+      },
+    },
+  });
+  s.host.handle = (p) => {
+    p.print("1.2");
+    p.finish(ok);
+  };
+  const archive = join(s.root, "selected.zip");
+  await writeFile(archive, bytes);
+  const identity = (await s.store.load("tools")).record.sha256;
+  const scoped = s.create(s.store);
+  expect(
+    (await scoped.installArchive("tools", "tool", archive, identity, undefined, s.provisioner))[0],
+  ).toMatchObject({
+    state: "ready",
+    version: "1.2",
+  });
+  await scoped.drain();
+  expect(s.fetches).toEqual([]);
+  expect((await s.record()).programs).toEqual({ tool: "1.2" });
+  await writeFile(archive, "wrong");
+  expect((await s.provisioner.installArchive("tools", "tool", archive, identity))[0]).toMatchObject({
+    problem: "sha256",
+  });
+  expect(await readdir(join(s.root, "plugins/runtime/downloads/.staging"))).toEqual([]);
+  expect((await s.record()).programs).toEqual({ tool: "1.2" });
+  s.provisioner.invalidate();
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "tool"))?.version).toBe("1.2");
+  await expect(s.provisioner.installArchive("tools", "tool", archive, "f".repeat(64))).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
+});
+
+// REQ-SEC-7a5afebb, REQ-REL-22ef3dca
+it("refuses package changes after local bytes are staged and before any tree publication or probe", async () => {
+  const bytes = zipSync({ "bin/tool": strToU8("tool") });
+  const s = await setup({
+    programs: {
+      tool: {
+        install: {
+          download: { "linux-x64": { url: "https://h.test/tool.zip", sha256: sha(bytes), path: "bin/tool" } },
+        },
+        version: { args: ["--version"], match: "(\\d+\\.\\d+)" },
+      },
+    },
+  });
+  const identity = (await s.store.load("tools")).record.sha256;
+  const archive = join(s.root, "selected.zip");
+  await writeFile(archive, bytes);
+  const original = s.store.load.bind(s.store);
+  let loads = 0;
+  const replaced = vi.spyOn(s.store, "load").mockImplementation(async (id) => {
+    if (++loads === 2)
+      await appendFile(join(s.installed, "scripts/serial.py"), "# changed while selected bytes copied\n");
+    return original(id);
+  });
+  try {
+    await expect(s.provisioner.installArchive("tools", "tool", archive, identity)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(s.host.programs).toHaveLength(0);
+    expect(existsSync(join(s.root, "plugins/runtime/downloads", sha(bytes)))).toBe(false);
+    expect(await readdir(join(s.root, "plugins/runtime/downloads/.staging"))).toEqual([]);
+    expect((await s.record()).programs).toEqual({});
+  } finally {
+    replaced.mockRestore();
+  }
+});
 
 // REQ-FUNC-20b10001, REQ-FUNC-20b10002
 it("prefers a found tool and installs one shared fallback archive only after find misses", async () => {
@@ -54,7 +468,7 @@ it("prefers a found tool and installs one shared fallback archive only after fin
   s.served.set("https://h.test/tools.zip", () => new Response(bytes));
   expect(await s.provisioner.statuses("tools")).toEqual([
     { name: "nm", kind: "download", state: "missing" },
-    { name: "size", kind: "download", state: "ready", version: "2.46", range: ">=2.40" },
+    { name: "size", kind: "download", state: "ready", version: "2.46", range: ">=2.40", external: true },
   ]);
   expect(s.fetches).toEqual([]);
   const plugin = await s.store.load("tools");
@@ -155,7 +569,7 @@ interface Setup {
   env?: Record<string, string>;
   settings?: PluginSettings;
   uv?: boolean;
-  probeMs?: number;
+  probeMs?: number | null;
   installMs?: number;
 }
 async function setup(options: Setup) {
@@ -190,7 +604,7 @@ async function setup(options: Setup) {
   const served = new Map<string, () => Response | Promise<Response>>();
   const fetches: string[] = [];
   const uv = join(root, "bundled", windows ? "uv.exe" : "uv");
-  const provisioner = new Provisioner({
+  const provisionerOptions: ConstructorParameters<typeof Provisioner>[0] = {
     store,
     root: join(root, "plugins", "runtime"),
     ...(options.uv === false ? {} : { uv: { executable: uv } }),
@@ -203,11 +617,16 @@ async function setup(options: Setup) {
       return respond ? respond() : new Response("missing", { status: 404 });
     },
     settings: () => options.settings,
-    timeouts: { probeMs: options.probeMs ?? 5000, installMs: options.installMs ?? 60_000 },
-  });
+    timeouts: {
+      ...(options.probeMs === null ? {} : { probeMs: options.probeMs ?? 5000 }),
+      installMs: options.installMs ?? 60_000,
+    },
+  };
+  const provisioner = new Provisioner(provisionerOptions);
+  const create = (view: PluginStore) => new Provisioner({ ...provisionerOptions, store: view });
   const installed = join(root, "plugins", "installed", "tools");
   const record = async () => JSON.parse(await readFile(join(installed, "install.json"), "utf8"));
-  return { root, store, host, provisioner, served, fetches, uv, installed, record, source };
+  return { root, store, host, provisioner, create, served, fetches, uv, installed, record, source };
 }
 const pip = (requirement: string, version: Record<string, unknown> = {}) => ({
   install: { pip: requirement },
@@ -627,15 +1046,15 @@ it("makes programs with unreadable versions unavailable", async () => {
     process.print("usage: git [--version]\n");
     process.finish(ok);
   };
-  expect(await s.provisioner.statuses("tools")).toEqual([unavailable]);
+  expect(await s.provisioner.statuses("tools")).toMatchObject([unavailable]);
   expect(await s.provisioner.resolve(plugin, "git")).toBeUndefined();
   s.provisioner.invalidate();
   s.host.handle = () => {};
-  expect(await s.provisioner.statuses("tools")).toEqual([unavailable]);
+  expect(await s.provisioner.statuses("tools")).toMatchObject([unavailable]);
   expect(s.host.signals.some(([pid, signal]) => pid < 0 && signal === "SIGTERM")).toBe(true);
   s.provisioner.invalidate();
   s.host.failNext = "EACCES";
-  expect(await s.provisioner.statuses("tools")).toEqual([unavailable]);
+  expect(await s.provisioner.statuses("tools")).toMatchObject([unavailable]);
 });
 
 // REQ-SEC-49ff111b, REQ-FUNC-13ef1c0c

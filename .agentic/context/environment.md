@@ -45,6 +45,8 @@ Project verification uses the authoritative .vera metadata layout for configurat
 pinned context, project ignore policy and skills. Test workbenches are created or
 copied in current form; root-level predecessors are not migrated or detected.
 
+Managed plugin Python pins verified uv0.13.7. Windows program environments include PATHEXT without inheriting unrelated host secrets. Normal-app dependency acceptance is recorded separately from isolated fresh-runtime proof; WSL2 evidence is not native Ubuntu evidence.
+
 ## Build and run
 
 Run commands from 05_Software using the repository-local npmw.py wrapper when Node is absent from PATH.

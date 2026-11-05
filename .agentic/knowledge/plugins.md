@@ -120,7 +120,7 @@ review must be shown, and installs it bound to the reviewed integrity hash with 
 `catalog` (the zip URL, or the bundled zip's file path). Desktop main
 composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` and `plugins.catalogInstall`, and its
 `CatalogChecks` (`main/catalog-checks.ts`) reads the index after the window opens and every 24 h. The Plugins page
-shows the catalog section (`renderer/components/plugin-catalog.tsx`) below the installed list. The index is not
+opens the catalog section (`renderer/components/plugin-catalog.tsx`) from the grouped top Catalog control, above the installed list. The index is not
 signed (ADR-0019 defers it).
 
 ## Authoring
@@ -145,6 +145,13 @@ Focused proof: core plugins/authoring.test.ts, agent/program-approvals.test.ts, 
 renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e/plugin-builder.spec.ts.
 
 ## Public interface
+
+- `plugins.check` explicitly refreshes all program probes without installing. Pending checks share package/runtime identity and serialize with provisioning; fresh per-program cache entries are populated together, so passive reads cannot replace a fresh check with a recorded version. A replaced package rejects the pending check. Scoped check observations, including negative states, propagate atomically into the singleton session resolver; concurrent runtime invalidation rejects the older pending check. Scoped passive status reads use the same resolver observations for the verified scoped package, so reopening the page cannot restore a rejected Ready state. Completed checked failures survive later unrelated invalidation, bound to runtime/plugin/program, package SHA, installation timestamp and per-program record. A fresh check or actual provisioning supersedes them. Ready observations clear prior failures and remain in the ordinary resolution cache so missing discovered files are detected after invalidation. Invalid archive selection preserves healthy runtime authority. Ordinary version probes allow30s; declared activation launchers allow120s because observed EIM startup can exceed the ordinary boundary.
+- `plugins.installArchive {id,program,sha256,workbenchId?}` uses a native archive picker. Current workbench/database, package hash, program/platform and trust are checked before and after selection. Selected regular bytes are streamed through SHA-256 before cache reuse; staging, extraction confinement and a second identity check precede publication. No URL or hash comes from the selected file. Verified blobs may remain when a later version probe fails.
+- Desktop package listing runs the complete PluginStore integrity path in `plugin-list-worker`, with only identical pending scopes coalesced and shutdown termination. No completed integrity result is reused by this seam. Main rechecks current workbench/database before returning.
+- The global manager starts with compact accessible rows and unknown dependency state, grouped top catalog/folder/zip/refresh/check-all actions, explicit Check/Install controls, expandable descriptions/program diagnostics, and secondary export/uninstall actions. Find-only tools retain vendor guidance, including when ready, and never enable automatic installation. Ready managed fallbacks keep a correctly labeled Install action. Managed version/range failures permit repair (uv reinstall); discovered hybrid tools explicitly mark external:true and retain the no-replacement policy unless preferDownload permits it. Same-hash reinstallation clears old dependency UI observations. Redaction is followed by schema-length caps. Workbench selection stays draft-only and compact, with no implicit enablement.
+- Windows minimal program environments preserve PATHEXT case-insensitively. Managed Python uses pinned uv0.13.7; an exact known minor-link failure can retry once after unlinking only an independently validated runtime-owned alias, never its patch interpreter or an escaping nested Python directory.
+
 
 - Shared: `pluginManifestSchema`, `validatePluginManifest(data)` → `{manifest?, issues}`,
   `pluginIdSchema`, `pluginRiskSchema`, `pluginTierSchema`, `pluginPlatformSchema`,

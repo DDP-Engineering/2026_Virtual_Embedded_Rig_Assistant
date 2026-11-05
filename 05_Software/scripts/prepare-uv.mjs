@@ -90,7 +90,7 @@ export async function prepareUv(
   }
   await rm(target, { force: true });
   const name = entry.url.split("/").at(-1);
-  const cached = join(destination, ".cache", name);
+  const cached = join(destination, ".cache", entry.sha256, name);
   let archive;
   try {
     archive = await readFile(cached);

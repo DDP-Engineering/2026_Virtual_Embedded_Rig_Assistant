@@ -76,45 +76,58 @@ export class SessionsHost {
     );
     return next;
   }
-  run<T>(operation: (service: SessionService) => T | Promise<T>): Promise<T> {
+  run<T>(operation: (service: SessionService) => T | Promise<T>, preparePrograms = true): Promise<T> {
     if (this.shutdown) return Promise.reject(veraError("BUSY"));
     this.pending++;
     return this.serial(async () => {
       const snapshot = this.options.workbench.getSnapshot();
       const db = this.options.workbench.getDatabase();
-      this.config = (await this.options.workbench.getConfig()).config;
-      this.pinned = (await this.options.workbench.getPinned()).content;
-      this.skills = this.options.workbench.skillCatalog(snapshot.config.id);
-      const skills = await this.skills.list();
-      this.skillMetadata = skills
-        .filter((skill) => skill.enabled && !skill.error)
-        .map(({ name, description }) => ({ name, description }));
-      const programs = this.options.programs;
-      this.programHost = programs && {
-        ...programs,
-        clock: this.options.clock,
-        plugins: () => this.options.workbench.loadPlugins(snapshot.config.id),
-      };
-      // Resolving loads and hashes every enabled plugin and may probe programs: reuse the entries
-      // until a plugin changes (invalidatePrograms) or the workbench or its plugin skills do.
-      const key = JSON.stringify([
-        snapshot.folder,
-        snapshot.config.id,
-        (this.programHost ? await this.options.workbench.loadPlugins(snapshot.config.id) : []).map(
-          (plugin) => [plugin.manifest.id, plugin.record.sha256],
-        ),
-        this.programGeneration,
-        skills
-          .filter((skill) => skill.source === "plugin")
-          .map((skill) => [skill.plugin, skill.name, skill.enabled, Boolean(skill.error)]),
-      ]);
-      if (key !== this.programKey) {
-        this.programEntries = this.programHost ? await programPromptEntries(this.programHost, skills) : [];
-        this.programKey = key;
+      this.config = preparePrograms ? (await this.options.workbench.getConfig()).config : snapshot.config;
+      if (preparePrograms) {
+        this.pinned = (await this.options.workbench.getPinned()).content;
+        this.skills = this.options.workbench.skillCatalog(snapshot.config.id);
+        const skills = await this.skills.list();
+        this.skillMetadata = skills
+          .filter((skill) => skill.enabled && !skill.error)
+          .map(({ name, description }) => ({ name, description }));
+        const programs = this.options.programs;
+        this.programHost = programs && {
+          ...programs,
+          clock: this.options.clock,
+          plugins: () => this.options.workbench.loadPlugins(snapshot.config.id),
+        };
+        // Resolving loads and hashes every enabled plugin and may probe programs: reuse the entries
+        // until a plugin changes (invalidatePrograms) or the workbench or its plugin skills do.
+        const key = JSON.stringify([
+          snapshot.folder,
+          snapshot.config.id,
+          (this.programHost ? await this.options.workbench.loadPlugins(snapshot.config.id) : []).map(
+            (plugin) => [plugin.manifest.id, plugin.record.sha256],
+          ),
+          this.programGeneration,
+          skills
+            .filter((skill) => skill.source === "plugin")
+            .map((skill) => [skill.plugin, skill.name, skill.enabled, Boolean(skill.error)]),
+        ]);
+        if (key !== this.programKey) {
+          this.programEntries = this.programHost ? await programPromptEntries(this.programHost, skills) : [];
+          this.programKey = key;
+        }
       }
+      if (!this.programHost && this.options.programs)
+        this.programHost = {
+          ...this.options.programs,
+          clock: this.options.clock,
+          plugins: () => this.options.workbench.loadPlugins(snapshot.config.id),
+        };
       if (this.db !== db) {
         await this.drain();
         const options = this.options;
+        this.programHost = options.programs && {
+          ...options.programs,
+          clock: options.clock,
+          plugins: () => options.workbench.loadPlugins(snapshot.config.id),
+        };
         const self = this;
         this.service = new SessionService({
           db,
@@ -179,6 +192,36 @@ export class SessionsHost {
     }).finally(() => {
       this.pending--;
     });
+  }
+  /** Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. */
+  async list(workbenchId?: string) {
+    if (this.shutdown) throw veraError("BUSY");
+    const snapshot = this.options.workbench.getSnapshot(),
+      db = this.options.workbench.getDatabase();
+    if (workbenchId && snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+    const service = this.service;
+    let rows: ReturnType<SessionService["list"]>;
+    if (service && this.db === db) {
+      await service.waitReady();
+      if (this.shutdown) throw veraError("BUSY");
+      if (
+        this.service !== service ||
+        this.options.workbench.getDatabase() !== db ||
+        this.options.workbench.getSnapshot().config.id !== snapshot.config.id
+      )
+        throw veraError("CONFLICT");
+      rows = service.list();
+    } else {
+      rows = await this.run((current) => {
+        if (
+          this.options.workbench.getDatabase() !== db ||
+          this.options.workbench.getSnapshot().config.id !== snapshot.config.id
+        )
+          throw veraError("CONFLICT");
+        return current.list();
+      }, false);
+    }
+    return rows.map((row) => ({ ...row, title: this.options.credentials.scrub(row.title) }));
   }
   /** Recomputes the program prompt entries on the next session call: a plugin was installed, removed, toggled or provisioned. */
   invalidatePrograms(): void {
