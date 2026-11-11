@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-d3193aa3"
+
+title = "Expose Microchip flashing and fuse skills"
+
+status = "active"
+
+requirement = """
+When microchip-pymcuprog is enabled for a workbench, VERA shall expose the microchip-flash and microchip-fuses skills that direct identification, flashing with verification and single explicit fuse changes.
+"""
+
+verification = "Install the package, list its skills through the skill catalog and read each for ping, hex flashing with --verify, read-back and the single-fuse confirmation guidance."
+
+affected_paths = ["05_Software/plugins/microchip-pymcuprog/skills/"]
+
+linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

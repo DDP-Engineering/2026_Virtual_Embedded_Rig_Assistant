@@ -119,7 +119,7 @@ they are candidates for the deferred MCP path, not a requirement.
 
 | Plugin | Programs | Risk |
 |---|---|---|
-| `microchip-pymcuprog` | `pymcuprog` (`pip`): ping, read, write, erase over UPDI, PICkit 4/5, nEDBG | ping, read: `device-read`; write, erase: `device-write`; fuse or config-word writes that enable code protection or lock bits: `irreversible` |
+| `microchip-pymcuprog` | `pymcuprog` (`pip`): ping, read, write, erase over UPDI (SerialUPDI), PICkit 4 / Snap in AVR mode, Atmel-ICE, nEDBG (pymcuprog 3.19 has no PICkit 5) | ping, read: `device-read`; write, erase: `device-write`; fuse, config-word, lock-bit and all-memory writes, every hex-file write (it can carry those segments), `setsupplyvoltage` and `-H` high voltage: `irreversible` |
 | `microchip-avrdude` | `avrdude` (`find`) | same split; `-U lock:` and fuse writes: `irreversible` |
 | `microchip-mplab` | MPLAB X IPE `ipecmd`, MDB (`find` in the MPLAB X install) | program: `device-write`; code protect: `irreversible` |
 

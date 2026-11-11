@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-9b1ed1aa"
+
+title = "Prove pymcuprog classification, typed confirmation and a real offline run"
+
+status = "active"
+
+requirement = """
+When the microchip-pymcuprog tests run, VERA shall prove the rules through the real matcher, a fuse write waiting for the typed word through a replay session, and with VERA_MCU_UV a real pymcuprog that converts a hex file without approval.
+"""
+
+verification = "Default: classification matrix and an auto-edit replay session (device-read ping runs by mode) with a stub resolver whose fake pymcuprog records its arguments; a missing or wrong word starts no process. Opt-in: provision from PyPI, run makeuf2 on a fixture hex and ping a missing SerialUPDI port after approval."
+
+affected_paths = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

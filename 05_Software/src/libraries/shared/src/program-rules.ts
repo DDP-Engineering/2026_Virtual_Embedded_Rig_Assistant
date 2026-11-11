@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { gitRuleArguments } from "./git-options.js";
 import { type PluginRisk, pluginIdSchema, pluginProgramNameSchema, pluginRiskSchema } from "./plugins.js";
+import { pymcuprogRuleArguments } from "./pymcuprog-options.js";
 import type { PermissionMode } from "./session.js";
 import { sigrokRuleArguments } from "./sigrok-options.js";
 import { tsharkRuleArguments } from "./tshark-options.js";
@@ -130,7 +131,7 @@ export function classifyCommand(
   rules: readonly ProgramRule[],
   program: string,
   args: readonly string[],
-  optionSyntax?: "sigrok-cli" | "git" | "tshark",
+  optionSyntax?: "sigrok-cli" | "git" | "tshark" | "pymcuprog",
 ): ProgramClassification {
   const projected =
     optionSyntax === "sigrok-cli"
@@ -139,7 +140,9 @@ export function classifyCommand(
         ? gitRuleArguments(args)
         : optionSyntax === "tshark"
           ? tsharkRuleArguments(args)
-          : args;
+          : optionSyntax === "pymcuprog"
+            ? pymcuprogRuleArguments(args)
+            : args;
   const line = tokens(program, projected);
   let risk: PluginRisk | undefined;
   let confirm: string | undefined;

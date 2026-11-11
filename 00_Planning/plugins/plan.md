@@ -318,6 +318,11 @@ tshark shows its hint; live capture works where Npcap or dumpcap permissions exi
   (`device-write`), fuse, config-word and lock writes that enable protection (`irreversible`).
 **Done when:** on one UPDI board the agent pings, flashes and verifies an image; matcher tests prove
 that protection writes are `irreversible`; no test writes real lock bits.
+- Implementation candidate 2026-11-11 (TASK-46fcedc2): official `microchip-pymcuprog` (pip pymcuprog 3.19) with an
+  `optionSyntax: pymcuprog` projection measured on 3.19.4.61; fuse/lock/config/all-memory writes, every hex write
+  (it can carry fuse segments), supply and high-voltage actions irreversible. Matrix and typed-word gate by default;
+  an opt-in real run converted a hex file and failed a ping on a missing port. UPDI board acceptance remains open;
+  PICkit 5 is not covered because pymcuprog 3.19 cannot drive it.
 
 ### PLG-17 STM32 plugin
 **Goal:** program STM32 parts. **Depends on:** PLG-07. **Specs:** packs §5.

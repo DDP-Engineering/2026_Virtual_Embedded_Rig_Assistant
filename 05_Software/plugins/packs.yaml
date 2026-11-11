@@ -23,3 +23,7 @@
   groups:
     - { name: Bus capture and transmit, plugins: [can-python], default: true }
     - { name: DBC decoding, plugins: [can-dbc], default: true }
+- id: microchip
+  name: Microchip (AVR, PIC)
+  groups:
+    - { name: Programming (pymcuprog), plugins: [microchip-pymcuprog], default: true }

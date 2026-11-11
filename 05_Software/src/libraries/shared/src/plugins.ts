@@ -195,7 +195,7 @@ const programSchema = z
     }),
     launcher: args.min(1).optional(),
     launcherMode: z.enum(["argv", "string"]).optional(),
-    optionSyntax: z.enum(["sigrok-cli", "git", "tshark"]).optional(),
+    optionSyntax: z.enum(["sigrok-cli", "git", "tshark", "pymcuprog"]).optional(),
     prefix: z
       .array(arg.refine(placeholders(["pluginDir"]), "Only the pluginDir placeholder is substituted."))
       .max(64)

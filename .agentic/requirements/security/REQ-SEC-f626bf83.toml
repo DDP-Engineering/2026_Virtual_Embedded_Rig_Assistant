@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-f626bf83"
+
+title = "Treat pymcuprog protection writes as irreversible"
+
+status = "active"
+
+requirement = """
+When a pymcuprog write targets fuses, lock bits, config words or all memories (including the default memory), writes any Intel hex file, or an erase targets fuses, lock bits or config words, VERA shall classify it irreversible with the action as the typed confirmation word.
+"""
+
+verification = "Classify -m in every spelling and case for each protection memory, a write without -m, hex writes with and without --erase/--verify, protection erases and chip erase (device-write); check the confirmation word."
+
+affected_paths = ["05_Software/plugins/microchip-pymcuprog/plugin.yaml", "05_Software/src/libraries/shared/src/pymcuprog-options.ts"]
+
+linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

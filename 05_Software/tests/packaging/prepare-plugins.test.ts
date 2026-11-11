@@ -36,6 +36,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],
     ["git", "official"],
+    ["microchip-pymcuprog", "official"],
     ["probe-rs", "official"],
     ["serial-monitor", "official"],
     ["sigrok", "official"],
