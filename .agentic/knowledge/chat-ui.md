@@ -49,7 +49,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab queries .vera/WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
 - UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Complete durable history and Activity remain available after historical compaction; the main transcript follows workbench chat.detail.
-- `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures.
+- `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures. Browser-test triggers in mocks/sessions.ts: a message `seed N messages` appends N seeded question/answer pairs; `stream slowly…` streams a 40-line reply over about 6 s.
 - CitationChip uses shared refs.ts parsing/compact labels and per-kind page, range,
   heading, line and artifact icons. Full refs remain in tooltip/accessible labels.
   Unverified and malformed refs render inert warning chips; verified chips open the scoped document viewer through session/message-bound host revalidation.
@@ -61,7 +61,21 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - The transcript and growing composer share a centered content column. The textarea
   resizes on draft/width changes up to a scrolling cap. Compact model/mode controls
   retain Enter/Shift+Enter, completion, steering, approval waits and Stop.
-- The transcript fills the remaining bounded session area; its native scrolling is controlled by a segmented left rail with a proportional position marker. The rail appears only for overflowing content, supports pointer dragging/track clicks and Arrow/Page/Home/End keys, and has an en/ro/de accessible label. Wheel and touch use the same native viewport. Content and viewport resize refresh rail metrics; new messages retain an older reading position until the reader returns to the bottom. Composer and shell stay in place.
+- The transcript fills the remaining bounded session area; its native scrolling is controlled by a segmented left rail with a proportional position marker. The rail appears only for overflowing content, supports pointer dragging/track clicks and Arrow/Page/Home/End keys, and has an en/ro/de accessible label. Wheel and touch use the same native viewport. Content and viewport resize refresh rail metrics; new messages retain an older reading position until the reader returns to the bottom. A return to the end whose scroll event is dispatched after the next commit still follows (the range settled at the last commit or scroll event decides). Composer and shell stay in place.
+- CHAT-NAV-01 (#89): a separate lane beside the rail (role=toolbar, not inside role=scrollbar)
+  holds one marker per displayed user message, pending ones included, placed proportionally over
+  the whole content (12 + clamp(y/S)·(H-24)); markers whose 24 px targets would overlap merge
+  deterministically into count groups with a non-modal fieldset selector. Hover/focus shows a
+  plain-text preview (140 code points, empty/pending labels, Escape, stays while hovered);
+  activation scrolls the message 16 px below the top or to the native limit, outlines it for 1.5 s,
+  announces "Moved to message N" and keeps focus in the lane. One roving Tab stop with arrows,
+  Home/End; aria-current marks the last message at or above scrollTop + min(80, V/4). A jump
+  suspends auto-follow until the reader returns to the end away from the jump target. Anchors are
+  re-measured once per frame after resize, DOM/disclosure changes or new messages, and after
+  font or image load events (wiring covered by component tests; Markdown renders images inert and no
+  web fonts are declared today); scrolling reuses them. Escape on a preview or selector is consumed so
+  the workspace Stop shortcut yields; the wheel over the open selector scrolls only its list. The navigator is keyed by session; Transcript clears highlight
+  and suspension on a session change. The left padding reserves rail plus lane.
 - The context icon shows latest request-view/context tokens divided by reported
   context window; missing capacity is displayed as unknown. Estimated values are
   labeled. Its modal renders UsageMeter and workbench instructions/available skills
@@ -107,6 +121,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Conversation scroll rail | transcript.tsx, transcript-scroll.tsx, styles.css | tests/e2e/session-scroll.spec.ts |
+| User-message navigator (lane, groups, preview, jump, follow suspension) | transcript-navigation.ts (pure geometry), transcript-navigator.tsx, transcript.tsx (anchors, navigate, follow), styles.css | transcript-navigation.test.ts; transcript-navigator.test.ts; tests/e2e/session-navigation.spec.ts (VERA_NAV_SCREENSHOT) |
 
 ## Key behaviors
 
@@ -126,6 +141,10 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - REQ-UX-d1b480e0 — optional compaction status and derived request-view size.
 - REQ-UX-1676bc64 — independent accessible segmented left conversation scroll rail.
 - REQ-UX-7c3fd9a6 — viewport containment including the growing composer.
+- REQ-UX-b2f6ffa8, REQ-UX-2bbfd052, REQ-UX-a3be2b11, REQ-UX-7b49305a, REQ-UX-958b58c2 — navigator lane, jump/highlight, preview, groups, keyboard and ARIA.
+- REQ-FUNC-1219a1e4 — current message at the reading line from memorized positions.
+- REQ-REL-47308c01, REQ-REL-c8ac2ecc — follow suspension after a jump; frame-coalesced invalidation, session isolation and cleanup.
+- REQ-TEST-ef975c5d, REQ-PLAT-bed960f3 — browser acceptance with screenshots; native Ubuntu run (manual).
 
 ## Files
 
@@ -136,6 +155,9 @@ Paths relative to05_Software.
 - src/apps/desktop/src/renderer/components/session/{workspace,session-list,composer,approval-card,transcript,markdown,disclosure,usage-meter,context-tab,changes-tab,diff-viewer,plan-tab}.tsx — session presentation.
 - src/apps/desktop/src/renderer/components/session/workspace.test.ts — fixtures, keyboard, context, model, Markdown and read-only tests.
 - src/apps/desktop/src/renderer/components/session/transcript-scroll.tsx — local native viewport metrics and accessible pointer/keyboard rail.
+- src/apps/desktop/src/renderer/components/session/transcript-navigation.ts — pure preview text, lane mapping, grouping, current index, scroll target and content offset.
+- src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx — marker lane, preview, group selector, status and measurement; transcript-navigation.test.ts and transcript-navigator.test.ts (jsdom) cover them.
+- tests/e2e/session-navigation.spec.ts — browser acceptance: mapping, jumps, keyboard, preview, streaming follow suspension, disclosures/detail levels, session switches, 500 messages, resize and text scale.
 - tests/e2e/session-scroll.spec.ts — bounded chat/settings/banner geometry, pointer/keyboard/wheel/touch scrolling and reading/follow behavior in browser and native Electron.
 - src/apps/desktop/src/renderer/mocks/{mockApi,sessions,session-fixtures}.ts — bridge lifecycle and fixtures.
 - src/apps/desktop/src/renderer/{styles.css,locales/en.json,locales/ro.json,locales/de.json} — responsive styling and catalogs.

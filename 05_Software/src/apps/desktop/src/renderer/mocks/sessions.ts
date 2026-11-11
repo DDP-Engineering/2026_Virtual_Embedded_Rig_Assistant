@@ -510,6 +510,30 @@ export class MockSessions {
               await new Promise((done) => setTimeout(done, 300));
             }
           }
+          // Browser-test scaffolding: a long history and a slowly streamed reply (REQ-TEST-ef975c5d).
+          const seeded = /^seed (\d+) messages(?:\s|$)/i.exec(request.text);
+          if (seeded && !row.stop)
+            for (let index = 1; index <= Math.min(1000, Number(seeded[1])); index += 1) {
+              this.emit(
+                id,
+                {
+                  type: "message.user",
+                  messageId: `message_${++this.number}`,
+                  text: `Seeded question ${index}. ${"Context words. ".repeat(index % 5)}`,
+                },
+                key,
+              );
+              this.emit(
+                id,
+                {
+                  type: "message.done",
+                  messageId: `message_${++this.number}`,
+                  text: `Seeded answer ${index}.\n\n${"A line of explanation.\n\n".repeat(1 + (index % 4))}`,
+                  citations: [],
+                },
+                key,
+              );
+            }
           if (!row.stop) {
             const pending = row.events
               .reduce(applySessionEvent, emptySessionState())
@@ -541,8 +565,19 @@ export class MockSessions {
               );
             }
             const messageId = `message_${++this.number}`;
-            this.emit(id, { type: "message.delta", messageId, text: "Mock response." }, key);
-            this.emit(id, { type: "message.done", messageId, text: "Mock response.", citations: [] }, key);
+            if (/^stream slowly(?:\s|$)/i.test(request.text)) {
+              let text = "";
+              for (let index = 1; index <= 40 && !row.stop; index += 1) {
+                const delta = `Streaming line ${index} of a slow mock answer.\n\n`;
+                text += delta;
+                this.emit(id, { type: "message.delta", messageId, text: delta }, key);
+                await new Promise((done) => setTimeout(done, 150));
+              }
+              this.emit(id, { type: "message.done", messageId, text, citations: [] }, key);
+            } else {
+              this.emit(id, { type: "message.delta", messageId, text: "Mock response." }, key);
+              this.emit(id, { type: "message.done", messageId, text: "Mock response.", citations: [] }, key);
+            }
           }
           row.active = false;
           row.summary.status = "idle";

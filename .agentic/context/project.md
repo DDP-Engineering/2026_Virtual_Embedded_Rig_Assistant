@@ -130,7 +130,7 @@ required before final release; current-host import/loaded-path evidence suppleme
 
 [Plan](../knowledge/plan.md) routes task-list bounds, atomic persistence and live status presentation.
 
-[Chat UI](../knowledge/chat-ui.md) routes session navigation, Markdown/tool/citation presentation, composer, usage, Context and snapshot-before-subscribe restoration.
+[Chat UI](../knowledge/chat-ui.md) routes session navigation, Markdown/tool/citation presentation, the user-message navigator beside the conversation rail, composer, usage, Context and snapshot-before-subscribe restoration.
 
 App-wide keyboard bindings are confirmed settings shared through the renderer
 ShortcutContext. Settings supports searching, recording, adding/removing aliases

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c8ac2ecc"
+
+title = "Keep navigator geometry and state current"
+
+status = "active"
+
+requirement = """
+When messages, streaming text, detail level, disclosures, text size, window size or the session change, VERA shall recompute marker geometry coalesced per animation frame, clear previews, selectors, highlights and navigation state from another session, and release its observers, listeners, frames and timers on unmount.
+"""
+
+verification = "Component tests switch sessions and unmount and check no stale preview, highlight or pending timer; browser tests change detail level, expand a disclosure, resize and change text size and check marker positions follow the messages."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

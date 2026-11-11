@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1219a1e4"
+
+title = "Mark the user message at the reading position"
+
+status = "active"
+
+requirement = """
+While the conversation scrolls, VERA shall mark as current the last user message whose start lies at or above scrollTop + min(80, clientHeight / 4), or the first one when none does, using the measured positions without re-measuring every message on each scroll.
+"""
+
+verification = "Unit tests check the reading line, before-first and after-last cases; browser tests scroll manually and check aria-current, and a 500-message run checks that scrolling does not re-measure anchors."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

@@ -223,6 +223,13 @@
     "invalidCitation": "Quellenverweis konnte nicht überprüft werden",
     "transcript": "Transkript",
     "scrollConversation": "Unterhaltung scrollen",
+    "navigator": {
+      "label": "Deine Nachrichten",
+      "message": "Nachricht {{ordinal}}",
+      "group": "Nachrichten {{first}}–{{last}} ({{count}})",
+      "empty": "Leere Nachricht",
+      "moved": "Zu Nachricht {{ordinal}} gesprungen"
+    },
     "empty": "Sende zuerst eine Nachricht.",
     "reasoning": "Überlegungen",
     "pending": "Zustellung ausstehend",
