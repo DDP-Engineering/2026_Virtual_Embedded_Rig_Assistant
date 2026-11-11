@@ -97,12 +97,13 @@ VERA's typed command approval remains enforced. `safe` describes hardware risk, 
 
 | Plugin | Programs | Risk |
 |---|---|---|
-| `can-python` | script on python-can: list interfaces; capture N seconds listen-only to ASC/BLF; replay | list: `safe`; capture: `device-read`; **any transmit or replay: `irreversible`** (actuation on a live bus) |
-| `can-dbc` | `cantools` (`pip`): decode, dump, convert | `safe` |
-| `can-utils` (Linux) | `candump`, `cansend`, `cangen` (`find`) | `candump`: `device-read`; `cansend`, `cangen`: `irreversible` |
+| `can-python` | script `can` on python-can: list interfaces and drivers; bounded listen-only capture to ASC/BLF/candump log; send; replay | list: `safe`; capture: `device-read`; capture `--active` (backend without listen-only): `device-write`; **any send or replay: `irreversible`** (actuation on a live bus) |
+| `can-dbc` | `cantools` (`pip`): dump, list, convert, generate_c_source; script `can-decode` decodes a log file with a database | `safe`; `cantools decode`/`plot` (read stdin, which VERA closes) and `monitor` (interactive): `blocked` |
+| `can-utils` (Linux, not shipped yet) | `candump`, `cansend`, `cangen` (`find`) | `candump`: `device-read`; `cansend`, `cangen`: `irreversible` |
 
 Backends: PCAN (PEAK driver), Vector XL, Kvaser CANlib, slcan (serial), gs_usb/candleLight
-(libusb), SocketCAN on Linux. Vendor drivers are `find` + `hint` steps, never bundled.
+(libusb), SocketCAN on Linux. Vendor drivers are never bundled; drivers are shared libraries, so the `can`
+script detects them (`can list`) and prints their install hints instead of manifest `find` programs.
 
 ## 3. Wireshark
 

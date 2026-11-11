@@ -291,6 +291,12 @@ change requires a new review.
   steps.
 **Done when:** on Linux a `vcan0` capture is decoded with a DBC file; on Windows one adapter captures
 a live bus; a transmit waits for the typed confirmation in `ask`.
+- Implementation candidate 2026-11-11 (TASK-324b8162): official `can-python` (`can` script: list with driver
+  hints, listen-only capture with `--active` as device-write for backends without a switch, send/replay
+  irreversible) and `can-dbc` (pip cantools for dump/list/convert; `can-decode` script because `cantools
+  decode` reads stdin) in a CAN pack. Typed confirmation proven by default tests; an opt-in real run
+  captured, transmitted and decoded on a udp_multicast bus on Windows. Real adapters and Linux vcan0 remain
+  open (no hardware or Linux host); the optional can-utils plugin was not shipped.
 
 ### PLG-15 Wireshark plugin
 **Goal:** analyse captures with tshark. **Depends on:** PLG-07. **Specs:** packs §3.

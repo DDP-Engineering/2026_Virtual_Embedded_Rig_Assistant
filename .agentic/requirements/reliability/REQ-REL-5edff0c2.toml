@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-5edff0c2"
+
+title = "Reject unreadable can-decode inputs"
+
+status = "active"
+
+requirement = """
+If the can-decode database or log file is missing or unreadable, or an --id is not hexadecimal, then the can-dbc script shall exit 2 with the reason.
+"""
+
+verification = "Run can-decode with a missing log, a missing database and an invalid --id and check exit 2 and the reason before any database is loaded."
+
+affected_paths = ["05_Software/plugins/can-dbc/scripts/can_decode.py"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

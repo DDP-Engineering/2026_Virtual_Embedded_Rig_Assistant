@@ -1,0 +1,32 @@
+format: 1
+id: can-python
+version: 1.0.0
+name: CAN bus (python-can)
+description: List CAN interfaces and driver availability, capture a bus listen-only to an ASC, BLF or candump log, and send or replay frames through python-can (PEAK, Vector, Kvaser, slcan, gs_usb, SocketCAN). Use to record or stimulate a board's CAN traffic.
+ecosystem: can
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://python-can.readthedocs.io/en/v4.6.1/"]
+programs:
+  can:
+    install: { script: scripts/can_bus.py }
+    version: { args: [--version], match: '^can-python (\d+\.\d+\.\d+)' }
+    timeout: 300
+rules:
+  - { match: "can {--version,--help,-h}", risk: safe }
+  - { match: "can list *", risk: safe, note: Detects interfaces and driver libraries without opening a bus. }
+  - match: "can capture *"
+    risk: device-read
+    note: Opens the adapter listen-only (PEAK, Vector, Kvaser, slcan) or a software bus and records frames; SocketCAN listen-only is set when the link is brought up.
+  - match: "can capture * --active *"
+    risk: device-write
+    note: The adapter joins the bus and acknowledges frames; a wrong bitrate can raise error frames that disturb other nodes.
+  - match: "can send *"
+    risk: irreversible
+    note: Transmits on a live bus; receiving ECUs act on the frame immediately.
+  - match: "can replay *"
+    risk: irreversible
+    note: Transmits every frame of the log file on a live bus with its recorded timing.
+  # The script also refuses any first argument other than a command, so "can -- send" never transmits.
+  - match: "can * {send,replay} *"
+    risk: irreversible
+    note: A send or replay word anywhere in the line is treated as a transmission.

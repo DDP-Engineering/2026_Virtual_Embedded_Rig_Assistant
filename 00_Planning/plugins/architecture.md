@@ -233,7 +233,7 @@ Never guess serial ports, chip types or flash offsets: list the ports and read t
 
 | Level | Meaning | Examples |
 |---|---|---|
-| `safe` | no effect on hardware | `esptool merge-bin`, `idf.py build`, `tshark -r capture.pcapng`, `cantools decode` |
+| `safe` | no effect on hardware | `esptool merge-bin`, `idf.py build`, `tshark -r capture.pcapng`, `can-decode --dbc board.dbc --input bus.asc` |
 | `device-read` | touches hardware without changing stored state; may reset or halt the target | `esptool chip-id`, `espefuse summary`, serial capture, CAN listen-only capture |
 | `device-write` | changes stored device state that a reflash restores | `write-flash`, erase, NVS write, PIC/AVR programming |
 | `irreversible` | a permanent change to the device, or physical actuation outside it | eFuse burn, secure boot or flash encryption enable, STM32 RDP level 2, OTP writes, CAN transmit on a live bus, power-supply output |

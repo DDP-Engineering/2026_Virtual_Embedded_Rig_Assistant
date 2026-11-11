@@ -1,0 +1,27 @@
+format: 1
+id: can-dbc
+version: 1.0.0
+name: CAN databases (cantools)
+description: Decode CAN log files (ASC, BLF, candump) with DBC, KCD, SYM or ARXML databases, and dump, list or convert those databases with cantools. Use to turn captured frames into named signals with units.
+ecosystem: can
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://cantools.readthedocs.io/en/latest/"]
+programs:
+  cantools:
+    install: { pip: "cantools>=45,<46" }
+    version: { args: [--version], match: '^(\d+\.\d+\.\d+)', range: ">=45,<46" }
+    timeout: 120
+  can-decode:
+    install: { script: scripts/can_decode.py }
+    version: { args: [--version], match: '^can-decode (\d+\.\d+\.\d+)' }
+    timeout: 300
+rules:
+  - { match: "cantools {--version,--help,-h}", risk: safe }
+  - { match: "cantools * {dump,list,convert,generate_c_source} *", risk: safe, note: Reads a database; convert and generate_c_source write their output files. }
+  - match: "cantools * {decode,plot} *"
+    risk: blocked
+    note: cantools reads candump frames from standard input, which VERA closes. Use can-decode --dbc <database> --input <log>.
+  - match: "cantools * monitor *"
+    risk: blocked
+    note: The monitor is an interactive terminal view that opens a bus. Capture with can-python, then use can-decode.
+  - { match: "can-decode *", risk: safe, note: Reads a database and a log file. }

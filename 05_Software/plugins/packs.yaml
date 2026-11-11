@@ -18,3 +18,8 @@
   name: Wireshark
   groups:
     - { name: Capture analysis, plugins: [wireshark-tshark], default: true }
+- id: can
+  name: CAN
+  groups:
+    - { name: Bus capture and transmit, plugins: [can-python], default: true }
+    - { name: DBC decoding, plugins: [can-dbc], default: true }

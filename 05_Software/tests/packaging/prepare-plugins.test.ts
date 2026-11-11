@@ -30,6 +30,8 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   expect(index.plugins.map((plugin: { id: string; tier: string }) => [plugin.id, plugin.tier])).toEqual([
     ["analysis-skills", "official"],
     ["binutils", "official"],
+    ["can-dbc", "official"],
+    ["can-python", "official"],
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],

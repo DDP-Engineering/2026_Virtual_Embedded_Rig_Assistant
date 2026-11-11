@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-2eb33af8"
+
+title = "Classify can-python commands by bus effect"
+
+status = "active"
+
+requirement = """
+When the agent submits a can command, VERA shall classify list, help and version as safe, capture as device-read, capture with --active as device-write, and any command line containing send or replay as irreversible with that word as the typed confirmation.
+"""
+
+verification = "Classify every rule row including options before the subcommand, a leading -- and --help before send, an --active capture and unknown subcommands (default device-write); check the confirmation word for send and replay in both positions."
+
+affected_paths = ["05_Software/plugins/can-python/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

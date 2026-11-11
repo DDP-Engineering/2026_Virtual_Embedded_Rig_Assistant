@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-e0466566"
+
+title = "CAN acceptance on a real adapter and on Linux vcan0"
+
+status = "active"
+
+requirement = """
+Where a host has a supported CAN adapter or a Linux vcan0 interface, VERA shall capture its live traffic with can-python and decode it with can-dbc on Windows x64 and Linux x64.
+"""
+
+verification = "Manual: on Linux bring up vcan0 (user step) and on Windows connect one PEAK, Vector, Kvaser, slcan or gs_usb adapter on a live bus; capture, decode with a DBC and record host, adapter and output."
+
+affected_paths = ["05_Software/plugins/can-python/README.md"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11
