@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-9dbe7de8"
+
+title = "Classify pymcuprog actions from parsed option roles"
+
+status = "active"
+
+requirement = """
+When the agent submits a pymcuprog command, VERA shall classify it from pymcuprog's parsed arguments: help, version and release information and makeuf2 safe; ping, read, verify, reset and the voltage reads device-read; write, erase, reboot-debugger and the locked-device switches device-write; and an unknown, ambiguous or malformed argument device-write.
+"""
+
+verification = "Classify every action with options before and after it, abbreviated, attached, equals and grouped spellings, -l value lists that swallow later words, -- and unknown options."
+
+affected_paths = ["05_Software/plugins/microchip-pymcuprog/plugin.yaml", "05_Software/src/libraries/shared/src/pymcuprog-options.ts"]
+
+linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

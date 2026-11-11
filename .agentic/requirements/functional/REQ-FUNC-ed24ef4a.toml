@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ed24ef4a"
+
+title = "can-python lists CAN interfaces and driver availability"
+
+status = "active"
+
+requirement = """
+When the agent runs `can list`, the can-python script shall print a JSON object with the python-can interface configurations it detects for pcan, vector, kvaser, slcan, gs_usb and socketcan and, for each of those backends, whether its driver library or package is available with an install hint, without opening a bus.
+"""
+
+verification = "Run list against the fake python-can and check the six driver entries, each with a hint, and that no Bus was constructed; the opt-in real run parses the same six drivers from the real script."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

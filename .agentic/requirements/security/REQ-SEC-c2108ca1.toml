@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-c2108ca1"
+
+title = "Treat pymcuprog supply and high-voltage actions as irreversible"
+
+status = "active"
+
+requirement = """
+When a pymcuprog command sets the kit's target supply voltage or applies a UPDI high-voltage activation (-H), VERA shall classify it irreversible with the action as the typed confirmation word.
+"""
+
+verification = "Classify setsupplyvoltage and -H/--high-voltage in short, long, abbreviated and attached forms with read-only actions; check the confirmation word."
+
+affected_paths = ["05_Software/plugins/microchip-pymcuprog/plugin.yaml", "05_Software/src/libraries/shared/src/pymcuprog-options.ts"]
+
+linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

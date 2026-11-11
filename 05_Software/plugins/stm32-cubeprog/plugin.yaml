@@ -1,0 +1,60 @@
+format: 1
+id: stm32-cubeprog
+version: 1.0.0
+name: STM32CubeProgrammer
+description: Connect to STM32 parts through an ST-LINK, UART, USB DFU, SPI, I2C or CAN bootloader with STM32_Programmer_CLI, read memories, flash and verify images, erase, reset, and read or change option bytes. Use to program an STM32 board or inspect its protection state.
+ecosystem: stm32
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://www.st.com/resource/en/user_manual/um2237-stm32cubeprogrammer-software-description-stmicroelectronics.pdf"]
+programs:
+  stm32_programmer_cli:
+    optionSyntax: stm32cubeprog
+    install:
+      find:
+        windows:
+          - "%PATH%"
+          - "%ProgramFiles%/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
+          - "%SystemDrive%/ST/STM32CubeCLT*/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
+          - "%SystemDrive%/ST/STM32CubeIDE_*/STM32CubeIDE/plugins/*cubeprogrammer*/tools/bin/STM32_Programmer_CLI.exe"
+        # The file is STM32_Programmer_CLI and VERA program names are lower case, so Linux lists install folders first.
+        linux:
+          - "~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
+          - "/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
+          - "/opt/st/stm32cubeclt*/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
+          - "/opt/st/stm32cubeide*/plugins/*cubeprogrammer*/tools/bin/STM32_Programmer_CLI"
+          - "~/st/stm32cubeide*/plugins/*cubeprogrammer*/tools/bin/STM32_Programmer_CLI"
+          # PATH finds only a lower-case stm32_programmer_cli link, which a custom install can provide.
+          - "$PATH"
+      hint: "Install STM32CubeProgrammer from https://www.st.com/en/development-tools/stm32cubeprog.html (an ST account is required) or STM32CubeIDE, which bundles it."
+    version: { args: [--version], match: 'STM32CubeProgrammer version: (\d+\.\d+\.\d+)' }
+    timeout: 600
+# stm32cubeprog syntax turns every command of the line into its canonical lower-case short name (aliases folded), with
+# a qualifier where one name has two risks: -ob/-otp/-psrss displ or <write>, -corereg <write>, debugauth (debug
+# authentication); a board-free listing is <list-only> instead of -l. A spelling the help does not list is <unknown> plus
+# every command it could mean. The typed word is the command (debugauth for debug authentication).
+rules:
+  - { match: "stm32_programmer_cli * {-h,-version,-q,-log,-vb,-y,-sl,-ms,-fchecksum,-tm,-ra,-nv,--skiperase,-noreconnect,-force_no_da,-el,-elbl} *", risk: safe, note: "Help, version, output settings, command modifiers and host-file tools (-fchecksum, -sl and -ms modify or read files only)." }
+  - { match: "stm32_programmer_cli * <list-only> *", risk: safe, note: Lists probes or ports without connecting to a target. }
+  - match: "stm32_programmer_cli * {-c,-l,-gettargetsellist,-r,-r32,-r16,-r8,-r32fast,-checksum,-v,-blankcheck,-score,-halt,-run,-step,-rst,-hardrst,-rstbl,-corereg,-getuid64,-fusgetstate,-fusopgetversion,-rssgetversion,-hsmgetinfo,-hsmgetcounter,-hsmgetfwid,-hsmgetstatus,-regdump,-hf,-swv,-startswv,-p,-gc,-ssigfoxc,-rp,-detach} *"
+    risk: device-read
+    note: Connects to the target and reads it; connection modes, resets and halt/run/step affect the running program.
+  - { match: "stm32_programmer_cli * {-ob,-otp,-psrss} displ *", risk: device-read, note: "Displays option bytes, OTP words or the product state without changing them." }
+  - match: "stm32_programmer_cli * {-w,-w32,-w16,-w8,-e,-fillmemory,-g,-wsigfoxc,-wb,-startfus,-fwdelete,-startwirelessstack,-w32dbgmcu,-a,-rsse,-mcsv,-ecsv,-rssekw} *"
+    risk: device-write
+    note: Writes, erases or fills flash or RAM, runs code, or changes wireless-stack state that a new download restores. A hex, srec or ELF image can also carry option-byte or OTP segments, which -w programs too.
+  - { match: "stm32_programmer_cli * -corereg <write> *", risk: device-write, note: Writes core registers of the halted target. }
+  - { match: "stm32_programmer_cli * <unknown> *", risk: device-write, note: A command or spelling the STM32CubeProgrammer 2.23.0 help does not list; check STM32_Programmer_CLI --help. }
+  - match: "stm32_programmer_cli * -ob <write> *"
+    risk: irreversible
+    note: Writes option bytes. RDP=0xBB enables read protection, which only a full mass erase removes; RDP=0xCC (level 2) is permanent and blocks debug access forever. Wrong boot or watchdog settings can also lock the part out.
+  - match: "stm32_programmer_cli * {-rdu,-tzenreg} *"
+    risk: irreversible
+    note: Regresses read protection or TrustZone, which mass-erases the flash.
+  - match: "stm32_programmer_cli * {-lockrdp1,-unlockrdp1,-lockrdp2,-unlockrdp2,-storekeyotp,-sfi,-ssfi,-ssp,-installipmodule,-updateipmodule,-dsecurity,-setdefaultob,-antirollback,-fwupgrade,-authkeyupdate,-authkeylock,-wusrkey,-sdp,-pwd,-obrss,-pmic} *"
+    risk: irreversible
+    note: Changes protection, one-time-programmable memory, keys, secure firmware, the wireless coprocessor firmware or the product state; many of these cannot be undone.
+  - { match: "stm32_programmer_cli * {-otp,-psrss} <write> *", risk: irreversible, note: Fuses OTP words or sets the product state; neither can be undone. }
+  - { match: "stm32_programmer_cli * debugauth *", risk: irreversible, note: Debug authentication can grant permissions such as full regression that erase the device. }
+  - { match: "stm32_programmer_cli * {-hsmgetlicense,-hsmglfcb} *", risk: irreversible, note: Consumes a license from the HSM card's counter. }
+  - { match: "stm32_programmer_cli * -pwr *", risk: irreversible, note: Switches the target supply from the ST-LINK. }
+  - { match: "stm32_programmer_cli * -script *", risk: blocked, note: "A script file can contain any command, so VERA cannot classify it. Run its commands directly." }

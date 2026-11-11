@@ -223,6 +223,13 @@
     "invalidCitation": "Citation could not be verified",
     "transcript": "Transcript",
     "scrollConversation": "Scroll conversation",
+    "navigator": {
+      "label": "Your messages",
+      "message": "Message {{ordinal}}",
+      "group": "Messages {{first}}–{{last}} ({{count}})",
+      "empty": "Empty message",
+      "moved": "Moved to message {{ordinal}}"
+    },
     "empty": "Start by sending a message.",
     "reasoning": "Reasoning",
     "pending": "Pending delivery",

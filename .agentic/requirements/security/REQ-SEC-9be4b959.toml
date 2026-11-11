@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-9be4b959"
+
+title = "Classify cantools commands and refuse stdin or interactive ones"
+
+status = "active"
+
+requirement = """
+When the agent submits a cantools or can-decode command, VERA shall classify cantools dump, list, convert, generate_c_source, help and version and every can-decode command as safe, and refuse cantools decode, plot and monitor as blocked because they read standard input or need an interactive terminal.
+"""
+
+verification = "Classify each cantools subcommand with and without a global option before it, help and version, and can-decode commands; blocked notes point to can-decode."
+
+affected_paths = ["05_Software/plugins/can-dbc/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

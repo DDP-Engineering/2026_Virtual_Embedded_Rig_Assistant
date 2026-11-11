@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-b2f6ffa8"
+
+title = "Show user-message markers beside the conversation rail"
+
+status = "active"
+
+requirement = """
+While a session conversation overflows its viewport and contains user messages, VERA shall show one marker or marker group per displayed user message, pending ones included, in a lane beside the scroll rail at a position proportional to the message's start in the whole content, and shall hide the lane otherwise without covering message text.
+"""
+
+verification = "Unit tests check the mapping p + clamp(y/S) * (H - 2p) for edges and zero sizes; browser tests check marker order and proportional positions with messages of different lengths, the hidden lane without overflow (a component test covers overflow without user messages), and that no marker overlaps message text at 1280x900 and 1024x640 with 100% and 150% text."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

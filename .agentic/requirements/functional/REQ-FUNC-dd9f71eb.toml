@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-dd9f71eb"
+
+title = "Install pymcuprog from PyPI for the microchip-pymcuprog plugin"
+
+status = "active"
+
+requirement = """
+When the user installs the microchip-pymcuprog programs, VERA shall install pymcuprog from PyPI within the supported range >=3.19,<4 and report the version printed by pymcuprog --version.
+"""
+
+verification = "With VERA_MCU_UV, provision the package from PyPI and check the ready status, the pip kind and a 3.19 version; the manifest declares the pip requirement and range."
+
+affected_paths = ["05_Software/plugins/microchip-pymcuprog/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

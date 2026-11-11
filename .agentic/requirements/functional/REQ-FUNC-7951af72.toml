@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7951af72"
+
+title = "Decode a CAN log file with a DBC database"
+
+status = "active"
+
+requirement = """
+When the agent runs `can-decode` with a DBC database and a .asc, .blf or .log capture, the can-dbc script shall print each frame whose ID the database defines with its message name and decoded signals, and end with counts of decoded and unknown frames per ID.
+"""
+
+verification = "In the opt-in real run, decode the .asc and .blf captures with the fixture DBC and check signal values with units, per-message counts and the unknown 7FF count, then --id 0x200 --limit 1 --no-choices; unreadable inputs are REQ-REL-5edff0c2."
+
+affected_paths = ["05_Software/plugins/can-dbc/scripts/can_decode.py", "05_Software/tests/fixtures/can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c9e6cb02"
+
+title = "Expose CAN capture, transmit and decode skills"
+
+status = "active"
+
+requirement = """
+When can-python and can-dbc are enabled for a workbench, VERA shall expose the can-capture, can-transmit and can-decode skills that direct bounded listen-only captures, confirmed transmissions and DBC decoding.
+"""
+
+verification = "Install both packages into a store, list their skills through the skill catalog and read each for its bounds, listen-only, typed-confirmation and decoding guidance."
+
+affected_paths = ["05_Software/plugins/can-python/skills/", "05_Software/plugins/can-dbc/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

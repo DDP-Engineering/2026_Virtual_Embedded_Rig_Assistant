@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-4e0621b6"
+
+title = "Refuse tshark Lua scripts and command-line RPCAP credentials"
+
+status = "active"
+
+requirement = """
+If a tshark command loads a Lua script through -X lua_script or passes RPCAP credentials with -A, then VERA shall refuse it as blocked in every permission mode without starting a process.
+"""
+
+verification = "Classify -X lua_script and lua_scriptN in separate, grouped and attached forms and -A in both forms as blocked, keep -x and other -X keys at their own risk, and run a blocked command through a bypass replay session to confirm the refusal and that no process starts."
+
+affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml", "05_Software/src/libraries/shared/src/tshark-options.ts"]
+
+linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

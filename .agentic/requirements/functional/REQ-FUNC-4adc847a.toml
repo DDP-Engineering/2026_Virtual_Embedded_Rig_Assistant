@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4adc847a"
+
+title = "Transmit a CAN frame after typed confirmation"
+
+status = "active"
+
+requirement = """
+When the user has confirmed a send, the can-python script shall transmit the given frame the requested number of times with the requested period and print the number of frames sent.
+"""
+
+verification = "Against the fake python-can, send three frames and check the recorded frames and the printed line, including a CAN FD frame with its flags; the opt-in real run sends two frames on udp_multicast that both captures receive."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

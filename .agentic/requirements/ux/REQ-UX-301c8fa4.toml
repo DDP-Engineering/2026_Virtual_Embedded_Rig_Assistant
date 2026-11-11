@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-301c8fa4"
+
+title = "Expose STM32 flashing and option-byte skills"
+
+status = "active"
+
+requirement = """
+When stm32-cubeprog is enabled for a workbench, VERA shall expose the stm32-flash and stm32-option-bytes skills that direct probe discovery, connection, flashing with verification and reset, and reading option bytes with single explicit changes.
+"""
+
+verification = "Install the package, list its skills through the skill catalog and read each for -l, -c port=SWD, -w with -v, -rst, -ob displ and the RDP warnings."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/skills/"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-1fbadc3c"
+
+title = "Answer questions about a sample pcapng through a replay session"
+
+status = "active"
+
+requirement = """
+When a replay session in ask mode analyses the sample capture fixture with the found tshark, VERA shall run the read, filter, field export and statistics commands without approval and return tshark's real output.
+"""
+
+verification = "With the generated sample pcapng and an installed tshark, run the replay script through SessionService in ask mode and check no approval is created, every command exits 0 and the outputs contain the fixture's known packets, fields and statistics; without tshark the test is skipped and says so."
+
+affected_paths = ["05_Software/tests/fixtures/wireshark-tshark/"]
+
+linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

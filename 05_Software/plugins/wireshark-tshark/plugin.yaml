@@ -1,0 +1,29 @@
+format: 1
+id: wireshark-tshark
+version: 1.0.0
+name: Wireshark (TShark)
+description: Analyse network capture files with TShark (filters, field export, protocol statistics, packet details) and capture live traffic from an interface. Use for questions about .pcap/.pcapng captures of a board's Ethernet, Wi-Fi or USB traffic.
+ecosystem: wireshark
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://www.wireshark.org/docs/man-pages/tshark.html"]
+programs:
+  tshark:
+    optionSyntax: tshark
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/Wireshark/tshark.exe"]
+        linux: ["$PATH", "/usr/bin/tshark"]
+      hint: "Install Wireshark (Windows: includes TShark and offers Npcap) from https://www.wireshark.org/download.html, or your distribution's tshark package."
+    version: { args: [--version], match: '^TShark \(Wireshark\) (\d+\.\d+\.\d+)' }
+    timeout: 300
+# tshark syntax projects option roles: <info> exits before capturing, <file> reads -r, <capture> opens an
+# interface (or the default one when no capture file is read), <unknown> is an unrecognised option.
+rules:
+  - { match: "tshark * <info> *", risk: safe }
+  - { match: "tshark * <file> *", risk: safe, note: Reads a saved capture file; output files such as -w or --export-objects are written without approval. }
+  - match: "tshark * <capture> *"
+    risk: device-read
+    note: Captures live traffic. Without -r tshark captures on the first interface. Needs Npcap on Windows or dumpcap capture permissions on Linux; extcap interfaces such as sshdump or rpcap reach other hosts.
+  - { match: "tshark * <unknown> *", risk: device-write, note: An option this plugin does not recognise; check it against tshark -h. }
+  - { match: "tshark * <execute> *", risk: blocked, note: "Lua scripts (-X lua_script) can run arbitrary code and are unavailable. Use display filters, -d decode-as rules or field export instead." }
+  - { match: "tshark * <credentials> *", risk: blocked, note: RPCAP passwords on the command line would be stored in run logs. Configure remote capture outside VERA. }

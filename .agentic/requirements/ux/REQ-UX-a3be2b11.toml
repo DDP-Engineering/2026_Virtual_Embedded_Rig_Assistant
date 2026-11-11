@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-a3be2b11"
+
+title = "Preview a user message from its marker"
+
+status = "active"
+
+requirement = """
+When a message marker gets hover or keyboard focus, VERA shall show a plain-text preview with the message number and at most 140 normalized characters (a localized label for an empty message, marked when pending) inside the window, closing on Escape and staying while the pointer is over it.
+"""
+
+verification = "Unit tests check normalization and the 140-character cut by code point; component tests check hover and focus previews, empty and pending labels, Escape and pointer moves onto the preview; a browser test checks the preview stays inside a small window."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

@@ -4,8 +4,9 @@ PURPOSE: the order in which VERA 1.0 is built — milestones, work packages, dep
 and the decisions taken with the user that shape it. Specs: `../architecture/`; decisions: `../decisions/`.
 STATE: planned 2026-10-09; implemented — WP-01…WP-38 and the epics M0–M5 are closed in Gitea. This file and the milestone files are now the historical record of the plan. What the code
 actually does is in `../architecture/`; per-WP outcomes are in the "Implementation notes" section of
-each milestone file. New work is planned in `../plugins/plan.md`, `../capabilities/` and
-[plugins-ui-redesign.md](plugins-ui-redesign.md) (PLG-23…PLG-25, implemented 2026-11-11; PLG-25 commit pending coordinator).
+each milestone file. New work is planned in `../plugins/plan.md` and `../capabilities/`; UI work after
+1.0 has its own pages here: [chat-navigation.md](chat-navigation.md) (CHAT-NAV-01, Gitea #89) and
+[plugins-ui-redesign.md](plugins-ui-redesign.md) (PLG-23�PLG-25, implemented 2026-11-11; validated local commits).
 
 ## 0. Outcome (2026-11-01)
 

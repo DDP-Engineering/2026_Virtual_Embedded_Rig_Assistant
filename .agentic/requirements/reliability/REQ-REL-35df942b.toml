@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-35df942b"
+
+title = "Refuse a capture without listen-only unless --active is given"
+
+status = "active"
+
+requirement = """
+If a capture names a backend without a python-can listen-only switch (such as gs_usb or a SocketCAN channel not configured listen-only) and --active is not given, then the can-python script shall refuse with exit 2 and explain that the adapter would acknowledge frames.
+"""
+
+verification = "Against the fake python-can, capture for gs_usb and for socketcan can0 without --active: exit 2, the explanation and no Bus; with --active the gs_usb Bus opens without listen-only arguments and the summary says active. The opt-in real run repeats the gs_usb refusal."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

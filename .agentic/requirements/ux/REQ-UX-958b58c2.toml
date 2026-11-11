@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-958b58c2"
+
+title = "Operate the message navigator from the keyboard"
+
+status = "active"
+
+requirement = """
+The message navigator shall be a single Tab stop separate from the scroll rail, move focus with ArrowUp/ArrowDown and Home/End without scrolling, activate with Enter or Space, expose the current marker with aria-current and use localized en/ro/de labels with visible focus in every theme.
+"""
+
+verification = "Component and browser tests tab into the navigator once, move with arrows and Home/End without scrolling, activate with Enter and Space, check aria-current and the role=scrollbar keys still working; the i18n check covers en/ro/de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

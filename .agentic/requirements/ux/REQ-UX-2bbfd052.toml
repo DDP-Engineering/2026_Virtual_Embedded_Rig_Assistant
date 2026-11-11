@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-2bbfd052"
+
+title = "Jump to a user message from its marker"
+
+status = "active"
+
+requirement = """
+When the user activates a message marker or a group selector entry, VERA shall scroll that message to about 16 px below the top of the transcript (or the native end), highlight it for about 1.5 s, announce the navigation briefly and keep focus on the navigator.
+"""
+
+verification = "Browser tests activate the first, a middle and the last marker by pointer and keyboard and check the message top, the native end limit, the highlight appearing and clearing, the status text and the focused navigator; two identical texts jump to their own messages."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11
