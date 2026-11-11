@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-292d1dd5"
+
+title = "Reject invalid can arguments before opening a bus"
+
+status = "active"
+
+requirement = """
+If can arguments are invalid (a first argument that is not a command, a capture without a bound, an output that is not .asc/.blf/.log or already exists or cannot be written, a non-positive or non-finite duration, message limit, count or bitrate, a negative or non-finite period, a missing bitrate for pcan, kvaser or gs_usb, an invalid ID, payload or FD length, or a missing replay log), then the can-python script shall exit 2 with the reason before opening a bus.
+"""
+
+verification = "Run each invalid case against the fake python-can and check exit 2, the reason and that no Bus was constructed; an existing output file keeps its content."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

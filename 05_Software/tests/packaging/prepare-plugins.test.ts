@@ -30,13 +30,18 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   expect(index.plugins.map((plugin: { id: string; tier: string }) => [plugin.id, plugin.tier])).toEqual([
     ["analysis-skills", "official"],
     ["binutils", "official"],
+    ["can-dbc", "official"],
+    ["can-python", "official"],
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],
     ["git", "official"],
+    ["microchip-pymcuprog", "official"],
     ["probe-rs", "official"],
     ["serial-monitor", "official"],
     ["sigrok", "official"],
+    ["stm32-cubeprog", "official"],
+    ["wireshark-tshark", "official"],
   ]);
   expect(JSON.parse(await readFile(join(target, "index.json"), "utf8"))).toEqual(index);
   await expect(checkBundledPlugins(target)).resolves.toEqual(index);

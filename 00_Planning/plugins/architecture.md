@@ -99,7 +99,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `programs.*.install` | one kind of §5, with an optional `download` fallback on `find`; a `script` path must exist in the package; a `pip` requirement starts with a letter or digit (never an option); a `download` URL ending in `.zip`, `.tar.gz`, `.tgz` or `.tar.xz` needs `path`; `find` entries are `%PATH%`/`$PATH` or absolute paths (optionally starting with `~` or a variable) with `*` inside one segment, in at most two segments, and no `**`; `find` takes an optional `hint` |
 | `programs.*.version` | probe arguments, a regex with one capture group and an optional supported `range` (comma-separated `>=`, `>`, `<=`, `<`, `==`, `!=` with dotted numbers, e.g. `>=5,<6`); shown in the UI and the prompt |
 | `programs.*.launcher` | optional argument prefix for programs that need an activated vendor environment, for example `[eim, run]` (§3.3) |
-| `programs.*.optionSyntax` | optional `git` or `sigrok-cli`: command-specific case-sensitive option-role projection for matching; Git adds its fixed no-ext-diff execution guard at the read-command boundary; approvals and labels retain raw arguments |
+| `programs.*.optionSyntax` | optional `git`, `sigrok-cli`, `tshark`, `pymcuprog` or `stm32cubeprog`: command-specific option-role projection for matching (case-sensitive except `stm32cubeprog`, whose CLI ignores case); Git adds its fixed no-ext-diff execution guard at the read-command boundary; approvals and labels retain raw arguments |
 | `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
 | `programs.*.env` | extra variables; values are literals, `${workbench}` or `${pluginDir}` |
 | `programs.*.timeout` | default seconds for a foreground run, ≤ 3600 |
@@ -233,7 +233,7 @@ Never guess serial ports, chip types or flash offsets: list the ports and read t
 
 | Level | Meaning | Examples |
 |---|---|---|
-| `safe` | no effect on hardware | `esptool merge-bin`, `idf.py build`, `tshark -r capture.pcapng`, `cantools decode` |
+| `safe` | no effect on hardware | `esptool merge-bin`, `idf.py build`, `tshark -r capture.pcapng`, `can-decode --dbc board.dbc --input bus.asc` |
 | `device-read` | touches hardware without changing stored state; may reset or halt the target | `esptool chip-id`, `espefuse summary`, serial capture, CAN listen-only capture |
 | `device-write` | changes stored device state that a reflash restores | `write-flash`, erase, NVS write, PIC/AVR programming |
 | `irreversible` | a permanent change to the device, or physical actuation outside it | eFuse burn, secure boot or flash encryption enable, STM32 RDP level 2, OTP writes, CAN transmit on a live bus, power-supply output |

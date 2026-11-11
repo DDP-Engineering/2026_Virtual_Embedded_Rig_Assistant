@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cd61ecee"
+
+title = "Capture CAN traffic listen-only to a log file"
+
+status = "active"
+
+requirement = """
+When the agent runs `can capture` with an interface, channel and a duration or message bound, the can-python script shall open the bus in the backend's listen-only mode, write every received frame to the new .asc, .blf or .log file given by --output (or print candump-style lines without it) and end with a summary of the count, mode, target and stop reason on stderr.
+"""
+
+verification = "Against the fake python-can, check the Bus arguments per backend (pcan state PASSIVE, vector and slcan listen_only, kvaser silent driver mode, software buses none; ignore_config always), the written frames, the stdout lines and the summary for both stop reasons; the opt-in real run captures to .asc and .blf on udp_multicast and checks the summary in the run log."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

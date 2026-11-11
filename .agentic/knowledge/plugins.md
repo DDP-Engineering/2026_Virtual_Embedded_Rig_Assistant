@@ -429,6 +429,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Launcher quoting | `core/src/plugins/launcher.ts` | `launcher.test.ts` |
 | Runner lifecycle in the apps | desktop `main/index.ts`, `cli/src/run.ts` | inspection; `process-hosts.test.ts` for the hosts |
 | Git option roles, helpers, listings and destructive escalation | `shared/src/git-options.ts`, `ProgramTools.request`, manifest `optionSyntax: git` | `tests/integration/git.test.ts` |
+| STM32_Programmer_CLI command map (canonical names, displ/<write>, debugauth, <list-only>, <unknown>) | `shared/src/stm32-options.ts`, manifest `optionSyntax: stm32cubeprog` | `tests/integration/stm32-cubeprog.test.ts` |
+| pymcuprog option roles (action, info, protect, high-voltage, locked, unknown) | `shared/src/pymcuprog-options.ts`, manifest `optionSyntax: pymcuprog` | `tests/integration/microchip-pymcuprog.test.ts` |
+| tshark option roles (info, file, capture, unknown, execute, credentials) | `shared/src/tshark-options.ts`, manifest `optionSyntax: tshark` | `tests/integration/wireshark-tshark.test.ts` |
 | Matching, policy table, confirmation word | `shared/src/program-rules.ts` | `shared/src/program-rules.test.ts` |
 | Program request, files, lookup | `core/src/plugins/program-request.ts` | `program-request.test.ts` |
 | Gate decisions for run_program | `core/src/agent/approvals.ts` | `core/src/agent/program-approvals.test.ts` |

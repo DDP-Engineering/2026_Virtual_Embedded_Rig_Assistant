@@ -14,3 +14,20 @@
     - { name: Debug probes and RTT, plugins: [probe-rs], default: true }
     - { name: Signal capture and bench instruments, plugins: [sigrok], default: true }
     - { name: Version control, plugins: [git], default: true }
+- id: wireshark
+  name: Wireshark
+  groups:
+    - { name: Capture analysis, plugins: [wireshark-tshark], default: true }
+- id: can
+  name: CAN
+  groups:
+    - { name: Bus capture and transmit, plugins: [can-python], default: true }
+    - { name: DBC decoding, plugins: [can-dbc], default: true }
+- id: microchip
+  name: Microchip (AVR, PIC)
+  groups:
+    - { name: Programming (pymcuprog), plugins: [microchip-pymcuprog], default: true }
+- id: stm32
+  name: STM32 (ST)
+  groups:
+    - { name: Programming (STM32CubeProgrammer), plugins: [stm32-cubeprog], default: true }

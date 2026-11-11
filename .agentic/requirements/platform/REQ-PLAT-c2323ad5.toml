@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-c2323ad5"
+
+title = "Analyse capture files with tshark on Linux x64"
+
+status = "active"
+
+requirement = """
+Where a Linux x64 host has tshark installed, when the agent analyses a capture file, VERA shall find tshark and run the capture-file analysis as on Windows x64.
+"""
+
+verification = "Manual: on a Linux x64 host with tshark and the pinned Linux Node runtime, run tests/integration/wireshark-tshark.test.ts; the sample-capture replay must run (not skip) and pass; record the host (native or WSL2), tshark version and result."
+
+affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

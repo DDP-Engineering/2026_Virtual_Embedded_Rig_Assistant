@@ -291,6 +291,12 @@ change requires a new review.
   steps.
 **Done when:** on Linux a `vcan0` capture is decoded with a DBC file; on Windows one adapter captures
 a live bus; a transmit waits for the typed confirmation in `ask`.
+- Implementation candidate 2026-11-11 (TASK-324b8162): official `can-python` (`can` script: list with driver
+  hints, listen-only capture with `--active` as device-write for backends without a switch, send/replay
+  irreversible) and `can-dbc` (pip cantools for dump/list/convert; `can-decode` script because `cantools
+  decode` reads stdin) in a CAN pack. Typed confirmation proven by default tests; an opt-in real run
+  captured, transmitted and decoded on a udp_multicast bus on Windows. Real adapters and Linux vcan0 remain
+  open (no hardware or Linux host); the optional can-utils plugin was not shipped.
 
 ### PLG-15 Wireshark plugin
 **Goal:** analyse captures with tshark. **Depends on:** PLG-07. **Specs:** packs §3.
@@ -298,6 +304,13 @@ a live bus; a transmit waits for the typed confirmation in `ask`.
   (`safe`); live capture with `-i` (`device-read`).
 **Done when:** the agent answers questions about a sample `.pcapng` on both systems; a missing
 tshark shows its hint; live capture works where Npcap or dumpcap permissions exist.
+- Implementation candidate 2026-11-11 (TASK-bb2d915f): official find-only `wireshark-tshark` package in
+  its own Wireshark pack, `optionSyntax: tshark` role projection measured on TShark 4.6.8 (case-sensitive
+  letters, grouping, long abbreviations, end of options at the first filter word; Lua scripts and `-A`
+  credentials blocked, capture without `-r` device-read), skills `wireshark-analyze` and
+  `wireshark-capture`, generated CoAP/Modbus sample capture. A real-TShark replay session answers the
+  sample on Windows, and an opt-in test captured self-sent loopback datagrams after the device-read
+  approval on Windows with Npcap. Linux execution remains open; no Linux host with tshark was available.
 
 ### PLG-16 Microchip plugin
 **Goal:** program AVR and PIC parts. **Depends on:** PLG-07. **Specs:** packs §4.
@@ -305,6 +318,11 @@ tshark shows its hint; live capture works where Npcap or dumpcap permissions exi
   (`device-write`), fuse, config-word and lock writes that enable protection (`irreversible`).
 **Done when:** on one UPDI board the agent pings, flashes and verifies an image; matcher tests prove
 that protection writes are `irreversible`; no test writes real lock bits.
+- Implementation candidate 2026-11-11 (TASK-46fcedc2): official `microchip-pymcuprog` (pip pymcuprog 3.19) with an
+  `optionSyntax: pymcuprog` projection measured on 3.19.4.61; fuse/lock/config/all-memory writes, every hex write
+  (it can carry fuse segments), supply and high-voltage actions irreversible. Matrix and typed-word gate by default;
+  an opt-in real run converted a hex file and failed a ping on a missing port. UPDI board acceptance remains open;
+  PICkit 5 is not covered because pymcuprog 3.19 cannot drive it.
 
 ### PLG-17 STM32 plugin
 **Goal:** program STM32 parts. **Depends on:** PLG-07. **Specs:** packs §5.
@@ -312,6 +330,11 @@ that protection writes are `irreversible`; no test writes real lock bits.
   (`device-write`), every option-byte write, above all `RDP=0xCC`, `irreversible`.
 **Done when:** on a Nucleo board the agent identifies the part, flashes and verifies an image; matcher
 tests prove that every `-ob` write is `irreversible`; no test changes option bytes.
+- Implementation candidate 2026-11-11 (TASK-71300a15): official find-only `stm32-cubeprog` (program
+  `stm32_programmer_cli`) with an `optionSyntax: stm32cubeprog` command map measured on STM32CubeProgrammer 2.23.0:
+  every command of a line counts; `-ob displ` device-read, every other `-ob` and the protection, OTP, key,
+  secure-firmware, FUS, debug-authentication, HSM-license and power commands irreversible; `-script` blocked. Tests
+  classify every command of the recorded help and run the real CLI without a board. Nucleo acceptance remains open.
 
 ### PLG-18 MCP adapter (optional)
 **Goal:** run a plugin's MCP server under the same rules. **Depends on:** PLG-04.

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-0cc3c9ba"
+
+title = "Show the tshark install hint when tshark is missing"
+
+status = "active"
+
+requirement = """
+If no tshark executable is found, then VERA shall report the tshark program as missing with the package's hint to install Wireshark or the distribution's tshark package and never start a tshark process.
+"""
+
+verification = "Resolve the program with an empty PATH and no standard install location, then check the missing status carries the hint text and that no process was spawned."
+
+affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

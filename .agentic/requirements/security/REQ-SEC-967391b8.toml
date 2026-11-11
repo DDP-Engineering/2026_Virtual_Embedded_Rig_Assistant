@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-967391b8"
+
+title = "Classify STM32_Programmer_CLI commands from the parsed command line"
+
+status = "active"
+
+requirement = """
+When the agent submits an STM32_Programmer_CLI command line, VERA shall classify every command on it at the highest risk: help, version, output settings, command modifiers, host-file tools and board-free probe listings safe; connecting, other listings, reading, verifying, resets, core control, -ob displ and other displays device-read; writing, erasing, filling, running code, core-register writes and wireless-stack start or delete device-write; and an unknown command, a word before the first command, or any spelling the help does not list (extra dashes, inner parts, spaces) device-write together with every command that spelling could mean.
+"""
+
+verification = "Classify each command family in help, mixed-case and long spellings, several commands on one line, numeric arguments (-1), board-free and other listings, and spellings the help does not list (--ob, --c, -file-checksum, -x-rst, -ob=displ) as device-write at least."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml", "05_Software/src/libraries/shared/src/stm32-options.ts", "05_Software/plugins/catalog.yaml", "05_Software/tests/fixtures/stm32/"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

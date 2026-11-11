@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-835a17ea"
+
+title = "Replay a CAN log file after typed confirmation"
+
+status = "active"
+
+requirement = """
+When the user has confirmed a replay, the can-python script shall transmit the frames of the given log file with their recorded timing, stop after --max-messages frames when given, and print the number of frames replayed.
+"""
+
+verification = "Against the fake python-can, replay a three-frame log with --max-messages 2 and check exactly two frames were sent; the opt-in real run replays the fixture log and both captures receive its three frames."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

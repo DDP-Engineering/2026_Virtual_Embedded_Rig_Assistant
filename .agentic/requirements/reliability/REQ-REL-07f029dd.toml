@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-07f029dd"
+
+title = "Report a CAN interface that cannot be opened with its driver hint"
+
+status = "active"
+
+requirement = """
+If python-can cannot open the requested interface, then the can-python script shall exit 3 with the error and the backend's driver or link-setup hint.
+"""
+
+verification = "With the fake python-can failing to open a pcan bus, check exit 3, the error text, the PEAK hint and that the new output file was removed; the opt-in real run opens a missing PCAN channel and checks exit 3 with the hint."
+
+affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

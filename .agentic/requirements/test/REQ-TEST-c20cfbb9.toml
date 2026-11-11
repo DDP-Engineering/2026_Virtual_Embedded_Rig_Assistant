@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-c20cfbb9"
+
+title = "Capture, transmit and decode on a multicast bus through VERA"
+
+status = "active"
+
+requirement = """
+When the opt-in real provisioning runs, VERA shall capture frames from a udp_multicast bus in background runs, transmit after the typed confirmation in ask and decode the resulting captures with the fixture DBC through replay sessions.
+"""
+
+verification = "With VERA_CAN_UV, provision both packages from PyPI and run replay sessions: two background captures (.asc, .blf) on a per-run group, a send and a replay approved with their typed words, can-decode of both captures and cantools dump; a missing or wrong word starting no process is covered by the default fake-uv test."
+
+affected_paths = ["05_Software/tests/integration/can.test.ts", "05_Software/tests/fixtures/can/"]
+
+linked_tests = ["05_Software/tests/integration/can.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

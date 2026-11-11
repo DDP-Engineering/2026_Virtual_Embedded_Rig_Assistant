@@ -11,7 +11,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -21,8 +21,8 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32 and Firmware analysis groups, default on), `catalog.yaml` (all packaged plugins
-`official`, no reviewed rules), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
+source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip and STM32 groups, default on except Security), `catalog.yaml` (all packaged plugins
+`official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
 an offline first install. Nothing installs them automatically. A package holds content only: a manifest, PEP 723
@@ -60,6 +60,72 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
   replay events, durable approvals and persistent virtual-state effects. No hardware burn runs.
 
 - `git` 1.0.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/integration/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
+
+- `stm32-cubeprog` 1.0.0, ecosystem `stm32` (STM32 pack, Programming (STM32CubeProgrammer), default on), Windows
+  x64/Linux x64: find-only program `stm32_programmer_cli` (program names are lower case; Windows matches the file
+  case-insensitively): Windows `%PATH%`, `%ProgramFiles%/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin`,
+  `%SystemDrive%/ST/STM32CubeCLT*` and `STM32CubeIDE_*` plugins; Linux `~/STMicroelectronics/...`,
+  `/usr/local/STMicroelectronics/...`, `/opt/st/stm32cubeclt*`, `/opt/st` and `~/st` STM32CubeIDE plugins, then
+  `$PATH`, which finds only a lower-case stm32_programmer_cli link; hint with the st.com link (ST account required); `--version` probe
+  without range; timeout 600 s; `optionSyntax: stm32cubeprog`. The projection folds every command (case-insensitive,
+  exact names, measured on 2.23.0) to its canonical short name and adds `displ`/`<write>` for -ob/-otp/-psrss,
+  `<write>` for core-register assignments, `debugauth` for any word starting debugauth except debugauth=2 (anywhere
+  on the line), whole numbers (-1, -0x10) as arguments, `<list-only>` for
+  board-free listings; a dash word the help does not spell exactly (the CLI accepts extra dashes and trims spaces)
+  is `<unknown>` plus every command its name or its parts (split at any non-alphanumeric character) could mean; `word=` is allowed only after `-otp displ`. Rules: help/version/modifiers/host-file tools and `<list-only>` safe;
+  connect, reads, verify, resets, core control and displays device-read; writes, erases, fill, go, core writes and
+  wireless-stack start/delete device-write; option-byte writes, RDP/TZ regression and locks, OTP, keys, SFI/SSFI/SSP,
+  IP modules, FUS upgrade, antirollback, security/default OB, product-state and OB-RSS changes, PMIC, debug
+  authentication, HSM licenses and probe power irreversible (typed command); `-script` blocked. catalog.yaml reviews
+  the `{-ob,-otp,-psrss} displ` rule for the `otp` token. Tests check every command of the recorded 2.23.0 help.
+
+- `microchip-pymcuprog` 1.0.0, ecosystem `microchip` (Microchip pack, Programming (pymcuprog), default on), Windows
+  x64/Linux x64: pip `pymcuprog>=3.19,<4` (probe `pymcuprog version (\d+(?:\.\d+)+)`, range `>=3.19,<4`), timeout
+  300 s, `optionSyntax: pymcuprog`. The projection mimics pymcuprog 3.19.4.61's argparse (abbreviations, attached
+  short values with one leading `=` dropped as argparse 3.12+ does, grouped short options, last-wins repeats, action anywhere, `-l` lists that run to the next option but take only an attached
+  value, `--`) and returns the action (or `<none>`) plus `<info>`, `<protect>`, `<high-voltage>`, `<locked>`,
+  `<unknown>`. Rules: help/version/release info and makeuf2 safe; ping/read/verify/reset/voltage reads device-read; write, erase,
+  reboot-debugger, locked-device switches and unknown arguments device-write; writes to fuses, lockbits,
+  config_words or all (the default memory), every hex-file write and protection-memory erases irreversible
+  (typed action); setsupplyvoltage and any -H irreversible. Skills cover ping/flash/verify/read-back and
+  single fuse changes. Opt-in VERA_MCU_UV provisions real pymcuprog, converts a hex file and fails a ping on a
+  missing port; board acceptance is pending hardware.
+
+- `can-python` 1.0.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
+  program `can` = `scripts/can_bus.py` on `python-can[serial,gs-usb,pcan,multicast]==4.6.1` (imports python-can
+  lazily, so `--version` needs no dependency), timeout 300 s. `can list` prints `{configs, drivers}`:
+  detected configs for pcan/vector/kvaser/slcan/gs_usb/socketcan and per-backend driver availability
+  (ctypes library lookup, pyserial, libusb backend, Linux) with install hints; no bus opens. `capture`
+  requires `--duration` or `--max-messages`, writes `.asc`/`.blf`/`.log` through `can.Logger` (text formats
+  flushed per frame) or prints candump-style lines, and ends with `[can] N frames ... (mode) ..., stopped by
+  duration|max-messages` on stderr. `send` (hex ID/data, extended, FD/BRS, count/period) and `replay`
+  (`can.MessageSync` timing, `--ignore-timestamps`, `--max-messages`). Exit 0 done, 2 usage or refused capture
+  before any bus opens, 3 open/IO failure with the backend hint. The first argument must be a command (a
+  leading `--` would reach a subcommand on CPython 3.12+); every Bus gets `ignore_config=True` and digit-only
+  channels are passed as integers (ignore_config skips python-can's casting); pcan, kvaser and gs_usb need --bitrate; the capture output must be new (removed again if the bus never opened); FD payloads use
+  canonical lengths and --brs needs --fd; replay stops right after --max-messages. Rules: list/help/version
+  safe, capture device-read, capture `--active` device-write, send/replay irreversible (confirm word =
+  subcommand), backstop `can * {send,replay} *` irreversible.
+- `can-dbc` 1.0.0, ecosystem `can` (DBC decoding, default on): pip `cantools>=45,<46` (version probe range
+  `>=45,<46`; dump/list/convert/generate_c_source safe; decode/plot blocked because they read stdin, monitor
+  blocked as an interactive view) and `can-decode` = `scripts/can_decode.py` on cantools 45.1.2 + python-can
+  4.6.1: `--dbc --input [--id]... [--limit] [--no-choices] [--no-strict]`, one `time id message sig=value unit`
+  line per decoded frame and a decoded/errors/unknown-ID summary; exit 2 for unreadable inputs; safe.
+  Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
+  adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
+
+- `wireshark-tshark` 1.0.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+  on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
+  Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
+  its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
+  `optionSyntax: tshark` projects role tokens: `<info>` (-h/-v/-D/--list-sources, -G reports) and `<file>` (-r)
+  safe; `<capture>` (-i/--source/-I/-L/--list-time-stamp-types, or neither -r nor info) device-read; `<unknown>`
+  (unrecognised or ambiguous) device-write;
+  `<execute>` (-X lua_script*) and `<credentials>` (-A) blocked. Skills wireshark-analyze (overview,
+  filters, field export, statistics, frame citations) and wireshark-capture (tshark -D, confirmed interface,
+  capture filter, -a duration or -c bound, saved .pcapng). Windows replay uses the real TShark and the
+  generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captured self-sent loopback datagrams after
+  approval on Windows/Npcap. Linux execution remains unverified. `-o extcap.*` credential values are not refused.
 
 - `sigrok` 1.0.0, general, Windows x64/Linux x64/Linux arm64: provision the
   SHA-256-pinned DDP PulseView 66540df asset or use a local sigrok-cli fallback.
@@ -109,6 +175,18 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
   boot log with `serial capture --port P --reset`.
 
 ## Invariants
+
+- can capture never opens a physical adapter actively by default: listen-only kwargs (pcan
+  `state=PASSIVE`, vector/slcan `listen_only`, kvaser `driver_mode=False`), software buses
+  (virtual, udp_multicast, socketcan `vcan*`) or a SocketCAN link that `ip -json -details` reports LISTEN-ONLY;
+  everything else needs `--active`. The scripts are not named can.py/cantools.py so they never shadow packages.
+
+- tshark parsing follows TShark: case-sensitive letters with the measured value letters, grouped flags,
+  attached or separate values, exact-or-unique long abbreviations (ambiguous is `<unknown>`), and the end of
+  options at the first non-option or `--`. Arguments after that end are still read for raising roles
+  (capture, execute, credentials), never for `<info>` or `<file>`, so filter text cannot lower risk. Output
+  files of safe commands (-w, --export-objects, --log-file) need no approval. The user's Wireshark profile
+  Lua/binary plugins still load; argv rules cannot prevent that.
 
 - Sigrok rules use the `sigrok-cli` option syntax to distinguish flags and values and
   classify output settings regardless of argument order. The CLI applies `--config`
@@ -172,6 +250,13 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 | Change requested | Start with | Focused verification |
 |---|---|---|
 | probe-rs pins, risk rows, device guidance or RTT | `plugins/probe-rs/` | `probe-rs.test.ts`; real archive opt-in plus separately recorded bench acceptance |
+| STM32 command map, rules or skills | `plugins/stm32-cubeprog/`, `shared/src/stm32-options.ts` | `stm32-cubeprog.test.ts` (matrix, recorded-help coverage, fake-host find, stub gate, real CLI where installed) |
+| A new STM32CubeProgrammer release | re-record `tests/fixtures/stm32/STM32_Programmer_CLI-<v>-help.txt`, then `stm32-options.ts` and the rules | "classifies every command of a line" |
+| pymcuprog roles, rules or skills | `plugins/microchip-pymcuprog/`, `shared/src/pymcuprog-options.ts` | `microchip-pymcuprog.test.ts` matrix and stub-resolver gate; `VERA_MCU_UV` real run |
+| CAN commands, listen-only map, driver hints | `plugins/can-python/scripts/can_bus.py`, `plugin.yaml` | `can.test.ts` matrix, fake python-can script cases, gate; `VERA_CAN_UV` real udp_multicast acceptance |
+| DBC decoding or cantools rules | `plugins/can-dbc/` | `can.test.ts`; fixtures `tests/fixtures/can/` |
+| tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
+| A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
 | IDF rules, launcher detection or decoder paths | `plugins/esp32-idf/plugin.yaml` | `esp32-idf.test.ts`, core `provisioning.test.ts` |
 | Build repair or panic guidance | `plugins/esp32-idf/skills/` and README | `esp32-idf.test.ts` skill and replay cases |
 | Risk rules or notes | `plugins/serial-monitor/plugin.yaml` `rules` | `serial-monitor.test.ts` "risk rules" |
@@ -185,6 +270,24 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
 
 ## Key behaviors
+
+- `REQ-FUNC-6ea24516` / `REQ-REL-e4731e39` — STM32_Programmer_CLI discovery and install hint.
+- `REQ-SEC-967391b8` / `REQ-SEC-08036a89` / `REQ-SEC-248961d6` — STM32 command classes, irreversible protection/security, blocked scripts.
+- `REQ-UX-301c8fa4` / `REQ-TEST-6f33cbba` / `REQ-PLAT-b6e64a02` — STM32 skills, tests, Nucleo acceptance (pending).
+- `REQ-FUNC-dd9f71eb` / `REQ-SEC-9dbe7de8` / `REQ-SEC-f626bf83` / `REQ-SEC-c2108ca1` — pymcuprog install, roles, protection and physical outputs.
+- `REQ-UX-d3193aa3` / `REQ-TEST-9b1ed1aa` / `REQ-PLAT-35de3f5d` — Microchip skills, tests, UPDI board acceptance (pending).
+- `REQ-FUNC-ed24ef4a` / `REQ-REL-07f029dd` — can list with driver hints; open failure exit 3 with the hint.
+- `REQ-SEC-2eb33af8` / `REQ-SEC-9be4b959` — CAN and cantools risk rules.
+- `REQ-FUNC-cd61ecee` / `REQ-REL-35df942b` / `REQ-FUNC-4adc847a` / `REQ-FUNC-835a17ea` — listen-only capture, --active refusal, send, replay.
+- `REQ-REL-292d1dd5` / `REQ-REL-5edff0c2` — can usage errors exit 2 before any bus; unreadable can-decode inputs exit 2.
+- `REQ-FUNC-7951af72` / `REQ-UX-c9e6cb02` / `REQ-TEST-c20cfbb9` — can-decode, three skills, opt-in multicast acceptance.
+- `REQ-PLAT-e0466566` — real adapter and Linux vcan0 acceptance (pending hardware/host).
+
+- `REQ-FUNC-3a49793a` / `REQ-REL-0cc3c9ba` — find-only TShark discovery with version, missing hint and no download.
+- `REQ-SEC-3fa7a69c` / `REQ-SEC-4e0621b6` — tshark option-role risk; Lua scripts and -A credentials blocked.
+- `REQ-UX-c68ec8b8` / `REQ-TEST-1fbadc3c` — analysis/capture skills; real-TShark replay of the sample capture.
+- `REQ-PLAT-0b1587fd` — approved bounded live capture (opt-in loopback test; Windows run, Linux pending).
+- `REQ-PLAT-c2323ad5` — capture-file analysis on Linux x64 (manual, pending a Linux host with tshark).
 
 - `REQ-FUNC-19b10001` — exact 0.32.0 official package, ordered discovery and pinned portable fallback.
 - `REQ-SEC-19b10002` through `REQ-SEC-19b10006` — all five risk levels and blocked-host escalation.
@@ -220,6 +323,19 @@ policy, approvals, timeouts and the serial-port guard is not repeated in the pac
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
+
+- `05_Software/plugins/stm32-cubeprog/` — manifest, README (risk table, parsing, limits), skills stm32-flash and stm32-option-bytes.
+- `05_Software/src/libraries/shared/src/stm32-options.ts`, `05_Software/tests/integration/stm32-cubeprog.test.ts`, `tests/fixtures/stm32/` (recorded 2.23.0 help, blink.hex) — projection and tests.
+- `05_Software/plugins/microchip-pymcuprog/` — manifest, README (risk table, argument parsing, limits), skills microchip-flash and microchip-fuses.
+- `05_Software/src/libraries/shared/src/pymcuprog-options.ts`, `05_Software/tests/integration/microchip-pymcuprog.test.ts`, `tests/fixtures/microchip/app.hex` — projection, matrix, gate, opt-in real run.
+- `05_Software/plugins/can-python/` — manifest, README (drivers, listen-only), `scripts/can_bus.py`, skills can-capture and can-transmit.
+- `05_Software/plugins/can-dbc/` — manifest, README, `scripts/can_decode.py`, skill can-decode.
+- `05_Software/tests/integration/can.test.ts`, `tests/fixtures/can/` — rules, stdlib fake python-can (`fake-python-can/can`, records Bus kwargs and frames), typed gate with a fake uv, fictional DBC and candump log, opt-in real acceptance.
+
+- `05_Software/plugins/wireshark-tshark/` — manifest, README (risk table, capture setup, limits) and two skills.
+- `05_Software/src/libraries/shared/src/tshark-options.ts` — tshark role projection for rules only.
+- `05_Software/tests/integration/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
+  find/hint with a fake host, generated CoAP/Modbus `sample.pcapng` (`build.py`) and real-TShark replay.
 
 - `05_Software/plugins/probe-rs/` — manifest, four skills and measured upstream evidence/limits.
 - `05_Software/tests/integration/probe-rs.test.ts`, `tests/fixtures/probe-rs/replay.mjs` — exhaustive

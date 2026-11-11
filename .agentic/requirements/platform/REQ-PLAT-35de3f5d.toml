@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-35de3f5d"
+
+title = "Microchip UPDI board acceptance"
+
+status = "active"
+
+requirement = """
+Where a UPDI board is connected through a supported tool, VERA shall ping it, flash an image and verify it with pymcuprog on Windows x64 and Linux x64.
+"""
+
+verification = "Manual: on one UPDI board (Curiosity Nano, PICkit 4 or Snap in AVR mode, or SerialUPDI) ping, write a hex with --verify and read back flash on each system; record host, tool, device and output; never write lock bits."
+
+affected_paths = ["05_Software/plugins/microchip-pymcuprog/README.md"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

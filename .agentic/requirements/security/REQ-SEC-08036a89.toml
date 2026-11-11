@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-08036a89"
+
+title = "Treat STM32 option-byte, protection and security commands as irreversible"
+
+status = "active"
+
+requirement = """
+When an STM32_Programmer_CLI command line writes option bytes (-ob with anything but displ, including RDP=0xCC and unlockchip), regresses or locks read protection or TrustZone, writes or locks OTP, provisions keys, secure firmware or IP modules, upgrades the wireless coprocessor firmware, changes the security, antirollback, product state or OB-RSS, programs a PMIC NVM, authenticates the debug port (debugauth with any value but 2), consumes an HSM license or switches target power, in any spelling, VERA shall classify it irreversible with that command (debugauth for authentication) as the typed confirmation word.
+"""
+
+verification = "Classify every listed command in each help spelling alone and after a read, spellings with extra dashes, spaces, inner parts or a leading number (--rdu, ---ob, -ob RDP=0xCC as one word, -x-rdu, -1-rdu), -ob/-psrss displ with extra words, -otp displ with value=, DEBUGAUTH=1, debugauth=01, 0x1, a spaced 'debugauth =1' and debugauth outside -c; check the confirmation words."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml", "05_Software/src/libraries/shared/src/stm32-options.ts"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

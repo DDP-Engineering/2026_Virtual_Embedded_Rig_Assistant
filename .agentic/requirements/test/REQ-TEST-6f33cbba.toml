@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-6f33cbba"
+
+title = "Prove STM32 classification, typed confirmation and real CLI runs without a board"
+
+status = "active"
+
+requirement = """
+When the stm32-cubeprog tests run with STM32_Programmer_CLI installed, VERA shall run its version, probe listing and file checksum without approval and a connection to a probe serial number that does not exist only after approval through a replay session, and an option-byte write shall wait for the typed word.
+"""
+
+verification = "With the real CLI found on this host: ask session runs --version, -l st-link-only and -fchecksum on a fixture without approval; -c port=SWD sn=VERA0000000000000000000 waits for device-read approval and fails; a stub-resolver session proves -ob RDP=0xBB waits for '-ob' and a missing or wrong word starts nothing; the test skips the real part where the CLI is missing."
+
+affected_paths = ["05_Software/tests/integration/stm32-cubeprog.test.ts", "05_Software/tests/fixtures/stm32/"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11
