@@ -138,16 +138,26 @@ export function createMockApi(
     name,
     description: `${name}: a plugin of the mock catalog.`,
     requires: [],
+    activities: [],
+    keywords: [id],
     url: `${id}-1.0.0.zip`,
     sha256: packageHash(`/mock/catalog/${id}.zip`),
     bytes: 4096,
     ...more,
   });
   const catalogEntries: CatalogEntry[] = [
-    catalogEntry("esp32-efuse", "ESP32 eFuse", { requires: ["esp32-esptool"] }),
-    catalogEntry("esp32-esptool", "ESP32 esptool", { requires: ["serial-monitor"] }),
-    catalogEntry("can-logger", "CAN logger", { tier: "community", ecosystem: "can" }),
-    catalogEntry("serial-monitor", "Serial monitor", { ecosystem: "general" }),
+    catalogEntry("esp32-efuse", "ESP32 eFuse", { requires: ["esp32-esptool"], activities: ["security"] }),
+    catalogEntry("esp32-esptool", "ESP32 esptool", { requires: ["serial-monitor"], activities: ["flash"] }),
+    catalogEntry("can-logger", "CAN logger", {
+      tier: "community",
+      ecosystem: "can",
+      activities: ["communication"],
+    }),
+    catalogEntry("serial-monitor", "Serial monitor", {
+      ecosystem: "general",
+      activities: ["communication", "debug"],
+      keywords: ["UART", "console"],
+    }),
   ];
   const catalogPacks: CatalogPack[] = [
     {

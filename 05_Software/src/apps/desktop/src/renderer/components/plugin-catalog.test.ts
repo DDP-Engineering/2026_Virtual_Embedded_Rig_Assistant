@@ -31,6 +31,8 @@ const entry = (id: string, more: Partial<CatalogPlugin> = {}): CatalogPlugin => 
   name: `Name ${id}`,
   description: `About ${id}.`,
   requires: [],
+  activities: [],
+  keywords: [],
   url: `${id}-1.0.0.zip`,
   sha256: "a".repeat(64),
   bytes: 100,

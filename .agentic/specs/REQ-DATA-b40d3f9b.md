@@ -40,10 +40,26 @@ format: 1
 official: [serial-monitor, esp32-esptool]   # every other catalog plugin is community
 reviewed:                                   # rules a maintainer accepted despite a dangerous token
   - { plugin: esp32-esptool, match: "esptool * read-flash-status *" }
+metadata:
+  serial-monitor:
+    activities: [communication, debug]
+    keywords: [UART, console]
+    # addedAt and updatedAt are omitted when publication days are genuinely unknown.
 ```
 
 `official` lists distinct plugin ids (default `[]`); `reviewed` entries name a plugin and the exact `match`
 string of one of its rules (default `[]`).
+
+`metadata` is a strict record keyed by plugin ids, at most1024 entries (default `{}` for an
+unclassified current source). Its values are strict discovery objects: `activities` is a distinct
+list of at most nine stable ids (`communication`, `flash`, `build`, `debug`, `firmware-analysis`,
+`measurement`, `security`, `version-control`, `testing`); `keywords` is at most32 distinct trimmed
+1..80-character strings. Both lists default to empty for genuinely unclassified entries. Keyword
+uniqueness is case-sensitive after trimming. `addedAt` and `updatedAt` are optional real calendar
+dates `YYYY-MM-DD`, first catalog publication and publication of the currently listed version.
+Impossible dates, datetimes and extra keys are invalid. No dates are synthesized from file/commit/
+build/cache/install time. Unknown dates stay omitted. These valid unknown states are not legacy
+layout detection or conversion. All formats remain1.
 
 ## 2. Check (`vera catalog check --source <dir>`)
 
@@ -57,7 +73,7 @@ an issue and 0 otherwise. `<where>` is the plugin id (folder name) or the file n
 | `manifest` | the store's examination reports an issue (`manifest`, `yaml`, `field`, `id`); detail: the issue code, path and issue. A folder whose manifest id differs from the folder name (so two folders cannot carry one id) is `id` |
 | `rules` | a declared program has no rule whose first pattern token matches the program name (rule grammar of REQ-FUNC-80b2033a) |
 | `token` | a rule at `safe` or `device-read` whose `match`, lowercased, contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send` as a substring, unless `catalog.yaml` lists `{plugin, match}` of that rule under `reviewed`; detail: the token and the match |
-| `reference` | a pack, `requires`, `official` or `reviewed` entry names a plugin that is not in the source, or a `reviewed` entry names no rule of its plugin |
+| `reference` | a pack, `requires`, `official`, `metadata` or `reviewed` entry names a plugin that is not in the source, or a `reviewed` entry names no rule of its plugin |
 | `output` | build only: the output folder is not empty |
 
 `blocked` rules are never flagged: they never run. Substring matching flags `block` and `clock` too
@@ -74,6 +90,11 @@ and exit 1) and writes:
 - `index.json` (§4), in id order, with `bytes` and `sha256` of each zip. Should the plugins break an index
   limit of §4 (more than 1024), the build reports `index.json: source: <path> <zod code>` and writes nothing.
 
+The exact serialized UTF-8 index (indentation and final newline included) must be at most4MiB.
+Above this existing client limit, build reports `index.json: source: index exceeds 4194304 bytes`,
+writes no output directory/files and exits1. Measure bytes, not JavaScript string length, because
+valid discovery terms may be multibyte. Serialization is reused for the actual write.
+
 The release job of the hosted repository runs the build on a tag and publishes the folder's files as
 one release; a mirror is a plain copy of that folder.
 
@@ -87,6 +108,7 @@ one release; a mirror is a plain copy of that folder.
       "id": "serial-monitor", "version": "1.0.0", "tier": "official", "ecosystem": "serial",
       "platforms": ["windows-x64", "linux-x64"], "name": "Serial monitor", "description": "…",
       "requires": [], "url": "serial-monitor-1.0.0.zip",
+      "activities": ["communication", "debug"], "keywords": ["UART", "console"],
       "sha256": "<64 lowercase hex>", "bytes": 12345
     }
   ],
@@ -99,6 +121,14 @@ Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `desc
 (`[A-Za-z0-9][A-Za-z0-9._+-]*\.zip`, at most 255 characters, no `/`), resolved against the catalog folder
 URL; `bytes` is 1..64 MiB (the zip import limit). At most 1024 plugins with distinct ids and 64 packs. An
 index larger than 4 MiB is invalid.
+
+Every released entry includes `activities` and `keywords` arrays and preserves supplied optional
+`addedAt`/`updatedAt` dates using the same discovery schema as the maintainers' map. Generation is
+deterministic and never adds a date. Discovery metadata does not change the package's manifest,
+identity, trust tier or zip hash. `PluginCatalog.view` includes these entry fields unchanged in
+both remote and bundled views, including when installed state/update markers are attached.
+`vera catalog build` writes them into its output `index.json`; the CLI's existing summary line stays
+`<count> plugins written to <out>`. `prepare:plugins` uses that same CLI path for packaged resources.
 
 ## 5. Client
 

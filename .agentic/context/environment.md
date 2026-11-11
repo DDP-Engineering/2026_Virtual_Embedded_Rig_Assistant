@@ -248,3 +248,8 @@ Chat detail verification: shared workbench config, core workbench reopen, main e
 Captured log acceptance uses core tools/parse-log.test.ts, registry/grep/worker regressions, shared refs, tool-editor/fixture/boundary checks, agent-versus-vera-run replay, eval:retrieval and native file-tools.spec.ts. Native acceptance exercises the production10s catastrophic-regex deadline, responsive app.info, Stop and replacement. Windows short1s worker-host tests also fail on the immutable pre-CAP-01 base on this host; preserve base/candidate proof separately. Ubuntu WSL2 is Linux execution, not native Ubuntu platform acceptance.
 
 Captured register acceptance uses tools/decode-register.test.ts, agent/citations.test.ts, registry/grep/parse-log/shared-ref regressions, localized WorkbenchTools, fixture inventory and import boundaries. Real SessionService versus npm-built vera run replay verifies identical complete results and definition/manual citations with open/restart. Native workbench-tools.spec.ts checks decode_register save/cancel/restart and en/ro/de descriptions. Exact1MiB/cardinality boundaries and deterministic during-read replacement are covered. Linux Ubuntu WSL2 is identified separately from native Ubuntu acceptance; full Analysis capabilities gate remains withCAP04/coordinator.
+
+Catalog discovery proof: shared plugin-catalog.test.ts, core catalog-source.test.ts/catalog.test.ts,
+focused CLI catalog check/build case and packaging prepare-plugins.test.ts cover strict activity/
+keyword/date metadata, dangling references, deterministic release bytes and remote/bundled/CLI
+preservation. Date-less real entries remain date-less; no real network catalog release is needed.

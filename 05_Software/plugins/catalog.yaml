@@ -2,6 +2,36 @@
 format: 1
 # Plugins maintained by the VERA maintainers; every other catalog plugin is community.
 official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills]
+# Discovery facts are maintained separately from package manifests. Publication dates are genuinely
+# unknown until a catalog release record establishes them; do not infer them from commits/builds.
+metadata:
+  serial-monitor:
+    activities: [communication, debug]
+    keywords: [serial, UART, console, COM, pyserial]
+  esp32-esptool:
+    activities: [flash]
+    keywords: [ESP32, Espressif, esptool, bootloader, flash]
+  esp32-idf:
+    activities: [build, debug, flash]
+    keywords: [ESP-IDF, Espressif, EIM, CMake, coredump, addr2line]
+  esp32-efuse:
+    activities: [security]
+    keywords: [ESP32, eFuse, secure boot, encryption, espefuse, espsecure]
+  binutils:
+    activities: [firmware-analysis]
+    keywords: [ELF, ARM, RISC-V, symbols, disassembly, readelf]
+  probe-rs:
+    activities: [debug, flash]
+    keywords: [SWD, JTAG, RTT, ARM, RISC-V, probes]
+  sigrok:
+    activities: [measurement]
+    keywords: [logic analyzer, signal, UART, I2C, oscilloscope, SCPI]
+  git:
+    activities: [version-control]
+    keywords: [Git, history, diff, commit, branches]
+  analysis-skills:
+    activities: [firmware-analysis, testing]
+    keywords: [firmware comparison, captured runs, manual test plan, evidence]
 # Rules below device-write whose pattern contains a dangerous token, accepted after review:
 # - { plugin: <id>, match: "<the rule's exact match>" }
 # Program names themselves contain efuse/secure. These exact low-risk rules cover reads,

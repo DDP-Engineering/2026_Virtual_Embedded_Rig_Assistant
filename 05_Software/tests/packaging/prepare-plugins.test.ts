@@ -39,6 +39,16 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["sigrok", "official"],
   ]);
   expect(JSON.parse(await readFile(join(target, "index.json"), "utf8"))).toEqual(index);
+  expect(index.plugins.find((plugin: { id: string }) => plugin.id === "serial-monitor")).toMatchObject({
+    activities: ["communication", "debug"],
+    keywords: ["serial", "UART", "console", "COM", "pyserial"],
+  });
+  for (const plugin of index.plugins) {
+    expect(plugin.activities.length).toBeGreaterThan(0);
+    expect(plugin.keywords.length).toBeGreaterThan(0);
+    expect(plugin).not.toHaveProperty("addedAt");
+    expect(plugin).not.toHaveProperty("updatedAt");
+  }
   await expect(checkBundledPlugins(target)).resolves.toEqual(index);
   const analysis = index.plugins.find((plugin: { id: string }) => plugin.id === "analysis-skills");
   expect(analysis).toBeDefined();

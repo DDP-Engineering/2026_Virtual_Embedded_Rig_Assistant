@@ -36,7 +36,20 @@ async function release(edit: (manifest: Manifest) => void = () => {}) {
     await cp(join(official, id), join(source, id), { recursive: true });
   await writeFile(
     join(source, "catalog.yaml"),
-    stringify({ format: 1, official: ["serial-monitor", "esp32-esptool"], reviewed: [] }),
+    stringify({
+      format: 1,
+      official: ["serial-monitor", "esp32-esptool"],
+      reviewed: [],
+      metadata: {
+        "serial-monitor": {
+          activities: ["communication", "debug"],
+          keywords: ["UART", "console"],
+          addedAt: "2024-02-29",
+          updatedAt: "2026-11-03",
+        },
+        "esp32-esptool": { activities: ["flash"], keywords: ["Espressif"] },
+      },
+    }),
   );
   await writeFile(
     join(source, "packs.yaml"),
@@ -119,6 +132,13 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   const remote = await catalog.view({ refresh: true });
   expect(remote).toMatchObject({ source: "remote", url: `${url}/`, checkedAt: "2026-11-03T12:00:00.000Z" });
   expect(remote.problem).toBeUndefined();
+  expect(remote.plugins.find((p) => p.id === "serial-monitor")).toMatchObject({
+    activities: ["communication", "debug"],
+    keywords: ["UART", "console"],
+    addedAt: "2024-02-29",
+    updatedAt: "2026-11-03",
+  });
+  expect(remote.plugins.find((p) => p.id === "esp32-esptool")).not.toHaveProperty("addedAt");
   expect(remote.plugins.map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
     ["esp32-esptool", "1.0.0", "official"],
     ["serial-monitor", "1.0.1", "official"],
@@ -145,6 +165,13 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   const offline = await catalog.view({ refresh: false });
   expect(offline.source).toBe("bundled");
   expect(offline.problem).toBeUndefined();
+  expect(offline.plugins.find((p) => p.id === "serial-monitor")).toMatchObject({
+    activities: ["communication", "debug"],
+    keywords: ["UART", "console"],
+    addedAt: "2024-02-29",
+    updatedAt: "2026-11-03",
+  });
+  expect(offline.plugins.find((p) => p.id === "esp32-esptool")).not.toHaveProperty("updatedAt");
 
   const none = await (await fixture()).catalog.view({ refresh: true });
   expect(none).toMatchObject({ source: "none", plugins: [], packs: [] });

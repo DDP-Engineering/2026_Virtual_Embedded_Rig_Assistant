@@ -123,6 +123,17 @@ composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` 
 opens the catalog section (`renderer/components/plugin-catalog.tsx`) from the grouped top Catalog control, above the installed list. The index is not
 signed (ADR-0019 defers it).
 
+Discovery metadata is maintained by plugin id in `catalog.yaml.metadata`: stable activities,
+bounded unique keywords and optional real calendar-day addedAt/updatedAt publication facts.
+Shared `catalogDiscoverySchema` validates the same fields on entries; source validation refuses
+unknown plugin references. Empty classification is valid; unknown publication dates stay absent.
+The source builder writes discovery data into deterministic format1 index entries. UTF-8 output
+exceeding the client's4MiB index cap is refused before creating any release files. Existing
+PluginCatalog entry spreading and CLI catalog build preserve it into remote/bundled client views
+and packaged resources without execution, trust or schema-version changes. Real official packages
+are classified, with dates omitted until a publication record is established.
+
+
 ## Authoring
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings

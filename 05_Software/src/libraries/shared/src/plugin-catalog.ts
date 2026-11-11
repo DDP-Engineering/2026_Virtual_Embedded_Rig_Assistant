@@ -21,6 +21,37 @@ export type CatalogTier = z.infer<typeof catalogTierSchema>;
 const unique = <T>(items: readonly T[]) => new Set(items).size === items.length;
 const ids = (max: number) => z.array(pluginIdSchema).max(max).refine(unique, "List each plugin once.");
 
+/** Stable identifiers; the renderer owns localized activity labels. */
+export const CATALOG_ACTIVITIES = [
+  "communication",
+  "flash",
+  "build",
+  "debug",
+  "firmware-analysis",
+  "measurement",
+  "security",
+  "version-control",
+  "testing",
+] as const;
+export const catalogActivitySchema = z.enum(CATALOG_ACTIVITIES);
+export type CatalogActivity = z.infer<typeof catalogActivitySchema>;
+/** Empty classification and absent publication dates are valid unknown metadata, never inferred. */
+export const catalogDiscoverySchema = z.strictObject({
+  activities: z
+    .array(catalogActivitySchema)
+    .max(CATALOG_ACTIVITIES.length)
+    .refine(unique, "List each activity once.")
+    .default([]),
+  keywords: z
+    .array(z.string().trim().min(1).max(80))
+    .max(32)
+    .refine(unique, "List each keyword once.")
+    .default([]),
+  addedAt: z.iso.date().optional(),
+  updatedAt: z.iso.date().optional(),
+});
+export type CatalogDiscovery = z.infer<typeof catalogDiscoverySchema>;
+
 const groupSchema = z.strictObject({
   name: z.string().trim().min(1).max(80),
   plugins: ids(CATALOG_LIMITS.groupPlugins).min(1),
@@ -46,6 +77,10 @@ export const catalogPacksSchema = z
 export const catalogMaintainersSchema = z.strictObject({
   format: z.literal(1),
   official: ids(CATALOG_LIMITS.plugins).default([]),
+  metadata: z
+    .record(pluginIdSchema, catalogDiscoverySchema)
+    .refine((value) => Object.keys(value).length <= CATALOG_LIMITS.plugins, "Too many metadata entries.")
+    .default({}),
   reviewed: z
     .array(z.strictObject({ plugin: pluginIdSchema, match: z.string().min(1).max(1024) }))
     .max(4096)
@@ -56,6 +91,7 @@ export type CatalogMaintainers = z.infer<typeof catalogMaintainersSchema>;
 const manifest = pluginManifestSchema.shape;
 /** One index.json entry: the manifest's identity plus where its zip lies and what it must hash to. */
 export const catalogEntrySchema = z.strictObject({
+  ...catalogDiscoverySchema.shape,
   id: pluginIdSchema,
   version: manifest.version,
   tier: catalogTierSchema,

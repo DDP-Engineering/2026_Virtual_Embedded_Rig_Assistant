@@ -77,9 +77,9 @@ corresponding data source.
 
 ## 4. Catalog discovery metadata
 
-The current catalog entry has ecosystem, name and description, but no activity/keyword metadata
-or publication dates. The implementation therefore includes the publishing path, not just controls
-that sort synthetic renderer data.
+PLG-23 implements the publishing path for activity/keyword metadata and optional factual publication
+dates; schema/source/client/CLI/bundled proof is recorded in TASK-5995883b. The UI changes remain
+planned in PLG-24/25. Real package dates stay unknown and absent without publication evidence.
 
 Maintain discovery metadata by plugin id in the maintainers' `catalog.yaml`, and carry it into
 generated `index.json`, the validated catalog view and bundled catalog resources:

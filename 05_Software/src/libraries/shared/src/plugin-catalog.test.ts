@@ -75,7 +75,12 @@ it("parses packs.yaml and catalog.yaml data with defaults and strict keys", () =
   expect(
     catalogPacksSchema.safeParse([{ ...pack, groups: [{ name: "Core", plugins: ["a", "a"] }] }]).success,
   ).toBe(false);
-  expect(catalogMaintainersSchema.parse({ format: 1 })).toEqual({ format: 1, official: [], reviewed: [] });
+  expect(catalogMaintainersSchema.parse({ format: 1 })).toEqual({
+    format: 1,
+    official: [],
+    reviewed: [],
+    metadata: {},
+  });
   expect(
     catalogMaintainersSchema.parse({
       format: 1,
@@ -86,6 +91,55 @@ it("parses packs.yaml and catalog.yaml data with defaults and strict keys", () =
   expect(catalogMaintainersSchema.safeParse({ format: 2 }).success).toBe(false);
   expect(catalogMaintainersSchema.safeParse({ format: 1, community: [] }).success).toBe(false);
   expect(catalogMaintainersSchema.safeParse({ format: 1, official: ["a", "a"] }).success).toBe(false);
+});
+
+// REQ-DATA-cbff7320
+it("validates bounded discovery metadata and real publication days without inventing unknown dates", () => {
+  const metadata = {
+    activities: ["communication", "debug"],
+    keywords: [" UART ", "console"],
+    addedAt: "2024-02-29",
+    updatedAt: "2026-11-11",
+  };
+  const parsed = catalogMaintainersSchema.parse({ format: 1, metadata: { serial: metadata } });
+  expect(parsed.metadata.serial).toEqual({ ...metadata, keywords: ["UART", "console"] });
+  const released = catalogIndexSchema.parse(index([entry("serial", metadata), entry("unknown")]));
+  expect(released.plugins[0]).toMatchObject({ ...metadata, keywords: ["UART", "console"] });
+  expect(released.plugins[1]).toMatchObject({ activities: [], keywords: [] });
+  expect(released.plugins[1]).not.toHaveProperty("addedAt");
+  expect(released.plugins[1]).not.toHaveProperty("updatedAt");
+  for (const invalid of [
+    { activities: ["unrecognised"] },
+    { activities: ["debug", "debug"] },
+    { activities: Array(10).fill("debug") },
+    { keywords: [""] },
+    { keywords: [" "] },
+    { keywords: ["UART", " UART "] },
+    { keywords: ["x".repeat(81)] },
+    { keywords: Array.from({ length: 33 }, (_, i) => `word${i}`) },
+    { addedAt: "2026-02-29" },
+    { addedAt: "1900-02-29" },
+    { updatedAt: "2026-04-31" },
+    { addedAt: "2026-1-01" },
+    { updatedAt: "2026-11-11T12:00:00Z" },
+    { unexpected: "value" },
+  ]) {
+    expect(
+      catalogMaintainersSchema.safeParse({ format: 1, metadata: { serial: invalid } }).success,
+      JSON.stringify(invalid),
+    ).toBe(false);
+    expect(
+      catalogIndexSchema.safeParse(index([entry("serial", invalid)])).success,
+      JSON.stringify(invalid),
+    ).toBe(false);
+  }
+  expect(catalogMaintainersSchema.safeParse({ format: 1, metadata: { "Bad ID": {} } }).success).toBe(false);
+  expect(
+    catalogMaintainersSchema.safeParse({
+      format: 1,
+      metadata: Object.fromEntries(Array.from({ length: 1025 }, (_, i) => [`p${i}`, {}])),
+    }).success,
+  ).toBe(false);
 });
 
 // REQ-SEC-5fa5cd5e

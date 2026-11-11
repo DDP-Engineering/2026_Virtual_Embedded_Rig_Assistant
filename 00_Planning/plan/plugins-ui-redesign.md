@@ -1,6 +1,6 @@
 # Plugins UI redesign — implementation work packages
 
-Date: 2026-11-11. Status: planned; no product implementation in this planning task.
+Date: 2026-11-11. Status: PLG-23 metadata implemented in candidate TASK-5995883b; PLG-24/25 remain planned.
 
 Specification: [catalog discovery and workbench activation](../plugins/ui-redesign.md).
 Interactive reference: [plugins-redesign.html](../ui/plugins-redesign.html).
@@ -26,6 +26,8 @@ PLG-24 [#87](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistan
 PLG-25 [#88](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/88).
 
 ## PLG-23 Catalog discovery metadata and publishing
+
+**Implementation candidate (2026-11-11, TASK-5995883b):** shared discovery schema, maintainer map/reference checks, deterministic publishing, nine real package classifications and downstream CLI/bundle/client proof. Publication dates are omitted where no release evidence exists. Coordinator records the validated commit separately.
 
 **Goal:** supply real activity/search/date data for scalable catalog discovery.
 **Depends on:** implemented PLG-07. **Spec:** ui-redesign.md §3–4, §8.
@@ -128,8 +130,8 @@ unchanged parts and do not schedule another full-suite gate for the umbrella.
 | Role | Issue | Depends on | State on 2026-11-11 |
 |---|---|---|---|
 | Umbrella | [#85 — Plugins UI redesign](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/85) | PLG-23…PLG-25 | Open; planning only |
-| PLG-23 — discovery metadata/publishing | [#86](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/86) | Implemented PLG-07 #63 | Open |
-| PLG-24 — global Plugins library | [#87](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/87) | #86 | Open |
+| PLG-23 — discovery metadata/publishing | [#86](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/86) | Implemented PLG-07 #63 | Implementation candidate TASK-5995883b |
+| PLG-24 — global Plugins library | [#87](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/87) | #86 | Implementation candidate TASK-5995883b |
 | PLG-25 — workbench settings and acceptance | [#88](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/88) | #87 | Open |
 
 The umbrella checklist links all children; each child links its parent and predecessor. Milestone:
