@@ -424,6 +424,18 @@ vera-plugins/                    # one Git repository
 The UI shows packs as checkable groups (pack → groups → plugins) and installs the selected
 plugins. Pack contents: [packs.md](packs.md).
 
+### Planned discovery/activation redesign (2026-11-11; not implemented)
+
+[ui-redesign.md](ui-redesign.md) supersedes the checkable-packs presentation above: one list per
+Available/Installed tab, combined search and filters, chronology/name sorting and pagination.
+Pack definitions remain data, without a duplicate selection list. The publishing/client path gains
+activities, keywords and factual publication dates at format 1. Enablement belongs to the existing
+Workbench settings → Plugins section, without a workbench selector or Add plugins button, with
+Save/Cancel at the beginning of the page and Save enabled on changes. Execution, trust, review and
+provisioning policy in this document still apply. Implementation: PLG-23…PLG-25 in
+[the follow-up plan](../plan/plugins-ui-redesign.md); interactive reference in
+[ui/plugins-redesign.html](../ui/plugins-redesign.html).
+
 ## 8. Authoring with the agent
 
 | Step | Who | What happens |
