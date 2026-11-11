@@ -652,7 +652,8 @@
     "back": "Înapoi la workbenchuri",
     "skills": "Skills",
     "indexing": "Indexare",
-    "discardChanges": "Renunți la modificările nesalvate ale workbench-ului?"
+    "discardChanges": "Renunți la modificările nesalvate ale workbench-ului?",
+    "unsavedChanges": "Modificări nesalvate"
   },
   "overview": {
     "title": "Prezentare workbench",
@@ -930,7 +931,10 @@
         "versionControl": "Versionare",
         "testing": "Testare"
       }
-    }
+    },
+    "configure": "Configurează dependențele",
+    "enabledSelection": "Activate",
+    "selectedCount": "Plugin-uri selectate: {{count}}"
   },
   "runs": {
     "none": "Nicio rulare de program în acest workbench încă.",

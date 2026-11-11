@@ -1,6 +1,6 @@
 # Plugins UI redesign — implementation work packages
 
-Date: 2026-11-11. Status: PLG-23 metadata implemented in candidate TASK-5995883b; PLG-24 global library implemented in candidate TASK-d5791e9a; PLG-25 remains planned.
+Date: 2026-11-11. Status: PLG-23 validated at `a67012a`; PLG-24 validated at `bbc7a0f`; PLG-25 implemented in candidate TASK-4f522ea5, with final focused integrated acceptance owned by this ticket. Coordinator records its commit after handover.
 
 Specification: [catalog discovery and workbench activation](../plugins/ui-redesign.md).
 Interactive reference: [plugins-redesign.html](../ui/plugins-redesign.html).
@@ -27,7 +27,7 @@ PLG-25 [#88](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistan
 
 ## PLG-23 Catalog discovery metadata and publishing
 
-**Implementation candidate (2026-11-11, TASK-5995883b):** shared discovery schema, maintainer map/reference checks, deterministic publishing, nine real package classifications and downstream CLI/bundle/client proof. Publication dates are omitted where no release evidence exists. Coordinator records the validated commit separately.
+**Implementation candidate (2026-11-11, TASK-5995883b):** shared discovery schema, maintainer map/reference checks, deterministic publishing, nine real package classifications and downstream CLI/bundle/client proof. Publication dates are omitted where no release evidence exists. Validated local commit: `a67012a`.
 
 **Goal:** supply real activity/search/date data for scalable catalog discovery.
 **Depends on:** implemented PLG-07. **Spec:** ui-redesign.md §3–4, §8.
@@ -55,7 +55,7 @@ and both independent reviews. Record the exact proof; no full-suite or remote pu
 
 ## PLG-24 Searchable Available/Installed plugin library
 
-**Implementation candidate (2026-11-11, TASK-d5791e9a):** retained management/source controls before one Available/Installed library; combined search/filters/counts, factual date sorts, UTC New, 6/12/24 paging and in-session state. Existing reviewed actions remain; browsing uses cached explicit observations and check-all reports mixed outcomes. Focused component and Windows native/Chromium proofs are recorded in the journal. Workbench draft redesign remains PLG-25.
+**Implementation candidate (2026-11-11, TASK-d5791e9a):** retained management/source controls before one Available/Installed library; combined search/filters/counts, factual date sorts, UTC New, 6/12/24 paging and in-session state. Existing reviewed actions remain; browsing uses cached explicit observations and check-all reports mixed outcomes. Focused component and Windows native/Chromium proofs are recorded in the journal. Validated local commit: `bbc7a0f`; workbench draft redesign is completed by PLG-25 below.
 
 **Goal:** replace the duplicate packs/catalog presentation with one scalable list per tab.
 **Depends on:** PLG-23. **Spec:** ui-redesign.md §2–5, §7–8.
@@ -96,6 +96,8 @@ retaining filters, and catalog settings preceding the tabbed list at supported w
 
 ## PLG-25 Explicit workbench activation and integrated acceptance
 
+**Implementation candidate (2026-11-11, TASK-4f522ea5):** current-workbench installed/unresolved list with separate session filters, sort and paging; owner-held selection preserved across a global installation detour with same-workbench section/filter restoration, top Save/Cancel and unsaved marker, set-based dirty restoration, readonly browsing and passive dependency observations with explicit configuration. Focused component and Windows native/Chromium acceptance covers hidden selections, source/trust errors, refresh, two workbenches, guarded navigation, restart and all supported display combinations. Exact validation and review results belong to the journal; commit/publication remain coordinator-owned.
+
 **Goal:** make installation, program readiness and per-project activation distinct across the flow.
 **Depends on:** PLG-24 and existing workbench editor/PLG-13 source resolution.
 **Spec:** ui-redesign.md §2, §5–8.
@@ -131,10 +133,10 @@ unchanged parts and do not schedule another full-suite gate for the umbrella.
 
 | Role | Issue | Depends on | State on 2026-11-11 |
 |---|---|---|---|
-| Umbrella | [#85 — Plugins UI redesign](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/85) | PLG-23…PLG-25 | Open; planning only |
-| PLG-23 — discovery metadata/publishing | [#86](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/86) | Implemented PLG-07 #63 | Implementation candidate TASK-5995883b |
-| PLG-24 — global Plugins library | [#87](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/87) | #86 | Implementation candidate TASK-d5791e9a |
-| PLG-25 — workbench settings and acceptance | [#88](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/88) | #87 | Open |
+| Umbrella | [#85 — Plugins UI redesign](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/85) | PLG-23…PLG-25 | Implementation complete in children; coordinator verifies/closes after #88 handover |
+| PLG-23 — discovery metadata/publishing | [#86](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/86) | Implemented PLG-07 #63 | Validated commit `a67012a` |
+| PLG-24 — global Plugins library | [#87](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/87) | #86 | Validated commit `bbc7a0f` |
+| PLG-25 — workbench settings and acceptance | [#88](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/88) | #87 | Implemented candidate TASK-4f522ea5; commit pending coordinator |
 
 The umbrella checklist links all children; each child links its parent and predecessor. Milestone:
 Plugins - platform. Labels: enhancement/P2 plus epic or work-package; no agent-ready/working labels.

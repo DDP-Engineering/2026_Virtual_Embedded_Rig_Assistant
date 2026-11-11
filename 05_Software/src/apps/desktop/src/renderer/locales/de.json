@@ -652,7 +652,8 @@
     "back": "Zurück zu Workbenches",
     "skills": "Skills",
     "indexing": "Indizierung",
-    "discardChanges": "Nicht gespeicherte Workbench-Änderungen verwerfen?"
+    "discardChanges": "Nicht gespeicherte Workbench-Änderungen verwerfen?",
+    "unsavedChanges": "Ungespeicherte Änderungen"
   },
   "overview": {
     "title": "Workbench-Übersicht",
@@ -930,7 +931,10 @@
         "versionControl": "Versionsverwaltung",
         "testing": "Tests"
       }
-    }
+    },
+    "configure": "Abhängigkeiten konfigurieren",
+    "enabledSelection": "Aktiviert",
+    "selectedCount": "Ausgewählte Plugins: {{count}}"
   },
   "runs": {
     "none": "In dieser Workbench gab es noch keine Programmläufe.",

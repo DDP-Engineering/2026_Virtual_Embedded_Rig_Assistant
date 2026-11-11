@@ -1709,22 +1709,26 @@ legend {
   flex-direction: column;
   gap: 1rem;
 }
-.workbench-editor > header,
-.workbench-editor > footer {
+.workbench-editor[hidden] {
+  display: none;
+}
+.workbench-editor > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .workbench-editor > header h3 {
   margin: 0;
   overflow-wrap: anywhere;
 }
-.workbench-editor > footer {
-  justify-content: flex-end;
-  border-top: 1px solid var(--border);
-  padding-top: 1rem;
+.workbench-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
 }
 .workbench-editor-layout {
   display: grid;

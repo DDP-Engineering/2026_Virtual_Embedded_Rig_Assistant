@@ -30,6 +30,7 @@ export function PluginLibraryControls({
   basic,
   total,
   count,
+  statusOptions,
 }: {
   state: LibraryState;
   change: (patch: Partial<LibraryState>) => void;
@@ -37,6 +38,7 @@ export function PluginLibraryControls({
   basic: readonly LibraryItem[];
   total: number;
   count: number;
+  statusOptions?: readonly [LibraryStatus, string][];
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -143,7 +145,7 @@ export function PluginLibraryControls({
       </div>
       <fieldset className="plugin-library-statuses">
         <legend className="sr-only">{t("plugins.library.filterState")}</legend>
-        {statuses.map(([value, label]) => (
+        {(statusOptions ?? statuses).map(([value, label]) => (
           <button
             type="button"
             key={value}

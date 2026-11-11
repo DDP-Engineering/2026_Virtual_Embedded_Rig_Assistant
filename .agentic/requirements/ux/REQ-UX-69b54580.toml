@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-69b54580"
+title = "Observe and explicitly configure workbench plugin readiness"
+status = "active"
+requirement = "When workbench plugin readiness is displayed, VERA shall use passive explicit-check observations and expose user-initiated checking and supported configuration without implicit activation, provisioning or trust changes."
+verification = "Component tests assert no programs/check/provision on browsing, explicit checking distinguishes unavailable/missing and failed recheck, readonly controls refuse mutations; native explicit setup remains separate from selection."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

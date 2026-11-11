@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-e5d617d7"
+title = "Filter workbench plugins without losing draft selection"
+status = "active"
+requirement = "When the user searches, filters, sorts or paginates workbench plugins, VERA shall retain the full owner-held enabled draft while presenting installed and unresolved selections with separate session-scoped controls that remain usable for read-only browsing. The existing editor owner shall preserve its still-valid draft and selected section across a global Plugins installation detour and return to the same workbench."
+verification = "32-entry component tests hide selections, save/cancel, restore filters after delayed reload, browse readonly pages and preserve untrusted/missing selection rules; App navigation and native cases install globally then resume the same owner/section with hidden selections, name/instructions retained and no config writes; actual departure guards and two-workbench restart remain intact."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

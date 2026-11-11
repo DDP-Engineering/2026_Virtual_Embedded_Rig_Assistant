@@ -38,6 +38,7 @@ export function WorkbenchConfigForm({
   instructionsNotice,
   skills,
   workbenchId,
+  shown = true,
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -53,6 +54,7 @@ export function WorkbenchConfigForm({
   instructionsNotice?: ReactNode;
   skills: ReactNode;
   workbenchId?: string | undefined;
+  shown?: boolean;
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -97,7 +99,7 @@ export function WorkbenchConfigForm({
       </nav>
       <div ref={content} className="workbench-editor-content">
         {notices}
-        <fieldset disabled={(readOnly && section !== "instructions") || disabled}>
+        <fieldset disabled={(readOnly && section !== "instructions" && section !== "plugins") || disabled}>
           {section === "general" && (
             <>
               {nameField && (
@@ -293,9 +295,11 @@ export function WorkbenchConfigForm({
               </label>
             </>
           )}
-          {section === "plugins" && (
+          {section === "plugins" && shown && (
             <WorkbenchPlugins
               workbenchId={workbenchId}
+              readOnly={readOnly}
+              disabled={disabled}
               enabled={config.plugins.enabled}
               toggle={(id, selected) =>
                 setConfig((current) => ({

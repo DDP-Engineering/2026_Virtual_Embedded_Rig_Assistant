@@ -118,7 +118,7 @@ test("native chat detail save, cancel, ordered projection, full Activity and res
     await page.keyboard.press("Escape");
     await edit(page);
     await page.locator("select[data-chat-detail]").selectOption("verbose");
-    await page.locator(".workbench-editor footer button").first().click();
+    await page.locator("[data-project-cancel]").first().click();
     await page.locator(`[data-session="${id}"]`).click();
     await expect(page.locator(".transcript-frame")).toHaveAttribute("data-chat-detail", "minimal");
     await detail(page, id, "verbose");
@@ -235,7 +235,7 @@ test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged 
       }
       if (process.env.VERA_CHAT_SCREENSHOT && language === "ro")
         await page.screenshot({ path: process.env.VERA_CHAT_SCREENSHOT });
-      await page.locator(".workbench-editor footer button").first().click();
+      await page.locator("[data-project-cancel]").first().click();
     }
     expect(errors).toEqual([]);
   } finally {

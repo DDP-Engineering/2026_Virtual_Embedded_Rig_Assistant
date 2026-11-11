@@ -652,7 +652,8 @@
     "back": "Back to workbenches",
     "skills": "Skills",
     "indexing": "Indexing",
-    "discardChanges": "Discard your unsaved workbench changes?"
+    "discardChanges": "Discard your unsaved workbench changes?",
+    "unsavedChanges": "Unsaved changes"
   },
   "overview": {
     "title": "Workbench overview",
@@ -930,7 +931,10 @@
         "versionControl": "Version control",
         "testing": "Testing"
       }
-    }
+    },
+    "configure": "Configure dependencies",
+    "enabledSelection": "Enabled",
+    "selectedCount": "Selected plugins: {{count}}"
   },
   "runs": {
     "none": "No program runs in this workbench yet.",

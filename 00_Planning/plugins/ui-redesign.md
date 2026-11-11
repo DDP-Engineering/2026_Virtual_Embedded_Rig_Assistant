@@ -1,6 +1,6 @@
 # Plugins — catalog discovery and workbench activation
 
-Date: 2026-11-11. Status: metadata and global library implemented in candidates TASK-5995883b/TASK-d5791e9a; workbench redesign remains planned.
+Date: 2026-11-11. Status: metadata validated at `a67012a`, global library validated at `bbc7a0f`, and workbench redesign implemented in candidate TASK-4f522ea5. The final ticket owns focused integrated acceptance; its local commit is coordinator-owned.
 The user requested that this proposal and its interactive HTML be saved and tracked in Gitea.
 
 Implementation plan: [PLG-23…PLG-25](../plan/plugins-ui-redesign.md).
@@ -78,7 +78,7 @@ corresponding data source.
 ## 4. Catalog discovery metadata
 
 PLG-23 implements the publishing path for activity/keyword metadata and optional factual publication
-dates; schema/source/client/CLI/bundled proof is recorded in TASK-5995883b. PLG-24 implements global library discovery; workbench changes remain planned in PLG-25. Real package dates stay unknown and absent without publication evidence.
+dates; schema/source/client/CLI/bundled proof is recorded in TASK-5995883b. PLG-24 implements global library discovery; PLG-25 implements the current-workbench draft, top actions and separate scalable controls. Validation details are recorded in their task journals. Real package dates stay unknown and absent without publication evidence.
 
 Maintain discovery metadata by plugin id in the maintainers' `catalog.yaml`, and carry it into
 generated `index.json`, the validated catalog view and bundled catalog resources:

@@ -10,7 +10,7 @@ or Add plugins button; Save/Cancel are at the top and Save activates on unsaved 
 Open the HTML directly in a browser; all catalog entries and actions are demonstrative, with no
 downloads or hardware operations. It includes hypothetical plugins and synthetic dates/versions.
 Behavioral specification: [plugins/ui-redesign.md](../plugins/ui-redesign.md).
-Implementation work: [PLG-23…PLG-25](../plan/plugins-ui-redesign.md), not implemented yet.
+Implementation work: [PLG-23…PLG-25](../plan/plugins-ui-redesign.md), implemented in #86/#87 and PLG-25 candidate TASK-4f522ea5; commit pending coordinator.
 
 ## Historical Layout A
 

@@ -119,6 +119,19 @@ test("installs through the review screen, enables the plugin and stops a run, wi
           });
           await page.locator('[data-toggle="right"]').click();
           await page.locator('[data-i18n="nav.settings"]').click();
+          await page.locator('[data-action="leave-settings"]').click();
+          await page.locator("[data-workbench-entry] .workbench-group-name").first().click();
+          await page.locator('[data-action="edit-workbench-overview"]').click();
+          await page.locator('[data-project-section="plugins"]').click();
+          await expect(page.locator("[data-project-save]")).toBeDisabled();
+          await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).toBeChecked();
+          await page.locator("[data-workbench-configuration] summary").click();
+          expect(await overflow(page), `workbench plugins ${language}/${theme}/${scale}`).toEqual({
+            page: false,
+            elements: [],
+          });
+          await page.locator("[data-project-cancel]").click();
+          await page.locator('[data-i18n="nav.settings"]').click();
         }
       }
     }

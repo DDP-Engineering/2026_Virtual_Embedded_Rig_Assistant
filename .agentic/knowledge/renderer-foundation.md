@@ -103,7 +103,7 @@ Paths relative to 05_Software/src/apps/desktop/src/renderer except qualified pat
 
 Settings hides the primary New/Open/Plugins actions while its categories are
 visible; Back to workbenches restores the previous workbench view. The overview
-has one Edit action and its editor hosts instructions and Skills management.
+has one Edit action and its editor hosts instructions and Skills management. Global Plugins is a reversible installation detour: App keeps that same editor owner mounted but hidden/inert, resumes its section/config/instructions when the active workbench row is chosen, and retains discard guards for actual departures. The hidden editor unmounts only plugin presentation to avoid duplicate library controls; private per-workbench view state restores on fresh list loading (REQ-UX-e5d617d7).
 Shared dialogs are centered, including nested Skills dialogs.
 
 PermissionPicker is shared by the session composer and workbench Agent settings. Bypass has a warning marker plus red/bold selected styling; explicit selection shows a centered, localized full-file-access warning with Close/X/Escape and focus restoration. The application suppressBypassWarning preference hides later notices after confirmed checkbox persistence; failed saves retain a visible error/notice. Native warnings are portaled outside the composer form, preserving input ownership. Given the session's workbench id, switching to Bypass also lists the irreversible rules of its enabled, issue-free, non-trial plugins (fresh plugins.list) and then shows the warning even when suppressed; an unreadable plugin list also shows it (REQ-UX-12185f60). REQ-UX-33b9d601 and REQ-UX-bb147586 attach to permission-picker.test.ts and tests/e2e/bypass.spec.ts.

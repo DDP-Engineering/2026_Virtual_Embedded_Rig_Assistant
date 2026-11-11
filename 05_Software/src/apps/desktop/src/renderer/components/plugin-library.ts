@@ -2,7 +2,7 @@
 import type { CatalogActivity, CatalogPlugin, PluginProgramStatus, PluginSummary } from "@vera/shared";
 
 export type LibraryTab = "available" | "installed";
-export type LibraryStatus = "all" | "missing" | "installed" | "new" | "updates" | "needs";
+export type LibraryStatus = "all" | "missing" | "installed" | "new" | "updates" | "needs" | "enabled";
 export interface LibraryState {
   tab: LibraryTab;
   search: string;
@@ -54,6 +54,7 @@ export interface LibraryItem {
   installed: boolean;
   update: boolean;
   readiness: ProgramReadiness;
+  selected?: boolean;
   catalog?: CatalogPlugin | undefined;
   plugin?: PluginSummary | undefined;
 }
@@ -125,6 +126,7 @@ export function matchesLibraryStatus(item: LibraryItem, status: LibraryStatus, n
   if (status === "updates") return item.update;
   if (status === "new") return isNewCatalogEntry(item.addedAt, now);
   if (status === "needs") return item.readiness === "needs";
+  if (status === "enabled") return item.selected === true;
   return true;
 }
 export function matchesLibraryFilters(
