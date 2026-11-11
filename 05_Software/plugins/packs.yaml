@@ -14,3 +14,7 @@
     - { name: Debug probes and RTT, plugins: [probe-rs], default: true }
     - { name: Signal capture and bench instruments, plugins: [sigrok], default: true }
     - { name: Version control, plugins: [git], default: true }
+- id: wireshark
+  name: Wireshark
+  groups:
+    - { name: Capture analysis, plugins: [wireshark-tshark], default: true }

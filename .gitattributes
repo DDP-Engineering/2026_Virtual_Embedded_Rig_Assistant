@@ -24,3 +24,5 @@
 *.exe binary
 *.dll binary
 *.zip binary
+*.pcap binary
+*.pcapng binary

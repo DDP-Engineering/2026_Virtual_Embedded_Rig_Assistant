@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c68ec8b8"
+
+title = "Expose tshark capture-analysis and live-capture skills"
+
+status = "active"
+
+requirement = """
+When wireshark-tshark is enabled for a workbench, VERA shall expose the wireshark-analyze and wireshark-capture skills that direct offline analysis of capture files and bounded live captures saved to a capture file.
+"""
+
+verification = "Install the package, list the plugin skills of the catalog and read both entries for the filter, field export, statistics and bounded capture guidance; a capture skill without an autostop or packet bound fails the check."
+
+affected_paths = ["05_Software/plugins/wireshark-tshark/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

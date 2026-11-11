@@ -3,6 +3,7 @@ import { gitRuleArguments } from "./git-options.js";
 import { type PluginRisk, pluginIdSchema, pluginProgramNameSchema, pluginRiskSchema } from "./plugins.js";
 import type { PermissionMode } from "./session.js";
 import { sigrokRuleArguments } from "./sigrok-options.js";
+import { tsharkRuleArguments } from "./tshark-options.js";
 
 /** A plugin rule as matching reads it: a space-separated pattern, its risk and an optional note. */
 export interface ProgramRule {
@@ -129,14 +130,16 @@ export function classifyCommand(
   rules: readonly ProgramRule[],
   program: string,
   args: readonly string[],
-  optionSyntax?: "sigrok-cli" | "git",
+  optionSyntax?: "sigrok-cli" | "git" | "tshark",
 ): ProgramClassification {
   const projected =
     optionSyntax === "sigrok-cli"
       ? sigrokRuleArguments(args)
       : optionSyntax === "git"
         ? gitRuleArguments(args)
-        : args;
+        : optionSyntax === "tshark"
+          ? tsharkRuleArguments(args)
+          : args;
   const line = tokens(program, projected);
   let risk: PluginRisk | undefined;
   let confirm: string | undefined;

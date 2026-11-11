@@ -298,6 +298,13 @@ a live bus; a transmit waits for the typed confirmation in `ask`.
   (`safe`); live capture with `-i` (`device-read`).
 **Done when:** the agent answers questions about a sample `.pcapng` on both systems; a missing
 tshark shows its hint; live capture works where Npcap or dumpcap permissions exist.
+- Implementation candidate 2026-11-11 (TASK-bb2d915f): official find-only `wireshark-tshark` package in
+  its own Wireshark pack, `optionSyntax: tshark` role projection measured on TShark 4.6.8 (case-sensitive
+  letters, grouping, long abbreviations, end of options at the first filter word; Lua scripts and `-A`
+  credentials blocked, capture without `-r` device-read), skills `wireshark-analyze` and
+  `wireshark-capture`, generated CoAP/Modbus sample capture. A real-TShark replay session answers the
+  sample on Windows, and an opt-in test captured self-sent loopback datagrams after the device-read
+  approval on Windows with Npcap. Linux execution remains open; no Linux host with tshark was available.
 
 ### PLG-16 Microchip plugin
 **Goal:** program AVR and PIC parts. **Depends on:** PLG-07. **Specs:** packs §4.

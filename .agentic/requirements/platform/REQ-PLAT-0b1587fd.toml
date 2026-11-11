@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-0b1587fd"
+
+title = "Capture live traffic with tshark after the device-read approval"
+
+status = "active"
+
+requirement = """
+Where the host has tshark with Npcap on Windows or dumpcap capture permissions on Linux, when the user approves a bounded live tshark capture, VERA shall run it and save the captured packets to the requested workbench capture file.
+"""
+
+verification = "With VERA_TSHARK_LIVE_INTERFACE naming a loopback interface, run the opt-in test: an ask session waits for the device-read approval without starting tshark, then after approval captures three self-sent UDP datagrams to captures/live.pcapng and reads them back; record the host and output. A denied approval starts no process (covered by the sample-capture test)."
+
+affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml", "05_Software/plugins/wireshark-tshark/skills/wireshark-capture/SKILL.md", "05_Software/plugins/wireshark-tshark/README.md"]
+
+linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

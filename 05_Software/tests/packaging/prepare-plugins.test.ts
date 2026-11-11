@@ -37,6 +37,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["probe-rs", "official"],
     ["serial-monitor", "official"],
     ["sigrok", "official"],
+    ["wireshark-tshark", "official"],
   ]);
   expect(JSON.parse(await readFile(join(target, "index.json"), "utf8"))).toEqual(index);
   await expect(checkBundledPlugins(target)).resolves.toEqual(index);

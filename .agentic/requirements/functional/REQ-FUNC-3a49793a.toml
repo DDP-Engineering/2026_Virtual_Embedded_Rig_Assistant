@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3a49793a"
+
+title = "Locate the user tshark for the wireshark-tshark plugin"
+
+status = "active"
+
+requirement = """
+When the wireshark-tshark plugin resolves its tshark program, VERA shall use the first tshark executable found on PATH or in the standard Wireshark install location of the host system and report the version printed by tshark --version, without downloading anything.
+"""
+
+verification = "Install the package in an isolated store, resolve tshark with a PATH that contains it and with one that does not but where the standard location holds it, and check the executable and reported version; a fetch that throws proves no download is attempted."
+
+affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11
