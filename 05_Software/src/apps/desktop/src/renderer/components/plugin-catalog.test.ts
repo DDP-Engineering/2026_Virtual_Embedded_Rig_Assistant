@@ -143,7 +143,8 @@ async function render() {
   await act(async () => {
     root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, {})));
   });
-  await click('[data-action="plugin-catalog"]');
+  await vi.waitFor(() => expect($('[data-library-tab="available"]')).not.toBeNull());
+  await click(".plugin-catalog-settings > summary");
 }
 const $ = (selector: string) => container.querySelector(selector) as HTMLElement;
 const click = async (selector: string) => {
@@ -171,18 +172,14 @@ it("orders installs with catalog requirements first and skips installed plugins"
 
 // REQ-UX-72a349a1
 it.each(["en", "ro", "de"])(
-  "checks default groups and reviews the selected plugins in order (%s)",
+  "reviews individual catalog installs and required dependencies in order (%s)",
   async (language) => {
     await i18n.changeLanguage(language);
     stub({ catalog: view(esp32) });
     await render();
-    await vi.waitFor(() => expect($('[data-pack="esp32"]')).not.toBeNull());
-    const box = (group: string) => $(`[data-group="${group}"] input`) as HTMLInputElement;
-    expect(box("Core").checked).toBe(true);
-    expect(box("Security (irreversible)").checked).toBe(false);
-    expect($('[data-group="Core"]').textContent).toContain("Name serial-monitor, Name esp32-esptool");
-
-    await click('[data-action="catalog-install-selected"]');
+    await vi.waitFor(() => expect($('[data-catalog-plugin="esp32-esptool"]')).not.toBeNull());
+    expect($("[data-pack]")).toBeNull();
+    await click('[data-catalog-plugin="esp32-esptool"] [data-action="catalog-install"]');
     await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
     expect(calls("plugins.catalogReview")).toEqual([{ id: "serial-monitor" }]);
     expect($("[data-catalog-review]").textContent).toContain(
@@ -206,9 +203,8 @@ it("stops the queue when the first review is cancelled", async () => {
   await i18n.changeLanguage("en");
   stub({ catalog: view(esp32) });
   await render();
-  await vi.waitFor(() => expect($('[data-pack="esp32"]')).not.toBeNull());
-  await click('[data-group="Security (irreversible)"] input');
-  await click('[data-action="catalog-install-selected"]');
+  await vi.waitFor(() => expect($('[data-catalog-plugin="esp32-efuse"]')).not.toBeNull());
+  await click('[data-catalog-plugin="esp32-efuse"] [data-action="catalog-install"]');
   await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
   await click('[data-action="plugin-review-cancel"]');
   expect(calls("plugins.catalogReview")).toEqual([{ id: "serial-monitor" }]);
@@ -259,6 +255,7 @@ it("opens the review screen for an update that needs one and installs other upda
     required: { "serial-monitor": true, "esp32-esptool": false },
   });
   await render();
+  await click('[data-library-tab="installed"]');
   await vi.waitFor(() =>
     expect($('[data-plugin="esp32-esptool"] [data-action="plugin-update"]')).not.toBeNull(),
   );
@@ -269,6 +266,7 @@ it("opens the review screen for an update that needs one and installs other upda
   await vi.waitFor(() => expect(calls("plugins.catalogInstall")).toHaveLength(1));
   expect($("[data-plugin-review]")).toBeNull();
 
+  await click('[data-library-tab="available"]');
   await click('[data-catalog-plugin="serial-monitor"] [data-action="catalog-update"]');
   await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
   expect($("[data-catalog-review]").textContent).toContain(i18n.t("plugins.catalog.reviewChanges"));
@@ -276,6 +274,68 @@ it("opens the review screen for an update that needs one and installs other upda
   await click('[data-action="plugin-install"]');
   await vi.waitFor(() => expect(calls("plugins.catalogInstall")).toHaveLength(2));
 });
+
+// REQ-UX-c55a0fe1 REQ-UX-28a74094
+it.each([
+  { source: "folder", tier: "local" },
+  { source: "zip", tier: "trial" },
+] as const)(
+  "retains reviewed catalog updates for a global $source import without borrowing trust or updating its scoped collision",
+  async ({ source, tier }) => {
+    await i18n.changeLanguage("en");
+    const global = { ...installed("serial-monitor", "1.0.0"), source, tier };
+    const scoped = {
+      ...global,
+      source: "workbench" as const,
+      sha256: "c".repeat(64),
+      installedAt: "2026-11-01T00:00:00Z",
+    };
+    const newer = entry("serial-monitor", {
+      version: "1.1.0",
+      activities: ["build"],
+      keywords: ["catalog-only"],
+      addedAt: "2026-11-01",
+      installed: { version: "1.0.0", tier },
+      update: true,
+    });
+    const options = {
+      catalog: view([newer]),
+      installed: [global, scoped],
+      required: { "serial-monitor": true },
+    };
+    stub(options);
+    await render();
+    await click('[data-library-tab="installed"]');
+    await vi.waitFor(() =>
+      expect(container.querySelectorAll('[data-plugin="serial-monitor"]')).toHaveLength(2),
+    );
+    expect(container.querySelectorAll(`[data-plugin="serial-monitor"] [data-tier="${tier}"]`)).toHaveLength(
+      2,
+    );
+    await act(async () => userEvent.setup().selectOptions($("[data-library-activity]"), "build"));
+    expect(container.querySelectorAll("[data-plugin]")).toHaveLength(0);
+    await click('[data-action="library-clear"]');
+    await click('[data-library-status="updates"]');
+    expect(container.querySelectorAll('[data-plugin="serial-monitor"]')).toHaveLength(1);
+    expect($(`[data-plugin="serial-monitor"] [data-tier="${tier}"]`)).not.toBeNull();
+    await click('[data-plugin="serial-monitor"] [data-action="plugin-expand"]');
+    expect($('[data-plugin="serial-monitor"]').textContent).toContain(
+      i18n.t("plugins.library.dateUnavailable"),
+    );
+    expect($('[data-plugin="serial-monitor"]').textContent).not.toContain("2026-11-01");
+    await click('[data-plugin="serial-monitor"] [data-action="plugin-update"]');
+    await vi.waitFor(() => expect($("[data-catalog-review]")).not.toBeNull());
+    expect(calls("plugins.catalogReview")).toEqual([{ id: "serial-monitor" }]);
+    expect(calls("plugins.catalogInstall")).toHaveLength(0);
+    expect(global.tier).toBe(tier);
+    expect(global.version).toBe("1.0.0");
+    expect(calls("plugins.toggle")).toHaveLength(0);
+    await click('[data-action="plugin-review-cancel"]');
+    options.catalog = view([{ ...newer, installed: { version: "0.8.0", tier } }]);
+    await click('[data-action="catalog-check"]');
+    await vi.waitFor(() => expect(container.querySelectorAll("[data-plugin]")).toHaveLength(0));
+  },
+);
 
 // REQ-UX-9207423e
 it("saves a catalog URL keeping the index and proxy, refuses a remote http URL and restores the default", async () => {
@@ -340,7 +400,7 @@ it("checks the catalog again on request", async () => {
   await i18n.changeLanguage("en");
   stub({ catalog: view(esp32) });
   await render();
-  await vi.waitFor(() => expect($('[data-pack="esp32"]')).not.toBeNull());
+  await vi.waitFor(() => expect($('[data-catalog-plugin="esp32-esptool"]')).not.toBeNull());
   await click('[data-action="catalog-check"]');
   await vi.waitFor(() => expect(calls("plugins.catalog")).toContainEqual({ refresh: true }));
   expect(calls("plugins.catalog")[0]).toEqual({ refresh: false });

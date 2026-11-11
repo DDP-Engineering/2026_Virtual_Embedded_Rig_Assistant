@@ -49,6 +49,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-tab="installed"]').click();
     await page.locator('[data-action="plugin-install-folder"]').click();
     const review = page.locator("[data-plugin-review]");
     await expect(review.locator("[data-rule]")).toHaveCount(5);
@@ -61,6 +62,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await page.locator('[data-workbench-plugin="echo-tools"] input').check();
     await page.locator("[data-project-save]").click();
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-tab="installed"]').click();
     await card.locator('[data-action="plugin-expand"]').focus();
     await page.keyboard.press("Enter");
     await card.locator('[data-action="plugin-check"]').click();
@@ -72,7 +74,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
       await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
-        for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
+        for (const scale of [0.75, 0.875, 1, 1.125, 1.25, 1.5]) {
           if (!(await page.locator("#interface-font-size").isVisible()))
             await page.locator('[data-i18n="nav.settings"]').click();
           await changeSetting(page, "appearance", () =>
@@ -80,11 +82,13 @@ test("installs through the review screen, enables the plugin and stops a run, wi
           );
           await page.locator('[data-action="leave-settings"]').click();
           await page.locator('[data-action="plugins-nav"]').click();
+          await page.locator('[data-library-tab="installed"]').click();
           await card.locator('[data-action="plugin-expand"]').focus();
           await page.keyboard.press("Enter");
           await expect(card.locator('[data-program="echo"]')).toBeVisible();
-          await page.locator('[data-action="plugin-catalog"]').click();
-          await expect(page.locator('[data-pack="esp32"] [data-group]')).toHaveCount(2);
+          await page.locator('[data-library-tab="available"]').click();
+          await expect(page.locator("[data-pack]")).toHaveCount(0);
+          await expect(page.locator("[data-catalog-plugin]")).toHaveCount(4);
           expect(await overflow(page), `list ${language}/${theme}/${scale}`).toEqual({
             page: false,
             elements: [],
@@ -96,7 +100,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
             elements: [],
           });
           await review.locator('[data-action="plugin-review-cancel"]').click();
-          await page.locator('[data-action="catalog-install-selected"]').click();
+          await page.locator('[data-catalog-plugin="esp32-esptool"] [data-action="catalog-install"]').click();
           await expect(review.locator("[data-catalog-review]")).toBeVisible();
           expect(await overflow(page), `catalog review ${language}/${theme}/${scale}`).toEqual({
             page: false,
@@ -137,19 +141,24 @@ test("installs through the review screen, enables the plugin and stops a run, wi
       await page.locator('[data-toggle="right"]').click();
     // Install selected reviews the Core group's plugins in order and installs them as official plugins.
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-action="plugin-catalog"]').click();
-    await page.locator('[data-action="catalog-install-selected"]').click();
+    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-tab="available"]').click();
+    await page.locator('[data-catalog-plugin="esp32-esptool"] [data-action="catalog-install"]').click();
     await expect(review.locator("[data-catalog-review]")).toContainText("Official");
     await review.locator('[data-action="plugin-install"]').click();
     await expect(review).toContainText("esp32-esptool");
     await review.locator('[data-action="plugin-install"]').click();
+    await page.locator('[data-library-tab="installed"]').click();
     await expect(page.locator('[data-plugin="serial-monitor"]')).toContainText("Official");
     await expect(page.locator('[data-plugin="esp32-esptool"]')).toContainText("Official");
+    await page.locator('[data-library-tab="available"]').click();
     await expect(page.locator('[data-catalog-plugin="serial-monitor"] [data-installed]')).toContainText(
       "1.0.0",
     );
+    await page.locator('[data-library-tab="installed"]').click();
     const serial = page.locator('[data-plugin="serial-monitor"]');
     await serial.locator('[data-action="plugin-expand"]').click();
+    await serial.locator('[data-action="plugin-check"]').click();
     await serial.locator('[data-action="plugin-provision"]').click();
     await expect(serial.locator('[data-action="plugin-provision"]')).toBeDisabled();
     expect(errors).toEqual([]);

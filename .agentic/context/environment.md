@@ -253,3 +253,11 @@ Catalog discovery proof: shared plugin-catalog.test.ts, core catalog-source.test
 focused CLI catalog check/build case and packaging prepare-plugins.test.ts cover strict activity/
 keyword/date metadata, dangling references, deterministic release bytes and remote/bundled/CLI
 preservation. Date-less real entries remain date-less; no real network catalog release is needed.
+
+Global plugin-library acceptance: plugin-library.test.ts uses 32 deterministic catalog fixtures for
+combined filters/counts, known/unknown/future dates and UTC day boundaries, source identity,
+pagination/mutation clamping and QueryClient state retention. plugins.test.ts and plugin-catalog.test.ts
+retain review, dependency/setup and explicit-check error assertions; no browsing probes are allowed.
+Focused Windows Electron plugins-catalog/plugins-ui/plugin-builder and Chromium plugins-mock cover
+native imports/review/update/trust/promotion plus en/ro/de, themes and text-size overflow. These use
+isolated profiles, virtual commands and loopback transports; no real hardware or model spend.

@@ -57,7 +57,7 @@ validate a catalog source and build its release (index.json format 1 and one zip
 reads the catalog URL setting (else the build default, else the bundled official plugins), verifies each zip's size
 and SHA-256, shows the review screen before a first install and before updates that change programs or rules, installs
 with the catalog tier and checks for updates at start and every 24 h without installing them.
-Catalog source metadata supplies bounded activities/keywords and optional factual publication days, preserved in format1 indices and remote/bundled client views; unknown dates stay absent.
+Catalog source metadata supplies bounded activities/keywords and optional factual publication days, preserved in format1 indices and remote/bundled client views; unknown dates stay absent. The global Plugins library presents management controls before Available/Installed tabs, combined search/filters, publication sorts and pagination. In-session state survives navigation. Browsing consumes cached explicit dependency observations without probes; checks report individual failures. Workbench enablement remains in its existing settings draft.
 
 [Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/ (also a
 catalog source that the package bundles as <resources>/plugins), installed from the folder or the catalog: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS

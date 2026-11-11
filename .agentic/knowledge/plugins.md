@@ -18,7 +18,7 @@ desktop UI: the Plugins page (pickers, review screen, install bound to the revie
 program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`); and for the
 plugin catalog client: index read with the bundled fallback, verified zip downloads, the review decision, installs
 with the catalog tier, update marks, `plugins.catalog*` IPC, the catalog URL setting, the 24 h checks and the
-Plugins page catalog section (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
+Plugins page Available/Installed library (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
 `05_Software/src/libraries/core/src/plugins/store.ts` (store),
 `05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
@@ -28,7 +28,7 @@ Plugins page catalog section (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start
 `05_Software/src/libraries/core/src/plugins/provisioning.ts` (provisioning, with `archive.ts`) or
 `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx` and `runs-tab.tsx` (UI) or
 `05_Software/src/libraries/core/src/plugins/catalog.ts` (catalog client), `catalog-source.ts` (catalog check and
-build), shared `plugin-catalog.ts` (formats) and renderer `plugin-catalog.tsx` (catalog section); focused tests sit
+build), shared `plugin-catalog.ts` (formats) and renderer `plugin-catalog.tsx` (source settings and catalog rows); focused tests sit
 next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
 and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
@@ -120,7 +120,7 @@ review must be shown, and installs it bound to the reviewed integrity hash with 
 `catalog` (the zip URL, or the bundled zip's file path). Desktop main
 composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` and `plugins.catalogInstall`, and its
 `CatalogChecks` (`main/catalog-checks.ts`) reads the index after the window opens and every 24 h. The Plugins page
-opens the catalog section (`renderer/components/plugin-catalog.tsx`) from the grouped top Catalog control, above the installed list. The index is not
+presents source/URL settings and management controls above one Available/Installed library. The index is not
 signed (ADR-0019 defers it).
 
 Discovery metadata is maintained by plugin id in `catalog.yaml.metadata`: stable activities,
@@ -133,6 +133,24 @@ PluginCatalog entry spreading and CLI catalog build preserve it into remote/bund
 and packaged resources without execution, trust or schema-version changes. Real official packages
 are classified, with dates omitted until a publication record is established.
 
+
+The global library is projected by `renderer/components/plugin-library.ts` and rendered by
+`plugin-library-controls.tsx`, `plugin-catalog.tsx` and `plugins.tsx`. Source settings, separate
+folder/ZIP imports, check-all, refresh and updates precede Available/Installed tabs and one list.
+Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/state. State
+counts respect other filters; tab counts remain totals. Recently added/updated sort known dates
+before unknown, with stable name/id/source ties. New is UTC day age 0..29. Page sizes are 6/12/24;
+filter changes reset and loaded snapshot mutations clamp pages after catalog metadata settles
+(including failure, which retains offline Installed management). The UI key uses gcTime Infinity;
+QueryClient lifetime retains global filter/tab/page state after long navigation and result-cache expiry,
+independently from workbench draft state. Local/trial/scoped entries never borrow catalog tier or
+publication metadata from id matches. Global folder/ZIP/trial imports retain catalog update
+filter/action when the catalog installed version agrees; same-id scoped records never do. Pack data remains; pack checkboxes and global activation are absent.
+Browsing/expansion uses disabled observers only, avoiding `plugins.programs` cache-miss probes.
+Explicit Check/provision observations and failures update row/readiness filters. A rejected check
+cannot show stale Ready; unknown, needs configuration and unavailable remain distinct. Check-all
+continues after failures without provisioning or enabling. Manual imports select Installed after review.
+Fixture-driven `plugin-library.test.ts` and the retained native/browser flows cover these boundaries.
 
 ## Authoring
 
@@ -538,7 +556,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-98ded47a` / `REQ-SEC-a3c31442` — catalog location with the bundled fallback; URL rule.
 - `REQ-SEC-449e334b` / `REQ-SEC-6305d7b7` / `REQ-SEC-69f9d44d` — wrong size or hash, entry mismatch, downgrade refused.
 - `REQ-FUNC-f244f8f6` / `REQ-FUNC-46079512` / `REQ-FUNC-ce542246` — install with tier, review decision, 24 h checks.
-- `REQ-UX-72a349a1` / `REQ-UX-c55a0fe1` / `REQ-UX-9207423e` — pack browser, catalog list and updates, catalog URL field.
+- `REQ-UX-72a349a1` / `REQ-UX-c55a0fe1` / `REQ-UX-9207423e` — prerequisite-aware catalog review, catalog list and updates, catalog URL field.
 - `REQ-PLAT-720aa4f2` — official plugins shipped as a bundled catalog release.
 
 ## Files
@@ -583,7 +601,8 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/tests/integration/provisioning.test.ts` — real system tar and a real probed program.
 - `05_Software/src/apps/cli/src/plugin.ts`, `provisioning.ts` — `vera plugin install` and the CLI provisioner.
 - `05_Software/src/uv/uv-manifest.json`, `05_Software/scripts/prepare-uv.mjs` — the pinned uv.
-- `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx`, `plugins.test.ts` — the Plugins page and its tests.
+- `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx`, `plugins.test.ts` — library/action owner and tests.
+- `05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts`, `plugin-library-controls.tsx`, `plugin-library.test.ts` — passive projection, filters/counts/sort/paging and session state.
 - `05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx`, `runs-tab.test.ts` — the Runs tab and its tests.
 - `05_Software/tests/e2e/plugins-ui.spec.ts` — native install through the review, enable, Runs log and Stop, broken plugin.
 - `05_Software/tests/e2e/plugins-mock.spec.ts` — browser mock flow and overflow in every language, theme and size.
@@ -593,7 +612,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/libraries/core/src/plugins/catalog.ts`, `catalog.test.ts` — catalog client.
 - `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build`.
 - `05_Software/src/apps/desktop/src/main/catalog-checks.ts`, `catalog-checks.test.ts` — start and 24 h checks.
-- `05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx`, `plugin-catalog.test.ts` — catalog section.
+- `05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx`, `plugin-catalog.test.ts` — catalog settings/rows.
 - `05_Software/tests/e2e/plugins-catalog.spec.ts` — native install and rule-changing update from a loopback catalog.
 
 Scoped request lifetime is implemented by desktop `main/provisioner-hosts.ts` and verified by the real hanging-probe quit case in `tests/e2e/plugins-ui.spec.ts`; content-addressed approval/spawn binding is verified by `tests/integration/scoped-programs.test.ts`.

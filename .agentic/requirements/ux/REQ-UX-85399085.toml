@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-85399085"
+title = "Sort plugin library by factual chronology"
+status = "active"
+requirement = "When a library sort or New filter is selected, VERA shall order factual known dates descending before unknown dates with stable name/id/source ties and classify New only for UTC day ages 0 through 29."
+verification = "Check name/date sorts, same-date ties, unknown dates, today, age 29, age 30 and future using deterministic UTC now."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+spec = "specs/REQ-UX-28a74094.md"
+priority = "high"
+created = 2026-11-11
+updated = 2026-11-11

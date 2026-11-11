@@ -2,15 +2,15 @@ schema = 1
 
 id = "REQ-UX-72a349a1"
 
-title = "Pack browser installs selected groups through reviews"
+title = "Review selected catalog plugin with required dependencies"
 
 status = "active"
 
-requirement = "When the Plugins page shows the catalog, it shall list each pack with its groups as checkboxes, checked by default for default groups, and Install selected shall open the review screen for each selected plugin that is not installed, with its catalog requirements first, one after another, stopping when the user cancels."
+requirement = "When a catalog plugin is installed, VERA shall review its uninstalled required catalog plugins first and stop the queue on cancellation or failure."
 
-verification = "Component test with a mocked API: the ESP32 pack shows Core checked and Security unchecked; Install selected reviews serial-monitor then esp32-esptool; Cancel on the first review stops the queue. Browser-mock e2e in every language: the pack browser renders without overflow."
+verification = "Component tests install esptool with serial prerequisite, observe ordered reviews and hash-bound installs, and cancel or fail the first review without continuing the queue."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-11

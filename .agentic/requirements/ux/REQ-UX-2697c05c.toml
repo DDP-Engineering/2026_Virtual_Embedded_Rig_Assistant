@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-2697c05c"
+title = "Paginate and retain plugin library state"
+status = "active"
+requirement = "When paging or revisiting the library, VERA shall retain its in-session selected tab and filters with 6/12/24 page sizes, visible ranges and page reset/clamping after filters or results change."
+verification = "Navigate several pages of 30+ entries, mutate results and filters, remount with same QueryClient and verify state persists without hiding valid rows."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+spec = "specs/REQ-UX-28a74094.md"
+priority = "high"
+created = 2026-11-11
+updated = 2026-11-11

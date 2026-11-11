@@ -1,6 +1,6 @@
 # Plugins — catalog discovery and workbench activation
 
-Date: 2026-11-11. Status: accepted planning direction; not implemented.
+Date: 2026-11-11. Status: metadata and global library implemented in candidates TASK-5995883b/TASK-d5791e9a; workbench redesign remains planned.
 The user requested that this proposal and its interactive HTML be saved and tracked in Gitea.
 
 Implementation plan: [PLG-23…PLG-25](../plan/plugins-ui-redesign.md).
@@ -11,7 +11,7 @@ that opens directly in a browser without a server or network connection.
 
 ## 1. Problem and outcome
 
-The current Plugins page combines installed packages, catalog configuration, checkable pack groups
+The prior Plugins page combined installed packages, catalog configuration, checkable pack groups
 and a detailed catalog list. Default-checked pack groups look like installed or enabled plugins even
 when the page says that none are installed. With dozens of plugins, this also creates a long page
 without search, filters or sorting.
@@ -78,8 +78,7 @@ corresponding data source.
 ## 4. Catalog discovery metadata
 
 PLG-23 implements the publishing path for activity/keyword metadata and optional factual publication
-dates; schema/source/client/CLI/bundled proof is recorded in TASK-5995883b. The UI changes remain
-planned in PLG-24/25. Real package dates stay unknown and absent without publication evidence.
+dates; schema/source/client/CLI/bundled proof is recorded in TASK-5995883b. PLG-24 implements global library discovery; workbench changes remain planned in PLG-25. Real package dates stay unknown and absent without publication evidence.
 
 Maintain discovery metadata by plugin id in the maintainers' `catalog.yaml`, and carry it into
 generated `index.json`, the validated catalog view and bundled catalog resources:
