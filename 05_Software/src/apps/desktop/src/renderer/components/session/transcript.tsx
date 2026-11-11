@@ -1,6 +1,6 @@
-// REQ-UX-4bea0002 REQ-UX-4bea0005
+// REQ-UX-4bea0002 REQ-UX-4bea0005 REQ-UX-2bbfd052 REQ-REL-47308c01 REQ-REL-c8ac2ecc
 import type { ChatDetail, SessionState } from "@vera/shared";
-import { useId, useLayoutEffect, useRef } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
@@ -8,6 +8,8 @@ import { ErrorMessage } from "../error-message.js";
 import { ApprovalCard } from "./approval-card.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
+import { contentOffset, scrollTarget } from "./transcript-navigation.js";
+import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
 export function Transcript({
@@ -35,11 +37,53 @@ export function Transcript({
   const content = useRef<HTMLDivElement>(null);
   const transcriptId = useId();
   const following = useRef(true);
+  /** scrollTop of the last marker jump; auto-follow stays off until the user returns to the end elsewhere. */
+  const suspended = useRef<number | null>(null);
+  const [anchors] = useState(() => new Map<string, HTMLElement>());
+  const [highlight, setHighlight] = useState<{ sessionId: string | undefined; id: string } | null>(null);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const shownSession = useRef(sessionId);
+  /** Scroll range at the last commit or scroll event. */
+  const settledMax = useRef(0);
+  // App keys the workspace by session, so this only guards a Transcript reused for another session.
   useLayoutEffect(() => {
-    if (following.current && scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
+    if (shownSession.current === sessionId) return;
+    shownSession.current = sessionId;
+    clearTimeout(highlightTimer.current);
+    suspended.current = null;
+    setHighlight(null);
+  }, [sessionId]);
+  useLayoutEffect(() => {
+    const node = scroll.current;
+    if (!node) return;
+    // A scroll event is dispatched on the next frame, after this commit may have added content: a
+    // position at the end of the previous range still follows, unless a marker jump suspended it.
+    if (suspended.current === null && (following.current || node.scrollTop >= settledMax.current - 80)) {
+      following.current = true;
+      node.scrollTop = node.scrollHeight;
+    }
+    settledMax.current = node.scrollHeight - node.clientHeight;
   });
+  useEffect(() => () => clearTimeout(highlightTimer.current), []);
+  const navigate = (id: string) => {
+    const node = scroll.current;
+    const element = anchors.get(id);
+    if (!node || !element?.isConnected) return false;
+    following.current = false;
+    node.scrollTop = scrollTarget(contentOffset(node)(element), node.scrollHeight, node.clientHeight);
+    suspended.current = node.scrollTop;
+    clearTimeout(highlightTimer.current);
+    setHighlight({ sessionId, id });
+    highlightTimer.current = setTimeout(() => setHighlight(null), 1500);
+    return true;
+  };
   const latestError = [...state.items].reverse().find((i) => i.kind === "error")?.id;
   const rows = transcriptRows(state, detail);
+  const userMessages = rows.flatMap((row): NavigatorMessage[] =>
+    row.kind !== "group" && row.item.kind === "user"
+      ? [{ id: row.item.id, text: row.item.text, pending: !!row.item.pending }]
+      : [],
+  );
   const stopped = new Set([
     ...state.interrupted,
     ...state.turns.filter((turn) => turn.stopReason === "aborted").map((turn) => turn.turnId),
@@ -47,6 +91,15 @@ export function Transcript({
   return (
     <div className="transcript-frame" data-chat-detail={detail}>
       <TranscriptScroll viewport={scroll} content={content} controls={transcriptId} />
+      <TranscriptNavigator
+        key={sessionId ?? ""}
+        viewport={scroll}
+        content={content}
+        anchors={anchors}
+        messages={userMessages}
+        controls={transcriptId}
+        onNavigate={navigate}
+      />
       <div
         className="transcript"
         ref={scroll}
@@ -58,7 +111,12 @@ export function Transcript({
         tabIndex={0}
         onScroll={(e) => {
           const node = e.currentTarget;
-          following.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+          const atEnd = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+          settledMax.current = node.scrollHeight - node.clientHeight;
+          if (suspended.current !== null && (!atEnd || Math.abs(node.scrollTop - suspended.current) < 2))
+            return;
+          suspended.current = null;
+          following.current = atEnd;
         }}
       >
         <div className="transcript-content" ref={content}>
@@ -93,7 +151,23 @@ export function Transcript({
             return (
               <article
                 key={`${item.kind}/${item.id}`}
+                ref={
+                  item.kind === "user"
+                    ? (node) => {
+                        if (!node) return;
+                        anchors.set(item.id, node);
+                        return () => {
+                          if (anchors.get(item.id) === node) anchors.delete(item.id);
+                        };
+                      }
+                    : undefined
+                }
                 data-message-kind={item.kind}
+                data-nav-highlight={
+                  highlight?.sessionId === sessionId && highlight?.id === item.id && item.kind === "user"
+                    ? ""
+                    : undefined
+                }
                 className={`transcript-item ${item.kind}`}
                 data-search-match={
                   search &&

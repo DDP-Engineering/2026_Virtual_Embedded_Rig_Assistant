@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-7b49305a"
+
+title = "Group overlapping user-message markers with a selector"
+
+status = "active"
+
+requirement = """
+When markers would overlap, VERA shall merge them deterministically into groups whose 24 px targets do not overlap within the lane, and activating a group shall open a non-modal selector listing every member that closes with Escape (focus back on the group), an outside click or Tab without scrolling.
+"""
+
+verification = "Unit tests check grouping order, determinism, no overlap, edges and a too-short lane; component and browser tests open a group, choose an entry, close with Escape, outside click and Tab, and reach every member with 500 messages."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

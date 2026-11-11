@@ -17,6 +17,8 @@ boundary to exercise three actual storage collisions and the complete chat fallb
 
 Per-prompt activity verification: shared/core prompt-usage tests and renderer activity-usage.test.ts; tests/e2e/prompt-usage.spec.ts uses isolated native replay counts, real file tools and restart with no external provider calls.
 
+User-message navigator verification: renderer transcript-navigation.test.ts and transcript-navigator.test.ts (jsdom, stubbed layout) plus browser-only tests/e2e/session-navigation.spec.ts against `?mock=chat` (mock triggers `seed N messages` and `stream slowly…`); set VERA_NAV_SCREENSHOT=<path prefix> for sparse, dense, group, keyboard and narrow screenshots. Run it with `npx playwright test` from 05_Software (no Electron build needed). The native Ubuntu run is recorded separately.
+
 ## Toolchain
 
 eFuse acceptance: tests/integration/esp32-efuse.test.ts checks the official package/risk/skill

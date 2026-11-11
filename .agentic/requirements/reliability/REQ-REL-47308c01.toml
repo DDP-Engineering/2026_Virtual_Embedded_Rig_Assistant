@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-47308c01"
+
+title = "Suspend auto-follow after a message jump"
+
+status = "active"
+
+requirement = """
+When the user jumps to a message, VERA shall stop following the end of the conversation until the user explicitly returns to the end by scrolling, dragging or End, so that a reply that is still streaming or a jump near the end does not pull the view back.
+"""
+
+verification = "Browser tests jump into history while a mock reply streams and check the view stays; jump to a message near the end; then return to the end and check that following resumes."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/session-navigation.spec.ts", "05_Software/tests/e2e/session-scroll.spec.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

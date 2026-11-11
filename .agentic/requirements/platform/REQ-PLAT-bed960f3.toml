@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-bed960f3"
+
+title = "Message navigation on native Windows and Ubuntu"
+
+status = "active"
+
+requirement = """
+Message navigation shall behave the same in the native Electron app on Windows x64 and native Ubuntu x64.
+"""
+
+verification = "Manual: run the navigation spec on native Ubuntu (WSL evidence is named WSL) and record host and result."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

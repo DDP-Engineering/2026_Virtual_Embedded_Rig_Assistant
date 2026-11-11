@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-ef975c5d"
+
+title = "Browser acceptance for message navigation"
+
+status = "active"
+
+requirement = """
+The browser acceptance shall exercise the message navigator through the mock renderer with a slow-streaming reply, covering the AC01-AC20 scenarios that need real layout, and keep screenshots of a sparse and a dense conversation, an open group, keyboard focus and a narrow window.
+"""
+
+verification = "Run tests/e2e/session-navigation.spec.ts on Windows; screenshots are written when VERA_NAV_SCREENSHOT is set."
+
+affected_paths = ["05_Software/tests/e2e/session-navigation.spec.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/tests/e2e/session-navigation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11
