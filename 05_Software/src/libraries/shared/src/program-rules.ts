@@ -4,6 +4,7 @@ import { type PluginRisk, pluginIdSchema, pluginProgramNameSchema, pluginRiskSch
 import { pymcuprogRuleArguments } from "./pymcuprog-options.js";
 import type { PermissionMode } from "./session.js";
 import { sigrokRuleArguments } from "./sigrok-options.js";
+import { stm32RuleArguments } from "./stm32-options.js";
 import { tsharkRuleArguments } from "./tshark-options.js";
 
 /** A plugin rule as matching reads it: a space-separated pattern, its risk and an optional note. */
@@ -131,7 +132,7 @@ export function classifyCommand(
   rules: readonly ProgramRule[],
   program: string,
   args: readonly string[],
-  optionSyntax?: "sigrok-cli" | "git" | "tshark" | "pymcuprog",
+  optionSyntax?: "sigrok-cli" | "git" | "tshark" | "pymcuprog" | "stm32cubeprog",
 ): ProgramClassification {
   const projected =
     optionSyntax === "sigrok-cli"
@@ -142,7 +143,9 @@ export function classifyCommand(
           ? tsharkRuleArguments(args)
           : optionSyntax === "pymcuprog"
             ? pymcuprogRuleArguments(args)
-            : args;
+            : optionSyntax === "stm32cubeprog"
+              ? stm32RuleArguments(args)
+              : args;
   const line = tokens(program, projected);
   let risk: PluginRisk | undefined;
   let confirm: string | undefined;

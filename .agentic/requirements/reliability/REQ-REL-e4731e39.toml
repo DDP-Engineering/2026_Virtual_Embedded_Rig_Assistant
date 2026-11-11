@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-e4731e39"
+
+title = "Show the STM32CubeProgrammer install hint when the CLI is missing"
+
+status = "active"
+
+requirement = """
+If no STM32_Programmer_CLI is found, then VERA shall report the program as missing with the hint to install STM32CubeProgrammer from st.com and never start a process.
+"""
+
+verification = "Resolve with an empty PATH and no install folder; check the missing status, hint and link and that nothing was spawned."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

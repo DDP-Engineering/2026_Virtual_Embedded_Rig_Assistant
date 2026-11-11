@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-248961d6"
+
+title = "Refuse STM32_Programmer_CLI script files"
+
+status = "active"
+
+requirement = """
+If an STM32_Programmer_CLI command line runs a script file (-script), then VERA shall refuse it as blocked in every permission mode, because a script can contain any command.
+"""
+
+verification = "Classify -script in its spellings (-SCRIPT, --script, -x-script), alone and with other commands, as blocked; a bypass replay session refuses it without starting a process."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml", "05_Software/src/libraries/shared/src/stm32-options.ts"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

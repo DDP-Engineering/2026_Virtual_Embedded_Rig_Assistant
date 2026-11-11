@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-6ea24516"
+
+title = "Locate STM32_Programmer_CLI for the stm32-cubeprog plugin"
+
+status = "active"
+
+requirement = """
+When the stm32-cubeprog plugin resolves its program, VERA shall use the first STM32_Programmer_CLI found on Windows on PATH or in the STM32CubeProgrammer, STM32CubeCLT or STM32CubeIDE install folders, and on Linux in those install folders or as a lower-case stm32_programmer_cli link on PATH, and report the version printed by --version, without downloading anything.
+"""
+
+verification = "Resolve the program with fake hosts: Windows PATH, the %ProgramFiles% install folder and STM32CubeCLT and STM32CubeIDE folders under %SystemDrive%, a Linux home install and, on Linux hosts, a lower-case link on PATH; check executable and version; a fetch that throws proves no download. The real test resolves an installed STM32_Programmer_CLI file or skips."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

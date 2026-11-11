@@ -127,7 +127,7 @@ they are candidates for the deferred MCP path, not a requirement.
 
 | Plugin | Programs | Risk |
 |---|---|---|
-| `stm32-cubeprog` | `STM32_Programmer_CLI` (`find`) | `-r`, `-ob displ`: `device-read`; `-w`, `-e`: `device-write`; any option-byte write (`-ob`), above all `RDP=0xCC` (level 2, permanent): `irreversible` |
+| `stm32-cubeprog` | `STM32_Programmer_CLI` (`find`; program `stm32_programmer_cli`) | `-c`, `-r`, `-ob displ`: `device-read`; `-w`, `-e`: `device-write`; any option-byte write (`-ob`), above all `RDP=0xCC` (level 2, permanent), and the protection, OTP, key, secure-firmware, FUS, debug-authentication, HSM-license and power commands: `irreversible`; `-script`: `blocked` |
 | `stm32-openocd` | OpenOCD (`download` or `find`) | as `esp32-openocd` |
 
 ## 6. Bench tools (vendor-neutral)

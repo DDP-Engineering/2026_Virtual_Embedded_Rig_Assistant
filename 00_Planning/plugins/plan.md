@@ -330,6 +330,11 @@ that protection writes are `irreversible`; no test writes real lock bits.
   (`device-write`), every option-byte write, above all `RDP=0xCC`, `irreversible`.
 **Done when:** on a Nucleo board the agent identifies the part, flashes and verifies an image; matcher
 tests prove that every `-ob` write is `irreversible`; no test changes option bytes.
+- Implementation candidate 2026-11-11 (TASK-71300a15): official find-only `stm32-cubeprog` (program
+  `stm32_programmer_cli`) with an `optionSyntax: stm32cubeprog` command map measured on STM32CubeProgrammer 2.23.0:
+  every command of a line counts; `-ob displ` device-read, every other `-ob` and the protection, OTP, key,
+  secure-firmware, FUS, debug-authentication, HSM-license and power commands irreversible; `-script` blocked. Tests
+  classify every command of the recorded help and run the real CLI without a board. Nucleo acceptance remains open.
 
 ### PLG-18 MCP adapter (optional)
 **Goal:** run a plugin's MCP server under the same rules. **Depends on:** PLG-04.

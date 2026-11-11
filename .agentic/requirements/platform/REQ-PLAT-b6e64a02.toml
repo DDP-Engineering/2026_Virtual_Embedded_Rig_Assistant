@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-b6e64a02"
+
+title = "STM32 Nucleo acceptance"
+
+status = "active"
+
+requirement = """
+Where an STM32 Nucleo board is connected through its ST-LINK, VERA shall identify the part, flash an image and verify it with STM32_Programmer_CLI on Windows x64 and Linux x64.
+"""
+
+verification = "Manual: on a Nucleo board connect over SWD, read the device ID, write an ELF or hex with -v, reset and record host, board and output; never change option bytes."
+
+affected_paths = ["05_Software/plugins/stm32-cubeprog/README.md"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-11
+updated = 2026-11-11

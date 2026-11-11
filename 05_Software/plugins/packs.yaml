@@ -27,3 +27,7 @@
   name: Microchip (AVR, PIC)
   groups:
     - { name: Programming (pymcuprog), plugins: [microchip-pymcuprog], default: true }
+- id: stm32
+  name: STM32 (ST)
+  groups:
+    - { name: Programming (STM32CubeProgrammer), plugins: [stm32-cubeprog], default: true }
