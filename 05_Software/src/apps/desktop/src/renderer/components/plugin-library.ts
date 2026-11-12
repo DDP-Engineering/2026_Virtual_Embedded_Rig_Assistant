@@ -1,10 +1,8 @@
 // REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-b99b1695
 import type { CatalogActivity, CatalogPlugin, PluginProgramStatus, PluginSummary } from "@vera/shared";
 
-export type LibraryTab = "available" | "installed";
 export type LibraryStatus = "all" | "missing" | "installed" | "new" | "updates" | "needs" | "enabled";
 export interface LibraryState {
-  tab: LibraryTab;
   search: string;
   ecosystem: string;
   activity: string;
@@ -15,7 +13,6 @@ export interface LibraryState {
   pageSize: 6 | 12 | 24;
 }
 export const initialLibraryState: LibraryState = {
-  tab: "available",
   search: "",
   ecosystem: "",
   activity: "",
@@ -111,6 +108,14 @@ export function installedLibraryItems(
       catalog: entry,
     };
   });
+}
+/** One row per installed package, plus catalog packages without a global installation. */
+export function combinedLibraryItems(
+  catalog: readonly LibraryItem[],
+  installed: readonly LibraryItem[],
+): LibraryItem[] {
+  const globalIds = new Set(installed.filter((item) => item.source !== "workbench").map((item) => item.id));
+  return [...catalog.filter((item) => !globalIds.has(item.id)), ...installed];
 }
 export const normalizeLibraryText = (text: string) =>
   text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();

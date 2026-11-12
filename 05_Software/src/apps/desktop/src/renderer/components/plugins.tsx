@@ -16,12 +16,14 @@ import { ErrorMessage } from "./error-message.js";
 import {
   CatalogItem,
   CatalogSettings,
+  CatalogUpdateCheck,
   catalogKey,
   installOrder,
   PluginDiscoveryFacts,
 } from "./plugin-catalog.js";
 import {
   catalogLibraryItems,
+  combinedLibraryItems,
   initialLibraryState,
   installedLibraryItems,
   type LibraryState,
@@ -776,7 +778,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     (plugin) => observed.get(plugin)?.isError ?? false,
   );
   const availableItems = catalogLibraryItems(catalog.data?.plugins ?? []);
-  const scope = library.tab === "available" ? availableItems : installedItems;
+  const scope = combinedLibraryItems(availableItems, installedItems);
   const basic = scope.filter((item) => matchesLibraryFilters(item, library, pluginActivityLabels(t)));
   const results = sortLibraryItems(
     basic.filter((item) => matchesLibraryStatus(item, library.status)),
@@ -784,8 +786,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     i18n.language,
   );
   const page = Math.min(library.page, Math.max(1, Math.ceil(results.length / library.pageSize)));
-  const hasSnapshot =
-    library.tab === "available" ? catalog.data !== undefined : list.data !== undefined && !catalog.isPending;
+  const hasSnapshot = list.data !== undefined && !catalog.isPending;
   useEffect(() => {
     if (hasSnapshot && page !== library.page) setLibrary((current) => ({ ...current, page }));
   }, [hasSnapshot, page, library.page]);
@@ -815,7 +816,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
           installed={() => {
             void client.resetQueries({ queryKey: ["plugin-programs"] });
             client.removeQueries({ queryKey: ["plugin-programs"] });
-            if (!review.catalog && !review.scoped) changeLibrary({ tab: "installed", status: "all" });
+            if (!review.catalog && !review.scoped) changeLibrary({ status: "installed" });
             setReview(undefined);
             void changed();
             if (queue.length) void reviewCatalog(queue);
@@ -823,7 +824,6 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
         />
       ) : (
         <>
-          <p className="muted">{t("plugins.intro")}</p>
           <section className="plugin-toolbar" aria-label={t("plugins.managementActions")}>
             <div className="workbench-actions">
               <button
@@ -850,14 +850,17 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
               >
                 {checkingAll ? t("plugins.checkingAll") : t("plugins.checkAll")}
               </button>
-              <button
-                type="button"
-                data-action="plugin-refresh"
-                disabled={busy}
-                onClick={() => void changed()}
-              >
-                {t("plugins.refresh")}
-              </button>
+              <div className="workbench-actions plugin-refresh-actions">
+                <button
+                  type="button"
+                  data-action="plugin-refresh"
+                  disabled={busy}
+                  onClick={() => void changed()}
+                >
+                  {t("plugins.refresh")}
+                </button>
+                <CatalogUpdateCheck />
+              </div>
             </div>
             <CatalogSettings catalog={catalog} />
           </section>
@@ -878,70 +881,20 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
               ))}
             </div>
           )}
-          <p className="muted">{t("plugins.configPointer")}</p>
-          <div
-            className="plugin-library-tabs"
-            data-library-tabs
-            role="tablist"
-            aria-label={t("plugins.library.tabs")}
-            onKeyDown={(event) => {
-              const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
-              if (!keys.includes(event.key)) return;
-              event.preventDefault();
-              const tab =
-                event.key === "Home"
-                  ? "available"
-                  : event.key === "End"
-                    ? "installed"
-                    : library.tab === "available"
-                      ? "installed"
-                      : "available";
-              changeLibrary({
-                tab,
-                status: "all",
-                tier: tab === "available" && ["local", "trial"].includes(library.tier) ? "" : library.tier,
-              });
-              event.currentTarget.querySelector<HTMLButtonElement>(`[data-library-tab="${tab}"]`)?.focus();
-            }}
-          >
-            {(["available", "installed"] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                id={`plugin-library-${tab}`}
-                role="tab"
-                data-library-tab={tab}
-                aria-selected={library.tab === tab}
-                tabIndex={library.tab === tab ? 0 : -1}
-                aria-controls="plugin-library-panel"
-                onClick={() =>
-                  changeLibrary({
-                    tab,
-                    status: "all",
-                    tier:
-                      tab === "available" && ["local", "trial"].includes(library.tier) ? "" : library.tier,
-                  })
-                }
-              >
-                {tab === "available" ? t("plugins.library.available") : t("plugins.library.installed")}{" "}
-                <span>{tab === "available" ? availableItems.length : installedItems.length}</span>
-              </button>
-            ))}
-          </div>
           <PluginLibraryControls
             state={library}
             change={changeLibrary}
-            items={[...availableItems, ...installedItems]}
+            items={scope}
             basic={basic}
             total={scope.length}
             count={results.length}
           />
-          {list.isPending && library.tab === "installed" && <p role="status">{t("home.loading")}</p>}
+          {list.isPending && <p role="status">{t("home.loading")}</p>}
           {list.isError && <ErrorMessage error={list.error} />}
           {results.length === 0 && (
             <div className="plugin-library-empty">
               <p>
-                {library.tab === "installed" && !installedItems.length
+                {library.status === "installed" && !installedItems.length
                   ? t("plugins.none")
                   : t("plugins.library.noMatches")}
               </p>
@@ -954,18 +907,18 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
               >
                 {t("plugins.library.clear")}
               </button>
-              {library.tab === "installed" && !installedItems.length && (
-                <button type="button" onClick={() => changeLibrary({ tab: "available", status: "all" })}>
+              {library.status === "installed" && !installedItems.length && (
+                <button type="button" onClick={() => changeLibrary({ status: "all" })}>
                   {t("plugins.library.browse")}
                 </button>
               )}
             </div>
           )}
-          <div role="tabpanel" id="plugin-library-panel" aria-labelledby={`plugin-library-${library.tab}`}>
+          <div id="plugin-library-panel">
             <ul className="plugin-list">
               {results.slice((page - 1) * library.pageSize, page * library.pageSize).map((item) => {
                 const view = catalog.data;
-                if (item.catalog && view && library.tab === "available")
+                if (item.catalog && view && !item.plugin)
                   return (
                     <CatalogItem
                       key={item.key}

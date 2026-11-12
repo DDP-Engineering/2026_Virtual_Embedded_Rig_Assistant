@@ -760,7 +760,6 @@
     "semantic": "Nur Bedeutung"
   },
   "plugins": {
-    "intro": "Hier installieren und verwalten Sie Plugin-Pakete. Welche Plugins eine Workbench verwendet, wählen Sie in ihrer Konfiguration aus.",
     "installFolder": "Aus Ordner installieren…",
     "installZip": "Aus ZIP installieren…",
     "none": "Es sind keine Plugins installiert.",
@@ -786,7 +785,6 @@
     "platforms": "Plattformen",
     "requires": "Benötigt",
     "nothing": "Keine",
-    "configPointer": "Um Plugins für eine Workbench zu aktivieren oder zu deaktivieren, öffnen Sie Workbench bearbeiten → Plugins.",
     "tier": {
       "official": "Offiziell",
       "community": "Community",
@@ -831,7 +829,6 @@
     "catalog": {
       "title": "Katalog",
       "remote": "Plugins von {{url}}",
-      "bundled": "Mit VERA ausgelieferte Plugins (offizielle Plugins, offline verfügbar).",
       "none": "Es ist kein Katalog eingerichtet, und dieser Build enthält keine Plugins.",
       "problemUnreachable": "Der Katalog war nicht erreichbar.",
       "problemInvalid": "Der Index des Katalogs ist ungültig.",
@@ -888,9 +885,7 @@
     "managementActions": "Aktionen zur Pluginverwaltung",
     "description": "Beschreibung",
     "library": {
-      "available": "Verfügbar",
       "installed": "Installiert",
-      "tabs": "Plugin-Bibliothek",
       "search": "Plugins suchen",
       "searchHint": "Name, Funktion oder Stichwort…",
       "sort": "Sortieren nach",

@@ -141,7 +141,7 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     await install.getByRole("button", { name: "Approve", exact: true }).click();
     await expect(input).toBeEnabled();
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     const card = page.locator('[data-plugin="fixture-cli"]');
     await expect(card).toContainText("Trial");
     await expect(card.getByRole("checkbox")).toHaveCount(0);
@@ -152,7 +152,7 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();
     await send("inspect");
     const run = page.locator('[data-approval-card][data-risk="safe"]');
@@ -170,7 +170,7 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     await burn.getByRole("button", { name: "Approve", exact: true }).click();
     await expect(input).toBeEnabled();
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     page.once("dialog", (dialog) => void dialog.accept());
     await card.locator(".plugin-more > summary").click();
     await card.locator('[data-action="plugin-promote"]').click();

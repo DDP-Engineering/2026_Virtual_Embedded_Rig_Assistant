@@ -143,7 +143,7 @@ async function render() {
   await act(async () => {
     root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, {})));
   });
-  await vi.waitFor(() => expect($('[data-library-tab="available"]')).not.toBeNull());
+  await vi.waitFor(() => expect($('[data-library-status="all"]')).not.toBeNull());
   await click(".plugin-catalog-settings > summary");
 }
 const $ = (selector: string) => container.querySelector(selector) as HTMLElement;
@@ -222,7 +222,7 @@ it("lists catalog plugins with tiers and installed states, and notes an unreacha
   stub({ catalog: view(plugins, { source: "bundled", problem: "unreachable" }) });
   await render();
   await vi.waitFor(() => expect($('[data-catalog-plugin="can-logger"]')).not.toBeNull());
-  expect($("[data-catalog-source]").textContent).toBe(i18n.t("plugins.catalog.bundled"));
+  expect($("[data-catalog-source]")).toBeNull();
   expect($('[data-catalog-problem="unreachable"]').textContent).toBe(
     i18n.t("plugins.catalog.problemUnreachable"),
   );
@@ -255,7 +255,7 @@ it("opens the review screen for an update that needs one and installs other upda
     required: { "serial-monitor": true, "esp32-esptool": false },
   });
   await render();
-  await click('[data-library-tab="installed"]');
+  await click('[data-library-status="installed"]');
   await vi.waitFor(() =>
     expect($('[data-plugin="esp32-esptool"] [data-action="plugin-update"]')).not.toBeNull(),
   );
@@ -266,8 +266,8 @@ it("opens the review screen for an update that needs one and installs other upda
   await vi.waitFor(() => expect(calls("plugins.catalogInstall")).toHaveLength(1));
   expect($("[data-plugin-review]")).toBeNull();
 
-  await click('[data-library-tab="available"]');
-  await click('[data-catalog-plugin="serial-monitor"] [data-action="catalog-update"]');
+  await click('[data-library-status="all"]');
+  await click('[data-plugin="serial-monitor"] [data-action="plugin-update"]');
   await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
   expect($("[data-catalog-review]").textContent).toContain(i18n.t("plugins.catalog.reviewChanges"));
   expect(calls("plugins.catalogInstall")).toHaveLength(1);
@@ -305,7 +305,7 @@ it.each([
     };
     stub(options);
     await render();
-    await click('[data-library-tab="installed"]');
+    await click('[data-library-status="installed"]');
     await vi.waitFor(() =>
       expect(container.querySelectorAll('[data-plugin="serial-monitor"]')).toHaveLength(2),
     );

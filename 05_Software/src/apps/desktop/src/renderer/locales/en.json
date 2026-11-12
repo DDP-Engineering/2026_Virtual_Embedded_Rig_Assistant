@@ -760,7 +760,6 @@
     "semantic": "Meaning only"
   },
   "plugins": {
-    "intro": "Install and manage plugin packages here. Select which plugins a workbench uses in its configuration.",
     "installFolder": "Install from folder…",
     "installZip": "Install from zip…",
     "none": "No plugins are installed.",
@@ -786,7 +785,6 @@
     "platforms": "Platforms",
     "requires": "Requires",
     "nothing": "None",
-    "configPointer": "To enable or disable plugins for a workbench, open Edit workbench → Plugins.",
     "tier": {
       "official": "Official",
       "community": "Community",
@@ -831,7 +829,6 @@
     "catalog": {
       "title": "Catalog",
       "remote": "Plugins from {{url}}",
-      "bundled": "Plugins bundled with VERA (official plugins, available offline).",
       "none": "No catalog is configured, and this build bundles no plugins.",
       "problemUnreachable": "The catalog could not be reached.",
       "problemInvalid": "The catalog's index is not valid.",
@@ -888,9 +885,7 @@
     "managementActions": "Plugin management actions",
     "description": "Description",
     "library": {
-      "available": "Available",
       "installed": "Installed",
-      "tabs": "Plugin library",
       "search": "Search plugins",
       "searchHint": "Name, function or keyword…",
       "sort": "Sort by",

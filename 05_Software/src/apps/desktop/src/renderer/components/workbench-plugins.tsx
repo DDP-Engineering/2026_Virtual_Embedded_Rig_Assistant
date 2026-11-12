@@ -53,7 +53,6 @@ function WorkbenchPluginLibrary({
     return (
       client.getQueryData<LibraryState>(stateKey) ?? {
         ...initialLibraryState,
-        tab: "installed",
         sort: "name",
       }
     );

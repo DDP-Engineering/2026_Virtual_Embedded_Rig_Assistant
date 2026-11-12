@@ -760,7 +760,6 @@
     "semantic": "Doar după sens"
   },
   "plugins": {
-    "intro": "Instalează și administrează pachetele de pluginuri aici. Selectează pluginurile folosite de un workbench în configurarea lui.",
     "installFolder": "Instalează din dosar…",
     "installZip": "Instalează din zip…",
     "none": "Nu este instalat niciun plugin.",
@@ -786,7 +785,6 @@
     "platforms": "Platforme",
     "requires": "Necesită",
     "nothing": "Nimic",
-    "configPointer": "Pentru a activa sau dezactiva pluginuri pentru un workbench, deschide Editează workbench → Pluginuri.",
     "tier": {
       "official": "Oficial",
       "community": "Comunitate",
@@ -831,7 +829,6 @@
     "catalog": {
       "title": "Catalog",
       "remote": "Pluginuri din {{url}}",
-      "bundled": "Pluginuri incluse în VERA (pluginuri oficiale, disponibile offline).",
       "none": "Nu este configurat niciun catalog, iar această versiune nu include pluginuri.",
       "problemUnreachable": "Catalogul nu a putut fi accesat.",
       "problemInvalid": "Indexul catalogului nu este valid.",
@@ -888,9 +885,7 @@
     "managementActions": "Acțiuni de administrare a pluginurilor",
     "description": "Descriere",
     "library": {
-      "available": "Disponibile",
       "installed": "Instalate",
-      "tabs": "Biblioteca de pluginuri",
       "search": "Caută pluginuri",
       "searchHint": "Nume, funcție sau cuvânt-cheie…",
       "sort": "Sortează după",

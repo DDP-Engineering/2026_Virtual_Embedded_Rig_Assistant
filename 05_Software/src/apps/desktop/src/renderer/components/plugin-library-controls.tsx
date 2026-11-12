@@ -44,28 +44,21 @@ export function PluginLibraryControls({
   const id = useId();
   const activities = pluginActivityLabels(t);
   const ecosystems = [...new Set(items.map((item) => item.ecosystem).filter(Boolean))].sort();
-  const tiers =
-    state.tab === "available" ? ["official", "community"] : ["official", "community", "local", "trial"];
+  const tiers = ["official", "community", "local", "trial"];
   const tierLabels: Record<string, string> = {
     official: t("plugins.tier.official"),
     community: t("plugins.tier.community"),
     local: t("plugins.tier.local"),
     trial: t("plugins.tier.trial"),
   };
-  const statuses: [LibraryStatus, string][] =
-    state.tab === "available"
-      ? [
-          ["all", t("plugins.library.all")],
-          ["missing", t("plugins.library.notInstalled")],
-          ["installed", t("plugins.library.installed")],
-          ["new", t("plugins.library.newInCatalog")],
-          ["updates", t("plugins.library.updates")],
-        ]
-      : [
-          ["all", t("plugins.library.all")],
-          ["needs", t("plugins.library.needsConfiguration")],
-          ["updates", t("plugins.library.updates")],
-        ];
+  const statuses: [LibraryStatus, string][] = [
+    ["all", t("plugins.library.all")],
+    ["missing", t("plugins.library.notInstalled")],
+    ["installed", t("plugins.library.installed")],
+    ["new", t("plugins.library.newInCatalog")],
+    ["updates", t("plugins.library.updates")],
+    ["needs", t("plugins.library.needsConfiguration")],
+  ];
   const active = state.search || state.ecosystem || state.activity || state.tier || state.status !== "all";
   return (
     <div className="plugin-library-controls">

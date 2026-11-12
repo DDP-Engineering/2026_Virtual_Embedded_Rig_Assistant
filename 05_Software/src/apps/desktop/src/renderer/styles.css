@@ -2742,9 +2742,6 @@ legend {
   display: grid;
   gap: 0.75rem;
 }
-.plugin-catalog > button {
-  justify-self: start;
-}
 .plugin-catalog-settings > summary {
   cursor: pointer;
   padding-block: 0.4rem;
@@ -2752,19 +2749,6 @@ legend {
 .plugin-catalog-settings .catalog-url {
   padding-top: 0.5rem;
 }
-.plugin-library-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  border-bottom: 0.0625rem solid var(--border);
-  padding-bottom: 0.5rem;
-}
-.plugin-library-tabs button {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.plugin-library-tabs button span,
 .plugin-library-statuses button span {
   font-variant-numeric: tabular-nums;
 }
@@ -2806,7 +2790,11 @@ legend {
 .plugin-library-statuses button {
   border-radius: 1rem;
 }
-.plugin-library-statuses {
+.plugin-library-statuses,
+.workbench-editor-content .plugin-library-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   border: 0;
   padding: 0;
   margin: 0;

@@ -118,7 +118,7 @@ test("installs a plugin from a tagged catalog release and reviews an update that
     );
     await expect(review.locator('[data-program="serial"]')).toContainText("scripts/serial_monitor.py");
     await review.locator('[data-action="plugin-install"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     const card = page.locator('[data-plugin="serial-monitor"]');
     await expect(card).toContainText("Official");
     await expect(card).toContainText("1.0.0");
@@ -135,7 +135,7 @@ test("installs a plugin from a tagged catalog release and reviews an update that
     await release(state.folder, "1.0.1", (text) =>
       text.replace('{ match: "serial list *", risk: safe }', '{ match: "serial list *", risk: device-read }'),
     );
-    await catalog.locator('[data-action="catalog-check"]').click();
+    await page.locator('[data-action="catalog-check"]').click();
     await expect(card.locator("[data-plugin-update]")).toHaveText("Update available: 1.0.1");
     await card.locator('[data-action="plugin-update"]').click();
     await expect(review.locator("[data-catalog-review]")).toContainText(

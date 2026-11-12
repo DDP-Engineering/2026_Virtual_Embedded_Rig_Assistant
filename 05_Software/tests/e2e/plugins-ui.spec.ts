@@ -84,7 +84,7 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
 
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await expect(page.locator("[data-plugins]")).toContainText("No plugins are installed.");
 
     // A broken package shows its manifest error and cannot be installed.
@@ -207,7 +207,7 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     const installed = join(root, "data/plugins/installed/echo-tools/plugin.yaml");
     await writeFile(installed, (await readFile(installed, "utf8")).replace("risk: safe", "risk: dangerous"));
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await expect(card.locator('[data-issue="changed"]')).toBeVisible();
     await expect(card.locator('[data-issue="field"]')).toContainText("rules.0.risk");
     await expect(card.getByRole("checkbox")).toHaveCount(0);
@@ -249,7 +249,7 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await page.locator('[data-action="open-workbench-nav"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     let card = page.locator('[data-plugin="echo-tools"]');
     await expect(card.locator('[data-issue="untrusted"]')).toBeVisible();
     await expect(card.locator('[data-action="plugin-provision"]')).toHaveCount(0);
@@ -257,7 +257,7 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await expect(await editPlugins(page)).toBeDisabled();
     await page.locator("[data-project-cancel]").first().click();
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await card.locator('[data-action="plugin-scoped-review"]').click();
     const review = page.locator("[data-plugin-review]");
     await expect(review).toContainText("SHA-256");
@@ -270,7 +270,7 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
     const helper = join(folder, ".vera/plugins/echo-tools/echo.mjs");
     await writeFile(helper, `${await readFile(helper, "utf8")}\n// changed helper\n`);
@@ -313,12 +313,12 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await page.locator('[data-action="open-workbench-nav"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     card = page.locator('[data-plugin="echo-tools"]');
     await expect(await editPlugins(page)).toBeChecked();
     await page.locator("[data-project-cancel]").first().click();
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await writeFile(join(folder, ".vera/plugins/echo-tools/skills/echo-guide/SKILL.md"), "changed skill");
     await page.locator('[data-action="plugin-refresh"]').click();
     await expect(card.locator('[data-issue="changed"]')).toBeVisible();

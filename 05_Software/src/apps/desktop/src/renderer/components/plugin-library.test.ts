@@ -52,7 +52,7 @@ const installed = (
   tier: PluginSummary["tier"] = "official",
 ): PluginSummary => ({
   id,
-  name: `Installed ${id}`,
+  name: id.startsWith("plugin-") ? `Écran ${id.slice(7)}` : `Installed ${id}`,
   version: "0.9.0",
   issues: [],
   enabled: false,
@@ -101,7 +101,7 @@ async function mount(reuse = false) {
   await act(async () =>
     root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, {}))),
   );
-  await vi.waitFor(() => expect(host.querySelector('[data-library-tab="available"]')).not.toBeNull());
+  await vi.waitFor(() => expect(host.querySelector('[data-library-status="all"]')).not.toBeNull());
 }
 const $ = (selector: string) => host.querySelector<HTMLElement>(selector)!;
 const click = async (selector: string) => act(async () => userEvent.setup().click($(selector)));
@@ -109,10 +109,12 @@ const select = async (selector: string, value: string) =>
   act(async () => userEvent.setup().selectOptions($(selector), value));
 const text = () => $("[data-library-results]").textContent;
 const ids = () =>
-  [...host.querySelectorAll<HTMLElement>("[data-catalog-plugin]")].map((el) => el.dataset.catalogPlugin);
+  [...host.querySelectorAll<HTMLElement>("[data-catalog-plugin], [data-plugin]")].map(
+    (el) => el.dataset.catalogPlugin ?? el.dataset.plugin,
+  );
 const calls = (name: string) => vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === name);
 
-it("starts with one Available list below all management controls and switches to source-aware Installed", async () => {
+it("shows one combined library below management and filters source-aware installations without duplicate catalog rows", async () => {
   const state = setup();
   state.installed.push({ ...installed("plugin-00", "workbench", "local"), issues: [{ code: "collision" }] });
   await mount();
@@ -127,16 +129,21 @@ it("starts with one Available list below all management controls and switches to
     "catalog-check",
   ]) {
     expect(
-      $(`[data-action="${action}"]`).compareDocumentPosition($("[data-library-tabs]")) &
+      $(`[data-action="${action}"]`).compareDocumentPosition($(".plugin-library-controls")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
   }
   expect(host.textContent).not.toContain("Configure workbench");
-  $('[data-library-tab="available"]').focus();
-  await act(async () => userEvent.setup().keyboard("{ArrowRight}"));
-  expect(document.activeElement).toBe($('[data-library-tab="installed"]'));
-  expect($('[data-library-tab="installed"]').getAttribute("aria-selected")).toBe("true");
-  expect($('[data-library-tab="available"]').getAttribute("tabindex")).toBe("-1");
+  expect(host.querySelector("[data-library-tabs]")).toBeNull();
+  expect($("[data-library-results]").textContent).toContain("35");
+  for (const text of [
+    "Install and manage plugin packages here. Select which plugins a workbench uses in its configuration.",
+    "To enable or disable plugins for a workbench, open Edit workbench → Plugins.",
+    "Plugins bundled with VERA (official plugins, available offline).",
+  ]) {
+    expect(host.textContent).not.toContain(text);
+  }
+  await click('[data-library-status="installed"]');
   expect(host.querySelectorAll("[data-plugin]")).toHaveLength(5);
   expect(host.textContent).toContain("Trial");
   expect(host.textContent).toContain("Local");
@@ -155,7 +162,7 @@ it("intersects normalized all-word search and ecosystem/activity/provenance filt
   await select("[data-library-tier]", "community");
   expect(host.textContent).toContain("No plugins match");
   await click('[data-action="library-clear"]');
-  expect(text()).toContain("32");
+  expect(text()).toContain("34");
   expect(calls("plugins.catalog")).toHaveLength(1);
   expect(calls("plugins.check")).toHaveLength(0);
 });
@@ -184,7 +191,7 @@ it("sorts known dates before unknown, has stable ties and classifies New by UTC 
   await select("[data-library-sort]", "updated");
   expect(ids()[0]).toBe("plugin-19");
   await click('[data-action="library-next"]');
-  expect(ids().at(-1)).toBe("plugin-00");
+  expect(ids().slice(-3)).toEqual(["plugin-00", "local-tools", "trial-tools"]);
 });
 
 it("changes New at UTC midnight rather than the host's local calendar day", () => {
@@ -195,7 +202,7 @@ it("changes New at UTC midnight rather than the host's local calendar day", () =
   expect(isNewCatalogEntry(undefined, Date.parse("2026-11-11T00:00:00Z"))).toBe(false);
 });
 
-it("retains in-session filters/tab across remount, resets filters to page1 and clamps shrinking results", async () => {
+it("retains in-session filters across remount, resets filters to page1 and clamps shrinking results", async () => {
   const state = setup();
   await mount();
   await click('[data-action="library-next"]');
@@ -207,24 +214,27 @@ it("retains in-session filters/tab across remount, resets filters to page1 and c
   await mount(true);
   expect(ids()[0]).toBe("plugin-06");
   state.entries = state.entries.slice(0, 2);
+  state.installed = state.installed.slice(0, 2);
   await click('[data-action="plugin-refresh"]');
   await vi.waitFor(() => expect(ids()).toHaveLength(2));
   expect($("[data-library-range]").textContent).toContain("1");
 });
 
-it("retains the selected tab after navigating away beyond the default five-minute cache lifetime", async () => {
+it("retains the selected status after navigating away beyond the default five-minute cache lifetime", async () => {
   setup();
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   try {
     await mount();
     await act(async () =>
-      userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click($('[data-library-tab="installed"]')),
+      userEvent
+        .setup({ advanceTimers: vi.advanceTimersByTime })
+        .click($('[data-library-status="installed"]')),
     );
     await act(async () => root.unmount());
     await act(async () => vi.advanceTimersByTimeAsync(6 * 60_000));
     vi.useRealTimers();
     await mount(true);
-    expect($('[data-library-tab="installed"]').getAttribute("aria-selected")).toBe("true");
+    expect($('[data-library-status="installed"]').getAttribute("aria-pressed")).toBe("true");
   } finally {
     vi.useRealTimers();
   }
@@ -257,7 +267,7 @@ it("retains Installed activity-filter paging while catalog metadata reloads", as
   state.installed = state.entries.map((entry) => installed(entry.id));
   await mount();
   await vi.waitFor(() => expect(ids()).toHaveLength(6));
-  await click('[data-library-tab="installed"]');
+  await click('[data-library-status="installed"]');
   await select("[data-library-activity]", "build");
   await select("[data-library-sort]", "name");
   await click('[data-action="library-next"]');
@@ -284,7 +294,7 @@ it("checks all installed entries despite individual failures and updates passive
   const state = setup();
   state.fail = "plugin-01";
   await mount();
-  await click('[data-library-tab="installed"]');
+  await click('[data-library-status="installed"]');
   await click('[data-plugin="plugin-00"] [data-action="plugin-expand"]');
   expect(calls("plugins.programs")).toHaveLength(0);
   expect(calls("plugins.check")).toHaveLength(0);
@@ -303,7 +313,7 @@ it("checks all installed entries despite individual failures and updates passive
 it("keeps unavailable program observations distinct from missing configuration", async () => {
   const state = setup();
   await mount();
-  await click('[data-library-tab="installed"]');
+  await click('[data-library-status="installed"]');
   await act(async () => {
     client.setQueryData(pluginProgramsKey(undefined, state.installed[0]!), [
       { name: "tool", kind: "find", state: "unavailable", problem: "version" },
@@ -328,7 +338,7 @@ it("keeps installed packages usable when catalog loading fails and provides empt
   const state = setup();
   state.catalogError = true;
   await mount();
-  await click('[data-library-tab="installed"]');
+  await click('[data-library-status="installed"]');
   await vi.waitFor(() => expect(host.querySelectorAll("[data-plugin]")).toHaveLength(4));
   await act(async () => userEvent.setup().type($("[data-library-search]"), "zz-no-match"));
   expect(host.textContent).toContain("No plugins match");

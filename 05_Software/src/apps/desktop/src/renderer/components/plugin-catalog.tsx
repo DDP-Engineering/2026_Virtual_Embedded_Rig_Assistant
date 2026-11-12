@@ -196,13 +196,12 @@ export function PluginDiscoveryFacts({ entry }: { entry?: CatalogPlugin | undefi
   );
 }
 
-/** Global source/settings stay above the tabbed library; pack definitions are not selection UI. */
-export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCatalogView> }) {
+/** Explicit refresh action shares the global management toolbar. */
+export function CatalogUpdateCheck() {
   const { t } = useTranslation();
   const client = useQueryClient();
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<unknown>();
-  const view = catalog.data;
   async function check() {
     setChecking(true);
     setError(undefined);
@@ -215,19 +214,29 @@ export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCat
     }
   }
   return (
-    <section className="plugin-catalog" data-plugin-catalog aria-label={t("plugins.catalog.title")}>
+    <>
       <button type="button" data-action="catalog-check" disabled={checking} onClick={() => void check()}>
         {checking ? t("plugins.catalog.checking") : t("plugins.catalog.check")}
       </button>
+      {error !== undefined && <ErrorMessage error={error} />}
+    </>
+  );
+}
+
+/** Source settings stay above the library; pack definitions are not selection UI. */
+export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCatalogView> }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const view = catalog.data;
+  return (
+    <section className="plugin-catalog" data-plugin-catalog aria-label={t("plugins.catalog.title")}>
       {catalog.isPending && <p role="status">{t("home.loading")}</p>}
       {catalog.isError && <ErrorMessage error={catalog.error} />}
-      {view && (
+      {view && view.source !== "bundled" && (
         <p className="muted" data-catalog-source={view.source}>
           {view.source === "remote"
             ? t("plugins.catalog.remote", { url: view.url ?? "" })
-            : view.source === "bundled"
-              ? t("plugins.catalog.bundled")
-              : t("plugins.catalog.none")}
+            : t("plugins.catalog.none")}
         </p>
       )}
       {view?.problem && (
@@ -237,7 +246,6 @@ export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCat
             : t("plugins.catalog.problemUnreachable")}
         </p>
       )}
-      {error !== undefined && <ErrorMessage error={error} />}
       <details className="plugin-catalog-settings">
         <summary>{t("plugins.library.catalogSettings")}</summary>
         <CatalogUrl changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />

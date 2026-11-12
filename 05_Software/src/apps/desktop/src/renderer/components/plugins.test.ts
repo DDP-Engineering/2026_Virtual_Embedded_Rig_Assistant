@@ -143,7 +143,7 @@ it("groups top actions and starts with compact accessible rows and explicit depe
   stub({ installed: [echo], programs: [{ name: "echo", kind: "find", state: "ready", version: "22.11.0" }] });
   await render();
   await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
-  expect($('[data-library-tab="available"]')).not.toBeNull();
+  expect($('[data-library-status="all"]')).not.toBeNull();
   const toggle = $('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
   expect(toggle.getAttribute("aria-expanded")).toBe("false");
   expect(container.textContent).toContain(echo.description);
@@ -168,7 +168,7 @@ async function render(props: Parameters<typeof Plugins>[0] = { workbench }) {
   await act(async () => {
     root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, props)));
   });
-  await click('[data-library-tab="installed"]');
+  await click('[data-library-status="installed"]');
 }
 const $ = (selector: string) => container.querySelector(selector) as HTMLElement;
 const click = async (selector: string) => {
@@ -354,7 +354,9 @@ it.each([true, false])(
     stub({ installed: [{ ...echo, enabled: true }] });
     await render(open ? { workbench } : {});
     await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
-    expect(container.textContent).toContain(i18n.t("plugins.configPointer"));
+    expect(container.textContent).not.toContain(
+      "To enable or disable plugins for a workbench, open Edit workbench → Plugins.",
+    );
     expect($('[data-plugin="echo-tools"] input[type="checkbox"]')).toBeNull();
     expect(calls("plugins.toggle")).toHaveLength(0);
   },

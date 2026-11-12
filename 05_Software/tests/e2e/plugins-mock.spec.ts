@@ -42,14 +42,21 @@ test("installs through the review screen, enables the plugin and stops a run, wi
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   try {
-    await page.setViewportSize({ width: 1024, height: 640 });
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(url);
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("#workbench-name").fill("Bench");
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await expect(page.locator("[data-library-tabs]")).toHaveCount(0);
+    const refresh = await page.locator('[data-action="plugin-refresh"]').boundingBox();
+    const updates = await page.locator('[data-action="catalog-check"]').boundingBox();
+    expect(refresh).not.toBeNull();
+    expect(updates).not.toBeNull();
+    expect(refresh?.y).toBe(updates?.y);
+
+    await page.locator('[data-library-status="installed"]').click();
     await page.locator('[data-action="plugin-install-folder"]').click();
     const review = page.locator("[data-plugin-review]");
     await expect(review.locator("[data-rule]")).toHaveCount(5);
@@ -59,16 +66,23 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await page.locator("[data-workbench-entry] .workbench-group-name").first().click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="plugins"]').click();
+    const statusTops = await page
+      .locator("[data-workbench-plugins] [data-library-status]")
+      .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().top));
+    expect(statusTops).toHaveLength(3);
+    expect(new Set(statusTops).size).toBe(1);
+
     await page.locator('[data-workbench-plugin="echo-tools"] input').check();
     await page.locator("[data-project-save]").click();
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await card.locator('[data-action="plugin-expand"]').focus();
     await page.keyboard.press("Enter");
     await card.locator('[data-action="plugin-check"]').click();
     await expect(card.locator('[data-action="plugin-provision"]')).toBeDisabled();
     await expect(card.locator('[data-program="echo"]')).toHaveAttribute("data-state", "ready");
 
+    await page.setViewportSize({ width: 1024, height: 640 });
     for (const language of ["en", "ro", "de"]) {
       await page.locator('[data-i18n="nav.settings"]').click();
       await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
@@ -82,11 +96,11 @@ test("installs through the review screen, enables the plugin and stops a run, wi
           );
           await page.locator('[data-action="leave-settings"]').click();
           await page.locator('[data-action="plugins-nav"]').click();
-          await page.locator('[data-library-tab="installed"]').click();
+          await page.locator('[data-library-status="installed"]').click();
           await card.locator('[data-action="plugin-expand"]').focus();
           await page.keyboard.press("Enter");
           await expect(card.locator('[data-program="echo"]')).toBeVisible();
-          await page.locator('[data-library-tab="available"]').click();
+          await page.locator('[data-library-status="all"]').click();
           await expect(page.locator("[data-pack]")).toHaveCount(0);
           await expect(page.locator("[data-catalog-plugin]")).toHaveCount(4);
           expect(await overflow(page), `list ${language}/${theme}/${scale}`).toEqual({
@@ -154,21 +168,19 @@ test("installs through the review screen, enables the plugin and stops a run, wi
       await page.locator('[data-toggle="right"]').click();
     // Install selected reviews the Core group's plugins in order and installs them as official plugins.
     await page.locator('[data-action="plugins-nav"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
-    await page.locator('[data-library-tab="available"]').click();
+    await page.locator('[data-library-status="installed"]').click();
+    await page.locator('[data-library-status="all"]').click();
     await page.locator('[data-catalog-plugin="esp32-esptool"] [data-action="catalog-install"]').click();
     await expect(review.locator("[data-catalog-review]")).toContainText("Official");
     await review.locator('[data-action="plugin-install"]').click();
     await expect(review).toContainText("esp32-esptool");
     await review.locator('[data-action="plugin-install"]').click();
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await expect(page.locator('[data-plugin="serial-monitor"]')).toContainText("Official");
     await expect(page.locator('[data-plugin="esp32-esptool"]')).toContainText("Official");
-    await page.locator('[data-library-tab="available"]').click();
-    await expect(page.locator('[data-catalog-plugin="serial-monitor"] [data-installed]')).toContainText(
-      "1.0.0",
-    );
-    await page.locator('[data-library-tab="installed"]').click();
+    await page.locator('[data-library-status="all"]').click();
+    await expect(page.locator('[data-plugin="serial-monitor"]')).toContainText("1.0.0");
+    await page.locator('[data-library-status="installed"]').click();
     const serial = page.locator('[data-plugin="serial-monitor"]');
     await serial.locator('[data-action="plugin-expand"]').click();
     await serial.locator('[data-action="plugin-check"]').click();
