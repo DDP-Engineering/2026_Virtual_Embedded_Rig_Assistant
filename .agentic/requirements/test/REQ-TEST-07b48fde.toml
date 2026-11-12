@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-07b48fde"
+
+title = "Verify kicad-tool against hand-made fictional KiCad fixtures"
+
+status = "active"
+
+requirement = """
+The kicad tests shall use fictional KiCad 10 projects made for them, whose expected hierarchy, instances, nets, BOM rows, ERC defects, DRC violations and counts are written in the fixture README from the fixture's design, not copied from program output.
+"""
+
+verification = "Inspection: the fixture README derives every expected value from the designed circuit and board; the tests compare against those values and run the real KiCad when the helper finds KiCad 10, and say so when they skip."
+
+affected_paths = ["05_Software/tests/fixtures/kicad/", "05_Software/tests/integration/kicad.test.ts"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

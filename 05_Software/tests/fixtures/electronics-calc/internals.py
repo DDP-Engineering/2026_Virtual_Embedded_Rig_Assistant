@@ -28,7 +28,7 @@ sys.path.insert(0, sys.argv[1])
 from pathlib import Path  # noqa: E402
 
 from elec_support import cli, contract, engine, report  # noqa: E402
-from elec_support.quantities import utf16_length  # noqa: E402
+from elec_support.workspace import utf16_length  # noqa: E402
 
 QUANTITY = {"value": 1.0, "unit": "V", "text": "1.000 V"}
 REQUEST = {"origin": "inline", "sha256": "0" * 64}

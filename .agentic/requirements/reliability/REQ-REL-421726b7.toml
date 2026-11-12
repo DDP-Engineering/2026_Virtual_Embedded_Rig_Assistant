@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-421726b7"
+
+title = "List missing symbol libraries as ERC library issues"
+
+status = "active"
+
+requirement = """
+When KiCad's ERC reports library issues, the helper shall list those violations under `libraryIssues` in the ERC summary.
+"""
+
+verification = "The fixture variant without its project `sym-lib-table` gives `lib_symbol_issues` warnings that name the project library, one per affected symbol, all under `libraryIssues`."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/checks.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

@@ -11,29 +11,24 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
 from datetime import datetime
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from typing import Any, Callable
 
-from . import FORMAT, TOOL, VERSION
+from . import FORMAT, TOOL, VERSION, workspace
 from .contract import CalcError, Problem, Reader, Result, refuse, result_document, stamp
-from .quantities import control_free, utf16_length
+from .workspace import DEVICES, PATH_TEXT_LIMIT, RUN_ID, is_device, valid_run_id  # noqa: F401 - the program's API
 
 INPUT_LIMIT = 1024 * 1024
 MAX_CALCULATIONS = 32
 MAX_NOTES = 16
 MAX_REPORT_SAMPLES = 1_000_000
 DEFAULT_RESULTS = "electronics-results"
-# UTF-16 units of a path option, and of the relative path a document repeats as JSON writes it (a quotation
-# mark or backslash, both legal in Linux file names, takes two): the output bound counts on that length.
-PATH_TEXT_LIMIT = 1024
-RUN_ID = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]{0,62}[A-Za-z0-9])?")
 CALCULATION_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
-DEVICES = frozenset(
-    {"CON", "PRN", "AUX", "NUL", *(f"COM{n}" for n in range(1, 10)), *(f"LPT{n}" for n in range(1, 10))}
-)
+# The path rules live in workspace.py, shared with the kicad plugin; these names keep their callers unchanged.
+_relative = workspace.relative
+_allowed_output = workspace.allowed_output
 
 
 class OutputFailure(Exception):
@@ -44,92 +39,22 @@ class OutputFailure(Exception):
         self.problem = Problem("output", "", message)
 
 
-def is_device(segment: str) -> bool:
-    """A Windows device name such as NUL or COM1, also with an extension: never a run id."""
-    return segment.split(".")[0].rstrip(" ").upper() in DEVICES
-
-
-def valid_run_id(value: str) -> bool:
-    return RUN_ID.fullmatch(value) is not None and not is_device(value)
-
-
-def _is_vera(segment: str) -> bool:
-    """`.vera` in any letter case, also in the spellings Windows opens as that folder (`.vera.`, `.vera::$DATA`)."""
-    return segment.split(":")[0].rstrip(". ").casefold() == ".vera"
-
-
-def _inside(root: Path, candidate: Path) -> bool:
-    left, right = os.path.normcase(str(root)), os.path.normcase(str(candidate))
-    return right == left or right.startswith(left.rstrip("\\/") + os.sep)
-
-
-def _relative(cwd: Path, path: Path) -> str:
-    try:
-        return Path(os.path.relpath(path, cwd)).as_posix()
-    except ValueError:  # Another drive or a device path.
-        return path.as_posix()
-
-
-def _json_units(text: str) -> int:
-    """The UTF-16 length of a text inside a JSON string, escapes included."""
-    return utf16_length(json.dumps(text, ensure_ascii=False)[1:-1])
-
-
-def _utf8(text: str) -> bool:
-    try:
-        text.encode("utf-8")
-    except UnicodeEncodeError:
-        return False
-    return True
-
-
 def _confined(cwd: Path, raw: str, option: str, spelled: Path | None = None) -> Path:
-    """The path an option names, resolved with links followed, inside the working directory.
-
-    The text is judged first, without any file-system access; only a path that already lies inside the working
-    directory by its text is resolved, and the resolved path is judged again. `cwd` is the resolved working
-    directory; `spelled` is the same folder as the caller entered it (through a link, perhaps), which an
-    absolute path may use as well. On Windows a device name such as NUL becomes a device path by its text and
-    is refused as lying outside. Control characters are refused in the text and in the resolved relative path,
-    which a document repeats: a link may resolve to a name that holds them."""
-    outside = refuse("path", "", f"{option} must lie inside the working directory; '{raw[:120]}' does not.")
-    if not raw:
-        raise refuse("path", "", f"{option} needs a path.")
-    if not control_free(raw):
-        raise refuse("path", "", f"{option} takes a path without control characters.")
-    if utf16_length(raw) > PATH_TEXT_LIMIT or not _utf8(raw):
-        raise refuse("path", "", f"{option} takes a path of at most {PATH_TEXT_LIMIT} UTF-16 units of valid Unicode text.")
-    if raw.startswith(("\\\\", "//")):
-        raise refuse("path", "", f"{option} does not accept network (UNC) or device paths.")
-    path = Path(raw)
-    if os.name == "nt":
-        drive = PureWindowsPath(raw).drive
-        if drive and (not PureWindowsPath(raw).is_absolute() or drive.casefold() != cwd.drive.casefold()):
-            raise outside
-    lexical = Path(os.path.abspath(path if path.is_absolute() else cwd / path))
-    if not _inside(cwd, lexical) and not (spelled is not None and _inside(spelled, lexical)):
-        raise outside
+    """workspace.confined with its refusal as this program's `path` problem."""
     try:
-        resolved = Path(os.path.realpath(lexical))
-    except (OSError, ValueError) as error:
-        raise refuse("path", "", f"{option} '{raw[:120]}' cannot be resolved.") from error
-    if not _inside(cwd, resolved):
-        raise outside
-    relative = _relative(cwd, resolved)
-    if not control_free(relative):
-        raise refuse("path", "", f"{option} resolves to a path that holds control characters.")
-    if not _utf8(relative) or _json_units(relative) > PATH_TEXT_LIMIT:
-        raise refuse("path", "", f"{option} resolves to a path that is too long or not valid Unicode text.")
-    return resolved
+        return workspace.confined(cwd, raw, option, spelled)
+    except workspace.PathRefused as error:
+        raise refuse("path", "", str(error)) from error
 
 
 def read_input(cwd: Path, raw: str, spelled: Path | None = None) -> tuple[bytes, str]:
     """The bytes of an `--input` file inside the working directory and its path relative to it."""
-    resolved = _confined(cwd, raw, "--input", spelled)
+    try:
+        resolved = workspace.regular_file(cwd, raw, "--input", spelled)
+    except workspace.PathRefused as error:
+        raise refuse("path", "", str(error)) from error
     shown = raw[:120]
     try:
-        if not resolved.is_file():
-            raise refuse("path", "", f"--input '{shown}' is not an existing regular file.")
         if resolved.stat().st_size > INPUT_LIMIT:
             raise refuse("path", "", f"--input '{shown}' is larger than {INPUT_LIMIT} bytes.")
         data = resolved.read_bytes()
@@ -138,29 +63,12 @@ def read_input(cwd: Path, raw: str, spelled: Path | None = None) -> tuple[bytes,
     return data, _relative(cwd, resolved)
 
 
-def _allowed_output(cwd: Path, folder: Path) -> bool:
-    """Whether a folder, resolved now, still lies inside the working directory and outside `.vera`."""
-    resolved = Path(os.path.realpath(folder))
-    if not _inside(cwd, resolved):
-        return False
-    return not any(_is_vera(segment) for segment in Path(os.path.relpath(resolved, cwd)).parts)
-
-
 def results_directory(cwd: Path, raw: str, spelled: Path | None = None) -> Path:
     """Where reports go: inside the working directory, never inside `.vera`, never below or over a file."""
-    resolved = _confined(cwd, raw, "--results-dir", spelled)
-    segments = [*Path(os.path.relpath(resolved, cwd)).parts, *Path(raw).parts]
-    if any(_is_vera(segment) for segment in segments):
-        raise refuse("path", "", "--results-dir must not lie inside .vera; that folder belongs to VERA.")
     try:
-        existing = resolved
-        while not existing.exists() and existing != existing.parent:
-            existing = existing.parent
-        if not existing.is_dir():
-            raise refuse("path", "", f"--results-dir '{raw[:120]}' lies on or below a file, not a folder.")
-    except OSError as error:
-        raise refuse("path", "", f"--results-dir '{raw[:120]}' cannot be used: {error.strerror or error}.") from error
-    return resolved
+        return workspace.results_directory(cwd, raw, spelled)
+    except workspace.PathRefused as error:
+        raise refuse("path", "", str(error)) from error
 
 
 def _escape(text: object) -> str:

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3c1c35b7"
+
+title = "Report DRC violations, unconnected items and schematic parity"
+
+status = "active"
+
+requirement = """
+When the agent runs `drc`, the helper shall run KiCad's DRC with every severity and, when the project has a schematic, schematic parity on the work copy, keep KiCad's JSON report, and return counts and entries for violations, unconnected items and parity, with a limit stating that zero violations does not validate function, current capacity, impedance or return paths.
+"""
+
+verification = "The DRC fixture reports a `tracks_crossing` violation, a `clearance` violation and the unrouted pad as an unconnected item, with the objects and positions written in the fixture README; a clean fixture board reports zero violations and still carries the limit; exit 0 in both cases."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/checks.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

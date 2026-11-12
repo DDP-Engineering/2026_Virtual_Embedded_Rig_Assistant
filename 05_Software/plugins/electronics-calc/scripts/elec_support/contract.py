@@ -20,9 +20,9 @@ from .quantities import (
     parse_quantity,
     quantity_json,
     round_significant,
-    utf16_length,
     valid_text,
 )
+from .workspace import utf16_length
 
 MISSING = object()
 # VERA's runner returns the last 12 000 characters of a run, counted as UTF-16 code units; a longer document

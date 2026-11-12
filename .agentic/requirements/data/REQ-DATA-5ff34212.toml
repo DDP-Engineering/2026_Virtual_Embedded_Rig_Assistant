@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-5ff34212"
+
+title = "Identify each symbol instance by its sheet and symbol UUID path"
+
+status = "active"
+
+requirement = """
+When `inspect`, `netlist` or `bom` lists symbol instances, the helper shall identify each placed symbol unit by the UUID path of its sheet instance followed by the symbol UUID and give its reference, value, footprint, library id, sheet path, fields, MPN, DNP flag and exclusion flags as KiCad's netlist states them.
+"""
+
+verification = "The hierarchical fixture places one sheet twice: every symbol of that sheet appears as two instances whose uuidPath differ and whose references equal the annotation recorded by hand in the fixture README; the MPN field is reported and a symbol without one has `mpn` null; the fixture's DNP and excluded-from-BOM symbols carry their flags."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/netlist.py", "05_Software/tests/fixtures/kicad/"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

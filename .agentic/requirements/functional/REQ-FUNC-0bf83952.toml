@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0bf83952"
+
+title = "Report duplicate references that KiCad's ERC does not report"
+
+status = "active"
+
+requirement = """
+When the agent runs `erc` or `review-report`, the helper shall list under `duplicateReferences` every reference that two placed symbol instances of the hierarchy carry for the same unit, with the unit, the count and their sheet and UUID paths and a `duplicateCount`, as its own check apart from KiCad's violations, reading the last `reference` (and `unit`, else 1) of the last instance entry for each symbol's path, leaving out power symbols, unannotated references (`R?` or an empty instance reference) and, with a warning giving their number, symbols without an entry for their path (KiCad then gives them another entry's reference or their Reference field).
+"""
+
+verification = "The erc fixture plants two resistors annotated R1 on the root sheet (KiCad 10.0.8's ERC reports nothing for them): `duplicateReferences` is exactly one entry R1, unit 1, count 2, on sheet `/` twice; the hier fixture, whose repeated channel sheet gives each instance its own reference, has none; two GND power symbols that share #PWR101 are not counted; `duplicateCount` is 1, the two UUID paths differ, `report.md` lists \"R1 (unit 1) x2\"; with both resistors unannotated (R?) the list is empty; a symbol without an entry for its path is left out (no duplicate) with the warning \"1 placed symbol instance(s) have no reference entry\"; an empty instance reference is no duplicate (KiCad's netlist shows R1 once and R?); with `(reference \"R2\") (reference \"R1\")` in one entry R1 stays a duplicate (KiCad's netlist shows no R2), and a later entry R2 for the same path removes it (KiCad's netlist shows R2)."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py", "05_Software/tests/fixtures/kicad/"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-13

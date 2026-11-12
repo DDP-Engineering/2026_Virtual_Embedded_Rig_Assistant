@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-24dba971"
+
+title = "Refuse when KiCad 10 kicad-cli is missing or unsupported"
+
+status = "active"
+
+requirement = """
+If no kicad-cli is found or the one found is not KiCad 10, then the helper shall refuse the operation with exit 2 and a `kicad` problem that names the searched locations or the version found and the KiCad 10 download page, before creating a run folder.
+"""
+
+verification = "The in-process probe with an empty search gives `kicad` naming PATH and the install folders; with a fake kicad-cli printing `9.0.2` it names 9.0.2; no results directory exists afterwards."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/discovery.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

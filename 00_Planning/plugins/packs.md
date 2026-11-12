@@ -152,7 +152,8 @@ Host-side design work; none of these plugins drives hardware. Order, state and s
 | Plugin | Programs | Risk | State |
 |---|---|---|---|
 | `electronics-calc` | `elec-calc` (standard-library script): dc, divider, rc, losses, thermal, tolerance, report | `safe`; `report` creates a new run folder in the workbench | implemented (ELEC-01) |
-| `kicad`, `parts-search`, `ngspice`, `ltspice`, `kicad-layout`, `freerouting` | see the plan page | set per package | planned (ELEC-02...ELEC-07) |
+| `kicad` | find `kicad-cli` (version and help only); `kicad-tool` (standard-library script): inspect, erc, drc, bom, netlist, export, review-report on a copy of the project | `safe` for kicad-tool (a new run folder in the workbench); other kicad-cli commands `blocked` | implemented (ELEC-02) |
+| `parts-search`, `ngspice`, `ltspice`, `kicad-layout`, `freerouting` | see the plan page | set per package | planned (ELEC-03...ELEC-07) |
 
 NOTES:
 - Exact subcommand spellings, defaults and version ranges belong in each plugin's manifest and are

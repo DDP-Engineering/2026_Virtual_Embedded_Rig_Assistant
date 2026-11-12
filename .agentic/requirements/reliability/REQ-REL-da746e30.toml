@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-da746e30"
+
+title = "Discard a run whose source files change while it runs"
+
+status = "active"
+
+requirement = """
+If a source file changes or disappears between the copy and the end of the last kicad-cli call, then the helper shall remove the run folder and exit 3 with a `source` problem naming the file.
+"""
+
+verification = "The in-process probe appends a byte to the fixture board during the DRC call: exit 3, one `source` problem naming the board, no run folder; the same request afterwards completes."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

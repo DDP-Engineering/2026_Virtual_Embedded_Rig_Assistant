@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-1adc8a2b"
+
+title = "Write a normalized BOM grouped by value, footprint, MPN and DNP"
+
+status = "active"
+
+requirement = """
+When the agent runs `bom`, the helper shall write `bom.json` with every instance and its groups and `bom.csv` with the header `Quantity,References,Value,Footprint,MPN,DNP`, one row per group of instances with equal value, footprint, MPN and DNP flag, references in natural order, and the instances excluded from the BOM listed only under `excluded`.
+"""
+
+verification = "The rows of the fixture's `bom.csv` equal the rows derived by hand in the fixture README (C2 before C10, the DNP part in its own row); the excluded-from-BOM symbol is in `excluded` and in no row; the quantities sum to the number of included instances."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/bom.py", "05_Software/tests/fixtures/kicad/"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

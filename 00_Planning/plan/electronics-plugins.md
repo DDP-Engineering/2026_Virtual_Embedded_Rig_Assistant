@@ -9,14 +9,15 @@ was built, so the two never diverge; the process notes inside the tickets (no AE
 back without commit) were set aside by the user on 2026-11-12: each package is implemented with AEGIS on
 its own branch, and where a ticket is wrong the code decides.
 STATE: ELEC-01 implemented 2026-11-12 on branch `feature/93-electronics-calc` from `origin/master`
-97662d5 (AEGIS TASK-72227ab6); ELEC-02...ELEC-07 planned.
+97662d5 (AEGIS TASK-72227ab6, commit 19dd919); ELEC-02 implemented 2026-11-12 on the same branch at the user's
+request (AEGIS TASK-7c2a9322); ELEC-03...ELEC-07 planned.
 
 ## Order
 
 | Order | Package | Issue | Plugin | Result | State |
 |---|---|---|---|---|---|
 | 1 | ELEC-01 | [#93](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/93) | `electronics-calc` | electrical and thermal calculations with explicit units and assumptions | implemented |
-| 2 | ELEC-02 | [#94](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/94) | `kicad` | native schematic and PCB analysis, ERC/DRC, BOM and exports | planned |
+| 2 | ELEC-02 | [#94](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/94) | `kicad` | native schematic and PCB analysis, ERC/DRC, BOM and exports | implemented |
 | 3 | ELEC-03 | [#95](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/95) | `parts-search` | documented component selection and controlled catalog access | planned |
 | 4 | ELEC-04 | [#96](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/96) | `ngspice` | electrical and electrothermal simulation on Windows and Linux | planned |
 | 5 | ELEC-05 | [#97](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/97) | `ltspice` | LTspice batch simulation on Windows in the same result model | planned |
@@ -74,6 +75,39 @@ those packages, not hidden manifest changes.
 - Questions left to the user: a current derating for diodes (ticket function 5 names "diodes and
   resistors"; only the resistor has one), CSV files for series such as the Foster response, and whether
   `report.md` should repeat the detail tables of `report.json`.
+
+## ELEC-02 as built
+
+- Package `05_Software/plugins/kicad/`: program `kicad-cli` (find for the user's KiCad 10: PATH, then
+  `%ProgramFiles%/KiCad/*/bin` or `/usr/bin`, probed with `kicad-cli version` against `>=10.0,<11`; only version
+  and help may run, every `sch`/`pcb`/`fp`/`sym`/`jobset` command is blocked) and program `kicad-tool`
+  (`scripts/kicad_tool.py`, PEP 723 on the standard library, support package `scripts/kicad_support/`). Skills
+  `schematic-review` and `pcb-review`. Catalog `official`, activity `design`, pack `electronics`, group
+  Schematic and PCB (KiCad). Exact interface: spec `.agentic/specs/REQ-DATA-c32834e3.md`.
+- Operations `inspect`, `erc`, `drc`, `bom`, `netlist`, `export` (`sch-pdf`, `sch-svg`, `pcb-pdf`, `pcb-svg`,
+  `gerbers`, `drill`, `pos`) and `review-report`, each writing a new run folder with `result.json`, `report.md`
+  and KiCad's files.
+- Observed with KiCad 10.0.8 and decisive for the design: kicad-cli creates or rewrites `<project>.kicad_prl`
+  in the folder of the file it reads, so it runs only on a hashed copy in a temporary folder and the run folder is
+  written last, after a second hash of the sources; kicad-cli's ERC reports zero violations for a missing sheet
+  file and plots the remaining layers with exit 0 for an unknown one, so the helper refuses both itself; started
+  detached on Windows kicad-cli prints nothing, so VERA's provisioner now starts its probes and uv calls attached
+  on Windows, like program runs (REQ-REL-380ee422).
+- The path rules of `elec-calc` moved into `workspace.py`, a byte-identical copy in `elec_support` and
+  `kicad_support` checked by a test: this is the "verified copy" mechanism decided by the first consumer.
+- Departures from the ticket: one branch for ELEC-01 and ELEC-02 at the user's request; the review skills do the
+  functional review, the helper only gathers facts; KiCad's own BOM export is not used (the normalized BOM comes
+  from KiCad's netlist); duplicate references, which kicad-cli 10's ERC does not report, come from kicad-tool's own check; 3D exports, jobsets, variants and library commands stay out.
+- Scope set by the user during review (2026-11-13, "do not overengineer: set a minimum version for kicad"): files
+  are read from KiCad 8 on (schematic 20231120, board 20240108), older ones refused with "open it in KiCad 10 and
+  save it". The helper reads files as KiCad 10.0.8 does (observed) and refuses where KiCad's readers could disagree;
+  project library tables accept only type `KiCad`; `erc` and `review-report` refuse a project that turns on ERC's
+  simulation model check, the only check that opens model files.
+- Criteria: E02-A...E02-E are covered by `05_Software/tests/integration/kicad.test.ts` with the real KiCad 10.0.8
+  on Windows against fictional projects in `tests/fixtures/kicad/` (expected values derived in its README).
+  E02-D "opens in KiCad/viewer" is checked structurally (PDF, SVG, Gerber X2, Excellon, CSV). The opt-in
+  `VERA_KICAD_UV` run through VERA's provisioner and runner passed on 2026-11-12. Open: native Ubuntu x64
+  (`REQ-PLAT-10747605`).
 
 ## Later, separate
 

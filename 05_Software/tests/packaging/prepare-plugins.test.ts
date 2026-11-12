@@ -39,6 +39,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],
     ["git", "official"],
+    ["kicad", "official"],
     ["microchip-pymcuprog", "official"],
     ["probe-rs", "official"],
     ["serial-monitor", "official"],
@@ -53,6 +54,12 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   });
   // REQ-DATA-0f278063
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "electronics-calc")).toMatchObject({
+    activities: ["design"],
+    ecosystem: "electronics",
+    version: "1.0.0",
+  });
+  // REQ-DATA-ece2d69c
+  expect(index.plugins.find((plugin: { id: string }) => plugin.id === "kicad")).toMatchObject({
     activities: ["design"],
     ecosystem: "electronics",
     version: "1.0.0",

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c4b14f26"
+
+title = "Refuse a project with a missing or malformed file before running KiCad"
+
+status = "active"
+
+requirement = """
+If the named file, a sheet file of the hierarchy or a project file is missing, resolves outside the project folder, or a sheet file (the first property named Sheetfile or Sheet file in any ASCII letter case, as KiCad reads it) is named by an absolute path, starts with `~` or climbs above the project folder with `..`, or holds `$` or `%`, or a project library or drawing sheet path is on a network or device path (also Windows' NT prefix \\??\\) or holds `$` or `%` other than one leading KIPRJMOD or KiCad KICAD<n>_.../KISYS... token, or a library entry has any type other than KiCad or a path of the above kind in any of its `type`/`uri` values, or a project text variable has a NUL character in its name or value (KiCad reads only up to it), or is named KIPRJMOD, KICAD<n>_... or KISYS... or has a value starting with two slashes or backslashes, made of slashes only, or referring to another variable (`$`, or `%` before a non-blank), or `erc`/`review-report` meet a project that turns on ERC's simulation model check, or a file is not parseable as KiCad reads it (an S-expression split at KiCad's blanks, with no control or Unicode space character outside a quoted string, schematic strings ending on their line and no escape above 0x7F; JSON without NaN, Infinity, non-finite numbers or repeated keys), or the operation needs a schematic or board the project lacks, then the helper shall refuse with exit 2 and a `project` problem naming the file and, for a syntax error, its line and column, before any kicad-cli run; a board is checked only by the operations that read it (inspect, drc, review-report, board exports).
+"""
+
+verification = "Fixture variants with a deleted sheet file (which KiCad's own ERC accepts with zero violations), an unbalanced parenthesis at a known line and column, a sheet path leaving the project folder, invalid project JSON, and `drc` on a schematic-only project each give the expected `project` message; so do a board file that resolves outside the project folder (the `linkout` seam, and a real file link where the OS allows one; the outside file is unchanged), a project file nested 100 000 deep or holding a 5000-digit number, a hierarchy of 8191 sheet instances, a sheet named by an absolute path, by `~/...`, by `../erc/...` (out and back in), by a first `Sheet file` or `SHEETFILE` property, by `\\x2f\\x2f...` or `\\057\\057...` escapes, or hidden from a naive reader behind `#` comment lines, between two words holding a quote (`x\"`), or behind a NUL-`#` comment, a look-alike `ſheetfile` decoy, an NBSP or vertical tab outside a string, an escaped byte above 0x7F, a string broken over two lines, a library hidden between two `x\"` words or an NBSP in a table, drawing sheets and text variables starting with `\\??\\` or `/??/`, a library table naming `//host/share/...` or (read raw) `\\\\?\\D:\\x`, libraries of type Table, Legacy, none, or KiCad then HTTP, a second uri `//host/share/...`, project text variables `KIPRJMOD\\u0000x` = `/\\u0000x` and `V` = `/\\u0000x`, named KIPRJMOD, KICAD10_SYMBOL_DIR or kisys3d or valued `\\\\?\\D:\\x`, `//host/share`, `/`, ` \\ `, `${S}/./pipe/x`, `/%S` or `%S%/x`, library paths `${X}/...`, `$(X)/...`, `$X/...`, `%X%/...`, `/$Xé/./D:/...`, `${E$X}/...`, `%E//?/...`, `${E//?/...`, `$(E//?/...`, `$Eé//?/...` and `${KIPRJMOD}/$E/...`, an HTTP library, drawing sheets `${WKS}/...` and `%E//?/...`, Sheetfiles `${X}/...`, `$(X)/...`, `$X/...`, `%X%/...`, `${A{B}}/...` and `a$b/...`, a simulation model check set to error or Ignore (erc and review-report), a repeated JSON key, NaN and 1e999 in the project file and a library table above the parse limit (seam `limit`); no run folder remains and no input ends in a traceback; text variables valued `https://example.org/hw`, `/ see notes`, `1%`, `5% / 10 %`, empty, or named KiCadRevision, a project library `${KICAD10_SYMBOL_DIR}/Device.kicad_sym` and `%KIPRJMOD%//fixture.pretty` are accepted, a BOM runs with the model check on, a sheet between two `x\"` words is a third block for kicad-tool and for KiCad's netlist alike, a symbol library given as a folder of `.kicad_sym` files is copied with no library issue, and an ERC run copies an oversized board unparsed while DRC refuses it."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py", "05_Software/plugins/kicad/scripts/kicad_support/sexpr.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-13

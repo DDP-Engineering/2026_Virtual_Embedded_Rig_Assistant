@@ -35,3 +35,4 @@
   name: Electronics design
   groups:
     - { name: Calculations, plugins: [electronics-calc], default: true }
+    - { name: Schematic and PCB (KiCad), plugins: [kicad], default: true }

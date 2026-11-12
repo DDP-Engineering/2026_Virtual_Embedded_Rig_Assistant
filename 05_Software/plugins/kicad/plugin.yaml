@@ -1,0 +1,33 @@
+format: 1
+id: kicad
+version: 1.0.0
+name: KiCad schematic and PCB analysis
+description: Analyse KiCad 10 projects without changing them - sheet hierarchy, symbol instances, nets, board layers, stackup, tracks and net classes; ERC and DRC with their objects and positions; BOM, netlist and inspection or fabrication exports (PDF, SVG, Gerber, drill, position files), each checked. kicad-cli runs on a copy of the project. Requires a user-installed KiCad 10.
+ecosystem: electronics
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://docs.kicad.org/10.0/en/cli/cli.html"]
+programs:
+  kicad-cli:
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/KiCad/*/bin/kicad-cli.exe"]
+        linux: ["$PATH", "/usr/bin/kicad-cli"]
+      hint: "Install KiCad 10 from https://www.kicad.org/download/ (on Ubuntu from the KiCad 10 PPA), then check again. VERA never installs KiCad."
+    version: { args: [version], match: '^(\d+\.\d+\.\d+)', range: '>=10.0,<11' }
+    timeout: 60
+  kicad-tool:
+    install: { script: scripts/kicad_tool.py }
+    version: { args: [--version], match: '^kicad-tool (\d+\.\d+\.\d+)' }
+    timeout: 1800
+# kicad-cli writes into the folder of the files it reads (it creates or rewrites <name>.kicad_prl) and can save or
+# upgrade a project, so the agent reaches KiCad only through kicad-tool, which runs it on a copy.
+rules:
+  - { match: "kicad-cli {version,--version,-v,--help,-h} *", risk: safe, note: Prints KiCad's version or help. }
+  - match: "kicad-cli {sch,pcb,fp,sym,jobset} *"
+    risk: blocked
+    note: "kicad-cli rewrites files in the project folder it reads and can save, upgrade or run jobsets. Use kicad-tool, which runs kicad-cli on a copy of the project and never changes it."
+  - { match: "kicad-tool {--version,--help,-h}", risk: safe }
+  - match: "kicad-tool {inspect,erc,drc,bom,netlist,export,review-report} *"
+    risk: safe
+    note: Host analysis. kicad-cli runs on a copy of the project in a temporary folder; the run creates a new run folder with result.json, report.md and KiCad's files under the results directory in the workbench and never changes the project.
+    timeout: 1800

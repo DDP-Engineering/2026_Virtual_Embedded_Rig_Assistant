@@ -7,6 +7,8 @@ import math
 import re
 from dataclasses import dataclass
 
+from .workspace import control_free
+
 PREFIXES = {
     "f": 1e-15,
     "p": 1e-12,
@@ -91,7 +93,6 @@ QUANTITY_LIMIT = 100  # Characters of a quantity written as text; it is echoed i
 _NUMBER = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?")
 _NUMERIC_CHARS = frozenset("0123456789+-.,eE")
 _NONZERO_DIGIT = re.compile(r"[1-9]")
-_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _NO_PREFIX_TEXT = frozenset({DEGREE_C, "deg", "dB", "1"})
 _ENGINEERING = {-15: "f", -12: "p", -9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M", 9: "G"}
 
@@ -125,19 +126,9 @@ class Quantity:
         return {key: value for key, value in pairs if value is not None}
 
 
-def utf16_length(text: str) -> int:
-    """The length VERA's runner measures: UTF-16 code units, so a character beyond the BMP counts twice."""
-    return len(text) + sum(1 for character in text if ord(character) > 0xFFFF)
-
-
 def nonzero_literal(literal: str) -> bool:
     """Whether a number literal names a value other than zero (its mantissa has a non-zero digit)."""
     return _NONZERO_DIGIT.search(re.split("[eE]", literal)[0]) is not None
-
-
-def control_free(text: str) -> bool:
-    """Whether a text holds no control character (C0 or DEL); JSON would write each as a six-unit escape."""
-    return _CONTROL.search(text) is None
 
 
 def valid_text(value: object) -> bool:

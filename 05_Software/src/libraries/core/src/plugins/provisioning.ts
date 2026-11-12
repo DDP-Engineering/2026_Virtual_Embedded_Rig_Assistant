@@ -825,7 +825,9 @@ export class Provisioner implements ProgramResolver {
     const child = host.spawn(executable, args, {
       cwd: root,
       env: programEnvironment(host, [], own),
-      group: true,
+      // As for program runs: a process group only off Windows. Started detached on Windows, a console program
+      // such as KiCad's kicad-cli prints nothing; taskkill /T stops the tree there without a group.
+      group: host.platform !== "win32",
       output: (stream, chunk) => push(decoders[stream].write(chunk)),
     });
     this.executions.add(child.exit);

@@ -6,6 +6,11 @@ For electronics-calc, start at plugins/electronics-calc/plugin.yaml, scripts/ele
 scripts/elec_support/ with spec .agentic/specs/REQ-DATA-3d15fdfc.md; tests/integration/electronics-calc.test.ts
 and tests/fixtures/electronics-calc/ own its numeric, refusal, report, integrity and session coverage.
 
+For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
+.agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
+projects, make_fixtures.py, internals.py) own its refusal, real-KiCad, integrity and provisioner coverage. The path
+rules of both electronics plugins live in `workspace.py`, a byte-identical copy in elec_support and kicad_support.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -15,7 +20,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -36,7 +41,7 @@ reports a `requires` that names no catalog plugin, and catalog installs review r
 from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
-Catalog discovery metadata for the fifteen real packages lives in the maintainers' catalog.yaml map,
+Catalog discovery metadata for the sixteen real packages lives in the maintainers' catalog.yaml map,
 not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain
 absent without catalog release evidence; no commit/build/install timestamps are substituted.
 Shared/source tests validate bounds/references; prepare-plugins and focused CLI acceptance prove
@@ -72,6 +77,25 @@ that source metadata reaches the deterministic bundled index unchanged.
   spec `.agentic/specs/REQ-DATA-3d15fdfc.md`. Verified on Windows with the toolchain Python, a direct
   `uv run --offline --script` and the opt-in `VERA_ELEC_UV` run (provisioner with uv 0.11.25 on a freshly
   downloaded managed CPython 3.13, 2026-11-12); native Ubuntu has not been run.
+
+- `kicad` 1.0.0, ecosystem `electronics` (Electronics design pack, group Schematic and PCB (KiCad), default on;
+  activity `design`), Windows x64/Linux x64. Program `kicad-cli`: find `%PATH%` then
+  `%ProgramFiles%/KiCad/*/bin/kicad-cli.exe` (Windows), `$PATH` then `/usr/bin/kicad-cli` (Linux), probe
+  `kicad-cli version` against `>=10.0,<11`, hint to https://www.kicad.org/download/; only
+  `kicad-cli {version,--version,-v,--help,-h} *` is safe and `kicad-cli {sch,pcb,fp,sym,jobset} *` is blocked with a
+  note pointing to kicad-tool. Program `kicad-tool` = `scripts/kicad_tool.py` (PEP 723, standard library only),
+  `--version` probe, timeout 1800 s, every operation safe with a note on the new run folder:
+  `kicad-tool <inspect|erc|drc|bom|netlist|export|review-report> --project FILE [--results-dir DIR] [--run-id ID]`,
+  `drc`/`review-report` also `--refill-zones`, `export` `--kind sch-pdf|sch-svg|pcb-pdf|pcb-svg|gerbers|drill|pos`
+  with `--layers` exactly for the three board-plot kinds. FILE is a `.kicad_pro`, `.kicad_sch` or `.kicad_pcb` inside
+  the working directory. Each run creates `<results-dir>/<run-id>/` (default `electronics-results`) with
+  `result.json`, `report.md` and KiCad's files (`erc.json`, `drc.json`, `netlist.net`, `stats.json`, `nets.json`,
+  `bom.csv`/`bom.json`, `exports/...`) and prints one format 1 document (tool, version, operation, status, runId,
+  started, finished, kicad {executable, version}, project {folder, name, files with role, bytes, SHA-256, format},
+  summary, warnings, limits, artifacts, result, truncated) of at most 11 000 UTF-16 units; a refusal or failure
+  has status `refused`/`failed` and `errors` {code, path, message} with codes usage, path, project, kicad, layer
+  (exit 2) or run, source, output (exit 3). Verified with KiCad 10.0.8 on Windows 11 (2026-11-12), also through the
+  opt-in `VERA_KICAD_UV` run (real uv 0.11.25, managed CPython 3.13, ProgramRunner); native Ubuntu has not been run.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -246,7 +270,57 @@ that source metadata reaches the deterministic bundled index unchanged.
   over-long integers are `json`; both `json.dumps` calls forbid non-finite numbers. Detail tables are
   formatted only when a document is written, and tolerance evaluations skip the input record.
 - `elec_support` is the single source of the quantity, result and report contracts; another plugin never
-  imports it from this plugin's installed folder.
+  imports it from this plugin's installed folder. Its path rules live in `elec_support/workspace.py`, which the kicad
+  plugin carries as a byte-identical `kicad_support/workspace.py` (a test compares the two).
+- kicad-tool runs kicad-cli only on a copy of the project in a temporary folder (`kicad-tool-*`) and never in the
+  working directory: kicad-cli creates or rewrites `<project>.kicad_prl` in the folder of the file it reads
+  (KiCad 10.0.8). The copy holds the bytes that were hashed: `<stem>.kicad_pro`, the root schematic and every sheet
+  file reached (Sheetfile relative to the referencing schematic, inside the project folder), `<stem>.kicad_pcb`,
+  `<stem>.kicad_dru`, the project's `sym-lib-table`/`fp-lib-table` and their `${KIPRJMOD}/` libraries, and relative
+  drawing sheets (at most 2048 files, 512 MiB, 128 MiB per file, 64 MiB per parsed schematic, board or library table, 4096
+  sheet instances).
+  Every project file is copied at the path the project names for it, so links inside the folder keep working;
+  that path and its resolved file must lie inside the project folder (a link out is refused, its "copy" would
+  otherwise be the original), a sheet named by an absolute path, starting with `~` or climbing above the folder with `..` is
+  refused, a project library or drawing sheet path on a network or device path, or holding `$` or `%`
+  other than one leading KIPRJMOD (four spellings) or KiCad KICAD<n>_.../KISYS... token, is refused (an allow-list:
+  KiCad expands variables in more spellings than a scanner follows), a Sheetfile holding `$` or `%` is refused, a
+  library of any type but `KiCad` is refused (Table, Legacy, importers, HTTP, Database; every `type`/`uri` of an entry
+  is checked, KiCad uses the last), a project text variable named KIPRJMOD/KICAD<n>_.../KISYS... or valued with two
+  leading slashes, only slashes or a reference to another variable (`$`, `%` before a non-blank), or holding a NUL
+  in its name or value (KiCad reads up to it), is refused, ordinary
+  values (URLs, text, `1%`) are accepted, erc/review-report refuse a project that turns on ERC's simulation model check
+  (only it opens model files, which may include any file; models are never copied), the board is parsed only by
+  operations that read it, and a library-table library or a
+  drawing sheet outside the folder is not copied, with a warning. Library tables obey the 64 MiB parse limit. After the last kicad-cli call every source is
+  hashed again (a change is `source`, exit 3); only then is the run folder created exclusively and written; the
+  temporary folder is removed in every case except a killed process.
+- kicad-tool refuses before kicad-cli runs: a missing sheet file (KiCad's ERC would report zero violations), a file
+  that is no well-formed S-expression (line and column), a KiCad 5 schematic or legacy board, a format version above
+  KiCad 10's (schematic 20260306, board 20260206) or below KiCad 8's (20231120, 20240108), an export layer the board
+  lacks (kicad-cli would plot the rest with exit 0), a missing or non-10 kicad-cli, a repeated option or flag. A KiCad
+  8 or 9 version runs with a warning (converted in memory). The reader follows KiCad 10.0.8's two readers (observed):
+  tokens split at space, tab, CR, LF (and NUL in schematics), a quote inside a word staying in it; control or
+  Unicode space characters outside strings and escapes above 0x7F are refused; schematics, boards and netlists
+  skip `#` comment lines (NUL counts as a blank) and undo KiCad's escapes (hex `\x2f`, octal, a backslash before
+  other characters stays), strings ending on their line; library tables have neither. A sheet's file is its first
+  `Sheetfile`/`Sheet file` property in ASCII letter case. `\??\` (NT prefix) counts as a device path. Unreadable or unparseable input (deep or huge JSON, NaN, Infinity or a repeated key in the
+  project file, unreadable folders) is a `project` refusal, while a number token that is not finite reads as
+  absent; any other failure after the copy is a `run` document (exit 3); no
+  input ends in a traceback. Every message and warning is cut to 600 UTF-16 units; the fitter drops bulk lists
+  before findings and facts and keeps every count, also of a review's ERC and DRC parts.
+- kicad-tool builds every kicad-cli command line itself; it never passes `--save-board`, `upgrade`, `jobset`,
+  `--define-var`, `--variant`, `--drawing-sheet` or `--exit-code-violations`, so any nonzero kicad-cli exit is a
+  failure and violations are results with exit 0. Connectivity comes from KiCad's netlist; an instance is
+  `<sheet tstamps><symbol tstamp>`; ERC object references come from KiCad's item descriptions (one pin UUID serves
+  every instance of a repeated sheet). `erc` adds `duplicateReferences` and `duplicateCount`, kicad-tool's own check from
+  the schematic files' per-instance references (the last `reference` of the symbol's `instances` entry for the
+  path, unit else 1; a symbol without one is left out with a warning, as KiCad then uses another entry or its
+  Reference field; power symbols, unannotated `R?` and empty instance references, which KiCad shows
+  as `R?`, left out), because KiCad 10's ERC and netlist merge symbols that share a
+  reference. kicad-tool locates kicad-cli in the manifest's order itself (PATH, then the
+  Program Files folder from the known-folder API, newest KiCad folder first), because a script program receives no
+  other program's path.
 
 - can capture never opens a physical adapter actively by default: listen-only kwargs (pcan
   `state=PASSIVE`, vector/slcan `listen_only`, kvaser `driver_mode=False`), software buses
@@ -329,6 +403,11 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A new field of a model | the model function and `cli.py` `FIELDS` | help test (fixture field names must appear in the help) |
 | Monte Carlo algorithm | `elec_support/tolerance.py` and `tests/fixtures/electronics-calc/montecarlo_reference.py` together | reference comparison test |
 | elec-calc rules or skills | `plugins/electronics-calc/plugin.yaml`, `skills/` | rule matrix and package test |
+| Path rules of the electronics plugins | `elec_support/workspace.py`, then copy it to `kicad_support/workspace.py` | electronics-calc report/path tests, kicad path tests, the byte-equality test |
+| A kicad-tool operation or its summary | `plugins/kicad/scripts/kicad_support/operations.py` and the parser it uses (`netlist`, `board`, `checks`, `bom`, `exports`) | the operation's real-KiCad case in `kicad.test.ts` against `tests/fixtures/kicad/README.md` |
+| A kicad-cli command line | `kicad_support/kicad.py` builders | "builds every kicad-cli call itself" (recorded calls) |
+| Project files, copy, version checks | `kicad_support/project.py`, `sexpr.py` | project and format refusal tests, unchanged-sources and stop tests |
+| A new KiCad release | `discovery.py` major, `project.py` newest format versions, the manifest range | regenerate the fixtures (`make_fixtures.py`) and rerun the real cases |
 | probe-rs pins, risk rows, device guidance or RTT | `plugins/probe-rs/` | `probe-rs.test.ts`; real archive opt-in plus separately recorded bench acceptance |
 | STM32 command map, rules or skills | `plugins/stm32-cubeprog/`, `shared/src/stm32-options.ts` | `stm32-cubeprog.test.ts` (matrix, recorded-help coverage, fake-host find, stub gate, real CLI where installed) |
 | A new STM32CubeProgrammer release | re-record `tests/fixtures/stm32/STM32_Programmer_CLI-<v>-help.txt`, then `stm32-options.ts` and the rules | "classifies every command of a line" |
@@ -352,6 +431,15 @@ that source metadata reaches the deterministic bundled index unchanged.
 ## Key behaviors
 
 - `REQ-FUNC-5ddc54a6` / `REQ-SEC-79d36216` / `REQ-REL-29808598` — electronics-calc installs, every command safe, a run leaves the installed copy unchanged.
+- `REQ-FUNC-1ae67789` / `REQ-DATA-ece2d69c` / `REQ-SEC-17f1e8d5` / `REQ-REL-20ece322` — kicad package, catalog and pack, safe kicad-tool and blocked kicad-cli, no bytecode in the installed copy.
+- `REQ-DATA-c32834e3` / `REQ-SEC-85467169` / `REQ-SEC-40a76c91` / `REQ-REL-1ab91569` — kicad-tool command line and documents, shared path rules, built kicad-cli calls, 11 000-unit bound.
+- `REQ-FUNC-9383047c` / `REQ-REL-24dba971` — KiCad 10 discovery and its refusal.
+- `REQ-REL-09628127` / `REQ-REL-da746e30` / `REQ-REL-05743834` — work copy, discarded run on a changed source, KiCad failure apart from violations.
+- `REQ-REL-c4b14f26` / `REQ-REL-426ec335` / `REQ-REL-3fe4718a` / `REQ-REL-f1bcbb19` / `REQ-REL-421726b7` — project, format and layer refusals, non-ASCII paths, library issues.
+- `REQ-FUNC-57feb0b5` / `REQ-DATA-5ff34212` / `REQ-FUNC-fa7fc405` / `REQ-FUNC-c2f97c86` / `REQ-DATA-1adc8a2b` — hierarchy, instance identity, board facts, netlist, BOM.
+- `REQ-FUNC-25b51df0` / `REQ-FUNC-0bf83952` / `REQ-FUNC-3c1c35b7` / `REQ-FUNC-fdd959d4` — ERC, duplicate references, DRC with its limit, zone refill on the copy.
+- `REQ-FUNC-bad2229c` / `REQ-FUNC-9cb44e40` / `REQ-FUNC-bb443178` / `REQ-UX-f366d2db` — checked exports, review report, review skills.
+- `REQ-TEST-07b48fde` / `REQ-PLAT-c30fa145` / `REQ-PLAT-10747605` — fictional fixtures; VERA run on Windows (opt-in `VERA_KICAD_UV`) and native Ubuntu (manual, pending).
 - `REQ-DATA-3d15fdfc` / `REQ-DATA-f4cc4198` — format 1 result document; quantities with units and prefixes.
 - `REQ-REL-6c99b9c7` / `REQ-REL-61e234ea` / `REQ-REL-7b943f73` — malformed requests, invalid quantities and out-of-domain values refused with exit 2.
 - `REQ-FUNC-a7be6767` / `REQ-FUNC-9897d628` / `REQ-FUNC-fa29ca17` / `REQ-FUNC-49d4ab63` — dc, divider, RC and amplitude models.
@@ -418,6 +506,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 ## Files
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
+- `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).
+- `05_Software/tests/integration/kicad.test.ts`, `tests/fixtures/kicad/` (`hier`, `erc`, `board` projects, `make_fixtures.py`, README with the design-derived expectations, `internals.py` seams).
 - `05_Software/tests/integration/electronics-calc.test.ts`, `tests/fixtures/electronics-calc/` (`cases.json`, README with the hand derivations, `montecarlo_reference.py`, `odd_name.py`, `internals.py`) — package, rules, numeric and refusal cases, output limit, help, Monte Carlo against the independent reference, report, path guards, exit 3, integrity, replay session, opt-in real uv.
 
 - `05_Software/plugins/stm32-cubeprog/` — manifest, README (risk table, parsing, limits), skills stm32-flash and stm32-option-bytes.

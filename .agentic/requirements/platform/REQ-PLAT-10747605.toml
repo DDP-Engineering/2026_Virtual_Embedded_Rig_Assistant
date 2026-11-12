@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-10747605"
+
+title = "Run the kicad plugin on native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+On native Ubuntu x64 with KiCad 10 installed from its packages, the kicad plugin shall complete `inspect`, `erc`, `drc` and the exports on the fixture through VERA.
+"""
+
+verification = "Manual: on a native Ubuntu x64 host with KiCad 10, run the opt-in test and the four operations from a VERA session and record the documents; WSL does not count."
+
+affected_paths = ["05_Software/plugins/kicad/plugin.yaml"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

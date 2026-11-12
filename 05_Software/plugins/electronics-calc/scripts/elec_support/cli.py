@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from . import TOOL, VERSION, contract, engine, report
+from . import TOOL, VERSION, contract, engine, report, workspace
 
 DESCRIPTION = """Deterministic electrical and thermal calculations with units, assumptions and limits.
 
@@ -172,20 +172,7 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _entered_directory() -> Path:
-    """The working directory as the caller named it, which may pass through a link: $PWD when it is that very
-    directory, else the system's own name for it. An absolute path may use either name."""
-    actual = os.path.abspath(os.getcwd())
-    named = os.environ.get("PWD")
-    if named and os.path.isabs(named):
-        # Compared after its text is normalised: a `..` behind a link must not name a different folder.
-        candidate = os.path.abspath(named)
-        try:
-            if os.path.samefile(candidate, actual):
-                return Path(candidate)
-        except OSError:
-            pass
-    return Path(actual)
+_entered_directory = workspace.entered_directory  # The rule lives in the shared path module.
 
 
 def _emit(document: dict[str, Any]) -> None:

@@ -287,7 +287,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   an id that is not installed is an UNKNOWN_NAME warning, not an error.
 - Store mutations run one at a time per store instance.
 - Every program starts with `shell: false`, `windowsHide: true`, stdio `[ignore, pipe, pipe]` (stdin
-  closed) and, off Windows, `detached` so it leads its own process group.
+  closed) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
+  the same way: started detached on Windows, a console program such as KiCad's kicad-cli prints nothing.
 - The environment holds only PATH (tool paths first), SystemRoot, HOME, USERPROFILE, TEMP, TMP,
   TMPDIR, LANG, LANGUAGE and LC_* from the host, then the program's variables, then PYTHONUTF8=1 and
   NO_COLOR=1; names compare case-insensitively on Windows, so one PATH key remains.
@@ -505,6 +506,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-e08c858b` — original argument values reach the process host unchanged, no shell.
 - `REQ-FUNC-dbcd3311` — stdin is closed.
 - `REQ-SEC-f5c114de` — minimal environment without VERA's credentials.
+- `REQ-REL-380ee422` — provisioner probes and uv calls are not detached on Windows (process group only elsewhere).
 - `REQ-FUNC-cb84887a` / `REQ-SEC-7a6c3f5f` — guarded cwd; DENIED outside, ignored or not a directory.
 - `REQ-FUNC-58d65f31` / `REQ-FUNC-691dd257` — timeout and Stop/abort kill the tree.
 - `REQ-PLAT-8423a400` / `REQ-PLAT-c76610c6` — taskkill on Windows; process group SIGTERM then SIGKILL on Linux.

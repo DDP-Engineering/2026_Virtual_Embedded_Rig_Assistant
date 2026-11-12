@@ -147,10 +147,12 @@ it("publishes the official electronics-calc package, its pack, activity and two 
   expect(catalog.metadata["electronics-calc"].activities).toEqual(["design"]);
   expect(catalog.metadata["electronics-calc"].keywords.length).toBeGreaterThan(3);
   const packs = parse(await readFile(new URL("packs.yaml", plugins), "utf8"));
-  expect(packs).toContainEqual({
-    id: "electronics",
-    name: "Electronics design",
-    groups: [{ name: "Calculations", plugins: ["electronics-calc"], default: true }],
+  const electronics = packs.find((pack: { id: string }) => pack.id === "electronics");
+  expect(electronics?.name).toBe("Electronics design");
+  expect(electronics?.groups).toContainEqual({
+    name: "Calculations",
+    plugins: ["electronics-calc"],
+    default: true,
   });
   expect(await core.checkCatalogSource(fileURLToPath(plugins))).toEqual([]);
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-elec-skills-")));

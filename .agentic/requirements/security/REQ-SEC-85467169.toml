@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-85467169"
+
+title = "Confine project paths and run folders to the working directory"
+
+status = "active"
+
+requirement = """
+If `--project` or `--results-dir` leaves the working directory by its text or through a link, names a network or device path or another drive, or the run folder would be inside `.vera`, then the helper shall refuse with exit 2 and a `path` problem before reading the project, with the same path rules as `elec-calc`.
+"""
+
+verification = "The path cases of `elec-calc` (parent traversal, absolute path elsewhere, `\\\\host\\share`, `NUL`, another drive, a link out, `.vera/x`) give `path` refusals for `--project` and `--results-dir`; the shared path module is byte-identical in both plugins."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/workspace.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/workspace.py", "05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/quantities.py", "05_Software/plugins/electronics-calc/scripts/elec_support/contract.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-ece2d69c"
+
+title = "Register kicad in the catalog and the electronics pack"
+
+status = "active"
+
+requirement = """
+The plugin catalog shall list `kicad` as official with the `design` activity and KiCad keywords, and the `electronics` pack shall offer it in a default group named Schematic and PCB (KiCad).
+"""
+
+verification = "`vera catalog check` of the plugin source reports no issue; the bundled catalog built by the packaging preparation contains `kicad` with activity `design`; `packs.yaml` lists the group with `kicad` and `default: true`."
+
+affected_paths = ["05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

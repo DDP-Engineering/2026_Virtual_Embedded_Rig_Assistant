@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-f366d2db"
+
+title = "Guide schematic and PCB reviews through two skills"
+
+status = "active"
+
+requirement = """
+The kicad plugin shall supply a schematic-review and a PCB-review skill that run the helper, keep KiCad's ERC/DRC findings apart from the functional review, label each observation as fact or hypothesis with its component, pin or net and source, and never declare a net or decoupling adequate without the electrical requirements or parameters it needs.
+"""
+
+verification = "Inspection: both SKILL.md files are listed by the installed plugin and state the separation, the fact/hypothesis labels, the evidence fields and the two limits; their commands match the helper's `--help`."
+
+affected_paths = ["05_Software/plugins/kicad/skills/"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

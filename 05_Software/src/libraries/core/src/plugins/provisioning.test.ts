@@ -1274,3 +1274,15 @@ it.skipIf(process.platform === "win32")("skips found files that are not executab
     join(base, "b-git"),
   );
 });
+
+it("starts probes and uv in their own process group only off Windows, like program runs", async () => {
+  // REQ-REL-380ee422: a console program started detached on Windows (KiCad's kicad-cli) prints nothing.
+  for (const hostPlatform of ["win32", "linux"] as const) {
+    const s = await setup({ programs: { esptool: pip("esptool>=5,<6") }, hostPlatform });
+    uvActs(s.host, s.uv, hostPlatform === "win32" ? "esptool.exe" : "esptool");
+    expect((await s.provisioner.install("tools"))[0], hostPlatform).toMatchObject({ state: "ready" });
+    expect(s.host.programs.length).toBeGreaterThan(1);
+    for (const program of s.host.programs)
+      expect(program.options.group, hostPlatform).toBe(hostPlatform !== "win32");
+  }
+});
