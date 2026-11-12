@@ -103,6 +103,7 @@ Diagrams: [diagram_TASK-9a4d3e8a.md](diagram_TASK-9a4d3e8a.md)
 - 2026-11-12 build: User explicitly resumed #91 on2026-11-12. Branch/candidate preserved after shutdown. Resume build; recorded round2 findings have implementation fixes, awaiting final native/calibration evidence and fresh review.
 - 2026-11-12 build: User narrowed immediate scope on2026-11-12 to descriptive measurement of existing behavior only. Full A360/360 valid Windows samples (external/provider0) delivered under06_SoftwareDocu/performance/session-loading-2026-11-12-windows.md and .json, raw bytes preserved. Second sweep interrupted and excluded. No loader/rendering optimization, calibrated reference, mandatory gate or final regression acceptance; policy additions removed and planning/guide clarified. #91 remains open/uncommitted for any later regression phase.
 - 2026-11-12 build: User explicitly authorized local commits on 2026-11-12 (commite ce e deja implementat). Prepare checkpoint commits of existing UI, experimental measurement harness/results and planning only; do not resume deferred #91 calibration or implement #110. UI checkpoint f24b0cf committed; existing 67 component and native/browser UI proof reused. Independent spec and quality reviewers approve the complete current candidate for checkpoint commits only, not final #91 acceptance. Renamed harness/output paths validated; three affected harness files formatted; focused tooling/API tests24/24, typecheck, i18n, Biome error-level checks and scoped strict AEGIS exit0. AEGIS reports0 errors,105 non-promoted historical/merge/out-of-scope warnings; no unrelated remediation. Raw360-sample SHA2566634ad12bab2e00463b696fd820697c7a4bd2bff36ecfa649c1bb8cf3e430759 preserved.
+- 2026-11-12 build: Authorized local commits created: f24b0cf compact Plugins UI and672e094 experimental native measurement checkpoint with360 preserved samples. Gitea audit confirms implemented #85,#86,#87,#88,#89 already closed; remaining open issues are planned or incomplete, including #91 and on-hold #110. No issue was falsely closed and no remote code publication occurred. This checkpoint is not final #91 regression acceptance.
 
 ## Rulings
 
@@ -111,11 +112,11 @@ Diagrams: [diagram_TASK-9a4d3e8a.md](diagram_TASK-9a4d3e8a.md)
 
 status: waiting
 reported: build - paused
-next: Measurement-only checkpoint prepared for authorized local commit. Resume broader #91 calibration/comparison/control acceptance only when explicitly requested.
+next: Measurement checkpoint672e094 is saved locally. Resume broader #91 calibration/comparison/control acceptance only when explicitly requested.
 must_read: .agentic/tasks/TASK-9a4d3e8a.md, .agentic/steps/4_build.md
-changed: Renamed experimental harness and output paths; prepared validated descriptive measurement checkpoint; UI committed as f24b0cf.
-evidence: Focused24/24, typecheck, i18n, Biome and scoped strict AEGIS exit0; both independent checkpoint reviews approve; raw360-sample hash unchanged.
-issues: Broader #91 incomplete: calibration, native controls, final regression acceptance and Ubuntu measurements deferred. #110 remains planning only/on hold. Historical strict warnings are non-promoted.
+changed: Committed compact Plugins UI as f24b0cf and experimental measurement implementation/results as672e094; planning records #110 on hold.
+evidence: Focused24/24, typecheck, i18n, Biome and scoped strict AEGIS exit0; both independent checkpoint reviews approve; raw360-sample hash unchanged; implemented Gitea #85-89 verified closed.
+issues: Broader #91 remains incomplete/open: calibration, native controls, final regression acceptance and Ubuntu measurement deferred. #110 remains on hold. No push performed.
 spec_compliance: changes_required
 implementation_quality: changes_required
 review_round: 2

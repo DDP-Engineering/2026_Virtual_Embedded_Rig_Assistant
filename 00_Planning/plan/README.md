@@ -6,7 +6,19 @@ STATE: planned 2026-10-09; implemented — WP-01…WP-38 and the epics M0–M5 a
 actually does is in `../architecture/`; per-WP outcomes are in the "Implementation notes" section of
 each milestone file. New work is planned in `../plugins/plan.md` and `../capabilities/`; UI work after
 1.0 has its own pages here: [chat-navigation.md](chat-navigation.md) (CHAT-NAV-01, Gitea #89) and
-[plugins-ui-redesign.md](plugins-ui-redesign.md) (PLG-23�PLG-25, implemented 2026-11-11; validated local commits).
+[plugins-ui-redesign.md](plugins-ui-redesign.md) (PLG-23...PLG-25, implemented 2026-11-11; validated local commits).
+
+Performance work: [performance-regression.md](performance-regression.md), **PERF-01 / [#91](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/91)**.
+Current-behavior measurement delivered 2026-11-12; [results](../../06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md).
+The user deferred calibration/regression gates and requested only measurement for now. Startup,
+Plugins and indexing benchmarks remain later scope.
+
+Repository organization: [tooling-tests-evaluators-layout.md](tooling-tests-evaluators-layout.md),
+**REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110)**.
+Agreed 2026-11-12: environment/build/release tooling in `02_Tools`, tests/E2E and
+evaluators in `05_Software`, with separate generated evaluation outputs. Planning and one tracking
+ticket only; **implementation is explicitly on hold until requested by the user**, including for
+the automated implementation cycle.
 
 ## 0. Outcome (2026-11-01)
 
