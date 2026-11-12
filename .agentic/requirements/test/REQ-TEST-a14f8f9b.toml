@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-a14f8f9b"
+title = "Session-load phase and responsiveness evidence"
+status = "active"
+requirement = "When a native session load is measured, the runner shall report storage, snapshot construction, IPC round trip, presentation, payload size, main and renderer responsiveness gaps and memory context using correlated measurements without subtracting independent clocks."
+verification = "Check real native phase records and nonnegative timings; controlled blocking increases the corresponding responsiveness gap."
+affected_paths = ["05_Software/scripts/eval-performance-harness/", "05_Software/scripts/perf-sessions.mjs", "05_Software/package.json", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-performance.ts", "05_Software/src/apps/desktop/src/renderer/api/index.ts", "05_Software/src/apps/desktop/src/renderer/api/session-performance.ts"]
+linked_tests = ["05_Software/tests/tooling/session-performance.test.ts", "05_Software/tests/tooling/session-performance-probe.test.ts"]
+spec = "specs/REQ-TEST-df5ff0ba.md"
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

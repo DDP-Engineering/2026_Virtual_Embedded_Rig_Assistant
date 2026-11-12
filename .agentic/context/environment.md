@@ -31,6 +31,14 @@ scratch. No physical burn is permitted. Identify Ubuntu WSL2 separately from nat
 
 The repository toolchain is defined by [02_Tools/toolchain.json](../../02_Tools/toolchain.json). [02_Tools/README.md](../../02_Tools/README.md) documents Python, Git and the local Node runtime.
 
+Session performance: `perf:sessions` uses the pinned Node/Electron/Playwright toolchain and existing
+local models, an owned isolated build/profile/workbench and serial quick5/full30 samples per case.
+Stop normal VERA and other builds/suites during measurements. Headless Linux runs through xvfb-run;
+native Ubuntu/WSL evidence remains distinct. Explicit calibration needs two complete compatible
+full runs of the same candidate and supplied budgets; preserve JSON/Markdown reports outside E2E cleanup.
+Focused harness regressions are in tests/tooling/session-performance.test.ts. Probes require both
+VERA_TEST=1 and VERA_SESSION_PERF=1 at build time and are omitted from ordinary/release output.
+
 ## Setup
 
 Use the repository setup script from the repository root; it downloads the verified pinned Node distribution, installs npm packages and checks Ubuntu libraries.

@@ -10,6 +10,14 @@ The software root contains four ESM workspaces and strict TypeScript tooling wit
 
 ## Supported operation
 
+Saved-session performance verification uses an isolated native Electron build, real persisted
+fixtures/sidebar selection, phase/responsiveness probes and explicit machine-specific reference
+comparison. `npm run perf:sessions` and `06_SoftwareDocu/session-performance.md` define quick/full,
+calibration and feature/milestone usage. Diagnostic measurements alone do not establish a passing budget.
+The currently authorized phase is measurement only:360 valid Windows samples are recorded in
+06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md; calibration and mandatory gates
+are deferred by the user, with the broader implementation unfinished.
+
 The target platforms are Windows x64 and Linux x64 (01-system section 9).
 
 The desktop shell occupies a fixed viewport without document scrolling; long pages/panels scroll internally, and conversations use an independent segmented left scroll rail while the composer remains visible.
