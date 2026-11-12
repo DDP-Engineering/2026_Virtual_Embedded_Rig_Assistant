@@ -931,7 +931,8 @@
         "measurement": "Măsurare",
         "security": "Securitate",
         "versionControl": "Versionare",
-        "testing": "Testare"
+        "testing": "Testare",
+        "design": "Proiectare"
       }
     },
     "configure": "Configurează dependențele",

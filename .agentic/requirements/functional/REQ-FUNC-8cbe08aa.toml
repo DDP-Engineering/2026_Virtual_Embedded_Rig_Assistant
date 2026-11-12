@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8cbe08aa"
+
+title = "Check a resistor's dissipation against its derated power rating"
+
+status = "active"
+
+requirement = """
+Where a `resistor` request gives a rated power, the script shall return the allowed power - the rating, or with a derating line the rating reduced linearly from full power at `fullPowerUpTo` to zero at `zeroPowerAt` for the ambient temperature - the utilization, and a `power-rating` check that passes when the dissipation does not exceed the allowed power.
+"""
+
+verification = "0.2 W in a 0.25 W resistor derated from 70 °C to 155 °C passes at 25 °C (allowed 0.25 W), has allowed power 0.125 W and fails at 112.5 °C, and has allowed power 0 W at 160 °C; without `ratedPower` the check is `not-evaluated`; `derating` without `tAmbient` is `insufficient`; `tAmbient` without `derating` is not used and says so in a warning."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

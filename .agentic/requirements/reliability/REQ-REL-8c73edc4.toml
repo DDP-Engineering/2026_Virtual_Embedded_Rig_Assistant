@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-8c73edc4"
+
+title = "Refuse a report that would overwrite or that contains a refused calculation"
+
+status = "active"
+
+requirement = """
+If the run folder already exists, any calculation of a report request is refused, or the calculations together ask for more than 1 000 000 Monte Carlo samples, then the script shall write nothing, list the errors with their calculation paths and exit 2.
+"""
+
+verification = "Repeating a report with the same `--run-id` gives code `output`, exit 2 and leaves both files byte-identical; a report whose second calculation has a unit error gives `unit` at `calculations.1.input.<field>` and creates no folder; eleven calculations of 100000 samples each give `limit` at `calculations` and create no folder; an empty list, a missing title, a repeated id, a nested report and an invalid id are refused."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

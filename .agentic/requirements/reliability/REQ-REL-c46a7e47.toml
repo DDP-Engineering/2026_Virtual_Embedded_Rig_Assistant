@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c46a7e47"
+
+title = "Keep every printed document within the runner's output limit"
+
+status = "active"
+
+requirement = """
+If a result, error or report-summary document would exceed 11 000 UTF-16 code units, the unit in which VERA's runner keeps the last 12 000 of a run, then the script shall leave out, in this order and each with a warning, its detail tables, its input list and its formulas, assumptions and limits, or the per-calculation result texts of a summary, or cut an error list to the problems that fit and state how many are not shown, and it shall bound every text it repeats from the request, so that the printed text is always one complete JSON document within that length that keeps its results and checks.
+"""
+
+verification = "A Foster request with 16 stages and 64 times and a 64-resistor series string each print a parseable document within the bound with their results, empty `details` and a warning naming the detail tables; 64 loads with 480-character sources and conditions also lose their 128 inputs, with a second warning; four quantities with 500 emoji in each free text lose their inputs because such characters count twice, and 64 emoji keys are cut to a list ending with `limit`; a tolerance run with six outputs, Monte Carlo and limits keeps all 76 results; `contract.fitted`, called through `tests/fixtures/electronics-calc/internals.py` on a 78-result document with a 1024-character path and long warnings, empties details, inputs, formulas, assumptions and limits with five warnings in all, keeps the results and the check and stays within the bound; the `escape` probe of `internals.py` shows that the resolved `--input` or `--results-dir` path a document repeats stays within those 1024 units as JSON writes it (a resolved name of 600 quotation marks or with a control character is refused; artifact paths add only the run id and the file name); a two-resistor string keeps its table without a warning; request files with a 20 000-character key, number, negative value, unit, parameter name and output name each give one problem in under 1 500 characters with a path of at most 200 and a message of at most 600; a report of 32 calculations prints a summary whose calculations lack `results`, with a warning naming report.json, while report.json holds all 64 rows of both tables; 64 unit errors are cut to a shorter list that ends with a `limit` problem; every elec-calc document the test file receives, also through `odd_name.py` and `internals.py change`, is asserted within the bound in UTF-16 units, and every run through the test's own runner exits 0, 2 or 3."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/quantities.py", "05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/tests/fixtures/electronics-calc/internals.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

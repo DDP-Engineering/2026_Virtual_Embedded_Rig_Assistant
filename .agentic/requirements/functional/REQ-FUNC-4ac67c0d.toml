@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4ac67c0d"
+
+title = "Run a seeded Monte Carlo analysis with declared distributions"
+
+status = "active"
+
+requirement = """
+Where a tolerance request has a `monteCarlo` section with a sample count and a seed and every parameter declares its distribution, the script shall add, per output, the mean, standard deviation, sample extremes, percentiles and the fraction within given limits, computed with the documented generator so that the same request and seed give the same values, next to the corner results.
+"""
+
+verification = "The 1 % divider with uniform distributions, 20000 samples and seed 12345 gives a mean within 0.02 % of 2.5 V, a standard deviation within 3 % of 0.010206 V, a fraction within 2.49 V..2.51 V of 0.64 ± 0.02, sample extremes inside the corner range and the corner results; for four seed, sample-count and distribution combinations every statistic equals, within 1e-11 relative, the output of `tests/fixtures/electronics-calc/montecarlo_reference.py`, an implementation of the documented algorithm that does not import the plugin; a second run gives identical results; seed 54321 gives other values inside the same tolerances; normal distributions with `sigmas` 3 give a standard deviation within 3 % of 0.0058926 V."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/tolerance.py", "05_Software/tests/fixtures/electronics-calc/montecarlo_reference.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

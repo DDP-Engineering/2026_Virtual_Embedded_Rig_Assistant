@@ -55,8 +55,8 @@ string of one of its rules (default `[]`).
 
 `metadata` is a strict record keyed by plugin ids, at most1024 entries (default `{}` for an
 unclassified current source). Its values are strict discovery objects: `activities` is a distinct
-list of at most nine stable ids (`communication`, `flash`, `build`, `debug`, `firmware-analysis`,
-`measurement`, `security`, `version-control`, `testing`); `keywords` is at most32 distinct trimmed
+list of at most ten stable ids (`communication`, `flash`, `build`, `debug`, `firmware-analysis`,
+`measurement`, `security`, `version-control`, `testing`, `design`); `keywords` is at most32 distinct trimmed
 1..80-character strings. Both lists default to empty for genuinely unclassified entries. Keyword
 uniqueness is case-sensitive after trimming. `addedAt` and `updatedAt` are optional real calendar
 dates `YYYY-MM-DD`, first catalog publication and publication of the currently listed version.

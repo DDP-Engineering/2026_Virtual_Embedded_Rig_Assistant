@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d476ec79"
+
+title = "Report MOSFET switching and gate-drive losses separately from conduction"
+
+status = "active"
+
+requirement = """
+When a `mosfet` request gives switching data and a frequency, the script shall return the switching loss from the turn-on and turn-off energies or from the named linear-overlap approximation, the device loss as conduction plus switching, and the gate-drive power as a separate result that the device loss excludes.
+"""
+
+verification = "10 A RMS, 10 mΩ and energies 100 µJ + 150 µJ at 100 kHz give conduction 1 W, switching 25 W and device 26 W; `gateDrive` 50 nC at 10 V adds `pGateDrive` 0.05 W and leaves `pDevice` at 26 W; linear-overlap with 400 V, 10 A, 20 ns and 30 ns at 100 kHz gives 10 W and an assumption naming the approximation; switching data without `frequency` is `insufficient`, and a `frequency` without switching data is not used and says so in a warning; `rdsOn` without conditions sets `rdson-conditions` to `unknown` with a warning, with conditions to `pass`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

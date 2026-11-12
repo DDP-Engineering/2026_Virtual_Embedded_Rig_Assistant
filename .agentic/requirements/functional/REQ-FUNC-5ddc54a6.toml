@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5ddc54a6"
+
+title = "Install electronics-calc and resolve its elec-calc script program"
+
+status = "active"
+
+requirement = """
+When the `electronics-calc` folder is installed, the plugin store shall accept it without issues and the provisioner shall resolve program `elec-calc` to the bundled uv running the installed `scripts/elec_calc.py`, whose `--version` prints `elec-calc` and the manifest version.
+"""
+
+verification = "The manifest validates as format 1 for windows-x64 and linux-x64 with one script program and no `requires`; installing the folder into a temporary store gives no issue; provisioning with a recording uv stand-in records version 1.0.0 and resolves `run --quiet --offline --script <installed>/scripts/elec_calc.py`; the script's `--version` output is `elec-calc 1.0.0`, equal to the manifest version; unusable arguments, a repeated option and a run id that is a device name or ends with a dot end with the usage text and exit 2."
+
+affected_paths = ["05_Software/plugins/electronics-calc/plugin.yaml", "05_Software/plugins/electronics-calc/scripts/elec_calc.py", "05_Software/plugins/electronics-calc/scripts/elec_support/__init__.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

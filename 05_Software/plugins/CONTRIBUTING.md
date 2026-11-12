@@ -60,7 +60,7 @@ the VERA maintainers; every other catalog plugin is `community`.
 
 Maintainers add discovery facts under `metadata.<plugin-id>` in `catalog.yaml`: `activities` uses
 the stable ids `communication`, `flash`, `build`, `debug`, `firmware-analysis`, `measurement`,
-`security`, `version-control`, `testing` (at most nine distinct values). `keywords` holds at most32
+`security`, `version-control`, `testing`, `design` (at most ten distinct values). `keywords` holds at most32
 distinct trimmed 1..80-character search terms. Unclassified entries use empty lists.
 Optional `addedAt` and `updatedAt` are real `YYYY-MM-DD` publication days: first catalog publication
 and publication of the currently listed version. Omit genuinely unknown dates; never substitute

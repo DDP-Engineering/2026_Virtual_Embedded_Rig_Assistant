@@ -13,6 +13,10 @@ Current-behavior measurement delivered 2026-11-12; [results](../../06_SoftwareDo
 The user deferred calibration/regression gates and requested only measurement for now. Startup,
 Plugins and indexing benchmarks remain later scope.
 
+Electronics engineering plugins: [electronics-plugins.md](electronics-plugins.md),
+**ELEC-01...ELEC-07 / epic [#92](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/92)**. ELEC-01 (`electronics-calc`, #93) implemented
+2026-11-12 with AEGIS on its own branch at the user's request; ELEC-02...ELEC-07 planned.
+
 Repository organization: [tooling-tests-evaluators-layout.md](tooling-tests-evaluators-layout.md),
 **REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110)**.
 Agreed 2026-11-12: environment/build/release tooling in `02_Tools`, tests/E2E and

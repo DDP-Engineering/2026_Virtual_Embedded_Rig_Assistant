@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-49d4ab63"
+
+title = "Distinguish peak, RMS and average amplitudes by waveform shape"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc rc` with model `waveform`, or gives a filter amplitude with its kind, the script shall return the peak, RMS, average, rectified-average and peak-to-peak values of the named shape, each under its own name.
+"""
+
+verification = "A 1 V peak sine gives RMS 0.707107 V, average 0 V and rectified average 0.636620 V; a 4 A pulse at duty 0.25 gives RMS 2 A and average 1 A, and at duty 1 a peak-to-peak value of 0; a triangle of 1 V RMS gives peak 1.73205 V; a filter with a 1 V RMS input at its cutoff gives output RMS 0.707107 V and peak 1 V; a filter amplitude without `amplitudeKind` is `insufficient`; `average` for a sine is `contradiction`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/waveforms.py", "05_Software/plugins/electronics-calc/scripts/elec_support/electrical.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

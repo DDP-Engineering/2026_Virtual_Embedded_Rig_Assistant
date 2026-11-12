@@ -32,6 +32,7 @@ export const CATALOG_ACTIVITIES = [
   "security",
   "version-control",
   "testing",
+  "design",
 ] as const;
 export const catalogActivitySchema = z.enum(CATALOG_ACTIVITIES);
 export type CatalogActivity = z.infer<typeof catalogActivitySchema>;

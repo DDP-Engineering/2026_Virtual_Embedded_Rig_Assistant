@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-fd2fa08d"
+
+title = "Discard a report whose input changed or whose files cannot be written"
+
+status = "active"
+
+requirement = """
+If the input file of a report changes while the report runs, the results directory is replaced meanwhile by a link that leads out of the working directory or into `.vera`, or the run folder or a report file cannot be written, then the script shall remove every file and folder the run created, print an error document with code `output` and exit 3.
+"""
+
+verification = "Through `tests/fixtures/electronics-calc/internals.py change`, run the real command line on a report request file into a results directory that does not exist yet and append a space to the file while the first calculation is computed: exit code 3, one `output` problem naming the change, and the working directory holds only the request file; the same request left alone then succeeds. Through `tests/fixtures/electronics-calc/internals.py`, run `report.run` and create the results directory as a junction or symlink to a folder outside while the first calculation is computed: the run fails naming the changed results directory, nothing is in the outside folder, and the link stays. A run folder that cannot be created (an invalid name on Windows, a read-only parent elsewhere) also exits 3 and leaves no folder the run made."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/tests/fixtures/electronics-calc/internals.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

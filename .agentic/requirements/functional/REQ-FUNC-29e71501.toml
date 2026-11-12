@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-29e71501"
+
+title = "Compute junction temperature in the declared thetaJA model"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc thermal` with model `junction-ambient`, the script shall return the junction temperature `tAmbient + power*thetaJA` and the temperature rise, repeat the thetaJA conditions in its inputs, and report whether the junction limit is met and whether those conditions were declared.
+"""
+
+verification = "40 °C, 1 W and 50 K/W with a conditions text give 90 °C and a rise of 50 K; the conditions appear in the `thetaJA` input; `thetaja-conditions` passes; `junction-limit` passes for 125 °C with margin 35 K and fails for 85 °C; without conditions the check is `unknown` with a warning; without a maximum `junction-limit` is `not-evaluated`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/thermal.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

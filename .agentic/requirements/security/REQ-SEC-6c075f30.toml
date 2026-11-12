@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-6c075f30"
+
+title = "Confine elec-calc inputs and report outputs to the working directory"
+
+status = "active"
+
+requirement = """
+If `--input` or `--results-dir` names a network or device path, another drive, a path of more than 1024 UTF-16 units, of invalid Unicode text or with a control character, a path that leaves the working directory by its text or through a link, a path whose resolved relative form holds a control character or exceeds 1024 UTF-16 units as JSON writes it, an input that is not a regular file of at most 1 MiB, or a results directory inside `.vera` or on or below a file, then the script shall refuse with code `path`, judging network, device and other-drive paths from their text before any file-system access, create nothing and exit 2.
+"""
+
+verification = "`--input ../outside.json`, an absolute path outside, a folder, a missing file and a file over 1 MiB each give `path`; `--results-dir ..`, an absolute folder outside, `.vera/x`, `.VERA`, `.vera.`, `.vera::$DATA` and an existing file give `path`; a junction (Windows) or directory symlink to a folder outside is refused for both options, one to `.vera` for `--results-dir`, and nothing appears behind it; a control character in `--input` or `--results-dir` is refused by its text with a message naming control characters and nothing appears; through `tests/fixtures/electronics-calc/internals.py escape`, a link that resolves to 600 quotation marks or to a name with a control character is refused, while 512 quotation marks (1024 units as JSON) and 1024 plain characters are accepted; `//192.0.2.1/share/x.json`, its backslash form and `//./NUL` are refused with a message naming network paths; on Windows `NUL`, `sub/nul` and a drive-relative path are refused, elsewhere `aux/con.json` is an ordinary file that is read; a 300-character name, a path over 1024 UTF-16 units and an empty path are refused; a request file whose name is not valid Unicode is refused for `dc` and for `report`, and no folder appears; with the working directory entered through a link, the relative name, the absolute name through the link and the resolved absolute name are all accepted, a path beside the directory is still refused, a `PWD` that names another folder is ignored and, where folders can be symbolic links, so is a `PWD` whose `..` behind a link collapses to another folder; an invalid `--run-id` (`../x`, `.hidden`, `a.`, `NUL`) ends with the usage text."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/quantities.py", "05_Software/tests/fixtures/electronics-calc/odd_name.py", "05_Software/tests/fixtures/electronics-calc/internals.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-b186323e"
+
+title = "List every model and field in the operation help"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc <operation> --help`, the script shall print the models of that operation with every field each accepts, the forms of a quantity and, for `losses`, of a current descriptor, and exit 0.
+"""
+
+verification = "For each of the seven operations the help names every model (for tolerance and report every request field), the options --json, --input and --run-id and the quantity metadata; every field name of every non-refused fixture request appears as a whole word in the block of its own model - the model's line and its indented continuation - or, for the parts of a current, in the description of a current (more than 300 field checks); `report --help` names --results-dir and the top-level help points to the operation help."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

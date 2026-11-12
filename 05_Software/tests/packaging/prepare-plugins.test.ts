@@ -34,6 +34,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["binutils", "official"],
     ["can-dbc", "official"],
     ["can-python", "official"],
+    ["electronics-calc", "official"],
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],
@@ -49,6 +50,12 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "serial-monitor")).toMatchObject({
     activities: ["communication", "debug"],
     keywords: ["serial", "UART", "console", "COM", "pyserial"],
+  });
+  // REQ-DATA-0f278063
+  expect(index.plugins.find((plugin: { id: string }) => plugin.id === "electronics-calc")).toMatchObject({
+    activities: ["design"],
+    ecosystem: "electronics",
+    version: "1.0.0",
   });
   for (const plugin of index.plugins) {
     expect(plugin.activities.length).toBeGreaterThan(0);

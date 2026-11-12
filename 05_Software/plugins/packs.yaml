@@ -31,3 +31,7 @@
   name: STM32 (ST)
   groups:
     - { name: Programming (STM32CubeProgrammer), plugins: [stm32-cubeprog], default: true }
+- id: electronics
+  name: Electronics design
+  groups:
+    - { name: Calculations, plugins: [electronics-calc], default: true }

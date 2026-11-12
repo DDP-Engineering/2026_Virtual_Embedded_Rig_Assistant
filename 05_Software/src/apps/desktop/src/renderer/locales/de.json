@@ -931,7 +931,8 @@
         "measurement": "Messung",
         "security": "Sicherheit",
         "versionControl": "Versionsverwaltung",
-        "testing": "Tests"
+        "testing": "Tests",
+        "design": "Entwurf"
       }
     },
     "configure": "Abhängigkeiten konfigurieren",

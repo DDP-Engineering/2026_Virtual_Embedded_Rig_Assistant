@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a7be6767"
+
+title = "Solve Ohm's law, series, parallel and shunt cases"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc dc` with model `ohm`, `series`, `parallel` or `shunt`, the script shall return voltage, current, resistance and power from exactly two of them, the equivalent resistance of a list with per-element voltage, current and power for a given source, or the shunt drop, power and amplified output with its rated-power check.
+"""
+
+verification = "ohm: 5 V and 10 mA give 500 Ω and 0.05 W, and 1 W with 100 Ω gives 10 V and 0.1 A; series 1 kΩ + 2 kΩ at 3 V gives 3 kΩ, 1 mA and element voltages 1 V and 2 V; parallel 1 kΩ || 1 kΩ at 2 mA gives 500 Ω and 1 V; shunt 10 mΩ at 5 A with gain 50 gives 0.05 V, 0.25 W and 2.5 V, `rated-power` pass for 0.5 W and fail for 0.2 W; three given values in `ohm` are refused."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/electrical.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

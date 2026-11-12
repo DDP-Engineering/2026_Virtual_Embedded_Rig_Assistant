@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-29808598"
+
+title = "Leave the installed package unchanged by a run"
+
+status = "active"
+
+requirement = """
+When an installed copy of `elec-calc` runs, the script shall create no file in the plugin folder, so that the store's integrity hash still matches.
+"""
+
+verification = "Install the folder into a temporary store and run the installed script with the test Python, without PYTHONDONTWRITEBYTECODE, for one calculation and one report: the installed tree lists the same files as before, holds no `__pycache__`, and `store.load` succeeds."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_calc.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

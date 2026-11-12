@@ -2,6 +2,10 @@
 
 ## Routing
 
+For electronics-calc, start at plugins/electronics-calc/plugin.yaml, scripts/elec_calc.py and
+scripts/elec_support/ with spec .agentic/specs/REQ-DATA-3d15fdfc.md; tests/integration/electronics-calc.test.ts
+and tests/fixtures/electronics-calc/ own its numeric, refusal, report, integrity and session coverage.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -11,7 +15,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -21,7 +25,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip and STM32 groups, default on except Security), `catalog.yaml` (all packaged plugins
+source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32 and Electronics design groups, default on except Security), `catalog.yaml` (all packaged plugins
 `official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -32,13 +36,42 @@ reports a `requires` that names no catalog plugin, and catalog installs review r
 from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
-Catalog discovery metadata for the fourteen real packages lives in the maintainers' catalog.yaml map,
+Catalog discovery metadata for the fifteen real packages lives in the maintainers' catalog.yaml map,
 not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain
 absent without catalog release evidence; no commit/build/install timestamps are substituted.
 Shared/source tests validate bounds/references; prepare-plugins and focused CLI acceptance prove
 that source metadata reaches the deterministic bundled index unchanged.
 
 ## Public interface
+
+- `electronics-calc` 1.0.0, ecosystem `electronics` (Electronics design pack, Calculations, default on;
+  catalog activity `design`), Windows x64/Linux x64: program `elec-calc` = `scripts/elec_calc.py`, a PEP 723
+  script on the standard library only (no dependency), `--version` probe, timeout 120 s.
+  `elec-calc <dc|divider|rc|losses|thermal|tolerance|report> (--json TEXT | --input FILE) [--run-id ID]`;
+  `report` also takes `--results-dir DIR` (default `electronics-results`). Standard output is one format 1
+  JSON document (UTF-8, LF): tool, operation, model, runId, times, status, request origin/path/SHA-256,
+  `inputs` (name, given, value, unit, source, conditions, note), assumptions, formulas, `results`
+  `{value, unit, text}` in SI (temperatures in °C, 12 significant digits), details, checks
+  (pass/fail/unknown/not-evaluated), warnings, limits, artifacts. A refusal has status `error` and `errors`
+  `{code, path, message}` with codes json, schema, unit, number, domain, contradiction, insufficient, limit,
+  path, output. Exit 0 result, 2 refused request or usage, 3 input/output failure (a report whose input
+  changed, whose results directory was swapped for a link or whose files cannot be written; what the run
+  created is removed). A printed document is at most 11 000 UTF-16 units: detail tables, then inputs, then
+  formulas, assumptions and limits (a summary's result texts) are left out with a warning, an error list
+  is cut and every text repeated from the request is bounded, because the runner returns the last 12 000
+  characters.
+  `elec-calc <operation> --help` lists every model with its fields.
+  Models: dc ohm/series/parallel/shunt; divider resistive (`solveFor` vout/rTop/rBottom); rc
+  time-constant/filter/waveform; losses linear-regulator/resistor/mosfet/diode/capacitor/inductor/power-budget;
+  thermal junction-ambient/junction-case-sink/foster; tolerance (target, outputs, parameters by tolerance or
+  min/max, 1..6 outputs, optional `monteCarlo` {samples 100..100000, seed} and limits); report (title,
+  notes, 1..32 calculations with at most 1 000 000 Monte Carlo samples in total ->
+  `<results-dir>/<run-id>/report.json` and `report.md`, summary with sizes and SHA-256).
+  Every documented command is safe, with rule timeouts of 600 s for tolerance and 1800 s for report (the
+  largest documented tolerance request took 51 s); anything else keeps the default device-write. Exact names and formulas:
+  spec `.agentic/specs/REQ-DATA-3d15fdfc.md`. Verified on Windows with the toolchain Python, a direct
+  `uv run --offline --script` and the opt-in `VERA_ELEC_UV` run (provisioner with uv 0.11.25 on a freshly
+  downloaded managed CPython 3.13, 2026-11-12); native Ubuntu has not been run.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -182,6 +215,39 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 ## Invariants
 
+- elec-calc sets `sys.dont_write_bytecode` and puts its own folder on `sys.path` before importing
+  `elec_support`: a run writes nothing into the installed package, so the integrity hash holds. Requests are
+  data only: the models are the fixed table `engine.MODELS` and nothing is evaluated from request text.
+- elec-calc quantities need a unit (ratios may be bare numbers), prefixes are case-sensitive, absolute
+  temperatures go through kelvin, unknown keys are refused and every problem found in one pass is reported.
+  A duty cycle with an RMS or dc current, thetaJA with any case-path resistance and `iq` with
+  `neglectIq: true` are `contradiction`; a missing Iq decision, a diode current without an average, switching
+  data without a frequency and a Monte Carlo run without seed or distributions are `insufficient`. Core loss
+  is never estimated and no datasheet value is scaled.
+- `tolerance` always evaluates all 2^n corners (n <= 12) and the three-point `monotonic` check; Monte Carlo
+  uses `random.Random(seed)`, draws parameters in sorted key order, Box-Muller normals, untruncated.
+- `report` validates and computes every calculation first, refuses `.vera` and anything outside the working
+  directory, creates the run folder and both files exclusively and removes every file and folder it created
+  on a failure; `--input` is a regular file of at most 1 MiB inside the working directory, hashed again
+  after a report.
+- elec-calc paths are judged from their text before any file-system call: network and device paths, another
+  drive and drive-relative paths are refused there (every command runs unapproved, so no path may make the
+  system contact a host; on Windows a device name such as NUL is a device path by its text). A path inside
+  the working directory by its text - under the directory's resolved name or the name it was entered by
+  (`$PWD`) - is resolved with links followed and judged again; paths are at most 1024 UTF-16 units of valid
+  Unicode without control characters, and the resolved relative `--input` or `--results-dir` path a document
+  repeats is at most 1024 UTF-16 units as JSON writes it (an artifact path adds only the run id and the file
+  name), so the output bound holds for Linux names with quotes or backslashes. On
+  Windows a drive letter is compared with the resolved working directory's, so a `subst` or mapped drive
+  letter counts as another drive. After the run folder is created it is resolved once more, so a results
+  directory swapped for a link discards the report.
+- No elec-calc input ends in a traceback or in `Infinity`/`NaN`: arithmetic errors and non-finite results
+  are `domain`, values that overflow or vanish with their prefix are `number`, lone surrogates and
+  over-long integers are `json`; both `json.dumps` calls forbid non-finite numbers. Detail tables are
+  formatted only when a document is written, and tolerance evaluations skip the input record.
+- `elec_support` is the single source of the quantity, result and report contracts; another plugin never
+  imports it from this plugin's installed folder.
+
 - can capture never opens a physical adapter actively by default: listen-only kwargs (pcan
   `state=PASSIVE`, vector/slcan `listen_only`, kvaser `driver_mode=False`), software buses
   (virtual, udp_multicast, socketcan `vcan*`) or a SocketCAN link that `ip -json -details` reports LISTEN-ONLY;
@@ -255,6 +321,14 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
+| A calculation model, formula, check or limit | `plugins/electronics-calc/scripts/elec_support/{electrical,losses,thermal}.py`, spec REQ-DATA-3d15fdfc §5 | that model's group in `tests/fixtures/electronics-calc/cases.json`, derived by hand in its README |
+| Units, prefixes, the quantity or result contract | `elec_support/quantities.py`, `contract.py` | "quantities" groups and the result-document test of `electronics-calc.test.ts` |
+| Corners or Monte Carlo | `elec_support/tolerance.py` | tolerance groups and the Monte Carlo tests |
+| Report files, path guards, command line | `elec_support/report.py`, `cli.py` | report tests (links, UNC, devices, exit 3) |
+| Document size or layout | `elec_support/contract.py` `fitted`, `dumps` | output-limit test; every run asserts the bound |
+| A new field of a model | the model function and `cli.py` `FIELDS` | help test (fixture field names must appear in the help) |
+| Monte Carlo algorithm | `elec_support/tolerance.py` and `tests/fixtures/electronics-calc/montecarlo_reference.py` together | reference comparison test |
+| elec-calc rules or skills | `plugins/electronics-calc/plugin.yaml`, `skills/` | rule matrix and package test |
 | probe-rs pins, risk rows, device guidance or RTT | `plugins/probe-rs/` | `probe-rs.test.ts`; real archive opt-in plus separately recorded bench acceptance |
 | STM32 command map, rules or skills | `plugins/stm32-cubeprog/`, `shared/src/stm32-options.ts` | `stm32-cubeprog.test.ts` (matrix, recorded-help coverage, fake-host find, stub gate, real CLI where installed) |
 | A new STM32CubeProgrammer release | re-record `tests/fixtures/stm32/STM32_Programmer_CLI-<v>-help.txt`, then `stm32-options.ts` and the rules | "classifies every command of a line" |
@@ -276,6 +350,19 @@ that source metadata reaches the deterministic bundled index unchanged.
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
 
 ## Key behaviors
+
+- `REQ-FUNC-5ddc54a6` / `REQ-SEC-79d36216` / `REQ-REL-29808598` — electronics-calc installs, every command safe, a run leaves the installed copy unchanged.
+- `REQ-DATA-3d15fdfc` / `REQ-DATA-f4cc4198` — format 1 result document; quantities with units and prefixes.
+- `REQ-REL-6c99b9c7` / `REQ-REL-61e234ea` / `REQ-REL-7b943f73` — malformed requests, invalid quantities and out-of-domain values refused with exit 2.
+- `REQ-FUNC-a7be6767` / `REQ-FUNC-9897d628` / `REQ-FUNC-fa29ca17` / `REQ-FUNC-49d4ab63` — dc, divider, RC and amplitude models.
+- `REQ-FUNC-af6f7e42` / `REQ-REL-c4a6c310` / `REQ-FUNC-8943ed4c` / `REQ-REL-e2517e0e` — regulator loss with the explicit Iq decision; conduction from RMS or pulse, never duty on RMS.
+- `REQ-FUNC-d476ec79` / `REQ-FUNC-0e71b135` / `REQ-FUNC-8cbe08aa` / `REQ-FUNC-da9b750b` / `REQ-FUNC-634a2c7e` — MOSFET, diode, resistor derating, ESR/DCR and power budget.
+- `REQ-FUNC-29e71501` / `REQ-FUNC-452dd186` / `REQ-REL-003ccb83` / `REQ-FUNC-d1afe1f3` — thetaJA estimate, case path and heatsink sizing, no thetaJA mix, Foster transient.
+- `REQ-FUNC-cd05145a` / `REQ-FUNC-4ac67c0d` / `REQ-REL-62a00f96` — corners, seeded Monte Carlo, explicit seed and distributions.
+- `REQ-FUNC-a39b04ed` / `REQ-REL-8c73edc4` / `REQ-SEC-6c075f30` / `REQ-REL-fd2fa08d` — report files, all-or-nothing, confined paths, exit 3 with cleanup.
+- `REQ-REL-c46a7e47` / `REQ-UX-b186323e` — documents within the runner's output limit; operation help with every field.
+- `REQ-UX-e13eef8a` / `REQ-DATA-0f278063` / `REQ-UX-a7a3f2a9` — two skills; official entry in the Electronics design pack; `design` activity.
+- `REQ-TEST-f4cf8c66` / `REQ-PLAT-c87a001f` / `REQ-PLAT-7f86133e` — ask-mode run without approval; real-uv Windows run (opt-in, passed 2026-11-12); native Ubuntu (manual, pending).
 
 - `REQ-FUNC-6ea24516` / `REQ-REL-e4731e39` — STM32_Programmer_CLI discovery and install hint.
 - `REQ-SEC-967391b8` / `REQ-SEC-08036a89` / `REQ-SEC-248961d6` — STM32 command classes, irreversible protection/security, blocked scripts.
@@ -329,6 +416,9 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
+
+- `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
+- `05_Software/tests/integration/electronics-calc.test.ts`, `tests/fixtures/electronics-calc/` (`cases.json`, README with the hand derivations, `montecarlo_reference.py`, `odd_name.py`, `internals.py`) — package, rules, numeric and refusal cases, output limit, help, Monte Carlo against the independent reference, report, path guards, exit 3, integrity, replay session, opt-in real uv.
 
 - `05_Software/plugins/stm32-cubeprog/` — manifest, README (risk table, parsing, limits), skills stm32-flash and stm32-option-bytes.
 - `05_Software/src/libraries/shared/src/stm32-options.ts`, `05_Software/tests/integration/stm32-cubeprog.test.ts`, `tests/fixtures/stm32/` (recorded 2.23.0 help, blink.hex) — projection and tests.

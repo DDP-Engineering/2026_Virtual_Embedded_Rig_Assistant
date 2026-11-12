@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9897d628"
+
+title = "Analyze and size a loaded resistive divider"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc divider`, the script shall return the loaded and unloaded output voltage, loading error, Thevenin resistance, currents and resistor powers of a two-resistor divider with an optional load across the bottom resistor, or the top or bottom resistor that reaches a target output voltage.
+"""
+
+verification = "5 V with 10 kΩ and 10 kΩ gives 2.5 V and Thevenin 5 kΩ; a 10 kΩ load gives 1.66667 V and loading error -1/3; solving `rTop` for 3.3 V from 5 V with a 10 kΩ bottom gives 5151.515 Ω; solving `rBottom` with a load that makes the target unreachable is `domain`; a solve mode without `vout` is refused."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/electrical.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

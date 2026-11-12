@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fa29ca17"
+
+title = "Compute RC time constants, step responses and first-order filter response"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc rc` with model `time-constant` or `filter`, the script shall return the time constant, cutoff frequency, 10-90 % rise time and 1 % settling time with the step voltage at a time or the time to a target voltage, or the gain, phase and output amplitudes of a first-order low-pass or high-pass filter at a frequency.
+"""
+
+verification = "10 kΩ and 100 nF give tau 1 ms, cutoff 159.155 Hz and rise time 2.19722 ms; a 0 V to 5 V step reaches 3.16060 V at 1 ms and 2.5 V after 0.693147 ms; the low-pass at its cutoff has gain 0.707107, -3.0103 dB and phase -45 deg, the high-pass +45 deg; a target outside the step is `domain`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/electrical.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6c99b9c7"
+
+title = "Refuse a malformed elec-calc request"
+
+status = "active"
+
+requirement = """
+If a request is not one JSON object with unique keys that UTF-8 can carry, holds a number too long to read, names an unknown model or key, omits a required key, gives a wrong JSON type or gives free text with a control character, then the script shall print a format 1 document with status `error` that lists each problem with its code (`json` or `schema`), request path and message, compute nothing and exit 2.
+"""
+
+verification = "Invalid JSON text, a duplicate key, a top-level array, a lone surrogate in a value, a key or a unit, a 5000-digit integer and a Latin-1 file each give `json`; an unknown model, an unknown key, a missing required key, a note with a line break and a list item that is not an object each give `schema` with the path and no other problem; a request with two problems lists both; a file with a byte-order mark is read; a 3000-character unit comes back in a message of bounded length; neither `--json` nor `--input`, both, a repeated option or an unknown operation ends with the argument parser's usage text and exit 2."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/engine.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

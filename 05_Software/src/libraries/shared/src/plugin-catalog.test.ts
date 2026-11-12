@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import {
+  CATALOG_ACTIVITIES,
   CATALOG_LIMITS,
   catalogIndexSchema,
   catalogMaintainersSchema,
@@ -103,6 +104,12 @@ it("validates bounded discovery metadata and real publication days without inven
   };
   const parsed = catalogMaintainersSchema.parse({ format: 1, metadata: { serial: metadata } });
   expect(parsed.metadata.serial).toEqual({ ...metadata, keywords: ["UART", "console"] });
+  // REQ-UX-a7a3f2a9: design work (calculations, schematics, simulation) is its own activity.
+  expect(CATALOG_ACTIVITIES).toContain("design");
+  expect(
+    catalogMaintainersSchema.parse({ format: 1, metadata: { calc: { activities: ["design"] } } }).metadata
+      .calc,
+  ).toEqual({ activities: ["design"], keywords: [] });
   const released = catalogIndexSchema.parse(index([entry("serial", metadata), entry("unknown")]));
   expect(released.plugins[0]).toMatchObject({ ...metadata, keywords: ["UART", "console"] });
   expect(released.plugins[1]).toMatchObject({ activities: [], keywords: [] });
@@ -111,7 +118,7 @@ it("validates bounded discovery metadata and real publication days without inven
   for (const invalid of [
     { activities: ["unrecognised"] },
     { activities: ["debug", "debug"] },
-    { activities: Array(10).fill("debug") },
+    { activities: Array(CATALOG_ACTIVITIES.length + 1).fill("debug") },
     { keywords: [""] },
     { keywords: [" "] },
     { keywords: ["UART", " UART "] },

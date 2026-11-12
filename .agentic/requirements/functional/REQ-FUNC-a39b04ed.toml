@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a39b04ed"
+
+title = "Write a calculation report as JSON and Markdown in a new run folder"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc report` with a title and a list of calculations, the script shall compute every calculation, create the folder `<results-dir>/<run-id>/` with `report.json` and `report.md` that hold each calculation's formulas, inputs with units, sources and conditions, assumptions, results, checks, warnings and limits, and print a summary naming both files with their sizes and SHA-256.
+"""
+
+verification = "A request file with the regulator, MOSFET and thetaJA calculations and `--run-id r1` in an empty working directory creates `electronics-results/r1/report.json` and `report.md`; the JSON has format 1, kind `elec-calc-report` and three results; the Markdown contains the title, each formula, a source text, a conditions text, an assumption and a limit; the summary's sizes and hashes match the files; the request file's bytes are unchanged."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

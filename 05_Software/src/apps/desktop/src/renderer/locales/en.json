@@ -931,7 +931,8 @@
         "measurement": "Measurement",
         "security": "Security",
         "versionControl": "Version control",
-        "testing": "Testing"
+        "testing": "Testing",
+        "design": "Design"
       }
     },
     "configure": "Configure dependencies",
