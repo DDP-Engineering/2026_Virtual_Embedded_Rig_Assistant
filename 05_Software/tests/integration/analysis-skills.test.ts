@@ -7,7 +7,7 @@ import { validatePluginManifest } from "@vera/shared";
 import { build } from "esbuild";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
-import { faultRegistry, prepareCase } from "../fixtures/firmware-comparator/harness.js";
+import { faultRegistry, prepareCase } from "../../evaluators/eval-firmware-comparator-harness/harness.js";
 
 const software = join(import.meta.dirname, "../..");
 const source = join(software, "plugins/analysis-skills");

@@ -65,8 +65,8 @@ Electron artifact.
 - Search: `grep` runs in a terminable worker with a host deadline
   (`core/src/workers/node-host.ts:22-132`).
 - Packages: `npm run smoke:package` tests the release artifact itself, bound by SHA-256
-  (`05_Software/scripts/smoke-package.mjs`, `scripts/smoke-report.mjs:30`). Ubuntu egress uses
-  `strace` (`scripts/smoke-egress.mjs`); procedure in `06_SoftwareDocu/release-package-smoke.md`.
+  (`05_Software/tests/packaging/smoke/smoke-package.mjs`, `tests/packaging/smoke/smoke-report.mjs:30`). Ubuntu egress uses
+  `strace` (`tests/packaging/smoke/smoke-egress.mjs`); procedure in `06_SoftwareDocu/release-package-smoke.md`.
 - Open: the Windows Sandbox run with networking disabled is pending manual execution
-  (`scripts/smoke-report.mjs:55-61`). Clean Windows/VC++ self-containment is deferred to the final
+  (`tests/packaging/smoke/smoke-report.mjs:55-61`). Clean Windows/VC++ self-containment is deferred to the final
   release, and the M5 repeat on 1.0 artifacts has not been done.

@@ -38,7 +38,7 @@ Scope:
 - Extractors per 05 §2: pdf.js `getTextContent` per page in a worker; Markdown with its heading tree;
   text types by lines; HTML with tags stripped; the extract cache in `.vera/cache/extract/`.
 - Chunkers per 05 §3 with locators (page, heading path, line range); `needs_ocr` detection.
-- `scripts/make-demo-pdfs.mjs`: Markdown sources of the fictional board VERA-DEMO-01 rendered into the
+- `tests/support/make-demo-pdfs.mjs`: Markdown sources of the fictional board VERA-DEMO-01 rendered into the
   demo workbench's PDFs (datasheet, reference manual excerpt, application note).
 
 Done when:
@@ -160,9 +160,9 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   `embeddings` settings — 1 400-character windows with 200-character overlap
   (`shared/workbench.ts:39-43`, `kn/chunk.ts:123-124`) — and the 60-line/10-line rule applies only
   without settings. pdf.js in a worker, the heading tree, HTML, the extract cache, `needs_ocr` and
-  `scripts/make-demo-pdfs.mjs` as planned (`kn/pdf-worker.ts`, `kn/processor.ts:40-55`).
+  `tests/support/make-demo-pdfs.mjs` as planned (`kn/pdf-worker.ts`, `kn/processor.ts:40-55`).
 - WP-24: implemented as planned: 28 questions, 14 English and 14 Romanian
-  (`tests/fixtures/retrieval/demo-board.yaml`), `scripts/compare-embeddings.mjs`; ADR-0015 picks
+  (`tests/fixtures/retrieval/demo-board.yaml`), `evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs`; ADR-0015 picks
   `Xenova/bge-small-en-v1.5` q8 with hybrid recall@5 ≥ 0.85 overall, ≥ 0.95 EN, ≥ 0.75 RO. Its
   measurement file was deleted in commit 891a699.
 - WP-25: implemented with deviation: no migration — `chunks_fts` and `chunks_tri` are part of the single
@@ -173,7 +173,7 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   (`kn/embedding-worker.ts:47-49`, `kn/search.ts:161-186`, `core/tools/documents.ts`); but
   `eval:retrieval` chunks its own corpus without the workbench settings and includes
   `logs/boot-0412.log` and `board.txt`, which the product does not index
-  (`scripts/retrieval/corpus.mjs:9-31`), so the recall gate does not measure the shipped chunking
+  (`evaluators/retrieval-support/corpus.mjs:9-31`), so the recall gate does not measure the shipped chunking
   (ADR-0015 says so); no passing result is committed.
 - WP-27: implemented as planned: five kinds — page, page range, heading, lines, artifact
   (`shared/refs.ts:49-54`); range checks sit in core (`kn/search.ts:420-466`,

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 // @ts-expect-error Native ESM tooling helper.
-import { nsisPayload, veraInstallNamePattern } from "../../scripts/smoke-runtime.mjs";
+import { nsisPayload, veraInstallNamePattern } from "./smoke/smoke-runtime.mjs";
 
 it("accepts flattened and wrapped NSIS payloads while rejecting absent payloads", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-nsis-layout-"));
@@ -29,14 +29,14 @@ it("protects versioned and companion VERA installer identities", () => {
 });
 
 // @ts-expect-error Native ESM tooling helper.
-import { checkEgress, exactLoopback } from "../../scripts/smoke-egress.mjs";
+import { checkEgress, exactLoopback } from "./smoke/smoke-egress.mjs";
 // @ts-expect-error Native ESM tooling helper.
-import * as smokeReport from "../../scripts/smoke-report.mjs";
+import * as smokeReport from "./smoke/smoke-report.mjs";
 
 const { parseSmokeArgs, smokeStatus, startupFailureFacts, upgradeSummary, windowsEvidence } = smokeReport;
 
 // @ts-expect-error Native ESM tooling helper.
-import { assertRequestBudget, assertSnapshotBudget, startSmokeServer } from "../../scripts/smoke-server.mjs";
+import { assertRequestBudget, assertSnapshotBudget, startSmokeServer } from "./smoke/smoke-server.mjs";
 
 const unix = '1 connect(4, {sa_family=AF_UNIX, sun_path="/run/dbus"}, 20) = -1 ENOENT';
 const inet = (port = 1234, ip = "127.0.0.1", pid = 2) =>
@@ -87,7 +87,7 @@ it("reads sockaddr outside quoted sendto payload text so payload cannot mask a f
 
 it("provides the already-built artifact smoke entrypoint without an implicit build", async () => {
   const pkg = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8"));
-  expect(pkg.scripts["smoke:package"]).toBe("node scripts/smoke-package.mjs");
+  expect(pkg.scripts["smoke:package"]).toBe("node tests/packaging/smoke/smoke-package.mjs");
 });
 
 it("keeps missing Windows evidence pending and rejects mismatched or incomplete proof", () => {

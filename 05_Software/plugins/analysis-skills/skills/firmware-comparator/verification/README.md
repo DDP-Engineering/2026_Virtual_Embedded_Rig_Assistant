@@ -15,8 +15,8 @@ selected `chatgpt/gpt-6.1-sol` for isolated sessions after live catalog discover
 From `05_Software`, with the repository's pinned Node runtime:
 
 ```text
-node scripts/firmware-comparator-rubric.mjs --prepare ABS_NEW_OWNED_OUTPUT
-node scripts/firmware-comparator-rubric.mjs --run ABS_NEW_OWNED_OUTPUT ABS_EXISTING_VERA_PROFILE chatgpt/gpt-6.1-sol
+node evaluators/eval-firmware-comparator-harness/firmware-comparator-rubric.mjs --prepare ABS_NEW_OWNED_OUTPUT
+node evaluators/eval-firmware-comparator-harness/firmware-comparator-rubric.mjs --run ABS_NEW_OWNED_OUTPUT ABS_EXISTING_VERA_PROFILE chatgpt/gpt-6.1-sol
 ```
 
 The output must be new; preserve each attempt. All seven fixtures, prompts, source hashes and pending

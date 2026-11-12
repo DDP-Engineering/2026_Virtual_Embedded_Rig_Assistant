@@ -29,7 +29,7 @@ check and announce. Details: 07 §5.
   26.17.0 (`src/apps/desktop/electron-builder.yml`).
 - electron-updater 6.8.10 with `provider: "generic"`
   (`src/apps/desktop/src/main/update-backend.ts:55-60`). The feed URL is the build input
-  `VERA_UPDATE_URL` (`scripts/update-config.mjs`, `electron.vite.config.ts:16,93`); without it
+  `VERA_UPDATE_URL` (`02_Tools/release/update-config.mjs`, `electron.vite.config.ts:16,93`); without it
   updates are disabled (`main/index.ts:663-672`).
 - Every file must carry SHA-512 (`update-backend.ts:96-101`); the publisher is checked when built
   signed (`update-backend.ts:139`); no auto-download, no install on quit, no downgrade (`:63-68`).

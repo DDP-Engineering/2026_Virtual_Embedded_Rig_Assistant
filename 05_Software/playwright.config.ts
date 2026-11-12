@@ -14,6 +14,6 @@ export default defineConfig({
   timeout: 30_000,
   workers: 1,
   fullyParallel: false,
-  reporter: [["list"], ["./scripts/cleanup-e2e-output.mjs", { outputDir }]],
+  reporter: [["list"], ["./tests/support/cleanup-e2e-output.mjs", { outputDir }]],
   use: { trace: "off", screenshot: "off", video: "off" },
 });

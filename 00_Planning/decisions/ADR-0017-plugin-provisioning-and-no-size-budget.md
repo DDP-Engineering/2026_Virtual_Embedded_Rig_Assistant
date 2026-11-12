@@ -4,7 +4,7 @@ Date: 2026-11-01
 Status: Accepted by the user on 2026-11-01 (no size budget, run-time downloads for plugins, `uv`
 inside the package). Supersedes law L5 of `architecture/01-system.md` and the 250 MB budget of
 `architecture/07-packaging-updates.md` §1. The budget checks were removed from
-`05_Software/scripts/package.mjs` and `scripts/probe-upgrade.mjs` the same day.
+`02_Tools/release/package.mjs` and `tests/packaging/probe-upgrade.mjs` the same day.
 
 ## Context
 Most embedded tools that plugins wrap are Python packages (esptool, espefuse, pymcuprog, python-can,

@@ -3,7 +3,7 @@
 ## Routing
 
 Select for package/test-package commands, model asset delivery, ASAR native paths, NSIS/portable ZIP/AppImage/deb
-budgets and packaged SQLite/embedding probes. Start at `05_Software/scripts/package.mjs`;
+budgets and packaged SQLite/embedding probes. Start at `02_Tools/release/package.mjs`;
 focused tests are `tests/packaging/packaging.test.ts and tests/tooling/build-mode.test.ts` and
 `src/apps/desktop/src/main/packaging/sqlite-probe.test.ts`. General workspace/compiler behavior belongs
 to [software-tooling](software-tooling.md); window/security lifecycle belongs to [desktop-shell](desktop-shell.md).
@@ -95,7 +95,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 | Native collection/budget | `package.mjs`, `electron-builder.yml` | packaging budget/ASAR tests, native OS artifact inspections |
 | SQLite SQL/fallback | `main/packaging/sqlite-probe.ts` | real SQLite test, packaged probe |
 | Embedding lifecycle | `embedding-worker.ts`, `probe.ts` | actual packaged offline worker, build-mode exclusion |
-| VM evidence | `scripts/probe-*-offline.*`, `probe-windows-sandbox.ps1` | real VM hashes, adapters/routes and process results |
+| VM evidence | `02_Tools/release/probe-*-offline.*`, `probe-windows-sandbox.ps1` | real VM hashes, adapters/routes and process results |
 
 ## Key behaviors
 
@@ -113,16 +113,16 @@ Native acceptance exercises real SQLite, local CPU indexing/search and PDF throu
 
 ## Files
 
-- `05_Software/scripts/{package,package-checks,prepare-model,prepare-windows-runtime}.mjs` — collection, source/cache integrity, sanitized prepack, target isolation and reports.
+- `02_Tools/release/{package,package-checks}.mjs`, `02_Tools/environment/{prepare-model,prepare-windows-runtime}.mjs` — collection, source/cache integrity, sanitized prepack, target isolation and reports.
 - `05_Software/src/windows_runtime/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
 - `main/app-info.ts`, shared ipc.ts, renderer Metadata/locales — immutable build/signature identity in About.
 - `05_Software/src/models/model-manifest.json` — immutable model provenance/pins.
-- `05_Software/src/uv/uv-manifest.json`, `05_Software/scripts/prepare-uv.mjs` — pinned uv per platform; `package.mjs`
+- `05_Software/src/uv/uv-manifest.json`, `02_Tools/environment/prepare-uv.mjs` — pinned uv per platform; `package.mjs`
   prepares it, stages `resources/uv/` (extraResources `uv`) and re-checks the packaged binary hash; the package report
   records `uv {version, platform, bytes, sha256}`.
 - `05_Software/src/apps/desktop/electron-builder.yml` — targets, unpacking and real resource delivery.
 - `05_Software/src/apps/desktop/electron.vite.config.ts`, `src/main/index.ts` — compiled boundary and test hook.
 - `05_Software/src/apps/desktop/src/main/packaging/{probe,sqlite-probe,embedding-worker}.ts` — actual packaged checks.
-- `05_Software/scripts/{probe-windows-offline,probe-windows-sandbox}.ps1`, `probe-linux-offline.sh` — host evidence.
+- `02_Tools/release/{probe-windows-offline,probe-windows-sandbox}.ps1`, `probe-linux-offline.sh` — host evidence.
 - `05_Software/tests/packaging/packaging.test.ts and 05_Software/tests/tooling/build-mode.test.ts`, `src/apps/desktop/src/main/packaging/sqlite-probe.test.ts` — focused regressions.
 - `06_SoftwareDocu/wp05-packaging-measurements.md`, `evidence/wp05/` — observed outcomes and raw evidence.

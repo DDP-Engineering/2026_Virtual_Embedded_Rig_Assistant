@@ -56,7 +56,7 @@ generation supplies fictional board documents for document and retrieval tests.
   header. locator_json stores page (PDF page or slide number), heading path/slug
   (Markdown line range), or line range.
 - `npm run make:demo-pdfs` renders three Markdown sources to demo-board/docs, and
-  `node scripts/make-office-fixtures.mjs` writes the deterministic office fixtures.
+  `node tests/support/make-office-fixtures.mjs` writes the deterministic office fixtures.
 
 ## Invariants
 
@@ -107,7 +107,7 @@ generation supplies fictional board documents for document and retrieval tests.
 | cache/hash/failures/lifecycle | processor.ts | processor.test.ts, ingest.test.ts |
 | PDF/office worker host | pdf-worker.ts, worker-host.ts | processor.test.ts, document-hosts.test.ts |
 | host wiring/build | host document-processor/pdf-worker entries; desktop indexer-process entry | native ingest.spec.ts, office-documents.spec.ts, indexer.spec.ts |
-| demo documents | scripts/make-demo-pdfs.mjs, demo sources | demo-documents.test.ts, processor demo extraction |
+| demo documents | tests/support/make-demo-pdfs.mjs, demo sources | demo-documents.test.ts, processor demo extraction |
 
 ## Key behaviors
 
@@ -129,7 +129,7 @@ generation supplies fictional board documents for document and retrieval tests.
 - src/apps/{cli/src,desktop/src/main}/{document-processor,pdf-worker}.ts — host composition; the
   desktop composes them inside main/indexer-process.ts (TASK-f09609fd).
 - tests/integration/document-hosts.test.ts, tests/tooling/demo-documents.test.ts; tests/e2e/{ingest,office-documents}.spec.ts — compiled/native proof.
-- scripts/make-demo-pdfs.mjs, scripts/make-office-fixtures.mjs; tests/fixtures/{documents,documents/office,workbenches/demo-board} — fixtures and demo assets.
+- tests/support/make-demo-pdfs.mjs, tests/support/make-office-fixtures.mjs; tests/fixtures/{documents,documents/office,workbenches/demo-board} — fixtures and demo assets.
 
 Tokenizer JSON/configuration are a semantic snapshot of the packaged
 Xenova/bge-small-en-v1.5 assets at revision

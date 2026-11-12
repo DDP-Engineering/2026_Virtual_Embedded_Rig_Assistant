@@ -19,7 +19,7 @@ On Ubuntu, the release smoke shall reject every inet or inet6 destination outsid
 
 verification = "Focused parser cases cover Unix, IPv4/IPv6, failed/interleaved/truncated calls; native release traces allow none offline and exact ephemeral loopback scripted; separate instrumented renderer request to another port is observed and rejected."
 
-affected_paths = ["05_Software/scripts/smoke-egress.mjs", "05_Software/scripts/smoke-runtime.mjs", "05_Software/scripts/smoke-calibration.mjs"]
+affected_paths = ["05_Software/tests/packaging/smoke/smoke-egress.mjs", "05_Software/tests/packaging/smoke/smoke-runtime.mjs", "05_Software/tests/packaging/smoke/smoke-calibration.mjs"]
 
 linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts"]
 

@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
 import type { Plugin } from "vite";
 // @ts-expect-error build helper is a Node ESM module.
-import { pluginCatalogFeed, updateFeed } from "../../../scripts/update-config.mjs";
+import { pluginCatalogFeed, updateFeed } from "../../../../02_Tools/release/update-config.mjs";
 import { productionCsp } from "./src/main/content-policy.js";
 
 const root = dirname(fileURLToPath(import.meta.url));

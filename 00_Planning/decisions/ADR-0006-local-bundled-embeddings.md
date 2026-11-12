@@ -34,7 +34,7 @@ hybrid: exact identifiers come from the keyword index, so retrieval does not dep
   (`src/libraries/core/src/knowledge/embedding.ts:123`, `knowledge/embedding-worker.ts:26`).
 - Remote model loading and filesystem/browser caches are off (`embedding-worker.ts:13-17`). Model
   files ship from `src/models` to `resources/models` through `extraResources`
-  (`src/apps/desktop/electron-builder.yml`, `scripts/package.mjs:149-153`,
+  (`src/apps/desktop/electron-builder.yml`, `02_Tools/release/package.mjs:149-153`,
   `src/apps/desktop/src/main/index.ts:84-89`).
 - Model: `Xenova/bge-small-en-v1.5` q8 (ADR-0015), the only value the workbench schema accepts
   (`src/libraries/shared/src/workbench.ts:11`).

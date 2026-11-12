@@ -11,7 +11,7 @@ export default defineConfig({
       ...["tooling", "integration", "packaging"].map((name) => ({
         test: {
           name,
-          setupFiles: ["tests/network-setup.ts"],
+          setupFiles: ["tests/support/network-setup.ts"],
           include: [`tests/${name}/**/*.test.ts`],
           environment: "node",
         },

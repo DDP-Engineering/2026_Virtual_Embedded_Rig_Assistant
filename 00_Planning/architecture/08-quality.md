@@ -17,9 +17,9 @@ Ubuntu (`02_Tools/verification-policy.md`, user policy of 2026-10-12).
 
 ## 1. Commands
 
-Run from `05_Software/`, after `python 02_Tools/setup.py` (repository root) has installed the pinned
+Run from `05_Software/`, after `python 02_Tools/environment/setup.py` (repository root) has installed the pinned
 Node.js (engine `>=24 <25`) and the npm packages. Without Node on the PATH, prefix a command with
-`python ../02_Tools/npmw.py`. AEGIS runs `lint`, `typecheck`, `check:i18n` and `npm test` through
+`python ../02_Tools/environment/npmw.py`. AEGIS runs `lint`, `typecheck`, `check:i18n` and `npm test` through
 that wrapper (`.agentic/aegis.toml`); `aegis check --run` runs lint, typecheck and i18n.
 
 | Command | Does |
@@ -45,10 +45,10 @@ that wrapper (`.agentic/aegis.toml`); `aegis check --run` runs lint, typecheck a
 | `npm run package:test` | build separately labelled instrumented packages ("VERA Test"), for debugging only |
 | `npm run smoke:package -- --artifact <path> [--scratch <new dir>] [--resume <failed run>] [--upgrade-proof <report>]… [--windows-evidence <json>]` | verify an already-built release package (§5) |
 
-Scripts without an npm command: `node scripts/probe-upgrade.mjs <scratch>`
-(instrumented updater probe, 07 §5); `node scripts/smoke-calibration.mjs <built app> <new root>` (egress
-negative control, §5); `scripts/probe-windows-sandbox.ps1` with `probe-windows-offline.ps1`, and
-`scripts/probe-linux-offline.sh` (offline `--packaging-probe` runs of an instrumented zip or AppImage
+Scripts without an npm command: `node tests/packaging/probe-upgrade.mjs <scratch>`
+(instrumented updater probe, 07 §5); `node tests/packaging/smoke/smoke-calibration.mjs <built app> <new root>` (egress
+negative control, §5); `02_Tools/release/probe-windows-sandbox.ps1` with `probe-windows-offline.ps1`, and
+`02_Tools/release/probe-linux-offline.sh` (offline `--packaging-probe` runs of an instrumented zip or AppImage
 in Windows Sandbox or a VM with its adapters down).
 
 ## 2. Test layers
@@ -60,15 +60,15 @@ in Windows Sandbox or a VM with its adapters down).
 | Renderer components | `src/apps/desktop/src/renderer/**/*.test.ts` | per-file `@vitest-environment jsdom`, React `createRoot` and `@testing-library/user-event` over the mock API (`mocks/mockApi.ts`, 06 §8) |
 | Root Vitest projects | `tests/tooling/`, `tests/integration/`, `tests/packaging/` | import boundaries, build modes, demo documents, i18n checker, network guard, workspace skeleton; CLI process, document CLI and hosts, retrieval, worker hosts; payload checks, smoke tooling, update feed configuration and server |
 | End-to-end | `tests/e2e/*.spec.ts` | Playwright `_electron.launch` of the electron-vite build with the development Electron binary, a temporary `--user-data-dir` and workbenches created or copied in temporary folders; browser specs run the mock renderer (`dev:renderer`, `VITE_API=mock`) in Chromium at 127.0.0.1:5173. One worker, serial |
-| Release package smoke | `scripts/smoke-package.mjs` with `smoke-runtime`, `smoke-server`, `smoke-egress`, `smoke-report` | the release artifact itself: offline indexing, scripted loopback session, egress check (§5) |
-| Retrieval evaluation | `scripts/eval-retrieval.mjs`, `scripts/retrieval/`, `tests/fixtures/retrieval/` | recall@5 thresholds (05 §8) |
+| Release package smoke | `tests/packaging/smoke/smoke-package.mjs` with `smoke-runtime`, `smoke-server`, `smoke-egress`, `smoke-report` | the release artifact itself: offline indexing, scripted loopback session, egress check (§5) |
+| Retrieval evaluation | `evaluators/eval-retrieval-harness/eval-retrieval.mjs`, `evaluators/retrieval-support/`, `tests/fixtures/retrieval/` | recall@5 thresholds (05 §8) |
 
 ## 3. Fixtures and test switches
 
 - `tests/fixtures/workbenches/demo-board/`: a fictional board, "VERA-DEMO-01", with `.vera/workbench.yaml`,
   `.vera/WORKBENCH.md`, `board.txt`, `docs/notes/bringup.md`, `docs/pinout.csv`, `logs/boot-0412.log` and
   three PDFs (`docs/vera-demo-01-{datasheet,reference-manual,application-note}.pdf`) generated from
-  `sources/*.md` by `scripts/make-demo-pdfs.mjs`. `demo-board.json` records its identity and complete
+  `sources/*.md` by `tests/support/make-demo-pdfs.mjs`. `demo-board.json` records its identity and complete
   file inventory, checked by `tests/tooling/demo-documents.test.ts`. Tests copy it to a temporary
   folder and never change it in place.
 - Workbench E2E (WP-06) covers native create, restart and recents, removal of deleted folders and
@@ -98,7 +98,7 @@ in Windows Sandbox or a VM with its adapters down).
   results, such as `{{ref}}` or `{{artifact:<name>}}`. The step is the number of assistant messages
   since the last user message, so the provider is stateless. Replay models report a 32768-token context,
   up to 4096 output tokens and a 1639-token safety margin.
-- For release-package agent tests, a harness-owned HTTP server (`scripts/smoke-server.mjs`) binds an
+- For release-package agent tests, a harness-owned HTTP server (`tests/packaging/smoke/smoke-server.mjs`) binds an
   ephemeral 127.0.0.1 port and serves `/v1/models` and scripted OpenAI-compatible streaming completions
   and tool calls. The release app connects through its normal custom-provider settings (context 32768,
   output 4096). The scenario is its own (read, an approved write, a cited answer), not a replay script;
@@ -121,7 +121,7 @@ in Windows Sandbox or a VM with its adapters down).
 ## 4. Rules for tests
 
 - No outbound network: the Vitest projects `core`, `desktop`, `cli`, `tooling`, `integration` and
-  `packaging` load `tests/network-setup.ts`, which wraps `fetch` and `net.Socket.connect` and fails the
+  `packaging` load `tests/support/network-setup.ts`, which wraps `fetch` and `net.Socket.connect` and fails the
   test after any non-loopback attempt (L6, L11). The `shared` workspace has no Vitest config and runs
   without it. E2E specs install `tests/e2e/network-guard.ts` in the main process (request cancelling
   plus the socket guard) and assert that no outbound attempt was recorded. Local mock HTTP servers on
@@ -132,7 +132,7 @@ in Windows Sandbox or a VM with its adapters down).
 - UI assertions use roles and `data-i18n` translation keys; many E2E and smoke checks also match English
   accessible names (for example "Approve", "Docs").
 - Screenshots are never compared pixel by pixel (fonts differ between operating systems). E2E writes
-  them into the run's temporary Playwright output folder, which `scripts/cleanup-e2e-output.mjs`
+  them into the run's temporary Playwright output folder, which `tests/support/cleanup-e2e-output.mjs`
   deletes at exit, so they are not kept by default; `smoke:package` keeps its screenshots in its root.
 - Some authored tests are marked "execution deferred by user" (for example
   `core/src/agent/compaction.test.ts`, `core/src/sessions/export.test.ts`,
@@ -164,10 +164,10 @@ pending. `--resume` reuses the extraction of a failed run of the same artifact.
   process in the app's tree, Chromium's network process and workers included. An `inet` or `inet6`
   destination outside the run's list fails the smoke, failed connection attempts included; Unix sockets
   (display, D-Bus) are ignored; truncated, unparsed or unfinished calls and a trace without any network
-  call also fail. Negative control: `node scripts/smoke-calibration.mjs` (Linux, an instrumented build
+  call also fail. Negative control: `node tests/packaging/smoke/smoke-calibration.mjs` (Linux, an instrumented build
   from `VERA_TEST=1 npm run build`) opens a sandboxed fixture window that fetches a forbidden loopback
   port; the same check must report FAIL. It is kept separate from release evidence.
-- Egress on Windows, manual: the offline run in Windows Sandbox (`scripts/sandbox/VERA.wsb`, networking
+- Egress on Windows, manual: the offline run in Windows Sandbox (`02_Tools/release/sandbox/VERA.wsb`, networking
   disabled) with a `pktmon` capture, following `06_SoftwareDocu/release-package-smoke.md`. The result
   enters the report through `--windows-evidence <json>`, bound to the artifact SHA-256 and the capture
   hash. As of 2026-11-01 this run, including VC++ self-containment on a clean machine, is deferred by

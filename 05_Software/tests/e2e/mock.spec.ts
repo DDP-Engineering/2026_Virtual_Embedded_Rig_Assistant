@@ -8,14 +8,14 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
   test.setTimeout(150_000);
   const manifest = JSON.parse(readFileSync("package.json", "utf8"));
   expect(manifest.scripts["dev:renderer"], "renderer-only dev entrypoint").toBe(
-    "node scripts/dev-renderer.mjs",
+    "node ../02_Tools/environment/dev-renderer.mjs",
   );
   const compiledShared = "src/libraries/shared/dist/index.js";
   const savedShared = `${compiledShared}.browser-backup`;
   expect(existsSync(savedShared), "no leftover generated-entry backup").toBe(false);
   const hadCompiledShared = existsSync(compiledShared);
   if (hadCompiledShared) renameSync(compiledShared, savedShared);
-  const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+  const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
     env: { ...process.env, VITE_API: "mock" },
     stdio: ["ignore", "pipe", "pipe"],
   });

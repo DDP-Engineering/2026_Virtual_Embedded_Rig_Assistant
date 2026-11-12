@@ -86,11 +86,11 @@ Windows and Ubuntu proof and does not claim to resolve those release checks.
   manifest schema requires q8 (`knowledge/embedding.ts:6-26`); chunks are at most 1400 characters
   (`knowledge/chunk.ts:5`); RRF uses k=60 (`knowledge/search.ts:168`).
 - `eval:retrieval` checks 0.85 / 0.95 / 0.75 hybrid recall@5 over
-  `tests/fixtures/retrieval/demo-board.yaml` (`scripts/retrieval/product-eval.mjs:75-78`). The E5
+  `tests/fixtures/retrieval/demo-board.yaml` (`evaluators/eval-retrieval-harness/product-eval.mjs:75-78`). The E5
   candidate manifest is kept (`tests/fixtures/retrieval/e5-model-manifest.json`).
 - Deviation: the gate does not measure the product's real chunking or document selection. It builds
   its corpus outside ingest with `chunkDocument` defaults: overlap 0, while workbenches default to 200
-  (`scripts/retrieval/corpus.mjs:29`, `knowledge/chunk.ts:96-97`, `shared/src/workbench.ts`). It
+  (`evaluators/retrieval-support/corpus.mjs:29`, `knowledge/chunk.ts:96-97`, `shared/src/workbench.ts`). It
   includes `logs/boot-0412.log` and `board.txt`, which the default `docs/**` selection never indexes
   (`corpus.mjs:15-16`). It also writes chunks directly (`product-eval.mjs:45`).
 - Link removed: `06_SoftwareDocu/wp24-embedding-measurements.md` and `evidence/wp24/` were deleted in

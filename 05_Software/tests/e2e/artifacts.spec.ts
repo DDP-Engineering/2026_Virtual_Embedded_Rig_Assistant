@@ -255,7 +255,7 @@ test.describe("browser artifacts", () => {
       page,
       context,
     }) => {
-      const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+      const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
         env: { ...process.env, VITE_API: "mock" },
         stdio: ["ignore", "pipe", "pipe"],
       });

@@ -74,8 +74,8 @@ Rules:
 | Reference file | Lines | VERA target | Change |
 |---|---|---|---|
 | `scripts/smoke.mjs` | 123 | e2e helpers (`tests/e2e/network-guard.ts`) | fail on console errors and on requests that leave the app |
-| `scripts/package-smoke.mjs` | 368 | `scripts/smoke-package.mjs` | reuse path/environment checks; add the artifact SHA-256, the scripted loopback session and the egress check (WP-33) |
-| `scripts/package.mjs` | 358 | `scripts/package.mjs`, `scripts/package-checks.mjs` | electron-builder replaces it; keep its pre-packaging checks: no secrets, path length, native files complete |
-| `scripts/sandbox/BenchPilot.wsb` | — | `scripts/sandbox/VERA.wsb` | Windows Sandbox for the clean-machine run |
+| `scripts/package-smoke.mjs` | 368 | `tests/packaging/smoke/smoke-package.mjs` | reuse path/environment checks; add the artifact SHA-256, the scripted loopback session and the egress check (WP-33) |
+| `scripts/package.mjs` | 358 | `02_Tools/release/package.mjs`, `02_Tools/release/package-checks.mjs` | electron-builder replaces it; keep its pre-packaging checks: no secrets, path length, native files complete |
+| `scripts/sandbox/BenchPilot.wsb` | — | `02_Tools/release/sandbox/VERA.wsb` | Windows Sandbox for the clean-machine run |
 | `apps/server/src/agent/replay-e2e.spec.ts`, `agent/guards.spec.ts`, `tools/caps.spec.ts` | — | `*.test.ts` beside the sources in `src/libraries/core/src/` (no `test/` folder) | the same kinds of tests for VERA's runtime, approvals and caps |
 | `skills/*/SKILL.md` (7) | — | none: skill tests build their own skills (`src/libraries/core/src/skills/catalog.test.ts`); the demo-board fixture has no `skills/` | format examples; `failure-analyzer` is the exemplar shape |

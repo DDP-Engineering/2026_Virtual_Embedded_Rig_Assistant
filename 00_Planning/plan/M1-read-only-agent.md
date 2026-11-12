@@ -343,7 +343,7 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
 - WP-09: implemented as planned: pi-ai pinned at 1.1.0, custom providers through
   `openAICompletionsApi` (`core/llm/providers.ts:31-66`), replay only through `VERA_REPLAY_DIR` in test
   builds (`main/index.ts:719`), loopback error-mapping tests (`core/llm/gateway.test.ts:342,367`);
-  `smoke:live` exists (`scripts/smoke-live.mjs`), its manual run is not provable from code.
+  `smoke:live` exists (`02_Tools/release/smoke-live.mjs`), its manual run is not provable from code.
 - WP-10: implemented as planned: `ReferenceRuntime` (`core/agent/runtime.ts:68`) and
   `core/agent/context.ts`, with one replay matrix run on both runtimes
   (`core/agent/runtime-matrix.test-support.ts`, `core/agent/pi-spike.test.ts`); ADR-0014 confirms

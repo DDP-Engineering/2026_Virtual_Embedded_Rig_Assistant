@@ -4,7 +4,7 @@
 
 Select for smoke:package, artifact functional acceptance, external egress,
 renderer calibration and manual Windows capture. Start at
-`05_Software/scripts/smoke-package.mjs`; focused tests: tooling/package-smoke.test.ts.
+`05_Software/tests/packaging/smoke/smoke-package.mjs`; focused tests: tooling/package-smoke.test.ts.
 Package construction/pins belong to [native packaging](native-packaging.md),
 installed updates to [updates](updates.md).
 
@@ -69,6 +69,6 @@ flowchart LR
 
 ## Files
 
-`scripts/smoke-{package,runtime,egress,server,report,calibration}.mjs` own scenarios,
+`tests/packaging/smoke/smoke-{package,runtime,egress,server,report,calibration}.mjs` own scenarios,
 native execution, oracle, SSE fixture, proof projection and separate calibration.
-`scripts/sandbox/VERA.wsb`, manual procedure and package-smoke tests route acceptance.
+`02_Tools/release/sandbox/VERA.wsb`, manual procedure and package-smoke tests route acceptance.

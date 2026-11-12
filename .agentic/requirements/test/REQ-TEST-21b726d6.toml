@@ -19,7 +19,7 @@ The software root shall provide dev, build and test:e2e commands, with Playwrigh
 
 verification = "Run build and acceptance suite on Windows/Ubuntu, inspect Linux launcher, and execute verify; report missing-platform readiness separately."
 
-affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "05_Software/scripts/", "05_Software/tests/", "05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/apps/desktop/src/main/chatgpt-probe.ts", "05_Software/src/apps/desktop/src/main/chatgpt-probe.test.ts", "05_Software/playwright.config.ts"]
+affected_paths = ["05_Software/package.json", "05_Software/package-lock.json", "02_Tools/environment/", "02_Tools/build/", "02_Tools/release/", "05_Software/tests/support/", "05_Software/tests/packaging/", "05_Software/evaluators/", "05_Software/tests/", "05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/apps/desktop/src/main/chatgpt-probe.ts", "05_Software/src/apps/desktop/src/main/chatgpt-probe.test.ts", "05_Software/playwright.config.ts"]
 
 linked_tests = ["05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/tooling/skeleton.test.ts"]
 

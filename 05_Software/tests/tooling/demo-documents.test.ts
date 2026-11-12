@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 
 it("renders the three fictional Markdown demo documents reproducibly", async () => {
-  const script = fileURLToPath(new URL("../../scripts/make-demo-pdfs.mjs", import.meta.url));
+  const script = fileURLToPath(new URL("../support/make-demo-pdfs.mjs", import.meta.url));
   expect(existsSync(script), "demo PDF generator is implemented").toBe(true);
   const { makeDemoPdfs } = await import(pathToFileURL(script).href);
   const root = await mkdtemp(join(tmpdir(), "vera-demo-docs-"));

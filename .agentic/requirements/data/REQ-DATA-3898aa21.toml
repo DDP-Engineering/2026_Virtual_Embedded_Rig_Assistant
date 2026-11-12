@@ -19,7 +19,7 @@ When an owned document completes extraction, ingest shall atomically publish cur
 
 verification = "Real FS/SQLite pipeline tests inspect ordered chunks/cache reuse and corrupted cache recovery, mutation/delete/reindex invalidation and failure/abort/owner/link refusal without stale publication."
 
-affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/apps/desktop/", "05_Software/src/apps/cli/", "05_Software/scripts/", "05_Software/tests/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/package.json"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/apps/desktop/", "05_Software/src/apps/cli/", "02_Tools/environment/", "02_Tools/build/", "02_Tools/release/", "05_Software/tests/support/", "05_Software/tests/packaging/", "05_Software/evaluators/", "05_Software/tests/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/package.json"]
 
 linked_tests = ["05_Software/src/libraries/core/src/knowledge/extraction.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/tests/integration/document-hosts.test.ts", "05_Software/tests/tooling/demo-documents.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
 

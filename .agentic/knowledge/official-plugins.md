@@ -368,7 +368,7 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `05_Software/plugins/esp32-esptool/README.md` — catalog description.
 - `05_Software/plugins/packs.yaml`, `catalog.yaml` — packs and the maintainers' file of the catalog source.
 - `05_Software/plugins/CONTRIBUTING.md`, `.ci/catalog.yml` — contribution guide and CI template for `vera-plugins`.
-- `05_Software/scripts/prepare-plugins.mjs` — builds and checks the bundled catalog release.
+- `02_Tools/environment/prepare-plugins.mjs` — builds and checks the bundled catalog release.
 - `05_Software/tests/integration/esp32-esptool.test.ts` — package, provisioning, rules, replay session, skill.
 - `05_Software/tests/fixtures/esp32-esptool/fake_esptool.py` — stub esptool a fake uv installs as the pip entry point (distlib `.exe` launcher on Windows); records arguments and file hashes.
 - `05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt` — recorded `esptool --help` of 5.6.0.

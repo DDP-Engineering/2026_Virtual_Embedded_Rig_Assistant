@@ -136,5 +136,5 @@ REQ-FUNC-51165496 verifies issued document bounds against current source/extract
 Under05_Software: core knowledge/{embedding,embedding-worker,embedding-ingest,
 search,processor,ingest}; storage/{schema,repos/documents};
 tools/documents; CLI {args,documents,document-processor,embedding-worker}; desktop
-{document-processor,document-embedding-worker,index,sessions}; scripts/{eval-retrieval,
-retrieval/product-eval,build-cli,package}; corresponding focused tests and ingest E2E.
+{document-processor,document-embedding-worker,index,sessions}; evaluators/eval-retrieval-harness/{eval-retrieval,
+product-eval}; 02_Tools/build/build-cli; 02_Tools/release/package; corresponding focused tests and ingest E2E.

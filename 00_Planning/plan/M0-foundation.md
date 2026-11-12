@@ -193,7 +193,7 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   German only, Romanian only in mock mode (`tests/e2e/mock.spec.ts:78-83`).
 - WP-05: partly implemented: the probes, the `node:sqlite` plan B (`main/packaging/sqlite-probe.ts`),
   verified model delivery by pinned URL and SHA-256 (`src/models/model-manifest.json`,
-  `scripts/prepare-model.mjs:25-67`), probe exclusion from release builds
+  `02_Tools/environment/prepare-model.mjs:25-67`), probe exclusion from release builds
   (`tests/tooling/build-mode.test.ts:62-77`) and ADR-0013 exist; missing: the offline Windows run (a
   connected-host run was accepted, ADR-0013 "Evidence and acceptance") and the per-OS measurements,
   whose file was deleted with the evidence folder in commit 891a699 — only sizes remain in ADR-0013.
@@ -209,4 +209,4 @@ Not in the plan, implemented in this area:
 - Extra settings: `webAccess`, `keyboardShortcuts`, `chatFontSize`, `codeFontSize`, `sessionOrder`,
   `suppressBypassWarning` (`shared/settings.ts:30-53`).
 - An app-local Microsoft VC++ runtime for Windows (`src/windows_runtime/`,
-  `scripts/prepare-windows-runtime.mjs`).
+  `02_Tools/environment/prepare-windows-runtime.mjs`).

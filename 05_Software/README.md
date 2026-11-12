@@ -25,14 +25,18 @@ tests/
   e2e/                Playwright Electron and browser acceptance
   tooling/            Build, configuration and verification infrastructure tests
   integration/        CLI, documents, workers and retrieval tests
-  packaging/          Distribution, smoke tooling and update tests
+  packaging/          Distribution, package smoke, update probe and update tests
   fixtures/           Test-only documents, replay scripts and scenarios
-scripts/              Development, build, packaging and diagnostic commands
+  support/            Test runners, reporters, network guard and fixture generators
+evaluators/           Measurement and scoring harnesses, one folder per evaluator family
+evaluation-outputs/   Generated evaluator runs, ignored by Git
 release_tmp/          Ignored packaging workspace
 node_modules/         Ignored installed dependencies
 ```
 
-Unit and component tests remain beside the implementation in `src/`.
+Unit and component tests remain beside the implementation in `src/`. Environment, build and
+release tooling lives in [02_Tools](../02_Tools/README.md); it resolves packages from this
+folder's `node_modules/`, so there is a single dependency tree.
 
 The bundled official `analysis-skills` plugin supplies captured `firmware-comparator` and sourced
 manual `test-planner` procedures with on-demand templates. Install from its folder or local catalog,
@@ -78,12 +82,14 @@ Model/DLL binaries in `src/models/` and `src/windows_runtime/` are ignored by Gi
 their manifests remain versioned beside them. Packaging maps these source locations
 to the installed application resource layout (`models/` and app-local native DLLs).
 
-The [scripts catalog](scripts/README.md) describes every helper, its invocation,
-outputs and platform requirements, with separate guides for retrieval and Sandbox.
+The [tooling catalog](../02_Tools/README.md) describes the environment, build and release
+commands. [Tests](tests/README.md) and [evaluators](evaluators/README.md) describe their runners
+and harnesses, with separate guides for [retrieval](evaluators/retrieval-support/README.md) and
+[Windows Sandbox](../02_Tools/release/sandbox/README.md).
 
 ## Set-up and commands
 
-From the repository root, once: `python 02_Tools/setup.py` (Ubuntu: `python3`). It installs the pinned
+From the repository root, once: `python 02_Tools/environment/setup.py` (Ubuntu: `python3`). It installs the pinned
 Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 
 | Command | Does |
@@ -107,8 +113,8 @@ E2E results are printed in the terminal. Screenshots, videos and traces are disa
 Playwright uses an isolated system temporary directory and removes it after each normal run,
 including failed tests. No `test-results/` directory is retained in the repository.
 
-Without Node on the PATH, prefix any command with `python ../02_Tools/npmw.py`, for example
-`python ../02_Tools/npmw.py npm run verify`. Full command list: [08-quality.md §1](../00_Planning/architecture/08-quality.md).
+Without Node on the PATH, prefix any command with `python ../02_Tools/environment/npmw.py`, for example
+`python ../02_Tools/environment/npmw.py npm run verify`. Full command list: [08-quality.md §1](../00_Planning/architecture/08-quality.md).
 
 | File | Purpose |
 |---|---|
@@ -157,7 +163,7 @@ non-loopback connections in Chromium and Node. Automated E2E runs retain no scre
 
 `npm ci` runs `install-electron` to install the pinned Electron binary; npm's allowScripts entries
 permit the pinned esbuild install scripts. Ubuntu requires the libraries and Xvfb listed by
-`python3 ../02_Tools/setup.py --check`; keep Linux and Windows `node_modules` separate.
+`python3 ../02_Tools/environment/setup.py --check`; keep Linux and Windows `node_modules` separate.
 Native dependencies use their pinned N-API prebuilds. Their install scripts are explicitly denied,
 including ONNX optional CUDA downloads; packaging retains host x64 runtime files, filters Linux
 CUDA/TensorRT binaries and uses the CPU execution provider. Windows keeps upstream ORT companion DLLs.
@@ -209,9 +215,9 @@ Accepted partial updates serialize and emit settings.changed after successful at
 Host logs retain seven UTC daily JSON-line files under userData/logs and redact registered secrets.
 [Application data](../.agentic/knowledge/app-data.md) routes schemas, validation and host adapters.
 
-Before browser acceptance, run `python ../02_Tools/npmw.py npx playwright install chromium` once
+Before browser acceptance, run `python ../02_Tools/environment/npmw.py npx playwright install chromium` once
 (Ubuntu: python3). In PowerShell, browser mock development uses `$env:VITE_API="mock"`, then
-`python ../02_Tools/npmw.py npm run dev:renderer`; remove the variable with `Remove-Item Env:VITE_API`
+`python ../02_Tools/environment/npmw.py npm run dev:renderer`; remove the variable with `Remove-Item Env:VITE_API`
 when returning to Electron development. The mock fixture version is taken from the desktop manifest.
 
 Packaging checks every offline PDF CMap/font/WASM resource against the pinned pdfjs-dist source bytes in staging and final ASAR. When both Windows certificate SHA1 and subject selectors are supplied, both constrain certificate selection.
@@ -232,7 +238,7 @@ the report; each run cleans its own temporary worker bundle.
 Run from this folder on a copy of the demo workbench:
 
 ```text
-python ../02_Tools/npmw.py npm run vera -- run --workbench <copied-demo-dir> --prompt "Read the board" --provider replay --script tests/fixtures/llm-scripts/read-then-answer.jsonl
+python ../02_Tools/environment/npmw.py npm run vera -- run --workbench <copied-demo-dir> --prompt "Read the board" --provider replay --script tests/fixtures/llm-scripts/read-then-answer.jsonl
 ```
 
 `--provider openai --model <id>` uses `OPENAI_API_KEY`; `--provider custom --base-url <http(s)://host/v1> --model <id>` uses the ordinary custom gateway. A plain UTF-8 `--key-file <file>` overrides the environment key. Credentials remain in memory and all event/log/usage output passes through the shared scrubber. Provider defaults to OpenAI, which requires `--model`; replay explicitly selects only the supplied script.
@@ -327,7 +333,7 @@ Automated model tests use deterministic replay or loopback scripted servers. Uni
 Run real-provider smoke manually from this folder after configuring a real OpenAI API key/model or a local OpenAI-compatible model such as Ollama in VERA:
 
 ```text
-python ../02_Tools/npmw.py npm run smoke:live -- --provider custom:ollama --data <absolute VERA userData>
+python ../02_Tools/environment/npmw.py npm run smoke:live -- --provider custom:ollama --data <absolute VERA userData>
 ```
 
 Use `--provider openai` for the stored OpenAI configuration; omit `--data` to use the installed app store. The command builds release, launches the ordinary main host, prints scrubbed per-step JSON and exits0 only when mandatory steps pass (unsupported listing may be skipped). Linux requires a desktop display or `xvfb-run -a`. Manual smoke may consume API quota; it is separate from automated checks and must be observed before declaring WP09 complete.
@@ -357,7 +363,7 @@ Real acceptance: sign in with your own subscription, run a short session, close 
 
 ## Demo document fixtures
 
-Run `python ../02_Tools/npmw.py npm run make:demo-pdfs` from05_Software to
+Run `python ../02_Tools/environment/npmw.py npm run make:demo-pdfs` from05_Software to
 regenerate the three fictional VERA-DEMO-01 PDFs from
 `tests/fixtures/workbenches/demo-board/sources/`. Background desktop/CLI ingest extracts
 PDF pages in a dedicated worker, caches extraction by SHA256 and persists
@@ -365,14 +371,15 @@ page/heading/line chunks. Scanned PDFs report `needs_ocr`.
 
 ## Embedding comparison
 
-From 05_Software, run the pinned local CPU comparison:
+A historical experiment behind ADR-0015, not a gate. From 05_Software, run the pinned local CPU
+comparison:
 
 ```powershell
-python ../02_Tools/npmw.py node scripts/compare-embeddings.mjs --prepare --scratch ../02_Tools/cache/wp24-TASK-fd4046b2/windows/build --models ../02_Tools/cache/wp24-TASK-fd4046b2/models --output ../02_Tools/cache/wp24-TASK-fd4046b2/windows/comparison.json
+python ../02_Tools/environment/npmw.py node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs --prepare --scratch node_modules/.cache/evaluators/embedding-comparison/windows --models node_modules/.cache/evaluators/embedding-comparison/models --output evaluation-outputs/embedding-comparison/<run>.json
 ```
 
 Omit --prepare for verified-cache-only execution; inference always disables remote
-model loading. On Ubuntu use python3 and a linux/build scratch child. The report
+model loading. On Ubuntu use python3 and a `linux` scratch child. The report
 retains exact corpus/fixture/manifest hashes, timings and keyword/semantic/hybrid
 recall by EN/RO. See [retrieval evaluation](../.agentic/knowledge/retrieval-evaluation.md)
 and [ADR0015](../00_Planning/decisions/ADR-0015-embedding-model-selection.md).
@@ -385,7 +392,7 @@ automatically are persisted in Updates. Check now works in Off. Downloaded updat
 install on restart/next quit after active turns and approvals finish.
 Portable announces notes and offers a confirmed browser link; deb uses its package manager.
 
-The local acceptance command is `node scripts/probe-upgrade.mjs <absolute-owned-scratch>`.
+The local acceptance command is `node tests/packaging/probe-upgrade.mjs <absolute-owned-scratch>`.
 It builds distinct instrumented0.31.0/0.31.1 artifacts with a compile-time loopback feed
 and records managed (deb) metadata-only checks, required SHA512 with refusal of a corrupt hash,
 installation deferred until a pending approval finishes followed by a real install, and a

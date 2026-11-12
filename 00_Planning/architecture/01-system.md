@@ -23,7 +23,7 @@ Every work package preserves these. Changing one is an architecture decision, re
 | L8 | Document and file content is data, never instructions. No tool executes content. |
 | L9 | Every user-facing string goes through i18n; `en` is the source catalog (`ro` and `de` also ship). Core returns error codes, not sentences. |
 | L10 | Deferred until the first public release: a persisted-format change ships with a migration, and data written by a newer version is never modified. During development formats change in place at version 1: every format or schema version field is kept and is always 1, and any other value is invalid data, reported like other invalid data. Data from an earlier development build may stop loading and is deleted or recreated. There are no migrations, upgrade backups, legacy fallbacks, newer-version guards or upgrade fixtures (root `AGENTS.md`, "Development compatibility policy"; WP-32). The application's update feature (07 §5) is not part of this deferral. |
-| L11 | Automated tests never call a real model. Core and test builds use the replay provider; release-package agent tests use a scripted loopback endpoint through the normal custom-provider path (08 §3, ADR-0012). Vitest projects and e2e runs block non-loopback connections (`tests/network-guard.ts`). |
+| L11 | Automated tests never call a real model. Core and test builds use the replay provider; release-package agent tests use a scripted loopback endpoint through the normal custom-provider path (08 §3, ADR-0012). Vitest projects and e2e runs block non-loopback connections (`tests/support/network-guard.ts`). |
 
 ## 2. Stack
 
@@ -217,14 +217,18 @@ The software root is `05_Software/`:
   tests/
     tooling/                              # configuration, build and test infrastructure
     integration/                          # CLI, documents, workers and retrieval
-    packaging/                            # distribution, smoke tooling and updates
+    packaging/                            # distribution, package smoke, update probe and updates
     e2e/                                  # Playwright Electron/browser acceptance
     fixtures/                             # test-only documents, scenarios and replay
-    network-guard.ts, network-setup.ts    # block non-loopback connections in tests
-  scripts/                                # development, packaging, model and runtime preparation, smoke, i18n
+    support/                              # runners, reporters, network guard, fixture generators
+  evaluators/                             # measurement/scoring harnesses, one folder per family
+  evaluation-outputs/                     # ignored generated evaluator runs
   release_tmp/                            # ignored packaging workspace
   node_modules/                           # ignored installed dependencies
 ```
+
+Environment, build and release tooling is outside the software root, in `02_Tools/environment/`,
+`02_Tools/build/` and `02_Tools/release/`; it resolves packages from `05_Software/node_modules/`.
 
 Build output is ignored: `src/apps/desktop/out/` (electron-vite), `src/apps/cli/dist/` and the
 libraries' `dist/`. Model and runtime assets are fetched and verified by `npm run prepare:model` and

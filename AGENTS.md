@@ -10,6 +10,26 @@ Do not open AEGIS tasks, journals or requirements for anything else: repository 
 remotes, labels, configuration, `02_Tools` setup), planning and architecture documents in
 `00_Planning/`, standalone documentation, brainstorming, research or questions. Do those directly.
 
+## Repository layout
+
+Place new files by responsibility; each folder's README holds its inventory. The other numbered
+folders are listed in `README.md`.
+
+- `00_Planning/`: architecture, decisions and work packages. `06_SoftwareDocu/`: explanatory software
+  documentation and deliberately retained evidence. `07_Delivery/`: selected, validated deliveries.
+- `02_Tools/environment/`, `build/`, `release/`: setup and the pinned toolchain, build and static
+  checks, packaging and release-environment launchers. Their JavaScript imports packages through
+  `environment/software.mjs` from `05_Software/node_modules`; never install a second dependency tree.
+  `runtime/` and `cache/` are ignored; evaluator scratch never goes into `cache/`.
+- `05_Software/src/`: product code, with its unit and component tests beside it.
+- `05_Software/tests/`: functional suites in `tooling/`, `integration/`, `packaging/` and `e2e/`.
+  `fixtures/` holds input data only; `support/` holds runners, reporters and fixture generators.
+- `05_Software/evaluators/eval-<family>-harness/`: harnesses that produce measurements and scores, each
+  with its own entrypoint and helpers. Saved runs go to `05_Software/evaluation-outputs/<family>/`,
+  which Git ignores.
+- Product code never imports tests or evaluators. Run npm and node from `05_Software` through
+  `python ../02_Tools/environment/npmw.py`.
+
 ## Development compatibility policy
 
 VERA is currently in development. Treat the current project layout, configuration and data

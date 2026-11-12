@@ -10,7 +10,7 @@ requirement = "If a catalog URL is not an absolute https URL or an http URL on l
 
 verification = "Shared tests: https://example.test/catalog, http://127.0.0.1:8080/c/ are accepted (a trailing slash added); http://example.test/, ftp://, https://u:p@host/, ?q and #f are rejected by the settings schema. Core test: a loopback index whose final URL is a non-loopback http URL reads as unreachable, one whose final URL is https with a query (a signed storage link) reads; an http setting on a remote host counts as no catalog."
 
-affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/scripts/update-config.mjs", "05_Software/src/apps/desktop/electron.vite.config.ts"]
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "02_Tools/release/update-config.mjs", "05_Software/src/apps/desktop/electron.vite.config.ts"]
 
 linked_tests = ["05_Software/src/libraries/shared/src/plugin-catalog.test.ts", "05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/tests/packaging/updates.test.ts"]
 

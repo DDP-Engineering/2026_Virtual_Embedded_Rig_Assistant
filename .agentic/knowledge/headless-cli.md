@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for `vera run`, `vera index`, `vera search`, arguments, event/usage formatting, Node host ports and lifecycle. Start at05_Software/src/apps/cli/src/{index,args,run,host-ports,replay-output}.ts and scripts/build-cli.mjs. Focused tests are tests/integration/cli.test.ts and src/apps/cli/src/host-ports.test.ts. [Sessions](sessions.md) owns durable transcript/events/recovery; [agent runtime](agent-runtime.md) owns context policy; [LLM gateway](llm-gateway.md) owns providers/replay; [file tools](file-tools.md) owns confinement and worker deadlines; [software tooling](software-tooling.md) owns npm/TypeScript/verification.
+Select for `vera run`, `vera index`, `vera search`, arguments, event/usage formatting, Node host ports and lifecycle. Start at05_Software/src/apps/cli/src/{index,args,run,host-ports,replay-output}.ts and 02_Tools/build/build-cli.mjs. Focused tests are tests/integration/cli.test.ts and src/apps/cli/src/host-ports.test.ts. [Sessions](sessions.md) owns durable transcript/events/recovery; [agent runtime](agent-runtime.md) owns context policy; [LLM gateway](llm-gateway.md) owns providers/replay; [file tools](file-tools.md) owns confinement and worker deadlines; [software tooling](software-tooling.md) owns npm/TypeScript/verification.
 
 ## Purpose and boundaries
 
@@ -78,6 +78,6 @@ REQ-FUNC-1ed659ec session; FUNCe0645fcd output; REL88dd69b2 exits; SEC25008e88 r
 
 ## Files
 
-Under05_Software: src/apps/cli/{package.json,tsconfig.json,vitest.config.ts,src/index.ts,src/args.ts,src/run.ts,src/host-ports.ts,src/replay-output.ts,src/approval-prompt.ts,src/approval-prompt.test.ts,src/host-ports.test.ts,src/worker-pool.ts,src/grep-worker.ts};scripts/build-cli.mjs;package.json/package-lock.json;tests/integration/cli.test.ts;tests/fixtures/workbenches/demo-board/board.txt;README.md.
+Under05_Software: src/apps/cli/{package.json,tsconfig.json,vitest.config.ts,src/index.ts,src/args.ts,src/run.ts,src/host-ports.ts,src/replay-output.ts,src/approval-prompt.ts,src/approval-prompt.test.ts,src/host-ports.test.ts,src/worker-pool.ts,src/grep-worker.ts};02_Tools/build/build-cli.mjs;package.json/package-lock.json;tests/integration/cli.test.ts;tests/fixtures/workbenches/demo-board/board.txt;README.md.
 
 CLI selects Exa/Tavily/Brave through ConfiguredWebProvider and applies the same current global enabled/authentication preference. Anonymous ignores keys. API-key mode reads explicit EXA_API_KEY/TAVILY_API_KEY/BRAVE_SEARCH_API_KEY for the selected provider through MemoryCredentials with redaction; it fails closed when absent and never reads Electron safeStorage credentials. No extra CLI flags or endpoint configuration. See [web access](web-search.md).

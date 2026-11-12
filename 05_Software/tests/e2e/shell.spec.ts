@@ -487,7 +487,7 @@ test.describe("isolated development shell", () => {
     test.setTimeout(60000);
     buildRoot = await mkdtemp(join(desktop, "out-dev-test-"));
     originalEntryHash = entryHash();
-    const preparation = spawnSync(process.execPath, ["scripts/dev-test-server.mjs", "--prepare"], {
+    const preparation = spawnSync(process.execPath, ["tests/support/dev-test-server.mjs", "--prepare"], {
       cwd: join(desktop, "../../.."),
       env: { ...environment, VERA_BUILD_ROOT: buildRoot },
       encoding: "utf8",
@@ -511,7 +511,7 @@ test.describe("isolated development shell", () => {
   });
   test("development React and HMR load with sandbox and bounded CSP", async () => {
     const userData = await mkdtemp(join(tmpdir(), "vera-dev-"));
-    const server = spawn(process.execPath, ["scripts/dev-test-server.mjs", "--serve"], {
+    const server = spawn(process.execPath, ["tests/support/dev-test-server.mjs", "--serve"], {
       cwd: join(desktop, "../../.."),
       env: { ...environment, VERA_BUILD_ROOT: buildRoot },
       stdio: ["ignore", "pipe", "pipe"],

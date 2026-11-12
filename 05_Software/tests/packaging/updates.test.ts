@@ -4,9 +4,9 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 
 // @ts-expect-error Native ESM build helpers.
-import { pluginCatalogFeed, updateFeed, updatePublish } from "../../scripts/update-config.mjs";
+import { pluginCatalogFeed, updateFeed, updatePublish } from "../../../02_Tools/release/update-config.mjs";
 // @ts-expect-error Native ESM feed server.
-import { startUpdateFeed } from "../../scripts/update-feed.mjs";
+import { startUpdateFeed } from "../../../02_Tools/release/update-feed.mjs";
 
 it("fixes HTTPS feed at build time and permits HTTP loopback only in test builds", () => {
   expect(updateFeed()).toBe("");

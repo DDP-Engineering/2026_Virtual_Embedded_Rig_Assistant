@@ -158,8 +158,8 @@ background run read with `until`, and the prompt snapshot shows the block only f
 - Install kinds `pip`, `script`, `download`, `find` with `hint`; `UV_*` directories under
   `<userData>/plugins/runtime/`; package index and proxy settings; version probe and supported-range
   check.
-- Done 2026-11-01: the 250 MB checks are gone from `05_Software/scripts/package.mjs` and
-  `scripts/probe-upgrade.mjs`, and from `architecture/07-packaging-updates.md` §1.
+- Done 2026-11-01: the 250 MB checks are gone from `02_Tools/release/package.mjs` and
+  `tests/packaging/probe-upgrade.mjs`, and from `architecture/07-packaging-updates.md` §1.
 - Measure and record the sizes of architecture §5 on both systems.
 - Implement core's `ProgramResolver` (PLG-04) for the install kinds and compose it in desktop main and
   the CLI in place of `unresolvedPrograms`; the `<programs>` block then lists the resolved programs.

@@ -19,7 +19,7 @@ While supported documents enter owned ingest, the processor shall extract PDF pa
 
 verification = "Fixture extraction/chunk tests inspect heading trees, decoded HTML, UTF8 lines, long paragraphs and exact locators/configured overlap; real PDF worker exercises multiple pages, raster-only OCR and malformed PDF."
 
-affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/tsconfig.json", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/apps/desktop/", "05_Software/src/apps/cli/", "05_Software/scripts/", "05_Software/tests/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/package.json"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/libraries/core/tsconfig.json", "05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/apps/desktop/", "05_Software/src/apps/cli/", "02_Tools/environment/", "02_Tools/build/", "02_Tools/release/", "05_Software/tests/support/", "05_Software/tests/packaging/", "05_Software/evaluators/", "05_Software/tests/fixtures/", "05_Software/package.json", "05_Software/package-lock.json", "05_Software/src/libraries/core/package.json"]
 
 linked_tests = ["05_Software/src/libraries/core/src/knowledge/extraction.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts", "05_Software/tests/integration/document-hosts.test.ts", "05_Software/tests/tooling/demo-documents.test.ts", "05_Software/tests/e2e/ingest.spec.ts"]
 

@@ -97,7 +97,7 @@ Paths relative to 05_Software/src/apps/desktop/src/renderer except qualified pat
 - i18n.ts, locales/{en,ro,de}.json — catalog initialization and translated strings.
 - styles.css, styles/themes.css — responsive rem geometry, focus and theme token blocks.
 - 05_Software/src/apps/desktop/src/main/index.ts — initial and updated nativeTheme.
-- 05_Software/scripts/check-i18n.mjs, tests/tooling/i18n.test.ts — AST catalog auditing/fixtures.
+- 02_Tools/build/check-i18n.mjs, tests/tooling/i18n.test.ts — AST catalog auditing/fixtures.
 - 05_Software/tests/e2e/{mock,shell}.spec.ts — browser and native UI acceptance.
 - 05_Software/tests/e2e/session-scroll.spec.ts — fixed document/main bounds, long Settings, update banner, enlarged input and conversation rail in browser/native Electron.
 

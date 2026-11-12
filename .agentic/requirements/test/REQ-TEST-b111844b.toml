@@ -19,7 +19,7 @@ The package smoke report shall bind run outcomes to artifact SHA256, version and
 
 verification = "Inspect artifact/report/log hashes and original upgrade-proof projections; missing manual evidence stays pending; invalid identity or missing artifact bindings rejects manual/upgrade-proof input."
 
-affected_paths = ["05_Software/scripts/smoke-report.mjs", "05_Software/scripts/smoke-package.mjs", "05_Software/scripts/sandbox/VERA.wsb"]
+affected_paths = ["05_Software/tests/packaging/smoke/smoke-report.mjs", "05_Software/tests/packaging/smoke/smoke-package.mjs", "02_Tools/release/sandbox/VERA.wsb"]
 
 linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts"]
 

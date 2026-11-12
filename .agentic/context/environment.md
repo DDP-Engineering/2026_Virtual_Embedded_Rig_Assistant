@@ -2,7 +2,7 @@
 
 Captured firmware comparison uses tests/integration/analysis-skills.test.ts, the installed catalog zip
 in prepare-plugins.test.ts and the actual SessionService/npm CLI replay in cli.test.ts. The opt-in
-scripts/firmware-comparator-rubric.mjs prepares seven fictional cases before any real model access;
+evaluators/eval-firmware-comparator-harness/firmware-comparator-rubric.mjs prepares seven fictional cases before any real model access;
 it uses existing VERA credentials through normal safeStorage and an explicit isolated model override,
 retains original prompts/events/artifacts/model and skill hashes, and never writes user settings.
 Public OAuth scopes stay out of secret-word registration; live Responses tools explicitly use
@@ -10,7 +10,7 @@ strict:false to preserve optional arguments. Credentials/subscription/gateway re
 UbuntuWSL2 proof is distinct from native Ubuntu. CAP04 implementation chat owns the aggregate
 Analysis capabilities gate; coordinator reuses its original proof without routine repetition.
 Manual test planning extends analysis-skills.test.ts, prepare-plugins.test.ts and cli.test.ts;
-scripts/test-planner-rubric.mjs prepares seven fictional real-model cases, uses the same authorized
+evaluators/eval-test-planner-harness/test-planner-rubric.mjs prepares seven fictional real-model cases, uses the same authorized
 normal credential host and isolated model override, and retains original sources/prompts/events/
 artifacts/hashes plus settings integrity. The repeated-name fixture seeds real artifacts at the save
 boundary to exercise three actual storage collisions and the complete chat fallback.
@@ -29,7 +29,7 @@ process exitCode 0, changed virtual bytes and read-back False/0b0 to True/0b1. V
 retains argv/output/process exits, events and durable approvals; VERA_EFUSE_SCRATCH selects owned
 scratch. No physical burn is permitted. Identify Ubuntu WSL2 separately from native Ubuntu/ARM64.
 
-The repository toolchain is defined by [02_Tools/toolchain.json](../../02_Tools/toolchain.json). [02_Tools/README.md](../../02_Tools/README.md) documents Python, Git and the local Node runtime.
+The repository toolchain is defined by [02_Tools/environment/toolchain.json](../../02_Tools/environment/toolchain.json). [02_Tools/README.md](../../02_Tools/README.md) documents Python, Git and the local Node runtime.
 
 Session performance: `perf:sessions` uses the pinned Node/Electron/Playwright toolchain and existing
 local models, an owned isolated build/profile/workbench and serial quick5/full30 samples per case.
@@ -91,7 +91,7 @@ version is invalid data (root AGENTS.md). Current-format fixtures live in tests/
 credentials.json, workbench.yaml and the crash-recovery interrupted-sessions.json.
 
 Update ticket acceptance uses shared/main/backend/core-approval/UI tests and immediate transports,
-tests/e2e/updates.spec.ts browser geometry/languages, and scripts/probe-upgrade.mjs with explicit owned scratch.
+tests/e2e/updates.spec.ts browser geometry/languages, and tests/packaging/probe-upgrade.mjs with explicit owned scratch.
 The latter builds separately identified local instrumented artifacts and records real installed
 vN->vN+1, SHA-512 refusal of a corrupt hash, turn/approval deferral and deb/portable metadata-only
 results; it publishes nothing. It does not check that settings, history or recovery survive an update.
@@ -118,7 +118,7 @@ and real processor/watcher/SQLite ingest.test.ts; immediate database/repository,
 workbench and import-boundary checks cover schema and lifecycle consumers.
 The configured strict run retains static checks under the verification policy.
 
-Retrieval comparison uses pinned Node scripts/compare-embeddings.mjs with owned scratch, local models and output paths. Explicit --prepare downloads verified assets; default inference is local/offline. Focused retrieval/packaging/extraction/boundary tests and native Windows/Ubuntu measurements accompany ADR0015; see [retrieval evaluation](../knowledge/retrieval-evaluation.md).
+Retrieval comparison uses pinned Node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs with owned scratch, local models and output paths. Explicit --prepare downloads verified assets; default inference is local/offline. Focused retrieval/packaging/extraction/boundary tests and native Windows/Ubuntu measurements accompany ADR0015; see [retrieval evaluation](../knowledge/retrieval-evaluation.md).
 
 Extraction acceptance uses core knowledge/{extraction,processor}.test.ts, compiled
 CLI/desktop document-hosts.test.ts, deterministic demo-documents.test.ts and
@@ -196,7 +196,7 @@ native acceptance checks all UI theme/scale preferences and panel geometry acros
 ## Authoritative references
 
 - [Tools](../../02_Tools/README.md)
-- [Toolchain](../../02_Tools/toolchain.json)
+- [Toolchain](../../02_Tools/environment/toolchain.json)
 - [AEGIS commands/layout](../aegis.toml)
 
 Prepared-write focused proof uses tools/write-edit.test.ts, sessions/write-edit.test.ts, workbench/service.test.ts and desktop main/sessions.test.ts with real temporary FS/SQLite. tests/e2e/write-edit.spec.ts uses instrumented replay plus a compiled test-only permission injection; release build regression confirms VERA_TEST_ALLOW_WRITES is omitted.
@@ -211,7 +211,7 @@ Headless `npm run vera -- run …` builds the CLI and dedicated grep worker with
 
 Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.
 
-Document viewer acceptance uses shared documents-ipc, core knowledge/viewer and search provenance, workbench/service, main document-viewer scrubbing, renderer documents/markdown and immediate IPC/preload/mock/session/artifact/import consumers. Office extraction uses core knowledge/office.test.ts over the committed fixtures in tests/fixtures/documents/office (regenerate with `node scripts/make-office-fixtures.mjs`), and native tests/e2e/office-documents.spec.ts proves worker extraction plus cited slide, heading and untitled leading-section (`#h=`) opening. Native tests/e2e/citations.spec.ts proves offline PDF page/snippet/search/zoom, repeated heading and line60–62 anchors, artifacts, Docs and restart; tests/e2e/documents.spec.ts checks en/ro/de light/dark/all-scale1024x640.
+Document viewer acceptance uses shared documents-ipc, core knowledge/viewer and search provenance, workbench/service, main document-viewer scrubbing, renderer documents/markdown and immediate IPC/preload/mock/session/artifact/import consumers. Office extraction uses core knowledge/office.test.ts over the committed fixtures in tests/fixtures/documents/office (regenerate with `node tests/support/make-office-fixtures.mjs`), and native tests/e2e/office-documents.spec.ts proves worker extraction plus cited slide, heading and untitled leading-section (`#h=`) opening. Native tests/e2e/citations.spec.ts proves offline PDF page/snippet/search/zoom, repeated heading and line60–62 anchors, artifacts, Docs and restart; tests/e2e/documents.spec.ts checks en/ro/de light/dark/all-scale1024x640.
 
 Session export/search verification routes are core sessions/export.test.ts and service.test.ts, shared/session-export.test.ts, main/session-export.test.ts and native tests/e2e/session-search.spec.ts; exact execution policy is owned by the current task and user.
 

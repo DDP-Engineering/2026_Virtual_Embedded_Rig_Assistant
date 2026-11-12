@@ -14,11 +14,11 @@ import { builtinToolNames, type SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
 import { afterAll, afterEach, beforeAll, expect, it } from "vitest";
-import { prepareCase, sections, sha256 } from "../fixtures/firmware-comparator/harness.js";
+import { prepareCase, sections, sha256 } from "../../evaluators/eval-firmware-comparator-harness/harness.js";
 import {
   sections as planSections,
   prepareCase as preparePlanCase,
-} from "../fixtures/test-planner/harness.js";
+} from "../../evaluators/eval-test-planner-harness/harness.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 let compiled: string;
@@ -96,7 +96,7 @@ beforeAll(async () => {
 process.stdout.write = (...args) => { const result = original(...args); if (!sent && String(args[0]).includes('"turn.started"')) { sent = true; setTimeout(() => process.emit(process.env.VERA_CLI_SIGNAL_TEST), 30); } return result; };`,
   );
   buildSync({
-    entryPoints: [join(root, "tests/network-guard.ts")],
+    entryPoints: [join(root, "tests/support/network-guard.ts")],
     outfile: join(compiled, "guard.mjs"),
     platform: "node",
     format: "esm",

@@ -112,7 +112,7 @@ tests; nothing was run. Paths are relative to `05_Software/`: `core/` = `src/lib
   (`tests/packaging/packaging.test.ts:263-269`). The demo workbench, sample skills and onboarding first
   built for WP-37 (commit d579d77, 2026-10-13) were removed on 2026-10-26 (commit 1d016b0).
 - WP-38: partly implemented: the shortcuts of 06 §7 and `check:i18n` exist
-  (`shared/keyboard-shortcuts.ts:17-25`, `scripts/check-i18n.mjs`); missing: a review beyond source
+  (`shared/keyboard-shortcuts.ts:17-25`, `02_Tools/build/check-i18n.mjs`); missing: a review beyond source
   reading — the record (`.agentic/specs/REQ-UX-52f83eb7.md`) has no keyboard, assistive-technology or
   screenshot pass — and the human `ro`/`de` review, which the same record says is still required.
 

@@ -96,7 +96,7 @@ test("compact navigation fits all languages, themes and text scales at minimum s
   context,
 }) => {
   test.setTimeout(180000);
-  const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+  const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
     env: { ...process.env, VITE_API: "mock" },
     stdio: ["ignore", "pipe", "pipe"],
   });

@@ -19,7 +19,7 @@ When a workbench document query is submitted, the system shall return bounded de
 
 verification = "Seed the frozen ordered demo corpus, execute all raw questions through production search and check exact path/locator top5; unit cases pin fusion ties, filtering, defaults, snippets and missing/failed semantic state."
 
-affected_paths = ["05_Software/package.json", "05_Software/src/libraries/core/src/knowledge/keyword.test.ts", "05_Software/src/libraries/core/src/knowledge/keyword.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/scripts/eval-retrieval.mjs", "05_Software/scripts/retrieval/product-eval.mjs"]
+affected_paths = ["05_Software/package.json", "05_Software/src/libraries/core/src/knowledge/keyword.test.ts", "05_Software/src/libraries/core/src/knowledge/keyword.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/evaluators/eval-retrieval-harness/eval-retrieval.mjs", "05_Software/evaluators/eval-retrieval-harness/product-eval.mjs"]
 
 linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/keyword.test.ts"]
 

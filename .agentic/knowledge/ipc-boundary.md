@@ -157,7 +157,7 @@ Paths relative to 05_Software.
 - src/apps/desktop/src/renderer/mocks/sessions.ts and sessions.test.ts — session contract and lifecycle fixtures.
 - src/apps/desktop/src/renderer/{vera.d.ts,i18n.ts,locales/en.json,App.tsx,main.tsx} — browser types, translation and foundation Query view. [Renderer foundation](renderer-foundation.md) routes the complete UI file set.
 - tests/e2e/{shell,mock,workbench}.spec.ts — real Electron and standalone browser acceptance.
-- scripts/dev-renderer.mjs — renderer-only Vite entrypoint, configured by desktop electron.vite.config.ts.
+- 02_Tools/environment/dev-renderer.mjs — renderer-only Vite entrypoint, configured by desktop electron.vite.config.ts.
 
 Dedicated strict web.access.get/save/removeKey/test/cancel channels expose safe preferences and an exhaustive keys map of provider-specific key-presence/storage metadata. Only save accepts a credential write; test accepts an optional ephemeral draft and returns stable status/timing, never raw errors or a secret. Test/remove require provider id and results identify the tested provider. Cancel matches the caller UUID. Router/preload and mock implement the same surface. See [web access](web-search.md).
 

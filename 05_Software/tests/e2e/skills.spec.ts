@@ -199,7 +199,7 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
 }) => {
   test.setTimeout(90000);
   await page.setViewportSize({ width: 1024, height: 640 });
-  const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+  const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
     env: { ...process.env, VITE_API: "mock" },
     stdio: ["ignore", "pipe", "pipe"],
   });
