@@ -1,5 +1,19 @@
 # UI reference
 
+## Current planned Plugins redesign (2026-11-11)
+
+[plugins-redesign.html](plugins-redesign.html) is the self-contained interactive reference for the
+approved Plugins redesign: management/catalog settings, folder/ZIP import and dependency checks at
+the top, followed by searchable/filterable/sortable Available and Installed lists, with
+workbench activation in **Workbench settings → Plugins**. That section has no workbench selector
+or Add plugins button; Save/Cancel are at the top and Save activates on unsaved changes.
+Open the HTML directly in a browser; all catalog entries and actions are demonstrative, with no
+downloads or hardware operations. It includes hypothetical plugins and synthetic dates/versions.
+Behavioral specification: [plugins/ui-redesign.md](../plugins/ui-redesign.md).
+Implementation work: [PLG-23…PLG-25](../plan/plugins-ui-redesign.md), implemented in #86/#87 and PLG-25 candidate TASK-4f522ea5; commit pending coordinator.
+
+## Historical Layout A
+
 Layout A, the three-pane workspace of `../architecture/06-ui.md` §1, chosen on 2026-10-09 for being
 simple and clear in its menus. These files are historical visual references made before the
 implementation, not a specification: as of 2026-11-01 the implemented UI differs in the points listed

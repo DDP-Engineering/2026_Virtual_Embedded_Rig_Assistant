@@ -31,6 +31,14 @@ scratch. No physical burn is permitted. Identify Ubuntu WSL2 separately from nat
 
 The repository toolchain is defined by [02_Tools/toolchain.json](../../02_Tools/toolchain.json). [02_Tools/README.md](../../02_Tools/README.md) documents Python, Git and the local Node runtime.
 
+Session performance: `perf:sessions` uses the pinned Node/Electron/Playwright toolchain and existing
+local models, an owned isolated build/profile/workbench and serial quick5/full30 samples per case.
+Stop normal VERA and other builds/suites during measurements. Headless Linux runs through xvfb-run;
+native Ubuntu/WSL evidence remains distinct. Explicit calibration needs two complete compatible
+full runs of the same candidate and supplied budgets; preserve JSON/Markdown reports outside E2E cleanup.
+Focused harness regressions are in tests/tooling/session-performance.test.ts. Probes require both
+VERA_TEST=1 and VERA_SESSION_PERF=1 at build time and are omitted from ordinary/release output.
+
 ## Setup
 
 Use the repository setup script from the repository root; it downloads the verified pinned Node distribution, installs npm packages and checks Ubuntu libraries.
@@ -258,3 +266,18 @@ Chat detail verification: shared workbench config, core workbench reopen, main e
 Captured log acceptance uses core tools/parse-log.test.ts, registry/grep/worker regressions, shared refs, tool-editor/fixture/boundary checks, agent-versus-vera-run replay, eval:retrieval and native file-tools.spec.ts. Native acceptance exercises the production10s catastrophic-regex deadline, responsive app.info, Stop and replacement. Windows short1s worker-host tests also fail on the immutable pre-CAP-01 base on this host; preserve base/candidate proof separately. Ubuntu WSL2 is Linux execution, not native Ubuntu platform acceptance.
 
 Captured register acceptance uses tools/decode-register.test.ts, agent/citations.test.ts, registry/grep/parse-log/shared-ref regressions, localized WorkbenchTools, fixture inventory and import boundaries. Real SessionService versus npm-built vera run replay verifies identical complete results and definition/manual citations with open/restart. Native workbench-tools.spec.ts checks decode_register save/cancel/restart and en/ro/de descriptions. Exact1MiB/cardinality boundaries and deterministic during-read replacement are covered. Linux Ubuntu WSL2 is identified separately from native Ubuntu acceptance; full Analysis capabilities gate remains withCAP04/coordinator.
+
+Catalog discovery proof: shared plugin-catalog.test.ts, core catalog-source.test.ts/catalog.test.ts,
+focused CLI catalog check/build case and packaging prepare-plugins.test.ts cover strict activity/
+keyword/date metadata, dangling references, deterministic release bytes and remote/bundled/CLI
+preservation. Date-less real entries remain date-less; no real network catalog release is needed.
+
+Global plugin-library acceptance: plugin-library.test.ts uses 32 deterministic catalog fixtures for
+combined filters/counts, known/unknown/future dates and UTC day boundaries, source identity,
+pagination/mutation clamping and QueryClient state retention. plugins.test.ts and plugin-catalog.test.ts
+retain review, dependency/setup and explicit-check error assertions; no browsing probes are allowed.
+Focused Windows Electron plugins-catalog/plugins-ui/plugin-builder and Chromium plugins-mock cover
+native imports/review/update/trust/promotion plus en/ro/de, themes and text-size overflow. These use
+isolated profiles, virtual commands and loopback transports; no real hardware or model spend.
+
+PLG-25 workbench plugin UI acceptance uses workbench-plugins.test.ts (32 deterministic packages, hidden draft selection, readonly paging, semantic dirty restoration, private per-workbench view state, pending metadata reload and failed explicit checks) plus immediate editor/global library consumers. Windows instrumented Electron plugins-ui.spec.ts proves imports/review and explicit setup separately from Save/Cancel, dirty navigation, actual global folder-install detour retaining hidden selections/name/instructions/section without writes, two-workbench isolation and restart. Chromium plugins-mock.spec.ts checks workbench Plugins in en/ro/de, both themes and all six interface scales at1024×640; chat-detail immediate consumers remain covered. Unchanged PLG-23/24 proof is reused, with no additional full-suite gate. Native Ubuntu was unavailable in this Windows session; no physical hardware, external network or model calls are required.

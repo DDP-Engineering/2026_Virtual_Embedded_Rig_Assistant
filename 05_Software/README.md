@@ -251,7 +251,7 @@ sessions, edited, or opened in Explorer. Pinning is an application preference.
 Selecting a workbench opens its overview with folder, configuration and dated session count/list; selecting a session opens its conversation. The overview provides a single Edit action for project settings. Tools/skills management and WORKBENCH.md editing are accessed inside that editor; Close is in the workbench sidebar menu. Settings replaces primary New/Open/Plugins actions with its categories and a Back to workbenches action. The sidebar shows workbench/session groups without search inputs. With no selected workbench, the main canvas shows VERA branding; New/Open are explicit actions.
 The project editor saves name, description, document include/exclude patterns,
 agent model/permissions, disabled tools/skills, instructions and embedding chunk settings.
-Plugins installs packages from folders, zips or the catalog through a review screen.
+Plugins installs packages from folders, zips or the catalog through a review screen. Management and catalog settings stay above the Available/Installed tabs. Search all words and combine ecosystem, activity, provenance and state filters; sort by publication dates or name and page through 6/12/24 entries. Publication dates may be unavailable. Dependency checks are explicit; browsing never runs probes, installs programs or enables a package.
 A workbench can carry portable packages in `.vera/plugins/<id>/` (commit these folders to Git).
 These start untrusted at each new workbench location and on each machine. On the Plugins page, choose
 **Review workbench plugin**, inspect the source, programs, risks and SHA-256, then **Trust this package**.

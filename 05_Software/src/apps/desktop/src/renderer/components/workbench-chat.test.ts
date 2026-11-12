@@ -114,7 +114,7 @@ it("Cancel leaves chat unchanged and a read-only workbench cannot edit", async (
   await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close }));
   await click('[data-project-section="chat"]');
   expect(selector()?.matches(":disabled")).toBe(true);
-  await click("footer button");
+  await click("[data-project-cancel]");
   expect(close).toHaveBeenCalledOnce();
   expect(calls("workbench.config.update")).toHaveLength(0);
 });

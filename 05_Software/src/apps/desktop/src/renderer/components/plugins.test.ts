@@ -143,19 +143,20 @@ it("groups top actions and starts with compact accessible rows and explicit depe
   stub({ installed: [echo], programs: [{ name: "echo", kind: "find", state: "ready", version: "22.11.0" }] });
   await render();
   await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
-  expect($('[data-action="plugin-catalog"]')).not.toBeNull();
+  expect($('[data-library-status="all"]')).not.toBeNull();
   const toggle = $('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
   expect(toggle.getAttribute("aria-expanded")).toBe("false");
-  expect(container.textContent).not.toContain(echo.description);
+  expect(container.textContent).toContain(echo.description);
   expect(calls("plugins.programs")).toEqual([]);
   await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+  expect(calls("plugins.programs")).toEqual([]);
+  await click('[data-action="plugin-check"]');
   await vi.waitFor(() => expect($('[data-program="echo"]')).not.toBeNull());
   expect(toggle.getAttribute("aria-expanded")).toBe("true");
   expect(toggle.textContent).toContain("\u2212");
   expect(container.textContent).not.toMatch(/[\u00c3\u00c2]/);
   expect(container.textContent).toContain(echo.description);
   expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(true);
-  await click('[data-action="plugin-check"]');
   expect(calls("plugins.check")).toHaveLength(1);
   expect(calls("plugins.toggle")).toEqual([]);
 });
@@ -167,6 +168,7 @@ async function render(props: Parameters<typeof Plugins>[0] = { workbench }) {
   await act(async () => {
     root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, props)));
   });
+  await click('[data-library-status="installed"]');
 }
 const $ = (selector: string) => container.querySelector(selector) as HTMLElement;
 const click = async (selector: string) => {
@@ -177,6 +179,22 @@ const click = async (selector: string) => {
 };
 const calls = (channel: string) => vi.mocked(api.invoke).mock.calls.filter(([name]) => name === channel);
 
+it("does not keep a Ready observation after a failed explicit recheck", async () => {
+  await i18n.changeLanguage("en");
+  stub({ installed: [echo], programs: [{ name: "echo", kind: "find", state: "ready" }] });
+  await render();
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect($("[data-readiness]").getAttribute("data-readiness")).toBe("ready"));
+  const invoke = vi.mocked(api.invoke).getMockImplementation();
+  vi.mocked(api.invoke).mockImplementation(((channel: string, request: unknown) => {
+    if (channel === "plugins.check") return Promise.reject(veraError("NOT_FOUND"));
+    return invoke?.(channel as never, request as never);
+  }) as never);
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect($("[data-readiness]").getAttribute("data-readiness")).toBe("unavailable"));
+  expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(true);
+});
+
 it("does not retain Ready dependency data after reinstalling an identical package hash", async () => {
   await i18n.changeLanguage("en");
   const state = stub({
@@ -186,6 +204,7 @@ it("does not retain Ready dependency data after reinstalling an identical packag
   });
   await render();
   await click('[data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
   await vi.waitFor(() => expect($('[data-program="echo"]')?.getAttribute("data-state")).toBe("ready"));
   expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(true);
   await click('[data-action="plugin-install-folder"]');
@@ -193,10 +212,12 @@ it("does not retain Ready dependency data after reinstalling an identical packag
   state.programs = [{ name: "echo", kind: "script", state: "missing" }];
   await click('[data-action="plugin-install"]');
   await click('[data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
   await vi.waitFor(() =>
     expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(false),
   );
-  expect(calls("plugins.programs")).toHaveLength(2);
+  expect(calls("plugins.programs")).toHaveLength(0);
+  expect(calls("plugins.check")).toHaveLength(2);
 });
 
 // REQ-UX-35b1e6b5
@@ -219,6 +240,7 @@ it.each(["ready", "missing", "unavailable"] as const)(
     });
     await render();
     await click('[data-action="plugin-expand"]');
+    await click('[data-action="plugin-check"]');
     await vi.waitFor(() => expect($('[data-program="echo"]')).not.toBeNull());
     expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(true);
     expect($('[data-web-source="https://vendor.test/sdk"]')).not.toBeNull();
@@ -256,6 +278,7 @@ it.each(["en", "ro", "de"])(
     stub({ installed: [echo] });
     await render();
     await click('[data-action="plugin-expand"]');
+    await click('[data-action="plugin-check"]');
     await vi.waitFor(() => expect($('[data-plugin="echo-tools"] [data-program="echo"]')).not.toBeNull());
     const card = $('[data-plugin="echo-tools"]');
     for (const text of [
@@ -292,6 +315,7 @@ it.each([
     stub({ installed: [echo], programs: [status] });
     await render();
     await click('[data-action="plugin-expand"]');
+    await click('[data-action="plugin-check"]');
     await vi.waitFor(() =>
       expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(false),
     );
@@ -330,7 +354,9 @@ it.each([true, false])(
     stub({ installed: [{ ...echo, enabled: true }] });
     await render(open ? { workbench } : {});
     await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
-    expect(container.textContent).toContain(i18n.t("plugins.configPointer"));
+    expect(container.textContent).not.toContain(
+      "To enable or disable plugins for a workbench, open Edit workbench → Plugins.",
+    );
     expect($('[data-plugin="echo-tools"] input[type="checkbox"]')).toBeNull();
     expect(calls("plugins.toggle")).toHaveLength(0);
   },

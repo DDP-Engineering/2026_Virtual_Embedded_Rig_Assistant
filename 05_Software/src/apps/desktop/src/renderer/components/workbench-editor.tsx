@@ -11,12 +11,15 @@ export function WorkbenchEditor({
   close,
   saved,
   dirtyChanged,
+  shown = true,
 }: {
   workbench: WorkbenchSnapshot;
   close: () => void;
   saved: (value: WorkbenchSnapshot) => void;
   /** Reports whether the draft differs from the loaded configuration and instructions. */
   dirtyChanged?: (dirty: boolean) => void;
+  /** Installation may temporarily hide this owner without discarding its draft. */
+  shown?: boolean;
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLElement>(null);
@@ -52,14 +55,22 @@ export function WorkbenchEditor({
     }
   }, []);
   useEffect(() => {
-    ref.current?.focus();
     void loadInstructions();
     return () => {
       ++loadGeneration.current;
     };
   }, [loadInstructions]);
+  useEffect(() => {
+    if (shown) ref.current?.focus();
+  }, [shown]);
   // Edits stay unsaved until a save completes, so a failed save is never left behind unseen.
-  const dirty = instructions !== original || JSON.stringify(config) !== JSON.stringify(workbench.config);
+  const comparable = (value: typeof config) => ({
+    ...value,
+    plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() },
+  });
+  const dirty =
+    instructions !== original ||
+    JSON.stringify(comparable(config)) !== JSON.stringify(comparable(workbench.config));
   useEffect(() => {
     dirtyChanged?.(dirty);
   }, [dirty, dirtyChanged]);
@@ -70,7 +81,7 @@ export function WorkbenchEditor({
       .map((s) => s.trim())
       .filter(Boolean);
   async function save() {
-    if (pending || workbench.readOnly || !loaded) return;
+    if (pending || workbench.readOnly || !loaded || !dirty) return;
     setPending(true);
     setError(undefined);
     setPartial(false);
@@ -117,6 +128,8 @@ export function WorkbenchEditor({
   }
   return (
     <section
+      hidden={!shown}
+      inert={!shown}
       ref={ref}
       tabIndex={-1}
       className="surface workbench-editor"
@@ -130,8 +143,23 @@ export function WorkbenchEditor({
     >
       <header>
         <h3 id={title}>{workbench.config.name}</h3>
+        <div className="workbench-actions" data-project-actions>
+          {dirty && <span role="status">{t("projects.unsavedChanges")}</span>}
+          <button type="button" data-project-cancel disabled={pending} onClick={close}>
+            {t("projects.cancel")}
+          </button>
+          <button
+            type="button"
+            data-project-save
+            disabled={pending || workbench.readOnly || !loaded || !config.name.trim() || !dirty}
+            onClick={() => void save()}
+          >
+            {pending ? t("projects.saving") : t("projects.save")}
+          </button>
+        </div>
       </header>
       <WorkbenchConfigForm
+        shown={shown}
         label={t("projects.edit")}
         config={config}
         setConfig={setConfig}
@@ -164,19 +192,6 @@ export function WorkbenchEditor({
           </>
         }
       />
-      <footer>
-        <button type="button" disabled={pending} onClick={close}>
-          {t("projects.cancel")}
-        </button>
-        <button
-          type="button"
-          data-project-save
-          disabled={pending || workbench.readOnly || !loaded || !config.name.trim()}
-          onClick={() => void save()}
-        >
-          {pending ? t("projects.saving") : t("projects.save")}
-        </button>
-      </footer>
     </section>
   );
 }

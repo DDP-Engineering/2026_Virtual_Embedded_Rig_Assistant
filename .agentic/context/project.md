@@ -10,6 +10,14 @@ The software root contains four ESM workspaces and strict TypeScript tooling wit
 
 ## Supported operation
 
+Saved-session performance verification uses an isolated native Electron build, real persisted
+fixtures/sidebar selection, phase/responsiveness probes and explicit machine-specific reference
+comparison. `npm run perf:sessions` and `06_SoftwareDocu/session-performance.md` define quick/full,
+calibration and feature/milestone usage. Diagnostic measurements alone do not establish a passing budget.
+The currently authorized phase is measurement only:360 valid Windows samples are recorded in
+06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md; calibration and mandatory gates
+are deferred by the user, with the broader implementation unfinished.
+
 The target platforms are Windows x64 and Linux x64 (01-system section 9).
 
 The desktop shell occupies a fixed viewport without document scrolling; long pages/panels scroll internally, and conversations use an independent segmented left scroll rail while the composer remains visible.
@@ -57,6 +65,7 @@ validate a catalog source and build its release (index.json format 1 and one zip
 reads the catalog URL setting (else the build default, else the bundled official plugins), verifies each zip's size
 and SHA-256, shows the review screen before a first install and before updates that change programs or rules, installs
 with the catalog tier and checks for updates at start and every 24 h without installing them.
+Catalog source metadata supplies bounded activities/keywords and optional factual publication days, preserved in format1 indices and remote/bundled client views; unknown dates stay absent. The global Plugins library presents management controls before Available/Installed tabs, combined search/filters, publication sorts and pagination. In-session state survives navigation. Browsing consumes cached explicit dependency observations without probes; checks report individual failures. Workbench enablement uses its existing settings draft with top Save/Cancel, unsaved indication and enabled-set dirty comparison. The current-workbench Plugins section has private session filters/sort/paging, retains hidden selections and permits readonly browsing; cached readiness and explicit dependency configuration remain separate from activation. A global Plugins installation detour keeps the same hidden/inert editor owner, section and valid draft, restoring its private filters and fresh packages on return; other departures keep discard guards. No global Configure workbench shortcut or workbench selector/Add plugins link is exposed.
 
 [Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/ (also a
 catalog source that the package bundles as <resources>/plugins), installed from the folder or the catalog: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS

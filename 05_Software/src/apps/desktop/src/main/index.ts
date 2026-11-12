@@ -77,6 +77,7 @@ import { openPath, revealPath } from "./reveal-path.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
 import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
+import { installSessionPerformance } from "./session-performance.js";
 import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
@@ -88,6 +89,8 @@ import { createDesktopWorkerPool } from "./worker-pool.js";
 const here = dirname(fileURLToPath(import.meta.url));
 declare const __VERA_DEV__: boolean;
 declare const __VERA_TEST__: boolean;
+declare const __VERA_SESSION_PERF__: boolean;
+if (__VERA_SESSION_PERF__) installSessionPerformance();
 declare const __VERA_UPDATE_URL__: string;
 /** The default plugin catalog folder (build input VERA_PLUGIN_CATALOG_URL); empty when none. */
 declare const __VERA_PLUGIN_CATALOG_URL__: string;

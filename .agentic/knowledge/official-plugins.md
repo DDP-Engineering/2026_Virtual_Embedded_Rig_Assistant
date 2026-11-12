@@ -22,7 +22,7 @@ plugin skill discovery is [Skills](skills.md).
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
 source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip and STM32 groups, default on except Security), `catalog.yaml` (all packaged plugins
-`official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
+`official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
 an offline first install. Nothing installs them automatically. A package holds content only: a manifest, PEP 723
@@ -31,6 +31,12 @@ PyPI at install time and is not part of the folder. `requires`: esp32-esptool li
 reports a `requires` that names no catalog plugin, and catalog installs review required plugins first, while installs
 from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
+
+Catalog discovery metadata for the fourteen real packages lives in the maintainers' catalog.yaml map,
+not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain
+absent without catalog release evidence; no commit/build/install timestamps are substituted.
+Shared/source tests validate bounds/references; prepare-plugins and focused CLI acceptance prove
+that source metadata reaches the deterministic bundled index unchanged.
 
 ## Public interface
 

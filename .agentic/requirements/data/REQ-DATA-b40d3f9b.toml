@@ -6,9 +6,9 @@ title = "Plugin catalog source and release formats"
 
 status = "active"
 
-requirement = "The plugin catalog shall read and write its source folder (plugin folders, packs.yaml, catalog.yaml) and its release folder (index.json format 1 with entries {id, version, tier, ecosystem, platforms, name, description, requires, url, sha256, bytes} and packs, plus one zip per plugin) in the formats of the catalog spec, and treat any other index version, unknown key or out-of-limit value as invalid."
+requirement = "The plugin catalog shall read and write its source folder (plugin folders, packs.yaml, catalog.yaml) and its release folder (index.json format 1 with entries {id, version, tier, ecosystem, platforms, name, description, requires, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes} and packs, plus one zip per plugin) in the formats of the catalog spec, and treat any other index version, unknown key or out-of-limit value as invalid."
 
-verification = "Shared schema tests: a valid index, packs.yaml and catalog.yaml parse; format 2, an unknown key, a url with a slash, bytes above 64 MiB, duplicate ids and more than 1024 plugins are rejected. Core build test: the written index.json parses with the schema."
+verification = "Shared schema tests: a valid index, packs.yaml and catalog.yaml parse; format 2, an unknown key, a url with a slash, bytes above 64 MiB, duplicate ids and more than 1024 plugins are rejected. Core build tests: the written index.json parses with the schema; valid multibyte metadata exceeding the serialized UTF-8 4 MiB index limit is refused before output creation."
 
 affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/plugins/packs.yaml", "05_Software/plugins/catalog.yaml", "05_Software/plugins/CONTRIBUTING.md", "05_Software/plugins/.ci/catalog.yml"]
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-11

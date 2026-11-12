@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { catalogIndexSchema } from "@vera/shared";
+import { CATALOG_LIMITS, catalogIndexSchema } from "@vera/shared";
 import { afterEach, expect, it } from "vitest";
 import { stringify } from "yaml";
 import { buildCatalogRelease, checkCatalogSource } from "./catalog-source.js";
@@ -204,3 +204,62 @@ it("writes nothing when the source has an issue or the output folder is not empt
   expect(codes(busy.issues)).toEqual([`${out} output`]);
   expect(await readdir(out)).toEqual(["old.txt"]);
 });
+
+// REQ-FUNC-6542e772 REQ-DATA-9b62ba69
+it("publishes discovery metadata deterministically and refuses dangling metadata references", async () => {
+  const metadata = {
+    activities: ["communication", "debug"],
+    keywords: ["UART", "console"],
+    addedAt: "2024-02-29",
+    updatedAt: "2026-11-11",
+  };
+  const root = await source({ catalog: { format: 1, official: ["alpha"], metadata: { alpha: metadata } } });
+  const first = `${root}-release-a`,
+    again = `${root}-release-b`;
+  roots.push(first, again);
+  expect(await checkCatalogSource(root)).toEqual([]);
+  const built = await buildCatalogRelease(root, first);
+  expect(built.issues).toEqual([]);
+  expect(built.index?.plugins.find((p) => p.id === "alpha")).toMatchObject(metadata);
+  const unknown = built.index?.plugins.find((p) => p.id === "beta");
+  expect(unknown).toMatchObject({ activities: [], keywords: [] });
+  expect(unknown).not.toHaveProperty("addedAt");
+  expect(unknown).not.toHaveProperty("updatedAt");
+  await buildCatalogRelease(root, again);
+  expect(await readFile(join(first, "index.json"))).toEqual(await readFile(join(again, "index.json")));
+  expect(await readFile(join(first, "alpha-1.0.0.zip"))).toEqual(
+    await readFile(join(again, "alpha-1.0.0.zip")),
+  );
+  const dangling = await source({ catalog: { format: 1, metadata: { ghost: metadata } } });
+  expect(await checkCatalogSource(dangling)).toContainEqual({
+    where: "catalog.yaml",
+    code: "reference",
+    detail: "metadata names ghost",
+  });
+  const refusedOut = `${dangling}-refused`;
+  roots.push(refusedOut);
+  const refused = await buildCatalogRelease(dangling, refusedOut);
+  expect(refused.index).toBeUndefined();
+  await expect(readdir(refusedOut)).rejects.toMatchObject({ code: "ENOENT" });
+});
+
+// REQ-DATA-b40d3f9b REQ-DATA-9b62ba69
+it("refuses a metadata-heavy UTF-8 index before writing any release output", async () => {
+  const keywords = Array.from({ length: 32 }, (_, i) => `${"界".repeat(78)}${String(i).padStart(2, "0")}`);
+  const plugins = Object.fromEntries(Array.from({ length: 560 }, (_, i) => [`p${i}`, plugin(`p${i}`)]));
+  const metadata = Object.fromEntries(
+    Object.keys(plugins).map((id) => [id, { activities: ["debug"], keywords: [...keywords] }]),
+  );
+  const json = JSON.stringify(metadata);
+  expect(json.length).toBeLessThan(CATALOG_LIMITS.indexBytes);
+  expect(Buffer.byteLength(json, "utf8")).toBeGreaterThan(CATALOG_LIMITS.indexBytes);
+  const root = await source({ plugins, packs: [], catalog: { format: 1, metadata } });
+  const out = `${root}-release`;
+  roots.push(out);
+  const result = await buildCatalogRelease(root, out);
+  expect(result.index === undefined).toBe(true);
+  expect(result.issues).toEqual([
+    { where: "index.json", code: "source", detail: "index exceeds 4194304 bytes" },
+  ]);
+  await expect(readdir(out)).rejects.toMatchObject({ code: "ENOENT" });
+}, 60_000);

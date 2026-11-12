@@ -377,18 +377,19 @@ export function App() {
         activeId={benchId}
         disabled={sessionPending}
         settingsLoading={!snapshot.data}
-        open={async (folder) =>
-          leaveEditor() &&
-          operation(async () => {
+        open={async (folder) => {
+          const resume = plugins && folder === editor?.folder && folder === activeWorkbench?.folder;
+          if (!resume && !leaveEditor()) return false;
+          return operation(async () => {
             if (folder !== activeWorkbench?.folder)
               benchChanged(await api.invoke("workbench.open", { folder }));
             setNewWorkbench(false);
             setPlugins(false);
             setChat(false);
-            setEditor(undefined);
+            if (!resume) setEditor(undefined);
             await recent.refetch();
-          })
-        }
+          });
+        }}
         pin={(folder, value) =>
           void operation(async () => {
             await api.invoke("workbench.recent", { pin: { folder, value } });
@@ -509,11 +510,10 @@ export function App() {
             newWorkbench={showNewWorkbench}
             openWorkbench={openWorkbench}
             showPlugins={() => {
-              if (!leaveEditor()) return;
+              // Installing a package is a reversible detour; the editor remains its draft owner.
               setPlugins(true);
               setSettings(false);
               setChat(false);
-              setEditor(undefined);
             }}
             navigate={navigate}
             navigation={navigation}
@@ -606,9 +606,10 @@ export function App() {
                   busy={sessionPending}
                 />
               </div>
-              {!settings && !plugins && !newWorkbench && editor && (
+              {editor && (
                 <WorkbenchEditor
                   key={editor.config.id}
+                  shown={!settings && !plugins && !newWorkbench}
                   workbench={editor}
                   close={closeEditor}
                   dirtyChanged={setEditorDirty}

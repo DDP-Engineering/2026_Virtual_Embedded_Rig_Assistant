@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-4bebe590"
+title = "Isolated performance fixtures and release boundaries"
+status = "active"
+requirement = "When session performance verification runs, it shall use only owned fictional profiles and workbenches with outbound traffic blocked and its opt-in native and renderer probes omitted from ordinary release builds."
+verification = "Run native guarded fixtures with no provider requests; inspect release output for absent performance markers and reject user-profile reuse."
+affected_paths = ["05_Software/scripts/eval-performance-harness/", "05_Software/scripts/perf-sessions.mjs", "05_Software/package.json", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-performance.ts", "05_Software/src/apps/desktop/src/renderer/api/index.ts", "05_Software/src/apps/desktop/src/renderer/api/session-performance.ts"]
+linked_tests = ["05_Software/tests/tooling/session-performance.test.ts", "05_Software/tests/tooling/session-performance-probe.test.ts"]
+spec = "specs/REQ-TEST-df5ff0ba.md"
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-7cc7bf91"
+title = "Reject incompatible performance evidence"
+status = "active"
+requirement = "If performance references or samples are missing, incompatible or insufficient, the runner shall return an invalid-evidence outcome distinct from a passing comparison."
+verification = "Reject changed hosts/fixtures/build modes, malformed or incomplete samples and references with fewer than30 samples."
+affected_paths = ["05_Software/scripts/eval-performance-harness/", "05_Software/scripts/perf-sessions.mjs", "05_Software/package.json", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-performance.ts", "05_Software/src/apps/desktop/src/renderer/api/index.ts", "05_Software/src/apps/desktop/src/renderer/api/session-performance.ts"]
+linked_tests = ["05_Software/tests/tooling/session-performance.test.ts", "05_Software/tests/tooling/session-performance-probe.test.ts"]
+spec = "specs/REQ-TEST-df5ff0ba.md"
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

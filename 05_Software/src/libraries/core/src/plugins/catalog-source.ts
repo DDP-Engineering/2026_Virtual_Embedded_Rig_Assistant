@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
+  CATALOG_LIMITS,
   type CatalogIndex,
   type CatalogMaintainers,
   type CatalogPack,
@@ -133,6 +134,9 @@ async function examineSource(folder: string): Promise<Examined> {
   for (const id of maintainers?.official ?? [])
     if (!known.has(id))
       issues.push({ where: MAINTAINERS, code: "reference", detail: `official names ${id}` });
+  for (const id of Object.keys(maintainers?.metadata ?? {}))
+    if (!known.has(id))
+      issues.push({ where: MAINTAINERS, code: "reference", detail: `metadata names ${id}` });
   for (const mark of maintainers?.reviewed ?? []) {
     // A plugin with its own issues is reported above; its marks wait until it reads again.
     if (known.has(mark.plugin) && !packages.has(mark.plugin)) continue;
@@ -186,6 +190,9 @@ export async function buildCatalogRelease(
     const url = `${id}-${manifest.version}.zip`;
     zips.set(url, zip);
     plugins.push({
+      activities: [],
+      keywords: [],
+      ...examined.maintainers?.metadata[id],
       id,
       version: manifest.version,
       tier: official.has(id) ? "official" : "community",
@@ -206,8 +213,15 @@ export async function buildCatalogRelease(
       issues: [{ where: "index.json", code: "source", detail: `${first?.path.join(".")} ${first?.code}` }],
     };
   }
+  const indexText = `${JSON.stringify(parsed.data, null, 2)}\n`;
+  if (Buffer.byteLength(indexText, "utf8") > CATALOG_LIMITS.indexBytes)
+    return {
+      issues: [
+        { where: "index.json", code: "source", detail: `index exceeds ${CATALOG_LIMITS.indexBytes} bytes` },
+      ],
+    };
   await mkdir(out, { recursive: true });
   for (const [name, zip] of zips) await writeFile(join(out, name), zip, { flag: "wx" });
-  await writeFile(join(out, "index.json"), `${JSON.stringify(parsed.data, null, 2)}\n`, { flag: "wx" });
+  await writeFile(join(out, "index.json"), indexText, { flag: "wx" });
   return { issues: [], index: parsed.data };
 }

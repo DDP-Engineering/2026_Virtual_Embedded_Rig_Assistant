@@ -58,6 +58,16 @@ the VERA maintainers; every other catalog plugin is `community`.
 
 ## Releases
 
+Maintainers add discovery facts under `metadata.<plugin-id>` in `catalog.yaml`: `activities` uses
+the stable ids `communication`, `flash`, `build`, `debug`, `firmware-analysis`, `measurement`,
+`security`, `version-control`, `testing` (at most nine distinct values). `keywords` holds at most32
+distinct trimmed 1..80-character search terms. Unclassified entries use empty lists.
+Optional `addedAt` and `updatedAt` are real `YYYY-MM-DD` publication days: first catalog publication
+and publication of the currently listed version. Omit genuinely unknown dates; never substitute
+file, commit, build, download or install times. The checker rejects malformed discovery data and
+metadata for nonexistent plugins. Discovery data belongs to the catalog, not the plugin zip.
+No dates are asserted for the currently bundled plugins without a publication record.
+
 A tag runs `vera catalog build --source plugins --out release`, which writes one
 `<id>-<version>.zip` per plugin and `index.json` with each zip's size and SHA-256; the release publishes
 those files together. VERA verifies every zip against the index before it shows the review screen. A

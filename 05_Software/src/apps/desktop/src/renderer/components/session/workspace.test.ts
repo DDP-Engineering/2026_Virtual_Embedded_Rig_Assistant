@@ -916,6 +916,69 @@ test("New session with unsaved editor edits confirms once and creates nothing wh
   expect(container.querySelector(".workbench-editor")).toBeNull();
   expect(container.querySelector('[data-session][aria-current="page"]')).toBeTruthy();
 });
+// REQ-UX-e5d617d7: Plugins is a reversible installation detour, not a draft discard.
+test("global Plugins detour retains the owner draft, section and hidden selections on return", async () => {
+  const reviewed = await api.invoke("plugins.review", { path: "/mock/plugins/detour-tools" });
+  await api.invoke("plugins.install", { path: reviewed.path, sha256: reviewed.sha256 });
+  await api.invoke("workbench.create", { folder: "/mock/plugin-detour", name: "Plugin detour" });
+  await mount();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click(),
+  );
+  await settle();
+  const owner = container.querySelector(".workbench-editor");
+  await act(async () =>
+    userEvent.setup().type(container.querySelector("[data-project-name]") as HTMLInputElement, " draft"),
+  );
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-project-section="plugins"]')?.click(),
+  );
+  await settle();
+  await act(async () =>
+    container.querySelector<HTMLInputElement>('[data-workbench-plugin="detour-tools"] input')?.click(),
+  );
+  await act(async () =>
+    userEvent
+      .setup()
+      .type(container.querySelector("[data-library-search]") as HTMLInputElement, "hidden selection"),
+  );
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="plugins-nav"]')?.click());
+  await settle();
+  expect(container.querySelector("[data-plugins]")).not.toBeNull();
+  expect(confirm).not.toHaveBeenCalled();
+  expect(container.querySelector(".workbench-editor")).toBe(owner);
+  expect(container.querySelector(".workbench-editor")?.hasAttribute("inert")).toBe(true);
+  expect(container.querySelectorAll("[data-library-search]")).toHaveLength(1);
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="plugin-install-folder"]')?.click(),
+  );
+  await settle();
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[data-plugin-review] [data-action="plugin-install"]')
+      ?.click(),
+  );
+  await settle();
+  await act(async () => button("Plugin detour").click());
+  await settle();
+  expect(container.querySelector("[data-plugins]")).toBeNull();
+  expect(container.querySelector(".workbench-editor")).toBe(owner);
+  expect(container.querySelector<HTMLInputElement>("[data-library-search]")?.value).toBe("hidden selection");
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="library-clear"]')?.click());
+  expect(
+    container.querySelector<HTMLInputElement>('[data-workbench-plugin="detour-tools"] input')?.checked,
+  ).toBe(true);
+  expect(
+    container.querySelector<HTMLInputElement>('[data-workbench-plugin="echo-tools"] input')?.checked,
+  ).toBe(false);
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-project-section="general"]')?.click(),
+  );
+  expect(container.querySelector<HTMLInputElement>("[data-project-name]")?.value).toBe("Plugin detour draft");
+  expect((await api.invoke("workbench.config.get", {})).config.name).toBe("Plugin detour");
+  expect((await api.invoke("workbench.config.get", {})).config.plugins.enabled).toEqual([]);
+});
 test("Welcome restores the active workbench and follows sidebar switches through editor and close", async () => {
   await api.invoke("workbench.create", { folder: "/mock/switch-a", name: "Switch A" });
   await api.invoke("workbench.create", { folder: "/mock/switch-b", name: "Switch B" });
@@ -936,9 +999,7 @@ test("Welcome restores the active workbench and follows sidebar switches through
   );
   await settle();
   expect(container.querySelector<HTMLTextAreaElement>("#pinned-content")?.value).toBe("Context B");
-  await act(async () =>
-    container.querySelector<HTMLButtonElement>(".workbench-editor footer button")?.click(),
-  );
+  await act(async () => container.querySelector<HTMLButtonElement>("[data-project-cancel]")?.click());
   await act(async () =>
     container.querySelector<HTMLButtonElement>('[data-action="close-workbench"]')?.click(),
   );

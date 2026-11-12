@@ -1,13 +1,14 @@
 // REQ-UX-e6056763 REQ-UX-8904f319 REQ-UX-acc04fbc REQ-UX-fd6bc95d REQ-UX-41c19e62 REQ-UX-e0e51891
 // REQ-UX-25921e97 REQ-UX-93fd56dc REQ-FUNC-6c76f25a: the Plugins page and the Runs tab in native Electron.
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { _electron, type ElectronApplication, expect, type Page, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { zipSync } from "fflate";
 import { parse } from "yaml";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
@@ -83,6 +84,7 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
 
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await expect(page.locator("[data-plugins]")).toContainText("No plugins are installed.");
 
     // A broken package shows its manifest error and cannot be installed.
@@ -92,6 +94,25 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     await expect(review.locator('[data-issue="field"]')).toContainText("rules.0.risk");
     await expect(review.locator('[data-action="plugin-install"]')).toBeDisabled();
     await review.locator('[data-action="plugin-review-cancel"]').click();
+
+    // The separate ZIP action reaches the native picker and the same hash-bound review.
+    const archive = join(root, "echo-tools.zip");
+    const files: Record<string, Uint8Array> = {};
+    for (const file of await readdir(fixture, { recursive: true, withFileTypes: true })) {
+      if (file.isFile()) {
+        const relative = join(file.parentPath, file.name)
+          .slice(fixture.length + 1)
+          .replaceAll("\\", "/");
+        files[`echo-tools/${relative}`] = await readFile(join(file.parentPath, file.name));
+      }
+    }
+    await writeFile(archive, zipSync(files));
+    await pick(app, archive);
+    await page.locator('[data-action="plugin-install-zip"]').click();
+    await expect(review).toContainText("Review Echo tools");
+    await expect(review.locator('[data-action="plugin-install"]')).toBeEnabled();
+    await review.locator('[data-action="plugin-review-cancel"]').click();
+    expect(await invoke(page, "plugins.list", {})).toEqual([]);
 
     // The fixture plugin installs through the review screen.
     await pick(app, fixture);
@@ -118,6 +139,22 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     await expect(card.getByRole("checkbox")).toHaveCount(0);
     const selected = await editPlugins(page);
     await expect(selected).not.toBeChecked();
+    await expect(page.locator("[data-project-save]")).toBeDisabled();
+    expect(
+      await page
+        .locator("[data-project-save]")
+        .evaluate((button) =>
+          Boolean(
+            button.compareDocumentPosition(document.querySelector("[data-workbench-plugins]") as Node) &
+              Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+        ),
+    ).toBe(true);
+    await selected.focus();
+    await page.keyboard.press("Space");
+    await expect(page.locator("[data-project-save]")).toBeEnabled();
+    await page.keyboard.press("Space");
+    await expect(page.locator("[data-project-save]")).toBeDisabled();
     await selected.check();
     await page.locator("[data-project-save]").click();
     await expect
@@ -170,6 +207,7 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     const installed = join(root, "data/plugins/installed/echo-tools/plugin.yaml");
     await writeFile(installed, (await readFile(installed, "utf8")).replace("risk: safe", "risk: dangerous"));
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await expect(card.locator('[data-issue="changed"]')).toBeVisible();
     await expect(card.locator('[data-issue="field"]')).toContainText("rules.0.risk");
     await expect(card.getByRole("checkbox")).toHaveCount(0);
@@ -211,13 +249,15 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await page.locator('[data-action="open-workbench-nav"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     let card = page.locator('[data-plugin="echo-tools"]');
     await expect(card.locator('[data-issue="untrusted"]')).toBeVisible();
     await expect(card.locator('[data-action="plugin-provision"]')).toHaveCount(0);
     await expect(card.getByRole("checkbox")).toHaveCount(0);
     await expect(await editPlugins(page)).toBeDisabled();
-    await page.locator(".workbench-editor footer button").first().click();
+    await page.locator("[data-project-cancel]").first().click();
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await card.locator('[data-action="plugin-scoped-review"]').click();
     const review = page.locator("[data-plugin-review]");
     await expect(review).toContainText("SHA-256");
@@ -230,6 +270,7 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
     const helper = join(folder, ".vera/plugins/echo-tools/echo.mjs");
     await writeFile(helper, `${await readFile(helper, "utf8")}\n// changed helper\n`);
@@ -272,10 +313,12 @@ test("scoped workbench plugin clone stays untrusted until review and a changed h
     await page.locator('[data-action="open-workbench-nav"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("VERA-DEMO-01");
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     card = page.locator('[data-plugin="echo-tools"]');
     await expect(await editPlugins(page)).toBeChecked();
-    await page.locator(".workbench-editor footer button").first().click();
+    await page.locator("[data-project-cancel]").first().click();
     await page.locator('[data-action="plugins-nav"]').click();
+    await page.locator('[data-library-status="installed"]').click();
     await writeFile(join(folder, ".vera/plugins/echo-tools/skills/echo-guide/SKILL.md"), "changed skill");
     await page.locator('[data-action="plugin-refresh"]').click();
     await expect(card.locator('[data-issue="changed"]')).toBeVisible();
@@ -431,13 +474,65 @@ test("workbench plugin draft save and cancel persist independently with empty ne
     await expect(page.locator('[data-workbench="active"]')).toContainText("A");
     expect((await config(a)).plugins.enabled).toEqual([]);
     const selected = await editPlugins(page);
+    await page.locator("[data-workbench-configuration] summary").click();
+    await expect(page.locator('[data-readiness="unchecked"]')).toBeVisible();
+    await page.locator('[data-workbench-configuration] [data-action="plugin-check"]').click();
+    await expect(page.locator('[data-readiness="needs"]')).toBeVisible();
+    await expect(page.locator('[data-workbench-configuration] [data-program="echo"]')).toHaveAttribute(
+      "data-state",
+      "missing",
+    );
+    await expect(
+      page.locator('[data-workbench-configuration] [data-action="plugin-provision"]'),
+    ).toBeDisabled();
+    await expect(selected).not.toBeChecked();
+    await expect(page.locator("[data-project-save]")).toBeDisabled();
     await selected.check();
     expect((await config(a)).plugins.enabled).toEqual([]);
-    await page.locator(".workbench-editor footer button").first().click();
+    await page.locator('[data-project-section="general"]').click();
+    await page.locator("[data-project-name]").fill("A unsaved");
+    await page.locator('[data-project-section="instructions"]').click();
+    await page.locator("#pinned-content").fill("Unsaved detour instructions");
+    await page.locator('[data-project-section="plugins"]').click();
+    await page.locator("[data-workbench-plugins] [data-library-search]").fill("hidden selection");
+    await page.locator('[data-action="plugins-nav"]').click();
+    await expect(page.locator(".workbench-editor")).toBeHidden();
+    await expect(page.locator("[data-library-search]")).toHaveCount(1);
+    const second = join(root, "second-tools");
+    await cp(fixture, second, { recursive: true });
+    await writeFile(
+      join(second, "plugin.yaml"),
+      (await readFile(join(second, "plugin.yaml"), "utf8")).replace("id: echo-tools", "id: second-tools"),
+    );
+    await pick(app, second);
+    await page.locator('[data-action="plugin-install-folder"]').click();
+    await page.locator('[data-plugin-review] [data-action="plugin-install"]').click();
+    expect((await config(a)).plugins.enabled).toEqual([]);
+    expect((await config(a)).name).toBe("A");
+    await page.getByRole("button", { name: "A", exact: true }).click();
+    await expect(page.locator(".workbench-editor")).toBeVisible();
+    await expect(page.locator('[data-project-section="plugins"]')).toHaveAttribute("aria-current", "page");
+    await expect(page.locator("[data-workbench-plugins] [data-library-search]")).toHaveValue(
+      "hidden selection",
+    );
+    await page.locator('[data-action="library-clear"]').click();
+    await expect(selected).toBeChecked();
+    await expect(page.locator('[data-workbench-plugin="second-tools"] input')).not.toBeChecked();
+    await page.locator('[data-project-section="general"]').click();
+    await expect(page.locator("[data-project-name]")).toHaveValue("A unsaved");
+    await page.locator('[data-project-section="instructions"]').click();
+    await expect(page.locator("#pinned-content")).toHaveValue("Unsaved detour instructions");
+    await page.locator('[data-project-section="plugins"]').click();
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await expect(selected).toBeChecked();
+    await expect(page.locator("[data-project-save]")).toBeEnabled();
+    await page.locator("[data-project-cancel]").first().click();
     await expect(await editPlugins(page)).not.toBeChecked();
     await page.locator('[data-workbench-plugin="echo-tools"] input').check();
     await page.locator("[data-project-save]").click();
     await expect.poll(async () => (await config(a)).plugins.enabled).toEqual(["echo-tools"]);
+    await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await app.evaluate((_electron, folder) => {
       process.env.VERA_TEST_DIALOG_PATH = folder;
     }, b);

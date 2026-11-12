@@ -933,6 +933,16 @@ it("CLI checks a catalog source and builds its release", async () => {
   expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual(
     officialIds.map((id) => [id, `${id}-1.0.0.zip`]),
   );
+  expect(index.plugins.find((plugin: { id: string }) => plugin.id === "serial-monitor")).toMatchObject({
+    activities: ["communication", "debug"],
+    keywords: ["serial", "UART", "console", "COM", "pyserial"],
+  });
+  for (const plugin of index.plugins) {
+    expect(plugin.activities.length).toBeGreaterThan(0);
+    expect(plugin.keywords.length).toBeGreaterThan(0);
+    expect(plugin).not.toHaveProperty("addedAt");
+    expect(plugin).not.toHaveProperty("updatedAt");
+  }
   const manifest = join(source, "serial-monitor", "plugin.yaml");
   await writeFile(
     manifest,

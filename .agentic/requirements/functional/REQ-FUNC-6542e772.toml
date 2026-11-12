@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-FUNC-6542e772"
+title = "Reject dangling catalog discovery metadata"
+status = "active"
+requirement = "When a maintainer metadata entry names a plugin absent from the catalog source, the catalog checker shall report a catalog.yaml reference finding and the builder shall write no release."
+verification = "Source test supplies metadata for an absent plugin and observes a reference finding, no returned index and no output folder; a present plugin is accepted."
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts"]
+spec = "specs/REQ-DATA-b40d3f9b.md"
+priority = "normal"
+rationale = "PLG-23 discovery metadata for scalable Plugins UI"
+created = 2026-11-11
+updated = 2026-11-11

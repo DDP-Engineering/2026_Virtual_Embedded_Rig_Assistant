@@ -22,6 +22,7 @@
     "dev:renderer": "node scripts/dev-renderer.mjs",
     "build": "electron-vite build src/apps/desktop",
     "test:e2e": "node scripts/test-e2e.mjs",
+    "perf:sessions": "node scripts/perf-sessions.mjs",
     "postinstall": "install-electron",
     "package": "node scripts/package.mjs",
     "package:test": "node scripts/package.mjs --test",

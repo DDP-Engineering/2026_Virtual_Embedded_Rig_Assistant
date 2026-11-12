@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-DATA-cbff7320"
+title = "Validate catalog discovery metadata"
+status = "active"
+requirement = "When catalog discovery metadata is parsed, the catalog shall accept only bounded unique stable activities, bounded unique nonempty trimmed keywords and optional real YYYY-MM-DD publication dates, preserving unknown dates as absent and rejecting invalid supplied fields."
+verification = "Shared schema tests accept multiple activities, empty classification, unknown dates and leap day; reject unknown/duplicate/oversized activities or keywords, impossible dates, date-times and unknown keys."
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-catalog.test.ts"]
+spec = "specs/REQ-DATA-b40d3f9b.md"
+priority = "normal"
+rationale = "PLG-23 discovery metadata for scalable Plugins UI"
+created = 2026-11-11
+updated = 2026-11-11

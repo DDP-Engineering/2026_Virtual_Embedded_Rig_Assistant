@@ -15,6 +15,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const buildRoot = process.env.VERA_BUILD_ROOT ? resolve(process.env.VERA_BUILD_ROOT) : resolve(root, "out");
 const shared = resolve(root, "../../libraries/shared/src/index.ts");
 const testBuild = process.env.VERA_TEST === "1";
+const sessionPerformance = testBuild && process.env.VERA_SESSION_PERF === "1";
 const updateUrl = updateFeed(process.env.VERA_UPDATE_URL, testBuild);
 const pluginCatalogUrl = pluginCatalogFeed(process.env.VERA_PLUGIN_CATALOG_URL, testBuild);
 
@@ -91,6 +92,7 @@ export default defineConfig(({ command }) => ({
     },
     define: {
       __VERA_TEST__: JSON.stringify(testBuild),
+      __VERA_SESSION_PERF__: JSON.stringify(sessionPerformance),
       __VERA_DEV__: JSON.stringify(command === "serve"),
       __VERA_SIGNED__: JSON.stringify(process.env.VERA_SIGNED_BUILD === "1"),
       __VERA_UPDATE_URL__: JSON.stringify(updateUrl),
@@ -134,6 +136,7 @@ export default defineConfig(({ command }) => ({
   },
   renderer: {
     define: {
+      __VERA_SESSION_PERF__: JSON.stringify(sessionPerformance),
       __VERA_VERSION__: JSON.stringify(
         JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version,
       ),

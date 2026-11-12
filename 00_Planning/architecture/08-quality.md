@@ -5,6 +5,11 @@ working tree). Items marked "Not implemented as of 2026-11-01" are still planned
 
 PURPOSE: specify the commands, test layers and fixtures every work package reuses, and the rules
 tests follow.
+
+PERF-01 (2026-11-12): the current authorized phase is descriptive Windows measurement only;
+[results and raw data](../../06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md).
+The [plan](../plan/performance-regression.md) and [experimental command guide](../../06_SoftwareDocu/session-performance.md)
+retain the deferred calibration/comparison design. No mandatory performance gate is established.
 DONE-WHEN: per ticket, lint, typecheck and `check:i18n` pass together with the smallest sufficient
 focused tests. At each milestone gate (M2/WP-21, M3/WP-29, M4/WP-33, M5/WP-38) `npm run verify`, the
 complete Electron and browser E2E suite and the applicable CLI regressions pass on Windows and native
@@ -27,6 +32,7 @@ that wrapper (`.agentic/aegis.toml`); `aegis check --run` runs lint, typecheck a
 | `npm run verify` | lint, typecheck, `check:i18n`, test, in that order |
 | `npm run check:i18n` | the en/ro/de catalogs against the keys the renderer uses: missing, unused and translation-only keys (06 §6) |
 | `npm run test:e2e` | `electron-vite build`, then Playwright over `tests/e2e/` (extra arguments pass through); Linux wraps it in `xvfb-run -a`. Specs that use test switches need the build made with `VERA_TEST=1` in the environment; the script does not set it |
+| `npm run perf:sessions -- run\|calibrate\|compare …` | isolated compiled native previous-session loading measurements (quick5/full30 samples per case), explicit environment-specific references, calibrated budget/regression comparison; see the command guide above |
 | `npm run dev`, `dev:renderer`, `build` | electron-vite watch launch; the renderer alone on Vite (`VITE_API=mock` for the mock bridge); a build into `src/apps/desktop/out/` |
 | `npm run smoke:live -- --provider <openai\|custom:slug> [--data <dir>]` | builds a release-mode app (`VERA_TEST=0`) and runs the provider connection test through `--vera-smoke-provider`; exit 0 when every step passes. Real provider, by hand only |
 | `npm run build:cli` | esbuild bundle of the CLI and its grep, PDF and embedding workers into `src/apps/cli/dist/` |

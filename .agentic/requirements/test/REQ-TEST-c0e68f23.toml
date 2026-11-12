@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-c0e68f23"
+title = "Calibrated performance comparison"
+status = "active"
+requirement = "When comparing compatible complete session performance evidence, the runner shall fail for a configured absolute-budget exceedance or a calibrated relative regression with an absolute noise allowance."
+verification = "Compare repeated reference runs and a deliberately delayed candidate; assert budget and regression failures and ordinary compatible pass."
+affected_paths = ["05_Software/scripts/eval-performance-harness/", "05_Software/scripts/perf-sessions.mjs", "05_Software/package.json", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-performance.ts", "05_Software/src/apps/desktop/src/renderer/api/index.ts", "05_Software/src/apps/desktop/src/renderer/api/session-performance.ts"]
+linked_tests = ["05_Software/tests/tooling/session-performance.test.ts", "05_Software/tests/tooling/session-performance-probe.test.ts"]
+spec = "specs/REQ-TEST-df5ff0ba.md"
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

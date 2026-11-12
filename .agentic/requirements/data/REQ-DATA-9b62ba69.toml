@@ -1,0 +1,13 @@
+schema = 1
+id = "REQ-DATA-9b62ba69"
+title = "Publish catalog discovery metadata end to end"
+status = "active"
+requirement = "When a valid catalog source is released, the catalog pipeline shall preserve its maintainer discovery metadata in deterministic format-1 index entries, bundled and remote client views and CLI-generated releases without synthesizing missing publication dates."
+verification = "Source test compares two complete indices and zip bytes; client test compares remote/bundled metadata including absent dates; CLI and bundled-preparation tests check real source activity/keywords in generated index and no inferred dates."
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/plugins/catalog.yaml"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/tests/integration/cli.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+spec = "specs/REQ-DATA-b40d3f9b.md"
+priority = "normal"
+rationale = "PLG-23 discovery metadata for scalable Plugins UI"
+created = 2026-11-11
+updated = 2026-11-11

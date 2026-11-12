@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-840fad9c"
+title = "Place workbench draft actions before configuration"
+status = "active"
+requirement = "When the workbench editor is displayed, VERA shall place Save and Cancel before the configuration controls, enabling Save only for a valid writable changed draft and treating restored plugin enabled sets as unchanged."
+verification = "Component tests verify DOM ordering, initial/reverted/readonly/pending/failed-save state, plus native save/cancel/restart isolation."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/components/workbench-chat.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-11
+updated = 2026-11-11

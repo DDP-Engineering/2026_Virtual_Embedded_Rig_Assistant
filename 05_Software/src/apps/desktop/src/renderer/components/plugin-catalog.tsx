@@ -4,6 +4,8 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { isNewCatalogEntry } from "./plugin-library.js";
+import { pluginActivityLabels } from "./plugin-library-controls.js";
 
 /** Under the `plugins` prefix, so every plugin change also reloads the catalog's installed states. */
 export const catalogKey = ["plugins", "catalog"] as const;
@@ -106,7 +108,7 @@ function CatalogUrl({ changed }: { changed: () => void }) {
   );
 }
 
-function CatalogItem({
+export function CatalogItem({
   plugin,
   busy,
   install,
@@ -120,6 +122,9 @@ function CatalogItem({
     <li className="plugin-card" data-catalog-plugin={plugin.id}>
       <p className="plugin-heading">
         <strong>{plugin.name}</strong>
+        {isNewCatalogEntry(plugin.addedAt) && (
+          <span className="risk-badge">{t("plugins.library.newBadge")}</span>
+        )}
         <span>{plugin.version}</span>
         <span className="risk-badge" data-tier={plugin.tier}>
           {plugin.tier === "official" ? t("plugins.tier.official") : t("plugins.tier.community")}
@@ -141,6 +146,10 @@ function CatalogItem({
           {t("plugins.catalog.installed", { version: plugin.installed.version ?? "?" })}
         </p>
       )}
+      <details>
+        <summary>{t("plugins.library.details")}</summary>
+        <PluginDiscoveryFacts entry={plugin} />
+      </details>
       <div className="workbench-actions">
         {!plugin.installed && (
           <button
@@ -167,37 +176,32 @@ function CatalogItem({
   );
 }
 
-/**
- * The catalog: where it comes from, the URL setting, packs as checkable groups (defaults checked) and
- * every catalog plugin with its tier and installed state. `install` reviews the given ids in order.
- */
-export function CatalogSection({
-  catalog,
-  busy,
-  install,
-}: {
-  catalog: UseQueryResult<PluginCatalogView>;
-  busy: boolean;
-  install: (ids: string[]) => void;
-}) {
+/** Publication facts are distinct from installation/check times, including unknown dates. */
+export function PluginDiscoveryFacts({ entry }: { entry?: CatalogPlugin | undefined }) {
+  const { t } = useTranslation();
+  const activities = pluginActivityLabels(t);
+  return (
+    <dl className="plugin-facts plugin-discovery">
+      <dt>{t("plugins.library.activity")}</dt>
+      <dd>
+        {entry?.activities.length
+          ? entry.activities.map((value) => activities[value]).join(", ")
+          : t("plugins.library.unclassified")}
+      </dd>
+      <dt>{t("plugins.library.addedAt")}</dt>
+      <dd>{entry?.addedAt ?? t("plugins.library.dateUnavailable")}</dd>
+      <dt>{t("plugins.library.updatedAt")}</dt>
+      <dd>{entry?.updatedAt ?? t("plugins.library.dateUnavailable")}</dd>
+    </dl>
+  );
+}
+
+/** Explicit refresh action shares the global management toolbar. */
+export function CatalogUpdateCheck() {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const title = useId();
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<unknown>();
-  const [choices, setChoices] = useState<Record<string, boolean>>({});
-  const view = catalog.data;
-  const names = new Map(view?.plugins.map((plugin) => [plugin.id, plugin.name]));
-  const selected = view
-    ? installOrder(
-        view,
-        view.packs.flatMap((pack) =>
-          pack.groups.flatMap((group) =>
-            (choices[`${pack.id}/${group.name}`] ?? group.default) ? group.plugins : [],
-          ),
-        ),
-      )
-    : [];
   async function check() {
     setChecking(true);
     setError(undefined);
@@ -210,17 +214,29 @@ export function CatalogSection({
     }
   }
   return (
-    <section className="plugin-catalog" aria-labelledby={title} data-plugin-catalog>
-      <h3 id={title}>{t("plugins.catalog.title")}</h3>
+    <>
+      <button type="button" data-action="catalog-check" disabled={checking} onClick={() => void check()}>
+        {checking ? t("plugins.catalog.checking") : t("plugins.catalog.check")}
+      </button>
+      {error !== undefined && <ErrorMessage error={error} />}
+    </>
+  );
+}
+
+/** Source settings stay above the library; pack definitions are not selection UI. */
+export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCatalogView> }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const view = catalog.data;
+  return (
+    <section className="plugin-catalog" data-plugin-catalog aria-label={t("plugins.catalog.title")}>
       {catalog.isPending && <p role="status">{t("home.loading")}</p>}
       {catalog.isError && <ErrorMessage error={catalog.error} />}
-      {view && (
+      {view && view.source !== "bundled" && (
         <p className="muted" data-catalog-source={view.source}>
           {view.source === "remote"
             ? t("plugins.catalog.remote", { url: view.url ?? "" })
-            : view.source === "bundled"
-              ? t("plugins.catalog.bundled")
-              : t("plugins.catalog.none")}
+            : t("plugins.catalog.none")}
         </p>
       )}
       {view?.problem && (
@@ -230,66 +246,10 @@ export function CatalogSection({
             : t("plugins.catalog.problemUnreachable")}
         </p>
       )}
-      <div className="workbench-actions">
-        <button type="button" data-action="catalog-check" disabled={checking} onClick={() => void check()}>
-          {checking ? t("plugins.catalog.checking") : t("plugins.catalog.check")}
-        </button>
-      </div>
-      {error !== undefined && <ErrorMessage error={error} />}
-      <CatalogUrl changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
-      {view && view.packs.length > 0 && (
-        <>
-          <h4>{t("plugins.catalog.packs")}</h4>
-          {view.packs.map((pack) => (
-            <fieldset className="catalog-pack" key={pack.id} data-pack={pack.id}>
-              <legend>{pack.name}</legend>
-              {pack.groups.map((group) => {
-                const key = `${pack.id}/${group.name}`;
-                return (
-                  <label className="catalog-group" key={key} data-group={group.name}>
-                    <input
-                      type="checkbox"
-                      checked={choices[key] ?? group.default}
-                      onChange={(event) => setChoices({ ...choices, [key]: event.target.checked })}
-                    />
-                    <span>
-                      <strong>{group.name}</strong>{" "}
-                      <span className="muted">
-                        {group.plugins.map((id) => names.get(id) ?? id).join(", ")}
-                      </span>
-                    </span>
-                  </label>
-                );
-              })}
-            </fieldset>
-          ))}
-          <div className="workbench-actions">
-            <button
-              type="button"
-              data-action="catalog-install-selected"
-              disabled={busy || selected.length === 0}
-              onClick={() => install(selected)}
-            >
-              {t("plugins.catalog.installSelected")}
-            </button>
-          </div>
-        </>
-      )}
-      {view && view.plugins.length > 0 && (
-        <>
-          <h4>{t("plugins.catalog.plugins")}</h4>
-          <ul className="plugin-list">
-            {view.plugins.map((plugin) => (
-              <CatalogItem
-                key={plugin.id}
-                plugin={plugin}
-                busy={busy}
-                install={(id) => install(plugin.update ? [id] : installOrder(view, [id]))}
-              />
-            ))}
-          </ul>
-        </>
-      )}
+      <details className="plugin-catalog-settings">
+        <summary>{t("plugins.library.catalogSettings")}</summary>
+        <CatalogUrl changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
+      </details>
     </section>
   );
 }

@@ -2,14 +2,15 @@
 
 PURPOSE: the order in which the plugin system of [architecture.md](architecture.md) and the ESP32
 pack of [packs.md](packs.md) are built: work packages PLG-01…PLG-22, dependencies, verification and
-risks.
+risks. Follow-up PLG-23…PLG-25 (2026-11-11) are planned in
+[../plan/plugins-ui-redesign.md](../plan/plugins-ui-redesign.md): scalable catalog discovery,
+Available/Installed management and activation in Workbench settings → Plugins with top Save/Cancel.
 DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user installs the ESP32 pack
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
 release smoke covers the approval card, the typed confirmation and process-tree termination.
-STATUS: decisions accepted 2026-11-01. PLG-01 (manifest schema, plugin store, per-workbench enablement; AEGIS
-TASK-0cb6ef0f), PLG-02 (process host and runner; TASK-50789c10) and PLG-03 (rules, risk levels and approvals;
-TASK-9b39247f) are implemented; otherwise nothing is implemented yet except PLG-05's removal of the size
-checks. Builds on code that already exists: skill catalog, approvals bound to `requestSha256`,
+STATUS: original decisions accepted 2026-11-01; per-package implementation outcomes are recorded
+below. The plugin foundations, catalog and manager exist; the 2026-11-11 UI redesign is planned,
+not implemented. Builds on code that already exists: skill catalog, approvals bound to `requestSha256`,
 permission modes, tool registry. Implementation follows the repository's AEGIS workflow
 (CLAUDE.md), one work package per task. Gitea tracks each work package as one issue.
 
@@ -31,6 +32,10 @@ permission modes, tool registry. Implementation follows the repository's AEGIS w
 
 Gitea issue of each package: PLG-01…PLG-18 are #57…#74 in order (PLG-n is issue #(56 + n)); PLG-19…PLG-22 are #81…#84.
 Created 2026-11-01 without ADORE labels.
+
+The new [Plugins UI redesign plan](../plan/plugins-ui-redesign.md) supplies the umbrella and
+PLG-23…PLG-25 follow-up issues. Its accepted UI direction supersedes the checkable-packs presentation
+of PLG-06/07 without reopening those original tickets or changing package execution policy.
 
 ```mermaid
 flowchart LR

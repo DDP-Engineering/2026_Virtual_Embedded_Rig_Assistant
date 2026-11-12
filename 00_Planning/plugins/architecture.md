@@ -389,7 +389,7 @@ vera-plugins/                    # one Git repository
 ```
 
 - `index.json` format 1 is `{format, plugins, packs}`; an entry is `{id, version, tier, ecosystem, platforms, name,
-  description, requires, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
+  description, requires, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
   so a mirror is a plain copy. Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
 - Tiers: `official` (VERA maintainers own it), `community` (merged by PR after CI and a
   maintainer's review of programs, install sources and rules). A plugin installed from a folder or
@@ -423,6 +423,19 @@ vera-plugins/                    # one Git repository
 
 The UI shows packs as checkable groups (pack → groups → plugins) and installs the selected
 plugins. Pack contents: [packs.md](packs.md).
+
+### Planned discovery/activation redesign (2026-11-11; not implemented)
+
+[ui-redesign.md](ui-redesign.md) supersedes the checkable-packs presentation above: one list per
+Available/Installed tab, combined search and filters, chronology/name sorting and pagination.
+Pack definitions remain data, without a duplicate selection list. The publishing/client path gains
+  activities, keywords and factual publication dates at format 1 (PLG-23 implemented; publication
+  dates remain absent for real packages without release evidence). Enablement belongs to the existing
+Workbench settings → Plugins section, without a workbench selector or Add plugins button, with
+Save/Cancel at the beginning of the page and Save enabled on changes. Execution, trust, review and
+provisioning policy in this document still apply. Implementation: PLG-23…PLG-25 in
+[the follow-up plan](../plan/plugins-ui-redesign.md); interactive reference in
+[ui/plugins-redesign.html](../ui/plugins-redesign.html).
 
 ## 8. Authoring with the agent
 
