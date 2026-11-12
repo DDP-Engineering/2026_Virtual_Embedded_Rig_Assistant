@@ -63,7 +63,7 @@ from the code: the settings v0–v3 migration chain and `.bak-<n>` backups, read
 settings, window state and layout, the `WORKBENCH_TOO_NEW` error, the FileAccess `backup` port,
 `tests/e2e/upgrade-safety.spec.ts`, `scripts/upgrade-fixture.mjs`, the settings version fixtures and
 `tests/fixtures/upgrade/`, and the `--migration-safety` switch and data checks of
-`scripts/probe-upgrade.mjs`. The text below is the plan for the release; it is not implemented. The
+`tests/packaging/probe-upgrade.mjs`. The text below is the plan for the release; it is not implemented. The
 updater itself (WP-31) and crash recovery of interrupted sessions are current and stay.
 
 **Goal:** data survives upgrades, and newer data is never damaged by an older VERA.
@@ -99,7 +99,7 @@ Scope:
   normal custom provider — tool calls, a citation, an approval and a restart. No test switches.
 - Egress: `strace` over the app's process tree on Ubuntu, automated; Windows Sandbox with networking
   disabled and `pktmon`, by hand (08 §5).
-- `scripts/sandbox/VERA.wsb` for the Windows run.
+- `02_Tools/release/sandbox/VERA.wsb` for the Windows run.
 
 Done when:
 - [ ] The offline run passes on Windows and Ubuntu; each of the four delivery formats installs or
@@ -118,15 +118,15 @@ Clean-machine, Windows Sandbox and `pktmon` items are manual; no smoke or update
 
 - WP-30: implemented with deviation: the four targets, `package`/`package:test`, `asarUnpack`, the
   model, pre-packaging checks, compiled-out test switches and per-artifact SHA-256 exist
-  (`scripts/package.mjs`, `scripts/package-checks.mjs:39-142`, `src/apps/desktop/electron-builder.yml:17-50`,
+  (`02_Tools/release/package.mjs`, `02_Tools/release/package-checks.mjs:39-142`, `src/apps/desktop/electron-builder.yml:17-50`,
   `tests/tooling/build-mode.test.ts`, `tests/packaging/packaging.test.ts`); there is no size budget,
   only a largest-contributors list, per ADR-0017 (`tests/packaging/packaging.test.ts:213-217`); About
   does not show "unsigned build" — `signing` is computed (`main/app-info.ts:17`) but not displayed
   (`renderer/components/metadata.tsx:6-13`).
 - WP-31: implemented as planned (`main/update-backend.ts:55-107`, `main/updates.ts:63-182`,
-  `renderer/components/updates.tsx`, `scripts/update-feed.mjs`, `main/updates.test.ts:57-145`); the
+  `renderer/components/updates.tsx`, `02_Tools/release/update-feed.mjs`, `main/updates.test.ts:57-145`); the
   vN → vN+1, deferral and portable checks live in the manual test-build probe
-  `scripts/probe-upgrade.mjs`, which has no npm script. The probe keeps only the updater checks
+  `tests/packaging/probe-upgrade.mjs`, which has no npm script. The probe keeps only the updater checks
   (managed deb gets metadata only, SHA-512 required and a corrupt hash refused, install deferred until
   approval finishes and then a real install, portable release link); the checks that settings, history
   and recovery survive an update were removed.
@@ -139,22 +139,22 @@ Clean-machine, Windows Sandbox and `pktmon` items are manual; no smoke or update
   fixtures moved to `tests/fixtures/app-data/`.
 - WP-33: implemented with deviation: `smoke:package -- --artifact`, a path with a space and "é",
   updates Off, a loopback custom-provider session with tools, citation, approval and restart, `strace`
-  egress on Ubuntu, artifact SHA-256 and `scripts/sandbox/VERA.wsb` exist (`scripts/smoke-package.mjs`,
-  `scripts/smoke-runtime.mjs:98,261-267,412`, `scripts/smoke-egress.mjs`); the deliberate-request check
+  egress on Ubuntu, artifact SHA-256 and `02_Tools/release/sandbox/VERA.wsb` exist (`tests/packaging/smoke/smoke-package.mjs`,
+  `tests/packaging/smoke/smoke-runtime.mjs:98,261-267,412`, `tests/packaging/smoke/smoke-egress.mjs`); the deliberate-request check
   runs in a separate `data:` probe window on development Electron, not in VERA's renderer in a test
-  build (`scripts/smoke-calibration.mjs:47-68`); the report marks the release upgrade result and the
-  Windows `pktmon` evidence "pending" (`scripts/smoke-report.mjs`). `--upgrade-proof` binds the
+  build (`tests/packaging/smoke/smoke-calibration.mjs:47-68`); the report marks the release upgrade result and the
+  Windows `pktmon` evidence "pending" (`tests/packaging/smoke/smoke-report.mjs`). `--upgrade-proof` binds the
   original WP-31 updater-probe report as supplementary instrumented evidence.
 
 Not in the plan, implemented in this area:
-- An app-local Microsoft VC++ runtime beside onnxruntime (`scripts/prepare-windows-runtime.mjs`,
+- An app-local Microsoft VC++ runtime beside onnxruntime (`02_Tools/environment/prepare-windows-runtime.mjs`,
   `src/windows_runtime/`); a packaging-input fingerprint guard and a pdf.js resource integrity check
-  (`scripts/package-checks.mjs:8-37`).
+  (`02_Tools/release/package-checks.mjs:8-37`).
 - Update hardening: HTTPS feed only (loopback HTTP in test builds), SHA-512, no downgrade, publisher
-  check; the deb install only reads update metadata (`scripts/update-config.mjs`,
+  check; the deb install only reads update metadata (`02_Tools/release/update-config.mjs`,
   `main/update-backend.ts:96-164`).
 - ONNX telemetry and Electron dictionary downloads disabled at start (`06_SoftwareDocu/release-package-smoke.md`).
 - Release builds keep a `--vera-smoke-provider` switch for `smoke:live` (`main/index.ts:697-718`).
-- Test-build probes without npm scripts: `scripts/probe-upgrade.mjs`, `smoke-calibration.mjs`,
+- Test-build probes without npm scripts: `tests/packaging/probe-upgrade.mjs`, `smoke-calibration.mjs`,
   `probe-windows-offline.ps1`, `probe-windows-sandbox.ps1`, `probe-linux-offline.sh`; `smoke:package`
   options `--resume` and `--windows-evidence`.

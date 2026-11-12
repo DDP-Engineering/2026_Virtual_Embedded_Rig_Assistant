@@ -39,7 +39,7 @@ proof remains pending. This option does not execute an upgrade.
 
 For native Ubuntu calibration, explicitly build a separate instrumented app with
 `VERA_TEST=1 npm run build`, then run
-`node scripts/smoke-calibration.mjs <built src/apps/desktop directory> <new owned root>`.
+`node tests/packaging/smoke/smoke-calibration.mjs <built src/apps/desktop directory> <new owned root>`.
 This uses the pinned development Electron and a dedicated sandboxed fixture
 renderer in the instrumented app, with a fixture CSP admitting only its deliberate
 endpoint. The production vera://app window and its CSP remain unchanged. A real
@@ -49,7 +49,7 @@ oracle FAIL separately from calibration PASS, and is never release proof.
 
 ## Windows Sandbox and pktmon
 
-`05_Software/scripts/sandbox/VERA.wsb` disables networking and clipboard, maps inputs
+`02_Tools/release/sandbox/VERA.wsb` disables networking and clipboard, maps inputs
 read-only and a new evidence folder writable. Substitute the two host paths before
 opening it. The supplied map is an example; it is not an executed result. Unsigned
 execution requires a machine whose policy permits it. The previously observed

@@ -4,12 +4,13 @@ import { createServer } from "node:http";
 import { Socket } from "node:net";
 import { beforeAll, expect, it } from "vitest";
 
-let guard: typeof import("../network-guard.js");
+let guard: typeof import("../support/network-guard.js");
 beforeAll(async () => {
-  expect(existsSync(new URL("../network-guard.ts", import.meta.url)), "core test egress guard exists").toBe(
-    true,
-  );
-  guard = await import("../network-guard.js");
+  expect(
+    existsSync(new URL("../support/network-guard.ts", import.meta.url)),
+    "core test egress guard exists",
+  ).toBe(true);
+  guard = await import("../support/network-guard.js");
 });
 it("fails non-loopback fetch and socket before traffic, permits loopback", async () => {
   guard.installTestNetworkGuard();

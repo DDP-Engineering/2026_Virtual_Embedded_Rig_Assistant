@@ -10,7 +10,7 @@ requirement = "When the desktop app reads the plugin catalog, it shall use the c
 
 verification = "Core catalog test with a loopback HTTP server: a configured URL lists the served index (source remote); a stopped server or a 404 gives source bundled with unreachable; malformed JSON gives invalid; no URL gives bundled, and no URL with no bundled folder gives none with no plugins."
 
-affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/scripts/update-config.mjs"]
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/electron.vite.config.ts", "02_Tools/release/update-config.mjs"]
 
 linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts"]
 

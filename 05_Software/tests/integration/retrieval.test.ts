@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const script = `${root}scripts/retrieval/evaluation.mjs`;
+const script = `${root}evaluators/retrieval-support/evaluation.mjs`;
 async function evaluation() {
   expect(existsSync(script), "local comparison evaluator is implemented").toBe(true);
   return import(pathToFileURL(script).href);

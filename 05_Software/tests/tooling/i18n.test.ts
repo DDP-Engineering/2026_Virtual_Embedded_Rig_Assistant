@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { expect, test } from "vitest";
 
 test("i18n audit rejects missing, unused and translation-only keys including dynamic contracts", async () => {
-  const path = "scripts/check-i18n.mjs";
+  const path = "../02_Tools/build/check-i18n.mjs";
   expect(existsSync(path), "catalog audit is implemented").toBe(true);
   const { auditCatalogs } = await import(/* @vite-ignore */ pathToFileURL(`${process.cwd()}/${path}`).href);
   const en = { screen: { title: "Title", count: "{{count}} items" } };
@@ -34,7 +34,7 @@ test("i18n audit rejects missing, unused and translation-only keys including dyn
 test("catalog CLI fails with a missing-key fixture", () => {
   const result = spawnSync(
     process.execPath,
-    ["scripts/check-i18n.mjs", "--fixture", "tests/fixtures/i18n/missing-key.json"],
+    ["../02_Tools/build/check-i18n.mjs", "--fixture", "tests/fixtures/i18n/missing-key.json"],
     { encoding: "utf8" },
   );
   expect(result.status).toBe(1);

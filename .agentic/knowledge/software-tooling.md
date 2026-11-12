@@ -7,7 +7,7 @@ verification commands and Electron test launchers, the Node fetch/socket network
 and `tsconfig.json`; configuration/build tests are `tests/tooling/`, cross-component tests are `tests/integration/`, and distribution tests are `tests/packaging/`. Desktop runtime behavior belongs
 to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Tools/`.
 
-Previous-session performance verification routes to `scripts/perf-sessions.mjs`, `scripts/eval-performance-harness/`,
+Previous-session performance verification routes to `evaluators/eval-performance-harness/perf-sessions.mjs`, `evaluators/eval-performance-harness/`,
 `tests/tooling/session-performance.test.ts` and [the command guide](../../06_SoftwareDocu/session-performance.md).
 
 ## Purpose and boundaries
@@ -19,7 +19,7 @@ publishes host ports, settings and workbench services; [Headless CLI](headless-c
 ## Public interface
 
 From `05_Software`, use `npm run verify`, `check:i18n`, `lint`, `format`, `typecheck`, `build`, `dev`, `dev:renderer`
-and `test:e2e`. VERA_BUILD_ROOT is an optional build-time absolute output directory with main/preload/renderer children; omitted builds use desktop/out. The repository-local `python ../02_Tools/npmw.py` wrapper selects pinned Node.
+and `test:e2e`. VERA_BUILD_ROOT is an optional build-time absolute output directory with main/preload/renderer children; omitted builds use desktop/out. The repository-local `python ../02_Tools/environment/npmw.py` wrapper selects pinned Node.
 
 `perf:sessions -- run|calibrate|compare` builds an isolated compiled native application and measures
 real sidebar selection of persisted fictional sessions. Quick/full use5/30 samples per selected
@@ -55,8 +55,8 @@ which owns verified assets, native staging and artifact measurements.
 | Workspace/pin/reference layout | manifests and `tsconfig*.json` | `skeleton.test.ts`, typecheck |
 | Layer boundaries | `biome.json` | `boundaries.test.ts` |
 | Test-build constant | desktop Vite config and `build-mode.ts` | `build-mode.test.ts` |
-| Acceptance execution/isolation | `scripts/`, `tests/e2e/network-guard.ts` | Electron acceptance and guard self-test |
-| Saved-session latency/stalls | `scripts/eval-performance-harness/`, main/API `session-performance.ts` | tooling report/fixture/watchdog tests and native quick/full runs |
+| Acceptance execution/isolation | `tests/support/`, `tests/e2e/network-guard.ts` | Electron acceptance and guard self-test |
+| Saved-session latency/stalls | `evaluators/eval-performance-harness/`, main/API `session-performance.ts` | tooling report/fixture/watchdog tests and native quick/full runs |
 
 Catalog audit scans renderer TypeScript AST for literal and finite registered translation keys, excluding tests; English defines required catalog keys.
 
@@ -78,8 +78,8 @@ All paths are under `05_Software/`.
 - `src/libraries/{shared,core}/{package.json,tsconfig.json,src/index.ts}` — library definitions and public exports.
 - src/libraries/core/vitest.config.ts — core Node tests with shared source resolution.
 - `src/apps/cli/{package.json,tsconfig.json,src/index.ts}` — headless CLI.
-- `scripts/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
-- `tests/network-{guard,setup}.ts`, `tests/tooling/network-guard.test.ts` — unit-test transport interception and guard regression.
+- `tests/support/test-e2e.mjs`, `dev-test-server.mjs` — build/acceptance and isolated Vite launchers.
+- `tests/support/network-{guard,setup}.ts`, `tests/tooling/network-guard.test.ts` — unit-test transport interception and guard regression.
 - `tests/e2e/network-guard.ts`, `shell.spec.ts` — connection interception and real-process acceptance.
 
-- scripts/check-i18n.mjs, tests/tooling/i18n.test.ts and tests/fixtures/i18n/missing-key.json — source-catalog usage/completeness audit and actual negative CLI regression.
+- 02_Tools/build/check-i18n.mjs, tests/tooling/i18n.test.ts and tests/fixtures/i18n/missing-key.json — source-catalog usage/completeness audit and actual negative CLI regression.

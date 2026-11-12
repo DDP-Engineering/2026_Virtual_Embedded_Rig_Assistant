@@ -16,9 +16,8 @@ Plugins and indexing benchmarks remain later scope.
 Repository organization: [tooling-tests-evaluators-layout.md](tooling-tests-evaluators-layout.md),
 **REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110)**.
 Agreed 2026-11-12: environment/build/release tooling in `02_Tools`, tests/E2E and
-evaluators in `05_Software`, with separate generated evaluation outputs. Planning and one tracking
-ticket only; **implementation is explicitly on hold until requested by the user**, including for
-the automated implementation cycle.
+evaluators in `05_Software`, with separate generated evaluation outputs. Implemented 2026-11-12 at
+the user's request; the plan records the source-to-target map.
 
 ## 0. Outcome (2026-11-01)
 

@@ -1,4 +1,4 @@
-# Repository-local toolchain and caches are reproducible with `python 02_Tools/setup.py`.
+# Repository-local toolchain and caches are reproducible with `python 02_Tools/environment/setup.py`.
 /02_Tools/runtime/
 /02_Tools/cache/
 __pycache__/
@@ -19,6 +19,10 @@ __pycache__/
 # The official plugins as a catalog release, built by npm run prepare:plugins.
 /05_Software/src/bundled-plugins/
 *.tsbuildinfo
+
+# Generated evaluator runs. Retained evidence is selected deliberately (git add -f).
+/05_Software/evaluation-outputs/*
+!/05_Software/evaluation-outputs/README.md
 
 # Ignore explicitly requested coverage/reports and any legacy Playwright output.
 **/coverage/

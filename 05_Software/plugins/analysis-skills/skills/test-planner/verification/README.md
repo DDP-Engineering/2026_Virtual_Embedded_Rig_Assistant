@@ -16,8 +16,8 @@ by SHA256 before/after. No normal VERA application or user workbench is opened.
 From `05_Software` with pinned Node24.21.0:
 
 ```text
-node scripts/test-planner-rubric.mjs --prepare ABS_NEW_OWNED_OUTPUT
-node scripts/test-planner-rubric.mjs --run ABS_NEW_OWNED_OUTPUT ABS_EXISTING_VERA_PROFILE chatgpt/gpt-6.1-sol
+node evaluators/eval-test-planner-harness/test-planner-rubric.mjs --prepare ABS_NEW_OWNED_OUTPUT
+node evaluators/eval-test-planner-harness/test-planner-rubric.mjs --run ABS_NEW_OWNED_OUTPUT ABS_EXISTING_VERA_PROFILE chatgpt/gpt-6.1-sol
 ```
 
 All seven fixtures, exact prompts, source hashes and criterion worksheet are prepared offline first.

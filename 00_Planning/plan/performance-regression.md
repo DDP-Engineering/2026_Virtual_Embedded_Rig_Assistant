@@ -17,12 +17,12 @@ is committed separately as `f24b0cf`.
 
 Results: [current-behavior evaluation](../../06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md)
 and [all360 raw samples](../../06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.json).
-Harness: `05_Software/scripts/eval-performance-harness/` with entrypoint `05_Software/scripts/perf-sessions.mjs`.
+Harness: `05_Software/evaluators/eval-performance-harness/` with entrypoint `05_Software/evaluators/eval-performance-harness/perf-sessions.mjs`.
 The remaining requirements below describe the deferred regression phase, not completed acceptance.
 
-The agreed future harness/output layout is tracked separately in
-[REPO-01 / #110](tooling-tests-evaluators-layout.md). That reorganization is planned only and on hold;
-the paths above describe the current implementation. It does not resume regression calibration or
+The harness and output layout follow [REPO-01 / #110](tooling-tests-evaluators-layout.md),
+implemented 2026-11-12; new saved runs go to `05_Software/evaluation-outputs/performance/`, while the
+retained reports above stay in `06_SoftwareDocu/` unchanged. It does not resume regression calibration or
 change the recorded historical measurements.
 
 ## Problem and first outcome
@@ -144,7 +144,7 @@ duplicate handover testing, a scheduled automation or continuous profiling of th
   components under `renderer/components/session/`, plus the real sidebar selection owner.
 - `05_Software/tests/e2e/chat-detail.spec.ts`, `session-scroll.spec.ts`, `navigation-actions.spec.ts`,
   `network-guard.ts`, and the existing fixture/replay helpers. Reuse relevant behavioral proof.
-- `05_Software/scripts/test-e2e.mjs`, `package.json`, `00_Planning/architecture/08-quality.md` and
+- `05_Software/tests/support/test-e2e.mjs`, `package.json`, `00_Planning/architecture/08-quality.md` and
   `02_Tools/verification-policy.md` for command and validation integration.
 
 These are investigation starting points, not a diagnosis or a prescribed rewrite.

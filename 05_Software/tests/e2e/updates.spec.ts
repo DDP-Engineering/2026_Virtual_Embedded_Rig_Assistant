@@ -5,7 +5,7 @@ import { changeSetting } from "./settings-navigation.js";
 test("Updates controls/notes/banner are usable in en/ro/de at minimum size", async ({ page, context }) => {
   test.setTimeout(120000);
   await page.setViewportSize({ width: 1024, height: 640 });
-  const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+  const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
     env: { ...process.env, VITE_API: "mock" },
     stdio: ["ignore", "pipe", "pipe"],
   });

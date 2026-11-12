@@ -40,7 +40,7 @@ it("runs owned CLI index/search and PDF replay through real local worker bundles
       },
     });
     await build({
-      entryPoints: [join(software, "tests/network-guard.ts")],
+      entryPoints: [join(software, "tests/support/network-guard.ts")],
       outfile: join(out, "guard.mjs"),
       bundle: true,
       platform: "node",

@@ -10,7 +10,7 @@ requirement = "The VERA package shall ship the official plugins of 05_Software/p
 
 verification = "Script test: prepare:plugins builds a release folder whose index lists serial-monitor and esp32-esptool as official and whose zips pass the hash check. Inspection: package.mjs stages the folder as resources/plugins and checks it against its index; main reads <resources>/plugins in a package. Manual: on a packaged build without network, the Plugins page lists the bundled plugins and installs serial-monitor."
 
-affected_paths = ["05_Software/scripts/prepare-plugins.mjs", "05_Software/scripts/package.mjs", "05_Software/src/apps/desktop/electron-builder.yml", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/package.json", ".gitignore"]
+affected_paths = ["02_Tools/environment/prepare-plugins.mjs", "02_Tools/release/package.mjs", "05_Software/src/apps/desktop/electron-builder.yml", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/package.json", ".gitignore"]
 
 linked_tests = ["05_Software/tests/packaging/prepare-plugins.test.ts", "05_Software/src/libraries/core/src/plugins/catalog.test.ts"]
 

@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     name: "cli",
     environment: "node",
-    setupFiles: ["../../../tests/network-setup.ts"],
+    setupFiles: ["../../../tests/support/network-setup.ts"],
     include: ["src/**/*.test.ts"],
   },
 });

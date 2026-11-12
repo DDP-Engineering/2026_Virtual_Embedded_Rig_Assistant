@@ -20,14 +20,21 @@ const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js");
 
+// The checkout mirrors the repository: 05_Software plus the release tooling its build config imports.
+let repo: string;
 let checkout: string;
 beforeAll(() => {
   const cache = join(root, "node_modules/.cache");
   mkdirSync(cache, { recursive: true });
-  checkout = mkdtempSync(join(cache, "vera-build-mode-"));
+  repo = mkdtempSync(join(cache, "vera-build-mode-"));
+  checkout = join(repo, "05_Software");
+  mkdirSync(checkout);
   copyFileSync(join(root, "package.json"), join(checkout, "package.json"));
-  mkdirSync(join(checkout, "scripts"));
-  copyFileSync(join(root, "scripts/update-config.mjs"), join(checkout, "scripts/update-config.mjs"));
+  mkdirSync(join(repo, "02_Tools/release"), { recursive: true });
+  copyFileSync(
+    join(root, "../02_Tools/release/update-config.mjs"),
+    join(repo, "02_Tools/release/update-config.mjs"),
+  );
   for (const relative of ["src/apps/desktop", "src/libraries/core", "src/libraries/shared"]) {
     mkdirSync(join(checkout, relative), { recursive: true });
     copyFileSync(join(root, relative, "package.json"), join(checkout, relative, "package.json"));
@@ -65,7 +72,7 @@ beforeAll(() => {
   expect(existsSync(join(checkout, "src/libraries/shared/dist/index.js"))).toBe(false);
 });
 afterAll(() => {
-  if (checkout) rmSync(checkout, { recursive: true, force: true });
+  if (repo) rmSync(repo, { recursive: true, force: true });
 });
 
 it.each([

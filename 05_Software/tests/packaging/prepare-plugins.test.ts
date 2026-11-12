@@ -5,7 +5,9 @@ import { PluginStore, SkillCatalog } from "@vera/core";
 import { afterAll, expect, it } from "vitest";
 
 // @ts-expect-error Native ESM build helper.
-import { checkBundledPlugins, prepareBundledPlugins } from "../../scripts/prepare-plugins.mjs";
+import * as bundledPlugins from "../../../02_Tools/environment/prepare-plugins.mjs";
+
+const { checkBundledPlugins, prepareBundledPlugins } = bundledPlugins;
 
 const target = join(tmpdir(), `vera-bundled-plugins-${process.pid}`);
 afterAll(async () => {

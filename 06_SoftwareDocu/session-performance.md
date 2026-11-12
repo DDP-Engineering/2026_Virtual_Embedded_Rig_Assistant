@@ -18,18 +18,18 @@ The output parent directory must exist. Choose a new filename for every run: JSO
 
 ```powershell
 # Five measured samples per selected case; diagnostic without an explicit reference.
-python ../02_Tools/npmw.py npm run perf:sessions -- run --mode quick --cases small,medium --scenarios first,warm --output ../02_Tools/cache/session-quick.json
+python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode quick --cases small,medium --scenarios first,warm --output evaluation-outputs/performance/session-quick.json
 
 # Thirty measured samples per case. Repeat the same candidate on the same idle host.
-python ../02_Tools/npmw.py npm run perf:sessions -- run --mode full --output ../02_Tools/cache/session-full-a.json
-python ../02_Tools/npmw.py npm run perf:sessions -- run --mode full --output ../02_Tools/cache/session-full-b.json
+python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode full --output evaluation-outputs/performance/session-full-a.json
+python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode full --output evaluation-outputs/performance/session-full-b.json
 
 # Explicit calibration, with separately justified positive absolute budgets.
-python ../02_Tools/npmw.py npm run perf:sessions -- calibrate --runs ../02_Tools/cache/session-full-a.json,../02_Tools/cache/session-full-b.json --budgets ../02_Tools/cache/session-budgets.json --output ../02_Tools/cache/session-reference.json
+python ../02_Tools/environment/npmw.py npm run perf:sessions -- calibrate --runs evaluation-outputs/performance/session-full-a.json,evaluation-outputs/performance/session-full-b.json --budgets evaluation-outputs/performance/session-budgets.json --output evaluation-outputs/performance/session-reference.json
 
 # New feature: measure and compare, or compare an existing report.
-python ../02_Tools/npmw.py npm run perf:sessions -- run --mode quick --reference ../02_Tools/cache/session-reference.json --output ../02_Tools/cache/session-candidate.json
-python ../02_Tools/npmw.py npm run perf:sessions -- compare --report ../02_Tools/cache/session-candidate.json --reference ../02_Tools/cache/session-reference.json --output ../02_Tools/cache/session-comparison.json
+python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode quick --reference evaluation-outputs/performance/session-reference.json --output evaluation-outputs/performance/session-candidate.json
+python ../02_Tools/environment/npmw.py npm run perf:sessions -- compare --report evaluation-outputs/performance/session-candidate.json --reference evaluation-outputs/performance/session-reference.json --output evaluation-outputs/performance/session-comparison.json
 ```
 
 Cases: `small` (20 messages), `medium` (200), `large` (2,000), `payload` (200 with 64 KiB completed

@@ -257,7 +257,7 @@ test("Plan follows every replacement live and restores the final list after nati
 test.describe("browser Plan", () => {
   test.use({ viewport: { width: 1024, height: 640 } });
   test("translated live Plan statuses fit minimum geometry", async ({ page, context }) => {
-    const server = spawn(process.execPath, ["scripts/dev-renderer.mjs"], {
+    const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
       env: { ...process.env, VITE_API: "mock" },
       stdio: ["ignore", "pipe", "pipe"],
     });

@@ -4,7 +4,7 @@
 
 Select for demo retrieval questions, CPU model comparison, isolated ranking
 baselines and measured model/threshold choice. Start at
-scripts/compare-embeddings.mjs and tests/fixtures/retrieval/demo-board.yaml.
+evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs and tests/fixtures/retrieval/demo-board.yaml.
 Extraction/chunks route to [document extraction](document-extraction.md);
 package asset verification to [native packaging](native-packaging.md).
 Production eval:retrieval routes to [document search](document-search.md); it uses
@@ -20,9 +20,9 @@ architecture05. Model selection is recorded in ADR0015.
 
 ## Public interface
 
-From 05_Software run pinned node scripts/compare-embeddings.mjs with required
+From 05_Software run pinned node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs with required
 --scratch, --models and --output absolute or cwd-relative paths. Scratch belongs
-under 02_Tools/cache/wp24-TASK-fd4046b2. --prepare explicitly permits downloads;
+under node_modules/.cache/evaluators/embedding-comparison/. --prepare explicitly permits downloads;
 the default requires checksum-verified local assets for both candidates.
 Both manifests live in tests/fixtures/retrieval; resource model-manifest selects BGE.
 The JSON report includes original corpus, fixture, source/asset hashes, host,
@@ -81,7 +81,7 @@ flowchart LR
 
 ## Files
 
-- scripts/compare-embeddings.mjs; scripts/retrieval/{corpus,embedding-worker,evaluation}.mjs
+- evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs; evaluators/retrieval-support/{corpus,evaluation}.mjs; evaluators/eval-embedding-comparison-harness/embedding-worker.mjs
 - tests/fixtures/retrieval/demo-board.yaml; {bge,e5}-model-manifest.json
 - tests/integration/retrieval.test.ts; existing packaging/extraction/boundary tests
 - 06_SoftwareDocu/wp24-embedding-measurements.md and evidence/wp24/

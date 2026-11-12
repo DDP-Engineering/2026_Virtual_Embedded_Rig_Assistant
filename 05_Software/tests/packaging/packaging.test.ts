@@ -14,7 +14,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 it("materializes pinned app-local VC++ DLLs and refuses altered cache or untrusted sources", async () => {
   const { prepareWindowsRuntime } = await import(
-    pathToFileURL(join(root, "scripts/prepare-windows-runtime.mjs")).href
+    pathToFileURL(join(root, "../02_Tools/environment/prepare-windows-runtime.mjs")).href
   );
   const dir = await mkdtemp(join(tmpdir(), "vera-crt-test-"));
   const source = join(dir, "source"),
@@ -47,7 +47,9 @@ it("materializes pinned app-local VC++ DLLs and refuses altered cache or untrust
 });
 
 it("configures native target pairs, distinct test identity and conditional mandatory signing", async () => {
-  const { distributionConfig } = await import(pathToFileURL(join(root, "scripts/package.mjs")).href);
+  const { distributionConfig } = await import(
+    pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href
+  );
   const win = distributionConfig("win32", false, {});
   expect(win.win.target.map((t: { target: string }) => t.target)).toEqual(["nsis", "zip"]);
   expect(win.nsis).toMatchObject({ perMachine: false, oneClick: true, allowElevation: false });
@@ -79,7 +81,9 @@ it("configures native target pairs, distinct test identity and conditional manda
 });
 
 it("rejects secrets and excessive paths without leaking secret values", async () => {
-  const { inspectPayloadFiles } = await import(pathToFileURL(join(root, "scripts/package-checks.mjs")).href);
+  const { inspectPayloadFiles } = await import(
+    pathToFileURL(join(root, "../02_Tools/release/package-checks.mjs")).href
+  );
   const secret = `sk-proj-${"A".repeat(40)}`;
   const problems = inspectPayloadFiles([
     { path: "credentials.json", bytes: Buffer.from(`{"apiKey":"${secret}"}`) },
@@ -94,7 +98,9 @@ it("rejects secrets and excessive paths without leaking secret values", async ()
 });
 
 it("requires native CPU files and rejects foreign native platform payloads", async () => {
-  const { validateNativeFiles } = await import(pathToFileURL(join(root, "scripts/package-checks.mjs")).href);
+  const { validateNativeFiles } = await import(
+    pathToFileURL(join(root, "../02_Tools/release/package-checks.mjs")).href
+  );
   expect(() => validateNativeFiles([], "win32")).toThrow(/missing native/);
   const paths = [
     "node_modules/better-sqlite3/prebuilds/win32-x64.node",
@@ -111,7 +117,9 @@ it("requires native CPU files and rejects foreign native platform payloads", asy
 });
 
 it("rejects missing, empty or altered individual PDF resources despite intact sibling assets", async () => {
-  const { checkStagedPayload } = await import(pathToFileURL(join(root, "scripts/package-checks.mjs")).href);
+  const { checkStagedPayload } = await import(
+    pathToFileURL(join(root, "../02_Tools/release/package-checks.mjs")).href
+  );
   const dir = await mkdtemp(join(tmpdir(), "vera-pdf-payload-"));
   const stage = join(dir, "stage"),
     source = join(dir, "pdfjs");
@@ -152,7 +160,7 @@ it("rejects missing, empty or altered individual PDF resources despite intact si
 
 it("rejects every release test hook including the audit environment name", async () => {
   const { verifyAppCode, documentWorkerMarkers } = await import(
-    pathToFileURL(join(root, "scripts/package.mjs")).href
+    pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href
   );
   for (const marker of [
     "VERA_REPLAY_DIR",
@@ -166,7 +174,7 @@ it("rejects every release test hook including the audit environment name", async
 });
 
 it("verifies immutable model assets and refuses altered cache/downloads or escaping paths", async () => {
-  const script = join(root, "scripts/prepare-model.mjs");
+  const script = join(root, "../02_Tools/environment/prepare-model.mjs");
   expect(existsSync(script), "verified model materializer is implemented").toBe(true);
   const { prepareModel } = await import(pathToFileURL(script).href);
   const dir = await mkdtemp(join(tmpdir(), "vera-model-test-"));
@@ -213,7 +221,7 @@ it("verifies immutable model assets and refuses altered cache/downloads or escap
 });
 
 it("measures package contributions without a size budget", async () => {
-  const script = join(root, "scripts/package.mjs");
+  const script = join(root, "../02_Tools/release/package.mjs");
   expect(existsSync(script), "packaging measurements are implemented").toBe(true);
   const packaging = await import(pathToFileURL(script).href);
   expect(packaging.enforceBudget).toBeUndefined();
@@ -232,7 +240,7 @@ it.each(["instrumented", "release", "missing-pdf-resource"] as const)(
   "inspects real ASAR app code through native file separators (%s)",
   async (scenario) => {
     const { inspectAppArchive, probeMarkers, documentWorkerMarkers } = await import(
-      pathToFileURL(join(root, "scripts/package.mjs")).href
+      pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href
     );
     const dir = await mkdtemp(join(tmpdir(), "vera-asar-test-"));
     const source = join(dir, "source");
@@ -301,7 +309,9 @@ function tarGz(name: string, data: Buffer): Buffer {
 
 // REQ-PLAT-c99d7918, REQ-SEC-1a151052
 it("prepares the pinned uv for the build platform and refuses altered archives or binaries", async () => {
-  const { prepareUv } = await import(pathToFileURL(join(root, "scripts/prepare-uv.mjs")).href);
+  const { prepareUv } = await import(
+    pathToFileURL(join(root, "../02_Tools/environment/prepare-uv.mjs")).href
+  );
   const sha = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
   const binary = Buffer.from("uv-binary");
   const zip = Buffer.from(zipSync({ "uv.exe": binary, "uvx.exe": Buffer.from("uvx") }));
@@ -391,8 +401,10 @@ it("prepares the pinned uv for the build platform and refuses altered archives o
 it("stages the uv binary as a package resource and verifies the packaged bytes", async () => {
   const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));
   expect(config.extraResources).toContainEqual({ from: "resources/uv", to: "uv", filter: ["**/*"] });
-  const { stageUv } = await import(pathToFileURL(join(root, "scripts/package.mjs")).href);
-  const { checkUvBinary } = await import(pathToFileURL(join(root, "scripts/prepare-uv.mjs")).href);
+  const { stageUv } = await import(pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href);
+  const { checkUvBinary } = await import(
+    pathToFileURL(join(root, "../02_Tools/environment/prepare-uv.mjs")).href
+  );
   const dir = await mkdtemp(join(tmpdir(), "vera-uv-stage-"));
   try {
     const binary = Buffer.from("uv-binary");

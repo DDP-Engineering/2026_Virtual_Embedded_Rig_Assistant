@@ -5,13 +5,13 @@ schema = 1
 
 [commands]
 # `aegis test` runs `test`; `check --run` uses the explicit [check] run list.
-# npmw.py runs the repository-local Node.js from 02_Tools/runtime (setup: python 02_Tools/setup.py)
-test = "python ../02_Tools/npmw.py npm test"
-test_impacted = "python ../02_Tools/npmw.py npx vitest run {tests}"  # {tests} = the focused regression set
+# npmw.py runs the repository-local Node.js from 02_Tools/runtime (setup: python 02_Tools/environment/setup.py)
+test = "python ../02_Tools/environment/npmw.py npm test"
+test_impacted = "python ../02_Tools/environment/npmw.py npx vitest run {tests}"  # {tests} = the focused regression set
 # Static checks are independent of targeted/full test selection (WP-18 policy).
-lint = "python ../02_Tools/npmw.py npm run lint"
-typecheck = "python ../02_Tools/npmw.py npm run typecheck"
-i18n = "python ../02_Tools/npmw.py npm run check:i18n"
+lint = "python ../02_Tools/environment/npmw.py npm run lint"
+typecheck = "python ../02_Tools/environment/npmw.py npm run typecheck"
+i18n = "python ../02_Tools/environment/npmw.py npm run check:i18n"
 workdir = "05_Software"                   # npm workspaces root (01-system.md §5)
 # timeout = 0                           # seconds allowed per command; 0 or
 #                                       # absent means no limit at all
@@ -42,7 +42,10 @@ source = [
     "05_Software/vitest.config.ts",
     "05_Software/src/libraries/",
     "05_Software/src/apps/",
-    "05_Software/scripts/",
+    "05_Software/evaluators/",
+    "02_Tools/environment/",
+    "02_Tools/build/",
+    "02_Tools/release/",
     "05_Software/src/models/",
     "05_Software/src/windows_runtime/",
     "05_Software/tests/fixtures/",

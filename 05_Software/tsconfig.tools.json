@@ -11,12 +11,11 @@
     "vitest.config.ts",
     "tests/tooling/**/*.ts",
     "tests/integration/**/*.ts",
-    "tests/fixtures/firmware-comparator/**/*.ts",
-    "tests/fixtures/test-planner/**/*.ts",
+    "evaluators/**/*.ts",
     "tests/packaging/**/*.ts",
     "playwright.config.ts",
     "tests/e2e/**/*.ts",
-    "tests/network*.ts"
+    "tests/support/**/*.ts"
   ],
   "references": [
     {

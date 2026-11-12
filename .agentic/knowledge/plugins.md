@@ -480,7 +480,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Catalog formats, token lint, URL rule, version order | shared `plugin-catalog.ts` | `plugin-catalog.test.ts` |
 | Catalog check or release build, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts` | `catalog-source.test.ts`, `tests/integration/cli.test.ts` |
 | Catalog client: sources, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server) |
-| Catalog IPC, checks, build-time URL | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `scripts/update-config.mjs` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
+| Catalog IPC, checks, build-time URL | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `02_Tools/release/update-config.mjs` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
 | Catalog section, review queue, update buttons | renderer `plugin-catalog.tsx`, `plugins.tsx`, `mocks/mockApi.ts`, locales | `plugin-catalog.test.ts`, `mockApi.test.ts`, `tests/e2e/plugins-catalog.spec.ts`, `plugins-mock.spec.ts` |
 
 ## Key behaviors
@@ -602,7 +602,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/libraries/shared/src/plugin-provisioning.test.ts` — range, download form, statuses, channels, settings.
 - `05_Software/tests/integration/provisioning.test.ts` — real system tar and a real probed program.
 - `05_Software/src/apps/cli/src/plugin.ts`, `provisioning.ts` — `vera plugin install` and the CLI provisioner.
-- `05_Software/src/uv/uv-manifest.json`, `05_Software/scripts/prepare-uv.mjs` — the pinned uv.
+- `05_Software/src/uv/uv-manifest.json`, `02_Tools/environment/prepare-uv.mjs` — the pinned uv.
 - `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx`, `plugins.test.ts` — library/action owner and tests.
 - `05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts`, `plugin-library-controls.tsx`, `plugin-library.test.ts` — passive projection, filters/counts/sort/paging and session state.
 - `05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx`, `runs-tab.test.ts` — the Runs tab and its tests.

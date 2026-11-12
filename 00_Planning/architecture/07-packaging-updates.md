@@ -80,7 +80,7 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
 | Linux x64 | AppImage | yes, when run as an AppImage | primary Linux distribution |
 | Linux x64 | deb | check only ("Install updates through your package manager") | for managed machines; category Development |
 
-Built by electron-builder 26.17.0 through `scripts/package.mjs`, which extends
+Built by electron-builder 26.17.0 through `02_Tools/release/package.mjs`, which extends
 `src/apps/desktop/electron-builder.yml` and supplies identity, targets, publish settings and file
 filters. On Windows the NSIS installer and the zip are two builder passes, so only the zip payload
 receives `vera.portable`. The build fails unless both targets of its platform are produced. Files are
@@ -148,9 +148,9 @@ after the window opens, then every 6 h, when the mode is not Off and the build h
   Updates panel.
 - Rollback: install the previous version's installer by hand; the updater never downgrades. Data
   compatibility across versions is deferred until the first public release (§6).
-- `scripts/update-feed.mjs` serves a local feed folder on 127.0.0.1, with range requests and a request
+- `02_Tools/release/update-feed.mjs` serves a local feed folder on 127.0.0.1, with range requests and a request
   log, for the update probe.
-- Update probe: `node scripts/probe-upgrade.mjs <scratch>` (WP-31) builds two instrumented versions
+- Update probe: `node tests/packaging/probe-upgrade.mjs <scratch>` (WP-31) builds two instrumented versions
   (0.31.0 → 0.31.1), installs the older NSIS or AppImage package for real and updates it through
   electron-updater from the local feed. It checks that a managed (deb) build gets metadata only, that a
   SHA-512 is required and a corrupt hash is refused, that the install is deferred until approval
