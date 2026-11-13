@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-e444904d"
+
+title = "Define the arduino-tool operations, VERA Arduino environment, run folder and result documents"
+
+status = "active"
+
+requirement = """
+The arduino-tool helper shall implement the operations, the VERA Arduino environment layout and configurations, the board identity keys, the run folders and the format 1 result documents defined in its spec, printing one JSON document per run and exiting 0 for pass, 2 for a refusal before arduino-cli acted and 3 for a run that failed.
+"""
+
+verification = "Each operation of the spec run against the fake arduino-cli and, for compile and queries, the real arduino-cli 1.6.0 prints one JSON document with format 1, kind arduino-tool-result and the documented fields; result.json and report.md appear in a new run folder under arduino-iot-results with no absolute path; an existing --run-id folder or a results folder inside .vera is refused with exit 2; an arduino-cli query that fails gives status error, tool-failed and exit 3."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_tool.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = "specs/REQ-DATA-e444904d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-37d5b2a2"
+
+title = "Fail a compile that used an undeclared index library"
+
+status = "active"
+
+requirement = """
+If a compile used a library from the environment's library folder that the request did not declare with its version, then the arduino-tool helper shall report status fail with an undeclared-library error naming the library and version, and shall report an ambiguous library choice as a warning.
+"""
+
+verification = "The fake compile result lists Servo 1.2.2 in location user without --library: status fail, undeclared-library Servo 1.2.2, exit 3; with --library Servo@1.2.2 status pass; compiler output with 'Multiple libraries were found' yields warning library-ambiguous."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

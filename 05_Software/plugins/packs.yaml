@@ -39,3 +39,7 @@
     - { name: Component selection, plugins: [parts-search], default: true }
     - { name: Simulation (ngspice), plugins: [ngspice], default: true }
     - { name: "Simulation (LTspice, Windows)", plugins: [ltspice], default: false }
+- id: arduino
+  name: Arduino
+  groups:
+    - { name: Sketches (Arduino CLI), plugins: [arduino-cli], default: true }

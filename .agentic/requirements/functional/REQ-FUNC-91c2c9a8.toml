@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-91c2c9a8"
+
+title = "Answer board, core and library queries offline"
+
+status = "active"
+
+requirement = """
+When boards details, boards search, cores list, cores search, libraries list or libraries search runs, the arduino-tool helper shall answer from the installed packages and the downloaded index files without network access, also when the indexes are older than a day, and write nothing.
+"""
+
+verification = "With the real arduino-cli, boards details of arduino:avr:nano lists the cpu option and the programmers, cores list lists arduino:avr 1.8.8 and arduino:samd 1.8.14, and with the index files dated three days back cores search avr and libraries search servo still answer and a compile succeeds; with the fake, searches over small index files rank and pick the latest versions while the only arduino-cli call is core list, and a missing index gives index-missing."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/boards.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/indexes.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

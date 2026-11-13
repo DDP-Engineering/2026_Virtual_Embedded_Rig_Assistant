@@ -11,13 +11,13 @@ PROCESS: at the user's request (2026-11-13) every child is implemented with AEGI
 branch `feature/113-arduino-iot` cut from `feature/93-electronics-calc` at bb79e4b, in the sibling
 worktree `F:\2026_Virtual_Embedded_Rig_Assistant_iot`. The implementer hands the candidate back without a
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
-STATE: IOT-01...IOT-08 planned.
+STATE: IOT-01 built (hardware acceptance pending); IOT-02...IOT-08 planned.
 
 ## Order
 
 | Order | Package | Issue | Plugin | Result | State |
 |---|---|---|---|---|---|
-| 1 | IOT-01 | [#114](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/114) | `arduino-cli` | native sketches: boards, cores, libraries, compile and upload of the verified binary | planned |
+| 1 | IOT-01 | [#114](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/114) | `arduino-cli` | pinned arduino-cli 1.6.0 (direct use blocked) behind `arduino-tool`: VERA's own environment `~/.vera-arduino`, offline outside `install`; exact-version installs; serial ports by identity key, no board inferred from a USB bridge; compile of a sketch copy into `arduino-iot-results/<run-id>/` (core, libraries, sizes, hashes); upload of exactly that verified binary to a matching identity; runner BUSY for foreground port holders. Real compiles verified on Windows (arduino:avr 1.8.8, arduino:samd 1.8.14); real upload, serial readback, two boards and native Ubuntu pending hardware (AEGIS TASK-239a7379) | built |
 | 2 | IOT-02 | [#115](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/115) | `micropython` | finite file and run operations on MicroPython devices | planned |
 | 3 | IOT-03 | [#116](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/116) | `circuitpython` | code and compatible libraries on an identified CircuitPython board | planned |
 | 4 | IOT-04 | [#117](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/117) | `bus-tools` | I2C/SPI/UART transactions through an identified adapter | planned |
@@ -40,6 +40,13 @@ the LAB-01 implementation (epic #101) when it exists. LAB-01 is developed in par
 checks that branch: a committed LAB-01 registry is taken over as is, so only one registry exists when the
 branches meet; otherwise IOT-01 builds the minimal registry along the seams of the LAB plan and the
 reconciliation is recorded as an open item for the merge.
+
+Outcome (IOT-01, 2026-11-13): LAB-01 was not committed (still at specify), so IOT-01 built no registry. It extended
+the existing in-process serial-port guard of the program runner (a foreground run now holds the ports it names;
+Linux `/dev/serial/by-id` links resolve to their device) and keeps serial board identity keys
+(`usb:<vid>:<pid>:<serial>`, `usb:<vid>:<pid>`, `serial:<address>`) inside the arduino-cli helper. Open item for the
+merge with `feature/101-embedded-lab`: LAB-01's cross-process lease registry replaces this guard extension and adopts
+the serial identity kind; desktop app and CLI do not yet see each other's ports.
 
 ## Rules shared by the packages
 

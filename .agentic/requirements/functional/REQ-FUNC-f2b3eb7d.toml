@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f2b3eb7d"
+
+title = "Upload only the verified binary of a passing compile run"
+
+status = "active"
+
+requirement = """
+When upload names a passing compile result, the arduino-tool helper shall verify the recorded hashes of the copied sketch, the binaries and the original sketch, copy the binaries to a staging folder, verify them again and have arduino-cli upload that copy to the named port with the compile's FQBN.
+"""
+
+verification = "With the fake arduino-cli the upload call carries --fqbn of the compile, --port, --protocol serial and --input-dir in the staging folder whose hex hash equals the recorded one; the upload result records the binary hash and the port before and after."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/upload.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

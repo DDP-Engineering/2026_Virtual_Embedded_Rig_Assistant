@@ -1,4 +1,4 @@
-import { constants } from "node:fs";
+import { constants, realpathSync } from "node:fs";
 import {
   type FileHandle,
   lstat,
@@ -94,6 +94,11 @@ export interface ProgramRunnerOptions {
   id?: () => string;
   /** Start time of run records; the system time by default. */
   now?: () => Date;
+  /**
+   * The device a Linux serial path names after its links (`/dev/serial/by-id/...` -> `/dev/ttyACM0`); a throw keeps
+   * the path as written. The file system's realpath by default.
+   */
+  devicePath?: (path: string) => string;
 }
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
@@ -114,18 +119,30 @@ const thrown = (code: "BUSY" | "DENIED", params: Record<string, string | number>
   params,
 });
 
-/** Serial ports an argument list names, alone or as the value of `--name=value`; COM names upper-cased. */
-export function serialPorts(args: readonly string[]): string[] {
+/**
+ * Serial ports an argument list names, alone or as the value of `--name=value`; COM names upper-cased, device
+ * paths as `devicePath` resolves them (as written when it throws or names no device path).
+ */
+export function serialPorts(args: readonly string[], devicePath?: (path: string) => string): string[] {
   const ports = new Set<string>();
   for (const arg of args) {
     const equals = arg.indexOf("=");
     for (const value of arg.startsWith("-") && equals > 0 ? [arg, arg.slice(equals + 1)] : [arg]) {
       const com = COM_PORT.exec(value)?.[1];
       if (com) ports.add(com.toUpperCase());
-      else if (DEVICE_PORT.test(value)) ports.add(value);
+      else if (DEVICE_PORT.test(value)) ports.add(resolveDevice(value, devicePath));
     }
   }
   return [...ports];
+}
+function resolveDevice(path: string, devicePath: ((path: string) => string) | undefined): string {
+  if (!devicePath) return path;
+  try {
+    const resolved = devicePath(path);
+    return resolved.startsWith("/dev/") ? resolved : path;
+  } catch {
+    return path;
+  }
 }
 
 /** The minimal environment of a run: allowlisted host variables, the program's own, then the fixed two. */
@@ -187,7 +204,10 @@ class Run implements ProgramRun {
   ) {
     this.background = request.background === true;
     this.workbench = runner.key(request.workbench);
-    this.ports = serialPorts(request.programArgs ?? request.args);
+    this.ports = serialPorts(
+      request.programArgs ?? request.args,
+      settings.host.platform === "win32" ? undefined : settings.devicePath,
+    );
     this.tail = new TailBuffer(settings.tailChars);
     this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
@@ -392,7 +412,7 @@ async function readRecord(path: string, id: string): Promise<ProgramRunRecord | 
  * Runs resolved executables for plugins (plugins architecture §3.2) through the host's ProcessHost:
  * guarded working directory, minimal environment, decoded output with a capped tail and a full log in
  * `.vera/runs/`, timeouts and Stop that kill the whole process tree, at most `maxBackground` background
- * runs per session and a serial-port guard against ports held by background runs.
+ * runs per session and a serial-port guard against ports held by unfinished runs.
  */
 export class ProgramRunner {
   private readonly active = new Map<string, Run>();
@@ -409,14 +429,15 @@ export class ProgramRunner {
       logsKept: options.logsKept ?? 200,
       killGraceMs: options.killGraceMs ?? 3000,
       now: options.now ?? (() => new Date()),
+      devicePath: options.devicePath ?? ((path) => realpathSync(path)),
     };
     this.nextId = options.id ?? monotonicFactory();
   }
 
   /**
    * Starts a run. Refuses with BUSY `{limit}` a background run beyond the session's limit, with BUSY
-   * `{handle, port}` a run naming a serial port that a running background run names, and with DENIED a
-   * working directory outside the workbench; none of these starts a process.
+   * `{handle, port}` a run naming a serial port that another unfinished run names (foreground or background),
+   * and with DENIED a working directory outside the workbench; none of these starts a process.
    */
   async start(request: RunRequest): Promise<ProgramRun> {
     const run = new Run(this.nextId(), request, this, this.settings);
@@ -428,7 +449,7 @@ export class ProgramRunner {
     )
       throw thrown("BUSY", { limit: this.settings.maxBackground });
     for (const port of run.ports) {
-      const holder = runs.find((other) => other.background && other.ports.includes(port));
+      const holder = runs.find((other) => other.ports.includes(port));
       if (holder) throw thrown("BUSY", { handle: holder.id, port });
     }
     this.active.set(run.id, run);

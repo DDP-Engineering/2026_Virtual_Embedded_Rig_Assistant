@@ -27,6 +27,12 @@ for the LTspice dialect checks, raw.py for raw files, engine.py, schematic.py) w
 tolerances in its README, hostile files, raw files written by LTspice 26.1.1) own its coverage. Its workspace.py,
 measure.py and sweep.py are byte-identical copies of ngspice-tool's.
 
+For arduino-cli, start at plugins/arduino-cli/plugin.yaml, scripts/arduino_tool.py and scripts/arduino_support/
+(environment.py for VERA's Arduino environment, configurations and staging; sketch.py, boards.py for identity keys,
+indexes.py for offline searches, compile.py, upload.py, report.py, cli.py) with spec .agentic/specs/REQ-DATA-e444904d.md;
+tests/integration/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
+coverage. Its workspace.py is a byte-identical copy of ngspice-tool's.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -36,7 +42,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -181,6 +187,39 @@ that source metadata reaches the deterministic bundled index unchanged.
   run (`vera_point` with `table()` parameters; temperature ascending) and writes no absolute path into results
   (`<LTspice library>`, workbench-relative paths, file names). Verified with LTspice 26.1.1 on Windows 11
   (2026-11-13), including the same requests against ngspice-47.
+- `arduino-cli` 1.0.0, ecosystem `arduino` (Arduino pack, group "Sketches (Arduino CLI)", default on; activities
+  `build`, `flash`), Windows x64 and Linux x64, requires serial-monitor. Program `arduino-cli`: the official 1.6.0 zip
+  (Windows) or tar.gz (Linux) by SHA-256, `preferDownload`, else PATH (`/usr/local/bin`, `/usr/bin` on Linux) in
+  range `>=1.6,<2`; every `arduino-cli *` command blocked. Program `arduino-tool` = `scripts/arduino_tool.py` (PEP 723,
+  standard library), `uses: [arduino-cli]`, timeout 1800 s. Risks: `inspect`, `report`, `clean`, `boards details`,
+  `boards search`, `cores *`, `libraries *` safe; `boards list` and `compile` device-read (discovery tools; core
+  recipes and hooks run on the host); `install *` device-write (3600 s); `upload *` device-write (600 s). VERA's
+  Arduino environment is `$VERA_ARDUINO_HOME` or `~/.vera-arduino` (`data`, `downloads`, `user`, `cache`,
+  `staging/<run-id>-<hex>` with `owner.json`, `environment.json` format 1 with https index URLs); every arduino-cli
+  call is `--config-file <generated> --json <command>` with cwd the staging folder (created as `.starting-*` with
+  `owner.json`, then renamed) and closed stdin, and no agent value may start with `-`; the offline configuration
+  (everything but install) sets `network.proxy: http://127.0.0.1:9`. `cores search` and `libraries search` read the
+  downloaded index files themselves (arduino-cli would refresh a day-old index first and fail offline). An
+  arduino-cli call that fails where its answer is needed is `error`/`tool-failed`, exit 3; a run folder holds an
+  `incomplete` result while arduino-cli compiles or uploads, so an interrupted run reads as such. Install: `index
+  [--index-url https]`, `core VENDOR:ARCH@VERSION --skip-post-install` (records a replaced version), `library
+  NAME@VERSION --no-deps` (missing dependencies are warnings). Compile refuses before arduino-cli compiles
+  (`fqbn-invalid`, `core-missing`, `core-version`, `local-override` for platform.local.txt/boards.local.txt,
+  `fqbn-unknown` with up to ten close candidates, `fqbn-option` with the declared values, `library-missing`,
+  `library-version`, `sketch-invalid`), copies the sketch (without sketch.yaml/sketch.json, a top-level build folder,
+  hidden entries; links refused) and `--library-dir` folders into the run folder, builds in staging, exports to
+  `binary/`, and records FQBN/options, platform with recipe hash and hooks, arduino-cli version, configuration hash,
+  source files and combined hash, libraries (platform/index/local, declared), sizes, binaries and sketch-relative
+  diagnostics; an undeclared index library makes it `fail`, "Multiple libraries were found" a warning. Upload takes
+  the compile's `result.json` (approval-bound), re-hashes the sketch copy, the binaries and the original sketch
+  (`conflict`), checks the port by identity (`port-missing`, `identity-mismatch`, `identity-ambiguous`,
+  `board-mismatch`, `board-unverified` without `--board-unverified`, `programmer-unknown`), copies the binaries to
+  staging together with exactly the recorded sketch files, verifies them and uploads those copies with `--protocol serial`, then lists the ports again for `port.after` (null with `identity-not-found`, `identity-ambiguous` or, when the list fails, `ports-unlisted`; the upload's status stands).
+  Identity: `usb:vid:pid:serial` (stable), `usb:vid:pid` or `serial:<address>` (unstable); FTDI, WCH, Silicon Labs
+  and Prolific bridge VID:PIDs are never identified (matches become candidates); network ports are ignored. Results:
+  `arduino-iot-results/<run-id>/` (`result.json` kind `arduino-tool-result`, `report.md`, logs), no absolute path;
+  exit 0 pass, 2 blocked, 3 fail or error. Verified with arduino-cli 1.6.0, arduino:avr 1.8.8 and arduino:samd 1.8.14
+  on Windows 11 (2026-11-13); real upload, serial readback, two boards and native Ubuntu are pending hardware.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -323,6 +362,13 @@ that source metadata reaches the deterministic bundled index unchanged.
   boot log with `serial capture --port P --reset`.
 
 ## Invariants
+
+- arduino-tool never names the Arduino IDE's folders and never installs during compile or upload: the offline
+  configuration's dead loopback proxy makes any HTTP access fail, and a missing core or library is a refusal naming
+  the install command. A compile never changes the sketch (it builds a copy) and never uses sketch.yaml defaults or
+  profiles; an upload sends only a staged, re-verified copy of a passing build's binaries, never a recompile.
+- arduino-tool sets `sys.dont_write_bytecode` before importing `arduino_support`, so a run leaves the installed package
+  unchanged; it writes only run folders under the workbench and the VERA Arduino environment.
 
 - elec-calc sets `sys.dont_write_bytecode` and puts its own folder on `sys.path` before importing
   `elec_support`: a run writes nothing into the installed package, so the integrity hash holds. Requests are
@@ -512,6 +558,10 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A new esptool release | re-record `fixtures/esp32-esptool/esptool-<v>-help.txt`, then rules and `version.range` | "names only esptool 5.6.0 commands" |
 | Flashing guidance | `plugins/esp32-esptool/skills/esp32-flash/SKILL.md` | "offers esp32-flash" test |
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
+| An arduino-tool operation, option or refusal | `plugins/arduino-cli/scripts/arduino_support/{cli,compile,upload}.py`, spec REQ-DATA-e444904d | the operation's describe block in `arduino-cli.test.ts` (fake arduino-cli), then the real-tool block |
+| Arduino environment, configurations, staging, clean | `arduino_support/environment.py` | "runs arduino-cli only with VERA's own folders", "Stop and clean" |
+| Board identity keys or the bridge list | `arduino_support/boards.py` | "lists serial ports by identity", upload identity refusals |
+| A new arduino-cli release | the manifest's download pins and range; rerun the real-tool tests (`VERA_TEST_ARDUINO_CLI`, `VERA_ARDUINO_HOME`) | package test and real compiles |
 
 ## Key behaviors
 
@@ -586,9 +636,18 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-TEST-fe972de0` — a replay session identifies, flashes with image hashes on the card and captures the boot log.
 - `REQ-PLAT-d2b3fa4a` — real boards on Windows 11 and Ubuntu (manual).
 - `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` (Plugins) — write-flash approvals list each image's SHA-256; a rebuilt image fails CONFLICT.
-- `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
+- `REQ-SEC-016c9aad` (Plugins) — a run naming a port that another unfinished run names (a background capture, a foreground upload) is BUSY.
+- `REQ-FUNC-5b49327c` / `REQ-SEC-93d5fc98` / `REQ-FUNC-693a8fbf` — arduino-cli pinned 1.6.0 with direct use blocked, arduino-tool risks, catalog, Arduino pack and three skills.
+- `REQ-DATA-e444904d` / `REQ-FUNC-32924acc` / `REQ-FUNC-9fceeea6` — arduino-tool contract, VERA's own environment offline outside install, exact-version installs.
+- `REQ-FUNC-d02a9d01` / `REQ-FUNC-cbd22972` / `REQ-FUNC-91c2c9a8` — inspect, identity keys without bridge inference, offline queries.
+- `REQ-FUNC-6678cab1` / `REQ-REL-6b92ea2f` / `REQ-REL-c731bd06` / `REQ-SEC-f5477b64` / `REQ-SEC-37d5b2a2` / `REQ-SEC-8faa1e1d` — traceable compile of a copy and its refusals and failures.
+- `REQ-FUNC-f2b3eb7d` / `REQ-SEC-ea1a5b7d` / `REQ-SEC-77af299d` / `REQ-FUNC-165776d6` — upload of the verified binary, conflict and identity refusals, port re-bound after upload.
+- `REQ-REL-fa13ca61` / `REQ-FUNC-e2eea361` / `REQ-TEST-de25fd47` — Stop leaves no process and clean removes ended staging; report; real-tool and gated hardware tests.
 
 ## Files
+
+- `05_Software/plugins/arduino-cli/` — manifest, README (pins, environment, risk table), skills arduino-build-fix, arduino-libraries and arduino-test-sketch, `scripts/arduino_tool.py` (entry), `scripts/arduino_support/` (`environment`, `sketch`, `boards`, `indexes`, `compile`, `upload`, `report`, `cli`, `workspace` shared).
+- `05_Software/tests/integration/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).

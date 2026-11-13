@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-868fc8ab"
+
+title = "Compare Linux serial device paths after resolving links"
+
+status = "active"
+
+requirement = """
+When the program runner compares the serial ports two runs name, it shall compare a Linux device path by the device its links resolve to, so that a /dev/serial/by-id link and the /dev/tty device it points to are one port, and shall keep a path that cannot be resolved as written.
+"""
+
+verification = "Runner unit test with a link resolver: a background run naming /dev/serial/by-id/usb-Arduino-if00 that resolves to /dev/ttyACM0 makes a run naming /dev/ttyACM0 BUSY with that port; an unresolvable /dev/ttyUSB9 stays as written and does not collide with /dev/ttyUSB0."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

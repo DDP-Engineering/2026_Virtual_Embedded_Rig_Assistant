@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-77af299d"
+
+title = "Refuse an upload to a port whose board identity is missing, changed, ambiguous or mismatched"
+
+status = "active"
+
+requirement = """
+If the upload's port is absent, carries another identity than --identity, shares its identity with another port, holds an identified board that does not match the FQBN, or holds an unidentified board without --board-unverified, then the arduino-tool helper shall refuse with exit 2 before uploading.
+"""
+
+verification = "With fake ports, each case gives port-missing, identity-mismatch naming the port that now carries the identity, identity-ambiguous for two CH340 ports, board-mismatch for a Leonardo port and an arduino:avr:uno build, and board-unverified for a CH340 without the flag; the recorded argv has board list calls and no upload call."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/upload.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/boards.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

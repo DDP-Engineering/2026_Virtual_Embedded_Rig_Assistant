@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-f5477b64"
+
+title = "Refuse an unknown board or option instead of correcting the FQBN"
+
+status = "active"
+
+requirement = """
+If the FQBN names a board that is not installed or an option key or value the board does not declare, then the arduino-tool helper shall refuse with exit 2 and list candidate boards or the declared values, without compiling or choosing a replacement.
+"""
+
+verification = "`--fqbn arduino:avr:unoo` exits 2 with fqbn-unknown and arduino:avr:uno among the candidates; `--fqbn arduino:avr:nano:cpu=atmega9` exits 2 with fqbn-option listing atmega328, atmega328old and atmega168; no compile call is made."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

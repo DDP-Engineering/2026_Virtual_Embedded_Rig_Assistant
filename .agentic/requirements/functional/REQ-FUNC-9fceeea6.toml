@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9fceeea6"
+
+title = "Install indexes, cores and libraries only on an explicit install with exact versions"
+
+status = "active"
+
+requirement = """
+When install names an index, a core VENDOR:ARCH@VERSION or a library NAME@VERSION, the arduino-tool helper shall install exactly that item into the VERA Arduino environment without post-install scripts and without library dependencies, accepting only https index URLs and refusing a missing or non-exact version with exit 2.
+"""
+
+verification = "The fake arduino-cli receives `core install arduino:avr@1.8.8 --skip-post-install` and `lib install Servo@1.2.2 --no-deps`; `install core arduino:avr`, `install library Servo@latest` and `install index --index-url http://x` are refused with exit 2 before arduino-cli runs; the real install of arduino:avr 1.8.8 and arduino:samd 1.8.14 succeeds."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/environment.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

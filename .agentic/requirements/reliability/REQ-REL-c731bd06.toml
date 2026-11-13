@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c731bd06"
+
+title = "Refuse a compile whose core or declared library is missing or in another version"
+
+status = "active"
+
+requirement = """
+If a compile's platform is not installed or differs from the asserted --core version, or a declared --library is not installed in its version, then the arduino-tool helper shall refuse with exit 2 and a diagnostic naming the install command, without installing anything and without compiling.
+"""
+
+verification = "With the fake arduino-cli reporting arduino:avr 1.8.6 installed, `compile --core arduino:avr@1.8.8` exits 2 with core-version and no compile call; an uninstalled platform gives core-missing and a declared library absent from lib list gives library-missing; no install call appears in the recorded argv."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

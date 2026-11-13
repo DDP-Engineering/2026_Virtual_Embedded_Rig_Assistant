@@ -309,7 +309,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   a log that cannot be deleted is skipped and never blocks the run.
 - At most 4 unfinished background runs per session (BUSY `{limit}`). A run naming a serial port
   (`COM<n>` with optional `\\.\`, upper-cased; `/dev/tty*`; `/dev/serial/by-id/*`; whole argument or
-  the value of `--name=value`) that an unfinished background run also names is BUSY `{handle, port}`.
+  the value of `--name=value`) that another unfinished run of the runner also names, foreground or
+  background, is BUSY `{handle, port}`. Off Windows a device path is compared by the device its links
+  resolve to (`ProgramRunnerOptions.devicePath`, realpath by default), so a `/dev/serial/by-id` link and its
+  `/dev/tty*` device are one port; an unresolvable path stays as written. The guard is per runner (one
+  process): the desktop app and a CLI process do not see each other's ports.
 - Format 1 requires `launcherMode: argv|string` iff `launcher` is present, with a find installation.
   Find locates launcher[0]; the resolver carries its remaining prefix and `{command, mode, platform}`.
   `programInvocation` builds probe and run argv. String launchers bind the generated invocation in
@@ -519,7 +523,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-85bf8a14` / `REQ-DATA-6491c211` / `REQ-DATA-49ebfb15` — 12 000-character tail, full ULID log, newest 200 kept.
 - `REQ-FUNC-b7e0b968` / `REQ-FUNC-f678fbd7` — background runs, incremental reads, at most 4 per session.
 - `REQ-FUNC-39d5e6d9` — session stop, workbench close and app exit stop runs.
-- `REQ-SEC-016c9aad` — serial-port guard.
+- `REQ-SEC-016c9aad` / `REQ-FUNC-868fc8ab` — serial-port guard for foreground and background holders; Linux links resolved.
 - `REQ-FUNC-efbc6124` / `REQ-SEC-7b3e7ed4` — launcher composition and metacharacter refusal.
 - `REQ-REL-e594e725` — a program that cannot start reports its error code.
 - `REQ-NFR-d056ff66` — core never imports child_process.

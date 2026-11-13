@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8faa1e1d"
+
+title = "Refuse local overrides of a core and record its hooks"
+
+status = "active"
+
+requirement = """
+If the board's platform folder holds platform.local.txt or boards.local.txt, then the arduino-tool helper shall refuse the compile with exit 2, and otherwise it shall record every recipe.hooks property of the build in the result.
+"""
+
+verification = "A fake platform folder with platform.local.txt makes compile exit 2 with local-override before the compile call; build properties with recipe.hooks.prebuild.1.pattern appear under platform.hooks in result.json; the helper accepts no --build-property option."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

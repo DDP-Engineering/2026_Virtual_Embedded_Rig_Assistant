@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5b49327c"
+
+title = "Provide arduino-cli as a pinned download or a found install and block its direct use"
+
+status = "active"
+
+requirement = """
+The arduino-cli plugin shall provide arduino-cli 1.6.0 as a SHA-256-pinned download for Windows x64 and Linux x64, preferred over an arduino-cli found on PATH in the version range >=1.6,<2, and shall classify every direct arduino-cli command as blocked.
+"""
+
+verification = "Validate plugin.yaml with the shared manifest schema: the download entries carry the release URLs and SHA-256 digests of arduino-cli 1.6.0 and preferDownload; classifyCommand gives blocked for `arduino-cli version` and `arduino-cli upload -p COM5`, and the version probe pattern extracts 1.6.0 from the real `arduino-cli version` output."
+
+affected_paths = ["05_Software/plugins/arduino-cli/plugin.yaml", "05_Software/plugins/arduino-cli/README.md"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13
