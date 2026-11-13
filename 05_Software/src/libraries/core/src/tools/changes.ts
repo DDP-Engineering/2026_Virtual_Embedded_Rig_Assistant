@@ -41,7 +41,7 @@ export interface FileChangeRequest {
   readonly sessionId: string;
   readonly turnId: string;
   readonly callId: string;
-  readonly tool: "write" | "edit";
+  readonly tool: "write" | "edit" | "apply_candidate";
   readonly path: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly existed: boolean;
@@ -84,7 +84,7 @@ export function protectedPath(path: string): boolean {
   return key === ".vera" || key.startsWith(".vera/");
 }
 /** Agent writes cannot exercise the user's plugin/settings/session management authority. */
-async function assertAgentWritable(ctx: ToolContext, target: GuardedPath): Promise<void> {
+export async function assertAgentWritable(ctx: ToolContext, target: GuardedPath): Promise<void> {
   const identity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
   const path = identity(target.absolute);
   if (/(?:^|[\\/])\.vera[\\/]workbench\.yaml$/.test(path))
@@ -178,85 +178,140 @@ export async function prepareChange(
     protected: protectedPath(target.relative),
     ...(guard.scope === "filesystem" ? { scope: "filesystem" as const } : {}),
   });
-  // Capture host identity as well: caller changes to its next call cannot retarget this row.
-  const identity = { sessionId: host.sessionId, callId: host.callId };
   const result =
     tool === "write"
       ? { path: changePath, bytes: after.length, created: before === null }
       : { path: changePath, replacements, added, removed };
-  let consumed = false;
   return Object.freeze({
     request,
-    async apply(applySignal: AbortSignal) {
-      if (consumed) throw Error("Prepared change was already consumed.");
-      consumed = true;
-      return host.queue.run(async () => {
-        const check = async () => {
-          signal.throwIfAborted();
-          applySignal.throwIfAborted();
-          host.assertWritable?.();
-          const current = await (await toolPathGuard(ctx)).resolve(args.path);
-          await assertAgentWritable(ctx, current);
-          if (current.key !== target.key || current.relative !== target.relative) throw conflict();
-          const currentBytes = await contents(current);
-          if ((currentBytes === null ? null : hash(currentBytes)) !== beforeSha256) throw conflict();
-          return current;
-        };
-        await check();
-        await mkdir(dirname(target.absolute), { recursive: true });
-        await check();
-        const id = Number(
-          host.db
-            .prepare(
-              "INSERT INTO changes(session_id,tool_call_id,path,before_sha256,after_sha256,diff,status,created_at) VALUES (?,?,?,?,?,?,'pending',?)",
-            )
-            .run(identity.sessionId, identity.callId, changePath, beforeSha256, afterSha256, diff, host.now())
-            .lastInsertRowid,
-        );
-        const temporary = join(dirname(target.absolute), `.vera-change-${randomUUID()}.tmp`);
-        let renamed = false;
-        try {
-          const mode =
-            before !== null && process.platform !== "win32"
-              ? (await stat(target.absolute)).mode & 0o777
-              : undefined;
-          const file = await open(temporary, "wx", 0o600);
-          try {
-            await file.writeFile(after);
-            if (mode !== undefined) await file.chmod(mode);
-            await file.sync();
-          } finally {
-            await file.close();
-          }
-          await check();
-          await rename(temporary, target.absolute);
-          renamed = true;
-          const publish = host.db.transaction(() => {
-            host.assertWritable?.();
-            host.db.prepare("UPDATE changes SET status='applied' WHERE id=?").run(id);
-            return host.recorded({
-              type: "change.recorded",
-              changeId: id,
-              path: changePath,
-              added,
-              removed,
-            });
-          })();
-          ctx.lastReads.set(target.key, {
-            sha256: afterSha256,
-            mtimeMs: (await stat(target.absolute)).mtimeMs,
-          });
-          publish?.();
-          return result;
-        } finally {
-          if (!renamed)
-            await unlink(temporary).catch((error: NodeJS.ErrnoException) => {
-              if (error.code !== "ENOENT") throw error;
-            });
-        }
-      });
-    },
+    apply: commitChange({
+      ctx,
+      signal,
+      target,
+      path: args.path,
+      before,
+      beforeSha256,
+      after,
+      afterSha256,
+      changePath,
+      diff,
+      added,
+      removed,
+      result,
+    }),
   });
+}
+
+/** What `commitChange` writes and how it checks the target again; `check` adds a caller's own conditions. */
+export interface CommitOptions {
+  readonly ctx: ToolContext;
+  readonly signal: AbortSignal;
+  readonly target: GuardedPath;
+  readonly path: string;
+  readonly before: Buffer | null;
+  readonly beforeSha256: string | null;
+  readonly after: Buffer;
+  readonly afterSha256: string;
+  readonly changePath: string;
+  readonly diff: string;
+  readonly added: number;
+  readonly removed: number;
+  readonly result: Record<string, unknown>;
+  readonly check?: () => Promise<void>;
+}
+
+/** Writes prepared bytes once, inside the write queue: the target must still hold the before hash (and pass the
+ * caller's check) before the temporary file, after it and right before the rename; the change row records it. */
+export function commitChange(options: CommitOptions): PreparedChange["apply"] {
+  const {
+    ctx,
+    signal,
+    target,
+    before,
+    beforeSha256,
+    after,
+    afterSha256,
+    changePath,
+    diff,
+    added,
+    removed,
+    result,
+  } = options;
+  const host = ctx.change;
+  if (!host) throw Error("Workbench write host is unavailable.");
+  // Capture host identity as well: caller changes to its next call cannot retarget this row.
+  const identity = { sessionId: host.sessionId, callId: host.callId };
+  let consumed = false;
+  return async (applySignal: AbortSignal) => {
+    if (consumed) throw Error("Prepared change was already consumed.");
+    consumed = true;
+    return host.queue.run(async () => {
+      const check = async () => {
+        signal.throwIfAborted();
+        applySignal.throwIfAborted();
+        host.assertWritable?.();
+        const current = await (await toolPathGuard(ctx)).resolve(options.path);
+        await assertAgentWritable(ctx, current);
+        if (current.key !== target.key || current.relative !== target.relative) throw conflict();
+        const currentBytes = await contents(current);
+        if ((currentBytes === null ? null : hash(currentBytes)) !== beforeSha256) throw conflict();
+        await options.check?.();
+        return current;
+      };
+      await check();
+      await mkdir(dirname(target.absolute), { recursive: true });
+      await check();
+      const id = Number(
+        host.db
+          .prepare(
+            "INSERT INTO changes(session_id,tool_call_id,path,before_sha256,after_sha256,diff,status,created_at) VALUES (?,?,?,?,?,?,'pending',?)",
+          )
+          .run(identity.sessionId, identity.callId, changePath, beforeSha256, afterSha256, diff, host.now())
+          .lastInsertRowid,
+      );
+      const temporary = join(dirname(target.absolute), `.vera-change-${randomUUID()}.tmp`);
+      let renamed = false;
+      try {
+        const mode =
+          before !== null && process.platform !== "win32"
+            ? (await stat(target.absolute)).mode & 0o777
+            : undefined;
+        const file = await open(temporary, "wx", 0o600);
+        try {
+          await file.writeFile(after);
+          if (mode !== undefined) await file.chmod(mode);
+          await file.sync();
+        } finally {
+          await file.close();
+        }
+        await check();
+        await rename(temporary, target.absolute);
+        renamed = true;
+        const publish = host.db.transaction(() => {
+          host.assertWritable?.();
+          host.db.prepare("UPDATE changes SET status='applied' WHERE id=?").run(id);
+          return host.recorded({
+            type: "change.recorded",
+            changeId: id,
+            path: changePath,
+            added,
+            removed,
+          });
+        })();
+        ctx.lastReads.set(target.key, {
+          sha256: afterSha256,
+          mtimeMs: (await stat(target.absolute)).mtimeMs,
+        });
+        publish?.();
+        return result;
+      } finally {
+        if (!renamed)
+          await unlink(temporary).catch((error: NodeJS.ErrnoException) => {
+            if (error.code !== "ENOENT") throw error;
+          });
+      }
+    });
+  };
 }
 export async function recoverChanges(
   root: string,

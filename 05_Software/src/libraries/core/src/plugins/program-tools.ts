@@ -288,6 +288,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
             ),
             ...current.resolved.env,
           },
+          ...(current.declared.gui ? { display: true } : {}),
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
           background,
           ...(background ? {} : { signal: applySignal }),

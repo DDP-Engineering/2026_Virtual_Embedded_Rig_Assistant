@@ -103,6 +103,8 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
 | `programs.*.env` | extra variables; values are literals, `${workbench}` or `${pluginDir}` |
 | `programs.*.timeout` | default seconds for a foreground run, ≤ 3600 |
+| `programs.*.uses` | other programs of the same plugin, found or downloaded first; their paths reach the run as `VERA_PROGRAM_<NAME>` |
+| `programs.*.gui` | `true` for a program that opens windows on the user's desktop: only its runs receive the display variables (§3.2) |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
 | `docs[]` | URLs or plugin-relative files (which must exist in the package) the UI offers to add to the workbench documents |
 
@@ -174,7 +176,8 @@ policy below; it receives a resolved executable and the program's resolved varia
   Stdin is closed, so an interactive program fails instead of hanging. `blocked` rules name the
   known interactive subcommands.
 - Environment: a minimal base (`PATH` = managed tool directories + system `PATH`; `SystemRoot`,
-  `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`), then the program's
+  `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`; for a `gui: true`
+  program also `DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY`, `XDG_RUNTIME_DIR`), then the program's
   `env`, then `PYTHONUTF8=1` and `NO_COLOR=1`. Names compare case-insensitively on Windows.
   Credentials from the VERA store and VERA's own environment never enter it.
 - `cwd` passes the workbench path guard and must be a directory, else DENIED. The program itself is

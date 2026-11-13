@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-32022bcd"
+
+title = "Open a candidate copy of a board in KiCad's PCB editor"
+
+status = "active"
+
+requirement = """
+When the agent runs `kicad-layout-tool open --board FILE`, the helper shall copy the board and its project context into a new run folder, start KiCad's PCB editor on the copy, bind to the KiCad API whose open document is that copy, save the copy through KiCad and record the source and candidate hashes, the inventory and the DRC of the copy, leaving the source unchanged.
+"""
+
+verification = "Real KiCad on Windows: open on the fixture board exits 0 within 60 s with a PCB editor window on the copy; state.json's source SHA-256 equals the source file's and its candidate SHA-256 the saved copy's; board.json lists the fixture's footprints, nets and copper layers; drc-before.json exists; the source board and project files keep their hashes and no KiCad lock file appears beside them."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/candidate.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/state.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/drc.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

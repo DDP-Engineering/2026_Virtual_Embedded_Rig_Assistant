@@ -70,6 +70,8 @@ export interface SessionHost {
   web?: WebProvider;
   /** Supplier catalog search; absent hosts never offer parts_search. */
   parts?: PartsSearcher;
+  /** Writing kicad-layout candidates over their boards; only hosts that enable it (with the official plugin) offer apply_candidate. */
+  applyCandidate?: boolean;
   downloads?: WebDownloads;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
@@ -699,6 +701,7 @@ export class SessionService {
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
       .filter((tool) => tool.name !== "parts_search" || !!this.host.parts)
+      .filter((tool) => tool.name !== "apply_candidate" || !!this.host.applyCandidate)
       .filter(
         (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,
       )

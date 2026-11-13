@@ -194,6 +194,33 @@ describe("command line (REQ-FUNC-8e22989a)", () => {
       args: raw,
     });
   });
+  // REQ-PLAT-e0d8f3cf
+  it("passes the desktop's display variables only to a program that declares windows (gui: true)", async () => {
+    (host.env as Record<string, string>).DISPLAY = ":0";
+    (host.env as Record<string, string>).XAUTHORITY = "/home/u/.Xauthority";
+    const rules = [{ match: "{echo,editor} status *", risk: "safe" }];
+    plugins = [
+      loaded("echo-tools", { echo: program(), editor: program({ gui: true }) }, rules, {
+        echo: "1",
+        editor: "1",
+      }),
+    ];
+    for (const [name, expected] of [
+      ["echo", false],
+      ["editor", true],
+    ] as const) {
+      const result = (await prepare({ program: name, args: ["status"] })).apply(signal());
+      const process = await spawned(name === "echo" ? 1 : 2);
+      if (expected)
+        expect(process.options.env).toMatchObject({ DISPLAY: ":0", XAUTHORITY: "/home/u/.Xauthority" });
+      else {
+        expect(process.options.env).not.toHaveProperty("DISPLAY");
+        expect(process.options.env).not.toHaveProperty("XAUTHORITY");
+      }
+      process.finish({ code: 0, signal: null });
+      await result;
+    }
+  });
   it("joins resolver prefix, manifest prefix and agent arguments with expanded env and cwd", async () => {
     plugins = [
       loaded(

@@ -658,6 +658,7 @@
     "program_stop": "Stop a background program run.",
     "plugin_validate": "Validate a plugin draft and report schema issues and warnings.",
     "plugin_install": "Request review and install a draft as a trial plugin.",
+    "apply_candidate": "Write a checked kicad-layout candidate over its source board after you ask to apply it. Needs the kicad-layout plugin; asks for approval like a write.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device.",
     "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in Settings > Parts search."
   },

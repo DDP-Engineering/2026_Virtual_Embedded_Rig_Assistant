@@ -16,6 +16,8 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
    `find` locates its first token; version probes and runs invoke the declared program through it.
    String mode refuses quotes and shell metacharacters and generates platform quoting; never put
    shell syntax in program arguments. Vendor suites and drivers remain user-installed.
+   A program that opens windows on the user's desktop (an editor the helper drives, say) declares `gui: true`;
+   only such a program receives the display variables (DISPLAY, WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR).
 3. Give every program rules. Every command line the agent may run should match a rule with the right risk
    level: `safe` (no effect on hardware), `device-read`, `device-write`, `irreversible` or `blocked`. A
    command no rule matches runs as `device-write`, and the highest risk of all matching rules applies.

@@ -275,6 +275,18 @@ schematics, sweeps, compare/measure/report and a folder with spaces and non-ASCI
 VERA_TEST_NGSPICE also the same requests through ngspice-tool. LTspice never runs from the test without -b and never
 with a fresh -ini file (it then waits on a prompt). Passed on Windows 11 on 2026-11-13.
 
+kicad-layout acceptance: tests/integration/kicad-layout.test.ts checks the package, rules, skill, catalog and pack,
+the byte-identical workspace.py, the installed kicad-cli's version (when present) and every refusal that needs no
+board on the toolchain Python; with uv on PATH (or VERA_TEST_UV) the stub-editor and no-KiCad connection failures
+run on the helper's pinned kicad-python 0.8.0 through `uv run --script` (uv fetches the pinned packages from PyPI
+into its cache once). VERA_TEST_KICAD_GUI runs the PCB editor tests: they open real KiCad 10 windows on copies of
+tests/fixtures/kicad-layout/board (no clicks), run the helper as VERA's runner does (`uv run --offline`, core's
+programEnvironment allowlist plus UV_CACHE_DIR, so pcbnew starts without APPDATA/LOCALAPPDATA) and need KiCad's API
+enabled (`api.enable_server` in %APPDATA%/kicad/10.0/kicad_common.json, set on this
+machine on 2026-11-13 at the user's choice) and no other KiCad window open, else they are skipped with the reason.
+VERA_TEST_KICAD_CLI overrides the kicad-cli path (default `C:/Program Files/KiCad/10.0/bin/kicad-cli.exe`). About
+3 minutes; passed with KiCad 10.0.8 on Windows 11 on 2026-11-13. Native Ubuntu remains unverified.
+
 Parts-search acceptance: tests/integration/parts-search.test.ts checks the package, catalog and pack registration, both installed skills, the rules, the three byte-identical workspace.py copies, that parts_support imports no network module, and runs scripts/parts_compare.py on the toolchain Python against tests/fixtures/parts-search/mosfet-24v.json (expected values derived in its README; `{{-1h}}`/`{{-25h}}` capture times are filled in by the test), refusals, the exit-3 input-change case (change_input.py) and the 11 000-unit output bound; a few seconds, no network. Opt-in VERA_PARTS_UV=uv provisions it through a real uv on its managed CPython 3.13; passed on Windows 11 on 2026-11-13. The host side is covered by core/src/parts/parts.test.ts (fake supplier network: fixtures per supplier, 401/403/429, stall, cancel, tokens, revocation, redaction), desktop parts-access tests (real CredentialFile and SettingsService) and cli/src/parts-env.test.ts. Live supplier probes (E03-F) need the user's own keys in Settings > Parts search and stay unverified until then. Native Ubuntu remains unverified.
 
 Git diff acceptance requires process exitCode 0 plus actual staged/worktree/tag/log/show/stash/reflog patch text before commit approval. The fixed empty diff.external alone is not usable; Git execution adds no-ext-diff at actual command boundaries, while raw approvals/run-record labels remain unchanged. Tests also prove stash -- list is a write path, named external-driver suppression and explicit stat/patch output. Original concealed exit-128 receipts are retained under pre-diff-fix as superseded evidence.

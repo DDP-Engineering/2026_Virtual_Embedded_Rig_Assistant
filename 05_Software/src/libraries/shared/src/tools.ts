@@ -22,6 +22,7 @@ export const builtinToolNames = [
   "program_stop",
   "plugin_validate",
   "plugin_install",
+  "apply_candidate",
 ] as const;
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];

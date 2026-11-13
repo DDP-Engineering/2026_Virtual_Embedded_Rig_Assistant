@@ -658,6 +658,7 @@
     "program_stop": "Oprește o rulare de program în fundal.",
     "plugin_validate": "Validează un draft de plugin și raportează erori și avertismente.",
     "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă.",
+    "apply_candidate": "Scrie un candidat kicad-layout verificat peste placa sursă după ce ceri aplicarea lui. Necesită pluginul kicad-layout; cere aprobare ca o scriere.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive.",
     "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în Setări > Căutare componente."
   },

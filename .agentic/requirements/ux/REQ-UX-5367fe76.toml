@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-5367fe76"
+
+title = "Guide the agent through open, edit, check, approval and close"
+
+status = "active"
+
+requirement = """
+The kicad-layout skill and README shall tell the agent to open a candidate, compose requests from board.json, read each edit's objectives and report, show the user the changes and previews, call apply_candidate only after the user asks to apply a passing candidate, and close the candidate window when done.
+"""
+
+verification = "Inspection: read skills/kicad-layout/SKILL.md and README.md and confirm each step, the API preference, the one-window limit and the refusal kinds are described."
+
+affected_paths = ["05_Software/plugins/kicad-layout/skills/kicad-layout/SKILL.md", "05_Software/plugins/kicad-layout/README.md"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

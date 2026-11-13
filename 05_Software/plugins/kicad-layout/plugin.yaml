@@ -1,0 +1,36 @@
+format: 1
+id: kicad-layout
+version: 1.0.0
+name: KiCad PCB placement and local routing
+description: Move and rotate footprints, align them, add keepouts and explicit local tracks and vias on a candidate copy of a KiCad 10 board through KiCad's official IPC API, check every request (locked items, nets, layers, the outline), verify the candidate with DRC and unconnected items, and report the changes with before/after previews. The source board changes only when you ask to apply a passing candidate, through VERA's approval. Needs a user-installed KiCad 10 with its API enabled (Preferences > Plugins); the candidate opens in a KiCad PCB editor window.
+ecosystem: electronics
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://dev-docs.kicad.org/en/apis-and-binding/ipc-api/"]
+programs:
+  kicad-cli:
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/KiCad/*/bin/kicad-cli.exe"]
+        linux: ["$PATH", "/usr/bin/kicad-cli"]
+      hint: "Install KiCad 10 from https://www.kicad.org/download/ (on Ubuntu from the KiCad 10 PPA), then check again. VERA never installs KiCad. Enable KiCad's API in Preferences > Plugins."
+    version: { args: [version], match: '^(\d+\.\d+\.\d+)', range: '>=10.0,<11' }
+    timeout: 60
+  kicad-layout-tool:
+    install: { script: scripts/kicad_layout_tool.py }
+    version: { args: [--version], match: '^kicad-layout-tool (\d+\.\d+\.\d+)' }
+    timeout: 1800
+    uses: [kicad-cli]
+    # It starts KiCad's PCB editor window: its runs get the desktop's display variables (Linux).
+    gui: true
+# kicad-cli rewrites files in the project folder it reads; the agent reaches KiCad only through kicad-layout-tool,
+# which works on a candidate copy in a run folder. Writing a candidate over its source is VERA's apply_candidate tool.
+rules:
+  - { match: "kicad-cli {version,--version,-v,--help,-h} *", risk: safe, note: Prints KiCad's version or help. }
+  - match: "kicad-cli {sch,pcb,fp,sym,jobset} *"
+    risk: blocked
+    note: "kicad-cli rewrites files in the project folder it reads and can save, upgrade or run jobsets. Use kicad-layout-tool, which works on a candidate copy in a run folder."
+  - { match: "kicad-layout-tool {--version,--help,-h}", risk: safe }
+  - match: "kicad-layout-tool {open,edit,close} *"
+    risk: safe
+    note: Host layout work on a candidate copy. open copies the board into a new run folder and opens the copy in a KiCad PCB editor window; edit changes only that candidate through KiCad's API after checking the request; close stops that window. The source board is never written; apply_candidate writes a passing candidate over it after approval.
+    timeout: 1800

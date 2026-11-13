@@ -151,6 +151,14 @@ Web access supports Exa/Tavily/Brave with isolated credentials and CLI EXA_API_K
 
 Parts search: Settings > Parts search holds supplier switches, credentials (Mouser, DigiKey, TME, Farnell, Rutronik; `parts:<id>` slots with the same consent and rollback) and region; the host tool `parts_search` is offered only with Web access on, the official parts-search plugin enabled for the workbench and a supplier enabled, contacts fixed supplier endpoints only, stores no result and never orders. The CLI reads MOUSER_API_KEY, DIGIKEY_CLIENT_ID/SECRET, TME_API_TOKEN/SECRET, FARNELL_API_KEY and RUTRONIK_API_KEY into memory. Live supplier probes need the user's own keys; see [parts search](../knowledge/parts-search.md).
 
+PCB layout candidates: the kicad-layout plugin (Electronics design pack, default off) edits a candidate copy of a
+KiCad 10 board through KiCad's IPC API (kicad-python 0.8.0) in a KiCad PCB editor window it opens, with every
+request checked (locked items, nets, layers, outline, nothing else changed) and DRC objectives per edit; it never
+writes the source board. The host tool `apply_candidate` (offered by the desktop app only with the official plugin
+enabled, never in read-only mode; the CLI app does not offer it) writes a passing candidate over its board through the normal write approval and conflict checks,
+and refuses while KiCad has the board open. KiCad's API must be enabled by the user; see
+[official plugins](../knowledge/official-plugins.md) and [file tools](../knowledge/file-tools.md).
+
 Managed PDF downloads: web_download is a provider-neutral approved write tool saving exact binary PDFs and provenance under .vera/downloads; local Open PDF actions reuse the viewer and remain offline-readable. Downloads share live Web access/permissions, never search-provider credentials, and are not automatically indexed for RAG. See [PDF downloads](../knowledge/pdf-downloads.md).
 
 Plugin authoring: the built-in official create-plugin skill researches CLI manuals and writes workbench drafts; plugin_validate reports schema/lint issues, and plugin_install always waits for user review then installs trial without enablement/provisioning. The Plugins page promotes a hash-bound trial to local and exports portable zips; agent file writes cannot mutate managed plugin/application data or workbench.yaml, including in bypass. See [Plugins](../knowledge/plugins.md).

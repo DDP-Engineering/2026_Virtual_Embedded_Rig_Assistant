@@ -27,6 +27,13 @@ for the LTspice dialect checks, raw.py for raw files, engine.py, schematic.py) w
 tolerances in its README, hostile files, raw files written by LTspice 26.1.1) own its coverage. Its workspace.py,
 measure.py and sweep.py are byte-identical copies of ngspice-tool's.
 
+For kicad-layout, start at plugins/kicad-layout/plugin.yaml, scripts/kicad_layout_tool.py and
+scripts/kicad_layout_support/ (cli.py for open/edit/close, kicad.py for the editor process, API session and binding,
+operations.py for the checks and the commit, drc.py, report.py, state.py, candidate.py) with spec
+.agentic/specs/REQ-DATA-891d5b5d.md; tests/integration/kicad-layout.test.ts and tests/fixtures/kicad-layout/ (board
+generator, hooks) own its coverage, the PCB editor tests only under VERA_TEST_KICAD_GUI. Applying a candidate is
+core's apply_candidate ([File tools](file-tools.md)). Its workspace.py is a byte-identical copy of kicad-tool's.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -181,6 +188,31 @@ that source metadata reaches the deterministic bundled index unchanged.
   run (`vera_point` with `table()` parameters; temperature ascending) and writes no absolute path into results
   (`<LTspice library>`, workbench-relative paths, file names). Verified with LTspice 26.1.1 on Windows 11
   (2026-11-13), including the same requests against ngspice-47.
+
+- `kicad-layout` 1.0.0, ecosystem `electronics` (Electronics design pack, group "PCB placement and local routing
+  (KiCad)", default off; activity `design`), Windows x64 and Linux x64. Program `kicad-cli`: found as the kicad
+  plugin finds it, range `>=10.0,<11`, every `kicad-cli {sch,pcb,fp,sym,jobset}` command blocked. Program
+  `kicad-layout-tool` = `scripts/kicad_layout_tool.py` (PEP 723: kicad-python 0.8.0, protobuf 5.29.6, pynng 0.9.0),
+  `uses: [kicad-cli]`, `gui: true` (its runs get the desktop's display variables for the PCB editor), operations
+  open/edit/close safe (they change only a run folder and the editor window the helper started). The PCB editor is `pcbnew` next to that kicad-cli. `open` refuses (`binding`) while any KiCad API
+  answers, copies the board, `<stem>.kicad_pro`, `.kicad_dru`, `fp-lib-table` and the folder's `.kicad_sch` files
+  into `<results>/<run-id>/candidate/`, starts the editor on the copy (DEVNULL handles, PID in state.json), binds
+  when the API's open documents name the copy (project folder + file name), saves through KiCad, reloads (revert)
+  and records the in-memory text hash, writes board.json/board-open.json (footprints with pads, nets, copper
+  layers, outline, routing), drc-before.json and before previews; any failure stops the editor and removes the
+  folder. `edit` checks the request statically (format 1, units mm, place/align/keepout/track/via, limits, one
+  move per footprint), then the candidate hashes and kicad-cli, connects, binds, compares the in-memory hash
+  (unsaved edits -> `changed`), resolves the items itself (unknown or ambiguous footprint, uuid, net, non-copper
+  layer, locked footprint - the API protects none of these), runs everything in one commit, then checks that every
+  created track and via kept its net (KiCad gives new copper the net it touches: `net`), KiCad's bounding boxes
+  against the outline and that no other item changed, by UUID and by count (revert and `net`/`outline`/`kicad`
+  otherwise), binds again and saves. Right after the save state.json records the new hashes, the edit and
+  objectives `none` (with requests/NNN.json and created.json); then `kicad-cli pcb drc --severity-all
+  --refill-zones` (parity with a schematic) sets objectives pass/fail (new error-severity violations or more
+  unconnected items than after open); a kicad-cli failure there exits 3 saying the edit was saved. result.json
+  carries inputs, warnings and artifacts with SHA-256. `close` stops only the
+  recorded PCB editor process when the candidate has no unsaved edits and removes KiCad's lock files. Verified
+  with KiCad 10.0.8 on Windows 11 (2026-11-13); native Ubuntu has not been run.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -476,6 +508,13 @@ that source metadata reaches the deterministic bundled index unchanged.
 - The installed copy must not change after install (integrity hash): tests run installed copies with
   `PYTHONDONTWRITEBYTECODE=1`, and `uv run --script` executes the file as `__main__` without a bytecode cache.
 
+- kicad-layout: KiCad 10 serves its IPC API only from the first KiCad process on Windows, only with a GUI
+  window, and lets clients move locked items and use unknown net names; it duplicates a footprint that one commit
+  updates twice and gives a created track the net of the copper it touches. The helper therefore binds by the open
+  document, refuses while another window holds the API, allows one move per footprint per request and checks
+  locked items, nets (before and after the commit) and layers itself. The source board is never written by the
+  plugin; only apply_candidate writes it, under the write policy.
+
 ## Change map
 
 | Change requested | Start with | Focused verification |
@@ -493,6 +532,9 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A kicad-cli command line | `kicad_support/kicad.py` builders | "builds every kicad-cli call itself" (recorded calls) |
 | Project files, copy, version checks | `kicad_support/project.py`, `sexpr.py` | project and format refusal tests, unchanged-sources and stop tests |
 | A new KiCad release | `discovery.py` major, `project.py` newest format versions, the manifest range | regenerate the fixtures (`make_fixtures.py`) and rerun the real cases |
+| A kicad-layout operation, check or report field | `plugins/kicad-layout/scripts/kicad_layout_support/{operations,cli,report}.py`, spec REQ-DATA-891d5b5d | `kicad-layout.test.ts` offline cases; the PCB editor cases with VERA_TEST_KICAD_GUI |
+| kicad-layout's KiCad connection or binding | `kicad_layout_support/kicad.py` | binding, unsaved-edit, Stop and lost-connection cases (VERA_TEST_KICAD_GUI) |
+| A new kicad-python release | the PEP 723 pins in `kicad_layout_tool.py` and `tests/fixtures/kicad-layout/hooks/nudge.py` | the whole kicad-layout suite with VERA_TEST_KICAD_GUI |
 | probe-rs pins, risk rows, device guidance or RTT | `plugins/probe-rs/` | `probe-rs.test.ts`; real archive opt-in plus separately recorded bench acceptance |
 | STM32 command map, rules or skills | `plugins/stm32-cubeprog/`, `shared/src/stm32-options.ts` | `stm32-cubeprog.test.ts` (matrix, recorded-help coverage, fake-host find, stub gate, real CLI where installed) |
 | A new STM32CubeProgrammer release | re-record `tests/fixtures/stm32/STM32_Programmer_CLI-<v>-help.txt`, then `stm32-options.ts` and the rules | "classifies every command of a line" |
@@ -583,6 +625,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-SEC-9c665082` — the rules name only esptool 5.6.0 commands and classify all of them.
 - `REQ-FUNC-a3a042ec` — flash transfers may run 1800 s.
 - `REQ-UX-6a22c4dc` — skill `esp32-flash`.
+- `REQ-DATA-891d5b5d` / `REQ-PLAT-3957eafc` / `REQ-FUNC-32022bcd` / `REQ-FUNC-f92446a1` / `REQ-FUNC-cd7d1b3f` / `REQ-FUNC-9c4d809c` / `REQ-FUNC-350e262a` / `REQ-FUNC-b0cbbb04` — kicad-layout formats, package, open, edit, unchanged check, objectives, report, close.
+- `REQ-REL-19ac705f` / `REQ-SEC-6bb41c34` / `REQ-REL-d2fd6d58` / `REQ-REL-2a3f09b8` / `REQ-REL-e30bf69f` / `REQ-SEC-438b7bbf` / `REQ-SEC-a6a6482e` / `REQ-SEC-f986d80d` / `REQ-SEC-f7a0b1fe` / `REQ-REL-233d6e0f` / `REQ-REL-1dd5113a` / `REQ-REL-ea280836` — kicad-layout refusals and failures; `REQ-UX-5367fe76` skill; `REQ-TEST-63c70d58` test gating.
 - `REQ-TEST-fe972de0` — a replay session identifies, flashes with image hashes on the card and captures the boot log.
 - `REQ-PLAT-d2b3fa4a` — real boards on Windows 11 and Ubuntu (manual).
 - `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` (Plugins) — write-flash approvals list each image's SHA-256; a rebuilt image fails CONFLICT.
@@ -593,6 +637,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).
 - `05_Software/tests/integration/kicad.test.ts`, `tests/fixtures/kicad/` (`hier`, `erc`, `board` projects, `make_fixtures.py`, README with the design-derived expectations, `internals.py` seams).
+- `05_Software/plugins/kicad-layout/` — manifest, README, skill kicad-layout, `scripts/kicad_layout_tool.py` (entry, PEP 723 pins), `scripts/kicad_layout_support/` (`cli`, `request`, `state`, `candidate`, `kicad`, `operations`, `drc`, `report`, `workspace` shared).
+- `05_Software/tests/integration/kicad-layout.test.ts`, `tests/fixtures/kicad-layout/` (`make_fixtures.py` reusing the kicad fixture writers, `board/`, `hooks/` with the in-process hook, the second API client `nudge.py` and the editor stub).
 - `05_Software/tests/integration/electronics-calc.test.ts`, `tests/fixtures/electronics-calc/` (`cases.json`, README with the hand derivations, `montecarlo_reference.py`, `odd_name.py`, `internals.py`) — package, rules, numeric and refusal cases, output limit, help, Monte Carlo against the independent reference, report, path guards, exit 3, integrity, replay session, opt-in real uv.
 
 - `05_Software/plugins/stm32-cubeprog/` — manifest, README (risk table, parsing, limits), skills stm32-flash and stm32-option-bytes.

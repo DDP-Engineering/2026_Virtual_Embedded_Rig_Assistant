@@ -40,6 +40,8 @@ export interface RunRequest {
   cwd?: string;
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
+  /** The program opens windows (manifest `gui: true`): pass the host's display variables. */
+  display?: boolean;
   /** Kill the process tree after this many milliseconds; no limit when absent. */
   timeoutMs?: number;
   background?: boolean;
@@ -98,6 +100,8 @@ export interface ProgramRunnerOptions {
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
 const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LANGUAGE"];
+/** The desktop session variables a program that opens windows needs (manifest `gui: true`), and only such a program. */
+export const DISPLAY_VARIABLES = ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"] as const;
 const RUN_FILE = /^([0-9A-HJKMNP-TV-Z]{26})\.(?:log|json)$/;
 const RUN_RECORD = /^[0-9A-HJKMNP-TV-Z]{26}\.json$/;
 /** Runs the Runs list returns, newest first. */
@@ -128,11 +132,15 @@ export function serialPorts(args: readonly string[]): string[] {
   return [...ports];
 }
 
-/** The minimal environment of a run: allowlisted host variables, the program's own, then the fixed two. */
+/**
+ * The minimal environment of a run: allowlisted host variables (with `display`, also the desktop session's display
+ * variables), the program's own, then the fixed two.
+ */
 export function programEnvironment(
   host: ProcessHost,
   toolPaths: readonly string[],
   own: Readonly<Record<string, string>> = {},
+  display = false,
 ): Record<string, string> {
   const windows = host.platform === "win32";
   const same = (left: string, right: string) =>
@@ -146,7 +154,9 @@ export function programEnvironment(
   if (path) set("PATH", path);
   for (const [name, value] of Object.entries(host.env)) {
     if (value === undefined) continue;
-    const inherited = INHERITED.find((candidate) => same(candidate, name));
+    const inherited = [...INHERITED, ...(display ? DISPLAY_VARIABLES : [])].find((candidate) =>
+      same(candidate, name),
+    );
     if (inherited) set(inherited, value);
     else if (windows && same(name, "PATHEXT")) set("PATHEXT", value);
     else if ((windows ? name.toUpperCase() : name).startsWith("LC_")) set(name, value);
@@ -240,7 +250,7 @@ class Run implements ProgramRun {
     this.started = performance.now();
     const child = host.spawn(this.request.executable, this.request.args, {
       cwd,
-      env: programEnvironment(host, this.settings.toolPaths, this.request.env),
+      env: programEnvironment(host, this.settings.toolPaths, this.request.env, this.request.display === true),
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
     });

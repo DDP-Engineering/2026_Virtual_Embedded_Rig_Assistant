@@ -229,6 +229,11 @@ const programSchema = z
     timeout: z.number().int().min(1).max(3600).optional(),
     /** Find or download programs of the same plugin whose paths the run receives as VERA_PROGRAM_<NAME>. */
     uses: z.array(pluginProgramNameSchema).min(1).max(8).refine(unique, "List each program once.").optional(),
+    /**
+     * The program opens windows on the user's desktop: its runs receive the display variables (DISPLAY,
+     * WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR) that other programs never get.
+     */
+    gui: z.literal(true).optional(),
   })
   .superRefine((program, ctx) => {
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))

@@ -658,6 +658,7 @@
     "program_stop": "Einen Programmlauf im Hintergrund stoppen.",
     "plugin_validate": "Plugin-Entwurf prüfen und Schemafehler und Warnungen melden.",
     "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren.",
+    "apply_candidate": "Schreibt einen geprüften kicad-layout-Kandidaten über seine Quellplatine, wenn Sie das Anwenden verlangen. Erfordert das Plugin kicad-layout; braucht eine Freigabe wie ein Schreibvorgang.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus.",
     "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in Einstellungen > Bauteilsuche eingerichteten Lieferanten."
   },

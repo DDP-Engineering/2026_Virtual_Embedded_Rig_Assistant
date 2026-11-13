@@ -48,6 +48,7 @@ export * from "./storage/repos/messages.js";
 export * from "./storage/repos/sessions.js";
 export * from "./storage/repos/todos.js";
 export * from "./storage/schema.js";
+export * from "./tools/apply-candidate.js";
 export * from "./tools/artifact-save.js";
 export * from "./tools/binary.js";
 export * from "./tools/changes.js";

@@ -1,0 +1,67 @@
+(footprint "R_0805"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Fixture footprint R_0805")
+	(property "Reference" "REF**"
+		(at 0 -2 0)
+		(layer "F.Fab")
+		(uuid "facbbbbe-2122-5a2a-8477-c98e6c2eb37f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "R_0805"
+		(at 0 2 0)
+		(layer "F.Fab")
+		(uuid "fbadf462-d1fa-5f50-8231-8c5a273cc5c8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0b2c1cb4-1bda-570b-9680-2b3cfe24eae8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "c0ca5c5b-ebaa-55ba-8a74-698e04130cfe")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(pad "1" smd rect
+		(at -0.95 0)
+		(size 1 1.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(uuid "8b53598a-2a4e-53b8-ab42-6d48669799e5")
+	)
+	(pad "2" smd rect
+		(at 0.95 0)
+		(size 1 1.25)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(uuid "45833d22-76b9-5002-b10c-05faeb90bb70")
+	)
+	(embedded_fonts no)
+)

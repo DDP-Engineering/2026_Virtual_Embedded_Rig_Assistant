@@ -304,3 +304,56 @@ it("computes the program prompt entries once until plugins or plugin skills chan
     await rm(root, { recursive: true, force: true });
   }
 });
+
+// REQ-FUNC-3f443814
+it("offers apply_candidate only while the official kicad-layout plugin is enabled in the workbench", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-host-layout-"));
+  await mkdir(join(root, ".vera"));
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const layout = (tier: string) => ({
+    manifest: { id: "kicad-layout", description: "Layout.", programs: {} },
+    record: { programs: {}, sha256: `${tier}`.padEnd(64, "0"), tier },
+  });
+  // loadPlugins returns the plugins the workbench enables; a disabled plugin is simply not among them.
+  let enabled: object[] = [];
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getConfig: async () => ({ config }),
+      getPinned: async () => ({ content: "" }),
+      skillCatalog: () => ({ list: async () => [] }),
+      loadPlugins: async () => enabled,
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+    gateway: () => ({ api: gateway }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (s: string) => s },
+    programs: { runner: {}, resolver: { resolve: async () => undefined } },
+  } as never);
+  const offered = () =>
+    host.run(
+      (service) =>
+        (service as unknown as { host: { applyCandidate?: boolean } }).host.applyCandidate === true,
+    );
+  try {
+    expect(await offered()).toBe(false);
+    enabled = [layout("official")];
+    host.invalidatePrograms();
+    expect(await offered()).toBe(true);
+    enabled = [layout("local")];
+    host.invalidatePrograms();
+    expect(await offered()).toBe(false);
+    enabled = [];
+    host.invalidatePrograms();
+    expect(await offered()).toBe(false);
+  } finally {
+    await host.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});

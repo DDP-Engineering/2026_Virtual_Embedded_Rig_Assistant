@@ -35,6 +35,7 @@ export function WorkbenchTools({
     program_stop: t("workbenchTools.program_stop"),
     plugin_validate: t("workbenchTools.plugin_validate"),
     plugin_install: t("workbenchTools.plugin_install"),
+    apply_candidate: t("workbenchTools.apply_candidate"),
   };
   return (
     <div className="workbench-tools">
