@@ -234,6 +234,11 @@ const programSchema = z
      * WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR) that other programs never get.
      */
     gui: z.literal(true).optional(),
+    /**
+     * A downloaded file that is never run (a Java archive, a data set): VERA verifies its hash, reads its version
+     * from the file name with `version.match`, and passes its path to the programs that use it.
+     */
+    file: z.literal(true).optional(),
   })
   .superRefine((program, ctx) => {
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))
@@ -281,6 +286,12 @@ export const pluginManifestSchema = z.strictObject({
             code: "custom",
             path: [name, "uses"],
             message: "Two used programs map to the same VERA_PROGRAM_ variable; rename one.",
+          });
+        if (program.file && !("download" in program.install && !("find" in program.install)))
+          ctx.addIssue({
+            code: "custom",
+            path: [name, "file"],
+            message: "A file program installs only by download.",
           });
         for (const used of program.uses ?? []) {
           const target = programs[used];

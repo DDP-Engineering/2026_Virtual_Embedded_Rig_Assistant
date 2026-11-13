@@ -105,6 +105,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `programs.*.timeout` | default seconds for a foreground run, ≤ 3600 |
 | `programs.*.uses` | other programs of the same plugin, found or downloaded first; their paths reach the run as `VERA_PROGRAM_<NAME>` |
 | `programs.*.gui` | `true` for a program that opens windows on the user's desktop: only its runs receive the display variables (§3.2) |
+| `programs.*.file` | `true` for a pinned download that is never run (a Java archive): its version comes from its file name through `version.match`, `run_program` refuses it, and programs that `use` it receive its path |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
 | `docs[]` | URLs or plugin-relative files (which must exist in the package) the UI offers to add to the workbench documents |
 

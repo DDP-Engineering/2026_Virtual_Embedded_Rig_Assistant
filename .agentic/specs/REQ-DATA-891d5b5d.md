@@ -96,7 +96,7 @@ count). The agent composes edit requests from it.
 
 - The request comes as `--json TEXT` or, for requests beyond the 4096-character argument limit, `--request FILE`
   (a UTF-8 file inside the workbench, at most 1 MiB; a file outside it, or unreadable, is refused `request`).
-- Keys outside these are refused. `units` must be `"mm"`. 1..64 operations; numbers are JSON numbers.
+- Keys outside these are refused. `units` must be `"mm"`. 1..1024 operations (a routed request from freerouting-tool is long); numbers are JSON numbers.
 - A footprint is moved by at most one `place` or `align` of a request (KiCad duplicates a footprint that one commit
   updates twice); one `place` sets `at` and `orientation` together.
 - `place`: a footprint by reference, `uuid` optional (must match when given); `at` and/or `orientation` (absolute,

@@ -39,6 +39,7 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `programs.*.timeout` | optional integer seconds, 1–3600 |
 | `programs.*.uses` | optional, 1–8 unique program names of the same plugin; their resolved paths reach the run as `VERA_PROGRAM_<NAME>` |
 | `programs.*.gui` | optional, only `true`: the program opens windows, and only its runs receive `DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY` and `XDG_RUNTIME_DIR` (REQ-PLAT-e0d8f3cf) |
+| `programs.*.file` | optional, only `true`, with a download-only install: never run; the version is `version.match` applied to the downloaded file's name; run_program refuses it (REQ-PLAT-e093fdbd) |
 | `rules` | optional, at most 512; `{match: 1–1024 characters without control characters, risk, note?: 1–512 characters, timeout?: 1–3600}` |
 | `rules[].risk` | `safe`, `device-read`, `device-write`, `irreversible`, `blocked` |
 | `docs` | optional, at most 64 entries of at most 2048 characters; an `https://` or `http://` URL, or a plugin-relative path that exists in the package |

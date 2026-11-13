@@ -35,7 +35,7 @@ A request longer than 4096 characters goes in a workbench file: `--request <file
 
 Operations: `place` (a footprint by reference, optional `uuid`, `at` and/or `orientation`), `align` (references and
 one of `x`/`y`, optional `pitch`), `keepout` (copper layers, a polygon, `forbid` some of tracks, vias, pads,
-footprints, zones), `track` (net, copper layer, width, points), `via` (net, at, diameter, drill). Up to 64 per
+footprints, zones), `track` (net, copper layer, width, points), `via` (net, at, diameter, drill). Up to 1024 per
 request; they run in one KiCad commit. Move a footprint once per request (one `place` sets `at` and
 `orientation`). Take pad positions from `board.json` after a `place`: rotation moves pads.
 

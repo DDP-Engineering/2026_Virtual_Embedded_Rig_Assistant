@@ -840,6 +840,27 @@ it("stores a single-file download as is, executable, with its prefix", async () 
   if (process.platform !== "win32") expect((await stat(file)).mode & 0o777).toBe(0o755);
 });
 
+// REQ-FUNC-file-program: a file program is downloaded and verified but never run.
+it("stores a file program without running it and reads its version from the file name", async () => {
+  const jar = strToU8("PK jar");
+  const url = "https://h.test/r/router-2.5.0.jar";
+  const s = await setup({
+    programs: {
+      router: {
+        install: { download: { "linux-x64": { url, sha256: sha(jar) } } },
+        version: { args: [], match: "^router-(\\d+\\.\\d+\\.\\d+)\\.jar$" },
+        file: true,
+      },
+    },
+  });
+  s.served.set(url, () => new Response(jar));
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready", version: "2.5.0" });
+  expect(s.host.programs).toEqual([]);
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "router"))?.executable).toBe(
+    join(s.root, "plugins", "runtime", "downloads", sha(jar), "router-2.5.0.jar"),
+  );
+});
+
 // REQ-SEC-cde8b481
 it("refuses a download with another hash and keeps nothing", async () => {
   const url = "https://h.test/tool.AppImage";

@@ -34,6 +34,11 @@ operations.py for the checks and the commit, drc.py, report.py, state.py, candid
 generator, hooks) own its coverage, the PCB editor tests only under VERA_TEST_KICAD_GUI. Applying a candidate is
 core's apply_candidate ([File tools](file-tools.md)). Its workspace.py is a byte-identical copy of kicad-tool's.
 
+For freerouting, start at plugins/freerouting/plugin.yaml, scripts/freerouting_tool.py,
+scripts/freerouting_support/{cli,ses}.py and scripts/export_dsn.py (run by KiCad's Python) with spec
+.agentic/specs/REQ-FUNC-2a80da7f.md; tests/integration/freerouting.test.ts owns its coverage (real router under
+VERA_TEST_FREEROUTING_JAR + VERA_TEST_JAVA, the golden path through kicad-layout under VERA_TEST_KICAD_GUI).
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -212,7 +217,22 @@ that source metadata reaches the deterministic bundled index unchanged.
   unconnected items than after open); a kicad-cli failure there exits 3 saying the edit was saved. result.json
   carries inputs, warnings and artifacts with SHA-256. `close` stops only the
   recorded PCB editor process when the candidate has no unsaved edits and removes KiCad's lock files. Verified
-  with KiCad 10.0.8 on Windows 11 (2026-11-13); native Ubuntu has not been run.
+  with KiCad 10.0.8 on Windows 11 (2026-11-13); native Ubuntu has not been run. Requests hold at most 1024
+  operations (a routed request from freerouting).
+
+- `freerouting` 1.0.0, ecosystem `electronics` (group "PCB autorouting (Freerouting)", default off; activity
+  `design`), Windows x64 and Linux x64, requires kicad-layout.
+  - Programs: `java` (Eclipse Temurin 25.0.5+8 JRE download, `java *` blocked); `freerouting` (the 2.5.0 jar, a
+    `file` program: verified, never run, version from its file name, `freerouting *` blocked); `kicad-cli` (find);
+    and `freerouting-tool route --run <kicad-layout run>` (safe), `uses: [java, freerouting, kicad-cli]`.
+  - Route: copies the saved candidate's board, project and rules files; exports a DSN with KiCad's Python; marks the
+    existing wiring `(type protect)`; runs `-cp jar app.freerouting.cli.FreeroutingCli` with a hosts file holding
+    only localhost (no version check or analytics traffic) and user.home in `freerouting/NNN/home`; converts the
+    SES's new wires and vias (0.1 µm units, Y negated) into a kicad-layout request (request.json).
+  - The agent applies the request with `kicad-layout-tool edit --request`. Custom `.kicad_dru` rules are refused
+    (`rules`) unless `--allow-custom-rules`.
+  - Verified with Freerouting 2.5.0, Temurin 25.0.5 and KiCad 10.0.8 on Windows 11 (2026-11-13): the fixture routes
+    to 0 unconnected, objectives pass. Native Ubuntu has not been run.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load

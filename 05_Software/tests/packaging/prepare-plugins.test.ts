@@ -38,6 +38,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],
+    ["freerouting", "official"],
     ["git", "official"],
     ["kicad", "official"],
     ["kicad-layout", "official"],

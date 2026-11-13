@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-73847af9"
+
+title = "Run Freerouting without network access or user-profile writes"
+
+status = "active"
+
+requirement = """
+While Freerouting runs, the tool shall start it with a hosts file that resolves only localhost, its user home in the run's work folder, its GUI, API and MCP servers and analytics disabled, and the board files only as local paths, so that it opens no network connection and writes nothing outside the work folder.
+"""
+
+verification = "Real Freerouting: the java command line holds -Djdk.net.hosts.file, -Duser.home in the work folder and the disabled settings; after a route Freerouting's settings and log files exist under the work folder's home. Probe 2026-11-13: zero sockets during a run."
+
+affected_paths = ["05_Software/plugins/freerouting/"]
+
+linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+
+
+spec = "specs/REQ-FUNC-2a80da7f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

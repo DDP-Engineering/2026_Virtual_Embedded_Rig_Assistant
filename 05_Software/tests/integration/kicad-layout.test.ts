@@ -366,13 +366,6 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
       ["inch", JSON.stringify({ format: 1, candidate: hash, units: "inch", operations: [place] })],
       ["replace", request(hash, [{ op: "replace", footprint: "C1", with: "R" }])],
       [
-        "65 operations",
-        request(
-          hash,
-          Array.from({ length: 65 }, () => place),
-        ),
-      ],
-      [
         "width 0",
         request(hash, [
           {
@@ -435,6 +428,17 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
       expect(done.code, label).toBe(2);
       expect(done.doc.problems[0]?.kind, label).toBe("request");
     }
+    // More than 1024 operations (a routed request is long, so it comes as a file).
+    await writeFile(
+      join(dir, "many.json"),
+      request(
+        hash,
+        Array.from({ length: 1025 }, () => place),
+      ),
+    );
+    const many = plain(["edit", "--run", "electronics-results/offline", "--request", "many.json"], dir);
+    expect(many.code, many.stdout).toBe(2);
+    expect(many.doc.problems[0]?.kind).toBe("request");
     const twice = plain(
       [
         "edit",

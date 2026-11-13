@@ -133,6 +133,8 @@ it("reports the field path of each invalid manifest field", () => {
     [{ programs: { esptool: { ...program, env: { HOME: ph("home") } } } }, "programs.esptool.env.HOME"],
     // REQ-PLAT-e0d8f3cf: gui is only ever `true` (a program that opens windows).
     [{ programs: { esptool: { ...program, gui: false } } }, "programs.esptool.gui"],
+    // A file program (never run) installs only by download.
+    [{ programs: { esptool: { ...program, file: true } } }, "programs.esptool.file"],
     [{ programs: { esptool: { ...program, prefix: [ph("workbench")] } } }, "programs.esptool.prefix.0"],
     [{ programs: { esptool: { ...program, launcher: [] } } }, "programs.esptool.launcher"],
     [

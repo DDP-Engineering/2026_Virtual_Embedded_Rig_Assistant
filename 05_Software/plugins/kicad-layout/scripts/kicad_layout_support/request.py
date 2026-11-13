@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-MAX_OPERATIONS = 64
+MAX_OPERATIONS = 1024  # a routed request (freerouting) holds one track per wire path
 MAX_POINTS = 64
 MAX_LAYERS = 32
 COORDINATE = 1000.0

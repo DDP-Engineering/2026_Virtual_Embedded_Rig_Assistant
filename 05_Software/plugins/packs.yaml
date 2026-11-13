@@ -40,3 +40,4 @@
     - { name: Simulation (ngspice), plugins: [ngspice], default: true }
     - { name: "Simulation (LTspice, Windows)", plugins: [ltspice], default: false }
     - { name: PCB placement and local routing (KiCad), plugins: [kicad-layout], default: false }
+    - { name: PCB autorouting (Freerouting), plugins: [kicad-layout, freerouting], default: false }

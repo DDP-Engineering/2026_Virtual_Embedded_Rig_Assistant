@@ -226,6 +226,28 @@ those packages, not hidden manifest changes.
   track across a VOUT track is saved as VOUT), and duplicates a footprint updated twice in one commit; the helper
   refuses both (`net`, `request`).
 
+## ELEC-07 as built
+
+- Route (user, 2026-11-13): the native freerouting-cli 2.5.0 is broken on boards with keepouts (GraalVM
+  serialization error, the routing thread dies). VERA downloads freerouting-2.5.0.jar and an Eclipse Temurin 25 JRE,
+  both pinned. The jar is a new kind of program, `file: true` (verified, never run, version from its file name).
+- Package `05_Software/plugins/freerouting/` (requires kicad-layout): programs `java`, `freerouting` (file),
+  `kicad-cli` (find) and `freerouting-tool route --run <kicad-layout run>`.
+  - It exports a DSN from a copy of the saved candidate with KiCad's Python (SWIG ExportSpecctraDSN).
+  - It marks the existing wiring as protected.
+  - It runs Freerouting's CLI entry offline: a hosts file with only localhost, and user.home in the work folder.
+  - It turns the SES's new wires and vias into a kicad-layout request; `kicad-layout-tool edit --request` applies
+    it with ELEC-06's checks, DRC and apply flow. kicad-layout's request limit was raised to 1024 operations.
+- Evidence: `tests/integration/freerouting.test.ts` uses Freerouting 2.5.0, Temurin 25.0.5 and KiCad 10.0.8 on
+  Windows 11 (VERA_TEST_FREEROUTING_JAR, VERA_TEST_JAVA, VERA_TEST_KICAD_GUI). The fixture routes to 0 unconnected
+  with no new DRC violation and objectives pass; existing copper and footprints are unchanged; custom rules are
+  refused; an exhausted budget and a corrupt SES write no request.
+- Open:
+  - native Ubuntu (E07-E Linux; KiCad's Python with pcbnew at /usr/bin/python3);
+  - several variants (optional in the ticket);
+  - the integrated acceptance (E07-G) beyond the evidence of ELEC-01..06 and this golden path. The user asked on
+    2026-11-13 for the golden path only.
+
 ## Later, separate
 
 `lab-validation` (simulation against sigrok/PyVISA measurements), OCR/vision for scanned schematics,

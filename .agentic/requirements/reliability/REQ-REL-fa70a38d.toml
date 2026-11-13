@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-fa70a38d"
+
+title = "Refuse a run folder that is not a saved kicad-layout candidate"
+
+status = "active"
+
+requirement = """
+If `--run` does not name a kicad-layout run folder inside the working directory, or the candidate file differs from the state's SHA-256, then the tool shall refuse with problem `run` or `changed` and exit 2 before exporting anything.
+"""
+
+verification = "Offline: a folder without state.json is refused run; a candidate whose bytes changed after its save is refused changed; neither creates a freerouting folder."
+
+affected_paths = ["05_Software/plugins/freerouting/"]
+
+linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+
+
+spec = "specs/REQ-FUNC-2a80da7f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13
