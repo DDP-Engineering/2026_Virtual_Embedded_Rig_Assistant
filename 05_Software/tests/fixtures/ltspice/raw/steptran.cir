@@ -1,0 +1,8 @@
+* stepped divider transient (raw fixture)
+.param RL=1k
+V1 in 0 10
+R1 in out 1k
+R2 out 0 {RL}
+.step param RL list 1k 3k
+.tran 0 1m 0 200u
+.end

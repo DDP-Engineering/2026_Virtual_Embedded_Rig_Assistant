@@ -1,0 +1,5 @@
+* section library
+.lib TT
+R9 out 0 1k
+.endl
+.lib C:\Windows\win.ini

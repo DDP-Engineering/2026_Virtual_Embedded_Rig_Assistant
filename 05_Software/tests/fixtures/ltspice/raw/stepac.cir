@@ -1,0 +1,8 @@
+* stepped rc ac (raw fixture)
+.param C=1u
+V1 in 0 AC 1
+R1 in out 1k
+C1 out 0 {C}
+.step param C list 1u 2u 4u
+.ac dec 2 10 1k
+.end

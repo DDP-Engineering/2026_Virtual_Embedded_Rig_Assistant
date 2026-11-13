@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-c6909384"
+
+title = "Record real LTspice batch runs with errors, Stop and timeout on Windows"
+
+status = "active"
+
+requirement = """
+The ltspice integration tests shall record real LTspice batch runs on Windows x64 of the schematic and netlist fixtures, the failure fixtures, a timeout and a Stop, and skip with a stated reason when no LTspice is installed.
+"""
+
+verification = "With VERA_TEST_LTSPICE set to the installed LTspice 26.1.1 the tests run the fixtures for E05-A..F and pass; without it the real-engine tests are skipped with the reason \"LTspice not installed (set VERA_TEST_LTSPICE)\" and the parser unit tests still run."
+
+affected_paths = ["05_Software/tests/integration/ltspice.test.ts"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

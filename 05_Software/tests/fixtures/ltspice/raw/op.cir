@@ -1,0 +1,6 @@
+* divider op (raw fixture)
+V1 in 0 12
+R1 in out 10k
+R2 out 0 2.2k
+.op
+.end

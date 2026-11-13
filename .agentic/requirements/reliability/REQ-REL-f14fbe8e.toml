@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-f14fbe8e"
+
+title = "Leave no LTspice process running after Stop or timeout"
+
+status = "active"
+
+requirement = """
+When VERA stops ltspice-tool's process tree (taskkill /T /F, as VERA's runner does) or its time or data limit stops a run, no LTspice process shall be left running.
+"""
+
+verification = "taskkill /T /F on the helper of a long run (as VERA's runner stops a program), and the timeout and data-limit cases, leave no LTspice.exe whose command line names the test's run folder (checked with the process list after the stop) and no result.json for the stopped run."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

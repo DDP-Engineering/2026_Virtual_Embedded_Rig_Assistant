@@ -1,0 +1,5 @@
+Hostile netlist: refused before LTspice runs
+V1 out 0 1
+R1 out 0 1k
+.wave C:\vera-wave.wav 16 44.1k V(out)
+.end

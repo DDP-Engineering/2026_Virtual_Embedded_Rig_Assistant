@@ -1,0 +1,8 @@
+* RC stage, fictional model for ltspice-tool tests
+* Licence: CC0 (written for VERA)
+.include values.inc
+.subckt RCSTAGE in out
+R1 in out {RV}
+C1 out 0 1u
+.ends RCSTAGE
+.model DQ D(Is=1e-14 mfg="Fictional")

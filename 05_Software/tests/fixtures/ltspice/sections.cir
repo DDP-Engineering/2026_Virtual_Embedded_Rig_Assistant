@@ -1,0 +1,6 @@
+Corner sections from a workbench library
+.lib "models/corners.lib" TT
+V1 in 0 1
+R1 in out {RC}
+R2 out 0 1k
+.end

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-08dc4fb1"
+
+title = "Override netlist parameters by rewriting their top-level assignment in the effective copy"
+
+status = "active"
+
+requirement = """
+When a request sets parameters, the helper shall rewrite each parameter's top-level `.param` assignment in the effective copy to the requested value, and refuse a parameter that no top-level assignment defines or whose card it cannot split into assignments with exit 2.
+"""
+
+verification = "The divider with `RB = 10k` gives 6.000000 V, the `.param RB=2.2k` of the source unchanged and the effective copy holding `RB=10000`; a parameter assigned in an include is rewritten in its copy; an unknown parameter and one assigned only inside a `.subckt` are refused with exit 2."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/netlist.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

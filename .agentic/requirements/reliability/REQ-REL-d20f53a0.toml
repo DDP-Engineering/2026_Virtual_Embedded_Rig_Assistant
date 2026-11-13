@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d20f53a0"
+
+title = "Keep LTspice inputs unchanged and remove a failed run's files"
+
+status = "active"
+
+requirement = """
+The helper shall never change a netlist, schematic, include or library file, and when a run fails after its run folder exists for any reason other than an engine failure or timeout it shall remove the files that run created.
+"""
+
+verification = "SHA-256 of every fixture before and after all runs is unchanged; an input changed between check and run, and a write error injected by the test hook, remove the run folder and exit 3; the LTspice library files' hashes are unchanged."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/cli.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/tests/fixtures/ltspice/change_input.py", "05_Software/tests/fixtures/ltspice/write_fail.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

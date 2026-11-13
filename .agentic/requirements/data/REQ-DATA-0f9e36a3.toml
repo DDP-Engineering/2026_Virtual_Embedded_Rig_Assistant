@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-0f9e36a3"
+
+title = "Define the ltspice-tool request, run folder and result contract"
+
+status = "active"
+
+requirement = """
+The ltspice-tool helper shall accept the requests, write the run folders and produce the result.json, series, plot and report files that its spec defines, with `format: 1` and `kind: "ltspice-tool-result"`.
+"""
+
+verification = "The divider run reads result.json and checks format 1, the kind, status, ltspice version and install, the netlist input with its SHA-256, engine exit and seconds, series file, rows, steps and columns, and that every listed artifact exists; the failure, library, schematic and sweep tests read result.json for status, problems, inputs or points; the report test reads report.json; a malformed or over-limit request is refused with exit 2 and no results folder."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/cli.py", "05_Software/plugins/ltspice/scripts/ltspice_support/report.py", "05_Software/plugins/ltspice/scripts/ltspice_support/request.py", "05_Software/plugins/ltspice/scripts/ltspice_support/__init__.py", "05_Software/plugins/ltspice/scripts/ltspice_support/workspace.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

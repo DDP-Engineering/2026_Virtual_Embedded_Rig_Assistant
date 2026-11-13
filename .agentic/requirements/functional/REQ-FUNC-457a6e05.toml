@@ -7,14 +7,14 @@ title = "Combine runs into one report"
 status = "active"
 
 requirement = """
-When the agent runs `ngspice-tool report` on run folders, the helper shall write one report.md and report.json summarizing their status, measurements and criteria in a new run folder.
+When the agent runs `ngspice-tool report` or `ltspice-tool report` on run folders, the helper shall write one report.md and report.json summarizing their status, measurements and criteria in a new run folder.
 """
 
-verification = "A report of a passing and a failed run lists both with their status, measurement values and criteria; its folder holds report.json and report.md."
+verification = "A report of a passing and a failed run lists both with their status, measurement values and criteria; its folder holds report.json and report.md; ltspice-tool report of a passing and a failed LTspice run lists both with their status, the passing run's measured value (|H| at 10 Hz) and the criteria (pass, not-evaluated) in report.json, and report.md names the failed run."
 
-affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/compare.py", "05_Software/plugins/ngspice/scripts/ngspice_support/report.py"]
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/compare.py", "05_Software/plugins/ngspice/scripts/ngspice_support/report.py", "05_Software/plugins/ltspice/scripts/ltspice_support/compare.py", "05_Software/plugins/ltspice/scripts/ltspice_support/report.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

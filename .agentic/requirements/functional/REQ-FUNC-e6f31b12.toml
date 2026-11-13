@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e6f31b12"
+
+title = "Map operating point, DC, AC, transient and noise analyses to LTspice with ELEC-04 series names"
+
+status = "active"
+
+requirement = """
+When a request declares an op, dc, ac, tran or noise analysis and vectors, the helper shall append the matching LTspice analysis card and build series named as ngspice-tool names them (axis, `v(n)`, `v(n,m)`, `i(X)`, complex `re`/`im` columns, `vdb`/`vm`/`vp`/`vr`/`vi`, `onoise_spectrum` and `inoise_spectrum`).
+"""
+
+verification = "An op gives v(out) 2.163934 V; a dc sweep of V1 has the axis `v-sweep`; the RC AC run has the header `frequency,v(out) re,v(out) im,vdb(out)` and vdb(out) -3.0103 dB at 159.155 Hz; a transient has `time`; noise has `frequency,onoise_spectrum,inoise_spectrum` with 2.879e-9 V/sqrt(Hz); v(a,b) equals v(a) - v(b)."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/raw.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

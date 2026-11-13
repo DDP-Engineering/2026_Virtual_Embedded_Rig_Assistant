@@ -1,0 +1,6 @@
+Hostile netlist: refused before LTspice runs
+V1 out 0 1
+R1 out 0 1k
+.param X=table(1, .​inc tbl.txt)
+R2 b 0 {X}
+.end

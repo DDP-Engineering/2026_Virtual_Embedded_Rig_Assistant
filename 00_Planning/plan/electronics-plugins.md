@@ -11,8 +11,8 @@ its own branch, and where a ticket is wrong the code decides.
 STATE: ELEC-01 implemented 2026-11-12 on branch `feature/93-electronics-calc` from `origin/master`
 97662d5 (AEGIS TASK-72227ab6, commit 19dd919); ELEC-02 implemented 2026-11-12 on the same branch at the user's
 request (AEGIS TASK-7c2a9322, commit e9fa5d2); ELEC-03 implemented 2026-11-13 on the same branch (AEGIS
-TASK-2c5054ba, commit 680c273); ELEC-04 implemented 2026-11-13 on the same branch (AEGIS TASK-80043c39);
-ELEC-05...ELEC-07 planned.
+TASK-2c5054ba, commit 680c273); ELEC-04 implemented 2026-11-13 on the same branch (AEGIS TASK-80043c39, commit 6ad9119);
+ELEC-05 implemented 2026-11-13 on the same branch (AEGIS TASK-43e9ee14); ELEC-06...ELEC-07 planned.
 
 ## Order
 
@@ -22,7 +22,7 @@ ELEC-05...ELEC-07 planned.
 | 2 | ELEC-02 | [#94](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/94) | `kicad` | native schematic and PCB analysis, ERC/DRC, BOM and exports | implemented |
 | 3 | ELEC-03 | [#95](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/95) | `parts-search` | documented component selection and controlled catalog access | implemented |
 | 4 | ELEC-04 | [#96](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/96) | `ngspice` | electrical and electrothermal simulation on Windows and Linux | implemented |
-| 5 | ELEC-05 | [#97](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/97) | `ltspice` | LTspice batch simulation on Windows in the same result model | planned |
+| 5 | ELEC-05 | [#97](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/97) | `ltspice` | LTspice batch simulation on Windows in the same result model | implemented |
 | 6 | ELEC-06 | [#98](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/98) | `kicad-layout` | placement and local routing on a candidate, checked and applied under the write policy | planned |
 | 7 | ELEC-07 | [#99](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/99) | `freerouting` | local autorouting, DSN/SES exchange and the integrated acceptance | planned |
 
@@ -165,6 +165,38 @@ those packages, not hidden manifest changes.
 - Criteria: E04-A...E and the Windows part of E04-F are covered by `tests/integration/ngspice.test.ts` with the real
   ngspice-47 (fixtures and references in `tests/fixtures/ngspice/`), including the opt-in real provisioner install of
   the 7z. Open: native Ubuntu x64 (`REQ-PLAT-0887e4d4`, `REQ-TEST-66a3c460`).
+
+## ELEC-05 as built
+
+- Package `05_Software/plugins/ltspice/` (Windows x64 only, no Wine, nothing downloaded - the user installs LTspice
+  from analog.com, RULING-001): program `ltspice` finds `%LOCALAPPDATA%/Programs/ADI/LTspice/LTspice.exe` or
+  `%ProgramFiles%/ADI/LTspice/LTspice.exe`, version 26 or newer; every direct `ltspice` command is blocked. Program
+  `ltspice-tool` (standard library, `uses: [ltspice]`): validate, convert, run, sweep, measure, compare, report.
+  Skill `ltspice-simulation`. Spec `.agentic/specs/REQ-DATA-0f9e36a3.md`. Pack group "Simulation (LTspice, Windows)",
+  off by default.
+- Same request and result model as ngspice-tool (RULING-002): the request's analysis, `.temp`, `.save` and `.step`
+  replace the netlist's own analysis, `.step`, `.temp`, `.save` and `.meas` cards; parameters rewrite their top-level
+  `.param` assignment (LTspice refuses a second `.param`); series carry ngspice-tool's names; `measure.py`,
+  `sweep.py` and `workspace.py` are byte-identical copies. Sweeps and Monte Carlo run as one `.step` run.
+- Security boundary (hardened through the explicit review rounds, each confirmed against the real LTspice): the
+  helper checks every line of the netlist chain on NFKC-normalized, case-folded text and refuses what LTspice reads or
+  writes files with (`.wave`, `.savebias`, `.loadbias`, `.savestate`, `.loadstate`; outside include cards the
+  substrings `file`, `scopedata`, `tbl`, `.inc`, `include`, `.lib`, `loadbias`, `savebias`, `loadstate`, `savestate`,
+  `fastaccess`, which LTspice matches by prefix),
+  files holding U+0085/U+2028/U+2029 (LTspice line breaks) or invisible formatting characters (LTspice drops them),
+  include names with `%` or not in NFC, netlists, includes and schematics whose path inside the working directory is not in NFC (a folder copied from a Mac may not be), include names read exactly as LTspice reads them (an unquoted name is the whole rest of the
+  card) with library includes rewritten to the hashed file, quotes outside include, library and model cards, `@`/`&` elements,
+  `.machine`, unknown cards, encrypted and non-UTF-8 files, unreadable include names and self-includes; includes lie
+  in the working directory or LTspice's own library (read in place, never copied); a single-name `.lib` is an include
+  except inside a file reached as `.lib FILE SECTION`. Schematics: symbols by absolute or escaping path refused in
+  every sheet of the folder and every encoding LTspice reads; conversion with `-netlist` on a copy.
+- Engine facts (LTspice 26.1.1): `-b` is synchronous, exit 1 on any error with `<file>(<line>): <message>` in the
+  UTF-8 log; the raw file has a UTF-16LE header and binary data (axis float64 + float32, `double`, complex pairs,
+  stepped with the axis restarting); a fresh `-ini` makes LTspice wait on a prompt; per-user msiexec installs fail on
+  managed machines with Windows Installer 2503/2502 - the README gives the all-users command.
+- Criteria: E05-A...F are covered by `tests/integration/ltspice.test.ts` with the real LTspice 26.1.1, including
+  the same requests against ngspice-47 (divider, RC transient and AC, noise within the README's tolerances). Open:
+  none on Windows; LTspice is Windows-only by scope.
 
 ## Later, separate
 

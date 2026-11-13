@@ -10,11 +10,11 @@ requirement = """
 The helper shall add no solver option to the effective netlist and shall report the netlist's own option cards as written.
 """
 
-verification = "The effective netlist of every fixture contains no `.option` the source lacks; a netlist with `.option reltol=1e-4` reports it in result.json."
+verification = "The effective netlist of every fixture contains no `.option` the source lacks; a netlist with `.option reltol=1e-4` reports it in result.json; ltspice-tool's effective netlist of every LTspice fixture contains no `.options` card the source lacks and result.json reports the source's `.options` cards as written."
 
-affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py"]
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

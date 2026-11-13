@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8e093f1b"
+
+title = "Run an LTspice simulation in batch mode on a copy in a new run folder"
+
+status = "active"
+
+requirement = """
+When the agent runs `ltspice-tool run` with a valid request, the helper shall write the effective netlist with the request's temperature, saved vectors and analysis in a new run folder, run `LTspice.exe -b` on it there, and record the engine version, the inputs, the log, the raw file and the series.
+"""
+
+verification = "The divider, RC and switch fixtures run with exit 0; the run folder holds input/, effective.net (title replaced, the netlist's `.tran` and `.meas` dropped with a warning, the request's `.temp`, `.save` and analysis appended), effective.log, effective.raw, series.csv, plot.svg, result.json with ltspice.version 26.1.1, and report.md; the source files' hashes are unchanged."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

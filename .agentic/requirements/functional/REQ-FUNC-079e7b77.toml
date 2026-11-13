@@ -7,14 +7,14 @@ title = "Measure an existing run without running the engine again"
 status = "active"
 
 requirement = """
-When the agent runs `ngspice-tool measure` on an existing run folder, the helper shall apply the measurements and criteria to its series in a new run folder without running the engine, after checking the series hash.
+When the agent runs `ngspice-tool measure` or `ltspice-tool measure` on an existing run folder, the helper shall apply the measurements and criteria to its series in a new run folder without running the engine, after checking the series hash.
 """
 
-verification = "Measuring a transient, an AC (complex vector by name, magnitude 1/sqrt(1 + (2 pi 10 x 1 ms)^2) at 10 Hz) and a noise run folder gives the original or analytic values; a series edited after the run is refused with exit 2."
+verification = "Measuring a transient, an AC (complex vector by name, magnitude 1/sqrt(1 + (2 pi 10 x 1 ms)^2) at 10 Hz) and a noise run folder gives the original or analytic values; a series edited after the run is refused with exit 2; ltspice-tool measure of an LTspice AC run gives the same 10 Hz magnitude and refuses an edited series with exit 2."
 
-affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ngspice/scripts/ngspice_support/cli.py"]
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ngspice/scripts/ngspice_support/cli.py", "05_Software/plugins/ltspice/scripts/ltspice_support/measure.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

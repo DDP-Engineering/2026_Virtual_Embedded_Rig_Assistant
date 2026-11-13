@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d17ee05f"
+
+title = "Report a missing LTspice as not installed before any run"
+
+status = "active"
+
+requirement = """
+If no LTspice of major version 26 or newer is found through `VERA_PROGRAM_LTSPICE` or the two install paths, then ltspice-tool shall refuse every operation that needs the engine with exit 2 and the problem `engine` naming the install instructions, before it writes anything.
+"""
+
+verification = "With `VERA_PROGRAM_LTSPICE` pointing to a missing file and LOCALAPPDATA/ProgramFiles pointing to empty folders, `run`, `sweep` and `convert` exit 2 with problem `engine` and the analog.com hint, and no run folder exists; `validate` still works."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

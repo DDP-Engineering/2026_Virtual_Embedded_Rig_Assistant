@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-285b6fcc"
+
+title = "Package the ltspice plugin around the user's own LTspice on Windows x64"
+
+status = "active"
+
+requirement = """
+The ltspice plugin shall find the user's LTspice at the per-user or all-users install path on Windows x64, show the official install instructions when it is missing, never download it, accept major version 26 or newer, block every direct `ltspice` command, and run simulations only through `ltspice-tool`.
+"""
+
+verification = "Manifest tests: plugin.yaml validates, program `ltspice` has only `find` paths `%LOCALAPPDATA%/Programs/ADI/LTspice/LTspice.exe` and `%ProgramFiles%/ADI/LTspice/LTspice.exe`, no `download`, the hint names analog.com, the version probe `-version` matches `26.1.1`; the rule engine rates `ltspice -b x.cir` and `ltspice -version` blocked and `ltspice-tool run --input r.json` safe; the real `-version` probe of the installed LTspice gives major version 26 or newer, and result.json records 26.1.1."
+
+affected_paths = ["05_Software/plugins/ltspice/plugin.yaml", "05_Software/plugins/ltspice/README.md", "05_Software/plugins/ltspice/skills/ltspice-simulation/SKILL.md", "05_Software/plugins/ltspice/scripts/ltspice_tool.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

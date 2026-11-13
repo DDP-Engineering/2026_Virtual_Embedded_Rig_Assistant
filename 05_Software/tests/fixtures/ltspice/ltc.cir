@@ -1,0 +1,7 @@
+* ADI op-amp from LTspice's library (validated, not run)
+.lib LTC.lib
+V1 in 0 1
+Vp vp 0 5
+Vn vn 0 -5
+XU1 in out vp vn out LT1001
+.end

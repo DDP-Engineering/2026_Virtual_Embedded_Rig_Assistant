@@ -1,0 +1,8 @@
+* stepped divider op (raw fixture)
+.param RB=2.2k
+V1 in 0 12
+R1 in out 10k
+R2 out 0 {RB}
+.step param RB list 2.2k 10k
+.op
+.end

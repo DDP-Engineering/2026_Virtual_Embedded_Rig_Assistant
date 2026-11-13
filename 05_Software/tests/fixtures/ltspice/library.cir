@@ -1,0 +1,6 @@
+* Diode from LTspice's standard library, read in place (E05-A)
+.lib standard.dio
+V1 in 0 5
+R1 in a 1k
+D1 a 0 1N4148
+.end

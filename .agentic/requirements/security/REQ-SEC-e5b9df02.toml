@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-e5b9df02"
+
+title = "Refuse LTspice constructs that read or write files or that the helper cannot check"
+
+status = "active"
+
+requirement = """
+If a netlist or one of its workbench includes contains a card or word that writes or reads files (`.wave`, `.savebias`, `.loadbias`, `.savestate`, `.loadstate`, and outside include cards the substrings `file`, `scopedata`, `tbl`, `.inc`, `include`, `.lib`, `loadbias`, `savebias`, `loadstate`, `savestate`, `fastaccess` - LTspice matches them by prefix -, a double quote outside include, library and model cards), a frequency-response element, an unsupported or unknown card or element, an encrypted file or text that is not UTF-8, holds U+0085 or U+2028 (LTspice line breaks) or U+2029, or holds an invisible formatting character LTspice drops (Unicode Cf or default-ignorable), then the helper shall refuse it with exit 2 and the line (or, for encoding and encrypted files, the file) named before the engine runs, matching after NFKC normalization and case folding, and it shall replace the netlist's title line in the effective copy.
+"""
+
+verification = "Hostile fixtures - `.wave C:\\x.wav`, `.savebias`, `.loadstate`, a PWL `file=`, `wavefile=`, `tbl=`, `table(x, .include \"f\")`, `.inc` and `.lib` forms in a B source, `.options fastaccess`, a fullwidth `．ｗａｖｅ`, an `@` element, `.machine`, an unknown card, a quoted string parameter, a UTF-16 file, U+2028 in a comment, U+0085 after `;` on an element line and U+2028 in an include, `PWL file x`, `fileC:\\x`, `scopedata x`, `.incl x` and `.incC:\\x` in expressions, a soft hyphen, zero-width space or inner BOM inside a keyword and `.options fast<U+00AD>access`, an encrypted include, and the same words on a `+` continuation line and in an include - each exit 2 with the line named, start no LTspice process and leave every input unchanged; the effective copy of a valid netlist starts with `* ltspice-tool effective netlist`."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/netlist.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

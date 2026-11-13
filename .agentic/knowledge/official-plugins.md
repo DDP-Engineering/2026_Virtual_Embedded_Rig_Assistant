@@ -21,6 +21,12 @@ For ngspice, start at plugins/ngspice/plugin.yaml, scripts/ngspice_tool.py and s
 .agentic/specs/REQ-DATA-29b9a988.md; tests/integration/ngspice.test.ts and tests/fixtures/ngspice/ (analytic
 references and tolerances in its README, hostile netlists) own its refusal, real-engine and provisioner coverage.
 
+For ltspice, start at plugins/ltspice/plugin.yaml, scripts/ltspice_tool.py and scripts/ltspice_support/ (netlist.py
+for the LTspice dialect checks, raw.py for raw files, engine.py, schematic.py) with spec
+.agentic/specs/REQ-DATA-0f9e36a3.md; tests/integration/ltspice.test.ts and tests/fixtures/ltspice/ (references and
+tolerances in its README, hostile files, raw files written by LTspice 26.1.1) own its coverage. Its workspace.py,
+measure.py and sweep.py are byte-identical copies of ngspice-tool's.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -30,7 +36,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -143,6 +149,38 @@ that source metadata reaches the deterministic bundled index unchanged.
   folder exists removes it. Verified with ngspice-47 on
   Windows 11 (2026-11-13), including the opt-in `VERA_NGSPICE_UV` provisioner install of the 7z; native Ubuntu
   has not been run.
+
+- `ltspice` 1.0.0, ecosystem `electronics` (Electronics design pack, group "Simulation (LTspice, Windows)", default
+  off; activity `design`), Windows x64 only, no Wine, no download. Program `ltspice`: find
+  `%LOCALAPPDATA%/Programs/ADI/LTspice/LTspice.exe` (per-user) and `%ProgramFiles%/ADI/LTspice/LTspice.exe` (all users);
+  hint with the analog.com install and the all-users msiexec command for error 2503; probe `-version` `^(\d+)\.`
+  range `>=26`; every `ltspice *` command blocked (a netlist can write files anywhere with `.wave`; without `-b`
+  LTspice opens its window). Program `ltspice-tool` = `scripts/ltspice_tool.py` (PEP 723, standard library),
+  `uses: [ltspice]`, timeout 1800 s, operations validate/convert/run/sweep/measure/compare/report safe. It takes
+  ngspice-tool's request and result model (kind `ltspice-tool-result`): the request's analysis, `.temp`, `.save`
+  and `.step` replace the netlist's analysis, `.step`, `.temp`, `.save` and `.meas` cards; parameters rewrite their
+  top-level `.param` assignment (LTspice refuses a second `.param`). Before LTspice runs it checks every line of the
+  netlist chain on NFKC-normalized, case-folded text and refuses `.wave`, `.savebias`, `.loadbias`, `.savestate`,
+  `.loadstate`, outside include cards the substrings `file`, `scopedata`, `tbl`, `.inc`, `include`, `.lib`,
+  `loadbias`, `savebias`, `loadstate`, `savestate`, `fastaccess` (LTspice matches them by prefix), files with U+0085/U+2028/U+2029 or invisible formatting characters
+  (LTspice reads the first two as line breaks and drops the latter), include names with `%` or not in NFC, netlists, includes and schematics whose path inside the working directory is not in NFC (a folder copied from a Mac may not be), quotes outside include, library and model cards, `@`/`&` elements, `.machine` and unknown cards,
+  encrypted and non-UTF-8 workbench files, unreadable include names and an include of the netlist itself (a
+  single-name `.lib` is an include except inside a file reached as `.lib FILE SECTION`); includes lie in the working directory (copied, rewritten relative to the
+  copy that includes them - LTspice resolves includes against the including file's folder) or in LTspice's library
+  `%LOCALAPPDATA%/LTspice/lib/{cmp,sub}` (read in place, recorded by `<LTspice library>/...` name and hash, and named
+  in the copies by their quoted absolute path so LTspice reads exactly that file); an unquoted include name is the
+  whole rest of the card, `;` included, as LTspice reads it. `A`
+  devices are allowed (ADI's special functions; its own libraries use them); missing models and subcircuits are
+  reported by LTspice. Schematics: symbols by absolute or escaping path refused in every `.asc` of the folder and every encoding LTspice reads; the schematic folder's .asc/.asy
+  copied below `input/`, `LTspice -netlist` on the copy, the netlist checked as if next to the schematic. Runs
+  `LTspice.exe -b <run folder>/effective.net` without a console window, with a deadline and a raw-size watchdog
+  (twice the profile's points), parses the binary raw file (UTF-16LE header; real float64 axis + float32,
+  `double`, complex float64 pairs, stepped with the axis restarting; partial/corrupt reported), names series as
+  ngspice-tool (`v-sweep`, `onoise_spectrum`...), classifies the log (model, subckt, include, singular, convergence,
+  netlist, engine, partial, corrupt, vector, limit -> failed, exit 3), runs sweeps and Monte Carlo as one `.step`
+  run (`vera_point` with `table()` parameters; temperature ascending) and writes no absolute path into results
+  (`<LTspice library>`, workbench-relative paths, file names). Verified with LTspice 26.1.1 on Windows 11
+  (2026-11-13), including the same requests against ngspice-47.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load

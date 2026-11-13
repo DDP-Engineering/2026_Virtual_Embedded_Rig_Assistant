@@ -1,0 +1,7 @@
+* corner sections (fictional)
+.lib TT
+.param RC=1k
+.endl TT
+.lib FF
+.param RC=900
+.endl FF
