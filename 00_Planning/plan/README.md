@@ -18,6 +18,10 @@ Electronics engineering plugins: [electronics-plugins.md](electronics-plugins.md
 2026-11-12 with AEGIS on its own branch at the user's request; ELEC-02 (`kicad`, #94) implemented 2026-11-12 on
 the same branch; ELEC-03...ELEC-07 planned.
 
+Arduino and IoT plugins: [arduino-iot-plugins.md](arduino-iot-plugins.md),
+**IOT-01...IOT-08 / epic [#113](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/113)**. Started 2026-11-13 with AEGIS, one
+child after another on branch `feature/113-arduino-iot` at the user's request; all eight planned.
+
 Repository organization: [tooling-tests-evaluators-layout.md](tooling-tests-evaluators-layout.md),
 **REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110)**.
 Agreed 2026-11-12: environment/build/release tooling in `02_Tools`, tests/E2E and
