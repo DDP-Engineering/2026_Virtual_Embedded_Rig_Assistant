@@ -328,6 +328,8 @@
     "executable": "Executable",
     "notes": "Rule notes",
     "files": "Workbench files and their SHA-256",
+    "resources": "Reserved bench resources",
+    "registry": "Declared in",
     "typeToConfirm": "This change is permanent. Type {{word}} to confirm.",
     "confirmMismatch": "The typed word does not match. Type the word shown on the card."
   },

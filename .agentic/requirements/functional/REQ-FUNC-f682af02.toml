@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f682af02"
+
+title = "Power an output for a bounded hold and switch it off"
+
+status = "active"
+
+requirement = """
+When `scpi output` runs, the helper shall confirm by readback that the channel's output is off, apply the requested voltage and current, switch the output on, confirm it, measure it during the hold, then switch it off and confirm the off state by readback, ending early on a stop request, and shall report the run as failed when a readback disagrees.
+"""
+
+verification = "The fake DP832 test checks the command order, the measured series, the final off state and pass; a stop request during the hold ends early with confirmed state; a fake that ignores OUTP OFF yields fail with physical unknown."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/classes.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/lifecycle.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-fae260c3"
+
+title = "Run scpi-instruments on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The scpi-instruments plugin and its lease and supervision host code shall run on Windows x64 and native Ubuntu x64, with the per-user lease folder in LOCALAPPDATA on Windows and XDG_RUNTIME_DIR or a private temporary folder on Linux.
+"""
+
+verification = "The offline and real-process tests pass on Windows x64 and on native Ubuntu x64 (the Ubuntu run is still owed); a leases test checks the folder choice and refuses a Linux folder with group or other permissions."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/leases.ts", "05_Software/plugins/scpi-instruments/plugin.yaml"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

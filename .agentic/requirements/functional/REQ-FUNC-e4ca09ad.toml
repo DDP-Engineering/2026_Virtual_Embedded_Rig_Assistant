@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e4ca09ad"
+
+title = "Share resource leases between VERA processes"
+
+status = "active"
+
+requirement = """
+The runner shall reserve each claimed identity key for the run's lifetime in a lease file that every VERA process of the same user on the machine checks, so that the desktop app and the CLI refuse a resource held by the other with BUSY before any I/O, and shall remove its lease files when the run ends.
+"""
+
+verification = "A leases test acquires a key in one ResourceLeases instance and expects BUSY from a second instance with the same root; an integration test holds a lease in a separate Node process and expects BUSY in the test process, then success after that process exits; lease files are gone after release."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/leases.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

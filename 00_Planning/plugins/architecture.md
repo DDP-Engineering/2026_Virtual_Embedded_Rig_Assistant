@@ -192,10 +192,11 @@ policy below; it receives a resolved executable and the program's resolved varia
   result carries the last 12 000 characters. Output is untrusted data, like file and web content.
 - Background runs: at most 4 per session (BUSY). Session stop, workbench create/open/close and app
   exit kill them; the CLI stops all runs when its run ends.
-- Serial-port guard: if an argument, or the value of a `--name=value` argument, names a serial port
-  (`COM\d+`, `/dev/tty*`, `/dev/serial/by-id/*`) that a running background run uses, the call fails
-  with BUSY and names that handle and port. Windows opens COM ports exclusively, so without this a
-  flasher would fail with an obscure error.
+- Serial-port guard: if an argument, the value of a `--name=value` argument or the `conn=` part of a
+  sigrok-cli driver specification names a serial port (`COM\d+`, `/dev/tty*`, `/dev/serial/by-id/*`)
+  that a running background run uses, or that a running run reserves as a bench resource (§3.5), the
+  call fails with BUSY and names that handle and port. Windows opens COM ports exclusively, so without
+  this a flasher would fail with an obscure error.
 - A program that cannot start finishes with no exit code and its system error code (`ENOENT`, …).
 
 ### 3.3 Launchers
@@ -228,6 +229,31 @@ program that was not found or installed is listed in Settings, not in the prompt
 
 Rule: "Run external programs only with run_program. Load the plugin's skill before its first use.
 Never guess serial ports, chip types or flash offsets: list the ports and read the build output."
+
+### 3.5 Bench resources, leases and supervised cleanup (LAB-01)
+
+Instruments and other bench resources are declared per workbench in `lab/resources.json` (format 1: alias,
+identity kind, identity fields, plugin data; spec `.agentic/specs/REQ-DATA-f2cbfc23.md`). A program that declares
+`resources {option, kinds, grace, cleanup, cleanupTimeout}` reserves the alias a call names with `option`:
+
+- Before approval, program-tools reads the registry through the path guard, resolves the alias to normalized
+  identity keys (VISA: `serial:COM3` for ASRL, `usb:<vid>:<pid>:<serial>`, `tcpip:<host>`, `gpib:...`, plus
+  `serial-number:<n>` when declared) and binds the aliases and the registry's SHA-256 into the request; the
+  approval card and the CLI prompt show them, and a registry changed before the start is CONFLICT.
+- The runner refuses with BUSY, before any spawn, a claim whose keys another unfinished run holds or names as a
+  serial port, and then takes the keys in a per-user lease folder (Windows `%LOCALAPPDATA%\VERA\leases`, Linux
+  `$XDG_RUNTIME_DIR/vera-leases` or a private 0700 temporary folder) that the desktop app and the CLI share: one
+  lease file per key, published complete by an exclusive hard link. A lease of a process that no longer runs is
+  stale and removed; if that run could actuate, the resource's state becomes `unknown`.
+- Supervision: the run gets a control folder (`VERA_RUN_CONTROL`). Stop, timeout, session stop, workbench close and
+  app exit first write `stop` there and kill the tree only after `grace` seconds. If an actuating run (risk
+  device-write or irreversible) ends without reporting a released resource whose physical state is confirmed or
+  unchanged, the runner starts the declared `cleanup` command once, without a new approval, under
+  `cleanupTimeout`. The result carries `physical` (`confirmed`, `unchanged`, `unknown`); `unknown` is recorded per key
+  and passed to the next run (`VERA_RESOURCE_STATE`), where the plugin refuses actuation until a confirmed readback.
+- Limits: VERA does not lock out programs outside VERA; nothing runs the cleanup after the host itself is lost (the
+  next claim reports `unknown`); other plugins' TCP/USB connections are not leased. Later identity kinds (NIC,
+  endpoint, lab host) extend the registry schema and the key function, never a second lease folder.
 
 ## 4. Risk levels and approvals (ADR-0018)
 

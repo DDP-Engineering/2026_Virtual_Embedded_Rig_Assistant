@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-f9f009d9"
+
+title = "Classify each scpi operation by its effect"
+
+status = "active"
+
+requirement = """
+The scpi-instruments rules shall classify `--version`, `--help`, `capabilities`, `discover-configured` and `decode` as safe, `discover-configured --list-local`, `identify`, `read`, `capture` and `status` as device-read, `configure` and `close` as device-write and `output` as irreversible with the typed word `output`, and the helper shall take its operation only from its first argument and refuse any other first argument.
+"""
+
+verification = "A classification table test runs classifyCommand over every operation, reordered options, a leading `--`, `--json`-like values naming another operation and an unknown verb (device-write by default), and the helper refuses a first argument that is not an operation with exit 2."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/plugin.yaml", "05_Software/plugins/scpi-instruments/scripts/scpi_support/request.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

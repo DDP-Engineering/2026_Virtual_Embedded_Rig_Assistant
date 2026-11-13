@@ -328,6 +328,8 @@
     "executable": "Executabil",
     "notes": "Note ale regulilor",
     "files": "Fișierele workbenchului și SHA-256 al lor",
+    "resources": "Resursele de laborator rezervate",
+    "registry": "Declarate în",
     "typeToConfirm": "Această modificare este permanentă. Tastați {{word}} pentru a confirma.",
     "confirmMismatch": "Cuvântul tastat nu se potrivește. Tastați cuvântul afișat pe card."
   },

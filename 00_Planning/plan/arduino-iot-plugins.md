@@ -48,6 +48,12 @@ Linux `/dev/serial/by-id` links resolve to their device) and keeps serial board 
 merge with `feature/101-embedded-lab`: LAB-01's cross-process lease registry replaces this guard extension and adopts
 the serial identity kind; desktop app and CLI do not yet see each other's ports.
 
+Merge (2026-11-14, at the user's request): `feature/101-embedded-lab` up to LAB-01 (41313ca) was merged into this branch
+before IOT-02, so the IoT plugins build on LAB-01's one lease registry (`leases.ts`, `resource-registry.ts`,
+`lab-resources.ts`). The runner keeps both guards: a serial port named by any unfinished run, or claimed by a run's
+lease, is BUSY; Linux by-id links resolve. Still open, owned by IOT-02: the serial identity kind in the lease registry,
+so serial plugins (arduino-cli, micropython) claim boards across desktop and CLI instead of only in-process.
+
 ## Rules shared by the packages
 
 - Finite operations with validated JSON and the existing plugin model (`plugin.yaml`, skills, declared

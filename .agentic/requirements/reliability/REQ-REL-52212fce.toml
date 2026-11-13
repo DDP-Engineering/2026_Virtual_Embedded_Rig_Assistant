@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-52212fce"
+
+title = "Recover leases left by a lost process"
+
+status = "active"
+
+requirement = """
+If a lease file names a process that no longer runs, then the next claim of that key shall remove the stale lease and, when the lost run could actuate the resource, record the resource's physical state as unknown.
+"""
+
+verification = "A leases test writes a lease for a dead pid with actuates true and false: the claim succeeds, the actuating one leaves an unknown state marker naming the lost run and the read-only one none; a lease of a live process stays BUSY; a corrupt lease file is BUSY, never deleted."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/leases.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

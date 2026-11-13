@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { labResourceKindSchema } from "./lab-resources.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 /** Import limits of one plugin package (folder or zip). */
@@ -229,6 +230,22 @@ const programSchema = z
     timeout: z.number().int().min(1).max(3600).optional(),
     /** Find or download programs of the same plugin whose paths the run receives as VERA_PROGRAM_<NAME>. */
     uses: z.array(pluginProgramNameSchema).min(1).max(8).refine(unique, "List each program once.").optional(),
+    /**
+     * Calls naming a `lab/resources.json` alias with `option` reserve that resource for the run; a stop request,
+     * `grace` seconds and the authorized `cleanup` run supervise it (spec REQ-DATA-f2cbfc23 §3).
+     */
+    resources: z
+      .strictObject({
+        option: z.string().regex(/^--[a-z][a-z0-9-]{0,31}$/),
+        kinds: z.array(labResourceKindSchema).min(1).max(8).refine(unique, "List each kind once."),
+        grace: z.number().int().min(1).max(60),
+        cleanup: z
+          .array(arg.refine(placeholders([]), "No placeholder is substituted."))
+          .min(1)
+          .max(8),
+        cleanupTimeout: z.number().int().min(1).max(300),
+      })
+      .optional(),
   })
   .superRefine((program, ctx) => {
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))

@@ -33,6 +33,13 @@ indexes.py for offline searches, compile.py, upload.py, report.py, cli.py) with 
 tests/integration/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
 coverage. Its workspace.py is a byte-identical copy of ngspice-tool's.
 
+For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
+(cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
+classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
+.agentic/specs/REQ-DATA-b3e2930f.md; tests/integration/scpi-instruments.test.ts and tests/fixtures/scpi-instruments/ (a
+fake PyVISA/pyserial/pyusb - offline evidence only) own its coverage. Its reservation and cleanup are platform
+behaviour, see [Plugins](plugins.md) and spec .agentic/specs/REQ-DATA-f2cbfc23.md.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -42,7 +49,9 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); scpi-instruments (program `scpi`, a PEP 723
+PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
+platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -52,7 +61,7 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32 and Electronics design groups, default on except Security), `catalog.yaml` (all packaged plugins
+source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32, Electronics design and Embedded lab groups, default on except Security), `catalog.yaml` (all packaged plugins
 `official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
 catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
@@ -63,7 +72,7 @@ reports a `requires` that names no catalog plugin, and catalog installs review r
 from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
-Catalog discovery metadata for the sixteen real packages lives in the maintainers' catalog.yaml map,
+Catalog discovery metadata for the twenty real packages lives in the maintainers' catalog.yaml map,
 not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain
 absent without catalog release evidence; no commit/build/install timestamps are substituted.
 Shared/source tests validate bounds/references; prepare-plugins and focused CLI acceptance prove
@@ -220,6 +229,33 @@ that source metadata reaches the deterministic bundled index unchanged.
   `arduino-iot-results/<run-id>/` (`result.json` kind `arduino-tool-result`, `report.md`, logs), no absolute path;
   exit 0 pass, 2 blocked, 3 fail or error. Verified with arduino-cli 1.6.0, arduino:avr 1.8.8 and arduino:samd 1.8.14
   on Windows 11 (2026-11-13); real upload, serial readback, two boards and native Ubuntu are pending hardware.
+
+- `scpi-instruments` 1.0.0, ecosystem `lab` (pack Embedded lab, group Bench instruments (SCPI), default on; activity
+  `measurement`), Windows x64/Linux x64. Program `scpi` = `scripts/scpi_tool.py` (PEP 723: PyVISA 1.16.2, pyvisa-py 0.8.1,
+  pyserial 3.5, pyusb 1.3.1), env `SCPI_REGISTRY=${workbench}/lab/resources.json`, `resources {option: --instrument,
+  kinds: [visa], grace: 10, cleanup: [close], cleanupTimeout: 60}`, timeout 120 s. Operations (first argument only, any
+  other first argument or option refused with exit 2): `capabilities (--profile|--alias)`, `discover-configured`,
+  `decode --capture` (safe); `discover-configured --list-local` (serial ports via pyserial, USBTMC via pyusb, never VISA's
+  resource search), `identify`, `read [--channel]`, `capture --channel`, `status` (device-read); `configure --set
+  NAME=VALUE` (1..16), `close` (device-write); `output --channel --voltage --current --hold 1..3500` (irreversible, word
+  `output`, rule timeout 3600 s). Every instrument operation checks `*IDN?` (manufacturer, model, firmware pattern,
+  declared serial) before anything else, validates channels and values against the profile and the entry's bench
+  limits before opening, writes `embedded-lab-results/<run-id>/result.json` (format 1, kind `scpi-result`, status
+  pass/fail/incomplete/blocked/error, identity, profile verification, lifecycle with `physical`, values/series with units,
+  problems, commands sent, artifacts with SHA-256) and exits 0 pass, 1 fail, 2 refused/blocked before any effect, 3
+  incomplete/error. Profiles (all `unverified`): `keysight-34461a`, `rigol-ds1000z`, `rigol-dp800`. A power supply's
+  set-points change only with that output off; `output` switches off and reads back at the end, on a stop request and
+  after reconnecting; `configure`/`output` are blocked while `VERA_RESOURCE_STATE` marks the alias unknown. Captures keep
+  `raw-<CH>.bin` and `preamble-<CH>.json`; `decode` recomputes `waveform-<CH>.csv` identically. Problem codes:
+  truncated-transfer, visa-timeout, instrument-absent, driver-missing, connection-lost, reconnected, unexpected-reply,
+  identity-mismatch, profile-unknown, registry-changed (the registry differs from `VERA_REGISTRY_SHA256`), state-unknown,
+  readback-mismatch, output-on, clipped, stopped, limit, request, internal. `decode` reads only `preamble-<CH>.json` and
+  `raw-<CH>.bin` (safe channel names, regular files, at most the profile's maxPoints x width bytes; a capture refuses a
+  larger announced block before reading it) and checks them before creating its folder; refusals before the
+  checks pass print without a folder; meter and scope `close` confirm only that no output exists to energize. Verified offline on
+  Windows 11 against a fake PyVISA and with VERA's real runner, and with the opt-in `VERA_SCPI_UV` run (real PyVISA
+  1.16.2 + pyvisa-py 0.8.1 through the provisioner, TCPIP SOCKET to local simulated servers, 2026-11-13); no real
+  instrument or native Ubuntu run yet.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
