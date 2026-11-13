@@ -66,6 +66,7 @@ import {
   type SystemAppDeps,
   systemApps,
 } from "./openers.js";
+import { PartsAccessService } from "./parts-access.js";
 import { PluginListingHost } from "./plugin-list-host.js";
 import { createDesktopProcessHost } from "./process-host.js";
 import { testProgramResolver } from "./program-resolver.js";
@@ -250,10 +251,19 @@ async function stopWorkbenchPrograms(): Promise<void> {
   await programs.stopWorkbench(folder);
 }
 const providers = new ProviderSettings(settings, credentials);
-const webAccess = new WebAccessService({
+const partsAccess = new PartsAccessService({
   settings,
   credentials,
   changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
+});
+const webAccess = new WebAccessService({
+  settings,
+  credentials,
+  changed: () => {
+    // Web access gates parts search too: a change ends supplier calls in flight.
+    partsAccess.revoke();
+    emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
+  },
 });
 let chatgpt = new ChatgptAuth({
   settings,
@@ -267,6 +277,7 @@ const sessions = new SessionsHost({
   pluginBuilder: plugins,
   managedRoots: [dataLocations.paths.userData],
   web: webAccess.provider,
+  parts: partsAccess.provider,
   downloads: (root) =>
     new WebDownloads(root, {
       access: webAccess.provider,
@@ -357,6 +368,11 @@ ipcMain.handle(
       "web.access.removeKey": (request) => webAccess.removeKey(request),
       "web.access.test": (request) => webAccess.test(request),
       "web.access.cancel": (request) => webAccess.cancelTest(request),
+      "parts.access.get": () => partsAccess.get(),
+      "parts.access.save": (request) => partsAccess.save(request),
+      "parts.access.removeKey": (request) => partsAccess.removeKey(request),
+      "parts.access.test": (request) => partsAccess.test(request),
+      "parts.access.cancel": (request) => partsAccess.cancelTest(request),
       "update.get": () => {
         if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
         return updates.get();
@@ -1015,6 +1031,7 @@ if (!app.requestSingleInstanceLock()) {
       .then(() => chatgpt.close())
       .then(() => providers.close())
       .then(() => webAccess.close())
+      .then(() => partsAccess.close())
       .then(() => credentials.close())
       .then(() => settings.close())
       .then(() => logger.flush())
@@ -1131,6 +1148,7 @@ if (!app.requestSingleInstanceLock()) {
         await modelGateway.close();
         await providers.close();
         await webAccess.close();
+        await partsAccess.close();
         await credentials.close();
         await settings.close();
         await logger.flush();

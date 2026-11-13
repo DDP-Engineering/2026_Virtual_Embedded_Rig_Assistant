@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-a953f579"
+
+title = "Report a supplier that does not answer in time as timed out"
+
+status = "active"
+
+requirement = """
+If a supplier does not complete its answer within 30 s, then the host shall stop the request and report that supplier with status `timeout`.
+"""
+
+verification = "A fixture body that never completes, with the deadline shortened in the test, ends with `timeout`; a supplier whose request times out is reported with status `timeout` and the call itself completes."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/http.ts", "05_Software/src/libraries/core/src/parts/configured.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/apps/desktop/src/main/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

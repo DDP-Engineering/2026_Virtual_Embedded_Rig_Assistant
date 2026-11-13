@@ -33,6 +33,7 @@ import type { EmbeddingPort } from "../knowledge/embedding.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
+import type { PartsSearcher } from "../parts/configured.js";
 import { type ProgramHost, ProgramSession } from "../plugins/program-tools.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
@@ -67,6 +68,8 @@ export interface SessionHost {
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   web?: WebProvider;
+  /** Supplier catalog search; absent hosts never offer parts_search. */
+  parts?: PartsSearcher;
   downloads?: WebDownloads;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
@@ -642,6 +645,8 @@ export class SessionService {
     if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
     if (this.host.web) ctx.web = this.host.web;
     else delete ctx.web;
+    if (this.host.parts) ctx.parts = this.host.parts;
+    else delete ctx.parts;
     if (this.host.downloads) ctx.downloads = this.host.downloads;
     else delete ctx.downloads;
     if (this.host.skills) ctx.skills = this.host.skills;
@@ -693,6 +698,7 @@ export class SessionService {
       .bind(ctx, this.host.disabledTools)
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
+      .filter((tool) => tool.name !== "parts_search" || !!this.host.parts)
       .filter(
         (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,
       )

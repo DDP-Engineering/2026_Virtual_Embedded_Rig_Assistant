@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-51a2423d"
+
+title = "Mark incomplete supplier answers as partial"
+
+status = "active"
+
+requirement = """
+If a supplier answers with errors next to results, or some of its items cannot be read, then the host shall return the readable items and report that supplier with status `partial`.
+"""
+
+verification = "A Mouser fixture with an Errors entry and two parts gives two items and `partial`; a fixture item without a part number is left out and the supplier is `partial`; an answer with errors and no parts gives `failed`."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/provider.ts", "05_Software/src/libraries/core/src/parts/suppliers.ts", "05_Software/src/libraries/core/src/parts/configured.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

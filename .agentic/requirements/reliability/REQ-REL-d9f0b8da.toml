@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d9f0b8da"
+
+title = "Cancel supplier requests when parts search access changes"
+
+status = "active"
+
+requirement = """
+When the parts settings are saved, a supplier credential is removed, Web access changes or the host closes, the host shall abort the parts search requests in flight and drop the cached access tokens, and the aborted calls shall fail as cancelled.
+"""
+
+verification = "A search held open by a fixture server is aborted by a save, a key removal and a close, and fails with the cancelled message; the next search requests a new token."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/configured.ts", "05_Software/src/apps/desktop/src/main/parts-access.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/apps/desktop/src/main/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
+import { partsSearchSettingsSchema } from "./parts-search.js";
 import { catalogUrlSchema } from "./plugin-catalog.js";
 import { urlParts } from "./plugins.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
@@ -45,6 +46,8 @@ const fontSizeSchema = z.union([
 const mutable = {
   suppressBypassWarning: z.boolean().optional(),
   webAccess: webAccessSettingsSchema,
+  /** Absent until the user first saves Settings > Parts search; readers apply partsSearchDefaults. */
+  partsSearch: partsSearchSettingsSchema.optional(),
   keyboardShortcuts: shortcutOverridesSchema.optional(),
   language: z.enum(["system", "en", "ro", "de"]),
   theme: z.enum(["system", "light", "dark"]),
@@ -100,6 +103,7 @@ export type Settings = z.infer<typeof settingsSchema>;
 /** Internal service patch; provider writes enter through their dedicated IPC boundary. */
 export const settingsServicePatchSchema = settingsPatchSchema.extend({
   webAccess: webAccessSettingsSchema.optional(),
+  partsSearch: partsSearchSettingsSchema.optional(),
   providers: providerSettingsSchema.optional(),
   sessionOrder: mutable.sessionOrder,
 });

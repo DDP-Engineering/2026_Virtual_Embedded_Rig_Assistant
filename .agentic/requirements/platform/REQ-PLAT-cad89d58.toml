@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-cad89d58"
+
+title = "Run parts-compare on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The parts-compare program shall run on Windows x64 and native Ubuntu x64 with the standard library only.
+"""
+
+verification = "The fixture tests pass on Windows x64 with the toolchain Python and through VERA's provisioner with uv's managed CPython; Manual: the same tests on native Ubuntu x64."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_compare.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-664afc86"
+
+title = "Configure parts search suppliers, credentials and region in Settings"
+
+status = "active"
+
+requirement = """
+The Settings dialog shall offer a Parts search section, in English, Romanian and German, where the user enables each supplier, enters or removes its credential without seeing a stored one, and sets the country, language, currency and Farnell store.
+"""
+
+verification = "In the renderer test the section lists the five suppliers, saves an enabled supplier with a new key, shows a stored key only as configured, removes it, and renders every label in en, ro and de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/parts-access.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-98175a73"
+
+title = "Package the parts-search plugin with selection skills and the parts-compare program"
+
+status = "active"
+
+requirement = """
+The parts-search plugin shall provide the parts-compare program and skills that guide the selection of MOSFETs, regulators, op-amps, resistors, capacitors, diodes and inductors through a structured request of hard constraints and preferences, and shall be listed in the official catalog within the electronics pack.
+"""
+
+verification = "The package validates, its skills load, each of the seven families has its checks in the skill text, the catalog and the electronics pack list it, and prepare-plugins packages it."
+
+affected_paths = ["05_Software/plugins/parts-search/plugin.yaml", "05_Software/plugins/parts-search/skills/component-selection/SKILL.md", "05_Software/plugins/parts-search/skills/component-families/SKILL.md", "05_Software/plugins/parts-search/README.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

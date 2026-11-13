@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9fd50acb"
+
+title = "Define the parts search result contract and supplier mapping"
+
+status = "active"
+
+requirement = """
+The parts search capability shall follow the tool arguments, result fields, supplier statuses, HTTP rules and supplier field mapping of its specification.
+"""
+
+verification = "Fixture answers of each supplier pass through the tool and the result matches the specification's fields; an argument outside the specification (both query and mpn, a limit of 21, an mpn with `|`) is refused before any request."
+
+affected_paths = ["05_Software/src/libraries/shared/src/parts-search.ts", "05_Software/src/libraries/core/src/parts/provider.ts", "05_Software/src/libraries/core/src/parts/suppliers.ts", "05_Software/src/libraries/core/src/parts/http.ts", "05_Software/src/libraries/core/src/parts/configured.ts", "05_Software/src/libraries/core/src/tools/parts.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/core/src/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

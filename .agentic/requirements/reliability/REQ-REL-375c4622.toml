@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-375c4622"
+
+title = "Stop every supplier request when the caller cancels"
+
+status = "active"
+
+requirement = """
+When the caller cancels a parts search, the host shall abort every supplier request of that call and fail the call as cancelled.
+"""
+
+verification = "Aborting the tool's signal while two fixture servers hold their answers ends both requests and the call fails with the cancelled message."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/configured.ts", "05_Software/src/libraries/core/src/parts/http.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

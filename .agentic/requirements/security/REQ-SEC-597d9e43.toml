@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-597d9e43"
+
+title = "Contact only fixed supplier endpoints without redirects"
+
+status = "active"
+
+requirement = """
+The host shall send parts search requests only to the fixed supplier endpoints, without following redirects, and shall refuse an answer larger than 4 MiB or slower than 30 s.
+"""
+
+verification = "A request for another path or with user information is refused before any fetch; every fetch asks redirect: error and a refused redirect is `unavailable`; a declared and a streamed body over 4 MiB are `unavailable`; a body that stalls past the (shortened) deadline is `timeout`."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/http.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

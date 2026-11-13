@@ -21,10 +21,13 @@ import {
   moveSession,
   opensExternally,
   orderSessions,
+  type PartsSupplierId,
   type PluginInstalled,
   type PluginManifest,
   type PluginReview,
   type ProgramRunInfo,
+  partsSearchDefaults,
+  partsSupplierIds,
   providerSlug,
   type Request,
   type Response,
@@ -380,6 +383,13 @@ export function createMockApi(
   }
   let sequence = 0;
   const webKeyConfigured: Record<WebProviderId, boolean> = { exa: false, tavily: false, brave: false };
+  const partsKeyConfigured: Record<PartsSupplierId, boolean> = {
+    mouser: false,
+    digikey: false,
+    tme: false,
+    farnell: false,
+    rutronik: false,
+  };
   // Browser fixtures keep metadata only; production secrets are handled by desktop main.
   const providerHints = new Map<string, string | null>();
   if (scenario !== "empty") {
@@ -1064,6 +1074,53 @@ export function createMockApi(
         break;
       }
       case "web.access.cancel":
+        value = {};
+        break;
+      case "parts.access.get":
+        value = {
+          preferences: settings.partsSearch ?? partsSearchDefaults,
+          keys: Object.fromEntries(
+            partsSupplierIds.map((id) => [
+              id,
+              { keyConfigured: partsKeyConfigured[id], storage: partsKeyConfigured[id] ? "memory" : null },
+            ]),
+          ),
+          secureStorage: true,
+        };
+        break;
+      case "parts.access.save": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        const request = channels["parts.access.save"].request.parse(input.data);
+        if (request.supplier) partsKeyConfigured[request.supplier] = true;
+        settings = mergeSettings(settings, { partsSearch: request.preferences });
+        emitAppEvent({ type: "settings.changed" });
+        value = { status: "saved" };
+        break;
+      }
+      case "parts.access.removeKey": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        const { supplier } = channels["parts.access.removeKey"].request.parse(input.data);
+        partsKeyConfigured[supplier] = false;
+        emitAppEvent({ type: "settings.changed" });
+        value = {};
+        break;
+      }
+      case "parts.access.test": {
+        const request = channels["parts.access.test"].request.parse(input.data);
+        value = {
+          testId: request.testId,
+          supplier: request.supplier,
+          checkedAt: "2026-11-13T12:00:00Z",
+          durationMs: 15,
+          status: !settings.webAccess.enabled
+            ? "disabled"
+            : partsKeyConfigured[request.supplier]
+              ? "ok"
+              : "key-required",
+        };
+        break;
+      }
+      case "parts.access.cancel":
         value = {};
         break;
       case "providers.chatgpt.status":

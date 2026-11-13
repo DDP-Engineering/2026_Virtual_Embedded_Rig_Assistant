@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-ddb16bb1"
+
+title = "Store supplier credentials in the credential store with explicit consent for unprotected storage"
+
+status = "active"
+
+requirement = """
+When the user saves a supplier credential and the operating system offers no protected storage, the host shall store it only after the user consents to unprotected storage.
+"""
+
+verification = "With protected storage the save stores the credential; without it the save answers `consent-required` and stores nothing until it is repeated with consent, after which the snapshot shows the storage as unprotected."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/parts-access.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

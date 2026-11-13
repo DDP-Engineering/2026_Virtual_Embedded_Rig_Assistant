@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e6ac90ad"
+
+title = "Report a supplier without a credential as needing a key"
+
+status = "active"
+
+requirement = """
+If a requested supplier is enabled but has no stored credential, then the host shall report it with status `key-required` and no offers, without contacting it.
+"""
+
+verification = "With DigiKey enabled and no credential, a search reports DigiKey `key-required`, sends no request to it and returns the other suppliers' offers."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/configured.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/apps/desktop/src/main/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

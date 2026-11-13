@@ -16,6 +16,7 @@ export const builtinToolNames = [
   "web_search",
   "web_read",
   "web_download",
+  "parts_search",
   "run_program",
   "program_output",
   "program_stop",

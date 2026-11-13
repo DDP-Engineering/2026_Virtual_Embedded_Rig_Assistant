@@ -2,6 +2,7 @@ import type { PermissionMode } from "@vera/shared";
 import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
 import type { DocumentKnowledge } from "../knowledge/search.js";
+import type { PartsSearcher } from "../parts/configured.js";
 import type { ProgramContext } from "../plugins/program-tools.js";
 import type { PluginStore } from "../plugins/store.js";
 import type { WorkerPool } from "../ports.js";
@@ -28,6 +29,8 @@ export interface ToolContext {
   knowledge?: DocumentKnowledge;
   web?: WebProvider;
   downloads?: WebDownloads;
+  /** Supplier catalog search of the official parts-search plugin; the host keeps every credential. */
+  parts?: PartsSearcher;
   skills?: SkillCatalog;
   /** Plugin programs of the session; absent when the host composes no program host. */
   programs?: ProgramContext;

@@ -10,7 +10,8 @@ back without commit) were set aside by the user on 2026-11-12: each package is i
 its own branch, and where a ticket is wrong the code decides.
 STATE: ELEC-01 implemented 2026-11-12 on branch `feature/93-electronics-calc` from `origin/master`
 97662d5 (AEGIS TASK-72227ab6, commit 19dd919); ELEC-02 implemented 2026-11-12 on the same branch at the user's
-request (AEGIS TASK-7c2a9322); ELEC-03...ELEC-07 planned.
+request (AEGIS TASK-7c2a9322, commit e9fa5d2); ELEC-03 implemented 2026-11-13 on the same branch (AEGIS
+TASK-2c5054ba); ELEC-04...ELEC-07 planned.
 
 ## Order
 
@@ -18,7 +19,7 @@ request (AEGIS TASK-7c2a9322); ELEC-03...ELEC-07 planned.
 |---|---|---|---|---|---|
 | 1 | ELEC-01 | [#93](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/93) | `electronics-calc` | electrical and thermal calculations with explicit units and assumptions | implemented |
 | 2 | ELEC-02 | [#94](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/94) | `kicad` | native schematic and PCB analysis, ERC/DRC, BOM and exports | implemented |
-| 3 | ELEC-03 | [#95](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/95) | `parts-search` | documented component selection and controlled catalog access | planned |
+| 3 | ELEC-03 | [#95](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/95) | `parts-search` | documented component selection and controlled catalog access | implemented |
 | 4 | ELEC-04 | [#96](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/96) | `ngspice` | electrical and electrothermal simulation on Windows and Linux | planned |
 | 5 | ELEC-05 | [#97](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/97) | `ltspice` | LTspice batch simulation on Windows in the same result model | planned |
 | 6 | ELEC-06 | [#98](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/98) | `kicad-layout` | placement and local routing on a candidate, checked and applied under the write policy | planned |
@@ -108,6 +109,34 @@ those packages, not hidden manifest changes.
   E02-D "opens in KiCad/viewer" is checked structurally (PDF, SVG, Gerber X2, Excellon, CSV). The opt-in
   `VERA_KICAD_UV` run through VERA's provisioner and runner passed on 2026-11-12. Open: native Ubuntu x64
   (`REQ-PLAT-10747605`).
+
+## ELEC-03 as built
+
+- Two parts. The host capability (VERA itself, because plugin programs get no secrets): read tool `parts_search`
+  over five supplier catalogs - Mouser Search API v2, DigiKey Product Information v4, TME API v2 and Farnell/element14
+  (both added by the user), Rutronik Shop API (manual v1.3, the user chose "Include Rutronik now"). Offered only while
+  Web access is on, the official-tier `parts-search` plugin is enabled for the workbench and a supplier is enabled;
+  rechecked at call time. Credentials in the credential store (`parts:<id>`), entered in Settings > Parts search
+  (en/ro/de) or CLI environment variables; never in results, errors, logs, settings or the snapshot. Fixed endpoints,
+  no redirects, 30 s and 4 MiB per request, one bounded retry after 429, statuses ok/partial/failed/key-required/
+  auth/rate-limited/timeout/unavailable, shared DigiKey/TME tokens refreshed once, revocation on every settings or
+  Web access change, result fitted under the 32 000-character tool cap. Exact contract: spec
+  `.agentic/specs/REQ-DATA-9fd50acb.md`; knowledge `.agentic/knowledge/parts-search.md`.
+- The plugin `05_Software/plugins/parts-search/`: program `parts-compare` (standard library, offline) and skills
+  `component-selection` and `component-families` (MOSFET, regulator, op-amp, resistor, capacitor, diode, inductor).
+  Hard constraints decide eligible/unknown/rejected; only confirmed datasheet values with a page or table, under the
+  stated conditions and with a guaranteed basis, are evidence (VGS(th) never proves RDS(on)); SKUs of one MPN and
+  package are one device; prices compare by the cost of the order quantity within one currency; offers older than
+  24 h are stale; comparison.json/.md and a proposed bom.csv in a new run folder. Spec
+  `.agentic/specs/REQ-DATA-6b26f2a5.md`.
+- Departures from the ticket: no supplier cache at all - Farnell's terms forbid caching, TME's forbid duplicating
+  API content and DigiKey's bar building a database (RULING-002), so the "offline run on a labelled cache" of E03-F
+  is parts-compare on a labelled snapshot; RS Components stays out (no public API documentation).
+- Criteria: E03-A...E and G covered by `src/libraries/core/src/parts/parts.test.ts`, desktop and renderer
+  `parts-access.test.ts`, `src/apps/cli/src/parts-env.test.ts` and `tests/integration/parts-search.test.ts` (fixtures
+  in `tests/fixtures/parts-search/`, derived in its README); the opt-in `VERA_PARTS_UV` run passed on 2026-11-13.
+  Open: E03-F live probes - no supplier credential has been provided, so all five suppliers are not verified live;
+  native Ubuntu x64 (`REQ-PLAT-cad89d58`).
 
 ## Later, separate
 

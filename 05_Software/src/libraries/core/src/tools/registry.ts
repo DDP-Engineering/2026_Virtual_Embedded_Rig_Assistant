@@ -14,6 +14,7 @@ import { grepTool } from "./grep.js";
 import { listTool } from "./list.js";
 import { loadSkillTool } from "./load-skill.js";
 import { parseLogTool } from "./parse-log.js";
+import { partsSearchTool } from "./parts.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
 import { webReadTool, webSearchTool } from "./web.js";
@@ -37,6 +38,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   web_search: webSearchTool,
   web_read: webReadTool,
   web_download: webDownloadTool,
+  parts_search: partsSearchTool,
   run_program: runProgramTool,
   program_output: programOutputTool,
   program_stop: programStopTool,

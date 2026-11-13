@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-ee71e2b0"
+
+title = "Report refused supplier credentials as an authentication failure"
+
+status = "active"
+
+requirement = """
+If a supplier answers 401 or 403, then the host shall report that supplier with status `auth` and a message to check its credential, after one token refresh for suppliers that use access tokens.
+"""
+
+verification = "Fixture 401 and 403 answers give `auth` for Mouser, Farnell and Rutronik with one request; for DigiKey and TME a 401 causes one new token and one repeated search, and a second 401 gives `auth`."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/http.ts", "05_Software/src/libraries/core/src/parts/configured.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/apps/desktop/src/main/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

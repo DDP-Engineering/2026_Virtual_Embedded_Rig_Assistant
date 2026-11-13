@@ -81,3 +81,10 @@ REQ-FUNC-1ed659ec session; FUNCe0645fcd output; REL88dd69b2 exits; SEC25008e88 r
 Under05_Software: src/apps/cli/{package.json,tsconfig.json,vitest.config.ts,src/index.ts,src/args.ts,src/run.ts,src/host-ports.ts,src/replay-output.ts,src/approval-prompt.ts,src/approval-prompt.test.ts,src/host-ports.test.ts,src/worker-pool.ts,src/grep-worker.ts};02_Tools/build/build-cli.mjs;package.json/package-lock.json;tests/integration/cli.test.ts;tests/fixtures/workbenches/demo-board/board.txt;README.md.
 
 CLI selects Exa/Tavily/Brave through ConfiguredWebProvider and applies the same current global enabled/authentication preference. Anonymous ignores keys. API-key mode reads explicit EXA_API_KEY/TAVILY_API_KEY/BRAVE_SEARCH_API_KEY for the selected provider through MemoryCredentials with redaction; it fails closed when absent and never reads Electron safeStorage credentials. No extra CLI flags or endpoint configuration. See [web access](web-search.md).
+
+Parts search: MOUSER_API_KEY, DIGIKEY_CLIENT_ID + DIGIKEY_CLIENT_SECRET, TME_API_TOKEN + TME_API_SECRET,
+FARNELL_API_KEY and RUTRONIK_API_KEY fill memory-only `parts:<id>` slots (registered for redaction, validated as
+printable ASCII without spaces); a supplier is enabled for the run exactly when all its variables are present.
+Region inputs come from the CLI settings. parts_search is offered under the same gate as the desktop (Web access,
+official parts-search plugin loaded, a supplier enabled). See [parts search](parts-search.md); code in
+apps/cli/src/parts-env.ts.

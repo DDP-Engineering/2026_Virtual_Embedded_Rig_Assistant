@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7b42ac37"
+
+title = "Search supplier catalogs by keyword or part number through the parts_search tool"
+
+status = "active"
+
+requirement = """
+When the agent calls `parts_search` with a keyword or a part number, the host shall query each requested enabled supplier and return the devices found with the manufacturer, manufacturer part number, package, description, lifecycle, datasheet link and supplier parameters, each offer's supplier part number, packaging, declared stock, minimum and multiple order quantities, lead time, currency, region and price breaks, and the query time, leaving every value the supplier did not state as null.
+"""
+
+verification = "A fixture answer of each supplier gives the expected device and offer fields; an answer without stock, currency or datasheet gives null for those fields, never 0 or an invented value; the result carries retrievedAt and the notes on taxes, shipping and unconfirmed parameters."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/provider.ts", "05_Software/src/libraries/core/src/parts/suppliers.ts", "05_Software/src/libraries/core/src/tools/parts.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

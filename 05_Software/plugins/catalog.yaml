@@ -1,7 +1,7 @@
 # Maintainers' file of the catalog (spec REQ-DATA-b40d3f9b §1.2). Only maintainers change it.
 format: 1
 # Plugins maintained by the VERA maintainers; every other catalog plugin is community.
-official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad]
+official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search]
 # Discovery facts are maintained separately from package manifests. Publication dates are genuinely
 # unknown until a catalog release record establishes them; do not infer them from commits/builds.
 metadata:
@@ -53,6 +53,9 @@ metadata:
   kicad:
     activities: [design]
     keywords: [KiCad, schematic, PCB, ERC, DRC, BOM, netlist, Gerber, drill, pick and place, design review, hierarchy]
+  parts-search:
+    activities: [design]
+    keywords: [component selection, parts search, Mouser, DigiKey, TME, Farnell, Rutronik, datasheet, MOSFET, regulator, op-amp, BOM, MPN, supplier]
 # Rules below device-write whose pattern contains a dangerous token, accepted after review:
 # - { plugin: <id>, match: "<the rule's exact match>" }
 # Program names themselves contain efuse/secure. These exact low-risk rules cover reads,

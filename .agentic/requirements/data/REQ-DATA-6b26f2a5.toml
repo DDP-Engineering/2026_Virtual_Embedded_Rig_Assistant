@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-6b26f2a5"
+
+title = "Define the parts-compare request and result contract"
+
+status = "active"
+
+requirement = """
+The parts-compare program shall follow the command line, request, evaluation rules and output files of its specification.
+"""
+
+verification = "Requests in the fixture folder produce the comparison.json, comparison.md and bom.csv the fixtures' README derives by hand; a request with an unknown key, a duplicate key or a constraint id used twice is refused with exit 2."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_compare.py", "05_Software/plugins/parts-search/scripts/parts_support/__init__.py", "05_Software/plugins/parts-search/scripts/parts_support/workspace.py", "05_Software/plugins/parts-search/scripts/parts_support/cli.py", "05_Software/plugins/parts-search/scripts/parts_support/request.py", "05_Software/plugins/parts-search/scripts/parts_support/units.py", "05_Software/plugins/parts-search/scripts/parts_support/evaluate.py", "05_Software/plugins/parts-search/scripts/parts_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

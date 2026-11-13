@@ -76,6 +76,11 @@ const workbenchHandlers = {
   "web.access.removeKey": unused,
   "web.access.test": unused,
   "web.access.cancel": unused,
+  "parts.access.get": unused,
+  "parts.access.save": unused,
+  "parts.access.removeKey": unused,
+  "parts.access.test": unused,
+  "parts.access.cancel": unused,
   "providers.chatgpt.cancel": unused,
   "providers.chatgpt.logout": unused,
 
