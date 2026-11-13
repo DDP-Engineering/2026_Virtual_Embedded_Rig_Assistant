@@ -77,10 +77,14 @@ export function urlParts(url: string): { authority: string; path: string } | und
   const match = /^[A-Za-z][A-Za-z0-9+.-]*:\/\/([^/?#]*)([^?#]*)/.exec(url);
   return match ? { authority: match[1] ?? "", path: match[2] ?? "" } : undefined;
 }
-/** Archive downloads by the file name of their URL path; anything else is stored as a single file. */
-export function downloadForm(url: string): "zip" | "tar" | "file" {
+/**
+ * Archive downloads by the file name of their URL path; anything else is stored as a single file. A `.7z` archive is
+ * extracted by Windows' own bsdtar, so it is declared for windows-x64 only.
+ */
+export function downloadForm(url: string): "zip" | "tar" | "7z" | "file" {
   const path = urlParts(url)?.path.toLowerCase() ?? "";
   if (path.endsWith(".zip")) return "zip";
+  if (path.endsWith(".7z")) return "7z";
   return /\.(?:tar\.gz|tgz|tar\.xz)$/.test(path) ? "tar" : "file";
 }
 /** The package-relative name a download installs: `path`, else the URL's last path segment, if valid. */
@@ -152,7 +156,16 @@ const downloadSchema = z
           ctx.addIssue({ code: "custom", path: ["path"], message: "Name the executable with path." });
       }),
   )
-  .refine((value) => Object.keys(value).length > 0, "Name at least one platform.");
+  .refine((value) => Object.keys(value).length > 0, "Name at least one platform.")
+  .superRefine((value, ctx) => {
+    for (const [platform, entry] of Object.entries(value))
+      if (entry && platform !== "windows-x64" && downloadForm(entry.url) === "7z")
+        ctx.addIssue({
+          code: "custom",
+          path: [platform, "url"],
+          message: "A .7z archive is extracted by Windows' bsdtar; declare it for windows-x64 only.",
+        });
+  });
 const installSchema = z.union([
   // A requirement, never an option such as `-e` or `--index-url=`.
   z.strictObject({
@@ -214,6 +227,8 @@ const programSchema = z
       )
       .optional(),
     timeout: z.number().int().min(1).max(3600).optional(),
+    /** Find or download programs of the same plugin whose paths the run receives as VERA_PROGRAM_<NAME>. */
+    uses: z.array(pluginProgramNameSchema).min(1).max(8).refine(unique, "List each program once.").optional(),
   })
   .superRefine((program, ctx) => {
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))
@@ -252,6 +267,27 @@ export const pluginManifestSchema = z.strictObject({
   programs: z
     .record(pluginProgramNameSchema, programSchema)
     .refine((value) => Object.keys(value).length <= 64, "Declare at most 64 programs.")
+    .superRefine((programs, ctx) => {
+      for (const [name, program] of Object.entries(programs)) {
+        // Each used program becomes VERA_PROGRAM_<NAME>; two names must not share one variable.
+        const variables = (program.uses ?? []).map((used) => used.toUpperCase().replace(/[-.]/g, "_"));
+        if (new Set(variables).size !== variables.length)
+          ctx.addIssue({
+            code: "custom",
+            path: [name, "uses"],
+            message: "Two used programs map to the same VERA_PROGRAM_ variable; rename one.",
+          });
+        for (const used of program.uses ?? []) {
+          const target = programs[used];
+          if (used === name || !target || !("find" in target.install || "download" in target.install))
+            ctx.addIssue({
+              code: "custom",
+              path: [name, "uses"],
+              message: "Name another find or download program of this plugin.",
+            });
+        }
+      }
+    })
     .default({}),
   rules: z.array(ruleSchema).max(512).default([]),
   docs: z

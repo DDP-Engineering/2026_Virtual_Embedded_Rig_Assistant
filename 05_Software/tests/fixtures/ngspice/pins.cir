@@ -1,0 +1,8 @@
+Pin mismatch (E04-C)
+.subckt AMP in out vcc
+R1 in out 1k
+R2 out vcc 1k
+.ends
+V1 a 0 DC 1
+X1 a b AMP
+.end

@@ -98,8 +98,11 @@ Core's `Provisioner` (`provisioning.ts`) installs and locates declared programs 
 (desktop `plugins.provision`, CLI `vera plugin install`), `statuses(id)` and `resolve(plugin, program)` never
 install. pip and script programs run the bundled uv (pinned by `src/uv/uv-manifest.json`) with every uv folder
 inside the runtime and one managed CPython 3.13; downloads are verified, extracted (zip in core through
-`archive.ts`, tar archives through the system tar) and kept per SHA-256; find programs are searched on PATH and
-absolute globs. Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
+`archive.ts`, tar archives through the system tar, Windows-only `.7z` through System32 bsdtar) and kept per SHA-256;
+find programs are searched on PATH and absolute globs (on Windows `%PATH%` looks for `<program>.exe`). A program may
+declare `uses: [<program>]` - find or download programs of the same plugin; resolving it also resolves each used
+program and adds its absolute path to the run as `VERA_PROGRAM_<NAME>` (upper case, `-`/`.` -> `_`), and it does not
+resolve when a used program does not. Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
 Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
 The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page
@@ -391,7 +394,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   provision).
 - Downloads: at most 2 GiB, hashed while streamed; another SHA-256 is `sha256`; transfer failures and HTTP
   errors are `download`; zip entries must be plugin-relative after `\` -> `/` and are written as plain files
-  (no links), tar archives go through `%SystemRoot%\System32\tar.exe` or `/usr/bin/tar` (`/bin/tar`), then every
+  (no links), tar archives (and on Windows `.7z`, declared for windows-x64 only) go through
+  `%SystemRoot%\System32\tar.exe` or `/usr/bin/tar` (`/bin/tar`) - for a `.7z`, bsdtar's exit 1 is accepted only
+  when its whole output is its notice of skipped entries with unreadable (non-ASCII) names - then every
   link must resolve inside the tree and every other entry be a file or folder (`archive`); the declared path must
   be a file (`archive`); single files and, off Windows, the archive's executable get mode 0755. Any failure
   removes the staging folder, so nothing of it remains. Limit: extraction is bounded only by the pinned download.

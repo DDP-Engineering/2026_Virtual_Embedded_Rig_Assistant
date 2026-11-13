@@ -11,7 +11,8 @@ its own branch, and where a ticket is wrong the code decides.
 STATE: ELEC-01 implemented 2026-11-12 on branch `feature/93-electronics-calc` from `origin/master`
 97662d5 (AEGIS TASK-72227ab6, commit 19dd919); ELEC-02 implemented 2026-11-12 on the same branch at the user's
 request (AEGIS TASK-7c2a9322, commit e9fa5d2); ELEC-03 implemented 2026-11-13 on the same branch (AEGIS
-TASK-2c5054ba); ELEC-04...ELEC-07 planned.
+TASK-2c5054ba, commit 680c273); ELEC-04 implemented 2026-11-13 on the same branch (AEGIS TASK-80043c39);
+ELEC-05...ELEC-07 planned.
 
 ## Order
 
@@ -20,7 +21,7 @@ TASK-2c5054ba); ELEC-04...ELEC-07 planned.
 | 1 | ELEC-01 | [#93](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/93) | `electronics-calc` | electrical and thermal calculations with explicit units and assumptions | implemented |
 | 2 | ELEC-02 | [#94](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/94) | `kicad` | native schematic and PCB analysis, ERC/DRC, BOM and exports | implemented |
 | 3 | ELEC-03 | [#95](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/95) | `parts-search` | documented component selection and controlled catalog access | implemented |
-| 4 | ELEC-04 | [#96](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/96) | `ngspice` | electrical and electrothermal simulation on Windows and Linux | planned |
+| 4 | ELEC-04 | [#96](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/96) | `ngspice` | electrical and electrothermal simulation on Windows and Linux | implemented |
 | 5 | ELEC-05 | [#97](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/97) | `ltspice` | LTspice batch simulation on Windows in the same result model | planned |
 | 6 | ELEC-06 | [#98](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/98) | `kicad-layout` | placement and local routing on a candidate, checked and applied under the write policy | planned |
 | 7 | ELEC-07 | [#99](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/99) | `freerouting` | local autorouting, DSN/SES exchange and the integrated acceptance | planned |
@@ -137,6 +138,33 @@ those packages, not hidden manifest changes.
   in `tests/fixtures/parts-search/`, derived in its README); the opt-in `VERA_PARTS_UV` run passed on 2026-11-13.
   Open: E03-F live probes - no supplier credential has been provided, so all five suppliers are not verified live;
   native Ubuntu x64 (`REQ-PLAT-cad89d58`).
+
+## ELEC-04 as built
+
+- Two platform extensions (RULING-002): plugin downloads accept a Windows-only `.7z`, extracted by System32 bsdtar,
+  whose exit 1 is accepted only for its notices of skipped entries with non-ASCII names (the official ngspice build
+  has 20 such example files); and a program field `uses` gives a script program the resolved path of a sibling program
+  as `VERA_PROGRAM_<NAME>` - the way a helper reaches a VERA-installed engine. ELEC-05...07 can reuse both.
+- Package `05_Software/plugins/ngspice/`: program `ngspice` (the user's ngspice 42 or newer, or on Windows the pinned
+  official ngspice-47 `.7z`, SHA-256 recorded, licence Modified BSD with LGPL/MPL/GPL parts; on Ubuntu `apt install
+  ngspice`); every direct engine command is blocked. Program `ngspice-tool` (standard library): validate, run, sweep,
+  measure, compare, report. Skill `circuit-simulation`. Spec `.agentic/specs/REQ-DATA-29b9a988.md`.
+- Security boundary (hardened through three review rounds): the helper reads the netlist chain itself and refuses
+  before the engine runs - control blocks, unknown cards, any line whose first visible character is punctuation
+  followed by `#` (ngspice runs `*#`, `;#` and the like as control lines), XSPICE `A` instances (code models can start
+  programs or read files), code loading, includes outside the workbench, undefined models, subcircuits and pin
+  mismatches; it replaces the title line (ngspice acts on cards there) and runs `ngspice -b -n` on a copy with its own
+  control block, adding no solver option.
+- Results: run folders with the log, effective netlist, input hashes and header lines, series CSV, SVG plot,
+  result.json and report.md; measurements in Python (min, max, average, rms, peak-to-peak, ripple with its window,
+  overshoot, settling, value-at, final, average power with its sign convention), criteria pass/fail/unknown, engine
+  failures without any pass, timeout and a 1700 s sweep budget, seeded Monte Carlo, comparison of runs.
+- Decisions (RULING-003): no partial series (ngspice writes at the end); the ticket's "SPICE units checked" is the `M`
+  (milli) warning plus units on requests; "model licence and dialect recorded" is each file's leading comment lines
+  plus the engine version.
+- Criteria: E04-A...E and the Windows part of E04-F are covered by `tests/integration/ngspice.test.ts` with the real
+  ngspice-47 (fixtures and references in `tests/fixtures/ngspice/`), including the opt-in real provisioner install of
+  the 7z. Open: native Ubuntu x64 (`REQ-PLAT-0887e4d4`, `REQ-TEST-66a3c460`).
 
 ## Later, separate
 

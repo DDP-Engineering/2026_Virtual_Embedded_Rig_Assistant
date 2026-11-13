@@ -120,7 +120,26 @@ export async function checkTree(root: string): Promise<void> {
 }
 
 /**
- * The system tar that extracts `.tar.gz`, `.tgz` and `.tar.xz` (it detects the compression itself):
+ * Whether bsdtar's whole output is its notice for entries it left out because Windows cannot represent their names
+ * (non-ASCII names in a 7z), plus the closing line of a delayed exit. Anything else is a real archive problem.
+ */
+export function bsdtarSkipsOnly(output: string): boolean {
+  const lines = output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return (
+    lines.some((line) => line.includes("Archive entry has empty or unreadable filename")) &&
+    lines.every((line) =>
+      /^tar(?:\.exe)?: (?:Archive entry has empty or unreadable filename \.\.\. skipping|Error exit delayed from previous errors)\.?$/.test(
+        line,
+      ),
+    )
+  );
+}
+
+/**
+ * The system tar that extracts `.tar.gz`, `.tgz`, `.tar.xz` and, on Windows, `.7z` (it detects the format itself):
  * bsdtar from System32 on Windows, GNU tar from /usr/bin or /bin elsewhere. Neither writes absolute
  * or `..` paths unless asked to; `checkTree` checks the links it leaves.
  */

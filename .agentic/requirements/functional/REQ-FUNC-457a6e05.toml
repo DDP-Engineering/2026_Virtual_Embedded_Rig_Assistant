@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-457a6e05"
+
+title = "Combine runs into one report"
+
+status = "active"
+
+requirement = """
+When the agent runs `ngspice-tool report` on run folders, the helper shall write one report.md and report.json summarizing their status, measurements and criteria in a new run folder.
+"""
+
+verification = "A report of a passing and a failed run lists both with their status, measurement values and criteria; its folder holds report.json and report.md."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/compare.py", "05_Software/plugins/ngspice/scripts/ngspice_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "low"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0e57b16f"
+
+title = "Refuse missing models, missing subcircuits and pin count mismatches before the engine runs"
+
+status = "active"
+
+requirement = """
+If an element names a model that no `.model` card of the chain defines, or a subcircuit instance names an undefined subcircuit or has another node count than its ports, then the helper shall refuse the netlist before the engine runs.
+"""
+
+verification = "A diode with an undefined model and an X instance with one node fewer than its subcircuit's ports each exit 2 with `model` or `pins` before the engine; netlists whose models and subcircuits are defined run."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/netlist.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

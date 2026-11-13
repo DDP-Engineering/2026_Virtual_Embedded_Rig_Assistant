@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-079e7b77"
+
+title = "Measure an existing run without running the engine again"
+
+status = "active"
+
+requirement = """
+When the agent runs `ngspice-tool measure` on an existing run folder, the helper shall apply the measurements and criteria to its series in a new run folder without running the engine, after checking the series hash.
+"""
+
+verification = "Measuring a transient, an AC (complex vector by name, magnitude 1/sqrt(1 + (2 pi 10 x 1 ms)^2) at 10 Hz) and a noise run folder gives the original or analytic values; a series edited after the run is refused with exit 2."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ngspice/scripts/ngspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

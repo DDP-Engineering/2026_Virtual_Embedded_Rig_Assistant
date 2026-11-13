@@ -37,3 +37,4 @@
     - { name: Calculations, plugins: [electronics-calc], default: true }
     - { name: Schematic and PCB (KiCad), plugins: [kicad], default: true }
     - { name: Component selection, plugins: [parts-search], default: true }
+    - { name: Simulation (ngspice), plugins: [ngspice], default: true }

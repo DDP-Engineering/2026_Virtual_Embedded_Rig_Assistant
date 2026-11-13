@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-66a3c460"
+
+title = "Record real batch runs with errors, Stop and timeout on each platform"
+
+status = "draft"
+
+requirement = """
+Real batch runs with the engine shall be recorded on each platform with their artefacts, an engine error, a Stop and a timeout.
+"""
+
+verification = "Windows: the opt-in real-engine tests record artefacts, the error, Stop and timeout cases with ngspice-47. Manual: the same on native Ubuntu x64, recorded as not run until a host exists."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

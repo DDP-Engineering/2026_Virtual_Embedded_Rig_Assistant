@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-a7ccca3e"
+
+title = "Refuse control blocks and executable directives before the engine runs"
+
+status = "active"
+
+requirement = """
+If a netlist or one of its includes contains a control block, an unknown dot card, a line whose first visible character is not a letter or digit and whose second is `#`, an XSPICE code-model instance, or a word that loads code or runs commands (pre_osdi, osdi, codemodel, shell), then the helper shall refuse it before the engine runs, and it shall replace the netlist's title line in the effective copy.
+"""
+
+verification = "Hostile fixtures - `.control`/`.endc`, `.exec`, `pre_osdi` on a continuation line, `shell` in an included file, `*#`, `;#` and `!#` lines in the netlist and `*#`/`;#` lines in an include, an `A` instance of a `d_process` model - each exit 2 with the line named, start no engine and leave every input unchanged; an `.include` written on the title line validates, runs without loading the file, and the effective copy starts with `ngspice-tool effective netlist`."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/netlist.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

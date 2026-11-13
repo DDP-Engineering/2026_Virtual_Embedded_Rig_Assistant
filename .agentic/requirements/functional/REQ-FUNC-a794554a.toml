@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a794554a"
+
+title = "Simulate a lumped RC thermal network that matches the steady-state calculation"
+
+status = "active"
+
+requirement = """
+When a netlist models heat flow as a lumped RC network (power as a current source, thermal resistances as resistors, ambient as a voltage source), the simulated steady-state temperature node shall equal the steady-state temperature elec-calc computes for the same values.
+"""
+
+verification = "The thermal fixture (1 W into 50 K/W from 40 °C ambient, with a thermal capacitance) settles at 90 °C within 0.1 % at the end of the transient, the value elec-calc thermal gives."
+
+affected_paths = ["05_Software/plugins/ngspice/skills/"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-adcd1fc1"
+
+title = "Leave no engine running after Stop"
+
+status = "active"
+
+requirement = """
+When the user stops an ngspice-tool run, VERA shall leave no engine process running.
+"""
+
+verification = "Stopping a long real run through VERA's runner ends the helper and its ngspice child; no ngspice process remains."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

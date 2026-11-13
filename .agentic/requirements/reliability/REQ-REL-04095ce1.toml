@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-04095ce1"
+
+title = "Refuse requests beyond the run profile limits and stop an engine that exceeds its time"
+
+status = "active"
+
+requirement = """
+If a request exceeds its profile's point, vector or time limits, the helper shall refuse it before the engine runs; if the engine runs longer than the time limit, the helper shall stop the engine and report the run as timed out; and if a sweep exhausts its 1700 s budget, the points that no longer fit shall be reported as not run and the sweep as timed out.
+"""
+
+verification = "A transient of 2 000 000 points on the standard profile exits 2 before any engine; a long transient with a 1 s limit exits 3 with status timeout and no engine process left; a sweep with its budget spent (test helper sets it to zero) exits 3 with status timeout and the budget warning."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/request.py", "05_Software/plugins/ngspice/scripts/ngspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

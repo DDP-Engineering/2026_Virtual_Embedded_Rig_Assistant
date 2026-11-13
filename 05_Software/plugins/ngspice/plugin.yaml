@@ -1,0 +1,40 @@
+format: 1
+id: ngspice
+version: 1.0.0
+name: ngspice circuit simulation
+description: Reproducible local circuit simulation with ngspice - operating point, DC, AC, transient and noise analyses on your netlist and local models, measurements over declared windows (ripple, overshoot, settling, RMS, average power), pass/fail criteria, parameter and temperature sweeps, seeded Monte Carlo, run comparison and reports. Netlists are checked before the engine runs and every run writes a new folder with the log, series, plot and report. Uses your ngspice or, on Windows, installs the pinned official ngspice-47.
+ecosystem: electronics
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://ngspice.sourceforge.io/docs.html"]
+programs:
+  ngspice:
+    install:
+      find:
+        windows: ["C:/Spice64/bin/ngspice_con.exe", "%ProgramFiles%/Spice64/bin/ngspice_con.exe", "%LOCALAPPDATA%/Programs/Spice64/bin/ngspice_con.exe"]
+        linux: ["$PATH", "/usr/bin/ngspice", "/usr/local/bin/ngspice"]
+      hint: "On Windows choose Install programs for the pinned official ngspice-47, or extract the official build to C:\\Spice64. On Ubuntu run: sudo apt install ngspice."
+      download:
+        windows-x64:
+          url: https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/47/ngspice-47_64.7z
+          sha256: 59225971bd68cdd1199443649aa4615a9e6d684933f205ab49006a3942518f5a
+          path: Spice64/bin/ngspice_con.exe
+    version: { args: [-v], match: 'ngspice-(\d+)', range: '>=42' }
+    timeout: 60
+  ngspice-tool:
+    install: { script: scripts/ngspice_tool.py }
+    version: { args: [--version], match: '^ngspice-tool (\d+\.\d+\.\d+)' }
+    timeout: 1800
+    uses: [ngspice]
+# A netlist's control block can run shell commands and write files anywhere, so the agent reaches the engine only
+# through ngspice-tool, which checks the netlist and its includes first and appends its own control block.
+rules:
+  # Every direct engine command is blocked (the highest risk of overlapping rules wins, so no exception is possible);
+  # ngspice-tool reports the engine version and VERA's provisioner probes it without these rules.
+  - match: "ngspice *"
+    risk: blocked
+    note: "A netlist's control block can run shell commands and write files. Use ngspice-tool, which checks the netlist and its includes, runs ngspice in batch mode on a copy and writes a new run folder."
+  - { match: "ngspice-tool {--version,--help,-h}", risk: safe }
+  - match: "ngspice-tool {validate,run,sweep,measure,compare,report} *"
+    risk: safe
+    note: Host simulation. Checks the netlist and its includes before the engine runs, runs ngspice in batch mode on a copy and creates a new run folder under the results directory in the workbench; it never changes the netlist or its models.
+    timeout: 1800

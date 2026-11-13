@@ -1,0 +1,2 @@
+* fictional small-signal diode
+.model D1N4148X D(Is=4.35n Rs=0.64 N=1.9 Cjo=4p)

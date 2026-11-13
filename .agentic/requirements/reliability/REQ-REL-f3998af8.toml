@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-f3998af8"
+
+title = "Report engine failures without passing any criterion"
+
+status = "active"
+
+requirement = """
+If the engine exits non-zero, writes no series, or logs an error, singular matrix, non-convergence, time step or missing model line, then the run shall be failed with the quoted problems, every criterion not evaluated and exit 3.
+"""
+
+verification = "With the real engine, a singular matrix (with its gmin and source stepping failures) and a vector that does not exist each give status failed, problems naming the log line, criteria not-evaluated and exit 3."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-ce869437"
+
+title = "Confine netlist includes and libraries to the working directory"
+
+status = "active"
+
+requirement = """
+If an include or library path is absolute outside the allowed roots, leaves them by `..` or a link, names a network or device path, exceeds the depth, size or file limits, or does not exist, then the helper shall refuse the netlist before the engine runs.
+"""
+
+verification = "Fixtures including `../outside.lib`, `C:/Windows/win.ini`, `\\\\host\\share\\m.lib`, `NUL`, a 17-deep chain and a missing file each exit 2 naming the include; an include in a subfolder of the working directory is accepted."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/netlist.py", "05_Software/plugins/ngspice/scripts/ngspice_support/workspace.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13
