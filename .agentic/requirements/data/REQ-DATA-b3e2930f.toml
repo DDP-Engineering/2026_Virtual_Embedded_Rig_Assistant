@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-b3e2930f"
+
+title = "Write format 1 instrument results in a new run folder"
+
+status = "active"
+
+requirement = """
+Each instrument operation of the scpi helper that passes the request, registry, limit and state checks shall write a new folder `<results-dir>/<run-id>/` (default `embedded-lab-results`, never inside `.vera`) holding result.json in format 1 with tool and PyVISA versions, instrument identity and profile verification status, inputs with hashes, lifecycle, values or series with units, problems, status `pass`, `fail`, `incomplete`, `blocked` or `error` and artifacts with SHA-256, and print a summary of at most 11 000 UTF-16 units; a refusal before those checks pass prints its document without creating a folder.
+"""
+
+verification = "Tests read result.json of identify, read, capture, output and a blocked run for format, kind, status, identity, lifecycle and artifact hashes, refuse a results dir inside .vera and an existing run id, and check the printed size bound."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/report.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/workspace.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

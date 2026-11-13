@@ -131,3 +131,27 @@ it("denies a typed confirmation under approval flags or without a terminal, and 
   const flash = { ...burn, program: { ...burn.program, risk: "device-write" as const, confirm: null } };
   expect(flagDecision(flash, "all", false)).toBe("approved");
 });
+// REQ-UX-73dd7a9b
+it("shows the reserved bench resources and the registry hash", async () => {
+  const output = new PassThrough();
+  const input = new PassThrough();
+  let text = "";
+  output.on("data", (chunk) => {
+    text += chunk.toString();
+  });
+  const reserve = {
+    ...burn,
+    program: {
+      ...burn.program,
+      risk: "device-read" as const,
+      confirm: null,
+      resources: [{ alias: "psu", kind: "visa", resource: "USB0::0x1AB1::0x0E11::DP8C1::INSTR" }],
+      registry: { path: "lab/resources.json", sha256: "c".repeat(64) },
+    },
+  };
+  const promise = promptApproval(reserve, new AbortController().signal, input, output);
+  input.write("d\n");
+  expect(await promise).toEqual({ decision: "denied" });
+  expect(text).toContain("Reserves: psu (visa USB0::0x1AB1::0x0E11::DP8C1::INSTR)");
+  expect(text).toContain(`Registry: lab/resources.json ${"c".repeat(64)}`);
+});

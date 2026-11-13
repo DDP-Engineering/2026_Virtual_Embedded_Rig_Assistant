@@ -12,13 +12,14 @@ PROCESS: at the user's request (2026-11-13) every child is implemented with AEGI
 branch `feature/101-embedded-lab` cut from `feature/93-electronics-calc` at bb79e4b, in the sibling
 worktree `F:\2026_Virtual_Embedded_Rig_Assistant_lab`. The implementer hands the candidate back without a
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
-STATE: LAB-01...LAB-08 planned.
+STATE: LAB-01 implemented 2026-11-13 on branch `feature/101-embedded-lab` (AEGIS TASK-a5a839c7, offline and
+real-process evidence; real instruments, real PyVISA and native Ubuntu open); LAB-02...LAB-08 planned.
 
 ## Order
 
 | Order | Package | Issue | Plugin | Result | State |
 |---|---|---|---|---|---|
-| 1 | LAB-01 | [#102](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/102) | `scpi-instruments` | identified instruments, finite operations, captures and approved control; resource leases and supervised cleanup | planned |
+| 1 | LAB-01 | [#102](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/102) | `scpi-instruments` | identified instruments, finite operations, captures and approved control; resource leases and supervised cleanup | implemented |
 | 2 | LAB-02 | [#103](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/103) | `lab-validation` | reproducible comparisons of captures, simulations and requirements | planned |
 | 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | planned |
 | 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | planned |
@@ -40,6 +41,44 @@ initiative: they extend the LAB-01 lease and lifecycle contracts with further id
 endpoint, lab host) and the LAB-02 numeric engine with further metrics, and they explicitly do not create
 a second lease registry or verdict engine. LAB-01 and LAB-02 keep those seams open without implementing
 them.
+
+## LAB-01 as built
+
+- Platform (VERA itself, reused by LAB-02...08 and later plans): the workbench registry `lab/resources.json` (format 1;
+  alias, identity kind as data - only `visa` today - identity fields, plugin data) and VISA identity keys in shared
+  `lab-resources.ts`; the manifest program field `resources {option, kinds, grace, cleanup, cleanupTimeout}`; core
+  `ResourceLeases` (`leases.ts`), the one lease registry: a per-user folder shared by the desktop app and the CLI, one
+  lease file per key, stale leases of lost processes removed and recorded `unknown` when they could actuate; the
+  runner's in-process BUSY (aliases, sessions, serial ports including sigrok-cli `conn=`), stop request with a grace
+  period before the tree kill, one authorized cleanup run after an interrupted actuation and the physical state
+  `confirmed`/`unchanged`/`unknown`; the approval card and CLI prompt show the reserved resources and the registry
+  hash. Spec `.agentic/specs/REQ-DATA-f2cbfc23.md`; architecture `00_Planning/plugins/architecture.md` §3.5.
+- Package `05_Software/plugins/scpi-instruments/` (official, pack "Embedded lab", activity `measurement`): program `scpi`
+  (`scripts/scpi_tool.py`, PEP 723 with PyVISA 1.16.2, pyvisa-py 0.8.1, pyserial 3.5, pyusb 1.3.1; support package
+  `scpi_support/`), skills `bench-instruments` and `instrument-profiles`. Operations `capabilities`,
+  `discover-configured [--list-local]`, `identify`, `read`, `capture`, `status`, `configure`, `close`,
+  `output --hold` (1...3500 s, always switched off at the end) and `decode`; spec `.agentic/specs/REQ-DATA-b3e2930f.md`.
+  Risk by the first argument only: safe (capabilities, discovery, decode), device-read (`--list-local`, identify,
+  read, capture, status), device-write (configure, close), irreversible with the word `output`.
+- Profiles `keysight-34461a` (DMM), `rigol-ds1000z` (scope), `rigol-dp800` (PSU) are data with fixed command slots whose
+  effect is decided by the helper's code; all three are `unverified` (written from the vendors' programming guides).
+- Decisions: VERA never leaves an output energized outside a supervised run (`output` always has a hold); a power
+  supply's set-points change only while its output is off; `--list-local` lists serial ports (pyserial) and USBTMC
+  devices (pyusb) and never uses VISA's resource search, because pyvisa-py's TCPIP listing broadcasts on the network
+  (GPIB is not listed); results go to `embedded-lab-results/<run-id>/result.json` (kind `scpi-result`) with the raw
+  block and preamble kept for `decode`.
+- Inventory (2026-11-13, read-only): this development machine has no SCPI instrument, no USBTMC device and no vendor VISA;
+  its COM ports are Bluetooth links. No command was sent to any instrument.
+- Criteria: L01-C, L01-D (two runners, a second Node process holding a lease) and L01-F are covered on Windows by
+  `src/libraries/shared/src/lab-resources.test.ts`, `core/src/plugins/{leases,runner-leases,program-resources}.test.ts`,
+  the approval tests and `tests/integration/scpi-instruments.test.ts` (real runner and helper processes against a fake
+  PyVISA in `tests/fixtures/scpi-instruments/`); L01-A, L01-B (own raw block re-decoded; importing an instrument's export
+  file is not implemented) and L01-E are covered offline only; L01-H is covered for package, catalog, pack, approvals
+  and artifacts, not for workbench activation, disabling or workbench change of this plugin (existing platform tests). The opt-in
+  `VERA_SCPI_UV` run passed on 2026-11-13 (real PyVISA 1.16.2 and pyvisa-py 0.8.1 from PyPI through VERA's provisioner:
+  identify, read, capture and output over TCPIP SOCKET against local simulated servers - the library path, not an
+  instrument). Open: L01-A/B/E/G against real instruments (none available; models chosen from the user's inventory),
+  native Ubuntu x64 (`REQ-PLAT-fae260c3`) and the vendor-VISA (`ivi`) backend.
 
 ## Rules shared by the packages
 

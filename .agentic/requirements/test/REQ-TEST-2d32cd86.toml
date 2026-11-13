@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-2d32cd86"
+
+title = "Prove PyVISA access through a real backend before calling a transport verified"
+
+status = "active"
+
+requirement = """
+The opt-in scpi-instruments test shall install the pinned PyVISA and pyvisa-py through VERA's provisioner and exercise identify, read, capture and output over a real pyvisa-py TCPIP SOCKET connection to a local SCPI test server, and no transport shall be documented as verified on hardware without a run against a real instrument.
+"""
+
+verification = "Manual: with the user's approval of the PyPI download, run the test with VERA_SCPI_UV set to a real uv and record the result; real-instrument runs are recorded in the README matrix with model, firmware, transport and OS."
+
+affected_paths = ["05_Software/tests/integration/scpi-instruments.test.ts", "05_Software/plugins/scpi-instruments/README.md"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0542cc94"
+
+title = "Normalize VISA resource names to identity keys"
+
+status = "active"
+
+requirement = """
+The plugin platform shall derive identity keys from a declared VISA resource so that spellings of one connection share a key: ASRL by port (COMn upper-cased, /dev paths verbatim) as `serial:<port>`, USB by vendor, product and serial number in any number base and letter case, TCPIP by host for INSTR, inst/hislip devices and SOCKET, GPIB by board and address, plus `serial-number:<value>` when the entry declares the instrument's serial number, and shall reject any other resource syntax as an invalid registry entry.
+"""
+
+verification = "Shared tests map pairs such as USB0::0x1AB1::0x0E11::DP8C1::INSTR and USB::6833::3601::dp8c1::0::INSTR, TCPIP0::10.0.0.5::inst0::INSTR and TCPIP::10.0.0.5::5025::SOCKET, ASRL3::INSTR and ASRLCOM3::INSTR to one key each, keep different hosts or serial numbers apart, add the serial-number key, and reject `PXI0::1::INSTR` and malformed strings."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

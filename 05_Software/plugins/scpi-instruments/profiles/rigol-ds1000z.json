@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "id": "rigol-ds1000z",
+  "class": "scope",
+  "title": "Rigol DS1000Z digital oscilloscope (DS1054Z, DS1074Z, DS1104Z and Plus variants)",
+  "source": "RIGOL MSO1000Z/DS1000Z Series Programming Guide (:WAVeform, :TIMebase, :CHANnel<n>, :TRIGger:STATus?)",
+  "verification": { "status": "unverified", "instruments": [] },
+  "identity": {
+    "manufacturers": ["RIGOL TECHNOLOGIES"],
+    "models": ["DS1054Z", "DS1074Z", "DS1104Z", "DS1074Z Plus", "DS1104Z Plus"],
+    "firmware": "^00\\.04\\."
+  },
+  "transport": {
+    "readTermination": "\n",
+    "writeTermination": "\n",
+    "timeoutMs": 5000,
+    "chunkBytes": 250000,
+    "blockTerminator": true
+  },
+  "channels": {
+    "CHAN1": { "index": 1, "limits": { "scale": 100.0, "offset": 1000.0 } },
+    "CHAN2": { "index": 2, "limits": { "scale": 100.0, "offset": 1000.0 } },
+    "CHAN3": { "index": 3, "limits": { "scale": 100.0, "offset": 1000.0 } },
+    "CHAN4": { "index": 4, "limits": { "scale": 100.0, "offset": 1000.0 } }
+  },
+  "commands": {
+    "waveformSource": ":WAV:SOUR {channel}",
+    "waveformMode": ":WAV:MODE NORM",
+    "waveformFormat": ":WAV:FORM BYTE",
+    "preamble": ":WAV:PRE?",
+    "data": ":WAV:DATA?",
+    "timebase": ":TIM:MAIN:SCAL?",
+    "setTimebase": ":TIM:MAIN:SCAL {value}",
+    "scale": ":{channel}:SCAL?",
+    "setScale": ":{channel}:SCAL {value}",
+    "offset": ":{channel}:OFFS?",
+    "setOffset": ":{channel}:OFFS {value}",
+    "probe": ":{channel}:PROB?",
+    "bandwidthLimit": ":{channel}:BWL?",
+    "display": ":{channel}:DISP?",
+    "triggerStatus": ":TRIG:STAT?"
+  },
+  "timebase": { "min": 5e-9, "max": 50 },
+  "scaleMin": 0.001,
+  "preamble": [
+    "format",
+    "type",
+    "points",
+    "count",
+    "xincrement",
+    "xorigin",
+    "xreference",
+    "yincrement",
+    "yorigin",
+    "yreference"
+  ],
+  "samples": {
+    "width": 1,
+    "signed": false,
+    "endian": "little",
+    "clipLow": 0,
+    "clipHigh": 255,
+    "maxPoints": 1200
+  }
+}

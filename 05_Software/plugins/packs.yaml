@@ -39,3 +39,7 @@
     - { name: Component selection, plugins: [parts-search], default: true }
     - { name: Simulation (ngspice), plugins: [ngspice], default: true }
     - { name: "Simulation (LTspice, Windows)", plugins: [ltspice], default: false }
+- id: lab
+  name: Embedded lab
+  groups:
+    - { name: Bench instruments (SCPI), plugins: [scpi-instruments], default: true }

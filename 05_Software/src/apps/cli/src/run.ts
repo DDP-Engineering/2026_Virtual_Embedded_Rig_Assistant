@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   buildSystemPrompt,
@@ -7,11 +8,13 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  leaseRoot,
   officialPartsPlugin,
   PluginStore,
   type ProgramHost,
   ProgramRunner,
   programPromptEntries,
+  ResourceLeases,
   SessionService,
   SettingsService,
   unavailablePartsTools,
@@ -168,7 +171,17 @@ export async function runTurn(
     );
     resources.push(() => workbench.close());
     // Plugin program runs end with the CLI run: closing resources stops every run's process tree.
-    const programs = new ProgramRunner({ host: createCliProcessHost(), clock: nodeClock });
+    // Bench resources are leased in the per-user folder the desktop app also uses (spec REQ-DATA-f2cbfc23 §5).
+    const leases = new ResourceLeases({
+      root: leaseRoot({
+        platform: process.platform,
+        env: process.env,
+        tmpdir: tmpdir(),
+        uid: process.getuid?.(),
+      }),
+      app: "cli",
+    });
+    const programs = new ProgramRunner({ host: createCliProcessHost(), clock: nodeClock, leases });
     resources.push(() => programs.stopAll());
     const snapshot = await workbench.open(options.workbench);
     signal.throwIfAborted();

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a8dcf154"
+
+title = "Discover only declared and local resources"
+
+status = "active"
+
+requirement = """
+The `scpi discover-configured` operation shall list the registry's entries with their profiles and, with `--list-local`, add this machine's serial ports (through pyserial) and USBTMC devices (through pyusb) as VISA resource names, never using VISA's resource search and never querying any network address.
+"""
+
+verification = "Fake tests list the registry, check that --list-local enumerated only the fake pyserial ports and pyusb devices (a non-USBTMC device left out, no VISA listing call), and that a missing libusb is a driver-missing problem."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/cli.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/local.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

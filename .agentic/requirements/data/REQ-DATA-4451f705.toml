@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-4451f705"
+
+title = "Publish the scpi-instruments plugin package"
+
+status = "active"
+
+requirement = """
+The repository shall ship the official plugin `scpi-instruments` 1.0.0 for Windows x64 and Linux x64 with program `scpi` as a PEP 723 script pinned to PyVISA and pyvisa-py, a README with the transport, backend and OS matrix, skills for instrument work, validated profiles, catalog metadata and a pack group, accepted by `vera catalog check`.
+"""
+
+verification = "The integration test validates the manifest, the pinned dependencies, catalog.yaml official and metadata, packs.yaml, the skills listed through SkillCatalog, and checkCatalogSource on 05_Software/plugins with no issue; prepare-plugins builds the zip."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/plugin.yaml", "05_Software/plugins/scpi-instruments/README.md", "05_Software/plugins/scpi-instruments/scripts/scpi_tool.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/__init__.py", "05_Software/plugins/scpi-instruments/skills/bench-instruments/SKILL.md", "05_Software/plugins/scpi-instruments/skills/instrument-profiles/SKILL.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

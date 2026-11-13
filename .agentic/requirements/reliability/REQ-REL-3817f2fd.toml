@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-3817f2fd"
+
+title = "Run the authorized cleanup after an interrupted actuation"
+
+status = "active"
+
+requirement = """
+If an actuating run with resource leases ends without its program reporting a released resource whose physical state is confirmed or unchanged, after a stop, a timeout, a kill or a crash, then the runner shall start the program's declared cleanup command for the claimed resource once, without a new approval, under the cleanup timeout and before releasing the lease.
+"""
+
+verification = "Runner tests cover a crash (cleanup spawned with the declared args), a confirmed release (no cleanup), a read-only run (no cleanup) and a hanging cleanup (killed at its timeout); the integration test kills a helper that ignores the stop request and finds the cleanup run's output in the same log and the instrument's output off."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/src/libraries/core/src/plugins/program-resources.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

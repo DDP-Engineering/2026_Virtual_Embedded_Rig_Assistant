@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-9524d2c9"
+
+title = "Refuse values beyond the profile and bench limits"
+
+status = "active"
+
+requirement = """
+If a requested channel, setting or value is not declared by the instrument's profile or exceeds the profile's limit or a lower bench limit of the registry entry, then the scpi helper shall refuse the request as an error before opening the instrument.
+"""
+
+verification = "Tests request CH4 on a DP832, 31 V on CH1, 6 V where the bench limit is 5.5 V, a hold of 0 and of 3501 s and an undeclared setting: each exits 2 and the fake transcript stays empty."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/request.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

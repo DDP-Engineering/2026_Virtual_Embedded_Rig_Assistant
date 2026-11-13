@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b1ab08fd"
+
+title = "Read scalar values with units"
+
+status = "active"
+
+requirement = """
+When `scpi read` runs on a declared multimeter or power supply, the helper shall query only the profile's measurement commands and return each value with its quantity, unit, channel, raw reply and the instrument's reported function in the result.
+"""
+
+verification = "Fake-instrument tests read a 34461A in VOLT mode (V), RES mode (Ohm) and a DP832 CH1 voltage and current, compare values and units with the fake's replies and check the transcript holds no configuration command."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/classes.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

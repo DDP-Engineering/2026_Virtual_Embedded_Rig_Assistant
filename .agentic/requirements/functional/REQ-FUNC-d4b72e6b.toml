@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d4b72e6b"
+
+title = "Report the physical state of a supervised run"
+
+status = "active"
+
+requirement = """
+When a run with resource leases ends, the runner shall report its physical state as `confirmed`, `unchanged` or `unknown` in the run result and the run log, record `unknown` for each claimed key, and clear a recorded `unknown` when the program reports the state confirmed.
+"""
+
+verification = "Runner and integration tests read `physical` from the result for a confirmed hold, a read-only run, and a failed cleanup (unknown, marker written); a later close that confirms clears the marker."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/leases.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/src/libraries/core/src/plugins/program-resources.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

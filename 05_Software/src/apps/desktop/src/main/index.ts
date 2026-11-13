@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
@@ -8,12 +9,14 @@ import {
   createDownloadPdfExtractor,
   embeddingModelId,
   type LlmGateway,
+  leaseRoot,
   modelSchema,
   PluginCatalog,
   PluginStore,
   ProgramRunner,
   Provisioner,
   pluginPlatform,
+  ResourceLeases,
   SettingsService,
   splitModelReference,
   WebDownloads,
@@ -191,7 +194,20 @@ const workbench = new WorkbenchService(
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
 const processHost = createDesktopProcessHost();
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
-const programs = new ProgramRunner({ host: processHost, clock: systemClock });
+const programs = new ProgramRunner({
+  host: processHost,
+  clock: systemClock,
+  // Bench resources are leased in the per-user folder the CLI also uses (spec REQ-DATA-f2cbfc23 §5).
+  leases: new ResourceLeases({
+    root: leaseRoot({
+      platform: process.platform,
+      env: process.env,
+      tmpdir: tmpdir(),
+      uid: process.getuid?.(),
+    }),
+    app: "desktop",
+  }),
+});
 /** The pinned uv of the package, or the one prepare:uv placed in the source tree for development. */
 const uvBinary = join(
   app.isPackaged

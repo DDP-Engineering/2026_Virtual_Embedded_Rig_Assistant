@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8737759e"
+
+title = "Act only on an instrument that matches its declared profile"
+
+status = "active"
+
+requirement = """
+Before any operation other than identify, the scpi helper shall query the identity, require the manufacturer, model and firmware pattern of the entry's profile and the declared serial number when present, and on a mismatch or an unknown profile shall stop as blocked without sending any further command.
+"""
+
+verification = "Fake-instrument tests identify a matching DP832, a DP711 declared as rigol-dp800 and a wrong serial number: configure and output are blocked and the fake's transcript holds only `*IDN?`; identify of an instrument without any matching profile reports the identity with profile null."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/profiles.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/session.py", "05_Software/plugins/scpi-instruments/profiles/rigol-dp800.json", "05_Software/plugins/scpi-instruments/profiles/rigol-ds1000z.json", "05_Software/plugins/scpi-instruments/profiles/keysight-34461a.json"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

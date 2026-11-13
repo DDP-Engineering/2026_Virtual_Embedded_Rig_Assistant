@@ -328,6 +328,8 @@
     "executable": "Programmdatei",
     "notes": "Hinweise der Regeln",
     "files": "Workbench-Dateien und ihr SHA-256",
+    "resources": "Reservierte Laborressourcen",
+    "registry": "Deklariert in",
     "typeToConfirm": "Diese Änderung ist dauerhaft. Geben Sie {{word}} zur Bestätigung ein.",
     "confirmMismatch": "Das eingegebene Wort stimmt nicht überein. Geben Sie das auf der Karte angezeigte Wort ein."
   },
