@@ -18,10 +18,12 @@ programs:
         windows-x64:
           url: https://github.com/renode/renode/releases/download/v1.17.0/renode-1.17.0.windows-portable.zip
           sha256: 18bcf145422039e8702c3e5f9864c7787561bfd5deb7a3ee6e168ecf19e2b9db
+          bytes: 106735414
           path: renode_1.17.0-portable/renode.exe
         linux-x64:
           url: https://github.com/renode/renode/releases/download/v1.17.0/renode-1.17.0.linux-portable.tar.gz
           sha256: 4ba7c68b59e2447f188ef4b4b112fcccd2802582c460beedceb63b84e5605a5f
+          bytes: 63459129
           path: renode_1.17.0-portable/renode
     version: { args: [--version], match: 'Renode v?(\d+\.\d+\.\d+)', range: '==1.17.0' }
     timeout: 60

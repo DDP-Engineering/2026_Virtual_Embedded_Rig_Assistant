@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-751e430e"
+
+title = "Re-install managed programs"
+
+status = "active"
+
+requirement = """
+When the user chooses Re-install on an installed plugin, the provisioner shall install again every program VERA manages (pip and script with uv --reinstall, downloads fetched again, verified against their SHA-256 and swapped in for VERA's copy), skip find programs, keep the existing copy when the new one fails, and change nothing else.
+"""
+
+verification = "Core provisioning test: a single-file download whose stored copy was damaged is downloaded again by reinstall and reports ready with the original bytes; a reinstall whose download fails reports the problem and keeps the old copy; pip runs `uv tool install --reinstall`; find programs are not touched. Shared IPC test for plugins.reinstall; renderer test for the Re-install button."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

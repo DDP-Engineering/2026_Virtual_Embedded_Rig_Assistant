@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-4cef9c7b"
+
+title = "Hash mismatch of an installed download"
+
+status = "active"
+
+requirement = """
+When the user checks the dependencies of a plugin whose single-file download no longer matches its pinned SHA-256, the provisioner shall report that program unavailable with problem `sha256`, which the page shows with the hint to re-install.
+"""
+
+verification = "Core provisioning test: after a single-file download is installed, overwriting the stored file makes check report state unavailable, problem sha256; a passive statuses call does not hash. Renderer label exists in en/ro/de."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

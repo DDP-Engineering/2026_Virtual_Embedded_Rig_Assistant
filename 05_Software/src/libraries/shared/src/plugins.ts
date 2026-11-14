@@ -191,6 +191,8 @@ const downloadSchema = z
         sha256: z.string().regex(/^[0-9a-f]{64}$/),
         path: relativePath.optional(),
         prefix: args.optional(),
+        /** The file's size in bytes, for the catalog card; a longer transfer is a hash mismatch. */
+        bytes: z.number().int().min(1).optional(),
       })
       .superRefine((entry, ctx) => {
         const named = downloadForm(entry.url) === "file" ? downloadName(entry) : entry.path;
@@ -558,8 +560,89 @@ export const pluginProgramStatusSchema = z.strictObject({
   downloadAvailable: z.literal(true).optional(),
   /** A combined find/download declaration is currently using a discovered external executable. */
   external: z.literal(true).optional(),
+  /** Where a ready program was found on this computer; VERA's own copies carry none. */
+  path: z.string().min(1).max(4096).optional(),
 });
 export type PluginProgramStatus = z.infer<typeof pluginProgramStatusSchema>;
+export type PluginProgramKind = z.infer<typeof pluginProgramKindSchema>;
+
+/** How a program installs: a find declaration with a managed download counts as a download. */
+export function pluginProgramKind(program: PluginProgram): PluginProgramKind {
+  const { install } = program;
+  if ("pip" in install) return "pip";
+  if ("script" in install) return "script";
+  return install.download !== undefined ? "download" : "find";
+}
+/** The first http(s) link of a hint, without trailing sentence punctuation (the vendor guide). */
+export function pluginHintLink(hint: string): string | undefined {
+  return /https?:\/\/[^\s<>"'()[\]]+/.exec(hint)?.[0].replace(/[.,;:!?]+$/, "");
+}
+/**
+ * One program dependency as the catalog index and the plugin page list it, derived from the manifest alone:
+ * VERA installs pip, script and download programs into its program folder (`automatic`); a find program is the
+ * user's to install, with its supported range and vendor guide.
+ */
+export const pluginDependencySchema = z.strictObject({
+  name: pluginProgramNameSchema,
+  kind: pluginProgramKindSchema,
+  automatic: z.boolean(),
+  pip: z.string().min(1).max(256).optional(),
+  script: z.string().min(1).max(1024).optional(),
+  downloads: z
+    .array(
+      z.strictObject({
+        platform: pluginPlatformSchema,
+        sha256: z.string().regex(/^[0-9a-f]{64}$/),
+        bytes: z.number().int().min(1).optional(),
+      }),
+    )
+    .min(1)
+    .max(3)
+    .optional(),
+  /** The systems whose installation VERA searches for the program. */
+  find: z
+    .array(z.enum(["windows", "linux"]))
+    .min(1)
+    .max(2)
+    .optional(),
+  range: z.string().min(1).max(128).optional(),
+  /** The manifest's hint: how to install the program yourself. */
+  guide: z.string().min(1).max(1024).optional(),
+});
+export type PluginDependency = z.infer<typeof pluginDependencySchema>;
+/** The program dependencies of a manifest in name order (the catalog index's `dependencies`). */
+export function pluginDependencies(manifest: PluginManifest): PluginDependency[] {
+  return Object.keys(manifest.programs)
+    .sort()
+    .map((name) => {
+      const program = manifest.programs[name] as PluginProgram;
+      const kind = pluginProgramKind(program);
+      const { install } = program;
+      const { range } = program.version;
+      if ("pip" in install) return { name, kind, automatic: true, pip: install.pip };
+      if ("script" in install) return { name, kind, automatic: true, script: install.script };
+      const downloads = pluginPlatformSchema.options.flatMap((platform) => {
+        const entry = install.download?.[platform];
+        return entry
+          ? [{ platform, sha256: entry.sha256, ...(entry.bytes !== undefined ? { bytes: entry.bytes } : {}) }]
+          : [];
+      });
+      const find =
+        "find" in install
+          ? (["windows", "linux"] as const).filter((system) => install.find[system] !== undefined)
+          : [];
+      const hint = "hint" in install ? install.hint : undefined;
+      return {
+        name,
+        kind,
+        automatic: kind !== "find",
+        ...(downloads.length ? { downloads } : {}),
+        ...(find.length ? { find } : {}),
+        ...(range !== undefined ? { range } : {}),
+        ...(hint !== undefined ? { guide: hint } : {}),
+      };
+    });
+}
 
 /** Run ids are ULIDs, so their order is their start order. */
 export const programRunIdSchema = z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/);

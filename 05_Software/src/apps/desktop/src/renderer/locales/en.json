@@ -886,8 +886,8 @@
     "problem": {
       "notFound": "Not found on this computer.",
       "install": "The install failed.",
-      "download": "The download failed.",
-      "sha256": "The file has the wrong SHA-256.",
+      "download": "The download failed. Check the connection (offline?) and try again.",
+      "sha256": "The file does not match its pinned SHA-256. Re-install downloads it again.",
       "archive": "The archive could not be extracted.",
       "platform": "Not available for this system.",
       "uv": "The bundled uv is missing.",
@@ -937,7 +937,8 @@
       "update": "Update to {{version}}",
       "updateAvailable": "Update available: {{version}}",
       "reviewFrom": "From the catalog: {{tier}}, version {{version}}.",
-      "reviewChanges": "This update changes programs, install sources or rules; review them before installing."
+      "reviewChanges": "This update changes programs, install sources or rules; review them before installing.",
+      "installWithDependencies": "Install with dependencies"
     },
     "catalogError": {
       "sha256": "The downloaded plugin does not match the size and SHA-256 the catalog lists. Nothing was installed.",
@@ -1032,7 +1033,33 @@
     },
     "configure": "Configure dependencies",
     "enabledSelection": "Enabled",
-    "selectedCount": "Selected plugins: {{count}}"
+    "selectedCount": "Selected plugins: {{count}}",
+    "reinstall": "Re-install",
+    "reinstalling": "Re-installing…",
+    "reinstallHint": "Downloads VERA's program copies again, checks their SHA-256 and replaces them. Vendor programs stay as they are.",
+    "dependencies": {
+      "title": "Dependencies",
+      "pluginInstalled": "Installed",
+      "pluginMissing": "Not installed; Install with dependencies adds it",
+      "automatic": "VERA installs it automatically into its program folder.",
+      "manual": "Install it yourself; VERA never installs it.",
+      "sizeUnknown": "size not declared",
+      "noDownload": "No download for this platform.",
+      "foundAt": "Found at {{path}}",
+      "programFolder": "In VERA's program folder",
+      "kind": {
+        "pip": "Python package",
+        "script": "Python script",
+        "download": "Pinned download",
+        "find": "Vendor program"
+      }
+    },
+    "installResult": {
+      "title": "Install with dependencies",
+      "manual": "Not everything is ready: install vendor programs with their guide, then check again.",
+      "checkAgain": "Check again",
+      "close": "Close"
+    }
   },
   "runs": {
     "none": "No program runs in this workbench yet.",

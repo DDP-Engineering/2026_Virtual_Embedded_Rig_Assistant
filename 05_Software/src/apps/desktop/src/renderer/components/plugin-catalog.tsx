@@ -10,6 +10,7 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { CatalogDependencies } from "./plugin-dependencies.js";
 import { isNewCatalogEntry } from "./plugin-library.js";
 import { MaturityBadge, pluginActivityLabels } from "./plugin-library-controls.js";
 
@@ -121,14 +122,18 @@ function CatalogUrl({ changed }: { changed: () => void }) {
 export function CatalogItem({
   plugin,
   platform,
+  installed,
   busy,
   install,
 }: {
   plugin: CatalogPlugin;
   /** The host's plugin platform; undefined while unknown, which shows no platform warning. */
   platform?: PluginPlatform | undefined;
+  /** The ids of the installed plugins, for the required plugins in the details. */
+  installed: ReadonlySet<string>;
   busy: boolean;
-  install: (id: string) => void;
+  /** `programs`: Install with dependencies also installs the programs of every installed plugin. */
+  install: (id: string, programs: boolean) => void;
 }) {
   const { t } = useTranslation();
   const unsupported = platform !== undefined && !plugin.platforms.includes(platform);
@@ -177,24 +182,35 @@ export function CatalogItem({
       <details>
         <summary>{t("plugins.library.details")}</summary>
         <PluginDiscoveryFacts entry={plugin} />
+        <CatalogDependencies entry={plugin} platform={platform} installed={installed} />
       </details>
       <div className="workbench-actions">
         {!plugin.installed && (
-          <button
-            type="button"
-            data-action="catalog-install"
-            disabled={busy}
-            onClick={() => install(plugin.id)}
-          >
-            {t("plugins.catalog.installAction")}
-          </button>
+          <>
+            <button
+              type="button"
+              data-action="catalog-install"
+              disabled={busy}
+              onClick={() => install(plugin.id, false)}
+            >
+              {t("plugins.catalog.installAction")}
+            </button>
+            <button
+              type="button"
+              data-action="catalog-install-all"
+              disabled={busy}
+              onClick={() => install(plugin.id, true)}
+            >
+              {t("plugins.catalog.installWithDependencies")}
+            </button>
+          </>
         )}
         {plugin.update && (
           <button
             type="button"
             data-action="catalog-update"
             disabled={busy}
-            onClick={() => install(plugin.id)}
+            onClick={() => install(plugin.id, false)}
           >
             {t("plugins.catalog.update", { version: plugin.version })}
           </button>

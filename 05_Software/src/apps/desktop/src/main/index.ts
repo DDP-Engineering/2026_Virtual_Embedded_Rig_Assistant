@@ -586,6 +586,19 @@ ipcMain.handle(
           pluginsChanged();
         }
       },
+      "plugins.reinstall": async ({ id, workbenchId }) => {
+        try {
+          return programStatuses(
+            await (workbenchId
+              ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                  host.reinstall(id, undefined, provisioner),
+                )
+              : provisioner.reinstall(id)),
+          );
+        } finally {
+          pluginsChanged();
+        }
+      },
       // Runs of the open workbench only; another workbench id is CONFLICT like the other workbench channels.
       // Arguments and output cross to the renderer redacted, like program approval payloads and documents.
       "runs.list": async ({ workbenchId }) => ({

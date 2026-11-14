@@ -12,6 +12,9 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
    `<id>/skills/<name>/SKILL.md` and helper scripts under `<id>/scripts/`, and a short `<id>/README.md`.
 2. Declare every program with a reproducible install source: a pinned pip requirement range, a PEP 723
    script in the package, a download with its SHA-256 per platform, or a `find` search with a `hint`.
+   Give each published download its size in `bytes` (the catalog card shows it before any download; a longer
+   transfer is refused as a hash mismatch). `vera catalog check` reports a `find` program without a `hint`: the hint
+   is the vendor guide the card and the plugin page show, because VERA never installs a vendor program.
    Vendor activation uses `launcher: [eim, run]` and an explicit `launcherMode: string` or `argv`.
    Verify the actual transport on both platforms and document the evidence in README. With a launcher,
    `find` locates its first token; version probes and runs invoke the declared program through it.

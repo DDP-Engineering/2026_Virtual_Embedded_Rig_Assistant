@@ -23,6 +23,7 @@ const entry = (id: string, more: Record<string, unknown> = {}) => ({
   description: "Lists ports.",
   risk: "device-read",
   requires: [],
+  dependencies: [],
   url: `${id}-1.0.0.zip`,
   sha256: "a".repeat(64),
   bytes: 1234,

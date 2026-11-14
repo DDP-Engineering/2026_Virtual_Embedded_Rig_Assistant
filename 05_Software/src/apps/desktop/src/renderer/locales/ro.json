@@ -886,8 +886,8 @@
     "problem": {
       "notFound": "Nu a fost găsit pe acest computer.",
       "install": "Instalarea a eșuat.",
-      "download": "Descărcarea a eșuat.",
-      "sha256": "Fișierul are un SHA-256 greșit.",
+      "download": "Descărcarea a eșuat. Verificați conexiunea (offline?) și încercați din nou.",
+      "sha256": "Fișierul nu corespunde SHA-256 fixat. Reinstalarea îl descarcă din nou.",
       "archive": "Arhiva nu a putut fi extrasă.",
       "platform": "Nu este disponibil pentru acest sistem.",
       "uv": "uv inclus lipsește.",
@@ -937,7 +937,8 @@
       "update": "Actualizează la {{version}}",
       "updateAvailable": "Actualizare disponibilă: {{version}}",
       "reviewFrom": "Din catalog: {{tier}}, versiunea {{version}}.",
-      "reviewChanges": "Această actualizare schimbă programe, surse de instalare sau reguli; verifică-le înainte de instalare."
+      "reviewChanges": "Această actualizare schimbă programe, surse de instalare sau reguli; verifică-le înainte de instalare.",
+      "installWithDependencies": "Instalează cu dependențe"
     },
     "catalogError": {
       "sha256": "Pluginul descărcat nu corespunde dimensiunii și SHA-256 din catalog. Nu s-a instalat nimic.",
@@ -1032,7 +1033,33 @@
     },
     "configure": "Configurează dependențele",
     "enabledSelection": "Activate",
-    "selectedCount": "Plugin-uri selectate: {{count}}"
+    "selectedCount": "Plugin-uri selectate: {{count}}",
+    "reinstall": "Reinstalează",
+    "reinstalling": "Se reinstalează…",
+    "reinstallHint": "Descarcă din nou copiile programelor VERA, le verifică SHA-256 și le înlocuiește. Programele furnizorilor rămân neschimbate.",
+    "dependencies": {
+      "title": "Dependențe",
+      "pluginInstalled": "Instalat",
+      "pluginMissing": "Neinstalat; Instalează cu dependențe îl adaugă",
+      "automatic": "VERA îl instalează automat în folderul său de programe.",
+      "manual": "Instalați-l singur; VERA nu îl instalează niciodată.",
+      "sizeUnknown": "dimensiune nedeclarată",
+      "noDownload": "Nicio descărcare pentru această platformă.",
+      "foundAt": "Găsit la {{path}}",
+      "programFolder": "În folderul de programe al VERA",
+      "kind": {
+        "pip": "Pachet Python",
+        "script": "Script Python",
+        "download": "Descărcare fixată",
+        "find": "Program al furnizorului"
+      }
+    },
+    "installResult": {
+      "title": "Instalare cu dependențe",
+      "manual": "Nu totul este gata: instalați programele furnizorilor după ghidul lor, apoi verificați din nou.",
+      "checkAgain": "Verifică din nou",
+      "close": "Închide"
+    }
   },
   "runs": {
     "none": "Nicio rulare de program în acest workbench încă.",

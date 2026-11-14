@@ -291,6 +291,12 @@ export const channels = {
     pluginProgramsRequestSchema,
     z.array(pluginProgramStatusSchema).max(64),
   ),
+  /** Installs again every program VERA manages for an installed plugin (a user action); find programs stay. */
+  "plugins.reinstall": defineChannel(
+    "plugins.reinstall",
+    pluginProgramsRequestSchema,
+    z.array(pluginProgramStatusSchema).max(64),
+  ),
   /** The plugin catalog (spec REQ-DATA-b40d3f9b §5): the last read, or a new one with `refresh`. */
   "plugins.catalog": defineChannel("plugins.catalog", pluginCatalogRequestSchema, pluginCatalogViewSchema),
   /** Downloads and verifies a catalog plugin and reviews it; installs nothing. */

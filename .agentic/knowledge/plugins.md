@@ -164,7 +164,20 @@ characters, required); the full description, programs, sources and rules stay in
 `data-catalog-warning="platform"` note when the host's plugin platform (from `app.info` via shared `pluginPlatform`)
 is known and not in the entry's `platforms`, and a `data-catalog-warning="risk"` note when the index entry's `risk`
 (`pluginHighestRisk` of the rules below `blocked`, written by `vera catalog build`) is `device-write` or
-`irreversible`; an unknown or unsupported host shows no platform warning. State
+`irreversible`; an unknown or unsupported host shows no platform warning. Its details also list the index entry's
+`dependencies` (shared `pluginDependencies(manifest)`, written by `vera catalog build`, which reports a find program
+without `hint` as a `dependency` issue) with `requires` (`plugin-dependencies.tsx` `CatalogDependencies`): each required
+plugin with whether it is installed, each program as automatic (into VERA's program folder: pip requirement, script
+path, the host's download with its declared `bytes` and SHA-256) or manual (range and vendor guide), before any package
+download. Install with dependencies (`data-action="catalog-install-all"`) runs the same review queue as Install, then
+`plugins.provision` for each plugin it installed, one at a time, and shows a `data-install-results` block (the
+Programs list per plugin, the not-ready ones with problem and guide, Check again = `plugins.check`). The expanded
+installed card lists the manifest's required plugins and, per checked program, `data-automatic` and the found `path`
+(ready find/external programs) or "In VERA's program folder". Re-install (`plugins.reinstall`, `Provisioner.reinstall`)
+installs every managed program again (uv `--reinstall`; downloads fetched again, verified and swapped in through the
+staging folder), never a find program; a failed re-download keeps the ready copy resolvable and reports the problem.
+A fresh check hashes a single-file download and reports `unavailable/sha256` on a mismatch; Install dependencies also
+repairs `sha256`. A download transfer longer than its declared `bytes` is `sha256`. State
 counts respect other filters; tab counts remain totals. Recently added/updated sort known dates
 before unknown, with stable name/id/source ties. New is UTC day age 0..29. Page sizes are 6/12/24;
 filter changes reset and loaded snapshot mutations clamp pages after catalog metadata settles
@@ -342,8 +355,10 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   link?, problem?, detail?}`, `pluginProgramProblemSchema` (notFound, install, download, sha256, archive,
   platform, uv, version, range), `downloadForm(url)`, `downloadName(entry)`, `versionInRange(version,
   range)`, `urlParts(url)`; settings `pluginSettingsSchema {index?, proxy?}`.
-- IPC: `plugins.programs {id}` and `plugins.provision {id}` -> statuses (NOT_FOUND unknown id, INVALID plugin
-  with issues); the browser mock answers both. CLI: `vera plugin install --path <folder|zip> --data <dir>`.
+- IPC: `plugins.programs {id}`, `plugins.provision {id}` and `plugins.reinstall {id}` -> statuses (NOT_FOUND unknown
+  id, INVALID plugin with issues); the browser mock answers them. Shared `pluginDependencies(manifest)`,
+  `pluginDependencySchema`, `pluginProgramKind(program)`, `pluginHintLink(hint)`; status `path` (found programs).
+  Catalog entries require `dependencies`. CLI: `vera plugin install --path <folder|zip> --data <dir>`.
 - `ResolvedProgram` carries `env` (applied after the manifest env by run_program) and `version` (prompt).
 - WorkbenchService `loadPlugins(id)` -> the enabled plugins that load (installed, issue-free,
   unchanged), in plugins.enabled order.
@@ -613,7 +628,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Install kinds, probes, ranges, statuses, uv environment | `core/src/plugins/provisioning.ts` | `provisioning.test.ts`, `tests/integration/provisioning.test.ts` |
 | Zip extraction, tree check, system tar | `core/src/plugins/archive.ts` | `archive.test.ts`, `tests/integration/provisioning.test.ts` |
 | Program status schema, range grammar, download form | shared `plugins.ts` | `shared/src/plugin-provisioning.test.ts` |
-| plugins.programs / plugins.provision, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
+| plugins.programs / plugins.provision / plugins.reinstall, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
+| Dependency summary, card dependencies, Install with dependencies, Re-install | shared `plugins.ts`, core `catalog-source.ts`, `provisioning.ts`, renderer `plugin-dependencies.tsx`, `plugin-catalog.tsx`, `plugins.tsx` | `shared/src/plugins.test.ts`, `catalog-source.test.ts`, `provisioning.test.ts`, `plugin-catalog.test.ts`, `plugins.test.ts` |
 | `vera plugin install` | `cli/src/{args,plugin,provisioning}.ts` | `tests/integration/cli.test.ts` |
 | Review, picker, hash-bound install | `PluginStore.review`/`install` in `store.ts`, `plugins.choose`/`review`/`install` in `main/index.ts` | `store.test.ts`, `plugins-ipc.test.ts`, `mockApi.test.ts` |
 | Run records, list, log, stop | `ProgramRunner` in `runner.ts`, `runs.*` in `main/index.ts`, label in `program-tools.ts` | `runner.test.ts`, `program-tools.test.ts` |
@@ -717,6 +733,11 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-f244f8f6` / `REQ-FUNC-46079512` / `REQ-FUNC-ce542246` — install with tier, review decision, 24 h checks.
 - `REQ-UX-72a349a1` / `REQ-UX-c55a0fe1` / `REQ-UX-9207423e` — prerequisite-aware catalog review, catalog list and updates, catalog URL field.
 - `REQ-PLAT-720aa4f2` — official plugins shipped as a bundled catalog release.
+- `REQ-DATA-defb1bf4` / `REQ-DATA-dbeebbbe` / `REQ-FUNC-60329be6` — index dependency summary, declared download size,
+  vendor guide required by catalog check.
+- `REQ-UX-714c27e6` / `REQ-UX-b3fb479b` / `REQ-FUNC-34191c6f` — dependencies on the catalog card and the installed card,
+  Install with dependencies.
+- `REQ-FUNC-751e430e` / `REQ-REL-4cef9c7b` — Re-install of managed programs, hash mismatch of an installed download.
 
 ## Files
 

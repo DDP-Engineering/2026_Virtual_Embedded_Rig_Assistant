@@ -77,6 +77,7 @@ an issue and 0 otherwise. `<where>` is the plugin id (folder name) or the file n
 | `rules` | a declared program has no rule whose first pattern token matches the program name (rule grammar of REQ-FUNC-80b2033a) |
 | `token` | a rule at `safe` or `device-read` whose `match`, lowercased, contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send` as a substring, unless `catalog.yaml` lists `{plugin, match}` of that rule under `reviewed`; detail: the token and the match |
 | `reference` | a pack, `requires`, `official`, `metadata` or `reviewed` entry names a plugin that is not in the source, or a `reviewed` entry names no rule of its plugin |
+| `dependency` | a `find` program declares no `hint` (the index lists the hint as its vendor guide); detail: `program <name> has no vendor guide` |
 | `output` | build only: the output folder is not empty |
 
 `blocked` rules are never flagged: they never run. Substring matching flags `block` and `clock` too
@@ -111,6 +112,7 @@ one release; a mirror is a plain copy of that folder.
       "id": "serial-monitor", "version": "1.0.0", "tier": "official", "ecosystem": "serial",
       "platforms": ["windows-x64", "linux-x64"], "name": "Serial monitor", "summary": "…", "description": "…",
       "risk": "device-write", "requires": [], "url": "serial-monitor-1.0.0.zip",
+      "dependencies": [ { "name": "serial", "kind": "script", "automatic": true, "script": "scripts/serial_monitor.py" } ],
       "activities": ["communication", "debug"], "keywords": ["UART", "console"],
       "sha256": "<64 lowercase hex>", "bytes": 12345
     }
@@ -123,7 +125,10 @@ Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `summ
 `ecosystem`, `platforms` and `requires` follow the manifest schema; `risk` is the highest rule risk of the
 manifest below `blocked` (`safe`, `device-read`, `device-write` or `irreversible`), `safe` when it has none; `url` is a bare file name
 (`[A-Za-z0-9][A-Za-z0-9._+-]*\.zip`, at most 255 characters, no `/`), resolved against the catalog folder
-URL; `bytes` is the zip's exact size, at least 1 (no upper limit). At most 1024 plugins with distinct ids and 64 packs. An
+URL; `bytes` is the zip's exact size, at least 1 (no upper limit). `dependencies` (at most 64) is shared
+`pluginDependencies(manifest)`, one item per program in name order: `{name, kind: pip|script|download|find, automatic
+(kind is not find), pip?, script?, downloads?: [{platform, sha256, bytes?}] in platform order, find?: [windows|linux],
+range?, guide? (the manifest hint)}`. At most 1024 plugins with distinct ids and 64 packs. An
 index larger than 4 MiB is invalid.
 
 Every released entry includes `activities` and `keywords` arrays and preserves supplied optional

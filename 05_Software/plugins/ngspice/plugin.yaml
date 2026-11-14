@@ -18,6 +18,7 @@ programs:
         windows-x64:
           url: https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/47/ngspice-47_64.7z
           sha256: 59225971bd68cdd1199443649aa4615a9e6d684933f205ab49006a3942518f5a
+          bytes: 13814879
           path: Spice64/bin/ngspice_con.exe
     version: { args: [-v], match: 'ngspice-(\d+)', range: '>=42' }
     timeout: 60

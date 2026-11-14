@@ -106,6 +106,8 @@ it("mock plugins list and install their programs", async () => {
   expect(await api.invoke("plugins.programs", { id: "esp32-esptool" })).toMatchObject([{ state: "ready" }]);
   await expect(api.invoke("plugins.programs", { id: "other" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   await expect(api.invoke("plugins.provision", { id: "other" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  // REQ-FUNC-751e430e: the mock re-installs like it provisions.
+  expect(await api.invoke("plugins.reinstall", { id: "esp32-esptool" })).toMatchObject([{ state: "ready" }]);
 });
 it("mock reindex obeys active-workbench ownership and strict empty request", async () => {
   const { api } = createMockApi();

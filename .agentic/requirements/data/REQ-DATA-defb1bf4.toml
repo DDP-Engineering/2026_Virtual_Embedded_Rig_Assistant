@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-defb1bf4"
+
+title = "Dependency summary in the catalog index"
+
+status = "active"
+
+requirement = """
+When `vera catalog build` writes index.json, it shall write for each plugin entry a `dependencies` list generated from the manifest by the shared `pluginDependencies`, one item per program in name order with its install kind and whether VERA installs it automatically, plus the pip requirement, the script path, each download platform with its SHA-256 and declared size, or the find platforms, supported version range and vendor guide, while the required plugins stay in `requires`.
+"""
+
+verification = "Core catalog-source test: building the official-like fixture writes arduino-cli's entry with program arduino-cli (download, automatic, windows-x64 and linux-x64 with sha256 and bytes, range, guide link) and arduino-tool (script scripts/arduino_tool.py) and requires [serial-monitor]; the index parses with catalogIndexSchema; an index entry without dependencies fails the schema. Shared unit test of pluginDependencies for pip, script, download and find."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -155,6 +155,7 @@ it("validates the catalog view, review and install channels and the catalog app 
         description: "Lists ports.",
         risk: "device-read",
         requires: [],
+        dependencies: [],
         url: "serial-monitor-1.0.1.zip",
         sha256,
         bytes: 900,

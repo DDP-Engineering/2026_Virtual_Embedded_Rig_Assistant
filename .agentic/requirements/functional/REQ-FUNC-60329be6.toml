@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-60329be6"
+
+title = "Catalog check requires a vendor guide"
+
+status = "active"
+
+requirement = """
+When `vera catalog check` reads a plugin whose find program declares no hint, it shall report a `dependency` issue naming that program, so every vendor program in the index carries a vendor guide.
+"""
+
+verification = "Core catalog-source test: a source plugin with a find program without hint gives issue {code: dependency, detail: 'program <name> has no vendor guide'} and build writes nothing; the official source checks clean (`npm run vera -- catalog check --source plugins`)."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/plugins/CONTRIBUTING.md"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

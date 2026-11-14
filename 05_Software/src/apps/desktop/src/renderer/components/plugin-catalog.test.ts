@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import type { CatalogPlugin, PluginCatalogReview, PluginCatalogView, PluginSummary } from "@vera/shared";
+import type {
+  CatalogPlugin,
+  PluginCatalogReview,
+  PluginCatalogView,
+  PluginProgramStatus,
+  PluginSummary,
+} from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -35,6 +41,7 @@ const entry = (id: string, more: Partial<CatalogPlugin> = {}): CatalogPlugin => 
   description: `About ${id}.`,
   risk: "device-read",
   requires: [],
+  dependencies: [],
   activities: [],
   keywords: [],
   url: `${id}-1.0.0.zip`,
@@ -110,6 +117,7 @@ function stub(options: {
   required?: Record<string, boolean>;
   plugins?: Record<string, string>;
   host?: { platform: string; arch: string };
+  provision?: Record<string, PluginProgramStatus[]>;
 }) {
   vi.mocked(api.getAppInfo).mockResolvedValue({
     name: "VERA",
@@ -140,6 +148,9 @@ function stub(options: {
       }
       case "plugins.catalogInstall":
         return installed(request.id as string, "1.0.0");
+      case "plugins.provision":
+      case "plugins.check":
+        return options.provision?.[request.id as string] ?? [];
       case "app.settings.get":
         return { settings: state.settings };
       case "app.settings.update":
@@ -511,4 +522,150 @@ it("shows no platform warning on a listed platform or when the host platform is 
     container.remove();
     client.clear();
   }
+});
+
+const arduinoSha = "2769b9b282ce597db9679d8ec14d726d57004ca4205ef4d7a795bf36b6cdc9d8";
+const kicadGuide =
+  "Install KiCad 10 from https://www.kicad.org/download/, then check again. VERA never installs KiCad.";
+const dependencyCatalog = [
+  entry("arduino-cli", {
+    ecosystem: "arduino",
+    requires: ["serial-monitor"],
+    dependencies: [
+      {
+        name: "arduino-cli",
+        kind: "download",
+        automatic: true,
+        downloads: [
+          { platform: "windows-x64", sha256: arduinoSha, bytes: 20404890 },
+          { platform: "linux-x64", sha256: "3".repeat(64), bytes: 20111675 },
+        ],
+        find: ["windows", "linux"],
+        range: ">=1.6,<2",
+        guide: "Install arduino-cli from https://arduino.github.io/arduino-cli/latest/installation/.",
+      },
+      { name: "arduino-tool", kind: "script", automatic: true, script: "scripts/arduino_tool.py" },
+    ],
+  }),
+  entry("kicad", {
+    ecosystem: "kicad",
+    dependencies: [
+      {
+        name: "kicad-cli",
+        kind: "find",
+        automatic: false,
+        find: ["windows", "linux"],
+        range: ">=10.0,<11",
+        guide: kicadGuide,
+      },
+      { name: "kicad-tool", kind: "script", automatic: true, script: "scripts/kicad_tool.py" },
+    ],
+  }),
+  entry("serial-monitor", {
+    dependencies: [{ name: "serial-tool", kind: "pip", automatic: true, pip: "pyserial>=3.5" }],
+  }),
+];
+
+// REQ-UX-714c27e6
+it.each(["en", "ro", "de"])(
+  "lists a catalog plugin's dependencies in its card details before any download (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    stub({ catalog: view(dependencyCatalog) });
+    await render();
+    await vi.waitFor(() => expect($('[data-catalog-plugin="arduino-cli"]')).not.toBeNull());
+    await click('[data-catalog-plugin="arduino-cli"] details > summary');
+    const card = $('[data-catalog-plugin="arduino-cli"]');
+    const required = card.querySelector('[data-required-plugin="serial-monitor"]') as HTMLElement;
+    expect(required.getAttribute("data-installed")).toBe("false");
+    const download = card.querySelector('[data-dependency="arduino-cli"]') as HTMLElement;
+    expect(download.getAttribute("data-automatic")).toBe("true");
+    expect(download.textContent).toContain(i18n.t("plugins.dependencies.automatic"));
+    expect(download.textContent).toContain(arduinoSha);
+    expect(download.textContent).toContain("windows-x64");
+    // The host is Windows x64: only its download is listed.
+    expect(download.textContent).not.toContain("3".repeat(64));
+    expect(download.textContent).toMatch(/20[.,]4/);
+    const script = card.querySelector('[data-dependency="arduino-tool"]') as HTMLElement;
+    expect(script.getAttribute("data-automatic")).toBe("true");
+    expect(script.textContent).toContain("scripts/arduino_tool.py");
+    expect(calls("plugins.catalogReview")).toEqual([]);
+
+    await click('[data-catalog-plugin="kicad"] details > summary');
+    const vendor = $('[data-catalog-plugin="kicad"] [data-dependency="kicad-cli"]');
+    expect(vendor.getAttribute("data-automatic")).toBe("false");
+    expect(vendor.textContent).toContain(i18n.t("plugins.dependencies.manual"));
+    expect(vendor.textContent).toContain(">=10.0,<11");
+    expect(vendor.querySelector('[data-web-source="https://www.kicad.org/download/"]')).not.toBeNull();
+    expect(calls("plugins.catalogReview")).toEqual([]);
+  },
+);
+
+// REQ-FUNC-34191c6f
+it("installs a plugin with its required plugins and programs and lists what stays manual", async () => {
+  await i18n.changeLanguage("en");
+  stub({
+    catalog: view(dependencyCatalog),
+    provision: {
+      "serial-monitor": [{ name: "serial-tool", kind: "pip", state: "missing", problem: "download" }],
+      "arduino-cli": [
+        { name: "arduino-cli", kind: "download", state: "ready", version: "1.6.0" },
+        { name: "arduino-tool", kind: "script", state: "ready", version: "0.2.0" },
+      ],
+      kicad: [
+        {
+          name: "kicad-cli",
+          kind: "find",
+          state: "missing",
+          problem: "notFound",
+          hint: kicadGuide,
+          link: "https://www.kicad.org/download/",
+        },
+        { name: "kicad-tool", kind: "script", state: "ready", version: "0.3.0" },
+      ],
+    },
+  });
+  await render();
+  await vi.waitFor(() => expect($('[data-catalog-plugin="arduino-cli"]')).not.toBeNull());
+  await click('[data-catalog-plugin="arduino-cli"] [data-action="catalog-install-all"]');
+  await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+  await click('[data-action="plugin-install"]');
+  await vi.waitFor(() => expect($("[data-plugin-review]")?.textContent).toContain("arduino-cli"));
+  await click('[data-action="plugin-install"]');
+  await vi.waitFor(() => expect($('[data-install-result="arduino-cli"]')).not.toBeNull());
+  expect(calls("plugins.catalogInstall").map((request) => (request as { id: string }).id)).toEqual([
+    "serial-monitor",
+    "arduino-cli",
+  ]);
+  expect(calls("plugins.provision")).toEqual([{ id: "serial-monitor" }, { id: "arduino-cli" }]);
+  expect(
+    $('[data-install-result="arduino-cli"] [data-program="arduino-cli"]').getAttribute("data-state"),
+  ).toBe("ready");
+  // Offline: the failed download has an explicit state.
+  expect($('[data-install-result="serial-monitor"]').textContent).toContain(
+    i18n.t("plugins.problem.download"),
+  );
+
+  await click('[data-catalog-plugin="kicad"] [data-action="catalog-install-all"]');
+  await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+  await click('[data-action="plugin-install"]');
+  await vi.waitFor(() => expect($('[data-install-result="kicad"]')).not.toBeNull());
+  const manual = $('[data-install-result="kicad"] [data-program="kicad-cli"]');
+  expect(manual.getAttribute("data-automatic")).toBe("false");
+  expect(manual.textContent).toContain(i18n.t("plugins.problem.notFound"));
+  expect(manual.querySelector('[data-web-source="https://www.kicad.org/download/"]')).not.toBeNull();
+  await click('[data-install-result="kicad"] [data-action="install-result-check"]');
+  await vi.waitFor(() => expect(calls("plugins.check")).toEqual([{ id: "kicad" }]));
+});
+
+// REQ-FUNC-34191c6f
+it("installs only the plugins when Install is chosen without dependencies", async () => {
+  await i18n.changeLanguage("en");
+  stub({ catalog: view(dependencyCatalog), required: { kicad: false } });
+  await render();
+  await vi.waitFor(() => expect($('[data-catalog-plugin="kicad"]')).not.toBeNull());
+  await click('[data-catalog-plugin="kicad"] [data-action="catalog-install"]');
+  await vi.waitFor(() => expect(calls("plugins.catalogInstall")).toHaveLength(1));
+  expect(calls("plugins.provision")).toEqual([]);
+  expect($("[data-install-result]")).toBeNull();
 });

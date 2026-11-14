@@ -40,6 +40,7 @@ const entries = (): CatalogPlugin[] =>
     activities: index % 2 ? ["debug"] : ["build"],
     keywords: ["UART", "wireless"],
     requires: [],
+    dependencies: [],
     url: `plugin-${index}.zip`,
     sha256: "a".repeat(64),
     bytes: 10,

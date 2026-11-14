@@ -15,7 +15,7 @@ branch `feature/261-plugin-management` cut from `master` at 920457e, in the sibl
 `F:\2026_Virtual_Embedded_Rig_Assistant_plg`. The implementer hands the candidate back without a commit;
 the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed. Each ticket
 runs only its focused tests; the complete suite runs once after PLG-08.
-STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04...PLG-08 planned.
+STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05...PLG-08 planned.
 
 ## Order
 
@@ -24,7 +24,7 @@ STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2
 | 1 | PLG-01 | [#262](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/262) | Pre-release badge and filter derived from semver; official plugins set to their evidence-based version (table below) | implemented |
 | 2 | PLG-02 | [#263](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/263) | manifest `summary`; pre-install card with name, version, type, summary, platform and risk warnings | implemented |
 | 3 | PLG-03 | [#264](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/264) | composition (programs, scripts, skills, profiles, documents) and operations by risk on the plugin page | implemented |
-| 4 | PLG-04 | [#265](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/265) | dependency summary in the catalog index; install with dependencies (required plugins too); re-install | planned |
+| 4 | PLG-04 | [#265](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/265) | dependency summary in the catalog index; install with dependencies (required plugins too); re-install | implemented |
 | 5 | PLG-05 | [#266](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/266) | manifest `settings`; Parts search, MQTT and Wokwi move from App settings to their plugins; configured state | planned |
 | 6 | PLG-06 | [#267](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/267) | one status block (dependencies, configuration, use) and pack install from the catalog | planned |
 | 7 | PLG-07 | [#268](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/268) | catalog release from `07_Delivery/plugins/`, signed index, stable and pre-release channels | planned |
@@ -87,6 +87,15 @@ when its open proof is recorded there. A plugin's bundled helper programs print 
 | `zephyr` | 0.2.0 | real Zephyr 4.4.2 + SDK builds, Twister, ztest on Renode (LAB-07); board flash open |
 | `bus-tools` | 0.1.0 | only a simulated BPIO2 adapter (IOT-04); real Bus Pirate, I2C/SPI fixtures open |
 | `esp32-idf` | 0.1.0 | EIM transport only; no ESP-IDF installation or board found, real build/flash/panic open |
+
+## PLG-04 #265 - dependencies before and after install
+
+`vera catalog build` writes `dependencies` per index entry from the manifest (shared `pluginDependencies`); manifest
+download entries carry an optional `bytes` (44 of the 47 official downloads; sigrok's three pinned DDP packages are
+unpublished, so their size stays unknown until they are). The catalog card's details list required plugins and each
+program as automatic (VERA's program folder) or manual (range, vendor guide). Install with dependencies installs the
+plugin, its required plugins and their pip, script and download programs, then shows what is not ready with Check
+again. Re-install fetches VERA's copies again against their SHA-256; find programs are never installed.
 
 ## Shared rules
 

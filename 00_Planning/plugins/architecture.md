@@ -519,8 +519,10 @@ vera-plugins/                    # one Git repository
 ```
 
 - `index.json` format 1 is `{format, plugins, packs}`; an entry is `{id, version, tier, ecosystem, platforms, name,
-  summary, description, risk, requires, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
-  so a mirror is a plain copy. Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
+  summary, description, risk, requires, dependencies, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
+  so a mirror is a plain copy, and `dependencies` is shared `pluginDependencies(manifest)` written by `vera catalog
+  build` (per program in name order: kind, automatic, pip requirement, script path, downloads `{platform, sha256,
+  bytes?}`, find systems, range, guide). Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
 - Tiers: `official` (VERA maintainers own it), `community` (merged by PR after CI and a
   maintainer's review of programs, install sources and rules). A plugin installed from a folder or
   zip is `local`.

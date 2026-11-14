@@ -10,6 +10,7 @@ import {
   catalogMaintainersSchema,
   catalogPacksSchema,
   dangerousToken,
+  pluginDependencies,
   pluginHighestRisk,
   ruleNamesProgram,
   type VeraError,
@@ -22,7 +23,7 @@ import { type PluginPackage, readPluginPackage } from "./store.js";
 /** One finding of the catalog check (spec REQ-DATA-b40d3f9b §2); `where` is a plugin id or file name. */
 export interface CatalogIssue {
   where: string;
-  code: "source" | "package" | "manifest" | "rules" | "token" | "reference" | "output";
+  code: "source" | "package" | "manifest" | "rules" | "token" | "reference" | "dependency" | "output";
   detail: string;
 }
 const PACKS = "packs.yaml";
@@ -107,9 +108,13 @@ async function examineSource(folder: string): Promise<Examined> {
       });
     if (!manifest || pkg.issues.length) continue;
     packages.set(name, pkg);
-    for (const program of Object.keys(manifest.programs))
+    for (const [program, declared] of Object.entries(manifest.programs)) {
       if (!manifest.rules.some((rule) => ruleNamesProgram(rule.match, program)))
         issues.push({ where: name, code: "rules", detail: `program ${program} has no rule` });
+      // The index lists a vendor program with this hint as its guide; VERA never installs it.
+      if ("find" in declared.install && !declared.install.hint)
+        issues.push({ where: name, code: "dependency", detail: `program ${program} has no vendor guide` });
+    }
     for (const rule of manifest.rules) {
       if (rule.risk !== "safe" && rule.risk !== "device-read") continue;
       const token = dangerousToken(rule.match);
@@ -204,6 +209,7 @@ export async function buildCatalogRelease(
       description: manifest.description,
       risk: pluginHighestRisk(manifest.rules),
       requires: manifest.requires,
+      dependencies: pluginDependencies(manifest),
       url,
       sha256: createHash("sha256").update(zip).digest("hex"),
       bytes: zip.length,

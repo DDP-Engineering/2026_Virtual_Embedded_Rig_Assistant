@@ -49,6 +49,7 @@ async function release(out: string, version: string, edit: (manifest: string) =>
         description: "Lists serial ports and captures consoles.",
         risk: "device-read",
         requires: [],
+        dependencies: [],
         url,
         sha256: createHash("sha256").update(zip).digest("hex"),
         bytes: zip.length,

@@ -886,8 +886,8 @@
     "problem": {
       "notFound": "Auf diesem Computer nicht gefunden.",
       "install": "Die Installation ist fehlgeschlagen.",
-      "download": "Der Download ist fehlgeschlagen.",
-      "sha256": "Die Datei hat die falsche SHA-256.",
+      "download": "Der Download ist fehlgeschlagen. Prüfen Sie die Verbindung (offline?) und versuchen Sie es erneut.",
+      "sha256": "Die Datei entspricht nicht ihrer festgelegten SHA-256. Neu installieren lädt sie erneut herunter.",
       "archive": "Das Archiv konnte nicht entpackt werden.",
       "platform": "Für dieses System nicht verfügbar.",
       "uv": "Das mitgelieferte uv fehlt.",
@@ -937,7 +937,8 @@
       "update": "Auf {{version}} aktualisieren",
       "updateAvailable": "Update verfügbar: {{version}}",
       "reviewFrom": "Aus dem Katalog: {{tier}}, Version {{version}}.",
-      "reviewChanges": "Dieses Update ändert Programme, Installationsquellen oder Regeln; prüfen Sie sie vor der Installation."
+      "reviewChanges": "Dieses Update ändert Programme, Installationsquellen oder Regeln; prüfen Sie sie vor der Installation.",
+      "installWithDependencies": "Mit Abhängigkeiten installieren"
     },
     "catalogError": {
       "sha256": "Das heruntergeladene Plugin entspricht nicht der Größe und dem SHA-256 aus dem Katalog. Es wurde nichts installiert.",
@@ -1032,7 +1033,33 @@
     },
     "configure": "Abhängigkeiten konfigurieren",
     "enabledSelection": "Aktiviert",
-    "selectedCount": "Ausgewählte Plugins: {{count}}"
+    "selectedCount": "Ausgewählte Plugins: {{count}}",
+    "reinstall": "Neu installieren",
+    "reinstalling": "Wird neu installiert…",
+    "reinstallHint": "Lädt die Programmkopien von VERA erneut herunter, prüft ihre SHA-256 und ersetzt sie. Herstellerprogramme bleiben unverändert.",
+    "dependencies": {
+      "title": "Abhängigkeiten",
+      "pluginInstalled": "Installiert",
+      "pluginMissing": "Nicht installiert; Mit Abhängigkeiten installieren fügt es hinzu",
+      "automatic": "VERA installiert es automatisch in seinen Programmordner.",
+      "manual": "Installieren Sie es selbst; VERA installiert es nie.",
+      "sizeUnknown": "Größe nicht angegeben",
+      "noDownload": "Kein Download für diese Plattform.",
+      "foundAt": "Gefunden unter {{path}}",
+      "programFolder": "Im Programmordner von VERA",
+      "kind": {
+        "pip": "Python-Paket",
+        "script": "Python-Skript",
+        "download": "Festgelegter Download",
+        "find": "Herstellerprogramm"
+      }
+    },
+    "installResult": {
+      "title": "Mit Abhängigkeiten installieren",
+      "manual": "Nicht alles ist bereit: Installieren Sie Herstellerprogramme nach ihrer Anleitung und prüfen Sie erneut.",
+      "checkAgain": "Erneut prüfen",
+      "close": "Schließen"
+    }
   },
   "runs": {
     "none": "In dieser Workbench gab es noch keine Programmläufe.",

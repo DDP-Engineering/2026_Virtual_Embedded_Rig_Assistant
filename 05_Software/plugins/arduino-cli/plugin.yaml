@@ -19,10 +19,12 @@ programs:
         windows-x64:
           url: https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Windows_64bit.zip
           sha256: 2769b9b282ce597db9679d8ec14d726d57004ca4205ef4d7a795bf36b6cdc9d8
+          bytes: 20404890
           path: arduino-cli.exe
         linux-x64:
           url: https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Linux_64bit.tar.gz
           sha256: 321ee249f44c78053234fec0f36101092bc6021bf24939e15e0cc2449c5ed250
+          bytes: 20111675
           path: arduino-cli
       preferDownload: true
     version: { args: [version], match: 'Version: (\d+\.\d+\.\d+)', range: '>=1.6,<2' }

@@ -1,5 +1,11 @@
 import { expect, it } from "vitest";
-import { pluginHighestRisk, pluginMaturity, pluginOperations, validatePluginManifest } from "./plugins.js";
+import {
+  pluginDependencies,
+  pluginHighestRisk,
+  pluginMaturity,
+  pluginOperations,
+  validatePluginManifest,
+} from "./plugins.js";
 
 const canonical = {
   format: 1,
@@ -242,4 +248,61 @@ it("groups the rules by risk in risk order, keeping manifest order and every rul
     { risk: "blocked", rules: [rules[4]] },
   ]);
   expect(pluginOperations([])).toEqual([]);
+});
+
+// REQ-DATA-defb1bf4, REQ-DATA-dbeebbbe
+it("summarises each program's dependency in name order and accepts a declared download size", () => {
+  const sha = "a".repeat(64);
+  const version = { args: ["--version"], match: "(\\d+\\.\\d+)", range: ">=1,<2" };
+  const guide = "Install the vendor tool from https://vendor.example/download.";
+  const { manifest, issues } = validatePluginManifest({
+    ...canonical,
+    programs: {
+      tool: { install: { pip: "tool>=1" }, version: program.version },
+      helper: { install: { script: "scripts/helper.py" }, version: program.version },
+      cli: {
+        install: {
+          find: { windows: ["%PATH%"], linux: ["$PATH"] },
+          hint: guide,
+          download: {
+            "linux-x64": { url: "https://h.test/cli.tar.gz", sha256: sha, path: "cli", bytes: 20 },
+            "windows-x64": { url: "https://h.test/cli.zip", sha256: sha, path: "cli.exe" },
+          },
+          preferDownload: true,
+        },
+        version,
+      },
+      vendor: { install: { find: { windows: ["%PATH%"] }, hint: guide }, version },
+    },
+  });
+  expect(issues).toEqual([]);
+  expect(pluginDependencies(manifest as never)).toEqual([
+    {
+      name: "cli",
+      kind: "download",
+      automatic: true,
+      downloads: [
+        { platform: "windows-x64", sha256: sha },
+        { platform: "linux-x64", sha256: sha, bytes: 20 },
+      ],
+      find: ["windows", "linux"],
+      range: ">=1,<2",
+      guide,
+    },
+    { name: "helper", kind: "script", automatic: true, script: "scripts/helper.py" },
+    { name: "tool", kind: "pip", automatic: true, pip: "tool>=1" },
+    { name: "vendor", kind: "find", automatic: false, find: ["windows"], range: ">=1,<2", guide },
+  ]);
+  const sized = (bytes: unknown) => ({
+    ...canonical,
+    programs: {
+      cli: {
+        install: { download: { "linux-x64": { url: "https://h.test/cli", sha256: sha, bytes } } },
+        version,
+      },
+    },
+  });
+  for (const bad of [0, 1.5, "7"])
+    expect(paths(sized(bad))[0], String(bad)).toMatch(/^programs\.cli\.install/);
+  expect(paths(sized(7))).toEqual([]);
 });

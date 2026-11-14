@@ -90,6 +90,7 @@ function stub(options: {
       { name: "echo", kind: "find", state: "missing", hint: "Install Node.js." },
     ],
     provisioned: false,
+    reinstalled: false,
   };
   vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
     switch (channel) {
@@ -103,6 +104,9 @@ function stub(options: {
       case "plugins.provision":
         state.provisioned = true;
         return [{ name: "echo", kind: "find", state: "ready", version: "22.11.0" }];
+      case "plugins.reinstall":
+        state.reinstalled = true;
+        return state.programs.map((program) => ({ ...program, state: "ready", problem: undefined }));
       case "plugins.toggle":
         state.installed = state.installed.map((plugin) =>
           plugin.id === request.id ? { ...plugin, enabled: request.enabled as boolean } : plugin,
@@ -630,4 +634,48 @@ it("says a skills-only plugin runs no programs and declares no operations, in en
   expect(
     new Set(["en", "ro", "de"].map((lng) => i18n.t("plugins.composition.noPrograms", { lng }))).size,
   ).toBe(3);
+});
+
+// REQ-UX-b3fb479b
+it("lists the required plugins and where each checked program is or goes on the installed card", async () => {
+  await i18n.changeLanguage("en");
+  const manifest = {
+    ...(review.manifest as NonNullable<PluginReview["manifest"]>),
+    requires: ["serial-monitor"],
+  };
+  stub({
+    installed: [{ ...echo, manifest }],
+    programs: [{ name: "echo", kind: "find", state: "ready", version: "22.11.0", path: "C:/node/node.exe" }],
+  });
+  await render();
+  await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect($('[data-program="echo"]')).not.toBeNull());
+  const program = $('[data-program="echo"]');
+  expect(program.getAttribute("data-automatic")).toBe("false");
+  expect(program.textContent).toContain(i18n.t("plugins.dependencies.foundAt", { path: "C:/node/node.exe" }));
+  expect(program.textContent).toContain("22.11.0");
+  expect($('[data-required-plugin="serial-monitor"]').getAttribute("data-installed")).toBe("false");
+});
+
+// REQ-FUNC-751e430e, REQ-REL-4cef9c7b
+it("re-installs VERA's damaged program copy from the installed card", async () => {
+  await i18n.changeLanguage("en");
+  const state = stub({
+    installed: [echo],
+    programs: [{ name: "tool", kind: "download", state: "unavailable", problem: "sha256" }],
+  });
+  await render();
+  await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect($('[data-program="tool"]')).not.toBeNull());
+  expect($('[data-program="tool"]').textContent).toContain(i18n.t("plugins.problem.sha256"));
+  expect($('[data-program="tool"]').textContent).toContain(i18n.t("plugins.dependencies.programFolder"));
+  expect(($('[data-action="plugin-reinstall"]') as HTMLButtonElement).disabled).toBe(false);
+  await click('[data-action="plugin-reinstall"]');
+  await vi.waitFor(() => expect($('[data-program="tool"]').getAttribute("data-state")).toBe("ready"));
+  expect(calls("plugins.reinstall").map(([, request]) => request)).toEqual([
+    { id: "echo-tools", workbenchId: workbench.id },
+  ]);
+  expect(state.reinstalled).toBe(true);
 });

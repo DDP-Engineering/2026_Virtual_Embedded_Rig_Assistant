@@ -143,6 +143,7 @@ export function createMockApi(
     description: `${name}: a plugin of the mock catalog.`,
     risk: "device-write",
     requires: [],
+    dependencies: [],
     activities: [],
     keywords: [id],
     url: `${id}-1.0.0.zip`,
@@ -736,10 +737,11 @@ export function createMockApi(
       }
       case "plugins.programs":
       case "plugins.check":
-      case "plugins.provision": {
+      case "plugins.provision":
+      case "plugins.reinstall": {
         const { id } = channels["plugins.programs"].request.parse(input.data);
         if (!installedPlugins.has(id)) throw veraError("NOT_FOUND");
-        if (channel === "plugins.provision") provisionedPlugins.add(id);
+        if (channel !== "plugins.check" && channel !== "plugins.programs") provisionedPlugins.add(id);
         value = (pluginPrograms.get(id) ?? []).map((program) =>
           program.kind === "find" || provisionedPlugins.has(id)
             ? { ...program, state: "ready", version: "1.0.0" }

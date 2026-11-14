@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-34191c6f"
+
+title = "Install with dependencies"
+
+status = "active"
+
+requirement = """
+When the user chooses Install with dependencies on a catalog card, the Plugins page shall review and install the plugin after the catalog plugins it requires, then install the programs of each plugin it installed, and show the result listing every program that is not ready with its problem, the manual ones with their vendor guide, and Check again.
+"""
+
+verification = "Renderer test with the mock API: Install with dependencies on arduino-cli installs serial-monitor then arduino-cli and calls plugins.provision for both; the result lists a manual kicad-cli-like program with its guide, Check again calls plugins.check; an offline provision failure (problem download) is shown with its label. Manual: a real install of the pinned arduino-cli into a scratch folder reports ready."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

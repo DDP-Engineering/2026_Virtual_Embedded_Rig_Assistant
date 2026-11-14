@@ -18,10 +18,12 @@ programs:
         windows-x64:
           url: https://github.com/wokwi/wokwi-cli/releases/download/v0.29.1/wokwi-cli-win-x64.exe
           sha256: 45292e3c4f32ba4cfbcc7a457a6df48aad95fdb3269a218cb83423da9dc483b2
+          bytes: 46728248
           path: wokwi-cli.exe
         linux-x64:
           url: https://github.com/wokwi/wokwi-cli/releases/download/v0.29.1/wokwi-cli-linuxstatic-x64
           sha256: 3c9d6da007d008a3822ab468318037285440055132c59fd659d7306e40f14258
+          bytes: 56591935
           path: wokwi-cli
       preferDownload: true
     version: { args: [--short-version], match: '^(\d+\.\d+\.\d+) \(', range: '>=0.29.1,<0.29.2' }

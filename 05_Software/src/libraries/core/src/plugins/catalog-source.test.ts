@@ -299,3 +299,108 @@ it("refuses a metadata-heavy UTF-8 index before writing any release output", asy
   ]);
   await expect(readdir(out)).rejects.toMatchObject({ code: "ENOENT" });
 }, 60_000);
+
+// REQ-DATA-defb1bf4, REQ-FUNC-60329be6
+it("writes each entry's dependency summary and requires a vendor guide for find programs", async () => {
+  const sha = "b".repeat(64);
+  const version = () => ({ args: ["--version"], match: "(\\S+)" });
+  const programs = {
+    tool: { install: { pip: "tool>=1" }, version: version() },
+    cli: {
+      install: { download: { "linux-x64": { url: "https://h.test/cli", sha256: sha, bytes: 7 } } },
+      version: version(),
+    },
+  };
+  const root = await source({
+    plugins: {
+      alpha: plugin("alpha", { programs, rules: [{ match: "{tool,cli} *", risk: "safe" }] }),
+      beta: plugin("beta", { requires: ["alpha"] }),
+    },
+  });
+  const out = join(root, "..", `${Math.random().toString(36).slice(2)}-release`);
+  roots.push(out);
+  const built = await buildCatalogRelease(root, out);
+  expect(built.issues).toEqual([]);
+  const index = catalogIndexSchema.parse(JSON.parse(await readFile(join(out, "index.json"), "utf8")));
+  expect(index.plugins.map(({ id, requires, dependencies }) => ({ id, requires, dependencies }))).toEqual([
+    {
+      id: "alpha",
+      requires: [],
+      dependencies: [
+        {
+          name: "cli",
+          kind: "download",
+          automatic: true,
+          downloads: [{ platform: "linux-x64", sha256: sha, bytes: 7 }],
+        },
+        { name: "tool", kind: "pip", automatic: true, pip: "tool>=1" },
+      ],
+    },
+    {
+      id: "beta",
+      requires: ["alpha"],
+      dependencies: [{ name: "tool", kind: "pip", automatic: true, pip: "tool" }],
+    },
+  ]);
+  // The summary is part of the index format: an entry without one is not a valid index.
+  const [first] = index.plugins;
+  const { dependencies: _omitted, ...bare } = first as NonNullable<typeof first>;
+  expect(catalogIndexSchema.safeParse({ ...index, plugins: [bare] }).success).toBe(false);
+
+  const vendor = await source({
+    plugins: {
+      alpha: plugin("alpha", {
+        programs: { tool: { install: { find: { linux: ["$PATH"] } }, version: version() } },
+      }),
+    },
+    packs: [],
+    catalog: { format: 1 },
+  });
+  expect(await checkCatalogSource(vendor)).toEqual([
+    { where: "alpha", code: "dependency", detail: "program tool has no vendor guide" },
+  ]);
+  const refused = join(vendor, "..", `${Math.random().toString(36).slice(2)}-release`);
+  expect((await buildCatalogRelease(vendor, refused)).index).toBeUndefined();
+});
+
+// REQ-DATA-defb1bf4
+it("summarises the official arduino-cli and KiCad dependencies in the release index", async () => {
+  const out = join(tmpdir(), `vera-official-${Math.random().toString(36).slice(2)}`);
+  roots.push(out);
+  const { issues, index } = await buildCatalogRelease(official, out);
+  expect(issues).toEqual([]);
+  const arduino = index?.plugins.find((entry) => entry.id === "arduino-cli");
+  expect(arduino?.requires).toEqual(["serial-monitor"]);
+  expect(arduino?.dependencies).toEqual([
+    {
+      name: "arduino-cli",
+      kind: "download",
+      automatic: true,
+      downloads: [
+        {
+          platform: "windows-x64",
+          sha256: "2769b9b282ce597db9679d8ec14d726d57004ca4205ef4d7a795bf36b6cdc9d8",
+          bytes: 20404890,
+        },
+        {
+          platform: "linux-x64",
+          sha256: "321ee249f44c78053234fec0f36101092bc6021bf24939e15e0cc2449c5ed250",
+          bytes: 20111675,
+        },
+      ],
+      find: ["windows", "linux"],
+      range: ">=1.6,<2",
+      guide: expect.stringContaining("https://arduino.github.io/arduino-cli/latest/installation/"),
+    },
+    { name: "arduino-tool", kind: "script", automatic: true, script: "scripts/arduino_tool.py" },
+  ]);
+  const kicad = index?.plugins.find((entry) => entry.id === "kicad");
+  expect(kicad?.dependencies.find((item) => item.name === "kicad-cli")).toEqual({
+    name: "kicad-cli",
+    kind: "find",
+    automatic: false,
+    find: ["windows", "linux"],
+    range: ">=10.0,<11",
+    guide: expect.stringContaining("https://www.kicad.org/download/"),
+  });
+});

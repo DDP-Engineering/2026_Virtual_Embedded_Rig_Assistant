@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-dbeebbbe"
+
+title = "Declared download size"
+
+status = "active"
+
+requirement = """
+When a manifest download entry declares `bytes`, the provisioner shall treat a transfer longer than that size as a hash mismatch (`sha256`) and keep nothing of it, and an entry without `bytes` shall stay valid.
+"""
+
+verification = "Core provisioning test: a download declared with bytes smaller than the served file reports problem sha256 and leaves no download folder; shared schema test: bytes accepts a positive integer, rejects 0, and is optional."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/plugins", "05_Software/plugins/CONTRIBUTING.md"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
