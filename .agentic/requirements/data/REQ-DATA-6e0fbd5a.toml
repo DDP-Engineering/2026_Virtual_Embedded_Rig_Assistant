@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-6e0fbd5a"
+
+title = "Keep virtual and real time apart in every run result"
+
+status = "active"
+
+requirement = """
+The run result shall record the virtual timeout and the virtual time reached in simulated nanoseconds separately from the real budget, start, end and elapsed wall-clock seconds.
+"""
+
+verification = "Helper test: after an assertion failure at [1500000000ns], result.time.virtual is {timeoutMs 5000, reachedNs 1500000000} and result.time.real holds budgetS, startedAt, endedAt and elapsedS of the wall clock."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/outcome.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

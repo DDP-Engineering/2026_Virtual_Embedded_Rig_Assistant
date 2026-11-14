@@ -81,6 +81,12 @@ const workbenchHandlers = {
   "parts.access.removeKey": unused,
   "parts.access.test": unused,
   "parts.access.cancel": unused,
+  "mqtt.credentials.list": unused,
+  "mqtt.credentials.save": unused,
+  "mqtt.credentials.remove": unused,
+  "wokwi.credentials.list": unused,
+  "wokwi.credentials.save": unused,
+  "wokwi.credentials.remove": unused,
   "providers.chatgpt.cancel": unused,
   "providers.chatgpt.logout": unused,
 

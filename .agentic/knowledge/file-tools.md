@@ -17,6 +17,20 @@ Core supplies context-bound tool definitions, canonical confinement, ignored dis
 
 The registry also exposes web_download as a prepared write operation with its own narrow binary store; it does not widen write/edit text formats or their .vera restrictions. ChangeRequest distinguishes a download approval (unknown final SHA, explicit source/budget) from text-file hashes/diffs. See [PDF downloads](pdf-downloads.md).
 
+- apply_candidate {run} is a write-class tool (FileChangeRequest tool `apply_candidate`) that writes a kicad-layout
+  candidate over its source board. It is offered only when the session host sets `applyCandidate` (the desktop
+  does while the official kicad-layout plugin is loaded, `officialLayoutPlugin`), never in read-only mode. Prepare
+  reads `<run>/state.json` (kind kicad-layout-state, format 1) through a workbench-scoped guard and refuses unless
+  edits >= 1, objectives pass, the candidate is a `.kicad_pcb` KiCad board (text, <= 64 MiB) inside the run folder
+  with its recorded hash, the target is a writable, unprotected `.kicad_pcb` inside the workbench with the recorded
+  base hash, and KiCad's lock file `~<name>.kicad_pcb.lck` is absent. The approval carries both hashes and a
+  unified diff cut to 2000 lines (`maxEditLength` 20000). Apply is `commitChange` with an extra check run with
+  every target recheck: the candidate still has the approved hash and no lock file appeared. See spec
+  REQ-DATA-891d5b5d §10.
+- `commitChange(options)` is the apply body shared by write/edit and apply_candidate: inside the write queue it
+  rechecks the target (path identity, agent-writable, before hash, the caller's `check`) before mkdir, after it
+  and before the rename, records the pending/applied change row and refreshes the fingerprint.
+
 
 - Registry includes read-class web_search/web_read over injected WebProvider. [Web search](web-search.md) owns the anonymous Exa adapter, bounded source extraction and errors; file-tool confinement remains unchanged.
 
@@ -80,6 +94,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 | Captured log contracts/scanning/citations | shared/tools/parse-log.ts; tools/parse-log.ts,parse-log-worker.ts,log-failure.ts | parse-log.test.ts; CLI parity; native file-tools |
 | Host deadlines/abort/capacity | NodeWorkerPool,app adapters | node-host/worker-hosts/native file-tools acceptance |
 | Prepared writes/diff/recovery | tools/changes.ts,write.ts,edit.ts | tools/write-edit.test.ts,sessions/write-edit.test.ts,native write-edit acceptance |
+| Applying kicad-layout candidates | tools/apply-candidate.ts, changes.ts commitChange, sessions/service.ts host flag, desktop main/sessions.ts gate | tools/apply-candidate.test.ts, sessions/apply-candidate.test.ts |
 | Shared app/session queue | workbench/write-queue.ts,service.ts | workbench/service.test.ts,desktop sessions startup recovery |
 | Schema/filter/errors/output cap | ToolRegistry,capToolResult | registry tests and runtime regression |
 | Bypass filesystem scope and revocation | context.ts, PathGuard, worker task scope, changes.ts | sessions/bypass.test.ts, tests/e2e/bypass.spec.ts |
@@ -112,6 +127,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 - REQ-FUNC-37261edc — Use saved checkbox exclusions when exposing runtime tools.
 - REQ-FUNC-a7ad5920 — Explicit Bypass filesystem execution, exact grants and revocation.
 - REQ-FUNC-73151724 — Format and parse line references.
+- REQ-FUNC-73b4e5d0 / REQ-SEC-c986d8f2 / REQ-SEC-854495d1 / REQ-SEC-c445ab5c / REQ-SEC-e27836d3 / REQ-SEC-8483534b / REQ-FUNC-3f443814 — apply_candidate: write flow, read-only, decline, conflicts, KiCad lock file, refusals, official-plugin gate.
 
 REQ-FUNC-9aa789af create; REQ-DATA-8c71b990 freshness; REQ-FUNC-d5b5be90 exact replacement/counts; REQ-DATA-cf979c63 CRLF/BOM; REQ-REL-d2437b70 shared immutable admission; REQ-DATA-f44069c2 atomic recording; REQ-DATA-60e025f4 event/fingerprint; REQ-REL-50217071 recovery; REQ-SEC-294dcab2 sequential write classification and internal metadata denial.
 
@@ -122,5 +138,7 @@ The host controls lifetime; the worker owns all grep discovery/read/matching and
 - shared/src/tools/decode-register.ts; core/src/tools/decode-register.ts and decode-register/{definition,decode}.ts; tools/decode-register.test.ts; agent/citations.ts/test; CLI parity and native workbench-tools acceptance.
 
 - shared/src/tools.ts — canonical built-in names and type; renderer components/workbench-tools.tsx presents localized selection. tools/registry.test.ts verifies runtime parity; renderer workbench-tools.test.ts and tests/e2e/workbench-tools.spec.ts cover selection/save/permissions.
+
+core/src/tools/apply-candidate.ts and its test; sessions/apply-candidate.test.ts.
 
 Under05_Software: core/src/tools/{parse-log,parse-log-worker,log-failure,changes,write,edit,context,registry,read,read-window,files,binary,discovery,list,glob,grep,grep-worker}.ts and corresponding tests; core/src/workbench/path-guard.ts/test; core/src/workers/{node-host,worker.test-support}.ts and node-host.test.ts; core/src/{ports,index}.ts. shared/src/refs.ts/test/index.ts. src/apps/{cli/src,desktop/src/main}/{worker-pool,grep-worker}.ts; desktop/main/file-tool-probe.ts/index.ts and electron.vite.config.ts. tests/integration/worker-hosts.test.ts and tests/tooling/build-mode.test.ts and tests/e2e/file-tools.spec.ts. WriteQueue is core/src/workbench/write-queue.ts; write/edit tests and tests/fixtures/llm-scripts/read-then-edit.jsonl/tests/e2e/write-edit.spec.ts prove changes. diff9.0.0 is pinned in root/core package manifests and lockfile.

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-92d16a4c"
+
+title = "Stop at the next safe point when VERA asks"
+
+status = "active"
+
+requirement = "When VERA creates the stop request in the run's control folder, ble-tool shall stop within 0.2 seconds at the next safe point, turn its subscription off, disconnect and end the run incomplete with code stopped."
+
+verification = "A subscription of 30 s with a stop file created after 1 s ends within a few seconds, stopped, subscription stopped, physical confirmed."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/notify.py", "05_Software/plugins/ble-tools/scripts/ble_support/lifecycle.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

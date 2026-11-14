@@ -131,6 +131,10 @@ it("reports the field path of each invalid manifest field", () => {
       "programs.esptool.version.match",
     ],
     [{ programs: { esptool: { ...program, env: { HOME: ph("home") } } } }, "programs.esptool.env.HOME"],
+    // REQ-PLAT-e0d8f3cf: gui is only ever `true` (a program that opens windows).
+    [{ programs: { esptool: { ...program, gui: false } } }, "programs.esptool.gui"],
+    // A file program (never run) installs only by download.
+    [{ programs: { esptool: { ...program, file: true } } }, "programs.esptool.file"],
     [{ programs: { esptool: { ...program, prefix: [ph("workbench")] } } }, "programs.esptool.prefix.0"],
     [{ programs: { esptool: { ...program, launcher: [] } } }, "programs.esptool.launcher"],
     [
@@ -155,4 +159,39 @@ it("reports the field path of each invalid manifest field", () => {
   const { version: _version, ...withoutVersion } = canonical;
   expect(paths(withoutVersion)).toEqual(["version"]);
   expect(paths({ ...canonical, id: "Bad_ID", name: "" })).toEqual(["id", "name"]);
+});
+
+// REQ-SEC-adb91424
+it("accepts sshAgent: true on a program and nothing else", () => {
+  const withAgent = (sshAgent: unknown) => ({
+    ...canonical,
+    programs: { esptool: { ...program, sshAgent } },
+  });
+  expect(paths(withAgent(true))).toEqual([]);
+  expect(validatePluginManifest(withAgent(true)).manifest?.programs.esptool?.sshAgent).toBe(true);
+  expect(paths(withAgent(false))).toEqual(["programs.esptool.sshAgent"]);
+  expect(paths(withAgent("/run/agent.sock"))).toEqual(["programs.esptool.sshAgent"]);
+});
+
+// REQ-DATA-e6b1fa1a
+it("accepts a credentials declaration with the mqtt or wokwi scope only", () => {
+  const withCredentials = (credentials: unknown) => ({
+    ...canonical,
+    programs: { esptool: { ...program, credentials } },
+  });
+  expect(paths(withCredentials({ option: "--credential", scope: "mqtt" }))).toEqual([]);
+  expect(
+    validatePluginManifest(withCredentials({ option: "--credential", scope: "mqtt" })).manifest?.programs
+      .esptool?.credentials,
+  ).toEqual({ option: "--credential", scope: "mqtt" });
+  expect(paths(withCredentials({ option: "--credential", scope: "wokwi" }))).toEqual([]);
+  expect(paths(withCredentials({ option: "--credential", scope: "ssh" }))).toEqual([
+    "programs.esptool.credentials.scope",
+  ]);
+  expect(paths(withCredentials({ option: "-c", scope: "mqtt" }))).toEqual([
+    "programs.esptool.credentials.option",
+  ]);
+  expect(paths(withCredentials({ option: "--credential", scope: "mqtt", key: "x" }))).toEqual([
+    "programs.esptool.credentials.key",
+  ]);
 });

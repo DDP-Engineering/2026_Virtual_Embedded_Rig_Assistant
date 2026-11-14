@@ -1,0 +1,67 @@
+format: 1
+id: arduino-cli
+version: 1.0.0
+name: Arduino CLI
+description: Native Arduino sketches with a pinned arduino-cli - inspect a sketch, list connected boards by identity, look up boards, cores and libraries, install cores and libraries in exact versions into VERA's own Arduino environment, compile a copy of the sketch into a traceable run folder (flash and RAM, libraries, core, hashes) and upload exactly that verified binary to an identified board. The Arduino IDE's own folders are never touched; no daemon, interactive monitor, bootloader, fuses or OTA.
+ecosystem: arduino
+platforms: [windows-x64, linux-x64]
+requires: [serial-monitor]
+docs: [README.md, "https://docs.arduino.cc/arduino-cli/"]
+programs:
+  arduino-cli:
+    install:
+      find:
+        windows: ["%PATH%"]
+        linux: ["$PATH", "/usr/local/bin/arduino-cli", "/usr/bin/arduino-cli"]
+      hint: "Choose Install programs for the pinned arduino-cli 1.6.0, or install arduino-cli 1.6 or newer (below 2) yourself from https://arduino.github.io/arduino-cli/latest/installation/."
+      download:
+        windows-x64:
+          url: https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Windows_64bit.zip
+          sha256: 2769b9b282ce597db9679d8ec14d726d57004ca4205ef4d7a795bf36b6cdc9d8
+          path: arduino-cli.exe
+        linux-x64:
+          url: https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Linux_64bit.tar.gz
+          sha256: 321ee249f44c78053234fec0f36101092bc6021bf24939e15e0cc2449c5ed250
+          path: arduino-cli
+      preferDownload: true
+    version: { args: [version], match: 'Version: (\d+\.\d+\.\d+)', range: '>=1.6,<2' }
+    timeout: 60
+  arduino-tool:
+    install: { script: scripts/arduino_tool.py }
+    version: { args: [--version], match: '^arduino-tool (\d+\.\d+\.\d+)' }
+    timeout: 1800
+    uses: [arduino-cli]
+# arduino-cli with its default configuration reads and changes the Arduino IDE's folders, installs profile platforms
+# during a compile and offers daemon, monitor, bootloader and OTA commands, so the agent reaches it only through
+# arduino-tool, which runs it with VERA's own environment and an offline configuration outside install.
+rules:
+  # Every direct command is blocked (the highest risk of overlapping rules wins, so no exception is possible);
+  # VERA's provisioner probes the version without these rules.
+  - match: "arduino-cli *"
+    risk: blocked
+    note: "arduino-cli would use the Arduino IDE's folders and offers daemon, monitor, bootloader and OTA commands. Use arduino-tool, which runs it in VERA's own Arduino environment."
+  - { match: "arduino-tool {--version,--help,-h}", risk: safe }
+  - match: "arduino-tool {inspect,report,clean} *"
+    risk: safe
+    note: Reads a sketch, VERA's Arduino environment or run folders; report writes a new run folder, clean removes only VERA's build cache and the staging folders of ended runs.
+  - match: "arduino-tool boards {details,search} *"
+    risk: safe
+    note: Looks up installed board definitions offline.
+  - match: "arduino-tool {cores,libraries} *"
+    risk: safe
+    note: Lists or searches the installed packages and the downloaded indexes offline.
+  - match: "arduino-tool boards list *"
+    risk: device-read
+    note: Runs the installed discovery tools, which enumerate serial ports and browse the local network by mDNS; network ports are ignored.
+  - match: "arduino-tool compile *"
+    risk: device-read
+    note: Runs the installed core's compiler, recipes and hooks on this computer on a copy of the sketch and writes a new run folder; it never installs anything.
+    timeout: 1800
+  - match: "arduino-tool install *"
+    risk: device-write
+    note: Downloads from Arduino's index or the named https index into VERA's own Arduino environment (exact versions, no post-install scripts, no library dependencies); the Arduino IDE is not changed.
+    timeout: 3600
+  - match: "arduino-tool upload *"
+    risk: device-write
+    note: Writes the verified binary of the named compile run to the board's flash; the new firmware starts at once and may drive the board's outputs. With --programmer it also overwrites the bootloader.
+    timeout: 600

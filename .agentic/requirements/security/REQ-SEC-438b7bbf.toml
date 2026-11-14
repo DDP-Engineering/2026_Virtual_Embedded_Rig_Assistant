@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-438b7bbf"
+
+title = "Refuse an edit or close when the API's open board is not the candidate"
+
+status = "active"
+
+requirement = """
+If none of the KiCad API's open PCB documents is the run folder's candidate when an edit or close connects, then the helper shall refuse the operation with exit 2 and the problem `binding`, changing no board.
+"""
+
+verification = "Real KiCad: while an editor on run c holds the API, an edit of run a exits 2 with problem binding and c's in-memory text hash is unchanged; a close of run a, whose editor is gone, exits 0 noting that the editor had already closed, without connecting; a close of a copy of run a whose state.json names c's editor process exits 2 with problem binding; c's window keeps running with its hash unchanged."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-d58d8abe"
+
+title = "Report tasks of an earlier boot as lost by reboot without signalling"
+
+status = "active"
+
+requirement = "When a task record's boot id differs from the board's current boot id, the remote helper shall report the task lost-by-reboot with its outcome unknown and shall not signal its recorded PID."
+
+verification = "A running task's record with its bootId rewritten: the waiting run-task ends lost-by-reboot (exit 3), task-status reports lost-by-reboot, stop-owned skips it (no task listed) and the task's process, still alive, is not signalled."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-e27836d3"
+
+title = "Refuse applying while the source board is open in KiCad"
+
+status = "active"
+
+requirement = """
+If KiCad's lock file for the source board lies beside it, then VERA shall refuse apply_candidate, write nothing and ask the user to save or discard their changes in KiCad and close the board.
+"""
+
+verification = "Core unit test: with `~main.kicad_pcb.lck` beside the target, apply_candidate is refused before approval, and also when the lock file appears between approval and apply; the target is unchanged. Real KiCad: a PCB editor opened on a board creates exactly that lock file beside it, which is what the refusal reads."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/apply-candidate.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/apply-candidate.test.ts", "05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

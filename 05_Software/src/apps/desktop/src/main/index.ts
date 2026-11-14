@@ -70,6 +70,7 @@ import {
   systemApps,
 } from "./openers.js";
 import { PartsAccessService } from "./parts-access.js";
+import { PluginCredentialService, programCredentials } from "./plugin-credentials.js";
 import { PluginListingHost } from "./plugin-list-host.js";
 import { createDesktopProcessHost } from "./process-host.js";
 import { testProgramResolver } from "./program-resolver.js";
@@ -236,7 +237,7 @@ const bundledPlugins =
     ? process.env.VERA_TEST_BUNDLED_PLUGINS || undefined
     : app.isPackaged
       ? join(process.resourcesPath, "plugins")
-      : join(here, "../../../../../src/bundled-plugins");
+      : join(here, "../../../../../../07_Delivery/plugins");
 /** The catalog folder from settings, else the build default; the bundled release stands in without one. */
 const catalogLocation = () =>
   settings.get().settings.plugins?.catalog ?? (__VERA_PLUGIN_CATALOG_URL__ || undefined);
@@ -269,6 +270,14 @@ async function stopWorkbenchPrograms(): Promise<void> {
 const providers = new ProviderSettings(settings, credentials);
 const partsAccess = new PartsAccessService({
   settings,
+  credentials,
+  changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
+});
+const mqttCredentials = new PluginCredentialService("mqtt", {
+  credentials,
+  changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
+});
+const wokwiCredentials = new PluginCredentialService("wokwi", {
   credentials,
   changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
 });
@@ -314,6 +323,8 @@ const sessions = new SessionsHost({
   // Instrumented builds may resolve fixture plugins from VERA_TEST_PROGRAMS for e2e; otherwise provisioning does.
   programs: {
     runner: programs,
+    // Approved runs of official plugins (mqtt-tools, wokwi) read their stored credentials here (spec REQ-DATA-96d18686 §1).
+    credentials: programCredentials(credentials),
     resolver:
       __VERA_TEST__ && process.env.VERA_TEST_PROGRAMS
         ? testProgramResolver(process.env.VERA_TEST_PROGRAMS)
@@ -389,6 +400,12 @@ ipcMain.handle(
       "parts.access.removeKey": (request) => partsAccess.removeKey(request),
       "parts.access.test": (request) => partsAccess.test(request),
       "parts.access.cancel": (request) => partsAccess.cancelTest(request),
+      "mqtt.credentials.list": () => mqttCredentials.list(),
+      "mqtt.credentials.save": (request) => mqttCredentials.save(request),
+      "mqtt.credentials.remove": (request) => mqttCredentials.remove(request),
+      "wokwi.credentials.list": () => wokwiCredentials.list(),
+      "wokwi.credentials.save": (request) => wokwiCredentials.save(request),
+      "wokwi.credentials.remove": (request) => wokwiCredentials.remove(request),
       "update.get": () => {
         if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
         return updates.get();

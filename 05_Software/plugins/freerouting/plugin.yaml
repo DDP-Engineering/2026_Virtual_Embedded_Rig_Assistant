@@ -1,0 +1,66 @@
+format: 1
+id: freerouting
+version: 1.0.0
+name: Freerouting autorouter (local)
+description: Autoroute a KiCad 10 board candidate locally with Freerouting 2.5.0 - export a Specctra DSN from the saved candidate of a kicad-layout run, route it offline with a finite budget (existing and locked copper is kept), and turn the new tracks and vias into a kicad-layout request that kicad-layout-tool edit checks, applies to the candidate and verifies with DRC. Nothing leaves the computer and the source board changes only through apply_candidate. Needs KiCad 10; VERA downloads Freerouting and a Java runtime (Eclipse Temurin 25) on Install.
+ecosystem: electronics
+platforms: [windows-x64, linux-x64]
+requires: [kicad-layout]
+docs: [README.md, "https://github.com/freerouting/freerouting"]
+programs:
+  java:
+    install:
+      download:
+        windows-x64:
+          url: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jre_x64_windows_hotspot_25.0.5_8.zip
+          sha256: da78d54a2fcdbba1e92d5e3f07dd30236f96297891c4a21a781c3f38f5c0beae
+          path: jdk-25.0.5+8-jre/bin/java.exe
+        linux-x64:
+          url: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jre_x64_linux_hotspot_25.0.5_8.tar.gz
+          sha256: 6fac98f0c8202efc3135a9e9e42aa61963ec42d1c5cbb40caf231e7b14a24ef6
+          path: jdk-25.0.5+8-jre/bin/java
+    version: { args: [-version], match: 'version "(\d+\.\d+\.\d+)', range: '>=25,<26' }
+    timeout: 60
+  freerouting:
+    # The Java archive is never run by itself: freerouting-tool runs it with the java program above.
+    install:
+      download:
+        windows-x64:
+          url: https://github.com/freerouting/freerouting/releases/download/v2.5.0/freerouting-2.5.0.jar
+          sha256: f6f51bb02245e8e717f9359bd260cc9c5c0b1bc0acc8b7cb2cd5b8ffeb5de3c7
+        linux-x64:
+          url: https://github.com/freerouting/freerouting/releases/download/v2.5.0/freerouting-2.5.0.jar
+          sha256: f6f51bb02245e8e717f9359bd260cc9c5c0b1bc0acc8b7cb2cd5b8ffeb5de3c7
+    version: { args: [], match: '^freerouting-(\d+\.\d+\.\d+)\.jar$', range: '>=2.5,<2.6' }
+    file: true
+  kicad-cli:
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/KiCad/*/bin/kicad-cli.exe"]
+        linux: ["$PATH", "/usr/bin/kicad-cli"]
+      hint: "Install KiCad 10 from https://www.kicad.org/download/ (on Ubuntu from the KiCad 10 PPA), then check again. VERA never installs KiCad."
+    version: { args: [version], match: '^(\d+\.\d+\.\d+)', range: '>=10.0,<11' }
+    timeout: 60
+  freerouting-tool:
+    install: { script: scripts/freerouting_tool.py }
+    version: { args: [--version], match: '^freerouting-tool (\d+\.\d+\.\d+)' }
+    timeout: 3600
+    uses: [java, freerouting, kicad-cli]
+# The agent reaches Java, Freerouting and KiCad only through freerouting-tool, which routes a copy of a saved
+# kicad-layout candidate offline and writes a request; kicad-layout-tool edit applies it to the candidate.
+rules:
+  - match: "java *"
+    risk: blocked
+    note: "Java runs only Freerouting, through freerouting-tool."
+  - match: "freerouting *"
+    risk: blocked
+    note: "The Freerouting Java archive is not a command; route with freerouting-tool."
+  - { match: "kicad-cli {version,--version,-v,--help,-h} *", risk: safe, note: Prints KiCad's version or help. }
+  - match: "kicad-cli {sch,pcb,fp,sym,jobset} *"
+    risk: blocked
+    note: "kicad-cli rewrites files in the project folder it reads. Use kicad-layout-tool and freerouting-tool, which work on candidate copies."
+  - { match: "freerouting-tool {--version,--help,-h}", risk: safe }
+  - match: "freerouting-tool route *"
+    risk: safe
+    note: Host work on a copy of a kicad-layout candidate. Exports a DSN with KiCad, runs Freerouting offline with a finite budget and writes a kicad-layout request under the run folder; the candidate and the source board are not written.
+    timeout: 3600

@@ -3,9 +3,11 @@ import {
   type Clock,
   type ConfiguredPartsProvider,
   type EmbeddingPort,
+  officialLayoutPlugin,
   officialPartsPlugin,
   type PermissionEngine,
   type PluginStore,
+  type ProgramCredentials,
   type ProgramHost,
   type ProgramPromptEntry,
   type ProgramResolver,
@@ -49,6 +51,8 @@ export class SessionsHost {
   private programGeneration = 0;
   /** Whether the open workbench has the official parts-search plugin loaded; refreshed by run(). */
   private partsPlugin = false;
+  /** Whether the open workbench has the official kicad-layout plugin loaded (apply_candidate); refreshed by run(). */
+  private layoutPlugin = false;
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
   private pending = 0;
@@ -71,7 +75,7 @@ export class SessionsHost {
       parts?: ConfiguredPartsProvider;
       downloads?: (root: string) => WebDownloads;
       /** Plugin program runs; each workbench supplies its enabled plugins. */
-      programs?: { runner: ProgramRunner; resolver: ProgramResolver };
+      programs?: { runner: ProgramRunner; resolver: ProgramResolver; credentials?: ProgramCredentials };
       pluginBuilder?: PluginStore;
       managedRoots?: readonly string[];
     },
@@ -111,6 +115,7 @@ export class SessionsHost {
             ? await this.options.workbench.loadPlugins(snapshot.config.id)
             : [];
         this.partsPlugin = loaded.some(officialPartsPlugin);
+        this.layoutPlugin = loaded.some(officialLayoutPlugin);
         const key = JSON.stringify([
           snapshot.folder,
           snapshot.config.id,
@@ -162,6 +167,9 @@ export class SessionsHost {
               }
             : {}),
           ...(options.downloads ? { downloads: options.downloads(snapshot.folder) } : {}),
+          get applyCandidate() {
+            return self.layoutPlugin;
+          },
           ...(options.pluginBuilder ? { pluginBuilder: options.pluginBuilder } : {}),
           ...(options.managedRoots ? { managedRoots: options.managedRoots } : {}),
           clock: options.clock,

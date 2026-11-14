@@ -106,7 +106,12 @@ inside the runtime and one managed CPython 3.13; downloads are verified, extract
 find programs are searched on PATH and absolute globs (on Windows `%PATH%` looks for `<program>.exe`). A program may
 declare `uses: [<program>]` - find or download programs of the same plugin; resolving it also resolves each used
 program and adds its absolute path to the run as `VERA_PROGRAM_<NAME>` (upper case, `-`/`.` -> `_`), and it does not
-resolve when a used program does not. Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
+resolve when a used program does not. A program that opens windows declares `gui: true`: its runs (and only
+its runs) also receive the host's DISPLAY, WAYLAND_DISPLAY, XAUTHORITY and XDG_RUNTIME_DIR (`DISPLAY_VARIABLES`,
+`programEnvironment(..., display)`, RunRequest `display`); kicad-layout-tool uses it for KiCad's PCB editor. A
+download-only program may declare `file: true` (a Java archive): provisioning never runs it, its version is
+`version.match` on the downloaded file's name, run_program refuses it, and programs that `use` it get its path
+(freerouting's jar). Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
 Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
 The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page
@@ -185,6 +190,25 @@ re-check only their own files), runs every cleanup step after Stop/budget/error 
 `unknown` physical states and writes `embedded-lab-results/<run-id>/`. In-process, the runner also treats `--probe`
 values as `probe:<selector>` keys, so a run naming a probe a plan holds is BUSY.
 
+Plugin credentials (spec REQ-DATA-96d18686 §1): a program that declares `credentials {option, scope}` (scope `mqtt`
+or `wokwi`) receives the stored credential `<scope>:<ref>` a call names with `option`, as one JSON line on stdin, and
+nothing else does.
+Prepare refuses a plugin that is not official, a host without `ProgramHost.credentials`, a repeated option, an invalid
+reference or a credential that is not stored; apply loads the enabled plugins again (a disabled plugin is undeclared and
+nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the scope's
+Settings section and CLI variable. Desktop main stores the credentials through one `PluginCredentialService(scope)`
+(`apps/desktop/src/main/plugin-credentials.ts`): Settings > MQTT credentials (`mqtt.credentials.*` IPC: reference,
+optional username, password) and Settings > Wokwi tokens (`wokwi.credentials.*`: reference and token, no username),
+both rendered by `renderer/components/plugin-credentials.tsx`; each list returns only its own scope's references and
+storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
+and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
+changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
+
+SSH agent socket (REQ-SEC-adb91424): a program of an official plugin that declares `sshAgent: true` gets
+`RunRequest.inherit: ["SSH_AUTH_SOCK"]`, so the runner copies the host's SSH_AUTH_SOCK (when set) into that run's
+and its cleanup run's environment; prepare refuses the declaration of any other tier before approval. No other
+program receives it, and no key or password passes through VERA.
+
 ## Authoring
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
@@ -197,7 +221,7 @@ trial, does not enable or provision, and permits the agent to replace only anoth
 `plugins.promote {id,sha256}` is a user-only IPC action bound to a healthy trial's displayed hash;
 it atomically changes install.json tier to local. The Plugins button asks the user to confirm trust.
 `plugins.export {id,sha256}` verifies a healthy package and saves a zip through the native save picker,
-without install.json or runtime files. A generated zip above the existing 64 MiB archive cap is INVALID before the save picker opens. Promotion and export invalidate/reload the relevant UI state.
+without install.json or runtime files; its size is not limited. Promotion and export invalidate/reload the relevant UI state.
 The agent has no promotion, enablement or session-mode tools. Its file tools refuse workbench.yaml,
 managed application data and multiply linked write targets even in bypass. Trials retain the existing
 per-command override and irreversible typed confirmation in every writable mode. The official
@@ -236,8 +260,17 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - Bench resources (shared `lab-resources.ts`): `LAB_REGISTRY_PATH` (`lab/resources.json`), `LAB_REGISTRY_BYTES` (256 KiB),
   `labRegistrySchema` (format 1, 1..64 entries, unique aliases; kind `visa`: alias, resource, serial?, profile,
   backend? py|ivi, limits?, note?; kind `probe`: alias, resource `VID:PID:SERIAL` with serial `[A-Za-z0-9._-]{1,64}`,
-  profile, note?), `labResourceKindSchema` (`visa`, `probe`), `visaResourceKeys(resource, serial?)`,
-  `probeResourceKeys(resource)`, `labResourceKeys(entry)`,
+  profile, note?; kind `power-monitor`: alias, resource `u/js220/<serial>`, profile, note?; kind `bus-adapter`: alias,
+  backend `bus-pirate-bpio2`, resource and terminal (COM<n> or
+  /dev paths, different), identity `usb:<vid>:<pid>:<serial>`, power? {maxMv 800-5000, maxMa 1-500}, note?; kind
+  `ble-device`: alias, address (six hex octets), addressType public|random (random only static), profile, serial?,
+  adapter? hci0-hci99, note?; kind `linux-board`: alias, host, port, user (not root), hostKeys 0-4 `SHA256:` fingerprints,
+  agentKey?, identity {serial?, machineId?, model?} with serial or machineId, root (absolute, 2-16 safe segments), note?),
+  `labResourceKindSchema` (`visa`, `probe`, `power-monitor`, `bus-adapter`, `ble-device`, `linux-board`),
+  `visaResourceKeys(resource, serial?)`, `probeResourceKeys(resource)`, `powerMonitorResourceKeys(resource)`,
+  `labResourceKeys(entry)` (bus-adapter: `serial:<resource>`, `serial:<terminal>`,
+  identity lower-cased; ble-device: `ble:<address lower-case>`; claimedResources reports its address as the resource;
+  linux-board: `ssh:<host lower-case>:<port>`, resource `<user>@<host>:<port>`),
   `serialPortKey(port)`; manifest program field `resources`; approval payload `resources [{alias, kind, resource}]` with
   `registry {path, sha256}` (both or neither).
 - Leases (core `leases.ts`): `leaseRoot({platform, env, tmpdir, uid?})`, `leaseFileName(key)`, `new ResourceLeases({root,
@@ -326,9 +359,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   exactly one capture group, placeholders other than `${workbench}`/`${pluginDir}` (env) or
   `${pluginDir}` (prefix) are field issues with dotted paths. `id` equals the folder name.
 - Imports refuse symbolic links and junctions (DENIED), unsafe or case-colliding paths, a root
-  `install.json`, more than 4096 files, 64 MiB of content, a 64 MiB zip or a 256 KiB manifest
-  (INVALID), before anything is written. Zip sizes are summed from the central directory before
-  inflating.
+  `install.json`, more than 4096 files or a 256 KiB manifest (INVALID), before anything is written; the
+  package size is not limited. Zip entries are counted from the central directory before inflating.
 - An invalid manifest refuses install with INVALID and `params {issue, path?}`; the installed
   plugins stay unchanged. A valid reinstall replaces the whole folder through `staging/`.
 - The integrity hash covers every file except the root install.json, in sorted path order, framed
@@ -338,7 +370,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   an id that is not installed is an UNKNOWN_NAME warning, not an error.
 - Store mutations run one at a time per store instance.
 - Every program starts with `shell: false`, `windowsHide: true`, stdio `[ignore, pipe, pipe]` (stdin
-  closed) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
+  closed; a run with `input` gets stdin as a pipe that receives exactly the input and is then closed, an early exit's
+  EPIPE ignored) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
   the same way: started detached on Windows, a console program such as KiCad's kicad-cli prints nothing.
 - The environment holds only PATH (tool paths first), SystemRoot, HOME, USERPROFILE, TEMP, TMP,
   TMPDIR, LANG, LANGUAGE and LC_* from the host, then the program's variables, then PYTHONUTF8=1 and
@@ -376,7 +409,19 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   log ends with `[VERA] Physical state: <state>`. A run without a resource claim behaves as before.
 - At most 4 unfinished background runs per session (BUSY `{limit}`). A run naming a serial port
   (`COM<n>` with optional `\\.\`, upper-cased; `/dev/tty*`; `/dev/serial/by-id/*`; whole argument or
-  the value of `--name=value`) that an unfinished background run also names is BUSY `{handle, port}`.
+  the value of `--name=value`) that another unfinished run of the runner also names, foreground or
+  background, is BUSY `{handle, port}`. Off Windows a device path is compared by the device its links
+  resolve to (`ProgramRunnerOptions.devicePath`, realpath by default), so a `/dev/serial/by-id` link and its
+  `/dev/tty*` device are one port; an unresolvable path stays as written. With a lease registry each such port is
+  also a non-actuating lease of kind `serial` (alias = the port, key `serial:<port>`), taken in the same `acquire` as
+  the run's registry claims and released when the run settles, so a port another VERA process (desktop app or CLI)
+  holds is BUSY `{resource: <port>, holder}`; a stale port lease is replaced without a state marker. Without a lease
+  registry the in-process guard alone applies.
+- A run naming a volume with `--volume <value>` or `--volume=<value>` (the circuitpython plugin's CIRCUITPY drive)
+  claims `volume:<value>`: a Windows drive as `<LETTER>:`, an absolute path as `devicePath` resolves it (as written when
+  that throws), trailing separators removed. Another unfinished run of the runner naming or claiming that key is BUSY
+  `{handle, resource}`; with a lease registry it is also a non-actuating lease of kind `volume`, taken and released with
+  the run's other claims (BUSY `{resource, holder}` across processes). `volumeKeys(args, resolve)` is exported.
 - Format 1 requires `launcherMode: argv|string` iff `launcher` is present, with a find installation.
   Find locates launcher[0]; the resolver carries its remaining prefix and `{command, mode, platform}`.
   `programInvocation` builds probe and run argv. String launchers bind the generated invocation in
@@ -578,7 +623,12 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-0c4bc419` — UNKNOWN_NAME/UNKNOWN_KEY warnings for plugins.
 - `REQ-FUNC-9dd7413b` — plugins.* IPC channels and browser mock.
 - `REQ-FUNC-e08c858b` — original argument values reach the process host unchanged, no shell.
-- `REQ-FUNC-dbcd3311` — stdin is closed.
+- `REQ-FUNC-dbcd3311` — stdin ends at once: closed, or the run's input then end of input.
+- `REQ-DATA-e6b1fa1a` / `REQ-SEC-3f57f781` / `REQ-SEC-dbbd21e5` / `REQ-SEC-9976af2e` / `REQ-FUNC-00c788bb` /
+  `REQ-FUNC-ba0396c0` — the credentials declaration, the stdin hand-off, official plugins only, revocation by disabling,
+  unresolvable references, the runner's input.
+- `REQ-SEC-1ffb429b` / `REQ-UX-4b90fed2` / `REQ-FUNC-f250eee7` — desktop credential storage and Settings section, CLI
+  environment credentials.
 - `REQ-SEC-f5c114de` — minimal environment without VERA's credentials.
 - `REQ-REL-380ee422` — provisioner probes and uv calls are not detached on Windows (process group only elsewhere).
 - `REQ-FUNC-cb84887a` / `REQ-SEC-7a6c3f5f` — guarded cwd; DENIED outside, ignored or not a directory.
@@ -588,7 +638,9 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-85bf8a14` / `REQ-DATA-6491c211` / `REQ-DATA-49ebfb15` — 12 000-character tail, full ULID log, newest 200 kept.
 - `REQ-FUNC-b7e0b968` / `REQ-FUNC-f678fbd7` — background runs, incremental reads, at most 4 per session.
 - `REQ-FUNC-39d5e6d9` — session stop, workbench close and app exit stop runs.
-- `REQ-SEC-016c9aad` — serial-port guard.
+- `REQ-SEC-016c9aad` / `REQ-FUNC-868fc8ab` — serial-port guard for foreground and background holders; Linux links resolved.
+- `REQ-FUNC-b9a25608` — serial-port leases across VERA processes (identity kind `serial`).
+- `REQ-FUNC-96c2f1de` — volume leases across VERA processes (identity kind `volume`).
 - `REQ-DATA-f2cbfc23` / `REQ-FUNC-0542cc94` / `REQ-UX-73dd7a9b` — bench registry, VISA identity keys, reserved resources in
   approvals (spec REQ-DATA-f2cbfc23.md).
 - `REQ-FUNC-a5770245` / `REQ-FUNC-e4ca09ad` / `REQ-REL-52212fce` / `REQ-PLAT-fae260c3` — in-process BUSY, cross-process

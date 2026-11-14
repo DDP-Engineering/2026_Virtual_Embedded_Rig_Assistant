@@ -14,6 +14,7 @@ export * from "./lab-resources.js";
 export * from "./ordering.js";
 export * from "./parts-search.js";
 export * from "./plugin-catalog.js";
+export * from "./plugin-credentials.js";
 export * from "./plugins.js";
 export * from "./program-rules.js";
 export * from "./provider-discovery.js";

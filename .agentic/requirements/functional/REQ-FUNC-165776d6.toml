@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-165776d6"
+
+title = "Re-bind the board identity to its port after an upload"
+
+status = "active"
+
+requirement = """
+When an upload ends, the arduino-tool helper shall list the ports again and record the port that now carries the board's identity, none with a warning when the identity is absent or on several ports, and none with a ports-unlisted warning marking the port unknown when the ports cannot be listed, keeping the upload's own outcome.
+"""
+
+verification = "The fake upload reports updated_upload_port COM7 and the second board list shows the identity on COM7: port.after is COM7 and port.reported COM7; when the identity is absent afterwards port.after is null and warning identity-not-found says so; when the board list after the upload fails, the upload still exits 0 with result.json status pass, port.after null and warning ports-unlisted."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/upload.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

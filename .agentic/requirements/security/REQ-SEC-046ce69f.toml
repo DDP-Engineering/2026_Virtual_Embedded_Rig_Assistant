@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-046ce69f"
+
+title = "Keep the token out of logs, results and reports"
+
+status = "active"
+
+requirement = """
+The wokwi-tool helper shall replace the token by [redacted] in every byte of wokwi-cli output it writes and shall write the token to no stdout document, result, report or other file.
+"""
+
+verification = "Helper test: a fake CLI that prints the token on stdout and stderr and in an error line; afterwards no file of the run or report folder and no stdout document contains the token, and cli-stderr.log contains [redacted]; a Python check feeds the redactor 2000 random chunk splits without a leak and cuts a capture at its limit inside the token without writing its prefix."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/run.py", "05_Software/plugins/wokwi/scripts/wokwi_support/redact.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-1dd5113a"
+
+title = "Refuse closing a candidate window that has unsaved edits"
+
+status = "active"
+
+requirement = """
+If the bound candidate's in-memory board text differs from the text recorded after the last save when a close runs, then the helper shall refuse the close with exit 2 and the problem `changed` and leave the PCB editor running.
+"""
+
+verification = "Real KiCad: after a move made without saving through a second API client, close exits 2 with problem changed and the editor process still runs with the move unsaved."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

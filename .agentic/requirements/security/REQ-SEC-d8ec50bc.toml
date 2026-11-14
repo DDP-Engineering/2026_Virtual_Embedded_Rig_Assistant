@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-d8ec50bc"
+title = "Classify micropython-tool operations by their effect on the board"
+status = "active"
+requirement = "The micropython plugin's rules shall classify version, help, ports and report as safe; identify, files, read-file, capture-output and reset as device-read with a note that they interrupt or restart the running program; deploy-file and run-file as device-write; and deploy-file with --startup as irreversible."
+verification = "classifyCommand over plugin.yaml: each operation yields the listed risk; the device-read rules' notes mention the interrupted program; run-file's note says Stop does not stop code already running on the board."
+affected_paths = ["05_Software/plugins/micropython/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

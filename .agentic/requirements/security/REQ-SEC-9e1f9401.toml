@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-9e1f9401"
+
+title = "Apply only the files of the approved candidate"
+
+status = "active"
+
+requirement = "When apply-candidate runs on a candidate.json, the remote helper shall verify every staged file and every target's base hash, end blocked with candidate-changed or conflict when one differs, replace only the candidate's new and changed files (a conflict file only when named with --overwrite) and never delete a project file, removing only the staging files it created."
+
+verification = "apply after a staged byte changes gives candidate-changed; a target edited after staging gives conflict; a normal apply writes the new and changed files, keeps remote-only files and other projects' files, records the applied hashes and leaves no staging folder; --overwrite replaces a conflict file."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

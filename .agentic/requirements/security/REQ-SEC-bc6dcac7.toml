@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-bc6dcac7"
+title = "Verify the broker certificate and host name"
+status = "active"
+requirement = "While the profile enables TLS, mqtt-tool shall verify the broker's certificate chain against the profile's CA and its host name, and if either check fails it shall end with code tls-failed before any MQTT packet is sent."
+verification = "Helper test against the TLS test broker: the fixture CA passes with tls.verified true; a second, unrelated CA and a certificate for another host name each give tls-failed (exit 3) and the broker log shows no CONNECT."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/connection.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,99 @@
+{
+  "format": 1,
+  "kind": "ble-tools-profile",
+  "id": "bench-thermometer",
+  "name": "Bench thermometer with a fan level (example)",
+  "pairing": "none",
+  "advertisement": { "serviceUuids": ["181a"], "localName": "THERMO" },
+  "limits": {
+    "connectTimeoutS": 20,
+    "operationTimeoutS": 10,
+    "maxNotificationsPerSecond": 50,
+    "maxNotifications": 10000,
+    "maxBytes": 1048576
+  },
+  "services": [
+    {
+      "uuid": "181a",
+      "characteristics": [
+        {
+          "name": "temperature",
+          "uuid": "2a6e",
+          "properties": ["read", "notify"],
+          "operations": ["read", "notify"],
+          "sideEffects": "none",
+          "payload": {
+            "type": "int",
+            "size": 2,
+            "byteOrder": "little",
+            "scale": 0.01,
+            "unit": "degC",
+            "min": -40,
+            "max": 125
+          }
+        }
+      ]
+    },
+    {
+      "uuid": "180a",
+      "characteristics": [
+        {
+          "name": "serial-number",
+          "uuid": "2a25",
+          "properties": ["read"],
+          "operations": ["read"],
+          "sideEffects": "none",
+          "identity": true,
+          "payload": { "type": "utf8", "minLength": 1, "maxLength": 64, "unit": "none" }
+        }
+      ]
+    },
+    {
+      "uuid": "8e1f0000-1c2b-4a3d-9e5f-0123456789ab",
+      "characteristics": [
+        {
+          "name": "fan-level",
+          "uuid": "8e1f0001-1c2b-4a3d-9e5f-0123456789ab",
+          "properties": ["read", "write"],
+          "operations": ["read", "write"],
+          "sideEffects": "none",
+          "payload": {
+            "type": "uint",
+            "size": 1,
+            "byteOrder": "little",
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          },
+          "writes": [
+            { "name": "set-level", "class": "actuate", "value": "typed", "response": true, "readBack": true },
+            {
+              "name": "off",
+              "class": "actuate",
+              "value": "fixed",
+              "data": "00",
+              "response": true,
+              "readBack": true
+            }
+          ]
+        },
+        {
+          "name": "default-level",
+          "uuid": "8e1f0002-1c2b-4a3d-9e5f-0123456789ab",
+          "properties": ["write"],
+          "operations": ["write"],
+          "sideEffects": "none",
+          "payload": {
+            "type": "uint",
+            "size": 1,
+            "byteOrder": "little",
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          },
+          "writes": [{ "name": "store", "class": "persistent", "value": "typed", "response": true }]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-ea280836"
+
+title = "Keep the candidate consistent when an operation is stopped"
+
+status = "active"
+
+requirement = """
+If an edit is stopped or times out, then the helper's process tree shall end with nothing saved after the last completed save, so that the next edit of the run completes from the last saved candidate or is refused with `changed` or `binding`.
+"""
+
+verification = "Real KiCad: a process-tree kill of an edit paused by a test hook inside its commit, after its move, leaves state.json and the candidate file unchanged; the next edit of the run exits 0 or 2 with problem changed or binding (then the file is still the last save), and the stopped request's move never appears in the saved candidate."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

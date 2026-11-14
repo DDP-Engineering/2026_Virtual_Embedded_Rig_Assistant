@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-255ef057"
+
+title = "Run only an installed helper whose SHA-256 matches the bundled helper"
+
+status = "active"
+
+requirement = "When the installed remote helper is missing or its SHA-256 differs from the bundled helper, the remote stub shall execute nothing and pi-tool shall end blocked with code helper-missing or helper-changed."
+
+verification = "identify before install gives helper-missing; appending one byte to the installed helper gives helper-changed; neither runs an operation."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

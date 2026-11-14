@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b0cbbb04"
+
+title = "Close the candidate's PCB editor when it has no unsaved edits"
+
+status = "active"
+
+requirement = """
+When the agent runs `kicad-layout-tool close --run DIR` and the bound candidate has no unsaved edits, the helper shall stop the PCB editor that the open started, remove KiCad's lock files from the candidate folder and keep the run folder.
+"""
+
+verification = "Real KiCad: close after an edit exits 0, the editor process started by open no longer runs, candidate/ holds no `~*.lck` file and the run folder's state.json, result.json and candidate are unchanged."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

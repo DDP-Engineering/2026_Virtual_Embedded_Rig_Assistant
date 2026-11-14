@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-TEST-e7ad54bf"
+
+title = "Test ble-tool offline against a fake Bleak and keep hardware tests opt-in"
+
+status = "active"
+
+requirement = "The ble-tools tests shall exercise ble-tool against a fake Bleak package that simulates adapters and devices and records every radio call, and shall run a real scan only when VERA_TEST_BLE_PYTHON names a Python with the pinned Bleak, never connecting to a device."
+
+verification = "Inspection: the test file runs the helper with the fake package on PYTHONPATH by default, and its real-scan block is skipped without VERA_TEST_BLE_PYTHON and calls only scan."
+
+affected_paths = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

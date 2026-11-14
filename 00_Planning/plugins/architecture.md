@@ -103,6 +103,9 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `programs.*.prefix` | fixed leading arguments for every run of the program, whatever the install kind; values may use `${pluginDir}`. Order on the command line: download `prefix`, program `prefix`, the agent's arguments. Not part of the matched command line. Example: the `git` plugin's `-c core.fsmonitor=false …` |
 | `programs.*.env` | extra variables; values are literals, `${workbench}` or `${pluginDir}` |
 | `programs.*.timeout` | default seconds for a foreground run, ≤ 3600 |
+| `programs.*.uses` | other programs of the same plugin, found or downloaded first; their paths reach the run as `VERA_PROGRAM_<NAME>` |
+| `programs.*.gui` | `true` for a program that opens windows on the user's desktop: only its runs receive the display variables (§3.2) |
+| `programs.*.file` | `true` for a pinned download that is never run (a Java archive): its version comes from its file name through `version.match`, `run_program` refuses it, and programs that `use` it receive its path |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
 | `docs[]` | URLs or plugin-relative files (which must exist in the package) the UI offers to add to the workbench documents |
 
@@ -172,9 +175,13 @@ policy below; it receives a resolved executable and the program's resolved varia
 
 - `spawn(executable, args, { shell: false, windowsHide: true, cwd, env, stdio: ["ignore", "pipe", "pipe"] })`.
   Stdin is closed, so an interactive program fails instead of hanging. `blocked` rules name the
-  known interactive subcommands.
+  known interactive subcommands. The one exception is a run with `input`: stdin is a pipe that receives exactly that
+  input and is then closed. Only the plugin-credential hand-off uses it: a program declaring
+  `credentials {option, scope: mqtt}` of an official plugin enabled at run start receives the stored credential a call
+  names, as one JSON line (spec REQ-DATA-96d18686 section 1).
 - Environment: a minimal base (`PATH` = managed tool directories + system `PATH`; `SystemRoot`,
-  `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`), then the program's
+  `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`; for a `gui: true`
+  program also `DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY`, `XDG_RUNTIME_DIR`), then the program's
   `env`, then `PYTHONUTF8=1` and `NO_COLOR=1`. Names compare case-insensitively on Windows.
   Credentials from the VERA store and VERA's own environment never enter it.
 - `cwd` passes the workbench path guard and must be a directory, else DENIED. The program itself is
@@ -492,7 +499,7 @@ Disk use, measured 2026-11-02 on Windows x64 (apparent bytes; Ubuntu still to me
   has the reviewed hash (CONFLICT otherwise). The CLI installs without a review.
 - Install accepts a folder named as the id, or a zip with the package at its root or in one top folder
   named as the id. It refuses links, unsafe or case-colliding paths, a root `install.json`, more than 4096
-  files, 64 MiB of content, a 64 MiB zip or a 256 KiB manifest, and an invalid manifest (INVALID with the
+  files or a 256 KiB manifest (the package size is not limited), and an invalid manifest (INVALID with the
   first issue's code and field path). A reinstall replaces the whole folder through `plugins/staging/`.
 - Listing reports every issue per plugin (`manifest`, `yaml`, `field`, `id`, `record`, `changed`,
   `unavailable`); a plugin with any issue never loads.

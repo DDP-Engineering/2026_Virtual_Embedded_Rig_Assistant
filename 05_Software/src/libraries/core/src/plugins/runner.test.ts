@@ -16,6 +16,52 @@ it("preserves only Windows PATHEXT case-insensitively for plugin launchers", () 
   expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("PATHEXT");
 });
 
+// REQ-SEC-adb91424, REQ-SEC-f5c114de: SSH_AUTH_SOCK only for a run that inherits it.
+it("copies an inherited host variable such as SSH_AUTH_SOCK only when the run asks for it", () => {
+  const env = { SSH_AUTH_SOCK: "/run/user/1000/agent.sock", HOME: "/home/me" };
+  expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("SSH_AUTH_SOCK");
+  expect(programEnvironment(new FakeHost("linux", env), [], {}, false, ["SSH_AUTH_SOCK"])).toEqual({
+    HOME: "/home/me",
+    SSH_AUTH_SOCK: "/run/user/1000/agent.sock",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+  expect(
+    programEnvironment(new FakeHost("win32", { ssh_auth_sock: "x" }), [], {}, false, ["SSH_AUTH_SOCK"]),
+  ).toEqual({
+    SSH_AUTH_SOCK: "x",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+  expect(programEnvironment(new FakeHost("linux", {}), [], {}, false, ["SSH_AUTH_SOCK"])).not.toHaveProperty(
+    "SSH_AUTH_SOCK",
+  );
+});
+
+// REQ-PLAT-e0d8f3cf: only a program that declares windows (gui: true) gets the desktop's display variables.
+it("passes the display variables only to a program that opens windows", () => {
+  const env = {
+    PATH: "/usr/bin",
+    DISPLAY: ":0",
+    WAYLAND_DISPLAY: "wayland-0",
+    XAUTHORITY: "/home/u/.Xauthority",
+    XDG_RUNTIME_DIR: "/run/user/1000",
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+  };
+  const plain = programEnvironment(new FakeHost("linux", env), []);
+  for (const name of ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"])
+    expect(plain).not.toHaveProperty(name);
+  expect(programEnvironment(new FakeHost("linux", env), [], {}, true)).toEqual({
+    PATH: "/usr/bin",
+    DISPLAY: ":0",
+    WAYLAND_DISPLAY: "wayland-0",
+    XAUTHORITY: "/home/u/.Xauthority",
+    XDG_RUNTIME_DIR: "/run/user/1000",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+});
+
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 let root = "";
 let host: FakeHost;
@@ -347,10 +393,43 @@ describe("serial-port guard", () => {
     expect(host.programs).toHaveLength(3);
   });
 
-  it("does not hold a port for a foreground run", async () => {
-    await runner.start(request({ args: ["COM3"] }));
-    await runner.start(request({ args: ["COM3"], background: true }));
+  // REQ-SEC-016c9aad: a foreground run holds its port until it ends, against foreground and background runs.
+  it("holds a port for an unfinished foreground run", async () => {
+    const upload = await runner.start(request({ sessionId: "a", args: ["upload", "--port", "COM3"] }));
+    for (const background of [false, true])
+      await expect(
+        runner.start(request({ sessionId: "b", args: ["capture", "--port=com3"], background })),
+      ).rejects.toMatchObject({ code: "BUSY", params: { handle: upload.id, port: "COM3" } });
+    expect(host.programs).toHaveLength(1);
+    host.programs[0]?.finish({ code: 0, signal: null });
+    await upload.done;
+    await runner.start(request({ sessionId: "b", args: ["capture", "--port=com3"] }));
     expect(host.programs).toHaveLength(2);
+  });
+
+  // REQ-FUNC-868fc8ab: a /dev/serial/by-id link and its device are one port; an unresolvable path stays as written.
+  it("compares Linux device paths after resolving their links", async () => {
+    const links: Record<string, string> = { "/dev/serial/by-id/usb-Arduino-if00": "/dev/ttyACM0" };
+    const resolving = make({
+      host,
+      clock: { sleep: async () => {} },
+      devicePath: (path) => {
+        const target = links[path];
+        if (target) return target;
+        if (path === "/dev/ttyACM0" || path === "/dev/ttyUSB0") return path;
+        throw Error("ENOENT");
+      },
+    });
+    const monitor = await resolving.start(
+      request({ background: true, args: ["--port", "/dev/serial/by-id/usb-Arduino-if00"] }),
+    );
+    await expect(resolving.start(request({ args: ["/dev/ttyACM0"] }))).rejects.toMatchObject({
+      code: "BUSY",
+      params: { handle: monitor.id, port: "/dev/ttyACM0" },
+    });
+    await resolving.start(request({ background: true, args: ["/dev/ttyUSB9"] }));
+    await resolving.start(request({ args: ["/dev/ttyUSB0"] }));
+    expect(host.programs).toHaveLength(3);
   });
 });
 

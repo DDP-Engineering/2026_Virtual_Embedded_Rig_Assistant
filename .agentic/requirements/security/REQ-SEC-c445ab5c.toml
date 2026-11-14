@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-c445ab5c"
+
+title = "Refuse applying when the source or the candidate changed"
+
+status = "active"
+
+requirement = """
+If the source board's hash differs from the base hash in the run folder's state, or the candidate's hash differs from its recorded hash or from the hash that was approved, then VERA shall refuse apply_candidate, write nothing and report the change: before approval with a message to open a new candidate or check it again, after approval as a conflict.
+"""
+
+verification = "Core unit tests: a source edited after open ('source ... changed'), a candidate edited after its check ('candidate ... changed'), and a candidate or source edited between approval and apply (each 'Conflict') are refused with the target unchanged and no applied change recorded."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/apply-candidate.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/apply-candidate.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

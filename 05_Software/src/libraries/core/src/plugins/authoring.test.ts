@@ -1,8 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PLUGIN_LIMITS, programPolicy } from "@vera/shared";
-import * as archive from "fflate";
+import { programPolicy } from "@vera/shared";
 import { unzipSync } from "fflate";
 import { afterEach, expect, it, vi } from "vitest";
 import { stringify } from "yaml";
@@ -12,11 +11,6 @@ import { ToolRegistry } from "../tools/registry.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { plugin } from "./program-fixtures.test-support.js";
 import { PluginStore } from "./store.js";
-
-vi.mock("fflate", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("fflate")>();
-  return { ...actual, zipSync: vi.fn(actual.zipSync) };
-});
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -134,16 +128,6 @@ it("binds a trial install to the reviewed draft, rejects changed bytes and preve
   expect((await f.registry.execute(ctx, "plugin_validate", { path: "../data" }, signal())).isError).toBe(
     true,
   );
-});
-it("refuses an exported zip beyond the established import byte cap", async () => {
-  const f = await fixture();
-  const installed = await f.store.install(f.draft);
-  vi.mocked(archive.zipSync).mockReturnValueOnce(new Uint8Array(PLUGIN_LIMITS.zipBytes + 1));
-  const outcome = await f.store.export("fixture-cli", installed.sha256 ?? "").then(
-    () => "exported",
-    (error: { code: string }) => error.code,
-  );
-  expect(outcome).toBe("INVALID");
 });
 it("ships an immutable official create-plugin skill and keeps disabling available", async () => {
   const f = await fixture();

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-dce7445c"
+
+title = "Test wokwi-tool offline and keep real-CLI tests opt-in"
+
+status = "active"
+
+requirement = """
+The wokwi plugin tests shall run wokwi-tool against a fake wokwi-cli by default and run the real wokwi-cli 0.29.1 only when VERA_TEST_WOKWI_CLI names it, with no test that reaches Wokwi's cloud.
+"""
+
+verification = "Inspection: wokwi.test.ts sets VERA_PROGRAM_WOKWI_CLI to the fake wrapper for every default case; its real-CLI block is skipIf(!VERA_TEST_WOKWI_CLI) and runs only --short-version, lint --offline and a run without WOKWI_CLI_TOKEN that ends at the CLI's missing-token check."
+
+affected_paths = ["05_Software/tests/integration/wokwi.test.ts"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

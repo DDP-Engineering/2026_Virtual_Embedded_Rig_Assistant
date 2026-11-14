@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-f0aa9c76"
+title = "Classify bus-tool calls at their highest risk"
+status = "active"
+requirement = "The bus-tools manifest shall classify devices, capabilities and report as safe, identify as device-read, configure-bus, read-register, transfer, capture and release as device-write, and any call naming --power as irreversible, with notes that say a read writes the register address and may clear flags."
+verification = "Package test classifies one call of each operation and calls with --power through classifyCommand and checks the notes."
+affected_paths = ["05_Software/plugins/bus-tools/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

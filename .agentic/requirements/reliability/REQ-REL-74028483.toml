@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-74028483"
+
+title = "Report a device that is not seen within the connect timeout"
+
+status = "active"
+
+requirement = "If the registry address is not seen by a scan within the profile's connect timeout, then ble-tool shall end the run blocked with not-found and make no connection attempt."
+
+verification = "A registry address no fake device advertises: identify is blocked not-found after the timeout and the fake log shows no connect."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/device.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

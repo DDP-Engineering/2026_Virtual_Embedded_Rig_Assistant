@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8483534b"
+
+title = "Refuse applying a candidate that failed its checks or lies outside its run folder"
+
+status = "active"
+
+requirement = """
+If the run folder's state is not a kicad-layout state, the candidate is not a KiCad board file of at most 64 MiB inside the run folder, the target is not a `.kicad_pcb` file inside the workbench that the agent may write, or no edit was made or the objectives did not pass, then VERA shall refuse apply_candidate and write nothing.
+"""
+
+verification = "Core unit tests: a state of another kind, a candidate path `../x.kicad_pcb`, a candidate not starting with `(kicad_pcb`, a target under `.vera/`, a target `notes.txt`, a target outside the workbench, edits 0 and objectives fail are each refused with the target unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/apply-candidate.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/apply-candidate.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

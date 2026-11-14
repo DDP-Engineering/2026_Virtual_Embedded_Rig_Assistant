@@ -39,6 +39,8 @@
     - { name: Component selection, plugins: [parts-search], default: true }
     - { name: Simulation (ngspice), plugins: [ngspice], default: true }
     - { name: "Simulation (LTspice, Windows)", plugins: [ltspice], default: false }
+    - { name: PCB placement and local routing (KiCad), plugins: [kicad-layout], default: false }
+    - { name: PCB autorouting (Freerouting), plugins: [kicad-layout, freerouting], default: false }
 - id: lab
   name: Embedded lab
   groups:
@@ -50,3 +52,14 @@
     - { name: Virtual boards (Renode), plugins: [renode], default: true }
     - { name: Zephyr builds and tests, plugins: [zephyr], default: true }
     - { name: PlatformIO projects, plugins: [platformio], default: true }
+- id: arduino
+  name: Arduino
+  groups:
+    - { name: Sketches (Arduino CLI), plugins: [arduino-cli], default: true }
+    - { name: MicroPython, plugins: [micropython], default: true }
+    - { name: CircuitPython, plugins: [circuitpython], default: true }
+    - { name: "Bus transactions (I2C, SPI, UART)", plugins: [bus-tools], default: true }
+    - { name: MQTT telemetry and commands, plugins: [mqtt-tools], default: true }
+    - { name: BLE devices (GATT), plugins: [ble-tools], default: true }
+    - { name: Cloud simulation (Wokwi), plugins: [wokwi], default: false }
+    - { name: Raspberry Pi Linux projects, plugins: [raspberry-pi-linux], default: false }

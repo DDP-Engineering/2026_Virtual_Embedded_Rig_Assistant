@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-ca9500d0"
+title = "Report an unknown library or an unavailable bundle distinctly"
+status = "active"
+requirement = "If a requested library is not in the bundle, then circuitpython-tool shall end prepare-libraries with status blocked and code unknown-library; if a bundle zip cannot be downloaded, then it shall end with status error and code download-failed; in both cases no library set is written."
+verification = "Fixture bundle: --library adafruit_nothing is blocked unknown-library; a local server answering 404 for the tag ends error download-failed; neither writes library-set.json; a dependency missing from the bundle is a warning dependency-not-in-bundle, not a failure."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/bundle.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

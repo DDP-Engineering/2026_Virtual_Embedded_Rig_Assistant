@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-c63f36b2"
+title = "Stop at the next safe point with the final state"
+status = "active"
+requirement = "When VERA requests a stop (the file stop in VERA_RUN_CONTROL) during a bus operation, bus-tool shall send no further data request, apply the final state release, and end incomplete (stopped) with the physical state it read back."
+verification = "capture with a control folder whose stop file appears during the window: exit 3 stopped, state.json phase released, physical confirmed, the simulated adapter in HiZ."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/lifecycle.py", "05_Software/plugins/bus-tools/scripts/bus_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

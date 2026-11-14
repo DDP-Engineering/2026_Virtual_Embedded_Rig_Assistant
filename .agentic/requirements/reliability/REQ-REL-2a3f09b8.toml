@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-2a3f09b8"
+
+title = "Refuse a malformed edit request before KiCad is used"
+
+status = "active"
+
+requirement = """
+If an edit request is not valid JSON or has keys or operations outside the spec, wrong types, units other than mm, values outside the limits, a reference repeated in an align or a footprint named by two place or align operations, then the helper shall refuse it with exit 2 and the problem `request` naming the operation index, before it connects to KiCad.
+"""
+
+verification = "Offline: malformed requests (format 2, units inch, op replace, 65 operations, width 0 and 11, via diameter equal to drill, a 2-point polygon, coordinate 1001, a number as a string, a repeated align reference, a footprint placed twice, a footprint placed and aligned, an unknown key) each exit 2 with problem request, the second placement naming operations[1] and the first, with no KiCad running and the run folder's files unchanged."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/request.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

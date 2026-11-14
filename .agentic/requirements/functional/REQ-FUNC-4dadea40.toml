@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-4dadea40"
+title = "Key a bus adapter by both of its serial ports and its USB identity"
+status = "active"
+requirement = "The plugin platform shall derive the identity keys of a bus-adapter entry as serial:<resource>, serial:<terminal> (COMn upper-cased, /dev paths as written) and its identity lower-cased, so that a run claiming the adapter conflicts with any run that names either port or claims the same USB device, in one VERA process and across processes."
+verification = "Shared test of the keys; integration test with the real runner and a lease folder: a running bus-tool capture on the adapter makes a run naming the terminal port in argv BUSY in the same runner and in a second runner sharing the lease folder, and a run naming the binary port first makes the bus-tool run BUSY."
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/integration/bus-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

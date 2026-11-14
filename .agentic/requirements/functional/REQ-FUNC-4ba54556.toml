@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4ba54556"
+
+title = "Map wokwi-cli's end to distinct pass, fail and timeout outcomes"
+
+status = "active"
+
+requirement = """
+When wokwi-cli exits, wokwi-tool shall report outcome passed (status pass) for exit 0, virtual-timeout for exit 42 with the timeout message, fail-text for an unexpected text and assertion-failed for a scenario assertion error, the last three with status fail and exit 1, never treating a timeout as pass.
+"""
+
+verification = "Helper test with the fake CLI scripted per case: exit 0 gives pass; exit 42 with 'Timeout: simulation did not finish in 5000ms' gives fail virtual-timeout with reachedNs 5000000000; 'Unexpected text found' exit 1 gives fail-text; 'Error: [1500000000ns] GPIO led1:A expected to be 1 but was 0' gives assertion-failed with reachedNs 1500000000."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/outcome.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

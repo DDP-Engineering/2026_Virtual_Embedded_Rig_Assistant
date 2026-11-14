@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-6073fccf"
+title = "Gate real-mpremote and board tests behind environment variables"
+status = "active"
+requirement = "The micropython integration tests shall run offline with a fake mpremote by default, run micropython-tool with the real pinned mpremote over a simulated serial board only when VERA_MICROPYTHON_UV names a uv executable, and touch a real board only when VERA_TEST_MICROPYTHON_PORT and VERA_TEST_MICROPYTHON_IDENTITY name it."
+verification = "Inspection: the default run skips both gated describe blocks; with VERA_MICROPYTHON_UV set, the opt-in block installs the pinned packages and runs identify, deploy-file and run-file against the simulated board."
+affected_paths = ["05_Software/tests/integration/micropython.test.ts"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

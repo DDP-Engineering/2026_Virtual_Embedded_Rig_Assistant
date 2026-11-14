@@ -1,0 +1,9 @@
+# Written by an IDE: arduino-tool leaves this file out of every build and reports it.
+default_fqbn: arduino:avr:uno
+default_port: COM99
+default_profile: uno
+profiles:
+  uno:
+    fqbn: arduino:avr:uno
+    platforms:
+      - platform: arduino:avr (1.8.6)

@@ -47,12 +47,14 @@ export interface ProcessSpawnOptions {
   group: boolean;
   /** Raw output bytes in arrival order. */
   output: (stream: "stdout" | "stderr", chunk: Uint8Array) => void;
+  /** Written to the program's stdin, which is then closed; without it stdin is closed from the start. */
+  input?: string;
 }
 export interface ProcessHost {
   readonly platform: string;
   /** The host's own environment; the runner copies only allowlisted names from it. */
   readonly env: Readonly<Record<string, string | undefined>>;
-  /** No shell, hidden window, closed stdin, piped stdout and stderr. */
+  /** No shell, hidden window, closed stdin (or the run's input, then closed), piped stdout and stderr. */
   spawn(executable: string, args: readonly string[], options: ProcessSpawnOptions): SpawnedProcess;
   /** Signals a process (pid > 0) or a process group (pid < 0); false when none exists. */
   signal(pid: number, signal: "SIGTERM" | "SIGKILL"): boolean;

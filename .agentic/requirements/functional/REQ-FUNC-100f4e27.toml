@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-100f4e27"
+title = "Bound every capture by time, messages and bytes"
+status = "active"
+requirement = "When mqtt-tool subscribes, it shall stop at the first of the requested duration, message count or payload bytes (the message that reaches the byte bound included), each capped by the profile's limits, and record which bound ended the capture."
+verification = "Helper test: a fixture publisher sends 8 messages; --max-messages 5 ends with endReason messages and 5 lines; --max-bytes 40 ends with bytes; --duration 1 with no traffic ends with duration; --duration above the profile limit is usage-refused (exit 2)."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

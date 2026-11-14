@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-e62ad15a"
+title = "Summarize bus-tool run folders"
+status = "active"
+requirement = "When report runs with one or more --run folders of the workbench, bus-tool shall write a new run folder whose result and report.md list each run's operation, status, adapter, device, register or bytes and physical state, refusing a folder that holds no bus-tool result."
+verification = "report over a read-register and a NACK run: two rows with their statuses; a folder without result.json: exit 2 run-invalid."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/report.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

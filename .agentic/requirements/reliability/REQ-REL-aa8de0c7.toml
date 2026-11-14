@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-aa8de0c7"
+title = "Refuse or stop a deploy on a read-only volume"
+status = "active"
+requirement = "If the selected volume is mounted read-only, then circuitpython-tool shall refuse the deploy with status blocked and code read-only before any write; if a write is refused as read-only during the deploy, then it shall end with status fail and code read-only, listing confirmed and unconfirmed files."
+verification = "Bench volume marked read-only: deploy blocked read-only and the volume unchanged; a write-protect fault on the second file: fail read-only, first file confirmed, the failing file failed, later files unconfirmed, application partially-updated."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/volumes.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

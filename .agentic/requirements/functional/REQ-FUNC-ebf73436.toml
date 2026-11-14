@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-ebf73436"
+title = "Report the backend's capabilities without opening a port"
+status = "active"
+requirement = "When capabilities runs, bus-tool shall report, without opening any port, the supported hardware and protocol versions, modes (i2c, spi, uart), operations and limits of its backend and, with --bus, the validated profile's devices, registers and effective limits."
+verification = "capabilities alone and with a fixture profile: the fields; with an invalid profile: exit 2 profile-invalid; the simulated adapter records no open."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/cli.py", "05_Software/plugins/bus-tools/scripts/bus_support/profile.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,10 +1,10 @@
 schema = 1
 id = "REQ-FUNC-4fdb0d42"
 title = "Refuse oversized plugin exports"
-status = "active"
-requirement = "If a generated plugin export exceeds the existing 64 MiB zip import cap, VERA shall return INVALID before saving it."
+status = "retired"
+requirement = "If a generated plugin export exceeds the existing 64 MiB zip import cap, VERA shall return INVALID before saving it. Retired 2026-11-14: plugin packages have no size limit (folder, zip, export or catalog entry); the 4096-file and 256 KiB manifest limits remain."
 verification = "With a healthy installed package and a controlled archive encoder returning cap+1 bytes, export returns INVALID; ordinary exports remain importable."
 affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/plugins/authoring.test.ts"]
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-14

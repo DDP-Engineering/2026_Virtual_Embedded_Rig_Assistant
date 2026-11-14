@@ -3,9 +3,9 @@ import { z } from "zod";
 /**
  * The workbench registry of bench resources, `lab/resources.json` (spec REQ-DATA-f2cbfc23 §1). One file per
  * workbench: the host reads its identity fields to reserve resources, plugin helpers read the whole entry. Identity
- * kinds are data: `visa` (instruments, LAB-01), `probe` (debug probes, LAB-04, spec REQ-DATA-d7da2a71 §4) and
- * `power-monitor` (Joulescope energy analyzers, LAB-05, spec REQ-DATA-dd3e4fe1 §4); later kinds (NIC, endpoint, lab
- * host) add a branch here and a key function below.
+ * kinds are data: `visa` (instruments, LAB-01), `probe` (debug probes, LAB-04, spec REQ-DATA-d7da2a71 §4),
+ * `power-monitor` (Joulescope energy analyzers, LAB-05, spec REQ-DATA-dd3e4fe1 §4), `bus-adapter`, `ble-device` and
+ * `linux-board` (IoT plugins); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
  */
 export const LAB_REGISTRY_PATH = "lab/resources.json";
 export const LAB_REGISTRY_BYTES = 256 * 1024;
@@ -62,13 +62,135 @@ const powerMonitorEntrySchema = z.strictObject({
   profile: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
   note: z.string().max(256).optional(),
 });
-export const labResourceSchema = z.discriminatedUnion("kind", [
+/** A serial port as a bus adapter entry names it: `COM<n>` or a `/dev/` path. */
+const serialPort = z
+  .string()
+  .regex(/^(?:[Cc][Oo][Mm][1-9]\d{0,2}|\/dev\/[\x21-\x7e]{1,250})$/, "Use COM<n> or a /dev/ path.");
+/**
+ * Kind `bus-adapter` (spec REQ-DATA-f2cbfc23 §1): a bus adapter reached on its binary serial port (`resource`) with a
+ * second port (`terminal`) of the same device; `identity` is its USB key as the bus-tools plugin lists it.
+ */
+const busAdapterEntrySchema = z
+  .strictObject({
+    alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+    kind: z.literal("bus-adapter"),
+    backend: z.literal("bus-pirate-bpio2"),
+    resource: serialPort,
+    terminal: serialPort,
+    identity: z
+      .string()
+      .regex(
+        /^usb:[0-9A-Fa-f]{4}:[0-9A-Fa-f]{4}:[\x21-\x39\x3b-\x7e]{1,64}$/,
+        "Use usb:<vid>:<pid>:<serial>.",
+      ),
+    power: z
+      .strictObject({
+        maxMv: z.number().int().min(800).max(5000),
+        maxMa: z.number().int().min(1).max(500),
+      })
+      .optional(),
+    note: z.string().max(256).optional(),
+  })
+  .refine((entry) => serialPortKey(entry.resource) !== serialPortKey(entry.terminal), {
+    path: ["terminal"],
+    message: "The terminal port must differ from the resource port.",
+  });
+/**
+ * Kind `ble-device` (spec REQ-DATA-f2cbfc23 §1): a Bluetooth Low Energy device the ble-tools plugin reaches by its
+ * identity address. A random address must be static (first octet's two most significant bits set): private addresses
+ * change. `profile` names the device profile the unit follows; `serial` is the value its identity characteristic reports.
+ */
+const bleDeviceEntrySchema = z
+  .strictObject({
+    alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+    kind: z.literal("ble-device"),
+    address: z
+      .string()
+      .regex(/^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$/, "Use six colon-separated hex octets."),
+    addressType: z.enum(["public", "random"]),
+    profile: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+    serial: printable(64).optional(),
+    adapter: z
+      .string()
+      .regex(/^hci(?:[0-9]|[1-9][0-9])$/, "Use a BlueZ adapter name hci0 to hci99.")
+      .optional(),
+    note: z.string().max(256).optional(),
+  })
+  .refine(
+    (entry) =>
+      entry.addressType === "public" || (Number.parseInt(entry.address.slice(0, 2), 16) & 0xc0) === 0xc0,
+    { path: ["address"], message: "A random address must be static; private addresses change." },
+  );
+/** A SHA-256 key fingerprint as OpenSSH prints it (`SHA256:` and 43 unpadded base64 characters). */
+const fingerprint = z.string().regex(/^SHA256:[A-Za-z0-9+/]{43}$/, "Use SHA256:<43 base64 characters>.");
+const rootSegment = /^[A-Za-z0-9._-]+$/;
+/**
+ * Kind `linux-board` (spec REQ-DATA-f2cbfc23 §1): a Linux board (a Raspberry Pi) the raspberry-pi-linux plugin reaches
+ * over SSH as an unprivileged `user`, accepting only a host key whose fingerprint `hostKeys` pins, checking the board's
+ * `identity` and working below the absolute remote `root`.
+ */
+const linuxBoardEntrySchema = z.strictObject({
+  alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+  kind: z.literal("linux-board"),
+  host: z
+    .string()
+    .regex(
+      /^(?:[A-Za-z0-9](?:[A-Za-z0-9.-]{0,252})|[0-9A-Fa-f:.]{2,45})$/,
+      "Use a host name, an IPv4 address or an IPv6 address without brackets.",
+    ),
+  port: z.number().int().min(1).max(65_535),
+  user: z
+    .string()
+    .regex(/^[a-z_][a-z0-9_-]{0,31}$/, "Use a lower-case login name.")
+    .refine((user) => user !== "root", "Use an unprivileged user; root is refused."),
+  hostKeys: z.array(fingerprint).max(4),
+  agentKey: fingerprint.optional(),
+  identity: z
+    .strictObject({
+      serial: z
+        .string()
+        .regex(/^[0-9A-Fa-f]{8,32}$/)
+        .optional(),
+      machineId: z
+        .string()
+        .regex(/^[0-9a-f]{32}$/)
+        .optional(),
+      model: printable(128).optional(),
+    })
+    .refine((identity) => identity.serial !== undefined || identity.machineId !== undefined, {
+      message: "Declare the board's serial or machine id.",
+    }),
+  root: z
+    .string()
+    .max(256)
+    .refine((root) => {
+      const segments = root.split("/");
+      return (
+        segments[0] === "" &&
+        segments.length >= 3 &&
+        segments.length <= 17 &&
+        segments.slice(1).every((segment) => rootSegment.test(segment) && segment !== "." && segment !== "..")
+      );
+    }, "Use an absolute path of 2 to 16 segments of letters, digits, dot, underscore and dash, without . or ..."),
+  note: z.string().max(256).optional(),
+});
+export const labResourceSchema = z.union([
   visaEntrySchema,
   probeEntrySchema,
   powerMonitorEntrySchema,
+  busAdapterEntrySchema,
+  bleDeviceEntrySchema,
+  linuxBoardEntrySchema,
 ]);
 export type LabResource = z.infer<typeof labResourceSchema>;
-export const labResourceKindSchema = z.enum(["visa", "probe", "power-monitor"]);
+export const labResourceKindSchema = z.enum([
+  "visa",
+  "probe",
+  "power-monitor",
+  "bus-adapter",
+  "ble-device",
+  "linux-board",
+]);
 export type LabResourceKind = z.infer<typeof labResourceKindSchema>;
 
 export const labRegistrySchema = z
@@ -178,5 +300,9 @@ export function powerMonitorResourceKeys(resource: string): string[] {
 export function labResourceKeys(entry: LabResource): string[] {
   if (entry.kind === "probe") return probeResourceKeys(entry.resource);
   if (entry.kind === "power-monitor") return powerMonitorResourceKeys(entry.resource);
+  if (entry.kind === "bus-adapter")
+    return [serialPortKey(entry.resource), serialPortKey(entry.terminal), entry.identity.toLowerCase()];
+  if (entry.kind === "ble-device") return [`ble:${entry.address.toLowerCase()}`];
+  if (entry.kind === "linux-board") return [`ssh:${entry.host.toLowerCase()}:${entry.port}`];
   return visaResourceKeys(entry.resource, entry.serial);
 }

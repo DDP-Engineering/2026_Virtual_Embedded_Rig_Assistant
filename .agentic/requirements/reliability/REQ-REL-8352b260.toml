@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-8352b260"
+
+title = "Report the task unknown when the SSH connection is lost"
+
+status = "active"
+
+requirement = "When the SSH connection ends during run-task, pi-tool shall end incomplete with code connection-lost and the task's remote state unknown, and stop-owned or task-status on a new connection shall report the task's real state."
+
+verification = "Killing the test server during a long task gives connection-lost with remote unknown; after a restart task-status shows it running or ended by its budget and stop-owned confirms it stopped."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-ea1a5b7d"
+
+title = "Refuse an upload whose build, binary or sketch changed or failed"
+
+status = "active"
+
+requirement = """
+If the upload's result file is not a format 1 compile result with status pass, or any recorded hash of the copied sketch, a binary or the original sketch no longer matches, then the arduino-tool helper shall refuse with exit 2 before arduino-cli runs, and it shall hand arduino-cli only staged copies of the recorded sketch files and binaries.
+"""
+
+verification = "Upload of a failed compile result gives build-failed; changing one byte of the hex gives conflict naming the file; editing the original sketch after compile gives conflict; deleting it gives conflict; a file added to the run's sketch copy gives conflict; in each case the fake records no arduino-cli call; a sketch.yaml with default_programmer added to the copy never reaches the upload, whose sketch folder holds only VeraBlink.ino and whose argv has no --programmer."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/upload.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

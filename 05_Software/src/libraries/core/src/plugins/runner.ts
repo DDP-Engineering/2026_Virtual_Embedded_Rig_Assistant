@@ -1,4 +1,4 @@
-import { constants } from "node:fs";
+import { constants, realpathSync } from "node:fs";
 import {
   type FileHandle,
   lstat,
@@ -42,6 +42,18 @@ export interface RunRequest {
   cwd?: string;
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
+  /**
+   * Host variables this run also receives beyond the allowlist (SSH_AUTH_SOCK for a program declaring sshAgent,
+   * REQ-SEC-adb91424), copied when the host has them; the cleanup run receives them too.
+   */
+  inherit?: readonly string[];
+  /**
+   * Written to stdin, which is then closed (a credential line, spec REQ-DATA-96d18686 section 1); never logged or
+   * recorded. Without it stdin is closed from the start.
+   */
+  input?: string;
+  /** The program opens windows (manifest `gui: true`): pass the host's display variables. */
+  display?: boolean;
   /** Kill the process tree after this many milliseconds; no limit when absent. */
   timeoutMs?: number;
   background?: boolean;
@@ -120,6 +132,11 @@ export interface ProgramRunnerOptions {
   id?: () => string;
   /** Start time of run records; the system time by default. */
   now?: () => Date;
+  /**
+   * The device a Linux serial path names after its links (`/dev/serial/by-id/...` -> `/dev/ttyACM0`); a throw keeps
+   * the path as written. The file system's realpath by default.
+   */
+  devicePath?: (path: string) => string;
   /** The lease registry; runs that claim resources are DENIED without one. */
   leases?: ResourceLeases | undefined;
 }
@@ -128,6 +145,8 @@ type RunnerSettings = Required<Omit<ProgramRunnerOptions, "id" | "leases">> &
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
 const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LANGUAGE"];
+/** The desktop session variables a program that opens windows needs (manifest `gui: true`), and only such a program. */
+export const DISPLAY_VARIABLES = ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"] as const;
 const RUN_FILE = /^([0-9A-HJKMNP-TV-Z]{26})\.(?:log|json)$/;
 const RUN_RECORD = /^[0-9A-HJKMNP-TV-Z]{26}\.json$/;
 /** Runs the Runs list returns, newest first. */
@@ -149,9 +168,10 @@ const thrown = (code: "BUSY" | "DENIED", params: Record<string, string | number>
 
 /**
  * Serial ports an argument list names, alone, as the value of `--name=value` or as `conn=` of a sigrok-cli driver
- * specification; COM names upper-cased.
+ * specification; COM names upper-cased, device paths as `devicePath` resolves them (as written when it throws or
+ * names no device path).
  */
-export function serialPorts(args: readonly string[]): string[] {
+export function serialPorts(args: readonly string[], devicePath?: (path: string) => string): string[] {
   const ports = new Set<string>();
   for (const arg of args) {
     const equals = arg.indexOf("=");
@@ -163,10 +183,57 @@ export function serialPorts(args: readonly string[]): string[] {
     for (const value of values) {
       const com = COM_PORT.exec(value)?.[1];
       if (com) ports.add(com.toUpperCase());
-      else if (DEVICE_PORT.test(value)) ports.add(value);
+      else if (DEVICE_PORT.test(value)) ports.add(resolveDevice(value, devicePath));
     }
   }
   return [...ports];
+}
+const VOLUME_OPTION = "--volume";
+const DRIVE = /^([A-Za-z]):[\\/]?$/;
+/**
+ * Volumes an argument list names with `--volume <value>` or `--volume=<value>` (spec REQ-DATA-f2cbfc23 §2), with
+ * their lease keys: a Windows drive as `volume:<LETTER>:`, an absolute path as `resolve` resolves it (as written when
+ * it throws), without trailing separators.
+ */
+function volumeNames(
+  args: readonly string[],
+  resolve?: (path: string) => string,
+): { alias: string; key: string }[] {
+  const found = new Map<string, string>();
+  for (const [index, arg] of args.entries()) {
+    const value = arg.startsWith(`${VOLUME_OPTION}=`)
+      ? arg.slice(VOLUME_OPTION.length + 1)
+      : arg === VOLUME_OPTION
+        ? args[index + 1]
+        : undefined;
+    if (!value) continue;
+    const drive = DRIVE.exec(value)?.[1];
+    let name = drive ? `${drive.toUpperCase()}:` : value;
+    if (!drive && resolve && (value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value))) {
+      try {
+        name = resolve(value);
+      } catch {
+        name = value;
+      }
+    }
+    if (!drive) name = name.replace(/(?<=.)[\\/]+$/, "");
+    const key = `volume:${name}`;
+    if (!found.has(key)) found.set(key, value);
+  }
+  return [...found].map(([key, alias]) => ({ alias, key }));
+}
+/** The lease keys of the volumes an argument list names (`volume:<volume>`). */
+export function volumeKeys(args: readonly string[], resolve?: (path: string) => string): string[] {
+  return volumeNames(args, resolve).map((volume) => volume.key);
+}
+function resolveDevice(path: string, devicePath: ((path: string) => string) | undefined): string {
+  if (!devicePath) return path;
+  try {
+    const resolved = devicePath(path);
+    return resolved.startsWith("/dev/") ? resolved : path;
+  } catch {
+    return path;
+  }
 }
 
 /** The `probe:<selector>` keys of the values of `--probe` (alone or `--probe=value`), selectors lower-cased. */
@@ -179,11 +246,16 @@ export function probeKeys(args: readonly string[]): string[] {
   return [...keys];
 }
 
-/** The minimal environment of a run: allowlisted host variables, the program's own, then the fixed two. */
+/**
+ * The minimal environment of a run: allowlisted host variables (with `display`, also the desktop session's display
+ * variables), the program's own, then the fixed two.
+ */
 export function programEnvironment(
   host: ProcessHost,
   toolPaths: readonly string[],
   own: Readonly<Record<string, string>> = {},
+  display = false,
+  inherit: readonly string[] = [],
 ): Record<string, string> {
   const windows = host.platform === "win32";
   const same = (left: string, right: string) =>
@@ -197,8 +269,12 @@ export function programEnvironment(
   if (path) set("PATH", path);
   for (const [name, value] of Object.entries(host.env)) {
     if (value === undefined) continue;
-    const inherited = INHERITED.find((candidate) => same(candidate, name));
+    const inherited = [...INHERITED, ...(display ? DISPLAY_VARIABLES : [])].find((candidate) =>
+      same(candidate, name),
+    );
+    const requested = inherit.find((candidate) => same(candidate, name));
     if (inherited) set(inherited, value);
+    else if (requested) set(requested, value);
     else if (windows && same(name, "PATHEXT")) set("PATHEXT", value);
     else if ((windows ? name.toUpperCase() : name).startsWith("LC_")) set(name, value);
   }
@@ -216,6 +292,7 @@ interface ActiveRun extends ProgramRun {
   readonly ports: readonly string[];
   readonly claimKeys: ReadonlySet<string>;
   readonly portKeys: ReadonlySet<string>;
+  readonly volumeKeys: ReadonlySet<string>;
 }
 
 class Run implements ActiveRun {
@@ -228,6 +305,9 @@ class Run implements ActiveRun {
   readonly portKeys: Set<string>;
   /** `probe:<selector>` keys of the debug probes the arguments name. */
   readonly probes: string[];
+  /** Volumes the run names with --volume, as lease aliases and keys. */
+  readonly volumes: { alias: string; key: string }[];
+  readonly volumeKeys: Set<string>;
   held: HeldLeases | undefined;
   control: string | undefined;
   private physical: PhysicalState | undefined;
@@ -259,10 +339,15 @@ class Run implements ActiveRun {
   ) {
     this.background = request.background === true;
     this.workbench = runner.key(request.workbench);
-    this.ports = serialPorts(request.programArgs ?? request.args);
+    this.ports = serialPorts(
+      request.programArgs ?? request.args,
+      settings.host.platform === "win32" ? undefined : settings.devicePath,
+    );
     this.claimKeys = new Set(request.lease?.claims.flatMap((claim) => claim.keys) ?? []);
     this.probes = probeKeys(request.programArgs ?? request.args);
     this.portKeys = new Set([...this.ports.map(serialPortKey), ...this.probes]);
+    this.volumes = volumeNames(request.programArgs ?? request.args, settings.devicePath);
+    this.volumeKeys = new Set(this.volumes.map((volume) => volume.key));
     this.tail = new TailBuffer(settings.tailChars);
     this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
@@ -320,12 +405,16 @@ class Run implements ActiveRun {
     this.started = performance.now();
     const child = host.spawn(this.request.executable, this.request.args, {
       cwd,
-      env: programEnvironment(host, this.settings.toolPaths, {
-        ...this.request.env,
-        ...this.supervisionEnv(),
-      }),
+      env: programEnvironment(
+        host,
+        this.settings.toolPaths,
+        { ...this.request.env, ...this.supervisionEnv() },
+        this.request.display === true,
+        this.request.inherit,
+      ),
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
+      ...(this.request.input === undefined ? {} : { input: this.request.input }),
     });
     this.pid = child.pid;
     if (this.request.timeoutMs !== undefined)
@@ -407,7 +496,12 @@ class Run implements ActiveRun {
   private async supervise(): Promise<void> {
     const { lease } = this.request;
     const held = this.held;
-    if (!lease || !held) return;
+    if (!held) return;
+    if (!lease) {
+      // Serial-port leases only: nothing to supervise.
+      await held.release();
+      return;
+    }
     try {
       const report = this.control ? await readControlState(this.control) : undefined;
       const actuates = lease.claims.some((claim) => claim.actuates);
@@ -449,11 +543,13 @@ class Run implements ActiveRun {
       const decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
       const child = host.spawn(this.request.executable, cleanup.args, {
         cwd: this.cwd,
-        env: programEnvironment(host, this.settings.toolPaths, {
-          ...this.request.env,
-          VERA_RUN_CONTROL: control,
-          VERA_CLEANUP_OF: this.id,
-        }),
+        env: programEnvironment(
+          host,
+          this.settings.toolPaths,
+          { ...this.request.env, VERA_RUN_CONTROL: control, VERA_CLEANUP_OF: this.id },
+          this.request.display === true,
+          this.request.inherit,
+        ),
         group: host.platform !== "win32",
         output: (stream, chunk) => this.append(decoders[stream].write(chunk)),
       });
@@ -595,6 +691,7 @@ class Hold implements ActiveRun, RunHold {
   readonly ports: readonly string[] = [];
   readonly claimKeys: ReadonlySet<string>;
   readonly portKeys: ReadonlySet<string>;
+  readonly volumeKeys: ReadonlySet<string> = new Set();
   held: HeldLeases | undefined;
   private settle!: (result: RunResult) => void;
   private result: RunResult | undefined;
@@ -797,7 +894,7 @@ async function readRecord(path: string, id: string): Promise<ProgramRunRecord | 
  * Runs resolved executables for plugins (plugins architecture §3.2) through the host's ProcessHost:
  * guarded working directory, minimal environment, decoded output with a capped tail and a full log in
  * `.vera/runs/`, timeouts and Stop that kill the whole process tree, at most `maxBackground` background
- * runs per session and a serial-port guard against ports held by background runs.
+ * runs per session and a serial-port guard against ports held by unfinished runs.
  */
 export class ProgramRunner {
   private readonly active = new Map<string, ActiveRun>();
@@ -814,6 +911,7 @@ export class ProgramRunner {
       logsKept: options.logsKept ?? 200,
       killGraceMs: options.killGraceMs ?? 3000,
       now: options.now ?? (() => new Date()),
+      devicePath: options.devicePath ?? ((path) => realpathSync(path)),
       leases: options.leases,
     };
     this.nextId = options.id ?? monotonicFactory();
@@ -821,8 +919,9 @@ export class ProgramRunner {
 
   /**
    * Starts a run. Refuses with BUSY `{limit}` a background run beyond the session's limit, with BUSY
-   * `{handle, port}` a run naming a serial port that a running background run names, and with DENIED a
-   * working directory outside the workbench; none of these starts a process.
+   * `{handle, port}` a run naming a serial port that another unfinished run names (foreground or background) or claims through a lease,
+   * with BUSY `{handle, resource}` a run naming a volume (`--volume`) that another unfinished run names or claims,
+   * and with DENIED a working directory outside the workbench; none of these starts a process.
    */
   async start(request: RunRequest): Promise<ProgramRun> {
     const run = new Run(this.nextId(), request, this, this.settings);
@@ -841,9 +940,7 @@ export class ProgramRunner {
     this.checkBackground(run.background, request.sessionId, runs);
     for (const port of run.ports) {
       const key = serialPortKey(port);
-      const holder = runs.find(
-        (other) => (other.background && other.ports.includes(port)) || other.claimKeys.has(key),
-      );
+      const holder = runs.find((other) => other.ports.includes(port) || other.claimKeys.has(key));
       if (holder) throw thrown("BUSY", { handle: holder.id, port });
     }
     // A probe a plan reserved (or a background run uses) is BUSY like a serial port.
@@ -853,27 +950,52 @@ export class ProgramRunner {
       );
       if (holder) throw thrown("BUSY", { handle: holder.id, resource: key.slice("probe:".length) });
     }
+    for (const volume of run.volumes) {
+      const holder = runs.find(
+        (other) => other.volumeKeys.has(volume.key) || other.claimKeys.has(volume.key),
+      );
+      if (holder) throw thrown("BUSY", { handle: holder.id, resource: volume.alias });
+    }
     const { lease } = request;
     const leases = this.settings.leases;
     if (lease) {
       for (const claim of lease.claims) {
         const holder = runs.find((other) =>
-          claim.keys.some((key) => other.claimKeys.has(key) || other.portKeys.has(key)),
+          claim.keys.some(
+            (key) => other.claimKeys.has(key) || other.portKeys.has(key) || other.volumeKeys.has(key),
+          ),
         );
         if (holder) throw thrown("BUSY", { handle: holder.id, resource: claim.alias });
       }
       if (!leases) throw thrown("DENIED", { reason: "leases" });
     }
+    // Identity kind serial: every port the run names is also reserved across VERA processes (never actuating; the
+    // physical state of a serial device is not supervised). Without a lease registry the in-process guard alone holds.
+    const portClaims: LeaseClaim[] = run.ports.map((port) => ({
+      kind: "serial",
+      alias: port,
+      resource: port,
+      keys: [serialPortKey(port)],
+      actuates: false,
+    }));
+    // Identity kind volume: a mass-storage volume named with --volume (a CircuitPython drive), never actuating.
+    for (const volume of run.volumes)
+      portClaims.push({
+        kind: "volume",
+        alias: volume.alias,
+        resource: volume.alias,
+        keys: [volume.key],
+        actuates: false,
+      });
     this.active.set(run.id, run);
     try {
-      if (lease && leases) {
-        run.held = await leases.acquire(lease.claims, {
+      if (leases && (lease || portClaims.length > 0))
+        run.held = await leases.acquire([...(lease?.claims ?? []), ...portClaims], {
           sessionId: request.sessionId,
           runId: run.id,
           parent: request.parent,
         });
-        run.control = await leases.controlFolder(run.id);
-      }
+      if (lease && leases) run.control = await leases.controlFolder(run.id);
       await run.begin();
     } catch (error) {
       this.active.delete(run.id);

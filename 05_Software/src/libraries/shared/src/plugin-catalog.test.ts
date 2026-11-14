@@ -44,6 +44,10 @@ it("parses index format 1 and refuses other versions, unknown keys and out-of-li
   expect(catalogIndexSchema.safeParse(index([entry("serial-monitor", { tier: "community" })])).success).toBe(
     true,
   );
+  // A package's size is not limited: a zip of several GiB is a valid entry.
+  expect(
+    catalogIndexSchema.safeParse(index([entry("serial-monitor", { bytes: 8 * 1024 * 1024 * 1024 })])).success,
+  ).toBe(true);
   const refused = [
     index([entry("serial-monitor")], { format: 2 }),
     index([entry("serial-monitor")], { extra: true }),
@@ -52,7 +56,6 @@ it("parses index format 1 and refuses other versions, unknown keys and out-of-li
     index([entry("serial-monitor", { url: "dir/serial-monitor-1.0.0.zip" })]),
     index([entry("serial-monitor", { url: "https://host.test/serial-monitor-1.0.0.zip" })]),
     index([entry("serial-monitor", { url: "serial-monitor-1.0.0.tar" })]),
-    index([entry("serial-monitor", { bytes: 64 * 1024 * 1024 + 1 })]),
     index([entry("serial-monitor", { bytes: 0 })]),
     index([entry("serial-monitor", { sha256: "A".repeat(64) })]),
     index([entry("serial-monitor", { version: "1.0" })]),

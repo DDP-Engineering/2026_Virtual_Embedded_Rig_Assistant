@@ -164,7 +164,24 @@ Compaction regression routes are agent/compaction.test.ts, sessions/service.test
 
 Agent runtime tests use the common replay matrix and deterministic injected counters; pi-agent-core is measured through a stream-function adapter with the same context policy. No live model is needed for runtime acceptance. Session acceptance uses read-then-answer JSONL, real temporary SQLite and a new core instance plus native Electron restart; focused routes are documented in [sessions](../knowledge/sessions.md).
 
-Node Vitest projects install the non-loopback fetch/socket guard before application modules. The integration test
+Node Vitest projects install the non-loopback fetch/socket guard before application modules. tests/integration/bus-tools.test.ts
+runs bus-tool under the same Python, which must have flatbuffers 25.12.19 installed (its fake pyserial parses BPIO2 with it). tests/integration/mqtt-tools.test.ts runs mqtt-tool, the stdlib test broker tests/support/mqtt-test-broker.py (127.0.0.1 only) and the paho fixture device under the same Python, which must have paho-mqtt 2.1.0 (installed on this host with `pip install --user paho-mqtt==2.1.0` from PyPI on 2026-11-14) and cryptography (TLS fixture CA in the test's temp folder); about 50 s on Windows, and its graceful-Stop branch (SIGTERM) runs only on Linux. The integration test
+tests/integration/ble-tools.test.ts runs ble-tool under the same Python with the fake Bleak in tests/fixtures/ble-tools/fake-bleak
+(no Bluetooth package, adapter or network needed). Opt-in VERA_TEST_BLE_PYTHON names a Python with bleak 3.1.0 and its pinned
+WinRT (or dbus-fast) packages for one real scan on this computer's adapter, never a connection; it passed on Windows 11 on
+2026-11-14 with a scratch venv (`pip install bleak==3.1.0` plus the pins of scripts/ble_tool.py from PyPI).
+tests/integration/wokwi.test.ts runs wokwi-tool under the same Python, which must have PyYAML 6.0.3 (present in this
+host's toolchain Python 3.12), with the scripted fake tests/support/fake-wokwi-cli.py; no network, Wokwi account or token
+is used, and its SIGTERM case runs only on Linux. Opt-in VERA_TEST_WOKWI_CLI names the real wokwi-cli 0.29.1 for offline
+version, `lint --offline` and argument checks; it passed on Windows 11 on 2026-11-14 with wokwi-cli-win-x64.exe from the
+v0.29.1 GitHub release (sha256 45292e3c...83b2) in a scratch folder.
+tests/integration/raspberry-pi-linux.test.ts runs pi-tool, tests/support/pi-test-sshd.py and pi-test-agent.py under the
+same Python, which must have asyncssh 2.24.1 (installed on this host with `pip install --user asyncssh==2.24.1` from PyPI on
+2026-11-14; cryptography 49.0.0 was present). Its SSH block needs a Linux shell with /usr/bin/python3: this host on Linux,
+the default WSL distribution on Windows (Ubuntu 24.04 here, x86_64, systemd user manager running); it creates a
+/tmp/vera-pi-test-* home there and a runtime user unit in $XDG_RUNTIME_DIR/systemd/user, both removed afterwards, and
+connects only to 127.0.0.1. VERA_TEST_PI_REMOTE=none skips it. About 90 s on Windows with WSL. WSL is Linux evidence,
+not a Raspberry Pi and not native Ubuntu.
 tests/integration/serial-monitor.test.ts runs the serial-monitor script under the toolchain's Python 3.11+ (`python` on
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a
@@ -289,6 +306,18 @@ real-engine tests run the fixtures against the README's references, failures, li
 schematics, sweeps, compare/measure/report and a folder with spaces and non-ASCII characters (about 60 s); with
 VERA_TEST_NGSPICE also the same requests through ngspice-tool. LTspice never runs from the test without -b and never
 with a fresh -ini file (it then waits on a prompt). Passed on Windows 11 on 2026-11-13.
+
+kicad-layout acceptance: tests/integration/kicad-layout.test.ts checks the package, rules, skill, catalog and pack,
+the byte-identical workspace.py, the installed kicad-cli's version (when present) and every refusal that needs no
+board on the toolchain Python; with uv on PATH (or VERA_TEST_UV) the stub-editor and no-KiCad connection failures
+run on the helper's pinned kicad-python 0.8.0 through `uv run --script` (uv fetches the pinned packages from PyPI
+into its cache once). VERA_TEST_KICAD_GUI runs the PCB editor tests: they open real KiCad 10 windows on copies of
+tests/fixtures/kicad-layout/board (no clicks), run the helper as VERA's runner does (`uv run --offline`, core's
+programEnvironment allowlist plus UV_CACHE_DIR, so pcbnew starts without APPDATA/LOCALAPPDATA) and need KiCad's API
+enabled (`api.enable_server` in %APPDATA%/kicad/10.0/kicad_common.json, set on this
+machine on 2026-11-13 at the user's choice) and no other KiCad window open, else they are skipped with the reason.
+VERA_TEST_KICAD_CLI overrides the kicad-cli path (default `C:/Program Files/KiCad/10.0/bin/kicad-cli.exe`). About
+3 minutes; passed with KiCad 10.0.8 on Windows 11 on 2026-11-13. Native Ubuntu remains unverified.
 
 Parts-search acceptance: tests/integration/parts-search.test.ts checks the package, catalog and pack registration, both installed skills, the rules, the three byte-identical workspace.py copies, that parts_support imports no network module, and runs scripts/parts_compare.py on the toolchain Python against tests/fixtures/parts-search/mosfet-24v.json (expected values derived in its README; `{{-1h}}`/`{{-25h}}` capture times are filled in by the test), refusals, the exit-3 input-change case (change_input.py) and the 11 000-unit output bound; a few seconds, no network. Opt-in VERA_PARTS_UV=uv provisions it through a real uv on its managed CPython 3.13; passed on Windows 11 on 2026-11-13. The host side is covered by core/src/parts/parts.test.ts (fake supplier network: fixtures per supplier, 401/403/429, stall, cancel, tokens, revocation, redaction), desktop parts-access tests (real CredentialFile and SettingsService) and cli/src/parts-env.test.ts. Live supplier probes (E03-F) need the user's own keys in Settings > Parts search and stay unverified until then. Native Ubuntu remains unverified.
 

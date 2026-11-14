@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-4b90fed2"
+title = "Show an MQTT credentials section in Settings in en, ro and de"
+status = "active"
+requirement = "The Settings page shall offer an MQTT credentials section that lists stored references with their storage and has fields for reference, username and password, a save and a remove action, with every text in English, Romanian and German."
+verification = "Renderer test: the panel lists a mocked reference, saving calls mqtt.credentials.save with the typed fields and clears the password field, remove calls mqtt.credentials.remove; check:i18n passes with the new keys in en, ro and de."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

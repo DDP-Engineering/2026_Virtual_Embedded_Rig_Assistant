@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-a59697a3"
+title = "Write boot.py only when the call names --boot"
+status = "active"
+requirement = "If a deploy target is /boot.py in any letter case without --boot, or is /boot_out.txt or a .vera-part name, then circuitpython-tool shall refuse the deploy with status blocked and code startup-file or target-path before it writes any file."
+verification = "deploy --source x.py --target /boot.py is blocked startup-file; with --boot it writes the file; /BOOT.PY is blocked the same way; /boot_out.txt and /lib/a.py.vera-part are blocked target-path; relative or dot-segment targets are blocked target-path."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/cli.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  PLUGIN_LIMITS,
   pluginIdSchema,
   pluginInstalledSchema,
   pluginManifestSchema,
@@ -107,7 +106,7 @@ export const catalogEntrySchema = z.strictObject({
     .max(255)
     .regex(/^[A-Za-z0-9][A-Za-z0-9._+-]*\.zip$/),
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
-  bytes: z.number().int().min(1).max(PLUGIN_LIMITS.zipBytes),
+  bytes: z.number().int().min(1),
 });
 export type CatalogEntry = z.infer<typeof catalogEntrySchema>;
 /** index.json format 1 of a catalog release. */

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-0ec93754"
+
+title = "Read a declared characteristic a bounded number of times and decode it"
+
+status = "active"
+
+requirement = "When ble-tool read-characteristic names a profile characteristic whose operations include read, it shall read it --count times (1 to 100) at --interval seconds (0.1 to 60) and record for each read the raw bytes as hex, the length, the receive time and the value decoded by the profile's payload schema with its unit."
+
+verification = "A fake temperature of 0x0915 little endian with scale 0.01 reads as 23.25 degC three times with --count 3; a characteristic without the read operation is refused operation-not-allowed before connecting."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/operations.py", "05_Software/plugins/ble-tools/scripts/ble_support/payload.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

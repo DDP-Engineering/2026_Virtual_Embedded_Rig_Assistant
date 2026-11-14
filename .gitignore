@@ -17,7 +17,8 @@ __pycache__/
 /05_Software/src/uv/*
 !/05_Software/src/uv/uv-manifest.json
 # The official plugins as a catalog release, built by npm run prepare:plugins.
-/05_Software/src/bundled-plugins/
+/07_Delivery/plugins/
+/07_Delivery/plugins.staging/
 *.tsbuildinfo
 
 # Generated evaluator runs. Retained evidence is selected deliberately (git add -f).

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2a80da7f"
+
+title = "Route a kicad-layout candidate and write a kicad-layout request"
+
+status = "active"
+
+requirement = """
+When the agent runs `freerouting-tool route --run DIR` on a kicad-layout run whose candidate is saved, the tool shall export a DSN from a copy of the candidate with KiCad's Python, run Freerouting with the pass and time budget given (default 20 passes, 600 s), and write in a new folder DIR/freerouting/NNN the DSN, the SES, Freerouting's log, a kicad-layout request (request.json, format 1, the candidate's SHA-256, units mm, one track per new wire path and one via per new via), result.json and report.md, and print result.json, which names the kicad-layout edit command that applies the request.
+"""
+
+verification = "Real KiCad 10.0.8 and Freerouting 2.5.0: on the fixture run with its connections unrouted, route exits 0 with new tracks and vias and Freerouting's unrouted count 0; kicad-layout-tool edit --request with that file exits 0 and its unconnected count after is 0."
+
+affected_paths = ["05_Software/plugins/freerouting/"]
+
+linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+
+
+spec = "specs/REQ-FUNC-2a80da7f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

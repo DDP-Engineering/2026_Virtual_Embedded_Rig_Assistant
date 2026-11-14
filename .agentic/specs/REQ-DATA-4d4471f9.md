@@ -37,6 +37,9 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `programs.*.prefix` | optional args; `${pluginDir}` is the only placeholder |
 | `programs.*.env` | optional map `^[A-Za-z_][A-Za-z0-9_]{0,127}$` → value ≤ 4096 characters; placeholders `${workbench}`, `${pluginDir}` only |
 | `programs.*.timeout` | optional integer seconds, 1–3600 |
+| `programs.*.uses` | optional, 1–8 unique program names of the same plugin; their resolved paths reach the run as `VERA_PROGRAM_<NAME>` |
+| `programs.*.gui` | optional, only `true`: the program opens windows, and only its runs receive `DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY` and `XDG_RUNTIME_DIR` (REQ-PLAT-e0d8f3cf) |
+| `programs.*.file` | optional, only `true`, with a download-only install: never run; the version is `version.match` applied to the downloaded file's name; run_program refuses it (REQ-PLAT-e093fdbd) |
 | `rules` | optional, at most 512; `{match: 1–1024 characters without control characters, risk, note?: 1–512 characters, timeout?: 1–3600}` |
 | `rules[].risk` | `safe`, `device-read`, `device-write`, `irreversible`, `blocked` |
 | `docs` | optional, at most 64 entries of at most 2048 characters; an `https://` or `http://` URL, or a plugin-relative path that exists in the package |
@@ -76,9 +79,9 @@ the relative `/`-separated path compared by UTF-16 code units. Each file contrib
 
 ### Import limits
 
-At most 4096 files and 64 MiB of file content; a zip file of at most 64 MiB; `plugin.yaml` at most
-256 KiB. Directory entries in a zip are ignored. Each zip entry counts the larger of its compressed and
-declared size, and a stored entry whose declared size differs from its stored size is refused. Two file or
+At most 4096 files; `plugin.yaml` at most 256 KiB. The package size (file content and zip file) is not
+limited; a zip is read into memory, so the computer's memory bounds it. Directory entries in a zip are
+ignored, and a stored entry whose declared size differs from its stored size is refused. Two file or
 folder names that are equal after lowercasing, or a file and a folder of the same name, are a collision.
 Files of a folder are read through a handle that does not follow links and must be the entry first seen. A root `install.json` in a package is reserved. Symbolic links, junctions and other
 non-regular entries of a source folder are refused with DENIED; every other defect with INVALID.

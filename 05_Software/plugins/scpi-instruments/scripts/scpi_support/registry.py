@@ -31,8 +31,9 @@ VISA = re.compile(
     r"|GPIB\d*::\d{1,2}(?:::\d{1,3})?::INSTR)"
 )
 KEYS = {"alias", "kind", "resource", "serial", "profile", "backend", "limits", "note"}
-# Kinds other plugins own (debug probes of gdb-debug, LAB-04): VERA validates them, this helper skips them.
-OTHER_KINDS = {"probe", "power-monitor"}
+# Kinds other plugins own (gdb-debug probes, power-profiler monitors, the IoT plugins' adapters, BLE devices and Linux
+# boards): VERA validates them, this helper skips them.
+OTHER_KINDS = ("probe", "power-monitor", "bus-adapter", "ble-device", "linux-board")
 
 
 @dataclass(frozen=True)
@@ -51,11 +52,14 @@ class Registry:
     path: Path
     sha256: str
     entries: tuple[Entry, ...]
+    others: dict[str, str] = field(default_factory=dict)
 
     def entry(self, alias: str) -> Entry:
         for entry in self.entries:
             if entry.alias == alias:
                 return entry
+        if alias in self.others:
+            raise Refused("request", f"The alias {alias} is a {self.others[alias]} resource, not an instrument.")
         raise Refused("request", f"The alias {alias} is not declared in lab/resources.json.")
 
 
@@ -131,14 +135,14 @@ def load() -> Registry:
     resources = document["resources"]
     if not isinstance(resources, list) or not 1 <= len(resources) <= 64:
         raise Refused("request", "lab/resources.json declares 1 to 64 resources.")
-    entries = tuple(
-        _entry(raw, index)
-        for index, raw in enumerate(resources)
-        if not (isinstance(raw, dict) and raw.get("kind") in OTHER_KINDS)
-    )
-    aliases = [entry.alias for entry in entries] + [
-        str(raw.get("alias")) for raw in resources if isinstance(raw, dict) and raw.get("kind") in OTHER_KINDS
-    ]
-    if len(set(aliases)) != len(aliases):
+    # Entries of other kinds belong to other plugins: VERA validated them, scpi skips them.
+    others = {
+        str(raw.get("alias")): str(raw.get("kind"))
+        for raw in resources
+        if isinstance(raw, dict) and raw.get("kind") in OTHER_KINDS
+    }
+    entries = tuple(_entry(raw, index) for index, raw in enumerate(resources) if not (isinstance(raw, dict) and raw.get("kind") in OTHER_KINDS))
+    aliases = [entry.alias for entry in entries] + list(others)
+    if len(set(aliases)) != len(aliases) or len(others) != sum(1 for raw in resources if isinstance(raw, dict) and raw.get("kind") in OTHER_KINDS):
         raise Refused("request", "lab/resources.json uses an alias twice.")
-    return Registry(path, digest, entries)
+    return Registry(path, digest, entries, others)

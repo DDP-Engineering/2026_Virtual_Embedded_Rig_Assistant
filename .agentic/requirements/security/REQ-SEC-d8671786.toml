@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-d8671786"
+title = "Act only on the approved bench registry in bus-tool"
+status = "active"
+requirement = "If VERA_REGISTRY_SHA256 is set and differs from the SHA-256 of the registry bus-tool reads, bus-tool shall end blocked (registry-changed) before opening any port."
+verification = "identify with a wrong hash: exit 2 registry-changed, no open; with the file's hash: pass."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/registry.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

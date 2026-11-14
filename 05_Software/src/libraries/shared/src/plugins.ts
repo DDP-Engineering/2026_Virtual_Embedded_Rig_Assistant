@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { labResourceKindSchema } from "./lab-resources.js";
+import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
 import { workbenchIdSchema } from "./workbench.js";
 
-/** Import limits of one plugin package (folder or zip). */
+/** Import limits of one plugin package (folder or zip); its size in bytes is not limited. */
 export const PLUGIN_LIMITS = {
   files: 4096,
-  bytes: 64 * 1024 * 1024,
-  zipBytes: 64 * 1024 * 1024,
   manifestBytes: 256 * 1024,
   issues: 64,
 } as const;
@@ -248,6 +247,31 @@ const programSchema = z
         cleanupTimeout: z.number().int().min(1).max(300),
       })
       .optional(),
+    /**
+     * Calls naming `option` with a credential reference receive the stored credential `<scope>:<ref>` as one JSON
+     * line on stdin, only for an official plugin enabled at run start (spec REQ-DATA-96d18686 section 1).
+     */
+    credentials: z
+      .strictObject({
+        option: z.string().regex(/^--[a-z][a-z0-9-]{0,31}$/),
+        scope: pluginCredentialScopeSchema,
+      })
+      .optional(),
+    /**
+     * The program authenticates through the system SSH agent: the runner gives it (and its cleanup run) the host's
+     * SSH_AUTH_SOCK, only for an official plugin (REQ-SEC-adb91424). The agent's keys never leave the agent.
+     */
+    sshAgent: z.literal(true).optional(),
+    /**
+     * The program opens windows on the user's desktop: its runs receive the display variables (DISPLAY,
+     * WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR) that other programs never get.
+     */
+    gui: z.literal(true).optional(),
+    /**
+     * A downloaded file that is never run (a Java archive, a data set): VERA verifies its hash, reads its version
+     * from the file name with `version.match`, and passes its path to the programs that use it.
+     */
+    file: z.literal(true).optional(),
   })
   .superRefine((program, ctx) => {
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))
@@ -295,6 +319,12 @@ export const pluginManifestSchema = z.strictObject({
             code: "custom",
             path: [name, "uses"],
             message: "Two used programs map to the same VERA_PROGRAM_ variable; rename one.",
+          });
+        if (program.file && !("download" in program.install && !("find" in program.install)))
+          ctx.addIssue({
+            code: "custom",
+            path: [name, "file"],
+            message: "A file program installs only by download.",
           });
         for (const used of program.uses ?? []) {
           const target = programs[used];

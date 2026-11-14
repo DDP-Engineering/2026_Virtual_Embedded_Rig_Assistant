@@ -565,6 +565,51 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
     expect(scpi(["identify", "--instrument", "psu"], { VERA_REGISTRY_SHA256: sha }).code).toBe(0);
   });
 
+  // REQ-FUNC-de5e43b9
+  it("uses the instruments of a registry that also declares a bus adapter, a BLE device and a Linux board and refuses their aliases", async () => {
+    const adapter = {
+      alias: "bp",
+      kind: "bus-adapter",
+      backend: "bus-pirate-bpio2",
+      resource: "COM35",
+      terminal: "COM34",
+      identity: "usb:1209:7331:BP5X0001",
+    };
+    const ble = {
+      alias: "thermo",
+      kind: "ble-device",
+      address: "C4:7F:51:00:12:34",
+      addressType: "public",
+      profile: "bench-thermometer",
+    };
+    const board = {
+      alias: "pi",
+      kind: "linux-board",
+      host: "pi.local",
+      port: 22,
+      user: "vera",
+      hostKeys: [],
+      identity: { serial: "10000000abcdef01" },
+      root: "/home/vera/vera-projects",
+    };
+    await writeFile(
+      paths().registry,
+      JSON.stringify({ ...registry, resources: [...registry.resources, adapter, ble, board] }),
+    );
+    expect(scpi(["identify", "--instrument", "psu"]).code).toBe(0);
+    await clearLog();
+    const other = scpi(["identify", "--instrument", "bp"]);
+    expect(other.code).toBe(2);
+    expect(other.json.problems[0].message).toMatch(/bus-adapter resource, not an instrument/);
+    const device = scpi(["identify", "--instrument", "thermo"]);
+    expect(device.code).toBe(2);
+    expect(device.json.problems[0].message).toMatch(/ble-device resource, not an instrument/);
+    const pi = scpi(["identify", "--instrument", "pi"]);
+    expect(pi.code).toBe(2);
+    expect(pi.json.problems[0].message).toMatch(/linux-board resource, not an instrument/);
+    expect(transcript()).toEqual([]);
+  });
+
   it("parses blocks, sample widths and endianness and refuses truncated or malformed blocks", () => {
     const run = spawnSync(python, [join(fixtures, "internals.py"), join(pluginFolder, "scripts")], {
       encoding: "utf8",

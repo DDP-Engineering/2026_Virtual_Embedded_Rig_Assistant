@@ -60,6 +60,168 @@ describe("lab/resources.json", () => {
   });
 });
 
+// REQ-DATA-9fe47866 REQ-FUNC-4dadea40
+describe("bus-adapter entries", () => {
+  const adapter = (fields: Record<string, unknown> = {}) => ({
+    alias: "bp",
+    kind: "bus-adapter",
+    backend: "bus-pirate-bpio2",
+    resource: "COM35",
+    terminal: "COM34",
+    identity: "usb:1209:7331:BP5X0001",
+    ...fields,
+  });
+  it("accepts a bus adapter beside a VISA instrument", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [
+        entry(),
+        adapter({ power: { maxMv: 3300, maxMa: 100 }, note: "bench Bus Pirate" }),
+        adapter({ alias: "bp-linux", resource: "/dev/ttyACM1", terminal: "/dev/ttyACM0" }),
+      ],
+    });
+    expect(parsed.resources.map((resource) => resource.kind)).toEqual(["visa", "bus-adapter", "bus-adapter"]);
+  });
+  it("refuses a bus adapter with a shared port, a bad identity, power or key", () => {
+    const bad = [
+      adapter({ terminal: "COM35" }),
+      adapter({ terminal: "com35" }),
+      adapter({ resource: "USB0::0x1AB1::0x0E11::A::INSTR" }),
+      adapter({ identity: "usb:1209:7331" }),
+      adapter({ identity: "serial:COM35" }),
+      adapter({ power: { maxMv: 6000, maxMa: 100 } }),
+      adapter({ power: { maxMv: 3300, maxMa: 0 } }),
+      adapter({ power: { maxMv: 3300.5, maxMa: 10 } }),
+      adapter({ backend: "ft232h" }),
+      adapter({ profile: "rigol-dp800" }),
+      adapter({ terminal: undefined }),
+    ];
+    for (const value of bad)
+      expect(
+        labRegistrySchema.safeParse({ format: 1, resources: [value] }).success,
+        JSON.stringify(value),
+      ).toBe(false);
+  });
+  it("keys a bus adapter by both ports and its USB identity", () => {
+    expect(labResourceKeys(adapter({ resource: "com35", terminal: "COM34" }) as never)).toEqual([
+      "serial:COM35",
+      "serial:COM34",
+      "usb:1209:7331:bp5x0001",
+    ]);
+    expect(labResourceKeys(adapter({ resource: "/dev/ttyACM1", terminal: "/dev/ttyACM0" }) as never)).toEqual(
+      ["serial:/dev/ttyACM1", "serial:/dev/ttyACM0", "usb:1209:7331:bp5x0001"],
+    );
+    expect(serialPortKey("COM34")).toBe("serial:COM34");
+  });
+});
+
+// REQ-DATA-bc2b27d1
+describe("ble-device entries", () => {
+  const device = (fields: Record<string, unknown> = {}) => ({
+    alias: "thermo",
+    kind: "ble-device",
+    address: "C4:7F:51:00:12:34",
+    addressType: "public",
+    profile: "bench-thermometer",
+    ...fields,
+  });
+  it("accepts BLE devices beside a VISA instrument and keys them by address", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [
+        entry(),
+        device({ serial: "TH-0042", note: "bench sensor" }),
+        device({ alias: "tag", address: "d1:22:33:44:55:66", addressType: "random", adapter: "hci1" }),
+      ],
+    });
+    expect(parsed.resources.map((resource) => resource.kind)).toEqual(["visa", "ble-device", "ble-device"]);
+    expect(labResourceKeys(parsed.resources[1] as never)).toEqual(["ble:c4:7f:51:00:12:34"]);
+    expect(labResourceKeys(parsed.resources[2] as never)).toEqual(["ble:d1:22:33:44:55:66"]);
+  });
+  it("refuses private random addresses, malformed fields and unknown keys", () => {
+    const bad = [
+      device({ address: "C4:7F:51:00:12" }),
+      device({ address: "C4-7F-51-00-12-34" }),
+      device({ address: "51:22:33:44:55:66", addressType: "random" }),
+      device({ address: "11:22:33:44:55:66", addressType: "random" }),
+      device({ addressType: "static" }),
+      device({ profile: "Bench" }),
+      device({ adapter: "hci100" }),
+      device({ adapter: "usb0" }),
+      device({ serial: "" }),
+      device({ resource: "COM3" }),
+      device({ profile: undefined }),
+    ];
+    for (const value of bad)
+      expect(
+        labRegistrySchema.safeParse({ format: 1, resources: [value] }).success,
+        JSON.stringify(value),
+      ).toBe(false);
+  });
+});
+
+describe("linux-board entries (REQ-DATA-6c8b61c9)", () => {
+  const FP = "SHA256:poL9IyoPcWFvRhSsEZrF7kHtkUwKG1XT7/5iI+t95OQ";
+  const board = (fields: Record<string, unknown> = {}) => ({
+    alias: "pi",
+    kind: "linux-board",
+    host: "Pi.Local",
+    port: 22,
+    user: "vera",
+    hostKeys: [FP],
+    identity: { serial: "10000000abcdef01" },
+    root: "/home/vera/vera-projects",
+    ...fields,
+  });
+  it("accepts a Raspberry Pi and keys it by host and port", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [
+        entry(),
+        board({ agentKey: FP, note: "bench Pi" }),
+        board({
+          alias: "wsl",
+          host: "127.0.0.1",
+          port: 2222,
+          hostKeys: [],
+          identity: {
+            machineId: "bc0b1006b5a746f78ab732682c62598c",
+            model: "Raspberry Pi 5 Model B Rev 1.0",
+          },
+        }),
+      ],
+    });
+    expect(labResourceKeys(parsed.resources[1] as never)).toEqual(["ssh:pi.local:22"]);
+    expect(labResourceKeys(parsed.resources[2] as never)).toEqual(["ssh:127.0.0.1:2222"]);
+  });
+  it("refuses root, unsafe roots, malformed fingerprints, a missing identity and unknown keys", () => {
+    const bad = [
+      board({ user: "root" }),
+      board({ user: "Vera" }),
+      board({ root: "relative/path" }),
+      board({ root: "/home/vera/../etc" }),
+      board({ root: "/home/vera/./x" }),
+      board({ root: "/" }),
+      board({ root: "/srv" }),
+      board({ root: "/home/vera/with space" }),
+      board({ hostKeys: ["poL9IyoPcWFvRhSsEZrF7kHtkUwKG1XT7/5iI+t95OQ"] }),
+      board({ hostKeys: [FP, FP, FP, FP, FP] }),
+      board({ agentKey: "MD5:aa" }),
+      board({ identity: {} }),
+      board({ identity: { model: "Raspberry Pi 5" } }),
+      board({ identity: { serial: "xyz" } }),
+      board({ port: 0 }),
+      board({ host: "pi;rm -rf" }),
+      board({ password: "secret" }),
+    ];
+    for (const value of bad)
+      expect(
+        labRegistrySchema.safeParse({ format: 1, resources: [value] }).success,
+        JSON.stringify(value),
+      ).toBe(false);
+  });
+});
+
 describe("VISA identity keys", () => {
   const same = (left: string, right: string) =>
     expect(visaResourceKeys(left)).toEqual(visaResourceKeys(right));

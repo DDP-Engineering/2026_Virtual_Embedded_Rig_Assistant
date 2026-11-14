@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-077448a5"
+title = "Report an address NACK after a single attempt"
+status = "active"
+requirement = "If the adapter reports a NACK for a transaction, bus-tool shall end fail (nack) after that single attempt, without repeating the request, and apply the final state."
+verification = "read-register on a device declared at 0x77 where nothing answers: exit 1 nack; the wire log holds one data request; the final state is HiZ."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

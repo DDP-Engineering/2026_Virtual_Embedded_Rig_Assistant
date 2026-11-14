@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-3542e56c"
+title = "Report missing space before or during a deploy"
+status = "active"
+requirement = "If the selected volume's free space is smaller than the deploy needs, then circuitpython-tool shall refuse the deploy with status blocked and code no-space before any write; if the volume runs out of space during the deploy, then it shall end with status fail and code no-space, listing confirmed and unconfirmed files."
+verification = "Bench free space 1000 bytes and a 5000-byte set: blocked no-space, nothing written, needed and free reported; an ENOSPC fault on the second file: fail no-space, its .vera-part removed, the first file confirmed, the second failed and its target unchanged."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

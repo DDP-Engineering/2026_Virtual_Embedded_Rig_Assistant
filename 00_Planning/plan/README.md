@@ -22,6 +22,10 @@ Embedded development and lab automation plugins: [embedded-lab-plugins.md](embed
 **LAB-01...LAB-08 / epic [#101](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/101)**. Started 2026-11-13 with AEGIS, one
 child after another on branch `feature/101-embedded-lab` at the user's request; all eight planned.
 
+Arduino and IoT plugins: [arduino-iot-plugins.md](arduino-iot-plugins.md),
+**IOT-01...IOT-08 / epic [#113](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/113)**. Started 2026-11-13 with AEGIS, one
+child after another on branch `feature/113-arduino-iot` at the user's request; all eight planned.
+
 Repository organization: [tooling-tests-evaluators-layout.md](tooling-tests-evaluators-layout.md),
 **REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110)**.
 Agreed 2026-11-12: environment/build/release tooling in `02_Tools`, tests/E2E and

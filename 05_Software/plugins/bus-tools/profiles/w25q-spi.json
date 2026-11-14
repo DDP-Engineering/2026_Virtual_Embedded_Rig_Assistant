@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "kind": "bus-tools-profile",
+  "name": "W25Q SPI flash identification",
+  "wiring": {
+    "commonGround": true,
+    "logicMv": 3300,
+    "note": "CS, CLK, MOSI, MISO on the Bus Pirate's SPI pins; WP and HOLD tied high"
+  },
+  "power": { "source": "external" },
+  "bus": {
+    "mode": "spi",
+    "speedHz": 1000000,
+    "pullups": false,
+    "cpol": 0,
+    "cpha": 0,
+    "csIdle": "high",
+    "bitOrder": "msb"
+  },
+  "limits": { "maxWriteBytes": 8, "maxReadBytes": 16, "timeoutMs": 1000 },
+  "final": "release",
+  "devices": [
+    {
+      "name": "flash",
+      "rawTransfer": false,
+      "registers": [
+        { "name": "jedec_id", "write": "9f", "read": 3, "access": "read", "expect": "ef4018" },
+        { "name": "status1", "write": "05", "read": 1, "access": "read" }
+      ]
+    }
+  ]
+}

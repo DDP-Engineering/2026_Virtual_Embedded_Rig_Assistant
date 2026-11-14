@@ -27,6 +27,73 @@ for the LTspice dialect checks, raw.py for raw files, engine.py, schematic.py) w
 tolerances in its README, hostile files, raw files written by LTspice 26.1.1) own its coverage. Its workspace.py,
 measure.py and sweep.py are byte-identical copies of ngspice-tool's.
 
+For kicad-layout, start at plugins/kicad-layout/plugin.yaml, scripts/kicad_layout_tool.py and
+scripts/kicad_layout_support/ (cli.py for open/edit/close, kicad.py for the editor process, API session and binding,
+operations.py for the checks and the commit, drc.py, report.py, state.py, candidate.py) with spec
+.agentic/specs/REQ-DATA-891d5b5d.md; tests/integration/kicad-layout.test.ts and tests/fixtures/kicad-layout/ (board
+generator, hooks) own its coverage, the PCB editor tests only under VERA_TEST_KICAD_GUI. Applying a candidate is
+core's apply_candidate ([File tools](file-tools.md)). Its workspace.py is a byte-identical copy of kicad-tool's.
+
+For freerouting, start at plugins/freerouting/plugin.yaml, scripts/freerouting_tool.py,
+scripts/freerouting_support/{cli,ses}.py and scripts/export_dsn.py (run by KiCad's Python) with spec
+.agentic/specs/REQ-FUNC-2a80da7f.md; tests/integration/freerouting.test.ts owns its coverage (real router under
+VERA_TEST_FREEROUTING_JAR + VERA_TEST_JAVA, the golden path through kicad-layout under VERA_TEST_KICAD_GUI).
+
+For arduino-cli, start at plugins/arduino-cli/plugin.yaml, scripts/arduino_tool.py and scripts/arduino_support/
+(environment.py for VERA's Arduino environment, configurations and staging; sketch.py, boards.py for identity keys,
+indexes.py for offline searches, compile.py, upload.py, report.py, cli.py) with spec .agentic/specs/REQ-DATA-e444904d.md;
+tests/integration/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
+coverage. Its workspace.py is a byte-identical copy of ngspice-tool's.
+
+For micropython, start at plugins/micropython/plugin.yaml, scripts/micropython_tool.py and scripts/micropython_support/
+(cli.py dispatch and argument limits, device.py session and board snippets, deploy.py, operations.py, ports.py identity
+keys, remote.py board paths, report.py) with spec .agentic/specs/REQ-DATA-cb0ccbea.md; tests/integration/micropython.test.ts
+and tests/fixtures/micropython/ (fake-serial: a simulated board speaking the raw REPL; fake-mpremote: a minimal
+SerialTransport client - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy of arduino-tool's.
+For circuitpython, start at plugins/circuitpython/plugin.yaml, scripts/circuitpython_tool.py and scripts/circuitpython_support/
+(cli.py dispatch and argument limits, volumes.py CIRCUITPY enumeration, boot_out.txt, identity and binding, ports.py,
+conventions.py the only circup imports, inspection.py, bundle.py prepare-libraries, deploy.py, console.py, report.py) with
+spec .agentic/specs/REQ-DATA-8f309a53.md; tests/integration/circuitpython.test.ts, tests/support/make-circuitpython-bundle.py
+and tests/fixtures/circuitpython/ (fake-serial: a CircuitPython console that reruns code.py on drive changes; fake-circup:
+the circup names the helper imports - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy
+of micropython-tool's.
+For bus-tools, start at plugins/bus-tools/plugin.yaml, scripts/bus_tool.py and scripts/bus_support/ (cli.py dispatch
+and argument limits, registry.py bus-adapter entries, profile.py bus profiles, ports.py identity keys, adapter.py the
+binary-port link, bpio.py FlatBuffers slots, cobs.py, operations.py the operation flow and final state, lifecycle.py,
+report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/integration/bus-tools.test.ts and
+tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets - offline
+evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
+cleanup are platform behaviour, see [Plugins](plugins.md).
+For mqtt-tools, start at plugins/mqtt-tools/plugin.yaml, scripts/mqtt_tool.py and scripts/mqtt_support/ (cli.py dispatch,
+profile.py the broker profile, topics.py filter coverage, schema.py payload checks, credential.py the stdin line,
+connection.py the paho connection and error codes, operations.py capture/publish/request, report.py) with spec
+.agentic/specs/REQ-DATA-96d18686.md; tests/integration/mqtt-tools.test.ts with tests/support/mqtt-test-broker.py (a
+stdlib MQTT 3.1.1/5 test broker on 127.0.0.1 with TLS, users, ACL and fault switches), make-mqtt-certs.py and
+mqtt-fixture-device.py own its coverage - evidence for the helper, not for a product broker or a device. Its
+workspace.py is a byte-identical copy of bus-tool's; the credential hand-off is platform behaviour, see
+[Plugins](plugins.md).
+For ble-tools, start at plugins/ble-tools/plugin.yaml, scripts/ble_tool.py and scripts/ble_support/ (cli.py dispatch and
+argument bounds, registry.py ble-device entries, profile.py device profiles and UUIDs, payload.py decode/encode,
+backend.py the pinned Bleak and error mapping, scan.py, device.py the managed link and identity, notify.py, write.py,
+operations.py read/discover/release, report.py) with spec .agentic/specs/REQ-DATA-e8502710.md;
+tests/integration/ble-tools.test.ts with the fake Bleak in tests/fixtures/ble-tools/fake-bleak owns its coverage -
+offline evidence plus one opt-in real scan, not proof of a device. Its workspace.py is a byte-identical copy of
+circuitpython-tool's and lifecycle.py of bus-tool's; the device lease is platform behaviour, see [Plugins](plugins.md).
+For wokwi, start at plugins/wokwi/plugin.yaml, scripts/wokwi_tool.py and scripts/wokwi_support/ (cli.py dispatch,
+engine.py the pinned wokwi-cli, its child environment and offline lint, project.py wokwi.toml/firmware/origin, diagram.py,
+scenario.py, job.py the job folder and its verification, credential.py the stdin token, run.py the one cloud run with its
+watch loop, outcome.py the outcome table, collect.py, redact.py, report.py) with spec .agentic/specs/REQ-DATA-d985bb3d.md;
+tests/integration/wokwi.test.ts with tests/support/fake-wokwi-cli.py owns its coverage - offline evidence plus the real
+wokwi-cli 0.29.1 offline (VERA_TEST_WOKWI_CLI), never a cloud run. Its workspace.py is a byte-identical copy of mqtt-tool's;
+the token hand-off is platform behaviour, see [Plugins](plugins.md).
+For raspberry-pi-linux, start at plugins/raspberry-pi-linux/plugin.yaml, scripts/pi_tool.py and scripts/pi_support/ (cli.py
+dispatch, registry.py the linux-board entries, project.py vera-pi.json and its files, ssh.py the pinned host key, agent
+authentication and remote calls, remote.py the two constant commands, operations.py every operation, report.py) and the
+board-side scripts/remote/vera_pi_remote.py, with spec .agentic/specs/REQ-DATA-44547a17.md;
+tests/integration/raspberry-pi-linux.test.ts with tests/support/pi-test-sshd.py and pi-test-agent.py owns its coverage -
+SSH protocol and real-Linux evidence (WSL on Windows), never proof of a Raspberry Pi. Its workspace.py and lifecycle.py
+are byte-identical copies of ble-tool's; the board lease and the agent socket are platform behaviour, see
+[Plugins](plugins.md).
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -148,7 +215,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); scpi-instruments (program `scpi`, a PEP 723
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); circuitpython (the pinned-circup `circuitpython-tool` script: devices, identify, inspect-code, inspect-libraries, prepare-libraries from a pinned bundle tag, deploy to the CIRCUITPY drive one verified file at a time, capture-output, report; skills circuitpython-deploy and circuitpython-libraries); bus-tools (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script: bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills bus-transactions and bus-profiles); mqtt-tools (program `mqtt-tool`, a pinned paho-mqtt PEP 723 script: capabilities, check-profile, connect-test, bounded subscribe, publish and correlated request on a broker a workbench profile declares, with the password handed over on stdin; skills mqtt-telemetry and mqtt-commands); scpi-instruments (program `scpi`, a PEP 723
 PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
 platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles); lab-validation
 (program `lab-validate`, a standard-library PEP 723 script that compares captures, CSV/sigrok exports and SPICE run
@@ -175,7 +242,7 @@ install --path`, IPC `plugins.install`) or from the catalog, and enables per wor
 source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32, Electronics design and Embedded lab groups, default on except Security), `catalog.yaml` (all packaged plugins
 `official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
-catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
+catalog release `07_Delivery/plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
 an offline first install. Nothing installs them automatically. A package holds content only: a manifest, PEP 723
 scripts that the provisioner runs with the bundled uv, and Markdown skills; a pip program such as esptool comes from
 PyPI at install time and is not part of the folder. `requires`: esp32-esptool lists `serial-monitor`; `vera catalog check`
@@ -307,6 +374,39 @@ that source metadata reaches the deterministic bundled index unchanged.
   run (`vera_point` with `table()` parameters; temperature ascending) and writes no absolute path into results
   (`<LTspice library>`, workbench-relative paths, file names). Verified with LTspice 26.1.1 on Windows 11
   (2026-11-13), including the same requests against ngspice-47.
+- `arduino-cli` 1.0.0, ecosystem `arduino` (Arduino pack, group "Sketches (Arduino CLI)", default on; activities
+  `build`, `flash`), Windows x64 and Linux x64, requires serial-monitor. Program `arduino-cli`: the official 1.6.0 zip
+  (Windows) or tar.gz (Linux) by SHA-256, `preferDownload`, else PATH (`/usr/local/bin`, `/usr/bin` on Linux) in
+  range `>=1.6,<2`; every `arduino-cli *` command blocked. Program `arduino-tool` = `scripts/arduino_tool.py` (PEP 723,
+  standard library), `uses: [arduino-cli]`, timeout 1800 s. Risks: `inspect`, `report`, `clean`, `boards details`,
+  `boards search`, `cores *`, `libraries *` safe; `boards list` and `compile` device-read (discovery tools; core
+  recipes and hooks run on the host); `install *` device-write (3600 s); `upload *` device-write (600 s). VERA's
+  Arduino environment is `$VERA_ARDUINO_HOME` or `~/.vera-arduino` (`data`, `downloads`, `user`, `cache`,
+  `staging/<run-id>-<hex>` with `owner.json`, `environment.json` format 1 with https index URLs); every arduino-cli
+  call is `--config-file <generated> --json <command>` with cwd the staging folder (created as `.starting-*` with
+  `owner.json`, then renamed) and closed stdin, and no agent value may start with `-`; the offline configuration
+  (everything but install) sets `network.proxy: http://127.0.0.1:9`. `cores search` and `libraries search` read the
+  downloaded index files themselves (arduino-cli would refresh a day-old index first and fail offline). An
+  arduino-cli call that fails where its answer is needed is `error`/`tool-failed`, exit 3; a run folder holds an
+  `incomplete` result while arduino-cli compiles or uploads, so an interrupted run reads as such. Install: `index
+  [--index-url https]`, `core VENDOR:ARCH@VERSION --skip-post-install` (records a replaced version), `library
+  NAME@VERSION --no-deps` (missing dependencies are warnings). Compile refuses before arduino-cli compiles
+  (`fqbn-invalid`, `core-missing`, `core-version`, `local-override` for platform.local.txt/boards.local.txt,
+  `fqbn-unknown` with up to ten close candidates, `fqbn-option` with the declared values, `library-missing`,
+  `library-version`, `sketch-invalid`), copies the sketch (without sketch.yaml/sketch.json, a top-level build folder,
+  hidden entries; links refused) and `--library-dir` folders into the run folder, builds in staging, exports to
+  `binary/`, and records FQBN/options, platform with recipe hash and hooks, arduino-cli version, configuration hash,
+  source files and combined hash, libraries (platform/index/local, declared), sizes, binaries and sketch-relative
+  diagnostics; an undeclared index library makes it `fail`, "Multiple libraries were found" a warning. Upload takes
+  the compile's `result.json` (approval-bound), re-hashes the sketch copy, the binaries and the original sketch
+  (`conflict`), checks the port by identity (`port-missing`, `identity-mismatch`, `identity-ambiguous`,
+  `board-mismatch`, `board-unverified` without `--board-unverified`, `programmer-unknown`), copies the binaries to
+  staging together with exactly the recorded sketch files, verifies them and uploads those copies with `--protocol serial`, then lists the ports again for `port.after` (null with `identity-not-found`, `identity-ambiguous` or, when the list fails, `ports-unlisted`; the upload's status stands).
+  Identity: `usb:vid:pid:serial` (stable), `usb:vid:pid` or `serial:<address>` (unstable); FTDI, WCH, Silicon Labs
+  and Prolific bridge VID:PIDs are never identified (matches become candidates); network ports are ignored. Results:
+  `arduino-iot-results/<run-id>/` (`result.json` kind `arduino-tool-result`, `report.md`, logs), no absolute path;
+  exit 0 pass, 2 blocked, 3 fail or error. Verified with arduino-cli 1.6.0, arduino:avr 1.8.8 and arduino:samd 1.8.14
+  on Windows 11 (2026-11-13); real upload, serial readback, two boards and native Ubuntu are pending hardware.
 
 - `scpi-instruments` 1.0.0, ecosystem `lab` (pack Embedded lab, group Bench instruments (SCPI), default on; activity
   `measurement`), Windows x64/Linux x64. Program `scpi` = `scripts/scpi_tool.py` (PEP 723: PyVISA 1.16.2, pyvisa-py 0.8.1,
@@ -398,6 +498,31 @@ that source metadata reaches the deterministic bundled index unchanged.
   blocked before any setting changed, 3 incomplete, 4 error. Verified on Windows 11 offline (closed-form fixtures, the
   driver stand-in, VERA's real runner, lab-validate on the written requests) and with the real pyjoulescope_driver 2.5.5
   from PyPI without a meter (2026-11-14); no JS220, board or native Ubuntu run yet.
+- `kicad-layout` 1.0.0, ecosystem `electronics` (Electronics design pack, group "PCB placement and local routing
+  (KiCad)", default off; activity `design`), Windows x64 and Linux x64. Program `kicad-cli`: found as the kicad
+  plugin finds it, range `>=10.0,<11`, every `kicad-cli {sch,pcb,fp,sym,jobset}` command blocked. Program
+  `kicad-layout-tool` = `scripts/kicad_layout_tool.py` (PEP 723: kicad-python 0.8.0, protobuf 5.29.6, pynng 0.9.0),
+  `uses: [kicad-cli]`, `gui: true` (its runs get the desktop's display variables for the PCB editor), operations
+  open/edit/close safe (they change only a run folder and the editor window the helper started). The PCB editor is `pcbnew` next to that kicad-cli. `open` refuses (`binding`) while any KiCad API
+  answers, copies the board, `<stem>.kicad_pro`, `.kicad_dru`, `fp-lib-table` and the folder's `.kicad_sch` files
+  into `<results>/<run-id>/candidate/`, starts the editor on the copy (DEVNULL handles, PID in state.json), binds
+  when the API's open documents name the copy (project folder + file name), saves through KiCad, reloads (revert)
+  and records the in-memory text hash, writes board.json/board-open.json (footprints with pads, nets, copper
+  layers, outline, routing), drc-before.json and before previews; any failure stops the editor and removes the
+  folder. `edit` checks the request statically (format 1, units mm, place/align/keepout/track/via, limits, one
+  move per footprint), then the candidate hashes and kicad-cli, connects, binds, compares the in-memory hash
+  (unsaved edits -> `changed`), resolves the items itself (unknown or ambiguous footprint, uuid, net, non-copper
+  layer, locked footprint - the API protects none of these), runs everything in one commit, then checks that every
+  created track and via kept its net (KiCad gives new copper the net it touches: `net`), KiCad's bounding boxes
+  against the outline and that no other item changed, by UUID and by count (revert and `net`/`outline`/`kicad`
+  otherwise), binds again and saves. Right after the save state.json records the new hashes, the edit and
+  objectives `none` (with requests/NNN.json and created.json); then `kicad-cli pcb drc --severity-all
+  --refill-zones` (parity with a schematic) sets objectives pass/fail (new error-severity violations or more
+  unconnected items than after open); a kicad-cli failure there exits 3 saying the edit was saved. result.json
+  carries inputs, warnings and artifacts with SHA-256. `close` stops only the
+  recorded PCB editor process when the candidate has no unsaved edits and removes KiCad's lock files. Verified
+  with KiCad 10.0.8 on Windows 11 (2026-11-13); native Ubuntu has not been run. Requests hold at most 1024
+  operations (a routed request from freerouting).
 
 - `renode` 1.0.0, ecosystem `lab` (pack Embedded lab, group Virtual boards (Renode), default on; activities
   testing/firmware-analysis), Windows x64/Linux x64.
@@ -461,6 +586,19 @@ that source metadata reaches the deterministic bundled index unchanged.
   - Verified on Windows 11 offline (real PlatformIO parser, stand-in commands, VERA's real runner) and with the real
     tools (2026-11-14): ststm32 20.0.0/CMSIS builds of two environments offline, native Unity on WinLibs GCC 16.2.0,
     device suites and board-basics on the real Renode 1.17.0. No board uploaded, no native Ubuntu run yet.
+- `freerouting` 1.0.0, ecosystem `electronics` (group "PCB autorouting (Freerouting)", default off; activity
+  `design`), Windows x64 and Linux x64, requires kicad-layout.
+  - Programs: `java` (Eclipse Temurin 25.0.5+8 JRE download, `java *` blocked); `freerouting` (the 2.5.0 jar, a
+    `file` program: verified, never run, version from its file name, `freerouting *` blocked); `kicad-cli` (find);
+    and `freerouting-tool route --run <kicad-layout run>` (safe), `uses: [java, freerouting, kicad-cli]`.
+  - Route: copies the saved candidate's board, project and rules files; exports a DSN with KiCad's Python; marks the
+    existing wiring `(type protect)`; runs `-cp jar app.freerouting.cli.FreeroutingCli` with a hosts file holding
+    only localhost (no version check or analytics traffic) and user.home in `freerouting/NNN/home`; converts the
+    SES's new wires and vias (0.1 µm units, Y negated) into a kicad-layout request (request.json).
+  - The agent applies the request with `kicad-layout-tool edit --request`. Custom `.kicad_dru` rules are refused
+    (`rules`) unless `--allow-custom-rules`.
+  - Verified with Freerouting 2.5.0, Temurin 25.0.5 and KiCad 10.0.8 on Windows 11 (2026-11-13): the fixture routes
+    to 0 unconnected, objectives pass. Native Ubuntu has not been run.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -601,6 +739,213 @@ that source metadata reaches the deterministic bundled index unchanged.
   program timeout 120 s. Skill `esp32-flash`: port and chip first, offsets and images from `build/flasher_args.json`
   as explicit pairs, stop for encrypted or secure-boot builds, `Hash of data verified.` per file or `verify-flash`,
   boot log with `serial capture --port P --reset`.
+- `micropython` 1.0.0, ecosystem `micropython` (Arduino pack, group "MicroPython", default on; activities `flash`,
+  `testing`), Windows x64 and Linux x64. Program `micropython-tool` = `scripts/micropython_tool.py` (PEP 723,
+  `mpremote==1.29.0`, `pyserial==3.5`, `platformdirs==4.14.0`), timeout 300 s. Risks: `ports`, `report` safe;
+  `identify`, `files`, `read-file`, `capture-output`, `reset` device-read (notes: interrupts or restarts the running
+  program; read-file 900 s, capture-output 660 s); `deploy-file`, `run-file` device-write (900 s, 3600 s); `deploy-file * --startup *` irreversible. The helper
+  uses mpremote's `SerialTransport` and sends only fixed snippets: no REPL, connect, exec, eval, mount or firmware
+  operation. Device operations list the ports first (`port-missing`, `identity-mismatch`), open the raw REPL without a
+  soft reset (run-file with one), refuse firmware other than MicroPython >=1.22 (`incompatible-firmware`), and leave the
+  raw REPL and close the port at the end (`--restart` soft-resets so main.py runs). Remote paths are absolute, <=255
+  characters, <=16 segments, no `.`/`..`/empty segment, backslash, control character or `.vera-part` (`remote-path`);
+  boot.py/main.py need `--startup` (`startup-file`). deploy-file: parent (`--mkdir`), `before` hash, `--expect-sha256`/
+  `--expect-absent` (`conflict`), stale part removed, space check (`no-space`), `incomplete` result.json phase
+  `transfer`, 256-byte chunks to `<target>.vera-part`, board hash (`hash-mismatch`; read-back without hashlib), target
+  re-check (`conflict`), phase `replace`, rename or, on EEXIST only, `remove-then-rename` (other errors `write-failed`),
+  verify (`verify-failed`); every refusal precedes the first write (`--mkdir` folders, stale part removal). Loss: `disconnected`
+  (port gone), `device-reset` (`soft reboot`/banner read during the failing exchange), `no-response` (Ctrl-C, Ctrl-B sent once); `application: unknown`. run-file: <=256 KiB
+  UTF-8, raw-REPL (raw-paste) execution, serial reads bounded at 10 s, output capped by `--max-output`, deadline `--timeout` (<=3500 s) then Ctrl-C (`incomplete
+  timeout`), verdict from the traceback. capture-output reads without sending (`firmware: null`), or checks the firmware and restarts first; reset hard waits up to
+  15 s for the identity (`port-lost`). Results `arduino-iot-results/<run-id>/` (`result.json` kind
+  `micropython-tool-result`, `report.md`, `files/`, `output.txt`); exit 0 pass, 1 fail, 2 blocked, 3 incomplete or
+  error. Verified against the simulated board with the fake client and with the real mpremote 1.29.0 (opt-in); no real
+  board yet.
+- `circuitpython` 1.0.0, ecosystem `circuitpython` (Arduino pack, group "CircuitPython", default on; activities `flash`,
+  `testing`), Windows x64 and Linux x64. Program `circuitpython-tool` = `scripts/circuitpython_tool.py` (PEP 723,
+  `circup==3.1.0`, `pyserial==3.5`), timeout 300 s. Risks: `devices`, `report` safe; `identify`, `inspect-code`,
+  `inspect-libraries`, `capture-output` device-read (660 s); `capture-output * --reload *`, `prepare-libraries` (900 s,
+  network) and `deploy` (900 s; note: code.py reloads, Stop does not stop board code) device-write; `deploy * --boot *`
+  irreversible. The board is reached through its CIRCUITPY drive (file I/O) and serial console (read; Ctrl-C/Ctrl-D only
+  for --reload); circup supplies only bundle conventions (platforms, supported majors 9-11, name cleaning, requirements,
+  versions), never its CLI. Volumes: Windows labels via GetVolumeInformationW (read-only flag, serial), Linux
+  /proc/self/mounts with by-label/by-uuid; identity = the bound port's `usb:<vid>:<pid>:<serial>` when boot_out.txt's UID
+  equals exactly one port's serial number, else `circuitpy-uid:<uid>`, else `volume-serial:<serial>` (unstable); refusals
+  `volume-missing`, `identity-mismatch`, `identity-insufficient`, deploy `ambiguous`; firmware other than 9-11 or no
+  boot_out.txt `incompatible-firmware`. inspect-code lists (2000 entries, depth 8) with hashes, names the startup file
+  (code.txt, code.py, main.txt, main.py) and copies it and boot.py; settings.toml/secrets.py never read. inspect-libraries
+  marks .mpy without header `C\x06` incompatible (`mpy-incompatible` warning). prepare-libraries: tag = 8 digits, assets
+  `adafruit-circuitpython-bundle-{py,<major>.x-mpy}-<tag>.zip` from the Adafruit bundle releases, cached in
+  `~/.vera-circuitpython/bundles/<tag>/` with `hashes.json` (`cache-changed`, `download-failed`), dependencies from the py
+  zip's requirements and pyproject `circup_dependencies` (`unknown-library`, warning `dependency-not-in-bundle`), every .mpy
+  `C\x06` (`mpy-incompatible`), writes `libraries/` + `library-set.json` (format 1, kind `circuitpython-library-set`,
+  per-file SHA-256). deploy: refusals before any write (`target-path`, `startup-file`, selection, firmware,
+  `library-set-invalid`/`incompatible-libraries`/`library-set-changed`, `read-only`, `--expect-from` `conflict`,
+  `no-space`, `port-mismatch`); order libraries, other files, boot.py, startup files; per file `.vera-part` + fsync,
+  read-back (`hash-mismatch`), target re-check (`conflict`), `os.replace`, `os.sync` where present, read-back
+  (`verify-failed`), `confirmed`; a shadowing startup file warns `startup-shadowed`; settings.toml/secrets.py targets keep
+  no hash in the result;
+  incomplete result.json after each file; ENOSPC `no-space`, EROFS/EACCES/write-protect `read-only`, volume gone, EIO/ENODEV/ENXIO
+  or Windows device-gone errors `incomplete disconnected`; `application` updated/partially-updated/unchanged/unknown; `--capture N --port` reads the
+  console from before the first write and judges the run after the last (`exception`, `no-run-observed`). capture-output
+  parses `Auto-reload is on/off`, `<file> output:`, `Code done running.` and tracebacks (`fail exception`). Results
+  `arduino-iot-results/<run-id>/` (`circuitpython-tool-result`, `report.md`, `files/`, `console.txt`); exit 0/1/2/3.
+  Test seams `VERA_CIRCUITPYTHON_FAKE_BENCH` (volumes, deploy faults) and `VERA_CIRCUITPYTHON_DOWNLOAD_BASE` (127.0.0.1
+  only); the runner never passes them. Verified on simulated volumes and console with the fake and the real circup
+  3.1.0 (opt-in); no real board or real bundle download yet.
+
+- `bus-tools` 1.0.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
+  `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
+  `flatbuffers==25.12.19`, `pyserial==3.5`), timeout 120 s, env `BUS_REGISTRY=${workbench}/lab/resources.json`,
+  `resources {option: --adapter, kinds: [bus-adapter], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
+  `devices`, `capabilities`, `report` safe; `identify` device-read; `configure-bus`, `read-register`, `transfer`,
+  `capture` (120 s), `release` device-write; any call with `--power` irreversible. Backend `bus-pirate-bpio2` only:
+  StatusResponse hardware major 5 or 6 and FlatBuffers major 2 (`adapter-unsupported`; a packet-level error too); a port
+  that answers no valid COBS/BPIO2 status in 2 s is `not-bpio2`. Order per adapter call: registry (hash
+  `registry-changed`, alias `adapter-unknown`), profile (`profile-invalid`: format 1, commonGround true, logicMv
+  1200-5000, I2C 1 kHz-1 MHz, SPI 10 kHz-20 MHz, UART 300-1 000 000 baud, I2C addresses 0x08-0x77, registers <=4 bytes
+  written and 1-64 read, limits <=512 bytes and <=10 s), request (`register-unknown`, `clears-flags`,
+  `transfer-not-allowed`, `limit`, `power-not-allowed`, `capture-mode`), VERA's unknown marker (`state-unknown` except
+  identify/release), both ports by identity (`port-missing`, `identity-mismatch`), then only the binary port is opened.
+  Wire: COBS frames ending in 0x00; RequestPacket version 2, minimum minor 0; one status, one configuration (mode
+  I2C/SPI/UART, ModeConfiguration fields, pull-ups, psu_enable with mV/mA only for `power.source: adapter` + `--power`
+  within the registry's `power`, else psu_disable), one status read-back (`config-error`, `config-mismatch`), byte limits
+  also from the adapter's mode_max_write/read (`limit`), one DataRequest (I2C: address<<1 first, start/stop; SPI:
+  start/stop as chip select; UART unframed); async DataResponses are kept apart for capture. Data errors: text naming
+  NACK `nack`, else `adapter-error`; `count-mismatch`; `unexpected-value` names SPI mode, wiring and logic voltage;
+  `no-response` (incomplete); serial failure `disconnected` (nothing more sent, physical unknown). Nothing is repeated.
+  Final state after configure-bus failures and every read-register, transfer and capture: `release` (HiZ, pull-ups and
+  supply off) or `keep`, read back -> `final.physical` confirmed/unknown; configure-bus leaves `configured`. Stop file
+  checked before configuration, data and during capture (`stopped`, release applied). Results
+  `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`, capture.bin and capture.csv); exit 0/1/2/3.
+  Verified only against the simulated adapter; no real Bus Pirate yet (NACK text, UART async receive and per-mode limits
+  unconfirmed).
+- `mqtt-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "MQTT telemetry and commands", default on; activities
+  `testing`, `communication`), Windows x64 and Linux x64. Program `mqtt-tool` = `scripts/mqtt_tool.py` (PEP 723,
+  `paho-mqtt==2.1.0`), timeout 120 s, `credentials {option: --credential, scope: mqtt}`, no env. Risks: `capabilities`,
+  `check-profile` safe; `connect-test`, `subscribe` device-read (3600 s); `publish`, `request` device-write; `publish`
+  with `--retain` irreversible. Profile (`mqtt-tools-profile` format 1, 64 KiB, unknown fields refused): broker
+  host/port, TLS with a workbench CA or the system store (chain and host name always verified), credential reference
+  (plaintext only to loopback), client id prefix + 8 random hex, protocol 5 or 3.1.1, clean session only, keepalive,
+  connect timeout, reconnect attempts 0-5 (subscribe only), limits, subscribe filters (first level literal, no `$`),
+  publish topics (literal, command/data/status, QoS 0/1, retain never on command, response topic/timeout and the 3.1.1
+  correlation field), optional Will on a status topic, json/text/binary schemas with an optional integer sequence field.
+  Every refusal (`profile-invalid`, `topic-denied`, `payload-invalid`, `retain-refused`, `credential-missing`,
+  `credential-mismatch`, `plaintext-credential`, `path`, `run-exists`, `usage`) comes before the run folder and any packet,
+  exit 2. Connection codes `broker-unreachable`, `connect-timeout`, `tls-failed`, `auth-failed`, `not-authorized`,
+  `protocol-error` (exit 3). Capture: every message appended and flushed to `messages.jsonl` (raw base64, text, QoS,
+  retain, dup, size, SHA-256, receive time, schema check, event retained/duplicate/stale/new, MQTT 5 properties); ends at
+  duration, messages or bytes; a lost connection is a gap, reconnected per policy, `auth-revoked` or `disconnected`
+  (incomplete). Publish/request: one PUBLISH, delivery not-sent/sent/acknowledged/refused/unknown, `retried` false,
+  command physical unknown or reported; request subscribes first, correlates (MQTT 5 correlation data, 3.1.1 JSON
+  field), lists uncorrelated replies, `response-timeout` (exit 1). `result.json` is rewritten as incomplete while the run
+  goes on; SIGTERM (Linux) unsubscribes and disconnects (`stopped`); a Windows Stop leaves the last written state.
+  Results `arduino-iot-results/<run-id>/` (`mqtt-tool-result`, `report.md`, `messages.jsonl`); exit 0/1/2/3. Verified
+  against the local test broker only; no product broker or device yet, native Ubuntu not run.
+- `ble-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "BLE devices (GATT)", default on; activities `testing`,
+  `communication`), Windows x64 and Linux x64. Program `ble-tool` = `scripts/ble_tool.py` (PEP 723, `bleak==3.1.0` with
+  `winrt-runtime==4.1.0`, eight `winrt-windows-*==4!10.0.28000.2957` projections and `typing-extensions==4.16.0` on win32,
+  `dbus-fast==5.2.0` on linux), timeout 120 s, env `BLE_REGISTRY=${workbench}/lab/resources.json`,
+  `resources {option: --device, kinds: [ble-device], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
+  `capabilities`, `report` safe; `scan`, `identify`, `discover-services`, `read-characteristic`,
+  `subscribe-notifications` device-read (3600 s); with `--side-effects` device-write; `write-characteristic` and
+  `release` device-write; `--persistent` irreversible. The helper refuses any installed Bleak other than 3.1.0
+  (`backend-version`), a backend other than WinRT/BlueZ or Windows older than build 22000 (`os-unsupported`); it uses
+  only the central role and never pairs, unpairs, enters a PIN, writes descriptors itself, advertises or changes the
+  adapter. Scan: passive by default (Linux refuses passive, `passive-unsupported`; `--active`), 1-30 s, at most 500
+  addresses, one entry per address with names, RSSI last/min/max, service UUIDs, manufacturer ids/data, tx power,
+  count, registry alias, `candidate` (registry address or profile advertisement hints) and `ambiguousName`; never
+  `confirmed`. Device calls: registry entry (kind `ble-device`), profile (`ble-tools-profile` format 1, 64 KiB, unknown
+  fields refused, closed unit set, `sideEffects` required, named writes with class configure/actuate/persistent and
+  fixed or typed value) whose `id` must equal the entry's `profile` (`profile-device`), then `find_device_by_address`
+  within `connectTimeoutS` (`not-found`), one connect with `pair=False` (WinRT `address_type`, no cached services),
+  the GATT check (`profile-mismatch` lists what is missing) and the identity characteristic against the entry's
+  `serial` (`identity-mismatch`; `identity-unchecked` warning when either is absent). Reads (1-100, interval 0.1-60 s)
+  and notifications keep raw hex, length, receive time, UUID, the payload schema and the decoded value; a wrong length,
+  invalid UTF-8 or a non-finite float gives `value: null`, `valid: false`; out-of-range keeps the value with `valid:
+  false`. Notifications: callback into a 1024 queue, `notifications.jsonl` and `series.csv`, ends at duration, count,
+  bytes, stop request, disconnect or `overflow` (rate above `maxNotificationsPerSecond` or a full queue); `stop_notify`
+  once before the disconnect, `subscription` stopped/unknown. Writes: named operation only (`write-unknown`), typed
+  values checked (`value-required`, `value-out-of-range`, `value-not-representable`), persistent only with
+  `--persistent` (`write-class`), one ATT write (`payload-too-large`: with response min(512, MTU-3), without response
+  `max_write_without_response_size`), sent once, `delivery` acknowledged/refused/sent/unknown, `retried` false,
+  optional read-back (`read-back` fail when it differs), `effect` unknown unless the read-back matched. ATT
+  0x05/0x08/0x0C/0x0F and access denied give `pairing-required` (blocked, the user pairs in the OS); 0x02/0x03
+  `not-permitted`. Nothing is retried and a lost link is `disconnected`, never re-opened. Lifecycle physical = the
+  managed link: confirmed once disconnected with every started subscription stopped, else unknown. `release` polls the
+  system's connected devices for 10 s: absent -> confirmed; Linux -> one connect/disconnect; Windows -> `held-by-system`
+  unknown. Results `arduino-iot-results/<run-id>/` (`ble-tool-result`, `report.md`, notification files); exit 0/1/2/3.
+  Verified against the fake Bleak and with one real passive scan on Windows 11; no real device read, notify, write or
+  pairing yet, native Ubuntu/BlueZ not run.
+- `wokwi` 1.0.0, ecosystem `arduino` (Arduino pack, group "Cloud simulation (Wokwi)", default off; activity `testing`),
+  Windows x64 and Linux x64. Program `wokwi-cli` = the official wokwi-cli 0.29.1 (sha 0aa185144b92) downloaded by
+  SHA-256 from its GitHub release (`wokwi-cli-win-x64.exe`, `wokwi-cli-linuxstatic-x64`), version probe
+  `--short-version` in range >=0.29.1,<0.29.2, every direct command blocked. Program `wokwi-tool` = `scripts/wokwi_tool.py`
+  (PEP 723, `pyyaml==6.0.3`), `uses: [wokwi-cli]`, `credentials {option: --credential, scope: wokwi}`, timeout 120 s.
+  Risks: `capabilities`, `inspect-project`, `validate-diagram`, `prepare-job`, `collect-results`, `report` safe;
+  `run-scenario` irreversible (timeout 1900 s; transmits the job's files to wss://wokwi.com/api/ws/beta). The helper
+  refuses another wokwi-cli version or build sha (`cli-version`) or none (`cli-unavailable`); every wokwi-cli child gets the helper's
+  environment without any `WOKWI_*` variable plus `NO_COLOR=1`, and only run-scenario adds `WOKWI_CLI_TOKEN`.
+  inspect-project reports wokwi.toml, firmware/ELF (form hex/bin/uf2/elf/ESP-IDF flasher_args.json, size, SHA-256,
+  origin arduino-cli run+FQBN by result.json hash, PlatformIO environment, ESP-IDF target, else unknown; buildMatch),
+  diagram parts and boards. validate-diagram runs structural checks and `wokwi-cli lint --offline`. prepare-job refuses
+  wokwi.toml tables/keys beyond version/firmware/elf, chips, SD cards, GDB/RFC 2217 (`unsupported-input`), mismatched
+  firmware (`firmware-invalid`), lint errors (`diagram-invalid`), not exactly one board, scenarios outside delay,
+  wait-serial, write-serial, set-control, expect-pin (`scenario-invalid`/`unsupported-input`), no assertion
+  (`assertion-missing`) or scenario plus expect-text; then writes `arduino-iot-results/<run-id>/` with `send/` (exact
+  copies and a generated wokwi.toml), `job.json` (`wokwi-job`: files with role, source, size, SHA-256, transmitted;
+  account, endpoint, board, limits virtual 100-600000 ms and real budget 10-1800 s, attempts 1, usage note) and
+  `job.md`. run-scenario accepts only fields of the form prepare-job writes (`job-invalid`), verifies that send/ holds
+  exactly the job's fixed layout with listed roles and hashes, a wokwi.toml byte-equal to the generated one and the
+  flash files flasher_args.json names (`job-changed`), checks the copies again (one board equal to the job's,
+  screenshot part, scenario, offline lint), then the account (`credential-mismatch`) and the CLI build sha before it
+  reads the stdin token; a stop before the CLI starts sends nothing; writes result.json incomplete/running, runs
+  wokwi-cli once on send/ with `--no-sdcard`, the virtual timeout and exit code 42, a 200 ms watch loop (real budget,
+  serial log 16 MiB, stdout/stderr 4 MiB each, stop signal -> CTRL_BREAK_EVENT/SIGTERM, kill after 5 s), redacts the
+  token from all CLI output it writes, then `exit.json` and the outcome: passed / virtual-timeout / fail-text /
+  assertion-failed / auth-failed / network-error / connection-lost / api-error / credential-missing / cli-failed /
+  stopped / real-budget-exceeded / output-limit / interrupted, with remote `not-started` (confirmed),
+  `closed-by-client` or `unknown`, virtual and real time apart, `connectRetries`. Results `wokwi-run`, `report.md`,
+  `serial.log`, optional `trace.vcd`/`screenshot.png`; report writes report.json/.md/.html and junit.xml; exit 0/1/2/3.
+  Verified offline against the fake CLI and with the real wokwi-cli 0.29.1 (version, offline lint, argument
+  acceptance up to its missing-token check); no cloud run (no token by the user's decision), native Ubuntu not run.
+- `raspberry-pi-linux` 1.0.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
+  activities `testing`, `debug`), Windows x64 and Linux x64; VERA stays on the host and reaches the board over SSH.
+  Program `pi-tool` = `scripts/pi_tool.py` (PEP 723, `asyncssh==2.24.1`, `cryptography==49.0.0`,
+  `typing-extensions==4.16.0`), env `PI_REGISTRY`, `resources {option: --board, kinds: [linux-board], grace: 10,
+  cleanup: [stop-owned], cleanupTimeout: 60}`, `sshAgent: true`, timeout 120 s. Rules: capabilities, inspect-project,
+  report safe; check-host-key, identify, task-status, service-status, collect-logs device-read; install-helper,
+  deploy-candidate, apply-candidate (600 s), run-task (3600 s), service-start/stop, stop-owned device-write;
+  apply-candidate `--overwrite` irreversible. The host key is accepted only when its SHA-256 fingerprint is in the
+  entry's hostKeys (callable known_hosts, `~/.ssh/known_hosts` and `~/.ssh/config` never read, no host certificates):
+  otherwise `host-key-unpinned`/`host-key-changed` before authentication; check-host-key stops before login.
+  Authentication is public key from the system agent only (SSH_AUTH_SOCK, else Pageant or the OpenSSH pipe on Windows,
+  `agentKey` filters), codes `agent-unavailable`, `agent-key-missing`, `auth-failed`, `unreachable`, `timeout`. Exec
+  requests are only `/usr/bin/python3 -I -c '<install stub>'` and `... '<run stub>'` built from the helper version and
+  SHA-256; requests and file bytes go on stdin. install-helper writes `~/.local/share/vera-pi/1.0.0/vera_pi_remote.py`
+  (0600, hash-checked; installed / already-installed / replaced); the run stub refuses `helper-missing` /
+  `helper-changed`. The helper checks the login user (not root), the declared serial/machine id/model
+  (`identity-mismatch`) and the root (exists, not a link, owned, not group/world-writable: `root-invalid`). vera-pi.json:
+  name, files (folders expand, `exclude`, no `..`/absolute/backslash/`.vera-pi`/links, 512 files, 16 MiB each, 64 MiB),
+  hardware, tasks (argv[0] `python3` or a listed file, else `command-not-allowed`; budgetS 1-3500, output 1 KiB-16 MiB,
+  extraArgs, actuates) and services (user `.service` units). deploy-candidate stages into
+  `<root>/.vera-pi/candidates/<id>/` and classifies new/changed/unchanged/conflict (neither the candidate's nor the last
+  applied hash) plus remoteOnly; candidate.json in the run folder. apply-candidate checks the board's own plan, staged
+  hashes (`candidate-changed`) and base hashes (`conflict`) before renaming new/changed/`--overwrite` files, records
+  `projects/<name>.json`, unlinks only its staged files and never deletes a project file. run-task: a detached supervisor
+  (new session) starts the task in its own process group, copies stdout/stderr through itself up to the limit, ends the
+  group at budget/limit/stop file (SIGTERM, SIGKILL after 3 s) and records handle, PID, `/proc` start time, boot id
+  and the end; states exited, budget-exceeded, output-limit, stopped, start-failed, supervisor-lost, lost-by-reboot
+  (never signalled). pi-tool polls task-wait, forwards VERA's stop file (remote `confirmed` or `unknown`), and on a
+  lost connection ends `connection-lost` with remote unknown; stop-owned retries an unreachable board 3 times, 3 s
+  apart. Services: `systemctl --user --no-ask-password start|stop|show` on listed units only (`service-not-allowed`),
+  results report `linger` (/var/lib/systemd/linger/<user>) and keepRunning warns `keeps-running`, or `no-linger` when
+  the service would stop with the SSH session; a starting record whose supervisor is gone is start-failed; group members
+  that outlive a lost supervisor keep the task running and pi-tool ends them (`supervisor-lost`); staging removes the
+  project's earlier candidates and its own partial folder; an ELF built on Windows deploys 0755; collect-logs writes `journalctl --user -o json -n N -u UNIT` lines (N 1-2000) and
+  task log tails. Results `pi-tool-result`, `report.md`, report.html for report; exit 0/1/2/3. Verified against the
+  local asyncssh test server with commands in WSL Ubuntu 24.04 (systemd user manager); no Raspberry Pi, native Ubuntu
+  not run.
 
 ## Invariants
 
@@ -678,6 +1023,22 @@ that source metadata reaches the deterministic bundled index unchanged.
 - gdb-debug's exit policy is applied by OpenOCD's gdb-detach event on every end (also when GDB is killed); only its
   printed state confirms the physical state; `release` never reconnects. An MI result is matched only to its own
   token; stale and untokened results are events.
+- mqtt-tool drives paho's `loop()` itself (never `loop_forever`/`loop_start`), so paho never reconnects or resends; a
+  PUBLISH is sent once per run, publish and request never reconnect, and the password read from stdin is never printed,
+  written or put in an error. TLS verification has no off switch.
+- bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
+  self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
+  `--power` within the registry's limits.
+- circuitpython-tool sets `sys.dont_write_bytecode`, reaches the network only in prepare-libraries, writes a volume only in
+  deploy (never boot.py without `--boot`, never boot_out.txt) and never reads settings.toml or secrets.py.
+- micropython-tool sets `sys.dont_write_bytecode` before importing `micropython_support`, writes only run folders under the
+  workbench, never stores run-file code on the board and never writes boot.py/main.py without `--startup`.
+- arduino-tool never names the Arduino IDE's folders and never installs during compile or upload: the offline
+  configuration's dead loopback proxy makes any HTTP access fail, and a missing core or library is a refusal naming
+  the install command. A compile never changes the sketch (it builds a copy) and never uses sketch.yaml defaults or
+  profiles; an upload sends only a staged, re-verified copy of a passing build's binaries, never a recompile.
+- arduino-tool sets `sys.dont_write_bytecode` before importing `arduino_support`, so a run leaves the installed package
+  unchanged; it writes only run folders under the workbench and the VERA Arduino environment.
 
 - elec-calc sets `sys.dont_write_bytecode` and puts its own folder on `sys.path` before importing
   `elec_support`: a run writes nothing into the installed package, so the integrity hash holds. Requests are
@@ -831,6 +1192,13 @@ that source metadata reaches the deterministic bundled index unchanged.
 - The installed copy must not change after install (integrity hash): tests run installed copies with
   `PYTHONDONTWRITEBYTECODE=1`, and `uv run --script` executes the file as `__main__` without a bytecode cache.
 
+- kicad-layout: KiCad 10 serves its IPC API only from the first KiCad process on Windows, only with a GUI
+  window, and lets clients move locked items and use unknown net names; it duplicates a footprint that one commit
+  updates twice and gives a created track the net of the copper it touches. The helper therefore binds by the open
+  document, refuses while another window holds the API, allows one move per footprint per request and checks
+  locked items, nets (before and after the commit) and layers itself. The source board is never written by the
+  plugin; only apply_candidate writes it, under the write policy.
+
 ## Change map
 
 | Change requested | Start with | Focused verification |
@@ -859,6 +1227,9 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A kicad-cli command line | `kicad_support/kicad.py` builders | "builds every kicad-cli call itself" (recorded calls) |
 | Project files, copy, version checks | `kicad_support/project.py`, `sexpr.py` | project and format refusal tests, unchanged-sources and stop tests |
 | A new KiCad release | `discovery.py` major, `project.py` newest format versions, the manifest range | regenerate the fixtures (`make_fixtures.py`) and rerun the real cases |
+| A kicad-layout operation, check or report field | `plugins/kicad-layout/scripts/kicad_layout_support/{operations,cli,report}.py`, spec REQ-DATA-891d5b5d | `kicad-layout.test.ts` offline cases; the PCB editor cases with VERA_TEST_KICAD_GUI |
+| kicad-layout's KiCad connection or binding | `kicad_layout_support/kicad.py` | binding, unsaved-edit, Stop and lost-connection cases (VERA_TEST_KICAD_GUI) |
+| A new kicad-python release | the PEP 723 pins in `kicad_layout_tool.py` and `tests/fixtures/kicad-layout/hooks/nudge.py` | the whole kicad-layout suite with VERA_TEST_KICAD_GUI |
 | probe-rs pins, risk rows, device guidance or RTT | `plugins/probe-rs/` | `probe-rs.test.ts`; real archive opt-in plus separately recorded bench acceptance |
 | STM32 command map, rules or skills | `plugins/stm32-cubeprog/`, `shared/src/stm32-options.ts` | `stm32-cubeprog.test.ts` (matrix, recorded-help coverage, fake-host find, stub gate, real CLI where installed) |
 | A new STM32CubeProgrammer release | re-record `tests/fixtures/stm32/STM32_Programmer_CLI-<v>-help.txt`, then `stm32-options.ts` and the rules | "classifies every command of a line" |
@@ -878,6 +1249,14 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A new esptool release | re-record `fixtures/esp32-esptool/esptool-<v>-help.txt`, then rules and `version.range` | "names only esptool 5.6.0 commands" |
 | Flashing guidance | `plugins/esp32-esptool/skills/esp32-flash/SKILL.md` | "offers esp32-flash" test |
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
+| An arduino-tool operation, option or refusal | `plugins/arduino-cli/scripts/arduino_support/{cli,compile,upload}.py`, spec REQ-DATA-e444904d | the operation's describe block in `arduino-cli.test.ts` (fake arduino-cli), then the real-tool block |
+| Arduino environment, configurations, staging, clean | `arduino_support/environment.py` | "runs arduino-cli only with VERA's own folders", "Stop and clean" |
+| Board identity keys or the bridge list | `arduino_support/boards.py` | "lists serial ports by identity", upload identity refusals |
+| A new arduino-cli release | the manifest's download pins and range; rerun the real-tool tests (`VERA_TEST_ARDUINO_CLI`, `VERA_ARDUINO_HOME`) | package test and real compiles |
+| A micropython-tool operation, snippet or refusal | `plugins/micropython/scripts/micropython_support/{cli,device,deploy,operations}.py`, spec REQ-DATA-cb0ccbea | micropython.test.ts |
+| A new mpremote release | the script header pins; rerun the opt-in test (`VERA_MICROPYTHON_UV`) | micropython.test.ts opt-in |
+| A circuitpython-tool operation or refusal | `plugins/circuitpython/scripts/circuitpython_support/{cli,volumes,inspection,bundle,deploy,console}.py`, spec REQ-DATA-8f309a53 | circuitpython.test.ts |
+| A new circup release or CircuitPython major | the script header pin, `conventions.py`; rerun the opt-in test (`VERA_CIRCUITPYTHON_UV`) | circuitpython.test.ts opt-in |
 
 ## Key behaviors
 
@@ -949,10 +1328,37 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-SEC-9c665082` — the rules name only esptool 5.6.0 commands and classify all of them.
 - `REQ-FUNC-a3a042ec` — flash transfers may run 1800 s.
 - `REQ-UX-6a22c4dc` — skill `esp32-flash`.
+- `REQ-DATA-891d5b5d` / `REQ-PLAT-3957eafc` / `REQ-FUNC-32022bcd` / `REQ-FUNC-f92446a1` / `REQ-FUNC-cd7d1b3f` / `REQ-FUNC-9c4d809c` / `REQ-FUNC-350e262a` / `REQ-FUNC-b0cbbb04` — kicad-layout formats, package, open, edit, unchanged check, objectives, report, close.
+- `REQ-REL-19ac705f` / `REQ-SEC-6bb41c34` / `REQ-REL-d2fd6d58` / `REQ-REL-2a3f09b8` / `REQ-REL-e30bf69f` / `REQ-SEC-438b7bbf` / `REQ-SEC-a6a6482e` / `REQ-SEC-f986d80d` / `REQ-SEC-f7a0b1fe` / `REQ-REL-233d6e0f` / `REQ-REL-1dd5113a` / `REQ-REL-ea280836` — kicad-layout refusals and failures; `REQ-UX-5367fe76` skill; `REQ-TEST-63c70d58` test gating.
 - `REQ-TEST-fe972de0` — a replay session identifies, flashes with image hashes on the card and captures the boot log.
 - `REQ-PLAT-d2b3fa4a` — real boards on Windows 11 and Ubuntu (manual).
 - `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` (Plugins) — write-flash approvals list each image's SHA-256; a rebuilt image fails CONFLICT.
-- `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
+- `REQ-SEC-016c9aad` (Plugins) — a run naming a port that another unfinished run names (a background capture, a foreground upload) is BUSY.
+- `REQ-FUNC-5b49327c` / `REQ-SEC-93d5fc98` / `REQ-FUNC-693a8fbf` — arduino-cli pinned 1.6.0 with direct use blocked, arduino-tool risks, catalog, Arduino pack and three skills.
+- `REQ-DATA-e444904d` / `REQ-FUNC-32924acc` / `REQ-FUNC-9fceeea6` — arduino-tool contract, VERA's own environment offline outside install, exact-version installs.
+- `REQ-FUNC-d02a9d01` / `REQ-FUNC-cbd22972` / `REQ-FUNC-91c2c9a8` — inspect, identity keys without bridge inference, offline queries.
+- `REQ-FUNC-6678cab1` / `REQ-REL-6b92ea2f` / `REQ-REL-c731bd06` / `REQ-SEC-f5477b64` / `REQ-SEC-37d5b2a2` / `REQ-SEC-8faa1e1d` — traceable compile of a copy and its refusals and failures.
+- `REQ-FUNC-f2b3eb7d` / `REQ-SEC-ea1a5b7d` / `REQ-SEC-77af299d` / `REQ-FUNC-165776d6` — upload of the verified binary, conflict and identity refusals, port re-bound after upload.
+- `REQ-REL-fa13ca61` / `REQ-FUNC-e2eea361` / `REQ-TEST-de25fd47` — Stop leaves no process and clean removes ended staging; report; real-tool and gated hardware tests.
+- `REQ-DATA-cb0ccbea` / `REQ-SEC-bf7892ca` / `REQ-SEC-d8ec50bc` / `REQ-FUNC-f030cffe` — micropython-tool contract, pinned
+  mpremote, no REPL/exec/mount, risks, catalog and pack.
+- `REQ-FUNC-884fed95` / `REQ-SEC-dee0e930` / `REQ-REL-2eaebfec` / `REQ-FUNC-b829232e` / `REQ-FUNC-d8afbfa0` /
+  `REQ-FUNC-9d90c56e` — ports, identity refusals, firmware gate, identify, files, read-file.
+- `REQ-SEC-d31255bc` / `REQ-SEC-b493a006` / `REQ-FUNC-9dc200c3` / `REQ-REL-af9aefa3` / `REQ-REL-1499a74b` /
+  `REQ-REL-8d35cfbd` — remote paths, startup files, verified deploy, conflict, space, loss.
+- `REQ-FUNC-ab3282a4` / `REQ-FUNC-eddae180` / `REQ-FUNC-2c9933c0` / `REQ-FUNC-44f315bd` / `REQ-TEST-6073fccf` — run-file,
+  capture-output, reset, report, gated real-mpremote and board tests.
+- `REQ-DATA-8f309a53` / `REQ-SEC-a6773cd2` / `REQ-SEC-1102b4a6` / `REQ-FUNC-998ebdb7` — circuitpython-tool contract, pinned
+  circup conventions, no REPL/UF2/update-all, risks, catalog and pack.
+- `REQ-FUNC-1bb6b2bb` / `REQ-FUNC-3f98ad97` / `REQ-SEC-b561dad0` / `REQ-SEC-8ddddfbb` / `REQ-REL-e00b3fb2` /
+  `REQ-FUNC-96d699ae` / `REQ-FUNC-33fb01a8` / `REQ-FUNC-e51d0294` — devices, UID binding, selection refusals, firmware gate,
+  identify, inspect-code, inspect-libraries.
+- `REQ-FUNC-37730607` / `REQ-REL-33085a32` / `REQ-REL-ca9500d0` / `REQ-SEC-15d58156` — library sets from a pinned tag,
+  .mpy ABI, unknown library and download failure, verified cache.
+- `REQ-SEC-1d4b7f0a` / `REQ-FUNC-5a6f4aec` / `REQ-SEC-a59697a3` / `REQ-REL-aa8de0c7` / `REQ-REL-3542e56c` /
+  `REQ-REL-dff06f35` / `REQ-REL-b71b5cab` — deploy: set check, verified files, boot.py, read-only, space, unplug, conflict.
+- `REQ-FUNC-9845bd14` / `REQ-FUNC-3371a413` / `REQ-FUNC-52e12d99` / `REQ-TEST-5af7bf4a` — console capture, deploy capture,
+  report, gated real-circup, bundle and board tests.
 
 ## Files
 
@@ -982,10 +1388,42 @@ that source metadata reaches the deterministic bundled index unchanged.
   `flash`, `registry`, `lifecycle`, `result`, `errors`, plus `elf` and `workspace` copies).
 - `05_Software/tests/integration/zephyr.test.ts` and `tests/fixtures/zephyr/` (`apps/board-demo/`,
   `tests/ztest-basic/`, `workspace/manifest/west.yml`, `stand-ins/`).
+- `05_Software/plugins/arduino-cli/` — manifest, README (pins, environment, risk table), skills arduino-build-fix, arduino-libraries and arduino-test-sketch, `scripts/arduino_tool.py` (entry), `scripts/arduino_support/` (`environment`, `sketch`, `boards`, `indexes`, `compile`, `upload`, `report`, `cli`, `workspace` shared).
+- `05_Software/tests/integration/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
+- `05_Software/plugins/mqtt-tools/` — manifest, README, skills mqtt-telemetry and mqtt-commands, profiles/bench-broker.json,
+  `scripts/mqtt_tool.py` (entry), `scripts/mqtt_support/` (`cli`, `profile`, `topics`, `schema`, `credential`, `connection`,
+  `operations`, `report`, `workspace` shared).
+- `05_Software/tests/integration/mqtt-tools.test.ts`, `tests/support/mqtt-test-broker.py`, `make-mqtt-certs.py`,
+  `mqtt-fixture-device.py`.
+- `05_Software/plugins/ble-tools/` — manifest, README, skills ble-devices and ble-profiles, profiles/bench-thermometer.json,
+  `scripts/ble_tool.py` (entry), `scripts/ble_support/` (`cli`, `registry`, `profile`, `payload`, `backend`, `scan`, `device`,
+  `notify`, `write`, `operations`, `report`, `lifecycle` and `workspace` shared).
+- `05_Software/tests/integration/ble-tools.test.ts`, `tests/fixtures/ble-tools/fake-bleak/` (fake Bleak 3.1.0 driven by a bench
+  file, logging every radio call).
+- `05_Software/plugins/wokwi/` — manifest, README, skills wokwi-simulation and wokwi-scenarios, `scripts/wokwi_tool.py`
+  (entry), `scripts/wokwi_support/` (`cli`, `engine`, `project`, `diagram`, `scenario`, `job`, `credential`, `redact`, `run`,
+  `outcome`, `collect`, `operations`, `report`, `workspace` shared).
+- `05_Software/tests/integration/wokwi.test.ts`, `tests/support/fake-wokwi-cli.py` (scripted wokwi-cli recording argv, cwd,
+  WOKWI_* environment and the project listing).
+- `05_Software/plugins/raspberry-pi-linux/` — manifest, README, skills raspberry-pi-projects and raspberry-pi-tasks,
+  `scripts/pi_tool.py` (entry), `scripts/pi_support/` (`cli`, `registry`, `project`, `ssh`, `remote`, `operations`,
+  `report`, `lifecycle` and `workspace` shared), `scripts/remote/vera_pi_remote.py` (board-side helper, stdlib only).
+- `05_Software/tests/integration/raspberry-pi-linux.test.ts`, `tests/support/pi-test-sshd.py` (asyncssh server running
+  exec requests as `sh -c` on this Linux host or in WSL, logging auth and exec), `tests/support/pi-test-agent.py` (SSH agent
+  on a named pipe or Unix socket), `tests/fixtures/raspberry-pi-linux/project/`.
+- `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
+  support package.
+- `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).
+- `05_Software/plugins/circuitpython/` — manifest, README, skills circuitpython-deploy and circuitpython-libraries, helper and
+  support package.
+- `05_Software/tests/integration/circuitpython.test.ts`, `tests/support/make-circuitpython-bundle.py`,
+  `tests/fixtures/circuitpython/` (fake-serial console, fake-circup).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).
 - `05_Software/tests/integration/kicad.test.ts`, `tests/fixtures/kicad/` (`hier`, `erc`, `board` projects, `make_fixtures.py`, README with the design-derived expectations, `internals.py` seams).
+- `05_Software/plugins/kicad-layout/` — manifest, README, skill kicad-layout, `scripts/kicad_layout_tool.py` (entry, PEP 723 pins), `scripts/kicad_layout_support/` (`cli`, `request`, `state`, `candidate`, `kicad`, `operations`, `drc`, `report`, `workspace` shared).
+- `05_Software/tests/integration/kicad-layout.test.ts`, `tests/fixtures/kicad-layout/` (`make_fixtures.py` reusing the kicad fixture writers, `board/`, `hooks/` with the in-process hook, the second API client `nudge.py` and the editor stub).
 - `05_Software/tests/integration/electronics-calc.test.ts`, `tests/fixtures/electronics-calc/` (`cases.json`, README with the hand derivations, `montecarlo_reference.py`, `odd_name.py`, `internals.py`) — package, rules, numeric and refusal cases, output limit, help, Monte Carlo against the independent reference, report, path guards, exit 3, integrity, replay session, opt-in real uv.
 
 - `05_Software/plugins/stm32-cubeprog/` — manifest, README (risk table, parsing, limits), skills stm32-flash and stm32-option-bytes.

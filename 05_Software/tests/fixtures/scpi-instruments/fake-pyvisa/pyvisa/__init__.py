@@ -3,7 +3,7 @@ instrument: it simulates a Rigol DP832, a Rigol DS1104Z and a Keysight 34461A fr
 state across processes in $FAKE_VISA_STATE and appends every open, close, write and query to $FAKE_VISA_LOG.
 
 Faults per resource (`faults` in the bench file): absent, driverMissing, timeoutOn (substring), hangOn (substring,
-once), exitOn (substring: the command takes effect, then the process dies, once), dropAfter (commands, once),
+once; ignores SIGTERM like a call stuck in a driver), exitOn (substring: the command takes effect, then the process dies, once), dropAfter (commands, once),
 ignoreOff, truncate, oversize, overload, shortPoints.
 """
 
@@ -18,6 +18,13 @@ import time
 
 from . import constants, errors  # noqa: F401
 from .errors import VisaIOError
+
+
+def _stuck() -> None:
+    """A call stuck in a driver's C code: Python's SIGTERM handler cannot run, so only the kill ends the process."""
+    if os.name != "nt":
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
 
 __version__ = "1.16.2+fake"
 TIMEOUT = -1073807339
@@ -132,9 +139,7 @@ class Instrument:
         if hang and hang in command and not flags.get("hung"):
             flags["hung"] = True
             _save_state(state)
-            # A real VISA call blocks in C, so Python's SIGTERM handler cannot run until it returns.
-            if hasattr(signal, "pthread_sigmask"):
-                signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM})
+            _stuck()
             time.sleep(600)
         crash = self.faults.get("exitOn")
         if crash and crash in command and not flags.get("crashed"):

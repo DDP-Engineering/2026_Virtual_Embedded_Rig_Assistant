@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-fa13ca61"
+
+title = "Leave no process or partial state after Stop, timeout or failure"
+
+status = "active"
+
+requirement = """
+When an arduino-tool run is stopped, times out or fails, VERA's runner shall end the helper's whole process tree, the sketch and the installed cores and libraries shall be unchanged, a run folder already created shall hold a result with status incomplete, and the next clean shall remove the leftover staging folder.
+"""
+
+verification = "A real runner run of arduino-tool compile against a fake arduino-cli that sleeps is stopped: the fake, its parent and the helper process (pid from the staging owner.json) end, the sketch hashes are unchanged, the run folder's result.json has status incomplete with error interrupted, the staging folder remains until `arduino-tool clean` removes it; clean keeps a folder whose owner runs, a fresh folder without owner.json and the cache while a folder is in use, and never removes data, downloads or user."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/environment.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

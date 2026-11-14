@@ -6,7 +6,7 @@ import { type LabResource, labRegistrySchema, labResourceKeys } from "@vera/shar
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FakeHost, type FakeProcess } from "./fake-process-host.test-support.js";
 import { type LeaseClaim, ResourceLeases } from "./leases.js";
-import { ProgramRunner, type RunRequest, serialPorts } from "./runner.js";
+import { ProgramRunner, type RunRequest, serialPorts, volumeKeys } from "./runner.js";
 
 let root = "";
 let leaseFolder = "";
@@ -156,6 +156,164 @@ describe("resource leases across runners", () => {
     await report(program(1), "released", "confirmed");
     program(1).finish({ code: 0, signal: null });
     await next.done;
+  });
+});
+
+describe("serial-port leases across runners", () => {
+  // REQ-FUNC-b9a25608: a port named in argv is claimed as kind serial, key serial:<port>, in every VERA process.
+  const leaseFiles = async () =>
+    existsSync(leaseFolder) ? (await readdir(leaseFolder)).filter((name) => name.endsWith(".lease")) : [];
+  const portRun = (args: string[], overrides: Partial<RunRequest> = {}) =>
+    request({ lease: undefined, args, ...overrides });
+
+  it("refuses a port that another process's run names, whatever the plugin's argument form", async () => {
+    const cli = make({
+      leases: new ResourceLeases({ root: leaseFolder, app: "cli", pid: 777, alive: () => true }),
+    });
+    const upload = await runner.start(
+      portRun(["upload", "--build", "b/result.json", "--port", "COM5", "--identity", "usb:2341:0043:1"], {
+        background: true,
+      }),
+    );
+    const files = await leaseFiles();
+    expect(files).toHaveLength(1);
+    const lease = JSON.parse(await readFile(join(leaseFolder, files[0] as string), "utf8"));
+    expect(lease).toMatchObject({
+      key: "serial:COM5",
+      kind: "serial",
+      alias: "COM5",
+      actuates: false,
+      pid: 4242,
+    });
+    for (const args of [
+      ["run-file", "--port", "com5", "--identity", "usb:2e8a:0005:e661", "--source", "t.py"],
+      ["capture", "--port=\\\\.\\COM5"],
+    ])
+      await expect(cli.start(portRun(args, { sessionId: "cli" }))).rejects.toMatchObject({
+        code: "BUSY",
+        params: { resource: "COM5", holder: "process 4242" },
+      });
+    expect(host.programs).toHaveLength(1);
+    program().finish({ code: 0, signal: null });
+    await upload.done;
+    expect(await leaseFiles()).toEqual([]);
+    const next = await cli.start(portRun(["capture", "--port", "COM5"], { sessionId: "cli" }));
+    expect(host.programs).toHaveLength(2);
+    program(1).finish({ code: 0, signal: null });
+    expect(await next.done).toMatchObject({ exitCode: 0 });
+    expect(await leaseFiles()).toEqual([]);
+  });
+
+  it("replaces the port lease of a process that no longer runs without recording a state", async () => {
+    const lost = await runner.start(portRun(["capture", "--port", "/dev/ttyACM0"], { background: true }));
+    const cli = make({
+      leases: new ResourceLeases({ root: leaseFolder, app: "cli", pid: 777, alive: (pid) => pid !== 4242 }),
+    });
+    const next = await cli.start(portRun(["capture", "--port", "/dev/ttyACM0"], { sessionId: "cli" }));
+    expect(host.programs).toHaveLength(2);
+    expect((await readdir(leaseFolder)).filter((name) => name.endsWith(".state"))).toEqual([]);
+    program(1).finish({ code: 0, signal: null });
+    await next.done;
+    program(0).finish({ code: 0, signal: null });
+    await lost.done;
+  });
+
+  it("takes no lease for a run without a serial port, and one per port beside a run's registry claims", async () => {
+    const plain = await runner.start(portRun(["ports"], { background: true }));
+    expect(await leaseFiles()).toEqual([]);
+    program().finish({ code: 0, signal: null });
+    await plain.done;
+    const both = await runner.start(
+      request({ args: ["run", "scpi.py", "read", "--instrument", "psu", "--port", "COM9"] }),
+    );
+    expect(await leaseFiles()).toHaveLength(3);
+    await report(program(1), "released", "confirmed");
+    program(1).finish({ code: 0, signal: null });
+    await both.done;
+    expect(await leaseFiles()).toEqual([]);
+  });
+
+  it("keeps the in-process guard alone when the runner has no lease registry", async () => {
+    const bare = make({ leases: undefined });
+    const run = await bare.start(portRun(["capture", "--port", "COM4"]));
+    expect(await leaseFiles()).toEqual([]);
+    program().finish({ code: 0, signal: null });
+    await run.done;
+  });
+});
+
+describe("volume leases", () => {
+  // REQ-FUNC-96c2f1de: a volume named with --volume is claimed as kind volume, key volume:<volume>, in every process.
+  const leaseFiles = async () =>
+    existsSync(leaseFolder) ? (await readdir(leaseFolder)).filter((name) => name.endsWith(".lease")) : [];
+  const volumeRun = (args: string[], overrides: Partial<RunRequest> = {}) =>
+    request({ lease: undefined, args, ...overrides });
+
+  it("normalizes the volumes an argument list names", () => {
+    expect(volumeKeys(["deploy", "--volume", "e:\\", "--identity", "k"])).toEqual(["volume:E:"]);
+    expect(volumeKeys(["deploy", "--volume=E:"])).toEqual(["volume:E:"]);
+    expect(volumeKeys(["deploy", "--volume", "f:/"])).toEqual(["volume:F:"]);
+    expect(volumeKeys(["deploy", "--volume", "/media/u/CIRCUITPY/"], (path) => path)).toEqual([
+      "volume:/media/u/CIRCUITPY",
+    ]);
+    expect(volumeKeys(["deploy", "--volume", "/run/media/CIRCUITPY"], () => "/media/real/CIRCUITPY")).toEqual(
+      ["volume:/media/real/CIRCUITPY"],
+    );
+    expect(
+      volumeKeys(["deploy", "--volume", "/missing/CIRCUITPY"], () => {
+        throw Error("ENOENT");
+      }),
+    ).toEqual(["volume:/missing/CIRCUITPY"]);
+    expect(volumeKeys(["devices", "E:", "--identity", "--volume"])).toEqual([]);
+  });
+
+  it("refuses a volume that a run of this or another process names until that run settles", async () => {
+    const cli = make({
+      leases: new ResourceLeases({ root: leaseFolder, app: "cli", pid: 777, alive: () => true }),
+    });
+    const deploy = await runner.start(
+      volumeRun(["deploy", "--volume", "e:\\", "--identity", "usb:239a:80f4:e661"], { background: true }),
+    );
+    const files = await leaseFiles();
+    expect(files).toHaveLength(1);
+    const lease = JSON.parse(await readFile(join(leaseFolder, files[0] as string), "utf8"));
+    expect(lease).toMatchObject({
+      key: "volume:E:",
+      kind: "volume",
+      alias: "e:\\",
+      actuates: false,
+      pid: 4242,
+    });
+    await expect(
+      runner.start(volumeRun(["identify", "--volume", "E:"], { sessionId: "s2" })),
+    ).rejects.toMatchObject({ code: "BUSY", params: { handle: deploy.id, resource: "E:" } });
+    await expect(cli.start(volumeRun(["deploy", "--volume=E:"], { sessionId: "cli" }))).rejects.toMatchObject(
+      {
+        code: "BUSY",
+        params: { resource: "E:", holder: "process 4242" },
+      },
+    );
+    expect(host.programs).toHaveLength(1);
+    program().finish({ code: 0, signal: null });
+    await deploy.done;
+    expect(await leaseFiles()).toEqual([]);
+    const next = await cli.start(volumeRun(["deploy", "--volume", "E:"], { sessionId: "cli" }));
+    program(1).finish({ code: 0, signal: null });
+    expect(await next.done).toMatchObject({ exitCode: 0 });
+    expect(await leaseFiles()).toEqual([]);
+  });
+
+  it("claims a volume and a serial port of one run side by side", async () => {
+    const run = await runner.start(
+      volumeRun(["deploy", "--volume", "E:", "--capture", "5", "--port", "COM7"], { background: true }),
+    );
+    expect(await leaseFiles()).toHaveLength(2);
+    await expect(
+      runner.start(volumeRun(["capture-output", "--port", "COM7"], { sessionId: "s2" })),
+    ).rejects.toMatchObject({ code: "BUSY" });
+    program().finish({ code: 0, signal: null });
+    await run.done;
+    expect(await leaseFiles()).toEqual([]);
   });
 });
 
