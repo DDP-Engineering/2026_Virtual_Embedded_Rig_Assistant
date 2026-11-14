@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-15d58156"
+title = "Download only pinned bundle zips and verify cached copies"
+status = "active"
+requirement = "When prepare-libraries needs a bundle zip, circuitpython-tool shall use only the release asset of the named tag of adafruit/Adafruit_CircuitPython_Bundle, record its SHA-256 in VERA's own cache the first time and, if a cached zip no longer matches its recorded SHA-256, end with status blocked and code cache-changed instead of using it."
+verification = "A local server serving the fixture zips: the first prepare downloads two zips and records their hashes; a second prepare succeeds from the cache without any request; altering the cached 9.x-mpy zip makes the next prepare blocked cache-changed; a --bundle-tag that is not eight digits is blocked arguments without network access."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/bundle.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

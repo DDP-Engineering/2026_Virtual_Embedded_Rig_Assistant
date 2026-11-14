@@ -35,6 +35,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["binutils", "official"],
     ["can-dbc", "official"],
     ["can-python", "official"],
+    ["circuitpython", "official"],
     ["electronics-calc", "official"],
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],

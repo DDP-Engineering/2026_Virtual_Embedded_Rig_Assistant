@@ -360,6 +360,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   the run's registry claims and released when the run settles, so a port another VERA process (desktop app or CLI)
   holds is BUSY `{resource: <port>, holder}`; a stale port lease is replaced without a state marker. Without a lease
   registry the in-process guard alone applies.
+- A run naming a volume with `--volume <value>` or `--volume=<value>` (the circuitpython plugin's CIRCUITPY drive)
+  claims `volume:<value>`: a Windows drive as `<LETTER>:`, an absolute path as `devicePath` resolves it (as written when
+  that throws), trailing separators removed. Another unfinished run of the runner naming or claiming that key is BUSY
+  `{handle, resource}`; with a lease registry it is also a non-actuating lease of kind `volume`, taken and released with
+  the run's other claims (BUSY `{resource, holder}` across processes). `volumeKeys(args, resolve)` is exported.
 - Format 1 requires `launcherMode: argv|string` iff `launcher` is present, with a find installation.
   Find locates launcher[0]; the resolver carries its remaining prefix and `{command, mode, platform}`.
   `programInvocation` builds probe and run argv. String launchers bind the generated invocation in
@@ -572,6 +577,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-39d5e6d9` — session stop, workbench close and app exit stop runs.
 - `REQ-SEC-016c9aad` / `REQ-FUNC-868fc8ab` — serial-port guard for foreground and background holders; Linux links resolved.
 - `REQ-FUNC-b9a25608` — serial-port leases across VERA processes (identity kind `serial`).
+- `REQ-FUNC-96c2f1de` — volume leases across VERA processes (identity kind `volume`).
 - `REQ-DATA-f2cbfc23` / `REQ-FUNC-0542cc94` / `REQ-UX-73dd7a9b` — bench registry, VISA identity keys, reserved resources in
   approvals (spec REQ-DATA-f2cbfc23.md).
 - `REQ-FUNC-a5770245` / `REQ-FUNC-e4ca09ad` / `REQ-REL-52212fce` / `REQ-PLAT-fae260c3` — in-process BUSY, cross-process

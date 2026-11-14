@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-8ddddfbb"
+title = "Refuse a volume write when the identity does not single out one volume"
+status = "active"
+requirement = "If the identity key of the volume a write names is shared by another mounted CIRCUITPY volume, or the volume has neither a UID nor a file-system serial, then circuitpython-tool shall refuse the write with status blocked and code ambiguous or identity-insufficient before it writes any file."
+verification = "Bench: two volumes without UID reporting the same file-system serial -> deploy blocked ambiguous on either; a volume with no UID and no serial -> deploy blocked identity-insufficient; devices still lists both and identify on them still runs; no file is written."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/volumes.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

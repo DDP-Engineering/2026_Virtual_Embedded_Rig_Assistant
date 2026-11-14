@@ -57,8 +57,15 @@ another run names (the runner's serial-port guard, also `conn=<port>` inside a s
 key `serial:<port>`. Identity kind `serial` (REQ-FUNC-b9a25608): with a lease registry, each such port is also claimed
 across VERA processes as a non-actuating lease `{kind: "serial", alias: <port>, key: "serial:<port>"}`, taken with the
 run's other claims and released when the run ends; no registry entry is needed, so every plugin that names its port in
-argv (serial-monitor, esp32-esptool, arduino-cli, micropython, sigrok `conn=`) is covered. Limit: different host names of one address, and one instrument on two transports without a
-declared serial number, do not share a key.
+argv (serial-monitor, esp32-esptool, arduino-cli, micropython, sigrok `conn=`) is covered. Identity kind `volume`
+(REQ-FUNC-96c2f1de): a run whose argv names a mass-storage volume with `--volume <value>` or `--volume=<value>` (the
+circuitpython plugin's CIRCUITPY drive) claims the key `volume:<value>` - a Windows drive (`e:`, `E:\`, `e:/`) as the
+upper-case letter and colon (`volume:E:`), an absolute path as the path it resolves to (as written when it does not
+resolve; letter case kept) and a relative value as written, without trailing separators - in the in-process guard and, with a lease registry, as a non-actuating lease
+`{kind: "volume", alias: <value>, key: "volume:<value>"}` taken and released with the run's other claims. Limit:
+different host names of one address, and one instrument on two transports without a
+declared serial number, do not share a key; one board named by its volume in one run and by its serial port in another
+is two keys.
 
 ## 3 Manifest extension
 

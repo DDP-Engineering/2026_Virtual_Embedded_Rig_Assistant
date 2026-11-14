@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-a6773cd2"
+title = "Reach CircuitPython boards only through finite circuitpython-tool operations"
+status = "active"
+requirement = "The circuitpython plugin shall reach CircuitPython boards only through circuitpython-tool, a script pinned to circup 3.1.0 and pyserial 3.5 that offers no REPL, no code given as an argument, no firmware or UF2 operation and no update of all libraries."
+verification = "plugin.yaml declares the one program circuitpython-tool whose PEP 723 header pins circup==3.1.0 and pyserial==3.5; circuitpython-tool repl, exec, update, update-all, install-firmware and uf2 are blocked arguments with exit 2; a deploy without --source or --libraries is refused; rules classify no other program."
+affected_paths = ["05_Software/plugins/circuitpython/plugin.yaml", "05_Software/plugins/circuitpython/scripts/circuitpython_tool.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/cli.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/conventions.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

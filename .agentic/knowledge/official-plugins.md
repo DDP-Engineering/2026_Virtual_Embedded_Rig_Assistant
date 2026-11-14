@@ -38,6 +38,13 @@ For micropython, start at plugins/micropython/plugin.yaml, scripts/micropython_t
 keys, remote.py board paths, report.py) with spec .agentic/specs/REQ-DATA-cb0ccbea.md; tests/integration/micropython.test.ts
 and tests/fixtures/micropython/ (fake-serial: a simulated board speaking the raw REPL; fake-mpremote: a minimal
 SerialTransport client - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy of arduino-tool's.
+For circuitpython, start at plugins/circuitpython/plugin.yaml, scripts/circuitpython_tool.py and scripts/circuitpython_support/
+(cli.py dispatch and argument limits, volumes.py CIRCUITPY enumeration, boot_out.txt, identity and binding, ports.py,
+conventions.py the only circup imports, inspection.py, bundle.py prepare-libraries, deploy.py, console.py, report.py) with
+spec .agentic/specs/REQ-DATA-8f309a53.md; tests/integration/circuitpython.test.ts, tests/support/make-circuitpython-bundle.py
+and tests/fixtures/circuitpython/ (fake-serial: a CircuitPython console that reruns code.py on drive changes; fake-circup:
+the circup names the helper imports - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy
+of micropython-tool's.
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -54,7 +61,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); scpi-instruments (program `scpi`, a PEP 723
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); circuitpython (the pinned-circup `circuitpython-tool` script: devices, identify, inspect-code, inspect-libraries, prepare-libraries from a pinned bundle tag, deploy to the CIRCUITPY drive one verified file at a time, capture-output, report; skills circuitpython-deploy and circuitpython-libraries); scpi-instruments (program `scpi`, a PEP 723
 PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
 platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
@@ -423,9 +430,43 @@ that source metadata reaches the deterministic bundled index unchanged.
   `micropython-tool-result`, `report.md`, `files/`, `output.txt`); exit 0 pass, 1 fail, 2 blocked, 3 incomplete or
   error. Verified against the simulated board with the fake client and with the real mpremote 1.29.0 (opt-in); no real
   board yet.
+- `circuitpython` 1.0.0, ecosystem `circuitpython` (Arduino pack, group "CircuitPython", default on; activities `flash`,
+  `testing`), Windows x64 and Linux x64. Program `circuitpython-tool` = `scripts/circuitpython_tool.py` (PEP 723,
+  `circup==3.1.0`, `pyserial==3.5`), timeout 300 s. Risks: `devices`, `report` safe; `identify`, `inspect-code`,
+  `inspect-libraries`, `capture-output` device-read (660 s); `capture-output * --reload *`, `prepare-libraries` (900 s,
+  network) and `deploy` (900 s; note: code.py reloads, Stop does not stop board code) device-write; `deploy * --boot *`
+  irreversible. The board is reached through its CIRCUITPY drive (file I/O) and serial console (read; Ctrl-C/Ctrl-D only
+  for --reload); circup supplies only bundle conventions (platforms, supported majors 9-11, name cleaning, requirements,
+  versions), never its CLI. Volumes: Windows labels via GetVolumeInformationW (read-only flag, serial), Linux
+  /proc/self/mounts with by-label/by-uuid; identity = the bound port's `usb:<vid>:<pid>:<serial>` when boot_out.txt's UID
+  equals exactly one port's serial number, else `circuitpy-uid:<uid>`, else `volume-serial:<serial>` (unstable); refusals
+  `volume-missing`, `identity-mismatch`, `identity-insufficient`, deploy `ambiguous`; firmware other than 9-11 or no
+  boot_out.txt `incompatible-firmware`. inspect-code lists (2000 entries, depth 8) with hashes, names the startup file
+  (code.txt, code.py, main.txt, main.py) and copies it and boot.py; settings.toml/secrets.py never read. inspect-libraries
+  marks .mpy without header `C\x06` incompatible (`mpy-incompatible` warning). prepare-libraries: tag = 8 digits, assets
+  `adafruit-circuitpython-bundle-{py,<major>.x-mpy}-<tag>.zip` from the Adafruit bundle releases, cached in
+  `~/.vera-circuitpython/bundles/<tag>/` with `hashes.json` (`cache-changed`, `download-failed`), dependencies from the py
+  zip's requirements and pyproject `circup_dependencies` (`unknown-library`, warning `dependency-not-in-bundle`), every .mpy
+  `C\x06` (`mpy-incompatible`), writes `libraries/` + `library-set.json` (format 1, kind `circuitpython-library-set`,
+  per-file SHA-256). deploy: refusals before any write (`target-path`, `startup-file`, selection, firmware,
+  `library-set-invalid`/`incompatible-libraries`/`library-set-changed`, `read-only`, `--expect-from` `conflict`,
+  `no-space`, `port-mismatch`); order libraries, other files, boot.py, startup files; per file `.vera-part` + fsync,
+  read-back (`hash-mismatch`), target re-check (`conflict`), `os.replace`, `os.sync` where present, read-back
+  (`verify-failed`), `confirmed`; a shadowing startup file warns `startup-shadowed`; settings.toml/secrets.py targets keep
+  no hash in the result;
+  incomplete result.json after each file; ENOSPC `no-space`, EROFS/EACCES/write-protect `read-only`, volume gone, EIO/ENODEV/ENXIO
+  or Windows device-gone errors `incomplete disconnected`; `application` updated/partially-updated/unchanged/unknown; `--capture N --port` reads the
+  console from before the first write and judges the run after the last (`exception`, `no-run-observed`). capture-output
+  parses `Auto-reload is on/off`, `<file> output:`, `Code done running.` and tracebacks (`fail exception`). Results
+  `arduino-iot-results/<run-id>/` (`circuitpython-tool-result`, `report.md`, `files/`, `console.txt`); exit 0/1/2/3.
+  Test seams `VERA_CIRCUITPYTHON_FAKE_BENCH` (volumes, deploy faults) and `VERA_CIRCUITPYTHON_DOWNLOAD_BASE` (127.0.0.1
+  only); the runner never passes them. Verified on simulated volumes and console with the fake and the real circup
+  3.1.0 (opt-in); no real board or real bundle download yet.
 
 ## Invariants
 
+- circuitpython-tool sets `sys.dont_write_bytecode`, reaches the network only in prepare-libraries, writes a volume only in
+  deploy (never boot.py without `--boot`, never boot_out.txt) and never reads settings.toml or secrets.py.
 - micropython-tool sets `sys.dont_write_bytecode` before importing `micropython_support`, writes only run folders under the
   workbench, never stores run-file code on the board and never writes boot.py/main.py without `--startup`.
 - arduino-tool never names the Arduino IDE's folders and never installs during compile or upload: the offline
@@ -629,6 +670,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A new arduino-cli release | the manifest's download pins and range; rerun the real-tool tests (`VERA_TEST_ARDUINO_CLI`, `VERA_ARDUINO_HOME`) | package test and real compiles |
 | A micropython-tool operation, snippet or refusal | `plugins/micropython/scripts/micropython_support/{cli,device,deploy,operations}.py`, spec REQ-DATA-cb0ccbea | micropython.test.ts |
 | A new mpremote release | the script header pins; rerun the opt-in test (`VERA_MICROPYTHON_UV`) | micropython.test.ts opt-in |
+| A circuitpython-tool operation or refusal | `plugins/circuitpython/scripts/circuitpython_support/{cli,volumes,inspection,bundle,deploy,console}.py`, spec REQ-DATA-8f309a53 | circuitpython.test.ts |
+| A new circup release or CircuitPython major | the script header pin, `conventions.py`; rerun the opt-in test (`VERA_CIRCUITPYTHON_UV`) | circuitpython.test.ts opt-in |
 
 ## Key behaviors
 
@@ -718,6 +761,17 @@ that source metadata reaches the deterministic bundled index unchanged.
   `REQ-REL-8d35cfbd` — remote paths, startup files, verified deploy, conflict, space, loss.
 - `REQ-FUNC-ab3282a4` / `REQ-FUNC-eddae180` / `REQ-FUNC-2c9933c0` / `REQ-FUNC-44f315bd` / `REQ-TEST-6073fccf` — run-file,
   capture-output, reset, report, gated real-mpremote and board tests.
+- `REQ-DATA-8f309a53` / `REQ-SEC-a6773cd2` / `REQ-SEC-1102b4a6` / `REQ-FUNC-998ebdb7` — circuitpython-tool contract, pinned
+  circup conventions, no REPL/UF2/update-all, risks, catalog and pack.
+- `REQ-FUNC-1bb6b2bb` / `REQ-FUNC-3f98ad97` / `REQ-SEC-b561dad0` / `REQ-SEC-8ddddfbb` / `REQ-REL-e00b3fb2` /
+  `REQ-FUNC-96d699ae` / `REQ-FUNC-33fb01a8` / `REQ-FUNC-e51d0294` — devices, UID binding, selection refusals, firmware gate,
+  identify, inspect-code, inspect-libraries.
+- `REQ-FUNC-37730607` / `REQ-REL-33085a32` / `REQ-REL-ca9500d0` / `REQ-SEC-15d58156` — library sets from a pinned tag,
+  .mpy ABI, unknown library and download failure, verified cache.
+- `REQ-SEC-1d4b7f0a` / `REQ-FUNC-5a6f4aec` / `REQ-SEC-a59697a3` / `REQ-REL-aa8de0c7` / `REQ-REL-3542e56c` /
+  `REQ-REL-dff06f35` / `REQ-REL-b71b5cab` — deploy: set check, verified files, boot.py, read-only, space, unplug, conflict.
+- `REQ-FUNC-9845bd14` / `REQ-FUNC-3371a413` / `REQ-FUNC-52e12d99` / `REQ-TEST-5af7bf4a` — console capture, deploy capture,
+  report, gated real-circup, bundle and board tests.
 
 ## Files
 
@@ -726,6 +780,10 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
   support package.
 - `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).
+- `05_Software/plugins/circuitpython/` — manifest, README, skills circuitpython-deploy and circuitpython-libraries, helper and
+  support package.
+- `05_Software/tests/integration/circuitpython.test.ts`, `tests/support/make-circuitpython-bundle.py`,
+  `tests/fixtures/circuitpython/` (fake-serial console, fake-circup).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).

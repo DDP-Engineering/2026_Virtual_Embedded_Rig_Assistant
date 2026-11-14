@@ -169,6 +169,44 @@ export function serialPorts(args: readonly string[], devicePath?: (path: string)
   }
   return [...ports];
 }
+const VOLUME_OPTION = "--volume";
+const DRIVE = /^([A-Za-z]):[\\/]?$/;
+/**
+ * Volumes an argument list names with `--volume <value>` or `--volume=<value>` (spec REQ-DATA-f2cbfc23 §2), with
+ * their lease keys: a Windows drive as `volume:<LETTER>:`, an absolute path as `resolve` resolves it (as written when
+ * it throws), without trailing separators.
+ */
+function volumeNames(
+  args: readonly string[],
+  resolve?: (path: string) => string,
+): { alias: string; key: string }[] {
+  const found = new Map<string, string>();
+  for (const [index, arg] of args.entries()) {
+    const value = arg.startsWith(`${VOLUME_OPTION}=`)
+      ? arg.slice(VOLUME_OPTION.length + 1)
+      : arg === VOLUME_OPTION
+        ? args[index + 1]
+        : undefined;
+    if (!value) continue;
+    const drive = DRIVE.exec(value)?.[1];
+    let name = drive ? `${drive.toUpperCase()}:` : value;
+    if (!drive && resolve && (value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value))) {
+      try {
+        name = resolve(value);
+      } catch {
+        name = value;
+      }
+    }
+    if (!drive) name = name.replace(/(?<=.)[\\/]+$/, "");
+    const key = `volume:${name}`;
+    if (!found.has(key)) found.set(key, value);
+  }
+  return [...found].map(([key, alias]) => ({ alias, key }));
+}
+/** The lease keys of the volumes an argument list names (`volume:<volume>`). */
+export function volumeKeys(args: readonly string[], resolve?: (path: string) => string): string[] {
+  return volumeNames(args, resolve).map((volume) => volume.key);
+}
 function resolveDevice(path: string, devicePath: ((path: string) => string) | undefined): string {
   if (!devicePath) return path;
   try {
@@ -216,6 +254,9 @@ class Run implements ProgramRun {
   /** Identity keys this run claims, and its serial ports as keys. */
   readonly claimKeys: Set<string>;
   readonly portKeys: Set<string>;
+  /** Volumes the run names with --volume, as lease aliases and keys. */
+  readonly volumes: { alias: string; key: string }[];
+  readonly volumeKeys: Set<string>;
   held: HeldLeases | undefined;
   control: string | undefined;
   private physical: PhysicalState | undefined;
@@ -253,6 +294,8 @@ class Run implements ProgramRun {
     );
     this.claimKeys = new Set(request.lease?.claims.flatMap((claim) => claim.keys) ?? []);
     this.portKeys = new Set(this.ports.map(serialPortKey));
+    this.volumes = volumeNames(request.programArgs ?? request.args, settings.devicePath);
+    this.volumeKeys = new Set(this.volumes.map((volume) => volume.key));
     this.tail = new TailBuffer(settings.tailChars);
     this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
@@ -620,6 +663,7 @@ export class ProgramRunner {
   /**
    * Starts a run. Refuses with BUSY `{limit}` a background run beyond the session's limit, with BUSY
    * `{handle, port}` a run naming a serial port that another unfinished run names (foreground or background) or claims through a lease,
+   * with BUSY `{handle, resource}` a run naming a volume (`--volume`) that another unfinished run names or claims,
    * and with DENIED a working directory outside the workbench; none of these starts a process.
    */
   async start(request: RunRequest): Promise<ProgramRun> {
@@ -636,12 +680,20 @@ export class ProgramRunner {
       const holder = runs.find((other) => other.ports.includes(port) || other.claimKeys.has(key));
       if (holder) throw thrown("BUSY", { handle: holder.id, port });
     }
+    for (const volume of run.volumes) {
+      const holder = runs.find(
+        (other) => other.volumeKeys.has(volume.key) || other.claimKeys.has(volume.key),
+      );
+      if (holder) throw thrown("BUSY", { handle: holder.id, resource: volume.alias });
+    }
     const { lease } = request;
     const leases = this.settings.leases;
     if (lease) {
       for (const claim of lease.claims) {
         const holder = runs.find((other) =>
-          claim.keys.some((key) => other.claimKeys.has(key) || other.portKeys.has(key)),
+          claim.keys.some(
+            (key) => other.claimKeys.has(key) || other.portKeys.has(key) || other.volumeKeys.has(key),
+          ),
         );
         if (holder) throw thrown("BUSY", { handle: holder.id, resource: claim.alias });
       }
@@ -656,6 +708,15 @@ export class ProgramRunner {
       keys: [serialPortKey(port)],
       actuates: false,
     }));
+    // Identity kind volume: a mass-storage volume named with --volume (a CircuitPython drive), never actuating.
+    for (const volume of run.volumes)
+      portClaims.push({
+        kind: "volume",
+        alias: volume.alias,
+        resource: volume.alias,
+        keys: [volume.key],
+        actuates: false,
+      });
     this.active.set(run.id, run);
     try {
       if (leases && (lease || portClaims.length > 0))

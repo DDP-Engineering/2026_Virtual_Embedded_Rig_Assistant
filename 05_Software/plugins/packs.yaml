@@ -48,3 +48,4 @@
   groups:
     - { name: Sketches (Arduino CLI), plugins: [arduino-cli], default: true }
     - { name: MicroPython, plugins: [micropython], default: true }
+    - { name: CircuitPython, plugins: [circuitpython], default: true }
