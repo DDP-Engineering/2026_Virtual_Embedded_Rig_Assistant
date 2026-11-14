@@ -6,6 +6,7 @@ import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { ApprovalCard } from "./approval-card.js";
+import { argsText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
@@ -147,7 +148,14 @@ export function Transcript({
             ))}
           {rows.map((row) => {
             if (row.kind === "group")
-              return <ToolGroupRow key={`group/${row.id}`} tools={row.tools} updates={updates} />;
+              return (
+                <ToolGroupRow
+                  key={`group/${row.id}`}
+                  tools={row.tools}
+                  updates={updates}
+                  sessionId={sessionId}
+                />
+              );
             const item = row.item;
             const key = `${item.kind}/${item.id}`;
             if (item.kind === "tool")
@@ -290,7 +298,9 @@ const ToolRow = memo(function ToolRow({
 }) {
   return (
     <article data-message-kind="tool" className="transcript-item tool">
-      {(detail === "verbose" || item.status === "error") && <ToolDetails item={item} update={update} />}
+      {(detail === "verbose" || item.status === "error") && (
+        <ToolDetails item={item} update={update} sessionId={sessionId} />
+      )}
       {item.name === "web_download" && item.status === "ok" && (
         <DownloadCard result={item.preview ?? item.summary ?? ""} />
       )}
@@ -328,7 +338,15 @@ const ErrorRow = memo(function ErrorRow({
   );
 });
 /** A Normal-detail group of routine tools; its details mount only when opened. */
-function ToolGroupRow({ tools, updates }: { tools: ToolItem[]; updates: Record<string, string> }) {
+function ToolGroupRow({
+  tools,
+  updates,
+  sessionId,
+}: {
+  tools: ToolItem[];
+  updates: Record<string, string>;
+  sessionId: string | undefined;
+}) {
   const { t } = useTranslation();
   return (
     <div className="transcript-item tool" data-tool-group>
@@ -343,7 +361,7 @@ function ToolGroupRow({ tools, updates }: { tools: ToolItem[]; updates: Record<s
         }
       >
         {tools.map((item) => (
-          <ToolDetails key={item.id} item={item} update={updates[item.id]} />
+          <ToolDetails key={item.id} item={item} update={updates[item.id]} sessionId={sessionId} />
         ))}
       </Disclosure>
     </div>
@@ -353,9 +371,11 @@ function ToolGroupRow({ tools, updates }: { tools: ToolItem[]; updates: Record<s
 const ToolDetails = memo(function ToolDetails({
   item,
   update,
+  sessionId,
 }: {
   item: ToolItem;
   update: string | undefined;
+  sessionId: string | undefined;
 }) {
   const { t } = useTranslation();
   return (
@@ -374,15 +394,12 @@ const ToolDetails = memo(function ToolDetails({
           </span>{" "}
           {item.name === "web_download" && item.status === "ok"
             ? t("downloads.saved")
-            : (item.summary || JSON.stringify(item.args)).slice(0, 100)}{" "}
+            : (item.summary || argsText(item, false)).slice(0, 100)}{" "}
           {item.durationMs !== undefined && `${item.durationMs} ms`}
         </>
       }
     >
-      <h4>{t("chat.arguments")}</h4>
-      <pre>{JSON.stringify(item.args, null, 2)}</pre>
-      <h4>{t("chat.preview")}</h4>
-      <pre>{item.preview ?? update ?? item.summary ?? t("chat.noPreview")}</pre>
+      <ToolOutput item={item} update={update} sessionId={sessionId} />
     </Disclosure>
   );
 });

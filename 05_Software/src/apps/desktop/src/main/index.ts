@@ -44,7 +44,7 @@ import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { publicDocument, publicDocumentHit, publicViewer, publicWebDownload } from "./document-viewer.js";
 import { createDesktopDownloadTransfer } from "./download-transfer.js";
-import { createEventEmitter, sanitizeSessionSnapshot, sanitizeSessionSummary } from "./events.js";
+import { createEventEmitter, rendererSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
 import { IndexerHost } from "./indexer-host.js";
@@ -791,9 +791,11 @@ ipcMain.handle(
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: sanitizeSessionSnapshot(value.snapshot, (text) => credentials.scrub(text)),
+            snapshot: rendererSessionSnapshot(value.snapshot, (text) => credentials.scrub(text)),
           };
         }),
+      "session.item.detail": ({ sessionId, itemId, field }) =>
+        sessions.run((s) => ({ text: credentials.scrub(s.itemDetail(sessionId, itemId, field)) })),
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };

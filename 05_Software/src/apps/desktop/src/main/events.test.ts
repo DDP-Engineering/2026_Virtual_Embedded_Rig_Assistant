@@ -356,3 +356,41 @@ it("redacts known credentials from program approval payloads in events and snaps
   }
   expect(sessionStateSchema.safeParse(state).success).toBe(true);
 });
+// REQ-FUNC-a8ca0721
+it("bounds the renderer snapshot after scrubbing, so no part of a secret survives the cut", () => {
+  const privateKey = "fake-bounded-private-key";
+  const redact = (text: string) => scrub(text, [privateKey]);
+  const state = emptySessionState();
+  const preview = `${"a".repeat(8185)}${privateKey}${"b".repeat(60000)}`;
+  state.items.push(
+    { kind: "tool", id: "big", turnId: null, name: "read", args: {}, status: "ok", preview },
+    { kind: "tool", id: "small", turnId: null, name: "read", args: {}, status: "ok", preview: "ok" },
+  );
+  const output = sessionStateSchema.parse(sessionOutput.rendererSessionSnapshot(state, redact));
+  const [big, small] = output.items;
+  const scrubbed = redact(preview);
+  expect(big).toMatchObject({ preview: scrubbed.slice(0, 8192), truncated: { preview: scrubbed.length } });
+  expect(JSON.stringify(output)).not.toContain(privateKey.slice(0, 7));
+  expect(small).toEqual(state.items[1]);
+  expect(state.items[0]).toMatchObject({ preview });
+});
+it("sends large session events to the renderer bounded", () => {
+  const send = vi.fn();
+  const emit = createEventEmitter(
+    () => ({ isDestroyed: () => false, send }),
+    (text) => text,
+  );
+  const event = {
+    type: "tool.done",
+    callId: "c",
+    ok: true,
+    summary: "s",
+    preview: "x".repeat(20000),
+    durationMs: 1,
+  };
+  emit({ topic: "session", id: "ses_00000000000000000000000001", seq: 3, event } as never);
+  expect(send.mock.calls[0]?.[1]).toMatchObject({
+    seq: 3,
+    event: { preview: "x".repeat(8192), truncated: { preview: 20000 } },
+  });
+});

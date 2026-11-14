@@ -220,3 +220,26 @@ it("normal never groups unknown or distinct turns and separates errors", async (
   await render(state, "normal");
   expect(container.querySelectorAll("[data-tool-group]")).toHaveLength(4);
 });
+// REQ-UX-4f1c85d5
+it("shows a cut tool output as an excerpt and loads the full text on request", async () => {
+  const full = "y".repeat(65536);
+  vi.mocked(api.invoke).mockResolvedValue({ text: full });
+  const state = fixture();
+  state.items[1] = { ...tool("one"), preview: full.slice(0, 8192), truncated: { preview: 65536 } };
+  await render(state, "verbose");
+  for (const toggle of container.querySelectorAll<HTMLButtonElement>(".disclosure-toggle"))
+    await act(async () => toggle.click());
+  const buttons = () => [...container.querySelectorAll<HTMLButtonElement>("button[data-show-full]")];
+  // Only the cut field gets a button; small previews and arguments do not.
+  expect(buttons().map((b) => b.textContent)).toEqual(["Show full output (64 KB)"]);
+  expect(container.textContent).toContain(full.slice(0, 8192));
+  expect(container.textContent).not.toContain(full);
+  await act(async () => buttons()[0]?.click());
+  expect(api.invoke).toHaveBeenCalledExactlyOnceWith("session.item.detail", {
+    sessionId: "session",
+    itemId: "one",
+    field: "preview",
+  });
+  expect(container.textContent).toContain(full);
+  expect(buttons()).toHaveLength(0);
+});

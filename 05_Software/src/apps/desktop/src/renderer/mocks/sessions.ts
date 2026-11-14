@@ -247,6 +247,19 @@ export class MockSessions {
     if (channel === "changes.list")
       return row.changes.map(({ diff: _, ...summary }) => structuredClone(summary));
     if (channel === "session.revision") return { seq: row.events.length };
+    if (channel === "session.item.detail") {
+      // Mock snapshots are never cut; this mirrors main's lookup of the item's latest stored event.
+      const { itemId, field } = raw as { itemId: string; field: "preview" | "args" | "diff" };
+      for (const event of [...row.events].reverse()) {
+        if (field === "diff" && event.type === "approval.requested" && event.approvalId === itemId)
+          return { text: event.diff };
+        if (field === "preview" && event.type === "tool.done" && event.callId === itemId && event.preview)
+          return { text: event.preview };
+        if (field === "args" && event.type === "tool.started" && event.callId === itemId)
+          return { text: JSON.stringify(event.args, null, 2) };
+      }
+      throw veraError("NOT_FOUND");
+    }
     if (channel === "session.get") return { snapshot: foldSessionEvents(row.events), seq: row.events.length };
     if (channel === "session.stop") {
       this.writable();

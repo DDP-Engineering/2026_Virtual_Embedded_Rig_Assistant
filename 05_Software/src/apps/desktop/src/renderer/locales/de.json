@@ -240,6 +240,7 @@
     "arguments": "Argumente",
     "preview": "Vorschau",
     "noPreview": "Keine Vorschau verfügbar.",
+    "showFull": "Vollständige Ausgabe anzeigen ({{size}} KB)",
     "contextAdvice": "Eingabe kürzen oder das Kontextfenster des benutzerdefinierten Modells in den Anbietereinstellungen anpassen. Das vollständige Transkript bleibt erhalten.",
     "tokens": "Eingabe- / Ausgabetoken",
     "estimated": "Geschätzte Kontexttoken",

@@ -263,6 +263,7 @@ export function SessionWorkspace({
           workbenchId={workbenchId}
           reasoning={view.reasoning}
           updates={view.updates}
+          sessionId={id}
           close={() => setInspector(undefined)}
         />
       )}

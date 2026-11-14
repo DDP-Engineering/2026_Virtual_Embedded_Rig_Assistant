@@ -8,6 +8,7 @@ import {
   parseRef,
   permissionModeSchema,
   type SessionEvent,
+  type SessionItemDetailField,
   type SessionSummary,
   sessionEventSchema,
   sessionExportSchema,
@@ -281,6 +282,11 @@ export class SessionService {
   get(id: string) {
     this.row(id);
     return this.hub.get(id);
+  }
+  /** The full stored text of one item's field; NOT_FOUND for a session of another workbench. */
+  itemDetail(id: string, itemId: string, field: SessionItemDetailField): string {
+    this.row(id);
+    return this.hub.itemDetail(id, itemId, field);
   }
   /** Revalidate a completed assistant citation; snippet comes only from successful issued results. */
   async openCitation(id: string, messageId: string, ref: string): Promise<ViewerContent> {

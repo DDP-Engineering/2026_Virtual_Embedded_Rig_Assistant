@@ -240,6 +240,7 @@
     "arguments": "Arguments",
     "preview": "Preview",
     "noPreview": "No preview available.",
+    "showFull": "Show full output ({{size}} KB)",
     "contextAdvice": "Reduce the input or adjust the custom model context window in Providers settings. The full transcript is retained.",
     "tokens": "Input / output tokens",
     "estimated": "Estimated context tokens",

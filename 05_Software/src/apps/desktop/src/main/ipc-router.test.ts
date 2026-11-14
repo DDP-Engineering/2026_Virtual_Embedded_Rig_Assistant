@@ -107,6 +107,7 @@ const workbenchHandlers = {
   "session.stop": unused,
   "session.model.set": unused,
   "session.reasoning.get": unused,
+  "session.item.detail": unused,
   "session.reasoning.set": unused,
   "session.mode.set": unused,
   "providers.discover": unused,

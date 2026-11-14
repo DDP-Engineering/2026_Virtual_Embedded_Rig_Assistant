@@ -39,6 +39,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   shows; SessionWorkspace and the Changes/Artifacts/Plan tabs read it through `useSessionView`, so a window holds one
   snapshot, subscription and revision poll per session. Without a provider, or for another session id, `useSessionView`
   runs its own `useSessionEvents`.
+- Tool arguments/output (transcript ToolDetails and Activity inspector, both via `ToolOutput`) and approval diffs render through `BoundedText` (`session/bounded-text.tsx`): a field with a `truncated` size shows its excerpt and a localized "Show full output (N KB)" button that loads the text once through `session.item.detail`; fields that were not cut show no button. A full diff above 256 KiB renders as plain `<pre>` instead of per-line DiffViewer markup.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
 - Attached entries (TASK-2fef1397): App keeps per-session lists in `AttachmentsContext`

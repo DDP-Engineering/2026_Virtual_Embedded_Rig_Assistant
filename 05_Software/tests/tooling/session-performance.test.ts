@@ -2,7 +2,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { applySessionEvent, emptySessionState, sessionEventSchema } from "@vera/shared";
+import { applySessionEvent, boundSessionState, emptySessionState, sessionEventSchema } from "@vera/shared";
 import { expect, it } from "vitest";
 // @ts-expect-error Node ESM fixture generator.
 import { fixtures } from "../../evaluators/eval-performance-harness/fixtures.mjs";
@@ -202,4 +202,18 @@ it("checks stream cases on their own metrics and gap budgets", () => {
   const missing = report("quick", 100, key);
   delete missing.samples[0]!.metrics.streamMs;
   expect(() => validateReport(missing)).toThrow();
+});
+// REQ-FUNC-a8ca0721: the expected projection is the bounded snapshot main sends to the renderer.
+it("expects every fixture snapshot bounded, with the payload previews cut to 8 KiB", () => {
+  for (const session of fixtures().sessions) {
+    const snapshot = boundSessionState(session.events.reduce(applySessionEvent, emptySessionState()));
+    expect(contentHash({ snapshot, seq: session.events.length })).toBe(session.snapshotHash);
+    const previews = snapshot.items.flatMap((item) => (item.kind === "tool" ? [item] : []));
+    for (const tool of previews)
+      expect(tool).toMatchObject(
+        session.tier === "payload"
+          ? { preview: expect.stringMatching(/^.{8192}$/s), truncated: { preview: 65536 } }
+          : { preview: "board ready" },
+      );
+  }
 });

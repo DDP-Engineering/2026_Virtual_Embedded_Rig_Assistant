@@ -23,6 +23,13 @@ const tool = z.strictObject({
   summary: z.string().optional(),
   preview: z.string().optional(),
   durationMs: z.number().optional(),
+  /** Full UTF-8 sizes of the fields cut for the renderer (PERF-06); `args` then holds a JSON prefix. */
+  truncated: z
+    .strictObject({
+      preview: z.number().int().nonnegative().optional(),
+      args: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
 });
 export const sessionStateSchema = z.strictObject({
   title: z.string(),
@@ -77,6 +84,7 @@ export const sessionStateSchema = z.strictObject({
         bytes: z.number(),
         download: downloadApprovalSchema.optional(),
         program: programApprovalSchema.optional(),
+        truncated: z.strictObject({ diff: z.number().int().nonnegative() }).optional(),
         decision: z.enum(["approved", "denied", "aborted"]).nullable(),
         by: z.enum(["user", "mode"]).optional(),
       })
@@ -275,6 +283,7 @@ function reduce(d: Draft, event: SessionEvent): void {
         name: event.name,
         args: event.args,
         status: "running",
+        ...(event.truncated ? { truncated: { ...event.truncated } } : {}),
       });
       for (let i = 0; i < s.turns.length; i++) if (s.turns[i]?.turnId === turnId) d.at("turns", i).steps++;
       break;
@@ -288,6 +297,7 @@ function reduce(d: Draft, event: SessionEvent): void {
       tool.summary = event.summary;
       tool.durationMs = event.durationMs;
       if (event.preview !== undefined) tool.preview = event.preview;
+      if (event.truncated) tool.truncated = { ...tool.truncated, ...event.truncated };
       break;
     }
     case "approval.requested": {

@@ -69,6 +69,38 @@ it("reads a session without re-validating each stored event and leaves corrupt r
   update.run("{", s.id, rows.at(-1)?.seq);
   expect(() => service.get(s.id)).toThrow(SyntaxError);
 });
+// REQ-FUNC-acaeb296 REQ-SEC-bde59b0b
+it("returns one item's full stored field and refuses items, fields and sessions it does not have", async () => {
+  const { service, handle } = await setup();
+  const s = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  const preview = "y".repeat(65536);
+  const args = { path: "board.txt", body: "x".repeat(5000) };
+  hub.emit(s.id, { type: "turn.started", turnId: "t" });
+  hub.emit(s.id, { type: "tool.started", callId: "big", name: "read", args });
+  hub.emit(s.id, { type: "tool.done", callId: "big", ok: true, summary: "s", preview, durationMs: 1 });
+  hub.emit(s.id, { type: "tool.started", callId: "bare", name: "list", args: {} });
+  hub.emit(s.id, { type: "tool.done", callId: "bare", ok: true, summary: "s", durationMs: 1 });
+  hub.emit(s.id, {
+    type: "approval.requested",
+    approvalId: "apv_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    callId: "big",
+    requestSha256: "0".repeat(64),
+    tool: "write",
+    path: "a.txt",
+    diff: "+".repeat(9000),
+    bytes: 9000,
+  });
+  expect(service.itemDetail(s.id, "big", "preview")).toBe(preview);
+  expect(service.itemDetail(s.id, "big", "args")).toBe(JSON.stringify(args, null, 2));
+  expect(service.itemDetail(s.id, "apv_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", "diff")).toBe("+".repeat(9000));
+  const notFound = expect.objectContaining({ code: "NOT_FOUND" });
+  expect(() => service.itemDetail(s.id, "missing", "preview")).toThrow(notFound);
+  expect(() => service.itemDetail(s.id, "bare", "preview")).toThrow(notFound);
+  expect(() => service.itemDetail(s.id, "big", "diff")).toThrow(notFound);
+  const other = await setup();
+  expect(() => other.service.itemDetail(s.id, "big", "preview")).toThrow(notFound);
+});
 // REQ-FUNC-9a6da7bb
 it("reuses a renamed unused session without changing its configuration and serializes repeated reuse requests", async () => {
   const { service } = await setup();

@@ -1,4 +1,11 @@
-import { foldSessionEvents, isLiveSessionEvent, type SessionEvent, sessionEventSchema } from "@vera/shared";
+import {
+  foldSessionEvents,
+  isLiveSessionEvent,
+  type SessionEvent,
+  type SessionItemDetailField,
+  sessionEventSchema,
+  veraError,
+} from "@vera/shared";
 import type Database from "better-sqlite3";
 import { EventsRepository } from "../storage/repos/events.js";
 
@@ -29,6 +36,27 @@ export class SessionHub {
       snapshot: foldSessionEvents(rows.map((r) => JSON.parse(r.payload_json) as SessionEvent)),
       seq: rows.at(-1)?.seq ?? 0,
     };
+  }
+  /**
+   * The full text of one item's field from its stored event (PERF-06), read with one query over this
+   * session's rows of that event type; the latest matching event wins, as in the fold. NOT_FOUND when
+   * the item or the field does not exist.
+   */
+  itemDetail(id: string, itemId: string, field: SessionItemDetailField): string {
+    const [type, key] =
+      field === "diff"
+        ? ["approval.requested", "$.approvalId"]
+        : [field === "preview" ? "tool.done" : "tool.started", "$.callId"];
+    const row = this.db
+      .prepare(
+        `SELECT payload_json FROM events WHERE session_id=? AND type=? AND json_extract(payload_json,'${key}')=? ORDER BY seq DESC LIMIT 1`,
+      )
+      .get(id, type, itemId) as { payload_json: string } | undefined;
+    const event = row ? (JSON.parse(row.payload_json) as Record<string, unknown>) : undefined;
+    const value = event?.[field];
+    const text = field === "args" && event && "args" in event ? JSON.stringify(value, null, 2) : value;
+    if (typeof text !== "string") throw veraError("NOT_FOUND");
+    return text;
   }
   record(id: string, input: SessionEvent): { seq?: number; event: SessionEvent } {
     const event = sessionEventSchema.parse(input);

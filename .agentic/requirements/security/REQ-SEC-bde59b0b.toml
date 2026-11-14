@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-bde59b0b"
+
+title = "Refuse session item detail outside the session"
+
+status = "active"
+
+requirement = """
+If session.item.detail names an item that the session does not have, a field that item does not have, or a session that is not in the open workbench, then main shall answer NOT_FOUND.
+"""
+
+verification = "Core service test: an unknown item id, a diff requested for a tool call, a preview requested for a tool without one, and a session id of another workbench database each throw NOT_FOUND; a malformed request (unknown field) is refused by the channel schema."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/hub.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/shared/src/bounded.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

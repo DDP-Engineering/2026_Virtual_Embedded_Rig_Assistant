@@ -1,4 +1,6 @@
 import {
+  boundSessionEvent,
+  boundSessionState,
   type EventEnvelope,
   eventEnvelopeSchema,
   modelReferenceSchema,
@@ -92,6 +94,14 @@ export function sanitizeSessionSnapshot(
     artifacts: snapshot.artifacts.map((a) => ({ ...a, name: scrub(a.name) })),
     todos: sanitizeTodos(snapshot.todos, scrub),
   };
+}
+
+/** The snapshot main sends to the renderer: scrubbed first, then bounded (PERF-06), so no cut splits a secret. */
+export function rendererSessionSnapshot(
+  snapshot: SessionState,
+  scrub: (text: string) => string,
+): SessionState {
+  return boundSessionState(sanitizeSessionSnapshot(snapshot, scrub));
 }
 
 /** Preserve schema fields/identities; redact user text and arbitrary extension keys/values. */
@@ -229,7 +239,13 @@ export function createEventEmitter(target: () => EventTarget | undefined, scrub?
     const parsed = scrub ? eventEnvelopeSchema.parse(sanitizeEvent(input, scrub)) : input;
     const contents = target();
     if (!contents || contents.isDestroyed()) return false;
-    contents.send("vera:event", parsed);
+    // Session events reach the renderer bounded like its snapshot; stored events keep full content.
+    let value = parsed;
+    if (parsed.topic === "session") {
+      const event = boundSessionEvent(parsed.event);
+      if (event !== parsed.event) value = { ...parsed, event };
+    }
+    contents.send("vera:event", value);
     return true;
   };
 }
