@@ -30,7 +30,9 @@ Plugins page Available/Installed library (spec `.agentic/specs/REQ-DATA-b40d3f9b
 `05_Software/src/libraries/core/src/plugins/catalog.ts` (catalog client), `catalog-source.ts` (catalog check and
 build), shared `plugin-catalog.ts` (formats) and renderer `plugin-catalog.tsx` (source settings and catalog rows); bench resources (`lab/resources.json`, identity keys, leases, supervised cleanup, spec
 `.agentic/specs/REQ-DATA-f2cbfc23.md`) at shared `lab-resources.ts`, core `leases.ts`, `resource-registry.ts` and the
-runner's `lease` option; focused tests sit
+runner's `lease` option; HIL plans (program field `plan: hil`, spec `.agentic/specs/REQ-DATA-5f714098.md`) at shared
+`hil-plan.ts`, core `plugins/hil/` (`adapters.ts`, `compile.ts`, `executor.ts`, `run.ts`) and the runner's `hold`/`parent`;
+focused tests sit
 next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
 and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
@@ -164,6 +166,18 @@ and through `ResourceLeases`, a per-user lease folder the desktop app and the CL
 request and a grace period, runs the declared cleanup once after an interrupted actuation and reports the physical
 state. `ResourceLeases` is the only lease registry; later identity kinds extend the registry schema and key function.
 
+HIL plans (LAB-03): for a program that declares `plan: hil`, `run_program` hands `check <plan>` and `run <plan>` to core
+`plugins/hil/`. Compilation validates the plan, checks the firmware hash and prepares every step's operation through
+its adapter exactly like a run_program call (`prepareCall`), so the program's own rules decide each risk; `check` prints
+the expansion (exit 0, or exit 2 with problem paths). `run` asks one run_program approval at the plan's highest risk
+(plus the declared firmware effect when the plan flashes or resets), with the expansion as notes and every operation's
+request hashed in its `plan` field; consuming re-compiles with the same run id (CONFLICT on any change). The executor
+holds the plan's registry, serial-port and probe keys through `ProgramRunner.hold`, runs each operation as a child run
+(`parent`) that borrows those leases, re-hashes the plan and firmware before each step child (cleanup children
+re-check only their own files), runs every cleanup step after Stop/budget/error and always finishes the hold, records
+`unknown` physical states and writes `embedded-lab-results/<run-id>/`. In-process, the runner also treats `--probe`
+values as `probe:<selector>` keys, so a run naming a probe a plan holds is BUSY.
+
 ## Authoring
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
@@ -219,7 +233,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `registry {path, sha256}` (both or neither).
 - Leases (core `leases.ts`): `leaseRoot({platform, env, tmpdir, uid?})`, `leaseFileName(key)`, `new ResourceLeases({root,
   app, pid?, alive?, now?, platform?})` with `acquire(claims, {sessionId, runId})` -> `HeldLeases {states, markUnknown(reason),
-  clear(), release()}` (BUSY `{resource, holder}`, DENIED `{reason: leases}`), `controlFolder(runId)`,
+  clear(), release()}` (BUSY `{resource, holder}`, DENIED `{reason: leases}`; an owner's `parent` names a plan run of
+  this process whose leases the claim borrows), `controlFolder(runId)`,
   `removeControl(runId)`; `LeaseClaim {kind, alias, resource, keys, actuates}`. Core `resource-registry.ts`:
   `namedAliases(option, args)`, `readRegistry(workbench)`, `claimedResources(workbench, program, args)` ->
   `{resources [{alias, kind, resource, keys}], registry {path, sha256}}`; `ProgramChangeRequest.resources/registry`.
@@ -502,6 +517,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | IPC or mock | `ipc.ts` `plugins.*`, desktop `main/index.ts`, `renderer/mocks/mockApi.ts` | `shared/src/plugins-ipc.test.ts`, `renderer/mocks/mockApi.test.ts` |
 | Run policy: env, cwd, log, retention, background, serial guard | `core/src/plugins/runner.ts` | `core/src/plugins/runner.test.ts` |
 | Bench registry, identity keys, leases, supervised cleanup | shared `lab-resources.ts`, core `leases.ts`, `resource-registry.ts`, `runner.ts` (`lease`) | `lab-resources.test.ts`, `leases.test.ts`, `runner-leases.test.ts`, `program-resources.test.ts`, `tests/integration/scpi-instruments.test.ts` |
+| HIL plans: schema, adapters, compilation, approval, executor, plan holds | shared `hil-plan.ts`, core `plugins/hil/*`, `program-tools.ts` (hand-off, `prepareCall`, `startCall`), `runner.ts` (`hold`, `parent`), `leases.ts` (`parent`) | `hil-plan.test.ts`, `hil/hil.test.ts`, `runner-leases.test.ts`, `tests/integration/hil-testing.test.ts` |
 | Spawn options or tree kill | `node-process-host.ts`, `process-tree.ts` | `node-process-host.test.ts`, `process-tree.test.ts`, `tests/integration/process-hosts.test.ts` |
 | Decoding, ANSI, tail | `core/src/plugins/run-output.ts` | `run-output.test.ts` |
 | Launcher quoting | `core/src/plugins/launcher.ts` | `launcher.test.ts` |
@@ -636,7 +652,10 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/libraries/shared/src/lab-resources.ts`, `lab-resources.test.ts` — registry schema and identity keys.
 - `05_Software/src/libraries/core/src/plugins/leases.ts`, `leases.test.ts` — the lease registry and unknown-state markers.
 - `05_Software/src/libraries/core/src/plugins/resource-registry.ts`, `program-resources.test.ts` — claims of run_program calls.
-- `05_Software/src/libraries/core/src/plugins/runner-leases.test.ts` — BUSY, stop request, cleanup run, physical state.
+- `05_Software/src/libraries/core/src/plugins/runner-leases.test.ts` — BUSY, stop request, cleanup run, physical state, plan holds.
+- `05_Software/src/libraries/shared/src/hil-plan.ts`, `hil-plan.test.ts` — HIL plan format 1 and its problem paths.
+- `05_Software/src/libraries/core/src/plugins/hil/` (`adapters.ts`, `compile.ts`, `executor.ts`, `run.ts`, `hil.test.ts`) —
+  HIL adapters, compilation, approval binding and the plan executor.
 - `05_Software/src/libraries/core/src/plugins/node-process-host.ts` — Node ProcessHost with injected spawn.
 - `05_Software/src/libraries/core/src/plugins/process-tree.ts` — taskkill and process-group kill.
 - `05_Software/src/libraries/core/src/plugins/run-output.ts` — OutputDecoder, TailBuffer.

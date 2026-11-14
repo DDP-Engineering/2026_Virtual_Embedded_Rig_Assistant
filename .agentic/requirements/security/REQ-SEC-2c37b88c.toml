@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-2c37b88c"
+
+title = "Refuse an invalid or unknown plan step before any I/O"
+
+status = "active"
+
+requirement = """
+If a plan has an unknown key, an unknown `use`, a parameter outside its bounds, `retries`, `repeat` or `background` on an adapter without that capability, an alias missing from `lab/resources.json` or a blocked operation, then VERA shall refuse it (`check` exit 2 naming the problem path, `run` without an approval) before any process starts.
+"""
+
+verification = "Tests give one plan per refusal (unknown use, retries on probe-rs.flash, a missing scope alias, an option-like parameter, an out-of-range timeout) and expect the problem, no spawn and no approval."
+
+affected_paths = ["05_Software/src/libraries/shared/src/hil-plan.ts", "05_Software/src/libraries/core/src/plugins/hil/adapters.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/hil-plan.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -12,6 +12,7 @@ import type { ProgramPromptEntry } from "../agent/prompt.js";
 import type { Clock } from "../ports.js";
 import type { PreparedChange } from "../tools/changes.js";
 import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { prepareHilCall } from "./hil/run.js";
 import { type LauncherMode, programInvocation } from "./launcher.js";
 import {
   findProgram,
@@ -174,7 +175,6 @@ const runParams = z.strictObject({
   timeout: z.number().int().min(1).max(3600).optional(),
   background: z.boolean().optional(),
 });
-type RunArgs = z.infer<typeof runParams>;
 
 function programContext(ctx: ToolContext): ProgramContext {
   if (!ctx.programs) throw Error("Plugin programs are unavailable.");
@@ -194,7 +194,17 @@ async function locate(ctx: ProgramContext, program: string, signal: AbortSignal)
     throw Error(`Program ${program} is not available: it is not installed or not supported yet.`);
   return { plugin, declared, resolved };
 }
-async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs, signal: AbortSignal) {
+/**
+ * Prepares one call of a declared program exactly as run_program does: the enabled plugin, the resolved executable,
+ * the argument refusals, rule classification, workbench file binding and registry aliases. HIL plans reuse it for
+ * every operation they compile.
+ */
+export async function prepareCall(
+  ctx: ToolContext,
+  programs: ProgramContext,
+  args: { program: string; args?: string[] | undefined; cwd?: string | undefined },
+  signal: AbortSignal,
+) {
   const { plugin, declared, resolved } = await locate(programs, args.program, signal);
   try {
     const programArgs = [
@@ -223,13 +233,13 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
     throw programError(error, args.program);
   }
 }
-const refusal = (request: ProgramChangeRequest, mode: string) =>
+export const refusal = (request: ProgramChangeRequest, mode: string) =>
   Error(
     request.risk === "blocked"
       ? `Refused: plugin ${request.pluginId} rates this command blocked; it never runs, in ${mode} mode or any other. ${request.notes.join(" ")}`.trim()
       : `Refused: ${request.risk} commands${request.trial ? ` of trial plugin ${request.pluginId}` : ""} do not run in ${mode} mode.`,
   );
-function foreground(result: RunResult, risk: string): Record<string, unknown> {
+export function foreground(result: RunResult, risk: string): Record<string, unknown> {
   return {
     exitCode: result.exitCode,
     durationMs: result.durationMs,
@@ -248,7 +258,8 @@ function foreground(result: RunResult, risk: string): Record<string, unknown> {
  * The lease of a call that names registry resources: claims (actuating when the risk can change the physical
  * state), the stop grace and the authorized cleanup with the program's own prefix (spec REQ-DATA-f2cbfc23 §6).
  */
-function lease(current: Awaited<ReturnType<typeof request>>): RunRequest["lease"] {
+export type PreparedCall = Awaited<ReturnType<typeof prepareCall>>;
+function lease(current: PreparedCall): RunRequest["lease"] {
   const { prepared, declared, resolved, plugin } = current;
   const resources = declared.resources;
   if (!resources || !prepared.resources) return undefined;
@@ -274,6 +285,69 @@ function lease(current: Awaited<ReturnType<typeof request>>): RunRequest["lease"
   };
 }
 
+/** Starts a prepared call through the session's runner, re-hashing its files right before the spawn. */
+export function startCall(
+  ctx: ToolContext,
+  programs: ProgramContext,
+  current: PreparedCall,
+  options: {
+    background: boolean;
+    timeoutMs?: number | undefined;
+    signal?: AbortSignal | undefined;
+    verifySignal?: AbortSignal | undefined;
+    /** A plan hold whose reservations this run uses (HIL). */
+    parent?: string | undefined;
+    /** Further checks right before the spawn (HIL: the plan file and the firmware). */
+    check?: (() => Promise<void>) | undefined;
+  },
+): Promise<ProgramRun> {
+  const pluginDir = current.plugin.folder;
+  return programs.host.runner.start({
+    sessionId: programs.sessionId,
+    workbench: ctx.root,
+    executable: current.resolved.executable,
+    args: current.invocation,
+    ...(current.resolved.launcher ? { programArgs: current.programArgs } : {}),
+    cwd: current.prepared.cwd,
+    env: {
+      ...Object.fromEntries(
+        Object.entries(current.declared.env ?? {}).map(([name, value]) => [
+          name,
+          value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
+        ]),
+      ),
+      ...current.resolved.env,
+      // The helper refuses a registry other than the approved one (also in the cleanup run).
+      ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
+    },
+    ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    background: options.background,
+    ...(options.signal ? { signal: options.signal } : {}),
+    beforeSpawn: async () => {
+      await options.check?.();
+      await verifyProgramFiles(current.prepared, options.verifySignal);
+      await current.plugin.verify?.();
+    },
+    label: {
+      plugin: current.plugin.manifest.id,
+      program: current.prepared.program,
+      args: [...current.prepared.args],
+    },
+    lease: lease(current),
+    ...(options.parent === undefined ? {} : { parent: options.parent }),
+  });
+}
+/** The timeout cap of a prepared call in seconds: its largest matching rule timeout, else the program's, else 600. */
+export function timeoutCap(current: PreparedCall): number {
+  const rule = classifyCommand(
+    current.plugin.manifest.rules,
+    current.prepared.program,
+    current.prepared.args,
+    current.declared.optionSyntax,
+  ).timeout;
+  return rule ?? current.declared.timeout ?? DEFAULT_PROGRAM_TIMEOUT;
+}
+
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
   signal.throwIfAborted();
   const args = runParams.parse(raw);
@@ -281,8 +355,25 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
   // Only a session's approval path sets these; without them nothing could consume an approval.
   const consume = programs.consume;
   if (!programs.turnId || !programs.callId || !consume) throw Error("Plugin programs are unavailable.");
-  const first = await request(ctx, programs, args, signal);
+  const first = await prepareCall(ctx, programs, args, signal);
   const mode = ctx.permissionMode?.() ?? "ask";
+  // A plan program's check and run are compiled and executed by VERA itself (spec REQ-DATA-5f714098 §1).
+  if (first.declared.plan === "hil" && (args.args?.[0] === "check" || args.args?.[0] === "run"))
+    return prepareHilCall({
+      ctx,
+      programs,
+      args: { ...args, args: args.args },
+      first,
+      mode,
+      consume,
+      signal,
+      refusal,
+      foreground,
+      prepareCall,
+      startCall,
+      timeoutCap,
+      programError,
+    });
   if (programPolicy(mode, first.prepared.risk, first.prepared.trial) === "refuse")
     throw refusal(first.prepared, mode);
   let used = false;
@@ -292,14 +383,13 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       if (used) throw Error("This prepared program run was already used.");
       used = true;
       // The approval covers the request as prepared then; the run uses only what still matches it.
-      const current = await request(ctx, programs, args, applySignal);
+      const current = await prepareCall(ctx, programs, args, applySignal);
       try {
         consume(current.prepared);
       } catch (error) {
         throw programError(error, args.program);
       }
       const background = args.background === true;
-      const pluginDir = current.plugin.folder;
       const timeoutMs = programTimeout({
         rule: classifyCommand(
           current.plugin.manifest.rules,
@@ -313,33 +403,11 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       });
       let run: ProgramRun;
       try {
-        run = await programs.host.runner.start({
-          sessionId: programs.sessionId,
-          workbench: ctx.root,
-          executable: current.resolved.executable,
-          args: current.invocation,
-          ...(current.resolved.launcher ? { programArgs: current.programArgs } : {}),
-          cwd: current.prepared.cwd,
-          env: {
-            ...Object.fromEntries(
-              Object.entries(current.declared.env ?? {}).map(([name, value]) => [
-                name,
-                value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
-              ]),
-            ),
-            ...current.resolved.env,
-            // The helper refuses a registry other than the approved one (also in the cleanup run).
-            ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
-          },
-          ...(timeoutMs === undefined ? {} : { timeoutMs }),
+        run = await startCall(ctx, programs, current, {
           background,
+          timeoutMs,
           ...(background ? {} : { signal: applySignal }),
-          beforeSpawn: async () => {
-            await verifyProgramFiles(current.prepared, applySignal);
-            await current.plugin.verify?.();
-          },
-          label: { plugin: current.plugin.manifest.id, program: args.program, args: args.args ?? [] },
-          lease: lease(current),
+          verifySignal: applySignal,
         });
       } catch (error) {
         if ((error as Error | undefined)?.name === "AbortError") throw error;

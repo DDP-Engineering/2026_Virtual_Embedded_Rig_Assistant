@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-bddb3f0a"
+
+title = "Clean up a HIL run after stop, timeout or budget"
+
+status = "active"
+
+requirement = """
+When a HIL run is stopped, a step times out or the budget runs out, VERA shall stop the running operations with their grace and declared cleanup, run every cleanup step once under its timeout and release the plan's resources.
+"""
+
+verification = "Tests stop a plan during a long step and during a background step and let the budget expire, and expect the cleanup steps run, the leases released, status incomplete or error and no process left."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

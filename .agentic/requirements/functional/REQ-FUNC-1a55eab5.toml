@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1a55eab5"
+
+title = "Evaluate a HIL capture with lab-validate"
+
+status = "active"
+
+requirement = """
+When a `lab-validate.compare` step runs, the executor shall write the LAB-02 request with each `step` source replaced by the capture folder that step created and each `path` source's hash, run `lab-validate compare` and take its verdict as the step outcome.
+"""
+
+verification = "An integration test captures with scpi on its fake PyVISA inside a plan, evaluates it with the real lab-validate helper and expects pass for a met criterion and fail for a violated one."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

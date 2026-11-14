@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ebe1fc9f"
+
+title = "Compile a HIL plan without device I/O"
+
+status = "active"
+
+requirement = """
+When `hil check <plan>` runs, VERA shall return the plan's expansion (operations with program, arguments, risk, notes and bound files, the highest risk, the reserved resources and the budget) with exit 0 without starting any process or opening any device.
+"""
+
+verification = "A test checks a valid plan whose steps name probe-rs, serial-monitor, scpi and lab-validate and expects exit 0, the expected argument lists and risks, and no spawned process."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/hil/run.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

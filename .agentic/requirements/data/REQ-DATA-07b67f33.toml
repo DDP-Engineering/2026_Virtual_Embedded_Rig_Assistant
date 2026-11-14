@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-07b67f33"
+
+title = "Write the HIL run evidence and report"
+
+status = "active"
+
+requirement = """
+When a HIL run starts, VERA shall create `embedded-lab-results/<run-id>/` exclusively with the plan copy, a result.json replaced at every state change, a monotonic event log and each attempt's output, and after the run `hil report` shall add report.html, report.md and junit.xml.
+"""
+
+verification = "Tests run a plan and check the folder, the states from prepared to done, the strictly increasing `t` in events.jsonl, the step logs and the JUnit testcase statuses; a second report into the folder is refused."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/plugins/hil-testing/scripts/hil_report/cli.py"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c4be4a14"
+
+title = "Show the expanded HIL plan in the approval"
+
+status = "active"
+
+requirement = """
+When `hil run` asks its approval, the approval shall list the setup, the firmware effect and hash, the budget, every operation with its risk and command line, every cleanup step, the bound files and the reserved serial ports and probes.
+"""
+
+verification = "A test inspects the approval request of a plan and expects the notes in the spec's order, the registry resources and the plan file binding."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -15,7 +15,8 @@ commit; the coordinator checks the evidence and makes one local commit per ticke
 STATE: LAB-01 implemented 2026-11-13 on branch `feature/101-embedded-lab` (AEGIS TASK-a5a839c7, offline and
 real-process evidence; real instruments, real PyVISA and native Ubuntu open); LAB-02 implemented 2026-11-13 on the same
 branch (AEGIS TASK-cf769025, offline evidence and real uv on Windows; a real capture of a real circuit and native Ubuntu
-open); LAB-03...LAB-08 planned.
+open); LAB-03 implemented 2026-11-14 on the same branch (AEGIS TASK-789dcc82, offline and real-process evidence on Windows;
+a real board, real probe-rs/esptool and native Ubuntu open); LAB-04...LAB-08 planned.
 
 ## Order
 
@@ -23,7 +24,7 @@ open); LAB-03...LAB-08 planned.
 |---|---|---|---|---|---|
 | 1 | LAB-01 | [#102](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/102) | `scpi-instruments` | identified instruments, finite operations, captures and approved control; resource leases and supervised cleanup | implemented |
 | 2 | LAB-02 | [#103](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/103) | `lab-validation` | reproducible comparisons of captures, simulations and requirements | implemented |
-| 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | planned |
+| 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | implemented |
 | 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | planned |
 | 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | planned |
 | 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | planned |
@@ -109,6 +110,34 @@ them.
   checked unchanged. Open: L02-F (a real capture of a real circuit compared with a real simulation - no instrument on
   this machine, and no ngspice here), native Ubuntu x64 (`REQ-PLAT-72a7e11a`), real sigrok-cli CSV bytes (no
   sigrok-cli here; the importer also takes a declared rate).
+
+## LAB-03 as built
+
+- Platform (VERA itself): the manifest program field `plan: hil`; `run_program` hands `hil check|run <plan>` to core
+  `plugins/hil/` (compile, adapters, executor, run); `ProgramRunner.hold` (a run without a process that reserves
+  resources and has a log and record) and `RunRequest.parent` (child runs that use the hold's reservations);
+  `LeaseOwner.parent` (children borrow the hold's lease files, never take or drop them); `ProgramChangeRequest.plan`
+  (hashed binding of every compiled operation); `prepareCall`/`startCall`/`timeoutCap` exported from program-tools.
+  Spec `.agentic/specs/REQ-DATA-5f714098.md`; architecture `00_Planning/plugins/architecture.md` §3.7.
+- Package `05_Software/plugins/hil-testing/` (official, pack "Embedded lab" group "Hardware-in-the-loop tests",
+  activities measurement/debug/flash): program `hil` (`scripts/hil_tool.py`, standard-library PEP 723; support package
+  `hil_report/` renders report.html, report.md and junit.xml), skill `hil-planning`. Risks: `hil check` and `hil report`
+  safe; `hil run` device-read by its rule, raised to the plan's highest operation risk and the firmware effect.
+- Adapters (registrations in `core/src/plugins/hil/adapters.ts`, extended by later plans, never a second executor):
+  `probe-rs.list|flash|verify|reset`, `esptool.identify|flash|verify`, `serial.capture|send`,
+  `scpi.identify|status|read|capture|configure|output|close`, `lab-validate.compare` (the plan embeds a LAB-02 request
+  whose sources name an earlier capture step or a hashed workbench path; the executor writes the request) and `await`.
+- Decisions: the firmware is flashed only from the plan's declared file and hash; `setup.firmwareEffect` is required
+  and raises the risk when the plan starts the firmware; the typed confirmation of an irreversible plan is its id; flash,
+  reset, output and configure never retry; setup-phase failures are `blocked`; status precedence blocked > error > fail >
+  incomplete > pass; the approval shows the expansion as notes (no UI change).
+- Criteria: L03-A, L03-B, L03-D, L03-E, L03-F (plan holds vs. another session, plan and VERA process; interleaving
+  refused at compilation; port handoff logged) and L03-G (risk, read-only, trial, confirmation) are covered on Windows by
+  `shared/src/hil-plan.test.ts`, `core/src/plugins/hil/hil.test.ts` and `runner-leases.test.ts` (offline);
+  `tests/integration/hil-testing.test.ts` runs plans with VERA's real runner and the real serial-monitor, scpi,
+  lab-validate and hil helpers on their fakes plus the probe-rs replay stand-in (stop with cleanup, no run left,
+  report). Open: L03-C (no board or probe on this machine; real probe-rs/esptool not provisioned), the live part of
+  L03-H on Windows and native Ubuntu x64 (`REQ-PLAT-759e6df8`).
 
 ## Rules shared by the packages
 

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8e4ac170"
+
+title = "Refuse firmware whose hash differs from the plan"
+
+status = "active"
+
+requirement = """
+If the firmware file's SHA-256 differs from the plan's `firmware.sha256`, then VERA shall refuse the plan before any process starts.
+"""
+
+verification = "A test compiles a plan with a wrong firmware sha256 and expects the refusal naming `firmware.sha256` and no spawn."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

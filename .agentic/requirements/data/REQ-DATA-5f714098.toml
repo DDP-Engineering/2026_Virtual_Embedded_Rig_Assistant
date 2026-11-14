@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-5f714098"
+
+title = "HIL plan, compiled operations and HIL test result formats"
+
+status = "active"
+
+requirement = """
+The hil-testing plugin shall accept HIL plans, compile them into operations and write HIL test results in the formats of its spec.
+"""
+
+verification = "Tests compile the spec's example plan and plans using every adapter, run plans offline and check result.json, events.jsonl and the step folders against the spec; a plan with an unknown key is refused."
+
+affected_paths = ["05_Software/src/libraries/shared/src/hil-plan.ts", "05_Software/src/libraries/core/src/plugins/hil/adapters.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/plugins/hil-testing/"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/hil-plan.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

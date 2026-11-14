@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-14e51eb1"
+
+title = "Bind a HIL plan approval to the plan, firmware and step files"
+
+status = "active"
+
+requirement = """
+If the plan file, the firmware, a file a step names, the bench registry or a step's plugin package changes after the approval was asked, then VERA shall refuse the run with CONFLICT before the first operation starts.
+"""
+
+verification = "A test asks the approval of a plan, changes one byte of the firmware (and in another case of the plan) before approving, and expects CONFLICT and no child run."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/hil/run.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -23,6 +23,8 @@ export interface LeaseClaim {
 export interface LeaseOwner {
   readonly sessionId: string;
   readonly runId: string;
+  /** A plan run of this process whose leases the run borrows: its keys are neither taken again nor released. */
+  readonly parent?: string | undefined;
 }
 export interface ResourceState {
   readonly key: string;
@@ -251,6 +253,8 @@ export class ResourceLeases {
         throw busy(claim.alias, "an unreadable lease");
       }
       if (!validLease(existing, key)) throw busy(claim.alias, "an unreadable lease");
+      // A child run of a plan uses the plan's lease; `drop` never removes it (another run id owns it).
+      if (owner.parent !== undefined && existing.runId === owner.parent && existing.pid === this.pid) return;
       if (this.alive(existing.pid)) throw busy(claim.alias, `process ${existing.pid}`);
       // Stale: moved aside atomically, and restored if what moved is no longer the stale lease.
       const tomb = `${path}.${randomUUID()}.stale`;

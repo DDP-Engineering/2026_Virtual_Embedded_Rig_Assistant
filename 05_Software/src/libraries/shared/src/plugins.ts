@@ -210,6 +210,8 @@ const programSchema = z
     launcher: args.min(1).optional(),
     launcherMode: z.enum(["argv", "string"]).optional(),
     optionSyntax: z.enum(["sigrok-cli", "git", "tshark", "pymcuprog", "stm32cubeprog"]).optional(),
+    /** `hil`: VERA core compiles and runs this program's `check` and `run` operations (spec REQ-DATA-5f714098 §1). */
+    plan: z.literal("hil").optional(),
     prefix: z
       .array(arg.refine(placeholders(["pluginDir"]), "Only the pluginDir placeholder is substituted."))
       .max(64)

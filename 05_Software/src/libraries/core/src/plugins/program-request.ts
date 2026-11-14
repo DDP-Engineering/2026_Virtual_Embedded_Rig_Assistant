@@ -46,6 +46,11 @@ export interface ProgramChangeRequest {
   /** Bench resources the run reserves (absent without a claim), and the registry bytes they come from. */
   readonly resources?: readonly ProgramResource[];
   readonly registry?: { readonly path: string; readonly sha256: string };
+  /**
+   * A HIL plan run (`hil run`): every operation, file and reservation the approval covers beyond the call's own
+   * arguments (spec REQ-DATA-5f714098 §5). Hashed with the request; not part of the approval event.
+   */
+  readonly plan?: Readonly<Record<string, unknown>>;
 }
 export interface ProgramRequestInput {
   workbench: string;

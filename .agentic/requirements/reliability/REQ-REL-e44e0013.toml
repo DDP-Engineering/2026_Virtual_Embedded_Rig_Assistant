@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-e44e0013"
+
+title = "Report an unconfirmed physical state of a HIL run as unknown"
+
+status = "active"
+
+requirement = """
+If a HIL operation reports physical state unknown, a cleanup step does not pass, or irreversible firmware was started without a passing cleanup step, then the HIL result shall report `physical: unknown` and record that state on the plan's resource keys.
+"""
+
+verification = "Tests make a cleanup step fail and expect physical unknown and the state marker seen by the next claim of the alias; a passing cleanup gives confirmed."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

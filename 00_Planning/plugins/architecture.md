@@ -272,6 +272,35 @@ workbench files and writes a new folder in `embedded-lab-results/`.
   later plans (networking and others) add metrics and importers as registrations in `metrics.py` and
   `importers.py`, never a second engine.
 
+### 3.7 Hardware-in-the-loop plans (LAB-03)
+
+`hil-testing` declares program `hil` with the program field `plan: hil` (spec `.agentic/specs/REQ-DATA-5f714098.md`).
+For such a program `run_program` hands `hil check <plan>` and `hil run <plan>` to core (`core/src/plugins/hil/`) instead
+of starting the executable; `hil report` and `--version` run the helper normally.
+
+- Compilation (`compile.ts`): the plan (format 1, `shared/src/hil-plan.ts`) is validated, the firmware's SHA-256 checked,
+  and each step built by its adapter (`adapters.ts`, a registry: probe-rs, esptool, serial-monitor, scpi, lab-validate,
+  `await`) and prepared exactly like a run_program call of that program (`prepareCall`: enabled plugin, resolver,
+  argument refusals, rules, file binding, registry aliases). An adapter never chooses a risk. Any problem refuses the
+  plan before a process starts; `hil check` returns the expansion with exit 0, or the problems with exit 2.
+- Approval: one run_program request for `hil run <plan>` whose risk is the highest of the `hil run` rule, every
+  operation and - when a step flashes or resets - the setup's `firmwareEffect`; `confirm` is the plan id when
+  irreversible; `trial` when any involved plugin is trial; notes list the setup, firmware, budget, every operation and
+  cleanup, the bound files and the reserved ports/probes; the request's `plan` field (hashed, not shown) carries every
+  operation's request. Consuming re-compiles with the same run id: any change is CONFLICT.
+- Execution (`executor.ts`): `ProgramRunner.hold` registers the plan run without a process (log, record, lease claims
+  for registry aliases, `serial:<port>` and `probe:<selector>` keys); its operations run as child runs
+  (`RunRequest.parent`) that borrow the hold's leases (`LeaseOwner.parent`) and stay excluded by siblings. Steps run in
+  order; background-capable steps (UART capture, power hold) run until their `await` or the end of the steps. Retries
+  and repetitions only for repeatable adapters. Before each child the plan file and firmware are hashed again. Stop,
+  budget, a step error or a blocked precondition end the steps; cleanup steps always run once; physical state `unknown`
+  is recorded on the plan's keys. Results: `embedded-lab-results/<run-id>/` (plan copy, `result.json` kind
+  `hil-test-result`, `events.jsonl` with monotonic `t`, step logs and run folders) and `hil report` (HTML, Markdown,
+  JUnit).
+- Limits: one step at a time apart from background steps; a probe is reserved by its selector text (runs of the same
+  process naming it with `--probe` get BUSY); serial runs in
+  another VERA process are not leased; GDB, Zephyr, PlatformIO and Twister are not adapters yet.
+
 ## 4. Risk levels and approvals (ADR-0018)
 
 | Level | Meaning | Examples |

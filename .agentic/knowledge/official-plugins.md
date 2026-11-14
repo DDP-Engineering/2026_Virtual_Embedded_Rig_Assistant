@@ -44,6 +44,13 @@ coverage; it imports real scpi-instruments capture folders written by the scpi h
 workspace.py is a byte-identical copy of the electronics plugins' (ngspice.test.ts checks every copy). New metrics and
 importers are registrations in metrics.py and importers.py, never a second engine.
 
+For hil-testing, start at plugins/hil-testing/plugin.yaml (program `hil` with `plan: hil`), the core HIL module
+(src/libraries/core/src/plugins/hil/: adapters.ts registry, compile.ts, executor.ts, run.ts) and scripts/hil_report/cli.py
+(the report renderer) with spec .agentic/specs/REQ-DATA-5f714098.md; core hil/hil.test.ts (scripted process host) and
+tests/integration/hil-testing.test.ts (real runner and real serial-monitor, scpi, lab-validate and hil helpers on
+their fakes, probe-rs replay stand-in) own its coverage. New step kinds are adapter registrations, never a second
+executor.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -57,7 +64,9 @@ skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, re
 PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
 platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles); lab-validation
 (program `lab-validate`, a standard-library PEP 723 script that compares captures, CSV/sigrok exports and SPICE run
-folders with requirements offline; skills validation-planning and difference-explanation). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+folders with requirements offline; skills validation-planning and difference-explanation); hil-testing (program `hil`
+whose `check` and `run` VERA core compiles and executes as hardware-in-the-loop plans over the other plugins, plus a
+standard-library report helper; skill hil-planning). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -255,6 +264,17 @@ that source metadata reaches the deterministic bundled index unchanged.
   3 incomplete/error; printed documents at most 11 000 UTF-16 units. No network, process or language model. Verified
   on Windows 11 (toolchain CPython 3.12 and 3.11, VERA's real runner, real uv 0.11.25 provisioning, 2026-11-13); no
   real capture of a real circuit and no native Ubuntu run yet.
+- `hil-testing` 1.0.0, ecosystem `lab` (pack Embedded lab, group Hardware-in-the-loop tests, default on; activities
+  `measurement`, `debug`, `flash`), Windows x64/Linux x64. Program `hil` = `scripts/hil_tool.py` (PEP 723, standard
+  library) with `plan: hil`: `hil check <plan>` (safe, compiled by core, nothing started) and `hil run <plan>` (rule
+  device-read, raised to the plan's highest operation risk and the firmware effect; one approval; core executes) never
+  start the helper; `hil report --run DIR` (safe) writes report.html, report.md and junit.xml once into a finished run
+  folder (exit 0, or 2 refused). Plan format 1 (setup with required `firmwareEffect`, firmware path + SHA-256, budget
+  <= 3600 s, 1-64 steps, 0-16 cleanup steps) and step kinds probe-rs.list|flash|verify|reset,
+  esptool.identify|flash|verify, serial.capture|send, scpi.identify|status|read|capture|configure|output|close,
+  lab-validate.compare, await. Results in `embedded-lab-results/<run-id>/` (plan.json, result.json kind
+  `hil-test-result`, events.jsonl, steps/). Verified on Windows 11 offline and with real helper processes (2026-11-14);
+  no real board, probe or native Ubuntu run yet.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load

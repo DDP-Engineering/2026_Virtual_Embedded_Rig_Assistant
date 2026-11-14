@@ -44,3 +44,4 @@
   groups:
     - { name: Bench instruments (SCPI), plugins: [scpi-instruments], default: true }
     - { name: Measurement validation, plugins: [lab-validation], default: true }
+    - { name: Hardware-in-the-loop tests, plugins: [hil-testing], default: true }

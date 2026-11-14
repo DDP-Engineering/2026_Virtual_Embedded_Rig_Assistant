@@ -54,6 +54,11 @@ export interface RunRequest {
   /** What the Runs list shows: the plugin, the program and the agent's arguments (never the executable). */
   label?: { plugin: string; program: string; args: readonly string[] };
   /**
+   * The id of an unfinished plan hold (`ProgramRunner.hold`) of the same session whose operation this run is: the
+   * hold's reservations never refuse it, and its lease claims borrow the hold's lease files.
+   */
+  parent?: string;
+  /**
    * Bench resources the run reserves and how it is supervised (spec REQ-DATA-f2cbfc23 §5-6): a stop request
    * `graceMs` before the tree kill, and the authorized cleanup run (full arguments of the same executable).
    */
@@ -164,6 +169,16 @@ export function serialPorts(args: readonly string[]): string[] {
   return [...ports];
 }
 
+/** The `probe:<selector>` keys of the values of `--probe` (alone or `--probe=value`), selectors lower-cased. */
+export function probeKeys(args: readonly string[]): string[] {
+  const keys = new Set<string>();
+  for (const [index, arg] of args.entries()) {
+    const value = arg === "--probe" ? args[index + 1] : arg.startsWith("--probe=") ? arg.slice(8) : undefined;
+    if (value) keys.add(`probe:${value.toLowerCase()}`);
+  }
+  return [...keys];
+}
+
 /** The minimal environment of a run: allowlisted host variables, the program's own, then the fixed two. */
 export function programEnvironment(
   host: ProcessHost,
@@ -193,14 +208,26 @@ export function programEnvironment(
   return env;
 }
 
-class Run implements ProgramRun {
+/** What the runner's in-process reservation checks need of an unfinished run or plan hold. */
+interface ActiveRun extends ProgramRun {
+  readonly background: boolean;
+  readonly sessionId: string;
+  readonly workbench: string;
+  readonly ports: readonly string[];
+  readonly claimKeys: ReadonlySet<string>;
+  readonly portKeys: ReadonlySet<string>;
+}
+
+class Run implements ActiveRun {
   readonly done: Promise<RunResult>;
   readonly background: boolean;
   readonly workbench: string;
   readonly ports: string[];
-  /** Identity keys this run claims, and its serial ports as keys. */
+  /** Identity keys this run claims, and its serial ports and probes as keys. */
   readonly claimKeys: Set<string>;
   readonly portKeys: Set<string>;
+  /** `probe:<selector>` keys of the debug probes the arguments name. */
+  readonly probes: string[];
   held: HeldLeases | undefined;
   control: string | undefined;
   private physical: PhysicalState | undefined;
@@ -234,7 +261,8 @@ class Run implements ProgramRun {
     this.workbench = runner.key(request.workbench);
     this.ports = serialPorts(request.programArgs ?? request.args);
     this.claimKeys = new Set(request.lease?.claims.flatMap((claim) => claim.keys) ?? []);
-    this.portKeys = new Set(this.ports.map(serialPortKey));
+    this.probes = probeKeys(request.programArgs ?? request.args);
+    this.portKeys = new Set([...this.ports.map(serialPortKey), ...this.probes]);
     this.tail = new TailBuffer(settings.tailChars);
     this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
@@ -244,6 +272,10 @@ class Run implements ProgramRun {
 
   get log(): string {
     return `.vera/runs/${this.id}.log`;
+  }
+
+  get sessionId(): string {
+    return this.request.sessionId;
   }
 
   /** Guards the working directory, opens the log, prunes old logs and starts the program. */
@@ -530,6 +562,200 @@ class Run implements ProgramRun {
   }
 }
 
+/** A run without a process of its own that reserves resources for child runs (a HIL plan). */
+export interface HoldRequest {
+  sessionId: string;
+  /** Absolute workbench root. */
+  workbench: string;
+  background?: boolean;
+  /** Taken in the lease folder for the hold's whole life; child runs borrow them. */
+  claims: readonly LeaseClaim[];
+  label?: { plugin: string; program: string; args: readonly string[] };
+  /** Called once when the hold is asked to stop (program_stop, Runs tab, session stop, app exit). */
+  onStop(): void;
+}
+export interface RunHold extends ProgramRun {
+  /** The leases the hold took; undefined without claims. */
+  readonly held: HeldLeases | undefined;
+  /** Appends text to the hold's log and output. */
+  write(text: string): void;
+  /** Ends the hold: writes its record, releases its leases and settles `done`. */
+  finish(end: {
+    exitCode: number | null;
+    stopped?: boolean;
+    timedOut?: boolean;
+    physical?: PhysicalState;
+  }): Promise<RunResult>;
+}
+
+class Hold implements ActiveRun, RunHold {
+  readonly done: Promise<RunResult>;
+  readonly background: boolean;
+  readonly workbench: string;
+  readonly ports: readonly string[] = [];
+  readonly claimKeys: ReadonlySet<string>;
+  readonly portKeys: ReadonlySet<string>;
+  held: HeldLeases | undefined;
+  private settle!: (result: RunResult) => void;
+  private result: RunResult | undefined;
+  private stopping = false;
+  private started = 0;
+  private startedAt: string | undefined;
+  private file: FileHandle | undefined;
+  private folder: string | undefined;
+  private writing = Promise.resolve();
+  private readonly tail: TailBuffer;
+  private unread: TailBuffer;
+
+  constructor(
+    readonly id: string,
+    readonly request: HoldRequest,
+    private readonly runner: ProgramRunner,
+    private readonly settings: RunnerSettings,
+  ) {
+    this.background = request.background === true;
+    this.workbench = runner.key(request.workbench);
+    this.claimKeys = new Set(request.claims.flatMap((claim) => claim.keys));
+    this.portKeys = this.claimKeys;
+    this.tail = new TailBuffer(settings.tailChars);
+    this.unread = new TailBuffer(settings.tailChars);
+    this.done = new Promise((resolve) => {
+      this.settle = resolve;
+    });
+  }
+
+  get sessionId(): string {
+    return this.request.sessionId;
+  }
+
+  get log(): string {
+    return `.vera/runs/${this.id}.log`;
+  }
+
+  /** The alias of the claim that holds a key, for BUSY messages. */
+  nameOf(key: string): string {
+    return this.request.claims.find((claim) => claim.keys.includes(key))?.alias ?? key;
+  }
+
+  async begin(): Promise<void> {
+    const guard = await PathGuard.create(this.request.workbench);
+    const runs = join(guard.root, ".vera", "runs");
+    await mkdir(runs, { recursive: true });
+    const info = await lstat(runs);
+    if (!info.isDirectory() || info.isSymbolicLink()) throw thrown("DENIED", { path: ".vera/runs" });
+    this.folder = runs;
+    this.file = await open(join(runs, `${this.id}.log`), "w");
+    await this.runner.prune(runs);
+    this.started = performance.now();
+    await this.record();
+  }
+
+  abandon(): void {
+    void this.file?.close().catch(() => {});
+    this.settle(this.snapshot(null));
+  }
+
+  write(text: string): void {
+    if (!text || this.result) return;
+    this.tail.push(text);
+    this.unread.push(text);
+    const file = this.file;
+    if (!file) return;
+    this.writing = this.writing
+      .then(() => file.write(text))
+      .then(
+        () => {},
+        () => {},
+      );
+  }
+
+  read(): RunRead {
+    const output = this.unread.text();
+    const truncated = this.unread.total > output.length;
+    this.unread = new TailBuffer(this.settings.tailChars);
+    return {
+      output,
+      truncated,
+      running: !this.result,
+      ...(this.result ? { exitCode: this.result.exitCode } : {}),
+      ...(this.result?.physical
+        ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
+        : {}),
+    };
+  }
+
+  stop(): Promise<RunResult> {
+    if (!this.stopping && !this.result) {
+      this.stopping = true;
+      try {
+        this.request.onStop();
+      } catch {
+        // The owner ends the hold itself; a failing stop callback never keeps other runs from stopping.
+      }
+    }
+    return this.done;
+  }
+
+  async finish(end: Parameters<RunHold["finish"]>[0]): Promise<RunResult> {
+    if (this.result) return this.result;
+    await this.writing;
+    await this.file?.close().catch(() => {});
+    this.result = this.snapshot(end.exitCode, end);
+    await this.record(this.result);
+    await this.held?.release();
+    this.runner.release(this.id);
+    this.settle(this.result);
+    return this.result;
+  }
+
+  private snapshot(exitCode: number | null, end?: Parameters<RunHold["finish"]>[0]): RunResult {
+    const output = this.tail.text();
+    return {
+      runId: this.id,
+      exitCode,
+      signal: null,
+      durationMs: this.started ? Math.round(performance.now() - this.started) : 0,
+      output,
+      truncated: this.tail.total > output.length,
+      log: this.log,
+      timedOut: end?.timedOut === true,
+      stopped: end?.stopped === true,
+      ...(end?.physical ? { physical: end.physical, cleanup: "none" as const } : {}),
+    };
+  }
+
+  private async record(result?: RunResult): Promise<void> {
+    if (!this.folder) return;
+    this.startedAt ??= this.settings.now().toISOString();
+    const { label } = this.request;
+    const record: ProgramRunRecord = {
+      format: 1,
+      id: this.id,
+      sessionId: this.request.sessionId,
+      ...(label ? { plugin: label.plugin, program: label.program } : {}),
+      args: [...(label?.args ?? [])],
+      background: this.background,
+      startedAt: this.startedAt,
+      ...(result
+        ? {
+            end: result.stopped ? "stopped" : result.timedOut ? "timedOut" : "exited",
+            exitCode: result.exitCode,
+            durationMs: result.durationMs,
+          }
+        : {}),
+    };
+    const path = join(this.folder, `${this.id}.json`);
+    const temporary = `${path}.tmp`;
+    try {
+      await writeFile(temporary, JSON.stringify(record));
+      await rename(temporary, path);
+    } catch {
+      await rm(temporary, { force: true }).catch(() => {});
+      await writeFile(path, JSON.stringify(record)).catch(() => {});
+    }
+  }
+}
+
 /** The program's last report in its control folder (`state.json`); undefined when missing or malformed. */
 async function readControlState(folder: string): Promise<{ phase: string; physical: string } | undefined> {
   try {
@@ -574,7 +800,7 @@ async function readRecord(path: string, id: string): Promise<ProgramRunRecord | 
  * runs per session and a serial-port guard against ports held by background runs.
  */
 export class ProgramRunner {
-  private readonly active = new Map<string, Run>();
+  private readonly active = new Map<string, ActiveRun>();
   private readonly settings: RunnerSettings;
   private readonly nextId: () => string;
 
@@ -600,19 +826,32 @@ export class ProgramRunner {
    */
   async start(request: RunRequest): Promise<ProgramRun> {
     const run = new Run(this.nextId(), request, this, this.settings);
-    const runs = [...this.active.values()];
-    if (
-      run.background &&
-      runs.filter((other) => other.background && other.request.sessionId === request.sessionId).length >=
-        this.settings.maxBackground
-    )
-      throw thrown("BUSY", { limit: this.settings.maxBackground });
+    let runs = [...this.active.values()];
+    if (request.parent !== undefined) {
+      const parent = this.active.get(request.parent);
+      if (
+        !(parent instanceof Hold) ||
+        parent.sessionId !== request.sessionId ||
+        parent.workbench !== run.workbench
+      )
+        throw thrown("DENIED", { reason: "parent" });
+      // A plan's operation may use what the plan reserved; its siblings still exclude it.
+      runs = runs.filter((other) => other !== parent);
+    }
+    this.checkBackground(run.background, request.sessionId, runs);
     for (const port of run.ports) {
       const key = serialPortKey(port);
       const holder = runs.find(
         (other) => (other.background && other.ports.includes(port)) || other.claimKeys.has(key),
       );
       if (holder) throw thrown("BUSY", { handle: holder.id, port });
+    }
+    // A probe a plan reserved (or a background run uses) is BUSY like a serial port.
+    for (const key of run.probes) {
+      const holder = runs.find(
+        (other) => other.claimKeys.has(key) || (other.background && other.portKeys.has(key)),
+      );
+      if (holder) throw thrown("BUSY", { handle: holder.id, resource: key.slice("probe:".length) });
     }
     const { lease } = request;
     const leases = this.settings.leases;
@@ -628,7 +867,11 @@ export class ProgramRunner {
     this.active.set(run.id, run);
     try {
       if (lease && leases) {
-        run.held = await leases.acquire(lease.claims, { sessionId: request.sessionId, runId: run.id });
+        run.held = await leases.acquire(lease.claims, {
+          sessionId: request.sessionId,
+          runId: run.id,
+          parent: request.parent,
+        });
         run.control = await leases.controlFolder(run.id);
       }
       await run.begin();
@@ -646,13 +889,57 @@ export class ProgramRunner {
     return (await this.start(request)).done;
   }
 
+  private checkBackground(background: boolean, sessionId: string, runs: readonly ActiveRun[]): void {
+    if (
+      background &&
+      runs.filter((other) => other.background && other.sessionId === sessionId).length >=
+        this.settings.maxBackground
+    )
+      throw thrown("BUSY", { limit: this.settings.maxBackground });
+  }
+
+  /**
+   * Registers a run without a process of its own (a HIL plan): it reserves `claims` in the lease folder and its keys
+   * in this process, so other runs and sessions get BUSY while its child runs (`RunRequest.parent`) use them. It has
+   * a log and a run record like any run; `finish` ends it and releases the leases. Refusals as for `start`.
+   */
+  async hold(request: HoldRequest): Promise<RunHold> {
+    const hold = new Hold(this.nextId(), request, this, this.settings);
+    const runs = [...this.active.values()];
+    this.checkBackground(hold.background, request.sessionId, runs);
+    for (const key of hold.claimKeys) {
+      const holder = runs.find(
+        (other) =>
+          other.claimKeys.has(key) ||
+          other.portKeys.has(key) ||
+          // Any unfinished run on a port the plan will use, foreground ones of other sessions included.
+          other.ports.some((port) => serialPortKey(port) === key),
+      );
+      if (holder) throw thrown("BUSY", { handle: holder.id, resource: hold.nameOf(key) });
+    }
+    const leases = this.settings.leases;
+    if (request.claims.length > 0 && !leases) throw thrown("DENIED", { reason: "leases" });
+    this.active.set(hold.id, hold);
+    try {
+      if (leases && request.claims.length > 0)
+        hold.held = await leases.acquire(request.claims, { sessionId: request.sessionId, runId: hold.id });
+      await hold.begin();
+    } catch (error) {
+      this.active.delete(hold.id);
+      await hold.held?.release();
+      hold.abandon();
+      throw error;
+    }
+    return hold;
+  }
+
   /** A run that has not finished yet. */
   get(handle: string): ProgramRun | undefined {
     return this.active.get(handle);
   }
 
   stopSession(sessionId: string): Promise<void> {
-    return this.stopWhere((run) => run.request.sessionId === sessionId);
+    return this.stopWhere((run) => run.sessionId === sessionId);
   }
 
   stopWorkbench(workbench: string): Promise<void> {
@@ -759,7 +1046,7 @@ export class ProgramRunner {
     this.active.delete(id);
   }
 
-  private async stopWhere(match: (run: Run) => boolean): Promise<void> {
+  private async stopWhere(match: (run: ActiveRun) => boolean): Promise<void> {
     await Promise.all([...this.active.values()].filter(match).map((run) => run.stop()));
   }
 }
