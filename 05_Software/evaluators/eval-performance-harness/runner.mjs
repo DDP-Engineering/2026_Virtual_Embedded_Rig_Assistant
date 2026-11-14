@@ -221,6 +221,44 @@ export async function run(options) {
     await page.locator("[data-transcript]").getByText(session.last, { exact: false }).waitFor();
     await page.locator("#chat-message:not(:disabled)").waitFor();
   };
+  /*
+   * Opens side b (no other scenario verifies its content hash, and injected durable events persist),
+   * then replays one reply through the main-process hub while the renderer records heartbeat gaps
+   * until the final message.done text is rendered. No provider is called.
+   */
+  const stream = { deltas: 2000, intervalMs: 2 };
+  const streamSample = async (sample, session, marker, prepareStart) => {
+    await select(session);
+    const before = await memory();
+    sample.preparationMs = performance.now() - prepareStart;
+    await page.evaluate(() => Reflect.get(window, "veraSessionPerformance").streamBegin());
+    const main = await app.evaluate(
+      (_, { id, options }) => Reflect.get(globalThis, "veraSessionPerformance").stream(id, options),
+      { id: session.id, options: { ...stream, marker } },
+    );
+    const renderer = await page.evaluate(
+      ({ marker, timeoutMs }) => Reflect.get(window, "veraSessionPerformance").streamEnd(marker, timeoutMs),
+      { marker, timeoutMs },
+    );
+    const externalTraffic =
+      (await outboundAttempts(app)).length +
+      (await app.evaluate(() => Reflect.get(globalThis, "veraSessionPerformance").traffic()));
+    Object.assign(sample, {
+      ok: !externalTraffic && !main.providerRequests,
+      correct: true,
+      externalTraffic,
+      providerRequests: main.providerRequests,
+      metrics: {
+        streamMs: renderer.streamMs,
+        emitMs: main.emitMs,
+        mainGapMs: main.mainGapMs,
+        rendererGapMs: renderer.rendererGapMs,
+      },
+      memory: { before, after: await memory() },
+    });
+    if (!sample.ok) sample.error = "content-or-network-contract";
+    validateSample(sample);
+  };
   const report = {
     format: 1,
     runId: crypto.randomUUID(),
@@ -242,6 +280,7 @@ export async function run(options) {
       memory: "main process.memoryUsage.rss; sum Electron Tab workingSetSize KiB times1024",
       deadlineMs: timeoutMs,
       injectedStallMs: inject,
+      stream: { ...stream, deltaChars: 20, events: "turn.started, deltas, message.done, turn.done" },
     },
     status: "diagnostic",
   };
@@ -367,6 +406,10 @@ export async function run(options) {
               if (!app) {
                 await launch();
                 await page.locator(`[data-session="${anchor.id}"]`).waitFor();
+              }
+              if (scenario === "stream") {
+                await streamSample(sample, other, `PERF_STREAM_END_${tier}_${index}`, prepareStart);
+                return;
               }
               if (scenario === "warm") {
                 await select(target);
@@ -495,12 +538,12 @@ export async function run(options) {
         if (!sample.ok || scenario === "first") await close();
         if ((index + 1) % 5 === 0)
           console.log(
-            `${key}: ${index + 1}/${report.repetitions}; last ${sample.ok ? `${sample.metrics.loadMs.toFixed(1)}ms` : sample.error}`,
+            `${key}: ${index + 1}/${report.repetitions}; last ${sample.ok ? `${(sample.metrics.loadMs ?? sample.metrics.streamMs).toFixed(1)}ms` : sample.error}`,
           );
       }
       const good = report.samples
         .filter((sample) => sample.case === key && sample.ok)
-        .map((sample) => sample.metrics.loadMs);
+        .map((sample) => sample.metrics.loadMs ?? sample.metrics.streamMs);
       console.log(
         `${key}: ${good.length}/${report.repetitions} complete; mean ${(good.reduce((n, value) => n + value, 0) / Math.max(1, good.length)).toFixed(1)}ms`,
       );

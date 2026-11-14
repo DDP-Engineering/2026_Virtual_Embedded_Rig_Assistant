@@ -9,15 +9,19 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import i18n from "../../i18n.js";
 import { Transcript } from "./transcript.js";
+import { streamingBlocks } from "./transcript-projection.js";
 
-/** Markdown renders per text, counted; the real pipeline is covered by markdown.test.ts. */
+/** Markdown renders per text, counted, memoized like the real one; markdown.test.ts covers the pipeline. */
 const renders = vi.hoisted(() => new Map<string, number>());
-vi.mock("./markdown.js", () => ({
-  Markdown: ({ text }: { text: string }) => {
-    renders.set(text, (renders.get(text) ?? 0) + 1);
-    return createElement("div", { className: "markdown" }, text);
-  },
-}));
+vi.mock("./markdown.js", async () => {
+  const { memo } = await import("react");
+  return {
+    Markdown: memo(({ text }: { text: string }) => {
+      renders.set(text, (renders.get(text) ?? 0) + 1);
+      return createElement("div", { className: "markdown" }, text);
+    }),
+  };
+});
 vi.mock("../../api/index.js", () => ({ api: { invoke: vi.fn().mockResolvedValue({}) } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 
@@ -117,4 +121,26 @@ it("a live delta to a 200-item transcript re-renders only the touched message ro
   await render(state, {}, "answer");
   expect([...renders.entries()]).toEqual([["answer 99 more", 1]]);
   expect(container.querySelectorAll("[data-search-match=true]")).toHaveLength(100);
+});
+it("re-parses only the growing last block of a streaming answer", async () => {
+  expect(streamingBlocks("One\n\n\nTwo\n```c\nx\n\ny\n```\n\nTail")).toEqual([
+    "One",
+    "Two\n```c\nx\n\ny\n```",
+    "Tail",
+  ]);
+  let state = emptySessionState();
+  state = applySessionEvent(state, { type: "message.delta", messageId: "live", text: "First block\n\nSec" });
+  await render(state);
+  expect([...renders.keys()]).toEqual(["First block", "Sec"]);
+  renders.clear();
+  state = applySessionEvent(state, { type: "message.delta", messageId: "live", text: "ond\n\nThird" });
+  await render(state);
+  expect([...renders.entries()]).toEqual([
+    ["Second", 1],
+    ["Third", 1],
+  ]);
+  renders.clear();
+  state = applySessionEvent(state, { type: "message.done", messageId: "live", text: "Final", citations: [] });
+  await render(state);
+  expect([...renders.entries()]).toEqual([["Final", 1]]);
 });

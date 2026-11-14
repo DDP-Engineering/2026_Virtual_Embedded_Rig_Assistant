@@ -10,7 +10,7 @@ import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
-import { searchMatch, type ToolItem, transcriptRows } from "./transcript-projection.js";
+import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
 export function Transcript({
   state,
@@ -52,7 +52,10 @@ export function Transcript({
     suspended.current = null;
     setHighlight(null);
   }, [sessionId]);
+  // Runs only for commits that change the content (live events arrive at most once per frame), not
+  // for highlight or search commits, so streaming forces no extra layout.
   useLayoutEffect(() => {
+    void [state, reasoning, updates, detail];
     const node = scroll.current;
     if (!node) return;
     // A scroll event is dispatched on the next frame, after this commit may have added content: a
@@ -62,7 +65,7 @@ export function Transcript({
       node.scrollTop = node.scrollHeight;
     }
     settledMax.current = node.scrollHeight - node.clientHeight;
-  });
+  }, [state, reasoning, updates, detail]);
   useEffect(() => () => clearTimeout(highlightTimer.current), []);
   const navigate = (id: string) => {
     const node = scroll.current;
@@ -111,6 +114,7 @@ export function Transcript({
         content={content}
         anchors={anchors}
         messages={userMessages}
+        live={!!state.activeTurnId}
         controls={transcriptId}
         onNavigate={navigate}
       />
@@ -257,7 +261,12 @@ const MessageRow = memo(function MessageRow({
       ) : (
         <>
           <strong>VERA</strong>
-          <Markdown text={item.text} citations={item.citations} onCitation={onCitation} />
+          {item.streaming ? (
+            // Only the growing last block is parsed again per frame; message.done renders it whole.
+            streamingBlocks(item.text).map((block, index) => <Markdown key={String(index)} text={block} />)
+          ) : (
+            <Markdown text={item.text} citations={item.citations} onCitation={onCitation} />
+          )}
           {item.streaming && <span role="status">{t("chat.streaming")}</span>}
         </>
       )}

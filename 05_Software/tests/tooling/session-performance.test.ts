@@ -11,10 +11,10 @@ import * as performanceReport from "../../evaluators/eval-performance-harness/re
 // @ts-expect-error Node ESM native runner.
 import { deadline } from "../../evaluators/eval-performance-harness/runner.mjs";
 
-const { calibrate, compare, contentHash, hash, metrics, saveReport, stats, validateReport } =
+const { calibrate, compare, contentHash, hash, metricsFor, saveReport, stats, validateReport } =
   performanceReport;
 
-function report(mode = "full", value = 100) {
+function report(mode = "full", value = 100, key = "small/first") {
   const count = mode === "full" ? 30 : 5;
   const fixture = { format: 1, seed: "fixture" };
   return {
@@ -22,7 +22,7 @@ function report(mode = "full", value = 100) {
     runId: crypto.randomUUID(),
     mode,
     repetitions: count,
-    cases: ["small/first"],
+    cases: [key],
     fixture,
     identity: {
       fixtureHash: hash(fixture),
@@ -43,13 +43,13 @@ function report(mode = "full", value = 100) {
     },
     source: { commit: "a".repeat(40), dirty: true, candidateHash: "b".repeat(64), buildHash: "c".repeat(64) },
     samples: Array.from({ length: count }, (_, index) => ({
-      case: "small/first",
+      case: key,
       index,
       ok: true,
       correct: true,
       externalTraffic: 0,
       providerRequests: 0,
-      metrics: Object.fromEntries(metrics.map((key: string) => [key, value])),
+      metrics: Object.fromEntries(metricsFor(key).map((metric: string) => [metric, value])),
       memory: {
         before: { main: { rssBytes: 1 }, renderer: { rssBytes: 1 } },
         after: { main: { rssBytes: 2 }, renderer: { rssBytes: 2 } },
@@ -188,4 +188,18 @@ it("preserves useful reference differences and failures in standalone comparison
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+it("checks stream cases on their own metrics and gap budgets", () => {
+  const key = "large/stream";
+  const streamBudgets = { [key]: { mainGapMs: 250, rendererGapMs: 120 } };
+  const reference = calibrate([report("full", 100, key), report("full", 101, key)], streamBudgets);
+  expect(compare(report("quick", 100, key), reference).status).toBe("passed");
+  expect(
+    compare(report("quick", 150, key), reference).failures.some(
+      (f: { kind: string; metric: string }) => f.kind === "budget" && f.metric === "rendererGapMs",
+    ),
+  ).toBe(true);
+  const missing = report("quick", 100, key);
+  delete missing.samples[0]!.metrics.streamMs;
+  expect(() => validateReport(missing)).toThrow();
 });

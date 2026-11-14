@@ -136,6 +136,8 @@ it.each([
         "registerReplay",
         "veraTestFileTools",
         "VERA_NETWORK_AUDIT",
+        // Session performance probes and the stream injector exist only in the perf:sessions build.
+        "veraSessionPerformance",
       ]) {
         expect(code).not.toContain(marker);
       }

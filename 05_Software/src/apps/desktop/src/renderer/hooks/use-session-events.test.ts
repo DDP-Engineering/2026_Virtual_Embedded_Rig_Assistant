@@ -11,6 +11,7 @@ vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 let root: Root;
 let container: HTMLDivElement;
 let latest: ReturnType<typeof useSessionEvents>;
+let renders = 0;
 let on: (event: SessionEvent) => void;
 const changed = vi.fn();
 const off = vi.fn();
@@ -25,6 +26,7 @@ const snapshot = () => ({
 });
 function Probe({ id }: { id?: string }) {
   latest = useSessionEvents(id, changed);
+  renders++;
   return null;
 }
 async function mount() {
@@ -153,4 +155,49 @@ it("reconnects after a transport error even when its synthetic event balances a 
   expect(latest.view?.state.activeTurnId).toBeNull();
   expect(latest.view?.state.status).toBe("idle");
   expect(api.subscribe).toHaveBeenCalledTimes(2);
+});
+it("applies the live events of one frame in a single update, in arrival order", async () => {
+  await mount();
+  const before = renders;
+  for (let index = 0; index < 100; index++)
+    await act(async () => on({ type: "message.delta", messageId: "answer", text: `${index},` }));
+  await act(async () => on({ type: "reasoning.delta", messageId: "answer", text: "why" }));
+  await act(async () => on({ type: "tool.update", callId: "download", text: "50%" }));
+  expect(renders).toBe(before);
+  await act(async () => vi.advanceTimersByTimeAsync(20));
+  expect(renders).toBe(before + 1);
+  const text = Array.from({ length: 100 }, (_, index) => `${index},`).join("");
+  expect(latest.view?.state.items.at(-1)).toMatchObject({ text, streaming: true });
+  expect(latest.view?.reasoning).toEqual({ answer: "why" });
+  expect(latest.view?.updates).toEqual({ download: "50%" });
+});
+it("flushes queued live text at once on turn.done, error and session.updated", async () => {
+  await mount();
+  await act(async () => on({ type: "message.delta", messageId: "answer", text: "Final" }));
+  await act(async () =>
+    on({ type: "session.updated", title: "Renamed", status: "running", mode: "ask", modelRef: null }),
+  );
+  expect(latest.view?.state.items.at(-1)).toMatchObject({ text: "Final" });
+  expect(latest.view?.state.title).toBe("Renamed");
+  await act(async () => on({ type: "message.delta", messageId: "answer", text: " text" }));
+  await act(async () => on({ type: "turn.done", turnId: "turn", stopReason: "end" }));
+  // turn.done drops unfinalized live text, so the delta must have been applied before it.
+  expect(latest.view?.state.status).toBe("idle");
+  expect(latest.view?.state.items.some((item) => item.kind === "assistant")).toBe(false);
+  await act(async () => on({ type: "reasoning.delta", messageId: "next", text: "thinking" }));
+  await act(async () =>
+    on({ type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false }),
+  );
+  expect(latest.view?.reasoning).toEqual({ next: "thinking" });
+});
+it("cancels a pending frame on unmount and on session switch", async () => {
+  await mount();
+  await act(async () => on({ type: "message.delta", messageId: "answer", text: "Dropped" }));
+  await act(async () => root.render(createElement(Probe, { id: "other" })));
+  await act(async () => vi.advanceTimersByTimeAsync(20));
+  expect(latest.view?.state.items.some((item) => item.kind === "assistant")).toBe(false);
+  await act(async () => on({ type: "message.delta", messageId: "answer", text: "Late" }));
+  await act(async () => root.unmount());
+  expect(vi.getTimerCount()).toBe(0);
+  root = createRoot(container);
 });

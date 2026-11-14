@@ -71,7 +71,9 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   announces "Moved to message N" and keeps focus in the lane. One roving Tab stop with arrows,
   Home/End; aria-current marks the last message at or above scrollTop + min(80, V/4). A jump
   suspends auto-follow until the reader returns to the end away from the jump target. Anchors are
-  re-measured once per frame after resize, DOM/disclosure changes or new messages, and after
+  re-measured once per frame after resize, DOM/disclosure changes (child lists and `hidden`/`open`, not
+  text) or new messages; while a turn is active (`live`) at most every 250 ms, and on the next frame
+  when it ends; and after
   font or image load events (wiring covered by component tests; Markdown renders images inert and no
   web fonts are declared today); scrolling reuses them. Escape on a preview or selector is consumed so
   the workspace Stop shortcut yields; the wheel over the open selector scrolls only its list. The navigator is keyed by session; Transcript clears highlight
@@ -114,6 +116,13 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   shallow props; they rely on `applySessionEvent` keeping untouched items' identity, so a live event re-renders
   only its row. Every value a row shows must arrive as a prop (or a stable callback); search text is lower-cased
   once per item object (`searchMatch`).
+- `useSessionEvents` queues live events (`message.delta`, `reasoning.delta`, `tool.update`) and applies them
+  in arrival order once per animation frame; a durable event applies the queue and itself at once. A new
+  snapshot, session switch or unmount drops the queue and cancels the frame. The transcript autoscroll
+  layout effect runs only for commits that change `state`, `reasoning`, `updates` or `detail`.
+- A streaming assistant message renders as blocks (`streamingBlocks`: split at blank lines outside code
+  fences), each through memoized `Markdown`, so only the growing last block is parsed again per frame;
+  `message.done` renders the whole text once.
 - Dialog closure restores connected opener focus with fallback after removed session actions; rename save/cancel restores its action. Named diff/artifact regions support keyboard scrolling; keyboard controls and wrapping rem layout use en/ro/de catalogs.
 
 ## Change map

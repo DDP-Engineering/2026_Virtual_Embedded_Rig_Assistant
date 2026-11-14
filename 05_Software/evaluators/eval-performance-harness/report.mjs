@@ -14,7 +14,13 @@ export const metrics = [
   "payloadBytes",
 ];
 export const budgetMetrics = ["loadMs", "mainGapMs", "rendererGapMs"];
-export const scenarios = ["first", "warm", "cross"];
+/** A reply replayed into an open session: renderer time to the final render, main emission time, gaps. */
+export const streamMetrics = ["streamMs", "emitMs", "mainGapMs", "rendererGapMs"];
+export const streamBudgetMetrics = ["mainGapMs", "rendererGapMs"];
+export const scenarios = ["first", "warm", "cross", "stream"];
+const streaming = (key) => key.endsWith("/stream");
+export const metricsFor = (key) => (streaming(key) ? streamMetrics : metrics);
+const budgetMetricsFor = (key) => (streaming(key) ? streamBudgetMetrics : budgetMetrics);
 export const hash = (value) =>
   createHash("sha256")
     .update(typeof value === "string" || Buffer.isBuffer(value) ? value : JSON.stringify(value))
@@ -85,7 +91,7 @@ export function validateReport(report) {
     !Array.isArray(report.cases) ||
     !report.cases.length ||
     new Set(report.cases).size !== report.cases.length ||
-    !report.cases.every((key) => /^(small|medium|large|payload)\/(first|warm|cross)$/.test(key))
+    !report.cases.every((key) => /^(small|medium|large|payload)\/(first|warm|cross|stream)$/.test(key))
   )
     throw Error("invalid cases or repetitions");
   if (!Array.isArray(report.samples) || report.samples.length !== report.cases.length * count)
@@ -105,8 +111,9 @@ export function validateReport(report) {
 export function validateSample(sample) {
   if (
     sample.ok !== true ||
-    !metrics.every((key) => validNumber(sample.metrics?.[key])) ||
-    sample.metrics.payloadBytes < 1 ||
+    typeof sample.case !== "string" ||
+    !metricsFor(sample.case).every((key) => validNumber(sample.metrics?.[key])) ||
+    (!streaming(sample.case) && sample.metrics.payloadBytes < 1) ||
     sample.correct !== true ||
     sample.externalTraffic !== 0 ||
     sample.providerRequests !== 0
@@ -130,7 +137,7 @@ export function summarize(report) {
         {
           failed: samples.length - good.length,
           metrics: Object.fromEntries(
-            metrics.map((metric) => [
+            metricsFor(key).map((metric) => [
               metric,
               good.length
                 ? stats(
@@ -150,7 +157,7 @@ function compatible(a, b) {
 }
 function checkBudgets(budgets, cases) {
   for (const key of cases)
-    for (const metric of budgetMetrics) {
+    for (const metric of budgetMetricsFor(key)) {
       if (!validNumber(budgets?.[key]?.[metric]) || budgets[key][metric] === 0)
         throw Error("missing positive absolute budget");
     }
@@ -178,7 +185,7 @@ export function calibrate(runs, budgets) {
   };
   for (const key of reference.cases) {
     reference.thresholds[key] = {};
-    for (const metric of metrics) {
+    for (const metric of metricsFor(key)) {
       const values = runs.map((run) =>
         stats(
           run.samples.filter((s) => s.case === key).map((s) => s.metrics[metric]),
@@ -207,7 +214,7 @@ export function calibrate(runs, budgets) {
 function absoluteFailures(samples, budgets) {
   const failures = [];
   for (const sample of samples)
-    for (const metric of budgetMetrics) {
+    for (const metric of budgetMetricsFor(sample.case)) {
       if (sample.metrics[metric] > budgets[sample.case][metric])
         failures.push({
           case: sample.case,
@@ -237,7 +244,7 @@ export function compare(report, reference) {
     failures = absoluteFailures(report.samples, verified.budgets),
     differences = [];
   for (const key of report.cases)
-    for (const metric of metrics)
+    for (const metric of metricsFor(key))
       for (const percentile of report.mode === "full" ? ["median", "p95", "max"] : ["median", "max"]) {
         const baseline = verified.thresholds[key][metric],
           actual = summary[key].metrics[metric][percentile];
@@ -270,10 +277,18 @@ export async function saveReport(path, report) {
     "| Case | Samples | Failed | Median ms | p95 ms | Max ms |",
     "|---|---:|---:|---:|---:|---:|",
   ];
-  for (const [key, value] of Object.entries(summary ?? {}))
+  for (const [key, value] of Object.entries(summary ?? {})) {
+    // A stream case has no load; its headline is the time to the final render.
+    const head = value.metrics[streaming(key) ? "streamMs" : "loadMs"];
     lines.push(
-      `| ${key} | ${value.metrics.loadMs?.count ?? 0} | ${value.failed} | ${value.metrics.loadMs?.median.toFixed(1) ?? "—"} | ${value.metrics.loadMs?.p95?.toFixed(1) ?? "—"} | ${value.metrics.loadMs?.max.toFixed(1) ?? "—"} |`,
+      `| ${key} | ${head?.count ?? 0} | ${value.failed} | ${head?.median.toFixed(1) ?? "—"} | ${head?.p95?.toFixed(1) ?? "—"} | ${head?.max.toFixed(1) ?? "—"} |`,
     );
+    const gap = value.metrics.rendererGapMs;
+    if (streaming(key) && gap)
+      lines.push(
+        `| ${key} renderer gap | ${gap.count} | | ${gap.median.toFixed(1)} | ${gap.p95?.toFixed(1) ?? "—"} | ${gap.max.toFixed(1)} |`,
+      );
+  }
   if (report.existingBudgetFailures?.length)
     lines.push(
       "",

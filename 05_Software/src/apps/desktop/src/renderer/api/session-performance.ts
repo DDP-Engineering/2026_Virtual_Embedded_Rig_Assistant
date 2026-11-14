@@ -27,8 +27,32 @@ export function instrumentSessionApi(api: VeraApi) {
     }
     return result;
   };
+  let streamStart = 0;
+  /** Final render: the last assistant message shows the marker that only `message.done` carries. */
+  const lastAssistantHas = (marker: string) => {
+    const messages = document.querySelectorAll('[data-transcript] [data-message-kind="assistant"]');
+    return !!messages[messages.length - 1]?.textContent?.includes(marker);
+  };
   Object.assign(window, {
     veraSessionPerformance: {
+      streamBegin() {
+        target = "stream";
+        maxGap = 0;
+        last = streamStart = performance.now();
+      },
+      async streamEnd(marker: string, timeoutMs: number) {
+        await new Promise<void>((resolve, reject) => {
+          const poll = () => {
+            if (lastAssistantHas(marker)) resolve();
+            else if (performance.now() - streamStart > timeoutMs) reject(Error("stream-not-rendered"));
+            else requestAnimationFrame(poll);
+          };
+          poll();
+        });
+        const now = performance.now();
+        target = "";
+        return { streamMs: now - streamStart, rendererGapMs: Math.max(maxGap, now - last) };
+      },
       begin(id: string) {
         received = false;
         response = undefined;

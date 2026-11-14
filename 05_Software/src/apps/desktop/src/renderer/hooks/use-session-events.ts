@@ -3,13 +3,36 @@ import { applySessionEvent, isLiveSessionEvent, type SessionEvent, type SessionS
 import { useEffect, useState } from "react";
 import { api } from "../api/index.js";
 
+type View = {
+  id: string;
+  state: SessionState;
+  reasoning: Record<string, string>;
+  updates: Record<string, string>;
+};
+/** Folds a frame's events in arrival order; reasoning and updates are copied once per batch. */
+function applyBatch(old: View, batch: readonly SessionEvent[]): View {
+  let { state, reasoning, updates } = old;
+  for (const event of batch) {
+    state = applySessionEvent(state, event);
+    if (event.type === "reasoning.delta") {
+      if (reasoning === old.reasoning) reasoning = { ...reasoning };
+      reasoning[event.messageId] = (reasoning[event.messageId] ?? "") + event.text;
+    } else if (event.type === "tool.update") {
+      if (updates === old.updates) updates = { ...updates };
+      updates[event.callId] = (updates[event.callId] ?? "") + event.text;
+    }
+  }
+  return { ...old, state, reasoning, updates };
+}
+
+/**
+ * Snapshot plus live subscription for one session. Live events (deltas, tool updates) are queued
+ * and applied once per animation frame (PERF-04): at most one transcript update per frame, whatever
+ * the token rate. A durable event (turn.done, error, session.updated, tool and todo changes) applies
+ * the queue and itself at once, so status changes are never a frame late and order is kept.
+ */
 export function useSessionEvents(id: string | undefined, changed: () => void) {
-  const [view, setView] = useState<{
-    id: string;
-    state: SessionState;
-    reasoning: Record<string, string>;
-    updates: Record<string, string>;
-  }>();
+  const [view, setView] = useState<View>();
   const [error, setError] = useState<unknown>();
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -22,6 +45,18 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
     let loaded = false;
     let needsSnapshot = false;
     let checking = false;
+    let queue: SessionEvent[] = [];
+    let frame = 0;
+    const drop = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      queue = [];
+    };
+    const flush = () => {
+      const batch = queue;
+      drop();
+      if (batch.length) setView((old) => (old && old.id === id ? applyBatch(old, batch) : old));
+    };
     setView(undefined);
     setError(undefined);
     async function reconcile() {
@@ -42,6 +77,7 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
         loaded = false;
         const current = ++generation;
         off?.();
+        drop(); // The snapshot is newer than anything still queued from the previous subscription.
         setError(undefined);
         setView({ id, state: snapshot, reasoning: {}, updates: {} });
         off = api.subscribe("session", id, seq, (event: SessionEvent) => {
@@ -50,25 +86,11 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
           // The preload can report a subscription failure as a non-durable error event.
           // Always reconcile errors, even if that extra event happens to balance a missed cursor.
           if (event.type === "error") needsSnapshot = true;
-          if (!isLiveSessionEvent(event)) seq++;
-          setView((old) => {
-            if (old?.id !== id) return old;
-            return {
-              ...old,
-              state: applySessionEvent(old.state, event),
-              reasoning:
-                event.type === "reasoning.delta"
-                  ? {
-                      ...old.reasoning,
-                      [event.messageId]: (old.reasoning[event.messageId] ?? "") + event.text,
-                    }
-                  : old.reasoning,
-              updates:
-                event.type === "tool.update"
-                  ? { ...old.updates, [event.callId]: (old.updates[event.callId] ?? "") + event.text }
-                  : old.updates,
-            };
-          });
+          const live = isLiveSessionEvent(event);
+          if (!live) seq++;
+          queue.push(event);
+          if (!live) flush();
+          else if (!frame) frame = requestAnimationFrame(flush);
           if (
             event.type === "turn.started" ||
             event.type === "turn.done" ||
@@ -96,6 +118,7 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
       window.clearInterval(timer);
       window.removeEventListener("focus", check);
       off?.();
+      drop();
     };
   }, [id, changed, attempt]);
   return { view: view?.id === id ? view : undefined, error, retry: () => setAttempt((n) => n + 1) };
