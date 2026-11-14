@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-4a902240"
+
+title = "Clean only the owned build folders of the selected project and environment"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio clean`, the platformio helper shall delete only the operation folders inside the request's owned, marked build folder, without following links or junctions, and shall leave the project folder (its .pio included), the core folder, the libdeps folder and every unmarked folder untouched.
+"""
+
+verification = "After a stand-in build, clean removes build/ and test/ inside the owned folder, keeps libdeps/ and the marker, keeps the project's own .pio/marker file, and a junction inside the build folder pointing at a workbench folder is removed without touching its target; clean of an unmarked folder is refused build-dir-foreign."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/builddir.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

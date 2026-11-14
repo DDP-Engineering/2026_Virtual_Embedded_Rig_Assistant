@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-90fd8436"
+
+title = "Inspect the effective configuration of PlatformIO environments"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio inspect-environments` with a request, the platformio helper shall report for each environment, or only the requested one, the effective options after extends, extra_configs and interpolation with the section each option came from, the resolved platform, board, framework, test framework and upload protocol, and whether the platform and packages it needs are installed in the request's core folder.
+"""
+
+verification = "Inspect the fixture: the `disco_fast` environment shows options inherited from `env:disco` and from the extra_configs section `common_mcu` with their source sections, `native` shows its platform; with the packages absent each environment reports missing packages; an unknown environment name is refused with code environment."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/config.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

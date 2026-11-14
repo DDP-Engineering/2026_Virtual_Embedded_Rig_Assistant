@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-82cb079b"
+
+title = "Never run upload, erase or project-default targets under build or test"
+
+status = "active"
+
+requirement = """
+When the platformio helper builds or tests an environment, it shall name PlatformIO's targets itself (buildprog for build, nobuild and upload only in the upload program) and pass `-e` with the requested environment, so that a targets, default_envs, upload, uploadfs, erase or custom target of the project is never run by build, test-host or test-device.
+"""
+
+verification = "The stand-in PlatformIO records its argv: build passes `run -e <env> -t buildprog`, test-device passes `--without-uploading --without-testing`, test-host passes `-e <native env>` with filters; a project whose env sets targets = upload is refused by preflight (finding targets) before any process."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/tests.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

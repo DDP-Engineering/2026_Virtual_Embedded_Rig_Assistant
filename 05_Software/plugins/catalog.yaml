@@ -1,7 +1,7 @@
 # Maintainers' file of the catalog (spec REQ-DATA-b40d3f9b §1.2). Only maintainers change it.
 format: 1
 # Plugins maintained by the VERA maintainers; every other catalog plugin is community.
-official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, scpi-instruments, lab-validation, hil-testing, gdb-debug, power-profiler, renode, zephyr]
+official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, scpi-instruments, lab-validation, hil-testing, gdb-debug, power-profiler, renode, zephyr, platformio]
 # Discovery facts are maintained separately from package manifests. Publication dates are genuinely
 # unknown until a catalog release record establishes them; do not infer them from commits/builds.
 metadata:
@@ -83,6 +83,9 @@ metadata:
   zephyr:
     activities: [build, testing, flash]
     keywords: [Zephyr, RTOS, west, Twister, ztest, CMake, Ninja, Zephyr SDK, devicetree, Kconfig, STM32F4]
+  platformio:
+    activities: [build, testing, flash]
+    keywords: [PlatformIO, pio, platformio.ini, Unity, unit test, native, STM32F4, CMSIS, firmware build, upload]
 # Rules below device-write whose pattern contains a dangerous token, accepted after review:
 # - { plugin: <id>, match: "<the rule's exact match>" }
 # Program names themselves contain efuse/secure. These exact low-risk rules cover reads,

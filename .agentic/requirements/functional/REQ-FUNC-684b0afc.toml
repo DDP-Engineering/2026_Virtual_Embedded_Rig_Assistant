@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-684b0afc"
+
+title = "Report PlatformIO tools and the core folder's installed packages without building"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio tools`, the platformio helper shall report its own version, the PlatformIO Core version it carries, its Python and, with a request, the platforms, tool packages and libraries installed in the request's core and libdeps folders with their versions and the SHA-256 of their manifest files, without starting PlatformIO's build engine or contacting the network.
+"""
+
+verification = "Run `tools` without and with a request against a core folder holding stand-in packages: the versions and the packages' versions and checksums appear; a core folder without platforms reports incomplete with code core-empty and a missing one is refused with code input; no process is started (fake call log empty)."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/packages.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

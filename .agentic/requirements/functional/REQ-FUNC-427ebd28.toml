@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-427ebd28"
+
+title = "Run host tests of a native environment with per-case results"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio test-host` for a request whose environment uses the native platform and names its test suites, the platformio helper shall run only those suites on the host and report every case as pass, fail, skipped or error from PlatformIO's own test report, with the run pass only when every case passed, fail when one failed, and incomplete otherwise; it shall refuse a non-native environment or a request without tests.
+"""
+
+verification = "Stand-in report with passed, failed, ignored and errored cases maps to fail; only-passed maps to pass; a suite with an IGNORE maps to incomplete; requesting the disco environment is refused environment; real opt-in with a host GCC runs the fixture's native suite (pass) and its failing variant (fail)."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/tests.py", "05_Software/plugins/platformio/scripts/pio_support/unity.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

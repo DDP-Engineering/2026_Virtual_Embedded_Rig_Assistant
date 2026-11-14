@@ -24,7 +24,10 @@ Windows; a JS220, a reference load, a sleep/wake board and native Ubuntu open); 
 same branch (AEGIS TASK-f059e085, offline evidence against an engine stand-in and the real Renode 1.17.0 on Windows;
 native Ubuntu open); LAB-07 implemented 2026-11-14 on the same branch (AEGIS TASK-287329c3, offline evidence against
 stand-ins and the real Zephyr 4.4.2, SDK 1.0.1, Twister, Renode 1.17.0 and STM32CubeProgrammer on Windows; a real board
-and native Ubuntu open); LAB-08 planned.
+and native Ubuntu open); LAB-08 implemented 2026-11-14 on the same branch (AEGIS TASK-b3344846, offline evidence
+with the real PlatformIO Core 6.2.0 parser and a PlatformIO stand-in, and real PlatformIO builds, native host tests
+and device tests on the real Renode on Windows with the approved downloads; a real board and native Ubuntu open), with the integrated acceptance report
+[embedded-lab-acceptance.md](embedded-lab-acceptance.md).
 
 ## Order
 
@@ -37,7 +40,7 @@ and native Ubuntu open); LAB-08 planned.
 | 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | implemented |
 | 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | implemented |
 | 7 | LAB-07 | [#108](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/108) | `zephyr` | Zephyr build, flash and tests through checked operations | implemented |
-| 8 | LAB-08 | [#109](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/109) | `platformio` | PlatformIO build, upload and tests, plus the integrated acceptance | planned |
+| 8 | LAB-08 | [#109](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/109) | `platformio` | PlatformIO build, upload and tests, plus the integrated acceptance | implemented |
 
 The order is the execution order of the initiative, not a runtime dependency chain: HIL can use the
 existing programmers before GDB exists, Renode accepts an ELF built elsewhere, PlatformIO works without
@@ -376,6 +379,76 @@ them.
     commands), L07-E on a real board (flash, a serial capture and a HIL test with Stop), the native Ubuntu half of L07-A
     (`REQ-PLAT-85d446fd`), native_sim/QEMU execution, runners other than stm32cubeprogrammer. The LAB-06 profile's
     72 MHz SysTick is a profile limitation reported to LAB-06, not changed here.
+
+## LAB-08 as built
+
+- Platform (VERA itself): no change. Upload reserves its probe through LAB-04's `probe` kind and the LAB-01 runner;
+  build and test runs reserve nothing (Stop is a tree kill, the progressive result.json carries the partial report,
+  as in LAB-06/07). Spec `.agentic/specs/REQ-DATA-865c8fbd.md`; section 9 holds the observed tool facts.
+- Package `05_Software/plugins/platformio/` (official, pack "Embedded lab" group "PlatformIO projects", activities
+  build/testing/flash), skill `platformio-projects`. Programs:
+  - `platformio` (`scripts/pio_tool.py`, PEP 723 with PlatformIO Core 6.2.0 and its whole dependency closure pinned;
+    PlatformIO runs as the helper's `python -m platformio`): `tools`, `inspect-project`, `inspect-environments`,
+    `artifacts`, `test-run` (safe); `build`, `test-host`, `test-device`, `clean` (device-write, host execution or
+    deletion); `prepare-packages` (device-write, network).
+  - `platformio-upload` (`scripts/pio_upload.py`, resources `--probe` kind probe): `upload` (device-write,
+    irreversible with `--firmware-effect actuates`), `tools`, `release`.
+- Verified matrix: `platformio/ststm32@20.0.0` + board `disco_f407vg` + framework `cmsis` (upload `stlink` through the
+  platform's tool-openocd), `platformio/native@1.2.1` with the user's host GCC, Unity 2.6.1.
+- Decisions:
+  - The request names the project folder, the environment (never `default_envs`), the PlatformIO core folder (never
+    `~/.platformio` implicitly), an owned buildDir, the test suites, the native host toolchain and approved hooks.
+  - platformio.ini is read by PlatformIO's own `ProjectConfig` in the project folder under the scrubbed environment
+    the build gets, so the preflight judges exactly what PlatformIO uses (the LAB-07 lesson about parser
+    differentials); options are judged under PlatformIO's current names (old spellings included).
+  - Preflight findings: extra scripts, library build scripts, custom test runners and local board files are approvable
+    by SHA-256; `!` items (raw split as PlatformIO splits, and effective), `${sysenv.*}`, `$` in script or library
+    paths, any `$` substitution SCons would evaluate as Python, `.pio-link` libraries, more than 256 library folders,
+    platform packages, inexact or non-registry platforms and libraries, custom upload or testing commands, `targets`,
+    PlatformIO folder options and extra_configs outside the project (refused before it is read) never.
+  - PlatformIO always gets `-e <env>` and explicit targets (`buildprog`; `nobuild` + `upload` only in the upload
+    program), its workspace and libdeps in the owned folder, telemetry and upgrade checks off, no `PLATFORMIO_*`
+    variable of the caller, and a closed loopback proxy except in prepare-packages, which installs the environment's
+    packages, tool-scons and the verified protocol's uploader with the user's own proxy. A missing platform, framework
+    package, toolchain, tool-scons or library is `packages-missing` before PlatformIO starts.
+  - Build results copy firmware.elf/.bin/.hex with SHA-256, record the effective options with their source sections,
+    the platform/package/library versions with manifest hashes, every project file's hash before and after
+    (input-changed), PlatformIO's RAM/Flash summary and the board limits, and diagnostics citing log lines.
+  - The owned buildDir carries a marker binding project, environment and core; build, test-host and test-device are
+    subfolders; `--pristine` and `clean` delete only those (never libdeps, the project's `.pio` or a link's target).
+  - test-host runs only named suites of a native environment and maps PlatformIO's JSON report per case
+    (fail > error > incomplete > pass; a skipped case is never a pass). test-device builds the suites' firmware only
+    (`incomplete`, `build-only`); test-run binds a renode-sim (virtual) or HIL (hardware) run of exactly that ELF and
+    parses Unity's output (a failure stays failed; a missing summary, count mismatch, reboot, ignored case or an
+    execution run that did not pass is `incomplete`). PlatformIO's own uploader and serial reader are not used for
+    device tests, so HIL keeps one programming path; a HIL plan takes the build's copied ELF and SHA-256 as firmware.
+  - Upload: protocol `stlink` only, no upload_flags of the project, the owned firmware equal to the build run's, the
+    probe serial passed to OpenOCD as `adapter serial`, physical state `unknown` once the upload starts.
+- Fixtures `tests/fixtures/platformio/`: `board-demo/` (environments `disco` and `disco_fast` (extends) for the
+  STM32F4DISCOVERY with the LAB-06 board-basics protocol, `native`; `common.ini` through extra_configs; `lib/lines`;
+  Unity suites `test_lines`, `test_skip`, `test_fail`; a custom unity_config for the CMSIS framework on USART2) and
+  `stand-ins/` (fake_pio.py and a fake core).
+- Criteria (Windows):
+  - Offline, by `tests/integration/platformio.test.ts` (the real PlatformIO 6.2.0 parser, the PlatformIO stand-in,
+    VERA's real runner for Stop and the probe lease): the mechanics of L08-A (two environments, separate folders,
+    distinct hashes, versions), L08-B (every finding, bypass forms from two review rounds), L08-C (host per case,
+    build-only, virtual and hardware records), L08-D (lease, BUSY, refusals, command line), L08-E (closed proxy,
+    packages-missing, prepare as the one network step), L08-F (Stop with no process left, failed build, clean,
+    invalid paths) and L08-G (test-run from renode/HIL records, a HIL plan on the build's ELF).
+  - Opt-in `VERA_PIO_REAL` (+ `VERA_PIO_REAL_GCC`, `VERA_RENODE_REAL`), run 2026-11-14 with the approved,
+    SHA-256-verified downloads in `D:\Temp\vera-pio` (spec section 9):
+    - L08-A/E: prepare-packages once, then offline builds of `disco` and `disco_fast` with distinct ELFs and the
+      recorded versions; a compile error is diagnosed from build.log.
+    - L08-C: native Unity on the host with WinLibs GCC 16.2.0: pass, incomplete (IGNORE) and fail; device suites
+      built only and judged from real Renode runs: pass, incomplete, fail (virtual).
+    - Step 6/7: the `disco` ELF passes all four board-basics cases on the LAB-06 profile.
+    - Found by the real runs and fixed: `pio run` installed Unity from PlatformIO's own caches behind the closed
+      proxy (now the framework is required whenever suites exist and the cache is disabled offline), and an upload
+      target requires every ststm32 uploader (now checked; `upload: true` makes prepare-packages install them).
+  - L08-H: [embedded-lab-acceptance.md](embedded-lab-acceptance.md) - partial: the report is complete; the steps that
+    need an instrument, probe, board or JS220 stay blocked.
+  - Open: L08-D on a real board (and OpenOCD reached through PlatformIO, which needs four more uploader packages),
+    test-device on a real board, native Ubuntu (`REQ-PLAT-c2031dc3`).
 
 ## Rules shared by the packages
 

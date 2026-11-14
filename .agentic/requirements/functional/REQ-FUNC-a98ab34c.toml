@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a98ab34c"
+
+title = "Build device tests only and take their verdict from a real run of the same ELF"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio test-device` the platformio helper shall only build the named device test suites (status incomplete, code build-only, each suite `built` with no case reported as executed) and keep each suite's firmware with its SHA-256, and `platformio test-run` shall take a verdict only from a renode-sim or HIL run whose firmware SHA-256 equals that ELF, parsing its Unity output, with a skipped, missing or truncated case, or an execution run that did not pass, incomplete and a failed case fail.
+"""
+
+verification = "test-device on the stand-in yields incomplete/build-only; test-run against a renode-sim run of another firmware is refused evidence-mismatch; console texts with all-pass, one IGNORE, one FAIL and no summary yield pass, incomplete, fail and incomplete; real opt-in with VERA_RENODE_REAL runs the device suite on the Renode profile."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/tests.py", "05_Software/plugins/platformio/scripts/pio_support/unity.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

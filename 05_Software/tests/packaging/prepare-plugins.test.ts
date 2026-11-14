@@ -47,6 +47,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["microchip-pymcuprog", "official"],
     ["ngspice", "official"],
     ["parts-search", "official"],
+    ["platformio", "official"],
     ["power-profiler", "official"],
     ["probe-rs", "official"],
     ["renode", "official"],

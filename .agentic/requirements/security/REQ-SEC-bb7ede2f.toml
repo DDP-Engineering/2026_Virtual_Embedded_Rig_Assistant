@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-bb7ede2f"
+
+title = "Build and test offline; refuse missing packages instead of installing them"
+
+status = "active"
+
+requirement = """
+While running PlatformIO for an operation other than prepare-packages, the platformio helper shall give it only a scrubbed environment (system variables, the request's core folder, the owned workspace and libdeps folders, telemetry and upgrade checks disabled, a closed loopback proxy for every network client, PlatformIO's caches disabled and replaced by an empty cache folder of the run) and, if the exact platform version, a framework package the platform manifest names for the environment, a toolchain package, the tool-scons build engine or a declared library (the test framework whenever the project has test suites) is not installed in the core or libdeps folder, shall refuse with code packages-missing before PlatformIO starts instead of letting it install anything.
+"""
+
+verification = "The stand-in records its environment: no PLATFORMIO_* variable of the caller (PLATFORMIO_EXTRA_SCRIPTS, PLATFORMIO_BUILD_FLAGS set by the test), HTTP(S)_PROXY = http://127.0.0.1:9, telemetry off; removing a package from the core folder refuses build with packages-missing; real opt-in: the fixture builds with the loopback proxy after prepare-packages."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/environment.py", "05_Software/plugins/platformio/scripts/pio_support/packages.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

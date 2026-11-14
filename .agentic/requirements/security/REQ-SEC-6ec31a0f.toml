@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-6ec31a0f"
+
+title = "Classify PlatformIO operations by their effective risk"
+
+status = "active"
+
+requirement = """
+The platformio plugin's rules shall rate tools, inspect-project, inspect-environments, artifacts and test-run safe, build, test-host, test-device and clean device-write as host execution or deletion, prepare-packages device-write as a network step, upload device-write and irreversible with --firmware-effect actuates and upload's release safe, leaving every unmatched call at VERA's default device-write.
+"""
+
+verification = "classifyCommand over the manifest rules for each operation and for an unknown subcommand gives the stated risks, the notes name host execution, the network and approval not being a sandbox."
+
+affected_paths = ["05_Software/plugins/platformio/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14
