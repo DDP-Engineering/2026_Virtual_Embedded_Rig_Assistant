@@ -53,3 +53,4 @@
     - { name: MQTT telemetry and commands, plugins: [mqtt-tools], default: true }
     - { name: BLE devices (GATT), plugins: [ble-tools], default: true }
     - { name: Cloud simulation (Wokwi), plugins: [wokwi], default: false }
+    - { name: Raspberry Pi Linux projects, plugins: [raspberry-pi-linux], default: false }

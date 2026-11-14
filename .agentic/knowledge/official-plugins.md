@@ -74,6 +74,14 @@ watch loop, outcome.py the outcome table, collect.py, redact.py, report.py) with
 tests/integration/wokwi.test.ts with tests/support/fake-wokwi-cli.py owns its coverage - offline evidence plus the real
 wokwi-cli 0.29.1 offline (VERA_TEST_WOKWI_CLI), never a cloud run. Its workspace.py is a byte-identical copy of mqtt-tool's;
 the token hand-off is platform behaviour, see [Plugins](plugins.md).
+For raspberry-pi-linux, start at plugins/raspberry-pi-linux/plugin.yaml, scripts/pi_tool.py and scripts/pi_support/ (cli.py
+dispatch, registry.py the linux-board entries, project.py vera-pi.json and its files, ssh.py the pinned host key, agent
+authentication and remote calls, remote.py the two constant commands, operations.py every operation, report.py) and the
+board-side scripts/remote/vera_pi_remote.py, with spec .agentic/specs/REQ-DATA-44547a17.md;
+tests/integration/raspberry-pi-linux.test.ts with tests/support/pi-test-sshd.py and pi-test-agent.py owns its coverage -
+SSH protocol and real-Linux evidence (WSL on Windows), never proof of a Raspberry Pi. Its workspace.py and lifecycle.py
+are byte-identical copies of ble-tool's; the board lease and the agent socket are platform behaviour, see
+[Plugins](plugins.md).
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -607,6 +615,43 @@ that source metadata reaches the deterministic bundled index unchanged.
   `serial.log`, optional `trace.vcd`/`screenshot.png`; report writes report.json/.md/.html and junit.xml; exit 0/1/2/3.
   Verified offline against the fake CLI and with the real wokwi-cli 0.29.1 (version, offline lint, argument
   acceptance up to its missing-token check); no cloud run (no token by the user's decision), native Ubuntu not run.
+- `raspberry-pi-linux` 1.0.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
+  activities `testing`, `debug`), Windows x64 and Linux x64; VERA stays on the host and reaches the board over SSH.
+  Program `pi-tool` = `scripts/pi_tool.py` (PEP 723, `asyncssh==2.24.1`, `cryptography==49.0.0`,
+  `typing-extensions==4.16.0`), env `PI_REGISTRY`, `resources {option: --board, kinds: [linux-board], grace: 10,
+  cleanup: [stop-owned], cleanupTimeout: 60}`, `sshAgent: true`, timeout 120 s. Rules: capabilities, inspect-project,
+  report safe; check-host-key, identify, task-status, service-status, collect-logs device-read; install-helper,
+  deploy-candidate, apply-candidate (600 s), run-task (3600 s), service-start/stop, stop-owned device-write;
+  apply-candidate `--overwrite` irreversible. The host key is accepted only when its SHA-256 fingerprint is in the
+  entry's hostKeys (callable known_hosts, `~/.ssh/known_hosts` and `~/.ssh/config` never read, no host certificates):
+  otherwise `host-key-unpinned`/`host-key-changed` before authentication; check-host-key stops before login.
+  Authentication is public key from the system agent only (SSH_AUTH_SOCK, else Pageant or the OpenSSH pipe on Windows,
+  `agentKey` filters), codes `agent-unavailable`, `agent-key-missing`, `auth-failed`, `unreachable`, `timeout`. Exec
+  requests are only `/usr/bin/python3 -I -c '<install stub>'` and `... '<run stub>'` built from the helper version and
+  SHA-256; requests and file bytes go on stdin. install-helper writes `~/.local/share/vera-pi/1.0.0/vera_pi_remote.py`
+  (0600, hash-checked; installed / already-installed / replaced); the run stub refuses `helper-missing` /
+  `helper-changed`. The helper checks the login user (not root), the declared serial/machine id/model
+  (`identity-mismatch`) and the root (exists, not a link, owned, not group/world-writable: `root-invalid`). vera-pi.json:
+  name, files (folders expand, `exclude`, no `..`/absolute/backslash/`.vera-pi`/links, 512 files, 16 MiB each, 64 MiB),
+  hardware, tasks (argv[0] `python3` or a listed file, else `command-not-allowed`; budgetS 1-3500, output 1 KiB-16 MiB,
+  extraArgs, actuates) and services (user `.service` units). deploy-candidate stages into
+  `<root>/.vera-pi/candidates/<id>/` and classifies new/changed/unchanged/conflict (neither the candidate's nor the last
+  applied hash) plus remoteOnly; candidate.json in the run folder. apply-candidate checks the board's own plan, staged
+  hashes (`candidate-changed`) and base hashes (`conflict`) before renaming new/changed/`--overwrite` files, records
+  `projects/<name>.json`, unlinks only its staged files and never deletes a project file. run-task: a detached supervisor
+  (new session) starts the task in its own process group, copies stdout/stderr through itself up to the limit, ends the
+  group at budget/limit/stop file (SIGTERM, SIGKILL after 3 s) and records handle, PID, `/proc` start time, boot id
+  and the end; states exited, budget-exceeded, output-limit, stopped, start-failed, supervisor-lost, lost-by-reboot
+  (never signalled). pi-tool polls task-wait, forwards VERA's stop file (remote `confirmed` or `unknown`), and on a
+  lost connection ends `connection-lost` with remote unknown; stop-owned retries an unreachable board 3 times, 3 s
+  apart. Services: `systemctl --user --no-ask-password start|stop|show` on listed units only (`service-not-allowed`),
+  results report `linger` (/var/lib/systemd/linger/<user>) and keepRunning warns `keeps-running`, or `no-linger` when
+  the service would stop with the SSH session; a starting record whose supervisor is gone is start-failed; group members
+  that outlive a lost supervisor keep the task running and pi-tool ends them (`supervisor-lost`); staging removes the
+  project's earlier candidates and its own partial folder; an ELF built on Windows deploys 0755; collect-logs writes `journalctl --user -o json -n N -u UNIT` lines (N 1-2000) and
+  task log tails. Results `pi-tool-result`, `report.md`, report.html for report; exit 0/1/2/3. Verified against the
+  local asyncssh test server with commands in WSL Ubuntu 24.04 (systemd user manager); no Raspberry Pi, native Ubuntu
+  not run.
 
 ## Invariants
 
@@ -943,6 +988,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   `outcome`, `collect`, `operations`, `report`, `workspace` shared).
 - `05_Software/tests/integration/wokwi.test.ts`, `tests/support/fake-wokwi-cli.py` (scripted wokwi-cli recording argv, cwd,
   WOKWI_* environment and the project listing).
+- `05_Software/plugins/raspberry-pi-linux/` — manifest, README, skills raspberry-pi-projects and raspberry-pi-tasks,
+  `scripts/pi_tool.py` (entry), `scripts/pi_support/` (`cli`, `registry`, `project`, `ssh`, `remote`, `operations`,
+  `report`, `lifecycle` and `workspace` shared), `scripts/remote/vera_pi_remote.py` (board-side helper, stdlib only).
+- `05_Software/tests/integration/raspberry-pi-linux.test.ts`, `tests/support/pi-test-sshd.py` (asyncssh server running
+  exec requests as `sh -c` on this Linux host or in WSL, logging auth and exec), `tests/support/pi-test-agent.py` (SSH agent
+  on a named pipe or Unix socket), `tests/fixtures/raspberry-pi-linux/project/`.
 - `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
   support package.
 - `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).

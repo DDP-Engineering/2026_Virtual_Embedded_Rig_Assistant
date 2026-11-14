@@ -178,6 +178,11 @@ storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PAS
 and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
 changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
 
+SSH agent socket (REQ-SEC-adb91424): a program of an official plugin that declares `sshAgent: true` gets
+`RunRequest.inherit: ["SSH_AUTH_SOCK"]`, so the runner copies the host's SSH_AUTH_SOCK (when set) into that run's
+and its cleanup run's environment; prepare refuses the declaration of any other tier before approval. No other
+program receives it, and no key or password passes through VERA.
+
 ## Authoring
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
@@ -231,9 +236,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   backend? py|ivi, limits?, note?; kind `bus-adapter`: alias, backend `bus-pirate-bpio2`, resource and terminal (COM<n> or
   /dev paths, different), identity `usb:<vid>:<pid>:<serial>`, power? {maxMv 800-5000, maxMa 1-500}, note?; kind
   `ble-device`: alias, address (six hex octets), addressType public|random (random only static), profile, serial?,
-  adapter? hci0-hci99, note?),
+  adapter? hci0-hci99, note?; kind `linux-board`: alias, host, port, user (not root), hostKeys 0-4 `SHA256:` fingerprints,
+  agentKey?, identity {serial?, machineId?, model?} with serial or machineId, root (absolute, 2-16 safe segments), note?),
   `visaResourceKeys(resource, serial?)`, `labResourceKeys(entry)` (bus-adapter: `serial:<resource>`, `serial:<terminal>`,
-  identity lower-cased; ble-device: `ble:<address lower-case>`; claimedResources reports its address as the resource),
+  identity lower-cased; ble-device: `ble:<address lower-case>`; claimedResources reports its address as the resource;
+  linux-board: `ssh:<host lower-case>:<port>`, resource `<user>@<host>:<port>`),
   `serialPortKey(port)`; manifest program field `resources`; approval payload `resources [{alias, kind, resource}]` with
   `registry {path, sha256}` (both or neither).
 - Leases (core `leases.ts`): `leaseRoot({platform, env, tmpdir, uid?})`, `leaseFileName(key)`, `new ResourceLeases({root,

@@ -257,6 +257,11 @@ const programSchema = z
         scope: pluginCredentialScopeSchema,
       })
       .optional(),
+    /**
+     * The program authenticates through the system SSH agent: the runner gives it (and its cleanup run) the host's
+     * SSH_AUTH_SOCK, only for an official plugin (REQ-SEC-adb91424). The agent's keys never leave the agent.
+     */
+    sshAgent: z.literal(true).optional(),
   })
   .superRefine((program, ctx) => {
     if (Boolean(program.launcher) !== Boolean(program.launcherMode))

@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * The workbench registry of bench resources, `lab/resources.json` (spec REQ-DATA-f2cbfc23 §1). One file per
  * workbench: the host reads its identity fields to reserve resources, plugin helpers read the whole entry. Identity
- * kinds are data (`visa`, `bus-adapter`, `ble-device`); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
+ * kinds are data (`visa`, `bus-adapter`, `ble-device`, `linux-board`); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
  */
 export const LAB_REGISTRY_PATH = "lab/resources.json";
 export const LAB_REGISTRY_BYTES = 256 * 1024;
@@ -101,9 +101,67 @@ const bleDeviceEntrySchema = z
       entry.addressType === "public" || (Number.parseInt(entry.address.slice(0, 2), 16) & 0xc0) === 0xc0,
     { path: ["address"], message: "A random address must be static; private addresses change." },
   );
-export const labResourceSchema = z.union([visaEntrySchema, busAdapterEntrySchema, bleDeviceEntrySchema]);
+/** A SHA-256 key fingerprint as OpenSSH prints it (`SHA256:` and 43 unpadded base64 characters). */
+const fingerprint = z.string().regex(/^SHA256:[A-Za-z0-9+/]{43}$/, "Use SHA256:<43 base64 characters>.");
+const rootSegment = /^[A-Za-z0-9._-]+$/;
+/**
+ * Kind `linux-board` (spec REQ-DATA-f2cbfc23 §1): a Linux board (a Raspberry Pi) the raspberry-pi-linux plugin reaches
+ * over SSH as an unprivileged `user`, accepting only a host key whose fingerprint `hostKeys` pins, checking the board's
+ * `identity` and working below the absolute remote `root`.
+ */
+const linuxBoardEntrySchema = z.strictObject({
+  alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+  kind: z.literal("linux-board"),
+  host: z
+    .string()
+    .regex(
+      /^(?:[A-Za-z0-9](?:[A-Za-z0-9.-]{0,252})|[0-9A-Fa-f:.]{2,45})$/,
+      "Use a host name, an IPv4 address or an IPv6 address without brackets.",
+    ),
+  port: z.number().int().min(1).max(65_535),
+  user: z
+    .string()
+    .regex(/^[a-z_][a-z0-9_-]{0,31}$/, "Use a lower-case login name.")
+    .refine((user) => user !== "root", "Use an unprivileged user; root is refused."),
+  hostKeys: z.array(fingerprint).max(4),
+  agentKey: fingerprint.optional(),
+  identity: z
+    .strictObject({
+      serial: z
+        .string()
+        .regex(/^[0-9A-Fa-f]{8,32}$/)
+        .optional(),
+      machineId: z
+        .string()
+        .regex(/^[0-9a-f]{32}$/)
+        .optional(),
+      model: printable(128).optional(),
+    })
+    .refine((identity) => identity.serial !== undefined || identity.machineId !== undefined, {
+      message: "Declare the board's serial or machine id.",
+    }),
+  root: z
+    .string()
+    .max(256)
+    .refine((root) => {
+      const segments = root.split("/");
+      return (
+        segments[0] === "" &&
+        segments.length >= 3 &&
+        segments.length <= 17 &&
+        segments.slice(1).every((segment) => rootSegment.test(segment) && segment !== "." && segment !== "..")
+      );
+    }, "Use an absolute path of 2 to 16 segments of letters, digits, dot, underscore and dash, without . or ..."),
+  note: z.string().max(256).optional(),
+});
+export const labResourceSchema = z.union([
+  visaEntrySchema,
+  busAdapterEntrySchema,
+  bleDeviceEntrySchema,
+  linuxBoardEntrySchema,
+]);
 export type LabResource = z.infer<typeof labResourceSchema>;
-export const labResourceKindSchema = z.enum(["visa", "bus-adapter", "ble-device"]);
+export const labResourceKindSchema = z.enum(["visa", "bus-adapter", "ble-device", "linux-board"]);
 export type LabResourceKind = z.infer<typeof labResourceKindSchema>;
 
 export const labRegistrySchema = z
@@ -196,5 +254,6 @@ export function labResourceKeys(entry: LabResource): string[] {
   if (entry.kind === "bus-adapter")
     return [serialPortKey(entry.resource), serialPortKey(entry.terminal), entry.identity.toLowerCase()];
   if (entry.kind === "ble-device") return [`ble:${entry.address.toLowerCase()}`];
+  if (entry.kind === "linux-board") return [`ssh:${entry.host.toLowerCase()}:${entry.port}`];
   return visaResourceKeys(entry.resource, entry.serial);
 }

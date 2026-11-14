@@ -360,6 +360,10 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
   const mode = ctx.permissionMode?.() ?? "ask";
   if (programPolicy(mode, first.prepared.risk, first.prepared.trial) === "refuse")
     throw refusal(first.prepared, mode);
+  if (first.declared.sshAgent && first.plugin.record.tier !== "official")
+    throw Error(
+      `Plugin ${first.plugin.manifest.id} asks for the system SSH agent, which only official plugins receive.`,
+    );
   const reference = credentialReference(programs.host, first.plugin, first.declared, args.args ?? []);
   if (reference && !(await programs.host.credentials?.has(reference.scope, reference.ref, signal)))
     throw notStored(reference.scope, reference.ref);
@@ -411,6 +415,10 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
             // The helper refuses a registry other than the approved one (also in the cleanup run).
             ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
           },
+          // The agent socket only for an official program declaring it (REQ-SEC-adb91424); its keys stay in the agent.
+          ...(current.declared.sshAgent && current.plugin.record.tier === "official"
+            ? { inherit: ["SSH_AUTH_SOCK"] }
+            : {}),
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
           ...(input === undefined ? {} : { input }),
           background,

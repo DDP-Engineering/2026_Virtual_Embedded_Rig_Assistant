@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-cf78987c"
+
+title = "Run a declared task under a remote supervisor with a handle, PID and budget"
+
+status = "active"
+
+requirement = "When run-task runs, the remote helper shall start the declared task through a detached supervisor that records a handle, the task's PID, process start time and boot id, the budget and output limit, and pi-tool shall wait for its end and report exit code or signal, duration and the stdout and stderr logs."
+
+verification = "run-task of the fixture task passes with exit 0, a PID, the handle and logs holding its output; a task exiting 3 ends fail with exit code 3."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

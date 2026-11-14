@@ -175,6 +175,13 @@ host's toolchain Python 3.12), with the scripted fake tests/support/fake-wokwi-c
 is used, and its SIGTERM case runs only on Linux. Opt-in VERA_TEST_WOKWI_CLI names the real wokwi-cli 0.29.1 for offline
 version, `lint --offline` and argument checks; it passed on Windows 11 on 2026-11-14 with wokwi-cli-win-x64.exe from the
 v0.29.1 GitHub release (sha256 45292e3c...83b2) in a scratch folder.
+tests/integration/raspberry-pi-linux.test.ts runs pi-tool, tests/support/pi-test-sshd.py and pi-test-agent.py under the
+same Python, which must have asyncssh 2.24.1 (installed on this host with `pip install --user asyncssh==2.24.1` from PyPI on
+2026-11-14; cryptography 49.0.0 was present). Its SSH block needs a Linux shell with /usr/bin/python3: this host on Linux,
+the default WSL distribution on Windows (Ubuntu 24.04 here, x86_64, systemd user manager running); it creates a
+/tmp/vera-pi-test-* home there and a runtime user unit in $XDG_RUNTIME_DIR/systemd/user, both removed afterwards, and
+connects only to 127.0.0.1. VERA_TEST_PI_REMOTE=none skips it. About 90 s on Windows with WSL. WSL is Linux evidence,
+not a Raspberry Pi and not native Ubuntu.
 tests/integration/serial-monitor.test.ts runs the serial-monitor script under the toolchain's Python 3.11+ (`python` on
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a

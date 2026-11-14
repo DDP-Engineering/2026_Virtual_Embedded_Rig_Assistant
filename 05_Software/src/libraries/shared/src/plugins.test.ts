@@ -157,6 +157,18 @@ it("reports the field path of each invalid manifest field", () => {
   expect(paths({ ...canonical, id: "Bad_ID", name: "" })).toEqual(["id", "name"]);
 });
 
+// REQ-SEC-adb91424
+it("accepts sshAgent: true on a program and nothing else", () => {
+  const withAgent = (sshAgent: unknown) => ({
+    ...canonical,
+    programs: { esptool: { ...program, sshAgent } },
+  });
+  expect(paths(withAgent(true))).toEqual([]);
+  expect(validatePluginManifest(withAgent(true)).manifest?.programs.esptool?.sshAgent).toBe(true);
+  expect(paths(withAgent(false))).toEqual(["programs.esptool.sshAgent"]);
+  expect(paths(withAgent("/run/agent.sock"))).toEqual(["programs.esptool.sshAgent"]);
+});
+
 // REQ-DATA-e6b1fa1a
 it("accepts a credentials declaration with the mqtt or wokwi scope only", () => {
   const withCredentials = (credentials: unknown) => ({

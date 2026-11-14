@@ -16,6 +16,28 @@ it("preserves only Windows PATHEXT case-insensitively for plugin launchers", () 
   expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("PATHEXT");
 });
 
+// REQ-SEC-adb91424, REQ-SEC-f5c114de: SSH_AUTH_SOCK only for a run that inherits it.
+it("copies an inherited host variable such as SSH_AUTH_SOCK only when the run asks for it", () => {
+  const env = { SSH_AUTH_SOCK: "/run/user/1000/agent.sock", HOME: "/home/me" };
+  expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("SSH_AUTH_SOCK");
+  expect(programEnvironment(new FakeHost("linux", env), [], {}, ["SSH_AUTH_SOCK"])).toEqual({
+    HOME: "/home/me",
+    SSH_AUTH_SOCK: "/run/user/1000/agent.sock",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+  expect(
+    programEnvironment(new FakeHost("win32", { ssh_auth_sock: "x" }), [], {}, ["SSH_AUTH_SOCK"]),
+  ).toEqual({
+    SSH_AUTH_SOCK: "x",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+  expect(programEnvironment(new FakeHost("linux", {}), [], {}, ["SSH_AUTH_SOCK"])).not.toHaveProperty(
+    "SSH_AUTH_SOCK",
+  );
+});
+
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 let root = "";
 let host: FakeHost;

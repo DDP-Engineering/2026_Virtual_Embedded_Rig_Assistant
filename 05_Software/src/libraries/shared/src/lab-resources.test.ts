@@ -154,6 +154,68 @@ describe("ble-device entries", () => {
   });
 });
 
+describe("linux-board entries (REQ-DATA-6c8b61c9)", () => {
+  const FP = "SHA256:poL9IyoPcWFvRhSsEZrF7kHtkUwKG1XT7/5iI+t95OQ";
+  const board = (fields: Record<string, unknown> = {}) => ({
+    alias: "pi",
+    kind: "linux-board",
+    host: "Pi.Local",
+    port: 22,
+    user: "vera",
+    hostKeys: [FP],
+    identity: { serial: "10000000abcdef01" },
+    root: "/home/vera/vera-projects",
+    ...fields,
+  });
+  it("accepts a Raspberry Pi and keys it by host and port", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [
+        entry(),
+        board({ agentKey: FP, note: "bench Pi" }),
+        board({
+          alias: "wsl",
+          host: "127.0.0.1",
+          port: 2222,
+          hostKeys: [],
+          identity: {
+            machineId: "bc0b1006b5a746f78ab732682c62598c",
+            model: "Raspberry Pi 5 Model B Rev 1.0",
+          },
+        }),
+      ],
+    });
+    expect(labResourceKeys(parsed.resources[1] as never)).toEqual(["ssh:pi.local:22"]);
+    expect(labResourceKeys(parsed.resources[2] as never)).toEqual(["ssh:127.0.0.1:2222"]);
+  });
+  it("refuses root, unsafe roots, malformed fingerprints, a missing identity and unknown keys", () => {
+    const bad = [
+      board({ user: "root" }),
+      board({ user: "Vera" }),
+      board({ root: "relative/path" }),
+      board({ root: "/home/vera/../etc" }),
+      board({ root: "/home/vera/./x" }),
+      board({ root: "/" }),
+      board({ root: "/srv" }),
+      board({ root: "/home/vera/with space" }),
+      board({ hostKeys: ["poL9IyoPcWFvRhSsEZrF7kHtkUwKG1XT7/5iI+t95OQ"] }),
+      board({ hostKeys: [FP, FP, FP, FP, FP] }),
+      board({ agentKey: "MD5:aa" }),
+      board({ identity: {} }),
+      board({ identity: { model: "Raspberry Pi 5" } }),
+      board({ identity: { serial: "xyz" } }),
+      board({ port: 0 }),
+      board({ host: "pi;rm -rf" }),
+      board({ password: "secret" }),
+    ];
+    for (const value of bad)
+      expect(
+        labRegistrySchema.safeParse({ format: 1, resources: [value] }).success,
+        JSON.stringify(value),
+      ).toBe(false);
+  });
+});
+
 describe("VISA identity keys", () => {
   const same = (left: string, right: string) =>
     expect(visaResourceKeys(left)).toEqual(visaResourceKeys(right));

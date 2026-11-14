@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "kind": "vera-pi-project",
+  "name": "vera-fixture",
+  "files": ["app.py", "run.sh", "config.json", "dir with space"],
+  "exclude": ["__pycache__"],
+  "hardware": { "actuates": false, "note": "The fixture drives no hardware." },
+  "tasks": {
+    "selftest": { "argv": ["python3", "app.py", "--selftest"], "budgetS": 30 },
+    "echo": {
+      "argv": ["python3", "app.py", "--echo", "two words", "; touch pwned-by-argument"],
+      "budgetS": 30,
+      "extraArgs": true
+    },
+    "script": { "argv": ["run.sh", "one arg"], "budgetS": 30 },
+    "long": { "argv": ["python3", "app.py", "--sleep", "120"], "budgetS": 300 },
+    "family": { "argv": ["python3", "app.py", "--family"], "budgetS": 300 },
+    "quiet": { "argv": ["python3", "app.py", "--hold", "120"], "budgetS": 300 },
+    "over-budget": { "argv": ["python3", "app.py", "--sleep", "60"], "budgetS": 2 },
+    "spam": { "argv": ["python3", "app.py", "--spam"], "budgetS": 30, "outputLimitBytes": 4096 },
+    "fail": { "argv": ["python3", "app.py", "--exit", "3"], "budgetS": 30 }
+  },
+  "services": {
+    "vera-fixture.service": { "keepRunning": true, "actuates": false, "note": "Prints a heartbeat." }
+  }
+}

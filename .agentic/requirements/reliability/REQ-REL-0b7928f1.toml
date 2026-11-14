@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-0b7928f1"
+
+title = "Stop the owned task when VERA stops the run"
+
+status = "active"
+
+requirement = "When VERA requests a stop during run-task, runs the stop-owned cleanup, or pi-tool finds the task's supervisor gone while members of its process group run, pi-tool shall have the owned task's process group ended, confirm that neither the recorded PID with its start time and boot id nor a group member started since then and carrying the task's VERA_TASK_HANDLE runs (a lost supervisor with nothing left is recorded supervisor-lost for good), and report the remote state confirmed or unknown, never signalling a process by name or one whose start time differs."
+
+verification = "A stop file during a long task gives incomplete stopped with remote confirmed and the PID gone; stop-owned after a lost connection stops the recorded task; after the supervisor and the leader are killed, pi-tool ends supervisor-lost with remote confirmed and no process of the group left; a task whose supervisor is gone and whose recorded start time differs is reported supervisor-lost, skipped by stop-owned and its process is not signalled."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

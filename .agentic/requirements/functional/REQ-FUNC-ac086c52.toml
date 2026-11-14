@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-ac086c52"
+
+title = "Install the remote helper only as an explicit operation"
+
+status = "active"
+
+requirement = "When install-helper runs, pi-tool shall write the bundled remote helper to `~/.local/share/vera-pi/<version>/vera_pi_remote.py` on the board through the constant install command, which checks the received bytes against the bundled SHA-256 before writing, and shall report installed or already-installed with the path and hash; no other operation installs or updates it."
+
+verification = "install-helper against the test server creates the file with the bundled hash and mode 0600; a second call reports already-installed, and after the file changed it reports replaced; identify before install ends helper-missing."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-12ea8292"
+
+title = "Collect bounded task and service logs"
+
+status = "active"
+
+requirement = "When collect-logs runs, pi-tool shall write the last lines (at most 2000) of each listed service's user journal and the bounded stdout and stderr tails of the named task handles into the run folder and report their sizes."
+
+verification = "collect-logs after a service start writes its journal lines holding the service's output and reports their count; a task handle's logs are copied into task-<handle>-stdout.log; --lines 5000 is refused with usage."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -30,7 +30,7 @@ VISA = re.compile(
     r"|GPIB\d*::\d{1,2}(?:::\d{1,3})?::INSTR)"
 )
 KEYS = {"alias", "kind", "resource", "serial", "profile", "backend", "limits", "note"}
-OTHER_KINDS = ("bus-adapter", "ble-device")
+OTHER_KINDS = ("bus-adapter", "ble-device", "linux-board")
 
 
 @dataclass(frozen=True)
@@ -132,7 +132,7 @@ def load() -> Registry:
     resources = document["resources"]
     if not isinstance(resources, list) or not 1 <= len(resources) <= 64:
         raise Refused("request", "lab/resources.json declares 1 to 64 resources.")
-    # Entries of other identity kinds (bus-adapter, ble-device) belong to other plugins: VERA validated them, scpi skips them.
+    # Entries of other identity kinds (bus-adapter, ble-device, linux-board) belong to other plugins: VERA validated them, scpi skips them.
     others = {
         str(raw.get("alias")): str(raw.get("kind"))
         for raw in resources

@@ -43,6 +43,11 @@ export interface RunRequest {
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
   /**
+   * Host variables this run also receives beyond the allowlist (SSH_AUTH_SOCK for a program declaring sshAgent,
+   * REQ-SEC-adb91424), copied when the host has them; the cleanup run receives them too.
+   */
+  inherit?: readonly string[];
+  /**
    * Written to stdin, which is then closed (a credential line, spec REQ-DATA-96d18686 section 1); never logged or
    * recorded. Without it stdin is closed from the start.
    */
@@ -227,6 +232,7 @@ export function programEnvironment(
   host: ProcessHost,
   toolPaths: readonly string[],
   own: Readonly<Record<string, string>> = {},
+  inherit: readonly string[] = [],
 ): Record<string, string> {
   const windows = host.platform === "win32";
   const same = (left: string, right: string) =>
@@ -241,7 +247,9 @@ export function programEnvironment(
   for (const [name, value] of Object.entries(host.env)) {
     if (value === undefined) continue;
     const inherited = INHERITED.find((candidate) => same(candidate, name));
+    const requested = inherit.find((candidate) => same(candidate, name));
     if (inherited) set(inherited, value);
+    else if (requested) set(requested, value);
     else if (windows && same(name, "PATHEXT")) set("PATHEXT", value);
     else if ((windows ? name.toUpperCase() : name).startsWith("LC_")) set(name, value);
   }
@@ -354,10 +362,12 @@ class Run implements ProgramRun {
     this.started = performance.now();
     const child = host.spawn(this.request.executable, this.request.args, {
       cwd,
-      env: programEnvironment(host, this.settings.toolPaths, {
-        ...this.request.env,
-        ...this.supervisionEnv(),
-      }),
+      env: programEnvironment(
+        host,
+        this.settings.toolPaths,
+        { ...this.request.env, ...this.supervisionEnv() },
+        this.request.inherit,
+      ),
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
       ...(this.request.input === undefined ? {} : { input: this.request.input }),
@@ -489,11 +499,12 @@ class Run implements ProgramRun {
       const decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
       const child = host.spawn(this.request.executable, cleanup.args, {
         cwd: this.cwd,
-        env: programEnvironment(host, this.settings.toolPaths, {
-          ...this.request.env,
-          VERA_RUN_CONTROL: control,
-          VERA_CLEANUP_OF: this.id,
-        }),
+        env: programEnvironment(
+          host,
+          this.settings.toolPaths,
+          { ...this.request.env, VERA_RUN_CONTROL: control, VERA_CLEANUP_OF: this.id },
+          this.request.inherit,
+        ),
         group: host.platform !== "win32",
         output: (stream, chunk) => this.append(decoders[stream].write(chunk)),
       });

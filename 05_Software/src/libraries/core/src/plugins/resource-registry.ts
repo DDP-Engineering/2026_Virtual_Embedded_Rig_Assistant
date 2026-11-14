@@ -103,7 +103,12 @@ export async function claimedResources(
     return Object.freeze({
       alias,
       kind: entry.kind,
-      resource: entry.kind === "ble-device" ? entry.address : entry.resource,
+      resource:
+        entry.kind === "ble-device"
+          ? entry.address
+          : entry.kind === "linux-board"
+            ? `${entry.user}@${entry.host}:${entry.port}`
+            : entry.resource,
       keys: Object.freeze(labResourceKeys(entry)),
     });
   });

@@ -166,6 +166,40 @@ describe("credential hand-off (REQ-SEC-3f57f781)", () => {
   });
 });
 
+describe("SSH agent socket (REQ-SEC-adb91424)", () => {
+  const withAgent = (tier: "official" | "local") => {
+    const plugin = mqttPlugin(tier);
+    const declared = plugin.manifest.programs["mqtt-tool"] as NonNullable<
+      (typeof plugin.manifest.programs)[string]
+    >;
+    const { credentials: _credentials, ...rest } = declared;
+    return {
+      ...plugin,
+      manifest: { ...plugin.manifest, programs: { "mqtt-tool": { ...rest, sshAgent: true as const } } },
+    };
+  };
+  it("gives an official program declaring sshAgent the host's SSH_AUTH_SOCK, and no other program", async () => {
+    host = new FakeHost("linux", { PATH: "/usr/bin", SSH_AUTH_SOCK: "/run/user/1000/ssh-agent.sock" });
+    runner = new ProgramRunner({ host, clock: { sleep: async () => {} } });
+    plugins = [withAgent("official")];
+    const result = (await prepare(["identify", "--board", "pi"])).apply(signal());
+    await vi.waitFor(() => expect(host.programs).toHaveLength(1));
+    expect(host.programs[0]?.options.env?.SSH_AUTH_SOCK).toBe("/run/user/1000/ssh-agent.sock");
+    host.programs[0]?.finish({ code: 0, signal: null });
+    await result;
+    plugins = [mqttPlugin()];
+    const other = (await prepare(["check-profile"])).apply(signal());
+    await vi.waitFor(() => expect(host.programs).toHaveLength(2));
+    expect(host.programs[1]?.options.env).not.toHaveProperty("SSH_AUTH_SOCK");
+    host.programs[1]?.finish({ code: 0, signal: null });
+    await other;
+  });
+  it("refuses a non-official plugin declaring sshAgent before approval", async () => {
+    plugins = [withAgent("local")];
+    await expect(prepare(["identify"])).rejects.toThrow(/SSH agent.*official/);
+  });
+});
+
 describe("official plugins only (REQ-SEC-dbbd21e5)", () => {
   it.each(["local", "community"] as const)(
     "refuses a %s plugin's credential call before approval",

@@ -51,6 +51,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["ngspice", "official"],
     ["parts-search", "official"],
     ["probe-rs", "official"],
+    ["raspberry-pi-linux", "official"],
     ["scpi-instruments", "official"],
     ["serial-monitor", "official"],
     ["sigrok", "official"],

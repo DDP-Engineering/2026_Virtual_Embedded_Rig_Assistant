@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-44547a17"
+
+title = "pi-tool contract: operations, inputs, remote calls, results and exit codes"
+
+status = "active"
+
+requirement = "The raspberry-pi-linux plugin's pi-tool shall accept exactly the operations, options, registry entry, project manifest, candidate and result documents of its specification and end every run with one JSON document and exit code 0 pass, 1 fail, 2 blocked or 3 incomplete or error."
+
+verification = "Integration tests run each operation and check the documented fields; an unknown operation, an unknown option (--password) and a missing --board each end blocked with code usage and exit 2."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/cli.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14
