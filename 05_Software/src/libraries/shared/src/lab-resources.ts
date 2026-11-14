@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * The workbench registry of bench resources, `lab/resources.json` (spec REQ-DATA-f2cbfc23 §1). One file per
  * workbench: the host reads its identity fields to reserve resources, plugin helpers read the whole entry. Identity
- * kinds are data; later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
+ * kinds are data (`visa`, `bus-adapter`); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
  */
 export const LAB_REGISTRY_PATH = "lab/resources.json";
 export const LAB_REGISTRY_BYTES = 256 * 1024;
@@ -42,9 +42,42 @@ const visaEntrySchema = z
       ctx.addIssue({ code: "custom", path: ["resource"], message: (error as Error).message });
     }
   });
-export const labResourceSchema = visaEntrySchema;
+/** A serial port as a bus adapter entry names it: `COM<n>` or a `/dev/` path. */
+const serialPort = z
+  .string()
+  .regex(/^(?:[Cc][Oo][Mm][1-9]\d{0,2}|\/dev\/[\x21-\x7e]{1,250})$/, "Use COM<n> or a /dev/ path.");
+/**
+ * Kind `bus-adapter` (spec REQ-DATA-f2cbfc23 §1): a bus adapter reached on its binary serial port (`resource`) with a
+ * second port (`terminal`) of the same device; `identity` is its USB key as the bus-tools plugin lists it.
+ */
+const busAdapterEntrySchema = z
+  .strictObject({
+    alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+    kind: z.literal("bus-adapter"),
+    backend: z.literal("bus-pirate-bpio2"),
+    resource: serialPort,
+    terminal: serialPort,
+    identity: z
+      .string()
+      .regex(
+        /^usb:[0-9A-Fa-f]{4}:[0-9A-Fa-f]{4}:[\x21-\x39\x3b-\x7e]{1,64}$/,
+        "Use usb:<vid>:<pid>:<serial>.",
+      ),
+    power: z
+      .strictObject({
+        maxMv: z.number().int().min(800).max(5000),
+        maxMa: z.number().int().min(1).max(500),
+      })
+      .optional(),
+    note: z.string().max(256).optional(),
+  })
+  .refine((entry) => serialPortKey(entry.resource) !== serialPortKey(entry.terminal), {
+    path: ["terminal"],
+    message: "The terminal port must differ from the resource port.",
+  });
+export const labResourceSchema = z.union([visaEntrySchema, busAdapterEntrySchema]);
 export type LabResource = z.infer<typeof labResourceSchema>;
-export const labResourceKindSchema = z.enum(["visa"]);
+export const labResourceKindSchema = z.enum(["visa", "bus-adapter"]);
 export type LabResourceKind = z.infer<typeof labResourceKindSchema>;
 
 export const labRegistrySchema = z
@@ -134,5 +167,7 @@ function connectionKey(resource: string): string {
 
 /** The identity keys of a registry entry. */
 export function labResourceKeys(entry: LabResource): string[] {
+  if (entry.kind === "bus-adapter")
+    return [serialPortKey(entry.resource), serialPortKey(entry.terminal), entry.identity.toLowerCase()];
   return visaResourceKeys(entry.resource, entry.serial);
 }

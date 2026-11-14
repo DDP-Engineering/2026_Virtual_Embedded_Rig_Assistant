@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-e0a0dfe1"
+title = "Gate the real Bus Pirate tests behind variables"
+status = "active"
+requirement = "The bus-tools tests shall talk to a real Bus Pirate only when VERA_TEST_BUS_PIRATE_PORT, VERA_TEST_BUS_PIRATE_TERMINAL and VERA_TEST_BUS_PIRATE_IDENTITY are set, and shall otherwise use only the simulated adapter."
+verification = "Inspection: the hardware block of the integration test is skipped without the variables and its identify runs read-only."
+affected_paths = ["05_Software/tests/integration/bus-tools.test.ts"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

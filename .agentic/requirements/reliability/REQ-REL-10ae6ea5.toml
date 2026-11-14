@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-10ae6ea5"
+title = "Report a lost adapter"
+status = "active"
+requirement = "If the serial port fails or disappears during an operation, bus-tool shall end incomplete (disconnected), report the physical state unknown and send nothing more."
+verification = "Simulated unplug after the configuration: exit 3 disconnected, physical unknown, nothing written after the failure."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/adapter.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

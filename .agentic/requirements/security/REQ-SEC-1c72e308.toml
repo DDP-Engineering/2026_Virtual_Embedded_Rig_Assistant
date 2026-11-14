@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-1c72e308"
+title = "Refuse an adapter whose ports are missing or show another identity"
+status = "active"
+requirement = "When an operation names a bus-adapter alias whose resource or terminal port is not listed, or is listed with an identity other than the entry's, bus-tool shall end blocked (port-missing or identity-mismatch) before opening any port."
+verification = "Simulated bench without the terminal port: exit 2 port-missing; registry identity changed: exit 2 identity-mismatch; in both the simulated adapter records no open."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/ports.py", "05_Software/plugins/bus-tools/scripts/bus_support/registry.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

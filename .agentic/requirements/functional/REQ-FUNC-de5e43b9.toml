@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-de5e43b9"
+title = "Ignore other identity kinds in the scpi helper's registry reader"
+status = "active"
+requirement = "When lab/resources.json holds bus-adapter entries beside visa entries, the scpi helper shall validate and use the visa entries and refuse an alias of another kind as not an instrument."
+verification = "scpi integration test with a mixed registry: identify on the visa alias passes; the bus-adapter alias is refused (exit 2) without opening anything."
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py"]
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

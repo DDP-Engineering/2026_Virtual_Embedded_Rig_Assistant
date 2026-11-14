@@ -54,6 +54,61 @@ describe("lab/resources.json", () => {
   });
 });
 
+// REQ-DATA-9fe47866 REQ-FUNC-4dadea40
+describe("bus-adapter entries", () => {
+  const adapter = (fields: Record<string, unknown> = {}) => ({
+    alias: "bp",
+    kind: "bus-adapter",
+    backend: "bus-pirate-bpio2",
+    resource: "COM35",
+    terminal: "COM34",
+    identity: "usb:1209:7331:BP5X0001",
+    ...fields,
+  });
+  it("accepts a bus adapter beside a VISA instrument", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [
+        entry(),
+        adapter({ power: { maxMv: 3300, maxMa: 100 }, note: "bench Bus Pirate" }),
+        adapter({ alias: "bp-linux", resource: "/dev/ttyACM1", terminal: "/dev/ttyACM0" }),
+      ],
+    });
+    expect(parsed.resources.map((resource) => resource.kind)).toEqual(["visa", "bus-adapter", "bus-adapter"]);
+  });
+  it("refuses a bus adapter with a shared port, a bad identity, power or key", () => {
+    const bad = [
+      adapter({ terminal: "COM35" }),
+      adapter({ terminal: "com35" }),
+      adapter({ resource: "USB0::0x1AB1::0x0E11::A::INSTR" }),
+      adapter({ identity: "usb:1209:7331" }),
+      adapter({ identity: "serial:COM35" }),
+      adapter({ power: { maxMv: 6000, maxMa: 100 } }),
+      adapter({ power: { maxMv: 3300, maxMa: 0 } }),
+      adapter({ power: { maxMv: 3300.5, maxMa: 10 } }),
+      adapter({ backend: "ft232h" }),
+      adapter({ profile: "rigol-dp800" }),
+      adapter({ terminal: undefined }),
+    ];
+    for (const value of bad)
+      expect(
+        labRegistrySchema.safeParse({ format: 1, resources: [value] }).success,
+        JSON.stringify(value),
+      ).toBe(false);
+  });
+  it("keys a bus adapter by both ports and its USB identity", () => {
+    expect(labResourceKeys(adapter({ resource: "com35", terminal: "COM34" }) as never)).toEqual([
+      "serial:COM35",
+      "serial:COM34",
+      "usb:1209:7331:bp5x0001",
+    ]);
+    expect(labResourceKeys(adapter({ resource: "/dev/ttyACM1", terminal: "/dev/ttyACM0" }) as never)).toEqual(
+      ["serial:/dev/ttyACM1", "serial:/dev/ttyACM0", "usb:1209:7331:bp5x0001"],
+    );
+    expect(serialPortKey("COM34")).toBe("serial:COM34");
+  });
+});
+
 describe("VISA identity keys", () => {
   const same = (left: string, right: string) =>
     expect(visaResourceKeys(left)).toEqual(visaResourceKeys(right));

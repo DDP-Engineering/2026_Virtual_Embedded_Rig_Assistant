@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-971cb423"
+title = "Identify the adapter through one BPIO2 status request"
+status = "active"
+requirement = "When identify runs on a matching adapter, bus-tool shall open only the binary port, send one BPIO2 status request and report the hardware version, firmware version, git hash and date, FlatBuffers protocol version, available modes, current mode, supply and pull-up state, with the verdict supported for hardware major 5 or 6 and protocol major 2."
+verification = "Simulated Bus Pirate 5 REV10 with protocol 2.0: pass with those fields; the terminal port is never opened; the wire log holds exactly one status request."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/bpio.py", "05_Software/plugins/bus-tools/scripts/bus_support/adapter.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,41 @@
+format: 1
+id: bus-tools
+version: 1.0.0
+name: Bus tools (I2C, SPI, UART)
+description: Active, bounded I2C, SPI and UART transactions through a Bus Pirate 5 or 6 in its BPIO2 binary mode, declared in lab/resources.json - identify the adapter, configure a bus from a profile that declares wiring, logic voltage, ground, pull-ups, speed, SPI mode, addresses and registers, read one declared register, run one bounded transfer, record a UART for a bounded time and leave a declared final state that is read back. The adapter is reserved with both of its serial ports and released to HiZ after Stop, timeout or a crash. No terminal, no address scan, no firmware change and no supply unless the profile and the call ask for it; passive capture and decoding stay with sigrok.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://docs.buspirate.com/docs/binmode-reference/protocol-bpio2/", "https://pypi.org/project/flatbuffers/25.12.19/"]
+programs:
+  bus-tool:
+    install: { script: scripts/bus_tool.py }
+    version: { args: [--version], match: '^bus-tool (\d+\.\d+\.\d+)' }
+    timeout: 120
+    env:
+      BUS_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --adapter, kinds: [bus-adapter], grace: 5, cleanup: [release], cleanupTimeout: 30 }
+# Every adapter call opens only the adapter's binary port and starts with one BPIO2 status request. A bus operation
+# configures the adapter's pins onto the circuit, so a register read is never classified safe: it writes the register
+# address first and may clear flags on the device.
+rules:
+  - { match: "bus-tool {--version,--help,-h}", risk: safe }
+  - match: "bus-tool {devices,capabilities,report} *"
+    risk: safe
+    note: Lists this computer's serial ports without opening them, describes the backend and a bus profile, or summarizes run folders; report writes a new run folder.
+  - match: "bus-tool identify *"
+    risk: device-read
+    note: Opens the adapter's binary port and sends one BPIO2 status request; the bus pins, pull-ups and supply are not changed.
+  - match: "bus-tool {configure-bus,read-register,transfer} *"
+    risk: device-write
+    note: Configures the adapter's mode, speed and pull-ups onto the circuit and, for read-register and transfer, runs one bounded transaction (a register read writes the register address first and may clear flags); then the profile's final state, by default HiZ with pull-ups and supply off, read back. configure-bus leaves the bus configured.
+  - match: "bus-tool capture *"
+    risk: device-write
+    note: Configures the adapter as a UART on the circuit, sends --write if given and records what arrives for --duration seconds, then the profile's final state.
+    timeout: 120
+  - match: "bus-tool release *"
+    risk: device-write
+    note: Sets the adapter to HiZ with pull-ups and supply off and reads it back. VERA runs the same command as the cleanup after Stop, timeout or a crash.
+  - match: "bus-tool * --power *"
+    risk: irreversible
+    note: Switches the adapter's supply on at the profile's voltage and current limit (within lab/resources.json's power limits), powering the circuit wired to it.
+    timeout: 120

@@ -164,7 +164,8 @@ Compaction regression routes are agent/compaction.test.ts, sessions/service.test
 
 Agent runtime tests use the common replay matrix and deterministic injected counters; pi-agent-core is measured through a stream-function adapter with the same context policy. No live model is needed for runtime acceptance. Session acceptance uses read-then-answer JSONL, real temporary SQLite and a new core instance plus native Electron restart; focused routes are documented in [sessions](../knowledge/sessions.md).
 
-Node Vitest projects install the non-loopback fetch/socket guard before application modules. The integration test
+Node Vitest projects install the non-loopback fetch/socket guard before application modules. tests/integration/bus-tools.test.ts
+runs bus-tool under the same Python, which must have flatbuffers 25.12.19 installed (its fake pyserial parses BPIO2 with it). The integration test
 tests/integration/serial-monitor.test.ts runs the serial-monitor script under the toolchain's Python 3.11+ (`python` on
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a

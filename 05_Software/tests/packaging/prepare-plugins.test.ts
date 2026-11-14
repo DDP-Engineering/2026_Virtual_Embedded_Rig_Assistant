@@ -33,6 +33,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["analysis-skills", "official"],
     ["arduino-cli", "official"],
     ["binutils", "official"],
+    ["bus-tools", "official"],
     ["can-dbc", "official"],
     ["can-python", "official"],
     ["circuitpython", "official"],
