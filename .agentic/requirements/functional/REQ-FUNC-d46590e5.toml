@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d46590e5"
+
+title = "Aggregate validation run folders into one report"
+
+status = "active"
+
+requirement = """
+When `report` receives lab-validation run folders, `lab-validate` shall check each folder's listed artifacts against their SHA-256 and that a compare run's verdict follows from its criteria, and write report.json (kind `lab-validation-report`) and report.md with each run's verdict and criteria counts and an overall verdict fail, incomplete or pass.
+"""
+
+verification = "A test aggregates a pass, a fail and an incomplete compare run and expects verdict fail with the three runs listed, and refuses a run folder whose report.md was edited or whose verdict does not follow from its criteria."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/aggregate.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

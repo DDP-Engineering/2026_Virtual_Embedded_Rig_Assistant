@@ -144,13 +144,14 @@ it("publishes the official ngspice package with a pinned engine, its rules, skil
   }
 });
 
-it("keeps the shared path module byte-identical in the four electronics plugins", async () => {
+it("keeps the shared path module byte-identical in the electronics and lab plugins", async () => {
   const copies = await Promise.all(
     [
       "electronics-calc/scripts/elec_support",
       "kicad/scripts/kicad_support",
       "parts-search/scripts/parts_support",
       "ngspice/scripts/ngspice_support",
+      "lab-validation/scripts/lab_validation",
     ].map((folder) => readFile(fileURLToPath(new URL(`${folder}/workspace.py`, plugins)))),
   );
   expect(new Set(copies.map(sha256)).size).toBe(1);

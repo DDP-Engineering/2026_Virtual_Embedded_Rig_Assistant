@@ -43,3 +43,4 @@
   name: Embedded lab
   groups:
     - { name: Bench instruments (SCPI), plugins: [scpi-instruments], default: true }
+    - { name: Measurement validation, plugins: [lab-validation], default: true }

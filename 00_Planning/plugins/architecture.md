@@ -255,6 +255,23 @@ identity kind, identity fields, plugin data; spec `.agentic/specs/REQ-DATA-f2cbf
   next claim reports `unknown`); other plugins' TCP/USB connections are not leased. Later identity kinds (NIC,
   endpoint, lab host) extend the registry schema and the key function, never a second lease folder.
 
+### 3.6 Measurement validation and the verdict engine (LAB-02)
+
+`lab-validation` (program `lab-validate`, spec `.agentic/specs/REQ-DATA-53797d16.md`) is the one numeric and verdict
+engine for bench data. It is a plugin, not platform code: every operation is a `safe` offline analysis that reads
+workbench files and writes a new folder in `embedded-lab-results/`.
+
+- Inputs only through its importer registry: scpi-instruments capture folders (through REQ-DATA-b3e2930f, hash-checked,
+  never by importing the scpi package), CSV with a declared mapping, sigrok-cli CSV, ngspice-tool/ltspice-tool
+  transient run folders (no SPICE plugin needs to be installed).
+- One request (format 1) fixes windows, metrics, alignment, criteria, the decision rule (`simple`/`guarded`) and the
+  handling of missing data; the result (`lab-validation-result`) states every level, threshold, preprocessing step,
+  alignment and diagnostic, and the verdict pass/fail/incomplete. Clocks of different sources are never assumed
+  synchronized; a correlation lag is itself a judged value.
+- Consumers: LAB-03 HIL and LAB-05 power profiling call `lab-validate compare`/`report` and link its run folders;
+  later plans (networking and others) add metrics and importers as registrations in `metrics.py` and
+  `importers.py`, never a second engine.
+
 ## 4. Risk levels and approvals (ADR-0018)
 
 | Level | Meaning | Examples |

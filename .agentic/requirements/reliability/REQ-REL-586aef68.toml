@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-586aef68"
+
+title = "Refuse a source whose content differs from its recorded hash"
+
+status = "active"
+
+requirement = """
+When a source file differs from the request's `sha256` or from the SHA-256 its run folder's result.json records for it, `lab-validate` shall refuse with exit 2 and a `source-changed` problem before creating a folder.
+"""
+
+verification = "Tests change one byte of a capture's waveform CSV and give a wrong request sha256, and expect exit 2, `source-changed` and no folder."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

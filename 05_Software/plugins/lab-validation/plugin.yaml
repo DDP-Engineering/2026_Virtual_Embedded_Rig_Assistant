@@ -1,0 +1,21 @@
+format: 1
+id: lab-validation
+version: 1.0.0
+name: Measurement validation
+description: Compare bench captures and simulations with requirements, offline and reproducibly - import scpi-instruments captures, CSV and sigrok CSV files and ngspice/LTspice run folders; normalize units and signs; measure RMS, frequency, duty cycle, rise/fall, overshoot, settling, ripple and delay over declared windows; align by declared markers or bounded cross-correlation; decide each criterion by its declared rule and uncertainty (pass, fail or incomplete) and write a report with overlays, differences, conditions and links to the sources.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md]
+programs:
+  lab-validate:
+    install: { script: scripts/lab_validate.py }
+    version: { args: [--version], match: '^lab-validate (\d+\.\d+\.\d+)' }
+    timeout: 600
+rules:
+  - { match: "lab-validate {--version,--help,-h}", risk: safe }
+  - match: "lab-validate inspect *"
+    risk: safe
+    note: Offline analysis. Reads the named files in the workbench and prints what they hold; it writes nothing.
+  - match: "lab-validate {normalize,measure,align,compare,report} *"
+    risk: safe
+    note: Offline analysis. Reads the request and its source files in the workbench, never changes them, and creates a new run folder under the results directory (default embedded-lab-results); no network, no other program.

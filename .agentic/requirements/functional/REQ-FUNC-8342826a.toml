@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8342826a"
+
+title = "Import LAB-01 capture run folders through their result contract"
+
+status = "active"
+
+requirement = """
+When a source uses importer `scpi-capture`, `lab-validate` shall read a scpi-instruments capture run folder through its result.json contract (refusing a decode folder, which keeps no raw block, with the capture folder to import instead), take the channel's waveform CSV, mark the samples whose raw codes equal the preamble's clip limits as clipped and report the captured conditions and instrument identity.
+"""
+
+verification = "A test runs the real scpi helper's capture against its fake PyVISA, imports that folder and expects 1200 points at 1 us, two clipped samples at the start and the captured probe and bandwidth limit; a folder of another kind and a decode folder are refused, and an incomplete capture limits its criteria with source-incomplete."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

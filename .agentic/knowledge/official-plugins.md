@@ -34,6 +34,16 @@ classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py)
 fake PyVISA/pyserial/pyusb - offline evidence only) own its coverage. Its reservation and cleanup are platform
 behaviour, see [Plugins](plugins.md) and spec .agentic/specs/REQ-DATA-f2cbfc23.md.
 
+For lab-validation, start at plugins/lab-validation/plugin.yaml, scripts/lab_validate.py and scripts/lab_validation/
+(cli.py operations and pipeline, request.py validation and bind, importers.py importer registry, signals.py and
+preprocess.py normalization and preprocessing, series.py windows/gaps/interpolation, metrics.py metric registry,
+align.py comparisons, decide.py criteria and verdict, diagnostics.py codes, report.py run folder and report.md,
+aggregate.py `report`) with spec .agentic/specs/REQ-DATA-53797d16.md; tests/integration/lab-validation.test.ts and
+tests/fixtures/lab-validation/ (hand-derived solutions in its README, a no-network sitecustomize guard) own its
+coverage; it imports real scpi-instruments capture folders written by the scpi helper on its fake PyVISA. Its
+workspace.py is a byte-identical copy of the electronics plugins' (ngspice.test.ts checks every copy). New metrics and
+importers are registrations in metrics.py and importers.py, never a second engine.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -45,7 +55,9 @@ serial ports with board family, capture a console with an optional DTR/RTS reset
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
 skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); scpi-instruments (program `scpi`, a PEP 723
 PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
-platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles); lab-validation
+(program `lab-validate`, a standard-library PEP 723 script that compares captures, CSV/sigrok exports and SPICE run
+folders with requirements offline; skills validation-planning and difference-explanation). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -217,6 +229,32 @@ that source metadata reaches the deterministic bundled index unchanged.
   Windows 11 against a fake PyVISA and with VERA's real runner, and with the opt-in `VERA_SCPI_UV` run (real PyVISA
   1.16.2 + pyvisa-py 0.8.1 through the provisioner, TCPIP SOCKET to local simulated servers, 2026-11-13); no real
   instrument or native Ubuntu run yet.
+
+- `lab-validation` 1.0.0, ecosystem `lab` (pack Embedded lab, group Measurement validation, default on; activity
+  `measurement`), Windows x64/Linux x64. Program `lab-validate` = `scripts/lab_validate.py` (PEP 723, standard library,
+  Python >= 3.11), timeout 600 s; every operation is `safe`: `inspect --path|--request` (prints, writes nothing),
+  `normalize`, `measure`, `align`, `compare --request FILE`, `report --run DIR (1-20)`. A format 1 request (at most
+  1 MiB; required `decisionRule` simple|guarded and `missingData` incomplete|exclude) names sources through the
+  importer registry - `scpi-capture` (a scpi capture folder: result.json kind scpi-result and waveform-<CH>.csv
+  checked against its artifact SHA-256, clipping from the required raw-<CH>.bin codes equal to the preamble's clip
+  limits, captured conditions and identity; a decode folder is refused with its capture folder named), `csv` (declared time column or sample rate, channel columns with units, clip limits,
+  `uniform`), `sigrok-csv` (`;` comments, `; Samplerate:`), `spice` (ngspice-tool/ltspice-tool transient folders,
+  series.csv hash-checked, v(...) V, i(...) A; other analyses refused `domain`) - and signals with explicit sign, scale
+  and ordered preprocessing (linear resample, moving average; never inside a gap). Metrics registry: min, max, mean,
+  rms (trapezoid), peak-to-peak, ripple, frequency, duty-cycle, rise-time, fall-time, overshoot, settling-time (bound
+  when unsettled), delay (same source only, else `clock`). Comparisons align by none/offset/marker (same source per
+  side)/cross-correlation within maxLag (N x (2K+1) <= 1e7, the reference evaluated only where a lag needs it) and
+  report max-abs, rms, mean, lag and correlation; `reference-short` limits the differences, not the lag.
+  Criteria `<=`/`>=`/`==` (tolerance) under simple or guarded rules with the supplied uncertainty; limiting
+  diagnostics (gap, clipped, source-incomplete, aliasing-suspect, aliasing-risk, under-sampled, bandwidth-unknown,
+  bandwidth-limited, conditions-unknown, conditions-differ, lag-at-limit, reference-short) make a criterion
+  incomplete; lag-unjudged and resampled-up are notes. Verdict fail > incomplete > pass. Results in
+  `embedded-lab-results/<run-id>/` (exclusive, never in .vera): result.json kind `lab-validation-result`, report.md
+  with relative source links, series-<signal>.csv, compare-<id>.csv/.svg; `report` writes report.json kind
+  `lab-validation-report` after checking each run's artifacts. Exit 0 pass, 1 fail, 2 refused before any folder,
+  3 incomplete/error; printed documents at most 11 000 UTF-16 units. No network, process or language model. Verified
+  on Windows 11 (toolchain CPython 3.12 and 3.11, VERA's real runner, real uv 0.11.25 provisioning, 2026-11-13); no
+  real capture of a real circuit and no native Ubuntu run yet.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load

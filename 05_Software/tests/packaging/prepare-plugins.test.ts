@@ -40,6 +40,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["esp32-idf", "official"],
     ["git", "official"],
     ["kicad", "official"],
+    ["lab-validation", "official"],
     ["ltspice", "official"],
     ["microchip-pymcuprog", "official"],
     ["ngspice", "official"],

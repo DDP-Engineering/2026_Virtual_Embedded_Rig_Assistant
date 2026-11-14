@@ -162,10 +162,12 @@ describe("package", () => {
     expect(catalog.official).toContain("scpi-instruments");
     expect(catalog.metadata["scpi-instruments"].activities).toEqual(["measurement"]);
     const packs = parse(readFileSync(join(software, "plugins", "packs.yaml"), "utf8"));
-    expect(packs).toContainEqual({
-      id: "lab",
-      name: "Embedded lab",
-      groups: [{ name: "Bench instruments (SCPI)", plugins: ["scpi-instruments"], default: true }],
+    const lab = packs.find((pack: { id: string }) => pack.id === "lab");
+    expect(lab.name).toBe("Embedded lab");
+    expect(lab.groups).toContainEqual({
+      name: "Bench instruments (SCPI)",
+      plugins: ["scpi-instruments"],
+      default: true,
     });
     expect(await core.checkCatalogSource(join(software, "plugins"))).toEqual([]);
     const store = new core.PluginStore({ root: join(root, "plugins") });

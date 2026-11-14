@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-556c3680"
+
+title = "Repeat identical metrics and verdicts for identical inputs"
+
+status = "active"
+
+requirement = """
+When the same request runs repeatedly on unchanged sources, `lab-validate` shall produce identical measurements, comparisons, criteria and verdict.
+"""
+
+verification = "Tests run compare twice with preprocessing and cross-correlation, and measure twice on the same capture, and expects equal measurements, comparisons, criteria and verdict apart from run id and times."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

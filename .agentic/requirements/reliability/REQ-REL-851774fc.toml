@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-851774fc"
+
+title = "Limit the verdict on gaps, clipping, aliasing, band and conditions"
+
+status = "active"
+
+requirement = """
+When a gap, clipped samples, an evident alias, missing or insufficient bandwidth or a missing or differing condition affects a value, `lab-validate` shall add the diagnostic of spec section 7 and make every criterion on that value `incomplete` instead of passing or failing it.
+"""
+
+verification = "Tests evaluate criteria over a gap, over the clipped start of a capture, on a frequency with fewer than 4 samples per period, on a rise time without bandwidth, and with a source lacking a condition, and expect each diagnostic and `incomplete`."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/diagnostics.py", "05_Software/plugins/lab-validation/scripts/lab_validation/decide.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

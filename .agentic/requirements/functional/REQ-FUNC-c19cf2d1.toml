@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c19cf2d1"
+
+title = "Normalize units, scale and sign explicitly"
+
+status = "active"
+
+requirement = """
+When a signal is imported, `lab-validate` shall convert its time axis to seconds and its values to the SI unit by the declared prefixes, apply the declared sign and scale, and report unit, sign, scale and channel mapping for each signal.
+"""
+
+verification = "Tests import the same waveform written in V/s and in mV/ms with sign -1 and expect identical normalized series after the sign, and the mapping in result.json and report.md."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/units.py", "05_Software/plugins/lab-validation/scripts/lab_validation/signals.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

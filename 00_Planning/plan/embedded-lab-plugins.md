@@ -13,14 +13,16 @@ branch `feature/101-embedded-lab` cut from `feature/93-electronics-calc` at bb79
 worktree `F:\2026_Virtual_Embedded_Rig_Assistant_lab`. The implementer hands the candidate back without a
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
 STATE: LAB-01 implemented 2026-11-13 on branch `feature/101-embedded-lab` (AEGIS TASK-a5a839c7, offline and
-real-process evidence; real instruments, real PyVISA and native Ubuntu open); LAB-02...LAB-08 planned.
+real-process evidence; real instruments, real PyVISA and native Ubuntu open); LAB-02 implemented 2026-11-13 on the same
+branch (AEGIS TASK-cf769025, offline evidence and real uv on Windows; a real capture of a real circuit and native Ubuntu
+open); LAB-03...LAB-08 planned.
 
 ## Order
 
 | Order | Package | Issue | Plugin | Result | State |
 |---|---|---|---|---|---|
 | 1 | LAB-01 | [#102](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/102) | `scpi-instruments` | identified instruments, finite operations, captures and approved control; resource leases and supervised cleanup | implemented |
-| 2 | LAB-02 | [#103](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/103) | `lab-validation` | reproducible comparisons of captures, simulations and requirements | planned |
+| 2 | LAB-02 | [#103](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/103) | `lab-validation` | reproducible comparisons of captures, simulations and requirements | implemented |
 | 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | planned |
 | 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | planned |
 | 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | planned |
@@ -79,6 +81,34 @@ them.
   identify, read, capture and output over TCPIP SOCKET against local simulated servers - the library path, not an
   instrument). Open: L01-A/B/E/G against real instruments (none available; models chosen from the user's inventory),
   native Ubuntu x64 (`REQ-PLAT-fae260c3`) and the vendor-VISA (`ivi`) backend.
+
+## LAB-02 as built
+
+- Package `05_Software/plugins/lab-validation/` (official, pack "Embedded lab" group "Measurement validation", activity
+  `measurement`): program `lab-validate` (`scripts/lab_validate.py`, standard-library PEP 723, Python >= 3.11; support
+  package `lab_validation/`), skills `validation-planning` and `difference-explanation`. Operations `inspect`,
+  `normalize`, `measure`, `align`, `compare`, `report`, all `safe`; spec `.agentic/specs/REQ-DATA-53797d16.md`. No
+  platform (core/shared/host) change.
+- Engine seams kept open for LAB-03/05 and later plans: the importer registry (`scpi-capture`, `csv`, `sigrok-csv`,
+  `spice`) and the metric registry (min, max, mean, rms, peak-to-peak, ripple, frequency, duty-cycle, rise-time,
+  fall-time, overshoot, settling-time, delay); result kind `lab-validation-result` with a `verdict`, and
+  `lab-validation-report` from `report`, which HIL reports link.
+- Decisions: `decisionRule` and `missingData` are required (no silent default); `guarded` without an uncertainty is
+  incomplete; only transient SPICE folders are imported (AC/DC/noise refused - complex AC and time series are not
+  compared); a cross-correlation lag is a judged value (`<id>.lag`), an unjudged one is reported `lag-unjudged`; a
+  delay needs one source (one clock), a marker must share the clock of the signal it aligns; LAB-01 captures are read
+  through their files and hashes, never by importing `scpi_support`, and only capture folders (a decode folder keeps
+  no raw block, so clipping could not be checked); a reference that ends before the window limits the difference
+  statistics, not the lag.
+- Criteria: L02-A (RMS, frequency, duty cycle, rise/fall, overshoot, settling, ripple against closed-form solutions in
+  `tests/fixtures/lab-validation/README.md`), L02-B, L02-C, L02-D, L02-E and L02-H (pass/fail/incomplete aggregated by
+  `report`; a sitecustomize guard proves no network or process access) are covered on Windows by
+  `tests/integration/lab-validation.test.ts`, including a real scpi-instruments capture folder produced by the scpi
+  helper on its fake PyVISA (offline evidence, not an instrument). L02-G: Windows offline with VERA's real runner, the
+  toolchain CPython 3.12 and 3.11 and a real uv 0.11.25 provisioning run (`VERA_LABVAL_UV`, 2026-11-13); inputs are
+  checked unchanged. Open: L02-F (a real capture of a real circuit compared with a real simulation - no instrument on
+  this machine, and no ngspice here), native Ubuntu x64 (`REQ-PLAT-72a7e11a`), real sigrok-cli CSV bytes (no
+  sigrok-cli here; the importer also takes a declared rate).
 
 ## Rules shared by the packages
 

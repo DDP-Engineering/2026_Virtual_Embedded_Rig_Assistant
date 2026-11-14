@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-53797d16"
+
+title = "Read one validated format 1 validation request"
+
+status = "active"
+
+requirement = """
+When `normalize`, `measure`, `align`, `compare` or `inspect --request` reads a validation request, `lab-validate` shall accept only a format 1 JSON object of at most 1 MiB with the fields, limits and references of spec section 2 and refuse anything else with exit 2 and a `request` problem naming the field.
+"""
+
+verification = "Tests refuse a missing decisionRule, values of a wrong JSON type, ids differing only in letter case, a correlation criterion on a comparison without cross-correlation, an unknown key, a duplicate id, an unknown signal reference, a criterion limit in another unit and `==` without tolerance, each with exit 2 and the field named."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/request.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

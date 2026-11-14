@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-72a7e11a"
+
+title = "Run lab-validation offline on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The lab-validation plugin shall run its operations offline on Windows x64 and native Ubuntu x64 under uv's managed CPython 3.11 or newer with no package dependency.
+"""
+
+verification = "The opt-in test provisions the plugin through VERA's provisioner with a real uv and runs compare offline; Windows is recorded, native Ubuntu x64 stays an open proof until run there."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validate.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13
