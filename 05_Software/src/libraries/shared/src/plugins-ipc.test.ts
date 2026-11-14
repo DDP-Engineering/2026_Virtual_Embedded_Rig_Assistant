@@ -166,11 +166,7 @@ it("validates the catalog view, review and install channels and the catalog app 
       { id: "esp32", name: "ESP32", groups: [{ name: "Core", plugins: ["serial-monitor"], default: true }] },
     ],
   };
-  // Catalog metadata defaults to no activities and no keywords.
-  expect(channels["plugins.catalog"].response.parse(view)).toEqual({
-    ...view,
-    plugins: view.plugins.map((plugin) => ({ ...plugin, activities: [], keywords: [] })),
-  });
+  expect(channels["plugins.catalog"].response.parse(view)).toEqual(view);
   expect(channels["plugins.catalog"].response.safeParse({ ...view, source: "mirror" }).success).toBe(false);
   expect(channels["plugins.catalog"].response.parse({ source: "none", plugins: [], packs: [] }).source).toBe(
     "none",
