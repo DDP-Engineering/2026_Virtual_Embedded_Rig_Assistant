@@ -26,6 +26,11 @@ Arduino and IoT plugins: [arduino-iot-plugins.md](arduino-iot-plugins.md),
 **IOT-01...IOT-08 / epic [#113](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/113)**. Started 2026-11-13 with AEGIS, one
 child after another on branch `feature/113-arduino-iot` at the user's request; all eight planned.
 
+Plugin management: [plugin-management.md](plugin-management.md),
+**PLG-01...PLG-08 #262...#269 / epic [#261](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/261)** (IDs reused from the first plugin
+epic, so always cited with their issue number). Started 2026-11-14 with AEGIS, one child after another on branch
+`feature/261-plugin-management` at the user's request; all eight planned.
+
 Repository organization: [tooling-tests-evaluators-layout.md](tooling-tests-evaluators-layout.md),
 **REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110)**.
 Agreed 2026-11-12: environment/build/release tooling in `02_Tools`, tests/E2E and
