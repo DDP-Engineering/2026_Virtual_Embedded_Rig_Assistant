@@ -20,22 +20,46 @@ it("preserves only Windows PATHEXT case-insensitively for plugin launchers", () 
 it("copies an inherited host variable such as SSH_AUTH_SOCK only when the run asks for it", () => {
   const env = { SSH_AUTH_SOCK: "/run/user/1000/agent.sock", HOME: "/home/me" };
   expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("SSH_AUTH_SOCK");
-  expect(programEnvironment(new FakeHost("linux", env), [], {}, ["SSH_AUTH_SOCK"])).toEqual({
+  expect(programEnvironment(new FakeHost("linux", env), [], {}, false, ["SSH_AUTH_SOCK"])).toEqual({
     HOME: "/home/me",
     SSH_AUTH_SOCK: "/run/user/1000/agent.sock",
     PYTHONUTF8: "1",
     NO_COLOR: "1",
   });
   expect(
-    programEnvironment(new FakeHost("win32", { ssh_auth_sock: "x" }), [], {}, ["SSH_AUTH_SOCK"]),
+    programEnvironment(new FakeHost("win32", { ssh_auth_sock: "x" }), [], {}, false, ["SSH_AUTH_SOCK"]),
   ).toEqual({
     SSH_AUTH_SOCK: "x",
     PYTHONUTF8: "1",
     NO_COLOR: "1",
   });
-  expect(programEnvironment(new FakeHost("linux", {}), [], {}, ["SSH_AUTH_SOCK"])).not.toHaveProperty(
+  expect(programEnvironment(new FakeHost("linux", {}), [], {}, false, ["SSH_AUTH_SOCK"])).not.toHaveProperty(
     "SSH_AUTH_SOCK",
   );
+});
+
+// REQ-PLAT-e0d8f3cf: only a program that declares windows (gui: true) gets the desktop's display variables.
+it("passes the display variables only to a program that opens windows", () => {
+  const env = {
+    PATH: "/usr/bin",
+    DISPLAY: ":0",
+    WAYLAND_DISPLAY: "wayland-0",
+    XAUTHORITY: "/home/u/.Xauthority",
+    XDG_RUNTIME_DIR: "/run/user/1000",
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+  };
+  const plain = programEnvironment(new FakeHost("linux", env), []);
+  for (const name of ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"])
+    expect(plain).not.toHaveProperty(name);
+  expect(programEnvironment(new FakeHost("linux", env), [], {}, true)).toEqual({
+    PATH: "/usr/bin",
+    DISPLAY: ":0",
+    WAYLAND_DISPLAY: "wayland-0",
+    XAUTHORITY: "/home/u/.Xauthority",
+    XDG_RUNTIME_DIR: "/run/user/1000",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
 });
 
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/;

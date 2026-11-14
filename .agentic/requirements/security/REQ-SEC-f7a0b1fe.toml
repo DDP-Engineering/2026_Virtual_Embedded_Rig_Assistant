@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-f7a0b1fe"
+
+title = "Refuse operations that leave the board outline"
+
+status = "active"
+
+requirement = """
+If, after the operations, the bounding box that KiCad reports for a placed footprint or a created item extends beyond the bounding box of the board outline, then the helper shall revert the candidate to its last save and refuse the request with exit 2 and the problem `outline`.
+"""
+
+verification = "Real KiCad: placing a footprint 5 mm outside the fixture's outline and a track ending outside it each exit 2 with problem outline; the candidate file and in-memory hashes are unchanged and the footprint keeps its position."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

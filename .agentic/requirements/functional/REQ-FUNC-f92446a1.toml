@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f92446a1"
+
+title = "Apply a checked placement and routing request to the candidate in one commit"
+
+status = "active"
+
+requirement = """
+When the agent runs `kicad-layout-tool edit --run DIR` with a valid request for the bound candidate, the helper shall execute its place, align, keepout, track and via operations in one KiCad commit, save the candidate through KiCad, and record the new candidate and in-memory hashes, the inventory and the accepted request.
+"""
+
+verification = "Real KiCad: on the fixture, a request that moves the decoupling capacitor next to the IC and rotates it by 90 degrees, one that adds 0.25 mm F.Cu tracks and a via on its nets, and one that adds a keepout and aligns two resistors, exit 0; board.json shows the new positions, orientation and rule area; state.json's candidate SHA-256 equals the saved file and edits counts 3; requests/002.json equals the sent request."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/operations.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

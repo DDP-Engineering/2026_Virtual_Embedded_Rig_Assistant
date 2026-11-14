@@ -12,7 +12,8 @@ STATE: ELEC-01 implemented 2026-11-12 on branch `feature/93-electronics-calc` fr
 97662d5 (AEGIS TASK-72227ab6, commit 19dd919); ELEC-02 implemented 2026-11-12 on the same branch at the user's
 request (AEGIS TASK-7c2a9322, commit e9fa5d2); ELEC-03 implemented 2026-11-13 on the same branch (AEGIS
 TASK-2c5054ba, commit 680c273); ELEC-04 implemented 2026-11-13 on the same branch (AEGIS TASK-80043c39, commit 6ad9119);
-ELEC-05 implemented 2026-11-13 on the same branch (AEGIS TASK-43e9ee14); ELEC-06...ELEC-07 planned.
+ELEC-05 implemented 2026-11-13 on the same branch (AEGIS TASK-43e9ee14, commit 0764e8f); ELEC-06 implemented
+2026-11-13 on the same branch (AEGIS TASK-6101faa4); ELEC-07 planned.
 
 ## Order
 
@@ -23,7 +24,7 @@ ELEC-05 implemented 2026-11-13 on the same branch (AEGIS TASK-43e9ee14); ELEC-06
 | 3 | ELEC-03 | [#95](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/95) | `parts-search` | documented component selection and controlled catalog access | implemented |
 | 4 | ELEC-04 | [#96](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/96) | `ngspice` | electrical and electrothermal simulation on Windows and Linux | implemented |
 | 5 | ELEC-05 | [#97](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/97) | `ltspice` | LTspice batch simulation on Windows in the same result model | implemented |
-| 6 | ELEC-06 | [#98](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/98) | `kicad-layout` | placement and local routing on a candidate, checked and applied under the write policy | planned |
+| 6 | ELEC-06 | [#98](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/98) | `kicad-layout` | placement and local routing on a candidate, checked and applied under the write policy | implemented |
 | 7 | ELEC-07 | [#99](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/99) | `freerouting` | local autorouting, DSN/SES exchange and the integrated acceptance | planned |
 
 The order is the execution order of the initiative, not a runtime dependency chain: `kicad-layout`
@@ -197,6 +198,55 @@ those packages, not hidden manifest changes.
 - Criteria: E05-A...F are covered by `tests/integration/ltspice.test.ts` with the real LTspice 26.1.1, including
   the same requests against ngspice-47 (divider, RC transient and AC, noise within the README's tolerances). Open:
   none on Windows; LTspice is Windows-only by scope.
+
+## ELEC-06 as built
+
+- Route (RULING-001, user): KiCad's official IPC API through kicad-python 0.8.0 (pinned with protobuf 5.29.6 and
+  pynng 0.9.0 in the helper's PEP 723 block), not the deprecated SWIG pcbnew and not S-expression editing. The
+  user's KiCad 10 API is enabled in kicad_common.json (RULING-002, user).
+- Package `05_Software/plugins/kicad-layout/` (Windows x64 and Linux x64): program `kicad-cli` (KiCad 10, direct
+  commands blocked), program `kicad-layout-tool` (`uses: [kicad-cli]`, `gui: true`): open, edit, close; the PCB
+  editor is the `pcbnew` next to kicad-cli. `gui: true` is a new manifest field (RULING-004, user): VERA's runner
+  passes the display variables (DISPLAY, WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR) only to such programs. Skill `kicad-layout`. Spec `.agentic/specs/REQ-DATA-891d5b5d.md`. Pack group "PCB
+  placement and local routing (KiCad)", off by default.
+- Capability gate (probed with KiCad 10.0.8): the API identifies the open board, moves and rotates footprints,
+  creates tracks, vias and rule areas in one commit, saves, saves a copy and reverts; it needs a GUI window
+  (no headless mode in 10), serves only the first KiCad process on Windows, and protects neither locked items nor
+  nets - the helper binds by the open document, refuses while another window holds the API and checks locked
+  items, nets, layers and the outline itself. KiCad's in-memory text never equals the file: unsaved edits are
+  detected by its hash after a save and reload.
+- Apply: VERA's first-party tool `apply_candidate` (core) writes a candidate whose objectives passed over the
+  source board through the write flow's shared `commitChange` (approval in ask mode, conflict on a changed source
+  or candidate, refused in read-only mode and while KiCad's lock file exists). The plugin never writes the source.
+- Criteria: E06-B, C, F and G are covered by `tests/integration/kicad-layout.test.ts` with the real KiCad 10.0.8 on
+  Windows (VERA_TEST_KICAD_GUI), run as VERA's runner runs the helper; E06-D and E06-E by core's apply-candidate
+  tests (the real-KiCad part of E06-G: the applied candidate reopens with the reported board, and KiCad's lock file
+  appears beside an open board). Open: native Ubuntu x64 for E06-A.
+- Found while validating: KiCad gives a track created through the API the net of the copper it touches (a GND
+  track across a VOUT track is saved as VOUT), and duplicates a footprint updated twice in one commit; the helper
+  refuses both (`net`, `request`).
+
+## ELEC-07 as built
+
+- Route (user, 2026-11-13): the native freerouting-cli 2.5.0 is broken on boards with keepouts (GraalVM
+  serialization error, the routing thread dies). VERA downloads freerouting-2.5.0.jar and an Eclipse Temurin 25 JRE,
+  both pinned. The jar is a new kind of program, `file: true` (verified, never run, version from its file name).
+- Package `05_Software/plugins/freerouting/` (requires kicad-layout): programs `java`, `freerouting` (file),
+  `kicad-cli` (find) and `freerouting-tool route --run <kicad-layout run>`.
+  - It exports a DSN from a copy of the saved candidate with KiCad's Python (SWIG ExportSpecctraDSN).
+  - It marks the existing wiring as protected.
+  - It runs Freerouting's CLI entry offline: a hosts file with only localhost, and user.home in the work folder.
+  - It turns the SES's new wires and vias into a kicad-layout request; `kicad-layout-tool edit --request` applies
+    it with ELEC-06's checks, DRC and apply flow. kicad-layout's request limit was raised to 1024 operations.
+- Evidence: `tests/integration/freerouting.test.ts` uses Freerouting 2.5.0, Temurin 25.0.5 and KiCad 10.0.8 on
+  Windows 11 (VERA_TEST_FREEROUTING_JAR, VERA_TEST_JAVA, VERA_TEST_KICAD_GUI). The fixture routes to 0 unconnected
+  with no new DRC violation and objectives pass; existing copper and footprints are unchanged; custom rules are
+  refused; an exhausted budget and a corrupt SES write no request.
+- Open:
+  - native Ubuntu (E07-E Linux; KiCad's Python with pcbnew at /usr/bin/python3);
+  - several variants (optional in the ticket);
+  - the integrated acceptance (E07-G) beyond the evidence of ELEC-01..06 and this golden path. The user asked on
+    2026-11-13 for the golden path only.
 
 ## Later, separate
 

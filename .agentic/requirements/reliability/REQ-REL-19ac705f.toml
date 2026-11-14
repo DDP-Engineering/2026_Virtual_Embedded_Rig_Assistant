@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-19ac705f"
+
+title = "Refuse an open of a path that is not a workbench KiCad board"
+
+status = "active"
+
+requirement = """
+If `--board` is not a regular `.kicad_pcb` file inside the workbench, or the results directory or run id is not valid, then the helper shall refuse the open with exit 2 and the problem `path` before it creates a run folder or starts KiCad.
+"""
+
+verification = "Offline: `--board ../outside.kicad_pcb`, an absolute path outside the workbench, a missing file, a `.kicad_pro` and a `.kicad_sch` file, `--run-id ../x` and `--results-dir ../elsewhere` (reported at --results-dir) each exit 2 with problem path; no run folder exists and no file of the workbench changes."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/workspace.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

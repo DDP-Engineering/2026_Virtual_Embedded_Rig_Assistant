@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-93285684"
+
+title = "Keep existing copper and route only the selected nets"
+
+status = "active"
+
+requirement = """
+When the tool exports the DSN, it shall mark every existing track and via as protected so that Freerouting keeps them, and the request shall create only the wires and vias Freerouting added, restricted to the nets named by `--nets` when given.
+"""
+
+verification = "Real KiCad: after route and edit, every track and via of the candidate before the route exists unchanged (count and positions, including the locked GND track); with --nets VIN only VIN tracks are in the request."
+
+affected_paths = ["05_Software/plugins/freerouting/"]
+
+linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+
+
+spec = "specs/REQ-FUNC-2a80da7f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

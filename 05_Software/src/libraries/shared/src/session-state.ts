@@ -71,7 +71,7 @@ export const sessionStateSchema = z.strictObject({
         approvalId: z.string(),
         callId: z.string(),
         requestSha256: z.string(),
-        tool: z.enum(["write", "edit", "web_download", "run_program", "plugin_install"]),
+        tool: z.enum(["write", "edit", "web_download", "run_program", "plugin_install", "apply_candidate"]),
         path: z.string(),
         diff: z.string(),
         bytes: z.number(),

@@ -882,6 +882,11 @@ export class Provisioner implements ProgramResolver {
     pluginDir = "",
     verify?: () => Promise<void>,
   ): Promise<{ version?: string; detail?: string }> {
+    if (program.file) {
+      // Never run: the version is in the downloaded file's name.
+      const version = boundedMatch(program.version.match, basename(resolved.executable));
+      return version ? { version } : { detail: "The file name does not show the version." };
+    }
     const result = await this.execute(
       resolved.executable,
       programInvocation(resolved, [

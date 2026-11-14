@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cd7d1b3f"
+
+title = "Verify that an edit changed only the items it named"
+
+status = "active"
+
+requirement = """
+When an edit's operations have run, the helper shall compare every footprint's position and orientation, the existing tracks, vias and zones by UUID and geometry, the number of footprints, tracks, vias and zones, and the net list with their state before the commit, and if anything other than the named and created items changed it shall revert the candidate and report the failure `kicad` with exit 3.
+"""
+
+verification = "Real KiCad: every successful edit reports `unchanged` counts equal to the untouched items; with a test hook that moves another footprint through a second API client before the comparison, and with one that makes KiCad hold the placed footprint twice (two updates in one commit), the edit exits 3 with problem kicad (the second naming a duplicated footprint), the candidate is reverted to its last save and state.json is unchanged."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/operations.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

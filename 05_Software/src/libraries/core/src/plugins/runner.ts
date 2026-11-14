@@ -52,6 +52,8 @@ export interface RunRequest {
    * recorded. Without it stdin is closed from the start.
    */
   input?: string;
+  /** The program opens windows (manifest `gui: true`): pass the host's display variables. */
+  display?: boolean;
   /** Kill the process tree after this many milliseconds; no limit when absent. */
   timeoutMs?: number;
   background?: boolean;
@@ -138,6 +140,8 @@ type RunnerSettings = Required<Omit<ProgramRunnerOptions, "id" | "leases">> &
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
 const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LANGUAGE"];
+/** The desktop session variables a program that opens windows needs (manifest `gui: true`), and only such a program. */
+export const DISPLAY_VARIABLES = ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"] as const;
 const RUN_FILE = /^([0-9A-HJKMNP-TV-Z]{26})\.(?:log|json)$/;
 const RUN_RECORD = /^[0-9A-HJKMNP-TV-Z]{26}\.json$/;
 /** Runs the Runs list returns, newest first. */
@@ -227,11 +231,15 @@ function resolveDevice(path: string, devicePath: ((path: string) => string) | un
   }
 }
 
-/** The minimal environment of a run: allowlisted host variables, the program's own, then the fixed two. */
+/**
+ * The minimal environment of a run: allowlisted host variables (with `display`, also the desktop session's display
+ * variables), the program's own, then the fixed two.
+ */
 export function programEnvironment(
   host: ProcessHost,
   toolPaths: readonly string[],
   own: Readonly<Record<string, string>> = {},
+  display = false,
   inherit: readonly string[] = [],
 ): Record<string, string> {
   const windows = host.platform === "win32";
@@ -246,7 +254,9 @@ export function programEnvironment(
   if (path) set("PATH", path);
   for (const [name, value] of Object.entries(host.env)) {
     if (value === undefined) continue;
-    const inherited = INHERITED.find((candidate) => same(candidate, name));
+    const inherited = [...INHERITED, ...(display ? DISPLAY_VARIABLES : [])].find((candidate) =>
+      same(candidate, name),
+    );
     const requested = inherit.find((candidate) => same(candidate, name));
     if (inherited) set(inherited, value);
     else if (requested) set(requested, value);
@@ -366,6 +376,7 @@ class Run implements ProgramRun {
         host,
         this.settings.toolPaths,
         { ...this.request.env, ...this.supervisionEnv() },
+        this.request.display === true,
         this.request.inherit,
       ),
       group: host.platform !== "win32",
@@ -503,6 +514,7 @@ class Run implements ProgramRun {
           host,
           this.settings.toolPaths,
           { ...this.request.env, VERA_RUN_CONTROL: control, VERA_CLEANUP_OF: this.id },
+          this.request.display === true,
           this.request.inherit,
         ),
         group: host.platform !== "win32",
