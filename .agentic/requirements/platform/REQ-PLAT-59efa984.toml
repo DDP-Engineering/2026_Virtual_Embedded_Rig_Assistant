@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-59efa984"
+
+title = "Provision the pinned wokwi-cli and block its direct use"
+
+status = "active"
+
+requirement = """
+The wokwi plugin shall install wokwi-cli 0.29.1 only from its official GitHub release file checked by SHA-256 for windows-x64 and linux-x64 and shall rate every direct wokwi-cli command blocked.
+"""
+
+verification = "Helper test of plugin.yaml: both downloads name the v0.29.1 release URLs with the release digests and preferDownload; classifying `wokwi-cli lint x`, `wokwi-cli mcp` and `wokwi-cli .` with the manifest rules gives blocked; `wokwi-tool capabilities` gives safe."
+
+affected_paths = ["05_Software/plugins/wokwi/plugin.yaml", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

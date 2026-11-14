@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
-// REQ-UX-4b90fed2
+// REQ-UX-4b90fed2, REQ-UX-c553435b
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import type { MqttCredentialList } from "@vera/shared";
+import type { PluginCredentialList } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
-import { MqttCredentialsPanel } from "./mqtt-credentials.js";
+import { PluginCredentialsPanel } from "./plugin-credentials.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn() } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -20,17 +20,20 @@ afterEach(async () => {
 });
 const PASSWORD = "typed-broker-password";
 
-async function mount(language: string) {
+async function mount(language: string, scope: "mqtt" | "wokwi" = "mqtt") {
   await i18n.changeLanguage(language);
-  let list: MqttCredentialList = { credentials: [{ ref: "lab", storage: "encrypted" }], secureStorage: true };
+  let list: PluginCredentialList = {
+    credentials: [{ ref: "lab", storage: "encrypted" }],
+    secureStorage: true,
+  };
   vi.mocked(api.invoke).mockImplementation(async (name, raw) => {
     const input = raw as { ref: string };
-    if (name === "mqtt.credentials.list") return structuredClone(list) as never;
-    if (name === "mqtt.credentials.save") {
+    if (name === `${scope}.credentials.list`) return structuredClone(list) as never;
+    if (name === `${scope}.credentials.save`) {
       list = { ...list, credentials: [...list.credentials, { ref: input.ref, storage: "encrypted" }] };
       return { status: "saved" } as never;
     }
-    if (name === "mqtt.credentials.remove") {
+    if (name === `${scope}.credentials.remove`) {
       list = { ...list, credentials: list.credentials.filter((entry) => entry.ref !== input.ref) };
       return {} as never;
     }
@@ -41,7 +44,9 @@ async function mount(language: string) {
   root = createRoot(container);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () =>
-    root!.render(createElement(QueryClientProvider, { client }, createElement(MqttCredentialsPanel))),
+    root!.render(
+      createElement(QueryClientProvider, { client }, createElement(PluginCredentialsPanel, { scope })),
+    ),
   );
   await vi.waitFor(() => expect(container!.querySelector('[data-credential="lab"]')).not.toBeNull());
   return userEvent.setup();
@@ -81,3 +86,27 @@ it.each(["en", "ro", "de"])("lists, saves and removes MQTT credentials: %s", asy
       ),
   ).toBe(true);
 });
+
+const TOKEN = "typed-wokwi-token";
+it.each(["en", "ro", "de"])(
+  "lists, saves and removes Wokwi tokens without a username: %s",
+  async (language) => {
+    const user = await mount(language, "wokwi");
+    const t = i18n.getFixedT(language);
+    expect(container!.textContent).toContain(t("settings.wokwiTokens"));
+    expect(container!.textContent).toContain(t("wokwiTokens.description"));
+    expect(container!.textContent).not.toMatch(/wokwiTokens\.|mqttCredentials\./);
+    expect(container!.textContent).not.toContain(t("mqttCredentials.username"));
+    await act(async () => user.type(field(t("wokwiTokens.reference")), "ci"));
+    await act(async () => user.type(field(t("wokwiTokens.token")), TOKEN));
+    await act(async () => user.click(button(container!, t("wokwiTokens.save"))));
+    await vi.waitFor(() => expect(container!.querySelector('[data-credential="ci"]')).not.toBeNull());
+    const save = vi.mocked(api.invoke).mock.calls.find(([name]) => name === "wokwi.credentials.save")!;
+    expect(save[1]).toEqual({ ref: "ci", token: TOKEN });
+    expect(container!.innerHTML).not.toContain(TOKEN);
+    const entry = container!.querySelector('[data-credential="lab"]')!;
+    await act(async () => user.click(button(entry, t("wokwiTokens.remove"))));
+    await vi.waitFor(() => expect(container!.querySelector('[data-credential="lab"]')).toBeNull());
+    expect(vi.mocked(api.invoke).mock.calls.some(([name]) => String(name).startsWith("mqtt."))).toBe(false);
+  },
+);

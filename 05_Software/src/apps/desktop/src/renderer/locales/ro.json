@@ -52,7 +52,8 @@
     "storage": "Stocare",
     "configuration": "Configurare",
     "partsSearch": "Căutare componente",
-    "mqttCredentials": "Credențiale MQTT"
+    "mqttCredentials": "Credențiale MQTT",
+    "wokwiTokens": "Tokenuri Wokwi"
   },
   "appearance": {
     "theme": "Temă",
@@ -644,6 +645,19 @@
     "username": "Nume de utilizator (opțional)",
     "password": "Parolă",
     "save": "Salvează credențiala",
+    "saved": "Salvat."
+  },
+  "wokwiTokens": {
+    "description": "Tokenuri Wokwi CI pentru pluginul oficial wokwi, care rulează simulări de firmware în cloudul Wokwi. Un job de simulare numește un token prin referința lui; VERA dă tokenul numai unei rulări aprobate a wokwi-tool din pluginul activat pentru acel workbench, pe intrarea programului, niciodată în argumente, loguri sau rezultate. Agentul nu îl vede niciodată. Fiecare rulare în cloud trimite firmware-ul și diagrama jobului la Wokwi și se contorizează în planul tău Wokwi.",
+    "loading": "Se încarcă tokenurile Wokwi…",
+    "none": "Niciun token Wokwi nu este salvat.",
+    "stored": "Salvat ({{storage}})",
+    "remove": "Elimină",
+    "add": "Adaugă sau înlocuiește un token",
+    "reference": "Referință",
+    "referenceHint": "1-64 litere mici, cifre și cratime, așa cum o numește contul jobului de simulare.",
+    "token": "Token",
+    "save": "Salvează tokenul",
     "saved": "Salvat."
   },
   "web": {

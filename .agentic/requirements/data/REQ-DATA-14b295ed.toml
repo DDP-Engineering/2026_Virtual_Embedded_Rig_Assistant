@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-14b295ed"
+
+title = "Prepare a job as exact copies with a send list, account, limits and budgets"
+
+status = "active"
+
+requirement = """
+When prepare-job succeeds, wokwi-tool shall create a new run folder holding exact copies of the diagram, firmware, ELF and scenario and a generated wokwi.toml under send/, and job.json and job.md listing every file with role, source, size, SHA-256 and whether it is transmitted, the account reference, the endpoint, the board, the virtual timeout, the real budget and the usage note, without changing the project.
+"""
+
+verification = "Helper test: prepare-job of the fixture project gives job.json format 1 with diagram, firmware and ELF transmitted and scenario and config local, hashes equal to the sources, the generated wokwi.toml with only version, firmware and elf, the account, limits {virtualTimeoutMs, realBudgetS default, attempts 1} and the usage note; the project tree hash is unchanged; a second prepare-job with the same --run-id gives run-exists."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/job.py", "05_Software/plugins/wokwi/scripts/wokwi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

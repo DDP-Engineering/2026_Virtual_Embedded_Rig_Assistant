@@ -158,7 +158,7 @@ it("reports the field path of each invalid manifest field", () => {
 });
 
 // REQ-DATA-e6b1fa1a
-it("accepts a credentials declaration with the mqtt scope only", () => {
+it("accepts a credentials declaration with the mqtt or wokwi scope only", () => {
   const withCredentials = (credentials: unknown) => ({
     ...canonical,
     programs: { esptool: { ...program, credentials } },
@@ -168,7 +168,8 @@ it("accepts a credentials declaration with the mqtt scope only", () => {
     validatePluginManifest(withCredentials({ option: "--credential", scope: "mqtt" })).manifest?.programs
       .esptool?.credentials,
   ).toEqual({ option: "--credential", scope: "mqtt" });
-  expect(paths(withCredentials({ option: "--credential", scope: "wokwi" }))).toEqual([
+  expect(paths(withCredentials({ option: "--credential", scope: "wokwi" }))).toEqual([]);
+  expect(paths(withCredentials({ option: "--credential", scope: "ssh" }))).toEqual([
     "programs.esptool.credentials.scope",
   ]);
   expect(paths(withCredentials({ option: "-c", scope: "mqtt" }))).toEqual([

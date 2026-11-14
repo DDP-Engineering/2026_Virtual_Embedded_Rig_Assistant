@@ -18,12 +18,6 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
-  mqttCredentialListSchema,
-  mqttCredentialRemoveSchema,
-  mqttCredentialSaveResultSchema,
-  mqttCredentialSaveSchema,
-} from "./mqtt-credentials.js";
-import {
   partsAccessCancelSchema,
   partsAccessSaveResultSchema,
   partsAccessSaveSchema,
@@ -39,6 +33,13 @@ import {
   pluginCatalogReviewSchema,
   pluginCatalogViewSchema,
 } from "./plugin-catalog.js";
+import {
+  mqttCredentialSaveSchema,
+  pluginCredentialListSchema,
+  pluginCredentialRemoveSchema,
+  pluginCredentialSaveResultSchema,
+  wokwiCredentialSaveSchema,
+} from "./plugin-credentials.js";
 import {
   pluginArchiveRequestSchema,
   pluginIdSchema,
@@ -159,16 +160,31 @@ export const channels = {
   "mqtt.credentials.list": defineChannel(
     "mqtt.credentials.list",
     z.strictObject({}),
-    mqttCredentialListSchema,
+    pluginCredentialListSchema,
   ),
   "mqtt.credentials.save": defineChannel(
     "mqtt.credentials.save",
     mqttCredentialSaveSchema,
-    mqttCredentialSaveResultSchema,
+    pluginCredentialSaveResultSchema,
   ),
   "mqtt.credentials.remove": defineChannel(
     "mqtt.credentials.remove",
-    mqttCredentialRemoveSchema,
+    pluginCredentialRemoveSchema,
+    z.strictObject({}),
+  ),
+  "wokwi.credentials.list": defineChannel(
+    "wokwi.credentials.list",
+    z.strictObject({}),
+    pluginCredentialListSchema,
+  ),
+  "wokwi.credentials.save": defineChannel(
+    "wokwi.credentials.save",
+    wokwiCredentialSaveSchema,
+    pluginCredentialSaveResultSchema,
+  ),
+  "wokwi.credentials.remove": defineChannel(
+    "wokwi.credentials.remove",
+    pluginCredentialRemoveSchema,
     z.strictObject({}),
   ),
   "window.menu": defineChannel(

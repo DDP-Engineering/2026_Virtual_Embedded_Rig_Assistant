@@ -1,7 +1,7 @@
-// REQ-SEC-1ffb429b
+// REQ-SEC-1ffb429b, REQ-SEC-2fda27e4
 import { expect, it, vi } from "vitest";
 import { CredentialFile } from "./credentials.js";
-import { MqttCredentialService, programCredentials } from "./mqtt-credentials.js";
+import { PluginCredentialService, programCredentials } from "./plugin-credentials.js";
 
 const PASSWORD = "broker-password-4711";
 function harness(secure = true) {
@@ -25,7 +25,13 @@ function harness(secure = true) {
     logger: { log: vi.fn(), registerSecret: vi.fn(() => () => {}), flush: vi.fn(async () => {}) },
   });
   const changed = vi.fn();
-  return { service: new MqttCredentialService({ credentials, changed }), credentials, disk, changed };
+  return {
+    service: new PluginCredentialService("mqtt", { credentials, changed }),
+    wokwi: new PluginCredentialService("wokwi", { credentials, changed }),
+    credentials,
+    disk,
+    changed,
+  };
 }
 
 it("stores, lists without secrets and removes an MQTT credential", async () => {
@@ -72,4 +78,33 @@ it("refuses invalid references and passwords with control characters", async () 
   await expect(h.service.save({ ref: "bench", password: "" })).rejects.toMatchObject({ code: "INVALID" });
   await expect(h.service.remove({ ref: "../x" })).rejects.toMatchObject({ code: "INVALID" });
   expect(await h.service.list()).toEqual({ credentials: [], secureStorage: true });
+});
+
+it("stores a Wokwi token without a username and keeps the scopes apart", async () => {
+  const h = harness();
+  const TOKEN = "wokwi-ci-token-0815";
+  await h.service.save({ ref: "bench", password: PASSWORD });
+  expect(await h.wokwi.save({ ref: "bench", token: TOKEN })).toEqual({ status: "saved" });
+  expect(await h.credentials.read("wokwi:bench")).toEqual({ type: "api_key", key: TOKEN });
+  expect(await h.wokwi.list()).toEqual({
+    credentials: [{ ref: "bench", storage: "encrypted" }],
+    secureStorage: true,
+  });
+  expect(JSON.stringify(await h.wokwi.list())).not.toContain(TOKEN);
+  const port = programCredentials(h.credentials);
+  expect(await port.read("wokwi", "bench")).toEqual({ password: TOKEN });
+  expect(await port.read("mqtt", "bench")).toEqual({ password: PASSWORD });
+  await expect(h.wokwi.save({ ref: "bench", token: TOKEN, username: "x" })).rejects.toMatchObject({
+    code: "INVALID",
+  });
+  await expect(h.wokwi.save({ ref: "bench", password: TOKEN })).rejects.toMatchObject({ code: "INVALID" });
+  expect(await h.wokwi.remove({ ref: "bench" })).toEqual({});
+  expect(await h.credentials.read("wokwi:bench")).toBeUndefined();
+  expect(await h.credentials.read("mqtt:bench")).toBeDefined();
+});
+
+it("asks for consent before storing a Wokwi token weakly", async () => {
+  const h = harness(false);
+  expect(await h.wokwi.save({ ref: "ci", token: "t-1" })).toEqual({ status: "consent-required" });
+  expect(await h.credentials.read("wokwi:ci")).toBeUndefined();
 });

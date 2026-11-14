@@ -1,9 +1,9 @@
 schema = 1
 id = "REQ-SEC-3f57f781"
-title = "Hand a stored broker credential to an approved run only on its stdin"
+title = "Hand a stored plugin credential to an approved run only on its stdin"
 status = "active"
-requirement = "When an approved run of an enabled official plugin's program that declares credentials names its option with a reference, the program tools shall read the credential mqtt:<ref> at run start and pass it to the runner only as one JSON line written to the process's stdin, never in argv, the environment, the run record, the label or the log."
-verification = "Core test: a fake credential port and process host record the spawn; the input line carries format, scope, ref, username and password; argv, env, the run record JSON and the run log hold no password; a call without the option starts with no input."
+requirement = "When an approved run of an enabled official plugin's program that declares credentials names its option with a reference, the program tools shall read the credential <scope>:<ref> of the declared scope at run start and pass it to the runner only as one JSON line written to the process's stdin, never in argv, the environment, the run record, the label or the log."
+verification = "Core test: a fake credential port and process host record the spawn; the input line carries format, scope, ref, username and password for scope mqtt, and format, scope wokwi, ref and password for scope wokwi; argv, env, the run record JSON and the run log hold no password; a call without the option starts with no input."
 affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
 linked_tests = ["05_Software/src/libraries/core/src/plugins/program-credentials.test.ts", "05_Software/tests/integration/mqtt-tools.test.ts"]
 spec = "specs/REQ-DATA-96d18686.md"

@@ -53,7 +53,6 @@ import { systemClock } from "./host-ports.js";
 import { IndexerHost } from "./indexer-host.js";
 import { createInvokeRouter } from "./ipc-router.js";
 import { createLogger } from "./logger.js";
-import { MqttCredentialService, programCredentials } from "./mqtt-credentials.js";
 import { openExternal } from "./open-external.js";
 import {
   copyEntry,
@@ -71,6 +70,7 @@ import {
   systemApps,
 } from "./openers.js";
 import { PartsAccessService } from "./parts-access.js";
+import { PluginCredentialService, programCredentials } from "./plugin-credentials.js";
 import { PluginListingHost } from "./plugin-list-host.js";
 import { createDesktopProcessHost } from "./process-host.js";
 import { testProgramResolver } from "./program-resolver.js";
@@ -273,7 +273,11 @@ const partsAccess = new PartsAccessService({
   credentials,
   changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
 });
-const mqttCredentials = new MqttCredentialService({
+const mqttCredentials = new PluginCredentialService("mqtt", {
+  credentials,
+  changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
+});
+const wokwiCredentials = new PluginCredentialService("wokwi", {
   credentials,
   changed: () => emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } }),
 });
@@ -319,7 +323,7 @@ const sessions = new SessionsHost({
   // Instrumented builds may resolve fixture plugins from VERA_TEST_PROGRAMS for e2e; otherwise provisioning does.
   programs: {
     runner: programs,
-    // Approved runs of the official mqtt-tools plugin read broker credentials here (spec REQ-DATA-96d18686 §1).
+    // Approved runs of official plugins (mqtt-tools, wokwi) read their stored credentials here (spec REQ-DATA-96d18686 §1).
     credentials: programCredentials(credentials),
     resolver:
       __VERA_TEST__ && process.env.VERA_TEST_PROGRAMS
@@ -399,6 +403,9 @@ ipcMain.handle(
       "mqtt.credentials.list": () => mqttCredentials.list(),
       "mqtt.credentials.save": (request) => mqttCredentials.save(request),
       "mqtt.credentials.remove": (request) => mqttCredentials.remove(request),
+      "wokwi.credentials.list": () => wokwiCredentials.list(),
+      "wokwi.credentials.save": (request) => wokwiCredentials.save(request),
+      "wokwi.credentials.remove": (request) => wokwiCredentials.remove(request),
       "update.get": () => {
         if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
         return updates.get();

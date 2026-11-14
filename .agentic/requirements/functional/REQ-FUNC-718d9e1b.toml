@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-718d9e1b"
+
+title = "Refuse a missing or other-version wokwi-cli"
+
+status = "active"
+
+requirement = """
+If VERA_PROGRAM_WOKWI_CLI names no file or the CLI's short version is not 0.29.1 with build sha 0aa185144b92, then wokwi-tool shall end blocked with code cli-unavailable or cli-version respectively and exit 2 before anything is sent.
+"""
+
+verification = "Helper test: capabilities with VERA_PROGRAM_WOKWI_CLI naming a missing file gives cli-unavailable exit 2; a fake CLI printing 0.30.0 or 0.29.1 with another build sha gives cli-version exit 2; the fake printing 0.29.1 (0aa185144b92) gives pass with cli.version 0.29.1."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

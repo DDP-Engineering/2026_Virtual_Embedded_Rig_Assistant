@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { labResourceKindSchema } from "./lab-resources.js";
-import { pluginCredentialScopeSchema } from "./mqtt-credentials.js";
+import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 /** Import limits of one plugin package (folder or zip). */

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-11ca382d"
+
+title = "Send only the job's own files"
+
+status = "active"
+
+requirement = """
+When run-scenario starts wokwi-cli, wokwi-tool shall run it with the job folder as working directory, the job's send folder as project, --no-sdcard and output paths inside the run folder, so that no other project file or folder is read for the simulation.
+"""
+
+verification = "Helper test with the fake CLI, which records its argv, working directory and the files of the project folder it was given: the project folder holds exactly the job's files, argv has --no-sdcard, the virtual timeout, --timeout-exit-code 42 and the serial log path in the run folder; a file added to send/ after prepare-job gives job-changed and the CLI is not started."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/run.py", "05_Software/plugins/wokwi/scripts/wokwi_support/job.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-fa87b102"
+
+title = "Read the Wokwi token only from VERA's stdin line for the job's account"
+
+status = "active"
+
+requirement = """
+When run-scenario starts, wokwi-tool shall require --credential equal to the job's account and read the token only from the stdin line VERA writes for scope wokwi, ending blocked with credential-mismatch for another reference and credential-missing when no valid line arrives.
+"""
+
+verification = "Helper test: --credential other than the job's account gives credential-mismatch, also with a stdin line of scope mqtt that would end credential-missing if it were read; closed stdin, a line of scope mqtt and a line for another ref give credential-missing, credential-missing and credential-mismatch; none starts the fake CLI."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/credential.py", "05_Software/plugins/wokwi/scripts/wokwi_support/run.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

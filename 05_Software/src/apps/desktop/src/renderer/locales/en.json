@@ -52,7 +52,8 @@
     "storage": "Storage",
     "configuration": "Configuration",
     "partsSearch": "Parts search",
-    "mqttCredentials": "MQTT credentials"
+    "mqttCredentials": "MQTT credentials",
+    "wokwiTokens": "Wokwi tokens"
   },
   "appearance": {
     "theme": "Theme",
@@ -644,6 +645,19 @@
     "username": "Username (optional)",
     "password": "Password",
     "save": "Save credential",
+    "saved": "Saved."
+  },
+  "wokwiTokens": {
+    "description": "Wokwi CI tokens for the official wokwi plugin, which runs firmware simulations in Wokwi's cloud. A simulation job names a token by its reference; VERA hands the token only to an approved wokwi-tool run of the plugin enabled for that workbench, on the program's input, never in its arguments, logs or results. The agent never sees it. Each cloud run sends the job's firmware and diagram to Wokwi and counts against your Wokwi plan.",
+    "loading": "Loading Wokwi tokens…",
+    "none": "No Wokwi token is stored.",
+    "stored": "Stored ({{storage}})",
+    "remove": "Remove",
+    "add": "Add or replace a token",
+    "reference": "Reference",
+    "referenceHint": "1-64 lowercase letters, digits and dashes, as the simulation job's account names it.",
+    "token": "Token",
+    "save": "Save token",
     "saved": "Saved."
   },
   "web": {

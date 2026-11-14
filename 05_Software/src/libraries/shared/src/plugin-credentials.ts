@@ -1,12 +1,13 @@
 import { z } from "zod";
 
 /**
- * MQTT broker credentials stored by the host and handed only to approved runs of an official plugin
- * (spec REQ-DATA-96d18686 section 1). The renderer sees references and storage, never a username or password.
+ * Plugin credentials stored by the host and handed only to approved runs of an official plugin (spec
+ * REQ-DATA-96d18686 section 1): MQTT broker logins (scope mqtt) and Wokwi CI tokens (scope wokwi). The renderer sees
+ * references and storage, never a username, password or token.
  */
 
 /** The credential scopes a plugin program may declare. */
-export const pluginCredentialScopeSchema = z.enum(["mqtt"]);
+export const pluginCredentialScopeSchema = z.enum(["mqtt", "wokwi"]);
 export type PluginCredentialScope = z.infer<typeof pluginCredentialScopeSchema>;
 /** 1-64 lowercase letters, digits and dashes, a letter or digit at both ends. */
 export const credentialReferenceSchema = z
@@ -24,11 +25,18 @@ export const mqttCredentialSaveSchema = z.strictObject({
   storageConsent: z.boolean().optional(),
 });
 export type MqttCredentialSave = z.infer<typeof mqttCredentialSaveSchema>;
-export const mqttCredentialSaveResultSchema = z.strictObject({
+/** A Wokwi CI token under a reference; it has no username. */
+export const wokwiCredentialSaveSchema = z.strictObject({
+  ref: credentialReferenceSchema,
+  token: z.string().min(1).max(1024).refine(noControl, "No control characters."),
+  storageConsent: z.boolean().optional(),
+});
+export type WokwiCredentialSave = z.infer<typeof wokwiCredentialSaveSchema>;
+export const pluginCredentialSaveResultSchema = z.strictObject({
   status: z.enum(["saved", "consent-required"]),
 });
-export const mqttCredentialRemoveSchema = z.strictObject({ ref: credentialReferenceSchema });
-export const mqttCredentialListSchema = z.strictObject({
+export const pluginCredentialRemoveSchema = z.strictObject({ ref: credentialReferenceSchema });
+export const pluginCredentialListSchema = z.strictObject({
   credentials: z
     .array(
       z.strictObject({
@@ -39,6 +47,6 @@ export const mqttCredentialListSchema = z.strictObject({
     .max(64),
   secureStorage: z.boolean(),
 });
-export type MqttCredentialList = z.infer<typeof mqttCredentialListSchema>;
-/** At most this many MQTT credentials are stored. */
-export const MQTT_CREDENTIALS_MAX = 64;
+export type PluginCredentialList = z.infer<typeof pluginCredentialListSchema>;
+/** At most this many credentials of one scope are stored. */
+export const PLUGIN_CREDENTIALS_MAX = 64;

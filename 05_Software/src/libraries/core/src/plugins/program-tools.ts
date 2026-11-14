@@ -270,10 +270,14 @@ function credentialReference(
     throw Error(`${option} needs a credential reference of 1-64 lowercase letters, digits and dashes.`);
   return { scope, ref };
 }
-const notStored = (scope: string, ref: string) =>
-  Error(
-    `The ${scope} credential ${ref} is not stored. The user adds it in Settings > MQTT credentials, or for the CLI in VERA_MQTT_PASSWORD_${ref.toUpperCase().replaceAll("-", "_")}.`,
-  );
+const notStored = (scope: PluginCredentialScope, ref: string) => {
+  const name = ref.toUpperCase().replaceAll("-", "_");
+  const where =
+    scope === "mqtt"
+      ? `Settings > MQTT credentials, or for the CLI in VERA_MQTT_PASSWORD_${name}`
+      : `Settings > Wokwi tokens, or for the CLI in VERA_WOKWI_TOKEN_${name}`;
+  return Error(`The ${scope} credential ${ref} is not stored. The user adds it in ${where}.`);
+};
 /** The stdin line of a run naming a credential: read now, after the plugin list was loaded again. */
 async function credentialInput(
   host: ProgramHost,

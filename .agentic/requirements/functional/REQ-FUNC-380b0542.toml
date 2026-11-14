@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-380b0542"
+
+title = "Validate a diagram with structural checks and wokwi-cli's offline linter"
+
+status = "active"
+
+requirement = """
+When validate-diagram names a diagram, wokwi-tool shall check its structure and run wokwi-cli lint --offline on it, report every issue with severity, rule, message and part, and end pass without errors or fail with exit 1 otherwise.
+"""
+
+verification = "Helper test with the real wokwi-cli 0.29.1 (opt-in): a diagram with pin uno:99 and type wokwi-foo-bar gives fail with invalid-pin and unknown-part-type errors and a redundant-parts warning; a valid Uno+LED diagram gives pass; with the fake CLI a duplicate part id and a connection to an unknown part give structural errors; the CLI argv is `lint --offline <diagram>`."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/diagram.py", "05_Software/plugins/wokwi/scripts/wokwi_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

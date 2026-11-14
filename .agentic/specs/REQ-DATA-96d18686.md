@@ -5,7 +5,8 @@ Governs REQ-DATA-96d18686 and the mqtt-tools and plugin-credential requirements 
 ## 1 Host credential hand-off
 
 A program in plugin.yaml may declare `credentials: { option: --credential, scope: mqtt }`. `option` is a long
-option (`--[a-z][a-z0-9-]{0,31}`); `scope` is `mqtt`, the only scope. A credential reference is 1-64 characters of
+option (`--[a-z][a-z0-9-]{0,31}`); `scope` is `mqtt` (broker username and password) or `wokwi` (a Wokwi CI token,
+used by the wokwi plugin, spec REQ-DATA-d985bb3d). A credential reference is 1-64 characters of
 `[a-z0-9-]`, a letter or digit at both ends.
 
 When a `run_program` call of such a program names the option once with a reference:
@@ -17,20 +18,25 @@ When a `run_program` call of such a program names the option once with a referen
    undeclared and the run is refused before any credential is read. The same checks run again; then the host reads
    `<scope>:<ref>` from the credential port.
 3. The runner starts the process with stdin as a pipe, writes exactly one line and closes stdin:
-   `{"format":1,"scope":"mqtt","ref":"<ref>","username":"<user>","password":"<password>"}\n` (`username` omitted when
-   not stored). The line is not part of the run record, the label, the log, argv or the environment.
+   `{"format":1,"scope":"<scope>","ref":"<ref>","username":"<user>","password":"<password>"}\n` (`username`
+   omitted when not stored, always for `wokwi`, whose token is the `password`). The line is not part of the run record, the label, the log, argv or the environment.
 
 A call that does not name the option starts with stdin closed, as every other program does. The credential entry is
-`{type: "api_key", key: <password>, env: {username: <user>}}` under id `mqtt:<ref>` in the CredentialStore.
+`{type: "api_key", key: <password>, env: {username: <user>}}` under id `<scope>:<ref>` in the CredentialStore (no `env`
+for `wokwi`).
 
 Desktop: IPC `mqtt.credentials.list` `{}` -> `{credentials: [{ref, storage}], secureStorage}` (at most 64 entries;
 username and password are never returned); `mqtt.credentials.save` `{ref, username?, password, storageConsent?}` ->
 `{status: "saved" | "consent-required"}` (consent required when OS encryption is unavailable and no choice was given,
 as for provider keys); `mqtt.credentials.remove` `{ref}` -> `{}`. Username 0-256 and password 1-1024 characters
-without control characters. Settings shows the section "MQTT credentials".
+without control characters. Settings shows the section "MQTT credentials". The same service, parameterized by scope,
+serves `wokwi.credentials.list` (same response), `wokwi.credentials.save` `{ref, token, storageConsent?}` (token 1-1024
+characters without control characters; no username) and `wokwi.credentials.remove` `{ref}`; Settings shows the
+section "Wokwi tokens". Each list returns only the entries of its own scope.
 
-CLI: `VERA_MQTT_PASSWORD_<REF>` and optional `VERA_MQTT_USERNAME_<REF>`, where `<REF>` is the reference upper-cased
-with `-` as `_`, are put in memory-only entries and registered as secrets for redaction.
+CLI: `VERA_MQTT_PASSWORD_<REF>` and optional `VERA_MQTT_USERNAME_<REF>`, and `VERA_WOKWI_TOKEN_<REF>`, where `<REF>`
+is the reference upper-cased with `-` as `_`, are put in memory-only entries `mqtt:<ref>` and `wokwi:<ref>` and
+registered as secrets for redaction.
 
 ## 2 Command line
 

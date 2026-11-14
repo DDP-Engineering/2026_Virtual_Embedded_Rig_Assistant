@@ -52,7 +52,8 @@
     "storage": "Speicher",
     "configuration": "Konfiguration",
     "partsSearch": "Bauteilsuche",
-    "mqttCredentials": "MQTT-Zugangsdaten"
+    "mqttCredentials": "MQTT-Zugangsdaten",
+    "wokwiTokens": "Wokwi-Tokens"
   },
   "appearance": {
     "theme": "Design",
@@ -644,6 +645,19 @@
     "username": "Benutzername (optional)",
     "password": "Passwort",
     "save": "Zugangsdaten speichern",
+    "saved": "Gespeichert."
+  },
+  "wokwiTokens": {
+    "description": "Wokwi-CI-Tokens für das offizielle wokwi-Plugin, das Firmware-Simulationen in der Wokwi-Cloud ausführt. Ein Simulationsjob nennt ein Token über seine Referenz; VERA übergibt das Token nur einem genehmigten wokwi-tool-Lauf des für diese Workbench aktivierten Plugins, über die Eingabe des Programms, nie in Argumenten, Logs oder Ergebnissen. Der Agent sieht es nie. Jeder Cloud-Lauf sendet Firmware und Diagramm des Jobs an Wokwi und wird auf deinen Wokwi-Plan angerechnet.",
+    "loading": "Wokwi-Tokens werden geladen…",
+    "none": "Kein Wokwi-Token gespeichert.",
+    "stored": "Gespeichert ({{storage}})",
+    "remove": "Entfernen",
+    "add": "Token hinzufügen oder ersetzen",
+    "reference": "Referenz",
+    "referenceHint": "1-64 Kleinbuchstaben, Ziffern und Bindestriche, wie das Konto des Simulationsjobs sie nennt.",
+    "token": "Token",
+    "save": "Token speichern",
     "saved": "Gespeichert."
   },
   "web": {

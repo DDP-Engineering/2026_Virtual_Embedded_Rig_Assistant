@@ -67,6 +67,13 @@ operations.py read/discover/release, report.py) with spec .agentic/specs/REQ-DAT
 tests/integration/ble-tools.test.ts with the fake Bleak in tests/fixtures/ble-tools/fake-bleak owns its coverage -
 offline evidence plus one opt-in real scan, not proof of a device. Its workspace.py is a byte-identical copy of
 circuitpython-tool's and lifecycle.py of bus-tool's; the device lease is platform behaviour, see [Plugins](plugins.md).
+For wokwi, start at plugins/wokwi/plugin.yaml, scripts/wokwi_tool.py and scripts/wokwi_support/ (cli.py dispatch,
+engine.py the pinned wokwi-cli, its child environment and offline lint, project.py wokwi.toml/firmware/origin, diagram.py,
+scenario.py, job.py the job folder and its verification, credential.py the stdin token, run.py the one cloud run with its
+watch loop, outcome.py the outcome table, collect.py, redact.py, report.py) with spec .agentic/specs/REQ-DATA-d985bb3d.md;
+tests/integration/wokwi.test.ts with tests/support/fake-wokwi-cli.py owns its coverage - offline evidence plus the real
+wokwi-cli 0.29.1 offline (VERA_TEST_WOKWI_CLI), never a cloud run. Its workspace.py is a byte-identical copy of mqtt-tool's;
+the token hand-off is platform behaviour, see [Plugins](plugins.md).
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -568,6 +575,38 @@ that source metadata reaches the deterministic bundled index unchanged.
   unknown. Results `arduino-iot-results/<run-id>/` (`ble-tool-result`, `report.md`, notification files); exit 0/1/2/3.
   Verified against the fake Bleak and with one real passive scan on Windows 11; no real device read, notify, write or
   pairing yet, native Ubuntu/BlueZ not run.
+- `wokwi` 1.0.0, ecosystem `arduino` (Arduino pack, group "Cloud simulation (Wokwi)", default off; activity `testing`),
+  Windows x64 and Linux x64. Program `wokwi-cli` = the official wokwi-cli 0.29.1 (sha 0aa185144b92) downloaded by
+  SHA-256 from its GitHub release (`wokwi-cli-win-x64.exe`, `wokwi-cli-linuxstatic-x64`), version probe
+  `--short-version` in range >=0.29.1,<0.29.2, every direct command blocked. Program `wokwi-tool` = `scripts/wokwi_tool.py`
+  (PEP 723, `pyyaml==6.0.3`), `uses: [wokwi-cli]`, `credentials {option: --credential, scope: wokwi}`, timeout 120 s.
+  Risks: `capabilities`, `inspect-project`, `validate-diagram`, `prepare-job`, `collect-results`, `report` safe;
+  `run-scenario` irreversible (timeout 1900 s; transmits the job's files to wss://wokwi.com/api/ws/beta). The helper
+  refuses another wokwi-cli version or build sha (`cli-version`) or none (`cli-unavailable`); every wokwi-cli child gets the helper's
+  environment without any `WOKWI_*` variable plus `NO_COLOR=1`, and only run-scenario adds `WOKWI_CLI_TOKEN`.
+  inspect-project reports wokwi.toml, firmware/ELF (form hex/bin/uf2/elf/ESP-IDF flasher_args.json, size, SHA-256,
+  origin arduino-cli run+FQBN by result.json hash, PlatformIO environment, ESP-IDF target, else unknown; buildMatch),
+  diagram parts and boards. validate-diagram runs structural checks and `wokwi-cli lint --offline`. prepare-job refuses
+  wokwi.toml tables/keys beyond version/firmware/elf, chips, SD cards, GDB/RFC 2217 (`unsupported-input`), mismatched
+  firmware (`firmware-invalid`), lint errors (`diagram-invalid`), not exactly one board, scenarios outside delay,
+  wait-serial, write-serial, set-control, expect-pin (`scenario-invalid`/`unsupported-input`), no assertion
+  (`assertion-missing`) or scenario plus expect-text; then writes `arduino-iot-results/<run-id>/` with `send/` (exact
+  copies and a generated wokwi.toml), `job.json` (`wokwi-job`: files with role, source, size, SHA-256, transmitted;
+  account, endpoint, board, limits virtual 100-600000 ms and real budget 10-1800 s, attempts 1, usage note) and
+  `job.md`. run-scenario accepts only fields of the form prepare-job writes (`job-invalid`), verifies that send/ holds
+  exactly the job's fixed layout with listed roles and hashes, a wokwi.toml byte-equal to the generated one and the
+  flash files flasher_args.json names (`job-changed`), checks the copies again (one board equal to the job's,
+  screenshot part, scenario, offline lint), then the account (`credential-mismatch`) and the CLI build sha before it
+  reads the stdin token; a stop before the CLI starts sends nothing; writes result.json incomplete/running, runs
+  wokwi-cli once on send/ with `--no-sdcard`, the virtual timeout and exit code 42, a 200 ms watch loop (real budget,
+  serial log 16 MiB, stdout/stderr 4 MiB each, stop signal -> CTRL_BREAK_EVENT/SIGTERM, kill after 5 s), redacts the
+  token from all CLI output it writes, then `exit.json` and the outcome: passed / virtual-timeout / fail-text /
+  assertion-failed / auth-failed / network-error / connection-lost / api-error / credential-missing / cli-failed /
+  stopped / real-budget-exceeded / output-limit / interrupted, with remote `not-started` (confirmed),
+  `closed-by-client` or `unknown`, virtual and real time apart, `connectRetries`. Results `wokwi-run`, `report.md`,
+  `serial.log`, optional `trace.vcd`/`screenshot.png`; report writes report.json/.md/.html and junit.xml; exit 0/1/2/3.
+  Verified offline against the fake CLI and with the real wokwi-cli 0.29.1 (version, offline lint, argument
+  acceptance up to its missing-token check); no cloud run (no token by the user's decision), native Ubuntu not run.
 
 ## Invariants
 
@@ -899,6 +938,11 @@ that source metadata reaches the deterministic bundled index unchanged.
   `notify`, `write`, `operations`, `report`, `lifecycle` and `workspace` shared).
 - `05_Software/tests/integration/ble-tools.test.ts`, `tests/fixtures/ble-tools/fake-bleak/` (fake Bleak 3.1.0 driven by a bench
   file, logging every radio call).
+- `05_Software/plugins/wokwi/` — manifest, README, skills wokwi-simulation and wokwi-scenarios, `scripts/wokwi_tool.py`
+  (entry), `scripts/wokwi_support/` (`cli`, `engine`, `project`, `diagram`, `scenario`, `job`, `credential`, `redact`, `run`,
+  `outcome`, `collect`, `operations`, `report`, `workspace` shared).
+- `05_Software/tests/integration/wokwi.test.ts`, `tests/support/fake-wokwi-cli.py` (scripted wokwi-cli recording argv, cwd,
+  WOKWI_* environment and the project listing).
 - `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
   support package.
 - `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).

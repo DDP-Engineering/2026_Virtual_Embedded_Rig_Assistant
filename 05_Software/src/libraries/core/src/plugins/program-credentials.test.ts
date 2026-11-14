@@ -19,7 +19,10 @@ import { ProgramRunner } from "./runner.js";
 import type { LoadedPlugin } from "./store.js";
 
 const PASSWORD = "s3cret-Passw0rd!";
-function mqttPlugin(tier: "official" | "local" | "community" = "official"): LoadedPlugin {
+function mqttPlugin(
+  tier: "official" | "local" | "community" = "official",
+  scope: "mqtt" | "wokwi" = "mqtt",
+): LoadedPlugin {
   return {
     folder: "/plugins/mqtt-tools",
     manifest: pluginManifestSchema.parse({
@@ -34,7 +37,7 @@ function mqttPlugin(tier: "official" | "local" | "community" = "official"): Load
         "mqtt-tool": {
           install: { pip: "mqtt-tool" },
           version: { args: ["--version"], match: "(\\d+)" },
-          credentials: { option: "--credential", scope: "mqtt" },
+          credentials: { option: "--credential", scope },
         },
       },
       rules: [{ match: "mqtt-tool *", risk: "device-read" }],
@@ -73,7 +76,8 @@ beforeEach(async () => {
   reads = [];
   approved = undefined;
   credentials = {
-    has: async (scope, ref) => stored.has(ref) && scope === "mqtt",
+    has: async (scope, ref) =>
+      stored.has(ref) && scope === (plugins[0]?.manifest.programs["mqtt-tool"]?.credentials?.scope ?? "mqtt"),
     read: async (scope, ref) => {
       reads.push(`${scope}:${ref}`);
       return stored.get(ref);
@@ -214,5 +218,32 @@ describe("unresolvable references (REQ-FUNC-00c788bb)", () => {
     stored.delete("bench");
     await expect(prepared.apply(signal())).rejects.toThrow(/bench/);
     expect(host.programs).toHaveLength(0);
+  });
+});
+
+describe("the wokwi scope (REQ-SEC-3f57f781)", () => {
+  it("hands a stored Wokwi token over as a wokwi line without a username", async () => {
+    plugins = [mqttPlugin("official", "wokwi")];
+    stored.set("ci", { password: PASSWORD });
+    const prepared = await prepare(["run-scenario", "--credential", "ci"]);
+    const result = prepared.apply(signal());
+    await vi.waitFor(() => expect(host.programs).toHaveLength(1));
+    const process = host.programs[0] as NonNullable<(typeof host.programs)[number]>;
+    expect(reads).toEqual(["wokwi:ci"]);
+    expect(JSON.parse(String(process.options.input))).toEqual({
+      format: 1,
+      scope: "wokwi",
+      ref: "ci",
+      password: PASSWORD,
+    });
+    expect(process.args.join(" ")).not.toContain(PASSWORD);
+    process.finish({ code: 0, signal: null });
+    await result;
+  });
+  it("names the Wokwi settings and CLI variable when the token is not stored", async () => {
+    plugins = [mqttPlugin("official", "wokwi")];
+    await expect(prepare(["run-scenario", "--credential", "bench-2"])).rejects.toThrow(
+      /Settings > Wokwi tokens.*VERA_WOKWI_TOKEN_BENCH_2/,
+    );
   });
 });

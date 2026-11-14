@@ -170,6 +170,11 @@ tests/integration/ble-tools.test.ts runs ble-tool under the same Python with the
 (no Bluetooth package, adapter or network needed). Opt-in VERA_TEST_BLE_PYTHON names a Python with bleak 3.1.0 and its pinned
 WinRT (or dbus-fast) packages for one real scan on this computer's adapter, never a connection; it passed on Windows 11 on
 2026-11-14 with a scratch venv (`pip install bleak==3.1.0` plus the pins of scripts/ble_tool.py from PyPI).
+tests/integration/wokwi.test.ts runs wokwi-tool under the same Python, which must have PyYAML 6.0.3 (present in this
+host's toolchain Python 3.12), with the scripted fake tests/support/fake-wokwi-cli.py; no network, Wokwi account or token
+is used, and its SIGTERM case runs only on Linux. Opt-in VERA_TEST_WOKWI_CLI names the real wokwi-cli 0.29.1 for offline
+version, `lint --offline` and argument checks; it passed on Windows 11 on 2026-11-14 with wokwi-cli-win-x64.exe from the
+v0.29.1 GitHub release (sha256 45292e3c...83b2) in a scratch folder.
 tests/integration/serial-monitor.test.ts runs the serial-monitor script under the toolchain's Python 3.11+ (`python` on
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a

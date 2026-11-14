@@ -164,13 +164,19 @@ and through `ResourceLeases`, a per-user lease folder the desktop app and the CL
 request and a grace period, runs the declared cleanup once after an interrupted actuation and reports the physical
 state. `ResourceLeases` is the only lease registry; later identity kinds extend the registry schema and key function.
 
-Plugin credentials (IOT-05, spec REQ-DATA-96d18686 §1): a program that declares `credentials {option, scope: mqtt}`
-receives the stored credential `mqtt:<ref>` a call names with `option`, as one JSON line on stdin, and nothing else does.
+Plugin credentials (spec REQ-DATA-96d18686 §1): a program that declares `credentials {option, scope}` (scope `mqtt`
+or `wokwi`) receives the stored credential `<scope>:<ref>` a call names with `option`, as one JSON line on stdin, and
+nothing else does.
 Prepare refuses a plugin that is not official, a host without `ProgramHost.credentials`, a repeated option, an invalid
 reference or a credential that is not stored; apply loads the enabled plugins again (a disabled plugin is undeclared and
-nothing is read), reads the credential and passes it as `RunRequest.input`. Desktop main stores the credentials
-(Settings > MQTT credentials, `mqtt.credentials.*` IPC) and the CLI takes `VERA_MQTT_PASSWORD_<REF>`; neither changes a
-program's environment.
+nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the scope's
+Settings section and CLI variable. Desktop main stores the credentials through one `PluginCredentialService(scope)`
+(`apps/desktop/src/main/plugin-credentials.ts`): Settings > MQTT credentials (`mqtt.credentials.*` IPC: reference,
+optional username, password) and Settings > Wokwi tokens (`wokwi.credentials.*`: reference and token, no username),
+both rendered by `renderer/components/plugin-credentials.tsx`; each list returns only its own scope's references and
+storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
+and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
+changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
 
 ## Authoring
 

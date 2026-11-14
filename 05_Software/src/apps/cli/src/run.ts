@@ -34,8 +34,8 @@ import {
   MemoryCredentials,
   nodeClock,
 } from "./host-ports.js";
-import { cliProgramCredentials, mqttFromEnvironment } from "./mqtt-env.js";
 import { cliPartsProvider, partsFromEnvironment } from "./parts-env.js";
+import { cliProgramCredentials, pluginCredentialsFromEnvironment } from "./plugin-credentials-env.js";
 import { createCliProcessHost } from "./process-host.js";
 import { createCliProvisioner } from "./provisioning.js";
 import { scrubReplayOutput } from "./replay-output.js";
@@ -101,8 +101,9 @@ export async function runTurn(
       (secret) => logger.registerSecret(secret),
     );
     const parts = cliPartsProvider(store, partsSettings, () => config.webAccess.enabled);
-    // MQTT broker credentials, also environment-only and in memory: approved mqtt-tool runs read them.
-    await mqttFromEnvironment(process.env, store, (secret) => logger.registerSecret(secret));
+    // MQTT broker credentials and Wokwi tokens, also environment-only and in memory: approved runs of the official
+    // mqtt-tools and wokwi plugins read them.
+    await pluginCredentialsFromEnvironment(process.env, store, (secret) => logger.registerSecret(secret));
     resources.push(() => parts.close());
     let gateway: LlmGateway, model: string;
     if (options.provider === "replay") {
