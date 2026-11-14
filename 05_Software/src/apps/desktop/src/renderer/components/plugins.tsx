@@ -3,10 +3,8 @@ import type {
   CatalogPlugin,
   PluginCatalogReview,
   PluginIssue,
-  PluginProgram,
   PluginProgramStatus,
   PluginReview,
-  PluginRisk,
   PluginSummary,
 } from "@vera/shared";
 import { pluginPlatform } from "@vera/shared";
@@ -22,6 +20,7 @@ import {
   installOrder,
   PluginDiscoveryFacts,
 } from "./plugin-catalog.js";
+import { PluginContents, useRiskLabels } from "./plugin-contents.js";
 import {
   catalogLibraryItems,
   clearedLibraryFilters,
@@ -51,13 +50,7 @@ export interface PluginsWorkbench {
 }
 function useLabels() {
   const { t } = useTranslation();
-  const risk: Record<PluginRisk, string> = {
-    safe: t("approval.risk.safe"),
-    "device-read": t("approval.risk.deviceRead"),
-    "device-write": t("approval.risk.deviceWrite"),
-    irreversible: t("approval.risk.irreversible"),
-    blocked: t("approval.risk.blocked"),
-  };
+  const risk = useRiskLabels();
   const issue = (item: PluginIssue): string => {
     switch (item.code) {
       case "manifest":
@@ -123,34 +116,6 @@ export function Issues({ issues }: { issues: readonly PluginIssue[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-/** Where a program comes from, as the review screen lists it. */
-function InstallSource({ program }: { program: PluginProgram }) {
-  const { t } = useTranslation();
-  const { install } = program;
-  if ("pip" in install) return <span>{t("plugins.source.pip", { requirement: install.pip })}</span>;
-  if ("script" in install) return <span>{t("plugins.source.script", { path: install.script })}</span>;
-  return (
-    <>
-      {"find" in install && (
-        <>
-          <span>{t("plugins.source.find")}</span>{" "}
-          <code>{[...(install.find.windows ?? []), ...(install.find.linux ?? [])].join(", ")}</code>
-          {install.hint && <span className="muted"> {install.hint}</span>}
-        </>
-      )}
-      {"download" in install && install.download && (
-        <ul>
-          {Object.entries(install.download).map(([platform, entry]) => (
-            <li key={platform}>
-              {t("plugins.source.download", { platform })} <code>{entry?.url}</code>{" "}
-              <span className="plugin-sha">SHA-256 {entry?.sha256}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
   );
 }
 function Review({
@@ -238,47 +203,7 @@ function Review({
       {manifest && (
         <>
           <p>{manifest.description}</p>
-          <h4>{t("plugins.programs")}</h4>
-          {Object.keys(manifest.programs).length === 0 && <p>{t("plugins.noPrograms")}</p>}
-          <ul className="plugin-review-list">
-            {Object.entries(manifest.programs).map(([name, program]) => (
-              <li key={name} data-program={name}>
-                <code>{name}</code> <InstallSource program={program} />
-                {program.version.range && (
-                  <span className="muted"> {t("plugins.range", { range: program.version.range })}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-          <h4>{t("plugins.rules")}</h4>
-          {manifest.rules.length === 0 && <p>{t("plugins.noRules")}</p>}
-          <ul className="plugin-review-list">
-            {manifest.rules.map((rule, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: rules keep manifest order and may repeat.
-              <li key={index} data-rule={rule.risk}>
-                <code>{rule.match}</code>{" "}
-                <span className="risk-badge" data-risk={rule.risk}>
-                  {labels.risk[rule.risk]}
-                </span>
-                {rule.note && <span> {rule.note}</span>}
-                {rule.timeout !== undefined && (
-                  <span className="muted"> {t("plugins.timeout", { seconds: rule.timeout })}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-          {manifest.docs.length > 0 && (
-            <>
-              <h4>{t("plugins.docs")}</h4>
-              <ul className="plugin-review-list">
-                {manifest.docs.map((doc) => (
-                  <li key={doc}>
-                    <code>{doc}</code>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          <PluginContents manifest={manifest} composition={review.composition} />
         </>
       )}
       {error !== undefined && <ErrorMessage error={error} />}
@@ -635,6 +560,9 @@ function PluginCard({
             />
           )}
           {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
+          {healthy && plugin.manifest && (
+            <PluginContents manifest={plugin.manifest} composition={plugin.composition} />
+          )}
         </div>
       )}
       {exported && <p role="status">{t("plugins.exported", { path: exported })}</p>}

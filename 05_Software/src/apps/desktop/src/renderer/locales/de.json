@@ -842,9 +842,17 @@
     "broken": "Dieses Plugin hat Fehler und wird nicht geladen:",
     "programs": "Programme",
     "noPrograms": "Keine Programme: Dieses Plugin fügt nur Skills hinzu.",
-    "rules": "Regeln",
-    "noRules": "Keine Regeln.",
     "docs": "Dokumente",
+    "composition": {
+      "title": "Zusammensetzung",
+      "noPrograms": "Führt keine Programme aus.",
+      "skills": "Skills",
+      "files": "Profile und Datendateien"
+    },
+    "operations": {
+      "title": "Operationen",
+      "none": "Keine Operationen: Dieses Plugin deklariert keine Regeln."
+    },
     "range": "unterstützt {{range}}",
     "timeout": "Zeitlimit {{seconds}} s",
     "installingPrograms": "Programme werden installiert…",

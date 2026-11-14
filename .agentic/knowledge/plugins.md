@@ -118,7 +118,12 @@ The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugi
 (`renderer/components/plugins.tsx`) installs in two steps, `plugins.choose` (native picker) and `plugins.review`
 (the store reads and validates the package, installs nothing), then `plugins.install {path, sha256}` with the
 reviewed hash. It lists installed plugins with their program statuses and issues, installs programs (`plugins.provision`) and uninstalls after a
-confirmation. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
+confirmation. The review screen and the expanded card of an issue-free installed plugin show the same `PluginContents`
+(`renderer/components/plugin-contents.tsx`): a Composition section (programs with install kind and script path or
+source, skills with their SKILL.md descriptions, profiles and data files, documents; "Runs no programs." without
+programs) and an Operations section, the manifest `rules` grouped by `pluginOperations` into one collapsed `<details>`
+per risk (safe, device-read, device-write, irreversible, blocked; label and count in the summary; pattern, note and
+timeout per rule). The risk labels are the approval prompt's `approval.risk.*`. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
 (`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second), shows a log (`runs.log`) and
 stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds WorkbenchPlugins: installed packages are draft checkboxes saved through workbench.create or workbench.config.update with plugins.enabled. New workbenches default to none; existing choices are retained. Missing/invalid selected entries can be removed; invalid or untrusted packages cannot be newly selected. Read-only/pending forms disable controls; list failures show retry and do not clear the draft. Cancel performs no activation write. The global manager has no enable switches and points to Edit workbench → Plugins. Scoped package trust remains a separate action.
 
@@ -254,7 +259,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `pluginIssueSchema` (`manifest`, `yaml`, `field`, `id`, `record`, `changed`, `unavailable`, `untrusted`, `collision`),
   `pluginInstalledSchema`, `pluginSummarySchema` (adds `enabled`), `PLUGIN_LIMITS`,
   `isPluginRelativePath`, `pluginMaturity(version)`, `pluginPlatform(platform, arch)` (core re-exports it),
-  `pluginHighestRisk(rules)` -> `PluginRunRisk` (`safe` without a rule below `blocked`).
+  `pluginHighestRisk(rules)` -> `PluginRunRisk` (`safe` without a rule below `blocked`),
+  `pluginOperations(rules)` -> `{risk, rules}[]` (one group per risk with rules, in risk order, rules in manifest
+  order and unchanged), `pluginCompositionSchema` (`skills: {name, description?}[]`, `files: string[]`).
 - Core: `new PluginStore({ root, now?, uuid? })` with `review(path)` → `PluginReview`, `install(path, sha256?)`
   (CONFLICT when the package's hash differs from `sha256`), `list()`, `load(id)` →
   `{manifest, record, folder}`, `uninstall(id)`, `ids()`; `pluginIntegrity(files)`;
@@ -341,7 +348,10 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - WorkbenchService `loadPlugins(id)` -> the enabled plugins that load (installed, issue-free,
   unchanged), in plugins.enabled order.
 - Summaries: `pluginInstalledSchema.irreversible` lists `{match, note?}` of a plugin without issues;
-  `plugins.list` carries it.
+  `plugins.list` carries it. An issue-free summary (global or trusted scoped) also carries `manifest` and
+  `composition`; a review carries `composition` whenever its manifest parses. Composition: each
+  `skills/<name>/SKILL.md` with the front-matter description of core `parseSkill` (none when it does not parse), and
+  the data files outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative docs, in path order.
 - Runs (shared): `programRunIdSchema` (ULID), `programRunRecordSchema` (format 1), `programRunSchema` (adds
   `state: running|exited|stopped|timedOut|interrupted` and `log`), `programRunLogSchema`. IPC `runs.list
   {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id
@@ -671,6 +681,8 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-43114b84` / `REQ-SEC-ce28991b` — bypass switch approvals; mode decisions revoked on mode change.
 - `REQ-UX-9744e270` / `REQ-UX-12185f60` — approval card; bypass warning lists irreversible rules.
 - `REQ-DATA-3f62c8c1` — irreversible rules in plugin summaries.
+- `REQ-DATA-b065d2a4` / `REQ-FUNC-8af265ac` — composition on review and summary; operations from the approval rules.
+- `REQ-UX-c49dc727` / `REQ-UX-b62eb1e0` — Composition and Operations sections on the plugin page.
 - `REQ-FUNC-7cf311ae` — CLI typed confirmation.
 - `REQ-FUNC-bce7d786` / `REQ-FUNC-9b38f5a8` / `REQ-FUNC-8e22989a` / `REQ-FUNC-90a95bef` — run_program
   foreground and background results, command line, timeout cap.
@@ -756,6 +768,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/apps/cli/src/plugin.ts`, `provisioning.ts` — `vera plugin install` and the CLI provisioner.
 - `05_Software/src/uv/uv-manifest.json`, `02_Tools/environment/prepare-uv.mjs` — the pinned uv.
 - `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx`, `plugins.test.ts` — library/action owner and tests.
+- `05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx` — Composition and Operations sections (tested in `plugins.test.ts`).
 - `05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts`, `plugin-library-controls.tsx`, `plugin-library.test.ts` — passive projection, filters/counts/sort/paging and session state.
 - `05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx`, `runs-tab.test.ts` — the Runs tab and its tests.
 - `05_Software/tests/e2e/plugins-ui.spec.ts` — native install through the review, enable, Runs log and Stop, broken plugin.

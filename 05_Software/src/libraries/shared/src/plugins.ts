@@ -46,6 +46,22 @@ export function pluginHighestRisk(rules: readonly { risk: PluginRisk }[]): Plugi
     if (risk !== "blocked" && order.indexOf(risk) > order.indexOf(highest)) highest = risk;
   return highest;
 }
+/** The rules of one risk, in manifest order, as the plugin page lists them as operations. */
+export interface PluginOperationGroup<Rule extends { risk: PluginRisk }> {
+  risk: PluginRisk;
+  rules: Rule[];
+}
+/**
+ * The manifest rules grouped by risk for the plugin page: one group per risk that has rules, in the order safe,
+ * device-read, device-write, irreversible, blocked. The rules are the same objects approvals classify with.
+ */
+export function pluginOperations<Rule extends { risk: PluginRisk }>(
+  rules: readonly Rule[],
+): PluginOperationGroup<Rule>[] {
+  return pluginRiskSchema.options
+    .map((risk) => ({ risk, rules: rules.filter((rule) => rule.risk === risk) }))
+    .filter((group) => group.rules.length > 0);
+}
 /** A package-relative path: `/` separated, no empty, `.` or `..` segment, no drive, device or trailing dot. */
 export function isPluginRelativePath(path: string): boolean {
   if (!path || path.length > 1024 || /[\p{Cc}\\:*?"<>|]/u.test(path) || path.startsWith("/")) return false;
@@ -419,6 +435,23 @@ export function validatePluginManifest(data: unknown): { manifest?: PluginManife
   return { issues: issues.slice(0, PLUGIN_LIMITS.issues) };
 }
 
+/**
+ * What a package ships beside its programs, as the plugin page lists it: each `skills/<name>/SKILL.md` with its
+ * front-matter description (none when the front matter does not parse), and the data files (profiles and other
+ * files outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative documents), in path order.
+ */
+export const pluginCompositionSchema = z.strictObject({
+  skills: z
+    .array(
+      z.strictObject({
+        name: z.string().min(1).max(255),
+        description: z.string().min(1).max(1024).optional(),
+      }),
+    )
+    .max(PLUGIN_LIMITS.files),
+  files: z.array(z.string().min(1).max(1024)).max(PLUGIN_LIMITS.files),
+});
+export type PluginComposition = z.infer<typeof pluginCompositionSchema>;
 /** An installed plugin as the store lists it: manifest and record metadata where they are valid. */
 export const pluginInstalledSchema = z.strictObject({
   id: z.string().min(1).max(255),
@@ -442,6 +475,9 @@ export const pluginInstalledSchema = z.strictObject({
     )
     .max(512)
     .optional(),
+  /** The manifest and composition of a plugin without issues, for its Composition and Operations sections. */
+  manifest: pluginManifestSchema.optional(),
+  composition: pluginCompositionSchema.optional(),
 });
 export type PluginInstalled = z.infer<typeof pluginInstalledSchema>;
 /**
@@ -454,6 +490,8 @@ export const pluginReviewSchema = z.strictObject({
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   issues: z.array(pluginIssueSchema).max(PLUGIN_LIMITS.issues),
   manifest: pluginManifestSchema.optional(),
+  /** Present whenever the manifest parses. */
+  composition: pluginCompositionSchema.optional(),
   installed: z.strictObject({ version: z.string().max(128).optional() }).optional(),
 });
 export type PluginReview = z.infer<typeof pluginReviewSchema>;

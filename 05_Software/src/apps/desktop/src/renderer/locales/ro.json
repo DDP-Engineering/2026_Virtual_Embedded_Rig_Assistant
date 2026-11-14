@@ -842,9 +842,17 @@
     "broken": "Acest plugin are erori și nu se încarcă:",
     "programs": "Programe",
     "noPrograms": "Fără programe: acest plugin adaugă doar abilități.",
-    "rules": "Reguli",
-    "noRules": "Nicio regulă.",
     "docs": "Documente",
+    "composition": {
+      "title": "Componență",
+      "noPrograms": "Nu rulează niciun program.",
+      "skills": "Abilități",
+      "files": "Profiluri și fișiere de date"
+    },
+    "operations": {
+      "title": "Operații",
+      "none": "Nicio operație: acest plugin nu declară reguli."
+    },
     "range": "suportat {{range}}",
     "timeout": "limită {{seconds}} s",
     "installingPrograms": "Se instalează programele…",

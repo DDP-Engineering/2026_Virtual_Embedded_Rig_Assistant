@@ -399,8 +399,9 @@ it("reviews a picked folder, then installs exactly the reviewed package", async 
   ])
     expect(screen.textContent).toContain(text);
   expect(screen.querySelectorAll("[data-rule]")).toHaveLength(5);
-  expect([...screen.querySelectorAll("[data-rule] .risk-badge")].map((badge) => badge.textContent)).toEqual([
-    i18n.t("approval.risk.safe"),
+  expect(
+    [...screen.querySelectorAll("[data-operations] > summary .risk-badge")].map((badge) => badge.textContent),
+  ).toEqual([
     i18n.t("approval.risk.safe"),
     i18n.t("approval.risk.deviceWrite"),
     i18n.t("approval.risk.irreversible"),
@@ -492,4 +493,141 @@ it("does nothing when the picker is cancelled", async () => {
   await click('[data-action="plugin-install-folder"]');
   expect(calls("plugins.review")).toEqual([]);
   expect($("[data-plugin-review]")).toBeNull();
+});
+
+const busManifest: NonNullable<PluginReview["manifest"]> = {
+  format: 1,
+  id: "bus-tools",
+  version: "0.1.0",
+  name: "Bus tools (I2C, SPI, UART)",
+  summary: "Run bounded I2C, SPI and UART transactions.",
+  description: "Active, bounded I2C, SPI and UART transactions through a Bus Pirate.",
+  ecosystem: "lab",
+  platforms: ["windows-x64", "linux-x64"],
+  requires: [],
+  programs: {
+    "bus-tool": {
+      install: { script: "scripts/bus_tool.py" },
+      version: { args: ["--version"], match: "^bus-tool (\\d+\\.\\d+\\.\\d+)" },
+    },
+  },
+  rules: [
+    { match: "bus-tool {--version,--help,-h}", risk: "safe" },
+    { match: "bus-tool {devices,capabilities,report} *", risk: "safe", note: "Lists serial ports." },
+    { match: "bus-tool identify *", risk: "device-read", note: "Sends one BPIO2 status request." },
+    {
+      match: "bus-tool {configure-bus,read-register,transfer} *",
+      risk: "device-write",
+      note: "Configures the bus.",
+    },
+    { match: "bus-tool capture *", risk: "device-write", note: "Records a UART.", timeout: 120 },
+    { match: "bus-tool release *", risk: "device-write", note: "Sets the adapter to HiZ." },
+    { match: "bus-tool * --power *", risk: "irreversible", note: "Switches the supply on." },
+  ],
+  docs: ["README.md", "https://docs.buspirate.com/docs/binmode-reference/protocol-bpio2/"],
+};
+const busComposition = {
+  skills: [
+    { name: "bus-profiles", description: "How to write a bus-tool profile." },
+    { name: "bus-transactions", description: "How to run bounded bus transactions." },
+  ],
+  files: ["profiles/bme280-i2c.json", "profiles/uart-console.json", "profiles/w25q-spi.json"],
+};
+function expectBusContents(scope: HTMLElement) {
+  const program = scope.querySelector('[data-program="bus-tool"]');
+  expect(program?.textContent).toContain("scripts/bus_tool.py");
+  expect([...scope.querySelectorAll("[data-skill]")].map((skill) => skill.textContent)).toEqual([
+    "bus-profiles How to write a bus-tool profile.",
+    "bus-transactions How to run bounded bus transactions.",
+  ]);
+  expect([...scope.querySelectorAll("[data-file]")].map((file) => file.textContent)).toEqual(
+    busComposition.files,
+  );
+  expect([...scope.querySelectorAll("[data-doc]")].map((doc) => doc.textContent)).toEqual(busManifest.docs);
+  const groups = [...scope.querySelectorAll<HTMLDetailsElement>("[data-operations]")];
+  expect(
+    groups.map((group) => [group.dataset.operations, group.querySelectorAll("[data-rule]").length]),
+  ).toEqual([
+    ["safe", 2],
+    ["device-read", 1],
+    ["device-write", 3],
+    ["irreversible", 1],
+  ]);
+  expect(groups.every((group) => !group.open)).toBe(true);
+  expect(groups[1]?.textContent).toContain("Sends one BPIO2 status request.");
+  expect(groups[2]?.textContent).toContain(i18n.t("plugins.timeout", { seconds: 120 }));
+}
+
+// REQ-UX-c49dc727, REQ-UX-b62eb1e0
+it("shows the composition and the operations by risk of a reviewed and an installed bus-tools", async () => {
+  await i18n.changeLanguage("en");
+  const busReview: PluginReview = {
+    path: "C:/plugins/bus-tools",
+    kind: "folder",
+    sha256: "c".repeat(64),
+    issues: [],
+    manifest: busManifest,
+    composition: busComposition,
+  };
+  const installed: PluginSummary = {
+    ...echo,
+    id: "bus-tools",
+    name: busManifest.name,
+    manifest: busManifest,
+    composition: busComposition,
+  };
+  stub({ installed: [installed], review: busReview });
+  await render();
+  await click('[data-plugin="bus-tools"] [data-action="plugin-expand"]');
+  expectBusContents($('[data-plugin="bus-tools"]'));
+  expect(calls("plugins.programs")).toEqual([]);
+  await click('[data-action="plugin-install-folder"]');
+  await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+  expectBusContents($("[data-plugin-review]"));
+});
+
+// REQ-UX-c49dc727, REQ-UX-b62eb1e0
+it("says a skills-only plugin runs no programs and declares no operations, in en, ro and de", async () => {
+  const skillsOnly: PluginReview = {
+    path: "C:/plugins/analysis-skills",
+    kind: "folder",
+    sha256: "d".repeat(64),
+    issues: [],
+    manifest: {
+      ...busManifest,
+      id: "analysis-skills",
+      name: "Analysis skills",
+      programs: {},
+      rules: [],
+      docs: ["README.md"],
+    },
+    composition: {
+      skills: [
+        { name: "firmware-comparator", description: "Compare two firmware runs." },
+        { name: "test-planner", description: "Plan tests." },
+      ],
+      files: [],
+    },
+  };
+  for (const language of ["en", "ro", "de"]) {
+    await i18n.changeLanguage(language);
+    stub({ review: skillsOnly });
+    await render();
+    await click('[data-action="plugin-install-folder"]');
+    await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+    const screen = $("[data-plugin-review]");
+    expect(screen.querySelectorAll("[data-skill]")).toHaveLength(2);
+    expect(screen.querySelector("[data-program]")).toBeNull();
+    expect(screen.querySelector("[data-no-programs]")?.textContent).toBe(
+      i18n.t("plugins.composition.noPrograms"),
+    );
+    expect(screen.querySelector("[data-operations]")).toBeNull();
+    expect(screen.textContent).toContain(i18n.t("plugins.operations.none"));
+    expect(screen.querySelector("[data-file]")).toBeNull();
+    await act(async () => root.unmount());
+    container.remove();
+  }
+  expect(
+    new Set(["en", "ro", "de"].map((lng) => i18n.t("plugins.composition.noPrograms", { lng }))).size,
+  ).toBe(3);
 });

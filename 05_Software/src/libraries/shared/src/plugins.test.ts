@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { pluginHighestRisk, pluginMaturity, validatePluginManifest } from "./plugins.js";
+import { pluginHighestRisk, pluginMaturity, pluginOperations, validatePluginManifest } from "./plugins.js";
 
 const canonical = {
   format: 1,
@@ -224,4 +224,22 @@ it("takes the highest rule risk below blocked, safe without rules", () => {
   expect(pluginHighestRisk(rules("safe", "irreversible", "blocked", "device-read"))).toBe("irreversible");
   expect(pluginHighestRisk(rules("blocked"))).toBe("safe");
   expect(pluginHighestRisk([])).toBe("safe");
+});
+
+// REQ-FUNC-8af265ac
+it("groups the rules by risk in risk order, keeping manifest order and every rule field", () => {
+  const rules = [
+    { match: "t write *", risk: "device-write", note: "Writes." },
+    { match: "t version", risk: "safe" },
+    { match: "t burn *", risk: "irreversible", timeout: 30 },
+    { match: "t erase *", risk: "device-write" },
+    { match: "t shell *", risk: "blocked" },
+  ] as const;
+  expect(pluginOperations(rules)).toEqual([
+    { risk: "safe", rules: [rules[1]] },
+    { risk: "device-write", rules: [rules[0], rules[3]] },
+    { risk: "irreversible", rules: [rules[2]] },
+    { risk: "blocked", rules: [rules[4]] },
+  ]);
+  expect(pluginOperations([])).toEqual([]);
 });

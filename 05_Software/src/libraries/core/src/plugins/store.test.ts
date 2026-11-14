@@ -1,7 +1,9 @@
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { classifyCommand, pluginOperations } from "@vera/shared";
 import { zipSync } from "fflate";
 import { afterEach, expect, it } from "vitest";
 import { stringify } from "yaml";
@@ -98,6 +100,8 @@ it("installs a plugin folder with install.json and lists it valid after a restar
     ecosystem: "esp32",
     platforms: ["windows-x64", "linux-x64"],
     irreversible: [],
+    manifest: (await f.store.load("esp32-esptool")).manifest,
+    composition: { skills: [{ name: "esp32-flash", description: "Flash an ESP32." }], files: [] },
     tier: "local",
     source: "folder",
     sha256,
@@ -456,4 +460,63 @@ it("refuses to install a package that changed since its review", async () => {
   expect(await f.entries()).toEqual([]);
   const current = await f.store.review(source);
   expect((await f.store.install(source, current.sha256)).sha256).toBe(current.sha256);
+});
+
+// REQ-DATA-b065d2a4
+it("carries the skills and data files of a package in its review and its installed listing", async () => {
+  const f = await fixture();
+  const files = packageFiles({
+    "skills/a-skill/SKILL.md": "---\nname: a-skill\ndescription: Does A.\n---\n# A\n",
+    "skills/a-skill/templates/t.md": "x",
+    "skills/broken/SKILL.md": "# no front matter\n",
+    "scripts/support/lib.py": "",
+    "profiles/p.json": "{}",
+    "data/x.csv": "a,b\n",
+  });
+  const composition = {
+    skills: [
+      { name: "a-skill", description: "Does A." },
+      { name: "broken" },
+      { name: "esp32-flash", description: "Flash an ESP32." },
+    ],
+    files: ["data/x.csv", "profiles/p.json"],
+  };
+  const source = await f.folder(files);
+  expect((await f.store.review(source)).composition).toEqual(composition);
+  await f.store.install(source);
+  const [listed] = await f.store.list();
+  expect(listed?.composition).toEqual(composition);
+  expect(listed?.manifest).toEqual((await f.store.load("esp32-esptool")).manifest);
+  await writeFile(join(f.installed, "esp32-esptool", "README.md"), "# edited\n");
+  const [changed] = await f.store.list();
+  expect(changed).not.toHaveProperty("manifest");
+  expect(changed).not.toHaveProperty("composition");
+});
+
+// REQ-FUNC-8af265ac
+it("lists the operations of official bus-tools from the rules its approvals classify with", async () => {
+  const f = await fixture();
+  const official = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../plugins/bus-tools");
+  expect((await f.store.review(official)).composition).toEqual({
+    skills: [
+      { name: "bus-profiles", description: expect.stringContaining("bus profile") },
+      { name: "bus-transactions", description: expect.any(String) },
+    ],
+    files: ["profiles/bme280-i2c.json", "profiles/uart-console.json", "profiles/w25q-spi.json"],
+  });
+  await f.store.install(official);
+  const [listed] = await f.store.list();
+  const { manifest } = await f.store.load("bus-tools");
+  expect(listed?.manifest?.rules).toEqual(manifest.rules);
+  const groups = pluginOperations(listed?.manifest?.rules ?? []);
+  expect(groups.map(({ risk, rules }) => [risk, rules.length])).toEqual([
+    ["safe", 2],
+    ["device-read", 1],
+    ["device-write", 3],
+    ["irreversible", 1],
+  ]);
+  const approval = classifyCommand(manifest.rules, "bus-tool", ["identify", "--adapter", "bp"]);
+  const [identify] = groups.find((group) => group.risk === "device-read")?.rules ?? [];
+  expect(approval.risk).toBe("device-read");
+  expect(approval.notes).toEqual([identify?.note]);
 });
