@@ -52,6 +52,8 @@ Timing starts before click dispatch and ends after selected identity/content che
 history access and two animation frames. Playwright interaction overhead is included. Correctness
 checks on persisted conversation counts/cursor run outside the interval. Future pagination need not
 render every historical message simultaneously to satisfy this measurement contract.
+`firstScreenMs` is the time from the click to the newest message being visible, before the draft
+and history checks; the transcript mounts older rows after that first screen.
 Complete canonical response hashes are checked outside the interval at both the main handler and
 the renderer API boundary, including interior text and tool previews; reports retain hashes only.
 

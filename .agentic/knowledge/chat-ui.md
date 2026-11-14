@@ -128,6 +128,15 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - A streaming assistant message renders as blocks (`streamingBlocks`: split at blank lines outside code
   fences), each through memoized `Markdown`, so only the growing last block is parsed again per frame;
   `message.done` renders the whole text once.
+- The transcript mounts the newest 40 rows in its first commit and prepends older rows in chunks of 100,
+  one per `requestIdleCallback` (250 ms timeout) inside `startTransition`, until all are mounted; the window
+  start is pinned once rows exist, so later rows never unmount older ones, and resets on session change.
+  A search mounts every row (matches are outlined in all of them). Scrolling within one screen of the oldest
+  mounted row (wheel, Home, the rail) mounts the rest at once; at scroll position 0 the view then shows the
+  first message. While following, prepended chunks keep the end in view; a reader who scrolled up keeps
+  the place through Chromium's native scroll anchoring. Navigator markers appear as their rows mount.
+  User and assistant rows use `content-visibility: auto` with `contain-intrinsic-block-size: auto 6rem`,
+  so off-screen messages skip layout and paint (also while streaming).
 - Dialog closure restores connected opener focus with fallback after removed session actions; rename save/cancel restores its action. Named diff/artifact regions support keyboard scrolling; keyboard controls and wrapping rem layout use en/ro/de catalogs.
 
 ## Change map
@@ -143,6 +152,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Conversation scroll rail | transcript.tsx, transcript-scroll.tsx, styles.css | tests/e2e/session-scroll.spec.ts |
 | Transcript render cost (lazy disclosures, memoized rows/Markdown) | disclosure, transcript, markdown, transcript-projection | transcript-render.test.ts; `npm run perf:sessions` |
+| Progressive transcript mount (newest first, idle chunks, content-visibility) | transcript, styles.css | transcript-progressive.test.ts; `npm run perf:sessions` (`firstScreenMs`) |
 | User-message navigator (lane, groups, preview, jump, follow suspension) | transcript-navigation.ts (pure geometry), transcript-navigator.tsx, transcript.tsx (anchors, navigate, follow), styles.css | transcript-navigation.test.ts; transcript-navigator.test.ts; tests/e2e/session-navigation.spec.ts (VERA_NAV_SCREENSHOT) |
 
 ## Key behaviors

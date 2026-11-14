@@ -4,6 +4,7 @@ import { writeFile } from "node:fs/promises";
 
 export const metrics = [
   "loadMs",
+  "firstScreenMs",
   "storageMs",
   "snapshotMs",
   "mainHandlerMs",
@@ -285,6 +286,11 @@ export async function saveReport(path, report) {
     lines.push(
       `| ${key} | ${head?.count ?? 0} | ${value.failed} | ${head?.median.toFixed(1) ?? "—"} | ${head?.p95?.toFixed(1) ?? "—"} | ${head?.max.toFixed(1) ?? "—"} |`,
     );
+    const screen = value.metrics.firstScreenMs;
+    if (!streaming(key) && screen)
+      lines.push(
+        `| ${key} first screen | ${screen.count} | | ${screen.median.toFixed(1)} | ${screen.p95?.toFixed(1) ?? "—"} | ${screen.max.toFixed(1)} |`,
+      );
     const gap = value.metrics.rendererGapMs;
     if (streaming(key) && gap)
       lines.push(

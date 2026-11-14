@@ -1,6 +1,16 @@
 // REQ-UX-4bea0002 REQ-UX-4bea0005 REQ-UX-2bbfd052 REQ-REL-47308c01 REQ-REL-c8ac2ecc
 import type { ChatDetail, SessionState } from "@vera/shared";
-import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
@@ -13,6 +23,21 @@ import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
+
+/** PERF-07: rows of the first commit, newest first; older rows are prepended in idle chunks. */
+const INITIAL_ROWS = 40;
+const CHUNK_ROWS = 100;
+const IDLE_TIMEOUT_MS = 250;
+/** Runs `callback` when the renderer is idle; returns the cancel function. */
+function whenIdle(callback: () => void): () => void {
+  // Chromium has requestIdleCallback on every platform; the timer serves test environments without it.
+  if (typeof requestIdleCallback !== "function") {
+    const timer = setTimeout(callback, 0);
+    return () => clearTimeout(timer);
+  }
+  const handle = requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS });
+  return () => cancelIdleCallback(handle);
+}
 export function Transcript({
   state,
   reasoning,
@@ -45,6 +70,10 @@ export function Transcript({
   const shownSession = useRef(sessionId);
   /** Scroll range at the last commit or scroll event. */
   const settledMax = useRef(0);
+  /** Index of the oldest mounted row; null until the first rows arrive. */
+  const [start, setStart] = useState<number | null>(null);
+  /** The reader reached the top of the mounted rows: after mounting the rest, show the first message. */
+  const toTop = useRef(false);
   // App keys the workspace by session, so this only guards a Transcript reused for another session.
   useLayoutEffect(() => {
     if (shownSession.current === sessionId) return;
@@ -52,21 +81,50 @@ export function Transcript({
     clearTimeout(highlightTimer.current);
     suspended.current = null;
     setHighlight(null);
+    setStart(null);
   }, [sessionId]);
+  const rows = useMemo(() => transcriptRows(state, detail), [state, detail]);
+  // A search outlines matches in every row, so it mounts them all. Fewer rows (another chat detail)
+  // still show the newest ones.
+  const first = search
+    ? 0
+    : Math.min(start ?? Number.POSITIVE_INFINITY, Math.max(0, rows.length - INITIAL_ROWS));
+  const shown = useMemo(() => (first ? rows.slice(first) : rows), [rows, first]);
+  const hasRows = rows.length > 0;
+  useEffect(() => {
+    // Pin the window once rows exist, so rows that arrive later never unmount older ones.
+    if (search || (start === null && hasRows)) {
+      if (start !== first) setStart(first);
+      return;
+    }
+    if (!start) return;
+    // A transition keeps input and streaming responsive while a chunk renders.
+    return whenIdle(() => startTransition(() => setStart(Math.max(0, first - CHUNK_ROWS))));
+  }, [search, start, first, hasRows]);
+  const shownFirst = useRef(first);
   // Runs only for commits that change the content (live events arrive at most once per frame), not
   // for highlight or search commits, so streaming forces no extra layout.
   useLayoutEffect(() => {
     void [state, reasoning, updates, detail];
     const node = scroll.current;
     if (!node) return;
-    // A scroll event is dispatched on the next frame, after this commit may have added content: a
-    // position at the end of the previous range still follows, unless a marker jump suspended it.
-    if (suspended.current === null && (following.current || node.scrollTop >= settledMax.current - 80)) {
+    // Rows prepended above a reader who scrolled up keep their place by Chromium's scroll anchoring.
+    const prepended = shownFirst.current !== first;
+    shownFirst.current = first;
+    if (toTop.current) {
+      toTop.current = false;
+      node.scrollTop = 0;
+    } else if (
+      // A scroll event is dispatched on the next frame, after this commit may have added content: a
+      // position at the end of the previous range still follows, unless a marker jump suspended it.
+      suspended.current === null &&
+      (following.current || (!prepended && node.scrollTop >= settledMax.current - 80))
+    ) {
       following.current = true;
       node.scrollTop = node.scrollHeight;
     }
     settledMax.current = node.scrollHeight - node.clientHeight;
-  }, [state, reasoning, updates, detail]);
+  }, [state, reasoning, updates, detail, first]);
   useEffect(() => () => clearTimeout(highlightTimer.current), []);
   const navigate = (id: string) => {
     const node = scroll.current;
@@ -85,7 +143,6 @@ export function Transcript({
   retryRef.current = retry;
   const onRetry = useCallback(() => retryRef.current(), []);
   const latestError = useMemo(() => state.items.findLast((i) => i.kind === "error")?.id, [state.items]);
-  const rows = useMemo(() => transcriptRows(state, detail), [state, detail]);
   const userMessages = useMemo(
     () =>
       rows.flatMap((row): NavigatorMessage[] =>
@@ -132,6 +189,12 @@ export function Transcript({
           const node = e.currentTarget;
           const atEnd = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
           settledMax.current = node.scrollHeight - node.clientHeight;
+          // Within a screen of the oldest mounted row (scrolling, Home, the rail): mount the rest now,
+          // as a transition so input stays responsive while it renders.
+          if (first > 0 && !atEnd && node.scrollTop < node.clientHeight) {
+            toTop.current = node.scrollTop < 1;
+            startTransition(() => setStart(0));
+          }
           if (suspended.current !== null && (!atEnd || Math.abs(node.scrollTop - suspended.current) < 2))
             return;
           suspended.current = null;
@@ -146,7 +209,7 @@ export function Transcript({
                 <pre>{text}</pre>
               </Disclosure>
             ))}
-          {rows.map((row) => {
+          {shown.map((row) => {
             if (row.kind === "group")
               return (
                 <ToolGroupRow

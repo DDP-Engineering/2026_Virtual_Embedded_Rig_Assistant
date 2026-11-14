@@ -425,6 +425,7 @@ export async function run(options) {
               );
               await page.evaluate((id) => Reflect.get(window, "veraSessionPerformance").begin(id), target.id);
               const start = performance.now();
+              let firstScreenMs = 0;
               await deadline(
                 async () => {
                   await row.click({ timeout: timeoutMs });
@@ -435,6 +436,8 @@ export async function run(options) {
                     .locator("[data-transcript]")
                     .getByText(target.last, { exact: false })
                     .waitFor({ timeout: timeoutMs });
+                  // The last screen is shown; older rows may still be mounting (PERF-07).
+                  firstScreenMs = performance.now() - start;
                   const composer = page.locator("#chat-message:not(:disabled)");
                   await composer.fill("performance draft", { timeout: timeoutMs });
                   if ((await composer.inputValue()) !== "performance draft") throw Error("draft-not-usable");
@@ -500,6 +503,7 @@ export async function run(options) {
                     providerRequests: main.providerRequests,
                     metrics: {
                       loadMs,
+                      firstScreenMs,
                       storageMs: main.storageMs,
                       snapshotMs: main.snapshotMs,
                       mainHandlerMs: main.mainHandlerMs,
