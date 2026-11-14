@@ -59,8 +59,10 @@ if COMMAND == "locate":
 
 if COMMAND == "discover":
     root = Path(REST[0])
-    windows = sys.platform == "win32"
-    name = "kicad-cli.exe" if windows else "kicad-cli"
+    # The Program Files folder order is Windows-only; Linux has no install folders after PATH, only
+    # /usr/bin. Testing the Windows order explicitly gives the same answer on every host.
+    windows = True
+    name = "kicad-cli.exe"
     on_path = root / "path-entry"
     files = root / "Program Files"
     for folder in (on_path, files / "KiCad" / "9.0" / "bin", files / "KiCad" / "10.0" / "bin"):
