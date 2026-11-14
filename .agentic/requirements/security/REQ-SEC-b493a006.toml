@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-b493a006"
+title = "Write boot.py or main.py only when the call names --startup"
+status = "active"
+requirement = "If deploy-file targets a file named boot.py or main.py, in any letter case, without --startup, then micropython-tool shall refuse it with code startup-file before it opens the port, and the plugin shall classify a deploy-file call with --startup as irreversible."
+verification = "deploy-file --remote /main.py, /MAIN.PY or /Boot.py without --startup is blocked startup-file and the fake file system is unchanged; with --startup it passes; classifyCommand on `micropython-tool deploy-file --startup ...` yields irreversible and without it device-write."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/remote.py", "05_Software/plugins/micropython/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

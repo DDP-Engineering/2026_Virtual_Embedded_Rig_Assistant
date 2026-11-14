@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-ab3282a4"
+title = "Run a script from RAM with a deadline and a verdict"
+status = "active"
+requirement = "When run-file runs, micropython-tool shall soft-reset the board, run the copy of --source from RAM without saving it, capture its output up to --max-output bytes until it ends or --timeout seconds pass, and report pass when it ends without an exception, fail with the traceback when it raises, or incomplete with code timeout after interrupting it, together with the state the board's application is left in."
+verification = "Fake board: a script printing 'ok' passes with output ok and application stopped; a script raising ValueError fails with the traceback; a script looping past --timeout 2 ends incomplete timeout, interrupted; the board file system is unchanged; --restart reports application restarted."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/operations.py", "05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

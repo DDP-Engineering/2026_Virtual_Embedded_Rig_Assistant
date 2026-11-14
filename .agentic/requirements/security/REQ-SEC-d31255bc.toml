@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-d31255bc"
+title = "Refuse remote paths outside the allowed form"
+status = "active"
+requirement = "If a remote path is not absolute, holds an empty, '.' or '..' segment, a control character or a backslash, is longer than 255 characters or has more than 16 segments, then micropython-tool shall refuse it with code remote-path before it opens the port."
+verification = "files, read-file and deploy-file with lib/a.py, /lib/../boot.py, /a//b, /a\\b, a 256-character path and a path with a newline are each blocked remote-path; /lib/sensor.py is accepted."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/remote.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

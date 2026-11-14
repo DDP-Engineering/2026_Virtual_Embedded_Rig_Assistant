@@ -33,6 +33,11 @@ indexes.py for offline searches, compile.py, upload.py, report.py, cli.py) with 
 tests/integration/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
 coverage. Its workspace.py is a byte-identical copy of ngspice-tool's.
 
+For micropython, start at plugins/micropython/plugin.yaml, scripts/micropython_tool.py and scripts/micropython_support/
+(cli.py dispatch and argument limits, device.py session and board snippets, deploy.py, operations.py, ports.py identity
+keys, remote.py board paths, report.py) with spec .agentic/specs/REQ-DATA-cb0ccbea.md; tests/integration/micropython.test.ts
+and tests/fixtures/micropython/ (fake-serial: a simulated board speaking the raw REPL; fake-mpremote: a minimal
+SerialTransport client - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy of arduino-tool's.
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -49,7 +54,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); scpi-instruments (program `scpi`, a PEP 723
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); scpi-instruments (program `scpi`, a PEP 723
 PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
 platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
@@ -396,9 +401,33 @@ that source metadata reaches the deterministic bundled index unchanged.
   program timeout 120 s. Skill `esp32-flash`: port and chip first, offsets and images from `build/flasher_args.json`
   as explicit pairs, stop for encrypted or secure-boot builds, `Hash of data verified.` per file or `verify-flash`,
   boot log with `serial capture --port P --reset`.
+- `micropython` 1.0.0, ecosystem `micropython` (Arduino pack, group "MicroPython", default on; activities `flash`,
+  `testing`), Windows x64 and Linux x64. Program `micropython-tool` = `scripts/micropython_tool.py` (PEP 723,
+  `mpremote==1.29.0`, `pyserial==3.5`, `platformdirs==4.14.0`), timeout 300 s. Risks: `ports`, `report` safe;
+  `identify`, `files`, `read-file`, `capture-output`, `reset` device-read (notes: interrupts or restarts the running
+  program; read-file 900 s, capture-output 660 s); `deploy-file`, `run-file` device-write (900 s, 3600 s); `deploy-file * --startup *` irreversible. The helper
+  uses mpremote's `SerialTransport` and sends only fixed snippets: no REPL, connect, exec, eval, mount or firmware
+  operation. Device operations list the ports first (`port-missing`, `identity-mismatch`), open the raw REPL without a
+  soft reset (run-file with one), refuse firmware other than MicroPython >=1.22 (`incompatible-firmware`), and leave the
+  raw REPL and close the port at the end (`--restart` soft-resets so main.py runs). Remote paths are absolute, <=255
+  characters, <=16 segments, no `.`/`..`/empty segment, backslash, control character or `.vera-part` (`remote-path`);
+  boot.py/main.py need `--startup` (`startup-file`). deploy-file: parent (`--mkdir`), `before` hash, `--expect-sha256`/
+  `--expect-absent` (`conflict`), stale part removed, space check (`no-space`), `incomplete` result.json phase
+  `transfer`, 256-byte chunks to `<target>.vera-part`, board hash (`hash-mismatch`; read-back without hashlib), target
+  re-check (`conflict`), phase `replace`, rename or, on EEXIST only, `remove-then-rename` (other errors `write-failed`),
+  verify (`verify-failed`); every refusal precedes the first write (`--mkdir` folders, stale part removal). Loss: `disconnected`
+  (port gone), `device-reset` (`soft reboot`/banner read during the failing exchange), `no-response` (Ctrl-C, Ctrl-B sent once); `application: unknown`. run-file: <=256 KiB
+  UTF-8, raw-REPL (raw-paste) execution, serial reads bounded at 10 s, output capped by `--max-output`, deadline `--timeout` (<=3500 s) then Ctrl-C (`incomplete
+  timeout`), verdict from the traceback. capture-output reads without sending (`firmware: null`), or checks the firmware and restarts first; reset hard waits up to
+  15 s for the identity (`port-lost`). Results `arduino-iot-results/<run-id>/` (`result.json` kind
+  `micropython-tool-result`, `report.md`, `files/`, `output.txt`); exit 0 pass, 1 fail, 2 blocked, 3 incomplete or
+  error. Verified against the simulated board with the fake client and with the real mpremote 1.29.0 (opt-in); no real
+  board yet.
 
 ## Invariants
 
+- micropython-tool sets `sys.dont_write_bytecode` before importing `micropython_support`, writes only run folders under the
+  workbench, never stores run-file code on the board and never writes boot.py/main.py without `--startup`.
 - arduino-tool never names the Arduino IDE's folders and never installs during compile or upload: the offline
   configuration's dead loopback proxy makes any HTTP access fail, and a missing core or library is a refusal naming
   the install command. A compile never changes the sketch (it builds a copy) and never uses sketch.yaml defaults or
@@ -598,6 +627,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 | Arduino environment, configurations, staging, clean | `arduino_support/environment.py` | "runs arduino-cli only with VERA's own folders", "Stop and clean" |
 | Board identity keys or the bridge list | `arduino_support/boards.py` | "lists serial ports by identity", upload identity refusals |
 | A new arduino-cli release | the manifest's download pins and range; rerun the real-tool tests (`VERA_TEST_ARDUINO_CLI`, `VERA_ARDUINO_HOME`) | package test and real compiles |
+| A micropython-tool operation, snippet or refusal | `plugins/micropython/scripts/micropython_support/{cli,device,deploy,operations}.py`, spec REQ-DATA-cb0ccbea | micropython.test.ts |
+| A new mpremote release | the script header pins; rerun the opt-in test (`VERA_MICROPYTHON_UV`) | micropython.test.ts opt-in |
 
 ## Key behaviors
 
@@ -679,11 +710,22 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-FUNC-6678cab1` / `REQ-REL-6b92ea2f` / `REQ-REL-c731bd06` / `REQ-SEC-f5477b64` / `REQ-SEC-37d5b2a2` / `REQ-SEC-8faa1e1d` — traceable compile of a copy and its refusals and failures.
 - `REQ-FUNC-f2b3eb7d` / `REQ-SEC-ea1a5b7d` / `REQ-SEC-77af299d` / `REQ-FUNC-165776d6` — upload of the verified binary, conflict and identity refusals, port re-bound after upload.
 - `REQ-REL-fa13ca61` / `REQ-FUNC-e2eea361` / `REQ-TEST-de25fd47` — Stop leaves no process and clean removes ended staging; report; real-tool and gated hardware tests.
+- `REQ-DATA-cb0ccbea` / `REQ-SEC-bf7892ca` / `REQ-SEC-d8ec50bc` / `REQ-FUNC-f030cffe` — micropython-tool contract, pinned
+  mpremote, no REPL/exec/mount, risks, catalog and pack.
+- `REQ-FUNC-884fed95` / `REQ-SEC-dee0e930` / `REQ-REL-2eaebfec` / `REQ-FUNC-b829232e` / `REQ-FUNC-d8afbfa0` /
+  `REQ-FUNC-9d90c56e` — ports, identity refusals, firmware gate, identify, files, read-file.
+- `REQ-SEC-d31255bc` / `REQ-SEC-b493a006` / `REQ-FUNC-9dc200c3` / `REQ-REL-af9aefa3` / `REQ-REL-1499a74b` /
+  `REQ-REL-8d35cfbd` — remote paths, startup files, verified deploy, conflict, space, loss.
+- `REQ-FUNC-ab3282a4` / `REQ-FUNC-eddae180` / `REQ-FUNC-2c9933c0` / `REQ-FUNC-44f315bd` / `REQ-TEST-6073fccf` — run-file,
+  capture-output, reset, report, gated real-mpremote and board tests.
 
 ## Files
 
 - `05_Software/plugins/arduino-cli/` — manifest, README (pins, environment, risk table), skills arduino-build-fix, arduino-libraries and arduino-test-sketch, `scripts/arduino_tool.py` (entry), `scripts/arduino_support/` (`environment`, `sketch`, `boards`, `indexes`, `compile`, `upload`, `report`, `cli`, `workspace` shared).
 - `05_Software/tests/integration/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
+- `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
+  support package.
+- `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).

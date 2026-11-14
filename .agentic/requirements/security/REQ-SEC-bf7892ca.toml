@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-bf7892ca"
+title = "Reach MicroPython boards only through finite micropython-tool operations"
+status = "active"
+requirement = "The micropython plugin shall declare micropython-tool, a PEP 723 script pinned to mpremote 1.29.0, pyserial 3.5 and platformdirs 4.14.0, as its only program, and micropython-tool shall offer no interactive REPL, no automatic connection, no execution or evaluation of code given in its arguments and no mount of a host folder."
+verification = "Test reads plugin.yaml and the script header: one program micropython-tool with the pinned dependencies; `micropython-tool repl`, `exec`, `eval`, `mount`, `connect` and an unknown option are refused with exit 2 and status blocked; no operation accepts code text as an argument."
+affected_paths = ["05_Software/plugins/micropython/plugin.yaml", "05_Software/plugins/micropython/scripts/micropython_tool.py", "05_Software/plugins/micropython/scripts/micropython_support/cli.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

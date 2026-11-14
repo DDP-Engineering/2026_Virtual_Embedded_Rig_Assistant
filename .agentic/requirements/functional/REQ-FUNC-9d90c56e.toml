@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9d90c56e"
+title = "Copy a board file into the run folder"
+status = "active"
+requirement = "When read-file runs, micropython-tool shall copy the board file --remote into the run folder's files/ folder and record its size and SHA-256, compared with the hash the board computes when it offers hashlib, and shall refuse a file larger than 1 MiB with code too-large."
+verification = "Fake /main.py: the run folder holds files/main.py with the same bytes and result.json its size and sha256 with deviceSha256 matching; without hashlib the hash is computed on the copy (deviceSha256 null); a file of 1 MiB plus one byte is blocked too-large; a folder is blocked not-a-file."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/operations.py", "05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

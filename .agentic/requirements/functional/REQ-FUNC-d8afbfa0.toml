@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-d8afbfa0"
+title = "List the files of a MicroPython board"
+status = "active"
+requirement = "When files runs, micropython-tool shall list the board's files and folders under --path (default /) to --depth levels (default 8), each with type and size, at most 1000 entries with the number left out, plus the file system's size and free space."
+verification = "Fake file system with /boot.py, /lib/a.py and a folder deeper than --depth 1: the listing holds /boot.py and /lib with sizes and omits deeper entries; a tree of 1005 files lists 1000 and reports 5 omitted; a missing --path is blocked remote-missing."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/operations.py", "05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

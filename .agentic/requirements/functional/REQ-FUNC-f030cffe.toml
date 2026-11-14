@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-f030cffe"
+title = "Ship micropython as an official plugin with skills, catalog and pack entries"
+status = "active"
+requirement = "The official plugin catalog shall list micropython with its README, skills micropython-deploy and micropython-test-script, catalog metadata and a MicroPython group of the Arduino pack."
+verification = "Catalog and pack tests: catalog.yaml lists micropython as official with metadata; packs.yaml's arduino pack holds group MicroPython with micropython; the plugin validates with validatePluginManifest and its skills are found."
+affected_paths = ["05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/plugins/micropython/plugin.yaml", "05_Software/plugins/micropython/skills/micropython-deploy/SKILL.md", "05_Software/plugins/micropython/skills/micropython-test-script/SKILL.md"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

@@ -31,6 +31,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   ).toBe(before);
   expect(index.plugins.map((plugin: { id: string; tier: string }) => [plugin.id, plugin.tier])).toEqual([
     ["analysis-skills", "official"],
+    ["arduino-cli", "official"],
     ["binutils", "official"],
     ["can-dbc", "official"],
     ["can-python", "official"],
@@ -42,6 +43,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["kicad", "official"],
     ["ltspice", "official"],
     ["microchip-pymcuprog", "official"],
+    ["micropython", "official"],
     ["ngspice", "official"],
     ["parts-search", "official"],
     ["probe-rs", "official"],

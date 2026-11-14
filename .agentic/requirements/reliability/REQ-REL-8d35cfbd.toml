@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-8d35cfbd"
+title = "Report an interrupted, unplugged or reset transfer as such"
+status = "active"
+requirement = "While deploy-file writes to the board, micropython-tool shall keep a result.json with status incomplete and the current phase in the run folder, and if the port disappears it shall end with status error and code disconnected, and if the board restarts it shall end with status error and code device-reset, never with pass."
+verification = "Fake disconnect after 2 write chunks: error disconnected, port missing; fake reset after 2 chunks: error device-reset; a helper killed during the transfer leaves result.json with status incomplete and phase transfer; in each case the target keeps its old bytes."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/deploy.py", "05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

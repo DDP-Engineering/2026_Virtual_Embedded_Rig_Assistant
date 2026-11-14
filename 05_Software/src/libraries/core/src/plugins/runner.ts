@@ -393,7 +393,12 @@ class Run implements ProgramRun {
   private async supervise(): Promise<void> {
     const { lease } = this.request;
     const held = this.held;
-    if (!lease || !held) return;
+    if (!held) return;
+    if (!lease) {
+      // Serial-port leases only: nothing to supervise.
+      await held.release();
+      return;
+    }
     try {
       const report = this.control ? await readControlState(this.control) : undefined;
       const actuates = lease.claims.some((claim) => claim.actuates);
@@ -642,12 +647,23 @@ export class ProgramRunner {
       }
       if (!leases) throw thrown("DENIED", { reason: "leases" });
     }
+    // Identity kind serial: every port the run names is also reserved across VERA processes (never actuating; the
+    // physical state of a serial device is not supervised). Without a lease registry the in-process guard alone holds.
+    const portClaims: LeaseClaim[] = run.ports.map((port) => ({
+      kind: "serial",
+      alias: port,
+      resource: port,
+      keys: [serialPortKey(port)],
+      actuates: false,
+    }));
     this.active.set(run.id, run);
     try {
-      if (lease && leases) {
-        run.held = await leases.acquire(lease.claims, { sessionId: request.sessionId, runId: run.id });
-        run.control = await leases.controlFolder(run.id);
-      }
+      if (leases && (lease || portClaims.length > 0))
+        run.held = await leases.acquire([...(lease?.claims ?? []), ...portClaims], {
+          sessionId: request.sessionId,
+          runId: run.id,
+        });
+      if (lease && leases) run.control = await leases.controlFolder(run.id);
       await run.begin();
     } catch (error) {
       this.active.delete(run.id);

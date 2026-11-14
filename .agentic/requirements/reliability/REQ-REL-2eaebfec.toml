@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-2eaebfec"
+title = "Refuse firmware other than MicroPython 1.22 or newer"
+status = "active"
+requirement = "If the board reports an implementation other than micropython or a version below 1.22.0, then micropython-tool shall end the device operation with status blocked and code incompatible-firmware, naming the reported implementation and version, before it lists, reads, writes or runs anything."
+verification = "Fake firmware circuitpython 9.2.0 and micropython 1.21.0: identify, files, deploy-file and run-file end blocked incompatible-firmware with the reported values; the fake file system is unchanged and no script ran; micropython 1.22.0 passes."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

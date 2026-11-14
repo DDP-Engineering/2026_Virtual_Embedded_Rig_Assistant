@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-dee0e930"
+title = "Refuse a device operation whose port is missing or shows another identity"
+status = "active"
+requirement = "If a device operation's --port is not present, or the port's identity key differs from --identity, then micropython-tool shall refuse the operation with status blocked and code port-missing or identity-mismatch before it opens the port."
+verification = "Fake ports: identify --port COM5 --identity usb:2e8a:0005:E661 on a list without COM5 is blocked port-missing; with COM5 showing usb:2e8a:0005:aaaa it is blocked identity-mismatch; in both cases the fake device records no open."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/ports.py", "05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

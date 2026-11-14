@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9dc200c3"
+title = "Deploy a file through a verified temporary copy"
+status = "active"
+requirement = "When deploy-file runs, micropython-tool shall record the current target's size and SHA-256 or its absence, write a copy of --source to <target>.vera-part, compare the SHA-256 the board reports for that file with the copy's, replace the target by renaming or, when the board refuses with EEXIST to rename over an existing file, by removing the target and renaming, verify the target's hash and report the mechanism used."
+verification = "Fake littlefs board replaces /lib/a.py by rename (mechanism rename, before and after hashes, verified true); fake FAT board whose rename over an existing file fails reports remove-then-rename; a new file reports before absent; a rename refused with another errno ends fail write-failed with the target unchanged; a device-side hash mismatch ends fail hash-mismatch with the target unchanged and the temporary file removed."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

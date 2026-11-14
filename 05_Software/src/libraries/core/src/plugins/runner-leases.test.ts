@@ -158,6 +158,89 @@ describe("resource leases across runners", () => {
   });
 });
 
+describe("serial-port leases across runners", () => {
+  // REQ-FUNC-b9a25608: a port named in argv is claimed as kind serial, key serial:<port>, in every VERA process.
+  const leaseFiles = async () =>
+    existsSync(leaseFolder) ? (await readdir(leaseFolder)).filter((name) => name.endsWith(".lease")) : [];
+  const portRun = (args: string[], overrides: Partial<RunRequest> = {}) =>
+    request({ lease: undefined, args, ...overrides });
+
+  it("refuses a port that another process's run names, whatever the plugin's argument form", async () => {
+    const cli = make({
+      leases: new ResourceLeases({ root: leaseFolder, app: "cli", pid: 777, alive: () => true }),
+    });
+    const upload = await runner.start(
+      portRun(["upload", "--build", "b/result.json", "--port", "COM5", "--identity", "usb:2341:0043:1"], {
+        background: true,
+      }),
+    );
+    const files = await leaseFiles();
+    expect(files).toHaveLength(1);
+    const lease = JSON.parse(await readFile(join(leaseFolder, files[0] as string), "utf8"));
+    expect(lease).toMatchObject({
+      key: "serial:COM5",
+      kind: "serial",
+      alias: "COM5",
+      actuates: false,
+      pid: 4242,
+    });
+    for (const args of [
+      ["run-file", "--port", "com5", "--identity", "usb:2e8a:0005:e661", "--source", "t.py"],
+      ["capture", "--port=\\\\.\\COM5"],
+    ])
+      await expect(cli.start(portRun(args, { sessionId: "cli" }))).rejects.toMatchObject({
+        code: "BUSY",
+        params: { resource: "COM5", holder: "process 4242" },
+      });
+    expect(host.programs).toHaveLength(1);
+    program().finish({ code: 0, signal: null });
+    await upload.done;
+    expect(await leaseFiles()).toEqual([]);
+    const next = await cli.start(portRun(["capture", "--port", "COM5"], { sessionId: "cli" }));
+    expect(host.programs).toHaveLength(2);
+    program(1).finish({ code: 0, signal: null });
+    expect(await next.done).toMatchObject({ exitCode: 0 });
+    expect(await leaseFiles()).toEqual([]);
+  });
+
+  it("replaces the port lease of a process that no longer runs without recording a state", async () => {
+    const lost = await runner.start(portRun(["capture", "--port", "/dev/ttyACM0"], { background: true }));
+    const cli = make({
+      leases: new ResourceLeases({ root: leaseFolder, app: "cli", pid: 777, alive: (pid) => pid !== 4242 }),
+    });
+    const next = await cli.start(portRun(["capture", "--port", "/dev/ttyACM0"], { sessionId: "cli" }));
+    expect(host.programs).toHaveLength(2);
+    expect((await readdir(leaseFolder)).filter((name) => name.endsWith(".state"))).toEqual([]);
+    program(1).finish({ code: 0, signal: null });
+    await next.done;
+    program(0).finish({ code: 0, signal: null });
+    await lost.done;
+  });
+
+  it("takes no lease for a run without a serial port, and one per port beside a run's registry claims", async () => {
+    const plain = await runner.start(portRun(["ports"], { background: true }));
+    expect(await leaseFiles()).toEqual([]);
+    program().finish({ code: 0, signal: null });
+    await plain.done;
+    const both = await runner.start(
+      request({ args: ["run", "scpi.py", "read", "--instrument", "psu", "--port", "COM9"] }),
+    );
+    expect(await leaseFiles()).toHaveLength(3);
+    await report(program(1), "released", "confirmed");
+    program(1).finish({ code: 0, signal: null });
+    await both.done;
+    expect(await leaseFiles()).toEqual([]);
+  });
+
+  it("keeps the in-process guard alone when the runner has no lease registry", async () => {
+    const bare = make({ leases: undefined });
+    const run = await bare.start(portRun(["capture", "--port", "COM4"]));
+    expect(await leaseFiles()).toEqual([]);
+    program().finish({ code: 0, signal: null });
+    await run.done;
+  });
+});
+
 describe("supervised stop and cleanup", () => {
   it("asks the program to stop and does not kill it when it exits within the grace period", async () => {
     const run = await runner.start(request({ background: true }));

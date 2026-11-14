@@ -355,8 +355,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   the value of `--name=value`) that another unfinished run of the runner also names, foreground or
   background, is BUSY `{handle, port}`. Off Windows a device path is compared by the device its links
   resolve to (`ProgramRunnerOptions.devicePath`, realpath by default), so a `/dev/serial/by-id` link and its
-  `/dev/tty*` device are one port; an unresolvable path stays as written. The guard is per runner (one
-  process): the desktop app and a CLI process do not see each other's ports.
+  `/dev/tty*` device are one port; an unresolvable path stays as written. With a lease registry each such port is
+  also a non-actuating lease of kind `serial` (alias = the port, key `serial:<port>`), taken in the same `acquire` as
+  the run's registry claims and released when the run settles, so a port another VERA process (desktop app or CLI)
+  holds is BUSY `{resource: <port>, holder}`; a stale port lease is replaced without a state marker. Without a lease
+  registry the in-process guard alone applies.
 - Format 1 requires `launcherMode: argv|string` iff `launcher` is present, with a find installation.
   Find locates launcher[0]; the resolver carries its remaining prefix and `{command, mode, platform}`.
   `programInvocation` builds probe and run argv. String launchers bind the generated invocation in
@@ -568,6 +571,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-b7e0b968` / `REQ-FUNC-f678fbd7` — background runs, incremental reads, at most 4 per session.
 - `REQ-FUNC-39d5e6d9` — session stop, workbench close and app exit stop runs.
 - `REQ-SEC-016c9aad` / `REQ-FUNC-868fc8ab` — serial-port guard for foreground and background holders; Linux links resolved.
+- `REQ-FUNC-b9a25608` — serial-port leases across VERA processes (identity kind `serial`).
 - `REQ-DATA-f2cbfc23` / `REQ-FUNC-0542cc94` / `REQ-UX-73dd7a9b` — bench registry, VISA identity keys, reserved resources in
   approvals (spec REQ-DATA-f2cbfc23.md).
 - `REQ-FUNC-a5770245` / `REQ-FUNC-e4ca09ad` / `REQ-REL-52212fce` / `REQ-PLAT-fae260c3` — in-process BUSY, cross-process

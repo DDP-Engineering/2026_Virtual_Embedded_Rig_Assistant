@@ -11,14 +11,14 @@ PROCESS: at the user's request (2026-11-13) every child is implemented with AEGI
 branch `feature/113-arduino-iot` cut from `feature/93-electronics-calc` at bb79e4b, in the sibling
 worktree `F:\2026_Virtual_Embedded_Rig_Assistant_iot`. The implementer hands the candidate back without a
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
-STATE: IOT-01 built (hardware acceptance pending); IOT-02...IOT-08 planned.
+STATE: IOT-01 and IOT-02 built (hardware acceptance pending); IOT-03...IOT-08 planned.
 
 ## Order
 
 | Order | Package | Issue | Plugin | Result | State |
 |---|---|---|---|---|---|
 | 1 | IOT-01 | [#114](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/114) | `arduino-cli` | pinned arduino-cli 1.6.0 (direct use blocked) behind `arduino-tool`: VERA's own environment `~/.vera-arduino`, offline outside `install`; exact-version installs; serial ports by identity key, no board inferred from a USB bridge; compile of a sketch copy into `arduino-iot-results/<run-id>/` (core, libraries, sizes, hashes); upload of exactly that verified binary to a matching identity; runner BUSY for foreground port holders. Real compiles verified on Windows (arduino:avr 1.8.8, arduino:samd 1.8.14); real upload, serial readback, two boards and native Ubuntu pending hardware (AEGIS TASK-239a7379) | built |
-| 2 | IOT-02 | [#115](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/115) | `micropython` | finite file and run operations on MicroPython devices | planned |
+| 2 | IOT-02 | [#115](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/115) | `micropython` | `micropython-tool` (PEP 723, pinned mpremote 1.29.0 / pyserial 3.5 / platformdirs 4.14.0) using mpremote's serial transport with fixed snippets only (no REPL, exec, eval, mount): ports by identity key, identify, files, read-file, deploy-file through a hashed `<target>.vera-part` copy with probed rename or remove-then-rename (boot.py/main.py only with `--startup`, irreversible), run-file from RAM with deadline and verdict, capture-output, reset with re-bind by identity, report; MicroPython >= 1.22 only; every board operation except a plain capture-output interrupts the running program and says so; loss reported as disconnected / device-reset / no-response. Serial identity kind added to LAB-01's lease registry: every run naming a serial port leases `serial:<port>` across VERA processes (arduino-cli, serial-monitor, esptool covered with no package change). Verified offline on a simulated board and with the real mpremote 1.29.0 (opt-in); real board and native Ubuntu pending (AEGIS TASK-fa2b0429) | built |
 | 3 | IOT-03 | [#116](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/116) | `circuitpython` | code and compatible libraries on an identified CircuitPython board | planned |
 | 4 | IOT-04 | [#117](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/117) | `bus-tools` | I2C/SPI/UART transactions through an identified adapter | planned |
 | 5 | IOT-05 | [#118](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/118) | `mqtt-tools` | bounded telemetry and commands on a configured broker | planned |
@@ -51,8 +51,9 @@ the serial identity kind; desktop app and CLI do not yet see each other's ports.
 Merge (2026-11-14, at the user's request): `feature/101-embedded-lab` up to LAB-01 (41313ca) was merged into this branch
 before IOT-02, so the IoT plugins build on LAB-01's one lease registry (`leases.ts`, `resource-registry.ts`,
 `lab-resources.ts`). The runner keeps both guards: a serial port named by any unfinished run, or claimed by a run's
-lease, is BUSY; Linux by-id links resolve. Still open, owned by IOT-02: the serial identity kind in the lease registry,
-so serial plugins (arduino-cli, micropython) claim boards across desktop and CLI instead of only in-process.
+lease, is BUSY; Linux by-id links resolve. IOT-02 (2026-11-14) added the serial identity kind: the runner leases every serial port a run names in argv
+(`serial:<port>`, non-actuating) in the same lease folder, so arduino-cli, serial-monitor, esptool and micropython
+runs exclude each other across desktop and CLI; no registry entry or manifest change is needed.
 
 ## Rules shared by the packages
 

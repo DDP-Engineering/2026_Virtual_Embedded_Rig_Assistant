@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-eddae180"
+title = "Capture the board's console for a bounded time"
+status = "active"
+requirement = "When capture-output runs, micropython-tool shall read the board's console for --duration seconds (1 to 600) without sending anything, or after a soft reset that restarts the board's application when --restart is given, and save the text in the run folder."
+verification = "Fake board emitting 'tick' lines: capture-output --duration 1 saves output.txt with the ticks and application unchanged; with --restart the fake records the soft reset and application restarted; --duration 0 and 601 are blocked arguments."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/operations.py", "05_Software/plugins/micropython/scripts/micropython_support/device.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,45 @@
+format: 1
+id: micropython
+version: 1.0.0
+name: MicroPython
+description: Finite operations on a MicroPython board that already runs MicroPython 1.22 or newer - list serial ports by identity, identify the board's firmware, list and copy its files, deploy a workbench file through a verified temporary copy, run a workbench script from RAM with a deadline and a verdict, capture its console and reset it - through a pinned mpremote. No interactive REPL, no code given as an argument, no mount of a host folder, no firmware installation and no implicit change of boot.py or main.py.
+ecosystem: micropython
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://pypi.org/project/mpremote/1.29.0/", "https://docs.micropython.org/en/latest/reference/mpremote.html"]
+programs:
+  micropython-tool:
+    install: { script: scripts/micropython_tool.py }
+    version: { args: [--version], match: '^micropython-tool (\d+\.\d+\.\d+)' }
+    timeout: 300
+# micropython-tool sends only its own fixed snippets through mpremote's serial transport. Entering the raw REPL sends
+# Ctrl-C, which interrupts whatever program the board runs, so no board operation is passive.
+rules:
+  - { match: "micropython-tool {--version,--help,-h}", risk: safe }
+  - match: "micropython-tool {ports,report} *"
+    risk: safe
+    note: Lists this computer's serial ports without opening them, or summarizes run folders; report writes a new run folder.
+  - match: "micropython-tool {identify,files,read-file} *"
+    risk: device-read
+    note: Opens the board's port and interrupts the running program (Ctrl-C), leaving the board at its REPL; with --restart a soft reset runs boot.py and main.py again. Reads firmware details, the file list or one file (at most 1 MiB).
+  - match: "micropython-tool read-file *"
+    risk: device-read
+    timeout: 900
+  - match: "micropython-tool capture-output *"
+    risk: device-read
+    note: Reads the board's console for --duration seconds without sending anything; with --restart it first interrupts the running program and soft-resets the board so main.py starts again.
+    timeout: 660
+  - match: "micropython-tool reset *"
+    risk: device-read
+    note: Restarts the board - --mode soft reruns boot.py and main.py, --mode hard calls machine.reset() - so the program it stores starts again and may drive the board's outputs.
+  - match: "micropython-tool deploy-file *"
+    risk: device-write
+    note: Interrupts the running program and replaces a file on the board's file system with the named workbench file (approval binds its hash), through a verified temporary copy. The code runs when the board imports it.
+    timeout: 900
+  - match: "micropython-tool deploy-file * --startup *"
+    risk: irreversible
+    note: Replaces boot.py or main.py, which run at every start of the board; a faulty one can lock out the REPL until the firmware is reinstalled.
+    timeout: 900
+  - match: "micropython-tool run-file *"
+    risk: device-write
+    note: Soft-resets the board and runs the named workbench script from RAM (approval binds its hash); the code may drive the board's pins and anything wired to them. Stop ends the helper, not code already running on the board.
+    timeout: 3600
