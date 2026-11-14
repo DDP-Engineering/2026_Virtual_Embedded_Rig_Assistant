@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-69c28e7f"
+
+title = "Rate pi-tool operations by their effect on the board"
+
+status = "active"
+
+requirement = "The raspberry-pi-linux manifest shall rate capabilities, inspect-project and report safe, check-host-key, identify, task-status, service-status and collect-logs device-read, install-helper, deploy-candidate, apply-candidate, run-task, service-start, service-stop and stop-owned device-write, and apply-candidate with --overwrite irreversible."
+
+verification = "classifyCommand over the manifest rules returns each listed risk."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-d7e0c14e"
+
+title = "Stage a deploy candidate and compare it with the remote project"
+
+status = "active"
+
+requirement = "When deploy-candidate runs, pi-tool shall remove the project's earlier staged candidates, upload the project files into a new staging folder below the remote root, verify each staged hash (removing its own partial folder when staging fails), classify each file as new, changed, unchanged or conflict (a remote file whose hash is neither the candidate's nor the one VERA last applied) and list remote-only files, and shall write candidate.json without changing any project file on the board."
+
+verification = "A first deploy plans four new files and leaves no project folder before apply; against a remote project with one hand-edited file, an unchanged one and an extra file the plan shows conflict, unchanged and remote-only; staging again after a refused apply reports the earlier candidate pruned and its folder is gone."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

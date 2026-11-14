@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3c5b6470"
+
+title = "Collect the results of a run folder again"
+
+status = "active"
+
+requirement = """
+When collect-results names a run-scenario folder, wokwi-tool shall derive the outcome from its exit record and CLI logs, rewrite result.json, and report a folder without an exit record as incomplete with outcome interrupted and remote state unknown.
+"""
+
+verification = "Helper test: deleting result.json's outcome and running collect-results reproduces it; a folder with result.json running and no exit.json gives incomplete interrupted remote unknown; a folder of another tool gives run-invalid."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/collect.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

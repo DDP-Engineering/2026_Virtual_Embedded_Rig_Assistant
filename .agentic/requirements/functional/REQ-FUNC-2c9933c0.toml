@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-2c9933c0"
+title = "Reset a board and find it again by identity"
+status = "active"
+requirement = "When reset runs, micropython-tool shall soft-reset the board (--mode soft) or call machine.reset() (--mode hard), and after a hard reset wait up to 15 seconds for a port with the same identity key and report that port, or end with status error and code port-lost."
+verification = "Fake hard reset that brings the board back on COM6: result port after COM6, identity unchanged; a board that does not come back ends error port-lost; --mode soft records a soft reset and application restarted."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/operations.py", "05_Software/plugins/micropython/scripts/micropython_support/ports.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

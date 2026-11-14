@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-214f3a7f"
+title = "Write each run's results to its own new folder"
+status = "active"
+requirement = "Each network operation of mqtt-tool shall write result.json (format 1), report.md and, for subscribe, messages.jsonl into a new folder <results-dir>/<run-id> inside the working directory, created exclusively and never inside .vera."
+verification = "Helper test: two runs give two folders; an existing --run-id gives run-exists and a --results-dir in .vera gives path (exit 2); result.json has format 1 and kind mqtt-tool-result."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/report.py", "05_Software/plugins/mqtt-tools/scripts/mqtt_support/workspace.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-73dd7a9b"
+
+title = "Show the reserved resources in the program approval"
+
+status = "active"
+
+requirement = """
+When a run_program request names a declared resource, the approval card and the CLI approval prompt shall show each reserved resource's alias, kind and declared resource name together with the registry file's path and SHA-256, and a registry that changes between approval and start shall end the call with CONFLICT without starting the program.
+"""
+
+verification = "A program-tools test checks the prepared request's resources and registry hash, edits lab/resources.json after approval and expects CONFLICT with no spawn; the renderer approval-card test and the CLI approval-prompt test render the alias, resource and SHA-256."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/cli/src/approval-prompt.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-resources.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.test.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts", "05_Software/src/libraries/shared/src/lab-resources.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

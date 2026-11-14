@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-fb090330"
+
+title = "End a run at its real-time budget"
+
+status = "active"
+
+requirement = """
+If wokwi-cli is still running when the job's real-time budget ends, then wokwi-tool shall ask it to stop, kill it after 5 s, and report outcome real-budget-exceeded with status incomplete and remote state unknown.
+"""
+
+verification = "Helper test: a job with --real-budget-s 10 and a fake CLI that hangs gives real-budget-exceeded after 10-20 s, exit.json reason real-budget, remote unknown, cancel connection-closed-requested, and the fake CLI process is gone."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/run.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

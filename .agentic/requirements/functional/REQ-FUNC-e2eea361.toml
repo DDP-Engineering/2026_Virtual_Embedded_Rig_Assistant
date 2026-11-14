@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e2eea361"
+
+title = "Summarize run folders in a report"
+
+status = "active"
+
+requirement = """
+When report names run folders, the arduino-tool helper shall write a new run folder whose result.json and report.md summarize each named compile or upload result with its status, target and hashes, and refuse a folder without a valid result with exit 2.
+"""
+
+verification = "report of a compile and an upload run folder lists both with FQBN, status and binary hash; report of a folder without result.json exits 2 with run-invalid."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/report.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

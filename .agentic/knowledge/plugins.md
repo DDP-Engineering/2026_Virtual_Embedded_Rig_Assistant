@@ -28,7 +28,9 @@ Plugins page Available/Installed library (spec `.agentic/specs/REQ-DATA-b40d3f9b
 `05_Software/src/libraries/core/src/plugins/provisioning.ts` (provisioning, with `archive.ts`) or
 `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx` and `runs-tab.tsx` (UI) or
 `05_Software/src/libraries/core/src/plugins/catalog.ts` (catalog client), `catalog-source.ts` (catalog check and
-build), shared `plugin-catalog.ts` (formats) and renderer `plugin-catalog.tsx` (source settings and catalog rows); focused tests sit
+build), shared `plugin-catalog.ts` (formats) and renderer `plugin-catalog.tsx` (source settings and catalog rows); bench resources (`lab/resources.json`, identity keys, leases, supervised cleanup, spec
+`.agentic/specs/REQ-DATA-f2cbfc23.md`) at shared `lab-resources.ts`, core `leases.ts`, `resource-registry.ts` and the
+runner's `lease` option; focused tests sit
 next to each, the gate's run_program branch is tested in `core/src/agent/program-approvals.test.ts`,
 and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
@@ -160,6 +162,32 @@ cannot show stale Ready; unknown, needs configuration and unavailable remain dis
 continues after failures without provisioning or enabling. Manual imports select Installed after review.
 Fixture-driven `plugin-library.test.ts` and the retained native/browser flows cover these boundaries.
 
+Bench resources (LAB-01): a program that declares `resources {option, kinds, grace, cleanup, cleanupTimeout}` claims
+the `lab/resources.json` alias a call names with `option`. Program-tools resolves it to identity keys before approval
+and binds the aliases and the registry hash into the request; the runner refuses a second holder (BUSY) in-process
+and through `ResourceLeases`, a per-user lease folder the desktop app and the CLI share, supervises the run with a stop
+request and a grace period, runs the declared cleanup once after an interrupted actuation and reports the physical
+state. `ResourceLeases` is the only lease registry; later identity kinds extend the registry schema and key function.
+
+Plugin credentials (spec REQ-DATA-96d18686 §1): a program that declares `credentials {option, scope}` (scope `mqtt`
+or `wokwi`) receives the stored credential `<scope>:<ref>` a call names with `option`, as one JSON line on stdin, and
+nothing else does.
+Prepare refuses a plugin that is not official, a host without `ProgramHost.credentials`, a repeated option, an invalid
+reference or a credential that is not stored; apply loads the enabled plugins again (a disabled plugin is undeclared and
+nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the scope's
+Settings section and CLI variable. Desktop main stores the credentials through one `PluginCredentialService(scope)`
+(`apps/desktop/src/main/plugin-credentials.ts`): Settings > MQTT credentials (`mqtt.credentials.*` IPC: reference,
+optional username, password) and Settings > Wokwi tokens (`wokwi.credentials.*`: reference and token, no username),
+both rendered by `renderer/components/plugin-credentials.tsx`; each list returns only its own scope's references and
+storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
+and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
+changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
+
+SSH agent socket (REQ-SEC-adb91424): a program of an official plugin that declares `sshAgent: true` gets
+`RunRequest.inherit: ["SSH_AUTH_SOCK"]`, so the runner copies the host's SSH_AUTH_SOCK (when set) into that run's
+and its cleanup run's environment; prepare refuses the declaration of any other tier before approval. No other
+program receives it, and no key or password passes through VERA.
+
 ## Authoring
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
@@ -208,6 +236,28 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   folder or .zip, the reviewed hash) → installed summary; `plugins.uninstall {id}`; `plugins.toggle {workbenchId, id,
   enabled}`. The browser mock keeps installed plugins in memory.
 
+- Bench resources (shared `lab-resources.ts`): `LAB_REGISTRY_PATH` (`lab/resources.json`), `LAB_REGISTRY_BYTES` (256 KiB),
+  `labRegistrySchema` (format 1, 1..64 entries, unique aliases; kind `visa`: alias, resource, serial?, profile,
+  backend? py|ivi, limits?, note?; kind `bus-adapter`: alias, backend `bus-pirate-bpio2`, resource and terminal (COM<n> or
+  /dev paths, different), identity `usb:<vid>:<pid>:<serial>`, power? {maxMv 800-5000, maxMa 1-500}, note?; kind
+  `ble-device`: alias, address (six hex octets), addressType public|random (random only static), profile, serial?,
+  adapter? hci0-hci99, note?; kind `linux-board`: alias, host, port, user (not root), hostKeys 0-4 `SHA256:` fingerprints,
+  agentKey?, identity {serial?, machineId?, model?} with serial or machineId, root (absolute, 2-16 safe segments), note?),
+  `visaResourceKeys(resource, serial?)`, `labResourceKeys(entry)` (bus-adapter: `serial:<resource>`, `serial:<terminal>`,
+  identity lower-cased; ble-device: `ble:<address lower-case>`; claimedResources reports its address as the resource;
+  linux-board: `ssh:<host lower-case>:<port>`, resource `<user>@<host>:<port>`),
+  `serialPortKey(port)`; manifest program field `resources`; approval payload `resources [{alias, kind, resource}]` with
+  `registry {path, sha256}` (both or neither).
+- Leases (core `leases.ts`): `leaseRoot({platform, env, tmpdir, uid?})`, `leaseFileName(key)`, `new ResourceLeases({root,
+  app, pid?, alive?, now?, platform?})` with `acquire(claims, {sessionId, runId})` -> `HeldLeases {states, markUnknown(reason),
+  clear(), release()}` (BUSY `{resource, holder}`, DENIED `{reason: leases}`), `controlFolder(runId)`,
+  `removeControl(runId)`; `LeaseClaim {kind, alias, resource, keys, actuates}`. Core `resource-registry.ts`:
+  `namedAliases(option, args)`, `readRegistry(workbench)`, `claimedResources(workbench, program, args)` ->
+  `{resources [{alias, kind, resource, keys}], registry {path, sha256}}`; `ProgramChangeRequest.resources/registry`.
+- Runner `RunRequest.lease {claims, graceMs, cleanup? {args, timeoutMs, shown?}}`, runner option `leases`;
+  `RunResult.physical` (`unchanged|confirmed|unknown`) and `cleanup` (`none|separate|failed`), also in the run_program
+  foreground and program_stop results and in `RunRead`/program_output once a background run ended. The serial-port
+  exclusion between serial runs and claims holds inside one runner (serial runs take no lease file).
 - Runner: `ProcessHost {platform, env, spawn(executable, args, {cwd, env, group, output}) ->
   {pid, exit}, signal(pid, name)}`; `new NodeProcessHost(spawn)`; `new ProgramRunner({host, clock,
   toolPaths?, tailChars=12000, maxBackground=4, logsKept=200, killGraceMs=3000, id?, now?})` with
@@ -295,7 +345,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   an id that is not installed is an UNKNOWN_NAME warning, not an error.
 - Store mutations run one at a time per store instance.
 - Every program starts with `shell: false`, `windowsHide: true`, stdio `[ignore, pipe, pipe]` (stdin
-  closed) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
+  closed; a run with `input` gets stdin as a pipe that receives exactly the input and is then closed, an early exit's
+  EPIPE ignored) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
   the same way: started detached on Windows, a console program such as KiCad's kicad-cli prints nothing.
 - The environment holds only PATH (tool paths first), SystemRoot, HOME, USERPROFILE, TEMP, TMP,
   TMPDIR, LANG, LANGUAGE and LC_* from the host, then the program's variables, then PYTHONUTF8=1 and
@@ -312,9 +363,40 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   characters; `.vera/runs/<ULID>.log` keeps all of it, plus a line naming a start error. After a run
   opens its log, ULID-named logs beyond the newest 200 are deleted, except logs of unfinished runs;
   a log that cannot be deleted is skipped and never blocks the run.
+- Bench resources: a call naming the program's resource option more than once, an alias missing from
+  `lab/resources.json`, a kind the program does not declare, or a registry that is missing, not a regular file, over
+  256 KiB, not UTF-8 JSON or invalid is refused before approval. Keys are compared as sets: a claim whose keys meet an
+  unfinished run's claims or serial ports (and a serial port a running claim holds) is BUSY `{handle, resource}` /
+  `{handle, port}` before spawn; then each key is taken in sorted order as `<sha256(key)[:32]>.lease`, written aside and
+  published with an exclusive hard link, all or none. A lease is held while its pid answers a signal-0 probe; a dead
+  holder's lease is moved aside and removed (restored if it changed meanwhile), and when it could actuate the key gets
+  `<hash>.state` `{state: unknown, reason: holder-lost}`; an unreadable lease is BUSY and never deleted. Leases are
+  removed only by their own run (same pid and run id). On Linux the folder must be owned by the user with no group or
+  other permissions.
+- A run with a lease, and its cleanup run, get `VERA_REGISTRY_SHA256` (the approved registry's hash, which the program
+  checks before opening anything) and `VERA_RUN_CONTROL` (`<lease folder>/runs/<run id>/`, removed after the run) and, when a
+  claimed key is recorded unknown, `VERA_RESOURCE_STATE` `{alias: {state, since, runId, reason}}`. Stop, timeout, abort
+  and the lifecycle stops write `stop` there and kill the tree only after `graceMs`. After the program exits the runner
+  reads `state.json` `{format: 1, phase, physical}`: an actuating claim (risk device-write or irreversible) without
+  `phase: released` and `physical` confirmed or unchanged starts `cleanup.args` with the same executable, once, without
+  approval, with its own control folder, `VERA_CLEANUP_OF` and a `cleanupTimeout` tree kill; its output follows a
+  `[VERA] Cleanup:` line in the run's log. `unknown` marks every claimed key, a reported `confirmed` clears them, and the
+  log ends with `[VERA] Physical state: <state>`. A run without a resource claim behaves as before.
 - At most 4 unfinished background runs per session (BUSY `{limit}`). A run naming a serial port
   (`COM<n>` with optional `\\.\`, upper-cased; `/dev/tty*`; `/dev/serial/by-id/*`; whole argument or
-  the value of `--name=value`) that an unfinished background run also names is BUSY `{handle, port}`.
+  the value of `--name=value`) that another unfinished run of the runner also names, foreground or
+  background, is BUSY `{handle, port}`. Off Windows a device path is compared by the device its links
+  resolve to (`ProgramRunnerOptions.devicePath`, realpath by default), so a `/dev/serial/by-id` link and its
+  `/dev/tty*` device are one port; an unresolvable path stays as written. With a lease registry each such port is
+  also a non-actuating lease of kind `serial` (alias = the port, key `serial:<port>`), taken in the same `acquire` as
+  the run's registry claims and released when the run settles, so a port another VERA process (desktop app or CLI)
+  holds is BUSY `{resource: <port>, holder}`; a stale port lease is replaced without a state marker. Without a lease
+  registry the in-process guard alone applies.
+- A run naming a volume with `--volume <value>` or `--volume=<value>` (the circuitpython plugin's CIRCUITPY drive)
+  claims `volume:<value>`: a Windows drive as `<LETTER>:`, an absolute path as `devicePath` resolves it (as written when
+  that throws), trailing separators removed. Another unfinished run of the runner naming or claiming that key is BUSY
+  `{handle, resource}`; with a lease registry it is also a non-actuating lease of kind `volume`, taken and released with
+  the run's other claims (BUSY `{resource, holder}` across processes). `volumeKeys(args, resolve)` is exported.
 - Format 1 requires `launcherMode: argv|string` iff `launcher` is present, with a find installation.
   Find locates launcher[0]; the resolver carries its remaining prefix and `{command, mode, platform}`.
   `programInvocation` builds probe and run argv. String launchers bind the generated invocation in
@@ -463,6 +545,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Workbench enablement or warnings | `workbench.ts` (`plugins`, `configWarnings`), `WorkbenchService.togglePlugin` | `shared/src/workbench.test.ts`, `core/src/workbench/service.test.ts` |
 | IPC or mock | `ipc.ts` `plugins.*`, desktop `main/index.ts`, `renderer/mocks/mockApi.ts` | `shared/src/plugins-ipc.test.ts`, `renderer/mocks/mockApi.test.ts` |
 | Run policy: env, cwd, log, retention, background, serial guard | `core/src/plugins/runner.ts` | `core/src/plugins/runner.test.ts` |
+| Bench registry, identity keys, leases, supervised cleanup | shared `lab-resources.ts`, core `leases.ts`, `resource-registry.ts`, `runner.ts` (`lease`) | `lab-resources.test.ts`, `leases.test.ts`, `runner-leases.test.ts`, `program-resources.test.ts`, `tests/integration/scpi-instruments.test.ts` |
 | Spawn options or tree kill | `node-process-host.ts`, `process-tree.ts` | `node-process-host.test.ts`, `process-tree.test.ts`, `tests/integration/process-hosts.test.ts` |
 | Decoding, ANSI, tail | `core/src/plugins/run-output.ts` | `run-output.test.ts` |
 | Launcher quoting | `core/src/plugins/launcher.ts` | `launcher.test.ts` |
@@ -514,7 +597,12 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-0c4bc419` — UNKNOWN_NAME/UNKNOWN_KEY warnings for plugins.
 - `REQ-FUNC-9dd7413b` — plugins.* IPC channels and browser mock.
 - `REQ-FUNC-e08c858b` — original argument values reach the process host unchanged, no shell.
-- `REQ-FUNC-dbcd3311` — stdin is closed.
+- `REQ-FUNC-dbcd3311` — stdin ends at once: closed, or the run's input then end of input.
+- `REQ-DATA-e6b1fa1a` / `REQ-SEC-3f57f781` / `REQ-SEC-dbbd21e5` / `REQ-SEC-9976af2e` / `REQ-FUNC-00c788bb` /
+  `REQ-FUNC-ba0396c0` — the credentials declaration, the stdin hand-off, official plugins only, revocation by disabling,
+  unresolvable references, the runner's input.
+- `REQ-SEC-1ffb429b` / `REQ-UX-4b90fed2` / `REQ-FUNC-f250eee7` — desktop credential storage and Settings section, CLI
+  environment credentials.
 - `REQ-SEC-f5c114de` — minimal environment without VERA's credentials.
 - `REQ-REL-380ee422` — provisioner probes and uv calls are not detached on Windows (process group only elsewhere).
 - `REQ-FUNC-cb84887a` / `REQ-SEC-7a6c3f5f` — guarded cwd; DENIED outside, ignored or not a directory.
@@ -524,7 +612,15 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-85bf8a14` / `REQ-DATA-6491c211` / `REQ-DATA-49ebfb15` — 12 000-character tail, full ULID log, newest 200 kept.
 - `REQ-FUNC-b7e0b968` / `REQ-FUNC-f678fbd7` — background runs, incremental reads, at most 4 per session.
 - `REQ-FUNC-39d5e6d9` — session stop, workbench close and app exit stop runs.
-- `REQ-SEC-016c9aad` — serial-port guard.
+- `REQ-SEC-016c9aad` / `REQ-FUNC-868fc8ab` — serial-port guard for foreground and background holders; Linux links resolved.
+- `REQ-FUNC-b9a25608` — serial-port leases across VERA processes (identity kind `serial`).
+- `REQ-FUNC-96c2f1de` — volume leases across VERA processes (identity kind `volume`).
+- `REQ-DATA-f2cbfc23` / `REQ-FUNC-0542cc94` / `REQ-UX-73dd7a9b` — bench registry, VISA identity keys, reserved resources in
+  approvals (spec REQ-DATA-f2cbfc23.md).
+- `REQ-FUNC-a5770245` / `REQ-FUNC-e4ca09ad` / `REQ-REL-52212fce` / `REQ-PLAT-fae260c3` — in-process BUSY, cross-process
+  leases, stale leases, per-user lease folder.
+- `REQ-FUNC-3bf3d5bc` / `REQ-REL-3817f2fd` / `REQ-FUNC-d4b72e6b` / `REQ-SEC-80fa1675` — stop request and grace, authorized
+  cleanup run, physical state, approved registry hash.
 - `REQ-FUNC-efbc6124` / `REQ-SEC-7b3e7ed4` — launcher composition and metacharacter refusal.
 - `REQ-REL-e594e725` — a program that cannot start reports its error code.
 - `REQ-NFR-d056ff66` — core never imports child_process.
@@ -587,7 +683,11 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/apps/desktop/src/main/index.ts` — store composition and `plugins.*` handlers.
 - `05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts` — in-memory mock of the channels.
 - `05_Software/src/libraries/core/src/ports.ts` — `ProcessHost`, `SpawnedProcess`, `ProcessExit`.
-- `05_Software/src/libraries/core/src/plugins/runner.ts` — ProgramRunner, environment, serial ports.
+- `05_Software/src/libraries/core/src/plugins/runner.ts` — ProgramRunner, environment, serial ports, leases and supervision.
+- `05_Software/src/libraries/shared/src/lab-resources.ts`, `lab-resources.test.ts` — registry schema and identity keys.
+- `05_Software/src/libraries/core/src/plugins/leases.ts`, `leases.test.ts` — the lease registry and unknown-state markers.
+- `05_Software/src/libraries/core/src/plugins/resource-registry.ts`, `program-resources.test.ts` — claims of run_program calls.
+- `05_Software/src/libraries/core/src/plugins/runner-leases.test.ts` — BUSY, stop request, cleanup run, physical state.
 - `05_Software/src/libraries/core/src/plugins/node-process-host.ts` — Node ProcessHost with injected spawn.
 - `05_Software/src/libraries/core/src/plugins/process-tree.ts` — taskkill and process-group kill.
 - `05_Software/src/libraries/core/src/plugins/run-output.ts` — OutputDecoder, TailBuffer.

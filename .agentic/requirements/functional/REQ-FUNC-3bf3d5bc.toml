@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3bf3d5bc"
+
+title = "Ask a supervised program to stop before killing it"
+
+status = "active"
+
+requirement = """
+When a run that holds resource leases is stopped, times out or is ended by session stop, workbench close or app exit, the runner shall write a stop request into the run's control folder and kill the process tree only if the program has not exited within the program's declared grace period.
+"""
+
+verification = "Runner tests with a fake host check that Stop creates the stop file and that the kill happens only after the grace period when the process stays, or not at all when it exits; an integration test stops a real `scpi output --hold` run and observes the helper's own clean exit."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/lifecycle.py"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

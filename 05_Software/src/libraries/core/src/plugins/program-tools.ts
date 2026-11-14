@@ -1,7 +1,10 @@
 import { createContext, Script } from "node:vm";
 import {
   classifyCommand,
+  credentialReferenceSchema,
   gitExecutionArguments,
+  type PluginCredentialScope,
+  type PluginProgram,
   pluginProgramNameSchema,
   programPolicy,
   type SkillSummary,
@@ -19,8 +22,9 @@ import {
   prepareProgramRequest,
   verifyProgramFiles,
 } from "./program-request.js";
+import { claimedResources } from "./resource-registry.js";
 import { TailBuffer } from "./run-output.js";
-import type { ProgramRun, ProgramRunner, RunResult } from "./runner.js";
+import type { ProgramRun, ProgramRunner, RunRequest, RunResult } from "./runner.js";
 import type { LoadedPlugin } from "./store.js";
 
 /** Where a declared program's executable lives, plus fixed leading arguments (for example a download prefix). */
@@ -42,6 +46,18 @@ export interface ProgramResolver {
 }
 /** The resolver of a host without provisioning: no program resolves. */
 export const unresolvedPrograms: ProgramResolver = { resolve: async () => undefined };
+/**
+ * Stored plugin credentials (spec REQ-DATA-96d18686 section 1): desktop main reads its CredentialStore, the CLI its
+ * memory-only entries from the environment. `has` never returns a secret.
+ */
+export interface ProgramCredentials {
+  has(scope: PluginCredentialScope, ref: string, signal?: AbortSignal): Promise<boolean>;
+  read(
+    scope: PluginCredentialScope,
+    ref: string,
+    signal?: AbortSignal,
+  ): Promise<{ username?: string | undefined; password: string } | undefined>;
+}
 /** What a session needs to run plugin programs; desktop main and the CLI compose it per workbench. */
 export interface ProgramHost {
   runner: ProgramRunner;
@@ -49,6 +65,8 @@ export interface ProgramHost {
   /** The enabled, issue-free plugins of the workbench, loaded now. */
   plugins(signal?: AbortSignal): Promise<readonly LoadedPlugin[]>;
   resolver: ProgramResolver;
+  /** Stored credentials for programs that declare them; absent, such calls are refused. */
+  credentials?: ProgramCredentials | undefined;
 }
 /** Program state of one session's tools. The session's approval path sets the call fields per call. */
 export interface ProgramContext {
@@ -144,11 +162,19 @@ export function programError(error: unknown, program?: string): Error {
       }
       if (params.cwd !== undefined)
         return Error(`The working directory ${params.cwd} is not a workbench folder.`);
+      if (params.reason === "leases")
+        return Error("The lease folder of bench resources cannot be used; the resource was not reserved.");
       return Error("The run is refused.");
     case "BUSY":
       if (params.limit !== undefined)
         return Error(`At most ${params.limit} background runs per session; stop one with program_stop.`);
-      return Error(`Port ${params.port} is held by background run ${params.handle}; stop that run first.`);
+      if (params.resource !== undefined)
+        return Error(
+          params.handle !== undefined
+            ? `Resource ${params.resource} is reserved by run ${params.handle}; wait for it to end or stop it first.`
+            : `Resource ${params.resource} is reserved by ${params.holder} (another VERA window or the CLI); wait for it to end.`,
+        );
+      return Error(`Port ${params.port} is held by run ${params.handle}; stop that run first.`);
     case "CONFLICT":
       return Error(
         "The program, its plugin, a file it names or the permission mode changed after approval. Request the run again.",
@@ -195,6 +221,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
       ...(declared.optionSyntax === "git" ? gitExecutionArguments(args.args ?? []) : (args.args ?? [])),
     ];
     const invocation = programInvocation(resolved, programArgs);
+    const claimed = await claimedResources(ctx.root, declared, args.args ?? [], signal);
     const prepared = await prepareProgramRequest({
       workbench: ctx.root,
       plugin,
@@ -207,6 +234,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
       turnId: programs.turnId ?? "",
       callId: programs.callId ?? "",
       signal,
+      claimed,
     });
     return { prepared, plugin, declared, resolved, programArgs, invocation };
   } catch (error) {
@@ -214,6 +242,64 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
     throw programError(error, args.program);
   }
 }
+/**
+ * The credential a call names with its program's declared option, or undefined when it names none. Refuses a plugin
+ * that is not official, a host without credentials, a repeated option and an invalid reference.
+ */
+function credentialReference(
+  host: ProgramHost,
+  plugin: LoadedPlugin,
+  declared: PluginProgram,
+  args: readonly string[],
+): { scope: PluginCredentialScope; ref: string } | undefined {
+  const declaration = declared.credentials;
+  if (!declaration) return undefined;
+  const { option, scope } = declaration;
+  const values: (string | undefined)[] = [];
+  args.forEach((arg, index) => {
+    if (arg === option) values.push(args[index + 1]);
+    else if (arg.startsWith(`${option}=`)) values.push(arg.slice(option.length + 1));
+  });
+  if (values.length === 0) return undefined;
+  if (plugin.record.tier !== "official")
+    throw Error(
+      `Program ${Object.keys(plugin.manifest.programs).join(", ")} of plugin ${plugin.manifest.id} asks for stored credentials, which only official plugins receive.`,
+    );
+  if (!host.credentials) throw Error("Stored credentials are unavailable in this VERA host.");
+  if (values.length > 1) throw Error(`Name ${option} once.`);
+  const ref = values[0];
+  if (ref === undefined || !credentialReferenceSchema.safeParse(ref).success)
+    throw Error(`${option} needs a credential reference of 1-64 lowercase letters, digits and dashes.`);
+  return { scope, ref };
+}
+const notStored = (scope: PluginCredentialScope, ref: string) => {
+  const name = ref.toUpperCase().replaceAll("-", "_");
+  const where =
+    scope === "mqtt"
+      ? `Settings > MQTT credentials, or for the CLI in VERA_MQTT_PASSWORD_${name}`
+      : `Settings > Wokwi tokens, or for the CLI in VERA_WOKWI_TOKEN_${name}`;
+  return Error(`The ${scope} credential ${ref} is not stored. The user adds it in ${where}.`);
+};
+/** The stdin line of a run naming a credential: read now, after the plugin list was loaded again. */
+async function credentialInput(
+  host: ProgramHost,
+  current: Awaited<ReturnType<typeof request>>,
+  args: readonly string[],
+  signal: AbortSignal,
+): Promise<string | undefined> {
+  const reference = credentialReference(host, current.plugin, current.declared, args);
+  if (!reference || !host.credentials) return undefined;
+  const value = await host.credentials.read(reference.scope, reference.ref, signal);
+  if (!value) throw notStored(reference.scope, reference.ref);
+  return `${JSON.stringify({
+    format: 1,
+    scope: reference.scope,
+    ref: reference.ref,
+    ...(value.username === undefined ? {} : { username: value.username }),
+    password: value.password,
+  })}\n`;
+}
+
 const refusal = (request: ProgramChangeRequest, mode: string) =>
   Error(
     request.risk === "blocked"
@@ -232,6 +318,36 @@ function foreground(result: RunResult, risk: string): Record<string, unknown> {
     ...(result.stopped ? { stopped: true } : {}),
     ...(result.signal ? { signal: result.signal } : {}),
     ...(result.error ? { error: result.error } : {}),
+    ...(result.physical ? { physical: result.physical, cleanup: result.cleanup } : {}),
+  };
+}
+/**
+ * The lease of a call that names registry resources: claims (actuating when the risk can change the physical
+ * state), the stop grace and the authorized cleanup with the program's own prefix (spec REQ-DATA-f2cbfc23 §6).
+ */
+function lease(current: Awaited<ReturnType<typeof request>>): RunRequest["lease"] {
+  const { prepared, declared, resolved, plugin } = current;
+  const resources = declared.resources;
+  if (!resources || !prepared.resources) return undefined;
+  const actuates = prepared.risk === "device-write" || prepared.risk === "irreversible";
+  const shown = [
+    ...resources.cleanup,
+    ...prepared.resources.flatMap((resource) => [resources.option, resource.alias]),
+  ];
+  const cleanupArgs = programInvocation(resolved, [
+    ...(declared.prefix ?? []).map((value) => value.replaceAll(PLUGIN_DIR, plugin.folder)),
+    ...shown,
+  ]);
+  return {
+    claims: prepared.resources.map(({ alias, kind, resource, keys }) => ({
+      alias,
+      kind,
+      resource,
+      keys,
+      actuates,
+    })),
+    graceMs: resources.grace * 1000,
+    cleanup: { args: cleanupArgs, shown, timeoutMs: resources.cleanupTimeout * 1000 },
   };
 }
 
@@ -246,6 +362,13 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
   const mode = ctx.permissionMode?.() ?? "ask";
   if (programPolicy(mode, first.prepared.risk, first.prepared.trial) === "refuse")
     throw refusal(first.prepared, mode);
+  if (first.declared.sshAgent && first.plugin.record.tier !== "official")
+    throw Error(
+      `Plugin ${first.plugin.manifest.id} asks for the system SSH agent, which only official plugins receive.`,
+    );
+  const reference = credentialReference(programs.host, first.plugin, first.declared, args.args ?? []);
+  if (reference && !(await programs.host.credentials?.has(reference.scope, reference.ref, signal)))
+    throw notStored(reference.scope, reference.ref);
   let used = false;
   return Object.freeze({
     request: first.prepared,
@@ -259,6 +382,8 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       } catch (error) {
         throw programError(error, args.program);
       }
+      // The credential is read only now: a plugin disabled since approval is undeclared above and reads nothing.
+      const input = await credentialInput(programs.host, current, args.args ?? [], applySignal);
       const background = args.background === true;
       const pluginDir = current.plugin.folder;
       const timeoutMs = programTimeout({
@@ -289,9 +414,16 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
               ]),
             ),
             ...current.resolved.env,
+            // The helper refuses a registry other than the approved one (also in the cleanup run).
+            ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
           },
+          // The agent socket only for an official program declaring it (REQ-SEC-adb91424); its keys stay in the agent.
+          ...(current.declared.sshAgent && current.plugin.record.tier === "official"
+            ? { inherit: ["SSH_AUTH_SOCK"] }
+            : {}),
           ...(current.declared.gui ? { display: true } : {}),
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
+          ...(input === undefined ? {} : { input }),
           background,
           ...(background ? {} : { signal: applySignal }),
           beforeSpawn: async () => {
@@ -299,6 +431,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
             await current.plugin.verify?.();
           },
           label: { plugin: current.plugin.manifest.id, program: args.program, args: args.args ?? [] },
+          lease: lease(current),
         });
       } catch (error) {
         if ((error as Error | undefined)?.name === "AbortError") throw error;
@@ -384,6 +517,7 @@ export const programOutputTool: ToolDefinition = {
           truncated: truncated || gathered.total > output.length,
           running: read.running,
           ...(read.running ? {} : { exitCode: read.exitCode ?? null }),
+          ...(read.physical ? { physical: read.physical, cleanup: read.cleanup } : {}),
           ...(matches ? { matched } : {}),
         };
       }
@@ -415,6 +549,7 @@ export const programStopTool: ToolDefinition = {
       output: unread.output,
       truncated: unread.truncated,
       log: result.log,
+      ...(result.physical ? { physical: result.physical, cleanup: result.cleanup } : {}),
     };
   },
 };

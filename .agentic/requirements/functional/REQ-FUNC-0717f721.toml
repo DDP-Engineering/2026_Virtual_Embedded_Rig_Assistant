@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-0717f721"
+title = "Correlate a request with its own response"
+status = "active"
+requirement = "When request is called, mqtt-tool shall subscribe to the response topic before publishing once with a fresh correlation (MQTT 5 correlation data and response topic, or the profile's JSON correlation field for 3.1.1), accept only a response with that correlation and end with response-timeout if none arrives in time."
+verification = "Helper test with the fixture device on both protocols: the reply with the same correlation passes with physical reported; a decoy reply with another correlation is listed as uncorrelated; a silent device gives response-timeout (exit 1) with delivery acknowledged."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

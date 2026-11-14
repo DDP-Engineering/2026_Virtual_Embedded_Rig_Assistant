@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-PLAT-638438cc"
+
+title = "Use only the backends the pinned Bleak supports"
+
+status = "active"
+
+requirement = "If ble-tool runs on Windows older than build 22000, on a platform other than Windows or Linux, or with an installed Bleak other than 3.1.0, then it shall refuse every radio operation with os-unsupported or backend-version."
+
+verification = "With the fake Windows build set to 19045 scan is blocked os-unsupported; a fake Bleak reporting 3.0.2 is blocked backend-version; capabilities reports the supported matrix."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/backend.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

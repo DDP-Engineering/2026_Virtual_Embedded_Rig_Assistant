@@ -200,32 +200,50 @@ export function programCommandLine(program: string, args: readonly string[]): st
 
 const sha256 = z.string().regex(/^[0-9a-f]{64}$/);
 /** What a run_program approval card and prompt show; core's request carries these and the ids. */
-export const programApprovalSchema = z.strictObject({
-  pluginId: pluginIdSchema,
-  trial: z.boolean(),
-  program: pluginProgramNameSchema,
-  programVersion: z.string().min(1).max(128).nullable(),
-  // Display strings are unbounded like other event text: credential redaction may lengthen them.
-  executable: z.string().min(1),
-  args: z.array(z.string()).max(PROGRAM_ARGUMENTS.count),
-  cwd: z.string().min(1),
-  risk: pluginRiskSchema,
-  confirm: z.string().min(1).max(PROGRAM_ARGUMENTS.length).nullable(),
-  notes: z.array(z.string().min(1)).max(512),
-  files: z
-    .array(
-      z.strictObject({
-        arg: z
-          .number()
-          .int()
-          .min(0)
-          .max(PROGRAM_ARGUMENTS.count - 1),
-        path: z.string().min(1),
-        sha256,
-      }),
-    )
-    .max(PROGRAM_ARGUMENTS.count),
-});
+export const programApprovalSchema = z
+  .strictObject({
+    pluginId: pluginIdSchema,
+    trial: z.boolean(),
+    program: pluginProgramNameSchema,
+    programVersion: z.string().min(1).max(128).nullable(),
+    // Display strings are unbounded like other event text: credential redaction may lengthen them.
+    executable: z.string().min(1),
+    args: z.array(z.string()).max(PROGRAM_ARGUMENTS.count),
+    cwd: z.string().min(1),
+    risk: pluginRiskSchema,
+    confirm: z.string().min(1).max(PROGRAM_ARGUMENTS.length).nullable(),
+    notes: z.array(z.string().min(1)).max(512),
+    files: z
+      .array(
+        z.strictObject({
+          arg: z
+            .number()
+            .int()
+            .min(0)
+            .max(PROGRAM_ARGUMENTS.count - 1),
+          path: z.string().min(1),
+          sha256,
+        }),
+      )
+      .max(PROGRAM_ARGUMENTS.count),
+    /** Bench resources the run reserves (spec REQ-DATA-f2cbfc23 §4), with the registry they come from. */
+    resources: z
+      .array(
+        z.strictObject({
+          alias: z.string().min(1).max(32),
+          kind: z.string().min(1).max(32),
+          resource: z.string().min(1),
+        }),
+      )
+      .min(1)
+      .max(PROGRAM_ARGUMENTS.count)
+      .optional(),
+    registry: z.strictObject({ path: z.string().min(1), sha256 }).optional(),
+  })
+  .refine((value) => (value.resources === undefined) === (value.registry === undefined), {
+    message: "Reserved resources come with their registry.",
+    path: ["registry"],
+  });
 export type ProgramApproval = z.infer<typeof programApprovalSchema>;
 /** A run_program approval carries a program payload and no diff; other tools carry none. */
 export function validProgramApproval(value: {

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-0f792684"
+
+title = "Reserve a BLE device through LAB-01's lease registry when a run names it"
+
+status = "active"
+
+requirement = "When a ble-tool call names a ble-device alias with --device, VERA shall lease the entry's key in the shared lease folder for the run, so a second run naming the same device in this or another VERA process is refused BUSY, and shall run `ble-tool release --device <alias>` as the cleanup of an actuating run that did not report its link released and confirmed."
+
+verification = "Integration tests start a real ProgramRunner with a lease folder: claimedResources gives the key ble:<address>; a second run naming the device from another runner is BUSY; a write run killed by a timeout gets the release cleanup."
+
+affected_paths = ["05_Software/plugins/ble-tools/plugin.yaml", "05_Software/src/libraries/core/src/plugins/resource-registry.ts"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

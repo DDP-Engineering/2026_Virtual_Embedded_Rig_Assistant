@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-1b62b28c"
+
+title = "Report a timeout or a lost connection without reconnecting"
+
+status = "active"
+
+requirement = "If a connect, read, write or notification wait exceeds its timeout or the device disconnects, then ble-tool shall end the operation with connect-timeout, timeout or disconnected, status incomplete (or blocked for a connect timeout), and shall neither reconnect nor send anything again."
+
+verification = "A fake connect that hangs gives connect-timeout; a fake disconnect after three notifications gives disconnected with three recorded and one connect in the log."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/device.py", "05_Software/plugins/ble-tools/scripts/ble_support/notify.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

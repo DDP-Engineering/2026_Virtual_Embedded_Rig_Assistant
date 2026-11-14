@@ -51,7 +51,9 @@
     "shortcuts": "Keyboard shortcuts",
     "storage": "Storage",
     "configuration": "Configuration",
-    "partsSearch": "Parts search"
+    "partsSearch": "Parts search",
+    "mqttCredentials": "MQTT credentials",
+    "wokwiTokens": "Wokwi tokens"
   },
   "appearance": {
     "theme": "Theme",
@@ -328,6 +330,8 @@
     "executable": "Executable",
     "notes": "Rule notes",
     "files": "Workbench files and their SHA-256",
+    "resources": "Reserved bench resources",
+    "registry": "Declared in",
     "typeToConfirm": "This change is permanent. Type {{word}} to confirm.",
     "confirmMismatch": "The typed word does not match. Type the word shown on the card."
   },
@@ -628,6 +632,33 @@
       "disabled": "Web access is disabled.",
       "cancelled": "Test cancelled."
     }
+  },
+  "mqttCredentials": {
+    "description": "Broker logins for the official mqtt-tools plugin. A broker profile in the workbench names a credential by its reference; VERA hands the username and password only to an approved mqtt-tool run of the plugin enabled for that workbench, on the program's input, never in its arguments, environment, logs or results. The agent never sees them.",
+    "loading": "Loading MQTT credentials…",
+    "none": "No MQTT credential is stored.",
+    "stored": "Stored ({{storage}})",
+    "remove": "Remove",
+    "add": "Add or replace a credential",
+    "reference": "Reference",
+    "referenceHint": "1-64 lowercase letters, digits and dashes, as the broker profile's credential field names it.",
+    "username": "Username (optional)",
+    "password": "Password",
+    "save": "Save credential",
+    "saved": "Saved."
+  },
+  "wokwiTokens": {
+    "description": "Wokwi CI tokens for the official wokwi plugin, which runs firmware simulations in Wokwi's cloud. A simulation job names a token by its reference; VERA hands the token only to an approved wokwi-tool run of the plugin enabled for that workbench, on the program's input, never in its arguments, logs or results. The agent never sees it. Each cloud run sends the job's firmware and diagram to Wokwi and counts against your Wokwi plan.",
+    "loading": "Loading Wokwi tokens…",
+    "none": "No Wokwi token is stored.",
+    "stored": "Stored ({{storage}})",
+    "remove": "Remove",
+    "add": "Add or replace a token",
+    "reference": "Reference",
+    "referenceHint": "1-64 lowercase letters, digits and dashes, as the simulation job's account names it.",
+    "token": "Token",
+    "save": "Save token",
+    "saved": "Saved."
   },
   "web": {
     "openTitle": "Open external website?",

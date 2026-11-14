@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-5a6f4aec"
+title = "Deploy files to a CircuitPython volume one verified file at a time"
+status = "active"
+requirement = "When deploy runs, circuitpython-tool shall write the library set's files and then each --source to its --target, the startup code last, each through <target>.vera-part, a read-back SHA-256 check, a replace and a flush to the device, and shall report every target as confirmed only after the replaced file's read-back SHA-256 matches."
+verification = "Bench 9.2.1 volume: deploy --libraries <set> --source app/code.py --target /code.py writes lib files first and /code.py last (write order recorded), reports all files confirmed with before/after hashes, leaves no .vera-part file and ends pass; a corrupted read-back (fault) ends fail hash-mismatch with that target unchanged."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

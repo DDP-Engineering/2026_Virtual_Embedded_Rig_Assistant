@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-96d699ae"
+title = "Identify a CircuitPython board from its volume"
+status = "active"
+requirement = "When identify runs on a selected volume, circuitpython-tool shall report the firmware version, major version, build date, board name, board id and UID from boot_out.txt, the matching bundle platform and .mpy header, the volume's size, free space and read-only state, and the bound serial port, without writing to the volume."
+verification = "Bench volume with CircuitPython 9.2.1 on an RP2040 board: identify reports version 9.2.1, major 9, boardId, uid, platform 9.x-mpy, mpyHeader C6, filesystem size and free, readOnly false and port COM7; the volume's files and timestamps are unchanged."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/inspection.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/volumes.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

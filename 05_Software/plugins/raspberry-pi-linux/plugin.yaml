@@ -1,0 +1,54 @@
+format: 1
+id: raspberry-pi-linux
+version: 1.0.0
+name: Raspberry Pi Linux projects
+description: Projects, finite tasks and user services on a Raspberry Pi (Raspberry Pi OS 12 64-bit) that VERA reaches over SSH from this computer - the board is a linux-board entry of lab/resources.json whose host key is pinned by fingerprint (a changed key is refused, never accepted), whose identity, unprivileged user and remote root are checked, and whose login uses a key of the system SSH agent. A small helper installed explicitly on the board performs finite operations - deploy a hashed candidate and apply only approved files, run a declared task with a remote handle, PID and budget, start, stop and read listed user services and their logs. No shell, sudo, system service, raw GPIO/I2C/SPI, OS provisioning or reboot.
+ecosystem: linux
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://www.raspberrypi.com/documentation/computers/remote-access.html", "https://pypi.org/project/asyncssh/2.24.1/"]
+programs:
+  pi-tool:
+    install: { script: scripts/pi_tool.py }
+    version: { args: [--version], match: '^pi-tool (\d+\.\d+\.\d+)' }
+    timeout: 120
+    env:
+      PI_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --board, kinds: [linux-board], grace: 10, cleanup: [stop-owned], cleanupTimeout: 60 }
+    # The login key stays in the system SSH agent; pi-tool receives only SSH_AUTH_SOCK (on Windows it also finds
+    # Pageant or the OpenSSH agent pipe) and never a password or key file.
+    sshAgent: true
+# Every board call verifies the pinned host key before authenticating, then runs one of two constant commands on the
+# board (install or run the helper of this version); operations, paths and arguments travel on stdin and never reach
+# the board's shell. Project code a task or service runs may actuate hardware: the project manifest classifies it.
+rules:
+  - { match: "pi-tool {--version,--help,-h}", risk: safe }
+  - match: "pi-tool {capabilities,inspect-project,report} *"
+    risk: safe
+    note: Offline. Describes the tool, reads a project manifest and hashes its files, or summarizes run folders into a new run folder; nothing is contacted.
+  - match: "pi-tool {check-host-key,identify,task-status,service-status,collect-logs} *"
+    risk: device-read
+    note: Connects to the declared board over SSH (check-host-key stops before logging in) and reads facts, task or service state and logs; nothing on the board is changed.
+  - match: "pi-tool install-helper *"
+    risk: device-write
+    note: Writes VERA's remote helper of this version into ~/.local/share/vera-pi/ of the board user's home, after checking its SHA-256. No download on the board and no shell script.
+  - match: "pi-tool deploy-candidate *"
+    risk: device-write
+    note: Uploads the project's files into a staging folder below the board's remote root (.vera-pi/candidates) and compares them with the deployed project; no project file on the board is changed.
+  - match: "pi-tool apply-candidate *"
+    risk: device-write
+    note: Replaces the new and changed files of the approved candidate.json in the board's project folder after checking every hash; files changed on the board meanwhile are left alone, and no file is deleted. Show the user the candidate's file list first.
+    timeout: 600
+  - match: "pi-tool apply-candidate * --overwrite *"
+    risk: irreversible
+    note: Also replaces the named files that were changed on the board since VERA last applied them; those changes are lost.
+    timeout: 600
+  - match: "pi-tool run-task *"
+    risk: device-write
+    note: Runs a task the project manifest declares in the board's project folder under a remote supervisor with the declared budget; project code can move, switch or drive hardware attached to the board (see the manifest's hardware classification). Stop ends the task and confirms it.
+    timeout: 3600
+  - match: "pi-tool {service-start,service-stop} *"
+    risk: device-write
+    note: Starts or stops a user service the project manifest lists (systemctl --user, never sudo or a system service); a started service may keep running after the run and may actuate hardware.
+  - match: "pi-tool stop-owned *"
+    risk: device-write
+    note: Stops every task VERA started below the board's remote root that still runs, after checking each recorded PID, start time and boot; VERA runs it as the cleanup after Stop, timeout or a lost connection.

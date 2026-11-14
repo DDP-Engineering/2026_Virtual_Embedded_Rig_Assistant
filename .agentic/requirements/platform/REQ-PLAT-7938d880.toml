@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-PLAT-7938d880"
+
+title = "Scan passively by default and refuse passive scanning on Linux"
+
+status = "active"
+
+requirement = "ble-tool shall scan in passive mode unless --active is named, and if a passive scan is requested on Linux, then it shall refuse with passive-unsupported before using the radio, because BlueZ needs advertisement-monitor patterns and its experimental mode, a global configuration it never changes."
+
+verification = "The fake Bleak records scanning_mode passive for a default scan and active with --active; with the platform forced to linux a default scan is blocked passive-unsupported and the fake log shows no scanner."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/scan.py", "05_Software/plugins/ble-tools/scripts/ble_support/backend.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

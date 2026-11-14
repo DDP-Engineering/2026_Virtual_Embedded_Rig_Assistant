@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-2fda27e4"
+
+title = "Store and remove Wokwi tokens from Settings without returning them"
+
+status = "active"
+
+requirement = """
+The desktop app shall let the user store a Wokwi token under a reference as wokwi:<ref> and remove it, asking for consent before weak storage, and its list response shall hold only the references and their storage, never a token.
+"""
+
+verification = "Main test: wokwi save stores {type api_key, key} under wokwi:<ref> without username; without secure storage the first save returns consent-required; list returns refs and storage only and ignores mqtt: entries; remove deletes wokwi:<ref>; a save with username is invalid."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/plugin-credentials.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/plugin-credentials.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/plugin-credentials.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

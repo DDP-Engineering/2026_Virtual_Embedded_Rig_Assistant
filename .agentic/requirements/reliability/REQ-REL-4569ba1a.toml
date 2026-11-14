@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-4569ba1a"
+
+title = "End a task at its budget or output limit on the board"
+
+status = "active"
+
+requirement = "When a running task exceeds its budget or output limit, the remote supervisor shall terminate its process group (SIGTERM, then SIGKILL after 3 s) whether or not an SSH connection is open, and record budget-exceeded or output-limit."
+
+verification = "A task sleeping past a 2 s budget ends budget-exceeded in under 6 s; a task printing past a 4096-byte limit ends output-limit with at most 4096 bytes logged; neither task's PID runs afterwards."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "id": "keysight-34461a",
+  "class": "dmm",
+  "title": "Keysight 34460A / 34461A digital multimeter",
+  "source": "Keysight Truevolt Series Operating and Service Guide, SCPI reference (FUNCtion, READ?, <function>:RANGe)",
+  "verification": { "status": "unverified", "instruments": [] },
+  "identity": {
+    "manufacturers": ["Keysight Technologies", "Agilent Technologies"],
+    "models": ["34460A", "34461A"],
+    "firmware": "^[A-Z]\\.\\d{2}\\.\\d{2}"
+  },
+  "transport": { "readTermination": "\n", "writeTermination": "\n", "timeoutMs": 5000, "chunkBytes": 20480 },
+  "channels": { "main": { "index": 1, "limits": {} } },
+  "commands": {
+    "function": "FUNC?",
+    "read": "READ?",
+    "setFunction": "FUNC \"{value}\"",
+    "range": "{function}:RANG?",
+    "setRange": "{function}:RANG {value}",
+    "autoRange": "{function}:RANG:AUTO?",
+    "setAutoRange": "{function}:RANG:AUTO ON"
+  },
+  "functions": {
+    "VOLT": { "name": "voltage-dc", "unit": "V", "ranges": [0.1, 1, 10, 100, 1000] },
+    "VOLT:AC": { "name": "voltage-ac", "unit": "V", "ranges": [0.1, 1, 10, 100, 750] },
+    "CURR": { "name": "current-dc", "unit": "A", "ranges": [0.0001, 0.001, 0.01, 0.1, 1, 3, 10] },
+    "CURR:AC": { "name": "current-ac", "unit": "A", "ranges": [0.0001, 0.001, 0.01, 0.1, 1, 3, 10] },
+    "RES": {
+      "name": "resistance",
+      "unit": "Ohm",
+      "ranges": [100, 1000, 10000, 100000, 1000000, 10000000, 100000000]
+    },
+    "FREQ": { "name": "frequency", "unit": "Hz", "ranges": [] }
+  },
+  "overload": 9.9e37
+}

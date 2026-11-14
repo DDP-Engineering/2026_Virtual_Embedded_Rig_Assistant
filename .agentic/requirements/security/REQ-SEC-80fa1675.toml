@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-80fa1675"
+
+title = "Act only on the approved bench registry"
+
+status = "active"
+
+requirement = """
+When VERA starts a run or its cleanup run for a call that names a registry alias, it shall pass the approved registry's SHA-256 as `VERA_REGISTRY_SHA256`, and the scpi helper shall refuse as blocked (`registry-changed`) a registry whose bytes differ, before opening any instrument.
+"""
+
+verification = "A program-tools test checks the variable in the started run's environment; the integration test runs identify with a wrong hash (exit 2, registry-changed, empty transcript) and with the file's hash (pass); the runner's cleanup run inherits the run's environment (runner-leases cleanup tests)."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-resources.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

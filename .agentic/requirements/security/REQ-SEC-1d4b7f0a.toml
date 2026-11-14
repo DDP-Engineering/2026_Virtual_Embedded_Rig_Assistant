@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-1d4b7f0a"
+title = "Deploy a library set only when it matches its manifest and the board's firmware"
+status = "active"
+requirement = "If a deploy names a library set whose files no longer match the manifest's sizes and SHA-256, or whose CircuitPython major version differs from the board's, then circuitpython-tool shall refuse the deploy with status blocked and code library-set-changed or incompatible-libraries before it writes any file."
+verification = "Prepared set for major 9: deploy to a 10.0.3 volume is blocked incompatible-libraries; after one library file in the run folder is altered, deploy to a 9.x volume is blocked library-set-changed; nothing is written to the volume in either case."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-f2cbfc23"
+
+title = "Declare bench resources in one workbench registry file"
+
+status = "active"
+
+requirement = """
+The plugin platform shall read declared bench resources only from the workbench file `lab/resources.json`, a format 1 document whose entries carry an alias, an identity kind, the kind's identity fields and plugin data, and shall refuse a run_program call naming an alias when the file is missing, not a regular file inside the workbench, larger than 256 KiB, not valid JSON or not valid against the schema, before any approval is requested.
+"""
+
+verification = "Program-tools tests prepare `scpi identify --instrument psu` with a valid registry (accepted) and with a missing file, a directory, an oversized file, invalid JSON, a duplicate alias and an unknown kind (each refused with a message naming lab/resources.json, no approval event, no spawn)."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/src/libraries/core/src/plugins/program-resources.test.ts"]
+
+
+spec = "specs/REQ-DATA-f2cbfc23.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

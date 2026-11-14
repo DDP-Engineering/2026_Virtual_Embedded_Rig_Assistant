@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cbd22972"
+
+title = "List serial ports with identity keys without inferring a board from a USB bridge"
+
+status = "active"
+
+requirement = """
+When boards list runs, the arduino-tool helper shall report each serial port with its identity key, stability and the boards arduino-cli matched, and shall report a port whose VID:PID is a common USB bridge as unidentified with the matches kept only as candidates.
+"""
+
+verification = "The fake board list with an Arduino Uno (2341:0043, serial number), a CH340 (1a86:7523, no serial), a port without USB properties and a network port yields identity usb:2341:0043:<serial> stable and identified, usb:1a86:7523 unstable, unidentified with bridge WCH CH340 and candidates, serial:COM3 unstable, and the network port counted as ignored; the real board list's serial: entries, where any exist, are unstable."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/boards.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

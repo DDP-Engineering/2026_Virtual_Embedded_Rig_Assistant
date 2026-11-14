@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-ea84ae6e"
+
+title = "Report runs as JSON, Markdown and HTML"
+
+status = "active"
+
+requirement = "When report names run folders, pi-tool shall write a new run folder with one JSON, Markdown and HTML summary listing each run's operation, status, board, project, handle and remote state, refusing folders without a pi-tool result."
+
+verification = "report over a deploy and a run-task folder lists both; a folder without result.json is refused run-invalid."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/report.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

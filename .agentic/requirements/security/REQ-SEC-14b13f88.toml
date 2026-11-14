@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-14b13f88"
+
+title = "Confirm a device's identity from address, GATT database and identity value"
+
+status = "active"
+
+requirement = "Before any profile characteristic is read, subscribed or written, ble-tool shall confirm the device: its registry address found within the profile's connect timeout and connected, every profile service and characteristic present with every declared property, and, when the profile declares an identity characteristic and the entry a serial, the value read equal to the serial."
+
+verification = "identify against a fake device that matches its profile reports identity confirmed and the serial; the fake log shows the identity read before any other read."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/device.py", "05_Software/plugins/ble-tools/scripts/ble_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

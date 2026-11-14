@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-bc2b27d1"
+
+title = "Declare BLE devices as registry entries of kind ble-device keyed by address"
+
+status = "active"
+
+requirement = "The lab registry shall accept entries of kind ble-device with an alias, a Bluetooth address of six hex octets, an addressType public or random (random only when static, its first octet's two most significant bits set), a profile id and the optional serial, adapter (hci0 to hci99) and note, refusing unknown fields, and shall key each such entry `ble:<address lower-case>`."
+
+verification = "lab-resources tests validate an entry, see the key ble:c4:7f:51:00:12:34 for C4:7F:51:00:12:34, and see a resolvable private random address, an unknown field and a malformed address refused."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

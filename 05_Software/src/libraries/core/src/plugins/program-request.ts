@@ -11,6 +11,7 @@ import {
   veraError,
 } from "@vera/shared";
 import { type GuardedPath, PathGuard, validateRelativePath } from "../workbench/path-guard.js";
+import type { ClaimedResources, ProgramResource } from "./resource-registry.js";
 import type { LoadedPlugin } from "./store.js";
 
 export interface ProgramFile {
@@ -42,6 +43,9 @@ export interface ProgramChangeRequest {
   readonly notes: readonly string[];
   /** Arguments naming existing workbench files, with the bytes the approval covers. */
   readonly files: readonly ProgramFile[];
+  /** Bench resources the run reserves (absent without a claim), and the registry bytes they come from. */
+  readonly resources?: readonly ProgramResource[];
+  readonly registry?: { readonly path: string; readonly sha256: string };
 }
 export interface ProgramRequestInput {
   workbench: string;
@@ -60,6 +64,8 @@ export interface ProgramRequestInput {
   signal?: AbortSignal | undefined;
   /** The platform whose path rules apply; `process.platform` by default. */
   platform?: NodeJS.Platform | undefined;
+  /** Registry resources the call names (program-tools reads them). */
+  claimed?: ClaimedResources | undefined;
 }
 const denied = (params: Record<string, string | number>) => ({ ...veraError("DENIED"), params });
 const declares = (plugin: LoadedPlugin, program: string) => Object.hasOwn(plugin.manifest.programs, program);
@@ -229,7 +235,7 @@ async function reservedFile(root: string, path: string): Promise<boolean> {
 /** Hashes the files of an approved request again; CONFLICT when any differs or cannot be read. */
 export async function verifyProgramFiles(request: ProgramChangeRequest, signal?: AbortSignal): Promise<void> {
   const guard = await PathGuard.create(request.workbench);
-  for (const file of request.files) {
+  for (const file of [...request.files, ...(request.registry ? [request.registry] : [])]) {
     let digest: string | undefined;
     try {
       digest = await sha256((await guard.resolve(file.path)).absolute, signal);
@@ -287,6 +293,7 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
     confirm: classification.confirm,
     notes: Object.freeze(classification.notes),
     files: Object.freeze(files),
+    ...(input.claimed ? { resources: input.claimed.resources, registry: input.claimed.registry } : {}),
   });
 }
 /** The card and prompt payload of a run_program approval event. */
@@ -303,5 +310,11 @@ export function programApproval(request: ProgramChangeRequest): ProgramApproval 
     confirm: request.confirm,
     notes: [...request.notes],
     files: request.files.map((file) => ({ ...file })),
+    ...(request.resources && request.registry
+      ? {
+          resources: request.resources.map(({ alias, kind, resource }) => ({ alias, kind, resource })),
+          registry: { ...request.registry },
+        }
+      : {}),
   };
 }

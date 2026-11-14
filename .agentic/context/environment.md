@@ -164,7 +164,24 @@ Compaction regression routes are agent/compaction.test.ts, sessions/service.test
 
 Agent runtime tests use the common replay matrix and deterministic injected counters; pi-agent-core is measured through a stream-function adapter with the same context policy. No live model is needed for runtime acceptance. Session acceptance uses read-then-answer JSONL, real temporary SQLite and a new core instance plus native Electron restart; focused routes are documented in [sessions](../knowledge/sessions.md).
 
-Node Vitest projects install the non-loopback fetch/socket guard before application modules. The integration test
+Node Vitest projects install the non-loopback fetch/socket guard before application modules. tests/integration/bus-tools.test.ts
+runs bus-tool under the same Python, which must have flatbuffers 25.12.19 installed (its fake pyserial parses BPIO2 with it). tests/integration/mqtt-tools.test.ts runs mqtt-tool, the stdlib test broker tests/support/mqtt-test-broker.py (127.0.0.1 only) and the paho fixture device under the same Python, which must have paho-mqtt 2.1.0 (installed on this host with `pip install --user paho-mqtt==2.1.0` from PyPI on 2026-11-14) and cryptography (TLS fixture CA in the test's temp folder); about 50 s on Windows, and its graceful-Stop branch (SIGTERM) runs only on Linux. The integration test
+tests/integration/ble-tools.test.ts runs ble-tool under the same Python with the fake Bleak in tests/fixtures/ble-tools/fake-bleak
+(no Bluetooth package, adapter or network needed). Opt-in VERA_TEST_BLE_PYTHON names a Python with bleak 3.1.0 and its pinned
+WinRT (or dbus-fast) packages for one real scan on this computer's adapter, never a connection; it passed on Windows 11 on
+2026-11-14 with a scratch venv (`pip install bleak==3.1.0` plus the pins of scripts/ble_tool.py from PyPI).
+tests/integration/wokwi.test.ts runs wokwi-tool under the same Python, which must have PyYAML 6.0.3 (present in this
+host's toolchain Python 3.12), with the scripted fake tests/support/fake-wokwi-cli.py; no network, Wokwi account or token
+is used, and its SIGTERM case runs only on Linux. Opt-in VERA_TEST_WOKWI_CLI names the real wokwi-cli 0.29.1 for offline
+version, `lint --offline` and argument checks; it passed on Windows 11 on 2026-11-14 with wokwi-cli-win-x64.exe from the
+v0.29.1 GitHub release (sha256 45292e3c...83b2) in a scratch folder.
+tests/integration/raspberry-pi-linux.test.ts runs pi-tool, tests/support/pi-test-sshd.py and pi-test-agent.py under the
+same Python, which must have asyncssh 2.24.1 (installed on this host with `pip install --user asyncssh==2.24.1` from PyPI on
+2026-11-14; cryptography 49.0.0 was present). Its SSH block needs a Linux shell with /usr/bin/python3: this host on Linux,
+the default WSL distribution on Windows (Ubuntu 24.04 here, x86_64, systemd user manager running); it creates a
+/tmp/vera-pi-test-* home there and a runtime user unit in $XDG_RUNTIME_DIR/systemd/user, both removed afterwards, and
+connects only to 127.0.0.1. VERA_TEST_PI_REMOTE=none skips it. About 90 s on Windows with WSL. WSL is Linux evidence,
+not a Raspberry Pi and not native Ubuntu.
 tests/integration/serial-monitor.test.ts runs the serial-monitor script under the toolchain's Python 3.11+ (`python` on
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a
@@ -254,6 +271,8 @@ Git acceptance: tests/integration/git.test.ts installs the official catalog zip,
 Wireshark acceptance: tests/integration/wireshark-tshark.test.ts checks the package, the tshark role matrix and find/hint with a fake host on any OS, then installs the catalog zip and runs a replay session against the host's real TShark (found through PATH or %ProgramFiles%) on tests/fixtures/wireshark-tshark/sample.pcapng; it skips with a message where tshark is missing; the installed skills are checked before that skip. The default live-capture step is denied, so no default test captures. Opt-in VERA_TSHARK_LIVE_INTERFACE (\Device\NPF_Loopback with Npcap, lo on Linux with dumpcap permissions) approves a bounded capture of self-sent UDP datagrams on 127.0.0.1:59999; VERA_TEST_EVIDENCE_DIR keeps the approval and outputs. The replay host isolates HOME/USERPROFILE/APPDATA from the personal Wireshark profile. Ubuntu WSL2 here has no tshark or Node, so Linux acceptance is pending.
 
 CAN acceptance: tests/integration/can.test.ts checks both packages, the installed skills, the rules, the scripts against tests/fixtures/can/fake-python-can on the toolchain Python, and the typed transmit gate with the real Provisioner and a fake uv (no python-can needed: the scripts import it lazily). Opt-in VERA_CAN_UV (any uv) provisions python-can 4.6.1 and cantools 45.1.2 from PyPI and, on a udp_multicast bus (a random per-run 239.74.x.y group), runs two background captures (.asc, .blf), send/replay after typed words, can-decode with tests/fixtures/can/board.dbc and the refusal/open-failure exits; VERA_TEST_EVIDENCE_DIR keeps the receipts. Real adapters and Linux vcan0 need hardware or a Linux host.
+
+SCPI acceptance: tests/integration/scpi-instruments.test.ts runs the scpi helper on the toolchain Python against tests/fixtures/scpi-instruments/fake-pyvisa (a fake PyVISA, pyserial and pyusb simulating a DP832, DS1104Z and 34461A; state in FAKE_VISA_STATE, command transcript in FAKE_VISA_LOG), drives real helper processes through VERA's ProgramRunner with a temporary lease folder (stop request, kill after grace, cleanup run, unknown state) and holds a lease from a second Node process (hold-lease.mjs imports core's built dist, so run `npm run typecheck` after changing core). It proves no instrument. Opt-in VERA_SCPI_UV (a real uv) provisions PyVISA 1.16.2 and pyvisa-py 0.8.1 from PyPI and powers a simulated output, identify, read and capture over real TCPIP SOCKETs to local SCPI servers (passed 2026-11-13); VERA_SCPI_PYTHON_SEED may name a uv python folder whose CPython 3.13 is copied in so only PyPI is reached. No test sends anything to a real instrument; the development machine has none.
 
 Microchip acceptance: tests/integration/microchip-pymcuprog.test.ts checks the package, installed skills, the pymcuprog role matrix and a fuse write waiting for the typed word in an auto-edit replay session through a stub resolver whose fake pymcuprog records argv. Opt-in VERA_MCU_UV provisions pymcuprog 3.19 from PyPI, runs --version and makeuf2 on tests/fixtures/microchip/app.hex without approval and a ping on a missing SerialUPDI port after approval; no step touches hardware.
 

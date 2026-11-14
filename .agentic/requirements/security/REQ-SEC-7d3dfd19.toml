@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-7d3dfd19"
+title = "Refuse retained commands"
+status = "active"
+requirement = "If publish is called with --retain on a command topic or on a topic whose profile entry does not allow retain, then mqtt-tool shall end blocked with code retain-refused before connecting."
+verification = "Helper test: --retain on the command topic and on a data topic without retain exits 2 with retain-refused and no CONNECT; --retain on a status topic declaring retain is acknowledged and a later subscriber sees it retained."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

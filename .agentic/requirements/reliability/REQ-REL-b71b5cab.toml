@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-b71b5cab"
+title = "Refuse a deploy over files changed outside it"
+status = "active"
+requirement = "If a target's current SHA-256 differs from the one an --expect-from inspection recorded, or a target changes between the deploy's first read and its replace, then circuitpython-tool shall refuse with status blocked or end with status fail, in both cases with code conflict and without replacing that target."
+verification = "inspect-code, then an editor rewrites /code.py, then deploy --expect-from <inspection> is blocked conflict with nothing written; a fault rewriting /code.py during the transfer ends fail conflict, /code.py keeps the editor's content and its .vera-part is removed."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

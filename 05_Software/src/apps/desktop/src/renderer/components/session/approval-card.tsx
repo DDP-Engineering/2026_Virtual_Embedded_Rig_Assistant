@@ -57,6 +57,19 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
           ))}
         </ul>
       )}
+      {program.resources && program.registry && (
+        <ul className="approval-files" aria-label={t("approval.resources")} data-approval-resources>
+          {program.resources.map((resource) => (
+            <li key={resource.alias}>
+              <code>{resource.alias}</code> {resource.kind} <code>{resource.resource}</code>
+            </li>
+          ))}
+          <li>
+            {t("approval.registry")} <code>{program.registry.path}</code>{" "}
+            <span className="approval-sha">SHA-256 {program.registry.sha256}</span>
+          </li>
+        </ul>
+      )}
     </>
   );
 }

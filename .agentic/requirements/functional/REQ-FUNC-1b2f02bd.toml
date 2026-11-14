@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1b2f02bd"
+
+title = "Report runs as JSON, Markdown, HTML and JUnit"
+
+status = "active"
+
+requirement = """
+When report names one or more run-scenario folders, wokwi-tool shall write a new folder with report.json, report.md, report.html and junit.xml holding one test case per run with its outcome, and the cloud-simulation note.
+"""
+
+verification = "Helper test: report over a passed and a virtual-timeout run gives junit.xml with 2 testcases, one failure of type virtual-timeout, and report.md naming both runs and stating the result is a cloud simulation, not an electrical or board test."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,44 @@
+format: 1
+id: circuitpython
+version: 1.0.0
+name: CircuitPython
+description: Code and compatible libraries on a board that already runs CircuitPython 9, 10 or 11 - list CIRCUITPY drives and serial ports by identity, identify the firmware, inspect the code and /lib, prepare a library set from a pinned Adafruit bundle tag for the board's major version, deploy approved files one verified file at a time and capture the console run that follows - through a pinned circup's bundle conventions. No REPL, no code given as an argument, no UF2 or firmware installation and no update of all libraries.
+ecosystem: circuitpython
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://pypi.org/project/circup/3.1.0/", "https://circuitpython.org/libraries", "https://docs.circuitpython.org/en/latest/docs/workflows.html"]
+programs:
+  circuitpython-tool:
+    install: { script: scripts/circuitpython_tool.py }
+    version: { args: [--version], match: '^circuitpython-tool (\d+\.\d+\.\d+)' }
+    timeout: 300
+# circuitpython-tool reads and writes the board's CIRCUITPY drive with ordinary file operations; CircuitPython reloads
+# code.py after the drive's files change, so a deploy runs the new code. The serial console is only read, except
+# Ctrl-C and Ctrl-D for capture-output --reload.
+rules:
+  - { match: "circuitpython-tool {--version,--help,-h}", risk: safe }
+  - match: "circuitpython-tool {devices,report} *"
+    risk: safe
+    note: Lists mounted CIRCUITPY drives (reading their boot_out.txt) and serial ports without opening them, or summarizes run folders; report writes a new run folder.
+  - match: "circuitpython-tool {identify,inspect-code,inspect-libraries} *"
+    risk: device-read
+    note: Reads the board's CIRCUITPY drive (firmware, files, /lib) without writing to it or interrupting the running code; inspect-code copies the startup file and boot.py into the run folder, never settings.toml or secrets.py.
+  - match: "circuitpython-tool capture-output *"
+    risk: device-read
+    note: Reads the board's serial console for --duration seconds without sending anything.
+    timeout: 660
+  - match: "circuitpython-tool capture-output * --reload *"
+    risk: device-write
+    note: Sends Ctrl-C and Ctrl-D, which stop the running code and start code.py again; it may drive the board's pins and anything wired to them.
+    timeout: 660
+  - match: "circuitpython-tool prepare-libraries *"
+    risk: device-write
+    note: Downloads the Adafruit CircuitPython bundle zips of the named tag from github.com into VERA's cache (unless cached and verified) and writes a library set into the workbench; no board is touched.
+    timeout: 900
+  - match: "circuitpython-tool deploy *"
+    risk: device-write
+    note: Writes the named workbench files and library set to the board's CIRCUITPY drive (approval binds their hashes); CircuitPython reloads code.py after the writes, so the new code runs and may drive the board's pins and anything wired to them. Stop ends the helper, not code already running on the board.
+    timeout: 900
+  - match: "circuitpython-tool deploy * --boot *"
+    risk: irreversible
+    note: Replaces boot.py, which runs before code.py at every start and can take the drive away from this computer or disable USB until the board is started in safe mode.
+    timeout: 900

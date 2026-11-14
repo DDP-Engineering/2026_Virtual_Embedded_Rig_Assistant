@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-d985bb3d"
+
+title = "wokwi-tool contract: operations, job, results, outcomes and exit codes"
+
+status = "active"
+
+requirement = """
+The wokwi-tool helper shall accept the command line, inputs, job folder, run folder, result documents, outcome table and exit codes of its specification, and shall refuse every other argument form with exit 2.
+"""
+
+verification = "Helper test: --help lists the seven operations; an unknown option (capabilities --bogus) and an unknown operation each give exit 2 with code usage; prepare-job, run-scenario and collect-results documents carry format 1, kinds wokwi-job and wokwi-run and the fields of the specification; exit codes are 0 pass, 1 fail, 2 blocked, 3 incomplete or error."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/cli.py", "05_Software/plugins/wokwi/scripts/wokwi_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

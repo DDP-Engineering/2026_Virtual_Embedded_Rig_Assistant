@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-2ec2103d"
+title = "Validate the bus profile before touching the adapter"
+status = "active"
+requirement = "When an operation names a bus profile, bus-tool shall refuse as blocked (profile-invalid) a profile that is not format 1, has unknown fields, does not declare a common ground, declares a logic voltage outside 1200 to 5000 mV, a speed outside its mode's range, an I2C address outside 0x08 to 0x77, a register writing more than 4 bytes or reading outside 1 to 64 bytes, or limits above the helper's caps, before opening any port."
+verification = "One case each (commonGround false, logicMv 900, I2C speed 2 MHz, address 0x78, register write of 5 bytes, maxReadBytes 4096, an unknown key): exit 2 profile-invalid, no open."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/profile.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

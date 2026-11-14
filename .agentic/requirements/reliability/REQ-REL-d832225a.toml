@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-d832225a"
+
+title = "Stop a notification flood instead of buffering it"
+
+status = "active"
+
+requirement = "If notifications arrive faster than the profile's maxNotificationsPerSecond within one second, or the bounded queue is full, then ble-tool shall stop the subscription and end the capture incomplete with code overflow and the count of dropped notifications."
+
+verification = "A fake stream of 500 notifications per second against a limit of 50: the run ends incomplete overflow with dropped above zero and subscription stopped."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/notify.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

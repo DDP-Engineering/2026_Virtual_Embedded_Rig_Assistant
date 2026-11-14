@@ -570,7 +570,7 @@ describe("launcher tools (REQ-FUNC-10e10004, REQ-SEC-10e10005)", () => {
     const started = await held.apply(signal());
     const next = await prepare({ program: "echo", args: ["write"], background: true });
     await expect(next.apply(signal())).rejects.toThrow(
-      new RegExp(`Port COM3 is held by background run ${started.handle}`),
+      new RegExp(`Port COM3 is held by run ${started.handle}`),
     );
     expect(host.programs).toHaveLength(1);
   });
@@ -664,7 +664,7 @@ describe("launcher tools (REQ-FUNC-10e10004, REQ-SEC-10e10005)", () => {
     const started = await background.apply(signal());
     const next = await prepare({ program: "idf.py", args: ["-p", "COM3", "flash"] });
     await expect(next.apply(signal())).rejects.toThrow(
-      new RegExp(`Port COM3 is held by background run ${started.handle}`),
+      new RegExp(`Port COM3 is held by run ${started.handle}`),
     );
     expect(host.programs).toHaveLength(1);
   });

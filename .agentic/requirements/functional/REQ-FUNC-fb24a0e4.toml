@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fb24a0e4"
+
+title = "Take Wokwi tokens for CLI runs from the environment"
+
+status = "active"
+
+requirement = """
+When the CLI starts a session, it shall offer as credential wokwi:<ref> each VERA_WOKWI_TOKEN_<REF> variable, held in memory only and registered as a secret.
+"""
+
+verification = "CLI test: VERA_WOKWI_TOKEN_BENCH_1=t gives a memory entry wokwi:bench-1 {type api_key, key t} and registers t; VERA_WOKWI_TOKEN_BAD= (empty) is ignored; a control character is invalid."
+
+affected_paths = ["05_Software/src/apps/cli/src/plugin-credentials-env.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/apps/cli/src/plugin-credentials-env.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

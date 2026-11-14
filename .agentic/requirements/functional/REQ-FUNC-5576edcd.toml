@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5576edcd"
+
+title = "Record serial output, VCD and a screenshot as run artifacts"
+
+status = "active"
+
+requirement = """
+When a run ends, wokwi-tool shall list serial.log and, where the job asked for them and wokwi-cli wrote them, trace.vcd and screenshot.png as artifacts with size and SHA-256.
+"""
+
+verification = "Helper test: a job with --vcd and --screenshot-part uno --screenshot-ms 1000 makes the fake CLI receive --vcd-file and --screenshot-* paths in the run folder; the files it writes are listed with their hashes; a VCD the CLI did not write is absent from artifacts."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/collect.py", "05_Software/plugins/wokwi/scripts/wokwi_support/run.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

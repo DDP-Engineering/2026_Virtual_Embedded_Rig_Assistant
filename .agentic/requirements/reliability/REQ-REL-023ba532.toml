@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-023ba532"
+title = "Name each connection failure distinctly"
+status = "active"
+requirement = "If the broker is absent, does not answer in time, refuses the credential or refuses a subscription or publication, then mqtt-tool shall end with the distinct code broker-unreachable, connect-timeout, auth-failed or not-authorized respectively."
+verification = "Helper test: a closed port gives broker-unreachable; a listener that never answers gives connect-timeout; a wrong password gives auth-failed; a broker ACL refusing the subscription gives not-authorized; an MQTT 5 PUBACK refusal gives not-authorized with delivery refused and one PUBLISH at the broker; each exits 3 and none is a pass."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/connection.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

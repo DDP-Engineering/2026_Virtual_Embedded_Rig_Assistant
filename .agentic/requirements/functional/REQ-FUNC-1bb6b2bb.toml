@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-1bb6b2bb"
+title = "List CircuitPython volumes and serial ports with their identity keys"
+status = "active"
+requirement = "When devices runs, circuitpython-tool shall list every mounted volume labelled CIRCUITPY with its path, firmware fields read from boot_out.txt, read-only state, identity key and bound serial port, and every serial port with its identity key, without writing to any volume or opening any port."
+verification = "Simulated bench with two CIRCUITPY volumes, one volume with another label and two ports: devices lists both CIRCUITPY volumes with version, board id, UID, readOnly and identity, skips the other volume, lists the ports with usb:<vid>:<pid>:<serial> keys and records no port open and no volume write."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/volumes.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/ports.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

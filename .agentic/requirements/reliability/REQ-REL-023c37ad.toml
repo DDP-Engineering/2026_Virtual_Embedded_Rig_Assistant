@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-023c37ad"
+title = "Refuse an unsupported adapter model or protocol version"
+status = "active"
+requirement = "If the status response reports a hardware major other than 5 or 6 or a FlatBuffers protocol major other than 2, bus-tool shall end blocked (adapter-unsupported) with the reported versions and send no configuration or data request."
+verification = "Simulated hardware 7 and, separately, protocol 3: exit 2 adapter-unsupported with the versions; no configuration request on the wire."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/adapter.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

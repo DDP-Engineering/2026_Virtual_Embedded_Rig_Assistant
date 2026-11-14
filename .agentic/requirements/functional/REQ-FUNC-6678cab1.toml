@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-6678cab1"
+
+title = "Compile a copy of the sketch into a new run folder with a traceable result"
+
+status = "active"
+
+requirement = """
+When compile succeeds, the arduino-tool helper shall compile a copy of the sketch into a new run folder and record the FQBN with options, the platform version with its recipe hash and hooks, the arduino-cli version, the configuration hash, the source and library hashes, the resolved libraries, the toolchain's flash and RAM sizes and every binary with its hash.
+"""
+
+verification = "Compiling the blink and library fixtures for arduino:avr:uno and arduino:samd:mkrzero with the real arduino-cli writes result.json status pass with platform arduino:avr 1.8.8 or arduino:samd 1.8.14, SPI as platform library, VeraCounter as local library, text and data sizes with their maxima and the hex or bin binary whose recorded hash equals the file's; the original sketch folder is byte-identical afterwards."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

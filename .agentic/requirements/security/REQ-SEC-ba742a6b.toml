@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-ba742a6b"
+
+title = "Read or subscribe to a state-changing characteristic only on purpose"
+
+status = "active"
+
+requirement = "If a read or subscription names a characteristic the profile declares sideEffects changes-state, then ble-tool shall refuse it with side-effects-not-named unless --side-effects is named, and the plugin rules shall classify a call naming --side-effects as device-write."
+
+verification = "read-characteristic on a changes-state characteristic is blocked side-effects-not-named without the option and reads with it; classifyCommand gives device-write for the call with --side-effects and device-read without."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/operations.py", "05_Software/plugins/ble-tools/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

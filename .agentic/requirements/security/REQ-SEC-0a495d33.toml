@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-0a495d33"
+
+title = "End a run whose device lacks a profile service, characteristic or property"
+
+status = "active"
+
+requirement = "If the connected device's GATT database lacks a service, characteristic or property the profile declares, then ble-tool shall end the run with status fail and code profile-mismatch, listing what is missing, without reading or writing any profile characteristic."
+
+verification = "A fake device without the setpoint characteristic, and one whose temperature lacks notify: identify and write fail profile-mismatch with the missing items; the fake log shows no read or write."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/device.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

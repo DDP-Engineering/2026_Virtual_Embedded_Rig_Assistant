@@ -1,4 +1,4 @@
-import { constants } from "node:fs";
+import { constants, realpathSync } from "node:fs";
 import {
   type FileHandle,
   lstat,
@@ -19,11 +19,13 @@ import {
   type ProgramRunRecord,
   programRunIdSchema,
   programRunRecordSchema,
+  serialPortKey,
   veraError,
 } from "@vera/shared";
 import { monotonicFactory } from "ulid";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
 import { PathGuard } from "../workbench/path-guard.js";
+import type { HeldLeases, LeaseClaim, ResourceLeases } from "./leases.js";
 import { hostVariable, killProcessTree } from "./process-tree.js";
 import { OutputDecoder, TailBuffer } from "./run-output.js";
 
@@ -40,6 +42,16 @@ export interface RunRequest {
   cwd?: string;
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
+  /**
+   * Host variables this run also receives beyond the allowlist (SSH_AUTH_SOCK for a program declaring sshAgent,
+   * REQ-SEC-adb91424), copied when the host has them; the cleanup run receives them too.
+   */
+  inherit?: readonly string[];
+  /**
+   * Written to stdin, which is then closed (a credential line, spec REQ-DATA-96d18686 section 1); never logged or
+   * recorded. Without it stdin is closed from the start.
+   */
+  input?: string;
   /** The program opens windows (manifest `gui: true`): pass the host's display variables. */
   display?: boolean;
   /** Kill the process tree after this many milliseconds; no limit when absent. */
@@ -53,7 +65,20 @@ export interface RunRequest {
   beforeSpawn?: () => Promise<void>;
   /** What the Runs list shows: the plugin, the program and the agent's arguments (never the executable). */
   label?: { plugin: string; program: string; args: readonly string[] };
+  /**
+   * Bench resources the run reserves and how it is supervised (spec REQ-DATA-f2cbfc23 §5-6): a stop request
+   * `graceMs` before the tree kill, and the authorized cleanup run (full arguments of the same executable).
+   */
+  lease?:
+    | {
+        claims: readonly LeaseClaim[];
+        graceMs: number;
+        cleanup?: { args: readonly string[]; timeoutMs: number; shown?: readonly string[] } | undefined;
+      }
+    | undefined;
 }
+/** The physical state of a supervised run's resources when it ended. */
+export type PhysicalState = "unchanged" | "confirmed" | "unknown";
 export interface RunResult {
   runId: string;
   exitCode: number | null;
@@ -68,6 +93,9 @@ export interface RunResult {
   log: string;
   timedOut: boolean;
   stopped: boolean;
+  /** Supervised runs only: the resources' physical state and whether a separate cleanup ran. */
+  physical?: PhysicalState;
+  cleanup?: "none" | "separate" | "failed";
 }
 export interface RunRead {
   /** Output since the previous read, at most `tailChars` characters. */
@@ -75,6 +103,9 @@ export interface RunRead {
   truncated: boolean;
   running: boolean;
   exitCode?: number | null;
+  /** Supervised runs that ended: their physical state and cleanup. */
+  physical?: PhysicalState;
+  cleanup?: RunResult["cleanup"];
 }
 export interface ProgramRun {
   /** Run id and background handle; also the log file name. */
@@ -96,7 +127,16 @@ export interface ProgramRunnerOptions {
   id?: () => string;
   /** Start time of run records; the system time by default. */
   now?: () => Date;
+  /**
+   * The device a Linux serial path names after its links (`/dev/serial/by-id/...` -> `/dev/ttyACM0`); a throw keeps
+   * the path as written. The file system's realpath by default.
+   */
+  devicePath?: (path: string) => string;
+  /** The lease registry; runs that claim resources are DENIED without one. */
+  leases?: ResourceLeases | undefined;
 }
+type RunnerSettings = Required<Omit<ProgramRunnerOptions, "id" | "leases">> &
+  Pick<ProgramRunnerOptions, "leases">;
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
 const INHERITED = ["SystemRoot", "HOME", "USERPROFILE", "TEMP", "TMP", "TMPDIR", "LANG", "LANGUAGE"];
@@ -113,23 +153,82 @@ export const RUN_LOG_BYTES = 1024 * 1024;
 const READ_FLAGS = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
 const COM_PORT = /^(?:\\\\\.\\)?(com\d+)$/i;
 const DEVICE_PORT = /^\/dev\/(?:tty\S*|serial\/by-id\/.+)$/;
+/** A serial port inside a sigrok-cli driver specification (`driver:conn=COM3:...`). */
+const CONN = /(?:^|:)conn=([^:]+)/i;
+const CONTROL_BYTES = 64 * 1024;
 const thrown = (code: "BUSY" | "DENIED", params: Record<string, string | number>) => ({
   ...veraError(code),
   params,
 });
 
-/** Serial ports an argument list names, alone or as the value of `--name=value`; COM names upper-cased. */
-export function serialPorts(args: readonly string[]): string[] {
+/**
+ * Serial ports an argument list names, alone, as the value of `--name=value` or as `conn=` of a sigrok-cli driver
+ * specification; COM names upper-cased, device paths as `devicePath` resolves them (as written when it throws or
+ * names no device path).
+ */
+export function serialPorts(args: readonly string[], devicePath?: (path: string) => string): string[] {
   const ports = new Set<string>();
   for (const arg of args) {
     const equals = arg.indexOf("=");
-    for (const value of arg.startsWith("-") && equals > 0 ? [arg, arg.slice(equals + 1)] : [arg]) {
+    const values = arg.startsWith("-") && equals > 0 ? [arg, arg.slice(equals + 1)] : [arg];
+    for (const value of [...values]) {
+      const conn = CONN.exec(value)?.[1];
+      if (conn) values.push(conn);
+    }
+    for (const value of values) {
       const com = COM_PORT.exec(value)?.[1];
       if (com) ports.add(com.toUpperCase());
-      else if (DEVICE_PORT.test(value)) ports.add(value);
+      else if (DEVICE_PORT.test(value)) ports.add(resolveDevice(value, devicePath));
     }
   }
   return [...ports];
+}
+const VOLUME_OPTION = "--volume";
+const DRIVE = /^([A-Za-z]):[\\/]?$/;
+/**
+ * Volumes an argument list names with `--volume <value>` or `--volume=<value>` (spec REQ-DATA-f2cbfc23 §2), with
+ * their lease keys: a Windows drive as `volume:<LETTER>:`, an absolute path as `resolve` resolves it (as written when
+ * it throws), without trailing separators.
+ */
+function volumeNames(
+  args: readonly string[],
+  resolve?: (path: string) => string,
+): { alias: string; key: string }[] {
+  const found = new Map<string, string>();
+  for (const [index, arg] of args.entries()) {
+    const value = arg.startsWith(`${VOLUME_OPTION}=`)
+      ? arg.slice(VOLUME_OPTION.length + 1)
+      : arg === VOLUME_OPTION
+        ? args[index + 1]
+        : undefined;
+    if (!value) continue;
+    const drive = DRIVE.exec(value)?.[1];
+    let name = drive ? `${drive.toUpperCase()}:` : value;
+    if (!drive && resolve && (value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value))) {
+      try {
+        name = resolve(value);
+      } catch {
+        name = value;
+      }
+    }
+    if (!drive) name = name.replace(/(?<=.)[\\/]+$/, "");
+    const key = `volume:${name}`;
+    if (!found.has(key)) found.set(key, value);
+  }
+  return [...found].map(([key, alias]) => ({ alias, key }));
+}
+/** The lease keys of the volumes an argument list names (`volume:<volume>`). */
+export function volumeKeys(args: readonly string[], resolve?: (path: string) => string): string[] {
+  return volumeNames(args, resolve).map((volume) => volume.key);
+}
+function resolveDevice(path: string, devicePath: ((path: string) => string) | undefined): string {
+  if (!devicePath) return path;
+  try {
+    const resolved = devicePath(path);
+    return resolved.startsWith("/dev/") ? resolved : path;
+  } catch {
+    return path;
+  }
 }
 
 /**
@@ -141,6 +240,7 @@ export function programEnvironment(
   toolPaths: readonly string[],
   own: Readonly<Record<string, string>> = {},
   display = false,
+  inherit: readonly string[] = [],
 ): Record<string, string> {
   const windows = host.platform === "win32";
   const same = (left: string, right: string) =>
@@ -157,7 +257,9 @@ export function programEnvironment(
     const inherited = [...INHERITED, ...(display ? DISPLAY_VARIABLES : [])].find((candidate) =>
       same(candidate, name),
     );
+    const requested = inherit.find((candidate) => same(candidate, name));
     if (inherited) set(inherited, value);
+    else if (requested) set(requested, value);
     else if (windows && same(name, "PATHEXT")) set("PATHEXT", value);
     else if ((windows ? name.toUpperCase() : name).startsWith("LC_")) set(name, value);
   }
@@ -172,6 +274,18 @@ class Run implements ProgramRun {
   readonly background: boolean;
   readonly workbench: string;
   readonly ports: string[];
+  /** Identity keys this run claims, and its serial ports as keys. */
+  readonly claimKeys: Set<string>;
+  readonly portKeys: Set<string>;
+  /** Volumes the run names with --volume, as lease aliases and keys. */
+  readonly volumes: { alias: string; key: string }[];
+  readonly volumeKeys: Set<string>;
+  held: HeldLeases | undefined;
+  control: string | undefined;
+  private physical: PhysicalState | undefined;
+  private cleanup: RunResult["cleanup"];
+  private cwd: string | undefined;
+  private graceTimer: ReturnType<typeof setTimeout> | undefined;
   private settle!: (result: RunResult) => void;
   private result: RunResult | undefined;
   private reason: "timedOut" | "stopped" | undefined;
@@ -193,11 +307,18 @@ class Run implements ProgramRun {
     readonly id: string,
     readonly request: RunRequest,
     private readonly runner: ProgramRunner,
-    private readonly settings: Required<Omit<ProgramRunnerOptions, "id">>,
+    private readonly settings: RunnerSettings,
   ) {
     this.background = request.background === true;
     this.workbench = runner.key(request.workbench);
-    this.ports = serialPorts(request.programArgs ?? request.args);
+    this.ports = serialPorts(
+      request.programArgs ?? request.args,
+      settings.host.platform === "win32" ? undefined : settings.devicePath,
+    );
+    this.claimKeys = new Set(request.lease?.claims.flatMap((claim) => claim.keys) ?? []);
+    this.portKeys = new Set(this.ports.map(serialPortKey));
+    this.volumes = volumeNames(request.programArgs ?? request.args, settings.devicePath);
+    this.volumeKeys = new Set(this.volumes.map((volume) => volume.key));
     this.tail = new TailBuffer(settings.tailChars);
     this.unread = new TailBuffer(settings.tailChars);
     this.done = new Promise((resolve) => {
@@ -220,6 +341,7 @@ class Run implements ProgramRun {
     } catch {
       throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
     }
+    this.cwd = cwd;
     const runs = join(guard.root, ".vera", "runs");
     await mkdir(runs, { recursive: true });
     const info = await lstat(runs);
@@ -250,9 +372,16 @@ class Run implements ProgramRun {
     this.started = performance.now();
     const child = host.spawn(this.request.executable, this.request.args, {
       cwd,
-      env: programEnvironment(host, this.settings.toolPaths, this.request.env, this.request.display === true),
+      env: programEnvironment(
+        host,
+        this.settings.toolPaths,
+        { ...this.request.env, ...this.supervisionEnv() },
+        this.request.display === true,
+        this.request.inherit,
+      ),
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
+      ...(this.request.input === undefined ? {} : { input: this.request.input }),
     });
     this.pid = child.pid;
     if (this.request.timeoutMs !== undefined)
@@ -276,6 +405,9 @@ class Run implements ProgramRun {
       truncated,
       running: !this.result,
       ...(this.result ? { exitCode: this.result.exitCode } : {}),
+      ...(this.result?.physical
+        ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
+        : {}),
     };
   }
 
@@ -288,8 +420,122 @@ class Run implements ProgramRun {
     if (this.exited || this.reason) return;
     this.reason = reason;
     if (this.pid === undefined) return;
+    const pid = this.pid;
     const { host, clock, killGraceMs } = this.settings;
-    void killProcessTree(host, this.pid, clock, killGraceMs).catch(() => {});
+    const treeKill = () => {
+      if (!this.exited) void killProcessTree(host, pid, clock, killGraceMs).catch(() => {});
+    };
+    const { lease } = this.request;
+    if (!lease || !this.control) {
+      treeKill();
+      return;
+    }
+    // A supervised program first gets a stop request and its grace period to clean up itself.
+    void writeFile(join(this.control, "stop"), reason).catch(() => {});
+    this.graceTimer = setTimeout(treeKill, lease.graceMs);
+  }
+
+  /** The variables of a supervised run: its control folder and the recorded unknown states of its resources. */
+  private supervisionEnv(): Record<string, string> {
+    if (!this.control) return {};
+    const states = Object.entries(this.held?.states ?? {});
+    return {
+      VERA_RUN_CONTROL: this.control,
+      ...(states.length > 0
+        ? {
+            VERA_RESOURCE_STATE: JSON.stringify(
+              Object.fromEntries(
+                states.map(([alias, { state, since, runId, reason }]) => [
+                  alias,
+                  { state, since, runId, reason },
+                ]),
+              ),
+            ),
+          }
+        : {}),
+    };
+  }
+
+  /**
+   * After a supervised program ends: the authorized cleanup when an actuating run did not report a released,
+   * confirmed or unchanged resource; then the physical state, the recorded markers and the released leases.
+   */
+  private async supervise(): Promise<void> {
+    const { lease } = this.request;
+    const held = this.held;
+    if (!held) return;
+    if (!lease) {
+      // Serial-port leases only: nothing to supervise.
+      await held.release();
+      return;
+    }
+    try {
+      const report = this.control ? await readControlState(this.control) : undefined;
+      const actuates = lease.claims.some((claim) => claim.actuates);
+      const reported = report?.phase === "released" ? report.physical : undefined;
+      if (this.pid === undefined || !actuates) {
+        this.physical = this.pid !== undefined && reported === "confirmed" ? "confirmed" : "unchanged";
+        this.cleanup = "none";
+      } else if (reported === "confirmed" || reported === "unchanged") {
+        this.physical = reported;
+        this.cleanup = "none";
+      } else {
+        this.physical = (await this.runCleanup()) ? "confirmed" : "unknown";
+        this.cleanup = this.physical === "confirmed" ? "separate" : "failed";
+      }
+      if (this.physical === "unknown") await held.markUnknown("cleanup-failed").catch(() => {});
+      if (this.physical === "confirmed") await held.clear().catch(() => {});
+      this.write(`\n[VERA] Physical state: ${this.physical}\n`);
+    } finally {
+      await held.release();
+      await this.settings.leases?.removeControl(this.id);
+    }
+  }
+
+  /** Runs the declared cleanup once under its timeout; true when it reported the resource released and confirmed. */
+  private async runCleanup(): Promise<boolean> {
+    const cleanup = this.request.lease?.cleanup;
+    const leases = this.settings.leases;
+    if (!cleanup || !leases || !this.cwd) return false;
+    const { host, clock, killGraceMs } = this.settings;
+    const id = `${this.id}-cleanup`;
+    let control: string;
+    try {
+      control = await leases.controlFolder(id);
+    } catch {
+      return false;
+    }
+    try {
+      this.write(`\n[VERA] Cleanup: ${(cleanup.shown ?? cleanup.args).join(" ")}\n`);
+      const decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
+      const child = host.spawn(this.request.executable, cleanup.args, {
+        cwd: this.cwd,
+        env: programEnvironment(
+          host,
+          this.settings.toolPaths,
+          { ...this.request.env, VERA_RUN_CONTROL: control, VERA_CLEANUP_OF: this.id },
+          this.request.display === true,
+          this.request.inherit,
+        ),
+        group: host.platform !== "win32",
+        output: (stream, chunk) => this.append(decoders[stream].write(chunk)),
+      });
+      let ended = false;
+      const timer = setTimeout(() => {
+        if (!ended && child.pid !== undefined)
+          void killProcessTree(host, child.pid, clock, killGraceMs).catch(() => {});
+      }, cleanup.timeoutMs);
+      const exit = await child.exit;
+      ended = true;
+      clearTimeout(timer);
+      this.append(decoders.stdout.end());
+      this.append(decoders.stderr.end());
+      if (exit.error) this.write(`\n[VERA] The cleanup could not start: ${exit.error}\n`);
+      const report = await readControlState(control);
+      return report?.phase === "released" && report.physical === "confirmed";
+    } finally {
+      await leases.removeControl(id);
+    }
   }
 
   private append(text: string): void {
@@ -313,10 +559,12 @@ class Run implements ProgramRun {
   private async finish(exit: ProcessExit): Promise<void> {
     this.exited = true;
     clearTimeout(this.timer);
+    clearTimeout(this.graceTimer);
     this.request.signal?.removeEventListener("abort", this.abort);
     this.append(this.decoders.stdout.end());
     this.append(this.decoders.stderr.end());
     if (exit.error) this.write(`\n[VERA] The program could not start: ${exit.error}\n`);
+    await this.supervise();
     await this.writing;
     await this.file?.close().catch(() => {});
     this.result = this.snapshot(exit);
@@ -372,7 +620,23 @@ class Run implements ProgramRun {
       log: this.log,
       timedOut: this.reason === "timedOut",
       stopped: this.reason === "stopped",
+      ...(this.physical ? { physical: this.physical, cleanup: this.cleanup ?? "none" } : {}),
     };
+  }
+}
+
+/** The program's last report in its control folder (`state.json`); undefined when missing or malformed. */
+async function readControlState(folder: string): Promise<{ phase: string; physical: string } | undefined> {
+  try {
+    const path = join(folder, "state.json");
+    const info = await lstat(path);
+    if (!info.isFile() || info.size > CONTROL_BYTES) return undefined;
+    const value = JSON.parse(await readFile(path, "utf8")) as Record<string, unknown>;
+    if (value.format !== 1 || typeof value.phase !== "string" || typeof value.physical !== "string")
+      return undefined;
+    return { phase: value.phase, physical: value.physical };
+  } catch {
+    return undefined;
   }
 }
 
@@ -402,11 +666,11 @@ async function readRecord(path: string, id: string): Promise<ProgramRunRecord | 
  * Runs resolved executables for plugins (plugins architecture §3.2) through the host's ProcessHost:
  * guarded working directory, minimal environment, decoded output with a capped tail and a full log in
  * `.vera/runs/`, timeouts and Stop that kill the whole process tree, at most `maxBackground` background
- * runs per session and a serial-port guard against ports held by background runs.
+ * runs per session and a serial-port guard against ports held by unfinished runs.
  */
 export class ProgramRunner {
   private readonly active = new Map<string, Run>();
-  private readonly settings: Required<Omit<ProgramRunnerOptions, "id">>;
+  private readonly settings: RunnerSettings;
   private readonly nextId: () => string;
 
   constructor(options: ProgramRunnerOptions) {
@@ -419,14 +683,17 @@ export class ProgramRunner {
       logsKept: options.logsKept ?? 200,
       killGraceMs: options.killGraceMs ?? 3000,
       now: options.now ?? (() => new Date()),
+      devicePath: options.devicePath ?? ((path) => realpathSync(path)),
+      leases: options.leases,
     };
     this.nextId = options.id ?? monotonicFactory();
   }
 
   /**
    * Starts a run. Refuses with BUSY `{limit}` a background run beyond the session's limit, with BUSY
-   * `{handle, port}` a run naming a serial port that a running background run names, and with DENIED a
-   * working directory outside the workbench; none of these starts a process.
+   * `{handle, port}` a run naming a serial port that another unfinished run names (foreground or background) or claims through a lease,
+   * with BUSY `{handle, resource}` a run naming a volume (`--volume`) that another unfinished run names or claims,
+   * and with DENIED a working directory outside the workbench; none of these starts a process.
    */
   async start(request: RunRequest): Promise<ProgramRun> {
     const run = new Run(this.nextId(), request, this, this.settings);
@@ -438,14 +705,60 @@ export class ProgramRunner {
     )
       throw thrown("BUSY", { limit: this.settings.maxBackground });
     for (const port of run.ports) {
-      const holder = runs.find((other) => other.background && other.ports.includes(port));
+      const key = serialPortKey(port);
+      const holder = runs.find((other) => other.ports.includes(port) || other.claimKeys.has(key));
       if (holder) throw thrown("BUSY", { handle: holder.id, port });
     }
+    for (const volume of run.volumes) {
+      const holder = runs.find(
+        (other) => other.volumeKeys.has(volume.key) || other.claimKeys.has(volume.key),
+      );
+      if (holder) throw thrown("BUSY", { handle: holder.id, resource: volume.alias });
+    }
+    const { lease } = request;
+    const leases = this.settings.leases;
+    if (lease) {
+      for (const claim of lease.claims) {
+        const holder = runs.find((other) =>
+          claim.keys.some(
+            (key) => other.claimKeys.has(key) || other.portKeys.has(key) || other.volumeKeys.has(key),
+          ),
+        );
+        if (holder) throw thrown("BUSY", { handle: holder.id, resource: claim.alias });
+      }
+      if (!leases) throw thrown("DENIED", { reason: "leases" });
+    }
+    // Identity kind serial: every port the run names is also reserved across VERA processes (never actuating; the
+    // physical state of a serial device is not supervised). Without a lease registry the in-process guard alone holds.
+    const portClaims: LeaseClaim[] = run.ports.map((port) => ({
+      kind: "serial",
+      alias: port,
+      resource: port,
+      keys: [serialPortKey(port)],
+      actuates: false,
+    }));
+    // Identity kind volume: a mass-storage volume named with --volume (a CircuitPython drive), never actuating.
+    for (const volume of run.volumes)
+      portClaims.push({
+        kind: "volume",
+        alias: volume.alias,
+        resource: volume.alias,
+        keys: [volume.key],
+        actuates: false,
+      });
     this.active.set(run.id, run);
     try {
+      if (leases && (lease || portClaims.length > 0))
+        run.held = await leases.acquire([...(lease?.claims ?? []), ...portClaims], {
+          sessionId: request.sessionId,
+          runId: run.id,
+        });
+      if (lease && leases) run.control = await leases.controlFolder(run.id);
       await run.begin();
     } catch (error) {
       this.active.delete(run.id);
+      await run.held?.release();
+      if (run.control) await leases?.removeControl(run.id);
       run.abandon();
       throw error;
     }
