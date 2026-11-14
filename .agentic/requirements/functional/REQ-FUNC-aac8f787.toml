@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-aac8f787"
+
+title = "List a device's GATT services without reading values"
+
+status = "active"
+
+requirement = "When ble-tool discover-services runs on a registry device, it shall connect and list every service, characteristic (UUID, handle, properties) and descriptor (UUID, handle) the device exposes without reading any characteristic or descriptor value, and with --profile it shall also report the profile mismatches."
+
+verification = "discover-services against a fake device lists its services and properties; the fake log shows no read; with a profile missing a characteristic the result names it."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

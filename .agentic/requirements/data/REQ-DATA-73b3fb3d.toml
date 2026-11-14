@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-73b3fb3d"
+
+title = "Report the managed link as the physical state"
+
+status = "active"
+
+requirement = "ble-tool shall report its lifecycle physical state as unchanged before any connection, confirmed once it disconnected and stopped every subscription it started, and unknown otherwise, and shall report what a write did to the device separately as write.effect, unknown unless a read-back matches."
+
+verification = "A read run ends physical confirmed; a run whose fake stop_notify fails ends unknown; a write without read-back has effect unknown and with a matching read-back effect read-back."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/lifecycle.py", "05_Software/plugins/ble-tools/scripts/ble_support/device.py", "05_Software/plugins/ble-tools/scripts/ble_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

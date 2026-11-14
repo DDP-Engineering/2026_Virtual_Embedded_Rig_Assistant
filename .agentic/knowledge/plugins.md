@@ -223,9 +223,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - Bench resources (shared `lab-resources.ts`): `LAB_REGISTRY_PATH` (`lab/resources.json`), `LAB_REGISTRY_BYTES` (256 KiB),
   `labRegistrySchema` (format 1, 1..64 entries, unique aliases; kind `visa`: alias, resource, serial?, profile,
   backend? py|ivi, limits?, note?; kind `bus-adapter`: alias, backend `bus-pirate-bpio2`, resource and terminal (COM<n> or
-  /dev paths, different), identity `usb:<vid>:<pid>:<serial>`, power? {maxMv 800-5000, maxMa 1-500}, note?),
+  /dev paths, different), identity `usb:<vid>:<pid>:<serial>`, power? {maxMv 800-5000, maxMa 1-500}, note?; kind
+  `ble-device`: alias, address (six hex octets), addressType public|random (random only static), profile, serial?,
+  adapter? hci0-hci99, note?),
   `visaResourceKeys(resource, serial?)`, `labResourceKeys(entry)` (bus-adapter: `serial:<resource>`, `serial:<terminal>`,
-  identity lower-cased),
+  identity lower-cased; ble-device: `ble:<address lower-case>`; claimedResources reports its address as the resource),
   `serialPortKey(port)`; manifest program field `resources`; approval payload `resources [{alias, kind, resource}]` with
   `registry {path, sha256}` (both or neither).
 - Leases (core `leases.ts`): `leaseRoot({platform, env, tmpdir, uid?})`, `leaseFileName(key)`, `new ResourceLeases({root,

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-73fb6150"
+
+title = "End a run whose identity value differs from the registry serial"
+
+status = "active"
+
+requirement = "If the identity characteristic's value differs from the registry entry's serial, then ble-tool shall end the run with status fail and code identity-mismatch without reading any other characteristic or writing anything."
+
+verification = "Two fake devices with the same name: the registry serial of the second against the first device's address gives identity-mismatch and no write in the fake log."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/device.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

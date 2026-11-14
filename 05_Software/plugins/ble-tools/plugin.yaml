@@ -1,0 +1,44 @@
+format: 1
+id: ble-tools
+version: 1.0.0
+name: BLE tools (discovery and GATT)
+description: Bounded Bluetooth Low Energy discovery and controlled GATT operations on known device profiles through Bleak 3.1.0 (WinRT on Windows 11, BlueZ on Linux) - scan for a bounded time, identify a device declared in lab/resources.json by its address against a profile that declares its services, characteristics, payload types, byte order, units, limits, allowed operations and pairing, list its services, read or record notifications of declared characteristics and send a named, classified write once. A name or RSSI never identifies a device. No pairing, PIN entry, raw write, firmware update, advertising, Bluetooth Classic or Bluetooth setting change; pairing is the user's step in the operating system.
+ecosystem: iot
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://bleak.readthedocs.io/en/latest/", "https://pypi.org/project/bleak/3.1.0/"]
+programs:
+  ble-tool:
+    install: { script: scripts/ble_tool.py }
+    version: { args: [--version], match: '^ble-tool (\d+\.\d+\.\d+)' }
+    timeout: 120
+    env:
+      BLE_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --device, kinds: [ble-device], grace: 5, cleanup: [release], cleanupTimeout: 30 }
+# A device call connects only to the address lab/resources.json declares, with pairing off, and checks the device's
+# GATT database against the profile before any characteristic is used. A read is never classified safe: a GATT read
+# can change a device, which the profile states per characteristic (sideEffects).
+rules:
+  - { match: "ble-tool {--version,--help,-h}", risk: safe }
+  - match: "ble-tool {capabilities,report} *"
+    risk: safe
+    note: Offline. Describes the backend, platform support and a device profile, or summarizes run folders; report writes a new run folder.
+  - match: "ble-tool scan *"
+    risk: device-read
+    note: Uses this computer's Bluetooth adapter to listen for advertisements for at most --duration seconds and connects to nothing; --active also sends scan requests to the advertisers. The adapter's settings are not changed.
+  - match: "ble-tool {identify,discover-services,read-characteristic,subscribe-notifications} *"
+    risk: device-read
+    note: Connects once to the declared device (pairing off), checks its GATT database and identity against the profile and reads declared characteristics without side effects; subscribe enables notifications on one characteristic for a bounded time and turns them off before disconnecting. discover-services reads no value.
+    timeout: 3600
+  - match: "ble-tool {read-characteristic,subscribe-notifications} * --side-effects *"
+    risk: device-write
+    note: Reads or subscribes to a characteristic the profile declares state-changing (a read-to-clear value, a stream that powers a sensor).
+    timeout: 3600
+  - match: "ble-tool write-characteristic *"
+    risk: device-write
+    note: Sends one named write operation of the profile to the confirmed device, once and never retried; a configure or actuate write changes a setting or moves, switches or drives hardware. Stop or a disconnect does not undo it.
+  - match: "ble-tool release *"
+    risk: device-write
+    note: Ends a connection this computer still holds to the declared device (on Linux by one connect and disconnect). VERA runs it as the cleanup after Stop, timeout or a crash of a write.
+  - match: "ble-tool write-characteristic * --persistent *"
+    risk: irreversible
+    note: Sends a persistent write the device stores and keeps after a reset (configuration in its non-volatile memory).

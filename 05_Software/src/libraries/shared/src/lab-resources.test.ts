@@ -109,6 +109,51 @@ describe("bus-adapter entries", () => {
   });
 });
 
+// REQ-DATA-bc2b27d1
+describe("ble-device entries", () => {
+  const device = (fields: Record<string, unknown> = {}) => ({
+    alias: "thermo",
+    kind: "ble-device",
+    address: "C4:7F:51:00:12:34",
+    addressType: "public",
+    profile: "bench-thermometer",
+    ...fields,
+  });
+  it("accepts BLE devices beside a VISA instrument and keys them by address", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [
+        entry(),
+        device({ serial: "TH-0042", note: "bench sensor" }),
+        device({ alias: "tag", address: "d1:22:33:44:55:66", addressType: "random", adapter: "hci1" }),
+      ],
+    });
+    expect(parsed.resources.map((resource) => resource.kind)).toEqual(["visa", "ble-device", "ble-device"]);
+    expect(labResourceKeys(parsed.resources[1] as never)).toEqual(["ble:c4:7f:51:00:12:34"]);
+    expect(labResourceKeys(parsed.resources[2] as never)).toEqual(["ble:d1:22:33:44:55:66"]);
+  });
+  it("refuses private random addresses, malformed fields and unknown keys", () => {
+    const bad = [
+      device({ address: "C4:7F:51:00:12" }),
+      device({ address: "C4-7F-51-00-12-34" }),
+      device({ address: "51:22:33:44:55:66", addressType: "random" }),
+      device({ address: "11:22:33:44:55:66", addressType: "random" }),
+      device({ addressType: "static" }),
+      device({ profile: "Bench" }),
+      device({ adapter: "hci100" }),
+      device({ adapter: "usb0" }),
+      device({ serial: "" }),
+      device({ resource: "COM3" }),
+      device({ profile: undefined }),
+    ];
+    for (const value of bad)
+      expect(
+        labRegistrySchema.safeParse({ format: 1, resources: [value] }).success,
+        JSON.stringify(value),
+      ).toBe(false);
+  });
+});
+
 describe("VISA identity keys", () => {
   const same = (left: string, right: string) =>
     expect(visaResourceKeys(left)).toEqual(visaResourceKeys(right));

@@ -29,7 +29,7 @@ PathGuard. Format 1:
 ```
 
 - `resources`: 1...64 entries; `alias` `^[a-z][a-z0-9-]{0,31}$`, unique.
-- `kind` is the identity kind, `visa` or `bus-adapter`. Kind `visa`: `resource` (VISA resource name, 1...256
+- `kind` is the identity kind, `visa`, `bus-adapter` or `ble-device`. Kind `visa`: `resource` (VISA resource name, 1...256
   printable ASCII), optional `serial` (1...64 printable ASCII, the instrument's serial number as `*IDN?` reports it),
   `profile` (`^[a-z0-9][a-z0-9-]{0,63}$`), optional `backend` `py` (pyvisa-py, default) or `ivi` (a VISA library the user
   installed), optional `limits` (channel name -> quantity -> positive finite number, at most 16 channels and 8
@@ -37,7 +37,10 @@ PathGuard. Format 1:
   plugin): `backend` `bus-pirate-bpio2`, `resource` (the adapter's binary serial port, `COM<n>` or a `/dev/` path),
   `terminal` (its other serial port, never the same port in any letter case), `identity`
   (`usb:<vid 4 hex>:<pid 4 hex>:<serial 1...64 printable ASCII without colon>`), optional `power` `{maxMv 800...5000,
-  maxMa 1...500}` (integers) and `note`. Unknown keys are refused. Later identity kinds (NIC,
+  maxMa 1...500}` (integers) and `note`. Kind `ble-device` (REQ-DATA-bc2b27d1, the ble-tools plugin): `address` (six
+  colon-separated hex octets), `addressType` `public` or `random` (a random address must be static: the first octet's two
+  most significant bits set), `profile` (`^[a-z0-9][a-z0-9-]{0,63}$`), optional `serial` (1...64 printable ASCII),
+  `adapter` (`hci0`...`hci99`) and `note`. Unknown keys are refused. Later identity kinds (NIC,
   endpoint, lab host) add a schema branch and a key function; they never add a second registry or lease folder.
 - The host reads only alias, kind and identity fields for leases; the whole entry is validated so a plugin never reads
   an entry the host refused.
@@ -58,7 +61,7 @@ Parsing is case-insensitive on the keywords; `n` is an optional board number. A 
 Hosts are a name or dotted IPv4 address, or a bracketed IPv6 literal. Any other syntax is an invalid entry. A declared
 `serial` adds `serial-number:<serial lower-case>`. A `bus-adapter` entry (REQ-FUNC-4dadea40) has the keys
 `serial:<resource>`, `serial:<terminal>` (COMn upper-cased, /dev paths as written) and its `identity` lower-cased, so a
-run on the adapter conflicts with any run naming either of its ports and with a VISA USB resource of the same device. Two claims conflict when their key sets intersect. A serial port that
+run on the adapter conflicts with any run naming either of its ports and with a VISA USB resource of the same device. A `ble-device` entry has the one key `ble:<address lower-case>`. Two claims conflict when their key sets intersect. A serial port that
 another run names (the runner's serial-port guard, also `conn=<port>` inside a sigrok-cli driver specification) is the
 key `serial:<port>`. Identity kind `serial` (REQ-FUNC-b9a25608): with a lease registry, each such port is also claimed
 across VERA processes as a non-actuating lease `{kind: "serial", alias: <port>, key: "serial:<port>"}`, taken with the

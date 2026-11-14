@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * The workbench registry of bench resources, `lab/resources.json` (spec REQ-DATA-f2cbfc23 §1). One file per
  * workbench: the host reads its identity fields to reserve resources, plugin helpers read the whole entry. Identity
- * kinds are data (`visa`, `bus-adapter`); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
+ * kinds are data (`visa`, `bus-adapter`, `ble-device`); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
  */
 export const LAB_REGISTRY_PATH = "lab/resources.json";
 export const LAB_REGISTRY_BYTES = 256 * 1024;
@@ -75,9 +75,35 @@ const busAdapterEntrySchema = z
     path: ["terminal"],
     message: "The terminal port must differ from the resource port.",
   });
-export const labResourceSchema = z.union([visaEntrySchema, busAdapterEntrySchema]);
+/**
+ * Kind `ble-device` (spec REQ-DATA-f2cbfc23 §1): a Bluetooth Low Energy device the ble-tools plugin reaches by its
+ * identity address. A random address must be static (first octet's two most significant bits set): private addresses
+ * change. `profile` names the device profile the unit follows; `serial` is the value its identity characteristic reports.
+ */
+const bleDeviceEntrySchema = z
+  .strictObject({
+    alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+    kind: z.literal("ble-device"),
+    address: z
+      .string()
+      .regex(/^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$/, "Use six colon-separated hex octets."),
+    addressType: z.enum(["public", "random"]),
+    profile: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+    serial: printable(64).optional(),
+    adapter: z
+      .string()
+      .regex(/^hci(?:[0-9]|[1-9][0-9])$/, "Use a BlueZ adapter name hci0 to hci99.")
+      .optional(),
+    note: z.string().max(256).optional(),
+  })
+  .refine(
+    (entry) =>
+      entry.addressType === "public" || (Number.parseInt(entry.address.slice(0, 2), 16) & 0xc0) === 0xc0,
+    { path: ["address"], message: "A random address must be static; private addresses change." },
+  );
+export const labResourceSchema = z.union([visaEntrySchema, busAdapterEntrySchema, bleDeviceEntrySchema]);
 export type LabResource = z.infer<typeof labResourceSchema>;
-export const labResourceKindSchema = z.enum(["visa", "bus-adapter"]);
+export const labResourceKindSchema = z.enum(["visa", "bus-adapter", "ble-device"]);
 export type LabResourceKind = z.infer<typeof labResourceKindSchema>;
 
 export const labRegistrySchema = z
@@ -169,5 +195,6 @@ function connectionKey(resource: string): string {
 export function labResourceKeys(entry: LabResource): string[] {
   if (entry.kind === "bus-adapter")
     return [serialPortKey(entry.resource), serialPortKey(entry.terminal), entry.identity.toLowerCase()];
+  if (entry.kind === "ble-device") return [`ble:${entry.address.toLowerCase()}`];
   return visaResourceKeys(entry.resource, entry.serial);
 }

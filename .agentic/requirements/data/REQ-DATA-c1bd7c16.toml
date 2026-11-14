@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-c1bd7c16"
+
+title = "Never turn a truncated or invalid payload into a measurement"
+
+status = "active"
+
+requirement = "If a read value or notification has a length the payload schema does not allow, invalid UTF-8 or a non-finite float, then ble-tool shall record its raw bytes with value null, valid false and the decodeError, and if a number lies outside the schema's min and max it shall keep the value with valid false and decodeError out-of-range."
+
+verification = "A fake one-byte temperature gives value null, valid false, decodeError length; 200 degC gives valid false, out-of-range; the series CSV marks both invalid."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/payload.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

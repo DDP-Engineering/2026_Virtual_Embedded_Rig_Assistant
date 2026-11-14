@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-864d305c"
+
+title = "Report an absent or switched-off adapter without changing it"
+
+status = "active"
+
+requirement = "If the Bluetooth adapter is missing, powered off or access is denied, then ble-tool shall end the run blocked with adapter-unavailable and the reason, without switching the radio on or changing any Bluetooth setting."
+
+verification = "Fake adapters missing and powered off: scan and identify are blocked adapter-unavailable with reason no-bluetooth and powered-off."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/backend.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

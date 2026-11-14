@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-a637b83d"
+
+title = "Refuse a write value outside the schema's limits or encoding"
+
+status = "active"
+
+requirement = "If a typed write's --value is missing, lies outside the payload's min and max, or does not encode to an integer raw value within the payload size, then ble-tool shall refuse it with value-required, value-out-of-range or value-not-representable before using the radio."
+
+verification = "--value 101 for a 0 to 100 percent setpoint is blocked value-out-of-range, 40.5 for a uint is value-not-representable, a missing value is value-required; the fake log stays empty."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/write.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

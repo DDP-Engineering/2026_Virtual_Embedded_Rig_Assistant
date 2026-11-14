@@ -166,6 +166,10 @@ Agent runtime tests use the common replay matrix and deterministic injected coun
 
 Node Vitest projects install the non-loopback fetch/socket guard before application modules. tests/integration/bus-tools.test.ts
 runs bus-tool under the same Python, which must have flatbuffers 25.12.19 installed (its fake pyserial parses BPIO2 with it). tests/integration/mqtt-tools.test.ts runs mqtt-tool, the stdlib test broker tests/support/mqtt-test-broker.py (127.0.0.1 only) and the paho fixture device under the same Python, which must have paho-mqtt 2.1.0 (installed on this host with `pip install --user paho-mqtt==2.1.0` from PyPI on 2026-11-14) and cryptography (TLS fixture CA in the test's temp folder); about 50 s on Windows, and its graceful-Stop branch (SIGTERM) runs only on Linux. The integration test
+tests/integration/ble-tools.test.ts runs ble-tool under the same Python with the fake Bleak in tests/fixtures/ble-tools/fake-bleak
+(no Bluetooth package, adapter or network needed). Opt-in VERA_TEST_BLE_PYTHON names a Python with bleak 3.1.0 and its pinned
+WinRT (or dbus-fast) packages for one real scan on this computer's adapter, never a connection; it passed on Windows 11 on
+2026-11-14 with a scratch venv (`pip install bleak==3.1.0` plus the pins of scripts/ble_tool.py from PyPI).
 tests/integration/serial-monitor.test.ts runs the serial-monitor script under the toolchain's Python 3.11+ (`python` on
 Windows, `python3` elsewhere, or `VERA_TEST_PYTHON`) with the fake pyserial in tests/fixtures/serial-monitor; it needs
 no serial port, uv or network. tests/integration/esp32-esptool.test.ts uses the same Python; its fake uv installs a

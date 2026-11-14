@@ -60,6 +60,13 @@ stdlib MQTT 3.1.1/5 test broker on 127.0.0.1 with TLS, users, ACL and fault swit
 mqtt-fixture-device.py own its coverage - evidence for the helper, not for a product broker or a device. Its
 workspace.py is a byte-identical copy of bus-tool's; the credential hand-off is platform behaviour, see
 [Plugins](plugins.md).
+For ble-tools, start at plugins/ble-tools/plugin.yaml, scripts/ble_tool.py and scripts/ble_support/ (cli.py dispatch and
+argument bounds, registry.py ble-device entries, profile.py device profiles and UUIDs, payload.py decode/encode,
+backend.py the pinned Bleak and error mapping, scan.py, device.py the managed link and identity, notify.py, write.py,
+operations.py read/discover/release, report.py) with spec .agentic/specs/REQ-DATA-e8502710.md;
+tests/integration/ble-tools.test.ts with the fake Bleak in tests/fixtures/ble-tools/fake-bleak owns its coverage -
+offline evidence plus one opt-in real scan, not proof of a device. Its workspace.py is a byte-identical copy of
+circuitpython-tool's and lifecycle.py of bus-tool's; the device lease is platform behaviour, see [Plugins](plugins.md).
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -526,6 +533,41 @@ that source metadata reaches the deterministic bundled index unchanged.
   goes on; SIGTERM (Linux) unsubscribes and disconnects (`stopped`); a Windows Stop leaves the last written state.
   Results `arduino-iot-results/<run-id>/` (`mqtt-tool-result`, `report.md`, `messages.jsonl`); exit 0/1/2/3. Verified
   against the local test broker only; no product broker or device yet, native Ubuntu not run.
+- `ble-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "BLE devices (GATT)", default on; activities `testing`,
+  `communication`), Windows x64 and Linux x64. Program `ble-tool` = `scripts/ble_tool.py` (PEP 723, `bleak==3.1.0` with
+  `winrt-runtime==4.1.0`, eight `winrt-windows-*==4!10.0.28000.2957` projections and `typing-extensions==4.16.0` on win32,
+  `dbus-fast==5.2.0` on linux), timeout 120 s, env `BLE_REGISTRY=${workbench}/lab/resources.json`,
+  `resources {option: --device, kinds: [ble-device], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
+  `capabilities`, `report` safe; `scan`, `identify`, `discover-services`, `read-characteristic`,
+  `subscribe-notifications` device-read (3600 s); with `--side-effects` device-write; `write-characteristic` and
+  `release` device-write; `--persistent` irreversible. The helper refuses any installed Bleak other than 3.1.0
+  (`backend-version`), a backend other than WinRT/BlueZ or Windows older than build 22000 (`os-unsupported`); it uses
+  only the central role and never pairs, unpairs, enters a PIN, writes descriptors itself, advertises or changes the
+  adapter. Scan: passive by default (Linux refuses passive, `passive-unsupported`; `--active`), 1-30 s, at most 500
+  addresses, one entry per address with names, RSSI last/min/max, service UUIDs, manufacturer ids/data, tx power,
+  count, registry alias, `candidate` (registry address or profile advertisement hints) and `ambiguousName`; never
+  `confirmed`. Device calls: registry entry (kind `ble-device`), profile (`ble-tools-profile` format 1, 64 KiB, unknown
+  fields refused, closed unit set, `sideEffects` required, named writes with class configure/actuate/persistent and
+  fixed or typed value) whose `id` must equal the entry's `profile` (`profile-device`), then `find_device_by_address`
+  within `connectTimeoutS` (`not-found`), one connect with `pair=False` (WinRT `address_type`, no cached services),
+  the GATT check (`profile-mismatch` lists what is missing) and the identity characteristic against the entry's
+  `serial` (`identity-mismatch`; `identity-unchecked` warning when either is absent). Reads (1-100, interval 0.1-60 s)
+  and notifications keep raw hex, length, receive time, UUID, the payload schema and the decoded value; a wrong length,
+  invalid UTF-8 or a non-finite float gives `value: null`, `valid: false`; out-of-range keeps the value with `valid:
+  false`. Notifications: callback into a 1024 queue, `notifications.jsonl` and `series.csv`, ends at duration, count,
+  bytes, stop request, disconnect or `overflow` (rate above `maxNotificationsPerSecond` or a full queue); `stop_notify`
+  once before the disconnect, `subscription` stopped/unknown. Writes: named operation only (`write-unknown`), typed
+  values checked (`value-required`, `value-out-of-range`, `value-not-representable`), persistent only with
+  `--persistent` (`write-class`), one ATT write (`payload-too-large`: with response min(512, MTU-3), without response
+  `max_write_without_response_size`), sent once, `delivery` acknowledged/refused/sent/unknown, `retried` false,
+  optional read-back (`read-back` fail when it differs), `effect` unknown unless the read-back matched. ATT
+  0x05/0x08/0x0C/0x0F and access denied give `pairing-required` (blocked, the user pairs in the OS); 0x02/0x03
+  `not-permitted`. Nothing is retried and a lost link is `disconnected`, never re-opened. Lifecycle physical = the
+  managed link: confirmed once disconnected with every started subscription stopped, else unknown. `release` polls the
+  system's connected devices for 10 s: absent -> confirmed; Linux -> one connect/disconnect; Windows -> `held-by-system`
+  unknown. Results `arduino-iot-results/<run-id>/` (`ble-tool-result`, `report.md`, notification files); exit 0/1/2/3.
+  Verified against the fake Bleak and with one real passive scan on Windows 11; no real device read, notify, write or
+  pairing yet, native Ubuntu/BlueZ not run.
 
 ## Invariants
 
@@ -852,6 +894,11 @@ that source metadata reaches the deterministic bundled index unchanged.
   `operations`, `report`, `workspace` shared).
 - `05_Software/tests/integration/mqtt-tools.test.ts`, `tests/support/mqtt-test-broker.py`, `make-mqtt-certs.py`,
   `mqtt-fixture-device.py`.
+- `05_Software/plugins/ble-tools/` — manifest, README, skills ble-devices and ble-profiles, profiles/bench-thermometer.json,
+  `scripts/ble_tool.py` (entry), `scripts/ble_support/` (`cli`, `registry`, `profile`, `payload`, `backend`, `scan`, `device`,
+  `notify`, `write`, `operations`, `report`, `lifecycle` and `workspace` shared).
+- `05_Software/tests/integration/ble-tools.test.ts`, `tests/fixtures/ble-tools/fake-bleak/` (fake Bleak 3.1.0 driven by a bench
+  file, logging every radio call).
 - `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
   support package.
 - `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).

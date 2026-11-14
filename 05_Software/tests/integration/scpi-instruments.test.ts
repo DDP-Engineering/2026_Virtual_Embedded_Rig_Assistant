@@ -564,7 +564,7 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
   });
 
   // REQ-FUNC-de5e43b9
-  it("uses the instruments of a registry that also declares a bus adapter and refuses the adapter's alias", async () => {
+  it("uses the instruments of a registry that also declares a bus adapter and a BLE device and refuses their aliases", async () => {
     const adapter = {
       alias: "bp",
       kind: "bus-adapter",
@@ -573,15 +573,25 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
       terminal: "COM34",
       identity: "usb:1209:7331:BP5X0001",
     };
+    const ble = {
+      alias: "thermo",
+      kind: "ble-device",
+      address: "C4:7F:51:00:12:34",
+      addressType: "public",
+      profile: "bench-thermometer",
+    };
     await writeFile(
       paths().registry,
-      JSON.stringify({ ...registry, resources: [...registry.resources, adapter] }),
+      JSON.stringify({ ...registry, resources: [...registry.resources, adapter, ble] }),
     );
     expect(scpi(["identify", "--instrument", "psu"]).code).toBe(0);
     await clearLog();
     const other = scpi(["identify", "--instrument", "bp"]);
     expect(other.code).toBe(2);
     expect(other.json.problems[0].message).toMatch(/bus-adapter resource, not an instrument/);
+    const device = scpi(["identify", "--instrument", "thermo"]);
+    expect(device.code).toBe(2);
+    expect(device.json.problems[0].message).toMatch(/ble-device resource, not an instrument/);
     expect(transcript()).toEqual([]);
   });
 
