@@ -149,6 +149,7 @@ nothing on PATH, no global configuration, no `setup.sh`/hosttools installer run,
 | xPack OpenOCD | 0.12.0-7 | linux-x64 tar.gz 94b37909...68d6 |
 | PlatformIO packages (Linux) | ststm32 20.0.0, toolchain-gccarmnoneeabi 1.70201.0 linux_x86_64, framework-cmsis(-stm32f4), tool-ldscripts-ststm32, tool-scons, Unity 2.6.1, tool-openocd 3.1200.7 | registry SHA-256 verified by PlatformIO; installed by the helper's prepare-packages |
 | PyPI | helper pins of zephyr_tool.py and pio_tool.py; pyjoulescope_driver 2.5.5; pyelftools 0.32 | uv venvs |
+| Host GCC (native host tests) | 13.3.0-6ubuntu2~24.04.1 | Ubuntu `build-essential`, installed by the user |
 
 Results (vitest in WSL2, 2026-11-14):
 
@@ -157,9 +158,10 @@ Results (vitest in WSL2, 2026-11-14):
   pyelftools oracle and real GDB 16.3.90 + OpenOCD 0.12.0-7 without a probe (LAB-04), the real pyjoulescope_driver
   without a meter (LAB-05; `usb.ok` false with the udev-rule hint, as designed), real Renode 1.17.0 (LAB-06), real
   Zephyr builds, Twister build-only and Renode verdicts (LAB-07), real PlatformIO prepare-packages, offline builds,
-  device suites judged on Renode and the upload refusal `packages-missing` (LAB-08): all pass.
-- Not run on Linux: PlatformIO `native` host tests (no host GCC; `build-essential` needs sudo) and STM32CubeProgrammer
-  (not installed in WSL).
+  device suites judged on Renode, the upload refusal `packages-missing` and the `native` Unity suites on the host with
+  Ubuntu's GCC 13.3.0 (`build-essential`, installed by the user): pass, incomplete and fail stay distinct (LAB-08):
+  all pass.
+- Not run on Linux: STM32CubeProgrammer (not installed in WSL).
 - The Linux runs found five test faults that Windows never reaches, all fixed without changing plugin code: a dangling
   symlink left by a Linux-only check (LAB-02), a fake VISA hang that SIGTERM interrupts on POSIX so the
   kill-after-grace path was never exercised (LAB-01), a USB assumption only true with WinUSB (LAB-05), a hard-coded
