@@ -19,7 +19,13 @@ import {
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
-import { eventEnvelopeSchema, type PluginProgramStatus, veraError, workbenchPatchSchema } from "@vera/shared";
+import {
+  eventEnvelopeSchema,
+  type PluginProgramStatus,
+  veraError,
+  type WorkbenchSnapshot,
+  workbenchPatchSchema,
+} from "@vera/shared";
 import {
   app,
   BrowserWindow,
@@ -329,9 +335,17 @@ function activePluginStore(workbenchId?: string): PluginStore {
 function programStatuses(statuses: PluginProgramStatus[]): PluginProgramStatus[] {
   return scrubProgramStatuses(statuses, (value) => credentials.scrub(value));
 }
-function pluginsChanged(): void {
-  provisioner.invalidate();
+/** `id` limits the forgotten program resolutions to that plugin; found programs stay stored by file stamp. */
+function pluginsChanged(id?: string): void {
+  provisioner.invalidate(id);
   sessions.invalidatePrograms();
+}
+/** Reads the enabled plugins' program statuses in the background, so later reads and runs find a warm cache. */
+function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
+  const store = plugins.forWorkbench(snapshot.folder);
+  for (const id of snapshot.config.plugins.enabled)
+    void scopedProvisioners.run(store, (host) => host.statuses(id, undefined, provisioner)).catch(() => {});
+  return snapshot;
 }
 
 // Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).
@@ -430,17 +444,17 @@ ipcMain.handle(
       "plugins.scopedReview": ({ workbenchId, id }) => activePluginStore(workbenchId).reviewScoped(id),
       "plugins.scopedTrust": async ({ workbenchId, id, sha256 }) => {
         const installed = await activePluginStore(workbenchId).trustScoped(id, sha256);
-        pluginsChanged();
+        pluginsChanged(id);
         return installed;
       },
       "plugins.install": async ({ path, sha256 }) => {
         const installed = await plugins.install(path, sha256);
-        pluginsChanged();
+        pluginsChanged(installed.id);
         return installed;
       },
       "plugins.promote": async ({ id, sha256 }) => {
         const installed = await plugins.promote(id, sha256);
-        pluginsChanged();
+        pluginsChanged(id);
         return installed;
       },
       "plugins.export": async ({ id, sha256 }) => {
@@ -456,19 +470,19 @@ ipcMain.handle(
       },
       "plugins.uninstall": async ({ id }) => {
         await plugins.uninstall(id);
-        pluginsChanged();
+        pluginsChanged(id);
         return {};
       },
       "plugins.toggle": async ({ workbenchId, id, enabled }) => {
         const result = await workbench.togglePlugin(workbenchId, id, enabled);
-        pluginsChanged();
+        pluginsChanged(id);
         return result;
       },
       "plugins.catalog": ({ refresh }) => catalog.view({ refresh }),
       "plugins.catalogReview": ({ id }) => catalog.review(id),
       "plugins.catalogInstall": async ({ id, sha256 }) => {
         const installed = await catalog.install(id, sha256);
-        pluginsChanged();
+        pluginsChanged(id);
         return installed;
       },
       "plugins.programs": async ({ id, workbenchId }) =>
@@ -537,7 +551,7 @@ ipcMain.handle(
               : provisioner.installArchive(id, program, selected.filePaths[0], sha256)),
           );
         } finally {
-          pluginsChanged();
+          pluginsChanged(id);
         }
       },
       "plugins.provision": async ({ id, workbenchId }) => {
@@ -550,7 +564,7 @@ ipcMain.handle(
               : provisioner.install(id)),
           );
         } finally {
-          pluginsChanged();
+          pluginsChanged(id);
         }
       },
       // Runs of the open workbench only; another workbench id is CONFLICT like the other workbench channels.
@@ -869,6 +883,8 @@ ipcMain.handle(
         if (credentials.containsSecret(patch)) throw { code: "INVALID", messageKey: "errors.INVALID" };
         const result = await settings.update(patch);
         nativeTheme.themeSource = result.settings.theme;
+        // The package index and proxy reach uv-run programs through their resolved environment.
+        if (patch.plugins) pluginsChanged();
         return result;
       },
       "app.chooseFolder": async ({ start }) => {
@@ -891,15 +907,17 @@ ipcMain.handle(
       "workbench.create": ({ folder, name, config, instructions }) =>
         sessions.lifecycle(async () => {
           await stopWorkbenchPrograms();
-          return workbench.create(folder, name, {
-            ...(config ? { config } : {}),
-            ...(instructions !== undefined ? { instructions } : {}),
-          });
+          return warmPrograms(
+            await workbench.create(folder, name, {
+              ...(config ? { config } : {}),
+              ...(instructions !== undefined ? { instructions } : {}),
+            }),
+          );
         }),
       "workbench.open": ({ folder }) =>
         sessions.lifecycle(async () => {
           await stopWorkbenchPrograms();
-          return workbench.open(folder);
+          return warmPrograms(await workbench.open(folder));
         }),
       "workbench.close": async () => {
         await sessions.lifecycle(async () => {

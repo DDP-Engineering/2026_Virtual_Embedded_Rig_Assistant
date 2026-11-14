@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-295dafd1"
+title = "Reuse a found program's probed version while its file is unchanged"
+status = "active"
+requirement = "When a found program that is not a launcher has an executable with the same path, size, modification time and file identity as when its version was last probed successfully, the provisioner shall report that stored version from probes.json in its runtime folder without starting the program, and a check again shall probe it for real."
+verification = "Unit tests: a second provisioner on the same runtime folder lists an unchanged found program as ready with the stored version and starts no process; after the file's modification time changes it starts the probe again; a check starts the probe even when the file is unchanged; a version stored by a scoped check survives a later write by another provisioner."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b34243de"
+title = "Invalidate only the changed plugin's program resolutions"
+status = "active"
+requirement = "When the provisioner is invalidated for one plugin id, it shall discard the cached program resolutions of that plugin only and keep those of other plugins."
+verification = "Unit test: with two plugins listed once, invalidating plugin A and listing both again probes A's program again and does not probe B's program."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14
