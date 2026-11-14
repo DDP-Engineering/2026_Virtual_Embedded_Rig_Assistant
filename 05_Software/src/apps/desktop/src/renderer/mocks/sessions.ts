@@ -1,9 +1,8 @@
 import {
   type ArtifactContent,
-  applySessionEvent,
   type ChangeDetail,
   confirmationMatches,
-  emptySessionState,
+  foldSessionEvents,
   isLiveSessionEvent,
   type ProgramApproval,
   programPolicy,
@@ -239,7 +238,7 @@ export class MockSessions {
         if (request.reasoning !== null && !options.includes(request.reasoning)) throw veraError("INVALID");
         this.emit(id, { type: "session.updated", reasoning: request.reasoning });
       }
-      const saved = row.events.reduce(applySessionEvent, emptySessionState()).reasoning;
+      const saved = foldSessionEvents(row.events).reasoning;
       return { modelRef, options, selected: saved && options.includes(saved) ? saved : null };
     }
     if (channel === "session.export") return { exported: true };
@@ -248,8 +247,7 @@ export class MockSessions {
     if (channel === "changes.list")
       return row.changes.map(({ diff: _, ...summary }) => structuredClone(summary));
     if (channel === "session.revision") return { seq: row.events.length };
-    if (channel === "session.get")
-      return { snapshot: row.events.reduce(applySessionEvent, emptySessionState()), seq: row.events.length };
+    if (channel === "session.get") return { snapshot: foldSessionEvents(row.events), seq: row.events.length };
     if (channel === "session.stop") {
       this.writable();
       row.stop = true;
@@ -331,7 +329,7 @@ export class MockSessions {
     }
     if (channel === "session.model.set") {
       row.summary.modelRef = request.modelRef;
-      const saved = row.events.reduce(applySessionEvent, emptySessionState()).reasoning;
+      const saved = foldSessionEvents(row.events).reasoning;
       const model = request.modelRef ?? this.current().model;
       this.emit(id, {
         type: "session.updated",
@@ -535,9 +533,9 @@ export class MockSessions {
               );
             }
           if (!row.stop) {
-            const pending = row.events
-              .reduce(applySessionEvent, emptySessionState())
-              .items.filter((item) => item.kind === "user" && item.pending);
+            const pending = foldSessionEvents(row.events).items.filter(
+              (item) => item.kind === "user" && item.pending,
+            );
             if (pending.length)
               this.emit(id, { type: "message.delivered", messageIds: pending.map((item) => item.id) }, key);
             if (/artifact/i.test(request.text)) {

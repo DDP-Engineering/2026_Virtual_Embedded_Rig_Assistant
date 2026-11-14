@@ -1,10 +1,4 @@
-import {
-  applySessionEvent,
-  emptySessionState,
-  isLiveSessionEvent,
-  type SessionEvent,
-  sessionEventSchema,
-} from "@vera/shared";
+import { foldSessionEvents, isLiveSessionEvent, type SessionEvent, sessionEventSchema } from "@vera/shared";
 import type Database from "better-sqlite3";
 import { EventsRepository } from "../storage/repos/events.js";
 
@@ -28,9 +22,7 @@ export class SessionHub {
   get(id: string) {
     const rows = this.events.list(id);
     return {
-      snapshot: rows
-        .map((r) => sessionEventSchema.parse(JSON.parse(r.payload_json)))
-        .reduce(applySessionEvent, emptySessionState()),
+      snapshot: foldSessionEvents(rows.map((r) => sessionEventSchema.parse(JSON.parse(r.payload_json)))),
       seq: rows.at(-1)?.seq ?? 0,
     };
   }
