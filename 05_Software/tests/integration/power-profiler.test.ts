@@ -1166,7 +1166,9 @@ describe.skipIf(!realPython)("the real pyjoulescope_driver 2.5.5 without a meter
     expect(run.code, run.stdout + run.stderr).toBe(0);
     expect(run.json.driver).toEqual({ package: "pyjoulescope_driver", version: "2.5.5" });
     expect(run.json.devices).toEqual([]);
-    expect(run.json.usb.ok).toBe(true);
+    // Windows ships WinUSB; Linux needs the vendor udev rule, which VERA reports but never installs.
+    if (process.platform === "win32") expect(run.json.usb.ok).toBe(true);
+    else if (!run.json.usb.ok) expect(run.json.usb.hint).toContain("72-joulescope.rules");
   });
   it("blocks identify and capture with device-missing and changes nothing", async () => {
     const ident = real(["identify", "--meter", "js1", "--run-id", "real-i"]);
