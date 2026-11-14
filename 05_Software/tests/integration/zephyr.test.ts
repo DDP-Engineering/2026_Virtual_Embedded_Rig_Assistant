@@ -1306,7 +1306,7 @@ describe.skipIf(!helperPython || !realRoot)(
       for (const suite of suites) {
         const elf = posix(suite.elf.path).replace(`${posix(wb)}/`, "");
         const capture = spawnSync(
-          "python",
+          helperPython as string,
           [
             sim,
             "capture-uart",

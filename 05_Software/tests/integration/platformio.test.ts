@@ -155,7 +155,8 @@ function helper(script: string, args: string[], extra: Record<string, string> = 
   env.PLATFORMIO_EXTRA_SCRIPTS = "pre:evil.py";
   env.PLATFORMIO_BUILD_FLAGS = "!echo injected";
   env.PLATFORMIO_CORE_DIR = join(root, "user-core");
-  env.HTTPS_PROXY = "http://proxy.invalid:8080";
+  // prepare-packages keeps the caller's proxy on purpose, so a real run with an empty core needs the real one.
+  if (!real) env.HTTPS_PROXY = "http://proxy.invalid:8080";
   const result = spawnSync(helperPython ?? "python", [script, ...args], {
     cwd: wb,
     env,
