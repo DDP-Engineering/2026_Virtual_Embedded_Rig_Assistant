@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-350e262a"
+
+title = "Report each edit's changes, nets, DRC, unconnected items and previews"
+
+status = "active"
+
+requirement = """
+When an edit completes, the helper shall write result.json and report.md listing each placed footprint with its position and orientation before and after, each created item, the track length and via count of each touched net before and after, the DRC counts before and after with the new violations, the unconnected counts, the verified-unchanged item counts, and before and after SVG previews of the touched layers.
+"""
+
+verification = "Real KiCad: after the routing request, result.json lists the capacitor's positions and orientations, the VIN track with its length, the via, GND's via count up by one, the DRC counts before and after, the unconnected counts, the unchanged counts (8 footprints, 6 tracks, 1 via, 0 zones) and previews with before-F_Cu.svg and after-F_Cu.svg (open wrote before-F_Cu.svg and before-B_Cu.svg); report.md shows the capacitor's move, the track size and length, the touched-net row, the DRC and unconnected counts and the after preview; the in-memory hash of the saved candidate read again through the API equals state.json's."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/report.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/drc.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

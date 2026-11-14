@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-c32834e3"
+
+title = "Define the kicad-tool command line and result documents"
+
+status = "active"
+
+requirement = """
+When the agent runs `kicad-tool` with one of the operations `inspect`, `erc`, `drc`, `bom`, `netlist`, `export` or `review-report` and `--project FILE`, the helper shall print one format-1 JSON document with the operation, the tool and KiCad versions, the run id, start and end, the project files with role, size and SHA-256, the operation's summary, warnings, limits, artifacts and the path of the complete `result.json` in a new run folder.
+"""
+
+verification = "Each operation on the fixture project prints a document with exactly these fields and status `completed`; `result.json` in the named run folder holds the same header and the complete lists; `--version` prints `kicad-tool 1.0.0`; an unknown operation, an abbreviated option, a repeated option and a repeated `--refill-zones` are `usage` refusals with exit 2."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/cli.py", "05_Software/plugins/kicad/scripts/kicad_support/document.py", "05_Software/plugins/kicad/scripts/kicad_support/review.py", "05_Software/plugins/kicad/scripts/kicad_tool.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

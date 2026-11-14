@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3f443814"
+
+title = "Offer apply_candidate only with the official kicad-layout plugin enabled"
+
+status = "active"
+
+requirement = """
+VERA shall offer apply_candidate only while the official kicad-layout plugin is installed and enabled in the session's workbench, and shall label it in English, Romanian and German.
+"""
+
+verification = "Unit tests: core offers the tool only with the host flag and only for the official kicad-layout package (a local package of the same id does not count); the desktop host sets the flag while the workbench's enabled plugins include the official package and clears it when they include only a local one or none; the tool label exists in the three locales."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/libraries/core/src/tools/registry.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/apply-candidate.test.ts", "05_Software/src/apps/desktop/src/main/sessions.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3ed87802"
+
+title = "Package the ngspice plugin with a pinned engine and the ngspice-tool helper"
+
+status = "active"
+
+requirement = """
+The ngspice plugin shall provide the ngspice engine program, found or on Windows downloaded from the pinned official build, the ngspice-tool helper that uses it, a rule that blocks every direct engine command, a simulation skill, and a catalog entry in the electronics pack.
+"""
+
+verification = "The package validates, its rules classify `ngspice -b x.cir` and `ngspice -v` blocked and `ngspice-tool run --input r.json` safe, the catalog and pack list it, its skill loads, and the README records version 47, the SHA-256 and the licence."
+
+affected_paths = ["05_Software/plugins/ngspice/plugin.yaml", "05_Software/plugins/ngspice/README.md", "05_Software/plugins/ngspice/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/plugins/ngspice/skills/circuit-simulation/SKILL.md"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

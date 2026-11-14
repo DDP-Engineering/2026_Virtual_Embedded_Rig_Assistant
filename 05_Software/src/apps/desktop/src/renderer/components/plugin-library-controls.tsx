@@ -21,6 +21,7 @@ export function pluginActivityLabels(t: TFunction): Record<CatalogActivity, stri
     security: t("plugins.library.activities.security"),
     "version-control": t("plugins.library.activities.versionControl"),
     testing: t("plugins.library.activities.testing"),
+    design: t("plugins.library.activities.design"),
   };
 }
 export function PluginLibraryControls({

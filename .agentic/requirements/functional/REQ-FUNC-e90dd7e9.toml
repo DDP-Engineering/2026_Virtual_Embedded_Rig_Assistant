@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e90dd7e9"
+
+title = "Sweep a parameter, the temperature or seeded Monte Carlo draws in one LTspice run"
+
+status = "active"
+
+requirement = """
+When the agent runs `ltspice-tool sweep`, the helper shall compute every parameter, temperature or seeded Monte Carlo point in one LTspice run with `.step`, split the stepped raw file into one series per point, and record each point's inputs and measurements and each measurement's summary.
+"""
+
+verification = "A load sweep of RLOAD 1k and 3k gives 5 V and 7.5 V at the two points; a temperature sweep 100, 0, 27 runs in ascending steps and is listed in the request's order (0.3663, 0.578035, 0.5 V); two Monte Carlo sweeps with seed 7 give the same drawn values and results, seed 8 others, all within 900..1100 ohm; one value or a repeated value is refused with exit 2."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/sweep.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

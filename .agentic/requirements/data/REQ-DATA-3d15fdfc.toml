@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-3d15fdfc"
+
+title = "Return one format 1 result document per elec-calc calculation"
+
+status = "active"
+
+requirement = """
+When `elec-calc` completes a calculation operation, the script shall print one UTF-8 JSON document with `format` 1, kind `elec-calc-result`, the tool name and version, the operation and model, the run id, start and end times, status `ok`, the request origin and SHA-256, the inputs it read with units, sources and conditions, assumptions, formulas, results with units, checks, warnings and limits, and exit 0.
+"""
+
+verification = "Run `losses` (linear-regulator) with an inline request whose `iq` carries a source and conditions and `--run-id t1`: the output parses as JSON and holds every listed field in the specified order, `runId` is t1, the request SHA-256 equals the SHA-256 of the argument bytes, the `iq` input repeats its source and conditions, results carry value, unit and text, and the exit code is 0; a request file gives origin `file` with its relative path and hash; result texts have four significant digits with the prefix taken from the rounded value (100.0 °C, 1.000 kΩ, 1.000e+12 Ω, 5.000e-16 s, 333.3 µA, 0, -45.00 deg, and 1.798e+308 V next to the largest number)."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_calc.py", "05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

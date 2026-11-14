@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-c2953ca4"
+
+title = "Confine LTspice includes to the working directory or the LTspice library"
+
+status = "active"
+
+requirement = """
+When a netlist includes a file, the helper shall accept it only as a workbench file inside the working directory, which it copies and checks, or as a file of the LTspice library (a bare name found in `lib/cmp` or `lib/sub`, or an absolute path inside `%LOCALAPPDATA%\\LTspice\\lib`), which it records by its library-relative name and hash without copying it, and refuse any other include - an unreadable file name, a file whose path inside the working directory is not in Unicode NFC, an include of the netlist itself, or a single-name `.lib` outside a file reached as `.lib FILE SECTION` that names no file - with exit 2.
+"""
+
+verification = "An include in a subfolder and a nested include are copied and rewritten relative to the copy that includes them; `.lib standard.dio` runs, is recorded as `<LTspice library>/cmp/standard.dio` with its hash (unchanged by the run) and is named by its quoted absolute path in effective.net; `validate` of `.lib LTC.lib` lists `<LTspice library>/sub/LTC.lib`; a converted schematic's absolute `standard.dio` path is a library input; `../../outside.lib`, `C:\\Windows\\win.ini`, a UNC path and a missing file are refused with exit 2 before LTspice; so are `.lib C:\\Windows\\win.ini` before `.end` with `.endl` after it, an unterminated quoted `.lib` path, an include of the netlist itself, an absolute `.lib` inside a section library, `.lib standard.dio ..\\..\\...`, `.inc standard.dio;..\\..\\...` an include name holding `%` and one not in NFC, a netlist and a schematic in a folder whose name is not in NFC; a workbench section library (`.lib \"models/corners.lib\" TT`) validates; no library file appears in the run folder."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/netlist.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

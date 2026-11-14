@@ -1,0 +1,5 @@
+Singular circuit (E04-C)
+V1 a 0 DC 5
+V2 a 0 DC 3
+R1 a 0 1k
+.end

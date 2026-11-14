@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-f4cf8c66"
+
+title = "Run elec-calc from a session without approval through the real runner"
+
+status = "active"
+
+requirement = """
+When a replay session in ask mode calls `run_program` for `elec-calc losses` with the plugin enabled, the program tools shall start it without an approval request and return the result document with exit code 0.
+"""
+
+verification = "With the real plugin store, provisioner (a uv stand-in that runs the installed script) and program runner, a replayed turn that calls run_program with the regulator request ends with exit code 0, risk safe and an output containing 2.61, and the session holds no approval."
+
+affected_paths = ["05_Software/plugins/electronics-calc/plugin.yaml", "05_Software/plugins/electronics-calc/scripts/elec_calc.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

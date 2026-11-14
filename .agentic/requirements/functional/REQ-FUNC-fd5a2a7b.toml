@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fd5a2a7b"
+
+title = "Test a supplier connection from Settings"
+
+status = "active"
+
+requirement = """
+When the user tests a supplier in Settings, the host shall run one keyword search with the stored credential and report pass, failed, key required, authentication, rate limited, timed out, Web access disabled or cancelled.
+"""
+
+verification = "With injected supplier answers the test reports ok, auth, rate-limited and timeout; with no credential key-required, with Web access off disabled, a cancel gives cancelled, a second test while one runs is BUSY, and the Settings page shows the outcome text."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/parts-access.ts", "05_Software/src/libraries/core/src/parts/configured.ts", "05_Software/src/apps/desktop/src/renderer/components/parts-access.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/parts-access.test.ts", "05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/apps/desktop/src/renderer/components/parts-access.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

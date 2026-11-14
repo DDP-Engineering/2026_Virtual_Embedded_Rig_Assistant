@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-da9b750b"
+
+title = "Compute capacitor ESR and inductor DCR losses without estimating core loss"
+
+status = "active"
+
+requirement = """
+When the agent runs `losses` with model `capacitor` or `inductor`, the script shall return the loss `I_rms^2` times the supplied ESR or DCR, add a core loss only when the request supplies its value, and otherwise mark the `core-loss` check `not-evaluated` with a warning.
+"""
+
+verification = "1 A RMS ripple in 30 mΩ ESR gives 0.03 W; 3 A RMS in 20 mΩ DCR gives 0.18 W with `core-loss` `not-evaluated`, a warning and total 0.18 W; with `coreLoss` 0.1 W the total is 0.28 W and the check passes."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

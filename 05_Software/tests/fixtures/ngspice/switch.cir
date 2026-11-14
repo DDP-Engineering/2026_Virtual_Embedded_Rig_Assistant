@@ -1,0 +1,8 @@
+Switch into a resistor (E04-B)
+V1 vin 0 DC 12
+Vctl ctl 0 PULSE(0 5 0 10n 10n 49.98u 100u)
+S1 vin a ctl 0 SW1
+.model SW1 SW(Ron=0.1 Roff=1e9 Vt=2.5 Vh=0)
+Vsense a b DC 0
+RL b 0 10
+.end

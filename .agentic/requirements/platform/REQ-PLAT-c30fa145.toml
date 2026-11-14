@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-c30fa145"
+
+title = "Run the kicad plugin through VERA on Windows x64 with real KiCad"
+
+status = "active"
+
+requirement = """
+On Windows x64 with KiCad 10 installed, the kicad plugin shall resolve `kicad-cli`, install `kicad-tool` through VERA's provisioner and complete `inspect`, `erc`, `drc` and an export on the fixture through VERA's program runner.
+"""
+
+verification = "The opt-in test (VERA_KICAD_UV naming a uv executable) provisions the plugin in a temporary runtime, resolves kicad-cli 10.x, runs the four operations through the ProgramRunner with the minimal environment and checks their documents and the unchanged sources."
+
+affected_paths = ["05_Software/plugins/kicad/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

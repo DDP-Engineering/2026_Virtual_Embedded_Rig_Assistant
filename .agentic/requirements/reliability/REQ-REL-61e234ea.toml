@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-61e234ea"
+
+title = "Refuse an invalid quantity"
+
+status = "active"
+
+requirement = """
+If a quantity has an unknown unit, a unit of another dimension than its field, no unit where one is required, a malformed number, a text or unit of more than 100 characters, or a value that is not finite or becomes zero once its prefix is applied, then the script shall refuse the request with code `unit` or `number` naming the field, and exit 2.
+"""
+
+verification = "A current where a voltage is required, `5 parsecs`, a bare number for a voltage, `3,3 V`, `NaN V`, `inf V`, `1e999 V`, `1e308 kV`, `1e-400 V`, 1e-320 fV, a 105-character quantity and a 101-character unit each give status `error` with the code and the field path and exit 2; the JSON literals NaN, Infinity, 1e999 and 1e-400 are refused as `json` with an empty path."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/quantities.py", "05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

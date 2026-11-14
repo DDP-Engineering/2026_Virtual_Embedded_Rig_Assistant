@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-40bcbc04"
+
+title = "Validate an LTspice netlist and its include chain without running the engine"
+
+status = "active"
+
+requirement = """
+When the agent runs `ltspice-tool validate --netlist FILE`, the helper shall list the title, every file with its role, bytes, SHA-256 and leading comment lines, the subcircuits with ports, the models, the dropped cards, the option cards as written and every problem, without starting the engine.
+"""
+
+verification = "Validating the RC fixture with an include lists the netlist and include with hashes, the include's leading comment lines, its subcircuit ports and models, the dropped `.tran` and `.meas` cards and an `.options` card as written, exit 0; a library `.lib LTC.lib` is listed with role library and its library-relative name; an `.asc` is refused with exit 2 naming `convert`; no LTspice process starts."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/netlist.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

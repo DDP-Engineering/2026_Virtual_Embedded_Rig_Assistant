@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d2fd6d58"
+
+title = "Report an open whose PCB editor never answers on the API"
+
+status = "active"
+
+requirement = """
+If the PCB editor started by an open does not answer on the KiCad API within 60 s, then the helper shall report the failure with exit 3 and the problem `connection` naming the KiCad preference that enables the API, stop the editor it started and remove the run folder.
+"""
+
+verification = "Offline: with a stub PCB editor that never serves the API and the wait shortened for the test, open exits 3 with problem connection naming Preferences > Plugins; the stub process is stopped and no run folder remains."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

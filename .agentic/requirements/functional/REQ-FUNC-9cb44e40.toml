@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9cb44e40"
+
+title = "Produce Gerber, drill and position files with explicit layers and a verification report"
+
+status = "active"
+
+requirement = """
+When the agent runs `export` with kind `gerbers`, `drill` or `pos`, the helper shall write the fabrication files with the options of its specification and the requested layers for Gerbers, and report each file with its format check and, for drill and position files, the counts compared with the board.
+"""
+
+verification = "On the fixture board: one Gerber per requested layer with `%TF.FileFunction` and `M02*` plus the job file; drill files with `M48`, `M30` and hole counts equal to the pads and vias with holes; a position CSV with one row per footprint not excluded from position files; a deliberately truncated file and a deleted job file in the in-process probe each give a `fail` entry while the run completes, and a board whose drawing layer is user-named `B.Cu` gives a `fail` for B.Cu because its file function is not copper."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/exports.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1ae67789"
+
+title = "Ship the kicad package with a KiCad find and the kicad-tool script"
+
+status = "active"
+
+requirement = """
+The official package `kicad` shall declare `kicad-cli` as a find program probed with `version` against KiCad 10 and `kicad-tool` as a PEP 723 script program on the standard library, with a README and two skills.
+"""
+
+verification = "The package validates as format 1; the provisioner resolves `kicad-cli` to the local KiCad 10 with version `10.0.8` and installs `kicad-tool` through uv; the installed folder lists the README and both skills."
+
+affected_paths = ["05_Software/plugins/kicad/plugin.yaml", "05_Software/plugins/kicad/README.md", "05_Software/plugins/kicad/scripts/kicad_tool.py", "05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

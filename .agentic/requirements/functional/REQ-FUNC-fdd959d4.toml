@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fdd959d4"
+
+title = "Refill zones only on the work copy and declare it"
+
+status = "active"
+
+requirement = """
+Where the agent passes `--refill-zones` to `drc` or `review-report`, the helper shall refill the zones of the work copy before DRC, never save the board, and report `zonesRefilled: true`.
+"""
+
+verification = "A run with `--refill-zones` on the fixture board with a zone reports `zonesRefilled: true` and the board's SHA-256 is unchanged; without the flag it reports `false`; no kicad-cli call of either run contains `--save-board`."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/operations.py", "05_Software/plugins/kicad/scripts/kicad_support/kicad.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

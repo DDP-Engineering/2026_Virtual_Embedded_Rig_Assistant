@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-52bb81f2"
+
+title = "Compute average power from voltage and current with a stated sign convention"
+
+status = "active"
+
+requirement = """
+When a request declares an average-power measurement, the helper shall integrate voltage times current over the window and divide by its length, state the sign convention, and never report the peak of the instantaneous power as the average.
+"""
+
+verification = "A resistor driven by a 50 % square wave through a sense source gives the analytic average power 7.058 W (positive, absorbed), different from the 14.116 W peak; the supply's own v x i over the same window is negative, -7.129 W (delivered); ltspice-tool's run of the same switch fixture gives 7.058 W within 0.5 %."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ltspice/scripts/ltspice_support/measure.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

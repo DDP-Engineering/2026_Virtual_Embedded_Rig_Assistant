@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-20ece322"
+
+title = "Leave no bytecode in the installed plugin folder"
+
+status = "active"
+
+requirement = """
+The `kicad-tool` script shall run without writing Python bytecode into the plugin folder.
+"""
+
+verification = "After every test run the plugin's `scripts` folder holds no `__pycache__` and no `.pyc` file."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_tool.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

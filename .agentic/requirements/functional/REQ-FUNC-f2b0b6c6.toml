@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f2b0b6c6"
+
+title = "Apply hard constraints before preferences when comparing candidates"
+
+status = "active"
+
+requirement = """
+When parts-compare evaluates candidates, it shall decide each candidate as rejected, eligible or unknown from the hard constraints alone and rank only eligible candidates by the preferences, so that a cheaper candidate never ranks above one that meets every constraint.
+"""
+
+verification = "A fixture where the cheapest candidate fails one constraint ranks it after every eligible and unknown candidate and does not propose it; with no eligible candidate nothing is proposed."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

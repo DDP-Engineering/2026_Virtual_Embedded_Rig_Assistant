@@ -180,6 +180,8 @@ async function locate(ctx: ProgramContext, program: string, signal: AbortSignal)
     throw programError(error, program);
   }
   const declared = plugin.manifest.programs[program];
+  if (declared?.file)
+    throw Error(`Program ${program} is a file that other programs of its plugin use; it does not run.`);
   const resolved = declared ? await ctx.host.resolver.resolve(plugin, program, signal) : undefined;
   if (!declared || !resolved)
     throw Error(`Program ${program} is not available: it is not installed or not supported yet.`);
@@ -288,6 +290,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
             ),
             ...current.resolved.env,
           },
+          ...(current.declared.gui ? { display: true } : {}),
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
           background,
           ...(background ? {} : { signal: applySignal }),

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-140facf3"
+
+title = "Refuse routing when the board has custom design rules the DSN cannot carry"
+
+status = "active"
+
+requirement = """
+If the candidate's project holds custom design rules (a .kicad_dru file with a rule), then the tool shall refuse the route with problem `rules` naming the rules before Freerouting starts, unless `--allow-custom-rules` is given, in which case it shall route and list the rules as a warning that the DSN does not carry them.
+"""
+
+verification = "Offline: a run folder whose candidate has a .kicad_dru with a rule is refused (exit 2, rules, the rule's name) and no freerouting folder is created; with --allow-custom-rules the refusal does not happen (real KiCad case: route exits 0 with the warning)."
+
+affected_paths = ["05_Software/plugins/freerouting/"]
+
+linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+
+
+spec = "specs/REQ-FUNC-2a80da7f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

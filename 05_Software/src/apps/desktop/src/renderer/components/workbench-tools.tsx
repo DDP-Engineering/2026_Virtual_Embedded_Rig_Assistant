@@ -29,11 +29,13 @@ export function WorkbenchTools({
     web_search: t("workbenchTools.web_search"),
     web_read: t("workbenchTools.web_read"),
     web_download: t("workbenchTools.web_download"),
+    parts_search: t("workbenchTools.parts_search"),
     run_program: t("workbenchTools.run_program"),
     program_output: t("workbenchTools.program_output"),
     program_stop: t("workbenchTools.program_stop"),
     plugin_validate: t("workbenchTools.plugin_validate"),
     plugin_install: t("workbenchTools.plugin_install"),
+    apply_candidate: t("workbenchTools.apply_candidate"),
   };
   return (
     <div className="workbench-tools">

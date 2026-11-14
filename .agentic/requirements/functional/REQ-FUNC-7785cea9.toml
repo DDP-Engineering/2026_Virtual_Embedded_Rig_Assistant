@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7785cea9"
+
+title = "Evaluate declared criteria as pass, fail or unknown"
+
+status = "active"
+
+requirement = """
+When a request declares criteria, the helper shall report each as pass, fail or unknown from its measurement, and unknown whenever the measurement is unknown.
+"""
+
+verification = "Fixture criteria give pass and fail as derived (a 7.06 W power against <= 8 W passes, against <= 5 W fails); a criterion on a measurement whose window lies outside the series is unknown, never pass; ltspice-tool evaluates the same criteria identically on its run of the switch fixture."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ltspice/scripts/ltspice_support/measure.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-c87a001f"
+
+title = "Run elec-calc offline through the bundled uv on Windows x64"
+
+status = "active"
+
+requirement = """
+While its program is installed, `elec-calc` shall run on Windows x64 through uv with `--offline` on the managed Python and return the regulator and thetaJA results.
+"""
+
+verification = "Opt-in test with `VERA_ELEC_UV` naming a real uv on Windows: the provisioner installs the script program, the resolved command contains `--offline`, and running it gives 2.61 W and 90 °C with exit code 0; the installed folder still passes the integrity check."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_calc.py"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

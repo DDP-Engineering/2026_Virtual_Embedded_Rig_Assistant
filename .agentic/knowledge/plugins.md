@@ -98,8 +98,16 @@ Core's `Provisioner` (`provisioning.ts`) installs and locates declared programs 
 (desktop `plugins.provision`, CLI `vera plugin install`), `statuses(id)` and `resolve(plugin, program)` never
 install. pip and script programs run the bundled uv (pinned by `src/uv/uv-manifest.json`) with every uv folder
 inside the runtime and one managed CPython 3.13; downloads are verified, extracted (zip in core through
-`archive.ts`, tar archives through the system tar) and kept per SHA-256; find programs are searched on PATH and
-absolute globs. Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
+`archive.ts`, tar archives through the system tar, Windows-only `.7z` through System32 bsdtar) and kept per SHA-256;
+find programs are searched on PATH and absolute globs (on Windows `%PATH%` looks for `<program>.exe`). A program may
+declare `uses: [<program>]` - find or download programs of the same plugin; resolving it also resolves each used
+program and adds its absolute path to the run as `VERA_PROGRAM_<NAME>` (upper case, `-`/`.` -> `_`), and it does not
+resolve when a used program does not. A program that opens windows declares `gui: true`: its runs (and only
+its runs) also receive the host's DISPLAY, WAYLAND_DISPLAY, XAUTHORITY and XDG_RUNTIME_DIR (`DISPLAY_VARIABLES`,
+`programEnvironment(..., display)`, RunRequest `display`); kicad-layout-tool uses it for KiCad's PCB editor. A
+download-only program may declare `file: true` (a Java archive): provisioning never runs it, its version is
+`version.match` on the downloaded file's name, run_program refuses it, and programs that `use` it get its path
+(freerouting's jar). Format-1 find may include a download fallback: by default a found executable is probed first, and a miss permits only the user-triggered installer to fetch. A failed found probe remains unavailable. With `preferDownload: true`, an installed managed executable is selected before discovery, and a discovery result with a managed entry for the host reports `downloadAvailable` so the user can still provision. Combined statuses use kind download and the review screen lists both sources. Archive entry points share the SHA-256 tree but retain separate recorded versions. Launchers remain find-only. Versions come from probes, are recorded in install.json and checked against `version.range`.
 Desktop `SessionsHost` caches the `<programs>` entries until a plugin changes.
 
 The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugins page
@@ -287,7 +295,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   an id that is not installed is an UNKNOWN_NAME warning, not an error.
 - Store mutations run one at a time per store instance.
 - Every program starts with `shell: false`, `windowsHide: true`, stdio `[ignore, pipe, pipe]` (stdin
-  closed) and, off Windows, `detached` so it leads its own process group.
+  closed) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
+  the same way: started detached on Windows, a console program such as KiCad's kicad-cli prints nothing.
 - The environment holds only PATH (tool paths first), SystemRoot, HOME, USERPROFILE, TEMP, TMP,
   TMPDIR, LANG, LANGUAGE and LC_* from the host, then the program's variables, then PYTHONUTF8=1 and
   NO_COLOR=1; names compare case-insensitively on Windows, so one PATH key remains.
@@ -390,7 +399,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   provision).
 - Downloads: at most 2 GiB, hashed while streamed; another SHA-256 is `sha256`; transfer failures and HTTP
   errors are `download`; zip entries must be plugin-relative after `\` -> `/` and are written as plain files
-  (no links), tar archives go through `%SystemRoot%\System32\tar.exe` or `/usr/bin/tar` (`/bin/tar`), then every
+  (no links), tar archives (and on Windows `.7z`, declared for windows-x64 only) go through
+  `%SystemRoot%\System32\tar.exe` or `/usr/bin/tar` (`/bin/tar`) - for a `.7z`, bsdtar's exit 1 is accepted only
+  when its whole output is its notice of skipped entries with unreadable (non-ASCII) names - then every
   link must resolve inside the tree and every other entry be a file or folder (`archive`); the declared path must
   be a file (`archive`); single files and, off Windows, the archive's executable get mode 0755. Any failure
   removes the staging folder, so nothing of it remains. Limit: extraction is bounded only by the pinned download.
@@ -505,6 +516,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-e08c858b` — original argument values reach the process host unchanged, no shell.
 - `REQ-FUNC-dbcd3311` — stdin is closed.
 - `REQ-SEC-f5c114de` — minimal environment without VERA's credentials.
+- `REQ-REL-380ee422` — provisioner probes and uv calls are not detached on Windows (process group only elsewhere).
 - `REQ-FUNC-cb84887a` / `REQ-SEC-7a6c3f5f` — guarded cwd; DENIED outside, ignored or not a directory.
 - `REQ-FUNC-58d65f31` / `REQ-FUNC-691dd257` — timeout and Stop/abort kill the tree.
 - `REQ-PLAT-8423a400` / `REQ-PLAT-c76610c6` — taskkill on Windows; process group SIGTERM then SIGKILL on Linux.

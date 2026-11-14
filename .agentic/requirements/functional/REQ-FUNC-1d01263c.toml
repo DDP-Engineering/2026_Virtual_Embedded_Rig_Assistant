@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1d01263c"
+
+title = "Price offers at the requested quantity and label captured offers as snapshots"
+
+status = "active"
+
+requirement = """
+When parts-compare prices an offer, it shall use the price break for the order quantity raised to the minimum and multiple, compare prices only within one currency, and label the offer as a snapshot that is stale when captured more than 24 hours before the run.
+"""
+
+verification = "At quantity 100 the fixture offers give the hand-derived order quantities, unit and extended prices (a minimum of 3000 raises the order to 3000, a minimum and multiple of 10 keep 100); offers in EUR and USD without a request currency make the price preference skipped with a warning; an offer captured 25 hours earlier is stale and one captured 1 hour earlier is not."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

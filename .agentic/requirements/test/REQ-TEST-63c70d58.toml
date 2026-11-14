@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-63c70d58"
+
+title = "Run the kicad-layout GUI tests against a real KiCad 10 when enabled"
+
+status = "active"
+
+requirement = """
+The kicad-layout test suite shall run its PCB editor tests against a real KiCad 10 only when VERA_TEST_KICAD_GUI is set, the KiCad API is enabled and no KiCad window serves the API, and shall otherwise skip them with the reason while the offline helper tests and the core apply tests still run.
+"""
+
+verification = "Without VERA_TEST_KICAD_GUI the PCB editor tests are skipped with the reason and the offline and core tests pass; with it set on Windows with KiCad 10.0.8 the open, edit, refusal, objective, report, close, Stop and apply tests pass."
+
+affected_paths = ["05_Software/tests/integration/kicad-layout.test.ts", "05_Software/tests/fixtures/kicad-layout/make_fixtures.py", "05_Software/tests/fixtures/kicad-layout/hooks/hook.py", "05_Software/tests/fixtures/kicad-layout/hooks/nudge.py", "05_Software/tests/fixtures/kicad-layout/hooks/editor_stub.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

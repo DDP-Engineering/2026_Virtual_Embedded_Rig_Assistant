@@ -18,6 +18,15 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  partsAccessCancelSchema,
+  partsAccessSaveResultSchema,
+  partsAccessSaveSchema,
+  partsAccessSnapshotSchema,
+  partsAccessSupplierSchema,
+  partsAccessTestResultSchema,
+  partsAccessTestSchema,
+} from "./parts-search.js";
+import {
   pluginCatalogIdRequestSchema,
   pluginCatalogInstallRequestSchema,
   pluginCatalogRequestSchema,
@@ -132,6 +141,15 @@ export const channels = {
   "web.access.removeKey": defineChannel("web.access.removeKey", webAccessProviderSchema, z.strictObject({})),
   "web.access.test": defineChannel("web.access.test", webAccessTestSchema, webAccessTestResultSchema),
   "web.access.cancel": defineChannel("web.access.cancel", webAccessCancelSchema, z.strictObject({})),
+  "parts.access.get": defineChannel("parts.access.get", z.strictObject({}), partsAccessSnapshotSchema),
+  "parts.access.save": defineChannel("parts.access.save", partsAccessSaveSchema, partsAccessSaveResultSchema),
+  "parts.access.removeKey": defineChannel(
+    "parts.access.removeKey",
+    partsAccessSupplierSchema,
+    z.strictObject({}),
+  ),
+  "parts.access.test": defineChannel("parts.access.test", partsAccessTestSchema, partsAccessTestResultSchema),
+  "parts.access.cancel": defineChannel("parts.access.cancel", partsAccessCancelSchema, z.strictObject({})),
   "window.menu": defineChannel(
     "window.menu",
     z.strictObject({

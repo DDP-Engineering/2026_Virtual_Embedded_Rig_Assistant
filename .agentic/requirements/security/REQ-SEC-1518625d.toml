@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-1518625d"
+
+title = "Offer the parts search tool only while the official plugin, Web access and a configured supplier allow it"
+
+status = "active"
+
+requirement = """
+The host shall offer `parts_search` to the model, and run a call of it, only while global Web access is enabled, the official parts-search plugin is enabled, installed, valid and unchanged in the open workbench, and at least one supplier is enabled, and otherwise shall leave the tool out and refuse a call with a message naming these conditions.
+"""
+
+verification = "With Web access on, a supplier enabled and the official plugin loaded the gate offers the tool; Web access off, every supplier off or the plugin gate false hide it and refuse a call made through a bound tool before any request; a local or trial copy of the plugin, or another plugin, does not count as the official one."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/configured.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts", "05_Software/src/apps/cli/src/parts-env.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

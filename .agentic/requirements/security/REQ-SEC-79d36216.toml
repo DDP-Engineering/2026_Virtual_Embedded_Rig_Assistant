@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-79d36216"
+
+title = "Classify every elec-calc command as a safe host calculation"
+
+status = "active"
+
+requirement = """
+When the rule matcher classifies an `elec-calc` command whose first argument is `--version`, `--help`, `-h` or one of the seven operations, the plugin's rules shall give risk `safe`, with a note for `report` that it creates a new folder in the workbench, a timeout of 600 s for `tolerance` and of 1800 s for `report`.
+"""
+
+verification = "classifyCommand gives `safe` for --version, --help, -h, each operation with `--json` or `--input`, and `report` with `--results-dir`, whose notes name the new folder; its timeout is null for a model operation, 600 for tolerance and 1800 for report, and the program timeout is 120; an unknown first argument keeps the platform default `device-write`; the catalog check of the plugin source reports no issue."
+
+affected_paths = ["05_Software/plugins/electronics-calc/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

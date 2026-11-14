@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-e0d8f3cf"
+
+title = "Pass the desktop display variables only to plugin programs that declare windows"
+
+status = "active"
+
+requirement = """
+Where a plugin program declares `gui: true` in plugin.yaml, VERA's program runner shall add the host's DISPLAY, WAYLAND_DISPLAY, XAUTHORITY and XDG_RUNTIME_DIR to that program's allowlisted environment, and it shall pass none of them to any other program.
+"""
+
+verification = "Unit tests: programEnvironment with a host environment holding the four display variables and a session-bus address gives none of them without the flag and exactly the four (and not the bus address) with it; run_program gives a gui program DISPLAY and XAUTHORITY and a program of the same plugin without the flag neither; the manifest schema refuses `gui: false`. Real KiCad: kicad-layout-tool declares `gui: true`, and an open started through the ProgramRunner opens the PCB editor on the candidate."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/plugins/kicad-layout/plugin.yaml"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

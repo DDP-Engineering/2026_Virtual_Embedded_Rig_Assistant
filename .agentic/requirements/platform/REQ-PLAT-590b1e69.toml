@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-590b1e69"
+
+title = "Offer the ltspice plugin only on Windows x64 and install nothing"
+
+status = "active"
+
+requirement = """
+The ltspice plugin shall declare only the windows-x64 platform, install no program and no Wine, and say in its README and catalog entry that it runs on Windows only with the user's own LTspice.
+"""
+
+verification = "plugin.yaml lists platforms [windows-x64] and no download; VERA offers a plugin only on the platforms it lists; the README states Windows only, the user's LTspice and the analog.com instructions."
+
+affected_paths = ["05_Software/plugins/ltspice/plugin.yaml", "05_Software/plugins/ltspice/README.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

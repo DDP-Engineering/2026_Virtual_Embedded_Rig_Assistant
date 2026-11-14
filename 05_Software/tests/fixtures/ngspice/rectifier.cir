@@ -1,0 +1,6 @@
+Half-wave rectifier (E04-A)
+.include models/diodes.lib
+V1 in 0 SIN(0 10 50)
+D1 in out D1N4148X
+R1 out 0 1k
+.end

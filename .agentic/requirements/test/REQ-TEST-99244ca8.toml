@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-99244ca8"
+
+title = "Match ngspice and analytic references on common circuits within declared tolerances"
+
+status = "active"
+
+requirement = """
+The ltspice integration tests shall run the divider, RC transient, RC AC and noise fixtures through ltspice-tool and, when ngspice is available, the same requests through ngspice-tool, and compare each measurement with the analytic reference and with ngspice within tolerances that the fixture README declares before the run.
+"""
+
+verification = "With VERA_TEST_LTSPICE and VERA_TEST_NGSPICE set, the divider op, RC at one time constant, the -3 dB point and the resistor noise each lie within their README tolerance of the analytic value and of the ngspice value; a difference beyond tolerance fails the test with both values printed."
+
+affected_paths = ["05_Software/tests/integration/ltspice.test.ts", "05_Software/tests/fixtures/ltspice/README.md"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

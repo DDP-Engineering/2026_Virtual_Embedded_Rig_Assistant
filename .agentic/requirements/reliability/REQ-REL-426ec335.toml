@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-426ec335"
+
+title = "Refuse files of another KiCad format without converting them"
+
+status = "active"
+
+requirement = """
+If a schematic, or a board for an operation that reads the board (inspect, drc, review-report and board exports), is in a KiCad 5 legacy format, carries a format version older than KiCad 8 writes (schematic 20231120, board 20240108) or newer than KiCad 10 writes, then the helper shall refuse with exit 2 and a `project` problem naming the file and its format, and for a KiCad 8 or 9 version it shall run with a warning that KiCad converts the file in memory and the source stays unchanged.
+"""
+
+verification = "A legacy `EESchema Schematic File Version 4` file, a board with `(version 29991231)` or `(version 20221018)` (drc) and a sheet with `(version 20230121)` are refused with these messages; a sheet with `(version 20250114)` completes with the warning; every source hash is unchanged."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-13

@@ -1,0 +1,5 @@
+other leading forms
+V1 a 0 DC 1
+R1 a 0 1k
+!#echo BANG-RAN
+.end

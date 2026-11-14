@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-e2517e0e"
+
+title = "Refuse a duty cycle combined with an RMS current"
+
+status = "active"
+
+requirement = """
+If a current descriptor gives `duty` together with `rms` or `dc`, mixes two forms, or gives an average above its RMS, then the script shall refuse the request with code `contradiction`, and exit 2.
+"""
+
+verification = "`{rms: 2 A, duty: 0.5}` gives `contradiction` on the current field with a message that an RMS value already covers the whole period; `{rms: 1 A, average: 2 A}` and `{dc: 1 A, shape: pulse, peak: 1 A, duty: 0.5}` are refused with `contradiction`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/waveforms.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

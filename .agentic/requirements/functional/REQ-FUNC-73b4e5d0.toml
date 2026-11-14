@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-73b4e5d0"
+
+title = "Apply an approved candidate over the source board through the write flow"
+
+status = "active"
+
+requirement = """
+When the agent calls apply_candidate for a kicad-layout run folder whose checks pass and the change is approved in ask mode or allowed by auto-edit or bypass mode, VERA shall write the candidate's bytes over the source board atomically through the write queue and record the change with the source's and the candidate's SHA-256.
+"""
+
+verification = "Core unit tests with a run folder fixture: in ask mode the approval request carries tool apply_candidate, the target path, both hashes, the byte count and a diff; after approval the target's bytes equal the candidate's and the change is recorded as applied; in auto-edit and in bypass mode it applies without a prompt (decided by the mode); the result names the path and hash. Real KiCad: the applied board reopens in the PCB editor and its footprints match the report."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/apply-candidate.ts", "05_Software/src/libraries/core/src/tools/changes.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/shared/src/events.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/apply-candidate.test.ts", "05_Software/src/libraries/core/src/sessions/apply-candidate.test.ts", "05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

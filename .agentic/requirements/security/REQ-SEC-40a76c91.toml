@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-40a76c91"
+
+title = "Build every kicad-cli argument inside the helper"
+
+status = "active"
+
+requirement = """
+The helper shall build each kicad-cli command from its own table of operations and options, never pass request text as a kicad-cli option, and never use `--save-board`, `upgrade`, `jobset`, `--define-var`, `--variant` or `--drawing-sheet`.
+"""
+
+verification = "The in-process probe records every kicad-cli argument list of all operations and export kinds: each starts with a known command, its output paths are inside the run folder or work copy, and none contains the forbidden options; a `--project` value starting with `-` is refused as `path` or treated as a file name, never as an option."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/kicad.py", "05_Software/plugins/kicad/scripts/kicad_support/exports.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

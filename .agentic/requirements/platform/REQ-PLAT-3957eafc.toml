@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-3957eafc"
+
+title = "Find KiCad 10 and run kicad-layout-tool with its pinned API client"
+
+status = "active"
+
+requirement = """
+The kicad-layout plugin shall find the user's kicad-cli of KiCad 10 on Windows x64 and Linux x64 as the kicad plugin finds it, start the PCB editor from the same folder, run kicad-layout-tool with the pinned dependencies kicad-python 0.8.0, protobuf 5.29.6 and pynng 0.9.0 as a program that opens windows (`gui: true`), never download or install KiCad, and block every direct kicad-cli command except version and help.
+"""
+
+verification = "Manifest tests: plugin.yaml validates with platforms windows-x64 and linux-x64, the kicad-cli find paths and range >=10.0,<11, and kicad-layout-tool with `uses: [kicad-cli]` and `gui: true`; the script's PEP 723 block pins the three dependencies; the rule engine rates `kicad-cli pcb drc x` blocked and `kicad-cli version` and `kicad-layout-tool open --board b.kicad_pcb` safe; on Windows the installed kicad-cli's version matches the manifest's probe and range. Real KiCad: an open started through VERA's ProgramRunner (closed stdin, allowlisted environment, uv --offline) completes."
+
+affected_paths = ["05_Software/plugins/kicad-layout/plugin.yaml", "05_Software/plugins/kicad-layout/scripts/kicad_layout_tool.py", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

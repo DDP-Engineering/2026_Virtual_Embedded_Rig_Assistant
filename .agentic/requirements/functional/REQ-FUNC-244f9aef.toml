@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-244f9aef"
+
+title = "Obtain and reuse supplier access tokens and refresh them once when refused"
+
+status = "active"
+
+requirement = """
+The host shall obtain DigiKey and TME access tokens with the stored credential, request at most one token at a time per supplier, reuse it until 60 s before it expires, and request a new one once when a search answers 401.
+"""
+
+verification = "Two concurrent searches from two sessions cause one token request; a search after the expiry margin requests a new token; a 401 search answer causes one token request and one repeated search."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/configured.ts", "05_Software/src/libraries/core/src/parts/suppliers.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

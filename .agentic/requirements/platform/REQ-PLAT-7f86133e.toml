@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-7f86133e"
+
+title = "Run elec-calc on native Linux x64"
+
+status = "active"
+
+requirement = """
+While its program is installed, `elec-calc` shall run on native Ubuntu x64 and return the same results as on Windows within 1e-9 relative.
+"""
+
+verification = "Manual: on a native Ubuntu x64 host (not WSL) run `npx vitest run tests/integration/electronics-calc.test.ts` with `VERA_ELEC_UV` set to a uv executable and record the Python, uv and distribution versions with the result."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_calc.py"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

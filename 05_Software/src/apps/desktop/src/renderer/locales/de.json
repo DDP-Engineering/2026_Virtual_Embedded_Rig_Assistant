@@ -50,7 +50,8 @@
     "notifications": "Benachrichtigungen",
     "shortcuts": "Tastenkombinationen",
     "storage": "Speicher",
-    "configuration": "Konfiguration"
+    "configuration": "Konfiguration",
+    "partsSearch": "Bauteilsuche"
   },
   "appearance": {
     "theme": "Design",
@@ -586,6 +587,48 @@
     "searchAndRead": "Websuche und Lesen von Webseiten.",
     "searchOnly": "Nur Suche. Zum Lesen von Webseiten Exa oder Tavily wählen."
   },
+  "partsSearch": {
+    "description": "Lieferantenkataloge für das offizielle Plugin parts-search. VERA sendet an die aktivierten Lieferanten nur den Suchtext oder die Teilenummer; Zugangsdaten bleiben auf diesem Computer und werden dem Agenten nie gezeigt. Suchen erfordern außerdem Web access und das für die Workbench aktivierte Plugin. Ergebnisse sind Momentaufnahmen ohne Steuern oder Versand, und es wird nie etwas bestellt.",
+    "loading": "Einstellungen der Bauteilsuche werden geladen…",
+    "region": "Region für Preise und Bestand",
+    "country": "Land (2 Buchstaben)",
+    "language": "Sprache (2 Buchstaben)",
+    "currency": "Währung (3 Buchstaben)",
+    "farnellStore": "Farnell-Shop",
+    "enabled": "Diesen Lieferanten verwenden",
+    "keyConfigured": "Zugangsdaten gespeichert ({{storage}}).",
+    "noKey": "Keine Zugangsdaten gespeichert.",
+    "idLabel": {
+      "digikey": "Client-ID",
+      "tme": "API-Token"
+    },
+    "secretLabel": {
+      "mouser": "API-Schlüssel",
+      "digikey": "Client-Secret",
+      "tme": "Anwendungsgeheimnis",
+      "farnell": "API-Schlüssel",
+      "rutronik": "API-Schlüssel"
+    },
+    "saveKey": "Zugangsdaten speichern",
+    "removeKey": "Zugangsdaten entfernen",
+    "test": "Testen",
+    "cancelTest": "Test abbrechen",
+    "save": "Speichern",
+    "saved": "Gespeichert.",
+    "results": {
+      "testing": "Wird getestet…",
+      "ok": "Der Lieferant hat geantwortet.",
+      "partial": "Der Lieferant hat geantwortet; einige Ergebnisse waren nicht lesbar.",
+      "failed": "Der Lieferant hat einen Fehler gemeldet.",
+      "key-required": "Für diesen Lieferanten sind keine Zugangsdaten gespeichert.",
+      "auth": "Der Lieferant hat die Zugangsdaten abgelehnt.",
+      "rate-limited": "Das Anfragelimit des Lieferanten ist erreicht. Später erneut versuchen.",
+      "timeout": "Der Lieferant hat nicht rechtzeitig geantwortet.",
+      "unavailable": "Der Lieferant war nicht erreichbar.",
+      "disabled": "Web access ist deaktiviert.",
+      "cancelled": "Test abgebrochen."
+    }
+  },
   "web": {
     "openTitle": "Externe Website öffnen?",
     "openDescription": "Diese Adresse wird im Systembrowser geöffnet.",
@@ -615,7 +658,9 @@
     "program_stop": "Einen Programmlauf im Hintergrund stoppen.",
     "plugin_validate": "Plugin-Entwurf prüfen und Schemafehler und Warnungen melden.",
     "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren.",
-    "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus."
+    "apply_candidate": "Schreibt einen geprüften kicad-layout-Kandidaten über seine Quellplatine, wenn Sie das Anwenden verlangen. Erfordert das Plugin kicad-layout; braucht eine Freigabe wie ein Schreibvorgang.",
+    "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus.",
+    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in Einstellungen > Bauteilsuche eingerichteten Lieferanten."
   },
   "projects": {
     "new": "Neue Workbench",
@@ -931,7 +976,8 @@
         "measurement": "Messung",
         "security": "Sicherheit",
         "versionControl": "Versionsverwaltung",
-        "testing": "Tests"
+        "testing": "Tests",
+        "design": "Entwurf"
       }
     },
     "configure": "Abhängigkeiten konfigurieren",

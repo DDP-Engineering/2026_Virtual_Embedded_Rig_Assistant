@@ -1,0 +1,7 @@
+Resistive divider (E04-A)
+V1 in 0 DC 12
+R1 in out 10k
+R2 out 0 {RB}
+.param RB=2.2k
+.op
+.end

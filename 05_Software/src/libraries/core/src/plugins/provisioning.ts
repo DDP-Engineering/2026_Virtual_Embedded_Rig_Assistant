@@ -28,7 +28,7 @@ import {
   versionInRange,
 } from "@vera/shared";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
-import { ArchiveError, checkTree, extractZip, tarCommand } from "./archive.js";
+import { ArchiveError, bsdtarSkipsOnly, checkTree, extractZip, tarCommand } from "./archive.js";
 import { programInvocation } from "./launcher.js";
 import { hostVariable, killProcessTree } from "./process-tree.js";
 import type { ProgramResolver, ResolvedProgram } from "./program-tools.js";
@@ -260,8 +260,21 @@ export class Provisioner implements ProgramResolver {
   ): Promise<ResolvedProgram | undefined> {
     await plugin.verify?.();
     const resolved = (await this.inspect(plugin, program, signal))?.resolved;
+    const uses = plugin.manifest.programs[program]?.uses ?? [];
+    if (!resolved || uses.length === 0) {
+      await plugin.verify?.();
+      return resolved;
+    }
+    // A helper that drives another program of its plugin receives that program's resolved path.
+    const paths: Record<string, string> = {};
+    for (const used of uses) {
+      const sibling = (await this.inspect(plugin, used, signal))?.resolved;
+      if (!sibling) return undefined;
+      paths[`VERA_PROGRAM_${used.toUpperCase().replaceAll("-", "_").replaceAll(".", "_")}`] =
+        sibling.executable;
+    }
     await plugin.verify?.();
-    return resolved;
+    return { ...resolved, env: { ...(resolved.env ?? {}), ...paths } };
   }
 
   /** Load through the caller's store and read the same observations as the runtime resolver. */
@@ -825,7 +838,9 @@ export class Provisioner implements ProgramResolver {
     const child = host.spawn(executable, args, {
       cwd: root,
       env: programEnvironment(host, [], own),
-      group: true,
+      // As for program runs: a process group only off Windows. Started detached on Windows, a console program
+      // such as KiCad's kicad-cli prints nothing; taskkill /T stops the tree there without a group.
+      group: host.platform !== "win32",
       output: (stream, chunk) => push(decoders[stream].write(chunk)),
     });
     this.executions.add(child.exit);
@@ -867,6 +882,11 @@ export class Provisioner implements ProgramResolver {
     pluginDir = "",
     verify?: () => Promise<void>,
   ): Promise<{ version?: string; detail?: string }> {
+    if (program.file) {
+      // Never run: the version is in the downloaded file's name.
+      const version = boundedMatch(program.version.match, basename(resolved.executable));
+      return version ? { version } : { detail: "The file name does not show the version." };
+    }
     const result = await this.execute(
       resolved.executable,
       programInvocation(resolved, [
@@ -1046,7 +1066,7 @@ export class Provisioner implements ProgramResolver {
       const form = downloadForm(entry.url);
       try {
         if (form === "zip") await extractZip(part, tree, signal);
-        else if (form === "tar") {
+        else if (form === "tar" || form === "7z") {
           const command = tarCommand(this.options.host, part, tree);
           const result = await this.execute(
             command.executable,
@@ -1055,7 +1075,14 @@ export class Provisioner implements ProgramResolver {
             this.options.timeouts?.installMs ?? INSTALL_MS,
             signal,
           );
-          if (result.exit.error || result.timedOut || result.exit.code !== 0) return "archive";
+          // A pinned 7z may hold names Windows cannot represent; bsdtar skips them and exits 1. Accept exactly that,
+          // with its whole output read; the declared executable is still required below.
+          const skipped =
+            form === "7z" &&
+            result.exit.code === 1 &&
+            result.head.length < PROBE_TEXT &&
+            bsdtarSkipsOnly(result.head);
+          if (result.exit.error || result.timedOut || (result.exit.code !== 0 && !skipped)) return "archive";
         } else {
           const target = join(tree, ...file.split("/"));
           await mkdir(dirname(target), { recursive: true });

@@ -1,0 +1,5 @@
+hostile exec card
+V1 a 0 DC 1
+.exec
+R1 a 0 1k
+.end

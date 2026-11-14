@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-003ccb83"
+
+title = "Refuse thetaJA combined with a junction-to-case path"
+
+status = "active"
+
+requirement = """
+If a thermal request gives `thetaJA` together with `thetaJC`, `thetaCS`, `thetaSA` or `thetaCA`, then the script shall refuse it with code `contradiction` and a message that thetaJA already contains the junction-to-case path, and exit 2.
+"""
+
+verification = "`junction-ambient` with an added `thetaJC`, and `junction-case-sink` with an added `thetaJA`, each give `contradiction` on the added key and exit 2."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/thermal.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

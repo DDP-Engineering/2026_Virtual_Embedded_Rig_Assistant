@@ -1,0 +1,5 @@
+Temperature-dependent divider: R1 = 1k x (1 + 0.01 x (T - 27))
+V1 in 0 1
+R1 in out 1k tc=0.01
+R2 out 0 1k
+.end

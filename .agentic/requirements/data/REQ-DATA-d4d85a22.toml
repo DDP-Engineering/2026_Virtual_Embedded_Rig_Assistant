@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-d4d85a22"
+
+title = "Parse LTspice raw files and report partial or corrupt data"
+
+status = "active"
+
+requirement = """
+When the helper reads an LTspice raw file, it shall decode the UTF-16LE header and the real, double, complex and stepped data with its axis, variable names, types and step boundaries, and report a file whose data length or header does not match as `partial` or `corrupt` instead of a series.
+"""
+
+verification = "Unit tests on raw files written by LTspice 26.1.1 (transient real, `numdgt=8` double, AC complex, stepped transient, stepped AC, stepped op, noise) give the expected points, columns and steps; a raw file cut mid-record is partial; a garbled header, a non-numeric point count and a decreasing non-stepped axis are corrupt; a raw file with no variables reads as empty (a run whose .save names an unknown vector reports problem vector)."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/raw.py", "05_Software/tests/fixtures/ltspice/raw_dump.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

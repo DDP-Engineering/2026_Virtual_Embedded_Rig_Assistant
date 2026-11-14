@@ -1,0 +1,18 @@
+format: 1
+id: parts-search
+version: 1.0.0
+name: Parts search and component selection
+description: Choose electronic components on evidence - search the supplier catalogs you enable (Mouser, DigiKey, TME, Farnell, Rutronik) through VERA's parts_search tool, then compare candidates against hard constraints first and preferences second, with every value traced to its datasheet page and conditions, and write a comparison and a proposed BOM. Supplier keys stay in VERA's Settings; nothing is ordered and no schematic or BOM is changed.
+ecosystem: electronics
+platforms: [windows-x64, linux-x64]
+docs: [README.md]
+programs:
+  parts-compare:
+    install: { script: scripts/parts_compare.py }
+    version: { args: [--version], match: '^parts-compare (\d+\.\d+\.\d+)' }
+    timeout: 120
+rules:
+  - { match: "parts-compare {--version,--help,-h}", risk: safe }
+  - match: "parts-compare compare *"
+    risk: safe
+    note: Offline comparison. Reads its JSON request and creates a new run folder with comparison.json, comparison.md and bom.csv under the results directory in the workbench; it opens no network connection, orders nothing and never overwrites.

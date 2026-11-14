@@ -50,7 +50,8 @@
     "notifications": "Notifications",
     "shortcuts": "Keyboard shortcuts",
     "storage": "Storage",
-    "configuration": "Configuration"
+    "configuration": "Configuration",
+    "partsSearch": "Parts search"
   },
   "appearance": {
     "theme": "Theme",
@@ -586,6 +587,48 @@
     "searchAndRead": "Web search and page reading.",
     "searchOnly": "Search only. For reading web pages, select Exa or Tavily."
   },
+  "partsSearch": {
+    "description": "Supplier catalogs for the official parts-search plugin. VERA sends only the search text or part number to the suppliers you enable; credentials stay on this computer and are never shown to the agent. Searches also need Web access and the plugin enabled for the workbench. Results are snapshots without taxes or shipping, and nothing is ever ordered.",
+    "loading": "Loading parts search settings…",
+    "region": "Region for prices and stock",
+    "country": "Country (2 letters)",
+    "language": "Language (2 letters)",
+    "currency": "Currency (3 letters)",
+    "farnellStore": "Farnell store",
+    "enabled": "Use this supplier",
+    "keyConfigured": "Credential stored ({{storage}}).",
+    "noKey": "No credential stored.",
+    "idLabel": {
+      "digikey": "Client ID",
+      "tme": "API token"
+    },
+    "secretLabel": {
+      "mouser": "API key",
+      "digikey": "Client secret",
+      "tme": "Application secret",
+      "farnell": "API key",
+      "rutronik": "API key"
+    },
+    "saveKey": "Save credential",
+    "removeKey": "Remove credential",
+    "test": "Test",
+    "cancelTest": "Cancel test",
+    "save": "Save",
+    "saved": "Saved.",
+    "results": {
+      "testing": "Testing…",
+      "ok": "The supplier answered.",
+      "partial": "The supplier answered; some results could not be read.",
+      "failed": "The supplier reported an error.",
+      "key-required": "No credential is stored for this supplier.",
+      "auth": "The supplier refused the credential.",
+      "rate-limited": "The supplier's request limit was reached. Retry later.",
+      "timeout": "The supplier did not answer in time.",
+      "unavailable": "The supplier could not be reached.",
+      "disabled": "Web access is disabled.",
+      "cancelled": "Test cancelled."
+    }
+  },
   "web": {
     "openTitle": "Open external website?",
     "openDescription": "This address will open in your system browser.",
@@ -615,7 +658,9 @@
     "program_stop": "Stop a background program run.",
     "plugin_validate": "Validate a plugin draft and report schema issues and warnings.",
     "plugin_install": "Request review and install a draft as a trial plugin.",
-    "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device."
+    "apply_candidate": "Write a checked kicad-layout candidate over its source board after you ask to apply it. Needs the kicad-layout plugin; asks for approval like a write.",
+    "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device.",
+    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in Settings > Parts search."
   },
   "projects": {
     "new": "New Workbench",
@@ -931,7 +976,8 @@
         "measurement": "Measurement",
         "security": "Security",
         "versionControl": "Version control",
-        "testing": "Testing"
+        "testing": "Testing",
+        "design": "Design"
       }
     },
     "configure": "Configure dependencies",

@@ -35,7 +35,8 @@ PLG-25 [#88](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistan
 Scope:
 - Extend maintainers' `catalog.yaml` by plugin-id discovery metadata: bounded unique activities,
   bounded keywords, optional factual `addedAt`/`updatedAt` calendar dates, with stable activity ids
-  for communication/flash/build/debug/firmware-analysis/measurement/security/version-control/testing.
+  for communication/flash/build/debug/firmware-analysis/measurement/security/version-control/testing
+  (`design` was added with ELEC-01 on 2026-11-12).
 - Carry the metadata through shared validation, catalog source checking/building, desktop catalog
   view, CLI output, mocks and bundled catalog generation. Keep existing identity/hash/tier behavior.
 - Define and validate true calendar days; reject invalid values and unknown plugin references.

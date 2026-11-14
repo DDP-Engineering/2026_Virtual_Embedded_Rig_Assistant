@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f1347188"
+
+title = "Run a simulation in batch mode on a copy in a new run folder"
+
+status = "active"
+
+requirement = """
+When the agent runs `ngspice-tool run`, the helper shall copy the netlist chain into a new run folder, run the engine in batch mode without .spiceinit on the effective copy with its own control block, and write the log, effective netlist, input hashes, series CSV, SVG plot, result.json and report.md there.
+"""
+
+verification = "A divider run creates exactly input/, effective.cir, ngspice.log, series.dat, series.csv, plot.svg, result.json and report.md in a new run folder; the effective netlist ends with the helper's control block and has no analysis card of the source."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py", "05_Software/plugins/ngspice/scripts/ngspice_support/report.py", "05_Software/plugins/ngspice/scripts/ngspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

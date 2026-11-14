@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fa7fc405"
+
+title = "Inspect board layers, stackup, dimensions, tracks, vias and net classes"
+
+status = "active"
+
+requirement = """
+When the agent runs `inspect` on a project with a board, the helper shall return the board's layers, stackup or its absence, KiCad's dimensions and counts, the footprints, per-net track count, length and widths, via sizes, zones and the project's net classes and patterns, and mark unconnected nets as not evaluated.
+"""
+
+verification = "The fixture board gives the layer names, stackup thicknesses, outline width and height, footprint references, the track length of a net drawn with known segments and the net classes written by hand in the fixture README; a board without stackup reports `available: false`; `unconnected` is `not-evaluated`."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/board.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

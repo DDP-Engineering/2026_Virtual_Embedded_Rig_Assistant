@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-91ca52fe"
+
+title = "Keep absolute paths out of ltspice-tool results and reports"
+
+status = "active"
+
+requirement = """
+The helper shall write no absolute path into result.json, report.md, report.json or its printed output, naming workbench files relative to the working directory, library files as `<LTspice library>/...`, and other files by name.
+"""
+
+verification = "Runs in a folder whose name has spaces and non-ASCII characters, a library include, a failing model and a convert produce result.json, report.md and printed output with no drive or UNC path; the model problem names `effective.net(<line>)` relative to the working directory; every hostile refusal's printed path and message hold no absolute path, also for `//server/share/...` and root-relative `\\Users\\...` includes (shown by their file names)."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/report.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

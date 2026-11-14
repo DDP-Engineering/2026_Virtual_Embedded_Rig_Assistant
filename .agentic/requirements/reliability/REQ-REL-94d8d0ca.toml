@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-94d8d0ca"
+
+title = "Retry a rate-limited supplier once after a bounded wait"
+
+status = "active"
+
+requirement = """
+If a supplier answers 429, then the host shall repeat the request once after the stated Retry-After seconds bounded to 5 s, or after 1 s without the header, and report status `rate-limited` when the repeat is limited too.
+"""
+
+verification = "A fixture 429 then 200 gives `ok` after one repeat; two 429 answers give `rate-limited` with exactly two requests; a Retry-After of 120 waits at most 5 s."
+
+affected_paths = ["05_Software/src/libraries/core/src/parts/http.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/parts/parts.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

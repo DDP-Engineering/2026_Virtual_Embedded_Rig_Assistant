@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-a6a6482e"
+
+title = "Refuse operations on unknown footprints, nets or layers"
+
+status = "active"
+
+requirement = """
+If an operation names a footprint reference that does not exist or is ambiguous, a uuid that does not match its reference, a net that does not exist or a layer that is not an enabled copper layer, or KiCad gives a created track or via another net than the request named because it touches that net's copper, then the helper shall refuse the request with exit 2 and the problem `footprint`, `net` or `layer`, without changing the candidate.
+"""
+
+verification = "Real KiCad: an unknown reference, a uuid of another footprint, a track on NO_SUCH_NET and on In5.Cu each exit 2 with problem footprint, net or layer; a GND track across the VOUT track, which KiCad would save as VOUT, exits 2 with problem net at operations[0] naming VOUT and the track's ends; a VIN via on the B.Cu GND track in a request that also moves R3 exits 2 with problem net at operations[1] naming GND, and R3 stays; after each the candidate file and in-memory hashes are unchanged."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/operations.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

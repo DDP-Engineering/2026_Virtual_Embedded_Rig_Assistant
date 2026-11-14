@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-fcbcb9dc"
+
+title = "Validate the uses field and 7z download platforms in plugin manifests"
+
+status = "active"
+
+requirement = """
+If a manifest's `uses` names no find or download program of the same plugin, names the program itself, repeats a name or holds two names that map to the same `VERA_PROGRAM_` variable, or a `.7z` download is declared for a platform other than windows-x64, then manifest validation shall report an issue.
+"""
+
+verification = "Manifests with uses naming an unknown program, a script program, itself, a name twice or `a-b` with `a.b`, and a linux-x64 .7z download each give a validation issue; a valid uses and a windows-x64 .7z give none."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-provisioning.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

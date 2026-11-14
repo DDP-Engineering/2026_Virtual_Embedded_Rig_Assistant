@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-97287e21"
+
+title = "Report LTspice failures with a distinct problem kind and without passing any criterion"
+
+status = "active"
+
+requirement = """
+If LTspice exits non-zero, writes an incomplete raw file or lacks a requested vector, then the helper shall report status failed with problems of kind model, subckt, include, singular, convergence, netlist, engine, partial, corrupt, vector or limit quoting the log lines, evaluate no measurement or criterion, keep the log and exit 3.
+"""
+
+verification = "Fixtures: a missing diode model gives kind model, a missing subcircuit subckt, two parallel sources singular, a non-converging behavioral loop convergence (\"Time step too small\"), a vector of a node that does not exist vector; each has status failed, exit 3, every measurement and criterion not-evaluated, effective.log kept, and no absolute path in the problems."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

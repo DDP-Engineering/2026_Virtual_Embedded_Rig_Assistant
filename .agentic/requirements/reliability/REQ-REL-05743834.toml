@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-05743834"
+
+title = "Report a KiCad execution failure apart from violations"
+
+status = "active"
+
+requirement = """
+If kicad-cli cannot start, exits with a nonzero code, times out, or does not produce the expected output, then the helper shall remove the run folder and exit 3 with a `run` problem quoting the end of KiCad's output, while violations alone complete with exit 0.
+"""
+
+verification = "The in-process probe makes the kicad-cli call return exit 3 with `Failed to load board`, separately produce no file, and separately name a kicad-cli that cannot start: each gives exit 3 with `run`, the quoted text or 'could not start', and no run folder; the DRC fixture with violations completes with exit 0."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/kicad.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

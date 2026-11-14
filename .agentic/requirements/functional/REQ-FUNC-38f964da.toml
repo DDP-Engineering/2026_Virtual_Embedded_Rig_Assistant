@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-38f964da"
+
+title = "Give a script program the resolved path of a sibling program it uses"
+
+status = "active"
+
+requirement = """
+When VERA resolves a program that declares `uses`, it shall also resolve each used program of the same plugin and give the run its absolute path as `VERA_PROGRAM_<NAME>`, and the program shall not resolve when a used program does not.
+"""
+
+verification = "A fixture plugin with a script program using a found program receives VERA_PROGRAM_<NAME> with that path in its environment; with the used program missing the script program resolves to nothing."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

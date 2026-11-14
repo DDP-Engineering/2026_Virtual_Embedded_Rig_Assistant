@@ -86,7 +86,7 @@ autopilot = true
 
 [review]
 enabled = true
-max_fix_cycles = 5
+max_fix_cycles = 10
 
 [diagrams]
 # Generate every supported Mermaid design diagram when applicable.

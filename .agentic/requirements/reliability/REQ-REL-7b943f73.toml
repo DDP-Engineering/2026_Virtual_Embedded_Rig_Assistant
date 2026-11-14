@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-7b943f73"
+
+title = "Refuse values outside a model's domain"
+
+status = "active"
+
+requirement = """
+If a value lies outside the domain of its model - a zero or negative resistance or capacitance, a negative magnitude, a ratio outside its range, an absolute temperature below 0 K, a pair that divides by zero - or the values are so large or small that a result is not a finite number, then the script shall refuse the request with code `domain`, and exit 2.
+"""
+
+verification = "A negative resistance, a zero capacitance, a duty of 1.5, an ambient of -300 °C and an Ohm's-law pair of zero voltage and zero current each give `domain` with the field path and exit 2; 1e200 V with 1e200 A, a 1e-320 Ω parallel branch with and without a source, two 1.7976e308 Ω resistors in series, a time constant of 1e-200 Ω with 1e-200 F and a low-pass at 1e200 Hz each give `domain` instead of a traceback, while one 1.7976e308 Ω resistor is computed."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/plugins/electronics-calc/scripts/elec_support/engine.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

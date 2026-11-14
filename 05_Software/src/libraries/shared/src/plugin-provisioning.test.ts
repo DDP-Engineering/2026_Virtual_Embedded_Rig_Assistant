@@ -170,3 +170,49 @@ it("accepts http and https index and proxy settings without credentials", () => 
   ])
     expect(settingsPatchSchema.safeParse({ plugins: bad }).success, JSON.stringify(bad)).toBe(false);
 });
+
+// REQ-FUNC-12ee8b64, REQ-DATA-fcbcb9dc
+it("reads .7z downloads as their own form, for windows-x64 only, with a named executable", () => {
+  expect(downloadForm("https://h.test/r/ngspice-47_64.7z")).toBe("7z");
+  expect(downloadForm("https://h.test/r/x.7Z?mirror=1")).toBe("7z");
+  expect(downloadForm("https://h.test/r/x.7z.sig")).toBe("file");
+  const seven = (platform: string, path?: string) =>
+    manifest({
+      download: { [platform]: { url: "https://h.test/r/n.7z", sha256, ...(path ? { path } : {}) } },
+    });
+  expect(paths(seven("windows-x64", "Spice64/bin/ngspice_con.exe"))).toEqual([]);
+  expect(paths(seven("windows-x64"))).toEqual(["programs.tool.install.download.windows-x64.path"]);
+  expect(paths(seven("linux-x64", "bin/ngspice"))).toEqual(["programs.tool.install.download.linux-x64.url"]);
+});
+
+// REQ-FUNC-38f964da, REQ-DATA-fcbcb9dc
+it("accepts uses only for find or download programs of the same plugin, once each, never itself", () => {
+  const version = { args: ["--version"], match: "(d+)" };
+  const plugin = (uses: unknown, engine: unknown = { find: { linux: ["$PATH"] } }) => ({
+    ...manifest({ script: "helper.py" }),
+    programs: {
+      engine: { install: engine, version },
+      helper: { install: { script: "helper.py" }, version, uses },
+    },
+  });
+  expect(paths(plugin(["engine"]))).toEqual([]);
+  expect(
+    paths(
+      plugin(["engine"], { download: { "linux-x64": { url: "https://h.test/e.zip", sha256, path: "e" } } }),
+    ),
+  ).toEqual([]);
+  expect(paths(plugin(["missing"]))).toEqual(["programs.helper.uses"]);
+  expect(paths(plugin(["helper"]))).toEqual(["programs.helper.uses"]);
+  expect(paths(plugin(["engine", "engine"]))).toEqual(["programs.helper.uses"]);
+  expect(paths(plugin(["engine"], { script: "engine.py" }))).toEqual(["programs.helper.uses"]);
+  expect(paths(plugin([]))).toEqual(["programs.helper.uses"]);
+  const twins = {
+    ...manifest({ script: "helper.py" }),
+    programs: {
+      "a-b": { install: { find: { linux: ["$PATH"] } }, version },
+      "a.b": { install: { find: { linux: ["$PATH"] } }, version },
+      helper: { install: { script: "helper.py" }, version, uses: ["a-b", "a.b"] },
+    },
+  };
+  expect(paths(twins)).toEqual(["programs.helper.uses"]);
+});

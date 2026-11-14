@@ -58,7 +58,7 @@ These operations work locally on the loaded snapshot and do not fetch on every k
 |---|---|
 | Search | Case- and diacritic-insensitive matching of name, id, description, ecosystem, activity labels and keywords. Whitespace-separated words all match somewhere in this combined text |
 | Ecosystem | Single selection using the catalog/manifest's actual ecosystem values; All is the default |
-| Activity | Single selection: communication, flash, build, debug, firmware analysis, measurement, security, version control or testing. Localized labels; a plugin can have multiple activities |
+| Activity | Single selection: communication, flash, build, debug, firmware analysis, measurement, security, version control, testing or design (added with ELEC-01). Localized labels; a plugin can have multiple activities |
 | Provenance | Official/community for catalog entries; include local/trial and applicable scoped-source information in Installed. Labels describe the actual package source |
 | State in Available | All, Not installed, Installed, New in catalog, Updates |
 | State in Installed | All, Needs configuration, Updates; expose unavailable/broken entries with their diagnostics instead of dropping them |

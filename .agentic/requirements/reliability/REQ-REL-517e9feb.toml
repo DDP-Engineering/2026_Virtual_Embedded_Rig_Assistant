@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-517e9feb"
+
+title = "Refuse requests beyond the run profile limits and stop LTspice beyond its time or data size"
+
+status = "active"
+
+requirement = """
+If a request exceeds its profile's point, vector or time limits, then the helper shall refuse it with exit 2 before the engine runs, and while LTspice runs it shall stop the engine when the time limit passes (status timeout) or the raw file grows beyond the profile's data limit (status failed, problem limit), exit 3.
+"""
+
+verification = "A transient of 2 000 000 points on the standard profile is refused with exit 2; the long switching fixture with a 2 s time limit ends with status timeout, exit 3, the log and partial raw kept; the same fixture with its data limit lowered by the test hook ends with problem limit; no LTspice process remains after either."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/request.py", "05_Software/tests/fixtures/ltspice/limit.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

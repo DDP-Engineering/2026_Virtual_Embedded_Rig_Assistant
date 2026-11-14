@@ -1,0 +1,8 @@
+Parameter only inside a subcircuit
+.subckt CELL a b
+.param RIN=1k
+R1 a b {RIN}
+.ends
+V1 in 0 1
+X1 in 0 CELL
+.end

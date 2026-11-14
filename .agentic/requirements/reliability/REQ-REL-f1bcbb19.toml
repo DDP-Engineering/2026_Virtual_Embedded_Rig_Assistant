@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-f1bcbb19"
+
+title = "Accept project paths with spaces and non-ASCII characters"
+
+status = "active"
+
+requirement = """
+When the project folder or file name contains spaces or characters outside ASCII, the helper shall run every operation as for any other path and report the paths unchanged.
+"""
+
+verification = "The fixture copied to a folder named with a space, `ü` and a CJK character gives the same ERC and DRC counts as the plain copy, and the document's project paths keep those characters."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py", "05_Software/plugins/kicad/scripts/kicad_support/kicad.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

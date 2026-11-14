@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3121bea3"
+
+title = "Validate a netlist and its include chain without running the engine"
+
+status = "active"
+
+requirement = """
+When the agent runs `ngspice-tool validate`, the helper shall list the netlist's title, the chain's files with their hashes and leading comment lines, subcircuits, models, dropped cards, option cards, problems and warnings (such as a value read as milli) without starting the engine.
+"""
+
+verification = "Validating the fixture netlists lists their includes with their header lines, subckt ports, models and dropped analysis cards with no engine started; `1M` gives the milli warning and `1MEG` none; a netlist with problems lists each one and exits 2."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/netlist.py", "05_Software/plugins/ngspice/scripts/ngspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

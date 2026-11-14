@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-0f278063"
+
+title = "Publish electronics-calc as an official catalog plugin in an Electronics design pack"
+
+status = "active"
+
+requirement = """
+When the catalog source is checked or built, the catalog shall list `electronics-calc` as official with activity `design` and its keywords, in pack `electronics` (Electronics design), group Calculations, without a catalog issue.
+"""
+
+verification = "catalog.yaml lists it under official with its metadata; packs.yaml holds the pack; the bundled catalog build lists fifteen official plugins including it with activities [design]; the catalog check of the source reports no issue."
+
+affected_paths = ["05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/plugins/electronics-calc/plugin.yaml", "05_Software/plugins/electronics-calc/README.md"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

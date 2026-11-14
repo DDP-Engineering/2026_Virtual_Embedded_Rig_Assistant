@@ -1,0 +1,26 @@
+format: 1
+id: electronics-calc
+version: 1.0.0
+name: Electronics calculations
+description: Reproducible electrical and thermal calculations with explicit units, assumptions, formulas and limits - Ohm's law, dividers, RC filters, regulator, MOSFET, diode and passive losses, junction temperatures, worst-case and Monte Carlo tolerance analysis, and a JSON/Markdown report. Use for any number a design decision rests on; it runs offline and touches no hardware.
+ecosystem: electronics
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://www.ti.com/lit/an/spra953d/spra953d.pdf"]
+programs:
+  elec-calc:
+    install: { script: scripts/elec_calc.py }
+    version: { args: [--version], match: '^elec-calc (\d+\.\d+\.\d+)' }
+    timeout: 120
+rules:
+  - { match: "elec-calc {--version,--help,-h}", risk: safe }
+  - match: "elec-calc {dc,divider,rc,losses,thermal} *"
+    risk: safe
+    note: Host calculation. Reads its JSON request and changes no file.
+  - match: "elec-calc tolerance *"
+    risk: safe
+    note: Host calculation. Reads its JSON request and changes no file; a large Monte Carlo run may take minutes.
+    timeout: 600
+  - match: "elec-calc report *"
+    risk: safe
+    note: Host calculation. Creates a new run folder with report.json and report.md under the results directory in the workbench; it never overwrites.
+    timeout: 1800

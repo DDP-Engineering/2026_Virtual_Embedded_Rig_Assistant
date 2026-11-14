@@ -1,0 +1,6 @@
+xspice process
+V1 a 0 DC 1
+R1 a 0 1k
+A1 [a] [b] proc1
+.model proc1 d_process (process_file="cmd.exe")
+.end

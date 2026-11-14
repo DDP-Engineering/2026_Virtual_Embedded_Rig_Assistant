@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cd05145a"
+
+title = "Evaluate worst-case corners of declared tolerances"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc tolerance`, the script shall evaluate the target operation at its nominal values and at every corner of the declared parameter ranges and return, for each of up to six requested outputs, the nominal, minimum and maximum with the corner that gives each extreme and a three-point monotonicity check.
+"""
+
+verification = "A 5 V divider of two 10 kΩ 1 % resistors gives `vout` nominal 2.5 V, minimum 2.475 V at rTop max and rBottom min, maximum 2.525 V at the opposite corner, and `monotonic` pass; a 2 % `vin` range widens it to 2.4255 V and 2.5755 V; `powerBottom` with rBottom 5 kΩ to 15 kΩ fails `monotonic`; a refusal at a corner names that corner; a path that is not a quantity, a list index written `01`, with a non-ASCII digit or with 5000 digits, 13 parameters, seven outputs, a nominal outside its range, a relative tolerance on an absolute temperature and an unknown output are refused; a distribution without `monteCarlo` gives the corners with a warning."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/tolerance.py", "05_Software/plugins/electronics-calc/scripts/elec_support/engine.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

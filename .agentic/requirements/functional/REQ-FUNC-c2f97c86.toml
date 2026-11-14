@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c2f97c86"
+
+title = "Export the KiCad netlist and normalized nets"
+
+status = "active"
+
+requirement = """
+When the agent runs `netlist`, the helper shall write KiCad's netlist as `netlist.net` and `nets.json` with every net, its class and nodes, and every component with its instances.
+"""
+
+verification = "The fixture's `nets.json` holds the nets and nodes recorded in the fixture README, including a net that crosses the hierarchy through sheet pins; `netlist.net` parses as one `export` list."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/netlist.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

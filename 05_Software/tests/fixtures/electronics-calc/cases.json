@@ -1,0 +1,4119 @@
+{
+  "comment": "Requests and hand-derived expectations for tests/integration/electronics-calc.test.ts. README.md shows each derivation; no value here was produced by the program.",
+  "groups": [
+    {
+      "requirement": "REQ-FUNC-a7be6767",
+      "title": "dc: Ohm's law, series, parallel and shunt",
+      "cases": [
+        {
+          "name": "ohm from voltage and current",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "5 V",
+            "current": "10 mA"
+          },
+          "results": {
+            "resistance": 500,
+            "power": 0.05,
+            "voltage": 5,
+            "current": 0.01
+          },
+          "units": {
+            "resistance": "Ω",
+            "power": "W"
+          }
+        },
+        {
+          "name": "ohm from power and resistance",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "power": "1 W",
+            "resistance": "100 Ohm",
+            "signal": "rms"
+          },
+          "results": {
+            "voltage": 10,
+            "current": 0.1
+          },
+          "assumptions": ["RMS"]
+        },
+        {
+          "name": "series string on a voltage",
+          "operation": "dc",
+          "input": {
+            "model": "series",
+            "resistances": ["1 kΩ", "2 kΩ"],
+            "voltage": "3 V"
+          },
+          "results": {
+            "totalResistance": 3000,
+            "current": 0.001,
+            "totalPower": 0.003
+          },
+          "details": {
+            "elements.0.voltage.value": 1,
+            "elements.1.voltage.value": 2,
+            "elements.1.power.value": 0.002
+          }
+        },
+        {
+          "name": "series without a source",
+          "operation": "dc",
+          "input": {
+            "model": "series",
+            "resistances": ["1 kΩ", "2 kΩ"]
+          },
+          "results": {
+            "totalResistance": 3000
+          },
+          "absent": ["current", "totalPower"]
+        },
+        {
+          "name": "parallel pair on a current",
+          "operation": "dc",
+          "input": {
+            "model": "parallel",
+            "resistances": ["1 kΩ", "1 kΩ"],
+            "current": "2 mA"
+          },
+          "results": {
+            "totalResistance": 500,
+            "voltage": 1,
+            "totalPower": 0.002
+          },
+          "details": {
+            "elements.0.current.value": 0.001,
+            "elements.1.current.value": 0.001
+          }
+        },
+        {
+          "name": "shunt within its rating",
+          "operation": "dc",
+          "input": {
+            "model": "shunt",
+            "resistance": "10 mΩ",
+            "current": "5 A",
+            "gain": 50,
+            "ratedPower": "0.5 W"
+          },
+          "results": {
+            "voltageDrop": 0.05,
+            "power": 0.25,
+            "outputVoltage": 2.5,
+            "powerUtilization": 0.5
+          },
+          "checks": {
+            "rated-power": "pass"
+          }
+        },
+        {
+          "name": "shunt above its rating",
+          "operation": "dc",
+          "input": {
+            "model": "shunt",
+            "resistance": "10 mΩ",
+            "current": "5 A",
+            "ratedPower": "0.2 W"
+          },
+          "results": {
+            "power": 0.25,
+            "powerUtilization": 1.25
+          },
+          "checks": {
+            "rated-power": "fail"
+          },
+          "absent": ["outputVoltage"]
+        },
+        {
+          "name": "shunt without a rating",
+          "operation": "dc",
+          "input": {
+            "model": "shunt",
+            "resistance": "10 mΩ",
+            "current": "5 A"
+          },
+          "results": {
+            "power": 0.25
+          },
+          "checks": {
+            "rated-power": "not-evaluated"
+          }
+        },
+        {
+          "name": "ohm with three values",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "5 V",
+            "current": "10 mA",
+            "resistance": "500 Ω"
+          },
+          "error": {
+            "code": "schema"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-9897d628",
+      "title": "divider: loaded analysis and sizing",
+      "cases": [
+        {
+          "name": "unloaded",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "rTop": "10 kΩ",
+            "rBottom": "10 kΩ"
+          },
+          "results": {
+            "vout": 2.5,
+            "voutUnloaded": 2.5,
+            "loadingError": 0,
+            "theveninResistance": 5000,
+            "currentTop": 0.00025,
+            "powerTop": 0.000625,
+            "powerBottom": 0.000625
+          },
+          "absent": ["currentLoad", "powerLoad"]
+        },
+        {
+          "name": "loaded",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "rTop": "10 kΩ",
+            "rBottom": "10 kΩ",
+            "rLoad": "10 kΩ"
+          },
+          "results": {
+            "vout": 1.6666666666667,
+            "voutUnloaded": 2.5,
+            "loadingError": -0.33333333333333,
+            "theveninResistance": 5000,
+            "currentTop": 0.00033333333333333,
+            "powerTop": 0.0011111111111111,
+            "powerBottom": 0.00027777777777778,
+            "currentLoad": 0.00016666666666667,
+            "powerLoad": 0.00027777777777778
+          }
+        },
+        {
+          "name": "solve the top resistor",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "vout": "3.3 V",
+            "rBottom": "10 kΩ",
+            "solveFor": "rTop"
+          },
+          "results": {
+            "rTop": 5151.5151515152,
+            "vout": 3.3
+          }
+        },
+        {
+          "name": "solve the bottom resistor under load",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "vout": "2.5 V",
+            "rTop": "10 kΩ",
+            "rLoad": "20 kΩ",
+            "solveFor": "rBottom"
+          },
+          "results": {
+            "rBottom": 20000,
+            "vout": 2.5
+          }
+        },
+        {
+          "name": "target the load makes unreachable",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "vout": "2.5 V",
+            "rTop": "10 kΩ",
+            "rLoad": "5 kΩ",
+            "solveFor": "rBottom"
+          },
+          "error": {
+            "code": "domain"
+          }
+        },
+        {
+          "name": "solve mode without a target",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "rBottom": "10 kΩ",
+            "solveFor": "rTop"
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "vout"
+          }
+        },
+        {
+          "name": "target above the input",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "vout": "6 V",
+            "rBottom": "10 kΩ",
+            "solveFor": "rTop"
+          },
+          "error": {
+            "code": "domain",
+            "path": "vout"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-fa29ca17",
+      "title": "rc: time constant, step response and first-order filters",
+      "cases": [
+        {
+          "name": "time constant",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF"
+          },
+          "results": {
+            "tau": 0.001,
+            "cutoffFrequency": 159.1549430919,
+            "riseTime1090": 0.0021972245773362,
+            "settlingTime1pct": 0.0046051701859881
+          },
+          "units": {
+            "tau": "s",
+            "cutoffFrequency": "Hz"
+          }
+        },
+        {
+          "name": "step voltage at one time constant",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "vInitial": "0 V",
+            "vFinal": "5 V",
+            "time": "1 ms"
+          },
+          "results": {
+            "voltageAtTime": 3.1606027941428
+          }
+        },
+        {
+          "name": "time to half of the step",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "vInitial": "0 V",
+            "vFinal": "5 V",
+            "vTarget": "2.5 V"
+          },
+          "results": {
+            "timeToTarget": 0.00069314718055995
+          }
+        },
+        {
+          "name": "falling step with a negative level",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "vInitial": "5 V",
+            "vFinal": "-5 V",
+            "vTarget": "0 V"
+          },
+          "results": {
+            "timeToTarget": 0.00069314718055995
+          }
+        },
+        {
+          "name": "target outside the step",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "vInitial": "0 V",
+            "vFinal": "5 V",
+            "vTarget": "6 V"
+          },
+          "error": {
+            "code": "domain",
+            "path": "vTarget"
+          }
+        },
+        {
+          "name": "low-pass at its cutoff",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "159.15494309189535 Hz"
+          },
+          "results": {
+            "gain": 0.70710678118655,
+            "gainDb": -3.0102999566398,
+            "phase": -45,
+            "cutoffFrequency": 159.1549430919
+          },
+          "units": {
+            "phase": "deg",
+            "gainDb": "dB"
+          }
+        },
+        {
+          "name": "high-pass at its cutoff",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "highpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "159.15494309189535 Hz"
+          },
+          "results": {
+            "gain": 0.70710678118655,
+            "phase": 45
+          }
+        },
+        {
+          "name": "low-pass a decade above its cutoff",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "1591.5494309189535 Hz"
+          },
+          "results": {
+            "gain": 0.099503719020999,
+            "gainDb": -20.043213737826,
+            "phase": -84.2894068625
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-49d4ab63",
+      "title": "rc: peak, RMS and average amplitudes",
+      "cases": [
+        {
+          "name": "sine from its peak",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "sine",
+            "peak": "1 V"
+          },
+          "results": {
+            "peak": 1,
+            "rms": 0.70710678118655,
+            "average": 0,
+            "rectifiedAverage": 0.63661977236758,
+            "peakToPeak": 2,
+            "crestFactor": 1.4142135623731,
+            "formFactor": 1.1107207345396
+          },
+          "units": {
+            "rms": "V"
+          }
+        },
+        {
+          "name": "pulse train",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "peak": "4 A",
+            "duty": 0.25
+          },
+          "results": {
+            "rms": 2,
+            "average": 1,
+            "rectifiedAverage": 1,
+            "peakToPeak": 4,
+            "crestFactor": 2,
+            "formFactor": 2
+          },
+          "units": {
+            "rms": "A"
+          }
+        },
+        {
+          "name": "pulse train from its average",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "average": "1 A",
+            "duty": "25 %"
+          },
+          "results": {
+            "peak": 4,
+            "rms": 2
+          }
+        },
+        {
+          "name": "triangle from its RMS",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "triangle",
+            "rms": "1 V"
+          },
+          "results": {
+            "peak": 1.7320508075689,
+            "rectifiedAverage": 0.86602540378444,
+            "formFactor": 1.1547005383793
+          }
+        },
+        {
+          "name": "square",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "square",
+            "peak": "3 V"
+          },
+          "results": {
+            "rms": 3,
+            "average": 0,
+            "rectifiedAverage": 3,
+            "peakToPeak": 6
+          }
+        },
+        {
+          "name": "dc",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "dc",
+            "peak": "3 V"
+          },
+          "results": {
+            "rms": 3,
+            "average": 3,
+            "peakToPeak": 0
+          }
+        },
+        {
+          "name": "filter output from an RMS input",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "159.15494309189535 Hz",
+            "amplitude": "1 V",
+            "amplitudeKind": "rms"
+          },
+          "results": {
+            "outputRms": 0.70710678118655,
+            "outputPeak": 1,
+            "outputPeakToPeak": 2,
+            "outputAverage": 0,
+            "outputRectifiedAverage": 0.63661977236758
+          }
+        },
+        {
+          "name": "filter output from a peak-to-peak input",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "159.15494309189535 Hz",
+            "amplitude": "2 V",
+            "amplitudeKind": "peak-to-peak"
+          },
+          "results": {
+            "outputPeak": 0.70710678118655,
+            "outputRms": 0.5
+          }
+        },
+        {
+          "name": "filter amplitude without its kind",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "1 kHz",
+            "amplitude": "1 V"
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "amplitudeKind"
+          }
+        },
+        {
+          "name": "average of a symmetric shape",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "sine",
+            "average": "1 V"
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "average"
+          }
+        },
+        {
+          "name": "pulse without its duty",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "peak": "1 A"
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "duty"
+          }
+        },
+        {
+          "name": "pulse at duty one is a constant level",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "peak": "3 A",
+            "duty": 1
+          },
+          "results": {
+            "rms": 3,
+            "average": 3,
+            "peakToPeak": 0
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-af6f7e42",
+      "title": "losses: linear regulator with the quiescent-current term (E01-A)",
+      "cases": [
+        {
+          "name": "quiescent current explicitly neglected",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "results": {
+            "pDissipated": 2.61,
+            "pInput": 3.6,
+            "pOutput": 0.99,
+            "efficiency": 0.275
+          },
+          "units": {
+            "pDissipated": "W",
+            "efficiency": "1"
+          },
+          "assumptions": ["neglected"],
+          "checks": {
+            "dropout": "not-evaluated"
+          }
+        },
+        {
+          "name": "quiescent current given",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "iq": "5 mA"
+          },
+          "results": {
+            "pDissipated": 2.67,
+            "pInput": 3.66,
+            "pOutput": 0.99,
+            "efficiency": 0.27049180327869
+          },
+          "assumptions": ["V_in"]
+        },
+        {
+          "name": "dropout met",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true,
+            "dropout": "1 V"
+          },
+          "results": {
+            "pDissipated": 2.61
+          },
+          "checks": {
+            "dropout": "pass"
+          }
+        },
+        {
+          "name": "dropout not met",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true,
+            "dropout": "10 V"
+          },
+          "results": {
+            "pDissipated": 2.61
+          },
+          "checks": {
+            "dropout": "fail"
+          }
+        },
+        {
+          "name": "no load and no quiescent current",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0 A",
+            "neglectIq": true
+          },
+          "results": {
+            "pDissipated": 0,
+            "pInput": 0
+          },
+          "absent": ["efficiency"],
+          "warnings": ["efficiency"]
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-c4a6c310",
+      "title": "losses: linear regulator refusals",
+      "cases": [
+        {
+          "name": "no quiescent-current decision",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A"
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "iq"
+          }
+        },
+        {
+          "name": "neglectIq false alone",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": false
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "iq"
+          }
+        },
+        {
+          "name": "quiescent current and its neglect",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "iq": "5 mA",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "neglectIq"
+          }
+        },
+        {
+          "name": "input below the output",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "3 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "vin"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-8943ed4c",
+      "title": "losses: conduction from RMS or pulsed current (E01-B)",
+      "cases": [
+        {
+          "name": "resistor with an RMS current",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "rms": "2 A"
+            }
+          },
+          "results": {
+            "power": 0.2,
+            "currentRms": 2
+          },
+          "absent": ["currentAverage"],
+          "checks": {
+            "power-rating": "not-evaluated"
+          }
+        },
+        {
+          "name": "resistor with a pulsed current",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "shape": "pulse",
+              "peak": "4 A",
+              "duty": 0.25
+            }
+          },
+          "results": {
+            "power": 0.2,
+            "currentRms": 2,
+            "currentAverage": 1
+          }
+        },
+        {
+          "name": "resistor with an RMS voltage",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V"
+          },
+          "results": {
+            "power": 0.2
+          }
+        },
+        {
+          "name": "resistor with a constant current",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "dc": "2 A"
+            }
+          },
+          "results": {
+            "power": 0.2,
+            "currentRms": 2,
+            "currentAverage": 2
+          }
+        },
+        {
+          "name": "resistor with a sine current",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "shape": "sine",
+              "peak": "2.8284271247462 A"
+            }
+          },
+          "results": {
+            "power": 0.2,
+            "currentRms": 2,
+            "currentAverage": 0
+          }
+        },
+        {
+          "name": "mosfet conduction with an RMS current",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "2 A"
+            },
+            "rdsOn": {
+              "value": 50,
+              "unit": "mΩ",
+              "conditions": "VGS = 10 V, Tj = 125 °C",
+              "source": "Datasheet rev. C, table 4"
+            }
+          },
+          "results": {
+            "pConduction": 0.2,
+            "pDevice": 0.2,
+            "currentRms": 2
+          },
+          "absent": ["pSwitching", "pGateDrive"],
+          "checks": {
+            "rdson-conditions": "pass"
+          }
+        },
+        {
+          "name": "mosfet conduction with a pulsed current",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "shape": "pulse",
+              "peak": "4 A",
+              "duty": 0.25
+            },
+            "rdsOn": {
+              "value": 50,
+              "unit": "mΩ",
+              "conditions": "VGS = 10 V, Tj = 125 °C"
+            }
+          },
+          "results": {
+            "pConduction": 0.2,
+            "currentRms": 2,
+            "currentAverage": 1
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-e2517e0e",
+      "title": "losses: a duty cycle is not applied to an RMS current",
+      "cases": [
+        {
+          "name": "duty with an RMS value",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "rms": "2 A",
+              "duty": 0.5
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "current",
+            "message": "whole period"
+          }
+        },
+        {
+          "name": "duty with a constant current",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "dc": "2 A",
+              "duty": 0.5
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "current"
+          }
+        },
+        {
+          "name": "average above the RMS value",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "current": {
+              "rms": "1 A",
+              "average": "2 A"
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "current"
+          }
+        },
+        {
+          "name": "two forms at once",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "dc": "1 A",
+              "shape": "pulse",
+              "peak": "1 A",
+              "duty": 0.5
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "current"
+          }
+        },
+        {
+          "name": "current and voltage together",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "rms": "2 A"
+            },
+            "voltageRms": "1 V"
+          },
+          "error": {
+            "code": "contradiction"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-d476ec79",
+      "title": "losses: MOSFET switching and gate drive",
+      "cases": [
+        {
+          "name": "switching energies",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "10 A"
+            },
+            "rdsOn": {
+              "value": 10,
+              "unit": "mΩ",
+              "conditions": "VGS = 10 V, Tj = 100 °C"
+            },
+            "frequency": "100 kHz",
+            "switching": {
+              "method": "energy",
+              "eOn": {
+                "value": 100,
+                "unit": "µJ",
+                "conditions": "VDS = 400 V, ID = 10 A"
+              },
+              "eOff": "150 uJ"
+            }
+          },
+          "results": {
+            "pConduction": 1,
+            "pSwitching": 25,
+            "pDevice": 26
+          },
+          "absent": ["pGateDrive"],
+          "assumptions": ["energies"]
+        },
+        {
+          "name": "gate drive reported separately",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "10 A"
+            },
+            "rdsOn": {
+              "value": 10,
+              "unit": "mΩ",
+              "conditions": "VGS = 10 V, Tj = 100 °C"
+            },
+            "frequency": "100 kHz",
+            "switching": {
+              "method": "energy",
+              "eOn": "100 µJ",
+              "eOff": "150 µJ"
+            },
+            "gateDrive": {
+              "qg": "50 nC",
+              "vDrive": "10 V"
+            }
+          },
+          "results": {
+            "pConduction": 1,
+            "pSwitching": 25,
+            "pDevice": 26,
+            "pGateDrive": 0.05
+          },
+          "assumptions": ["separately"]
+        },
+        {
+          "name": "linear-overlap approximation",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "10 A"
+            },
+            "rdsOn": {
+              "value": 10,
+              "unit": "mΩ",
+              "conditions": "VGS = 10 V"
+            },
+            "frequency": "100 kHz",
+            "switching": {
+              "method": "linear-overlap",
+              "vds": "400 V",
+              "id": "10 A",
+              "tRise": "20 ns",
+              "tFall": "30 ns"
+            }
+          },
+          "results": {
+            "pSwitching": 10,
+            "pDevice": 11
+          },
+          "assumptions": ["approximation"]
+        },
+        {
+          "name": "switching data without a frequency",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "10 A"
+            },
+            "rdsOn": "10 mΩ",
+            "switching": {
+              "method": "energy",
+              "eOn": "100 µJ",
+              "eOff": "150 µJ"
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "frequency"
+          }
+        },
+        {
+          "name": "on-resistance without its conditions",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "2 A"
+            },
+            "rdsOn": "50 mΩ"
+          },
+          "results": {
+            "pConduction": 0.2
+          },
+          "checks": {
+            "rdson-conditions": "unknown"
+          },
+          "warnings": ["conditions"]
+        },
+        {
+          "name": "unknown switching method",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "2 A"
+            },
+            "rdsOn": "50 mΩ",
+            "frequency": "100 kHz",
+            "switching": {
+              "method": "guess"
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "switching.method"
+          }
+        },
+        {
+          "name": "frequency without switching data",
+          "operation": "losses",
+          "input": {
+            "model": "mosfet",
+            "current": {
+              "rms": "2 A"
+            },
+            "rdsOn": {
+              "value": 50,
+              "unit": "mΩ",
+              "conditions": "VGS = 10 V"
+            },
+            "frequency": "100 kHz"
+          },
+          "results": {
+            "pDevice": 0.2
+          },
+          "warnings": ["frequency"],
+          "absent": ["pSwitching"]
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-0e71b135",
+      "title": "losses: diode",
+      "cases": [
+        {
+          "name": "forward drop with a pulsed current",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "current": {
+              "shape": "pulse",
+              "peak": "4 A",
+              "duty": 0.25
+            }
+          },
+          "results": {
+            "pForward": 0.7,
+            "pTotal": 0.7,
+            "currentAverage": 1,
+            "currentRms": 2
+          },
+          "absent": ["pReverseRecovery"]
+        },
+        {
+          "name": "dynamic resistance",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "rd": "50 mΩ",
+            "current": {
+              "shape": "pulse",
+              "peak": "4 A",
+              "duty": 0.25
+            }
+          },
+          "results": {
+            "pForward": 0.9,
+            "pTotal": 0.9
+          }
+        },
+        {
+          "name": "reverse recovery",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "rd": "50 mΩ",
+            "current": {
+              "rms": "2 A",
+              "average": "1 A"
+            },
+            "qrr": "100 nC",
+            "vr": "400 V",
+            "frequency": "100 kHz"
+          },
+          "results": {
+            "pForward": 0.9,
+            "pReverseRecovery": 4,
+            "pTotal": 4.9
+          },
+          "assumptions": ["approximation"]
+        },
+        {
+          "name": "descriptor without an average",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "current": {
+              "rms": "2 A"
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "current"
+          }
+        },
+        {
+          "name": "recovery charge alone",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "current": {
+              "dc": "1 A"
+            },
+            "qrr": "100 nC"
+          },
+          "error": {
+            "code": "insufficient"
+          }
+        },
+        {
+          "name": "symmetric current through a diode",
+          "operation": "losses",
+          "input": {
+            "model": "diode",
+            "vf": "0.7 V",
+            "current": {
+              "shape": "sine",
+              "peak": "1 A"
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "current"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-8cbe08aa",
+      "title": "losses: resistor rating and derating",
+      "cases": [
+        {
+          "name": "below the derating knee",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "0.25 W",
+            "derating": {
+              "fullPowerUpTo": "70 °C",
+              "zeroPowerAt": "155 °C"
+            },
+            "tAmbient": "25 °C"
+          },
+          "results": {
+            "power": 0.2,
+            "allowedPower": 0.25,
+            "powerUtilization": 0.8
+          },
+          "checks": {
+            "power-rating": "pass"
+          }
+        },
+        {
+          "name": "half way down the derating line",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "0.25 W",
+            "derating": {
+              "fullPowerUpTo": "70 °C",
+              "zeroPowerAt": "155 °C"
+            },
+            "tAmbient": "112.5 °C"
+          },
+          "results": {
+            "power": 0.2,
+            "allowedPower": 0.125,
+            "powerUtilization": 1.6
+          },
+          "checks": {
+            "power-rating": "fail"
+          }
+        },
+        {
+          "name": "above the zero-power temperature",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "0.25 W",
+            "derating": {
+              "fullPowerUpTo": "70 °C",
+              "zeroPowerAt": "155 °C"
+            },
+            "tAmbient": "160 °C"
+          },
+          "results": {
+            "power": 0.2,
+            "allowedPower": 0
+          },
+          "absent": ["powerUtilization"],
+          "checks": {
+            "power-rating": "fail"
+          }
+        },
+        {
+          "name": "rating without a derating line",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "250 mW"
+          },
+          "results": {
+            "allowedPower": 0.25,
+            "powerUtilization": 0.8
+          },
+          "checks": {
+            "power-rating": "pass"
+          }
+        },
+        {
+          "name": "derating line without an ambient",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "0.25 W",
+            "derating": {
+              "fullPowerUpTo": "70 °C",
+              "zeroPowerAt": "155 °C"
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "tAmbient"
+          }
+        },
+        {
+          "name": "derating line upside down",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "0.25 W",
+            "derating": {
+              "fullPowerUpTo": "155 °C",
+              "zeroPowerAt": "70 °C"
+            },
+            "tAmbient": "25 °C"
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "derating"
+          }
+        },
+        {
+          "name": "ambient without a derating line",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5 Ω",
+            "voltageRms": "1 V",
+            "ratedPower": "0.25 W",
+            "tAmbient": "85 °C"
+          },
+          "results": {
+            "allowedPower": 0.25
+          },
+          "warnings": ["tAmbient"],
+          "checks": {
+            "power-rating": "pass"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-da9b750b",
+      "title": "losses: capacitor ESR and inductor DCR",
+      "cases": [
+        {
+          "name": "capacitor ripple in its ESR",
+          "operation": "losses",
+          "input": {
+            "model": "capacitor",
+            "esr": {
+              "value": 30,
+              "unit": "mΩ",
+              "conditions": "100 kHz, 20 °C"
+            },
+            "current": {
+              "rms": "1 A"
+            }
+          },
+          "results": {
+            "pEsr": 0.03
+          }
+        },
+        {
+          "name": "inductor copper loss without a core-loss value",
+          "operation": "losses",
+          "input": {
+            "model": "inductor",
+            "dcr": "20 mΩ",
+            "current": {
+              "rms": "3 A"
+            }
+          },
+          "results": {
+            "pCopper": 0.18,
+            "pTotal": 0.18
+          },
+          "absent": ["pCore"],
+          "checks": {
+            "core-loss": "not-evaluated"
+          },
+          "warnings": ["Core loss"]
+        },
+        {
+          "name": "inductor with a supplied core loss",
+          "operation": "losses",
+          "input": {
+            "model": "inductor",
+            "dcr": "20 mΩ",
+            "current": {
+              "rms": "3 A"
+            },
+            "coreLoss": {
+              "value": 0.1,
+              "unit": "W",
+              "source": "Manufacturer loss tool, 500 kHz, 30 % ripple"
+            }
+          },
+          "results": {
+            "pCopper": 0.18,
+            "pCore": 0.1,
+            "pTotal": 0.28
+          },
+          "checks": {
+            "core-loss": "pass"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-634a2c7e",
+      "title": "losses: power budget",
+      "cases": [
+        {
+          "name": "sum of the loads",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "mcu",
+                "voltage": "3.3 V",
+                "current": "0.5 A"
+              },
+              {
+                "name": "led",
+                "power": "1 W"
+              }
+            ]
+          },
+          "results": {
+            "pLoads": 2.65
+          },
+          "absent": ["pInput", "pLoss", "inputCurrent"],
+          "details": {
+            "loads.0.power.value": 1.65,
+            "loads.1.power.value": 1,
+            "loads.0.name": "mcu"
+          }
+        },
+        {
+          "name": "supply efficiency",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "mcu",
+                "voltage": "3.3 V",
+                "current": "0.5 A"
+              },
+              {
+                "name": "led",
+                "power": "1 W"
+              }
+            ],
+            "efficiency": "90 %"
+          },
+          "results": {
+            "pLoads": 2.65,
+            "pInput": 2.9444444444444,
+            "pLoss": 0.29444444444444,
+            "efficiency": 0.9
+          },
+          "absent": ["inputCurrent"]
+        },
+        {
+          "name": "input current",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "mcu",
+                "voltage": "3.3 V",
+                "current": "0.5 A"
+              },
+              {
+                "name": "led",
+                "power": "1 W"
+              }
+            ],
+            "efficiency": 0.9,
+            "sourceVoltage": "12 V"
+          },
+          "results": {
+            "inputCurrent": 0.24537037037037
+          }
+        },
+        {
+          "name": "efficiency of zero",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "led",
+                "power": "1 W"
+              }
+            ],
+            "efficiency": 0
+          },
+          "error": {
+            "code": "domain",
+            "path": "efficiency"
+          }
+        },
+        {
+          "name": "efficiency above one",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "led",
+                "power": "1 W"
+              }
+            ],
+            "efficiency": "150 %"
+          },
+          "error": {
+            "code": "domain",
+            "path": "efficiency"
+          }
+        },
+        {
+          "name": "load with both forms",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "led",
+                "power": "1 W",
+                "voltage": "3.3 V",
+                "current": "0.3 A"
+              }
+            ]
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "loads.0"
+          }
+        },
+        {
+          "name": "source voltage without an efficiency",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "led",
+                "power": "1 W"
+              }
+            ],
+            "sourceVoltage": "12 V"
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "efficiency"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-29e71501",
+      "title": "thermal: junction temperature in the thetaJA model (E01-C)",
+      "cases": [
+        {
+          "name": "declared conditions",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": {
+              "value": 50,
+              "unit": "K/W",
+              "conditions": "JEDEC 2s2p board, still air",
+              "source": "Datasheet rev. B, section 6.4"
+            }
+          },
+          "results": {
+            "tJunction": 90,
+            "temperatureRise": 50
+          },
+          "units": {
+            "tJunction": "°C",
+            "temperatureRise": "K"
+          },
+          "checks": {
+            "thetaja-conditions": "pass",
+            "junction-limit": "not-evaluated"
+          },
+          "absent": ["junctionMargin"],
+          "inputs": {
+            "thetaJA": {
+              "conditions": "JEDEC 2s2p board, still air",
+              "source": "Datasheet rev. B, section 6.4",
+              "unit": "K/W",
+              "value": 50
+            }
+          }
+        },
+        {
+          "name": "limit met",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": {
+              "value": 50,
+              "unit": "°C/W",
+              "conditions": "JEDEC 2s2p board, still air"
+            },
+            "tJunctionMax": "125 °C"
+          },
+          "results": {
+            "tJunction": 90,
+            "junctionMargin": 35
+          },
+          "checks": {
+            "junction-limit": "pass"
+          }
+        },
+        {
+          "name": "limit exceeded",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": {
+              "value": 50,
+              "unit": "degC/W",
+              "conditions": "JEDEC 2s2p board, still air"
+            },
+            "tJunctionMax": "85 °C"
+          },
+          "results": {
+            "tJunction": 90,
+            "junctionMargin": -5
+          },
+          "checks": {
+            "junction-limit": "fail"
+          }
+        },
+        {
+          "name": "conditions not declared",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": "50 K/W"
+          },
+          "results": {
+            "tJunction": 90
+          },
+          "checks": {
+            "thetaja-conditions": "unknown"
+          },
+          "warnings": ["thetaJA"]
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-452dd186",
+      "title": "thermal: junction-to-case path with a heatsink",
+      "cases": [
+        {
+          "name": "sink path",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W",
+            "thetaCS": "0.5 K/W",
+            "thetaSA": "5 K/W"
+          },
+          "results": {
+            "tSink": 75,
+            "tCase": 80,
+            "tJunction": 95,
+            "thetaTotal": 7
+          },
+          "units": {
+            "thetaTotal": "K/W",
+            "tCase": "°C"
+          }
+        },
+        {
+          "name": "largest heatsink resistance",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W",
+            "thetaCS": "0.5 K/W",
+            "tJunctionMax": "125 °C",
+            "solveFor": "thetaSA"
+          },
+          "results": {
+            "thetaSAMax": 8
+          },
+          "checks": {
+            "heatsink-feasible": "pass"
+          }
+        },
+        {
+          "name": "no heatsink can meet the limit",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W",
+            "thetaCS": "0.5 K/W",
+            "tJunctionMax": "40 °C",
+            "solveFor": "thetaSA"
+          },
+          "results": {
+            "thetaSAMax": -0.5
+          },
+          "checks": {
+            "heatsink-feasible": "fail"
+          }
+        },
+        {
+          "name": "case to ambient without a sink",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W",
+            "thetaCA": "20 K/W",
+            "tJunctionMax": "150 °C"
+          },
+          "results": {
+            "tCase": 225,
+            "tJunction": 240,
+            "thetaTotal": 21.5,
+            "junctionMargin": -90
+          },
+          "absent": ["tSink"],
+          "checks": {
+            "junction-limit": "fail"
+          }
+        },
+        {
+          "name": "sink path and case-to-ambient together",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W",
+            "thetaCS": "0.5 K/W",
+            "thetaSA": "5 K/W",
+            "thetaCA": "20 K/W"
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "thetaCA"
+          }
+        },
+        {
+          "name": "no path to ambient",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W"
+          },
+          "error": {
+            "code": "insufficient"
+          }
+        },
+        {
+          "name": "junction exactly at its limit",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "0.5 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "0.1 K/W",
+            "thetaCS": "0.2 K/W",
+            "thetaSA": "199.7 K/W",
+            "tJunctionMax": "125 °C"
+          },
+          "results": {
+            "tJunction": 125,
+            "junctionMargin": 0
+          },
+          "texts": {
+            "junctionMargin": "0 K"
+          },
+          "checks": {
+            "junction-limit": "pass"
+          }
+        },
+        {
+          "name": "heatsink budget exactly used up",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "0.1 K/W",
+            "thetaCS": "0.2 K/W",
+            "tJunctionMax": "28 °C",
+            "solveFor": "thetaSA"
+          },
+          "results": {
+            "thetaSAMax": 0
+          },
+          "checks": {
+            "heatsink-feasible": "fail"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-003ccb83",
+      "title": "thermal: thetaJA is not combined with a case path",
+      "cases": [
+        {
+          "name": "thetaJC added to the thetaJA model",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": "50 K/W",
+            "thetaJC": "5 K/W"
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "thetaJC",
+            "message": "thetaJA"
+          }
+        },
+        {
+          "name": "thetaSA added to the thetaJA model",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": "50 K/W",
+            "thetaSA": "5 K/W"
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "thetaSA"
+          }
+        },
+        {
+          "name": "thetaJA added to the case path",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-case-sink",
+            "power": "10 W",
+            "tAmbient": "25 °C",
+            "thetaJC": "1.5 K/W",
+            "thetaCS": "0.5 K/W",
+            "thetaSA": "5 K/W",
+            "thetaJA": "50 K/W"
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "thetaJA"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-d1afe1f3",
+      "title": "thermal: Foster network transient",
+      "cases": [
+        {
+          "name": "two stages at two times",
+          "operation": "thermal",
+          "input": {
+            "model": "foster",
+            "power": "10 W",
+            "tReference": "25 °C",
+            "stages": [
+              {
+                "resistance": "1 K/W",
+                "tau": "1 ms"
+              },
+              {
+                "resistance": "2 K/W",
+                "capacitance": "0.05 J/K"
+              }
+            ],
+            "times": ["1 ms", "1 s"]
+          },
+          "results": {
+            "zthSteady": 3,
+            "tSteady": 55
+          },
+          "absent": ["zth", "temperatureAtTime"],
+          "details": {
+            "response.0.zth.value": 0.65202089133705,
+            "response.0.temperature.value": 31.520208913371,
+            "response.0.temperatureRise.value": 6.5202089133705,
+            "response.1.zth.value": 2.9999092001405,
+            "response.1.temperature.value": 54.999092001405
+          }
+        },
+        {
+          "name": "one time",
+          "operation": "thermal",
+          "input": {
+            "model": "foster",
+            "power": "10 W",
+            "tReference": "25 °C",
+            "stages": [
+              {
+                "resistance": "1 K/W",
+                "tau": "1 ms"
+              },
+              {
+                "resistance": "2 K/W",
+                "capacitance": "0.05 J/K"
+              }
+            ],
+            "times": ["1 ms"]
+          },
+          "results": {
+            "zth": 0.65202089133705,
+            "temperatureAtTime": 31.520208913371,
+            "zthSteady": 3
+          }
+        },
+        {
+          "name": "stage with a time constant and a capacitance",
+          "operation": "thermal",
+          "input": {
+            "model": "foster",
+            "power": "10 W",
+            "tReference": "25 °C",
+            "stages": [
+              {
+                "resistance": "1 K/W",
+                "tau": "1 ms",
+                "capacitance": "1 J/K"
+              }
+            ],
+            "times": ["1 ms"]
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "stages.0"
+          }
+        },
+        {
+          "name": "stage without either",
+          "operation": "thermal",
+          "input": {
+            "model": "foster",
+            "power": "10 W",
+            "tReference": "25 °C",
+            "stages": [
+              {
+                "resistance": "1 K/W"
+              }
+            ],
+            "times": ["1 ms"]
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "stages.0"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-DATA-f4cc4198",
+      "title": "quantities: prefixes, unit spellings and temperature scales (E01-D)",
+      "cases": [
+        {
+          "name": "amperes and ohms",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "0.05 Ω",
+            "current": {
+              "rms": "2 A"
+            }
+          },
+          "results": {
+            "power": 0.2
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "milliamperes and milliohms",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "rms": "2000 mA"
+            }
+          },
+          "results": {
+            "power": 0.2
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "value and unit objects",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": {
+              "value": 50000,
+              "unit": "µΩ"
+            },
+            "current": {
+              "rms": {
+                "value": 0.002,
+                "unit": "kA"
+              }
+            }
+          },
+          "results": {
+            "power": 0.2
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "no space and an exponent",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "5e-2Ohm",
+            "current": {
+              "rms": "2.0A"
+            }
+          },
+          "results": {
+            "power": 0.2
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "lower-case ohm",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mohm",
+            "current": {
+              "rms": "2 A"
+            }
+          },
+          "results": {
+            "power": 0.2
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "megaohm is not milliohm",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "1 V",
+            "resistance": "1 MΩ"
+          },
+          "results": {
+            "current": 1e-6
+          }
+        },
+        {
+          "name": "micro sign",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "0.1 µF"
+          },
+          "results": {
+            "tau": 0.001
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "greek mu",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "0.1 μF"
+          },
+          "results": {
+            "tau": 0.001
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "letter u",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "0.1 uF"
+          },
+          "results": {
+            "tau": 0.001
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "picofarads and megaohms",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "0.01 MΩ",
+            "capacitance": "100000 pF"
+          },
+          "results": {
+            "tau": 0.001
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "ambient in kelvin",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1000 mW",
+            "tAmbient": "313.15 K",
+            "thetaJA": "50 K/W"
+          },
+          "results": {
+            "tJunction": 90,
+            "temperatureRise": 50
+          }
+        },
+        {
+          "name": "ambient in degC spelling",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 degC",
+            "thetaJA": "50000 mK/W"
+          },
+          "results": {
+            "tJunction": 90
+          }
+        },
+        {
+          "name": "negative Celsius ambient",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "-40 °C",
+            "thetaJA": "50 K/W"
+          },
+          "results": {
+            "tJunction": 10
+          }
+        },
+        {
+          "name": "ratio as percent, number and unit one",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "peak": "4 A",
+            "duty": {
+              "value": 25,
+              "unit": "%"
+            }
+          },
+          "results": {
+            "rms": 2
+          }
+        },
+        {
+          "name": "giga and femto",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "1 GΩ",
+            "capacitance": "1 fF"
+          },
+          "results": {
+            "tau": 1e-6
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "leading point, trailing point and a capital exponent",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": ".5 V",
+            "current": "5.E-1 A"
+          },
+          "results": {
+            "resistance": 1,
+            "power": 0.25
+          },
+          "rel": 1e-12
+        },
+        {
+          "name": "degree Celsius sign",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 ℃",
+            "thetaJA": "50 K/W"
+          },
+          "results": {
+            "tJunction": 90
+          }
+        },
+        {
+          "name": "ohm sign",
+          "operation": "losses",
+          "input": {
+            "model": "resistor",
+            "resistance": "50 mΩ",
+            "current": {
+              "rms": "2 A"
+            }
+          },
+          "results": {
+            "power": 0.2
+          },
+          "rel": 1e-12
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-61e234ea",
+      "title": "quantities: refusals",
+      "cases": [
+        {
+          "name": "a current where a voltage is required",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 A",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "unit",
+            "path": "vin"
+          }
+        },
+        {
+          "name": "unknown unit",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "5 parsecs",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "unit",
+            "path": "vin"
+          }
+        },
+        {
+          "name": "bare number for a voltage",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": 12,
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "unit",
+            "path": "vin"
+          }
+        },
+        {
+          "name": "string without a unit",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "unit",
+            "path": "vin"
+          }
+        },
+        {
+          "name": "decimal comma",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3,3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "number",
+            "path": "vout"
+          }
+        },
+        {
+          "name": "number that overflows",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "1e999 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true
+          },
+          "error": {
+            "code": "number",
+            "path": "vin"
+          }
+        },
+        {
+          "name": "prefix on degrees Celsius",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 m°C",
+            "thetaJA": "50 K/W"
+          },
+          "error": {
+            "code": "unit",
+            "path": "tAmbient"
+          }
+        },
+        {
+          "name": "wrong-case prefix",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "1 V",
+            "resistance": "1 KΩ"
+          },
+          "error": {
+            "code": "unit",
+            "path": "resistance"
+          }
+        },
+        {
+          "name": "object value as text",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": {
+              "value": "1",
+              "unit": "V"
+            },
+            "resistance": "1 kΩ"
+          },
+          "error": {
+            "code": "number",
+            "path": "voltage"
+          }
+        },
+        {
+          "name": "percent for a voltage",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "5 %",
+            "resistance": "1 kΩ"
+          },
+          "error": {
+            "code": "unit",
+            "path": "voltage"
+          }
+        },
+        {
+          "name": "prefix that scales past the largest number",
+          "operation": "losses",
+          "input": {
+            "model": "linear-regulator",
+            "vin": "12 V",
+            "vout": "3.3 V",
+            "iout": "0.3 A",
+            "neglectIq": true,
+            "dropout": "1e308 kV"
+          },
+          "error": {
+            "code": "number",
+            "path": "dropout"
+          }
+        },
+        {
+          "name": "object value that scales past the largest number",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": {
+              "value": 1e308,
+              "unit": "kV"
+            },
+            "current": "1 A"
+          },
+          "error": {
+            "code": "number",
+            "path": "voltage"
+          }
+        },
+        {
+          "name": "number too small to represent",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "1e-400 V",
+            "current": "1 A"
+          },
+          "error": {
+            "code": "number",
+            "path": "voltage"
+          }
+        },
+        {
+          "name": "prefix that scales to zero",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": {
+              "value": 1e-320,
+              "unit": "fV"
+            },
+            "current": "1 A"
+          },
+          "error": {
+            "code": "number",
+            "path": "voltage"
+          }
+        },
+        {
+          "name": "quantity text over 100 characters",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005 V",
+            "current": "1 A"
+          },
+          "error": {
+            "code": "number",
+            "path": "voltage"
+          }
+        },
+        {
+          "name": "unit over 100 characters",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": {
+              "value": 5,
+              "unit": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+            },
+            "current": "1 A"
+          },
+          "error": {
+            "code": "unit",
+            "path": "voltage"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-7b943f73",
+      "title": "domains: refusals",
+      "cases": [
+        {
+          "name": "negative resistance",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "1 V",
+            "resistance": "-1 kΩ"
+          },
+          "error": {
+            "code": "domain",
+            "path": "resistance"
+          }
+        },
+        {
+          "name": "zero capacitance",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "10 kΩ",
+            "capacitance": "0 F"
+          },
+          "error": {
+            "code": "domain",
+            "path": "capacitance"
+          }
+        },
+        {
+          "name": "duty above one",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "peak": "4 A",
+            "duty": 1.5
+          },
+          "error": {
+            "code": "domain",
+            "path": "duty"
+          }
+        },
+        {
+          "name": "duty of zero",
+          "operation": "rc",
+          "input": {
+            "model": "waveform",
+            "shape": "pulse",
+            "peak": "4 A",
+            "duty": 0
+          },
+          "error": {
+            "code": "domain",
+            "path": "duty"
+          }
+        },
+        {
+          "name": "below absolute zero",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "-300 °C",
+            "thetaJA": "50 K/W"
+          },
+          "error": {
+            "code": "domain",
+            "path": "tAmbient"
+          }
+        },
+        {
+          "name": "zero voltage and zero current",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "0 V",
+            "current": "0 A"
+          },
+          "error": {
+            "code": "domain"
+          }
+        },
+        {
+          "name": "negative power",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "-1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": "50 K/W"
+          },
+          "error": {
+            "code": "domain",
+            "path": "power"
+          }
+        },
+        {
+          "name": "zero frequency for a filter",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "0 Hz"
+          },
+          "error": {
+            "code": "domain",
+            "path": "frequency"
+          }
+        },
+        {
+          "name": "product that overflows",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "1e200 V",
+            "current": "1e200 A"
+          },
+          "error": {
+            "code": "domain",
+            "message": "finite"
+          }
+        },
+        {
+          "name": "reciprocal of a subnormal resistance",
+          "operation": "dc",
+          "input": {
+            "model": "parallel",
+            "resistances": ["1e-320 Ohm"],
+            "voltage": "1 V"
+          },
+          "error": {
+            "code": "domain"
+          }
+        },
+        {
+          "name": "time constant that underflows",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "1e-200 Ohm",
+            "capacitance": "1e-200 F"
+          },
+          "error": {
+            "code": "domain"
+          }
+        },
+        {
+          "name": "gain that underflows to zero",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "1 Ohm",
+            "capacitance": "1 F",
+            "frequency": "1e200 Hz"
+          },
+          "error": {
+            "code": "domain"
+          }
+        },
+        {
+          "name": "parallel resistance that underflows to zero",
+          "operation": "dc",
+          "input": {
+            "model": "parallel",
+            "resistances": ["1e-320 Ohm"]
+          },
+          "error": {
+            "code": "domain"
+          }
+        },
+        {
+          "name": "series string next to the largest number",
+          "operation": "dc",
+          "input": {
+            "model": "series",
+            "resistances": ["1.7976e308 Ohm"]
+          },
+          "results": {
+            "totalResistance": 1.7976e308
+          }
+        },
+        {
+          "name": "sum that overflows",
+          "operation": "dc",
+          "input": {
+            "model": "series",
+            "resistances": ["1.7976e308 Ohm", "1.7976e308 Ohm"]
+          },
+          "error": {
+            "code": "domain"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-6c99b9c7",
+      "title": "requests: malformed documents",
+      "cases": [
+        {
+          "name": "unknown model",
+          "operation": "losses",
+          "input": {
+            "model": "transformer"
+          },
+          "error": {
+            "code": "schema",
+            "path": "model"
+          }
+        },
+        {
+          "name": "missing model",
+          "operation": "losses",
+          "input": {
+            "vin": "12 V"
+          },
+          "error": {
+            "code": "schema",
+            "path": "model"
+          }
+        },
+        {
+          "name": "unknown key",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "40 °C",
+            "thetaJA": "50 K/W",
+            "airflow": "1 m/s"
+          },
+          "error": {
+            "code": "schema",
+            "path": "airflow"
+          }
+        },
+        {
+          "name": "missing required key",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "thetaJA": "50 K/W"
+          },
+          "error": {
+            "code": "schema",
+            "path": "tAmbient"
+          }
+        },
+        {
+          "name": "wrong type for a list",
+          "operation": "dc",
+          "input": {
+            "model": "series",
+            "resistances": "1 kΩ"
+          },
+          "error": {
+            "code": "schema",
+            "path": "resistances"
+          }
+        },
+        {
+          "name": "empty list",
+          "operation": "dc",
+          "input": {
+            "model": "series",
+            "resistances": []
+          },
+          "error": {
+            "code": "limit",
+            "path": "resistances"
+          }
+        },
+        {
+          "name": "two problems reported together",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 V",
+            "tAmbient": "40 °C",
+            "thetaJA": "50 K/W",
+            "airflow": "1 m/s"
+          },
+          "errors": [
+            {
+              "code": "unit",
+              "path": "power"
+            },
+            {
+              "code": "schema",
+              "path": "airflow"
+            }
+          ]
+        },
+        {
+          "name": "empty free text",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": {
+              "value": 1,
+              "unit": "V",
+              "source": ""
+            },
+            "resistance": "1 kΩ"
+          },
+          "error": {
+            "code": "schema",
+            "path": "voltage.source"
+          }
+        },
+        {
+          "name": "line break in free text",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": {
+              "value": 1,
+              "unit": "V",
+              "note": "first\nsecond"
+            },
+            "resistance": "1 kΩ"
+          },
+          "error": {
+            "code": "schema",
+            "path": "voltage.note"
+          }
+        },
+        {
+          "name": "list item that is not an object",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "a",
+                "power": "1 W"
+              },
+              7
+            ]
+          },
+          "error": {
+            "code": "schema",
+            "path": "loads.1"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-FUNC-cd05145a",
+      "title": "tolerance: worst-case corners (E01-E)",
+      "cases": [
+        {
+          "name": "two 1 % resistors",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              },
+              "rBottom": {
+                "min": "9.9 kΩ",
+                "max": "10.1 kΩ"
+              }
+            }
+          },
+          "results": {
+            "vout.nominal": 2.5,
+            "vout.min": 2.475,
+            "vout.max": 2.525
+          },
+          "units": {
+            "vout.min": "V"
+          },
+          "checks": {
+            "monotonic": "pass"
+          },
+          "details": {
+            "worstCase.vout.min.rTop": "max",
+            "worstCase.vout.min.rBottom": "min",
+            "worstCase.vout.max.rTop": "min",
+            "worstCase.vout.max.rBottom": "max",
+            "corners": 4
+          },
+          "absent": ["vout.mean"]
+        },
+        {
+          "name": "supply tolerance added",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout", "currentTop"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              },
+              "rBottom": {
+                "tolerance": 0.01
+              },
+              "vin": {
+                "tolerance": "2 %"
+              }
+            }
+          },
+          "results": {
+            "vout.min": 2.4255,
+            "vout.max": 2.5755,
+            "currentTop.min": 0.00024257425742574,
+            "currentTop.max": 0.00025757575757576
+          },
+          "details": {
+            "corners": 8,
+            "worstCase.vout.max.vin": "max"
+          },
+          "checks": {
+            "monotonic": "pass"
+          }
+        },
+        {
+          "name": "non-monotonic output",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["powerBottom"],
+            "parameters": {
+              "rBottom": {
+                "min": "5 kΩ",
+                "max": "15 kΩ"
+              }
+            }
+          },
+          "results": {
+            "powerBottom.nominal": 0.000625,
+            "powerBottom.min": 0.00055555555555556,
+            "powerBottom.max": 0.0006
+          },
+          "checks": {
+            "monotonic": "fail"
+          },
+          "warnings": ["monotonic"]
+        },
+        {
+          "name": "absolute temperature by its limits",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "thermal",
+              "input": {
+                "model": "junction-ambient",
+                "power": "1 W",
+                "tAmbient": "40 °C",
+                "thetaJA": "50 K/W"
+              }
+            },
+            "outputs": ["tJunction"],
+            "parameters": {
+              "tAmbient": {
+                "min": "30 °C",
+                "max": "50 °C"
+              },
+              "thetaJA": {
+                "tolerance": "10 %"
+              }
+            }
+          },
+          "results": {
+            "tJunction.nominal": 90,
+            "tJunction.min": 75,
+            "tJunction.max": 105
+          },
+          "units": {
+            "tJunction.max": "°C"
+          }
+        },
+        {
+          "name": "nested parameter path",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "losses",
+              "input": {
+                "model": "resistor",
+                "resistance": "50 mΩ",
+                "current": {
+                  "shape": "pulse",
+                  "peak": "4 A",
+                  "duty": 0.25
+                }
+              }
+            },
+            "outputs": ["power"],
+            "parameters": {
+              "current.peak": {
+                "tolerance": "10 %"
+              }
+            }
+          },
+          "results": {
+            "power.nominal": 0.2,
+            "power.min": 0.162,
+            "power.max": 0.242
+          }
+        },
+        {
+          "name": "list item path",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "dc",
+              "input": {
+                "model": "series",
+                "resistances": ["1 kΩ", "2 kΩ"]
+              }
+            },
+            "outputs": ["totalResistance"],
+            "parameters": {
+              "resistances.1": {
+                "tolerance": "5 %"
+              }
+            }
+          },
+          "results": {
+            "totalResistance.min": 2900,
+            "totalResistance.max": 3100
+          }
+        },
+        {
+          "name": "path that is not a quantity",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "model": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "parameters.model"
+          }
+        },
+        {
+          "name": "path that does not exist",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rMiddle": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "parameters.rMiddle"
+          }
+        },
+        {
+          "name": "thirteen parameters",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "dc",
+              "input": {
+                "model": "series",
+                "resistances": [
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω",
+                  "1 Ω"
+                ]
+              }
+            },
+            "outputs": ["totalResistance"],
+            "parameters": {
+              "resistances.0": {
+                "tolerance": "1 %"
+              },
+              "resistances.1": {
+                "tolerance": "1 %"
+              },
+              "resistances.2": {
+                "tolerance": "1 %"
+              },
+              "resistances.3": {
+                "tolerance": "1 %"
+              },
+              "resistances.4": {
+                "tolerance": "1 %"
+              },
+              "resistances.5": {
+                "tolerance": "1 %"
+              },
+              "resistances.6": {
+                "tolerance": "1 %"
+              },
+              "resistances.7": {
+                "tolerance": "1 %"
+              },
+              "resistances.8": {
+                "tolerance": "1 %"
+              },
+              "resistances.9": {
+                "tolerance": "1 %"
+              },
+              "resistances.10": {
+                "tolerance": "1 %"
+              },
+              "resistances.11": {
+                "tolerance": "1 %"
+              },
+              "resistances.12": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "limit",
+            "path": "parameters"
+          }
+        },
+        {
+          "name": "nominal outside its range",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "min": "11 kΩ",
+                "max": "12 kΩ"
+              }
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "parameters.rTop"
+          }
+        },
+        {
+          "name": "relative tolerance on an absolute temperature",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "thermal",
+              "input": {
+                "model": "junction-ambient",
+                "power": "1 W",
+                "tAmbient": "40 °C",
+                "thetaJA": "50 K/W"
+              }
+            },
+            "outputs": ["tJunction"],
+            "parameters": {
+              "tAmbient": {
+                "tolerance": "5 %"
+              }
+            }
+          },
+          "error": {
+            "code": "domain",
+            "path": "parameters.tAmbient.tolerance"
+          }
+        },
+        {
+          "name": "unknown output",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vmid"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "outputs.0"
+          }
+        },
+        {
+          "name": "range of another dimension",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "min": "9 V",
+                "max": "11 V"
+              }
+            }
+          },
+          "errors": [
+            {
+              "code": "unit",
+              "path": "parameters.rTop.min"
+            },
+            {
+              "code": "unit",
+              "path": "parameters.rTop.max"
+            }
+          ]
+        },
+        {
+          "name": "tolerance of a tolerance",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "tolerance",
+              "input": {}
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "target.operation"
+          }
+        },
+        {
+          "name": "refusal inside the target",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 A",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "unit",
+            "path": "target.input.vin"
+          }
+        },
+        {
+          "name": "refusal at a corner names the corner",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "losses",
+              "input": {
+                "model": "linear-regulator",
+                "vin": "3.4 V",
+                "vout": "3.3 V",
+                "iout": "0.3 A",
+                "neglectIq": true
+              }
+            },
+            "outputs": ["pDissipated"],
+            "parameters": {
+              "vin": {
+                "tolerance": "10 %"
+              }
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "target.input.vin",
+            "message": "At corner {'vin': 'min'}"
+          }
+        },
+        {
+          "name": "list index with a leading zero",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "dc",
+              "input": {
+                "model": "series",
+                "resistances": ["1 kΩ", "2 kΩ"]
+              }
+            },
+            "outputs": ["totalResistance"],
+            "parameters": {
+              "resistances.01": {
+                "tolerance": "5 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "parameters.resistances.01"
+          }
+        },
+        {
+          "name": "list index in another script",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "dc",
+              "input": {
+                "model": "series",
+                "resistances": ["1 kΩ", "2 kΩ", "3 kΩ"]
+              }
+            },
+            "outputs": ["totalResistance"],
+            "parameters": {
+              "resistances.²": {
+                "tolerance": "5 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "parameters.resistances.²"
+          }
+        },
+        {
+          "name": "seven outputs",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": [
+              "vout",
+              "voutUnloaded",
+              "loadingError",
+              "theveninResistance",
+              "currentTop",
+              "powerTop",
+              "powerBottom"
+            ],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              }
+            }
+          },
+          "error": {
+            "code": "limit",
+            "path": "outputs"
+          }
+        },
+        {
+          "name": "distribution without a Monte Carlo section",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            }
+          },
+          "results": {
+            "vout.min": 2.4875621890547,
+            "vout.max": 2.5125628140704
+          },
+          "warnings": ["distribution"],
+          "absent": ["vout.mean"]
+        },
+        {
+          "name": "list index of five thousand digits",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "dc",
+              "input": {
+                "model": "series",
+                "resistances": ["1 kΩ", "2 kΩ"]
+              }
+            },
+            "outputs": ["totalResistance"],
+            "parameters": {
+              "resistances.99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999": {
+                "tolerance": "5 %"
+              }
+            }
+          },
+          "error": {
+            "code": "schema"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-REL-62a00f96",
+      "title": "tolerance: Monte Carlo refusals",
+      "cases": [
+        {
+          "name": "no seed",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "samples": 1000
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "monteCarlo.seed"
+          }
+        },
+        {
+          "name": "no sample count",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "seed": 1
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "monteCarlo.samples"
+          }
+        },
+        {
+          "name": "parameter without a distribution",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              }
+            },
+            "monteCarlo": {
+              "samples": 1000,
+              "seed": 1
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "parameters.rTop.distribution"
+          }
+        },
+        {
+          "name": "normal distribution without its sigmas",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "normal"
+              }
+            },
+            "monteCarlo": {
+              "samples": 1000,
+              "seed": 1
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "parameters.rTop.sigmas"
+          }
+        },
+        {
+          "name": "too few samples",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "samples": 50,
+              "seed": 1
+            }
+          },
+          "error": {
+            "code": "limit",
+            "path": "monteCarlo.samples"
+          }
+        },
+        {
+          "name": "too many samples",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "samples": 100001,
+              "seed": 1
+            }
+          },
+          "error": {
+            "code": "limit",
+            "path": "monteCarlo.samples"
+          }
+        },
+        {
+          "name": "seed that is not an integer",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "samples": 1000,
+              "seed": 1.5
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "monteCarlo.seed"
+          }
+        },
+        {
+          "name": "unknown distribution",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "lognormal"
+              }
+            },
+            "monteCarlo": {
+              "samples": 1000,
+              "seed": 1
+            }
+          },
+          "error": {
+            "code": "schema",
+            "path": "parameters.rTop.distribution"
+          }
+        },
+        {
+          "name": "limits without a Monte Carlo section",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %"
+              }
+            },
+            "limits": {
+              "vout": {
+                "min": "2.4 V"
+              }
+            }
+          },
+          "error": {
+            "code": "insufficient",
+            "path": "monteCarlo"
+          }
+        },
+        {
+          "name": "limits with min above max",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "samples": 100,
+              "seed": 1
+            },
+            "limits": {
+              "vout": {
+                "min": "2.6 V",
+                "max": "2.4 V"
+              }
+            }
+          },
+          "error": {
+            "code": "contradiction",
+            "path": "limits.vout"
+          }
+        },
+        {
+          "name": "seed out of range",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "1 %",
+                "distribution": "uniform"
+              }
+            },
+            "monteCarlo": {
+              "samples": 100,
+              "seed": -1
+            }
+          },
+          "error": {
+            "code": "domain",
+            "path": "monteCarlo.seed"
+          }
+        },
+        {
+          "name": "refusal at a sample names the sample",
+          "operation": "tolerance",
+          "input": {
+            "target": {
+              "operation": "divider",
+              "input": {
+                "model": "resistive",
+                "vin": "5 V",
+                "rTop": "10 kΩ",
+                "rBottom": "10 kΩ"
+              }
+            },
+            "outputs": ["vout"],
+            "parameters": {
+              "rTop": {
+                "tolerance": "90 %",
+                "distribution": "normal",
+                "sigmas": 0.5
+              }
+            },
+            "monteCarlo": {
+              "samples": 1000,
+              "seed": 7
+            }
+          },
+          "error": {
+            "code": "domain",
+            "path": "target.input.rTop",
+            "message": "At Monte Carlo sample"
+          }
+        }
+      ]
+    },
+    {
+      "requirement": "REQ-DATA-3d15fdfc",
+      "title": "results: engineering text",
+      "cases": [
+        {
+          "name": "rounding up to the next power of ten without a prefix",
+          "operation": "thermal",
+          "input": {
+            "model": "junction-ambient",
+            "power": "1 W",
+            "tAmbient": "49.996 °C",
+            "thetaJA": "50 K/W"
+          },
+          "results": {
+            "tJunction": 99.996
+          },
+          "texts": {
+            "tJunction": "100.0 °C",
+            "temperatureRise": "50.00 K"
+          }
+        },
+        {
+          "name": "ratio rounding up to one",
+          "operation": "losses",
+          "input": {
+            "model": "power-budget",
+            "loads": [
+              {
+                "name": "a",
+                "power": "1 W"
+              }
+            ],
+            "efficiency": "99.996 %"
+          },
+          "results": {
+            "efficiency": 0.99996
+          },
+          "texts": {
+            "efficiency": "1.000",
+            "pLoads": "1.000 W"
+          }
+        },
+        {
+          "name": "rounding up into the next prefix",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "999.96 V",
+            "current": "1 A"
+          },
+          "results": {
+            "resistance": 999.96
+          },
+          "texts": {
+            "resistance": "1.000 kΩ",
+            "current": "1.000 A"
+          }
+        },
+        {
+          "name": "above the largest prefix",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "999.96 GV",
+            "current": "1 A"
+          },
+          "results": {
+            "resistance": 999960000000
+          },
+          "texts": {
+            "resistance": "1.000e+12 Ω"
+          }
+        },
+        {
+          "name": "below the smallest prefix",
+          "operation": "rc",
+          "input": {
+            "model": "time-constant",
+            "resistance": "1 Ω",
+            "capacitance": "5e-16 F"
+          },
+          "results": {
+            "tau": 5e-16
+          },
+          "texts": {
+            "tau": "5.000e-16 s"
+          }
+        },
+        {
+          "name": "prefixes on both sides of one",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "rTop": "10 kΩ",
+            "rBottom": "10 kΩ",
+            "rLoad": "10 kΩ"
+          },
+          "results": {
+            "vout": 1.6666666666667
+          },
+          "texts": {
+            "vout": "1.667 V",
+            "currentTop": "333.3 µA",
+            "powerTop": "1.111 mW",
+            "theveninResistance": "5.000 kΩ",
+            "loadingError": "-0.3333"
+          }
+        },
+        {
+          "name": "zero",
+          "operation": "divider",
+          "input": {
+            "model": "resistive",
+            "vin": "5 V",
+            "rTop": "10 kΩ",
+            "rBottom": "10 kΩ"
+          },
+          "results": {
+            "loadingError": 0
+          },
+          "texts": {
+            "loadingError": "0"
+          }
+        },
+        {
+          "name": "angle and decibel",
+          "operation": "rc",
+          "input": {
+            "model": "filter",
+            "type": "lowpass",
+            "resistance": "10 kΩ",
+            "capacitance": "100 nF",
+            "frequency": "159.15494309189535 Hz"
+          },
+          "results": {
+            "phase": -45
+          },
+          "texts": {
+            "phase": "-45.00 deg",
+            "gainDb": "-3.010 dB",
+            "gain": "0.7071",
+            "cutoffFrequency": "159.2 Hz"
+          }
+        },
+        {
+          "name": "next to the largest number",
+          "operation": "dc",
+          "input": {
+            "model": "ohm",
+            "voltage": "1.7976e308 V",
+            "current": "1 A"
+          },
+          "results": {
+            "voltage": 1.7976e308,
+            "resistance": 1.7976e308
+          },
+          "texts": {
+            "voltage": "1.798e+308 V",
+            "resistance": "1.798e+308 Ω",
+            "current": "1.000 A"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4a4d8cf2"
+
+title = "Call a candidate a drop-in replacement only with confirmed pinout and footprint"
+
+status = "active"
+
+requirement = """
+Where the request names a part to replace, parts-compare shall call a device a drop-in replacement only when its pinout and footprint are stated on a datasheet page and equal those of the replaced part.
+"""
+
+verification = "A candidate with equal pinout and footprint on stated pages is `yes`, one with another pinout `no`, one without a stated footprint `unknown`."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

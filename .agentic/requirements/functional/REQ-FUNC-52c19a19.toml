@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-52c19a19"
+
+title = "Measure series over declared windows"
+
+status = "active"
+
+requirement = """
+When a request declares measurements, the helper shall compute min, max, average, rms, peak-to-peak, ripple, overshoot, settling, value-at and final values over the declared window, and report a measurement it cannot compute as unknown with its reason.
+"""
+
+verification = "The divider, RC step, half-wave rectifier and switch fixtures give values within the tolerances their README declares before the run (min, max, peak-to-peak, ripple, average, rms, overshoot, settling, value-at, final); a window outside the series gives unknown; a ripple without a window is refused; ltspice-tool's byte-identical measure.py (checked by a test) gives the same measurements on LTspice runs of the divider, RC and switch fixtures within the same tolerances."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ltspice/scripts/ltspice_support/measure.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

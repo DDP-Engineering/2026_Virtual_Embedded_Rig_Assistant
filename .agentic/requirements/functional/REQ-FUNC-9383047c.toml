@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9383047c"
+
+title = "Locate KiCad 10 kicad-cli in the manifest's search order"
+
+status = "active"
+
+requirement = """
+When an operation starts, the helper shall use the first kicad-cli found on PATH, then on Windows in `<Program Files>/KiCad/<folder>/bin` with the highest folder name first and on Linux at `/usr/bin/kicad-cli`, and report its path and version in the document.
+"""
+
+verification = "A real run reports the kicad-cli of `C:/Program Files/KiCad/10.0/bin` and version `10.0.8` when PATH holds none; the in-process probe with a fake PATH entry and a fake Program Files root with folders `9.0` and `10.0` picks the PATH entry first and otherwise `10.0`, and skips a relative PATH entry naming a folder with a kicad-cli."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/discovery.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

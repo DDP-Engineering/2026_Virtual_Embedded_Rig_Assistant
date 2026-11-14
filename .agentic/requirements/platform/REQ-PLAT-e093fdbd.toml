@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-e093fdbd"
+
+title = "A plugin program can be a verified download that never runs"
+
+status = "active"
+
+requirement = """
+When a plugin program declares `file: true` and installs only by download, VERA shall download and verify it like any download, take its version from its file name with `version.match` without running it, pass its path to the programs that use it as VERA_PROGRAM_<NAME>, and refuse run_program for it; a `file` program that installs any other way shall be refused by the manifest schema.
+"""
+
+verification = "Unit: provisioning installs a file program with ready and version 2.5.0 from router-2.5.0.jar and starts no process; resolve returns the downloaded path; the schema refuses file: true on a find program (programs.<name>.file)."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

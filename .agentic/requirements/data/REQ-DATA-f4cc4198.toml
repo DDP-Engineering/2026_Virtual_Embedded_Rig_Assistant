@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-f4cc4198"
+
+title = "Accept quantities with explicit units and SI prefixes"
+
+status = "active"
+
+requirement = """
+When a request gives a quantity as a number with a unit made of an optional SI prefix (f, p, n, u or µ, m, k, M, G) and a base unit of the field's dimension, as a string or as a value and unit object, the script shall compute with its SI value, so that one physical input written with different prefixes, or in °C and in K, gives equal results.
+"""
+
+verification = "The conduction loss with 2 A and 50 mΩ, with 2000 mA and 0.05 Ω and with value/unit objects gives powers equal within 1e-12 relative; the thetaJA case with 40 °C and with 313.15 K gives the same junction temperature; `µF`, `μF` and `uF` give the same time constant; `Ω`, `Ohm` and `ohm` are one unit."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/quantities.py", "05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

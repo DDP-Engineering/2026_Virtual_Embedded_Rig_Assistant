@@ -3,6 +3,7 @@ import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
+import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolSignal } from "./context.js";
@@ -14,6 +15,7 @@ import { grepTool } from "./grep.js";
 import { listTool } from "./list.js";
 import { loadSkillTool } from "./load-skill.js";
 import { parseLogTool } from "./parse-log.js";
+import { partsSearchTool } from "./parts.js";
 import { readTool } from "./read.js";
 import { todoTool } from "./todo.js";
 import { webReadTool, webSearchTool } from "./web.js";
@@ -37,11 +39,13 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   web_search: webSearchTool,
   web_read: webReadTool,
   web_download: webDownloadTool,
+  parts_search: partsSearchTool,
   run_program: runProgramTool,
   program_output: programOutputTool,
   program_stop: programStopTool,
   plugin_validate: pluginValidateTool,
   plugin_install: pluginInstallTool,
+  apply_candidate: applyCandidateTool,
 };
 /** Tools offered only when the host composes a program host. */
 export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];

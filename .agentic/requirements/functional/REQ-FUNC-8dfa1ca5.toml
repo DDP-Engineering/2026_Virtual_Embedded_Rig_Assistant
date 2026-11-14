@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8dfa1ca5"
+
+title = "Write the comparison and a proposed BOM into a new run folder"
+
+status = "active"
+
+requirement = """
+When a comparison completes, parts-compare shall write comparison.json, comparison.md and a proposed bom.csv into a new run folder and change no other file.
+"""
+
+verification = "A fixture run creates exactly the three files in a new run folder, leaves the request file and every other workbench file unchanged, and a second run with the same run id is refused."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/report.py", "05_Software/plugins/parts-search/scripts/parts_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-09628127"
+
+title = "Run kicad-cli only on a work copy so project files stay unchanged"
+
+status = "active"
+
+requirement = """
+The helper shall run every kicad-cli command on a copy of the project files in a new temporary folder, remove that folder when the run ends, and leave every source file byte-identical, also after a refusal, a failure or a stopped run.
+"""
+
+verification = "For every operation, a refusal and a failure, the SHA-256 of every fixture file and the folder listing (no new `.kicad_prl`) are equal before and after; a run stopped by killing its process tree during kicad-cli leaves the sources unchanged; recorded kicad-cli calls name only paths inside the work copy or the run folder; a sheet reached through a folder link inside the project folder and a sheet folder that is such a link give the same ERC counts and instances as the plain fixture."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py", "05_Software/plugins/kicad/scripts/kicad_support/kicad.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

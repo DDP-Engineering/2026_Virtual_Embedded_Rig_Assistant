@@ -1,0 +1,4 @@
+.include title-evil.cir
+V1 a 0 DC 1
+R1 a 0 1k
+.end

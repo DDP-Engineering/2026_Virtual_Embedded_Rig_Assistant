@@ -1,0 +1,7 @@
+Hostile netlist: refused before LTspice runs
+V1 out 0 1
+R1 out 0 1k
+.machine tstep=1n
+.state s0 0
+.endmachine
+.end

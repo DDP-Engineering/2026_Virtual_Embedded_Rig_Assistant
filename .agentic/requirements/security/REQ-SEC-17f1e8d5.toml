@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-17f1e8d5"
+
+title = "Classify kicad-tool commands as safe and block direct kicad-cli use"
+
+status = "active"
+
+requirement = """
+When the rule matcher classifies a command of the kicad plugin, the rules shall give `safe` to `kicad-tool` with its version, help and seven operations, with a note that it creates a run folder in the workbench, and to `kicad-cli` version and help, and `blocked` to the `kicad-cli` subcommands `sch`, `pcb`, `fp`, `sym` and `jobset` with a note pointing to `kicad-tool`.
+"""
+
+verification = "classifyCommand gives `safe` for `kicad-tool --version`, each operation with `--project`, `kicad-cli version` and `kicad-cli --help`; `blocked` for `kicad-cli pcb drc x.kicad_pcb --refill-zones --save-board`, `kicad-cli jobset run`, `kicad-cli sch upgrade` and `kicad-cli sch erc`, each with a note naming kicad-tool; the catalog check of the plugin source reports no issue."
+
+affected_paths = ["05_Software/plugins/kicad/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

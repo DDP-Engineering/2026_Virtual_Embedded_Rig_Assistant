@@ -1,0 +1,5 @@
+semicolon hash control line
+V1 a 0 DC 1
+R1 a 0 1k
+;#echo SEMI-HASH-RAN
+.end

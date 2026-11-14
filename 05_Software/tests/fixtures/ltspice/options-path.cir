@@ -1,0 +1,6 @@
+Options that name a path (validate only)
+V1 a 0 1
+R1 a 0 1k
+.options plotwinsize=0 C:\Users\someone\x
+.op
+.end

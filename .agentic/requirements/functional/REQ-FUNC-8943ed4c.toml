@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8943ed4c"
+
+title = "Compute conduction loss from an RMS or pulsed current"
+
+status = "active"
+
+requirement = """
+When a `losses` model takes a current descriptor, the script shall use an RMS value as given for the whole period, or derive RMS `peak*sqrt(duty)` and average `peak*duty` from a pulse, and return the resistive loss `I_rms^2 * R`.
+"""
+
+verification = "`resistor` and `mosfet` with `{rms: 2 A}` and 50 mΩ give 0.2 W; a 4 A pulse at duty 0.25 gives the same 0.2 W with results `currentRms` 2 A and `currentAverage` 1 A; `voltageRms` 1 V across 5 Ω gives 0.2 W; `{dc: 2 A}` gives 0.2 W."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/waveforms.py", "05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

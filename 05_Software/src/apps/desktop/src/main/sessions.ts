@@ -1,7 +1,10 @@
 import {
   buildSystemPrompt,
   type Clock,
+  type ConfiguredPartsProvider,
   type EmbeddingPort,
+  officialLayoutPlugin,
+  officialPartsPlugin,
   type PermissionEngine,
   type PluginStore,
   type ProgramHost,
@@ -12,6 +15,7 @@ import {
   SessionService,
   type SettingsService,
   type SkillCatalog,
+  unavailablePartsTools,
   unavailableWebTools,
   type WebDownloads,
   type WebProvider,
@@ -20,6 +24,7 @@ import {
 } from "@vera/core";
 import {
   type EventEnvelope,
+  partsSearchDefaults,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
   veraError,
@@ -43,6 +48,10 @@ export class SessionsHost {
   /** The prompt entries are reused until this key changes: workbench, generation and plugin skills. */
   private programKey = "";
   private programGeneration = 0;
+  /** Whether the open workbench has the official parts-search plugin loaded; refreshed by run(). */
+  private partsPlugin = false;
+  /** Whether the open workbench has the official kicad-layout plugin loaded (apply_candidate); refreshed by run(). */
+  private layoutPlugin = false;
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
   private pending = 0;
@@ -61,6 +70,8 @@ export class SessionsHost {
       emit: (event: EventEnvelope) => unknown;
       permissions?: PermissionEngine;
       web?: WebProvider;
+      /** Supplier catalog search; offered only with the official parts-search plugin of the workbench. */
+      parts?: ConfiguredPartsProvider;
       downloads?: (root: string) => WebDownloads;
       /** Plugin program runs; each workbench supplies its enabled plugins. */
       programs?: { runner: ProgramRunner; resolver: ProgramResolver };
@@ -98,12 +109,16 @@ export class SessionsHost {
         };
         // Resolving loads and hashes every enabled plugin and may probe programs: reuse the entries
         // until a plugin changes (invalidatePrograms) or the workbench or its plugin skills do.
+        const loaded =
+          this.programHost || this.options.parts
+            ? await this.options.workbench.loadPlugins(snapshot.config.id)
+            : [];
+        this.partsPlugin = loaded.some(officialPartsPlugin);
+        this.layoutPlugin = loaded.some(officialLayoutPlugin);
         const key = JSON.stringify([
           snapshot.folder,
           snapshot.config.id,
-          (this.programHost ? await this.options.workbench.loadPlugins(snapshot.config.id) : []).map(
-            (plugin) => [plugin.manifest.id, plugin.record.sha256],
-          ),
+          (this.programHost ? loaded : []).map((plugin) => [plugin.manifest.id, plugin.record.sha256]),
           this.programGeneration,
           skills
             .filter((skill) => skill.source === "plugin")
@@ -129,6 +144,8 @@ export class SessionsHost {
           plugins: () => options.workbench.loadPlugins(snapshot.config.id),
         };
         const self = this;
+        const partsProvider = options.parts;
+        const workbenchId = snapshot.config.id;
         this.service = new SessionService({
           db,
           root: snapshot.folder,
@@ -138,7 +155,20 @@ export class SessionsHost {
           },
           gateway: options.gateway().api,
           ...(options.web ? { web: options.web } : {}),
+          ...(partsProvider
+            ? {
+                parts: {
+                  search: (args: unknown, signal: AbortSignal) =>
+                    partsProvider.search(args, signal, async () =>
+                      (await options.workbench.loadPlugins(workbenchId)).some(officialPartsPlugin),
+                    ),
+                },
+              }
+            : {}),
           ...(options.downloads ? { downloads: options.downloads(snapshot.folder) } : {}),
+          get applyCandidate() {
+            return self.layoutPlugin;
+          },
           ...(options.pluginBuilder ? { pluginBuilder: options.pluginBuilder } : {}),
           ...(options.managedRoots ? { managedRoots: options.managedRoots } : {}),
           clock: options.clock,
@@ -160,6 +190,11 @@ export class SessionsHost {
             return [
               ...(self.config?.tools.disabled ?? []),
               ...unavailableWebTools(options.settings.get().settings.webAccess),
+              ...unavailablePartsTools(
+                options.settings.get().settings.webAccess.enabled,
+                options.settings.get().settings.partsSearch ?? partsSearchDefaults,
+                self.partsPlugin,
+              ),
             ];
           },
           model: (ref) => options.gateway().modelReference(ref, this.config?.agent.model),

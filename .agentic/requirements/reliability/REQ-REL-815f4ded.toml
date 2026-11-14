@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-815f4ded"
+
+title = "Keep simulation inputs unchanged and remove a failed run's files"
+
+status = "active"
+
+requirement = """
+The helper shall leave the netlist, its includes and the request unchanged, and if an input changes during a run or the run folder cannot be written, it shall remove what the run created and exit 3.
+"""
+
+verification = "Input hashes are equal before and after the fixture runs; a request file changed or deleted during a run exits 3 and leaves no run folder; a run whose plot would divide by zero (a 1e32 value) completes."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/cli.py", "05_Software/plugins/ngspice/scripts/ngspice_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

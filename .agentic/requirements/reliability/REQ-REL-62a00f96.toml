@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-62a00f96"
+
+title = "Refuse a Monte Carlo analysis without an explicit seed or distributions"
+
+status = "active"
+
+requirement = """
+If a `monteCarlo` section lacks `samples` or `seed`, a parameter lacks its `distribution`, a normal distribution lacks `sigmas`, the sample count is outside 100..100000, the seed is outside 0..2^63-1, limits are given without `monteCarlo` or with min above max, then the script shall refuse the request with code `insufficient`, `limit`, `domain` or `contradiction`, and exit 2.
+"""
+
+verification = "The divider request with `monteCarlo` {samples: 1000} gives `insufficient` naming `monteCarlo.seed`; a parameter without `distribution`, a normal one without `sigmas`, counts of 50 and 100001, a seed of -1 or 1.5, limits without `monteCarlo` and limits with min above max are each refused with the field path; a sample that the target refuses is reported with its sample number."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/tolerance.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

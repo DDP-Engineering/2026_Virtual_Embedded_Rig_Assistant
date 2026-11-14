@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-452dd186"
+
+title = "Compute case, sink and junction temperatures on a junction-to-case path"
+
+status = "active"
+
+requirement = """
+When the agent runs `thermal` with model `junction-case-sink`, the script shall return distinct case, sink and junction temperatures from the junction-to-case, interface and sink-to-ambient resistances or from a case-to-ambient resistance, or the largest sink-to-ambient resistance that keeps the junction at its maximum.
+"""
+
+verification = "10 W at 25 °C with 1.5, 0.5 and 5 K/W gives sink 75 °C, case 80 °C, junction 95 °C and total 7 K/W; solving for 125 °C gives `thetaSAMax` 8 K/W with `heatsink-feasible` pass, and for 40 °C -0.5 K/W with fail; `thetaCA` 20 K/W gives case 225 °C and junction 240 °C; a junction that lands on its maximum within rounding gives margin 0 K and pass, and a heatsink budget used up exactly gives 0 K/W and fail."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/thermal.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

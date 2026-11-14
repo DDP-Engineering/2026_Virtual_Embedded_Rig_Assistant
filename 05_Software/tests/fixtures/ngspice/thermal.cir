@@ -1,0 +1,6 @@
+Lumped RC thermal network (E04-B): 1 V = 1 degC, 1 A = 1 W
+Ipow 0 tj DC 1
+Rth tj amb 50
+Cth tj 0 0.01
+Vamb amb 0 DC 40
+.end

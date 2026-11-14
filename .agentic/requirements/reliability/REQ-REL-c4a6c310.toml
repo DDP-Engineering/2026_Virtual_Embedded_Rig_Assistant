@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c4a6c310"
+
+title = "Refuse a linear-regulator loss without a quiescent-current decision"
+
+status = "active"
+
+requirement = """
+If a `linear-regulator` request gives neither `iq` nor `neglectIq: true`, gives both, or gives an input voltage below the output voltage, then the script shall refuse it with code `insufficient` or `contradiction`, and exit 2.
+"""
+
+verification = "The 12 V, 3.3 V, 0.3 A request without `iq` and `neglectIq` gives `insufficient` naming `iq`; `neglectIq: false` alone is refused the same way; `iq` together with `neglectIq: true` gives `contradiction`; `vin` 3 V with `vout` 3.3 V gives `contradiction`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

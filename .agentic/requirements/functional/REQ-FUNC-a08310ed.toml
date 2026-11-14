@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a08310ed"
+
+title = "Accept a parameter as evidence only under the conditions a constraint names"
+
+status = "active"
+
+requirement = """
+When parts-compare checks a constraint that names conditions, it shall accept a parameter value as evidence only when the value is stated under conditions that satisfy them, and never a value of another parameter.
+"""
+
+verification = "For 24 V / 5 A with a 3.3 V gate drive, RDS(on) stated only at VGS 10 V together with VGS(th) 0.9 V gives `unknown` with the reasons; RDS(on) stated at VGS 2.5 V within the limit gives `pass`."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

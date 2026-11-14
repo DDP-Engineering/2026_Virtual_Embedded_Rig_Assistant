@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-bad2229c"
+
+title = "Produce schematic and board PDF and SVG exports for inspection"
+
+status = "active"
+
+requirement = """
+When the agent runs `export` with kind `sch-pdf`, `sch-svg`, `pcb-pdf` or `pcb-svg`, the helper shall write the files under `exports/` in the run folder, using the requested layers for board kinds, and report each file with its format check.
+"""
+
+verification = "On the fixture, `sch-pdf` and `pcb-pdf` give files that start with `%PDF-` and end with `%%EOF`; `sch-svg` gives one SVG per plotted sheet and `pcb-svg` one per requested layer, each XML with root `svg`; the count checks compare 5 SVG files with 5 sheet instances and 2 with 2 layers; all checks `pass`."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/exports.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

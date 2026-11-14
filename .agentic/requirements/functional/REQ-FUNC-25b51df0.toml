@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-25b51df0"
+
+title = "Report ERC violations with their sheets, objects and severities"
+
+status = "active"
+
+requirement = """
+When the agent runs `erc`, the helper shall run KiCad's ERC with every severity on the work copy, keep KiCad's JSON report, and return counts by severity and type and every violation with its type, severity, description, sheet path, objects, positions and the references of symbol objects, with exit 0 when violations exist.
+"""
+
+verification = "The ERC fixture with planted defects (an unconnected and undriven input pin in a sheet used twice, two outputs on one net, an undriven power input, a dangling wire; a duplicate R1, which KiCad does not report) reports exactly the types, severities, sheets, references and wire position listed in the fixture README; `erc.json` is in the run folder; the exclusion count (0) and KiCad's ignored checks appear."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/checks.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

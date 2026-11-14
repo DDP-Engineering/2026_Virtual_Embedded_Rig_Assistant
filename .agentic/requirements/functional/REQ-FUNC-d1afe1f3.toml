@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d1afe1f3"
+
+title = "Compute a transient junction temperature from a supplied Foster network"
+
+status = "active"
+
+requirement = """
+When the agent runs `thermal` with model `foster`, the script shall return the thermal impedance `sum(R_i*(1 - exp(-t/tau_i)))` and the temperature at each requested time for a power step from the reference temperature, with the steady-state values.
+"""
+
+verification = "Stages 1 K/W with tau 1 ms and 2 K/W with capacitance 0.05 J/K, 10 W from 25 °C: at 1 ms the impedance is 0.652021 K/W and the temperature 31.5202 °C, at 1 s the impedance is 2.99991 K/W, the steady values are 3 K/W and 55 °C; a stage with both `tau` and `capacitance` is refused."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/thermal.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

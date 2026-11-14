@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-84309105"
+
+title = "Trace every compared value to its source and conditions"
+
+status = "active"
+
+requirement = """
+The comparison shall name, for each check, the evidence values with their unit, basis, conditions and datasheet page, table or figure with the datasheet link and revision, and for each offer its supplier, supplier part number and capture time.
+"""
+
+verification = "In the fixture comparison every pass or fail check lists its evidence with page and conditions, every unknown check its reasons, and every offer its supplier, sku and retrievedAt, in both comparison.json and comparison.md."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py", "05_Software/plugins/parts-search/scripts/parts_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

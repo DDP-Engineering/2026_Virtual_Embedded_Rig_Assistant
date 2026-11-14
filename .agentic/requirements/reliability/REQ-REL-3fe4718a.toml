@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-3fe4718a"
+
+title = "Refuse unknown export layers before plotting"
+
+status = "active"
+
+requirement = """
+If `--layers` names a layer that is not in the board's layer table, or is given for a kind that takes no layers, or is missing for a kind that needs it, then the helper shall refuse with exit 2 and a `layer` or `usage` problem naming the layer or kind, before running kicad-cli.
+"""
+
+verification = "`gerbers --layers F.Cu,Nope.Layer` (which kicad-cli itself plots partially with exit 0) is refused naming `Nope.Layer`; `drill --layers F.Cu` and `gerbers` without layers are `usage`; no run folder remains."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/exports.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

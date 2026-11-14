@@ -1,0 +1,34 @@
+format: 1
+id: ltspice
+version: 1.0.0
+name: LTspice circuit simulation
+description: Reproducible batch simulation with your own LTspice on Windows - operating point, DC, AC, transient and noise analyses of a netlist or an .asc schematic, parameter, temperature and Monte Carlo steps, measurements over declared windows (ripple, overshoot, settling, RMS, average power), pass/fail criteria, run comparison and reports, in the same request and result model as the ngspice plugin. Netlists and schematics are checked before LTspice runs, every run writes a new folder with the log, raw file, series, plot and report, and nothing is downloaded or installed.
+ecosystem: electronics
+platforms: [windows-x64]
+docs: [README.md, "https://www.analog.com/ltspice"]
+programs:
+  ltspice:
+    install:
+      find:
+        windows: ["%LOCALAPPDATA%/Programs/ADI/LTspice/LTspice.exe", "%ProgramFiles%/ADI/LTspice/LTspice.exe"]
+      hint: "Install LTspice from https://www.analog.com/ltspice (LTspice64.msi, Windows 10/11 x64). If the per-user install fails with error 2503, install it for all users from an administrator prompt: msiexec /i LTspice64.msi ALLUSERS=1."
+    version: { args: [-version], match: '^(\d+)\.', range: '>=26' }
+    timeout: 60
+  ltspice-tool:
+    install: { script: scripts/ltspice_tool.py }
+    version: { args: [--version], match: '^ltspice-tool (\d+\.\d+\.\d+)' }
+    timeout: 1800
+    uses: [ltspice]
+# A netlist can write files anywhere (.wave) and LTspice without -b opens its GUI, so the agent reaches the engine
+# only through ltspice-tool, which checks the netlist or schematic and its includes first.
+rules:
+  # Every direct engine command is blocked (the highest risk of overlapping rules wins, so no exception is possible);
+  # ltspice-tool reports the engine version and VERA's provisioner probes it without these rules.
+  - match: "ltspice *"
+    risk: blocked
+    note: "A netlist can write files anywhere and LTspice without -b opens its window. Use ltspice-tool, which checks the netlist or schematic and its includes, runs LTspice in batch mode on a copy and writes a new run folder."
+  - { match: "ltspice-tool {--version,--help,-h}", risk: safe }
+  - match: "ltspice-tool {validate,convert,run,sweep,measure,compare,report} *"
+    risk: safe
+    note: Host simulation. Checks the netlist or schematic and its includes before LTspice runs, runs it in batch mode on a copy and creates a new run folder under the results directory in the workbench; it never changes the netlist, schematic, models or LTspice's libraries.
+    timeout: 1800

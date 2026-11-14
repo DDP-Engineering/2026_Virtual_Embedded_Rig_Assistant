@@ -1,0 +1,8 @@
+RC stage from an included model file (includes)
+.include models/stage.lib
+V1 in 0 AC 1
+X1 in out RCSTAGE
+.tran 0 1m
+.meas tran x FIND V(out) AT=1m
+.options reltol=1e-4
+.end

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-384a082a"
+
+title = "Merge candidates of one manufacturer part number and package into one device"
+
+status = "active"
+
+requirement = """
+When candidates share manufacturer, manufacturer part number and package, parts-compare shall treat them as one device with all their offers, and keep candidates of different manufacturer part numbers as separate devices.
+"""
+
+verification = "Cut-tape and reel entries of one MPN and package become one device with two offers and a merge warning; two pinout variants with different MPNs stay two devices; one MPN in two packages stays two devices with a warning."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

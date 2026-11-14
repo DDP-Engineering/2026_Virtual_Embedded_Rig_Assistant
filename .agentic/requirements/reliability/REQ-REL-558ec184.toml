@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-558ec184"
+
+title = "Leave the candidate untouched when routing fails, times out or is stopped"
+
+status = "active"
+
+requirement = """
+If the DSN export fails, Freerouting fails or exceeds the time budget, or the SES cannot be read, then the tool shall end Freerouting's process, report status failed with exit 3 and the problem `kicad`, `router` or `ses`, write no request, and leave the candidate and state.json unchanged.
+"""
+
+verification = "Real Freerouting: a 1-second budget on a board that needs longer, or a corrupt SES given through the test seam, exits 3 with no request.json, the candidate's SHA-256 unchanged and no java process left."
+
+affected_paths = ["05_Software/plugins/freerouting/"]
+
+linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+
+
+spec = "specs/REQ-FUNC-2a80da7f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

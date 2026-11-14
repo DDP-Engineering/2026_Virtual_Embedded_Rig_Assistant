@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-4f8d5368"
+
+title = "Refuse an invalid comparison request and clean up a failed run"
+
+status = "active"
+
+requirement = """
+If a comparison request is invalid, then parts-compare shall refuse it with exit 2 and every problem found, and if writing the run fails, it shall remove what the run created and exit 3.
+"""
+
+verification = "A request without quantity, with a quantity without a number, a constraint id used twice, a capture time in the future and an unknown field exits 2 listing all five problems and writes nothing; a repeated key and a results directory inside .vera exit 2; a run whose input file changes after the comparison exits 3 and leaves no run folder."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/cli.py", "05_Software/plugins/parts-search/scripts/parts_support/request.py", "05_Software/plugins/parts-search/scripts/parts_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

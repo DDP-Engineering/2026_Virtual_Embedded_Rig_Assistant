@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-99ee75ad"
+
+title = "Treat unconfirmed or typical parameter values as unknown"
+
+status = "active"
+
+requirement = """
+If a parameter value is marked proposed, comes from a supplier instead of a datasheet page or table, or is a typical value for a limit check, then parts-compare shall treat it as unknown evidence and say why.
+"""
+
+verification = "A proposed RDS(on), a supplier-sourced VDS and a typical RDS(on) each leave their constraint `unknown` with the matching reason, and the supplier value is listed as unconfirmed."
+
+affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
+
+linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+
+
+spec = "specs/REQ-DATA-6b26f2a5.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

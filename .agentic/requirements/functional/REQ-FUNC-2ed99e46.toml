@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2ed99e46"
+
+title = "Read supplier credentials from environment variables in the command-line interface"
+
+status = "active"
+
+requirement = """
+When the command-line interface starts with supplier credential environment variables, it shall hold them only in memory and enable each supplier whose variables are all present for that run.
+"""
+
+verification = "MOUSER_API_KEY and TME_API_TOKEN with TME_API_SECRET enable Mouser and TME and fill memory-only slots with the secrets registered for scrubbing; DIGIKEY_CLIENT_ID without DIGIKEY_CLIENT_SECRET leaves DigiKey disabled; a key with a space is refused; the CLI provider refuses while Web access is off."
+
+affected_paths = ["05_Software/src/apps/cli/src/parts-env.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/apps/cli/src/parts-env.test.ts"]
+
+
+spec = "specs/REQ-DATA-9fd50acb.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

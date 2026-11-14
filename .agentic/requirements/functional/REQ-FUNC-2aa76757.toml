@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2aa76757"
+
+title = "Compare two runs and name what changed"
+
+status = "active"
+
+requirement = """
+When the agent runs `ngspice-tool compare` or `ltspice-tool compare` on two run folders, the helper shall list the differences of netlist hashes, analysis, temperature, parameters, seed and drawn values, and the measurement deltas.
+"""
+
+verification = "Comparing two runs that differ only in RB names that parameter; comparing a run with itself names no difference; comparing two Monte Carlo sweeps with seeds 7 and 8 names the seed, each point's drawn values and the delta of the measurement mean; ltspice-tool compare of two LTspice Monte Carlo sweeps with seeds 7 and 8 names the seed and the drawn value of each of the five points."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/compare.py", "05_Software/plugins/ltspice/scripts/ltspice_support/compare.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

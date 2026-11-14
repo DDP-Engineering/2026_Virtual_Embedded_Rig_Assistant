@@ -16,6 +16,30 @@ it("preserves only Windows PATHEXT case-insensitively for plugin launchers", () 
   expect(programEnvironment(new FakeHost("linux", env), [])).not.toHaveProperty("PATHEXT");
 });
 
+// REQ-PLAT-e0d8f3cf: only a program that declares windows (gui: true) gets the desktop's display variables.
+it("passes the display variables only to a program that opens windows", () => {
+  const env = {
+    PATH: "/usr/bin",
+    DISPLAY: ":0",
+    WAYLAND_DISPLAY: "wayland-0",
+    XAUTHORITY: "/home/u/.Xauthority",
+    XDG_RUNTIME_DIR: "/run/user/1000",
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+  };
+  const plain = programEnvironment(new FakeHost("linux", env), []);
+  for (const name of ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"])
+    expect(plain).not.toHaveProperty(name);
+  expect(programEnvironment(new FakeHost("linux", env), [], {}, true)).toEqual({
+    PATH: "/usr/bin",
+    DISPLAY: ":0",
+    WAYLAND_DISPLAY: "wayland-0",
+    XAUTHORITY: "/home/u/.Xauthority",
+    XDG_RUNTIME_DIR: "/run/user/1000",
+    PYTHONUTF8: "1",
+    NO_COLOR: "1",
+  });
+});
+
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 let root = "";
 let host: FakeHost;

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-634a2c7e"
+
+title = "Sum a power budget and its supply efficiency"
+
+status = "active"
+
+requirement = """
+When the agent runs `losses` with model `power-budget`, the script shall return the sum of the load powers, each given directly or as voltage times current, and with a supply efficiency the input power and supply loss and, with a source voltage as well, the input current.
+"""
+
+verification = "Loads 3.3 V x 0.5 A and 1 W give 2.65 W; an efficiency of 90 % gives input 2.94444 W and loss 0.294444 W; a 12 V source gives 0.245370 A; an efficiency of 0 or above 1 is `domain`; a load with both `power` and `voltage` is refused."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

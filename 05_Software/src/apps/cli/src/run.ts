@@ -7,18 +7,20 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  officialPartsPlugin,
   PluginStore,
   type ProgramHost,
   ProgramRunner,
   programPromptEntries,
   SessionService,
   SettingsService,
+  unavailablePartsTools,
   unavailableWebTools,
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
-import { customSettingsSchema, veraError, veraErrorSchema } from "@vera/shared";
+import { customSettingsSchema, partsSearchDefaults, veraError, veraErrorSchema } from "@vera/shared";
 import { flagDecision, promptApproval } from "./approval-prompt.js";
 import type { RunOptions } from "./args.js";
 import { createDocumentServices } from "./document-processor.js";
@@ -29,6 +31,7 @@ import {
   MemoryCredentials,
   nodeClock,
 } from "./host-ports.js";
+import { cliPartsProvider, partsFromEnvironment } from "./parts-env.js";
 import { createCliProcessHost } from "./process-host.js";
 import { createCliProvisioner } from "./provisioning.js";
 import { scrubReplayOutput } from "./replay-output.js";
@@ -86,6 +89,15 @@ export async function runTurn(
       },
     });
     resources.push(() => web.close());
+    // Supplier credentials come only from the environment and stay in memory for this run.
+    const partsSettings = await partsFromEnvironment(
+      process.env,
+      config.partsSearch ?? partsSearchDefaults,
+      store,
+      (secret) => logger.registerSecret(secret),
+    );
+    const parts = cliPartsProvider(store, partsSettings, () => config.webAccess.enabled);
+    resources.push(() => parts.close());
     let gateway: LlmGateway, model: string;
     if (options.provider === "replay") {
       // Isolate only the explicitly chosen script; unrelated sibling fixtures have no effect.
@@ -179,12 +191,19 @@ export async function runTurn(
       plugins: () => workbench.loadPlugins(snapshot.config.id),
     };
     const programEntries = await programPromptEntries(programHost, skillList);
+    const partsPlugin = (await workbench.loadPlugins(snapshot.config.id)).some(officialPartsPlugin);
     const service = new SessionService({
       db,
       root: snapshot.folder,
       readOnly: snapshot.readOnly,
       gateway,
       web,
+      parts: {
+        search: (args, signal) =>
+          parts.search(args, signal, async () =>
+            (await workbench.loadPlugins(snapshot.config.id)).some(officialPartsPlugin),
+          ),
+      },
       downloads: new WebDownloads(snapshot.folder, {
         access: web,
         pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
@@ -199,7 +218,11 @@ export async function runTurn(
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
       retrieval: snapshot.config.retrieval,
-      disabledTools: [...snapshot.config.tools.disabled, ...unavailableWebTools(config.webAccess)],
+      disabledTools: [
+        ...snapshot.config.tools.disabled,
+        ...unavailableWebTools(config.webAccess),
+        ...unavailablePartsTools(config.webAccess.enabled, partsSettings, partsPlugin),
+      ],
       maxToolCallsPerTurn: config.limits.maxToolCallsPerTurn,
       model: () => model,
       assertWritable: () => workbench.assertSessionWritable(),

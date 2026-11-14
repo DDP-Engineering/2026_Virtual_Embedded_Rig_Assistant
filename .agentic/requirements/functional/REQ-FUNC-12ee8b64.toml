@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-12ee8b64"
+
+title = "Extract Windows 7z plugin downloads with the system bsdtar"
+
+status = "active"
+
+requirement = """
+When a Windows plugin download is a `.7z` archive, the provisioner shall extract it with the system bsdtar after its SHA-256 check and accept exit 1 only when the whole output holds at least one notice that bsdtar skipped an entry with an unreadable name and nothing but those notices and the closing delayed-exit line.
+"""
+
+verification = "A 7z fixture extracts and installs; one whose bsdtar output holds only skip notices and the delayed-exit line installs; output with any other line, only the delayed-exit line, an exit code other than 0 or 1, or no declared executable is the archive problem; a .tar.gz that exits 1 with skip notices is the archive problem; a wrong hash is never extracted."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/archive.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

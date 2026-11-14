@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-a7a3f2a9"
+
+title = "Offer a Design activity in the plugin library filter"
+
+status = "active"
+
+requirement = """
+When catalog metadata names the activity `design`, the shared catalog schema shall accept it and the Plugins library activity filter shall offer it with a localized label in English, Romanian and German.
+"""
+
+verification = "catalogMaintainersSchema parses activities [design] and CATALOG_ACTIVITIES holds it; `pluginActivityLabels`, from which the library controls build their activity options, returns a non-empty label for every activity id in en, ro and de, with Design, Proiectare and Entwurf for `design`; `check:i18n` passes."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/plugins/CONTRIBUTING.md"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

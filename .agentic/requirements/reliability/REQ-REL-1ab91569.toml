@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-1ab91569"
+
+title = "Keep each printed document within 11 000 UTF-16 units"
+
+status = "active"
+
+requirement = """
+The helper shall print each document within 11 000 UTF-16 units, dropping list entries from the end and keeping every count, with `truncated: true` when it dropped any, while `result.json` keeps the complete document.
+"""
+
+verification = "The in-process probe hands the document writer 5000 violations with long descriptions and text beyond the Basic Multilingual Plane: the printed text is at most 11 000 UTF-16 units, valid JSON, `truncated` true, counts complete; a small document is printed whole with `truncated` false; a review document with 400 single-node nets and 300 duplicate references keeps its ERC and DRC counts and the duplicate count; refusals naming 4 x 4000-character arguments, a 12 000-character sheet name or file head stay within the bound."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/document.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

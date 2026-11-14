@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0e71b135"
+
+title = "Compute diode forward and reverse-recovery losses"
+
+status = "active"
+
+requirement = """
+When the agent runs `losses` with model `diode`, the script shall return the forward loss `vf*I_avg + rd*I_rms^2`, the reverse-recovery loss `qrr*vr*f` when all three values are given, and their total.
+"""
+
+verification = "0.7 V with a 4 A pulse at duty 0.25 gives 0.7 W; `rd` 50 mΩ raises it to 0.9 W; `qrr` 100 nC, 400 V and 100 kHz add 4 W; a descriptor `{rms: 2 A}` without an average is `insufficient`; `qrr` without `vr` and `frequency` is refused."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

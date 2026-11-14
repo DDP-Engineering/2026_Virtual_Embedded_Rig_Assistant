@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-e13eef8a"
+
+title = "Offer sizing and thermal-analysis skills with the plugin"
+
+status = "active"
+
+requirement = """
+When the plugin is installed, the skill catalog shall list `electronics-sizing` and `thermal-analysis` from it, whose bodies tell the agent to take values with their source and conditions, to pass one-line JSON or an input file, to read checks, warnings and limits, never to invent a missing datasheet value, to keep thetaJA and junction-to-case paths apart and to save a report.
+"""
+
+verification = "List the skills of the installed package: both names with source plugin; the bodies contain `elec-calc`, `--json`, `--input`, `neglectIq`, `conditions`, `thetaJA`, `junction-case-sink`, `tolerance`, `report` and the instruction not to invent values."
+
+affected_paths = ["05_Software/plugins/electronics-calc/skills/electronics-sizing/SKILL.md", "05_Software/plugins/electronics-calc/skills/thermal-analysis/SKILL.md"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

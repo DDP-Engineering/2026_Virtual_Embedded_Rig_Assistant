@@ -1,0 +1,5 @@
+Missing subcircuit (E05-D)
+V1 a 0 5
+R1 a b 1k
+X1 b 0 NOPESUB
+.end

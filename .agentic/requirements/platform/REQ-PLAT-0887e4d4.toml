@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-0887e4d4"
+
+title = "Run ngspice-tool on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The ngspice-tool helper shall run on Windows x64 with the pinned ngspice-47 and on native Ubuntu x64 with the distribution's ngspice 42 or newer.
+"""
+
+verification = "The fixture tests pass on Windows x64 with the toolchain Python and through VERA's provisioner with uv's managed CPython; Manual: the same tests on native Ubuntu x64 with `apt install ngspice`."
+
+affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_tool.py"]
+
+linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-29b9a988.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0a9592c1"
+
+title = "Convert an LTspice schematic to a netlist on a copy"
+
+status = "active"
+
+requirement = """
+When the agent converts an LTspice schematic or runs one, the helper shall refuse a symbol named by an absolute or escaping path in any schematic of its folder and in any encoding LTspice reads, copy the schematic and the schematics and symbols of its folder into the run folder, convert the copy with `LTspice -netlist`, check the written netlist like any netlist, and report a conversion that writes no netlist as failed with the problem `convert`.
+"""
+
+verification = "`convert` of the RC `filter.asc` fixture writes a run folder with `input/filter.asc` and `filter.net` holding V1, R1, C1 and the `.ac` card, exit 0, the original unchanged; `run` on `filter.asc` gives the -3 dB point of the RC fixture; a `SYMBOL C:\\evil\\res` or `..\\..\\evil\\res` line, the same in a UTF-16LE file without BOM, and in a sibling sheet are refused with exit 2; a schematic with an unknown symbol gives status failed, the single problem kind convert, exit 3; a TEXT directive carrying a 0x85 byte is refused after conversion (encoding, exit 2)."
+
+affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/schematic.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-0f9e36a3.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

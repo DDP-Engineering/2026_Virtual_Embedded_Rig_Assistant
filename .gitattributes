@@ -18,6 +18,8 @@
 *.ttf binary
 *.pdf binary
 *.onnx binary
+# LTspice raw files (UTF-16LE header and binary data), as written by LTspice for the parser fixtures.
+*.raw binary
 *.db binary
 *.sqlite binary
 *.node binary

@@ -50,7 +50,8 @@
     "notifications": "Notificări",
     "shortcuts": "Comenzi rapide",
     "storage": "Stocare",
-    "configuration": "Configurare"
+    "configuration": "Configurare",
+    "partsSearch": "Căutare componente"
   },
   "appearance": {
     "theme": "Temă",
@@ -586,6 +587,48 @@
     "searchAndRead": "Căutare web și citirea paginilor.",
     "searchOnly": "Doar căutare. Pentru citirea paginilor web, selectează Exa sau Tavily."
   },
+  "partsSearch": {
+    "description": "Cataloagele furnizorilor pentru pluginul oficial parts-search. VERA trimite furnizorilor activați doar textul căutării sau codul piesei; datele de acces rămân pe acest calculator și nu sunt arătate agentului. Căutările cer și Web access și pluginul activat pentru workbench. Rezultatele sunt instantanee fără taxe sau transport și nu se plasează nicio comandă.",
+    "loading": "Se încarcă setările de căutare a componentelor…",
+    "region": "Regiunea pentru prețuri și stoc",
+    "country": "Țara (2 litere)",
+    "language": "Limba (2 litere)",
+    "currency": "Moneda (3 litere)",
+    "farnellStore": "Magazinul Farnell",
+    "enabled": "Folosește acest furnizor",
+    "keyConfigured": "Date de acces salvate ({{storage}}).",
+    "noKey": "Nu sunt salvate date de acces.",
+    "idLabel": {
+      "digikey": "Client ID",
+      "tme": "Token API"
+    },
+    "secretLabel": {
+      "mouser": "Cheie API",
+      "digikey": "Client secret",
+      "tme": "Secretul aplicației",
+      "farnell": "Cheie API",
+      "rutronik": "Cheie API"
+    },
+    "saveKey": "Salvează datele de acces",
+    "removeKey": "Șterge datele de acces",
+    "test": "Testează",
+    "cancelTest": "Anulează testul",
+    "save": "Salvează",
+    "saved": "Salvat.",
+    "results": {
+      "testing": "Se testează…",
+      "ok": "Furnizorul a răspuns.",
+      "partial": "Furnizorul a răspuns; unele rezultate nu au putut fi citite.",
+      "failed": "Furnizorul a raportat o eroare.",
+      "key-required": "Nu sunt salvate date de acces pentru acest furnizor.",
+      "auth": "Furnizorul a refuzat datele de acces.",
+      "rate-limited": "S-a atins limita de cereri a furnizorului. Reîncearcă mai târziu.",
+      "timeout": "Furnizorul nu a răspuns la timp.",
+      "unavailable": "Furnizorul nu a putut fi contactat.",
+      "disabled": "Web access este dezactivat.",
+      "cancelled": "Test anulat."
+    }
+  },
   "web": {
     "openTitle": "Deschizi un site extern?",
     "openDescription": "Această adresă se va deschide în browserul sistemului.",
@@ -615,7 +658,9 @@
     "program_stop": "Oprește o rulare de program în fundal.",
     "plugin_validate": "Validează un draft de plugin și raportează erori și avertismente.",
     "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă.",
-    "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive."
+    "apply_candidate": "Scrie un candidat kicad-layout verificat peste placa sursă după ce ceri aplicarea lui. Necesită pluginul kicad-layout; cere aprobare ca o scriere.",
+    "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive.",
+    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în Setări > Căutare componente."
   },
   "projects": {
     "new": "Workbench nou",
@@ -931,7 +976,8 @@
         "measurement": "Măsurare",
         "security": "Securitate",
         "versionControl": "Versionare",
-        "testing": "Testare"
+        "testing": "Testare",
+        "design": "Proiectare"
       }
     },
     "configure": "Configurează dependențele",

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-233d6e0f"
+
+title = "Report a lost KiCad connection or a KiCad error during an edit without saving"
+
+status = "active"
+
+requirement = """
+If the KiCad API connection is lost, KiCad's token no longer matches, KiCad refuses a request, kicad-cli is missing or fails, a run-folder file the edit reads is missing or not what the tool wrote, a run-folder file cannot be written, or any other error occurs during an edit, then the helper shall report status failed with exit 3 and the problem `connection`, `kicad` or `output`: before KiCad saved the candidate (board-open.json and drc-before.json are checked after the binding, before the commit) it shall drop the open commit when it can and keep the candidate and state.json unchanged; after the save, whatever the error, it shall say in the problem that the edit was saved, record the saved candidate in state.json with objectives none whenever KiCad's new state can be read back and state.json written, and write a failed result.json and report.md.
+"""
+
+verification = "Real KiCad: an edit whose candidate editor is stopped by a test hook after binding exits 3 with problem connection and state.json unchanged; an edit run with a kicad-cli that cannot run DRC exits 3 with problem kicad saying the edit was saved, state.json then holds the saved file's SHA-256, KiCad's in-memory hash, edits plus one and objectives none, requests/NNN.json holds the request, result.json has status failed with that request and hash and report.md says the edit was saved; the next edit with the real kicad-cli completes, reports the saved move and lists open's before previews. A corrupt drc-before.json exits 3 with problem output and leaves every run file unchanged; a result.json that is not the tool's does not matter. With board.json replaced by a folder the edit exits 3 with problem output saying its checks did not finish, state.json counts it with objectives none, result.json is failed with KiCad's version, the request and the saved hash, and no temporary file remains; with requests replaced by a file the problem says the run folder could not record it and the failed result.json has no request. Offline: with no KiCad running a valid request exits 3 with problem connection after the shortened wait; without kicad-cli an edit exits 3 with problem kicad before connecting."
+
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/kicad.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/state.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+
+
+spec = "specs/REQ-DATA-891d5b5d.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-380ee422"
+
+title = "Start provisioner probes and uv calls without detaching them on Windows"
+
+status = "active"
+
+requirement = """
+The provisioner shall start version probes and uv calls in their own process group only off Windows, as program runs are started, so that a console program such as kicad-cli writes its output to the captured pipes on Windows.
+"""
+
+verification = "The provisioner unit test installs a pip program on a Windows and a Linux fake host and finds every spawn with group false on Windows and true on Linux; on Windows with KiCad 10 the provisioner reports the kicad plugin's kicad-cli ready with version 10.0.8 (it printed nothing when started detached)."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

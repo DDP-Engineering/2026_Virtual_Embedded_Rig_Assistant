@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-bb443178"
+
+title = "Write a review report that separates KiCad checks from facts for review"
+
+status = "active"
+
+requirement = """
+When the agent runs `review-report`, the helper shall run `inspect`, ERC when there is a schematic and DRC when there is a board in one run folder and write `report.md` with the sections Project, KiCad checks, Facts for review and Limits.
+"""
+
+verification = "On the fixture the report has the four sections in this order, the ERC and DRC counts of the separate runs, the power nets and single-node nets listed in the fixture README, and the limits that a net is not sized without its electrical requirements and that zero DRC violations is not a functional validation; `report.md` shows the ERC counts and the single-node-net line; a review of the erc fixture keeps its 8 ERC violations and the instances in `result.json`."
+
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/review.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+
+
+spec = "specs/REQ-DATA-c32834e3.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

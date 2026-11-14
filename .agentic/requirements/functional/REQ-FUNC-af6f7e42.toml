@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-af6f7e42"
+
+title = "Compute linear-regulator dissipation with an explicit quiescent-current term"
+
+status = "active"
+
+requirement = """
+When the agent runs `elec-calc losses` with model `linear-regulator` and either a quiescent current or `neglectIq: true`, the script shall return the dissipation `(vin - vout)*iout + vin*iq`, the input and output power and the efficiency, and name in its assumptions whether the quiescent current was neglected.
+"""
+
+verification = "12 V, 3.3 V and 0.3 A with `neglectIq` give 2.61 W and an assumption naming the neglect; with `iq` 5 mA they give 2.67 W, input power 3.66 W and efficiency 0.270492; a `dropout` of 1 V passes, of 10 V fails, and without it the check is `not-evaluated`."
+
+affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
+
+linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+
+
+spec = "specs/REQ-DATA-3d15fdfc.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-12
+updated = 2026-11-12

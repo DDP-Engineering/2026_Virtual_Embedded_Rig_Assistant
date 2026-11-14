@@ -840,6 +840,27 @@ it("stores a single-file download as is, executable, with its prefix", async () 
   if (process.platform !== "win32") expect((await stat(file)).mode & 0o777).toBe(0o755);
 });
 
+// REQ-FUNC-file-program: a file program is downloaded and verified but never run.
+it("stores a file program without running it and reads its version from the file name", async () => {
+  const jar = strToU8("PK jar");
+  const url = "https://h.test/r/router-2.5.0.jar";
+  const s = await setup({
+    programs: {
+      router: {
+        install: { download: { "linux-x64": { url, sha256: sha(jar) } } },
+        version: { args: [], match: "^router-(\\d+\\.\\d+\\.\\d+)\\.jar$" },
+        file: true,
+      },
+    },
+  });
+  s.served.set(url, () => new Response(jar));
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready", version: "2.5.0" });
+  expect(s.host.programs).toEqual([]);
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "router"))?.executable).toBe(
+    join(s.root, "plugins", "runtime", "downloads", sha(jar), "router-2.5.0.jar"),
+  );
+});
+
 // REQ-SEC-cde8b481
 it("refuses a download with another hash and keeps nothing", async () => {
   const url = "https://h.test/tool.AppImage";
@@ -1273,4 +1294,138 @@ it.skipIf(process.platform === "win32")("skips found files that are not executab
   expect((await s.provisioner.resolve(await s.store.load("tools"), "git"))?.executable).toBe(
     join(base, "b-git"),
   );
+});
+
+it("starts probes and uv in their own process group only off Windows, like program runs", async () => {
+  // REQ-REL-380ee422: a console program started detached on Windows (KiCad's kicad-cli) prints nothing.
+  for (const hostPlatform of ["win32", "linux"] as const) {
+    const s = await setup({ programs: { esptool: pip("esptool>=5,<6") }, hostPlatform });
+    uvActs(s.host, s.uv, hostPlatform === "win32" ? "esptool.exe" : "esptool");
+    expect((await s.provisioner.install("tools"))[0], hostPlatform).toMatchObject({ state: "ready" });
+    expect(s.host.programs.length).toBeGreaterThan(1);
+    for (const program of s.host.programs)
+      expect(program.options.group, hostPlatform).toBe(hostPlatform !== "win32");
+  }
+});
+
+// REQ-FUNC-12ee8b64: a Windows .7z goes through System32 bsdtar; exit 1 passes only with its skip notices.
+it("extracts a Windows .7z with bsdtar and accepts exit 1 only for skipped unreadable names", async () => {
+  const bytes = strToU8("7z archive bytes");
+  const skip = "tar.exe: Archive entry has empty or unreadable filename ... skipping\n";
+  const delayed = "tar.exe: Error exit delayed from previous errors\n";
+  const outcomes: [string, number, boolean, string, string | undefined][] = [
+    ["clean", 0, true, "", undefined],
+    ["skips", 1, true, skip + skip + delayed, undefined],
+    ["other", 1, true, `${skip}tar.exe: Damaged 7-Zip archive\n${delayed}`, "archive"],
+    ["code2", 2, true, skip + delayed, "archive"],
+    ["nofile", 1, false, skip + delayed, "archive"],
+    ["delayed", 1, true, delayed, "archive"],
+  ];
+  for (const [name, code, writes, output, problem] of outcomes) {
+    const s = await setup({
+      programs: {
+        engine: {
+          install: {
+            download: {
+              "windows-x64": {
+                url: `https://h.test/${name}.7z`,
+                sha256: sha(bytes),
+                path: "Spice64/bin/engine.exe",
+              },
+            },
+          },
+          version: { args: ["-v"], match: "ngspice-(\\d+)" },
+        },
+      },
+      hostPlatform: "win32",
+      platforms: ["windows-x64"],
+      env: { Path: "C:\\Windows", SystemRoot: "C:\\Windows", USERPROFILE: "C:\\Users\\u" },
+    });
+    s.served.set(`https://h.test/${name}.7z`, () => new Response(bytes));
+    s.host.handle = (p) => {
+      if (p.executable.toLowerCase().endsWith("tar.exe")) {
+        expect(p.executable).toBe("C:\\Windows\\System32\\tar.exe");
+        const target = p.args[p.args.indexOf("-C") + 1] as string;
+        if (writes) {
+          mkdirSync(join(target, "Spice64", "bin"), { recursive: true });
+          writeFileSync(join(target, "Spice64", "bin", "engine.exe"), "exe");
+        }
+        p.print(output);
+        p.finish({ code, signal: null });
+        return;
+      }
+      p.print("** ngspice-47 : Circuit level simulation program\n");
+      p.finish(ok);
+    };
+    const [status] = await s.provisioner.install("tools");
+    expect([name, status?.state, status?.problem], name).toEqual([
+      name,
+      problem ? "missing" : "ready",
+      problem,
+    ]);
+  }
+});
+
+// REQ-FUNC-38f964da: a script program receives the resolved path of each program it uses.
+it("gives a script program the resolved path of the programs it uses, and resolves nothing without them", async () => {
+  const windows = process.platform === "win32";
+  const base = await mkdtemp(join(tmpdir(), "vera-uses-"));
+  roots.push(base);
+  const engine = join(base, "bin", windows ? "ngspice.exe" : "ngspice");
+  await executable(engine);
+  const s = await setup({
+    programs: {
+      ngspice: {
+        install: { find: { windows: ["%PATH%"], linux: ["$PATH"] } },
+        version: { args: ["-v"], match: "ngspice-(\\d+)" },
+      },
+      "ngspice-tool": {
+        install: { script: "scripts/serial.py" },
+        version: { args: ["--version"], match: "tool (\\S+)" },
+        uses: ["ngspice"],
+      },
+    },
+    hostPlatform: windows ? "win32" : "linux",
+    env: windows
+      ? { Path: join(base, "bin"), USERPROFILE: "C:\\Users\\u" }
+      : { PATH: join(base, "bin"), HOME: "/home/u" },
+  });
+  uvActs(s.host, s.uv, "unused", "** ngspice-47\ntool 1.0.0\n");
+  await s.provisioner.install("tools");
+  const resolved = await s.provisioner.resolve(await s.store.load("tools"), "ngspice-tool");
+  expect(resolved?.env?.VERA_PROGRAM_NGSPICE).toBe(engine);
+  expect(resolved?.env?.UV_NO_CONFIG).toBe("1");
+  await rm(join(base, "bin"), { recursive: true });
+  await s.provisioner.check("tools");
+  expect(await s.provisioner.resolve(await s.store.load("tools"), "ngspice-tool")).toBeUndefined();
+});
+
+// REQ-FUNC-12ee8b64: the skip tolerance belongs to .7z only; a tar archive that exits 1 is still an archive failure.
+it("refuses a .tar.gz whose bsdtar exits 1 even with only skip notices", async () => {
+  const bytes = strToU8("tar bytes");
+  const s = await setup({
+    programs: {
+      engine: {
+        install: {
+          download: {
+            "windows-x64": { url: "https://h.test/e.tar.gz", sha256: sha(bytes), path: "bin/engine.exe" },
+          },
+        },
+        version: { args: ["-v"], match: "ngspice-(\\d+)" },
+      },
+    },
+    hostPlatform: "win32",
+    platforms: ["windows-x64"],
+    env: { Path: "C:\\Windows", SystemRoot: "C:\\Windows", USERPROFILE: "C:\\Users\\u" },
+  });
+  s.served.set("https://h.test/e.tar.gz", () => new Response(bytes));
+  s.host.handle = (p) => {
+    const target = p.args[p.args.indexOf("-C") + 1] as string;
+    mkdirSync(join(target, "bin"), { recursive: true });
+    writeFileSync(join(target, "bin", "engine.exe"), "exe");
+    p.print("tar.exe: Archive entry has empty or unreadable filename ... skipping\n");
+    p.finish({ code: 1, signal: null });
+  };
+  const [status] = await s.provisioner.install("tools");
+  expect([status?.state, status?.problem]).toEqual(["missing", "archive"]);
 });

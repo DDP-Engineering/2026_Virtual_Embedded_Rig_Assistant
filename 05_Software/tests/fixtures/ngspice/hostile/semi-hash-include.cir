@@ -1,0 +1,5 @@
+semicolon hash in an include
+.include semi-hash.lib
+V1 a 0 DC 1
+R1 a 0 1k
+.end
