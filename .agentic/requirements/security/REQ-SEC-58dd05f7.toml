@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-58dd05f7"
+
+title = "Open no network connection and change no source file"
+
+status = "active"
+
+requirement = """
+The lab-validate helper shall compute every number itself without opening a network connection, starting a process or changing any source file.
+"""
+
+verification = "A test runs every operation with sockets, subprocess and os.system disabled by a sitecustomize guard (a capture folder among the inputs) and compares the SHA-256 of every input file before and after; an inspection test checks the support package imports no network or process module."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

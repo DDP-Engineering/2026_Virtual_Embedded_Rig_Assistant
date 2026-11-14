@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-a4ed8466"
+
+title = "Refuse unverified flash runners, runner arguments and images"
+
+status = "active"
+
+requirement = """
+If a flash request names another runner, the build's runners.yaml holds an argument outside the verified runner's allowlist, the HEX differs from the build run or has a record outside the flash region, or the probe alias is not a declared probe, then zephyr-flash shall refuse before opening the probe.
+"""
+
+verification = "Flash with runners.yaml argument --tool-opt=-script x, a HEX edited after the build, a HEX record at 0x1FFFC000 (option bytes) and an alias of kind visa: each exits 2 with its code and the stand-in CLI records no call."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/flash.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

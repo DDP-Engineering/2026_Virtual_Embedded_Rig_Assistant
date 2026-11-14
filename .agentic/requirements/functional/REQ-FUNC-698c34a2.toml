@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-698c34a2"
+
+title = "Decide each criterion by its declared rule and uncertainty"
+
+status = "active"
+
+requirement = """
+When `compare` evaluates a criterion, `lab-validate` shall decide it by its declared `simple` or `guarded` rule with the supplied uncertainty and tolerance as spec section 7 tabulates, echo the limit as written, and give the verdict fail when a criterion fails, else incomplete when one is incomplete, else pass.
+"""
+
+verification = "Tests evaluate values just inside, on and beyond a limit with and without uncertainty under both rules, a `bound` settling time, and a lag above its limit after cross-correlation (also against a simulation starting at t = 0), and expect pass, fail or incomplete per the table."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/decide.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

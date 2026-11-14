@@ -131,14 +131,14 @@ describe("leaseRoot", () => {
         env: { LOCALAPPDATA: "C:\\Users\\me\\AppData\\Local" },
         tmpdir: "C:\\T",
       }),
-    ).toBe(join("C:\\Users\\me\\AppData\\Local", "VERA", "leases"));
-    expect(leaseRoot({ platform: "win32", env: {}, tmpdir: "C:\\T" })).toBe(join("C:\\T", "vera-leases"));
+    ).toBe("C:\\Users\\me\\AppData\\Local\\VERA\\leases");
+    expect(leaseRoot({ platform: "win32", env: {}, tmpdir: "C:\\T" })).toBe("C:\\T\\vera-leases");
     expect(
       leaseRoot({ platform: "linux", env: { XDG_RUNTIME_DIR: "/run/user/1000" }, tmpdir: "/tmp", uid: 1000 }),
-    ).toBe(join("/run/user/1000", "vera-leases"));
+    ).toBe("/run/user/1000/vera-leases");
     expect(
       leaseRoot({ platform: "linux", env: { XDG_RUNTIME_DIR: "relative" }, tmpdir: "/tmp", uid: 1000 }),
-    ).toBe(join("/tmp", "vera-leases-1000"));
+    ).toBe("/tmp/vera-leases-1000");
   });
 
   it.skipIf(process.platform === "win32")("refuses a Linux lease folder others can enter", async () => {

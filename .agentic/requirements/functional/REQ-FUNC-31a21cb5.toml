@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-31a21cb5"
+
+title = "Line up virtual results with HIL results by requirement"
+
+status = "active"
+
+requirement = """
+When report is given a HIL run folder, renode-sim shall list each requirement id of the virtual test set with its virtual status and the status of the HIL steps the test set maps to it in a separate column, and shall label the virtual column as simulation evidence that does not replace hardware evidence.
+"""
+
+verification = "Report a virtual run with a hil-testing result fixture: the comparison table has one row per requirement, separate virtual and hardware columns, a requirement without a HIL step shows not run on hardware; a folder that is not a hil-test-result is refused."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

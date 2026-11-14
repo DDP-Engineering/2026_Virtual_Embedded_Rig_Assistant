@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-d8ecee6a"
+
+title = "Define the zephyr plugin request, run folder, result and build folder formats"
+
+status = "active"
+
+requirement = """
+The zephyr plugin shall read requests and write run folders, results, test reports and build folder markers exactly in the format 1 layout of its specification, and shall treat any other format version or unknown request field as invalid data.
+"""
+
+verification = "Run each operation on the fixtures and compare result.json, junit.xml and the build folder marker with the specification's fields and statuses; a request with format 2 or an unknown field is refused with exit 2 and nothing written."
+
+affected_paths = ["05_Software/plugins/zephyr/plugin.yaml", "05_Software/plugins/zephyr/scripts/zephyr_support/request.py", "05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/tests.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = "specs/REQ-DATA-d8ecee6a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -3,7 +3,9 @@ import { z } from "zod";
 /**
  * The workbench registry of bench resources, `lab/resources.json` (spec REQ-DATA-f2cbfc23 §1). One file per
  * workbench: the host reads its identity fields to reserve resources, plugin helpers read the whole entry. Identity
- * kinds are data (`visa`, `bus-adapter`, `ble-device`, `linux-board`); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
+ * kinds are data: `visa` (instruments, LAB-01), `probe` (debug probes, LAB-04, spec REQ-DATA-d7da2a71 §4),
+ * `power-monitor` (Joulescope energy analyzers, LAB-05, spec REQ-DATA-dd3e4fe1 §4), `bus-adapter`, `ble-device` and
+ * `linux-board` (IoT plugins); later kinds (NIC, endpoint, lab host) add a branch here and a key function below.
  */
 export const LAB_REGISTRY_PATH = "lab/resources.json";
 export const LAB_REGISTRY_BYTES = 256 * 1024;
@@ -42,6 +44,24 @@ const visaEntrySchema = z
       ctx.addIssue({ code: "custom", path: ["resource"], message: (error as Error).message });
     }
   });
+/** A probe's USB VID:PID and serial; the serial reaches OpenOCD inside a Tcl command, so it has no Tcl metacharacter. */
+const PROBE = /^([0-9A-Fa-f]{4}):([0-9A-Fa-f]{4}):([A-Za-z0-9._-]{1,64})$/;
+const probeEntrySchema = z.strictObject({
+  alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+  kind: z.literal("probe"),
+  resource: z.string().regex(PROBE, "Use VID:PID:SERIAL: four hex digits each and the probe's serial."),
+  profile: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+  note: z.string().max(256).optional(),
+});
+/** A Joulescope as pyjoulescope_driver names it: backend `u`, model, serial (only the JS220 has a profile). */
+const POWER_MONITOR = /^u\/(js220)\/([A-Za-z0-9_-]{1,32})$/;
+const powerMonitorEntrySchema = z.strictObject({
+  alias: z.string().regex(/^[a-z][a-z0-9-]{0,31}$/),
+  kind: z.literal("power-monitor"),
+  resource: z.string().regex(POWER_MONITOR, "Use the device path u/js220/<serial>."),
+  profile: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+  note: z.string().max(256).optional(),
+});
 /** A serial port as a bus adapter entry names it: `COM<n>` or a `/dev/` path. */
 const serialPort = z
   .string()
@@ -156,12 +176,21 @@ const linuxBoardEntrySchema = z.strictObject({
 });
 export const labResourceSchema = z.union([
   visaEntrySchema,
+  probeEntrySchema,
+  powerMonitorEntrySchema,
   busAdapterEntrySchema,
   bleDeviceEntrySchema,
   linuxBoardEntrySchema,
 ]);
 export type LabResource = z.infer<typeof labResourceSchema>;
-export const labResourceKindSchema = z.enum(["visa", "bus-adapter", "ble-device", "linux-board"]);
+export const labResourceKindSchema = z.enum([
+  "visa",
+  "probe",
+  "power-monitor",
+  "bus-adapter",
+  "ble-device",
+  "linux-board",
+]);
 export type LabResourceKind = z.infer<typeof labResourceKindSchema>;
 
 export const labRegistrySchema = z
@@ -249,8 +278,28 @@ function connectionKey(resource: string): string {
   throw Error("Use a VISA resource name of the form ASRL, USB, TCPIP (INSTR or SOCKET) or GPIB.");
 }
 
+/**
+ * Identity keys of a debug probe `VID:PID:SERIAL`: `probe:<vid>:<pid>:<serial>` and `probe:<vid>:<pid>`, lower-cased,
+ * as the runner keys probe-rs `--probe` selectors, so a selector naming the probe, or only its model, is BUSY too.
+ */
+export function probeResourceKeys(resource: string): string[] {
+  const found = PROBE.exec(resource);
+  if (!found) throw Error("Use a probe resource VID:PID:SERIAL.");
+  const model = `${(found[1] as string).toLowerCase()}:${(found[2] as string).toLowerCase()}`;
+  return [`probe:${model}:${(found[3] as string).toLowerCase()}`, `probe:${model}`];
+}
+
+/** The identity key of a power monitor `u/<model>/<serial>`: `power-monitor:<model>:<serial>`, lower-cased. */
+export function powerMonitorResourceKeys(resource: string): string[] {
+  const found = POWER_MONITOR.exec(resource);
+  if (!found) throw Error("Use a power monitor resource u/js220/<serial>.");
+  return [`power-monitor:${found[1] as string}:${(found[2] as string).toLowerCase()}`];
+}
+
 /** The identity keys of a registry entry. */
 export function labResourceKeys(entry: LabResource): string[] {
+  if (entry.kind === "probe") return probeResourceKeys(entry.resource);
+  if (entry.kind === "power-monitor") return powerMonitorResourceKeys(entry.resource);
   if (entry.kind === "bus-adapter")
     return [serialPortKey(entry.resource), serialPortKey(entry.terminal), entry.identity.toLowerCase()];
   if (entry.kind === "ble-device") return [`ble:${entry.address.toLowerCase()}`];

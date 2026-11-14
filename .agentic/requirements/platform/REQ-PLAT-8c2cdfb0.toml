@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-8c2cdfb0"
+
+title = "Run gdb-debug on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The gdb-debug plugin shall run its offline operations and its live operations with the user's arm-none-eabi-gdb (or gdb-multiarch on Ubuntu) and OpenOCD 0.12 or newer on Windows x64 and native Ubuntu x64.
+"""
+
+verification = "Manual: on Windows x64 and on native Ubuntu x64 (not WSL), with a profiled board and probe, run tools, snapshot, break and step through VERA and record versions, probe identity and results. Offline operations are covered by the integration tests on each platform."
+
+affected_paths = ["05_Software/plugins/gdb-debug"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

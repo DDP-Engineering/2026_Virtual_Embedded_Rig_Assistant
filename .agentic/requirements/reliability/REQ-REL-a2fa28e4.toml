@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-a2fa28e4"
+
+title = "Refuse battery estimates the data cannot support"
+
+status = "active"
+
+requirement = """
+When the battery inputs lack a required quantity (efficiency of a switching converter, the battery voltage for a capacity in mAh with an energy-domain estimate), mix charge across different voltages, or come from a profile with fewer than three whole events, the analyzer shall refuse the estimate with its reason instead of assuming a value.
+"""
+
+verification = "Tests give each missing or mixed input and a two-event profile; each exits 2 with code battery and the reason, writing nothing."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/battery.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

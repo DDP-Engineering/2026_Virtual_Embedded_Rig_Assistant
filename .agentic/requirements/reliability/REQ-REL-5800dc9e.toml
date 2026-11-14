@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-5800dc9e"
+
+title = "Stop PlatformIO runs with no process left and folders intact"
+
+status = "active"
+
+requirement = """
+When VERA stops or times out a PlatformIO build or test run, no process of the run shall remain and the project, core and other build folders shall keep their content, and the run's progressively written result.json shall read as stopped (code interrupted) once its heartbeat is older than 90 seconds, with `artifacts` reporting the folder build-unfinished.
+"""
+
+verification = "Through VERA's real runner a stand-in build that sleeps is stopped: every recorded child PID is gone, the other build folder's ELF hash and the project sources are unchanged, the partial result has state running, artifacts reports build-unfinished."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/result.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

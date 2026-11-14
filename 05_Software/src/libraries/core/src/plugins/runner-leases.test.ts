@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type LabResource, labRegistrySchema, labResourceKeys } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FakeHost, type FakeProcess } from "./fake-process-host.test-support.js";
 import { type LeaseClaim, ResourceLeases } from "./leases.js";
@@ -420,5 +421,245 @@ describe("supervised stop and cleanup", () => {
     await report(program(), "released", "unknown");
     program().finish({ code: 3, signal: null });
     expect(await run.done).toMatchObject({ physical: "unknown", cleanup: "failed" });
+  });
+});
+
+describe("plan holds and their child runs", () => {
+  const planClaims = (): LeaseClaim[] => [
+    claim(),
+    { kind: "serial", alias: "COM5", resource: "COM5", keys: ["serial:COM5"], actuates: true },
+  ];
+  const hold = (target = runner, fields: Partial<Parameters<ProgramRunner["hold"]>[0]> = {}) =>
+    target.hold({
+      sessionId: "s1",
+      workbench: root,
+      claims: planClaims(),
+      label: { plugin: "hil-testing", program: "hil", args: ["run", "hil/plan.json"] },
+      onStop: () => {},
+      ...fields,
+    });
+
+  it("lets child runs use the plan's resources and refuses everyone else", async () => {
+    const plan = await hold();
+    const leaseFiles = (await readdir(leaseFolder)).filter((name) => name.endsWith(".lease"));
+    expect(leaseFiles).toHaveLength(3);
+    // A child naming the instrument and the port starts: its claim borrows the plan's lease files.
+    const child = await runner.start(
+      request({ parent: plan.id, args: ["run", "scpi.py", "output", "--instrument", "psu", "COM5"] }),
+    );
+    expect(host.programs).toHaveLength(1);
+    // The same resources outside the plan: another session, a run without the parent, a second plan.
+    await expect(runner.start(request({ sessionId: "s2" }))).rejects.toMatchObject({ code: "BUSY" });
+    await expect(
+      runner.start({
+        sessionId: "s1",
+        workbench: root,
+        executable: "/x",
+        args: ["capture", "--port", "COM5"],
+      }),
+    ).rejects.toMatchObject({ code: "BUSY", params: { port: "COM5" } });
+    await expect(hold(runner, { sessionId: "s2" })).rejects.toMatchObject({ code: "BUSY" });
+    // Another VERA process (second runner, same lease folder) gets BUSY from the lease files.
+    const other = make({
+      leases: new ResourceLeases({ root: leaseFolder, app: "cli", pid: 777, alive: () => true }),
+    });
+    await expect(
+      other.hold({ sessionId: "s9", workbench: root, claims: planClaims(), onStop: () => {} }),
+    ).rejects.toMatchObject({
+      code: "BUSY",
+    });
+    program().finish({ code: 0, signal: null });
+    await report(program(), "released", "confirmed");
+    await child.done;
+    // The child's end never releases the plan's leases.
+    expect((await readdir(leaseFolder)).filter((name) => name.endsWith(".lease"))).toHaveLength(3);
+    const result = await plan.finish({ exitCode: 0 });
+    expect(result.exitCode).toBe(0);
+    expect((await readdir(leaseFolder)).filter((name) => name.endsWith(".lease"))).toHaveLength(0);
+    const record = JSON.parse(await readFile(join(root, ".vera", "runs", `${plan.id}.json`), "utf8"));
+    expect(record).toMatchObject({ plugin: "hil-testing", program: "hil", end: "exited", exitCode: 0 });
+  });
+
+  it("refuses a plan while any run, foreground included, uses one of its ports", async () => {
+    const other = await runner.start({
+      sessionId: "s2",
+      workbench: root,
+      executable: "/x",
+      args: ["--port", "COM5"],
+    });
+    await expect(hold()).rejects.toMatchObject({
+      code: "BUSY",
+      params: { handle: other.id, resource: "COM5" },
+    });
+    program().finish({ code: 0, signal: null });
+    await other.done;
+    const plan = await hold();
+    await plan.finish({ exitCode: 0 });
+  });
+
+  it("keeps stopping the session's other runs when a hold's stop callback throws", async () => {
+    const plan = await hold(runner, {
+      claims: [],
+      onStop: () => {
+        throw Error("owner not ready");
+      },
+    });
+    const other = await runner.start({
+      sessionId: "s1",
+      workbench: root,
+      executable: "/x",
+      args: [],
+      background: true,
+    });
+    await Promise.race([runner.stopSession("s1"), wait(200)]);
+    expect((await other.done).stopped).toBe(true);
+    await plan.finish({ exitCode: 3, stopped: true });
+  });
+
+  it("refuses a child of an unknown or foreign parent", async () => {
+    const plan = await hold();
+    await expect(runner.start(request({ parent: "01JUNKNOWNPARENT0000000000" }))).rejects.toMatchObject({
+      code: "DENIED",
+    });
+    await expect(runner.start(request({ parent: plan.id, sessionId: "s2" }))).rejects.toMatchObject({
+      code: "DENIED",
+    });
+    expect(host.programs).toHaveLength(0);
+    await plan.finish({ exitCode: 0 });
+  });
+
+  it("asks its owner to stop on Stop, session stop and workbench close, and keeps output", async () => {
+    let stops = 0;
+    const plan: Awaited<ReturnType<typeof hold>> = await hold(runner, {
+      background: true,
+      onStop: () => {
+        stops++;
+        void plan.finish({ exitCode: 3, stopped: true, physical: "confirmed" });
+      },
+    });
+    plan.write("[HIL] step flash: pass\n");
+    expect(plan.read()).toMatchObject({ output: "[HIL] step flash: pass\n", running: true });
+    await runner.stopSession("s1");
+    expect(stops).toBe(1);
+    const result = await plan.done;
+    expect(result).toMatchObject({ exitCode: 3, stopped: true, physical: "confirmed" });
+    expect(runner.get(plan.id)).toBeUndefined();
+    expect(readFileSync(join(root, ".vera", "runs", `${plan.id}.log`), "utf8")).toContain("step flash");
+  });
+
+  it("counts a background hold against the session's background limit", async () => {
+    const limited = make({ maxBackground: 1 });
+    const plan = await hold(limited, { background: true, claims: [] });
+    await expect(
+      limited.start({ sessionId: "s1", workbench: root, executable: "/x", args: [], background: true }),
+    ).rejects.toMatchObject({ code: "BUSY", params: { limit: 1 } });
+    await plan.finish({ exitCode: 0 });
+    expect(existsSync(join(root, ".vera", "runs", `${plan.id}.log`))).toBe(true);
+  });
+});
+
+describe("debug probe reservations of gdb-debug (REQ-SEC-ad412ce8)", () => {
+  const PROBE = "0483:374B:066DFF4851";
+  const probeKeys = labResourceKeys(
+    labRegistrySchema.parse({
+      format: 1,
+      resources: [{ alias: "stlink1", kind: "probe", resource: PROBE, profile: "stm32f4-stlink" }],
+    }).resources[0] as LabResource,
+  );
+  const debug = (overrides: Partial<RunRequest> = {}): RunRequest => ({
+    sessionId: "s1",
+    workbench: root,
+    executable: "/py",
+    args: ["gdb_debug.py", "snapshot", "--probe", "stlink1", "--elf", "app.elf"],
+    lease: {
+      claims: [{ kind: "probe", alias: "stlink1", resource: PROBE, keys: probeKeys, actuates: true }],
+      graceMs: 40,
+      cleanup: {
+        args: ["gdb_debug.py", "release", "--probe", "stlink1"],
+        shown: ["release", "--probe", "stlink1"],
+        timeoutMs: 80,
+      },
+    },
+    ...overrides,
+  });
+  const flash = (selector: string, sessionId = "s1"): RunRequest => ({
+    sessionId,
+    workbench: root,
+    executable: "/probe-rs",
+    args: ["download", "--chip", "STM32F401RE", "--probe", selector, "app.elf"],
+  });
+  const plan = (selector: string, target = runner) =>
+    target.hold({
+      sessionId: "s2",
+      workbench: root,
+      claims: [
+        {
+          kind: "probe",
+          alias: selector,
+          resource: selector,
+          keys: [`probe:${selector.toLowerCase()}`],
+          actuates: true,
+        },
+      ],
+      label: { plugin: "hil-testing", program: "hil", args: ["run", "hil/plan.json"] },
+      onStop: () => {},
+    });
+
+  it("refuses probe-rs on the probe, a second debug run and a HIL plan while a debug run holds it", async () => {
+    await runner.start(debug());
+    for (const selector of ["0483:374b:066DFF4851", "0483:374B:066dff4851", "0483:374b"]) {
+      await expect(runner.start(flash(selector)), selector).rejects.toMatchObject({ code: "BUSY" });
+      await expect(runner.start(flash(selector, "s2")), selector).rejects.toMatchObject({ code: "BUSY" });
+    }
+    await expect(
+      runner.start({ ...flash("x"), args: ["download", "--probe=0483:374b:066dff4851", "app.elf"] }),
+    ).rejects.toMatchObject({ code: "BUSY" });
+    await expect(runner.start(debug({ sessionId: "s2" }))).rejects.toMatchObject({ code: "BUSY" });
+    await expect(plan("0483:374b:066DFF4851")).rejects.toMatchObject({ code: "BUSY" });
+    // Another runner (another VERA process) sees the lease file.
+    await expect(make().start(debug({ sessionId: "s3" }))).rejects.toMatchObject({ code: "BUSY" });
+    // A probe of another model is free.
+    await runner.start(flash("1366:0105:000123456789"));
+    expect(host.programs).toHaveLength(2);
+    // A second probe of the same model is reserved too: a VID:PID selector cannot tell the two apart (documented).
+    const twin = labResourceKeys(
+      labRegistrySchema.parse({
+        format: 1,
+        resources: [
+          { alias: "stlink2", kind: "probe", resource: "0483:374B:OTHERSERIAL", profile: "stm32f4-stlink" },
+        ],
+      }).resources[0] as LabResource,
+    );
+    await expect(
+      runner.start(
+        debug({
+          sessionId: "s4",
+          lease: {
+            claims: [
+              {
+                kind: "probe",
+                alias: "stlink2",
+                resource: "0483:374B:OTHERSERIAL",
+                keys: twin,
+                actuates: true,
+              },
+            ],
+            graceMs: 40,
+          },
+        }),
+      ),
+    ).rejects.toMatchObject({ code: "BUSY" });
+  });
+
+  it("refuses a debug run while probe-rs or a HIL plan uses the probe", async () => {
+    const flashing = await runner.start(flash("0483:374b:066dff4851"));
+    await expect(runner.start(debug())).rejects.toMatchObject({ code: "BUSY" });
+    host.programs[0]?.finish({ code: 0, signal: null });
+    await flashing.done;
+    const held = await plan("0483:374b");
+    await expect(runner.start(debug())).rejects.toMatchObject({ code: "BUSY" });
+    await held.finish({ exitCode: 0 });
+    await runner.start(debug());
+    expect(host.programs).toHaveLength(2);
   });
 });

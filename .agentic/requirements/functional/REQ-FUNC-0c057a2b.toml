@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0c057a2b"
+
+title = "Import CSV and sigrok CSV files through a declared channel mapping"
+
+status = "active"
+
+requirement = """
+When a source uses importer `csv` or `sigrok-csv`, `lab-validate` shall read the declared time column or sample rate (for sigrok-csv also the `; Samplerate:` comment) and the declared channel columns with their units, skip declared comment lines, drop empty or `nan` cells as missing samples and refuse any other non-number with its row.
+"""
+
+verification = "Tests import a CSV with a millisecond time column and millivolt values, a tab-separated LTspice-style export, a sigrok-cli style CSV with a samplerate comment, a CSV with BOM, CRLF, quoted cells and -nan, and refuse a text cell, a value beyond 1e30, a zero sample rate and a time that does not increase."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

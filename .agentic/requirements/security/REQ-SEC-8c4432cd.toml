@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8c4432cd"
+
+title = "Refuse unlisted projects, extension commands and build hooks unless approved by hash"
+
+status = "active"
+
+requirement = """
+If the workspace or application contains a project not listed in the request, a listed project missing, pinned at another SHA or checked out elsewhere, an outer west workspace or a .west/config key outside the allowlist, an extension command of a project other than zephyr, a module build root or runner, a CMake command, find_package form or environment read outside the allowlist (also when hidden by quoting, bracket syntax or a byte-order mark), a Kconfig macro or foreign source, sysbuild files, an implicit board input, a test scenario with another harness, extra arguments or extra files, or another Twister suite below the test root, then the zephyr helper shall refuse every process-starting operation with the finding and its file; it shall accept a file-based finding only while the request approves that file by its current SHA-256, and shall never approve project, west configuration, shadowing-extension or nested-suite findings.
+"""
+
+verification = "Preflight fixtures each with one hook (an execute_process in the app CMakeLists.txt, one hidden after a quoted #[[, one after a byte-order mark, a find_package HINTS path, a Kconfig $(shell,...), a sysbuild.conf, a boards/stm32f4_disco.overlay not listed, an unlisted project with west-commands, a shadowing build command, a moved HEAD, a .west/config build key, a pytest harness, extra_conf_files, a nested testcase.yaml and a sample.yaml): each is refused with its code; adding the file's SHA-256 to hooks makes the CMake, Kconfig, sysbuild, implicit-input, extension and harness findings approved, but not the shadowing extension or the nested suites; changing the file after approval refuses again."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/preflight.py", "05_Software/plugins/zephyr/scripts/zephyr_support/cmake_scan.py", "05_Software/plugins/zephyr/scripts/zephyr_support/model.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

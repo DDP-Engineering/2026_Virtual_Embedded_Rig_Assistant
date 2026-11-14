@@ -1,0 +1,12 @@
+{
+  "type": "platform",
+  "name": "native",
+  "version": "1.2.1",
+  "spec": {
+    "owner": "platformio",
+    "id": null,
+    "name": "native",
+    "requirements": null,
+    "uri": null
+  }
+}

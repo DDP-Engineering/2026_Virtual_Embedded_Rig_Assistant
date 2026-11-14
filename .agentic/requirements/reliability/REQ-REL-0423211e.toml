@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-0423211e"
+
+title = "Refuse a firmware that does not fit the profile"
+
+status = "active"
+
+requirement = """
+If the firmware's machine, class, architecture, memory map or vector table, or the stated architecture or boot address, does not match the profile, then renode-sim shall refuse the firmware with a named code (exit 2 for validate, a blocked run folder with exit 3 for run, capture-uart and test) without starting the engine and without reporting the platform validated; a missing --arch or --boot-address is refused with exit 2 before anything is written.
+"""
+
+verification = "Validate and test the RV32 fixture (machine), the Cortex-M0+ fixture (arch-mismatch), the CCM-linked Cortex-M4 fixture (memory-map), a text file (elf), --arch cortex-m0plus (arch-mismatch) and --boot-address 0x00000000 (boot-address): each is refused with its code, the blocked result records validation refused, and the engine stand-in never starts a session; a run without --arch is refused with code request and exit 2."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/firmware.py", "05_Software/plugins/renode/scripts/renode_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

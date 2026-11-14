@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-dd3e4fe1"
+
+title = "Define the power-profiler operations, profile, capture and result formats"
+
+status = "active"
+
+requirement = """
+The power-profiler plugin shall implement the operations, option syntax, meter profile, capture folder, result documents and exit codes that the linked specification defines.
+"""
+
+verification = "Integration tests run every operation of power-profile (against the fake driver) and power-analyze and check each document's required fields, kinds, statuses and exit codes against the spec; a profile with an unknown field is refused."
+
+affected_paths = ["05_Software/plugins/power-profiler/plugin.yaml", "05_Software/plugins/power-profiler/profiles/joulescope-js220.json", "05_Software/plugins/power-profiler/scripts/power_support/cli_profile.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py", "05_Software/plugins/power-profiler/scripts/power_support/capfile.py", "05_Software/plugins/power-profiler/scripts/power_support/profiles.py", "05_Software/plugins/power-profiler/scripts/power_support/result.py", "05_Software/plugins/power-profiler/README.md", "05_Software/plugins/power-profiler/scripts/power_analyze.py", "05_Software/plugins/power-profiler/scripts/power_profile.py", "05_Software/plugins/power-profiler/scripts/power_support/__init__.py", "05_Software/plugins/power-profiler/scripts/power_support/errors.py", "05_Software/plugins/power-profiler/scripts/power_support/workspace.py", "05_Software/plugins/power-profiler/skills/energy-analysis/SKILL.md", "05_Software/plugins/power-profiler/skills/power-measurement/SKILL.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = "specs/REQ-DATA-dd3e4fe1.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

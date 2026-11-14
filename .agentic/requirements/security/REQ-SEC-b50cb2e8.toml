@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-b50cb2e8"
+
+title = "Start GDB without init files, auto-load or network lookups"
+
+status = "active"
+
+requirement = """
+When gdb-debug starts GDB, it shall start it in MI mode with `-nx`, script auto-loading off, debuginfod off, history saving off, confirmation off and calls of target functions off (`may-call-functions`), in a working folder inside the run folder, with the standard input owned by the helper.
+"""
+
+verification = "Integration tests read the arguments the GDB stand-in received and expect --interpreter=mi3, -nx, -q and the -iex settings for auto-load, debuginfod, history, confirm, trust-readonly-sections and may-call-functions, the working folder inside the run folder, and no reference to a .gdbinit placed in the workbench."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/session.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

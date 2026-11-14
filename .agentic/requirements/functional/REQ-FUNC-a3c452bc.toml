@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a3c452bc"
+
+title = "Capture current, voltage, power, range and markers on the meter clock"
+
+status = "active"
+
+requirement = """
+When a capture runs, the helper shall stream current, voltage, power, current range and the requested general-purpose inputs on the meter's sample clock for the declared duration and write a capture folder with samples.csv, the acquisition settings read back, the timebase, the meter identity, the declared conditions and the SHA-256 of every artifact.
+"""
+
+verification = "A fake-driver test captures 0.2 s at 10 kHz with GPI0 and checks the row count, the sample times from the sample ids, the settings readback and the artifact hashes; lab-validate imports the folder."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/capture.py", "05_Software/plugins/power-profiler/scripts/power_support/capfile.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

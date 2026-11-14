@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-334a3066"
+
+title = "Refuse interleaved use of a resource inside a plan"
+
+status = "active"
+
+requirement = """
+If a plan step names a serial port, probe or registry resource that a background step of the same plan still uses, then VERA shall refuse the plan at compilation.
+"""
+
+verification = "A test compiles a background serial capture on COM5 followed by a serial send on COM5 before its await and expects the refusal; the same send after the await compiles."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cd1e687f"
+
+title = "Identify the firmware build of a capture"
+
+status = "active"
+
+requirement = """
+When a capture names --firmware, the helper shall record the workbench file's SHA-256, size and format and, for an ELF, its machine and GNU build id, and shall refuse a file outside the workbench before opening the meter.
+"""
+
+verification = "Tests capture with an ELF fixture (hash, build id) and a binary file (hash, format bin); a path outside the working directory is refused with exit 2."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/firmware.py", "05_Software/plugins/power-profiler/scripts/power_support/elf.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-72b39f27"
+
+title = "Identify the declared power monitor"
+
+status = "active"
+
+requirement = """
+When identify runs for a declared meter, the helper shall open the meter without applying defaults and report its model, serial, hardware, firmware and FPGA versions and its current range mode, refuse a registry entry whose model differs from its profile before any device call, and return blocked with code device-missing when the driver lists no such device.
+"""
+
+verification = "Fake-driver tests: identify writes a power-result with the versions and range mode and publishes nothing; a missing device gives blocked/device-missing with physical unchanged; a probe alias or unknown alias is refused with exit 2 and no driver call."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/capture.py", "05_Software/plugins/power-profiler/scripts/power_support/meter.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_profile.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

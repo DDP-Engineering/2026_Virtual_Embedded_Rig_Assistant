@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0000b585"
+
+title = "List the supported virtual platform profiles"
+
+status = "active"
+
+requirement = """
+When profiles is requested, renode-sim shall list every plugin and workbench profile in one row with its id, origin, hash, engine version, verification state, CPU, boot address, console, stimuli, observables and modeled peripherals, shall list an invalid workbench profile as refused with its reason instead of omitting it, and with --profile shall show that profile's full facts including its files and hashes, engine files, memory regions, UARTs and documented unsupported features.
+"""
+
+verification = "Run profiles in a workbench with one valid and one invalid profile: the plugin profile and the valid workbench profile are listed as rows, the invalid one refused with the validator's line; profiles --profile stm32f4-discovery shows the full facts with the four file hashes and no engine files, exit 0."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/profiles.py", "05_Software/plugins/renode/scripts/renode_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

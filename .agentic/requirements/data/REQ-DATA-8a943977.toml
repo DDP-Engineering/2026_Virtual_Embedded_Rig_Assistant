@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-8a943977"
+
+title = "Define renode-sim operations, profiles, test sets and run folders"
+
+status = "active"
+
+requirement = """
+The renode-sim helper shall implement the operations, options, profile, test-set, run-folder and result formats, statuses and exit codes defined in its specification.
+"""
+
+verification = "Integration tests run every operation against fixture ELFs and the engine stand-in and check each written result.json, junit.xml and exit code against the specification; malformed options, outside paths and invalid option values are refused with exit 2 and no run folder, while an unfitting profile, firmware, test set or engine makes a blocked run folder with exit 3 and no engine start."
+
+affected_paths = ["05_Software/plugins/renode/plugin.yaml", "05_Software/plugins/renode/scripts/renode_sim.py", "05_Software/plugins/renode/scripts/renode_support/cli.py", "05_Software/plugins/renode/scripts/renode_support/result.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = "specs/REQ-DATA-8a943977.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

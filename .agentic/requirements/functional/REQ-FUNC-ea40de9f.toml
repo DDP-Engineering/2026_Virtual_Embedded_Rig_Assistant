@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ea40de9f"
+
+title = "Report what was simulated and what is not covered"
+
+status = "active"
+
+requirement = """
+When report is requested for a finished renode-sim run folder, renode-sim shall write report.md, report.html and junit.xml from result.json in the hil-testing report shape, naming the firmware hash and build id, the engine version, the profile and platform-file hashes, the modeled peripherals used, and the properties not covered: real electrical timing, analog power consumption, EMI and SPICE circuit behavior.
+"""
+
+verification = "Report a test run: the three files exist, junit.xml has one testcase per case with properties status, runId and evidence virtual; the markdown lists the hashes and the not-covered properties."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

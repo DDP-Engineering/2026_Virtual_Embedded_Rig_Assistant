@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-c2031dc3"
+
+title = "PlatformIO plugin on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The platformio plugin shall run its operations on Windows x64 and native Ubuntu x64 with the same request and result formats, the core folder's packages for that system and the host compiler of that system for native tests.
+"""
+
+verification = "Windows: the offline suite and the opt-in real build/test runs; native Ubuntu x64: Manual: the same opt-in runs on a native Ubuntu x64 machine (open: no such machine is available to this task; WSL is not native Ubuntu)."
+
+affected_paths = ["05_Software/plugins/platformio/plugin.yaml", "05_Software/plugins/platformio/scripts/pio_support/environment.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,12 @@
+{
+  "type": "tool",
+  "name": "toolchain-gccarmnoneeabi",
+  "version": "1.70201.0",
+  "spec": {
+    "owner": "platformio",
+    "id": null,
+    "name": "toolchain-gccarmnoneeabi",
+    "requirements": null,
+    "uri": null
+  }
+}

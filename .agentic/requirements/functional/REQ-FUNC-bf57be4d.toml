@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-bf57be4d"
+
+title = "Step the halted core a bounded number of times"
+
+status = "active"
+
+requirement = """
+When `gdb-debug step --count <n>` runs with n from 1 to 100, the helper shall step the core n source lines (or n instructions with `--instruction`), record each stop's location, stop early with status incomplete on a timeout or an unrequested stop reason, and take a snapshot at the end.
+"""
+
+verification = "Integration tests step 3 lines and 2 instructions against the stand-in and expect three/two step records and the MI step commands; a step that never stops is interrupted after the step timeout; count 0 and 101 are refused with exit 2."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

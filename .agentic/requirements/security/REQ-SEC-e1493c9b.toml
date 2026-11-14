@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-e1493c9b"
+
+title = "Refuse an ELF that is outside the workbench or does not suit the profile"
+
+status = "active"
+
+requirement = """
+When an ELF named by a gdb-elf or gdb-debug operation is outside the workbench, not a regular file, larger than 64 MiB, not a valid ELF, or (for gdb-debug) not a 32-bit little-endian ARM M-profile image the profile's core can run, the helper shall refuse the request with exit 2 before starting GDB or OpenOCD.
+"""
+
+verification = "Integration tests pass a path outside the workbench, an absolute path elsewhere, a folder, a missing file, a truncated ELF and a text file to inspect, a RISC-V image, an ARMv7E-M image for the ARMv6-M profile, outside and folder paths to snapshot, and an ELF with a malformed .ARM.attributes table to both, and expect exit 2, no stand-in invocation and no run folder; internals.py checks truncated and out-of-file headers in the reader. The 64 MiB bound is a size check in elf.read, not exercised by a test."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/elf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/workspace.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_elf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

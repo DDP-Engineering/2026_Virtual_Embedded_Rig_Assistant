@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-cd7e4f2c"
+
+title = "Run power-profiler on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The power-profiler helpers shall run on Windows x64 and native Ubuntu x64 with the pinned pyjoulescope_driver wheel for the platform, and the absence of a meter shall leave every live criterion explicitly unmet.
+"""
+
+verification = "Manual: the opt-in VERA_POWER_REAL_PYTHON test (real pyjoulescope_driver 2.5.5) on Windows x64 and native Ubuntu x64 (WSL does not count), and a live capture with a JS220 on each; when no meter or Ubuntu machine is available the live items stay open."
+
+affected_paths = ["05_Software/plugins/power-profiler/plugin.yaml", "05_Software/plugins/power-profiler/scripts/power_support/usb.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

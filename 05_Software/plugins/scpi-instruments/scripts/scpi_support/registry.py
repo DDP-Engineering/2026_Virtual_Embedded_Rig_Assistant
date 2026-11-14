@@ -1,7 +1,8 @@
 """The workbench registry `lab/resources.json` (spec REQ-DATA-f2cbfc23 section 1), read from $SCPI_REGISTRY.
 
 VERA validates the same document before it reserves a resource; the helper validates it again because it also
-reads the plugin fields (profile, backend, bench limits) and runs without VERA in tests.
+reads the plugin fields (profile, backend, bench limits) and runs without VERA in tests. Entries of kinds other
+plugins own (`probe`, gdb-debug) are skipped; their aliases still count for uniqueness.
 """
 
 from __future__ import annotations
@@ -30,7 +31,9 @@ VISA = re.compile(
     r"|GPIB\d*::\d{1,2}(?:::\d{1,3})?::INSTR)"
 )
 KEYS = {"alias", "kind", "resource", "serial", "profile", "backend", "limits", "note"}
-OTHER_KINDS = ("bus-adapter", "ble-device", "linux-board")
+# Kinds other plugins own (gdb-debug probes, power-profiler monitors, the IoT plugins' adapters, BLE devices and Linux
+# boards): VERA validates them, this helper skips them.
+OTHER_KINDS = ("probe", "power-monitor", "bus-adapter", "ble-device", "linux-board")
 
 
 @dataclass(frozen=True)
@@ -132,7 +135,7 @@ def load() -> Registry:
     resources = document["resources"]
     if not isinstance(resources, list) or not 1 <= len(resources) <= 64:
         raise Refused("request", "lab/resources.json declares 1 to 64 resources.")
-    # Entries of other identity kinds (bus-adapter, ble-device, linux-board) belong to other plugins: VERA validated them, scpi skips them.
+    # Entries of other kinds belong to other plugins: VERA validated them, scpi skips them.
     others = {
         str(raw.get("alias")): str(raw.get("kind"))
         for raw in resources

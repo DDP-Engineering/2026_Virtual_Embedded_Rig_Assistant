@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7ba90d50"
+
+title = "Reserve a HIL plan's resources for the plan run"
+
+status = "active"
+
+requirement = """
+While a HIL run is unfinished, VERA shall hold the identity keys of every registry alias, serial port and probe its operations name, let the plan's own operations use them and refuse with BUSY another plan or registry claim in any VERA process (through the lease folder) and, within the same VERA process, any other run naming one of them.
+"""
+
+verification = "Tests run a plan whose step uses COM5 and the scope alias, and during it start a second plan, a serial run and a second lease holder naming COM5 or the alias, and expect BUSY while the plan's own steps run."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/leases.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/hil/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

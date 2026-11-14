@@ -1,0 +1,50 @@
+format: 1
+id: renode
+version: 1.0.0
+name: Renode virtual boards
+description: Run a firmware ELF on an explicitly supported virtual board with the pinned Renode 1.17.0 - list the supported profiles, check a firmware against a profile's architecture, memory map and boot address before anything runs, boot it headless and capture its UART, and run approved test sets (UART lines, timer ticks, declared button and UART stimuli, the modeled LED) with separate virtual and real time budgets. Only approved platform profiles run; the agent never reaches the Renode monitor, scripts, sockets or host devices, unmodeled peripherals make a result incomplete, and every run folder states what was simulated and what a simulation does not cover.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://renode.readthedocs.io/en/latest/introduction/testing.html", "https://renode.readthedocs.io/en/latest/introduction/supported-boards.html"]
+programs:
+  renode:
+    install:
+      find:
+        windows: ["%PATH%", "%ProgramFiles%/Renode/bin/Renode.exe", "%ProgramFiles%/Renode/renode.exe"]
+        linux: ["$PATH", "/usr/bin/renode", "/opt/renode/renode"]
+      hint: Choose Install programs for the pinned Renode 1.17.0 portable package, or put a Renode 1.17.0 installation on PATH.
+      download:
+        windows-x64:
+          url: https://github.com/renode/renode/releases/download/v1.17.0/renode-1.17.0.windows-portable.zip
+          sha256: 18bcf145422039e8702c3e5f9864c7787561bfd5deb7a3ee6e168ecf19e2b9db
+          path: renode_1.17.0-portable/renode.exe
+        linux-x64:
+          url: https://github.com/renode/renode/releases/download/v1.17.0/renode-1.17.0.linux-portable.tar.gz
+          sha256: 4ba7c68b59e2447f188ef4b4b112fcccd2802582c460beedceb63b84e5605a5f
+          path: renode_1.17.0-portable/renode
+    version: { args: [--version], match: 'Renode v?(\d+\.\d+\.\d+)', range: '==1.17.0' }
+    timeout: 60
+  renode-sim:
+    install: { script: scripts/renode_sim.py }
+    version: { args: [--version], match: '^renode-sim (\d+\.\d+\.\d+)' }
+    timeout: 600
+    uses: [renode]
+# The agent never reaches Renode directly: its monitor runs Python, includes scripts, downloads files and opens
+# sockets, PTYs, TAP devices and GDB servers. renode-sim composes the monitor commands from an approved profile and
+# fixed templates (the highest risk of all matching rules wins, so no exception to this block is possible); VERA's
+# provisioner probes the engine version itself.
+rules:
+  - match: "renode *"
+    risk: blocked
+    note: The Renode monitor can run Python, include scripts, download files and open sockets or host devices. Use renode-sim, which runs approved profiles headless with UARTs on files in the run folder.
+  - { match: "renode-sim {--version,--help,-h}", risk: safe }
+  - match: "renode-sim {tools,profiles}"
+    risk: safe
+    note: Reports the engine version or the supported profiles; simulates nothing.
+  - match: "renode-sim {tools,profiles,validate,report} *"
+    risk: safe
+    note: Reads profiles, a workbench ELF or a run folder; validate starts no simulation, report writes report files into the run folder.
+  - match: "renode-sim {run,capture-uart,test} *"
+    risk: safe
+    timeout: 3600
+    note: Host simulation. Runs the firmware on the virtual board of an approved profile in the pinned Renode, headless, with no device, network listener or host file outside the new run folder; the result is virtual evidence, not a hardware test.

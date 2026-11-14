@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a9ddc5de"
+
+title = "Compute the documented metrics with their definitions shown"
+
+status = "active"
+
+requirement = """
+When a measurement is requested, `lab-validate` shall compute its registered metric over the declared window with the definition, levels, thresholds and band of spec section 4 and report the value with its unit and status `ok`, `bound` or `unknown` with a reason.
+"""
+
+verification = "Tests compare RMS, frequency, duty cycle, rise and fall time, overshoot, settling time, ripple and delay (also with declared levels on one side only) of synthetic signals with independent solutions fixed in the fixture README, and expect `unknown` for a window outside the series."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/metrics.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

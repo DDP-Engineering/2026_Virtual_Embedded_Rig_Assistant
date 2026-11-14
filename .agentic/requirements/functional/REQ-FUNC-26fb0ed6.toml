@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-26fb0ed6"
+
+title = "Upload an owned build through the verified protocol with a reserved probe"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio-upload upload` with a request, a build run, a declared probe alias and --firmware-effect, the platformio upload helper shall check the owned build folder's firmware against the build run's SHA-256, the environment's upload protocol against the verified list (stlink), the preflight and that every uploader package the platform declares is installed, then run PlatformIO's nobuild and upload targets with the probe's serial passed explicitly to the uploader and report the physical state unknown once the upload starts; it shall refuse an unverified protocol, a changed firmware, a missing or non-probe alias and an upload_command with exit 2 before the probe is opened.
+"""
+
+verification = "Stand-in: the recorded argv is `run -e disco -t nobuild -t upload` with PLATFORMIO_UPLOAD_FLAGS naming `adapter serial <serial>`; a modified firmware.elf, upload_protocol = jlink, an alias of kind visa and an unknown alias are each refused; through VERA's real runner a second run naming the probe is BUSY; real opt-in: with only tool-openocd installed the upload is refused packages-missing naming tool-stm32flash before PlatformIO starts; with every uploader installed and no probe attached it reports fail with physical unknown."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/upload.py", "05_Software/plugins/platformio/scripts/pio_support/registry.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

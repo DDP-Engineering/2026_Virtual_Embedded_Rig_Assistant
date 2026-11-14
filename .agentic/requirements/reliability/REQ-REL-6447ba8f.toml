@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6447ba8f"
+
+title = "Leave no active capture and an explicit physical state on every end"
+
+status = "active"
+
+requirement = """
+When a capture ends by Stop, timeout, device removal or a driver error, the helper shall stop streaming, restore the changed settings when the meter is still present, read them back and report the physical state confirmed or unknown, and the cleanup release shall return the meter to auto-ranging and report confirmed only after readback.
+"""
+
+verification = "Fake-driver tests: a stop file mid-capture ends incomplete with settings restored and physical confirmed; a stalled stream and a malformed driver message end error with the samples kept (or code internal) and the meter restored; a removal mid-capture ends error with physical unknown; release sets auto and reports confirmed, or unknown when the device is missing or the current path is off or unnamed; VERA runner tests stop a capture and time one out, each leaving no run and no lease."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/capture.py", "05_Software/plugins/power-profiler/scripts/power_support/meter.py", "05_Software/plugins/power-profiler/scripts/power_support/lifecycle.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

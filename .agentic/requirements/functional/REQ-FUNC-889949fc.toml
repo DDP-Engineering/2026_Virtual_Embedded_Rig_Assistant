@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-889949fc"
+
+title = "Build Twister test scenarios as build-only results that never pass"
+
+status = "active"
+
+requirement = """
+When test-build is requested, the zephyr helper shall build the requested Twister scenarios with Twister in build-only mode for the exact board and report each scenario as built or failed with its ELF hash and every case as not-run, with the result status incomplete and the evidence build-only, never pass.
+"""
+
+verification = "Manual: test-build the ztest fixture's scenarios with the real Twister on Windows x64: result incomplete, evidence build-only, each case not-run, junit.xml marks the cases skipped; offline a stand-in Twister reporting passed for a build-only suite is still reported not-run."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/tests.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,94 @@
+{
+  "format": 1,
+  "id": "stm32f4-discovery",
+  "title": "STM32F4 Discovery (STM32F407VG, Cortex-M4F) on Renode 1.17.0",
+  "platform": "Renode 1.17.0's STM32F4 Discovery board (platforms/boards/stm32f4_discovery.repl) and STM32F4 CPU model (platforms/cpus/stm32f4.repl), copied beside the profile without the CPU file's SVD download and register tags; user button on PA0, user LED on PD12",
+  "engine": "1.17.0",
+  "verification": "unverified",
+  "repl": "platform.repl",
+  "resc": "machine.resc",
+  "engineFiles": {},
+  "cpu": {
+    "arch": "cortex-m4",
+    "isa": "v7E-M"
+  },
+  "boot": "0x08000000",
+  "memory": [
+    {
+      "name": "flash",
+      "kind": "flash",
+      "start": "0x08000000",
+      "size": "0x200000"
+    },
+    {
+      "name": "sram",
+      "kind": "ram",
+      "start": "0x20000000",
+      "size": "0x40000"
+    }
+  ],
+  "uarts": {
+    "usart1": "sysbus.usart1",
+    "usart2": "sysbus.usart2",
+    "usart3": "sysbus.usart3",
+    "uart4": "sysbus.uart4",
+    "uart5": "sysbus.uart5"
+  },
+  "console": "usart2",
+  "peripherals": [
+    {
+      "name": "usart2",
+      "model": "UART.STM32_UART",
+      "address": "0x40004400",
+      "note": "Bytes only: no baud rate, framing or line timing is modeled."
+    },
+    {
+      "name": "timer2",
+      "model": "Timers.STM32_Timer",
+      "address": "0x40000000",
+      "note": "Counts at the model's fixed 10 MHz; the RCC clock tree does not change it."
+    },
+    {
+      "name": "gpioPortA",
+      "model": "GPIOPort.STM32_GPIOPort",
+      "address": "0x40020000",
+      "note": "PA0 is driven by the modeled user button."
+    },
+    {
+      "name": "gpioPortD",
+      "model": "GPIOPort.STM32_GPIOPort",
+      "address": "0x40020C00",
+      "note": "PD12 drives the modeled user LED."
+    },
+    {
+      "name": "nvic",
+      "model": "IRQControllers.NVIC",
+      "address": "0xE000E000",
+      "note": "SysTick at the model's 72 MHz."
+    }
+  ],
+  "stimuli": {
+    "user-button": {
+      "kind": "button",
+      "target": "sysbus.gpioPortA.UserButton"
+    },
+    "console-rx": {
+      "kind": "uart-input",
+      "uart": "usart2"
+    }
+  },
+  "observables": {
+    "user-led": {
+      "kind": "led",
+      "target": "sysbus.gpioPortD.UserLED"
+    }
+  },
+  "unsupported": [
+    "The clock tree (RCC, PLL, flash wait states) does not change the execution speed or the timer rates of the model.",
+    "Instruction timing is not cycle-accurate: the CPU model executes at its configured MIPS.",
+    "Peripherals without a model in platforms/cpus/stm32f4.repl (for example the DAC, ADC, USB OTG, SDIO and DCMI) are not simulated.",
+    "The audio codec, accelerometer and other parts of the Discovery board outside the STM32F407 are not modeled.",
+    "The register tags of the upstream CPU file (GPIOE_MODER, GPIOE_OTYPER, USB:RESET) and its SVD register names are left out: an access to an unmodeled register is reported as an access to a non-existing peripheral."
+  ],
+  "slice": 0.01
+}

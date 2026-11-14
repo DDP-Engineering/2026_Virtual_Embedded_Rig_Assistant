@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-08e50f9f"
+
+title = "Never report pass for an unexecuted or failed test"
+
+status = "active"
+
+requirement = """
+The HIL run status shall follow blocked > error > fail > incomplete > pass and be `pass` only when every test step ran and passed.
+"""
+
+verification = "Tests run a plan with a failing assertion (fail), an absent instrument in setup (blocked), a skipped test step (incomplete), a stopped run (incomplete) and an all-pass plan (pass)."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

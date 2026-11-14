@@ -1,0 +1,11 @@
+west-commands:
+  - file: scripts/west_commands/flash.py
+    commands:
+      - name: flash
+        class: Flash
+        help: stand-in of Zephyr's flash command
+  - file: scripts/west_commands/build.py
+    commands:
+      - name: build
+        class: Build
+        help: stand-in (never invoked)

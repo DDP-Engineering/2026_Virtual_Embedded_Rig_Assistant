@@ -155,6 +155,9 @@ it("validates the catalog view, review and install channels and the catalog app 
         url: "serial-monitor-1.0.1.zip",
         sha256,
         bytes: 900,
+        // Discovery metadata defaults to empty lists (unknown, never inferred).
+        activities: [],
+        keywords: [],
         installed: { version: "1.0.0", tier: "official" },
         update: true,
       },

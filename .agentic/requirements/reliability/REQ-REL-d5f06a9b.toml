@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d5f06a9b"
+
+title = "Apply the declared exit policy and stop GDB and OpenOCD on every end"
+
+status = "active"
+
+requirement = """
+When a gdb-debug live operation ends by completion, error, Stop (also while a GDB command is pending) or timeout, the helper shall make OpenOCD apply the declared exit policy (`halted` or `resume`) on GDB's detach, report the target state OpenOCD confirmed after the policy (else `unknown`), stop GDB and OpenOCD within the manifest's grace period before it exits, and the cleanup `release` shall report the physical state unknown without touching the target.
+"""
+
+verification = "Integration tests end runs normally, by a VERA stop file during a breakpoint wait (VERA's real runner), by GDB going silent and by GDB dying, and expect the gdb-detach event argument for the policy, the confirmed state from the stand-in's marker, no stand-in process alive afterwards, and `release` reporting unknown without starting either tool; internals.py checks that a stop request abandons a pending command (Interrupted) while cleanup commands are not interruptible."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/openocd.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/lifecycle.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

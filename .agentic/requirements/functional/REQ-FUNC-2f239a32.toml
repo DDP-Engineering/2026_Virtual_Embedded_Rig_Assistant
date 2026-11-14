@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2f239a32"
+
+title = "Align signals only by a declared method within lag limits"
+
+status = "active"
+
+requirement = """
+When a comparison is requested, `lab-validate` shall shift the reference only by the declared alignment (`none`, `offset`, `marker` on signals of the same source, or `cross-correlation` within `maxLag`), report the lag as the comparison's `lag` value and compute max-abs, rms and mean of the difference.
+"""
+
+verification = "Tests shift a reference by a known lag and expect the offset, marker and cross-correlation lags within one sample, `lag-at-limit` when the lag exceeds maxLag, a refused marker on another source, a correlation within [-1, 1] on a large DC offset and a run time bounded by the samples across a 20 s gap."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/align.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

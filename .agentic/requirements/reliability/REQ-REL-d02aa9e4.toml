@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-d02aa9e4"
+
+title = "Withhold energy and charge over gaps and overflow"
+
+status = "active"
+
+requirement = """
+When the measured window contains a gap or an overflow sample, measure-energy and segment shall report the energy and charge of the window or event as null with the covered values, the gap time and the overflow count, and status incomplete.
+"""
+
+verification = "The gap fixture gives energy and charge null with the covered values and the gap time, status incomplete; an overflow window gives energy null with the overflow count; a segment event spanning a skip has energy and charge null and status incomplete."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/measure.py", "05_Software/plugins/power-profiler/scripts/power_support/segment.py", "05_Software/plugins/power-profiler/scripts/power_support/signals.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

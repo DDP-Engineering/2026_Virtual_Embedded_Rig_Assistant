@@ -1,0 +1,12 @@
+common:
+  platform_allow:
+    - stm32f4_disco
+  tags: vera
+tests:
+  vera.ztest.pass: {}
+  vera.ztest.skip:
+    extra_configs:
+      - CONFIG_VERA_SKIP_DEMO=y
+  vera.ztest.fail:
+    extra_configs:
+      - CONFIG_VERA_FAIL_DEMO=y

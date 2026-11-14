@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-274a88e6"
+
+title = "Stop a Zephyr operation without leftover processes or damaged folders"
+
+status = "active"
+
+requirement = """
+When a zephyr operation is stopped or times out, VERA's process-tree kill shall leave no helper, CMake, Ninja, compiler, Twister or runner process, the run folder shall keep its result.json in state running so that a stale one reads as stopped wherever it is used as evidence, the build folder's marker shall report the unfinished build, and the application, workspace and other build folders shall stay unchanged.
+"""
+
+verification = "Stop a fixture build through VERA's real runner while the stand-in compiler sleeps: no process of the run remains, the run folder's result.json is in state running, artifacts reports the folder incomplete with build-unfinished, and the sources' hashes and another owned build folder are unchanged."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

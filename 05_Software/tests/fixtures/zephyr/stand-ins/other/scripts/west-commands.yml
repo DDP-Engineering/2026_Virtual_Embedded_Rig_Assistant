@@ -1,0 +1,5 @@
+west-commands:
+  - file: scripts/extra.py
+    commands:
+      - name: extra-tool
+        class: Extra

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-2de3e20e"
+
+title = "Keep each owned Zephyr build folder bound to one configuration"
+
+status = "active"
+
+requirement = """
+When a build or test-build reuses a build folder, the zephyr helper shall continue it only when its marker's fingerprint equals the request's, shall refuse a different fingerprint with build-dir-mismatch unless pristine is requested, and shall refuse a folder without a valid marker as build-dir-foreign even with pristine.
+"""
+
+verification = "Build configuration A into folder X, then request configuration B into X: refused build-dir-mismatch, A's artifacts untouched; with --pristine B rebuilds X; B into its own folder Y gives artifacts whose hashes differ from A's; a folder X' created by hand without a marker is refused build-dir-foreign with and without --pristine and its files remain."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/request.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

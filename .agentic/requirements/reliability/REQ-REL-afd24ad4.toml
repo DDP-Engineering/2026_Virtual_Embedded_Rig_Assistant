@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-afd24ad4"
+
+title = "Keep the target state explicit after a timeout, disconnect or unexpected stop"
+
+status = "active"
+
+requirement = """
+When a GDB/MI command times out, GDB reports the remote connection lost or exits, or the target stops for a reason the operation did not request, the helper shall end the operation with the target state `unknown`, `disconnected` or the reported stop reason recorded, never as a breakpoint hit or completed step, and with status `error` or `incomplete`.
+"""
+
+verification = "Integration tests script the GDB stand-in to stay silent on a register read, to report `Remote communication error` during a continue, to exit during a snapshot, to exit before its first prompt, and to emit `*stopped,reason=\"signal-received\"` or another breakpoint number while a breakpoint is awaited, and point the helper at missing GDB and OpenOCD executables; they expect status error/incomplete with a result.json, target.state unknown/disconnected/halted with the reason, and breakpoint.hit false."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/session.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

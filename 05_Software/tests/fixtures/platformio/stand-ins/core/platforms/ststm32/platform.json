@@ -1,0 +1,30 @@
+{
+  "name": "ststm32",
+  "title": "ST STM32 (stand-in)",
+  "version": "20.0.0",
+  "frameworks": {
+    "cmsis": {
+      "package": "framework-cmsis",
+      "script": "builder/frameworks/cmsis.py"
+    }
+  },
+  "packages": {
+    "toolchain-gccarmnoneeabi": {
+      "type": "toolchain",
+      "owner": "platformio",
+      "version": ">=1.60301.0,<1.80000.0"
+    },
+    "framework-cmsis": {
+      "type": "framework",
+      "optional": true,
+      "owner": "platformio",
+      "version": "~2.50501.0"
+    },
+    "tool-openocd": {
+      "type": "uploader",
+      "optional": true,
+      "owner": "platformio",
+      "version": "~3.1200.7"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-17266b8a"
+
+title = "Refuse PlatformIO code hooks unless approved by hash"
+
+status = "active"
+
+requirement = """
+If the selected environment's effective configuration (options judged under PlatformIO's current names, old spellings included) uses extra_scripts, a library with build.extraScript in its manifest, a .pio-link library link, more library folders than the helper judges, a $ variable SCons expands later in extra_scripts, lib_extra_dirs or a library script, any $ substitution SCons would evaluate as a Python expression in an effective value or a library build field, test_framework custom or a test_custom_runner.py, test_testing_command, a value item beginning with '!' (raw or effective, after PlatformIO's line or ', ' split), a ${sysenv.*} interpolation, platform_packages, a platform or library that is not an exact registry owner/name@version, an extra_configs file outside the project (a pattern that is absolute, a network path, starts with ~ or climbs with .. is refused before it is read), a [platformio] folder option, a local board definition, an upload_command or upload_protocol custom, or a targets option, then the platformio helper shall report each finding with its file, section and option and refuse every process-starting operation; it shall accept a file-based finding (extra scripts, library scripts, a custom runner, a local board file) only while the request approves that file by its current SHA-256, and shall never approve the other findings.
+"""
+
+verification = "Fixture variants each with one hook: refused with its finding code; approving the hook file's SHA-256 accepts extra_scripts, library extraScript, custom runner and board-file findings but not '!' flags, platform_packages, URL platforms, upload_command, outside extra_configs, folder options or targets; changing an approved file after approval refuses again; the bypass forms are refused too: `build_flags = -Wall, !echo hi`, an interpolation yielding '!', `extra_script` (old name), `lib_install` with a URL, `extra_scripts = pre:ok.py$NOPE`, `lib_extra_dirs = $PROJECT_DIR/...`, a lib/x.pio-link, 257 library folders, extra_configs `../../outside.ini`, a UNC pattern and a link inside the project leading outside (code config-outside before reading), `${len('abc')}` in build_flags, `$PROJECT_DIR.upper` and an expression in a library.json build.flags (scons-expression)."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/preflight.py", "05_Software/plugins/platformio/scripts/pio_support/config.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

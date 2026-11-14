@@ -245,7 +245,8 @@ identity kind, identity fields, plugin data; spec `.agentic/specs/REQ-DATA-f2cbf
 
 - Before approval, program-tools reads the registry through the path guard, resolves the alias to normalized
   identity keys (VISA: `serial:COM3` for ASRL, `usb:<vid>:<pid>:<serial>`, `tcpip:<host>`, `gpib:...`, plus
-  `serial-number:<n>` when declared) and binds the aliases and the registry's SHA-256 into the request; the
+  `serial-number:<n>` when declared; debug probe (LAB-04): `probe:<vid>:<pid>:<serial>` and `probe:<vid>:<pid>`, the
+  same keys the runner gives probe-rs `--probe` selectors) and binds the aliases and the registry's SHA-256 into the request; the
   approval card and the CLI prompt show them, and a registry changed before the start is CONFLICT.
 - The runner refuses with BUSY, before any spawn, a claim whose keys another unfinished run holds or names as a
   serial port, and then takes the keys in a per-user lease folder (Windows `%LOCALAPPDATA%\VERA\leases`, Linux
@@ -261,6 +262,101 @@ identity kind, identity fields, plugin data; spec `.agentic/specs/REQ-DATA-f2cbf
 - Limits: VERA does not lock out programs outside VERA; nothing runs the cleanup after the host itself is lost (the
   next claim reports `unknown`); other plugins' TCP/USB connections are not leased. Later identity kinds (NIC,
   endpoint, lab host) extend the registry schema and the key function, never a second lease folder.
+
+### 3.6 Measurement validation and the verdict engine (LAB-02)
+
+`lab-validation` (program `lab-validate`, spec `.agentic/specs/REQ-DATA-53797d16.md`) is the one numeric and verdict
+engine for bench data. It is a plugin, not platform code: every operation is a `safe` offline analysis that reads
+workbench files and writes a new folder in `embedded-lab-results/`.
+
+- Inputs only through its importer registry: scpi-instruments capture folders (through REQ-DATA-b3e2930f, hash-checked,
+  never by importing the scpi package), CSV with a declared mapping, sigrok-cli CSV, ngspice-tool/ltspice-tool
+  transient run folders (no SPICE plugin needs to be installed).
+- One request (format 1) fixes windows, metrics, alignment, criteria, the decision rule (`simple`/`guarded`) and the
+  handling of missing data; the result (`lab-validation-result`) states every level, threshold, preprocessing step,
+  alignment and diagnostic, and the verdict pass/fail/incomplete. Clocks of different sources are never assumed
+  synchronized; a correlation lag is itself a judged value.
+- Consumers: LAB-03 HIL and LAB-05 power profiling call `lab-validate compare`/`report` and link its run folders;
+  later plans (networking and others) add metrics and importers as registrations in `metrics.py` and
+  `importers.py`, never a second engine.
+
+### 3.7 Hardware-in-the-loop plans (LAB-03)
+
+`hil-testing` declares program `hil` with the program field `plan: hil` (spec `.agentic/specs/REQ-DATA-5f714098.md`).
+For such a program `run_program` hands `hil check <plan>` and `hil run <plan>` to core (`core/src/plugins/hil/`) instead
+of starting the executable; `hil report` and `--version` run the helper normally.
+
+- Compilation (`compile.ts`): the plan (format 1, `shared/src/hil-plan.ts`) is validated, the firmware's SHA-256 checked,
+  and each step built by its adapter (`adapters.ts`, a registry: probe-rs, esptool, serial-monitor, scpi, lab-validate,
+  `await`) and prepared exactly like a run_program call of that program (`prepareCall`: enabled plugin, resolver,
+  argument refusals, rules, file binding, registry aliases). An adapter never chooses a risk. Any problem refuses the
+  plan before a process starts; `hil check` returns the expansion with exit 0, or the problems with exit 2.
+- Approval: one run_program request for `hil run <plan>` whose risk is the highest of the `hil run` rule, every
+  operation and - when a step flashes or resets - the setup's `firmwareEffect`; `confirm` is the plan id when
+  irreversible; `trial` when any involved plugin is trial; notes list the setup, firmware, budget, every operation and
+  cleanup, the bound files and the reserved ports/probes; the request's `plan` field (hashed, not shown) carries every
+  operation's request. Consuming re-compiles with the same run id: any change is CONFLICT.
+- Execution (`executor.ts`): `ProgramRunner.hold` registers the plan run without a process (log, record, lease claims
+  for registry aliases, `serial:<port>` and `probe:<selector>` keys); its operations run as child runs
+  (`RunRequest.parent`) that borrow the hold's leases (`LeaseOwner.parent`) and stay excluded by siblings. Steps run in
+  order; background-capable steps (UART capture, power hold) run until their `await` or the end of the steps. Retries
+  and repetitions only for repeatable adapters. Before each child the plan file and firmware are hashed again. Stop,
+  budget, a step error or a blocked precondition end the steps; cleanup steps always run once; physical state `unknown`
+  is recorded on the plan's keys. Results: `embedded-lab-results/<run-id>/` (plan copy, `result.json` kind
+  `hil-test-result`, `events.jsonl` with monotonic `t`, step logs and run folders) and `hil report` (HTML, Markdown,
+  JUnit).
+- Limits: one step at a time apart from background steps; a probe is reserved by its selector text (runs of the same
+  process naming it with `--probe` get BUSY); serial runs in
+  another VERA process are not leased; GDB, Zephyr, PlatformIO and Twister are not adapters yet.
+
+### 3.8 Supervised debug sessions (LAB-04)
+
+`gdb-debug` (spec `.agentic/specs/REQ-DATA-d7da2a71.md`) adds no core code beyond the registry kind `probe`
+(`shared/src/lab-resources.ts`). Its program `gdb-debug` declares `uses: [arm-none-eabi-gdb, openocd]` and
+`resources {option: --probe, kinds: [probe], cleanup: [release]}`, so the LAB-01 lease, BUSY, stop/grace and cleanup
+machinery applies unchanged; the direct programs `arm-none-eabi-gdb` and `openocd` are rated blocked. Program
+`gdb-elf` is offline and needs neither tool.
+
+- One call = one finite session in the helper: validate (registry probe with serial, package profile, ELF architecture,
+  variable/location syntax) -> run folder -> OpenOCD from the profile's interface/target scripts with `adapter serial`,
+  GDB port on 127.0.0.1 (helper-chosen), telnet/Tcl off, GDB flash programming off, hardware breakpoints -> GDB in MI
+  mode (`-nx`, auto-load/debuginfod/history off) through pipes the helper owns, a fixed MI command set with tokens ->
+  CPUID identity -> ELF read-only sections compared byte for byte with flash -> snapshot / breakpoint / step ->
+  `-target-detach`, whose OpenOCD gdb-detach event applies `--on-exit halted|resume` and prints the state it left.
+- The runner's stdin stays closed and no console exists: the agent never reaches GDB's or OpenOCD's input. GDB may
+  read only the profile's flash and RAM and the SCB fault registers (`mem` regions, inaccessible by default);
+  nothing is written to target memory or flash. GDB's `compare-sections` is not used (OpenOCD would run a CRC routine
+  in the target's RAM work area).
+- Risk: `snapshot`, `break`, `step` device-write (halting and running the core are execution control);
+  `--firmware-effect actuates` irreversible; `tools`, `release` and `gdb-elf` safe. The cleanup `release` never
+  reconnects (a reconnect halts the core) and reports the physical state `unknown`; a normal exit reports
+  `confirmed` only from OpenOCD's marker.
+- Limits: profiles are unverified until a recorded board run; no RTOS awareness; two probes of one VID:PID are one
+  reservation; BUSY covers access that names the probe: probe-rs with `--probe`, HIL plans that reserve it and other gdb-debug runs; a probe-rs call without `--probe`, stm32-cubeprog (`sn=`) or another tool reaching the same probe is not detected. No HIL adapter for GDB steps yet.
+
+### 3.9 Power profiling (LAB-05)
+
+`power-profiler` (spec `.agentic/specs/REQ-DATA-dd3e4fe1.md`) adds the registry kind `power-monitor`
+(`shared/src/lab-resources.ts`, resource `u/js220/<serial>`, key `power-monitor:js220:<serial>`) and two HIL adapters
+(`power.identify`, `power.capture`); its program `power-profile` declares `resources {option: --meter, kinds:
+[power-monitor], cleanup: [release]}`, so the LAB-01 lease, BUSY, stop/grace and cleanup machinery applies unchanged.
+Program `power-analyze` is offline (standard library) and needs no driver.
+
+- One capture = one supervised run in the helper: registry, profile, acquisition and firmware checks -> run folder ->
+  pyjoulescope_driver 2.5.5 `open(path, "restore")` -> settings read (a current range mode `off` is blocked) -> only
+  the sample rate, current/voltage range and signal controls written -> current, voltage, power, range and GPI streams
+  assembled by sample id (skips and NaN kept as gaps, overflow flagged) until the duration, a stop request, removal or
+  a stall -> signals off, previous settings restored and read back (`confirmed` only on a matching readback) ->
+  `result.json` (kind `power-result`) and `samples.csv`. The cleanup `release` returns the meter to auto-ranging.
+- Numbers: power-analyze runs on a byte-identical copy of lab-validation's `series.py`; criteria are decided only by
+  lab-validate, which gains the `integral` metric (unknown over a gap) and the `power-capture` importer. A/B
+  comparisons write a lab-validate request whose source conditions carry the setup, so differing setups make criteria
+  incomplete.
+- HIL adapters gain a `captures` flag (scpi.capture, power.capture): a `lab-validate.compare` source may bind to such a
+  step's run folder; `power.capture` passes the plan's firmware so the capture records the build it measured.
+- Limits: the profile is unverified (written from the driver's topics; no JS220 here); no DUT power-path control, no
+  meter outputs, no meter firmware update; the cleanup cannot restore the pre-capture settings (it does not see the
+  interrupted run), only auto-ranging.
 
 ## 4. Risk levels and approvals (ADR-0018)
 

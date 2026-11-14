@@ -1,0 +1,12 @@
+{
+  "type": "library",
+  "name": "Unity",
+  "version": "2.6.1",
+  "spec": {
+    "owner": "throwtheswitch",
+    "id": null,
+    "name": "Unity",
+    "requirements": null,
+    "uri": null
+  }
+}

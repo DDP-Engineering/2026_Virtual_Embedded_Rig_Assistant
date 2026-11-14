@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fa8f52db"
+
+title = "Inspect a PlatformIO project offline: files, environments and preflight"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio inspect-project` with a request, the platformio helper shall read platformio.ini and every extra_configs file with PlatformIO's own parser under the helper's scrubbed environment and report, offline and without starting a process, every parsed file with its SHA-256, the environments, the [platformio] options and the preflight findings of every environment.
+"""
+
+verification = "Inspect the fixture project (folder with a space and non-ASCII letters, three environments, an extra_configs file): files, hashes, environments and findings are listed; an extra_configs glob that reaches outside the project, a parse error and a missing platformio.ini are reported (findings or refusal input) and nothing runs."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/config.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/preflight.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-01fae096"
+
+title = "Start the engine without network, devices or a GUI"
+
+status = "active"
+
+requirement = """
+When renode-sim starts the engine, it shall pass only its fixed headless options, compose the monitor commands only from the profile and its fixed templates, connect UARTs only to file backends in the run folder, and open no network listener, physical serial or USB device.
+"""
+
+verification = "Inspect the stand-in's recorded argv and every monitor command for a test run against fixed templates on run-folder files; with the real engine (opt-in) list the engine process's TCP and UDP endpoints during a run: none; its engine.log shows no download."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

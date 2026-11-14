@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, link, lstat, mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises";
-import { isAbsolute, join } from "node:path";
+import { join, posix, win32 } from "node:path";
 import { veraError } from "@vera/shared";
 
 /**
@@ -23,6 +23,8 @@ export interface LeaseClaim {
 export interface LeaseOwner {
   readonly sessionId: string;
   readonly runId: string;
+  /** A plan run of this process whose leases the run borrows: its keys are neither taken again nor released. */
+  readonly parent?: string | undefined;
 }
 export interface ResourceState {
   readonly key: string;
@@ -72,13 +74,16 @@ export function leaseRoot(input: {
   tmpdir: string;
   uid?: number | undefined;
 }): string {
+  // The path rules of the platform asked for, not of the host running this code.
   if (input.platform === "win32") {
     const local = input.env.LOCALAPPDATA;
-    return local && isAbsolute(local) ? join(local, "VERA", "leases") : join(input.tmpdir, "vera-leases");
+    return local && win32.isAbsolute(local)
+      ? win32.join(local, "VERA", "leases")
+      : win32.join(input.tmpdir, "vera-leases");
   }
   const runtime = input.env.XDG_RUNTIME_DIR;
-  if (runtime?.startsWith("/")) return join(runtime, "vera-leases");
-  return join(input.tmpdir, `vera-leases-${input.uid ?? "user"}`);
+  if (runtime?.startsWith("/")) return posix.join(runtime, "vera-leases");
+  return posix.join(input.tmpdir, `vera-leases-${input.uid ?? "user"}`);
 }
 
 /** The lease file of a key; its state marker replaces `.lease` with `.state`. */
@@ -251,6 +256,8 @@ export class ResourceLeases {
         throw busy(claim.alias, "an unreadable lease");
       }
       if (!validLease(existing, key)) throw busy(claim.alias, "an unreadable lease");
+      // A child run of a plan uses the plan's lease; `drop` never removes it (another run id owns it).
+      if (owner.parent !== undefined && existing.runId === owner.parent && existing.pid === this.pid) return;
       if (this.alive(existing.pid)) throw busy(claim.alias, `process ${existing.pid}`);
       // Stale: moved aside atomically, and restored if what moved is no longer the stale lease.
       const tomb = `${path}.${randomUUID()}.stale`;

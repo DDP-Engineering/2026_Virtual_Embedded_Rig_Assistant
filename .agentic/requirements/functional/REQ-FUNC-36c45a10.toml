@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-36c45a10"
+
+title = "Report the debug tools and their architecture support"
+
+status = "active"
+
+requirement = """
+When `gdb-debug tools` runs, the helper shall report the GDB and OpenOCD paths and versions, GDB's configured target, whether GDB accepts each profile's architecture, and each profile's verification status, without opening a probe.
+"""
+
+verification = "Integration tests run tools with the stand-ins and expect versions, the target triple and architecture support per profile; a GDB that rejects `set architecture` is reported unsupported for that profile and a snapshot on it is blocked."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/session.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

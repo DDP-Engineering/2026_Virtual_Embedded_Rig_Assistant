@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-47103659"
+
+title = "Refuse comparisons across domains or quantities"
+
+status = "active"
+
+requirement = """
+When a request uses a non-transient SPICE analysis, compares signals of different quantities or takes a delay between signals of different sources, `lab-validate` shall refuse with exit 2 and a `domain`, `quantity` or `clock` problem.
+"""
+
+verification = "Tests use an AC run folder, compare a voltage with a current and take a delay across two sources, and expect exit 2 with the named problem."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/request.py", "05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13
