@@ -22,7 +22,9 @@ a probe, a board and native Ubuntu open); LAB-05 implemented 2026-11-14 on the s
 offline evidence with closed-form fixtures and a pyjoulescope_driver stand-in, the real driver 2.5.5 without a meter on
 Windows; a JS220, a reference load, a sleep/wake board and native Ubuntu open); LAB-06 implemented 2026-11-14 on the
 same branch (AEGIS TASK-f059e085, offline evidence against an engine stand-in and the real Renode 1.17.0 on Windows;
-native Ubuntu open); LAB-07 and LAB-08 planned.
+native Ubuntu open); LAB-07 implemented 2026-11-14 on the same branch (AEGIS TASK-287329c3, offline evidence against
+stand-ins and the real Zephyr 4.4.2, SDK 1.0.1, Twister, Renode 1.17.0 and STM32CubeProgrammer on Windows; a real board
+and native Ubuntu open); LAB-08 planned.
 
 ## Order
 
@@ -34,7 +36,7 @@ native Ubuntu open); LAB-07 and LAB-08 planned.
 | 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | implemented |
 | 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | implemented |
 | 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | implemented |
-| 7 | LAB-07 | [#108](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/108) | `zephyr` | Zephyr build, flash and tests through checked operations | planned |
+| 7 | LAB-07 | [#108](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/108) | `zephyr` | Zephyr build, flash and tests through checked operations | implemented |
 | 8 | LAB-08 | [#109](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/109) | `platformio` | PlatformIO build, upload and tests, plus the integrated acceptance | planned |
 
 The order is the execution order of the initiative, not a runtime dependency chain: HIL can use the
@@ -299,6 +301,81 @@ them.
       no URL in any command (the network was not disabled).
   - Open: L06-H on native Ubuntu x64 (`REQ-PLAT-d03a51af`; the Linux archive was not downloaded) and a firmware other
     than the fixtures. The profile stays `unverified`.
+
+## LAB-07 as built
+
+- Platform (VERA itself): no change. The flash program reserves its probe through LAB-04's `probe` kind and the LAB-01
+  runner; build and test runs reserve nothing, so VERA's Stop is a tree kill and the progressive result.json carries
+  the partial report (the LAB-06 pattern). Spec `.agentic/specs/REQ-DATA-d8ecee6a.md`; section 9 holds the observed
+  tool facts.
+- Package `05_Software/plugins/zephyr/` (official, pack "Embedded lab" group "Zephyr builds and tests", activities
+  build/testing/flash), skill `zephyr-builds`. Programs:
+  - `zephyr` (`scripts/zephyr_tool.py`, PEP 723 with pinned west 1.5.0, cmake 4.4.4, ninja 1.13.2, pytest 9.2.0 and
+    Zephyr's build and Twister imports): `tools`, `inspect`, `artifacts`, `test-run`, `differences` (safe); `build`,
+    `test-build`, `clean` (device-write, host execution or deletion); `prepare-workspace` (device-write, network).
+  - `zephyr-flash` (`scripts/zephyr_flash.py`, `uses: [stm32_programmer_cli]`, resources `--probe` kind probe):
+    `flash` (device-write, irreversible with `--firmware-effect actuates`), `tools`, `release`.
+  - `stm32_programmer_cli`: find-only, every direct call blocked.
+- Supported matrix: Zephyr >=4.4,<4.6 (fixture v4.4.2), Zephyr SDK >=1.0.1 named by the request (toolchain variant
+  `zephyr`, GNU toolchain in `<sdk>/gnu/`; candidates are reported, never selected), verified board `stm32f4_disco`.
+- Decisions:
+  - The request names everything: workspace and manifest folder, every resolved project at its full SHA (checked
+    against the manifest and the checked-out HEAD, read from `.git` files), the SDK folder, the app, the exact board
+    `name[@revision][/qualifiers]` (checked against board.yml), configs/extraConfigs/overlays and the owned buildDir.
+  - Builds call CMake and Ninja directly, not `west build`: `-DZEPHYR_MODULES` names exactly the listed modules,
+    `-DDTC_OVERLAY_FILE` is always defined (Zephyr then picks no overlay itself), no sysbuild, no extension command is
+    loaded. The environment is scrubbed (no ZEPHYR_*/WEST_*/CMAKE_*/VERA variables, empty west and git global configs),
+    with a closed loopback proxy and git limited to the file protocol. Only prepare-workspace runs `west init -l` and
+    `west update --narrow -o=--depth=1`, then checks every head.
+  - Preflight findings (refused unless the user approves the file by SHA-256 in `hooks`): unlisted/missing/other
+    projects and checkouts, extension commands of projects other than zephyr (shadowing build/flash/twister never
+    approvable), module build roots and runners, CMake commands outside a plain allowlist, Kconfig macros and
+    foreign sources, sysbuild files, implicit board inputs, Twister harnesses other than ztest, nested or sample.yaml
+    suites. CMake listfiles are read by a tokenizer (BOM, bracket and quoted arguments, comments), `find_package` is
+    allowed only for Zephyr and the build pins `-DZephyr_DIR`. zephyr-flash reruns the workspace preflight because
+    `west flash` imports module runners. Binary blobs of a listed module are reported, not refused (never fetched).
+  - Build folders carry a marker binding them to one configuration; a mismatch needs `--pristine`; folders without
+    the marker are never reused or deleted; deletion re-checks the marker and never follows links or junctions.
+  - Build results copy zephyr.elf/hex/bin, the final config, zephyr.dts, zephyr.map, build_info.yml and runners.yaml
+    with SHA-256, the memory regions and ELF sections, and the provenance; diagnostics cite log file and line; input
+    hashes before/after (input-changed); build_info.yml user files beyond the request are `undeclared-input`.
+  - Twister runs build-only: every case `not-run`, the run `incomplete` (Twister itself says `not run`). test-run
+    executes nothing: it binds a renode-sim run (virtual) or a HIL run (hardware) of exactly the scenario's ELF and
+    parses ztest output; pass only when every expected case passed, a failure stays failed across a rerun, a skip,
+    a missing case or a reboot is `incomplete`. Virtual
+    verdicts and `differences` list target vs profile, the SysTick clock and every unmodeled register access.
+  - Flash: west's `stm32cubeprogrammer` runner only (the board's default runner), runners.yaml arguments allowlisted,
+    the HEX equal to the build run's and inside the build devicetree's `zephyr,flash` region, the CLI and the probe
+    serial passed explicitly, physical state `unknown` once flashing starts. Live debug stays LAB-04's.
+- Fixtures `tests/fixtures/zephyr/`: `apps/board-demo` (the LAB-06 board-basics protocol for stm32f4_disco; `prj.conf`,
+  `fast.conf`, `bad.conf`, `console.overlay`, `broken.overlay`), `tests/ztest-basic` (scenarios pass/skip/fail through
+  an app Kconfig symbol), `workspace/manifest/west.yml` (zephyr v4.4.2 with only cmsis_6 and hal_stm32) and
+  `stand-ins/` (fake Zephyr tree with a Twister stand-in and a west `flash` extension, fake CMake, fake CLI).
+- Criteria (Windows):
+  - Offline, by `tests/integration/zephyr.test.ts` against the stand-ins (real helpers in the pinned venv, real west
+    and git for prepare-workspace, VERA's real runner for Stop and the probe lease): the mechanics of L07-B, C, D, F
+    and G; L07-E's lease and BUSY, command line and refusals.
+  - Opt-in `VERA_ZEPHYR_REAL` (+ `VERA_RENODE_REAL`, `VERA_ZEPHYR_REAL_CLI`), run 2026-11-14 with the approved,
+    SHA-256-verified downloads in `D:\Temp\vera-zephyr`:
+    - L07-A/B: board-demo builds for stm32f4_disco in two folders with different HEX hashes; a bad Kconfig symbol and
+      a broken overlay fail with kconfig/devicetree diagnostics.
+    - L07-C: the real workspace was fetched once by hand with the same `west init -l` and `west update --narrow
+      -o=--depth=1` commands, before the helper's prepare-workspace existed (that operation is proven offline against
+      local repositories); every real build and test build afterwards ran with the offline environment.
+    - L07-D/H: Twister builds three ztest scenarios build-only; on the real Renode profile the pass, skip and fail
+      scenarios give pass, incomplete and fail. The declared differences: the profile clocks SysTick at 72 MHz where
+      the board's Zephyr configuration assumes 168 MHz (kernel time 0.43x of virtual time), DBGMCU_CR (selected by
+      ztest) and SYSCFG_EXTICR1 (the button's EXTI route) are unmodeled, so board-basics' timer and button cases do
+      not pass for the Zephyr board-demo there.
+    - L07-E part: west flash drives the real STM32CubeProgrammer 2.23.0 with the probe's serial; with no probe
+      attached it reports "No debug probe detected" (fail, physical unknown).
+  - Review: two independent reviews; round 1 found preflight bypasses (a quoted `#[[`, a byte-order mark, nested
+    Twister suites, find_package HINTS), the missing flash-time workspace check and a rerun masking a failure - all
+    fixed with negative tests.
+  - Open: prepare-workspace run against the network (the real workspace was fetched by hand with the same west
+    commands), L07-E on a real board (flash, a serial capture and a HIL test with Stop), the native Ubuntu half of L07-A
+    (`REQ-PLAT-85d446fd`), native_sim/QEMU execution, runners other than stm32cubeprogrammer. The LAB-06 profile's
+    72 MHz SysTick is a profile limitation reported to LAB-06, not changed here.
 
 ## Rules shared by the packages
 

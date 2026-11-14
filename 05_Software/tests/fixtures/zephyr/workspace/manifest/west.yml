@@ -1,0 +1,16 @@
+# Minimal west manifest of the zephyr plugin fixtures (LAB-07): Zephyr v4.4.2 with only the modules a Cortex-M
+# STM32 build needs. Revisions are full commit SHAs; the request lists the same three projects.
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: dccb09599635bdff17633fa7e9dab014b91dce90
+      import:
+        name-allowlist:
+          - cmsis_6
+          - hal_stm32
+  self:
+    path: manifest

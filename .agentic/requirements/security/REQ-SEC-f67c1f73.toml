@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-f67c1f73"
+
+title = "Build and test-build without network access or workspace updates"
+
+status = "active"
+
+requirement = """
+While build, artifacts, test-build or test-run runs, the zephyr helper shall start no west update or other network command and shall run its processes with a scrubbed environment that names only the requested modules and SDK, points every proxy at a closed loopback port and allows git only the file protocol.
+"""
+
+verification = "Record the commands and environment of a fixture build and test-build through the stand-ins: no update/fetch command, ZEPHYR_MODULES lists exactly the requested modules, no ZEPHYR_*/WEST_* variable of the caller survives, the proxies are http://127.0.0.1:9 and GIT_ALLOW_PROTOCOL is file; manual: the real Windows build succeeds with that environment."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/environment.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py", "05_Software/plugins/zephyr/scripts/zephyr_support/tests.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

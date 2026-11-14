@@ -1,0 +1,5 @@
+name: hal_fake
+build:
+  cmake: .
+  settings:
+    dts_root: .

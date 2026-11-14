@@ -1,0 +1,4 @@
+/* A devicetree syntax error (missing semicolon). */
+&usart2 {
+	current-speed = <115200>
+};

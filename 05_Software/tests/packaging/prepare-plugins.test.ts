@@ -55,6 +55,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["sigrok", "official"],
     ["stm32-cubeprog", "official"],
     ["wireshark-tshark", "official"],
+    ["zephyr", "official"],
   ]);
   expect(JSON.parse(await readFile(join(target, "index.json"), "utf8"))).toEqual(index);
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "serial-monitor")).toMatchObject({

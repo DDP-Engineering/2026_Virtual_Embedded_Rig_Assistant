@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b9bd62a7"
+
+title = "Report the Zephyr host tools, SDK candidates and workspace versions"
+
+status = "active"
+
+requirement = """
+When tools is requested, the zephyr helper shall report the versions of its own west, CMake, Ninja and Python, the git on PATH and the detected Zephyr SDK candidates, and with a request also the workspace's Zephyr version, the named SDK's check and each project's checked-out revision, without starting a build or contacting the network.
+"""
+
+verification = "Run tools without and with the fixture request: versions are reported from the helper environment, SDK candidates are listed but none is selected without a request, and with the request the Zephyr version, SDK version/toolchain and project heads appear; exit 0, no run folder."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/tools.py", "05_Software/plugins/zephyr/scripts/zephyr_support/sdk.py", "05_Software/plugins/zephyr/scripts/zephyr_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

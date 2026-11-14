@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d30944ca"
+
+title = "Report the artifacts and memory use of an owned Zephyr build"
+
+status = "active"
+
+requirement = """
+When artifacts is requested, the zephyr helper shall report from the existing owned build folder, without building, each available image and configuration output with its SHA-256 and size, the ELF section sizes and the linker's memory region use, and shall report a folder with an unfinished or failed build as incomplete.
+"""
+
+verification = "Run artifacts after the fixture build: the hashes equal those of the build run, FLASH and RAM regions show used and total bytes; after deleting zephyr.hex the HEX is listed missing and the status is incomplete; on a foreign folder exit 2."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/artifacts.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py", "05_Software/plugins/zephyr/scripts/zephyr_support/elf.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

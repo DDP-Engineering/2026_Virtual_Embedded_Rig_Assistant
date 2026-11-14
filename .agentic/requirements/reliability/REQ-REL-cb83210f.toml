@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-cb83210f"
+
+title = "Refuse a Zephyr request with a wrong board, configuration, overlay, SDK or Zephyr version before building"
+
+status = "active"
+
+requirement = """
+If a request names an unknown board, a revision or qualifier the board does not define, a missing configuration or overlay file, an invalid SDK folder, an SDK older than the workspace requires, an SDK without the toolchain for the board's architecture or a Zephyr version outside the supported range, then the zephyr helper shall refuse the operation with the matching code before starting any process and write nothing.
+"""
+
+verification = "Run build with each faulty variant of the fixture request (stm32f4_disco@B, stm32f4_disco/nosuchsoc, nosuch_board, a missing prj.conf, a missing overlay, an SDK folder without sdk_version, an SDK whose sdk_version is 0.17.0, an SDK without the arm toolchain, a workspace whose VERSION is 3.7.0): each exits 2 with codes board-revision, board-qualifier, board, input, input, sdk-missing, sdk-version, sdk-toolchain and zephyr-version, and no run or build folder appears."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/request.py", "05_Software/plugins/zephyr/scripts/zephyr_support/boards.py", "05_Software/plugins/zephyr/scripts/zephyr_support/sdk.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

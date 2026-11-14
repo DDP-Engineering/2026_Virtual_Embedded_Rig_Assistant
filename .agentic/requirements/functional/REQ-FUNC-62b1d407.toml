@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-62b1d407"
+
+title = "Flash an owned Zephyr build through the verified runner with a reserved probe"
+
+status = "active"
+
+requirement = """
+When flash is requested for a build run, zephyr-flash shall reserve the named probe, check the workspace again with the preflight, check that the build folder's HEX equals the build run's HEX by SHA-256 and lies inside the board's flash region, and flash it through west's stm32cubeprogrammer runner with that probe's serial and the CLI VERA found, reporting the runner's exit and output in the run folder.
+"""
+
+verification = "Offline: flash the fixture build with a stand-in STM32_Programmer_CLI: the CLI receives sn=<serial> and the build folder's zephyr.hex, the result records exit 0; under VERA's runner with the probe lease a second session naming the probe is BUSY. Manual: the real STM32_Programmer_CLI 2.23.0 receives the serial and reports no probe (no board attached). Open: flash a real STM32F4 Discovery and read its UART."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/flash.py", "05_Software/plugins/zephyr/scripts/zephyr_support/preflight.py", "05_Software/plugins/zephyr/scripts/zephyr_support/registry.py", "05_Software/plugins/zephyr/scripts/zephyr_support/lifecycle.py", "05_Software/plugins/zephyr/scripts/zephyr_flash.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

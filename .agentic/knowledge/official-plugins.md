@@ -99,6 +99,27 @@ Coverage:
 No platform (core/shared/host) seam was added. A run reserves no bench resource, so VERA's Stop is the runner's
 tree kill, and the progressive result.json carries the partial report.
 
+For zephyr, start at plugins/zephyr/plugin.yaml (programs `zephyr`, `zephyr-flash` with `uses: [stm32_programmer_cli]`
+and the probe lease, and the find-only, blocked `stm32_programmer_cli`), scripts/zephyr_tool.py, scripts/zephyr_flash.py
+and scripts/zephyr_support/:
+- request.py: the zephyr-request document and the build-folder fingerprint;
+- model.py: the west workspace read offline (west's Manifest with a file importer, heads from `.git` files);
+- boards.py and sdk.py: exact board identifiers and the named SDK folder;
+- preflight.py: findings and hook approvals by SHA-256; cmake_scan.py: the CMake tokenizer it reads listfiles with;
+- environment.py: the scrubbed, offline process environment;
+- builddir.py: owned build folders (marker, safe deletion);
+- ops.py: inspect, build, artifacts, clean and the shared checks; diagnostics.py and artifacts.py;
+- tests.py and ztest.py: Twister build-only, test-run, differences; prepare.py; tools.py;
+- flash.py, registry.py and lifecycle.py: the verified runner; elf.py and workspace.py are the shared copies.
+
+The spec is .agentic/specs/REQ-DATA-d8ecee6a.md (section 9 records the observed Zephyr, SDK, Twister, Renode and
+STM32CubeProgrammer facts). Coverage: tests/integration/zephyr.test.ts with tests/fixtures/zephyr/ (apps/board-demo,
+tests/ztest-basic, workspace/manifest/west.yml, stand-ins/: a fake Zephyr tree with a Twister stand-in and a `flash`
+extension the real west loads, fake_cmake.py, fake_cli.py), run with a Python holding the pinned dependencies
+(`VERA_ZEPHYR_PYTHON`); the opt-in `VERA_ZEPHYR_REAL` suite builds with the real tools, with `VERA_RENODE_REAL` and
+`VERA_ZEPHYR_REAL_CLI` also on the real Renode and STM32CubeProgrammer. No platform seam was added: the probe lease is
+LAB-04's `probe` kind, the runner unchanged.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -120,7 +141,9 @@ debug-sessions); power-profiler (programs `power-profile` for Joulescope JS220 c
 `power-analyze` for offline energy, charge, events, A/B and battery analysis; skills power-measurement and
 energy-analysis). renode (programs `renode`, the pinned Renode 1.17.0 engine whose direct calls are blocked, and `renode-sim`,
 which validates firmware against approved virtual-board profiles and runs it headless with UART capture and data-only
-test sets; skill virtual-boards). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+test sets; skill virtual-boards). zephyr (programs `zephyr` for inspect, prepare-workspace, build, artifacts,
+test-build, test-run, differences and clean of Zephyr applications from an explicit request, and `zephyr-flash` for the
+verified stm32cubeprogrammer runner on a reserved probe; skill zephyr-builds). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -378,6 +401,27 @@ that source metadata reaches the deterministic bundled index unchanged.
     times out, the DAC write is unmodeled, the engine owns no TCP/UDP endpoint, and engine.log shows no download. The
     network was not disabled for that run. No native Ubuntu run yet.
 
+- `zephyr` 1.0.0, ecosystem `lab` (pack Embedded lab, group Zephyr builds and tests, default on; activities
+  build/testing/flash), Windows x64/Linux x64. Supported: Zephyr >=4.4,<4.6, Zephyr SDK >=1.0.1 (toolchain variant
+  `zephyr`, GNU toolchain in `<sdk>/gnu/`), verified board `stm32f4_disco`.
+  - `zephyr` (PEP 723, pinned west 1.5.0, cmake 4.4.4, ninja 1.13.2, pytest 9.2.0 and Zephyr's build/Twister imports):
+    `tools [--request]`, `inspect`, `artifacts`, `test-run --test-build --scenario --evidence`, `differences --build
+    --evidence` (safe); `build [--pristine]`, `test-build [--pristine]`, `clean` (device-write, host execution or
+    deletion; build/test-build rule timeout 3600); `prepare-workspace` (device-write, network).
+  - `zephyr-flash` (PEP 723, west and the runner's imports): `tools`, `release` (safe), `flash --request --build
+    --probe --firmware-effect none|actuates` (device-write, irreversible with actuates), resources `--probe` kind
+    probe, grace 30 s, cleanup release. `stm32_programmer_cli` is find-only and blocked.
+  - The request (format 1, kind zephyr-request) names workspace, manifest folder, every project at its full SHA, the
+    SDK folder, the app, the exact board, configs/extraConfigs/overlays, the owned buildDir, optional tests and hooks.
+  - Results in `embedded-lab-results/<run-id>/`: result.json kind `zephyr-result` (state running/done), step logs,
+    `artifacts/` for build (zephyr.elf/hex/bin, config, zephyr.dts, zephyr.map, build_info.yml, runners.yaml with
+    SHA-256), junit.xml for test-build/test-run. Exit 0 pass (test-build: built), 1 fail, 2 refused, 3 incomplete,
+    blocked, error or stopped.
+  - Verified on Windows 11 offline (stand-ins, real west and git for prepare-workspace, VERA's real runner for Stop and
+    the probe lease) and with the real tools (2026-11-14): Zephyr 4.4.2 + SDK 1.0.1 builds of the fixtures, Twister
+    build-only, ztest pass/skip/fail on the real Renode 1.17.0 profile, west flash through the real STM32CubeProgrammer
+    2.23.0 with no probe attached. No board flashed, no native Ubuntu run yet.
+
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
   through source plugin. It compares explicit captured runs with parse_log, documented conditions,
@@ -546,6 +590,25 @@ that source metadata reaches the deterministic bundled index unchanged.
   - Firmware is checked against the profile's architecture, memory map, boot address and vector table before the
     engine starts, and the engine's initial PC/SP must match that vector table.
   - Unmodeled accesses make a run incomplete, never pass. Virtual and real time are separate fields.
+- zephyr: builds call CMake and Ninja directly (never `west build`) with `ZEPHYR_MODULES` = the listed modules,
+  `-DDTC_OVERLAY_FILE` always defined, no sysbuild, a scrubbed environment (no ZEPHYR_*/WEST_*/CMAKE_* or VERA
+  variables, empty west/git global configs, a closed loopback proxy, `GIT_ALLOW_PROTOCOL=file`). Only
+  prepare-workspace runs `west update`.
+  - Every refusal happens before a run folder or process exists. Unlisted projects, other revisions or checkouts,
+    extension commands of projects other than zephyr, module build roots or runners, CMake commands outside the
+    allowlist (read by a tokenizer: BOM, bracket and quoted arguments, comments; find_package only for Zephyr, with
+    `-DZephyr_DIR` pinned), Kconfig macros/sources, sysbuild files, implicit board inputs, Twister harnesses other than
+    ztest and nested or sample.yaml suites are findings; a file approved by SHA-256 in `hooks` passes while unchanged;
+    shadowing build/flash/twister, project and nested-suite findings never. zephyr-flash reruns the workspace part.
+  - A build folder is VERA's only with its marker of the same family and fingerprint; `--pristine` and `clean` delete
+    only such folders, re-checked, without following links or junctions. build_info.yml user files beyond the
+    request make the build `error` (undeclared-input).
+  - Twister runs build-only; every case is `not-run`, the run `incomplete`. test-run takes the verdict from a renode or
+    HIL run of exactly the scenario's ELF (SHA-256); a failure stays failed across reruns, a reboot or a skip or missing
+    case is `incomplete`, never pass, and virtual
+    verdicts carry the target/model differences (clock, unmodeled registers).
+  - Flash: only stm32cubeprogrammer, runners.yaml arguments `--port=swd`/`--reset-mode=hw`, the HEX equal to the
+    build run's and inside the build devicetree's `zephyr,flash` region; physical state `unknown` once flashing starts.
   - Results are always `evidence: virtual`, with a fixed not-covered list (electrical timing, power, EMI, SPICE).
   - Renode's Robot keyword server is never started: it listens on every interface on Linux.
 - gdb-debug's exit policy is applied by OpenOCD's gdb-detach event on every end (also when GDB is killed); only its
@@ -712,6 +775,9 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A gdb-debug operation or MI handling | `gdb_support/operations.py`, `session.py`, `mi.py`, `tests/fixtures/gdb-debug/fake_gdb.py` | the session tests of `gdb-debug.test.ts` and the session checks of `internals.py` |
 | A renode profile or a profile validator rule | `plugins/renode/profiles/<id>/`, `renode_support/profiles.py` | the profile tests of `renode.test.ts`; the opt-in `VERA_RENODE_REAL` suite for a new profile before `verified` |
 | A renode step kind, status or engine command | `renode_support/testsets.py`, `operations.py`, `engine.py`, `tests/fixtures/renode/fake_renode.py` | the stand-in tests and the allow-list test of `renode.test.ts`; the real-engine suite for any new monitor command |
+| A zephyr preflight finding or allowlist | `zephyr_support/preflight.py`, spec REQ-DATA-d8ecee6a §4 | the preflight test of `zephyr.test.ts` |
+| A zephyr build/test command line or environment | `zephyr_support/ops.py`, `tests.py`, `environment.py`, `tests/fixtures/zephyr/stand-ins/` | the stand-in build/test-build tests of `zephyr.test.ts`; the opt-in `VERA_ZEPHYR_REAL` suite |
+| Another zephyr flash runner | `zephyr_support/flash.py`, `plugin.yaml` (a find program per tool) | the flash tests of `zephyr.test.ts`; a real board before it is called verified |
 | ELF/DWARF facts or fault decoding | `gdb_support/elf.py`, `dwarf.py`, `faults.py`, `symbols.py` | inspect and diagnose tests, `internals.py`, opt-in `VERA_GDB_ORACLE_PYTHON` (pyelftools) |
 | A calculation model, formula, check or limit | `plugins/electronics-calc/scripts/elec_support/{electrical,losses,thermal}.py`, spec REQ-DATA-3d15fdfc §5 | that model's group in `tests/fixtures/electronics-calc/cases.json`, derived by hand in its README |
 | Units, prefixes, the quantity or result contract | `elec_support/quantities.py`, `contract.py` | "quantities" groups and the result-document test of `electronics-calc.test.ts` |
@@ -838,6 +904,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   - `fake_renode.py` and `make_engine.py`;
   - `engine/platforms/` (Renode's two STM32F4 descriptions);
   - `stock/stm32f4_discovery.resc`.
+- `05_Software/plugins/zephyr/` — manifest, README, skill zephyr-builds, `scripts/zephyr_tool.py` and
+  `scripts/zephyr_flash.py` (entries), `scripts/zephyr_support/` (`cli`, `request`, `model`, `boards`, `sdk`,
+  `preflight`, `cmake_scan`, `environment`, `builddir`, `ops`, `diagnostics`, `artifacts`, `prepare`, `tests`, `ztest`, `tools`,
+  `flash`, `registry`, `lifecycle`, `result`, `errors`, plus `elf` and `workspace` copies).
+- `05_Software/tests/integration/zephyr.test.ts` and `tests/fixtures/zephyr/` (`apps/board-demo/`,
+  `tests/ztest-basic/`, `workspace/manifest/west.yml`, `stand-ins/`).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).

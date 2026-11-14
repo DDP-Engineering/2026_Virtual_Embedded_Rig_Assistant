@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-01b0aa08"
+
+title = "Delete only an owned, verified Zephyr build folder"
+
+status = "active"
+
+requirement = """
+When clean or pristine deletes a build folder, the zephyr helper shall delete only a folder inside the workbench that carries a valid marker, re-checked at deletion time, without following links or junctions inside it, and shall never delete application, workspace or SDK files.
+"""
+
+verification = "Clean an owned folder that contains a link to a folder of sources: the folder is gone, the link target and its files remain; clean on a folder without marker, on the application folder and on a buildDir outside the workbench is refused and nothing is deleted."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

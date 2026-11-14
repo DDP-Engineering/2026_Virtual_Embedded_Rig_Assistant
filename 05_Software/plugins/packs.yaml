@@ -48,3 +48,4 @@
     - { name: Debugging (GDB and OpenOCD), plugins: [gdb-debug], default: true }
     - { name: Power profiling (Joulescope), plugins: [power-profiler], default: true }
     - { name: Virtual boards (Renode), plugins: [renode], default: true }
+    - { name: Zephyr builds and tests, plugins: [zephyr], default: true }

@@ -1,0 +1,70 @@
+format: 1
+id: zephyr
+version: 1.0.0
+name: Zephyr builds, tests and flashing
+description: Build Zephyr applications for an exact board from an explicit request (west workspace at pinned revisions, Zephyr SDK folder, configuration and overlay files, an owned build folder), with hashed ELF/HEX/BIN, final configuration, devicetree, map and size; inspect the workspace offline, refuse unlisted projects, extension commands and build hooks unless approved by hash, build Twister test scenarios build-only, take test verdicts only from a real Renode or HIL run of the same ELF, prepare the workspace in a separate network step and flash through the verified STM32CubeProgrammer runner with a reserved probe.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://docs.zephyrproject.org/latest/develop/west/build-flash-debug.html", "https://docs.zephyrproject.org/latest/develop/twister/index.html", "https://docs.zephyrproject.org/latest/develop/west/extensions.html"]
+programs:
+  zephyr:
+    install: { script: scripts/zephyr_tool.py }
+    version: { args: [--version], match: '^zephyr (\d+\.\d+\.\d+)' }
+    timeout: 1800
+  zephyr-flash:
+    install: { script: scripts/zephyr_flash.py }
+    version: { args: [--version], match: '^zephyr-flash (\d+\.\d+\.\d+)' }
+    timeout: 300
+    uses: [stm32_programmer_cli]
+    env:
+      ZEPHYR_FLASH_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --probe, kinds: [probe], grace: 30, cleanup: [release], cleanupTimeout: 30 }
+  stm32_programmer_cli:
+    install:
+      find:
+        windows:
+          - "%PATH%"
+          - "%ProgramFiles%/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
+          - "%SystemDrive%/ST/STM32CubeCLT*/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
+        linux:
+          - "~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
+          - "/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
+          - "/opt/st/stm32cubeclt*/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
+          - "$PATH"
+      hint: "Install STM32CubeProgrammer from https://www.st.com/en/development-tools/stm32cubeprog.html (an ST account is required); zephyr-flash hands it to Zephyr's stm32cubeprogrammer runner."
+    version: { args: [--version], match: 'STM32CubeProgrammer version: (\d+\.\d+\.\d+)' }
+    timeout: 120
+# The agent never reaches west, CMake, Twister or the programmer directly: west runs any extension command a project
+# declares and CMake runs project code. The helpers compose fixed command lines from a checked request; the highest
+# risk of all matching rules wins, so no exception to the block below is possible.
+rules:
+  - match: "stm32_programmer_cli *"
+    risk: blocked
+    note: Use zephyr-flash, which flashes an owned build through Zephyr's stm32cubeprogrammer runner, or the stm32-cubeprog plugin.
+  - { match: "zephyr {--version,--help,-h}", risk: safe }
+  - { match: "zephyr tools", risk: safe, note: "Reports the helper's west, CMake, Ninja and Python, git and Zephyr SDK candidates." }
+  - match: "zephyr {tools,inspect,artifacts,test-run,differences} *"
+    risk: safe
+    note: Reads the request, the workspace, an owned build folder or run folders; starts no build, no project code and no network access. artifacts, test-run and differences write a new run folder.
+  - match: "zephyr {build,test-build} *"
+    risk: device-write
+    timeout: 3600
+    note: Host execution. CMake, Kconfig, the devicetree scripts and Twister run the code of the Zephyr workspace, its modules and the application on this computer (approval is not a sandbox); writes the owned build folder and a run folder. Never contacts the network.
+  - match: "zephyr clean *"
+    risk: device-write
+    note: Deletes the request's build folder, only when it carries VERA's marker; sources, workspace and SDK are untouched.
+  - match: "zephyr prepare-workspace *"
+    risk: device-write
+    timeout: 3600
+    note: Contacts the network. Runs west init (local manifest) and west update of the listed projects, which downloads and changes the Zephyr workspace.
+  - { match: "zephyr-flash {--version,--help,-h}", risk: safe }
+  - { match: "zephyr-flash tools", risk: safe, note: Reports the runner and the STM32_Programmer_CLI VERA found; opens no probe. }
+  - match: "zephyr-flash release *"
+    risk: safe
+    note: VERA's cleanup after an interrupted flash; starts nothing and does not touch the target.
+  - match: "zephyr-flash flash *"
+    risk: device-write
+    note: Overwrites the target's flash through the reserved probe with the owned build's HEX and starts it.
+  - match: "zephyr-flash * --firmware-effect actuates *"
+    risk: irreversible
+    note: The flashed firmware drives actuators once it starts.

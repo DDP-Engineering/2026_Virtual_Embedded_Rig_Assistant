@@ -1,0 +1,15 @@
+# A stand-in board with revisions and two SoCs (qualifiers required).
+board:
+  name: acme_revboard
+  vendor: acme
+  socs:
+    - name: socone
+      cpuclusters:
+        - name: cpuapp
+    - name: soctwo
+  revision:
+    format: letter
+    default: B
+    revisions:
+      - name: A
+      - name: B

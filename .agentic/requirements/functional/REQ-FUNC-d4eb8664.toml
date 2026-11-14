@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d4eb8664"
+
+title = "Build a Zephyr application into hashed artifacts with provenance"
+
+status = "active"
+
+requirement = """
+When build is requested with a request that passes the checks, the zephyr helper shall configure and build the application with CMake and Ninja for the exact board into the owned build folder and write a run folder with the build log, copies of the available ELF, HEX and BIN images, the final configuration, the devicetree, the map file, build_info.yml and runners.yaml, each with its SHA-256 and size, and the provenance of Zephyr version, project revisions, SDK and tool versions and request hash.
+"""
+
+verification = "Manual: with the real Zephyr v4.4.2 workspace and SDK 1.0.1, build the board-demo fixture for stm32f4_disco on Windows x64: exit 0, result pass, artifacts hashed and equal to the build folder files, build_info.yml names the board and the requested configuration and overlay files only; offline the same path runs against the CMake stand-in in the integration test."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/ops.py", "05_Software/plugins/zephyr/scripts/zephyr_support/artifacts.py", "05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_tool.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14
