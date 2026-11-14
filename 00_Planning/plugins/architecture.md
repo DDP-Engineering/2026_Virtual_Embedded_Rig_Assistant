@@ -172,7 +172,10 @@ policy below; it receives a resolved executable and the program's resolved varia
 
 - `spawn(executable, args, { shell: false, windowsHide: true, cwd, env, stdio: ["ignore", "pipe", "pipe"] })`.
   Stdin is closed, so an interactive program fails instead of hanging. `blocked` rules name the
-  known interactive subcommands.
+  known interactive subcommands. The one exception is a run with `input`: stdin is a pipe that receives exactly that
+  input and is then closed. Only the plugin-credential hand-off uses it: a program declaring
+  `credentials {option, scope: mqtt}` of an official plugin enabled at run start receives the stored credential a call
+  names, as one JSON line (spec REQ-DATA-96d18686 section 1).
 - Environment: a minimal base (`PATH` = managed tool directories + system `PATH`; `SystemRoot`,
   `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`), then the program's
   `env`, then `PYTHONUTF8=1` and `NO_COLOR=1`. Names compare case-insensitively on Windows.

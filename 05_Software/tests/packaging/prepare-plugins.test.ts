@@ -46,6 +46,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["ltspice", "official"],
     ["microchip-pymcuprog", "official"],
     ["micropython", "official"],
+    ["mqtt-tools", "official"],
     ["ngspice", "official"],
     ["parts-search", "official"],
     ["probe-rs", "official"],

@@ -6,6 +6,7 @@ import {
   officialPartsPlugin,
   type PermissionEngine,
   type PluginStore,
+  type ProgramCredentials,
   type ProgramHost,
   type ProgramPromptEntry,
   type ProgramResolver,
@@ -71,7 +72,7 @@ export class SessionsHost {
       parts?: ConfiguredPartsProvider;
       downloads?: (root: string) => WebDownloads;
       /** Plugin program runs; each workbench supplies its enabled plugins. */
-      programs?: { runner: ProgramRunner; resolver: ProgramResolver };
+      programs?: { runner: ProgramRunner; resolver: ProgramResolver; credentials?: ProgramCredentials };
       pluginBuilder?: PluginStore;
       managedRoots?: readonly string[];
     },

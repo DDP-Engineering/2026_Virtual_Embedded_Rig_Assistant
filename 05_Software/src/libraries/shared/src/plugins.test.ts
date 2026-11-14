@@ -156,3 +156,25 @@ it("reports the field path of each invalid manifest field", () => {
   expect(paths(withoutVersion)).toEqual(["version"]);
   expect(paths({ ...canonical, id: "Bad_ID", name: "" })).toEqual(["id", "name"]);
 });
+
+// REQ-DATA-e6b1fa1a
+it("accepts a credentials declaration with the mqtt scope only", () => {
+  const withCredentials = (credentials: unknown) => ({
+    ...canonical,
+    programs: { esptool: { ...program, credentials } },
+  });
+  expect(paths(withCredentials({ option: "--credential", scope: "mqtt" }))).toEqual([]);
+  expect(
+    validatePluginManifest(withCredentials({ option: "--credential", scope: "mqtt" })).manifest?.programs
+      .esptool?.credentials,
+  ).toEqual({ option: "--credential", scope: "mqtt" });
+  expect(paths(withCredentials({ option: "--credential", scope: "wokwi" }))).toEqual([
+    "programs.esptool.credentials.scope",
+  ]);
+  expect(paths(withCredentials({ option: "-c", scope: "mqtt" }))).toEqual([
+    "programs.esptool.credentials.option",
+  ]);
+  expect(paths(withCredentials({ option: "--credential", scope: "mqtt", key: "x" }))).toEqual([
+    "programs.esptool.credentials.key",
+  ]);
+});

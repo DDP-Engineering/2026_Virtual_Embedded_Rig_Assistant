@@ -1,7 +1,10 @@
 import { createContext, Script } from "node:vm";
 import {
   classifyCommand,
+  credentialReferenceSchema,
   gitExecutionArguments,
+  type PluginCredentialScope,
+  type PluginProgram,
   pluginProgramNameSchema,
   programPolicy,
   type SkillSummary,
@@ -43,6 +46,18 @@ export interface ProgramResolver {
 }
 /** The resolver of a host without provisioning: no program resolves. */
 export const unresolvedPrograms: ProgramResolver = { resolve: async () => undefined };
+/**
+ * Stored plugin credentials (spec REQ-DATA-96d18686 section 1): desktop main reads its CredentialStore, the CLI its
+ * memory-only entries from the environment. `has` never returns a secret.
+ */
+export interface ProgramCredentials {
+  has(scope: PluginCredentialScope, ref: string, signal?: AbortSignal): Promise<boolean>;
+  read(
+    scope: PluginCredentialScope,
+    ref: string,
+    signal?: AbortSignal,
+  ): Promise<{ username?: string | undefined; password: string } | undefined>;
+}
 /** What a session needs to run plugin programs; desktop main and the CLI compose it per workbench. */
 export interface ProgramHost {
   runner: ProgramRunner;
@@ -50,6 +65,8 @@ export interface ProgramHost {
   /** The enabled, issue-free plugins of the workbench, loaded now. */
   plugins(signal?: AbortSignal): Promise<readonly LoadedPlugin[]>;
   resolver: ProgramResolver;
+  /** Stored credentials for programs that declare them; absent, such calls are refused. */
+  credentials?: ProgramCredentials | undefined;
 }
 /** Program state of one session's tools. The session's approval path sets the call fields per call. */
 export interface ProgramContext {
@@ -223,6 +240,60 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
     throw programError(error, args.program);
   }
 }
+/**
+ * The credential a call names with its program's declared option, or undefined when it names none. Refuses a plugin
+ * that is not official, a host without credentials, a repeated option and an invalid reference.
+ */
+function credentialReference(
+  host: ProgramHost,
+  plugin: LoadedPlugin,
+  declared: PluginProgram,
+  args: readonly string[],
+): { scope: PluginCredentialScope; ref: string } | undefined {
+  const declaration = declared.credentials;
+  if (!declaration) return undefined;
+  const { option, scope } = declaration;
+  const values: (string | undefined)[] = [];
+  args.forEach((arg, index) => {
+    if (arg === option) values.push(args[index + 1]);
+    else if (arg.startsWith(`${option}=`)) values.push(arg.slice(option.length + 1));
+  });
+  if (values.length === 0) return undefined;
+  if (plugin.record.tier !== "official")
+    throw Error(
+      `Program ${Object.keys(plugin.manifest.programs).join(", ")} of plugin ${plugin.manifest.id} asks for stored credentials, which only official plugins receive.`,
+    );
+  if (!host.credentials) throw Error("Stored credentials are unavailable in this VERA host.");
+  if (values.length > 1) throw Error(`Name ${option} once.`);
+  const ref = values[0];
+  if (ref === undefined || !credentialReferenceSchema.safeParse(ref).success)
+    throw Error(`${option} needs a credential reference of 1-64 lowercase letters, digits and dashes.`);
+  return { scope, ref };
+}
+const notStored = (scope: string, ref: string) =>
+  Error(
+    `The ${scope} credential ${ref} is not stored. The user adds it in Settings > MQTT credentials, or for the CLI in VERA_MQTT_PASSWORD_${ref.toUpperCase().replaceAll("-", "_")}.`,
+  );
+/** The stdin line of a run naming a credential: read now, after the plugin list was loaded again. */
+async function credentialInput(
+  host: ProgramHost,
+  current: Awaited<ReturnType<typeof request>>,
+  args: readonly string[],
+  signal: AbortSignal,
+): Promise<string | undefined> {
+  const reference = credentialReference(host, current.plugin, current.declared, args);
+  if (!reference || !host.credentials) return undefined;
+  const value = await host.credentials.read(reference.scope, reference.ref, signal);
+  if (!value) throw notStored(reference.scope, reference.ref);
+  return `${JSON.stringify({
+    format: 1,
+    scope: reference.scope,
+    ref: reference.ref,
+    ...(value.username === undefined ? {} : { username: value.username }),
+    password: value.password,
+  })}\n`;
+}
+
 const refusal = (request: ProgramChangeRequest, mode: string) =>
   Error(
     request.risk === "blocked"
@@ -285,6 +356,9 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
   const mode = ctx.permissionMode?.() ?? "ask";
   if (programPolicy(mode, first.prepared.risk, first.prepared.trial) === "refuse")
     throw refusal(first.prepared, mode);
+  const reference = credentialReference(programs.host, first.plugin, first.declared, args.args ?? []);
+  if (reference && !(await programs.host.credentials?.has(reference.scope, reference.ref, signal)))
+    throw notStored(reference.scope, reference.ref);
   let used = false;
   return Object.freeze({
     request: first.prepared,
@@ -298,6 +372,8 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       } catch (error) {
         throw programError(error, args.program);
       }
+      // The credential is read only now: a plugin disabled since approval is undeclared above and reads nothing.
+      const input = await credentialInput(programs.host, current, args.args ?? [], applySignal);
       const background = args.background === true;
       const pluginDir = current.plugin.folder;
       const timeoutMs = programTimeout({
@@ -332,6 +408,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
             ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
           },
           ...(timeoutMs === undefined ? {} : { timeoutMs }),
+          ...(input === undefined ? {} : { input }),
           background,
           ...(background ? {} : { signal: applySignal }),
           beforeSpawn: async () => {

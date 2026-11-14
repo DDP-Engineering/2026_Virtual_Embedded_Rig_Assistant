@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-e6b1fa1a"
+title = "Accept a credentials declaration on a plugin program"
+status = "active"
+requirement = "plugin.yaml format 1 shall accept on a program an optional credentials declaration with a long option and the scope mqtt, and shall reject any other scope or option form."
+verification = "Shared test: a program with credentials {option: --credential, scope: mqtt} validates; scope wokwi, option '-c' and an extra field are manifest errors."
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/mqtt-credentials.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

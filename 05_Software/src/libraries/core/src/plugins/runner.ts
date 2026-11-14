@@ -42,6 +42,11 @@ export interface RunRequest {
   cwd?: string;
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
+  /**
+   * Written to stdin, which is then closed (a credential line, spec REQ-DATA-96d18686 section 1); never logged or
+   * recorded. Without it stdin is closed from the start.
+   */
+  input?: string;
   /** Kill the process tree after this many milliseconds; no limit when absent. */
   timeoutMs?: number;
   background?: boolean;
@@ -355,6 +360,7 @@ class Run implements ProgramRun {
       }),
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
+      ...(this.request.input === undefined ? {} : { input: this.request.input }),
     });
     this.pid = child.pid;
     if (this.request.timeoutMs !== undefined)

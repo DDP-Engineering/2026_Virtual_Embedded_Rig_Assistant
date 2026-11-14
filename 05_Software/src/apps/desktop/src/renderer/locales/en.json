@@ -51,7 +51,8 @@
     "shortcuts": "Keyboard shortcuts",
     "storage": "Storage",
     "configuration": "Configuration",
-    "partsSearch": "Parts search"
+    "partsSearch": "Parts search",
+    "mqttCredentials": "MQTT credentials"
   },
   "appearance": {
     "theme": "Theme",
@@ -630,6 +631,20 @@
       "disabled": "Web access is disabled.",
       "cancelled": "Test cancelled."
     }
+  },
+  "mqttCredentials": {
+    "description": "Broker logins for the official mqtt-tools plugin. A broker profile in the workbench names a credential by its reference; VERA hands the username and password only to an approved mqtt-tool run of the plugin enabled for that workbench, on the program's input, never in its arguments, environment, logs or results. The agent never sees them.",
+    "loading": "Loading MQTT credentials…",
+    "none": "No MQTT credential is stored.",
+    "stored": "Stored ({{storage}})",
+    "remove": "Remove",
+    "add": "Add or replace a credential",
+    "reference": "Reference",
+    "referenceHint": "1-64 lowercase letters, digits and dashes, as the broker profile's credential field names it.",
+    "username": "Username (optional)",
+    "password": "Password",
+    "save": "Save credential",
+    "saved": "Saved."
   },
   "web": {
     "openTitle": "Open external website?",

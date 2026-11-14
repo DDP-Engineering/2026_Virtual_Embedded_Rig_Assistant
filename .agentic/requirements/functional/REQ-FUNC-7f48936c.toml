@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-7f48936c"
+title = "Tell retained, duplicate and stale messages from new events"
+status = "active"
+requirement = "mqtt-tool shall mark a message delivered with the retain flag as retained, a dup-flagged message or one repeating the topic's last schema sequence value as duplicate, and a message whose schema sequence decreases as stale, so that only the remaining ones count as new events."
+verification = "Helper test: a retained telemetry message present before subscribing is event retained; a broker redelivery with the DUP flag and a repeated seq are duplicate; seq 5 after seq 7 is stale; the result document's capture.events counts each event."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

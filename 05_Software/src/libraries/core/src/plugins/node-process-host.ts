@@ -8,6 +8,11 @@ interface ChildLike {
   readonly pid?: number | undefined;
   readonly stdout: OutputPipe | null;
   readonly stderr: OutputPipe | null;
+  /** Present when stdin is a pipe (a run with input). */
+  readonly stdin?: {
+    on(event: "error", listener: (error: Error) => void): unknown;
+    end(data: string): unknown;
+  } | null;
   once(event: "error", listener: (error: Error) => void): unknown;
   once(event: "exit", listener: (code: number | null, signal: NodeJS.Signals | null) => void): unknown;
   once(event: "close", listener: (code: number | null, signal: NodeJS.Signals | null) => void): unknown;
@@ -22,13 +27,14 @@ export type SpawnFunction = (
     shell: false;
     windowsHide: true;
     detached: boolean;
-    stdio: ["ignore", "pipe", "pipe"];
+    stdio: ["ignore" | "pipe", "pipe", "pipe"];
   },
 ) => ChildLike;
 
 /**
  * The Node.js ProcessHost. Every program starts without a shell (arguments reach it unchanged), without
- * a console window, with stdin closed so an interactive program fails instead of hanging, and, when
+ * a console window, with stdin closed so an interactive program fails instead of hanging (a run with input
+ * gets it on stdin, which is then closed), and, when
  * `group` is set, as the leader of a new process group. `exit` waits for both pipes to close, but at
  * most `closeGraceMs` after the program itself exited: a descendant that inherited the pipes must not
  * keep the run open forever.
@@ -50,12 +56,17 @@ export class NodeProcessHost implements ProcessHost {
         shell: false,
         windowsHide: true,
         detached: options.group,
-        stdio: ["ignore", "pipe", "pipe"],
+        stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
       });
     } catch (error) {
       // Node throws some start failures (EINVAL for a .cmd without a shell, a NUL in an argument).
       const code = (error as NodeJS.ErrnoException).code ?? "ERROR";
       return { pid: undefined, exit: Promise.resolve({ code: null, signal: null, error: code }) };
+    }
+    if (options.input !== undefined && child.stdin) {
+      // A program that exits without reading its input closes the pipe; that is not a host failure.
+      child.stdin.on("error", () => {});
+      child.stdin.end(options.input);
     }
     child.stdout?.on("data", (chunk) => options.output("stdout", chunk));
     child.stderr?.on("data", (chunk) => options.output("stderr", chunk));

@@ -51,7 +51,8 @@
     "shortcuts": "Tastenkombinationen",
     "storage": "Speicher",
     "configuration": "Konfiguration",
-    "partsSearch": "Bauteilsuche"
+    "partsSearch": "Bauteilsuche",
+    "mqttCredentials": "MQTT-Zugangsdaten"
   },
   "appearance": {
     "theme": "Design",
@@ -630,6 +631,20 @@
       "disabled": "Web access ist deaktiviert.",
       "cancelled": "Test abgebrochen."
     }
+  },
+  "mqttCredentials": {
+    "description": "Broker-Anmeldungen für das offizielle Plugin mqtt-tools. Ein Broker-Profil im Workbench nennt Zugangsdaten über ihre Referenz; VERA übergibt Benutzername und Passwort nur einem genehmigten mqtt-tool-Lauf des für diesen Workbench aktivierten Plugins, über die Eingabe des Programms, nie in Argumenten, Umgebung, Logs oder Ergebnissen. Der Agent sieht sie nie.",
+    "loading": "MQTT-Zugangsdaten werden geladen…",
+    "none": "Keine MQTT-Zugangsdaten gespeichert.",
+    "stored": "Gespeichert ({{storage}})",
+    "remove": "Entfernen",
+    "add": "Zugangsdaten hinzufügen oder ersetzen",
+    "reference": "Referenz",
+    "referenceHint": "1-64 Kleinbuchstaben, Ziffern und Bindestriche, wie das Feld credential des Broker-Profils sie nennt.",
+    "username": "Benutzername (optional)",
+    "password": "Passwort",
+    "save": "Zugangsdaten speichern",
+    "saved": "Gespeichert."
   },
   "web": {
     "openTitle": "Externe Website öffnen?",

@@ -52,6 +52,14 @@ report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/integration/bus-
 tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets - offline
 evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
 cleanup are platform behaviour, see [Plugins](plugins.md).
+For mqtt-tools, start at plugins/mqtt-tools/plugin.yaml, scripts/mqtt_tool.py and scripts/mqtt_support/ (cli.py dispatch,
+profile.py the broker profile, topics.py filter coverage, schema.py payload checks, credential.py the stdin line,
+connection.py the paho connection and error codes, operations.py capture/publish/request, report.py) with spec
+.agentic/specs/REQ-DATA-96d18686.md; tests/integration/mqtt-tools.test.ts with tests/support/mqtt-test-broker.py (a
+stdlib MQTT 3.1.1/5 test broker on 127.0.0.1 with TLS, users, ACL and fault switches), make-mqtt-certs.py and
+mqtt-fixture-device.py own its coverage - evidence for the helper, not for a product broker or a device. Its
+workspace.py is a byte-identical copy of bus-tool's; the credential hand-off is platform behaviour, see
+[Plugins](plugins.md).
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
@@ -68,7 +76,7 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); circuitpython (the pinned-circup `circuitpython-tool` script: devices, identify, inspect-code, inspect-libraries, prepare-libraries from a pinned bundle tag, deploy to the CIRCUITPY drive one verified file at a time, capture-output, report; skills circuitpython-deploy and circuitpython-libraries); bus-tools (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script: bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills bus-transactions and bus-profiles); scpi-instruments (program `scpi`, a PEP 723
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); circuitpython (the pinned-circup `circuitpython-tool` script: devices, identify, inspect-code, inspect-libraries, prepare-libraries from a pinned bundle tag, deploy to the CIRCUITPY drive one verified file at a time, capture-output, report; skills circuitpython-deploy and circuitpython-libraries); bus-tools (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script: bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills bus-transactions and bus-profiles); mqtt-tools (program `mqtt-tool`, a pinned paho-mqtt PEP 723 script: capabilities, check-profile, connect-test, bounded subscribe, publish and correlated request on a broker a workbench profile declares, with the password handed over on stdin; skills mqtt-telemetry and mqtt-commands); scpi-instruments (program `scpi`, a PEP 723
 PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
 platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
@@ -496,8 +504,34 @@ that source metadata reaches the deterministic bundled index unchanged.
   `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`, capture.bin and capture.csv); exit 0/1/2/3.
   Verified only against the simulated adapter; no real Bus Pirate yet (NACK text, UART async receive and per-mode limits
   unconfirmed).
+- `mqtt-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "MQTT telemetry and commands", default on; activities
+  `testing`, `communication`), Windows x64 and Linux x64. Program `mqtt-tool` = `scripts/mqtt_tool.py` (PEP 723,
+  `paho-mqtt==2.1.0`), timeout 120 s, `credentials {option: --credential, scope: mqtt}`, no env. Risks: `capabilities`,
+  `check-profile` safe; `connect-test`, `subscribe` device-read (3600 s); `publish`, `request` device-write; `publish`
+  with `--retain` irreversible. Profile (`mqtt-tools-profile` format 1, 64 KiB, unknown fields refused): broker
+  host/port, TLS with a workbench CA or the system store (chain and host name always verified), credential reference
+  (plaintext only to loopback), client id prefix + 8 random hex, protocol 5 or 3.1.1, clean session only, keepalive,
+  connect timeout, reconnect attempts 0-5 (subscribe only), limits, subscribe filters (first level literal, no `$`),
+  publish topics (literal, command/data/status, QoS 0/1, retain never on command, response topic/timeout and the 3.1.1
+  correlation field), optional Will on a status topic, json/text/binary schemas with an optional integer sequence field.
+  Every refusal (`profile-invalid`, `topic-denied`, `payload-invalid`, `retain-refused`, `credential-missing`,
+  `credential-mismatch`, `plaintext-credential`, `path`, `run-exists`, `usage`) comes before the run folder and any packet,
+  exit 2. Connection codes `broker-unreachable`, `connect-timeout`, `tls-failed`, `auth-failed`, `not-authorized`,
+  `protocol-error` (exit 3). Capture: every message appended and flushed to `messages.jsonl` (raw base64, text, QoS,
+  retain, dup, size, SHA-256, receive time, schema check, event retained/duplicate/stale/new, MQTT 5 properties); ends at
+  duration, messages or bytes; a lost connection is a gap, reconnected per policy, `auth-revoked` or `disconnected`
+  (incomplete). Publish/request: one PUBLISH, delivery not-sent/sent/acknowledged/refused/unknown, `retried` false,
+  command physical unknown or reported; request subscribes first, correlates (MQTT 5 correlation data, 3.1.1 JSON
+  field), lists uncorrelated replies, `response-timeout` (exit 1). `result.json` is rewritten as incomplete while the run
+  goes on; SIGTERM (Linux) unsubscribes and disconnects (`stopped`); a Windows Stop leaves the last written state.
+  Results `arduino-iot-results/<run-id>/` (`mqtt-tool-result`, `report.md`, `messages.jsonl`); exit 0/1/2/3. Verified
+  against the local test broker only; no product broker or device yet, native Ubuntu not run.
+
 ## Invariants
 
+- mqtt-tool drives paho's `loop()` itself (never `loop_forever`/`loop_start`), so paho never reconnects or resends; a
+  PUBLISH is sent once per run, publish and request never reconnect, and the password read from stdin is never printed,
+  written or put in an error. TLS verification has no off switch.
 - bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
   self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
   `--power` within the registry's limits.
@@ -813,6 +847,11 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 - `05_Software/plugins/arduino-cli/` — manifest, README (pins, environment, risk table), skills arduino-build-fix, arduino-libraries and arduino-test-sketch, `scripts/arduino_tool.py` (entry), `scripts/arduino_support/` (`environment`, `sketch`, `boards`, `indexes`, `compile`, `upload`, `report`, `cli`, `workspace` shared).
 - `05_Software/tests/integration/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
+- `05_Software/plugins/mqtt-tools/` — manifest, README, skills mqtt-telemetry and mqtt-commands, profiles/bench-broker.json,
+  `scripts/mqtt_tool.py` (entry), `scripts/mqtt_support/` (`cli`, `profile`, `topics`, `schema`, `credential`, `connection`,
+  `operations`, `report`, `workspace` shared).
+- `05_Software/tests/integration/mqtt-tools.test.ts`, `tests/support/mqtt-test-broker.py`, `make-mqtt-certs.py`,
+  `mqtt-fixture-device.py`.
 - `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
   support package.
 - `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).

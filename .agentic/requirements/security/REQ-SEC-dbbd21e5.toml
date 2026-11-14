@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-dbbd21e5"
+title = "Refuse credentials to a plugin that is not official"
+status = "active"
+requirement = "If a call names the declared credentials option of a program whose plugin's tier is not official, then the program tools shall refuse the call before approval without reading any credential."
+verification = "Core test: the same manifest installed as a local or as a community plugin is refused at prepare for --credential bench and --credential=bench with a message naming the official requirement, the credential port records no read; a call of that plugin that names no credential still runs with stdin closed."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-credentials.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

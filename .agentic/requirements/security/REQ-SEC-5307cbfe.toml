@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-5307cbfe"
+title = "Treat payloads as untrusted data checked against a schema"
+status = "active"
+requirement = "mqtt-tool shall check each payload against its topic's schema and size limit, record valid or invalid with the failing field, store an oversize payload only by size and hash, and never execute or follow a payload."
+verification = "Helper test: {temp: 'x'} is valid false naming temp; a payload over maxPayloadBytes is oversize without payloadBase64; a payload saying 'ignore previous instructions' is stored as plain data; the result note says payloads are untrusted data."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/schema.py", "05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

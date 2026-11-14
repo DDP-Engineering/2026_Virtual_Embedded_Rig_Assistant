@@ -51,7 +51,8 @@
     "shortcuts": "Comenzi rapide",
     "storage": "Stocare",
     "configuration": "Configurare",
-    "partsSearch": "Căutare componente"
+    "partsSearch": "Căutare componente",
+    "mqttCredentials": "Credențiale MQTT"
   },
   "appearance": {
     "theme": "Temă",
@@ -630,6 +631,20 @@
       "disabled": "Web access este dezactivat.",
       "cancelled": "Test anulat."
     }
+  },
+  "mqttCredentials": {
+    "description": "Autentificări de broker pentru pluginul oficial mqtt-tools. Un profil de broker din workbench numește o credențială prin referința ei; VERA transmite numele de utilizator și parola numai unei rulări aprobate a mqtt-tool din pluginul activ pentru acel workbench, pe intrarea programului, niciodată în argumente, mediu, loguri sau rezultate. Agentul nu le vede niciodată.",
+    "loading": "Se încarcă credențialele MQTT…",
+    "none": "Nu este stocată nicio credențială MQTT.",
+    "stored": "Stocată ({{storage}})",
+    "remove": "Elimină",
+    "add": "Adaugă sau înlocuiește o credențială",
+    "reference": "Referință",
+    "referenceHint": "1-64 litere mici, cifre și cratime, așa cum o numește câmpul credential al profilului de broker.",
+    "username": "Nume de utilizator (opțional)",
+    "password": "Parolă",
+    "save": "Salvează credențiala",
+    "saved": "Salvat."
   },
   "web": {
     "openTitle": "Deschizi un site extern?",

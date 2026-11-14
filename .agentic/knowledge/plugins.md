@@ -164,6 +164,14 @@ and through `ResourceLeases`, a per-user lease folder the desktop app and the CL
 request and a grace period, runs the declared cleanup once after an interrupted actuation and reports the physical
 state. `ResourceLeases` is the only lease registry; later identity kinds extend the registry schema and key function.
 
+Plugin credentials (IOT-05, spec REQ-DATA-96d18686 §1): a program that declares `credentials {option, scope: mqtt}`
+receives the stored credential `mqtt:<ref>` a call names with `option`, as one JSON line on stdin, and nothing else does.
+Prepare refuses a plugin that is not official, a host without `ProgramHost.credentials`, a repeated option, an invalid
+reference or a credential that is not stored; apply loads the enabled plugins again (a disabled plugin is undeclared and
+nothing is read), reads the credential and passes it as `RunRequest.input`. Desktop main stores the credentials
+(Settings > MQTT credentials, `mqtt.credentials.*` IPC) and the CLI takes `VERA_MQTT_PASSWORD_<REF>`; neither changes a
+program's environment.
+
 ## Authoring
 
 `plugin_validate {path}` reads a confined workbench draft folder and returns schema errors plus warnings
@@ -317,7 +325,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   an id that is not installed is an UNKNOWN_NAME warning, not an error.
 - Store mutations run one at a time per store instance.
 - Every program starts with `shell: false`, `windowsHide: true`, stdio `[ignore, pipe, pipe]` (stdin
-  closed) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
+  closed; a run with `input` gets stdin as a pipe that receives exactly the input and is then closed, an early exit's
+  EPIPE ignored) and, off Windows, `detached` so it leads its own process group. Provisioner probes and uv calls start
   the same way: started detached on Windows, a console program such as KiCad's kicad-cli prints nothing.
 - The environment holds only PATH (tool paths first), SystemRoot, HOME, USERPROFILE, TEMP, TMP,
   TMPDIR, LANG, LANGUAGE and LC_* from the host, then the program's variables, then PYTHONUTF8=1 and
@@ -568,7 +577,12 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-0c4bc419` — UNKNOWN_NAME/UNKNOWN_KEY warnings for plugins.
 - `REQ-FUNC-9dd7413b` — plugins.* IPC channels and browser mock.
 - `REQ-FUNC-e08c858b` — original argument values reach the process host unchanged, no shell.
-- `REQ-FUNC-dbcd3311` — stdin is closed.
+- `REQ-FUNC-dbcd3311` — stdin ends at once: closed, or the run's input then end of input.
+- `REQ-DATA-e6b1fa1a` / `REQ-SEC-3f57f781` / `REQ-SEC-dbbd21e5` / `REQ-SEC-9976af2e` / `REQ-FUNC-00c788bb` /
+  `REQ-FUNC-ba0396c0` — the credentials declaration, the stdin hand-off, official plugins only, revocation by disabling,
+  unresolvable references, the runner's input.
+- `REQ-SEC-1ffb429b` / `REQ-UX-4b90fed2` / `REQ-FUNC-f250eee7` — desktop credential storage and Settings section, CLI
+  environment credentials.
 - `REQ-SEC-f5c114de` — minimal environment without VERA's credentials.
 - `REQ-REL-380ee422` — provisioner probes and uv calls are not detached on Windows (process group only elsewhere).
 - `REQ-FUNC-cb84887a` / `REQ-SEC-7a6c3f5f` — guarded cwd; DENIED outside, ignored or not a directory.

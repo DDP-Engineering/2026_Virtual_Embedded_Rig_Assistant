@@ -383,6 +383,7 @@ export function createMockApi(
   }
   let sequence = 0;
   const webKeyConfigured: Record<WebProviderId, boolean> = { exa: false, tavily: false, brave: false };
+  const mqttCredentialRefs = new Set<string>();
   const partsKeyConfigured: Record<PartsSupplierId, boolean> = {
     mouser: false,
     digikey: false,
@@ -1123,6 +1124,24 @@ export function createMockApi(
       case "parts.access.cancel":
         value = {};
         break;
+      case "mqtt.credentials.list":
+        value = {
+          credentials: [...mqttCredentialRefs].sort().map((ref) => ({ ref, storage: "memory" })),
+          secureStorage: true,
+        };
+        break;
+      case "mqtt.credentials.save": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        mqttCredentialRefs.add(channels["mqtt.credentials.save"].request.parse(input.data).ref);
+        value = { status: "saved" };
+        break;
+      }
+      case "mqtt.credentials.remove": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        mqttCredentialRefs.delete(channels["mqtt.credentials.remove"].request.parse(input.data).ref);
+        value = {};
+        break;
+      }
       case "providers.chatgpt.status":
         value = chatgpt;
         break;

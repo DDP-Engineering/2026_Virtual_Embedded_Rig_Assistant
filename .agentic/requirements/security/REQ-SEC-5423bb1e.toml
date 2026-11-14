@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-5423bb1e"
+title = "Reach the broker only through the pinned mqtt-tool helper"
+status = "active"
+requirement = "The mqtt-tools plugin shall run only its pinned PEP 723 helper mqtt-tool (paho-mqtt 2.1.0) and shall offer no broker administration, no free client console and no publish outside the profile's declared topics."
+verification = "Package test: plugin.yaml declares the single program mqtt-tool installed from the script with credentials {--credential, mqtt}; the PEP 723 block pins paho-mqtt==2.1.0; the operations shell, console and admin are refused as usage (exit 2)."
+affected_paths = ["05_Software/plugins/mqtt-tools/plugin.yaml", "05_Software/plugins/mqtt-tools/scripts/mqtt_tool.py", "05_Software/plugins/mqtt-tools/scripts/mqtt_support/cli.py", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/plugins/mqtt-tools/README.md", "05_Software/plugins/mqtt-tools/skills/mqtt-telemetry/SKILL.md", "05_Software/plugins/mqtt-tools/skills/mqtt-commands/SKILL.md"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

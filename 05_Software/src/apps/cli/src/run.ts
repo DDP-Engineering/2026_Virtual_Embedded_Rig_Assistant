@@ -34,6 +34,7 @@ import {
   MemoryCredentials,
   nodeClock,
 } from "./host-ports.js";
+import { cliProgramCredentials, mqttFromEnvironment } from "./mqtt-env.js";
 import { cliPartsProvider, partsFromEnvironment } from "./parts-env.js";
 import { createCliProcessHost } from "./process-host.js";
 import { createCliProvisioner } from "./provisioning.js";
@@ -100,6 +101,8 @@ export async function runTurn(
       (secret) => logger.registerSecret(secret),
     );
     const parts = cliPartsProvider(store, partsSettings, () => config.webAccess.enabled);
+    // MQTT broker credentials, also environment-only and in memory: approved mqtt-tool runs read them.
+    await mqttFromEnvironment(process.env, store, (secret) => logger.registerSecret(secret));
     resources.push(() => parts.close());
     let gateway: LlmGateway, model: string;
     if (options.provider === "replay") {
@@ -202,6 +205,7 @@ export async function runTurn(
         () => config.plugins,
       ),
       plugins: () => workbench.loadPlugins(snapshot.config.id),
+      credentials: cliProgramCredentials(store),
     };
     const programEntries = await programPromptEntries(programHost, skillList);
     const partsPlugin = (await workbench.loadPlugins(snapshot.config.id)).some(officialPartsPlugin);

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-cce1c4b7"
+title = "Publish only to declared topics with a valid payload"
+status = "active"
+requirement = "If publish or request names a topic that is not a declared publish topic, or a payload that does not satisfy that topic's schema, then mqtt-tool shall end blocked with code topic-denied or payload-invalid before connecting."
+verification = "Helper test: an undeclared topic, a wildcard topic and {on: 'yes'} for a boolean schema each exit 2 and the broker log shows no CONNECT; a declared topic with {on: true} is acknowledged."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py", "05_Software/plugins/mqtt-tools/scripts/mqtt_support/schema.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -50,3 +50,4 @@
     - { name: MicroPython, plugins: [micropython], default: true }
     - { name: CircuitPython, plugins: [circuitpython], default: true }
     - { name: "Bus transactions (I2C, SPI, UART)", plugins: [bus-tools], default: true }
+    - { name: MQTT telemetry and commands, plugins: [mqtt-tools], default: true }

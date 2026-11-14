@@ -18,6 +18,12 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  mqttCredentialListSchema,
+  mqttCredentialRemoveSchema,
+  mqttCredentialSaveResultSchema,
+  mqttCredentialSaveSchema,
+} from "./mqtt-credentials.js";
+import {
   partsAccessCancelSchema,
   partsAccessSaveResultSchema,
   partsAccessSaveSchema,
@@ -150,6 +156,21 @@ export const channels = {
   ),
   "parts.access.test": defineChannel("parts.access.test", partsAccessTestSchema, partsAccessTestResultSchema),
   "parts.access.cancel": defineChannel("parts.access.cancel", partsAccessCancelSchema, z.strictObject({})),
+  "mqtt.credentials.list": defineChannel(
+    "mqtt.credentials.list",
+    z.strictObject({}),
+    mqttCredentialListSchema,
+  ),
+  "mqtt.credentials.save": defineChannel(
+    "mqtt.credentials.save",
+    mqttCredentialSaveSchema,
+    mqttCredentialSaveResultSchema,
+  ),
+  "mqtt.credentials.remove": defineChannel(
+    "mqtt.credentials.remove",
+    mqttCredentialRemoveSchema,
+    z.strictObject({}),
+  ),
   "window.menu": defineChannel(
     "window.menu",
     z.strictObject({

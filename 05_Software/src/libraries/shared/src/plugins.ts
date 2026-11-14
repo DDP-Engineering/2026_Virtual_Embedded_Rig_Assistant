@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { labResourceKindSchema } from "./lab-resources.js";
+import { pluginCredentialScopeSchema } from "./mqtt-credentials.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 /** Import limits of one plugin package (folder or zip). */
@@ -244,6 +245,16 @@ const programSchema = z
           .min(1)
           .max(8),
         cleanupTimeout: z.number().int().min(1).max(300),
+      })
+      .optional(),
+    /**
+     * Calls naming `option` with a credential reference receive the stored credential `<scope>:<ref>` as one JSON
+     * line on stdin, only for an official plugin enabled at run start (spec REQ-DATA-96d18686 section 1).
+     */
+    credentials: z
+      .strictObject({
+        option: z.string().regex(/^--[a-z][a-z0-9-]{0,31}$/),
+        scope: pluginCredentialScopeSchema,
       })
       .optional(),
   })
