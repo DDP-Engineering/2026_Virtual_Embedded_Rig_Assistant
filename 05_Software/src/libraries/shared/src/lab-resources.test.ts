@@ -369,6 +369,7 @@ describe("manifest resources and approvals", () => {
     id: "lab",
     version: "1.0.0",
     name: "Lab",
+    summary: "Fixture summary.",
     description: "Lab plugin.",
     ecosystem: "lab",
     platforms: ["windows-x64"],

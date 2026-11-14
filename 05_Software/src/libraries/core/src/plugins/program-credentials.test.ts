@@ -30,6 +30,7 @@ function mqttPlugin(
       id: "mqtt-tools",
       version: "1.0.0",
       name: "MQTT tools",
+      summary: "Fixture summary.",
       description: "Fixture.",
       ecosystem: "iot",
       platforms: ["windows-x64", "linux-x64"],

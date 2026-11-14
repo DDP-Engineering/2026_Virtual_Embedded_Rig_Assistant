@@ -921,6 +921,11 @@
       "useDefault": "Standard verwenden",
       "installed": "Installiert: {{version}}",
       "installAction": "Installieren",
+      "platformWarning": "Für deine Plattform nicht verfügbar. Unterstützt: {{platforms}}.",
+      "riskWarning": {
+        "device-write": "Kann auf ein angeschlossenes Gerät schreiben (zum Beispiel flashen oder löschen).",
+        "irreversible": "Kann ein Gerät dauerhaft verändern (zum Beispiel eFuses brennen oder es sperren)."
+      },
       "update": "Auf {{version}} aktualisieren",
       "updateAvailable": "Update verfügbar: {{version}}",
       "reviewFrom": "Aus dem Katalog: {{tier}}, Version {{version}}.",

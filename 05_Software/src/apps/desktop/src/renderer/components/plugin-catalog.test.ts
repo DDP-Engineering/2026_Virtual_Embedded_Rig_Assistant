@@ -10,7 +10,9 @@ import i18n from "../i18n.js";
 import { installOrder } from "./plugin-catalog.js";
 import { Plugins } from "./plugins.js";
 
-vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
+vi.mock("../api/index.js", () => ({
+  api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}), getAppInfo: vi.fn() },
+}));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 let root: Root;
 let container: HTMLDivElement;
@@ -29,7 +31,9 @@ const entry = (id: string, more: Partial<CatalogPlugin> = {}): CatalogPlugin => 
   ecosystem: "esp32",
   platforms: ["windows-x64", "linux-x64"],
   name: `Name ${id}`,
+  summary: `Short ${id}.`,
   description: `About ${id}.`,
+  risk: "device-read",
   requires: [],
   activities: [],
   keywords: [],
@@ -83,6 +87,7 @@ const reviewOf = (id: string, required: boolean, update = false, version = "1.0.
       id,
       version,
       name: `Name ${id}`,
+      summary: `Short ${id}.`,
       description: `About ${id}.`,
       ecosystem: "esp32",
       platforms: ["windows-x64"],
@@ -104,7 +109,17 @@ function stub(options: {
   installed?: PluginSummary[];
   required?: Record<string, boolean>;
   plugins?: Record<string, string>;
+  host?: { platform: string; arch: string };
 }) {
+  vi.mocked(api.getAppInfo).mockResolvedValue({
+    name: "VERA",
+    version: "0.0.0",
+    ...(options.host ?? { platform: "win32", arch: "x64" }),
+    portable: false,
+    locale: "en",
+    testBuild: true,
+    signing: "not-applicable",
+  });
   const state = { settings: { plugins: options.plugins ?? {} } as { plugins: Record<string, string> } };
   vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
     switch (channel) {
@@ -429,3 +444,71 @@ it.each(["en", "ro", "de"])(
     expect($('[data-plugin-review] [data-maturity="pre-release"]').textContent).toBe(badge);
   },
 );
+
+// REQ-UX-d431b9b2, REQ-UX-9ae801f5, REQ-UX-41f26472
+it.each(["en", "ro", "de"])(
+  "shows the summary and type on the card, and the platform and risk warnings only when they apply (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    stub({
+      catalog: view([
+        entry("ltspice", { platforms: ["windows-x64"], risk: "safe", version: "0.3.0" }),
+        entry("esp32-esptool", { risk: "device-write" }),
+        entry("esp32-efuse", { risk: "irreversible" }),
+        entry("serial-monitor"),
+      ]),
+      host: { platform: "linux", arch: "x64" },
+    });
+    await render();
+    const card = (id: string) => `[data-catalog-plugin="${id}"]`;
+    const warning = (id: string, kind: string) => $(`${card(id)} [data-catalog-warning="${kind}"]`);
+    await vi.waitFor(() => expect(warning("ltspice", "platform")).not.toBeNull());
+    const ltspice = $(card("ltspice"));
+    expect(ltspice.textContent).toContain("Name ltspice");
+    expect(ltspice.textContent).toContain("0.3.0");
+    expect(ltspice.querySelector('[data-maturity="pre-release"]')).not.toBeNull();
+    expect(ltspice.querySelector('[data-tier="official"]')?.textContent).toBe(
+      i18n.t("plugins.tier.official"),
+    );
+    expect(ltspice.textContent).toContain("esp32");
+    expect(ltspice.textContent).toContain("Short ltspice.");
+    expect(ltspice.textContent).not.toContain("About ltspice.");
+    expect(warning("ltspice", "platform").textContent).toBe(
+      i18n.t("plugins.catalog.platformWarning", { platforms: "windows-x64" }),
+    );
+    expect(warning("ltspice", "risk")).toBeNull();
+    expect(warning("esp32-esptool", "risk").textContent).toBe(
+      i18n.t("plugins.catalog.riskWarning.device-write"),
+    );
+    expect(warning("esp32-efuse", "risk").textContent).toBe(
+      i18n.t("plugins.catalog.riskWarning.irreversible"),
+    );
+    expect(warning("esp32-efuse", "risk").textContent).not.toBe(warning("esp32-esptool", "risk").textContent);
+    for (const id of ["esp32-esptool", "esp32-efuse", "serial-monitor"])
+      expect(warning(id, "platform"), id).toBeNull();
+    expect(warning("serial-monitor", "risk")).toBeNull();
+    // The review keeps the full description and the rules.
+    await click(`${card("serial-monitor")} [data-action="catalog-install"]`);
+    await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+    expect($("[data-plugin-review]").textContent).toContain("About serial-monitor.");
+    expect($('[data-plugin-review] [data-rule="device-write"]')).not.toBeNull();
+  },
+);
+
+// REQ-UX-9ae801f5
+it("shows no platform warning on a listed platform or when the host platform is unknown", async () => {
+  await i18n.changeLanguage("en");
+  for (const host of [
+    { platform: "win32", arch: "x64" },
+    { platform: "darwin", arch: "arm64" },
+  ]) {
+    stub({ catalog: view([entry("ltspice", { platforms: ["windows-x64"] })]), host });
+    await render();
+    await vi.waitFor(() => expect($('[data-catalog-plugin="ltspice"]')).not.toBeNull());
+    await vi.waitFor(() => expect(vi.mocked(api.getAppInfo)).toHaveBeenCalled());
+    expect($('[data-catalog-warning="platform"]'), host.platform).toBeNull();
+    await act(async () => root.unmount());
+    container.remove();
+    client.clear();
+  }
+});

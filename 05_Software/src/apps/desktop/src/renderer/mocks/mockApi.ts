@@ -139,7 +139,9 @@ export function createMockApi(
     ecosystem: "esp32",
     platforms: ["windows-x64", "linux-x64"],
     name,
+    summary: `${name} from the mock catalog.`,
     description: `${name}: a plugin of the mock catalog.`,
+    risk: "device-write",
     requires: [],
     activities: [],
     keywords: [id],
@@ -149,7 +151,11 @@ export function createMockApi(
     ...more,
   });
   const catalogEntries: CatalogEntry[] = [
-    catalogEntry("esp32-efuse", "ESP32 eFuse", { requires: ["esp32-esptool"], activities: ["security"] }),
+    catalogEntry("esp32-efuse", "ESP32 eFuse", {
+      requires: ["esp32-esptool"],
+      activities: ["security"],
+      risk: "irreversible",
+    }),
     catalogEntry("esp32-esptool", "ESP32 esptool", { requires: ["serial-monitor"], activities: ["flash"] }),
     catalogEntry("can-logger", "CAN logger", {
       tier: "community",
@@ -280,6 +286,7 @@ export function createMockApi(
             id,
             version: "1.0.0",
             name: "Echo tools",
+            summary: "Echo arguments and print test output.",
             description: "Echo arguments and print test output. Use to exercise plugin program runs.",
             ecosystem: "general",
             platforms: ["windows-x64", "linux-x64"],
@@ -308,6 +315,7 @@ export function createMockApi(
             id,
             version: "1.0.0",
             name: id,
+            summary: `Mock plugin ${id}.`,
             description: `Mock plugin installed from ${path}.`,
             ecosystem: "general",
             platforms: ["windows-x64", "linux-x64"],

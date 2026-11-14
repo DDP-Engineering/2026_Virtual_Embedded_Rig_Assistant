@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-41f26472"
+
+title = "Warn on the catalog card when a rule can write to or permanently change a device"
+
+status = "active"
+
+requirement = "When a catalog card shows an entry whose risk is device-write or irreversible, the card shall show a localized warning for that risk; for safe or device-read it shall show no risk warning."
+
+verification = "Renderer component test: entries with risk device-write and irreversible each show their own warning; safe and device-read show none; texts exist in en, ro and de (i18n check)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

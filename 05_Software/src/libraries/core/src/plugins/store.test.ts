@@ -16,6 +16,7 @@ const manifest = {
   id: "esp32-esptool",
   version: "1.2.0",
   name: "ESP32 esptool",
+  summary: "Fixture summary.",
   description: "Identify, flash, erase and read Espressif chips over a serial port.",
   ecosystem: "esp32",
   platforms: ["windows-x64", "linux-x64"],

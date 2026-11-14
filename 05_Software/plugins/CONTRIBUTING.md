@@ -7,7 +7,8 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
 
 ## Adding or changing a plugin
 
-1. Create `<id>/plugin.yaml` (format 1); the folder name is the plugin id. Add skills under
+1. Create `<id>/plugin.yaml` (format 1); the folder name is the plugin id. `summary` (at most 160
+   characters) is the one line on the catalog card; `description` holds the details for the install review. Add skills under
    `<id>/skills/<name>/SKILL.md` and helper scripts under `<id>/scripts/`, and a short `<id>/README.md`.
 2. Declare every program with a reproducible install source: a pinned pip requirement range, a PEP 723
    script in the package, a download with its SHA-256 per platform, or a `find` search with a `hint`.

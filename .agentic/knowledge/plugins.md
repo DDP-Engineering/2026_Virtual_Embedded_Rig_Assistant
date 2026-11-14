@@ -153,7 +153,13 @@ Case/diacritic-insensitive all-word search intersects ecosystem/activity/provena
 shared `pluginMaturity(version)` (`plugins.ts`): `0.x.y` or a semver pre-release tag is `pre-release`, every other
 valid version `stable`, a missing or invalid version `pre-release`; there is no manifest field. `MaturityBadge`
 (`plugin-library-controls.tsx`) shows Pre-release beside the version on catalog cards, the review facts and installed
-cards, and nothing for stable; Clear resets the maturity filter with the others (`clearedLibraryFilters`). State
+cards, and nothing for stable; Clear resets the maturity filter with the others (`clearedLibraryFilters`). A catalog
+card (`CatalogItem`) shows name, version and badge, tier badge, id, ecosystem and the manifest `summary` (1-160
+characters, required); the full description, programs, sources and rules stay in the install review. It adds a
+`data-catalog-warning="platform"` note when the host's plugin platform (from `app.info` via shared `pluginPlatform`)
+is known and not in the entry's `platforms`, and a `data-catalog-warning="risk"` note when the index entry's `risk`
+(`pluginHighestRisk` of the rules below `blocked`, written by `vera catalog build`) is `device-write` or
+`irreversible`; an unknown or unsupported host shows no platform warning. State
 counts respect other filters; tab counts remain totals. Recently added/updated sort known dates
 before unknown, with stable name/id/source ties. New is UTC day age 0..29. Page sizes are 6/12/24;
 filter changes reset and loaded snapshot mutations clamp pages after catalog metadata settles
@@ -247,7 +253,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `pluginIdSchema`, `pluginRiskSchema`, `pluginTierSchema`, `pluginPlatformSchema`,
   `pluginIssueSchema` (`manifest`, `yaml`, `field`, `id`, `record`, `changed`, `unavailable`, `untrusted`, `collision`),
   `pluginInstalledSchema`, `pluginSummarySchema` (adds `enabled`), `PLUGIN_LIMITS`,
-  `isPluginRelativePath`.
+  `isPluginRelativePath`, `pluginMaturity(version)`, `pluginPlatform(platform, arch)` (core re-exports it),
+  `pluginHighestRisk(rules)` -> `PluginRunRisk` (`safe` without a rule below `blocked`).
 - Core: `new PluginStore({ root, now?, uuid? })` with `review(path)` → `PluginReview`, `install(path, sha256?)`
   (CONFLICT when the package's hash differs from `sha256`), `list()`, `load(id)` →
   `{manifest, record, folder}`, `uninstall(id)`, `ids()`; `pluginIntegrity(files)`;

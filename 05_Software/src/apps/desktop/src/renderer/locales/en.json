@@ -921,6 +921,11 @@
       "useDefault": "Use default",
       "installed": "Installed: {{version}}",
       "installAction": "Install",
+      "platformWarning": "Not available for your platform. Supported: {{platforms}}.",
+      "riskWarning": {
+        "device-write": "Can write to a connected device (for example flash or erase it).",
+        "irreversible": "Can change a device permanently (for example burn eFuses or lock it)."
+      },
       "update": "Update to {{version}}",
       "updateAvailable": "Update available: {{version}}",
       "reviewFrom": "From the catalog: {{tier}}, version {{version}}.",

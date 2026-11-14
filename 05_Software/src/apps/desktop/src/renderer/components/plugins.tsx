@@ -9,6 +9,7 @@ import type {
   PluginRisk,
   PluginSummary,
 } from "@vera/shared";
+import { pluginPlatform } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -690,6 +691,9 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     queryFn: () => api.invoke("plugins.catalog", { refresh: false }),
     staleTime: 0,
   });
+  // The host's plugin platform for the catalog cards' platform warning; unknown until app.info loads.
+  const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
+  const platform = info.data ? pluginPlatform(info.data.platform, info.data.arch) : undefined;
   useEffect(
     () =>
       api.subscribe("app", (event) => {
@@ -926,6 +930,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
                     <CatalogItem
                       key={item.key}
                       plugin={item.catalog}
+                      platform={platform}
                       busy={busy}
                       install={(id) =>
                         void reviewCatalog(item.catalog?.update ? [id] : installOrder(view, [id]))

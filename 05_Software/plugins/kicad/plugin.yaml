@@ -2,6 +2,7 @@ format: 1
 id: kicad
 version: 0.3.0
 name: KiCad schematic and PCB analysis
+summary: Analyse KiCad 10 schematics and boards without changing them - ERC, DRC, BOM, netlists and exports.
 description: Analyse KiCad 10 projects without changing them - sheet hierarchy, symbol instances, nets, board layers, stackup, tracks and net classes; ERC and DRC with their objects and positions; BOM, netlist and inspection or fabrication exports (PDF, SVG, Gerber, drill, position files), each checked. kicad-cli runs on a copy of the project. Requires a user-installed KiCad 10.
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]

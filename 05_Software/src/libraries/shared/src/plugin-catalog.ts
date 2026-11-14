@@ -4,6 +4,7 @@ import {
   pluginInstalledSchema,
   pluginManifestSchema,
   pluginReviewSchema,
+  pluginRiskSchema,
 } from "./plugins.js";
 
 /** Limits of a catalog index (spec REQ-DATA-b40d3f9b §4) and its packs (§1.1). */
@@ -98,7 +99,10 @@ export const catalogEntrySchema = z.strictObject({
   ecosystem: manifest.ecosystem,
   platforms: manifest.platforms,
   name: manifest.name,
+  summary: manifest.summary,
   description: manifest.description,
+  /** The highest rule risk of the manifest below blocked (`pluginHighestRisk`), for the card's warning. */
+  risk: pluginRiskSchema.exclude(["blocked"]),
   requires: ids(64),
   /** A bare zip file name in the catalog folder, so a mirror is a plain copy. */
   url: z

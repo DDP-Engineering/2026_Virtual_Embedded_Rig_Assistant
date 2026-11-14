@@ -1,5 +1,11 @@
 import { type UseQueryResult, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type CatalogPlugin, catalogUrl, type PluginCatalogView, type SettingsSnapshot } from "@vera/shared";
+import {
+  type CatalogPlugin,
+  catalogUrl,
+  type PluginCatalogView,
+  type PluginPlatform,
+  type SettingsSnapshot,
+} from "@vera/shared";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -108,16 +114,25 @@ function CatalogUrl({ changed }: { changed: () => void }) {
   );
 }
 
+/**
+ * A catalog plugin before installing it: name, version, type and summary, with a warning when the host
+ * platform is known and not supported, and one when a rule can write to or permanently change a device.
+ */
 export function CatalogItem({
   plugin,
+  platform,
   busy,
   install,
 }: {
   plugin: CatalogPlugin;
+  /** The host's plugin platform; undefined while unknown, which shows no platform warning. */
+  platform?: PluginPlatform | undefined;
   busy: boolean;
   install: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const unsupported = platform !== undefined && !plugin.platforms.includes(platform);
+  const risky = plugin.risk === "device-write" || plugin.risk === "irreversible";
   return (
     <li className="plugin-card" data-catalog-plugin={plugin.id}>
       <p className="plugin-heading">
@@ -141,7 +156,19 @@ export function CatalogItem({
           </span>
         )}
       </p>
-      <p>{plugin.description}</p>
+      <p>{plugin.summary}</p>
+      {unsupported && (
+        <p role="note" data-catalog-warning="platform">
+          {t("plugins.catalog.platformWarning", { platforms: plugin.platforms.join(", ") })}
+        </p>
+      )}
+      {risky && (
+        <p role="note" data-catalog-warning="risk" data-risk={plugin.risk}>
+          {plugin.risk === "irreversible"
+            ? t("plugins.catalog.riskWarning.irreversible")
+            : t("plugins.catalog.riskWarning.device-write")}
+        </p>
+      )}
       {plugin.installed && (
         <p className="muted" data-installed>
           {t("plugins.catalog.installed", { version: plugin.installed.version ?? "?" })}

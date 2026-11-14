@@ -2,6 +2,7 @@ format: 1
 id: raspberry-pi-linux
 version: 0.2.0
 name: Raspberry Pi Linux projects
+summary: Run projects, finite tasks and user services on a Raspberry Pi over a pinned SSH connection.
 description: Projects, finite tasks and user services on a Raspberry Pi (Raspberry Pi OS 12 64-bit) that VERA reaches over SSH from this computer - the board is a linux-board entry of lab/resources.json whose host key is pinned by fingerprint (a changed key is refused, never accepted), whose identity, unprivileged user and remote root are checked, and whose login uses a key of the system SSH agent. A small helper installed explicitly on the board performs finite operations - deploy a hashed candidate and apply only approved files, run a declared task with a remote handle, PID and budget, start, stop and read listed user services and their logs. No shell, sudo, system service, raw GPIO/I2C/SPI, OS provisioning or reboot.
 ecosystem: linux
 platforms: [windows-x64, linux-x64]

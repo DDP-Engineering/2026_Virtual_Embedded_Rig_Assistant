@@ -1,11 +1,12 @@
 import { expect, it } from "vitest";
-import { pluginMaturity, validatePluginManifest } from "./plugins.js";
+import { pluginHighestRisk, pluginMaturity, validatePluginManifest } from "./plugins.js";
 
 const canonical = {
   format: 1,
   id: "esp32-esptool",
   version: "1.2.0",
   name: "ESP32 esptool",
+  summary: "Identify and flash Espressif chips over a serial port.",
   description: "Identify, flash, erase and read Espressif chips over a serial port.",
   ecosystem: "esp32",
   platforms: ["windows-x64", "linux-x64"],
@@ -47,6 +48,7 @@ it("accepts the canonical manifest, a skills-only plugin and every install kind"
     id: "analysis-skills",
     version: "0.1.0-rc.1+build.5",
     name: "Analysis skills",
+    summary: "Firmware comparison and test planning skills.",
     description: "Compare firmware images and plan tests.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64", "linux-arm64"],
@@ -204,4 +206,22 @@ it("derives pre-release maturity from a 0.x version or a pre-release tag, never 
     expect(pluginMaturity(version), version).toBe("stable");
   for (const version of ["1.0", "x", "", "01.0.0", "1.0.0-", undefined])
     expect(pluginMaturity(version), String(version)).toBe("pre-release");
+});
+
+// REQ-DATA-c4afc07b
+it("requires a summary of 1 to 160 characters", () => {
+  expect(paths({ ...canonical, summary: "s".repeat(160) })).toEqual([]);
+  const { summary: _summary, ...withoutSummary } = canonical;
+  expect(paths(withoutSummary)).toEqual(["summary"]);
+  expect(paths({ ...canonical, summary: "   " })).toEqual(["summary"]);
+  expect(paths({ ...canonical, summary: "s".repeat(161) })).toEqual(["summary"]);
+});
+
+// REQ-DATA-9cdaa766
+it("takes the highest rule risk below blocked, safe without rules", () => {
+  const rules = (...risks: string[]) => risks.map((risk) => ({ match: "x", risk }) as never);
+  expect(pluginHighestRisk(canonical.rules as never)).toBe("device-write");
+  expect(pluginHighestRisk(rules("safe", "irreversible", "blocked", "device-read"))).toBe("irreversible");
+  expect(pluginHighestRisk(rules("blocked"))).toBe("safe");
+  expect(pluginHighestRisk([])).toBe("safe");
 });

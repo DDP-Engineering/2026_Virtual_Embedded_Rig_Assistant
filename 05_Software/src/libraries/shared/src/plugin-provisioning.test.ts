@@ -14,6 +14,7 @@ const manifest = (install: unknown, version: Record<string, unknown> = {}) => ({
   id: "tools",
   version: "1.0.0",
   name: "Tools",
+  summary: "Fixture summary.",
   description: "Test tools.",
   ecosystem: "general",
   platforms: ["windows-x64", "linux-x64"],

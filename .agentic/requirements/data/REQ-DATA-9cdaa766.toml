@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-9cdaa766"
+
+title = "Carry the summary and the highest rule risk in the catalog index"
+
+status = "active"
+
+requirement = "When vera catalog build writes index.json, each plugin entry shall carry the manifest summary and a field risk holding the highest rule risk of the manifest below blocked, or safe when the manifest has no such rule, and the index schema shall reject an entry without either field."
+
+verification = "Core and shared unit tests: a built entry carries the manifest summary; a plugin with safe, irreversible and blocked rules gets risk irreversible, one with only a blocked rule or no rules gets safe; an index entry without summary or risk fails catalogIndexSchema."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/src/libraries/shared/src/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

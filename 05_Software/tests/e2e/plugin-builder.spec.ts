@@ -43,6 +43,7 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     id: "fixture-cli",
     version: "1.0.0",
     name: "Fixture CLI",
+    summary: "Fixture summary.",
     description: "Inspect a virtual device.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64"],

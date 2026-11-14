@@ -346,6 +346,7 @@ test("scoped program status probes are cancelled when the app quits", async () =
       id: "probe-tools",
       name: "Probe tools",
       version: "1.0.0",
+      summary: "Fixture summary.",
       description: "Fixture probe lifetime.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],

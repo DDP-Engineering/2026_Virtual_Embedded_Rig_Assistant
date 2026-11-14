@@ -2,6 +2,7 @@ format: 1
 id: bus-tools
 version: 0.1.0
 name: Bus tools (I2C, SPI, UART)
+summary: Run bounded I2C, SPI and UART transactions through a Bus Pirate 5 or 6 declared in the lab resources.
 description: Active, bounded I2C, SPI and UART transactions through a Bus Pirate 5 or 6 in its BPIO2 binary mode, declared in lab/resources.json - identify the adapter, configure a bus from a profile that declares wiring, logic voltage, ground, pull-ups, speed, SPI mode, addresses and registers, read one declared register, run one bounded transfer, record a UART for a bounded time and leave a declared final state that is read back. The adapter is reserved with both of its serial ports and released to HiZ after Stop, timeout or a crash. No terminal, no address scan, no firmware change and no supply unless the profile and the call ask for it; passive capture and decoding stay with sigrok.
 ecosystem: lab
 platforms: [windows-x64, linux-x64]

@@ -2617,6 +2617,14 @@ legend {
 .plugin-card p {
   margin: 0;
 }
+.plugin-card [data-catalog-warning] {
+  font-weight: 600;
+  color: var(--primary);
+}
+.plugin-card [data-catalog-warning="platform"],
+.plugin-card [data-catalog-warning][data-risk="irreversible"] {
+  color: var(--destructive);
+}
 .plugin-heading {
   display: flex;
   flex-wrap: wrap;

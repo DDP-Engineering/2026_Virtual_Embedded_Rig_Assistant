@@ -26,6 +26,7 @@ const scpi: LoadedPlugin = {
     id: "lab",
     version: "1.0.0",
     name: "lab",
+    summary: "Fixture summary.",
     description: "Lab tools.",
     ecosystem: "lab",
     platforms: ["windows-x64", "linux-x64"],

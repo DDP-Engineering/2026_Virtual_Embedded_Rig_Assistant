@@ -24,6 +24,7 @@ import {
   type PluginProgramProblem,
   type PluginProgramStatus,
   type PluginSettings,
+  pluginPlatform,
   veraError,
   versionInRange,
 } from "@vera/shared";
@@ -39,13 +40,8 @@ import type { LoadedPlugin } from "./store.js";
 // biome-ignore lint/suspicious/noTemplateCurlyInString: literal manifest placeholder.
 const PLUGIN_DIR = "${pluginDir}";
 
-/** The plugin platform of a host, or undefined where VERA has no build. */
-export function pluginPlatform(platform: string, arch: string): PluginPlatform | undefined {
-  if (platform === "win32") return arch === "x64" ? "windows-x64" : undefined;
-  if (platform === "linux")
-    return arch === "x64" ? "linux-x64" : arch === "arm64" ? "linux-arm64" : undefined;
-  return undefined;
-}
+/** Re-exported for the CLI, the desktop main process and tests that import it from core. */
+export { pluginPlatform };
 
 /** What provisioning needs of the plugin store. */
 export interface ProvisionerStore {

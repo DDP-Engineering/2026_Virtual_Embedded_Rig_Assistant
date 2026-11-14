@@ -53,6 +53,7 @@ const review: PluginReview = {
     id: "echo-tools",
     version: "1.0.0",
     name: "Echo tools",
+    summary: "Echo arguments.",
     description: "Echo arguments and print test output.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64"],

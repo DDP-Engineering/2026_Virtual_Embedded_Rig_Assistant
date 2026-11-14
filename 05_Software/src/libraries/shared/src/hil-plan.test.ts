@@ -88,6 +88,7 @@ describe("manifest program field plan", () => {
     id: "hil-testing",
     version: "1.0.0",
     name: "HIL",
+    summary: "Fixture summary.",
     description: "Runs HIL plans.",
     ecosystem: "lab",
     platforms: ["windows-x64"],

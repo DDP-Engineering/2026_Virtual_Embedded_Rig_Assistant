@@ -2,6 +2,7 @@ format: 1
 id: ltspice
 version: 1.0.0
 name: LTspice circuit simulation
+summary: Batch-simulate netlists and schematics with your own LTspice on Windows, with measurements and pass/fail.
 description: Reproducible batch simulation with your own LTspice on Windows - operating point, DC, AC, transient and noise analyses of a netlist or an .asc schematic, parameter, temperature and Monte Carlo steps, measurements over declared windows (ripple, overshoot, settling, RMS, average power), pass/fail criteria, run comparison and reports, in the same request and result model as the ngspice plugin. Netlists and schematics are checked before LTspice runs, every run writes a new folder with the log, raw file, series, plot and report, and nothing is downloaded or installed.
 ecosystem: electronics
 platforms: [windows-x64]

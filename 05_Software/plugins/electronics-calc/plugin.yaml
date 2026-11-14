@@ -2,6 +2,7 @@ format: 1
 id: electronics-calc
 version: 0.3.0
 name: Electronics calculations
+summary: Reproducible electrical and thermal calculations with units, tolerances and a report, fully offline.
 description: Reproducible electrical and thermal calculations with explicit units, assumptions, formulas and limits - Ohm's law, dividers, RC filters, regulator, MOSFET, diode and passive losses, junction temperatures, worst-case and Monte Carlo tolerance analysis, and a JSON/Markdown report. Use for any number a design decision rests on; it runs offline and touches no hardware.
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]

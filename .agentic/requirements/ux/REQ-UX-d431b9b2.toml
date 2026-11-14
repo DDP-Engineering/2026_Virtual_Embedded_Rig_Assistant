@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-d431b9b2"
+
+title = "Show name, version, type and summary on the catalog card"
+
+status = "active"
+
+requirement = "When the Plugins page shows a catalog plugin that is not installed, its card shall show the name, the version with the maturity badge, the tier badge, the ecosystem and the summary, and shall not show the full description, which stays in the install review."
+
+verification = "Renderer component test: a catalog card shows name, version, Pre-release badge, Official badge, ecosystem and summary text, and not the description text; the catalog review still shows the full description, programs and rules (existing review tests)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -921,6 +921,11 @@
       "useDefault": "Folosește implicitul",
       "installed": "Instalat: {{version}}",
       "installAction": "Instalează",
+      "platformWarning": "Nu este disponibil pentru platforma ta. Platforme acceptate: {{platforms}}.",
+      "riskWarning": {
+        "device-write": "Poate scrie pe un dispozitiv conectat (de exemplu îl programează sau îl șterge).",
+        "irreversible": "Poate modifica permanent un dispozitiv (de exemplu arde eFuse-uri sau îl blochează)."
+      },
       "update": "Actualizează la {{version}}",
       "updateAvailable": "Actualizare disponibilă: {{version}}",
       "reviewFrom": "Din catalog: {{tier}}, versiunea {{version}}.",

@@ -35,6 +35,7 @@ async function setup(programs: Record<string, unknown>, served: Map<string, Uint
       id: "tools",
       version: "1.0.0",
       name: "Tools",
+      summary: "Fixture summary.",
       description: "Integration tools.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],

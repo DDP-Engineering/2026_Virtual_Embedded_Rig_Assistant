@@ -47,6 +47,7 @@ format: 1
 id: esp32-esptool
 version: 1.0.0
 name: ESP32 esptool
+summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
 description: Identify, flash, erase and read Espressif chips over a serial port with esptool v5. Use for any ESP32 programming task, such as confirming the chip type, writing the images of an ESP-IDF build, verifying them or erasing the flash.
 ecosystem: esp32
 platforms: [windows-x64, linux-x64]
@@ -91,7 +92,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `format` | `1` |
 | `id` | `[a-z0-9-]{1,64}`; equals the folder name; unique in a catalog |
 | `version` | Semantic Versioning |
-| `name`, `description` | ≤ 80 and ≤ 1024 characters; the description says what and when, like a skill's |
+| `name`, `summary`, `description` | ≤ 80, 1–160 and ≤ 1024 characters; the summary is the catalog card's one line, the description says what and when, like a skill's |
 | `ecosystem` | grouping tag: `esp32`, `stm32`, `microchip`, `can`, `wireshark`, `general`, … |
 | `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
 | `requires` | plugin IDs installed together with this one (at most 64): catalog installs review the required catalog plugins first and the catalog check rejects unknown ids; installs from a folder or zip and enabling do not check it |
@@ -518,7 +519,7 @@ vera-plugins/                    # one Git repository
 ```
 
 - `index.json` format 1 is `{format, plugins, packs}`; an entry is `{id, version, tier, ecosystem, platforms, name,
-  description, requires, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
+  summary, description, risk, requires, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
   so a mirror is a plain copy. Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
 - Tiers: `official` (VERA maintainers own it), `community` (merged by PR after CI and a
   maintainer's review of programs, install sources and rules). A plugin installed from a folder or

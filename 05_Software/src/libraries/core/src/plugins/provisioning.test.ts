@@ -584,6 +584,7 @@ async function setup(options: Setup) {
       id: "tools",
       version: "1.0.0",
       name: "Tools",
+      summary: "Fixture summary.",
       description: "Test tools.",
       ecosystem: "general",
       platforms: options.platforms ?? ["windows-x64", "linux-x64"],

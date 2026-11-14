@@ -2,6 +2,7 @@ format: 1
 id: ngspice
 version: 0.3.0
 name: ngspice circuit simulation
+summary: Reproducible local circuit simulation with ngspice - analyses, sweeps, Monte Carlo and pass/fail.
 description: Reproducible local circuit simulation with ngspice - operating point, DC, AC, transient and noise analyses on your netlist and local models, measurements over declared windows (ripple, overshoot, settling, RMS, average power), pass/fail criteria, parameter and temperature sweeps, seeded Monte Carlo, run comparison and reports. Netlists are checked before the engine runs and every run writes a new folder with the log, series, plot and report. Uses your ngspice or, on Windows, installs the pinned official ngspice-47.
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]

@@ -109,8 +109,8 @@ one release; a mirror is a plain copy of that folder.
   "plugins": [
     {
       "id": "serial-monitor", "version": "1.0.0", "tier": "official", "ecosystem": "serial",
-      "platforms": ["windows-x64", "linux-x64"], "name": "Serial monitor", "description": "…",
-      "requires": [], "url": "serial-monitor-1.0.0.zip",
+      "platforms": ["windows-x64", "linux-x64"], "name": "Serial monitor", "summary": "…", "description": "…",
+      "risk": "device-write", "requires": [], "url": "serial-monitor-1.0.0.zip",
       "activities": ["communication", "debug"], "keywords": ["UART", "console"],
       "sha256": "<64 lowercase hex>", "bytes": 12345
     }
@@ -119,8 +119,9 @@ one release; a mirror is a plain copy of that folder.
 }
 ```
 
-Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `description`, `ecosystem`,
-`platforms` and `requires` follow the manifest schema; `url` is a bare file name
+Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `summary`, `description`,
+`ecosystem`, `platforms` and `requires` follow the manifest schema; `risk` is the highest rule risk of the
+manifest below `blocked` (`safe`, `device-read`, `device-write` or `irreversible`), `safe` when it has none; `url` is a bare file name
 (`[A-Za-z0-9][A-Za-z0-9._+-]*\.zip`, at most 255 characters, no `/`), resolved against the catalog folder
 URL; `bytes` is the zip's exact size, at least 1 (no upper limit). At most 1024 plugins with distinct ids and 64 packs. An
 index larger than 4 MiB is invalid.

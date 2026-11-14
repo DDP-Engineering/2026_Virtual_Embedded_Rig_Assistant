@@ -29,6 +29,23 @@ export function pluginMaturity(version: string | undefined): PluginMaturity {
   const match = version === undefined ? null : semver.exec(version);
   return match && match[1] !== "0" && match[4] === undefined ? "stable" : "pre-release";
 }
+/** The plugin platform of a host (Node `platform` and `arch`), or undefined where VERA has no build. */
+export function pluginPlatform(platform: string, arch: string): PluginPlatform | undefined {
+  if (platform === "win32") return arch === "x64" ? "windows-x64" : undefined;
+  if (platform === "linux")
+    return arch === "x64" ? "linux-x64" : arch === "arm64" ? "linux-arm64" : undefined;
+  return undefined;
+}
+/** A risk a rule can let run: every risk except `blocked`, whose commands are refused. */
+export type PluginRunRisk = Exclude<PluginRisk, "blocked">;
+/** The highest risk among the rules below `blocked`, or `safe` without such a rule. */
+export function pluginHighestRisk(rules: readonly { risk: PluginRisk }[]): PluginRunRisk {
+  const order = pluginRiskSchema.options;
+  let highest: PluginRunRisk = "safe";
+  for (const { risk } of rules)
+    if (risk !== "blocked" && order.indexOf(risk) > order.indexOf(highest)) highest = risk;
+  return highest;
+}
 /** A package-relative path: `/` separated, no empty, `.` or `..` segment, no drive, device or trailing dot. */
 export function isPluginRelativePath(path: string): boolean {
   if (!path || path.length > 1024 || /[\p{Cc}\\:*?"<>|]/u.test(path) || path.startsWith("/")) return false;
@@ -312,6 +329,8 @@ export const pluginManifestSchema = z.strictObject({
   id: pluginIdSchema,
   version: z.string().max(128).regex(semver),
   name: z.string().trim().min(1).max(80),
+  /** One line for the catalog card; `description` holds the details for the review. */
+  summary: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(1024),
   ecosystem: z.string().regex(/^[a-z0-9-]{1,64}$/),
   platforms: z.array(pluginPlatformSchema).min(1).refine(unique, "List each platform once."),

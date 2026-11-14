@@ -10,6 +10,7 @@ import {
   catalogMaintainersSchema,
   catalogPacksSchema,
   dangerousToken,
+  pluginHighestRisk,
   ruleNamesProgram,
   type VeraError,
 } from "@vera/shared";
@@ -199,7 +200,9 @@ export async function buildCatalogRelease(
       ecosystem: manifest.ecosystem,
       platforms: manifest.platforms,
       name: manifest.name,
+      summary: manifest.summary,
       description: manifest.description,
+      risk: pluginHighestRisk(manifest.rules),
       requires: manifest.requires,
       url,
       sha256: createHash("sha256").update(zip).digest("hex"),

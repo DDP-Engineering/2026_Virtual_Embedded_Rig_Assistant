@@ -19,6 +19,7 @@ const plugin = (id: string, more: Record<string, unknown> = {}) => ({
   id,
   version: "1.0.0",
   name: `Plugin ${id}`,
+  summary: `Test plugin ${id}.`,
   description: "A test plugin.",
   ecosystem: "test",
   platforms: ["windows-x64", "linux-x64"],
@@ -147,16 +148,51 @@ it("reports dangerous tokens below device-write unless a maintainer marked the r
 
 // REQ-FUNC-f4381792
 it("builds deterministic zips and an index that the store installs", async () => {
-  const root = await source();
+  const root = await source({
+    plugins: {
+      alpha: plugin("alpha"),
+      beta: plugin("beta", {
+        requires: ["alpha"],
+        rules: [
+          { match: "tool *", risk: "safe" },
+          { match: "tool burn *", risk: "irreversible" },
+          { match: "tool shell", risk: "blocked" },
+        ],
+      }),
+    },
+  });
   const out = join(root, "..", `${Math.random().toString(36).slice(2)}-release`);
   roots.push(out);
   const first = await buildCatalogRelease(root, out);
   expect(first.issues).toEqual([]);
   const index = catalogIndexSchema.parse(JSON.parse(await readFile(join(out, "index.json"), "utf8")));
   expect(index).toEqual(first.index);
-  expect(index.plugins.map(({ id, tier, url, requires }) => ({ id, tier, url, requires }))).toEqual([
-    { id: "alpha", tier: "official", url: "alpha-1.0.0.zip", requires: [] },
-    { id: "beta", tier: "community", url: "beta-1.0.0.zip", requires: ["alpha"] },
+  expect(
+    index.plugins.map(({ id, tier, url, requires, summary, risk }) => ({
+      id,
+      tier,
+      url,
+      requires,
+      summary,
+      risk,
+    })),
+  ).toEqual([
+    {
+      id: "alpha",
+      tier: "official",
+      url: "alpha-1.0.0.zip",
+      requires: [],
+      summary: "Test plugin alpha.",
+      risk: "device-write",
+    },
+    {
+      id: "beta",
+      tier: "community",
+      url: "beta-1.0.0.zip",
+      requires: ["alpha"],
+      summary: "Test plugin beta.",
+      risk: "irreversible",
+    },
   ]);
   expect(index.packs).toEqual([
     { id: "test", name: "Test", groups: [{ name: "Core", plugins: ["alpha", "beta"], default: true }] },

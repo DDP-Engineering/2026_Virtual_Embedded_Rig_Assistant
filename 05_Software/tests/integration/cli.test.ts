@@ -855,6 +855,7 @@ it("CLI installs a plugin and its programs and prints their statuses", async () 
       "id: bench-tools",
       "version: 1.0.0",
       "name: Bench tools",
+      "summary: Fixture summary.",
       "description: Node and a missing analyser.",
       "ecosystem: general",
       "platforms: [windows-x64, linux-x64]",

@@ -254,6 +254,8 @@ Each manifest's version records its evidence level (table and reasons in `00_Pla
 1.0.0 only with every real-tool and real-hardware proof on each declared platform (today only the Windows-only
 ltspice), 0.3.0 when only native Ubuntu is open, 0.2.0 when the real tool ran on Windows but hardware or cloud proof
 is open, 0.1.0 with offline evidence only. Each bundled helper's `VERSION` (its `--version`, result and state records) equals its plugin's manifest version.
+Every manifest carries a one-line `summary` (at most 160 characters) for the catalog card, written from its
+description; the description keeps the details for the install review.
 
 Catalog discovery metadata for the twenty real packages lives in the maintainers' catalog.yaml map,
 not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain

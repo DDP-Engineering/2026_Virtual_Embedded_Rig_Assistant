@@ -20,6 +20,7 @@ YAML with unique keys and no aliases; every object is strict (an unknown key is 
 | `id` | `^[a-z0-9-]{1,64}$`; equals the package folder name |
 | `version` | Semantic Versioning 2.0.0 (`1.2.0`, `1.2.0-rc.1+b5`), at most 128 characters |
 | `name` | 1–80 characters after trimming |
+| `summary` | 1–160 characters after trimming; the one line of the catalog card |
 | `description` | 1–1024 characters after trimming |
 | `ecosystem` | `^[a-z0-9-]{1,64}$` |
 | `platforms` | non-empty, unique subset of `windows-x64`, `linux-x64`, `linux-arm64` |

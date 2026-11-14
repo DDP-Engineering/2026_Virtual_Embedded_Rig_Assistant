@@ -2,6 +2,7 @@ format: 1
 id: hil-testing
 version: 0.2.0
 name: HIL testing
+summary: Run finite hardware-in-the-loop test plans on a real board through the enabled lab plugins.
 description: Run finite hardware-in-the-loop test plans on a real board - VERA compiles a declarative JSON plan (setup, firmware and hash, wiring, steps, budget, cleanup) into operations of the enabled probe-rs, esp32-esptool, serial-monitor, scpi-instruments and lab-validation plugins, asks one approval at the plan's highest risk, reserves the probe, serial ports and instruments for the plan, flashes, resets, talks to the UART, waits for events, captures and judges the results, always runs the cleanup on Stop or timeout, and writes a JSON/JUnit/HTML report.
 ecosystem: lab
 platforms: [windows-x64, linux-x64]

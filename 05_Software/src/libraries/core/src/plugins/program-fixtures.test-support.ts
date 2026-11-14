@@ -15,6 +15,7 @@ export function plugin(
       id,
       version: "1.0.0",
       name: id,
+      summary: "Fixture summary.",
       description: "Fixture plugin.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],
