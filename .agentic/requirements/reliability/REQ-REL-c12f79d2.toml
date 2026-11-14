@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c12f79d2"
+
+title = "Open an owned workbench database in place"
+
+status = "active"
+
+requirement = """
+When VERA opens a workbench whose lock it holds, core shall open that workbench's vera.db in place, without copying the database or its WAL, and shall validate the current schema on that connection with query_only ON before any pragma or write.
+"""
+
+verification = "Create and close an owned database with data, reopen it with openDb while mkdtemp/mkdtempSync are observed: open succeeds, the data is readable and writable, and no vera-storage-* folder is made; an empty or missing database still initializes. Opt-in VERA_OPEN_TIMING_MB times WorkbenchService.open."
+
+affected_paths = ["05_Software/src/libraries/core/src/storage/db.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/storage/db.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/workbench/open-timing.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/storage/db.test.ts", "05_Software/src/libraries/core/src/workbench/open-timing.test.ts"]
+
+
+spec = "specs/REQ-PLAT-f0d13546.md"
+
+priority = "normal"   # low | normal | high
+rationale = "PERF-09 (#257): a full synchronous copy blocked the main process for large databases."
+
+created = 2026-11-14
+updated = 2026-11-14

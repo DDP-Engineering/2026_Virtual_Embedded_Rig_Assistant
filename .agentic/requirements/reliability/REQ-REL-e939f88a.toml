@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-e939f88a"
+
+title = "Refuse an owned workbench database in another schema before writes"
+
+status = "active"
+
+requirement = """
+When an owned workbench database fails current-schema or identity validation, core shall fail INVALID or CONFLICT, release the lock it acquired for that open, and leave the database and WAL bytes unchanged while another connection keeps the database open.
+"""
+
+verification = "Owned database whose meta schema_version is 0/2/99/text with a live WAL: openDb fails INVALID with vera.db and vera.db-wal hashes unchanged. WorkbenchService.open of a workbench with schema_version 99 and a dead owner lock: INVALID, vera.db unchanged, no lock or WAL left, recents unchanged, the previous workbench stays open."
+
+affected_paths = ["05_Software/src/libraries/core/src/storage/db.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/storage/db.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/workbench/open-timing.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/storage/db.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = "specs/REQ-PLAT-f0d13546.md"
+
+priority = "normal"   # low | normal | high
+rationale = "The schema check moved behind lock acquisition; refusal must still precede any write."
+
+created = 2026-11-14
+updated = 2026-11-14
