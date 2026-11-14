@@ -13,6 +13,7 @@ import json
 import math
 import os
 import re
+import signal
 import time
 
 from . import constants, errors  # noqa: F401
@@ -131,6 +132,9 @@ class Instrument:
         if hang and hang in command and not flags.get("hung"):
             flags["hung"] = True
             _save_state(state)
+            # A real VISA call blocks in C, so Python's SIGTERM handler cannot run until it returns.
+            if hasattr(signal, "pthread_sigmask"):
+                signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM})
             time.sleep(600)
         crash = self.faults.get("exitOn")
         if crash and crash in command and not flags.get("crashed"):

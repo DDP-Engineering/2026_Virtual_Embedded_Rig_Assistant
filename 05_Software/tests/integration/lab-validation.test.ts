@@ -552,6 +552,7 @@ describe("command line and request (REQ-DATA-53797d16)", { timeout: 120_000 }, (
         expect(lv(root, ["measure", "--request", linked]).code).toBe(2);
       }
     } finally {
+      await rm(join(root, "data", "link.csv"), { force: true });
       await rm(outside, { recursive: true, force: true });
     }
   });
