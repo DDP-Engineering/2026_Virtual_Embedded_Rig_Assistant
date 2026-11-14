@@ -5,7 +5,8 @@ the LAB-08 ticket, the evidence that exists, the versions and hashes it rests on
 limits. It reuses the still-valid evidence of LAB-01...07 (their "as built" sections in
 [embedded-lab-plugins.md](embedded-lab-plugins.md)) instead of rerunning it; only the new LAB-08 flows and the
 interactions they touch were verified again.
-STATE: written 2026-11-14 with LAB-08 (AEGIS TASK-b3344846) on branch `feature/101-embedded-lab`, Windows 11 x64.
+STATE: written 2026-11-14 with LAB-08 (AEGIS TASK-b3344846) on branch `feature/101-embedded-lab`, Windows 11 x64;
+Linux x64 runs under WSL2 added the same day (section "Linux x64 under WSL2").
 
 ## Rules this report follows
 
@@ -24,7 +25,7 @@ STATE: written 2026-11-14 with LAB-08 (AEGIS TASK-b3344846) on branch `feature/1
 
 | Item | Version | Identity | Used by |
 |---|---|---|---|
-| Branch base | `feature/101-embedded-lab` | LAB-01 41313ca, LAB-02 12059de, LAB-03 8c374f4, LAB-04 b3667c2, LAB-05 dfbf0a8, LAB-06 8c6974d, LAB-07 daee715; LAB-08 uncommitted candidate on daee715 | all |
+| Branch base | `feature/101-embedded-lab` | LAB-01 41313ca, LAB-02 12059de, LAB-03 8c374f4, LAB-04 b3667c2, LAB-05 dfbf0a8, LAB-06 8c6974d, LAB-07 daee715, LAB-08 35f7adb; Linux test fixes 8c0e09a, 398d2e2, 97bfe22 | all |
 | PyVISA / pyvisa-py / pyserial / pyusb | 1.16.2 / 0.8.1 / 3.5 / 1.3.1 | PyPI pins of `scpi_tool.py` | LAB-01 (real library run against local simulated servers) |
 | pyjoulescope_driver | 2.5.5 | PyPI pin of `power_profile.py` | LAB-05 (import and enumeration, no meter) |
 | xPack arm-none-eabi-gcc (GDB 16.3.90) | 15.2.1-1.1 | zip SHA-256 bae6a3d1...93ea | LAB-04 |
@@ -129,6 +130,43 @@ nothing on PATH or in global configuration; opt-in `VERA_PIO_REAL` suite plus a 
 | L08-F | Stop, failed build, clean, invalid paths (offline, real runner); real failed build leaves sources unchanged; upload errors only against the stand-in and the real `packages-missing` refusal | met for build/test/clean; upload errors offline only |
 | L08-G | test-run consumes Renode (real) and HIL (record) runs by ELF SHA-256; a HIL plan takes the build's ELF and hash | met for virtual; HIL on a board blocked |
 | L08-H | this report | partial: the report is complete, but steps 2 and 5 are blocked and steps 1, 3 and 4 partial (no instrument, probe, board or JS220) |
+
+## Linux x64 under WSL2
+
+Ubuntu 24.04.4 LTS under WSL2 (kernel 6.18.33.2-microsoft-standard-WSL2), Python 3.12.3, Node 24.21.0, clone of
+`feature/101-embedded-lab` at `~/vera-lab`. This is real Linux x64 for the software paths (paths, POSIX process
+groups and signals, the `linux-x64` provisioning entries, the Linux tool builds). It is **not** native Ubuntu: WSL2
+has no `/dev/bus/usb`, no udev and no attached device, so every hardware and USB-access criterion stays as above.
+Downloads approved by the user on 2026-11-14, each SHA-256 checked before extraction, all under `~/vera-lab-tools`,
+nothing on PATH, no global configuration, no `setup.sh`/hosttools installer run, no sudo:
+
+| Item | Version | Identity |
+|---|---|---|
+| Renode | 1.17.0 | renode-1.17.0.linux-portable.tar.gz SHA-256 4ba7c68b...5a5f (the manifest's `linux-x64` pin) |
+| Zephyr SDK | 1.0.1 | linux-x86_64 minimal ca9bc0ff...a7eb, arm-zephyr-eabi toolchain 21b85981...a634 (GCC 14.3.0) |
+| Zephyr workspace | v4.4.2 dccb0959, cmsis_6 30a859f4, hal_stm32 fc11896d | cloned locally from the Windows workspace, no network |
+| xPack arm-none-eabi-gcc (GDB 16.3.90) | 15.2.1-1.1 | linux-x64 tar.gz da6a49ad...1ff6 (the binutils `linux-x64` pin) |
+| xPack OpenOCD | 0.12.0-7 | linux-x64 tar.gz 94b37909...68d6 |
+| PlatformIO packages (Linux) | ststm32 20.0.0, toolchain-gccarmnoneeabi 1.70201.0 linux_x86_64, framework-cmsis(-stm32f4), tool-ldscripts-ststm32, tool-scons, Unity 2.6.1, tool-openocd 3.1200.7 | registry SHA-256 verified by PlatformIO; installed by the helper's prepare-packages |
+| PyPI | helper pins of zephyr_tool.py and pio_tool.py; pyjoulescope_driver 2.5.5; pyelftools 0.32 | uv venvs |
+
+Results (vitest in WSL2, 2026-11-14):
+
+- All 12 LAB test files offline: pass (228 passed; the skipped ones are the opt-in suites run below).
+- Opt-in real suites: PyVISA/pyvisa-py over TCPIP SOCKET (LAB-01), uv-provisioned lab-validation (LAB-02), the
+  pyelftools oracle and real GDB 16.3.90 + OpenOCD 0.12.0-7 without a probe (LAB-04), the real pyjoulescope_driver
+  without a meter (LAB-05; `usb.ok` false with the udev-rule hint, as designed), real Renode 1.17.0 (LAB-06), real
+  Zephyr builds, Twister build-only and Renode verdicts (LAB-07), real PlatformIO prepare-packages, offline builds,
+  device suites judged on Renode and the upload refusal `packages-missing` (LAB-08): all pass.
+- Not run on Linux: PlatformIO `native` host tests (no host GCC; `build-essential` needs sudo) and STM32CubeProgrammer
+  (not installed in WSL).
+- The Linux runs found five test faults that Windows never reaches, all fixed without changing plugin code: a dangling
+  symlink left by a Linux-only check (LAB-02), a fake VISA hang that SIGTERM interrupts on POSIX so the
+  kill-after-grace path was never exercised (LAB-01), a USB assumption only true with WinUSB (LAB-05), a hard-coded
+  `python` (LAB-07) and a bogus proxy that also reached the real prepare-packages (LAB-08).
+
+Verdict for the `native Ubuntu` halves: the Linux x64 software paths are met under WSL2; native Ubuntu with USB access
+and hardware stays open.
 
 ## Open items by package
 
