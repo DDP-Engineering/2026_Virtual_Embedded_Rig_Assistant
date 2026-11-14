@@ -10,11 +10,19 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import signal
 import time
 from typing import Any, Callable
 
 from .backends import BleakBackend, get_default_backend
 from .exc import BleakBluetoothNotAvailableError, BleakBluetoothNotAvailableReason, BleakError, BleakGATTProtocolError
+
+
+def _stuck() -> None:
+    """A call stuck in a driver's C code: Python's SIGTERM handler cannot run, so only the kill ends the process."""
+    if os.name != "nt":
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
 
 __all__ = ["BleakScanner", "BleakClient", "BleakAdapter", "BLEDevice", "AdvertisementData"]
 
@@ -281,6 +289,7 @@ class BleakClient:
             raise BleakError("Not connected")
         log("write", address=self.address, uuid=char.uuid, data=bytes(data).hex(), response=response)
         if char.raw.get("writeHang"):
+            _stuck()
             await asyncio.sleep(3600)
         if self._faults.get("disconnectOnWrite"):
             self._drop()

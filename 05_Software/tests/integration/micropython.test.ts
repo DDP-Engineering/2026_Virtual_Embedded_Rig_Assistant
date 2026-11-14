@@ -274,7 +274,14 @@ describe("ports and identity", () => {
     const missing = mpy(["identify", "--port", "COM6", "--identity", PICO]);
     expect(missing.code).toBe(2);
     expect(codes(missing)).toEqual(["port-missing"]);
-    const other = mpy(["identify", "--port", "com5", "--identity", "usb:2e8a:0005:AAAA"]);
+    // Windows matches COM names case-insensitively; Linux device names are case-sensitive.
+    const other = mpy([
+      "identify",
+      "--port",
+      process.platform === "win32" ? "com5" : "COM5",
+      "--identity",
+      "usb:2e8a:0005:AAAA",
+    ]);
     expect(other.code).toBe(2);
     expect(codes(other)).toEqual(["identity-mismatch"]);
     expect(events().some((line) => line.startsWith("open"))).toBe(false);

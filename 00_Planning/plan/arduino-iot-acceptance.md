@@ -21,6 +21,13 @@ Host: Windows 11 x64 with the repository's toolchain Python 3.12 and Node; Linux
 not native Ubuntu. Every child was verified with `aegis check --task <id> --strict --run` (lint, typecheck, i18n) exit 0
 and focused vitest runs recorded in its journal; reviews approved in each journal.
 
+Linux run (2026-11-14, after the master merge 33227dc): the focused IoT tests (the eight plugin integration files,
+scpi-instruments, runner, leases, credentials, shared schemas, packaging; 20 files) ran in a separate WSL 2 Ubuntu 24.04
+clone with Node 24.21.0 and a Python 3.12 venv holding the pinned test packages (`VERA_TEST_PYTHON`). All pass. The run
+found three Windows-only test assumptions, fixed in the tests: the micropython case-insensitive `com5` match (Linux
+device names are case-sensitive), and the fake PyVISA and fake Bleak "stuck" calls, which Linux's SIGTERM interrupted so
+the helper unwound itself and the separate cleanup never ran; they now ignore SIGTERM like a call stuck in a driver.
+
 ## Scenarios
 
 | # | Scenario (ticket) | Plugin, AEGIS task | Offline | Real tool | Test service | Real hardware / cloud |
