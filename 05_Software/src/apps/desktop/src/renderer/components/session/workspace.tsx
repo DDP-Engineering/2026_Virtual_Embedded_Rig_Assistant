@@ -5,7 +5,7 @@ import { Activity } from "lucide-react";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
-import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { useSessionView } from "../../hooks/session-view.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
@@ -35,7 +35,7 @@ export function SessionWorkspace({
 }) {
   const { t } = useTranslation();
   const bindings = useContext(ShortcutContext);
-  const { view, error, retry } = useSessionEvents(id, changed);
+  const { view, error, retry } = useSessionView(id, changed);
   const [failure, setFailure] = useState<unknown>();
   const [pending, setPending] = useState(false);
   const [search, setSearch] = useState("");

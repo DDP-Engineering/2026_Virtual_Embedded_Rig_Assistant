@@ -503,6 +503,7 @@ export async function run(options) {
                       storageMs: main.storageMs,
                       snapshotMs: main.snapshotMs,
                       mainHandlerMs: main.mainHandlerMs,
+                      validateMs: main.validateMs,
                       payloadBytes: main.payloadBytes,
                       mainGapMs: main.mainGapMs,
                       ...renderer,

@@ -1,6 +1,6 @@
 // REQ-REL-4bea0006
 import { applySessionEvent, isLiveSessionEvent, type SessionEvent, type SessionState } from "@vera/shared";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/index.js";
 
 type View = {
@@ -121,5 +121,7 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
       drop();
     };
   }, [id, changed, attempt]);
-  return { view: view?.id === id ? view : undefined, error, retry: () => setAttempt((n) => n + 1) };
+  // Stable, so a shared session view (SessionViewProvider) only changes when the data does.
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  return { view: view?.id === id ? view : undefined, error, retry };
 }

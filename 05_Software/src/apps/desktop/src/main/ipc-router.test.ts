@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { defaultSettings } from "@vera/shared";
+import { defaultSettings, foldSessionEvents } from "@vera/shared";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const info = {
@@ -337,5 +337,31 @@ describe("validated invoke router", () => {
     });
     handler.mockRejectedValueOnce(new Error("unknown"));
     expect(await router()(event, "app.info", {})).toMatchObject({ ok: false, error: { code: "INTERNAL" } });
+  });
+  // REQ-FUNC-2b462360 (PERF-05: stored rows are folded without per-event parsing)
+  it("answers session.get with INTERNAL when a corrupt stored row breaks the folded snapshot", async () => {
+    const rows = ['{"type":"session.updated","title":42}', "{"];
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: frame.url }),
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": unused,
+        "app.settings.update": unused,
+        "session.get": () => ({
+          snapshot: foldSessionEvents([JSON.parse(rows.shift() ?? "{}")]),
+          seq: 1,
+        }),
+      },
+      log,
+    });
+    const request = { sessionId: "ses_00000000000000000000000001" };
+    for (const reason of ["response", "handler"]) {
+      expect(await invoke(event, "session.get", request)).toEqual({
+        ok: false,
+        error: { code: "INTERNAL", messageKey: "errors.INTERNAL" },
+      });
+      expect(log).toHaveBeenLastCalledWith({ channel: "session.get", reason });
+    }
   });
 });

@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import { Socket } from "node:net";
 import { EventsRepository, SessionHub } from "@vera/core";
+import { channels } from "@vera/shared";
 import { app, ipcMain } from "electron";
 
 export function installSessionPerformance() {
@@ -38,6 +39,7 @@ export function installSessionPerformance() {
   let storageMs = 0;
   let snapshotMs = 0;
   let mainHandlerMs = 0;
+  let validateMs = 0;
   let payloadBytes = 0;
   let providerRequests = 0;
   let maxGap = 0;
@@ -74,6 +76,17 @@ export function installSessionPerformance() {
       return get.call(this, id);
     } finally {
       if (id === target) snapshotMs += performance.now() - start - (storageMs - before);
+    }
+  };
+  // The router's one response validation of session.get (PERF-05), timed while a load is measured.
+  const sessionGet = channels["session.get"].response;
+  const safeParse = sessionGet.safeParse.bind(sessionGet);
+  sessionGet.safeParse = (value, params) => {
+    const start = performance.now();
+    try {
+      return safeParse(value, params);
+    } finally {
+      if (target) validateMs += performance.now() - start;
     }
   };
   const handle = ipcMain.handle.bind(ipcMain);
@@ -140,7 +153,7 @@ export function installSessionPerformance() {
         response = undefined;
         target = id;
         stall = delay;
-        storageMs = snapshotMs = mainHandlerMs = payloadBytes = maxGap = providerRequests = 0;
+        storageMs = snapshotMs = mainHandlerMs = validateMs = payloadBytes = maxGap = providerRequests = 0;
         last = performance.now();
       },
       end() {
@@ -170,6 +183,7 @@ export function installSessionPerformance() {
           storageMs,
           snapshotMs,
           mainHandlerMs,
+          validateMs,
           payloadBytes,
           mainGapMs: maxGap,
           providerRequests,

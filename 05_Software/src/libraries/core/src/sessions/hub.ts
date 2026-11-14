@@ -19,10 +19,14 @@ export class SessionHub {
       seq: number;
     };
   }
+  /**
+   * Rows were validated by `record()` when written, so a read only parses JSON (PERF-05 ruling).
+   * A corrupt row surfaces as an invalid snapshot or a throw, both caught by the IPC response check.
+   */
   get(id: string) {
     const rows = this.events.list(id);
     return {
-      snapshot: foldSessionEvents(rows.map((r) => sessionEventSchema.parse(JSON.parse(r.payload_json)))),
+      snapshot: foldSessionEvents(rows.map((r) => JSON.parse(r.payload_json) as SessionEvent)),
       seq: rows.at(-1)?.seq ?? 0,
     };
   }

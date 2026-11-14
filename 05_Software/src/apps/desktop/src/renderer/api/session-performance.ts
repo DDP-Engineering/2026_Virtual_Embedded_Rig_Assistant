@@ -1,4 +1,5 @@
 // REQ-TEST-a14f8f9b REQ-SEC-4bebe590
+import { channels } from "@vera/shared";
 import type { VeraApi } from "./client.js";
 
 export function instrumentSessionApi(api: VeraApi) {
@@ -6,6 +7,7 @@ export function instrumentSessionApi(api: VeraApi) {
   let received = false;
   let target = "",
     ipcMs = 0,
+    validateMs = 0,
     receivedAt = 0,
     maxGap = 0,
     last = performance.now();
@@ -14,6 +16,17 @@ export function instrumentSessionApi(api: VeraApi) {
     if (target) maxGap = Math.max(maxGap, now - last);
     last = now;
   }, 20);
+  // The renderer's one response validation of session.get (PERF-05), part of ipcMs.
+  const sessionGet = channels["session.get"].response;
+  const safeParse = sessionGet.safeParse.bind(sessionGet);
+  sessionGet.safeParse = (value, params) => {
+    const start = performance.now();
+    try {
+      return safeParse(value, params);
+    } finally {
+      if (target && target !== "stream") validateMs += performance.now() - start;
+    }
+  };
   const invoke = api.invoke.bind(api);
   api.invoke = async (channel, request) => {
     const selected = channel === "session.get" && "sessionId" in request && request.sessionId === target;
@@ -57,7 +70,7 @@ export function instrumentSessionApi(api: VeraApi) {
         received = false;
         response = undefined;
         target = id;
-        ipcMs = receivedAt = maxGap = 0;
+        ipcMs = validateMs = receivedAt = maxGap = 0;
         last = performance.now();
       },
       async end() {
@@ -65,6 +78,7 @@ export function instrumentSessionApi(api: VeraApi) {
         target = "";
         const timings = {
           ipcMs,
+          rendererValidateMs: validateMs,
           presentationMs: performance.now() - receivedAt,
           rendererGapMs: Math.max(maxGap, performance.now() - last),
         };

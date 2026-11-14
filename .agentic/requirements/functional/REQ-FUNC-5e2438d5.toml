@@ -21,7 +21,7 @@ verification = "Fold golden events with/without live deltas and compare detached
 
 affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/shared/src/session.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/libraries/core/src/sessions/hub.ts", "05_Software/src/libraries/core/src/sessions/export.ts"]
 
-linked_tests = ["05_Software/src/libraries/shared/src/session-state.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"

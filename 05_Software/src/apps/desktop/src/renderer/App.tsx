@@ -24,6 +24,7 @@ import { Workbench } from "./components/workbench.js";
 import { WorkbenchCreate } from "./components/workbench-create.js";
 import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
+import { SessionViewProvider } from "./hooks/session-view.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 import { ATTACHMENT_LIMIT, addAttachment } from "./lib/attachments.js";
 import { removeTabs } from "./lib/document-tabs-store.js";
@@ -503,176 +504,182 @@ export function App() {
           workbenchId={benchId ?? ""}
           reveal={revealChat}
         >
-          <Shell
-            settings={settings}
-            newSelected={newWorkbench}
-            pluginsSelected={plugins}
-            newWorkbench={showNewWorkbench}
-            openWorkbench={openWorkbench}
-            showPlugins={() => {
-              // Installing a package is a reversible detour; the editor remains its draft owner.
-              setPlugins(true);
-              setSettings(false);
-              setChat(false);
-            }}
-            navigate={navigate}
-            navigation={navigation}
-            context={
-              benchId && chat && !settings ? (
-                <ContextTab workbenchId={benchId} readOnly={readOnly} />
-              ) : undefined
-            }
-            docs={
-              benchId && !settings ? (
-                <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
-              ) : undefined
-            }
-            changes={
-              benchId && activeSession && chat && !settings ? (
-                <ChangesTab workbenchId={benchId} sessionId={activeSession} />
-              ) : undefined
-            }
-            artifacts={
-              benchId && activeSession && chat && !settings ? (
-                <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
-              ) : undefined
-            }
-            plan={
-              benchId && activeSession && chat && !settings ? (
-                <PlanTab workbenchId={benchId} sessionId={activeSession} />
-              ) : undefined
-            }
-            runs={benchId && !settings ? <RunsTab key={benchId} workbenchId={benchId} /> : undefined}
+          {/* One session view per window (PERF-05): the chat and its side tabs share one read. */}
+          <SessionViewProvider
+            id={benchId && chat && !settings && !plugins ? activeSession : undefined}
+            changed={changed}
           >
-            <UpdateBanner />
-            <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
-              <h2
-                hidden={!settings && !plugins && !newWorkbench && !activeWorkbench}
-                className="page-title"
-                key={settings ? "settings" : "welcome"}
-                ref={focusHeading}
-                tabIndex={-1}
-              >
-                {settings
-                  ? t("settings.title")
-                  : plugins
-                    ? t("projects.plugins")
-                    : newWorkbench
-                      ? t("projects.new")
-                      : editor
-                        ? t("projects.edit")
-                        : t("overview.title")}
-              </h2>
-              {(info.isPending || snapshot.isPending) && (
-                <p role="status" data-i18n="home.loading">
-                  {t("home.loading")}
-                </p>
-              )}
-              {benchFailure && <ErrorMessage error={bench.error} />}
-              {(info.isError || snapshot.isError) && (
-                <>
-                  <ErrorMessage error={info.error ?? snapshot.error} />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void info.refetch();
-                      void snapshot.refetch();
+            <Shell
+              settings={settings}
+              newSelected={newWorkbench}
+              pluginsSelected={plugins}
+              newWorkbench={showNewWorkbench}
+              openWorkbench={openWorkbench}
+              showPlugins={() => {
+                // Installing a package is a reversible detour; the editor remains its draft owner.
+                setPlugins(true);
+                setSettings(false);
+                setChat(false);
+              }}
+              navigate={navigate}
+              navigation={navigation}
+              context={
+                benchId && chat && !settings ? (
+                  <ContextTab workbenchId={benchId} readOnly={readOnly} />
+                ) : undefined
+              }
+              docs={
+                benchId && !settings ? (
+                  <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
+                ) : undefined
+              }
+              changes={
+                benchId && activeSession && chat && !settings ? (
+                  <ChangesTab workbenchId={benchId} sessionId={activeSession} />
+                ) : undefined
+              }
+              artifacts={
+                benchId && activeSession && chat && !settings ? (
+                  <ArtifactsTab workbenchId={benchId} sessionId={activeSession} />
+                ) : undefined
+              }
+              plan={
+                benchId && activeSession && chat && !settings ? (
+                  <PlanTab workbenchId={benchId} sessionId={activeSession} />
+                ) : undefined
+              }
+              runs={benchId && !settings ? <RunsTab key={benchId} workbenchId={benchId} /> : undefined}
+            >
+              <UpdateBanner />
+              <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
+                <h2
+                  hidden={!settings && !plugins && !newWorkbench && !activeWorkbench}
+                  className="page-title"
+                  key={settings ? "settings" : "welcome"}
+                  ref={focusHeading}
+                  tabIndex={-1}
+                >
+                  {settings
+                    ? t("settings.title")
+                    : plugins
+                      ? t("projects.plugins")
+                      : newWorkbench
+                        ? t("projects.new")
+                        : editor
+                          ? t("projects.edit")
+                          : t("overview.title")}
+                </h2>
+                {(info.isPending || snapshot.isPending) && (
+                  <p role="status" data-i18n="home.loading">
+                    {t("home.loading")}
+                  </p>
+                )}
+                {benchFailure && <ErrorMessage error={bench.error} />}
+                {(info.isError || snapshot.isError) && (
+                  <>
+                    <ErrorMessage error={info.error ?? snapshot.error} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void info.refetch();
+                        void snapshot.refetch();
+                      }}
+                    >
+                      {t("settings.retry")}
+                    </button>
+                  </>
+                )}
+                {settings && snapshot.data && (
+                  <Settings
+                    section={section}
+                    snapshot={snapshot.data}
+                    info={info.data}
+                    saving={mutation.isPending}
+                    error={mutation.error}
+                    update={(patch) => mutation.mutate(patch)}
+                  />
+                )}
+                {/* Stays mounted while hidden so an unsaved draft survives navigation. */}
+                <div hidden={settings || plugins || !newWorkbench}>
+                  <p className="muted">{t("welcome.description")}</p>
+                  <WorkbenchCreate
+                    key={createdCount}
+                    shown={!settings && !plugins && newWorkbench}
+                    created={(value) => {
+                      setCreatedCount((count) => count + 1);
+                      benchChanged(value);
                     }}
-                  >
-                    {t("settings.retry")}
-                  </button>
-                </>
-              )}
-              {settings && snapshot.data && (
-                <Settings
-                  section={section}
-                  snapshot={snapshot.data}
-                  info={info.data}
-                  saving={mutation.isPending}
-                  error={mutation.error}
-                  update={(patch) => mutation.mutate(patch)}
-                />
-              )}
-              {/* Stays mounted while hidden so an unsaved draft survives navigation. */}
-              <div hidden={settings || plugins || !newWorkbench}>
-                <p className="muted">{t("welcome.description")}</p>
-                <WorkbenchCreate
-                  key={createdCount}
-                  shown={!settings && !plugins && newWorkbench}
-                  created={(value) => {
-                    setCreatedCount((count) => count + 1);
-                    benchChanged(value);
-                  }}
-                  busy={sessionPending}
-                />
-              </div>
-              {editor && (
-                <WorkbenchEditor
-                  key={editor.config.id}
-                  shown={!settings && !plugins && !newWorkbench}
-                  workbench={editor}
-                  close={closeEditor}
-                  dirtyChanged={setEditorDirty}
-                  saved={(value) => {
-                    benchChanged(value, true);
-                    void recent.refetch();
-                  }}
-                />
-              )}
-              <div hidden={settings || plugins || newWorkbench || !!editor || !activeWorkbench}>
-                {info.data && snapshot.data && (
-                  <Workbench
-                    active={activeWorkbench}
-                    changed={benchChanged}
-                    closed={benchClosed}
-                    sessionPending={sessionPending}
-                    sessions={sessions.data}
-                    sessionsError={sessions.error}
-                    retrySessions={() => void sessions.refetch()}
-                    edit={() => activeWorkbench && openEditor(activeWorkbench)}
-                    selectSession={select}
+                    busy={sessionPending}
+                  />
+                </div>
+                {editor && (
+                  <WorkbenchEditor
+                    key={editor.config.id}
+                    shown={!settings && !plugins && !newWorkbench}
+                    workbench={editor}
+                    close={closeEditor}
+                    dirtyChanged={setEditorDirty}
+                    saved={(value) => {
+                      benchChanged(value, true);
+                      void recent.refetch();
+                    }}
+                  />
+                )}
+                <div hidden={settings || plugins || newWorkbench || !!editor || !activeWorkbench}>
+                  {info.data && snapshot.data && (
+                    <Workbench
+                      active={activeWorkbench}
+                      changed={benchChanged}
+                      closed={benchClosed}
+                      sessionPending={sessionPending}
+                      sessions={sessions.data}
+                      sessionsError={sessions.error}
+                      retrySessions={() => void sessions.refetch()}
+                      edit={() => activeWorkbench && openEditor(activeWorkbench)}
+                      selectSession={select}
+                    />
+                  )}
+                </div>
+                {plugins && (
+                  <Plugins
+                    workbench={
+                      activeWorkbench
+                        ? {
+                            id: activeWorkbench.config.id,
+                            name: activeWorkbench.config.name,
+                            readOnly: activeWorkbench.readOnly,
+                          }
+                        : undefined
+                    }
                   />
                 )}
               </div>
-              {plugins && (
-                <Plugins
-                  workbench={
-                    activeWorkbench
-                      ? {
-                          id: activeWorkbench.config.id,
-                          name: activeWorkbench.config.name,
-                          readOnly: activeWorkbench.readOnly,
-                        }
-                      : undefined
+              {emptyCanvas && (
+                <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
+                  <Activity aria-hidden="true" />
+                  <span>VERA</span>
+                </div>
+              )}
+              {chat && !settings && !plugins && benchId && (
+                <DocumentTabs
+                  chat={
+                    <SessionWorkspace
+                      key={`${benchId}/${activeSession}`}
+                      id={activeSession}
+                      workbenchId={benchId}
+                      detail={bench.data?.config.chat.detail ?? "normal"}
+                      changed={changed}
+                      readOnly={readOnly}
+                      composerFocusRequest={
+                        composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
+                      }
+                      composerFocused={clearComposerFocus}
+                    />
                   }
                 />
               )}
-            </div>
-            {emptyCanvas && (
-              <div className="empty-workbench" data-empty-workbench role="img" aria-label="VERA">
-                <Activity aria-hidden="true" />
-                <span>VERA</span>
-              </div>
-            )}
-            {chat && !settings && !plugins && benchId && (
-              <DocumentTabs
-                chat={
-                  <SessionWorkspace
-                    key={`${benchId}/${activeSession}`}
-                    id={activeSession}
-                    workbenchId={benchId}
-                    detail={bench.data?.config.chat.detail ?? "normal"}
-                    changed={changed}
-                    readOnly={readOnly}
-                    composerFocusRequest={
-                      composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
-                    }
-                    composerFocused={clearComposerFocus}
-                  />
-                }
-              />
-            )}
-          </Shell>
+            </Shell>
+          </SessionViewProvider>
         </DocumentViewerProvider>
       </AttachmentsContext.Provider>
     </ShortcutContext.Provider>

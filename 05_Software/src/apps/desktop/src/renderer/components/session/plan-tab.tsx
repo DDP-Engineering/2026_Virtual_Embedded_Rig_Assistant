@@ -1,16 +1,15 @@
 // REQ-UX-8d3039aa
 import { Circle, CircleCheck, CircleDot } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { useSessionView } from "../../hooks/session-view.js";
 import { ErrorMessage } from "../error-message.js";
 
-function unchanged() {}
 export function PlanTab({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
   return <PlanView key={`${workbenchId}/${sessionId}`} sessionId={sessionId} />;
 }
 function PlanView({ sessionId }: { sessionId: string }) {
   const { t } = useTranslation();
-  const { view, error, retry } = useSessionEvents(sessionId, unchanged);
+  const { view, error, retry } = useSessionView(sessionId);
   const occurrences = new Map<string, number>();
   return (
     <section className="plan-tab" aria-label={t("panel.plan")}>

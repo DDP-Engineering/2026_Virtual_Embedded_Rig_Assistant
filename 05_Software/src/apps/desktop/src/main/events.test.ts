@@ -134,6 +134,46 @@ it("scrubs get/list session user fields without altering schema identities", () 
   });
   expect(state.title).toBe(privateKey);
 });
+// REQ-FUNC-2b462360 (PERF-05: one scrub pass, no full snapshot clone)
+it("scrubs every user string of a snapshot in one pass without deep-cloning it", () => {
+  const privateKey = "fake-snapshot-private";
+  const redact = (text: string) => scrub(text, [privateKey]);
+  const state = emptySessionState();
+  state.title = privateKey;
+  state.modelRef = `openai/${privateKey}`;
+  state.items.push(
+    { kind: "user", id: "u", text: privateKey },
+    {
+      kind: "assistant",
+      id: "m",
+      turnId: "t",
+      text: privateKey,
+      streaming: false,
+      citations: [{ ref: `${privateKey}#L1-L1`, valid: true }],
+    },
+    {
+      kind: "tool",
+      id: "c",
+      turnId: "t",
+      name: privateKey,
+      args: { nested: [{ [privateKey]: privateKey }] },
+      status: "ok",
+      summary: privateKey,
+      preview: privateKey,
+    },
+  );
+  state.changes = [{ changeId: 1, path: `src/${privateKey}.c`, added: 1, removed: 0 }];
+  state.artifacts = [{ artifactId: "a", name: privateKey, bytes: 1 }];
+  state.todos = [{ id: privateKey, text: privateKey, status: "pending" }];
+  const before = structuredClone(state);
+  const clone = vi.spyOn(globalThis, "structuredClone");
+  const output = sessionOutput.sanitizeSessionSnapshot(state, redact);
+  expect(clone).not.toHaveBeenCalled();
+  clone.mockRestore();
+  expect(JSON.stringify(output)).not.toContain(privateKey);
+  expect(output.items.map((item) => item.kind)).toEqual(["user", "assistant", "tool"]);
+  expect(state).toEqual(before);
+});
 it("keeps session protocol fields and bounded titles when redaction expands short secrets", () => {
   const send = vi.fn();
   const emit = createEventEmitter(

@@ -35,6 +35,10 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
 - SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
+- App mounts one `SessionViewProvider` (`renderer/hooks/session-view.tsx`) around Shell for the open session while the chat
+  shows; SessionWorkspace and the Changes/Artifacts/Plan tabs read it through `useSessionView`, so a window holds one
+  snapshot, subscription and revision poll per session. Without a provider, or for another session id, `useSessionView`
+  runs its own `useSessionEvents`.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
 - Attached entries (TASK-2fef1397): App keeps per-session lists in `AttachmentsContext`
