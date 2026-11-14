@@ -283,6 +283,110 @@ def _clipped(ctx: Context, folder: Path, field_name: str, artifacts: dict[str, d
     return [code == low or code == high for code in codes]
 
 
+# ---- power-capture: a power-profiler (LAB-05) capture or import folder (REQ-DATA-dd3e4fe1 sections 6 and 9) ----
+
+POWER_COLUMNS = {"current_A": ("current", "A", "i"), "voltage_V": ("voltage", "V", "v"), "power_W": ("power", "W", "iv")}
+POWER_MARKER = re.compile(r"gpi[0-9]")
+POWER_CSV_LIMIT = 128 * 1024 * 1024  # power-profiler's own bound: up to 1 000 000 rows with four markers
+
+
+@register("power-capture", set(), "a power-profiler capture or import run folder: result.json (kind power-result) and samples.csv, "
+          "hash-checked; channels current (A), voltage (V), power (W) and gpi<n>; missing cells are gaps, overflow flags clip")
+def power_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
+    field_name = f"sources.{source_id}.path"
+    folder = _folder(ctx, spec["path"], field_name)
+    _, data, record = _member(ctx, folder, "result.json", field_name, RESULT_LIMIT)
+    _requested_hash(spec, record, "result.json")
+    document = _json(data, "result.json")
+    what = f"the power folder {relative(ctx.cwd, folder)}"
+    if not (isinstance(document, dict) and document.get("format") == 1 and document.get("kind") == "power-result"):
+        raise Refused("source", f"{what} has no format 1 power-result result.json.")
+    if document.get("operation") not in ("capture", "import"):
+        raise Refused("source", f"{what} holds a power {document.get('operation')!s:.20} result, not a capture or import.")
+    if document.get("status") not in ("pass", "incomplete"):
+        raise Refused("source", f"{what} has status {document.get('status')!s:.20}; only pass or incomplete captures hold samples.")
+    timebase = document.get("timebase") if isinstance(document.get("timebase"), dict) else {}
+    uniform = timebase.get("uniform")
+    if not isinstance(uniform, bool):
+        raise Refused("source", f"{what} records no timebase.uniform.")
+    artifacts = _artifacts(document)
+    _, csv_data, csv_record = _member(ctx, folder, "samples.csv", field_name, POWER_CSV_LIMIT)
+    _check_hash(csv_record, artifacts, "samples.csv", what)
+    rows, lines = _rows(_text(csv_data, "samples.csv"), ",", None)
+    if not rows:
+        raise Refused("source", "samples.csv has no header.")
+    header = [cell.strip() for cell in rows[0]]
+    if not header or header[0] != "t_s" or header[-1] != "flags" or len(set(header)) != len(header):
+        raise Refused("source", "samples.csv does not have the header t_s,...,flags.")
+    columns: dict[str, tuple[int, str, str]] = {}
+    for index, name in enumerate(header[1:-1], start=1):
+        if name in POWER_COLUMNS:
+            channel, unit, flags = POWER_COLUMNS[name]
+            columns[channel] = (index, unit, flags)
+        elif POWER_MARKER.fullmatch(name):
+            columns[name] = (index, "", "")
+        elif name != "range":
+            raise Refused("source", f"samples.csv has an unknown column {name[:40]}.")
+    if "current" not in columns:
+        raise Refused("source", "samples.csv has no current_A column.")
+    built = {name: ([], [], [], set()) for name in columns}  # t, v, clipped, missing_after
+    previous = -math.inf
+    for row, line in zip(rows[1:], lines[1:]):
+        if len(row) != len(header):
+            raise Refused("source", f"samples.csv row {line} does not hold {len(header)} cells.")
+        time = _cell(row[0], line, "t_s")
+        if time is None:
+            raise Refused("source", f"samples.csv row {line} has no time.")
+        if not time > previous:
+            raise Refused("source", f"samples.csv: the time at row {line} does not increase.")
+        previous = time
+        flags = row[-1].strip()
+        if flags.strip("miv"):
+            raise Refused("source", f"samples.csv row {line}: unknown flags '{flags[:10]}'.")
+        for name, (index, _unit, clip_by) in columns.items():
+            t, v, clipped, missing = built[name]
+            value = _cell(row[index], line, header[index])
+            if value is None:
+                if t:
+                    missing.add(len(t) - 1)
+                continue
+            t.append(time)
+            v.append(value)
+            clipped.append(any(flag in flags for flag in clip_by))
+    channels: dict[str, Channel] = {}
+    for name, (index, unit, _clip) in columns.items():
+        t, v, clipped, missing = built[name]
+        if len(t) >= 2:
+            channels[name] = Channel(t, v, clipped, unit, uniform, missing, {"file": "samples.csv", "column": header[index],
+                                                                              "unit": unit or "dimensionless", "time": "t_s (s)"})
+    if not channels:
+        raise Refused("source", f"{what} holds fewer than two samples.")
+    meter = document.get("meter") if isinstance(document.get("meter"), dict) else {}
+    firmware = document.get("firmware") if isinstance(document.get("firmware"), dict) else None
+    captured = document.get("conditions") if isinstance(document.get("conditions"), dict) else {}
+    source = Source(
+        id=source_id,
+        importer="power-capture",
+        path=relative(ctx.cwd, folder),
+        sha256=record["sha256"],
+        files=[record, csv_record],
+        channels=channels,
+        time_zero="the capture's first sample (t_s = 0 on the meter clock)" if timebase.get("clock") == "meter"
+        else "the imported file's time origin",
+        captured=captured,
+        identity={
+            **{key: meter.get(key) for key in ("alias", "model", "serial", "profile", "profileStatus", "source")},
+            "firmware": {key: firmware.get(key) for key in ("sha256", "format", "buildId", "path")} if firmware else None,
+            "board": document.get("board"),
+        },
+        info={"operation": document.get("operation"), "status": document.get("status"), "rate": timebase.get("rate"),
+              "clock": timebase.get("clock")},
+    )
+    if document.get("status") == "incomplete":
+        source.diagnostics.append("source-incomplete")
+    return source
+
+
 # ---- csv and sigrok-csv ----
 
 CSV_FIELDS = {"delimiter", "comment", "header", "time", "sampleRate", "start", "columns", "uniform"}

@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "id": "joulescope-js220",
+  "status": "unverified",
+  "model": "js220",
+  "description": "Joulescope JS220 precision energy analyzer over USB, through pyjoulescope_driver 2.5.5. Written from the driver's topic list and host parameters; not yet checked against a real JS220.",
+  "rates": [
+    1000000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1
+  ],
+  "maxSamples": 1000000,
+  "maxDuration": 3500,
+  "currentRanges": [
+    { "label": "10 A", "limit": 10 },
+    { "label": "180 mA", "limit": 0.18 },
+    { "label": "18 mA", "limit": 0.018 },
+    { "label": "1.8 mA", "limit": 0.0018 },
+    { "label": "180 uA", "limit": 0.00018 },
+    { "label": "18 uA", "limit": 0.000018 }
+  ],
+  "voltageRanges": [{ "label": "15 V", "limit": 15 }, { "label": "2 V", "limit": 2 }],
+  "markers": [0, 1, 2, 3],
+  "burden": "The JS220 measures current through a shunt in series with the DUT supply between IN and OUT. Each current range adds its own series resistance (burden voltage), and auto-ranging switches it while the DUT runs; a manual range that is too small adds more drop and saturates. A readback confirms the meter's settings, not that the DUT was undisturbed.",
+  "signConvention": "Positive current flows from the meter's IN to its OUT terminals, into the DUT; voltage is measured at OUT against the meter's ground."
+}

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3ca637cb"
+
+title = "Compare two firmware builds on an equivalent setup"
+
+status = "active"
+
+requirement = """
+When compare runs on the segment results of two captures, the analyzer shall keep both firmware build identities, classify the pair as firmware-change, setup-difference, same-firmware or unidentified from the recorded setup and builds, report the per-event energy difference with its standard error and write a lab-validate request whose sources carry each capture's setup as conditions.
+"""
+
+verification = "Tests compare A/B fixtures with equal setup and different builds (firmware-change), with different supply voltage (setup-difference, difference not attributed), with equal builds (same-firmware) and without a build (unidentified); lab-validate compare of the written request marks criteria incomplete for the setup-difference pair."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/compare.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

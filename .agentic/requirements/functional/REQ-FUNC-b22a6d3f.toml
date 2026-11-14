@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b22a6d3f"
+
+title = "Segment a capture into events and states with the sync method"
+
+status = "active"
+
+requirement = """
+When segment runs with markers, meter-clock timestamps or a current threshold, the analyzer shall report each event's start, end, duration, charge and energy, the time and energy in each state and the event statistics, and record the synchronisation method and its resolution.
+"""
+
+verification = "A sleep/wake fixture with a GPI marker gives the expected number of events, per-event energy and state times to 1e-9 relative, sync marker gpi0 with resolution 1/rate; the same fixture by threshold and by a meter-time timestamp file gives the same events."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/segment.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

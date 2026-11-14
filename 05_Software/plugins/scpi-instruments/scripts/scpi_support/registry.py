@@ -32,7 +32,7 @@ VISA = re.compile(
 )
 KEYS = {"alias", "kind", "resource", "serial", "profile", "backend", "limits", "note"}
 # Kinds other plugins own (debug probes of gdb-debug, LAB-04): VERA validates them, this helper skips them.
-OTHER_KINDS = {"probe"}
+OTHER_KINDS = {"probe", "power-monitor"}
 
 
 @dataclass(frozen=True)

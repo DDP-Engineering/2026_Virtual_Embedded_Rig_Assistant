@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cdc1b00a"
+
+title = "Integrate a signal in lab-validate"
+
+status = "active"
+
+requirement = """
+When a lab-validate measurement uses the metric integral, the engine shall report the trapezoid integral of the signal over the window in C for a current, J for a power and V s for a voltage, and report it unknown when the window holds a gap.
+"""
+
+verification = "Tests integrate a fake-driver capture's power (J) and current (C) to the values power-analyze reports, a window with a gap (unknown, criterion incomplete), and criteria limits written in mJ and mC parse as J and C."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/metrics.py", "05_Software/plugins/lab-validation/scripts/lab_validation/units.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

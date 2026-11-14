@@ -6,11 +6,11 @@ import math
 import re
 
 PREFIXES = {"p": 1e-12, "n": 1e-9, "u": 1e-6, "\u00b5": 1e-6, "\u03bc": 1e-6, "m": 1e-3, "": 1.0, "k": 1e3, "M": 1e6, "G": 1e9}
-UNITS = {"s": "s", "Hz": "Hz", "V": "V", "A": "A", "W": "W", "ohm": "ohm", "Ω": "ohm", "K": "K"}
+UNITS = {"s": "s", "Hz": "Hz", "V": "V", "A": "A", "W": "W", "C": "C", "J": "J", "ohm": "ohm", "Ω": "ohm", "K": "K"}
 SIGNAL_UNITS = ("V", "A", "W")
 TIME_UNITS = {"s": 1.0, "ms": 1e-3, "us": 1e-6, "\u00b5s": 1e-6, "\u03bcs": 1e-6, "ns": 1e-9}
 _NUMBER = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
-_QUANTITY = re.compile(rf"\s*({_NUMBER})\s*(%|°C|[pnu\u00b5\u03bcmkMG]?(?:Hz|ohm|Ω|s|V|A|W|K))?\s*")
+_QUANTITY = re.compile(rf"\s*({_NUMBER})\s*(%|°C|[pnu\u00b5\u03bcmkMG]?(?:Hz|ohm|Ω|s|V|A|W|C|J|K))?\s*")
 
 
 class QuantityError(ValueError):
@@ -99,7 +99,7 @@ def show(value: float | None, unit: str) -> str:
     """A value for reports, with an engineering prefix: 2.19722e-05 s -> '21.9722 us'."""
     if value is None:
         return "unknown"
-    if unit not in ("Hz", "V", "A", "W", "s", "ohm"):
+    if unit not in ("Hz", "V", "A", "W", "C", "J", "s", "ohm"):
         return f"{value:.6g} {unit}".rstrip()
     if value == 0:
         return f"0 {unit}"

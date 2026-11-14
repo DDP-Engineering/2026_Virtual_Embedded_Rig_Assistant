@@ -947,3 +947,103 @@ describe("hil run execution", () => {
     ]);
   });
 });
+
+describe("power-profiler steps (REQ-FUNC-068ff296)", () => {
+  const meterRegistry = {
+    format: 1,
+    resources: [
+      ...registry.resources,
+      { alias: "js1", kind: "power-monitor", resource: "u/js220/000415", profile: "joulescope-js220" },
+    ],
+  };
+  const powerPlan = (request: Record<string, unknown>) =>
+    plan({
+      steps: [
+        { id: "flash", phase: "setup", use: "probe-rs.flash", with: target },
+        { id: "meter", use: "power.identify", with: { meter: "js1" } },
+        {
+          id: "power",
+          use: "power.capture",
+          background: true,
+          with: { meter: "js1", duration: 2, rate: 10000, markers: [0], conditions: { supply: "3.3V" } },
+        },
+        { id: "reset", use: "probe-rs.reset", with: target },
+        { id: "done", use: "await", with: { step: "power" } },
+        { id: "energy", use: "lab-validate.compare", with: { request } },
+      ],
+    });
+  beforeEach(async () => {
+    await writeFile(join(root, "lab", "resources.json"), JSON.stringify(meterRegistry));
+    enabled.push(load("power-profiler"));
+  });
+
+  it("compiles identify and a background capture with the plan's firmware and the meter reserved", async () => {
+    const checked = await check(
+      powerPlan({ format: 1, sources: { dut: { importer: "power-capture", step: "power" } } }),
+    );
+    expect(checked.exitCode, JSON.stringify(checked.json)).toBe(0);
+    const steps = checked.json.steps as { id: string; program?: string; risk: string; args?: string[] }[];
+    expect(steps.find((step) => step.id === "meter")).toMatchObject({
+      program: "power-profile",
+      risk: "device-read",
+      args: ["identify", "--meter", "js1", "--results-dir", expect.stringContaining("steps/meter")],
+    });
+    const power = steps.find((step) => step.id === "power");
+    expect(power).toMatchObject({ program: "power-profile", risk: "device-write" });
+    expect(power?.args).toEqual([
+      "capture",
+      "--meter",
+      "js1",
+      "--duration",
+      "2",
+      "--rate",
+      "10000",
+      "--markers",
+      "0",
+      "--condition",
+      "supply=3.3V",
+      "--firmware",
+      "build/app.elf",
+      "--results-dir",
+      expect.stringContaining("steps/power"),
+    ]);
+    expect(JSON.stringify(checked.json)).toContain("js1");
+  });
+
+  it("refuses a lab-validate source that names a step without a capture", async () => {
+    const checked = await check(
+      powerPlan({ format: 1, sources: { dut: { importer: "power-capture", step: "meter" } } }),
+    );
+    expect(checked.exitCode).not.toBe(0);
+    expect(JSON.stringify(checked.json)).toMatch(/meter is not an earlier capture step/);
+  });
+
+  it("binds the power capture's run folder into the generated lab-validate request", async () => {
+    host.behave = async (program, args, process) => {
+      if (program === "power-profile" && args[0] === "capture") {
+        const folder = args[args.indexOf("--results-dir") + 1] as string;
+        await mkdir(join(root, folder, "01JPOWER"), { recursive: true });
+        await writeFile(
+          join(root, folder, "01JPOWER", "result.json"),
+          JSON.stringify({ started: "2026-11-14T00:00:00Z", ended: "2026-11-14T00:00:02Z" }),
+        );
+      }
+      exit(process, 0, "0483:374b\n");
+    };
+    const { result } = await run(
+      powerPlan({ format: 1, sources: { dut: { importer: "power-capture", step: "power" } } }),
+    );
+    const { json } = await resultOf(result);
+    const power = json.steps.find((step: { id: string }) => step.id === "power");
+    expect(power.attempts[0]).toMatchObject({
+      folder: `${result.result}/steps/power/01JPOWER`,
+      deviceTimes: { started: "2026-11-14T00:00:00Z", ended: "2026-11-14T00:00:02Z" },
+    });
+    const generated = JSON.parse(
+      await readFile(join(root, result.result as string, "steps", "energy.request.json"), "utf8"),
+    );
+    expect(generated.sources).toEqual({
+      dut: { importer: "power-capture", path: `${result.result}/steps/power/01JPOWER` },
+    });
+  });
+});

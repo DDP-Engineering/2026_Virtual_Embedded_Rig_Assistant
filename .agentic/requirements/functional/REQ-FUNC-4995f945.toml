@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4995f945"
+
+title = "Measure current, power, energy and charge over a window"
+
+status = "active"
+
+requirement = """
+When measure-energy runs over a capture and a window, the analyzer shall report mean, minimum and maximum current, mean power, energy as the trapezoid integral of voltage times current and charge as the trapezoid integral of current, in A, W, J and C, on the capture's own time axis whether uniform or not.
+"""
+
+verification = "Offline fixtures with closed-form integrals (uniform constant load with mean current and power, a ramp on a non-uniform grid, the sleep/wake profile) match the expected energy and charge to 1e-9 relative; units are J and C."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/measure.py", "05_Software/plugins/power-profiler/scripts/power_support/signals.py", "05_Software/plugins/power-profiler/scripts/power_support/series.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

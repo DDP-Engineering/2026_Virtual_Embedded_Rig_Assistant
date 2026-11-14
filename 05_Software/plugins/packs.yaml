@@ -46,3 +46,4 @@
     - { name: Measurement validation, plugins: [lab-validation], default: true }
     - { name: Hardware-in-the-loop tests, plugins: [hil-testing], default: true }
     - { name: Debugging (GDB and OpenOCD), plugins: [gdb-debug], default: true }
+    - { name: Power profiling (Joulescope), plugins: [power-profiler], default: true }

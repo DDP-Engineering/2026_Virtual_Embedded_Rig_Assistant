@@ -18,7 +18,9 @@ branch (AEGIS TASK-cf769025, offline evidence and real uv on Windows; a real cap
 open); LAB-03 implemented 2026-11-14 on the same branch (AEGIS TASK-789dcc82, offline and real-process evidence on Windows;
 a real board, real probe-rs/esptool and native Ubuntu open); LAB-04 implemented 2026-11-14 on the same branch (AEGIS
 TASK-6b092dfc, offline evidence with real compiler-built ELFs and GDB/OpenOCD stand-ins on Windows; real GDB, OpenOCD,
-a probe, a board and native Ubuntu open); LAB-05...LAB-08 planned.
+a probe, a board and native Ubuntu open); LAB-05 implemented 2026-11-14 on the same branch (AEGIS TASK-39da0f51,
+offline evidence with closed-form fixtures and a pyjoulescope_driver stand-in, the real driver 2.5.5 without a meter on
+Windows; a JS220, a reference load, a sleep/wake board and native Ubuntu open); LAB-06...LAB-08 planned.
 
 ## Order
 
@@ -28,7 +30,7 @@ a probe, a board and native Ubuntu open); LAB-05...LAB-08 planned.
 | 2 | LAB-02 | [#103](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/103) | `lab-validation` | reproducible comparisons of captures, simulations and requirements | implemented |
 | 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | implemented |
 | 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | implemented |
-| 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | planned |
+| 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | implemented |
 | 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | planned |
 | 7 | LAB-07 | [#108](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/108) | `zephyr` | Zephyr build, flash and tests through checked operations | planned |
 | 8 | LAB-08 | [#109](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/109) | `platformio` | PlatformIO build, upload and tests, plus the integrated acceptance | planned |
@@ -184,6 +186,58 @@ them.
   `--configuration`, and that the stand-in's fault pc lay in padding; both fixed. Open: L04-B/C/E/F on a real board and
   probe, OpenOCD's detach events on a real core, each profile (both stay `unverified`), L04-H on native Ubuntu x64
   (`REQ-PLAT-8c2cdfb0`).
+
+## LAB-05 as built
+
+- Platform (VERA itself): the `lab/resources.json` identity kind `power-monitor` (`{alias, kind: "power-monitor",
+  resource: "u/js220/<serial>", profile}`, pyjoulescope_driver's device path, key `power-monitor:js220:<serial>`) in
+  shared `lab-resources.ts`; leases, BUSY, stop/grace and cleanup are the LAB-01 runner code, unchanged. HIL adapters
+  `power.identify` and `power.capture` (background; the plan's firmware is passed as `--firmware`) and an adapter flag
+  `captures` that replaces the hard-coded `scpi.capture` check, so a `lab-validate.compare` source may bind to either.
+  The LAB-01 scpi helper skips `power-monitor` entries. Spec `.agentic/specs/REQ-DATA-dd3e4fe1.md`; architecture
+  `00_Planning/plugins/architecture.md` §3.9.
+- LAB-02 extended where it belongs (no second engine): units C and J, metric `integral` (C for a current, J for a power;
+  `unknown` when the window holds a gap - a missing interval is never counted as zero) and importer `power-capture`
+  (capture/import folders, hash-checked, missing cells as gaps, overflow flags as clipped, conditions and meter/firmware
+  identity as recorded).
+- Package `05_Software/plugins/power-profiler/` (official, pack "Embedded lab" group "Power profiling (Joulescope)",
+  activity `measurement`): program `power-profile` (`scripts/power_profile.py`, PEP 723, Python >= 3.12,
+  `pyjoulescope_driver==2.5.5` - 2.5.6 was five days old; `tools [--list]`, `identify`, `capture`, cleanup `release`)
+  and `power-analyze` (`scripts/power_analyze.py`, standard library: `acquisition` = configure-acquisition offline,
+  `import`, `inspect`, `measure-energy`, `segment`, `compare`, `battery`, `report`); support package `power_support/`
+  with byte-identical copies of lab-validation's `series.py`, gdb-debug's `elf.py` and the shared `workspace.py`;
+  profile `joulescope-js220` (`unverified`); skills `power-measurement` and `energy-analysis`.
+- Decisions: the meter is opened with `restore` and its defaults are never applied; only the sample rate, the current
+  range mode (auto/manual, never off) and selection, the voltage range and the signal controls are written; a meter
+  whose current path is off, or reads a raw mode value its metadata does not name, is blocked (VERA never powers the DUT; no power-path operation exists); settings are
+  restored and read back, `confirmed` only on a matching readback; the cleanup `release` cannot see the interrupted
+  run, so it returns the meter to auto-ranging. Capture risk is device-write (range and rate change the burden), not a
+  read. Row 0 of a capture is the first sample every enabled signal covers; sample-id skips and NaN samples stay empty
+  cells and a gap list, samples beyond their range limit are flagged overflow; energy and charge over either are null
+  with the covered values. Energy uses the meter's power channel, or v x i when a sign or offset correction is declared
+  (named in `energySource`). Segmentation trusts only the meter's clock: GPI markers, timestamps on the capture's own
+  clock with the capture's hash, or the current itself; a PC/UART arrival time is refused (`sync`). A/B: build identity
+  by SHA-256 and ELF build id, the setup from the meter's readback; classification `unidentified` > `setup-difference` > `same-firmware` >
+  `firmware-change`; the lab-validate request integrates whole start-to-start periods and carries each capture's setup
+  as source conditions, so lab-validate makes criteria incomplete when setups differ. Battery: charge domain for
+  direct/linear, energy domain for switching (efficiency required; mAh needs the battery voltage), every input a range,
+  the life an interval rounded outwards to two significant figures (one beyond a factor 10), at least three events.
+- Criteria: L05-B (uniform, non-uniform, gap and overflow fixtures with closed forms in
+  `tests/fixtures/power-profiler/README.md`; gaps and overflow never zero, in power-analyze and in lab-validate), L05-D
+  (firmware-change, setup-difference, same-firmware, unidentified; lab-validate verdicts on the written requests), L05-E
+  (two hand-computed battery examples and six refusals), L05-F (stop request, removal, a stalled stream, a malformed
+  driver message, current path off or unnamed, release; VERA's real runner with BUSY, Stop and a timeout leaving no run
+  or lease) and L05-G (lab-validate integrates a capture
+  to the same energy and charge as power-analyze; a HIL plan binds a power.capture folder into its request; the report
+  hash-checks its runs) are covered on Windows by `tests/integration/power-profiler.test.ts`,
+  `core/src/plugins/hil/hil.test.ts` and `shared/src/lab-resources.test.ts`, offline against the pyjoulescope_driver
+  stand-in `tests/fixtures/power-profiler/fake-driver/`. L05-C is covered offline only (a sleep/wake fixture with a GPI
+  marker, a threshold and meter-clock timestamps; sync method recorded). L05-H: the opt-in `VERA_POWER_REAL_PYTHON` run
+  passed on 2026-11-14 with the real pyjoulescope_driver 2.5.5 from PyPI in a scratch uv venv (CPython 3.12, Windows):
+  import, `tools --list` with no device, WinUSB present, `identify` and `capture` blocked `device-missing` with physical
+  `unchanged`. Open: L05-A (a real reference load against an independent check), L05-C live (a sleep/wake firmware on a
+  board), L05-H live on Windows and native Ubuntu x64 (`REQ-PLAT-cd7e4f2c`) - no JS220 is available; the profile stays
+  `unverified`; provisioning through VERA's own uv was not run (the pin was resolved by uv directly).
 
 ## Rules shared by the packages
 

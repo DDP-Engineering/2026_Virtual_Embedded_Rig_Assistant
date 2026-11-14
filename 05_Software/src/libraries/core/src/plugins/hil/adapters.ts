@@ -36,8 +36,10 @@ export interface HilAdapter<P = any> {
   readonly formats?: readonly HilFirmware["format"][];
   /** Probe selectors the step uses (reserved as `probe:<selector>`). */
   probes(params: P): string[];
-  /** The step writes run folders into its folder (scpi, lab-validate). */
+  /** The step writes run folders into its folder (scpi, lab-validate, power-profile). */
   readonly folders: boolean;
+  /** A passing attempt's run folder is a capture a later `lab-validate.compare` source may name (`step`). */
+  readonly captures?: boolean;
   /** The attempt's outcome from the program's exit code (a process that ran to its end). */
   outcome(exitCode: number | null): HilAttemptStatus;
 }
@@ -98,7 +100,14 @@ const validateOutcome = (code: number | null): HilAttemptStatus =>
 const never = () => false;
 const always = () => true;
 const none = () => [];
-const base = { background: false, flashes: false, folders: false, resets: never, probes: none } as const;
+const base = {
+  background: false,
+  flashes: false,
+  folders: false,
+  captures: false,
+  resets: never,
+  probes: none,
+} as const;
 
 // --- probe-rs ---------------------------------------------------------------------------------------------------
 const target = z.strictObject({ probe, chip });
@@ -320,6 +329,7 @@ registerHilAdapter<z.infer<typeof channelOf>>({
   ],
   repeatable: always,
   folders: true,
+  captures: true,
   outcome: scpiOutcome,
 });
 const configure = z.strictObject({
@@ -385,6 +395,72 @@ registerHilAdapter<Instrument>({
   repeatable: never,
   folders: true,
   outcome: scpiOutcome,
+});
+
+// --- power-profiler ------------------------------------------------------------------------------------------------
+/** power-profile: 2 refused or blocked before any setting changed, 3 incomplete (gaps, overflow, stopped), 4 error. */
+const powerOutcome = (code: number | null): HilAttemptStatus =>
+  code === 0 ? "pass" : code === 2 ? "blocked" : code === 3 ? "incomplete" : "error";
+const meter = z.strictObject({ meter: alias });
+registerHilAdapter<z.infer<typeof meter>>({
+  ...base,
+  use: "power.identify",
+  program: "power-profile",
+  params: meter,
+  args: (params, { folder }) => ["identify", "--meter", params.meter, ...results(folder)],
+  repeatable: always,
+  folders: true,
+  outcome: powerOutcome,
+});
+const conditionName = z.string().regex(/^[a-z][a-z0-9_-]{0,31}$/);
+const powerCapture = z.strictObject({
+  meter: alias,
+  duration: z.number().min(0.01).max(3500),
+  rate: z.number().int().positive().max(1_000_000),
+  currentRange: plain(16).optional(),
+  voltageRange: plain(16).optional(),
+  markers: z
+    .array(z.number().int().min(0).max(3))
+    .max(4)
+    .refine((value) => new Set(value).size === value.length, "List each marker input once.")
+    .optional(),
+  conditions: z
+    .record(conditionName, z.string().regex(/^[ -~]{1,120}$/))
+    .refine((value) => Object.keys(value).length <= 16, "Declare at most 16 conditions.")
+    .optional(),
+});
+registerHilAdapter<z.infer<typeof powerCapture>>({
+  ...base,
+  use: "power.capture",
+  program: "power-profile",
+  params: powerCapture,
+  // The plan's firmware is named so the capture records the build it measured (hash and ELF build id).
+  args: (params, { firmware, folder }) => [
+    "capture",
+    "--meter",
+    params.meter,
+    "--duration",
+    String(params.duration),
+    "--rate",
+    String(params.rate),
+    ...(params.currentRange === undefined ? [] : ["--current-range", params.currentRange]),
+    ...(params.voltageRange === undefined ? [] : ["--voltage-range", params.voltageRange]),
+    ...(params.markers === undefined || params.markers.length === 0
+      ? []
+      : ["--markers", params.markers.join(",")]),
+    ...Object.entries(params.conditions ?? {}).flatMap(([name, value]) => [
+      "--condition",
+      `${name}=${value}`,
+    ]),
+    "--firmware",
+    firmware.path,
+    ...results(folder),
+  ],
+  repeatable: always,
+  background: true,
+  folders: true,
+  captures: true,
+  outcome: powerOutcome,
 });
 
 // --- lab-validation ------------------------------------------------------------------------------------------------

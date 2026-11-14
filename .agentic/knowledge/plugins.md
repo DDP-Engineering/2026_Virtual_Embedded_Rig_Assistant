@@ -169,6 +169,9 @@ Debug probes (LAB-04) are identity kind `probe` (`resource` `VID:PID:SERIAL`), k
 `probe:<vid>:<pid>`, the keys the runner gives probe-rs `--probe` selectors and HIL plan probes, so a gdb-debug session,
 a probe-rs run and a HIL plan on one probe exclude each other with no runner change; two probes of one model are one
 reservation, and access that does not name the probe (probe-rs without `--probe`, stm32-cubeprog `sn=`) is not detected.
+Power monitors (LAB-05) are identity kind `power-monitor` (`resource` `u/js220/<serial>`, pyjoulescope_driver's device
+path), keyed `power-monitor:js220:<serial>`; the LAB-01 runner code reserves them unchanged. HIL adapters carry a
+`captures` flag (scpi.capture, power.capture): a later `lab-validate.compare` source may bind to such a step's run folder.
 
 HIL plans (LAB-03): for a program that declares `plan: hil`, `run_program` hands `check <plan>` and `run <plan>` to core
 `plugins/hil/`. Compilation validates the plan, checks the firmware hash and prepares every step's operation through

@@ -327,6 +327,30 @@ machinery applies unchanged; the direct programs `arm-none-eabi-gdb` and `openoc
 - Limits: profiles are unverified until a recorded board run; no RTOS awareness; two probes of one VID:PID are one
   reservation; BUSY covers access that names the probe: probe-rs with `--probe`, HIL plans that reserve it and other gdb-debug runs; a probe-rs call without `--probe`, stm32-cubeprog (`sn=`) or another tool reaching the same probe is not detected. No HIL adapter for GDB steps yet.
 
+### 3.9 Power profiling (LAB-05)
+
+`power-profiler` (spec `.agentic/specs/REQ-DATA-dd3e4fe1.md`) adds the registry kind `power-monitor`
+(`shared/src/lab-resources.ts`, resource `u/js220/<serial>`, key `power-monitor:js220:<serial>`) and two HIL adapters
+(`power.identify`, `power.capture`); its program `power-profile` declares `resources {option: --meter, kinds:
+[power-monitor], cleanup: [release]}`, so the LAB-01 lease, BUSY, stop/grace and cleanup machinery applies unchanged.
+Program `power-analyze` is offline (standard library) and needs no driver.
+
+- One capture = one supervised run in the helper: registry, profile, acquisition and firmware checks -> run folder ->
+  pyjoulescope_driver 2.5.5 `open(path, "restore")` -> settings read (a current range mode `off` is blocked) -> only
+  the sample rate, current/voltage range and signal controls written -> current, voltage, power, range and GPI streams
+  assembled by sample id (skips and NaN kept as gaps, overflow flagged) until the duration, a stop request, removal or
+  a stall -> signals off, previous settings restored and read back (`confirmed` only on a matching readback) ->
+  `result.json` (kind `power-result`) and `samples.csv`. The cleanup `release` returns the meter to auto-ranging.
+- Numbers: power-analyze runs on a byte-identical copy of lab-validation's `series.py`; criteria are decided only by
+  lab-validate, which gains the `integral` metric (unknown over a gap) and the `power-capture` importer. A/B
+  comparisons write a lab-validate request whose source conditions carry the setup, so differing setups make criteria
+  incomplete.
+- HIL adapters gain a `captures` flag (scpi.capture, power.capture): a `lab-validate.compare` source may bind to such a
+  step's run folder; `power.capture` passes the plan's firmware so the capture records the build it measured.
+- Limits: the profile is unverified (written from the driver's topics; no JS220 here); no DUT power-path control, no
+  meter outputs, no meter firmware update; the cleanup cannot restore the pre-capture settings (it does not see the
+  interrupted run), only auto-ranging.
+
 ## 4. Risk levels and approvals (ADR-0018)
 
 | Level | Meaning | Examples |

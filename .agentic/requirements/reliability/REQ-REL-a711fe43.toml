@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-a711fe43"
+
+title = "Record missing samples and overflow explicitly in a capture"
+
+status = "active"
+
+requirement = """
+When the driver delivers a sample-id skip or NaN samples in any channel, or a sample exceeds the active range limit, the capture shall record those samples as missing (empty cells, a gap list for the current and per-channel missing counts) or as overflow flags, never as zero, and its status shall be incomplete.
+"""
+
+verification = "Fake-driver tests inject a 30-sample skip, NaN current samples, NaN power-only samples and a sample above 10 A; samples.csv has empty cells there, result.json lists the gaps, the per-channel missing counts and overflow counts, and the status is incomplete."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/capture.py", "05_Software/plugins/power-profiler/scripts/power_support/capfile.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

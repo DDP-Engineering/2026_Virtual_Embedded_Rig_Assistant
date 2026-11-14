@@ -1,7 +1,7 @@
 # Maintainers' file of the catalog (spec REQ-DATA-b40d3f9b §1.2). Only maintainers change it.
 format: 1
 # Plugins maintained by the VERA maintainers; every other catalog plugin is community.
-official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, scpi-instruments, lab-validation, hil-testing, gdb-debug]
+official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, scpi-instruments, lab-validation, hil-testing, gdb-debug, power-profiler]
 # Discovery facts are maintained separately from package manifests. Publication dates are genuinely
 # unknown until a catalog release record establishes them; do not infer them from commits/builds.
 metadata:
@@ -74,6 +74,9 @@ metadata:
   gdb-debug:
     activities: [debug, firmware-analysis]
     keywords: [GDB, OpenOCD, Cortex-M, HardFault, breakpoint, ELF, DWARF, backtrace]
+  power-profiler:
+    activities: [measurement]
+    keywords: [power, energy, current, charge, Joulescope, JS220, sleep current, battery life, low power, A/B comparison]
 # Rules below device-write whose pattern contains a dangerous token, accepted after review:
 # - { plugin: <id>, match: "<the rule's exact match>" }
 # Program names themselves contain efuse/secure. These exact low-risk rules cover reads,

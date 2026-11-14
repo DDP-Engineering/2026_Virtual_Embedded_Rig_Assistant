@@ -61,6 +61,18 @@ ELFs built by firmware/build.py with zig cc, the GDB/OpenOCD stand-ins fake_gdb.
 by make_tools.py, internals.py unit checks) own its coverage - offline evidence, never a real GDB, OpenOCD or target.
 Its probe reservation is the platform's `probe` registry kind, see [Plugins](plugins.md).
 
+For power-profiler, start at plugins/power-profiler/plugin.yaml (programs `power-profile` with `resources {option:
+--meter, kinds: [power-monitor]}` and `power-analyze`), scripts/power_profile.py, scripts/power_analyze.py and
+scripts/power_support/ (capture.py the live flows and stream assembler, meter.py the allow-listed driver wrapper,
+capfile.py the capture folder, signals.py/measure.py/segment.py the analysis on the copied series.py, compare.py,
+battery.py, importer.py, render.py, acquisition.py and profiles.py with profiles/joulescope-js220.json, registry.py,
+firmware.py with the copied elf.py, usb.py, result.py, lifecycle.py, workspace.py the shared copy) with spec
+.agentic/specs/REQ-DATA-dd3e4fe1.md; tests/integration/power-profiler.test.ts and tests/fixtures/power-profiler/ (the
+pyjoulescope_driver stand-in fake-driver/, closed-form CSV fixtures from make_fixtures.py) own its coverage - offline
+evidence, never a real JS220 - plus the opt-in `VERA_POWER_REAL_PYTHON` suite with the real driver and no meter. Its
+meter reservation is the platform's `power-monitor` registry kind, see [Plugins](plugins.md); criteria go through
+lab-validation's `integral` metric and `power-capture` importer; HIL steps `power.identify`/`power.capture`.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -78,7 +90,9 @@ folders with requirements offline; skills validation-planning and difference-exp
 whose `check` and `run` VERA core compiles and executes as hardware-in-the-loop plans over the other plugins, plus a
 standard-library report helper; skill hil-planning); gdb-debug (programs `gdb-elf` for offline ELF/DWARF inspection and
 fault re-diagnosis and `gdb-debug` for finite supervised GDB/OpenOCD sessions on a declared probe; skill
-debug-sessions). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+debug-sessions); power-profiler (programs `power-profile` for Joulescope JS220 captures on pyjoulescope_driver 2.5.5 and
+`power-analyze` for offline energy, charge, events, A/B and battery analysis; skills power-measurement and
+energy-analysis). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -301,6 +315,19 @@ that source metadata reaches the deterministic bundled index unchanged.
   openocd.log). Exit 0 pass, 2 refused before any process, 3 incomplete/blocked/error. Verified on Windows 11 offline
   (fixture ELFs from zig cc 0.13.0, pyelftools 0.32 oracle, GDB/OpenOCD stand-ins, VERA's real runner, 2026-11-14); no
   real GDB, OpenOCD, probe, board or native Ubuntu run yet.
+- `power-profiler` 1.0.0, ecosystem `lab` (pack Embedded lab, group Power profiling (Joulescope), default on; activity
+  `measurement`), Windows x64/Linux x64. `power-profile` (PEP 723, Python >= 3.12, `pyjoulescope_driver==2.5.5`):
+  `tools` (safe; driver version, WinUSB DLL / Joulescope udev rule, nothing changed), `tools --list` (device-read;
+  device paths), `identify --meter <alias>` (device-read), `capture --meter <alias> --duration <0.01-3500> --rate
+  <profile rate> [--current-range auto|<label>] [--voltage-range <label>] [--markers 0..3] [--firmware] [--board]
+  [--condition]... [--label]` (device-write, rule timeout 3600; at most 1 000 000 samples) and the cleanup `release
+  --meter` (device-write; signals off, current range auto, read back). `power-analyze` (standard library, all safe):
+  `acquisition`, `import`, `inspect`, `measure-energy`, `segment`, `compare`, `battery`, `report`. Profile
+  `joulescope-js220` `unverified`. Results in `embedded-lab-results/<run-id>/` (result.json kind `power-result`,
+  samples.csv, events.csv, lab-validation-request.json, report.md/html, current-<n>.svg). Exit 0 pass, 2 refused or
+  blocked before any setting changed, 3 incomplete, 4 error. Verified on Windows 11 offline (closed-form fixtures, the
+  driver stand-in, VERA's real runner, lab-validate on the written requests) and with the real pyjoulescope_driver 2.5.5
+  from PyPI without a meter (2026-11-14); no JS220, board or native Ubuntu run yet.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -454,6 +481,13 @@ that source metadata reaches the deterministic bundled index unchanged.
   `compare-sections` is not used: OpenOCD would run a CRC routine in target RAM); a mismatch withholds every symbol,
   source, variable and fault-site attribution, as does an ELF of which no byte could be compared (`unchecked`, compared
   0); a partly compared, all-equal ELF keeps them with an `elf-unchecked` problem and a limit.
+- power-profiler opens the meter with `restore` (never its defaults) and writes only the sample rate, the current
+  range mode (`auto` or `manual`, never `off`) and selection, the voltage range mode/selection and the signal controls;
+  a meter whose current path is off is blocked before any write; changed settings are restored and read back, and only
+  a matching readback reports `confirmed`. A sample-id skip or NaN stays an empty cell and a gap, a sample beyond its
+  range limit an overflow flag; energy and charge over either are null (covered values reported), never zero.
+  Segmentation trusts only the meter's clock (GPI markers, timestamps on the capture's own clock, the current itself);
+  verdicts are lab-validate's.
 - gdb-debug's exit policy is applied by OpenOCD's gdb-detach event on every end (also when GDB is killed); only its
   printed state confirms the physical state; `release` never reconnects. An MI result is matched only to its own
   token; stale and untokened results are events.

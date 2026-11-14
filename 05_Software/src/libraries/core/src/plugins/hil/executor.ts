@@ -452,7 +452,7 @@ export class HilExecution {
         attempt.folder = `${op.folder}/${name}`;
         const times = await this.deviceTimes(attempt.folder);
         if (times) attempt.deviceTimes = times;
-        if (op.use === "scpi.capture" && attempt.status === "pass") this.captures.set(op.id, attempt.folder);
+        if (op.adapter.captures && attempt.status === "pass") this.captures.set(op.id, attempt.folder);
       }
     }
     this.event("step-end", {

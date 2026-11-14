@@ -47,6 +47,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["microchip-pymcuprog", "official"],
     ["ngspice", "official"],
     ["parts-search", "official"],
+    ["power-profiler", "official"],
     ["probe-rs", "official"],
     ["scpi-instruments", "official"],
     ["serial-monitor", "official"],

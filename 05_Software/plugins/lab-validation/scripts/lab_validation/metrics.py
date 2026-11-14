@@ -168,6 +168,22 @@ def _rms(job: Job) -> Outcome:
     return Outcome(math.sqrt(area / covered))
 
 
+INTEGRAL_UNITS = {"A": "C", "W": "J"}
+
+
+@register("integral", lambda unit: INTEGRAL_UNITS.get(unit, f"{unit} s".strip()), "amplitude",
+          "integral of v dt over the window, trapezoid rule: charge in C for a current, energy in J for a power; "
+          "unknown when the window holds a gap (a missing interval is never counted as zero)")
+def _integral(job: Job) -> Outcome:
+    if job.win.breaks or job.win.gap_time > 0:
+        return Outcome(None, "unknown", f"gap: the window holds {job.win.gap_time:.6g} s without data; the integral "
+                       "would count it as zero", details={"gapTime": job.win.gap_time})
+    area, covered = integrate(job.win)
+    if covered <= 0:
+        return Outcome(None, "unknown", "the window holds no interval with data")
+    return Outcome(area, details={"covered": covered})
+
+
 @register("peak-to-peak", SAME, "amplitude", "max - min over the window")
 def _p2p(job: Job) -> Outcome:
     return Outcome(max(job.win.v) - min(job.win.v))

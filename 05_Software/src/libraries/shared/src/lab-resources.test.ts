@@ -162,6 +162,45 @@ describe("debug probes in lab/resources.json (REQ-DATA-ea470ec1)", () => {
   });
 });
 
+describe("power monitors in lab/resources.json (REQ-DATA-f13cc264)", () => {
+  const meter = (fields: Record<string, unknown> = {}) => ({
+    alias: "js1",
+    kind: "power-monitor",
+    resource: "u/js220/000415",
+    profile: "joulescope-js220",
+    ...fields,
+  });
+  it("accepts a Joulescope named by its device path beside instruments and probes", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [meter({ note: "DUT supply" }), entry()],
+    });
+    expect(parsed.resources[0]?.kind).toBe("power-monitor");
+  });
+  it("keys a meter by model and serial in lower case", () => {
+    const keys = labResourceKeys(
+      labRegistrySchema.parse({ format: 1, resources: [meter({ resource: "u/js220/00AbC4" })] })
+        .resources[0] as LabResource,
+    );
+    expect(keys).toEqual(["power-monitor:js220:00abc4"]);
+  });
+  it("refuses another model, a missing serial, odd characters or an unknown field", () => {
+    for (const bad of [
+      meter({ resource: "u/js110/000415" }),
+      meter({ resource: "u/js220/" }),
+      meter({ resource: "u/js220/00 41" }),
+      meter({ resource: "u/js220/00/41" }),
+      meter({ resource: "js220/000415" }),
+      meter({ resource: "u/js220/000415000415000415000415000415000" }),
+      meter({ serial: "000415" }),
+      meter({ profile: "Bad Profile" }),
+    ])
+      expect(labRegistrySchema.safeParse({ format: 1, resources: [bad] }).success, JSON.stringify(bad)).toBe(
+        false,
+      );
+  });
+});
+
 describe("manifest resources and approvals", () => {
   const manifest = (resources: unknown) => ({
     format: 1,

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-f13cc264"
+
+title = "Declare a power monitor in the bench registry by its device path"
+
+status = "active"
+
+requirement = """
+The bench registry shall accept an entry of kind power-monitor whose resource is a Joulescope device path u/js220/<serial> and give it the identity key power-monitor:js220:<serial in lower case>, refusing any other resource syntax.
+"""
+
+verification = "lab-resources tests parse a registry with a power-monitor entry and check its key, and refuse another model, a missing serial, odd characters and unknown fields; the scpi helper still reads a registry that holds such an entry."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py", "05_Software/plugins/power-profiler/scripts/power_support/registry.py"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

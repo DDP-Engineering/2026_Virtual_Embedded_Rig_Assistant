@@ -333,8 +333,8 @@ export async function compileHilPlan(input: HilCompileInput): Promise<CompiledHi
           }
           if (fields.step !== undefined) {
             const earlier = operations.find((op) => op.group === "steps" && op.id === fields.step);
-            if (group !== "steps" || earlier?.use !== "scpi.capture") {
-              problem(`${where}.step`, `${String(fields.step)} is not an earlier scpi.capture step.`);
+            if (group !== "steps" || !earlier || hilAdapter(earlier.use)?.captures !== true) {
+              problem(`${where}.step`, `${String(fields.step)} is not an earlier capture step.`);
               continue;
             }
             if (fields.sha256 !== undefined)

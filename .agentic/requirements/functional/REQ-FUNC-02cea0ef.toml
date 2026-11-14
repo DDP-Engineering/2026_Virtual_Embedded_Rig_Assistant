@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-02cea0ef"
+
+title = "Apply declared sign and offset and report auto-ranging"
+
+status = "active"
+
+requirement = """
+When measure-energy is given --sign -1 or --current-offset, the analyzer shall apply them before every metric and record them, report negative samples and negative charge without clamping, and report the time spent in each current range and the number of range switches.
+"""
+
+verification = "Tests run the constant fixture with --sign -1 (charge, negative samples and negative charge) and with an offset and its source (charge and v x i energy against hand-computed values); a fake-driver capture that auto-ranges reports the time per range code and a non-zero switch count."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/measure.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

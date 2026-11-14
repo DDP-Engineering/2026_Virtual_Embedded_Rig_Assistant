@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-f040d125"
+
+title = "Never switch the DUT current path in a capture"
+
+status = "active"
+
+requirement = """
+When a capture or release finds the meter's current range mode off, or a raw value its metadata does not name, the helper shall change no setting (capture: blocked with code current-path-off or current-path-unknown; release: physical unknown), and it shall never set the range mode off, write a general-purpose output, start a firmware update or apply the device defaults.
+"""
+
+verification = "Fake-driver tests: a capture with the current path off, and a capture and release with an unnamed raw mode 0 (no metadata), end blocked/unknown with no range-mode publish; the log of every other capture contains only the allowed topics (h/fs, s/i/range/mode, s/i/range/select, s/v/range/mode, s/v/range/select, signal ctrl) and never mode off."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/meter.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_profile.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cd01d9d7"
+
+title = "Report the power driver and the USB access prerequisites"
+
+status = "active"
+
+requirement = """
+When tools runs, the helper shall report the pyjoulescope_driver version or its absence and the platform's USB access prerequisites (WinUSB on Windows, a Joulescope udev rule on Linux) without opening a device or changing any driver, rule or permission, and with --list shall add the connected Joulescope device paths.
+"""
+
+verification = "A test runs tools with the fake driver and with no driver on the path (driver missing, exit 3); the opt-in real-driver test runs tools --list with pyjoulescope_driver 2.5.5 from PyPI and sees version 2.5.5 and an empty device list on a machine without a meter."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/cli_profile.py", "05_Software/plugins/power-profiler/scripts/power_support/usb.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14
