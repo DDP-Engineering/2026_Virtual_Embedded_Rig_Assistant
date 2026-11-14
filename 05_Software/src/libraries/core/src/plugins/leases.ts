@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, link, lstat, mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises";
-import { isAbsolute, join } from "node:path";
+import { join, posix, win32 } from "node:path";
 import { veraError } from "@vera/shared";
 
 /**
@@ -74,13 +74,16 @@ export function leaseRoot(input: {
   tmpdir: string;
   uid?: number | undefined;
 }): string {
+  // The path rules of the platform asked for, not of the host running this code.
   if (input.platform === "win32") {
     const local = input.env.LOCALAPPDATA;
-    return local && isAbsolute(local) ? join(local, "VERA", "leases") : join(input.tmpdir, "vera-leases");
+    return local && win32.isAbsolute(local)
+      ? win32.join(local, "VERA", "leases")
+      : win32.join(input.tmpdir, "vera-leases");
   }
   const runtime = input.env.XDG_RUNTIME_DIR;
-  if (runtime?.startsWith("/")) return join(runtime, "vera-leases");
-  return join(input.tmpdir, `vera-leases-${input.uid ?? "user"}`);
+  if (runtime?.startsWith("/")) return posix.join(runtime, "vera-leases");
+  return posix.join(input.tmpdir, `vera-leases-${input.uid ?? "user"}`);
 }
 
 /** The lease file of a key; its state marker replaces `.lease` with `.state`. */
