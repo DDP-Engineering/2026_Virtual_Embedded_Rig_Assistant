@@ -256,7 +256,9 @@ it("finds PATH before cargo, never installs implicitly and rejects an unsupporte
         executable: path,
         version: "0.32.0",
       });
+      // An in-place downgrade rewrites the program; found versions are reused while the file is unchanged.
       version = "0.31.0";
+      await writeFile(path, `fake ${version}`, { mode: 0o755 });
       provisioner.invalidate();
       expect(await provisioner.statuses("probe-rs")).toMatchObject([
         { state: "unavailable", problem: "range", version },
