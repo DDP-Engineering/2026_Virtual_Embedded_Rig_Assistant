@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-ad412ce8"
+
+title = "Reserve the debug probe against flash, HIL and other debug runs"
+
+status = "active"
+
+requirement = """
+While a gdb-debug run holds a debug probe, VERA shall refuse with BUSY a probe-rs run whose `--probe` selector names that probe, a HIL plan that reserves it and another gdb-debug run on it, and the probe-rs rules for `gdb`, `debug`, `serve` and `dap-server` shall stay blocked.
+"""
+
+verification = "Runner tests hold a gdb-debug lease on a probe and start a probe-rs run with `--probe VID:PID:SERIAL` and with `--probe VID:PID`, a second gdb-debug run and a HIL plan hold on the same probe and expect BUSY; a different probe serial of another VID:PID is not BUSY; the probe-rs manifest rules are checked unchanged."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/plugins/gdb-debug/plugin.yaml"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

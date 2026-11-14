@@ -1,0 +1,67 @@
+format: 1
+id: gdb-debug
+version: 1.0.0
+name: GDB debugging
+description: Inspect firmware ELF files offline (architecture, hash, symbols, DWARF) and debug a Cortex-M target through a declared probe with finite, supervised GDB sessions - snapshot of registers, backtrace, locals, permitted RAM and decoded fault state with symbols checked against the target's flash, a hardware breakpoint with a timeout, bounded stepping - with OpenOCD from verified profiles on 127.0.0.1 only, no GDB console, scripts or monitor commands, the probe reserved for the run and the declared halt/resume policy applied at every exit.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://sourceware.org/gdb/current/onlinedocs/gdb.html/GDB_002fMI.html", "https://openocd.org/doc/html/GDB-and-OpenOCD.html"]
+programs:
+  arm-none-eabi-gdb:
+    install:
+      find:
+        windows: ["%PATH%", "C:/ST/STM32CubeCLT*/GNU-tools-for-STM32/bin", "C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32*/tools/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%APPDATA%/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "%APPDATA%/xPacks/xpack-arm-none-eabi-gcc-*/bin", "%ProgramFiles%/Arm GNU Toolchain arm-none-eabi/*/bin"]
+        linux: ["$PATH", "/usr/bin/gdb-multiarch", "/opt/st/stm32cubeclt*/GNU-tools-for-STM32/bin", "~/.platformio/packages/toolchain-gccarmnoneeabi*/bin", "~/.local/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/*/.content/bin", "~/.local/xPacks/xpack-arm-none-eabi-gcc-*/bin", "/opt/arm-gnu-toolchain-*/bin"]
+      hint: Install the Arm GNU Toolchain (arm-none-eabi-gdb 12 or newer, for example the xPack arm-none-eabi-gcc 15.2.1-1.1) and put its bin folder on PATH; on Ubuntu run sudo apt install gdb-multiarch.
+    version: { args: [--version], match: 'GNU gdb[^\n]*?(\d+\.\d+)', range: '>=12' }
+    timeout: 60
+  openocd:
+    install:
+      find:
+        windows: ["%PATH%", "~/.local/xPacks/@xpack-dev-tools/openocd/*/.content/bin", "%APPDATA%/xPacks/@xpack-dev-tools/openocd/*/.content/bin", "%APPDATA%/xPacks/xpack-openocd-*/bin", "~/.platformio/packages/tool-openocd*/bin"]
+        linux: ["$PATH", "/usr/bin/openocd", "/usr/local/bin/openocd", "~/.local/xPacks/@xpack-dev-tools/openocd/*/.content/bin", "~/.platformio/packages/tool-openocd*/bin"]
+      hint: Install OpenOCD 0.12.0 or newer (for example the xPack OpenOCD) and put its bin folder on PATH; on Ubuntu run sudo apt install openocd. Probe drivers and USB permissions stay yours to set up.
+    version: { args: [--version], match: 'Open On-Chip Debugger (\d+\.\d+\.\d+)', range: '>=0.12.0' }
+    timeout: 60
+  gdb-elf:
+    install: { script: scripts/gdb_elf.py }
+    version: { args: [--version], match: '^gdb-elf (\d+\.\d+\.\d+)' }
+    timeout: 60
+  gdb-debug:
+    install: { script: scripts/gdb_debug.py }
+    version: { args: [--version], match: '^gdb-debug (\d+\.\d+\.\d+)' }
+    timeout: 300
+    uses: [arm-none-eabi-gdb, openocd]
+    env:
+      GDB_DEBUG_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --probe, kinds: [probe], grace: 30, cleanup: [release], cleanupTimeout: 30 }
+# The agent never reaches GDB or OpenOCD directly: a GDB console runs scripts, shell and monitor commands, and OpenOCD
+# runs Tcl and opens network ports. gdb-debug drives both through a fixed command set (the highest risk of all
+# matching rules wins, so no exception to these blocks is possible); VERA's provisioner probes their versions itself.
+rules:
+  - match: "arm-none-eabi-gdb *"
+    risk: blocked
+    note: A GDB console can run scripts, Python, shell and monitor commands. Use gdb-debug, which drives GDB/MI with a fixed command set.
+  - match: "openocd *"
+    risk: blocked
+    note: OpenOCD runs Tcl and opens network ports. Use gdb-debug, which starts it from a verified profile on 127.0.0.1 only.
+  - { match: "gdb-elf {--version,--help,-h}", risk: safe }
+  - match: "gdb-elf {inspect,diagnose} *"
+    risk: safe
+    note: Reads a workbench ELF (and a saved gdb-debug run folder); starts no process and opens no device.
+  - { match: "gdb-debug {--version,--help,-h}", risk: safe }
+  - match: "gdb-debug tools"
+    risk: safe
+    note: Asks the installed GDB and OpenOCD for their versions and GDB for its architecture support; opens no probe.
+  - match: "gdb-debug release *"
+    risk: safe
+    note: VERA's cleanup after an interrupted session; starts nothing and does not touch the target.
+  - match: "gdb-debug {snapshot,break,step} *"
+    risk: device-write
+    note: Connects through the declared probe and halts the core; break and step run firmware until the breakpoint, timeout or step ends; the declared --on-exit policy (halted or resume) is applied at the end. Nothing is written to target memory or flash.
+  - match: "gdb-debug break *"
+    risk: device-write
+    timeout: 3600
+  - match: "gdb-debug * --firmware-effect actuates *"
+    risk: irreversible
+    note: The firmware drives actuators. Halting it can leave an output in its last state, and running or resuming it lets it act on the hardware.

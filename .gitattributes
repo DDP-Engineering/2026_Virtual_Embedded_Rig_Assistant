@@ -28,3 +28,5 @@
 *.zip binary
 *.pcap binary
 *.pcapng binary
+# Firmware images (gdb-debug fixture ELFs).
+*.elf binary

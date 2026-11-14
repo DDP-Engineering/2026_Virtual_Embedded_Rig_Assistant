@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type LabResource, labRegistrySchema, labResourceKeys } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FakeHost, type FakeProcess } from "./fake-process-host.test-support.js";
 import { type LeaseClaim, ResourceLeases } from "./leases.js";
@@ -396,5 +397,111 @@ describe("plan holds and their child runs", () => {
     ).rejects.toMatchObject({ code: "BUSY", params: { limit: 1 } });
     await plan.finish({ exitCode: 0 });
     expect(existsSync(join(root, ".vera", "runs", `${plan.id}.log`))).toBe(true);
+  });
+});
+
+describe("debug probe reservations of gdb-debug (REQ-SEC-ad412ce8)", () => {
+  const PROBE = "0483:374B:066DFF4851";
+  const probeKeys = labResourceKeys(
+    labRegistrySchema.parse({
+      format: 1,
+      resources: [{ alias: "stlink1", kind: "probe", resource: PROBE, profile: "stm32f4-stlink" }],
+    }).resources[0] as LabResource,
+  );
+  const debug = (overrides: Partial<RunRequest> = {}): RunRequest => ({
+    sessionId: "s1",
+    workbench: root,
+    executable: "/py",
+    args: ["gdb_debug.py", "snapshot", "--probe", "stlink1", "--elf", "app.elf"],
+    lease: {
+      claims: [{ kind: "probe", alias: "stlink1", resource: PROBE, keys: probeKeys, actuates: true }],
+      graceMs: 40,
+      cleanup: {
+        args: ["gdb_debug.py", "release", "--probe", "stlink1"],
+        shown: ["release", "--probe", "stlink1"],
+        timeoutMs: 80,
+      },
+    },
+    ...overrides,
+  });
+  const flash = (selector: string, sessionId = "s1"): RunRequest => ({
+    sessionId,
+    workbench: root,
+    executable: "/probe-rs",
+    args: ["download", "--chip", "STM32F401RE", "--probe", selector, "app.elf"],
+  });
+  const plan = (selector: string, target = runner) =>
+    target.hold({
+      sessionId: "s2",
+      workbench: root,
+      claims: [
+        {
+          kind: "probe",
+          alias: selector,
+          resource: selector,
+          keys: [`probe:${selector.toLowerCase()}`],
+          actuates: true,
+        },
+      ],
+      label: { plugin: "hil-testing", program: "hil", args: ["run", "hil/plan.json"] },
+      onStop: () => {},
+    });
+
+  it("refuses probe-rs on the probe, a second debug run and a HIL plan while a debug run holds it", async () => {
+    await runner.start(debug());
+    for (const selector of ["0483:374b:066DFF4851", "0483:374B:066dff4851", "0483:374b"]) {
+      await expect(runner.start(flash(selector)), selector).rejects.toMatchObject({ code: "BUSY" });
+      await expect(runner.start(flash(selector, "s2")), selector).rejects.toMatchObject({ code: "BUSY" });
+    }
+    await expect(
+      runner.start({ ...flash("x"), args: ["download", "--probe=0483:374b:066dff4851", "app.elf"] }),
+    ).rejects.toMatchObject({ code: "BUSY" });
+    await expect(runner.start(debug({ sessionId: "s2" }))).rejects.toMatchObject({ code: "BUSY" });
+    await expect(plan("0483:374b:066DFF4851")).rejects.toMatchObject({ code: "BUSY" });
+    // Another runner (another VERA process) sees the lease file.
+    await expect(make().start(debug({ sessionId: "s3" }))).rejects.toMatchObject({ code: "BUSY" });
+    // A probe of another model is free.
+    await runner.start(flash("1366:0105:000123456789"));
+    expect(host.programs).toHaveLength(2);
+    // A second probe of the same model is reserved too: a VID:PID selector cannot tell the two apart (documented).
+    const twin = labResourceKeys(
+      labRegistrySchema.parse({
+        format: 1,
+        resources: [
+          { alias: "stlink2", kind: "probe", resource: "0483:374B:OTHERSERIAL", profile: "stm32f4-stlink" },
+        ],
+      }).resources[0] as LabResource,
+    );
+    await expect(
+      runner.start(
+        debug({
+          sessionId: "s4",
+          lease: {
+            claims: [
+              {
+                kind: "probe",
+                alias: "stlink2",
+                resource: "0483:374B:OTHERSERIAL",
+                keys: twin,
+                actuates: true,
+              },
+            ],
+            graceMs: 40,
+          },
+        }),
+      ),
+    ).rejects.toMatchObject({ code: "BUSY" });
+  });
+
+  it("refuses a debug run while probe-rs or a HIL plan uses the probe", async () => {
+    const flashing = await runner.start(flash("0483:374b:066dff4851"));
+    await expect(runner.start(debug())).rejects.toMatchObject({ code: "BUSY" });
+    host.programs[0]?.finish({ code: 0, signal: null });
+    await flashing.done;
+    const held = await plan("0483:374b");
+    await expect(runner.start(debug())).rejects.toMatchObject({ code: "BUSY" });
+    await held.finish({ exitCode: 0 });
+    await runner.start(debug());
+    expect(host.programs).toHaveLength(2);
   });
 });

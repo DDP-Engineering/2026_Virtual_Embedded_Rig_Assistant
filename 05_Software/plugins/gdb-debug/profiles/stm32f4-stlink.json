@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "stm32f4-stlink",
+  "status": "unverified",
+  "description": "STM32F4 (Cortex-M4F) through an ST-LINK/V2, V2-1 or V3 over SWD, for example NUCLEO-F401RE or NUCLEO-F446RE.",
+  "probe": { "vid": "0483", "pids": ["3748", "374b", "374e", "374f", "3752", "3753", "3754"] },
+  "openocd": { "interface": "interface/stlink.cfg", "target": "target/stm32f4x.cfg", "speedKhz": 1800 },
+  "gdb": { "architecture": "armv7e-m" },
+  "core": { "name": "cortex-m4", "partno": "0xc24", "arch": "v7E-M", "faults": "v7m" },
+  "memory": {
+    "flash": [{ "start": "0x08000000", "size": 2097152 }],
+    "ram": [{ "start": "0x20000000", "size": 196608 }]
+  },
+  "rtos": "none"
+}

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { labRegistrySchema, labResourceKeys, serialPortKey, visaResourceKeys } from "./lab-resources.js";
+import {
+  type LabResource,
+  labRegistrySchema,
+  labResourceKeys,
+  serialPortKey,
+  visaResourceKeys,
+} from "./lab-resources.js";
 import { validatePluginManifest } from "./plugins.js";
 import { programApprovalSchema } from "./program-rules.js";
 
@@ -110,6 +116,52 @@ describe("VISA identity keys", () => {
   });
 });
 
+describe("debug probes in lab/resources.json (REQ-DATA-ea470ec1)", () => {
+  const probe = (fields: Record<string, unknown> = {}) => ({
+    alias: "stlink1",
+    kind: "probe",
+    resource: "0483:374B:066DFF485153826687243634",
+    profile: "stm32f4-stlink",
+    ...fields,
+  });
+  it("accepts a probe named by VID:PID:SERIAL beside instruments", () => {
+    const parsed = labRegistrySchema.parse({
+      format: 1,
+      resources: [probe({ note: "NUCLEO-F401RE" }), entry()],
+    });
+    expect(parsed.resources[0]?.kind).toBe("probe");
+  });
+  it("keys a probe by VID:PID:SERIAL and VID:PID in lower case, whatever the spelling", () => {
+    const keys = labResourceKeys(
+      labRegistrySchema.parse({ format: 1, resources: [probe()] }).resources[0] as LabResource,
+    );
+    expect(keys).toEqual(["probe:0483:374b:066dff485153826687243634", "probe:0483:374b"]);
+    const lower = labRegistrySchema.parse({
+      format: 1,
+      resources: [probe({ resource: "0483:374b:066dff485153826687243634" })],
+    }).resources[0] as LabResource;
+    expect(labResourceKeys(lower)).toEqual(keys);
+  });
+  it("refuses a probe without a serial, with a malformed id, a Tcl character or an unknown field", () => {
+    for (const bad of [
+      probe({ resource: "0483:374b" }),
+      probe({ resource: "0483:374b:" }),
+      probe({ resource: "483:374b:ABC" }),
+      probe({ resource: "0x0483:374b:ABC" }),
+      probe({ resource: "0483:374g:ABC" }),
+      probe({ resource: "0483:374b:AB C" }),
+      probe({ resource: "0483:374b:AB[x]" }),
+      probe({ resource: "0483:374b:AB$x" }),
+      probe({ resource: "0483:374b:AB;x" }),
+      probe({ serial: "ABC" }),
+      probe({ profile: "Bad Profile" }),
+    ])
+      expect(labRegistrySchema.safeParse({ format: 1, resources: [bad] }).success, JSON.stringify(bad)).toBe(
+        false,
+      );
+  });
+});
+
 describe("manifest resources and approvals", () => {
   const manifest = (resources: unknown) => ({
     format: 1,
@@ -142,6 +194,7 @@ describe("manifest resources and approvals", () => {
       { option: "instrument", kinds: ["visa"], grace: 10, cleanup: ["close"], cleanupTimeout: 60 },
       { option: "--instrument", kinds: [], grace: 10, cleanup: ["close"], cleanupTimeout: 60 },
       { option: "--instrument", kinds: ["nic"], grace: 10, cleanup: ["close"], cleanupTimeout: 60 },
+      { option: "--instrument", kinds: ["visa", "visa"], grace: 10, cleanup: ["close"], cleanupTimeout: 60 },
       { option: "--instrument", kinds: ["visa"], grace: 0, cleanup: ["close"], cleanupTimeout: 60 },
       { option: "--instrument", kinds: ["visa"], grace: 10, cleanup: [], cleanupTimeout: 60 },
       { option: "--instrument", kinds: ["visa"], grace: 10, cleanup: ["close"], cleanupTimeout: 301 },

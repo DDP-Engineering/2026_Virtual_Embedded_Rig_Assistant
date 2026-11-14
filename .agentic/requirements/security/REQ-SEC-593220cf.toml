@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-593220cf"
+
+title = "Run OpenOCD only from package profiles on the loopback interface"
+
+status = "active"
+
+requirement = """
+When gdb-debug starts OpenOCD, it shall use only the interface and target scripts of the selected package profile and the probe's declared serial, start it in an empty folder outside the workbench, bind the GDB port to 127.0.0.1 on a port it chose, disable the telnet and Tcl ports, disable flash programming through GDB and force hardware breakpoints, and it shall record the address, port and process id in the result.
+"""
+
+verification = "Integration tests read the arguments the OpenOCD stand-in received and expect -f of the profile's two scripts, `adapter serial <serial>`, `bindto 127.0.0.1`, the chosen gdb_port, `telnet_port disabled`, `tcl_port disabled`, `gdb_flash_program disable`, `gdb_breakpoint_override hard`, no `-s` or workbench script, a working folder outside the workbench that is removed after the run, and the server block in result.json; internals.py refuses profiles with project or `..` scripts and peripheral, system or overlapping regions."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/openocd.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/profiles.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

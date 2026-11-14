@@ -238,7 +238,8 @@ identity kind, identity fields, plugin data; spec `.agentic/specs/REQ-DATA-f2cbf
 
 - Before approval, program-tools reads the registry through the path guard, resolves the alias to normalized
   identity keys (VISA: `serial:COM3` for ASRL, `usb:<vid>:<pid>:<serial>`, `tcpip:<host>`, `gpib:...`, plus
-  `serial-number:<n>` when declared) and binds the aliases and the registry's SHA-256 into the request; the
+  `serial-number:<n>` when declared; debug probe (LAB-04): `probe:<vid>:<pid>:<serial>` and `probe:<vid>:<pid>`, the
+  same keys the runner gives probe-rs `--probe` selectors) and binds the aliases and the registry's SHA-256 into the request; the
   approval card and the CLI prompt show them, and a registry changed before the start is CONFLICT.
 - The runner refuses with BUSY, before any spawn, a claim whose keys another unfinished run holds or names as a
   serial port, and then takes the keys in a per-user lease folder (Windows `%LOCALAPPDATA%\VERA\leases`, Linux
@@ -300,6 +301,31 @@ of starting the executable; `hil report` and `--version` run the helper normally
 - Limits: one step at a time apart from background steps; a probe is reserved by its selector text (runs of the same
   process naming it with `--probe` get BUSY); serial runs in
   another VERA process are not leased; GDB, Zephyr, PlatformIO and Twister are not adapters yet.
+
+### 3.8 Supervised debug sessions (LAB-04)
+
+`gdb-debug` (spec `.agentic/specs/REQ-DATA-d7da2a71.md`) adds no core code beyond the registry kind `probe`
+(`shared/src/lab-resources.ts`). Its program `gdb-debug` declares `uses: [arm-none-eabi-gdb, openocd]` and
+`resources {option: --probe, kinds: [probe], cleanup: [release]}`, so the LAB-01 lease, BUSY, stop/grace and cleanup
+machinery applies unchanged; the direct programs `arm-none-eabi-gdb` and `openocd` are rated blocked. Program
+`gdb-elf` is offline and needs neither tool.
+
+- One call = one finite session in the helper: validate (registry probe with serial, package profile, ELF architecture,
+  variable/location syntax) -> run folder -> OpenOCD from the profile's interface/target scripts with `adapter serial`,
+  GDB port on 127.0.0.1 (helper-chosen), telnet/Tcl off, GDB flash programming off, hardware breakpoints -> GDB in MI
+  mode (`-nx`, auto-load/debuginfod/history off) through pipes the helper owns, a fixed MI command set with tokens ->
+  CPUID identity -> ELF read-only sections compared byte for byte with flash -> snapshot / breakpoint / step ->
+  `-target-detach`, whose OpenOCD gdb-detach event applies `--on-exit halted|resume` and prints the state it left.
+- The runner's stdin stays closed and no console exists: the agent never reaches GDB's or OpenOCD's input. GDB may
+  read only the profile's flash and RAM and the SCB fault registers (`mem` regions, inaccessible by default);
+  nothing is written to target memory or flash. GDB's `compare-sections` is not used (OpenOCD would run a CRC routine
+  in the target's RAM work area).
+- Risk: `snapshot`, `break`, `step` device-write (halting and running the core are execution control);
+  `--firmware-effect actuates` irreversible; `tools`, `release` and `gdb-elf` safe. The cleanup `release` never
+  reconnects (a reconnect halts the core) and reports the physical state `unknown`; a normal exit reports
+  `confirmed` only from OpenOCD's marker.
+- Limits: profiles are unverified until a recorded board run; no RTOS awareness; two probes of one VID:PID are one
+  reservation; BUSY covers access that names the probe: probe-rs with `--probe`, HIL plans that reserve it and other gdb-debug runs; a probe-rs call without `--probe`, stm32-cubeprog (`sn=`) or another tool reaching the same probe is not detected. No HIL adapter for GDB steps yet.
 
 ## 4. Risk levels and approvals (ADR-0018)
 

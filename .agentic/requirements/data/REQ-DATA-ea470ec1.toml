@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-ea470ec1"
+
+title = "Declare a debug probe in the bench registry by its serial"
+
+status = "active"
+
+requirement = """
+The bench registry `lab/resources.json` shall accept an entry of kind `probe` with an alias, a probe resource `VID:PID:SERIAL` naming the probe's serial and a profile id, and shall give it the identity keys `probe:<vid>:<pid>:<serial>` and `probe:<vid>:<pid>` in lower case.
+"""
+
+verification = "Tests validate a probe entry, its keys for upper- and lower-case spellings, and refuse an entry without a serial, with a non-hexadecimal VID/PID or with an unknown field."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/registry.py"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

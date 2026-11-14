@@ -165,6 +165,10 @@ and binds the aliases and the registry hash into the request; the runner refuses
 and through `ResourceLeases`, a per-user lease folder the desktop app and the CLI share, supervises the run with a stop
 request and a grace period, runs the declared cleanup once after an interrupted actuation and reports the physical
 state. `ResourceLeases` is the only lease registry; later identity kinds extend the registry schema and key function.
+Debug probes (LAB-04) are identity kind `probe` (`resource` `VID:PID:SERIAL`), keyed `probe:<vid>:<pid>:<serial>` and
+`probe:<vid>:<pid>`, the keys the runner gives probe-rs `--probe` selectors and HIL plan probes, so a gdb-debug session,
+a probe-rs run and a HIL plan on one probe exclude each other with no runner change; two probes of one model are one
+reservation, and access that does not name the probe (probe-rs without `--probe`, stm32-cubeprog `sn=`) is not detected.
 
 HIL plans (LAB-03): for a program that declares `plan: hil`, `run_program` hands `check <plan>` and `run <plan>` to core
 `plugins/hil/`. Compilation validates the plan, checks the firmware hash and prepares every step's operation through
@@ -228,7 +232,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 - Bench resources (shared `lab-resources.ts`): `LAB_REGISTRY_PATH` (`lab/resources.json`), `LAB_REGISTRY_BYTES` (256 KiB),
   `labRegistrySchema` (format 1, 1..64 entries, unique aliases; kind `visa`: alias, resource, serial?, profile,
-  backend? py|ivi, limits?, note?), `visaResourceKeys(resource, serial?)`, `labResourceKeys(entry)`,
+  backend? py|ivi, limits?, note?; kind `probe`: alias, resource `VID:PID:SERIAL` with serial `[A-Za-z0-9._-]{1,64}`,
+  profile, note?), `labResourceKindSchema` (`visa`, `probe`), `visaResourceKeys(resource, serial?)`,
+  `probeResourceKeys(resource)`, `labResourceKeys(entry)`,
   `serialPortKey(port)`; manifest program field `resources`; approval payload `resources [{alias, kind, resource}]` with
   `registry {path, sha256}` (both or neither).
 - Leases (core `leases.ts`): `leaseRoot({platform, env, tmpdir, uid?})`, `leaseFileName(key)`, `new ResourceLeases({root,

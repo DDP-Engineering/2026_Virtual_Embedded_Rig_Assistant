@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ccbd4442"
+
+title = "Re-diagnose a saved snapshot offline"
+
+status = "active"
+
+requirement = """
+When `gdb-elf diagnose <run-folder>` names a gdb-debug snapshot folder, the helper shall recompute the fault decoding and the symbol attribution from the recorded registers and the recorded ELF, and shall refuse symbol attribution when the ELF's SHA-256 differs from the recorded one, the recorded match was `mismatched`, or it was `unchecked` with no compared byte.
+"""
+
+verification = "Integration tests diagnose snapshot folders the helper wrote against the GDB stand-in: against its ELF (causes and faulting function), against a rebuilt different ELF (no attribution, limit), a folder whose recorded match is mismatched and one whose match is unchecked with compared 0 (no attribution), and a folder without result.json (exit 2)."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/cli_elf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/faults.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/symbols.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

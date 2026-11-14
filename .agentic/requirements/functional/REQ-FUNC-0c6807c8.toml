@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0c6807c8"
+
+title = "Inspect a firmware ELF offline"
+
+status = "active"
+
+requirement = """
+When `gdb-elf inspect <elf>` names a workbench ELF file, the helper shall report its SHA-256, size, class, byte order, machine and ARM architecture profile, entry point, loadable segments, symbol counts, build id and the presence, DWARF versions, compilation units, producers and optimisation level of its debug information, without starting any other process.
+"""
+
+verification = "Integration tests inspect committed fixture ELFs built with zig cc 0.13.0 for Cortex-M4 (DWARF 4, two units, C11; clang records no -O level, so optimization is unknown with a limit), Cortex-M0+ (no debug sections) and RISC-V, and check the SHA-256 against the file; internals.py checks the -O parsing of GCC producer strings; the opt-in VERA_GDB_ORACLE_PYTHON test compares entry, machine, CPU attributes, symbol counts, units, DWARF versions and producers with pyelftools 0.32."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/elf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/dwarf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_elf.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

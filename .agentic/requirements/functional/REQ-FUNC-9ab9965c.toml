@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9ab9965c"
+
+title = "Snapshot registers, backtrace and fault state with symbols"
+
+status = "active"
+
+requirement = """
+When `gdb-debug snapshot` connects to the profiled target through the selected probe, the helper shall halt it and record the CPUID-identified core, core and special registers, a bounded backtrace, frame-0 arguments and locals, the fault status registers and decoded causes, the stacked exception frame and, when the ELF matched, symbol names with offsets for PC, LR and the stacked PC/LR, plus the reported limits (missing source, optimised-out values, no RTOS awareness).
+"""
+
+verification = "Integration tests run snapshot against the GDB stand-in replaying a Cortex-M4 HardFault (forced UsageFault DIVBYZERO) with a fixture ELF and expect the decoded causes, the stacked PC mapped to the fixture's faulting function, frames and the limits list; offline tests decode CFSR/HFSR bit sets, EXC_RETURN and an ARMv6-M HardFault without fault status registers."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/faults.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/symbols.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

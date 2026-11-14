@@ -16,7 +16,9 @@ STATE: LAB-01 implemented 2026-11-13 on branch `feature/101-embedded-lab` (AEGIS
 real-process evidence; real instruments, real PyVISA and native Ubuntu open); LAB-02 implemented 2026-11-13 on the same
 branch (AEGIS TASK-cf769025, offline evidence and real uv on Windows; a real capture of a real circuit and native Ubuntu
 open); LAB-03 implemented 2026-11-14 on the same branch (AEGIS TASK-789dcc82, offline and real-process evidence on Windows;
-a real board, real probe-rs/esptool and native Ubuntu open); LAB-04...LAB-08 planned.
+a real board, real probe-rs/esptool and native Ubuntu open); LAB-04 implemented 2026-11-14 on the same branch (AEGIS
+TASK-6b092dfc, offline evidence with real compiler-built ELFs and GDB/OpenOCD stand-ins on Windows; real GDB, OpenOCD,
+a probe, a board and native Ubuntu open); LAB-05...LAB-08 planned.
 
 ## Order
 
@@ -25,7 +27,7 @@ a real board, real probe-rs/esptool and native Ubuntu open); LAB-04...LAB-08 pla
 | 1 | LAB-01 | [#102](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/102) | `scpi-instruments` | identified instruments, finite operations, captures and approved control; resource leases and supervised cleanup | implemented |
 | 2 | LAB-02 | [#103](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/103) | `lab-validation` | reproducible comparisons of captures, simulations and requirements | implemented |
 | 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | implemented |
-| 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | planned |
+| 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | implemented |
 | 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | planned |
 | 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | planned |
 | 7 | LAB-07 | [#108](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/108) | `zephyr` | Zephyr build, flash and tests through checked operations | planned |
@@ -138,6 +140,50 @@ them.
   lab-validate and hil helpers on their fakes plus the probe-rs replay stand-in (stop with cleanup, no run left,
   report). Open: L03-C (no board or probe on this machine; real probe-rs/esptool not provisioned), the live part of
   L03-H on Windows and native Ubuntu x64 (`REQ-PLAT-759e6df8`).
+
+## LAB-04 as built
+
+- Platform (VERA itself): only the `lab/resources.json` identity kind `probe` (`{alias, kind: "probe", resource:
+  "VID:PID:SERIAL", profile}`, serial `[A-Za-z0-9._-]`, keys `probe:<vid>:<pid>:<serial>` and `probe:<vid>:<pid>`) in
+  shared `lab-resources.ts`; leases, BUSY, stop/grace and cleanup are the LAB-01 runner code, unchanged. The LAB-01 scpi
+  helper skips `probe` entries. Spec `.agentic/specs/REQ-DATA-d7da2a71.md`; architecture
+  `00_Planning/plugins/architecture.md` §3.8.
+- Package `05_Software/plugins/gdb-debug/` (official, pack "Embedded lab" group "Debugging (GDB and OpenOCD)",
+  activities debug/firmware-analysis): programs `gdb-elf` (`scripts/gdb_elf.py`, offline `inspect` and `diagnose`),
+  `gdb-debug` (`scripts/gdb_debug.py`, `tools`, `snapshot`, `break`, `step`, cleanup `release`; `uses:
+  [arm-none-eabi-gdb, openocd]`), the find-only programs `arm-none-eabi-gdb` (GDB >= 12; `gdb-multiarch` on Ubuntu) and
+  `openocd` (>= 0.12.0), both blocked for direct calls; support package `gdb_support/` (standard library: ELF/DWARF
+  reader, MI parser and session, OpenOCD supervision, fault decoder, profiles); skill `debug-sessions`; profiles
+  `stm32f4-stlink` (Cortex-M4F) and `stm32g0-stlink` (Cortex-M0+), both `unverified`.
+- Decisions: one finite session per call (no long-lived debug service, no console); `--firmware-effect none|actuates`
+  and `--on-exit halted|resume` are required (device-write, irreversible with `actuates`); OpenOCD's gdb-detach event
+  applies the exit policy and prints the state it left, which alone confirms the physical state; the cleanup `release`
+  never reconnects (a reconnect halts the core) and reports `unknown`; the ELF is matched by reading its read-only
+  sections back from flash (GDB `compare-sections` would make OpenOCD run code in the target's RAM); a mismatch, or an
+  `unchecked` match with nothing compared, withholds every symbol, source line, variable and fault-site attribution
+  (a partly compared, all-equal ELF keeps them with an `elf-unchecked` problem), live and in `diagnose`; GDB may read only the profile's flash, RAM
+  and the SCB fault registers; no GDB/OpenOCD download is declared (no verified archive layout on this machine).
+- Fixtures: `tests/fixtures/gdb-debug/firmware/` built with zig cc 0.13.0 (clang 18.1.6, pinned PyPI `ziglang`):
+  Cortex-M4 with DWARF 4, a rebuilt variant, Cortex-M0+ without debug information, RISC-V; GDB/OpenOCD stand-ins
+  (`fake_gdb.py`, `fake_openocd.py`) made into real executables by `make_tools.py` (pip's launcher on Windows).
+- Criteria: L04-A covered on Windows by `tests/integration/gdb-debug.test.ts` on real compiler output and checked
+  against pyelftools 0.32 (opt-in `VERA_GDB_ORACLE_PYTHON`, run 2026-11-14); L04-D, L04-E (an external reset only
+  indirectly: as an unrequested stop and async events, no scenario of its own), L04-G partially (runner BUSY against
+  probe-rs `--probe` selectors, a second session and a HIL hold; access that does not name the probe - probe-rs
+  without `--probe`, stm32-cubeprog `sn=` - is not detected; probe-rs `gdb`/`debug`/`serve`/`dap-server` still blocked) and
+  the protocol/lifecycle parts of L04-B, L04-C and L04-F (MI tokens, mismatch withholding, breakpoint/step/timeout,
+  exit policy, no process left, loopback-only arguments, Stop through VERA's real runner) are covered offline against
+  the stand-ins and `internals.py`. Inventory 2026-11-14 (read-only): no GDB, OpenOCD, probe-rs, pyOCD, J-Link or QEMU
+  installed and no debug probe attached. Real tools, Windows, 2026-11-14 (approved downloads, verified SHA-256, kept in
+  a scratch folder): xPack arm-none-eabi-gcc 15.2.1-1.1 (GDB 16.3.90) and xPack OpenOCD 0.12.0-7. The opt-in tests
+  `VERA_GDB_REAL_GDB` run snapshot, break (function, `file:line`, address), a not-hit interrupt, instruction steps and a
+  rebuilt-ELF mismatch with the real GDB against the OpenOCD stand-in's remote-protocol target (fixture flash, a
+  HardFault state): real MI output, real unwinding through the exception frame, no write packet. `VERA_GDB_REAL_OPENOCD`
+  starts the real OpenOCD with a serial no probe has: every configuration command is accepted, it stops at the missing
+  adapter, result `error`/`openocd`, physical `unchanged`. These runs found that GDB 16 names its target only for
+  `--configuration`, and that the stand-in's fault pc lay in padding; both fixed. Open: L04-B/C/E/F on a real board and
+  probe, OpenOCD's detach events on a real core, each profile (both stay `unverified`), L04-H on native Ubuntu x64
+  (`REQ-PLAT-8c2cdfb0`).
 
 ## Rules shared by the packages
 

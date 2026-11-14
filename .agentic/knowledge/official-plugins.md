@@ -51,6 +51,16 @@ tests/integration/hil-testing.test.ts (real runner and real serial-monitor, scpi
 their fakes, probe-rs replay stand-in) own its coverage. New step kinds are adapter registrations, never a second
 executor.
 
+For gdb-debug, start at plugins/gdb-debug/plugin.yaml (programs `gdb-elf`, `gdb-debug` with `uses` and `resources`,
+find-only `arm-none-eabi-gdb` and `openocd`, both blocked), scripts/gdb_elf.py, scripts/gdb_debug.py and
+scripts/gdb_support/ (elf.py and dwarf.py the offline reader, cli_elf.py inspect/diagnose, cli_debug.py validation,
+tools and release, operations.py the session flow, session.py and mi.py GDB/MI, openocd.py, faults.py, symbols.py,
+validate.py, profiles.py with profiles/*.json, registry.py, lifecycle.py, report.py, workspace.py the shared copy) with
+spec .agentic/specs/REQ-DATA-d7da2a71.md; tests/integration/gdb-debug.test.ts and tests/fixtures/gdb-debug/ (fixture
+ELFs built by firmware/build.py with zig cc, the GDB/OpenOCD stand-ins fake_gdb.py and fake_openocd.py made executable
+by make_tools.py, internals.py unit checks) own its coverage - offline evidence, never a real GDB, OpenOCD or target.
+Its probe reservation is the platform's `probe` registry kind, see [Plugins](plugins.md).
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -66,7 +76,9 @@ platform's resource leases and supervised cleanup; skills bench-instruments and 
 (program `lab-validate`, a standard-library PEP 723 script that compares captures, CSV/sigrok exports and SPICE run
 folders with requirements offline; skills validation-planning and difference-explanation); hil-testing (program `hil`
 whose `check` and `run` VERA core compiles and executes as hardware-in-the-loop plans over the other plugins, plus a
-standard-library report helper; skill hil-planning). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+standard-library report helper; skill hil-planning); gdb-debug (programs `gdb-elf` for offline ELF/DWARF inspection and
+fault re-diagnosis and `gdb-debug` for finite supervised GDB/OpenOCD sessions on a declared probe; skill
+debug-sessions). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -275,6 +287,20 @@ that source metadata reaches the deterministic bundled index unchanged.
   lab-validate.compare, await. Results in `embedded-lab-results/<run-id>/` (plan.json, result.json kind
   `hil-test-result`, events.jsonl, steps/). Verified on Windows 11 offline and with real helper processes (2026-11-14);
   no real board, probe or native Ubuntu run yet.
+- `gdb-debug` 1.0.0, ecosystem `lab` (pack Embedded lab, group Debugging (GDB and OpenOCD), default on; activities
+  `debug`, `firmware-analysis`), Windows x64/Linux x64. `gdb-elf inspect <elf>` and `gdb-elf diagnose <run> [--elf]`
+  (safe, standard library, no process): SHA-256, class, machine, ARM Tag_CPU_name/arch/profile, float ABI, entry,
+  segments, symbol counts, GNU build id, DWARF 2-5 unit versions, producers, languages and the `-O` level when a
+  producer records it; diagnose recomputes a saved snapshot's fault and attribution, none for another ELF.
+  `gdb-debug tools` (safe; versions, GDB target, `set architecture` support per profile), `snapshot|break|step --probe
+  <alias> --elf <elf> --firmware-effect none|actuates --on-exit halted|resume [--read VAR]... [--frames 1-64]` (break:
+  `--at <function|file:line|*0xflash>` `--timeout 1-3000`; step: `--count 1-100` `[--instruction]`; device-write,
+  irreversible with `actuates`; rule timeout 3600 for break) and the cleanup `release --probe` (safe, touches nothing,
+  physical unknown). Profiles `stm32f4-stlink` (Cortex-M4F, v7m faults) and `stm32g0-stlink` (Cortex-M0+, v6m), both
+  `unverified`. Results in `embedded-lab-results/<run-id>/` (result.json kind `gdb-debug-result`, mi.log,
+  openocd.log). Exit 0 pass, 2 refused before any process, 3 incomplete/blocked/error. Verified on Windows 11 offline
+  (fixture ELFs from zig cc 0.13.0, pyelftools 0.32 oracle, GDB/OpenOCD stand-ins, VERA's real runner, 2026-11-14); no
+  real GDB, OpenOCD, probe, board or native Ubuntu run yet.
 
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
@@ -417,6 +443,20 @@ that source metadata reaches the deterministic bundled index unchanged.
   boot log with `serial capture --port P --reset`.
 
 ## Invariants
+
+- gdb-debug: the agent never reaches GDB's or OpenOCD's input - the direct programs are blocked, the helper owns the
+  pipes and sends only its fixed MI command set; `--read` and `--at` values pass a whitelist (identifiers, `.member`,
+  `[index]`, function, `file:line`, flash `*0x`) before any process starts; GDB starts with `-nx` and auto-load,
+  debuginfod, history and target function calls (`may-call-functions`) off; OpenOCD runs only the profile's own scripts with the probe serial (charset without Tcl
+  metacharacters), GDB port on 127.0.0.1, telnet/Tcl off, GDB flash programming off, hardware breakpoints.
+- gdb-debug reads target memory only inside the profile's flash and RAM and the SCB fault registers (`mem` regions,
+  all read-only, inaccessible by default); OpenOCD runs in an empty temporary folder outside the workbench and never writes target memory or flash; the ELF match reads flash back (GDB
+  `compare-sections` is not used: OpenOCD would run a CRC routine in target RAM); a mismatch withholds every symbol,
+  source, variable and fault-site attribution, as does an ELF of which no byte could be compared (`unchecked`, compared
+  0); a partly compared, all-equal ELF keeps them with an `elf-unchecked` problem and a limit.
+- gdb-debug's exit policy is applied by OpenOCD's gdb-detach event on every end (also when GDB is killed); only its
+  printed state confirms the physical state; `release` never reconnects. An MI result is matched only to its own
+  token; stale and untokened results are events.
 
 - elec-calc sets `sys.dont_write_bytecode` and puts its own folder on `sys.path` before importing
   `elec_support`: a run writes nothing into the installed package, so the integrity hash holds. Requests are
@@ -574,6 +614,9 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
+| A gdb-debug board/probe profile | `plugins/gdb-debug/profiles/*.json`, `gdb_support/profiles.py` | profile tests in `tests/fixtures/gdb-debug/internals.py`, OpenOCD argument test in `gdb-debug.test.ts`; a real board run before `verified` |
+| A gdb-debug operation or MI handling | `gdb_support/operations.py`, `session.py`, `mi.py`, `tests/fixtures/gdb-debug/fake_gdb.py` | the session tests of `gdb-debug.test.ts` and the session checks of `internals.py` |
+| ELF/DWARF facts or fault decoding | `gdb_support/elf.py`, `dwarf.py`, `faults.py`, `symbols.py` | inspect and diagnose tests, `internals.py`, opt-in `VERA_GDB_ORACLE_PYTHON` (pyelftools) |
 | A calculation model, formula, check or limit | `plugins/electronics-calc/scripts/elec_support/{electrical,losses,thermal}.py`, spec REQ-DATA-3d15fdfc §5 | that model's group in `tests/fixtures/electronics-calc/cases.json`, derived by hand in its README |
 | Units, prefixes, the quantity or result contract | `elec_support/quantities.py`, `contract.py` | "quantities" groups and the result-document test of `electronics-calc.test.ts` |
 | Corners or Monte Carlo | `elec_support/tolerance.py` | tolerance groups and the Monte Carlo tests |
@@ -683,6 +726,9 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
 
 ## Files
+
+- `05_Software/plugins/gdb-debug/` — manifest, README (operations, guarantees, limits), profiles `stm32f4-stlink.json` and `stm32g0-stlink.json`, skill debug-sessions, `scripts/gdb_elf.py` and `scripts/gdb_debug.py` (entries), `scripts/gdb_support/` (`elf`, `dwarf`, `symbols`, `faults`, `validate`, `profiles`, `registry`, `mi`, `session`, `openocd`, `operations`, `lifecycle`, `report`, `errors`, `cli_elf`, `cli_debug`, `workspace` shared).
+- `05_Software/tests/integration/gdb-debug.test.ts`, `tests/fixtures/gdb-debug/` (`firmware/` sources, linker scripts, `build.py` and the four ELFs; `fake_gdb.py`, `fake_openocd.py`, `make_tools.py`, `internals.py`).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).
