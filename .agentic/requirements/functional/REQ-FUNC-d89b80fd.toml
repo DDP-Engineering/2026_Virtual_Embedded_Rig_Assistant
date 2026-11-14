@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d89b80fd"
+
+title = "Run approved test sets with declared stimuli on the model"
+
+status = "active"
+
+requirement = """
+When test is requested, renode-sim shall run each case of the approved test set in order on one simulated machine, applying only stimuli the profile declares and reading only observables the profile declares, and shall record each case's status, its step results with virtual times and its requirement id.
+"""
+
+verification = "Run the board-basics set on the boot fixture: the boot-version, uart-rx, timer and button-led cases pass with their virtual times; a test set naming a stimulus the profile does not declare is refused before the engine starts."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/testsets.py", "05_Software/plugins/renode/scripts/renode_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

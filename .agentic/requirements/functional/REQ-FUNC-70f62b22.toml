@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-70f62b22"
+
+title = "Provision the pinned Renode engine"
+
+status = "active"
+
+requirement = """
+The renode plugin shall install the engine from the pinned Renode 1.17.0 portable archive for Windows x64 and Linux x64 verified by SHA-256, or find an installed Renode whose version is 1.17.0, and renode-sim tools shall report the engine path, version and platforms folder without starting a simulation, or blocked when no engine is provided.
+"""
+
+verification = "Manifest tests check the download entries, hashes and version range; tools against the stand-in reports its version and platforms folder and starts no session, and without an engine exits 3 with engine-missing; opt-in, the real extracted archive (renode_1.17.0-portable/renode.exe) reports Renode 1.17.0."
+
+affected_paths = ["05_Software/plugins/renode/plugin.yaml", "05_Software/plugins/renode/scripts/renode_support/engine.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

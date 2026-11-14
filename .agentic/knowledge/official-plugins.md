@@ -73,6 +73,32 @@ evidence, never a real JS220 - plus the opt-in `VERA_POWER_REAL_PYTHON` suite wi
 meter reservation is the platform's `power-monitor` registry kind, see [Plugins](plugins.md); criteria go through
 lab-validation's `integral` metric and `power-capture` importer; HIL steps `power.identify`/`power.capture`.
 
+For renode, start at plugins/renode/plugin.yaml (programs `renode`, the engine: find or the pinned Renode 1.17.0
+portable download, every direct rule blocked; `renode-sim` with `uses: [renode]`), scripts/renode_sim.py and
+scripts/renode_support/:
+- cli.py: operations and refusals;
+- profiles.py: profile.json, the quote-aware `.repl` validator, the `.resc` parser and the engine-file check;
+- firmware.py: ELF checks with the copied elf.py;
+- testsets.py: data-only step kinds and parameters;
+- engine.py: the headless console session, UART segments, the log watch and process-tree kill;
+- operations.py: slices, steps and statuses;
+- result.py: the progressive result.json;
+- report.py: md/html/junit and the `--hil` table;
+- workspace.py: the shared copy.
+
+The spec is .agentic/specs/REQ-DATA-8a943977.md (section 9 records the observed engine facts). The plugin's
+profiles/stm32f4-discovery/ holds Renode's board and CPU descriptions without the SVD download, and
+testsets/board-basics/ is the approved test set.
+
+Coverage:
+- tests/integration/renode.test.ts with tests/fixtures/renode/: the engine stand-in fake_renode.py made executable
+  by make_engine.py, firmware/ ELFs built with zig cc plus variants.json, the stock vendor .resc, and engine/platforms/
+  vendor copies. This is offline evidence.
+- The opt-in `VERA_RENODE_REAL` suite runs against the real engine.
+
+No platform (core/shared/host) seam was added. A run reserves no bench resource, so VERA's Stop is the runner's
+tree kill, and the progressive result.json carries the partial report.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -92,7 +118,9 @@ standard-library report helper; skill hil-planning); gdb-debug (programs `gdb-el
 fault re-diagnosis and `gdb-debug` for finite supervised GDB/OpenOCD sessions on a declared probe; skill
 debug-sessions); power-profiler (programs `power-profile` for Joulescope JS220 captures on pyjoulescope_driver 2.5.5 and
 `power-analyze` for offline energy, charge, events, A/B and battery analysis; skills power-measurement and
-energy-analysis). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+energy-analysis). renode (programs `renode`, the pinned Renode 1.17.0 engine whose direct calls are blocked, and `renode-sim`,
+which validates firmware against approved virtual-board profiles and runs it headless with UART capture and data-only
+test sets; skill virtual-boards). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -329,6 +357,27 @@ that source metadata reaches the deterministic bundled index unchanged.
   driver stand-in, VERA's real runner, lab-validate on the written requests) and with the real pyjoulescope_driver 2.5.5
   from PyPI without a meter (2026-11-14); no JS220, board or native Ubuntu run yet.
 
+- `renode` 1.0.0, ecosystem `lab` (pack Embedded lab, group Virtual boards (Renode), default on; activities
+  testing/firmware-analysis), Windows x64/Linux x64.
+  - Engine program `renode`: found (`==1.17.0`), or downloaded and SHA-256-checked from the 1.17.0 portable archives
+    (`renode_1.17.0-portable/renode[.exe]`). Every direct call is blocked.
+  - `renode-sim` (standard library, all rules safe, host simulation):
+    - `tools`;
+    - `profiles [--profile ID]`;
+    - `validate --profile --firmware --arch --boot-address` (offline);
+    - `run`, `capture-uart --until REGEX` and `test --test-set ID [--param N=V]...`, with `--virtual-budget` up to
+      3600 virtual s and `--real-timeout` up to 3500 s (rule timeout 3600);
+    - `report --run DIR [--hil DIR]`.
+  - Profile `stm32f4-discovery` (`unverified`: Windows only) and test set `board-basics` (boot/version, UART echo,
+    10 Hz timer, button/LED).
+  - Results in `embedded-lab-results/<run-id>/`: result.json kind `renode-result` (state running/done), firmware.elf,
+    profile/, uart-<name>.log, engine.log, monitor.log and junit.xml. `report` adds report.md/html.
+  - Exit codes: 0 pass, 1 fail/timeout, 2 refused, 3 incomplete/blocked/error/stopped.
+  - Verified on Windows 11 with offline fixtures (the stand-in, VERA's real runner and Stop) and with the real
+    Renode 1.17.0 (2026-11-14): board-basics passes twice with equal virtual results, the wrong version fails, silence
+    times out, the DAC write is unmodeled, the engine owns no TCP/UDP endpoint, and engine.log shows no download. The
+    network was not disabled for that run. No native Ubuntu run yet.
+
 - `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
   through source plugin. It compares explicit captured runs with parse_log, documented conditions,
@@ -488,6 +537,17 @@ that source metadata reaches the deterministic bundled index unchanged.
   range limit an overflow flag; energy and charge over either are null (covered values reported), never zero.
   Segmentation trusts only the meter's clock (GPI markers, timestamps on the capture's own clock, the current itself);
   verdicts are lab-validate's.
+- renode: the agent never reaches the Renode monitor.
+  - renode-sim sends only commands composed from an approved profile and fixed templates, with absolute run-folder
+    `@` paths (8.3 short form, else blocked). Any answer to a setup or run command is an engine error.
+  - Profiles: `.repl` files are validated line by line (quote-aware comments, using allowlist, denied host-binding
+    words, no init or @file paths), and `.resc` files are parsed into five allowed commands. Engine files that a
+    profile uses must be hashed and free of init blocks and URLs.
+  - Firmware is checked against the profile's architecture, memory map, boot address and vector table before the
+    engine starts, and the engine's initial PC/SP must match that vector table.
+  - Unmodeled accesses make a run incomplete, never pass. Virtual and real time are separate fields.
+  - Results are always `evidence: virtual`, with a fixed not-covered list (electrical timing, power, EMI, SPICE).
+  - Renode's Robot keyword server is never started: it listens on every interface on Linux.
 - gdb-debug's exit policy is applied by OpenOCD's gdb-detach event on every end (also when GDB is killed); only its
   printed state confirms the physical state; `release` never reconnects. An MI result is matched only to its own
   token; stale and untokened results are events.
@@ -650,6 +710,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 |---|---|---|
 | A gdb-debug board/probe profile | `plugins/gdb-debug/profiles/*.json`, `gdb_support/profiles.py` | profile tests in `tests/fixtures/gdb-debug/internals.py`, OpenOCD argument test in `gdb-debug.test.ts`; a real board run before `verified` |
 | A gdb-debug operation or MI handling | `gdb_support/operations.py`, `session.py`, `mi.py`, `tests/fixtures/gdb-debug/fake_gdb.py` | the session tests of `gdb-debug.test.ts` and the session checks of `internals.py` |
+| A renode profile or a profile validator rule | `plugins/renode/profiles/<id>/`, `renode_support/profiles.py` | the profile tests of `renode.test.ts`; the opt-in `VERA_RENODE_REAL` suite for a new profile before `verified` |
+| A renode step kind, status or engine command | `renode_support/testsets.py`, `operations.py`, `engine.py`, `tests/fixtures/renode/fake_renode.py` | the stand-in tests and the allow-list test of `renode.test.ts`; the real-engine suite for any new monitor command |
 | ELF/DWARF facts or fault decoding | `gdb_support/elf.py`, `dwarf.py`, `faults.py`, `symbols.py` | inspect and diagnose tests, `internals.py`, opt-in `VERA_GDB_ORACLE_PYTHON` (pyelftools) |
 | A calculation model, formula, check or limit | `plugins/electronics-calc/scripts/elec_support/{electrical,losses,thermal}.py`, spec REQ-DATA-3d15fdfc §5 | that model's group in `tests/fixtures/electronics-calc/cases.json`, derived by hand in its README |
 | Units, prefixes, the quantity or result contract | `elec_support/quantities.py`, `contract.py` | "quantities" groups and the result-document test of `electronics-calc.test.ts` |
@@ -763,6 +825,19 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 - `05_Software/plugins/gdb-debug/` — manifest, README (operations, guarantees, limits), profiles `stm32f4-stlink.json` and `stm32g0-stlink.json`, skill debug-sessions, `scripts/gdb_elf.py` and `scripts/gdb_debug.py` (entries), `scripts/gdb_support/` (`elf`, `dwarf`, `symbols`, `faults`, `validate`, `profiles`, `registry`, `mi`, `session`, `openocd`, `operations`, `lifecycle`, `report`, `errors`, `cli_elf`, `cli_debug`, `workspace` shared).
 - `05_Software/tests/integration/gdb-debug.test.ts`, `tests/fixtures/gdb-debug/` (`firmware/` sources, linker scripts, `build.py` and the four ELFs; `fake_gdb.py`, `fake_openocd.py`, `make_tools.py`, `internals.py`).
+- `05_Software/plugins/renode/`:
+  - the manifest and README;
+  - `profiles/stm32f4-discovery/` (`profile.json`, `platform.repl`, `stm32f4.repl`, `machine.resc`);
+  - `testsets/board-basics/testset.json`;
+  - skill virtual-boards;
+  - `scripts/renode_sim.py`;
+  - `scripts/renode_support/`: `cli`, `profiles`, `firmware`, `testsets`, `engine`, `operations`, `result`, `report`,
+    `errors`, plus `elf` and `workspace` (copies).
+- `05_Software/tests/integration/renode.test.ts` and `tests/fixtures/renode/`:
+  - `firmware/`: `demo.c`, `startup.c`, linker scripts, `build.py`, five ELFs and `variants.json`;
+  - `fake_renode.py` and `make_engine.py`;
+  - `engine/platforms/` (Renode's two STM32F4 descriptions);
+  - `stock/stm32f4_discovery.resc`.
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).

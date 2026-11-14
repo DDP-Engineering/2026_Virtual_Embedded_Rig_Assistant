@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cea31393"
+
+title = "Capture UART output until a pattern or the virtual budget"
+
+status = "active"
+
+requirement = """
+When capture-uart is requested, renode-sim shall record the selected UART until a line matches the given pattern or the virtual budget is used, and shall report pass when the pattern matched and timeout with the virtual time used when it did not.
+"""
+
+verification = "Capture the boot fixture until the version pattern: pass with the matched line and its virtual time; capture until a pattern the firmware never prints within 0.5 s: timeout with virtual 0.5 s used."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

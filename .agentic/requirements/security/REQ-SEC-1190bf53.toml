@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-1190bf53"
+
+title = "Refuse disallowed includes and scripts in profiles"
+
+status = "active"
+
+requirement = """
+If a profile's .repl or .resc file names a URL, a monitor python or script command, an init block, an include or using of a file that is neither a hashed file of the pinned engine's platforms folder nor a file beside the profile, a host-binding object or command (socket, PTY, TAP, switch, GDB server, USB/IP, host network), a comment marker inside a string or a file path outside the run folder, then renode-sim shall refuse the profile with the line number and reason; and if an engine file the profile uses holds an init block or a URL, renode-sim shall block every run of it naming that file and line; in both cases the engine is not started.
+"""
+
+verification = "Validate the stock stm32f4_discovery.resc and workbench profiles with each refused construct (including a comment marker inside a string and malformed profile.json shapes): each is refused naming its line or reason; a workbench profile using Renode's own platforms/cpus/stm32f4.repl (which downloads an SVD) is blocked with engine-files; the plugin profile passes."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/profiles.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

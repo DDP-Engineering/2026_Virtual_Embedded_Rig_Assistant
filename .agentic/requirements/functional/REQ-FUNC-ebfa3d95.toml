@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ebfa3d95"
+
+title = "Validate a firmware ELF against a profile before simulation"
+
+status = "active"
+
+requirement = """
+When validate is requested with a profile, a firmware ELF, an explicit architecture and an explicit boot address, renode-sim shall report the firmware validated only if the ELF is a little-endian 32-bit ARM executable whose architecture attributes, when present, match the stated architecture, the stated architecture and boot address equal the profile's, every loadable segment lies inside a profile memory region, and the vector table at the boot address holds an initial stack pointer inside RAM and a Thumb reset vector inside flash.
+"""
+
+verification = "Validate the Cortex-M4 fixture for stm32f4-discovery with cortex-m4 and 0x08000000: validated with SHA-256, build id, segment regions and the vector table (initial SP 0x20020000 inside the declared RAM)."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/firmware.py", "05_Software/plugins/renode/scripts/renode_support/elf.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

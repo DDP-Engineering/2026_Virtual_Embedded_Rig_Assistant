@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9431b520"
+
+title = "Keep virtual and real time separate"
+
+status = "active"
+
+requirement = """
+The renode-sim helper shall record the virtual time and the real duration of every run, case and step in separate fields, accept separate virtual and real budgets, and state in every result that virtual time is not physical timing and that no power consumption was measured.
+"""
+
+verification = "Check result.json of a test run: virtualSeconds and realSeconds differ and both budgets are recorded; the coverage section names electrical timing and analog consumption as not covered."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/result.py", "05_Software/plugins/renode/scripts/renode_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

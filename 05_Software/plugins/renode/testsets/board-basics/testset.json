@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "id": "board-basics",
+  "title": "Boot banner and version, UART receive, timer ticks and the user button/LED on the STM32F4 Discovery model",
+  "profiles": ["stm32f4-discovery"],
+  "params": {
+    "banner": { "default": "VERA-FW renode-demo", "regex": "^[A-Za-z0-9 ._:-]{1,64}$" },
+    "version": { "default": "1.2.3", "regex": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "ticks": { "default": "10", "regex": "^[0-9]{1,4}$" }
+  },
+  "cases": [
+    {
+      "id": "boot-version",
+      "requirement": "FW-BOOT",
+      "hil": ["boot-banner"],
+      "budget": 0.5,
+      "steps": [
+        { "do": "uart", "pattern": "^${banner}$", "within": 0.2 },
+        { "do": "uart", "pattern": "^version ${version}$", "fail": "^version ", "within": 0.2 }
+      ]
+    },
+    {
+      "id": "uart-rx",
+      "requirement": "FW-UART-ECHO",
+      "hil": ["uart-echo"],
+      "budget": 0.5,
+      "steps": [
+        { "do": "stimulus", "name": "console-rx", "text": "ping\r" },
+        { "do": "uart", "pattern": "^ECHO ping$", "fail": "^ECHO ", "within": 0.2 }
+      ]
+    },
+    {
+      "id": "timer",
+      "requirement": "FW-TIMER-10HZ",
+      "hil": ["tick-rate"],
+      "budget": 2,
+      "steps": [
+        { "do": "uart", "pattern": "^TICK [0-9]+$", "within": 0.2 },
+        { "do": "count", "pattern": "^TICK [0-9]+$", "over": 1, "min": "${ticks}", "max": "${ticks}" }
+      ]
+    },
+    {
+      "id": "button-led",
+      "requirement": "FW-BUTTON-LED",
+      "hil": ["button-led"],
+      "budget": 1,
+      "steps": [
+        { "do": "observe", "name": "user-led", "equals": false, "within": 0.05 },
+        { "do": "stimulus", "name": "user-button", "action": "press" },
+        { "do": "uart", "pattern": "^BUTTON 1$", "fail": "^BUTTON 0$", "within": 0.2 },
+        { "do": "observe", "name": "user-led", "equals": true, "within": 0.05 },
+        { "do": "stimulus", "name": "user-button", "action": "release" },
+        { "do": "uart", "pattern": "^BUTTON 0$", "within": 0.2 },
+        { "do": "observe", "name": "user-led", "equals": false, "within": 0.05 }
+      ]
+    }
+  ]
+}

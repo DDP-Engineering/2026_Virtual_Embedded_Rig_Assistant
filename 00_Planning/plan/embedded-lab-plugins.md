@@ -20,7 +20,9 @@ a real board, real probe-rs/esptool and native Ubuntu open); LAB-04 implemented 
 TASK-6b092dfc, offline evidence with real compiler-built ELFs and GDB/OpenOCD stand-ins on Windows; real GDB, OpenOCD,
 a probe, a board and native Ubuntu open); LAB-05 implemented 2026-11-14 on the same branch (AEGIS TASK-39da0f51,
 offline evidence with closed-form fixtures and a pyjoulescope_driver stand-in, the real driver 2.5.5 without a meter on
-Windows; a JS220, a reference load, a sleep/wake board and native Ubuntu open); LAB-06...LAB-08 planned.
+Windows; a JS220, a reference load, a sleep/wake board and native Ubuntu open); LAB-06 implemented 2026-11-14 on the
+same branch (AEGIS TASK-f059e085, offline evidence against an engine stand-in and the real Renode 1.17.0 on Windows;
+native Ubuntu open); LAB-07 and LAB-08 planned.
 
 ## Order
 
@@ -31,7 +33,7 @@ Windows; a JS220, a reference load, a sleep/wake board and native Ubuntu open); 
 | 3 | LAB-03 | [#104](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/104) | `hil-testing` | orchestrated tests on the real board with controlled resources and stop | implemented |
 | 4 | LAB-04 | [#105](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/105) | `gdb-debug` | supervised debug sessions and symbol-aware fault diagnosis | implemented |
 | 5 | LAB-05 | [#106](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/106) | `power-profiler` | measured current, power and energy tied to firmware | implemented |
-| 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | planned |
+| 6 | LAB-06 | [#107](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/107) | `renode` | firmware on explicitly supported virtual platforms | implemented |
 | 7 | LAB-07 | [#108](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/108) | `zephyr` | Zephyr build, flash and tests through checked operations | planned |
 | 8 | LAB-08 | [#109](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/109) | `platformio` | PlatformIO build, upload and tests, plus the integrated acceptance | planned |
 
@@ -238,6 +240,65 @@ them.
   `unchanged`. Open: L05-A (a real reference load against an independent check), L05-C live (a sleep/wake firmware on a
   board), L05-H live on Windows and native Ubuntu x64 (`REQ-PLAT-cd7e4f2c`) - no JS220 is available; the profile stays
   `unverified`; provisioning through VERA's own uv was not run (the pin was resolved by uv directly).
+
+## LAB-06 as built
+
+- Platform (VERA itself): no change. A Renode run reserves no bench resource, so VERA's Stop and the runner timeout
+  are tree kills. The helper keeps `result.json` current instead, and `report` turns a killed run into
+  `stopped`/`interrupted`. Spec `.agentic/specs/REQ-DATA-8a943977.md`; section 9 holds the observed engine facts.
+- Package `05_Software/plugins/renode/` (official, pack "Embedded lab" group "Virtual boards (Renode)", activities
+  testing/firmware-analysis), skill `virtual-boards`. Two programs:
+  - `renode`: the engine. It is found (`==1.17.0`) or installed from the SHA-256-pinned 1.17.0 portable archives
+    (`renode_1.17.0-portable/renode[.exe]`; the Linux path is inferred from Renode's packaging script). Every direct
+    call is blocked.
+  - `renode-sim`: `scripts/renode_sim.py`, standard-library PEP 723, all rules safe. Operations `tools`, `profiles`,
+    `validate`, `run`, `capture-uart`, `test` and `report`.
+- Profile `stm32f4-discovery` (STM32F407, Cortex-M4F, `unverified`): Renode's board and CPU descriptions copied beside
+  the profile, without the CPU file's `sysbus: init:` block. That block downloads an SVD from dl.antmicro.com
+  (`ApplySVD @https`), which is a hidden download the ticket forbids; it was found on the real engine.
+  - Declared stimuli: user button and UART input. Observable: the user LED. The profile also lists what the model does
+    not support.
+- Test set `board-basics`: boot banner and version, UART echo, 10 timer ticks per virtual second, button to LED.
+  Parameters `banner`, `version`, `ticks`.
+- Fixtures `tests/fixtures/renode/firmware/` were built with zig cc 0.13.0, as in LAB-04: `demo`, `wrong-version`,
+  `silent`, DAC `unmodeled`, and the CCM-linked memory-map mismatch. The LAB-04 `riscv.elf` and `fault-m0.elf` serve as
+  foreign-chip fixtures.
+- Decisions:
+  - No Robot Framework. Renode 1.17.0's keyword server listens on every interface on Linux, and `Execute Command`
+    reaches the monitor's `python`. Test sets are data, using the step kinds uart, count, stimulus, observe and run,
+    and the helper runs them over the console.
+  - The engine starts as `--disable-gui --console --plain --hide-log --config <run>/renode.config`, with no telnet
+    port, no .NET diagnostics IPC and only system environment variables.
+  - Commands are composed from the approved profile and fixed templates. Every `@` path is absolute and lies in the
+    run folder (8.3 short form for spaces, else `blocked`/`run-path`). Any answer to a setup or run command is an
+    error.
+  - The UART file backend is exclusive on Windows, so it is read in closed segments (`CloseFileBackend` while
+    emulation is paused).
+  - Workbench `.repl` files are validated quote-aware: a `using` allowlist, denied host-binding words, no `init` and
+    no `@` file paths. `.resc` files are parsed into five allowed commands. An engine file a profile uses must be
+    hashed and free of `init` and URLs, so the stock `stm32f4_discovery.resc` and Renode's own CPU file are refused.
+  - Firmware is checked offline against the explicit `--arch`, the memory map, `--boot-address` and the vector table.
+    The engine's logged initial PC/SP must match that vector table.
+  - Time advances in fixed slices (10 ms), so line times, stimuli and observations repeat exactly. Virtual and real
+    time are separate fields, and both budgets apply.
+  - Statuses: `fail` is an assertion, `timeout` has the code `virtual-timeout` or `real-timeout`, and an unmodeled
+    access makes the run `incomplete`. Reports carry `evidence: virtual` and a fixed list of what is not covered:
+    electrical timing, power, EMI, SPICE.
+  - `report --hil` lines up requirement ids with the HIL steps a case names, in separate virtual and hardware
+    columns.
+- Criteria (Windows):
+  - Offline, by `tests/integration/renode.test.ts` against the stand-in and VERA's real runner: L06-A, B, C, D, E
+    (including Stop with no process left and the partial report), F and G.
+  - Opt-in `VERA_RENODE_REAL`, run 2026-11-14 with the approved, SHA-256-verified Windows portable archive in a scratch
+    folder:
+    - L06-A/B: board-basics passes twice with equal virtual results.
+    - L06-C: the DAC write is reported unmodeled.
+    - L06-E: the wrong version is an assertion and silence a virtual timeout.
+    - L06-D: no TCP/UDP endpoint of the engine during a run; a tree kill leaves no engine.
+    - L06-H, Windows half: the profile files are the engine's own minus the SVD block; no download in engine.log and
+      no URL in any command (the network was not disabled).
+  - Open: L06-H on native Ubuntu x64 (`REQ-PLAT-d03a51af`; the Linux archive was not downloaded) and a firmware other
+    than the fixtures. The profile stays `unverified`.
 
 ## Rules shared by the packages
 

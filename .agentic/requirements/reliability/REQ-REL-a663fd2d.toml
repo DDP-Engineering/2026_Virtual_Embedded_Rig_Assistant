@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-a663fd2d"
+
+title = "Repeat a test with the same outcome under the model"
+
+status = "active"
+
+requirement = """
+When the same firmware, profile and test set are run twice, renode-sim shall produce the same case statuses, the same UART lines and the same virtual times of each matched step.
+"""
+
+verification = "Run board-basics twice on the boot fixture (stand-in and, opt-in, the real engine): statuses, matched lines and virtual times are equal; the real durations may differ."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

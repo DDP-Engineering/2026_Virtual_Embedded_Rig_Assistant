@@ -49,6 +49,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["parts-search", "official"],
     ["power-profiler", "official"],
     ["probe-rs", "official"],
+    ["renode", "official"],
     ["scpi-instruments", "official"],
     ["serial-monitor", "official"],
     ["sigrok", "official"],

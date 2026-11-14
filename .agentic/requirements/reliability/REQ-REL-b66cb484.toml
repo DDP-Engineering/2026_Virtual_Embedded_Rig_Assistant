@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-b66cb484"
+
+title = "Mark unmodeled peripheral accesses incomplete"
+
+status = "active"
+
+requirement = """
+If the engine reports an access to an address or register without a model during a run, capture or test, then renode-sim shall list each accessed address or register with its access kind and count, make the run at least incomplete with code unmodeled-peripheral and the case during which it happened incomplete, and never report that run as pass.
+"""
+
+verification = "Run the unmodeled fixture (writes the DAC at 0x40007400, which the stm32f4 model lacks) on the stand-in and on the real Renode 1.17.0: incomplete with code unmodeled-peripheral and the write listed; the boot fixture lists none."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/engine.py", "05_Software/plugins/renode/scripts/renode_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14
