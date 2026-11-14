@@ -2243,17 +2243,6 @@ legend {
 .transcript-item {
   flex-shrink: 0;
 }
-/*
- * PERF-07: off-screen messages skip layout and paint, so a long session lays out about one screen
- * while text streams. `auto` keeps each row's last rendered height; scroll anchoring keeps the view.
- */
-.transcript-item.user,
-.transcript-item.assistant {
-  content-visibility: auto;
-  contain-intrinsic-block-size: auto 6rem;
-  /* The always-on paint containment would clip focus rings of links at the row edge. */
-  overflow-clip-margin: 0.25rem;
-}
 .transcript-item.user {
   border-radius: 1.25rem;
   background: var(--muted);

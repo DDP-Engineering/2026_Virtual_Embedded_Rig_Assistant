@@ -336,7 +336,10 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="instructions"]').click();
     await page.locator("#pinned-content").fill("ă".repeat(9000));
-    await expect(page.locator(".workbench-editor").getByRole("status")).toBeVisible();
+    // "Unsaved changes" is a status too; the oversize warning is the one this checks.
+    await expect(
+      page.locator(".workbench-editor").getByRole("status").filter({ hasText: "Context exceeds 16 KB" }),
+    ).toBeVisible();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).not.toBeVisible();
     await page.locator("[data-workbench-entry] .workbench-menu summary").first().click();
@@ -499,7 +502,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         await page.locator("[data-workbench-entry] .workbench-group-name").click();
         await page.locator("[data-session]").filter({ hasText: "Tool rows" }).focus();
         await page.keyboard.press("Enter");
-        await expect(page.locator("[data-tool-row]")).toHaveCount(2);
+        await expect(page.locator("[data-tool-group]")).toHaveCount(1);
         await expect(page.locator('[data-citation="valid"]')).toHaveCount(1);
         await expect(page.locator("html")).toHaveAttribute("lang", language);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -508,6 +511,8 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         await group.focus();
         await page.keyboard.press("Space");
         await expect(group).toHaveAttribute("aria-expanded", "true");
+        // The group's tool rows mount only once it is open.
+        await expect(page.locator("[data-tool-row]")).toHaveCount(2);
         const detail = page.locator("[data-tool-row]").first();
         await expect(detail.locator("button")).toBeVisible();
         await detail.locator("button").focus();
