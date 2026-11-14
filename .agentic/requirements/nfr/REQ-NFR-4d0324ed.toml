@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-4d0324ed"
+
+title = "Reuse the ChatGPT model list across agent iterations"
+
+status = "active"
+
+requirement = """
+While the ChatGPT model catalog fetched for the current token and account is younger than its cache lifetime of at most 300 seconds, the gateway shall answer prepareModel and models from that catalog without a new model-list request.
+"""
+
+verification = "Unit test: two prepareModel calls for the same chatgpt model fetch the model list once."
+
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/llm/subscription.test.ts"]
+
+
+spec = ""
+
+priority = "normal"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14

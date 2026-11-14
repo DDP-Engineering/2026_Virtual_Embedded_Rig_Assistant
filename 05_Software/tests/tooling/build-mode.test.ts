@@ -144,6 +144,11 @@ it.each([
     }
     expect(code).toContain("allowRemoteModels");
     expect(existsSync(join(mainDir, "document-embedding-worker.js"))).toBe(true);
+    const assets = join(output, "renderer/assets");
+    const entry = readdirSync(assets).find((name) => /^index-.*\.js$/.test(name));
+    expect(entry, "renderer entry chunk emitted").toBeDefined();
+    const lines = readFileSync(join(assets, String(entry)), "utf8").split("\n").length;
+    expect(lines, "renderer entry chunk is minified").toBeLessThan(1000);
     const url = pathToFileURL(join(output, "main/build-mode.js")).href;
     const run = spawnSync(
       process.execPath,

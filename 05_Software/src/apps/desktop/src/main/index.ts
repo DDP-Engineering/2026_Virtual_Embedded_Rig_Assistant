@@ -50,6 +50,7 @@ import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
 import { publicDocument, publicDocumentHit, publicViewer, publicWebDownload } from "./document-viewer.js";
 import { createDesktopDownloadTransfer } from "./download-transfer.js";
+import { createEmbeddingWarmup } from "./embedding-warmup.js";
 import { createEventEmitter, rendererSessionSnapshot, sanitizeSessionSummary } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
@@ -89,8 +90,8 @@ import { SessionsHost } from "./sessions.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
 import { WebAccessService } from "./web-access.js";
-import { popupWindowMenu, restoreWindowBounds, titleBarOverlay } from "./window-chrome.js";
-import { loadWindowState, saveWindowState } from "./window-state.js";
+import { popupWindowMenu, restoreWindowBounds, titleBarOverlay, windowBackground } from "./window-chrome.js";
+import { loadWindowState, saveWindowState, type WindowState } from "./window-state.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -117,9 +118,13 @@ protocol.registerSchemesAsPrivileged([
 
 let window: BrowserWindow | undefined;
 nativeTheme.on("updated", () => {
-  if (window && !window.isDestroyed())
-    window.setTitleBarOverlay(titleBarOverlay(nativeTheme.shouldUseDarkColors));
+  if (!window || window.isDestroyed()) return;
+  window.setTitleBarOverlay(titleBarOverlay(nativeTheme.shouldUseDarkColors));
+  window.setBackgroundColor(windowBackground(nativeTheme.shouldUseDarkColors));
 });
+// IPC waits for this before dispatch: responses are redacted with every stored secret. It never rejects;
+// a credential file that fails to load leaves credential operations failing, not the window (PERF-11).
+let credentialsReady: Promise<void> = Promise.resolve();
 const fileWorkers = createDesktopWorkerPool();
 const pluginListings = new PluginListingHost(join(dataLocations.paths.userData, "plugins"));
 const downloadTransfer = createDesktopDownloadTransfer();
@@ -313,9 +318,10 @@ const sessions = new SessionsHost({
     ? { permissions: { allow: () => true } }
     : {}),
 });
-ipcMain.handle("vera:subscription", (event, action, payload) =>
-  sessions.subscription(event, action, payload),
-);
+ipcMain.handle("vera:subscription", async (event, action, payload) => {
+  await credentialsReady;
+  return sessions.subscription(event, action, payload);
+});
 /** The folder of the open workbench when `workbenchId` names it; CONFLICT otherwise. */
 function openWorkbenchFolder(workbenchId: string): string {
   const snapshot = workbench.getSnapshot();
@@ -347,6 +353,17 @@ function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
     void scopedProvisioners.run(store, (host) => host.statuses(id, undefined, provisioner)).catch(() => {});
   return snapshot;
 }
+
+/** The first message of an open workbench loads its embedding model in the indexer (PERF-11). */
+const embeddingWarmup = createEmbeddingWarmup({
+  hasVectors: (workbenchId) =>
+    workbench.readDocuments(workbenchId, async (root, db) =>
+      db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(indexer.embeddings.modelId)
+        ? root
+        : undefined,
+    ),
+  embed: (root, signal) => indexer.embeddings.embed(root, ["warm-up"], signal),
+});
 
 // Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).
 let detected: Map<OpenerId, Opener> | undefined;
@@ -827,7 +844,9 @@ ipcMain.handle(
       "session.send": ({ sessionId, text }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return s.send(sessionId, text);
+          const sent = s.send(sessionId, text);
+          embeddingWarmup.request(workbench.getSnapshot().config.id);
+          return sent;
         }),
       "session.stop": ({ sessionId }) => {
         return sessions.run((s) => ({ stopped: s.stop(sessionId) }));
@@ -906,6 +925,7 @@ ipcMain.handle(
       }),
       "workbench.create": ({ folder, name, config, instructions }) =>
         sessions.lifecycle(async () => {
+          embeddingWarmup.cancel();
           await stopWorkbenchPrograms();
           return warmPrograms(
             await workbench.create(folder, name, {
@@ -916,11 +936,13 @@ ipcMain.handle(
         }),
       "workbench.open": ({ folder }) =>
         sessions.lifecycle(async () => {
+          embeddingWarmup.cancel();
           await stopWorkbenchPrograms();
           return warmPrograms(await workbench.open(folder));
         }),
       "workbench.close": async () => {
         await sessions.lifecycle(async () => {
+          embeddingWarmup.cancel();
           await stopWorkbenchPrograms();
           await workbench.close();
         });
@@ -949,20 +971,20 @@ ipcMain.handle(
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),
     sanitize: (value) => credentials.sanitize(value),
+    ready: () => credentialsReady,
   }),
 );
 
-async function createWindow(): Promise<void> {
+const windowStateFile = () => join(app.getPath("userData"), "window-state.json");
+async function createWindow(state: WindowState): Promise<void> {
   Menu.setApplicationMenu(null);
-  const stateFile = join(app.getPath("userData"), "window-state.json");
-  const state = await loadWindowState(
-    stateFile,
-    screen.getAllDisplays().map((display) => display.workArea),
-  );
+  const stateFile = windowStateFile();
   window = new BrowserWindow({
     title: "VERA",
     titleBarStyle: "hidden",
     titleBarOverlay: titleBarOverlay(nativeTheme.shouldUseDarkColors),
+    // nativeTheme.themeSource holds the saved theme here, so the first frame is not white in dark mode.
+    backgroundColor: windowBackground(nativeTheme.shouldUseDarkColors),
     ...state.bounds,
     minWidth: 1024,
     minHeight: 640,
@@ -1098,8 +1120,19 @@ if (!app.requestSingleInstanceLock()) {
     .then(async () => {
       if (draining) return;
       secureSession(session.defaultSession);
-      await settings.load();
-      await credentials.load();
+      // Credentials decrypt through safeStorage (the desktop keyring on Linux) while settings and the window
+      // state load; the window does not wait for them, IPC does (credentialsReady).
+      credentialsReady = credentials.load().then(
+        () => {},
+        () => logger.log("error", "credentials.load.failed"),
+      );
+      const [, windowState] = await Promise.all([
+        settings.load(),
+        loadWindowState(
+          windowStateFile(),
+          screen.getAllDisplays().map((display) => display.workArea),
+        ),
+      ]);
       updates = new Updates({
         distribution: updateDistribution(dataLocations.portable),
         configured: Boolean(__VERA_UPDATE_URL__),
@@ -1215,7 +1248,7 @@ if (!app.requestSingleInstanceLock()) {
         app.exit(await runPackagingProbe(app.commandLine.getSwitchValue("packaging-probe")));
         return;
       }
-      await createWindow();
+      await createWindow(windowState);
       updates.start();
       catalogChecks.start();
     })

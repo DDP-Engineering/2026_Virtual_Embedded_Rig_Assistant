@@ -167,6 +167,33 @@ describe("validated invoke router", () => {
     expect(handler).toHaveBeenCalledWith({});
     expect(log).not.toHaveBeenCalled();
   });
+  it("holds authorized requests until the credential load settles and denies others at once", async () => {
+    let settle = () => {};
+    const ready = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: "vera://app/index.html" }),
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": unused,
+        "app.settings.update": unused,
+      },
+      log,
+      ready: () => ready,
+    });
+    expect(await invoke({ sender: {}, senderFrame: frame } as never, "app.info", {})).toEqual({
+      ok: false,
+      error: { code: "DENIED", messageKey: "errors.DENIED" },
+    });
+    const pending = invoke(event, "app.info", {});
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(handler).not.toHaveBeenCalled();
+    settle();
+    expect(await pending).toEqual({ ok: true, value: info });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
   it("dispatches settings patches only after strict validation and validates the snapshot", async () => {
     const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19") };
     const update = vi.fn(async () => ({

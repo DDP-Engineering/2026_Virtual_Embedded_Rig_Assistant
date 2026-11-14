@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-9b03e401"
+
+title = "Minify the production renderer bundle"
+
+status = "active"
+
+requirement = """
+When the desktop renderer is built, the build shall emit a minified renderer entry chunk.
+"""
+
+verification = "Build-mode tooling test: the built renderer entry chunk has fewer than 1000 lines (the unminified chunk had 69,487); the build output reports the chunk size before and after."
+
+affected_paths = ["05_Software/src/apps/desktop/electron.vite.config.ts"]
+
+linked_tests = ["05_Software/tests/tooling/build-mode.test.ts"]
+
+
+spec = ""
+
+priority = "normal"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14

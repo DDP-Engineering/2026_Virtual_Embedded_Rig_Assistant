@@ -115,6 +115,9 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - Only the current live own WebContents main frame at the configured exact renderer URL dispatches.
   Foreign, missing or detached frames return DENIED.
 - Unknown/prototype channel names return NOT_FOUND; invalid requests return INVALID before dispatch.
+- Authorized, valid invokes and session subscriptions wait for the settled credential load (`ready`) before
+  dispatch, so responses are redacted with every stored secret (REQ-SEC-613bf976). Unauthorized calls are denied
+  without waiting.
 - Invalid responses and unknown handler failures return logged INTERNAL; logs carry channel/category.
 - Shared's sole runtime dependency is zod; Vite resolves the source entrypoint and sandbox preload bundles the shared schemas as CommonJS.
 - Events validate topic/id/seq/payload and callbacks receive only event data.

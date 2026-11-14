@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-ff1b5e56"
+
+title = "Open the window when the credential file fails to load"
+
+status = "active"
+
+requirement = """
+If the credential file fails to load at startup, then VERA shall log credentials.load.failed, open the window and answer IPC requests, and shall reject credential reads and writes with INVALID instead of exiting.
+"""
+
+verification = "Startup e2e: a corrupt credentials.json still opens the window, app.settings.get answers ok, the file bytes stay unchanged, and the log holds credentials.load.failed."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/credentials.ts"]
+
+linked_tests = ["05_Software/tests/e2e/startup.spec.ts", "05_Software/src/apps/desktop/src/main/credentials.test.ts"]
+
+
+spec = ""
+
+priority = "high"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14
