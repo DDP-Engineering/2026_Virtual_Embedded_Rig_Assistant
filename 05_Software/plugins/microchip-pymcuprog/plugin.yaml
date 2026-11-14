@@ -1,6 +1,6 @@
 format: 1
 id: microchip-pymcuprog
-version: 1.0.0
+version: 0.2.0
 name: Microchip pymcuprog (AVR, PIC)
 description: Identify, program, verify and erase Microchip AVR (UPDI) and PIC parts with pymcuprog through a Curiosity Nano/Xplained nEDBG kit, PICkit 4 or MPLAB Snap (AVR mode), Atmel-ICE or a SerialUPDI adapter, and read or change fuses. Use to flash a hex image or inspect a part's memories.
 ecosystem: microchip

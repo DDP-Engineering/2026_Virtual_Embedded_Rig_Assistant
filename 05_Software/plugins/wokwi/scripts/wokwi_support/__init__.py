@@ -2,7 +2,7 @@
 
 FORMAT = 1
 TOOL = "wokwi-tool"
-VERSION = "1.0.0"
+VERSION = "0.2.0"
 CLI_VERSION = "0.29.1"
 CLI_SHA = "0aa185144b92"
 ENDPOINT = "wss://wokwi.com/api/ws/beta"

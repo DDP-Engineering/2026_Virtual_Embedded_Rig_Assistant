@@ -226,7 +226,7 @@ describe("package", () => {
   it("publishes the official bus-tools package with one pinned helper, a supervised resource, skills, catalog and pack", async () => {
     const m = manifest();
     expect(validatePluginManifest(m).issues).toEqual([]);
-    expect(m).toMatchObject({ id: "bus-tools", version: "1.0.0", platforms: ["windows-x64", "linux-x64"] });
+    expect(m).toMatchObject({ id: "bus-tools", version: "0.1.0", platforms: ["windows-x64", "linux-x64"] });
     expect(Object.keys(m.programs)).toEqual(["bus-tool"]);
     const program = m.programs["bus-tool"];
     expect(program?.install).toEqual({ script: "scripts/bus_tool.py" });
@@ -326,7 +326,7 @@ describe("package", () => {
       "print_string",
     ])
       expect(source).not.toContain(field);
-    expect(bt(["--version"]).stdout.trim()).toBe("bus-tool 1.0.0");
+    expect(bt(["--version"]).stdout.trim()).toBe("bus-tool 0.1.0");
   });
 
   it("carries workspace.py as a byte-identical copy of the shared path rules", async () => {

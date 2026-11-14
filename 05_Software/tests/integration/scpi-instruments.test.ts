@@ -138,7 +138,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "scpi-instruments",
-      version: "1.0.0",
+      version: "0.2.0",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -859,7 +859,7 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
     expect(result).toMatchObject({
       format: 1,
       kind: "scpi-result",
-      tool: { name: "scpi-instruments", version: "1.0.0" },
+      tool: { name: "scpi-instruments", version: "0.2.0" },
     });
   });
 });

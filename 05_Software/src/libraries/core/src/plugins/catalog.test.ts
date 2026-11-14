@@ -140,7 +140,7 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   });
   expect(remote.plugins.find((p) => p.id === "esp32-esptool")).not.toHaveProperty("addedAt");
   expect(remote.plugins.map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
-    ["esp32-esptool", "1.0.0", "official"],
+    ["esp32-esptool", "0.2.0", "official"],
     ["serial-monitor", "1.0.1", "official"],
   ]);
   expect(remote.packs[0]?.groups[0]).toEqual({
@@ -152,7 +152,7 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   state.status = 404;
   const missing = await catalog.view({ refresh: true });
   expect(missing).toMatchObject({ source: "bundled", problem: "unreachable" });
-  expect(missing.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("1.0.0");
+  expect(missing.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.0");
 
   state.status = 200;
   await writeFile(join(served, "index.json"), "{ not json");
@@ -198,7 +198,7 @@ it("installs a reviewed catalog plugin with its tier and the catalog source, onc
   const reviewed = await catalog.review("serial-monitor");
   expect(reviewed).toMatchObject({
     id: "serial-monitor",
-    version: "1.0.0",
+    version: "0.2.0",
     tier: "official",
     required: true,
   });
@@ -217,7 +217,7 @@ it("installs a reviewed catalog plugin with its tier and the catalog source, onc
   const record = JSON.parse(
     await readFile(join(data, "plugins", "installed", "serial-monitor", "install.json"), "utf8"),
   );
-  expect(record.source).toEqual({ kind: "catalog", path: `${url}/serial-monitor-1.0.0.zip` });
+  expect(record.source).toEqual({ kind: "catalog", path: `${url}/serial-monitor-0.2.0.zip` });
   await expect(catalog.install("serial-monitor", reviewed.review.sha256)).rejects.toMatchObject({
     code: "CONFLICT",
   });
@@ -298,7 +298,39 @@ it("refuses to replace an installed plugin with a lower catalog version", async 
   expect((await store.list())[0]?.version).toBe("1.1.0");
 
   await store.install(join(official, "serial-monitor"));
-  expect((await catalog.review("serial-monitor")).version).toBe("1.0.0");
+  expect((await catalog.review("serial-monitor")).version).toBe(manifest.version);
+});
+
+// REQ-SEC-69f9d44d - a pre-release plugin lowered from 1.0.0 is reinstalled, never migrated.
+it("keeps refusing a lowered plugin as an update and installs it after an uninstall", async () => {
+  const { state, url } = await host();
+  state.folder = await release();
+  const { catalog, store } = await fixture({ location: url });
+  const manifest = parse(await readFile(join(official, "serial-monitor", "plugin.yaml"), "utf8"));
+  expect(manifest.version).toMatch(/^0\./);
+  const old = join(await temp("old"), "serial-monitor");
+  await cp(join(official, "serial-monitor"), old, { recursive: true });
+  await writeFile(join(old, "plugin.yaml"), stringify({ ...manifest, version: "1.0.0" }));
+  await store.install(old);
+
+  const view = await catalog.view({ refresh: true });
+  expect(view.plugins.find((plugin) => plugin.id === "serial-monitor")).toMatchObject({
+    version: manifest.version,
+    installed: { version: "1.0.0" },
+    update: false,
+  });
+  const downgrade = { code: "CONFLICT", messageKey: "plugins.catalogError.downgrade" };
+  await expect(catalog.review("serial-monitor")).rejects.toMatchObject(downgrade);
+  await expect(catalog.install("serial-monitor", "0".repeat(64))).rejects.toMatchObject(downgrade);
+  expect((await store.list())[0]?.version).toBe("1.0.0");
+
+  await store.uninstall("serial-monitor");
+  const review = await catalog.review("serial-monitor");
+  expect(review.version).toBe(manifest.version);
+  await catalog.install("serial-monitor", review.review.sha256);
+  expect(await store.list()).toMatchObject([
+    { id: "serial-monitor", version: manifest.version, tier: "official" },
+  ]);
 });
 
 // REQ-FUNC-46079512
@@ -346,7 +378,7 @@ it("marks installed plugins with a higher catalog version as updates without fet
   await store.install(join(official, "serial-monitor"));
   const same = await catalog.view({ refresh: true });
   expect(same.plugins.find((plugin) => plugin.id === "serial-monitor")).toMatchObject({
-    installed: { version: "1.0.0", tier: "local" },
+    installed: { version: "0.2.0", tier: "local" },
     update: false,
   });
   expect(same.plugins.find((plugin) => plugin.id === "esp32-esptool")).toMatchObject({ update: false });
@@ -358,7 +390,7 @@ it("marks installed plugins with a higher catalog version as updates without fet
   const newer = await catalog.view({ refresh: true });
   expect(newer.plugins.find((plugin) => plugin.id === "serial-monitor")?.update).toBe(true);
   expect(state.requests.filter((name) => name.endsWith(".zip"))).toEqual([]);
-  expect((await store.list())[0]?.version).toBe("1.0.0");
+  expect((await store.list())[0]?.version).toBe("0.2.0");
 });
 
 // REQ-PLAT-720aa4f2

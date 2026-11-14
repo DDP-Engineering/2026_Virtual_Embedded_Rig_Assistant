@@ -930,9 +930,17 @@ it("CLI checks a catalog source and builds its release", async () => {
   ];
   expect(built.stdout.trim()).toBe(`${officialIds.length} plugins written to ${out}`);
   const index = JSON.parse(await readFile(join(out, "index.json"), "utf8"));
-  expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual(
-    officialIds.map((id) => [id, `${id}-1.0.0.zip`]),
-  );
+  expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual([
+    ["analysis-skills", "analysis-skills-0.3.0.zip"],
+    ["binutils", "binutils-0.3.0.zip"],
+    ["esp32-efuse", "esp32-efuse-0.2.0.zip"],
+    ["esp32-esptool", "esp32-esptool-0.2.0.zip"],
+    ["esp32-idf", "esp32-idf-0.1.0.zip"],
+    ["git", "git-0.3.0.zip"],
+    ["probe-rs", "probe-rs-0.2.0.zip"],
+    ["serial-monitor", "serial-monitor-0.2.0.zip"],
+    ["sigrok", "sigrok-0.2.0.zip"],
+  ]);
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "serial-monitor")).toMatchObject({
     activities: ["communication", "debug"],
     keywords: ["serial", "UART", "console", "COM", "pyserial"],

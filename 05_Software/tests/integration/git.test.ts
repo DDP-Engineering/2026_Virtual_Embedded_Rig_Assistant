@@ -77,7 +77,7 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
     expect(release.issues).toEqual([]);
     expect(release.index?.plugins.find((item) => item.id === "git")?.tier).toBe("official");
     const store = new core.PluginStore({ root: join(root, "plugins") });
-    await store.install(join(root, "release/git-1.0.0.zip"));
+    await store.install(join(root, "release/git-0.3.0.zip"));
     const plugin = await store.load("git");
     expect(await readFile(join(plugin.folder, "no-hooks/README.txt"), "utf8")).toContain("no Git hook names");
     provisioner = new core.Provisioner({

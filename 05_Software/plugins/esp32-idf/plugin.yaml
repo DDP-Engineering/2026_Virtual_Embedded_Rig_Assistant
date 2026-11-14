@@ -1,6 +1,6 @@
 format: 1
 id: esp32-idf
-version: 1.0.0
+version: 0.1.0
 name: ESP32 ESP-IDF
 description: Build and repair ESP-IDF projects, flash firmware, and analyse ESP32 panic backtraces and core dumps with the matching toolchain and ELF. Requires a user-installed EIM and ESP-IDF toolchain.
 ecosystem: esp32

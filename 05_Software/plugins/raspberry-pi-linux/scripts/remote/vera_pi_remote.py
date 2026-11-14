@@ -21,7 +21,7 @@ import subprocess
 import sys
 import time
 
-VERSION = "1.0.0"
+VERSION = "0.2.0"
 PYTHON = "/usr/bin/python3"
 STATE = ".vera-pi"
 REQUEST_LIMIT = 1024 * 1024

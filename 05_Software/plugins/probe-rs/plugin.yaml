@@ -1,6 +1,6 @@
 format: 1
 id: probe-rs
-version: 1.0.0
+version: 0.2.0
 name: probe-rs
 description: Identify, flash, verify, reset, read memory and stream RTT on ARM, RISC-V and supported Xtensa targets through local debug probes.
 ecosystem: general

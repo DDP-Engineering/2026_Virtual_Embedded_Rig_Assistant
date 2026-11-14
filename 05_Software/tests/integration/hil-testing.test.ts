@@ -339,7 +339,7 @@ describe("hil-testing package", () => {
     const manifest = load("hil-testing").manifest;
     expect(manifest).toMatchObject({
       id: "hil-testing",
-      version: "1.0.0",
+      version: "0.2.0",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -378,7 +378,7 @@ describe("hil-testing package", () => {
   it("refuses reports of unfinished, foreign or outside folders and never runs plans itself", async () => {
     const helper = (args: string[]) =>
       spawnSync(python, [SCRIPTS.hil as string, ...args], { cwd: root, encoding: "utf8" });
-    expect(helper(["--version"]).stdout.trim()).toBe("hil-testing 1.0.0");
+    expect(helper(["--version"]).stdout.trim()).toBe("hil-testing 0.2.0");
     expect(helper(["run", "hil/plan.json"]).status).toBe(2);
     await mkdir(join(root, "embedded-lab-results", "r1"), { recursive: true });
     await writeFile(

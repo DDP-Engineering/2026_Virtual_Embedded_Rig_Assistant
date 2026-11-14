@@ -149,7 +149,11 @@ are classified, with dates omitted until a publication record is established.
 The global library is projected by `renderer/components/plugin-library.ts` and rendered by
 `plugin-library-controls.tsx`, `plugin-catalog.tsx` and `plugins.tsx`. Source settings, separate
 folder/ZIP imports, check-all, refresh and updates precede Available/Installed tabs and one list.
-Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/state. State
+Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/maturity/state. Maturity is
+shared `pluginMaturity(version)` (`plugins.ts`): `0.x.y` or a semver pre-release tag is `pre-release`, every other
+valid version `stable`, a missing or invalid version `pre-release`; there is no manifest field. `MaturityBadge`
+(`plugin-library-controls.tsx`) shows Pre-release beside the version on catalog cards, the review facts and installed
+cards, and nothing for stable; Clear resets the maturity filter with the others (`clearedLibraryFilters`). State
 counts respect other filters; tab counts remain totals. Recently added/updated sort known dates
 before unknown, with stable name/id/source ties. New is UTC day age 0..29. Page sizes are 6/12/24;
 filter changes reset and loaded snapshot mutations clamp pages after catalog metadata settles

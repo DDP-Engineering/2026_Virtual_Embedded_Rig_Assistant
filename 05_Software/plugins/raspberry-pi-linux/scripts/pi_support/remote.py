@@ -12,7 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 
 HELPER = Path(__file__).resolve().parent.parent / "remote" / "vera_pi_remote.py"
-HELPER_VERSION = "1.0.0"
+HELPER_VERSION = "0.2.0"
 HELPER_LIMIT = 512 * 1024
 PYTHON = "/usr/bin/python3"
 

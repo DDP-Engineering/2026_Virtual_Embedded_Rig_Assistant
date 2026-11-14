@@ -216,7 +216,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "circuitpython",
-      version: "1.0.0",
+      version: "0.2.0",
       platforms: ["windows-x64", "linux-x64"],
     });
     expect(Object.keys(m.programs)).toEqual(["circuitpython-tool"]);
@@ -315,7 +315,7 @@ describe("package", () => {
     expect(
       cpy(vol("deploy", "--source", "a.py", "--target", "/a.py", "--port", "COM7")).json.errors[0].code,
     ).toBe("arguments");
-    expect(cpy(["--version"]).stdout.trim()).toBe("circuitpython-tool 1.0.0");
+    expect(cpy(["--version"]).stdout.trim()).toBe("circuitpython-tool 0.2.0");
     expect(cpy(vol("identify", "--run-id", "same")).json.status).toBe("pass");
     const again = cpy(vol("identify", "--run-id", "same"));
     expect(again.code).toBe(2);

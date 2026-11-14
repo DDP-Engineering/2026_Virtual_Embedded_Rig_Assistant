@@ -159,7 +159,7 @@ describe("package", () => {
       expect(validatePluginManifest(m).issues).toEqual([]);
       expect(m).toMatchObject({
         id: "raspberry-pi-linux",
-        version: "1.0.0",
+        version: "0.2.0",
         platforms: ["windows-x64", "linux-x64"],
       });
       const program = m.programs["pi-tool"];
@@ -280,7 +280,7 @@ describe("package", () => {
       expect(command.endsWith("'")).toBe(true);
       expect(command.slice(24, -1)).not.toContain("'");
       expect(command).toContain(digest);
-      expect(command).toContain("1.0.0");
+      expect(command).toContain("0.2.0");
     }
   });
 });
@@ -298,8 +298,8 @@ describe("refusals before any connection", { timeout: 60_000 }, () => {
     const run = pi(["capabilities"]);
     expect(run.code).toBe(0);
     expect(run.json.helper).toMatchObject({
-      version: "1.0.0",
-      path: "~/.local/share/vera-pi/1.0.0/vera_pi_remote.py",
+      version: "0.2.0",
+      path: "~/.local/share/vera-pi/0.2.0/vera_pi_remote.py",
     });
     expect(run.json.matrix.boards).toContain("Raspberry Pi OS 12");
     expect(run.json.matrix.excluded).toContain("reboot or shutdown");
@@ -626,7 +626,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       .update(readFileSync(join(scripts, "remote", "vera_pi_remote.py")))
       .digest("hex");
     expect(install.json.helper.sha256).toBe(digest);
-    const installed = `${home}/.local/share/vera-pi/1.0.0/vera_pi_remote.py`;
+    const installed = `${home}/.local/share/vera-pi/0.2.0/vera_pi_remote.py`;
     expect(sh(`sha256sum '${installed}' | cut -d' ' -f1`).out).toBe(digest);
     expect(sh(`stat -c %a '${installed}'`).out).toBe("600");
     expect(pi(["install-helper", "--board", "pi"]).json.helper.state).toBe("already-installed");
@@ -643,7 +643,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
       machineId: remote.machineId,
       user: remote.user,
       uid: Number(remote.uid),
-      helper: "1.0.0",
+      helper: "0.2.0",
     });
     expect(run.json.identity.machine).toMatch(/^(x86_64|aarch64)$/);
     expect(run.json.identity.os.ID).toBeTruthy();

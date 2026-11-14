@@ -166,7 +166,7 @@ it("discovers only present programs and probes PATH, vendor, PlatformIO, Arduino
     record: {
       format: 1 as const,
       id: "binutils",
-      version: "1.0.0",
+      version: "0.3.0",
       tier: "official" as const,
       source: { kind: "folder" as const, path: source },
       sha256: "a".repeat(64),

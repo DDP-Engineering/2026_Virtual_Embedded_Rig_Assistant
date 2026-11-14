@@ -131,7 +131,7 @@ it("publishes the official electronics-calc package, its pack, activity and two 
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "electronics-calc",
-    version: "1.0.0",
+    version: "0.3.0",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -320,7 +320,7 @@ describe("the elec-calc script", { timeout: 120_000 }, () => {
     expect(doc).toMatchObject({
       format: 1,
       kind: "elec-calc-result",
-      tool: { name: "elec-calc", version: "1.0.0" },
+      tool: { name: "elec-calc", version: "0.3.0" },
       operation: "losses",
       model: "linear-regulator",
       runId: "t1",
@@ -1078,7 +1078,7 @@ ${help.slice(help.indexOf("A current is one of"))}`;
       expect(report).toMatchObject({
         format: 1,
         kind: "elec-calc-report",
-        tool: { name: "elec-calc", version: "1.0.0" },
+        tool: { name: "elec-calc", version: "0.3.0" },
         runId: "r1",
         title: "Power stage review",
         notes: ["Bench revision B"],
@@ -1608,7 +1608,7 @@ it("runs from an ask-mode session without approval through the real runner (REQ-
       settings: () => undefined,
     });
     expect(await provisioner.install("electronics-calc")).toEqual([
-      { name: "elec-calc", kind: "script", state: "ready", version: "1.0.0" },
+      { name: "elec-calc", kind: "script", state: "ready", version: "0.3.0" },
     ]);
     const plugin = await store.load("electronics-calc");
     const resolved = await provisioner.resolve(plugin, "elec-calc");
@@ -1679,7 +1679,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/electronics-calc-1.0.0.zip"));
+      await store.install(join(root, "release/electronics-calc-0.3.0.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),
@@ -1693,7 +1693,7 @@ it.skipIf(!uv)(
         },
       });
       expect(await provisioner.install("electronics-calc")).toEqual([
-        { name: "elec-calc", kind: "script", state: "ready", version: "1.0.0" },
+        { name: "elec-calc", kind: "script", state: "ready", version: "0.3.0" },
       ]);
       const plugin = await store.load("electronics-calc");
       const resolved = await provisioner.resolve(plugin, "elec-calc");

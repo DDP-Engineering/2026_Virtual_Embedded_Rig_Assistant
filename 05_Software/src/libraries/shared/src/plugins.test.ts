@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { validatePluginManifest } from "./plugins.js";
+import { pluginMaturity, validatePluginManifest } from "./plugins.js";
 
 const canonical = {
   format: 1,
@@ -194,4 +194,14 @@ it("accepts a credentials declaration with the mqtt or wokwi scope only", () => 
   expect(paths(withCredentials({ option: "--credential", scope: "mqtt", key: "x" }))).toEqual([
     "programs.esptool.credentials.key",
   ]);
+});
+
+// REQ-DATA-2b59c9cc
+it("derives pre-release maturity from a 0.x version or a pre-release tag, never stable for an invalid version", () => {
+  for (const version of ["0.4.0", "0.0.1", "1.0.0-beta.1", "2.0.0-rc.1+build.7"])
+    expect(pluginMaturity(version), version).toBe("pre-release");
+  for (const version of ["1.0.0", "2.3.1", "1.0.0+build.5"])
+    expect(pluginMaturity(version), version).toBe("stable");
+  for (const version of ["1.0", "x", "", "01.0.0", "1.0.0-", undefined])
+    expect(pluginMaturity(version), String(version)).toBe("pre-release");
 });

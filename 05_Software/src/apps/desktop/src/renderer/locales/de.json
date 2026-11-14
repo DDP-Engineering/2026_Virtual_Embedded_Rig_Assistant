@@ -861,6 +861,9 @@
     "platforms": "Plattformen",
     "requires": "Benötigt",
     "nothing": "Keine",
+    "maturity": {
+      "preRelease": "Vorabversion"
+    },
     "tier": {
       "official": "Offiziell",
       "community": "Community",
@@ -974,6 +977,9 @@
       "allActivities": "Alle Tätigkeiten",
       "provenance": "Herkunft",
       "allSources": "Alle Quellen",
+      "maturity": "Reife",
+      "allMaturities": "Alle Reifegrade",
+      "stable": "Stabil",
       "filterState": "Nach Status filtern",
       "all": "Alle",
       "notInstalled": "Nicht installiert",

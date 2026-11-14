@@ -266,7 +266,7 @@ async function workbench(scripts: Record<string, unknown[]>) {
   expect(release.issues).toEqual([]);
   expect(release.index?.plugins.find((item) => item.id === "wireshark-tshark")?.tier).toBe("official");
   const store = new core.PluginStore({ root: join(root, "plugins") });
-  await store.install(join(root, "release/wireshark-tshark-1.0.0.zip"));
+  await store.install(join(root, "release/wireshark-tshark-0.3.0.zip"));
   const plugin = await store.load("wireshark-tshark");
   const skills = new core.SkillCatalog({
     root: bench,

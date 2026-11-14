@@ -172,7 +172,7 @@ it("publishes the official kicad package, its pack and two installed skills", as
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "kicad",
-    version: "1.0.0",
+    version: "0.3.0",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -293,7 +293,7 @@ describe("kicad-tool without KiCad", { timeout: 300_000 }, () => {
   it("prints its version and refuses unusable command lines (REQ-DATA-c32834e3)", () => {
     const version = kt(["--version"], dir);
     expect(version.code).toBe(0);
-    expect(version.stdout.trim()).toBe("kicad-tool 1.0.0");
+    expect(version.stdout.trim()).toBe("kicad-tool 0.3.0");
     for (const help of [["--help"], ["erc", "--help"], ["export", "--help"]]) {
       const shown = kt(help, dir);
       expect(shown.code, help.join(" ")).toBe(0);
@@ -1013,7 +1013,7 @@ describe.skipIf(!kicad10)("kicad-tool with the real KiCad 10", { timeout: 600_00
     expect(doc).toMatchObject({
       format: 1,
       tool: "kicad-tool",
-      version: "1.0.0",
+      version: "0.3.0",
       operation: "erc",
       runId: "doc-1",
       truncated: false,
@@ -2151,7 +2151,7 @@ it.skipIf(!uv || !kicad10)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/kicad-1.0.0.zip"));
+      await store.install(join(root, "release/kicad-0.3.0.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),
@@ -2167,7 +2167,7 @@ it.skipIf(!uv || !kicad10)(
       const statuses = await provisioner.install("kicad");
       expect(statuses).toMatchObject([
         { name: "kicad-cli", kind: "find", state: "ready", version: located?.version },
-        { name: "kicad-tool", kind: "script", state: "ready", version: "1.0.0" },
+        { name: "kicad-tool", kind: "script", state: "ready", version: "0.3.0" },
       ]);
       const plugin = await store.load("kicad");
       const resolved = await provisioner.resolve(plugin, "kicad-tool");

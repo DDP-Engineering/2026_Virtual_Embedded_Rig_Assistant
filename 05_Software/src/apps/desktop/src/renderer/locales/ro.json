@@ -861,6 +861,9 @@
     "platforms": "Platforme",
     "requires": "Necesită",
     "nothing": "Nimic",
+    "maturity": {
+      "preRelease": "Pre-lansare"
+    },
     "tier": {
       "official": "Oficial",
       "community": "Comunitate",
@@ -974,6 +977,9 @@
       "allActivities": "Toate activitățile",
       "provenance": "Proveniență",
       "allSources": "Toate sursele",
+      "maturity": "Maturitate",
+      "allMaturities": "Toate nivelurile",
+      "stable": "Stabil",
       "filterState": "Filtrează după stare",
       "all": "Toate",
       "notInstalled": "Neinstalate",

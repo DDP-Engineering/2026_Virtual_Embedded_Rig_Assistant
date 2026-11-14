@@ -14,7 +14,7 @@ import os
 import sys
 from typing import NoReturn
 
-VERSION = "1.0.0"
+VERSION = "0.3.0"
 
 
 def fail(message) -> NoReturn:

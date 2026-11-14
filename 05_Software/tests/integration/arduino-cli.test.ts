@@ -298,7 +298,7 @@ describe("package", { timeout: 30_000 }, () => {
   it("prints its version and offers no daemon, monitor, bootloader or OTA operation (REQ-SEC-93d5fc98)", async () => {
     const b = await bench();
     expect(spawnSync(python, ["-I", script, "--version"], { encoding: "utf8" }).stdout.trim()).toBe(
-      "arduino-tool 1.0.0",
+      "arduino-tool 0.2.0",
     );
     const help = spawnSync(python, ["-I", script, "--help"], { encoding: "utf8" }).stdout;
     for (const operation of [

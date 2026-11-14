@@ -1,6 +1,6 @@
 format: 1
 id: binutils
-version: 1.0.0
+version: 0.3.0
 name: GNU binutils (ARM, RISC-V)
 description: Inspect local ARM and RISC-V firmware ELF files for section and symbol size growth, memory layout, targeted disassembly and crash PC/LR source lines. Use the ELF from the exact build.
 ecosystem: general

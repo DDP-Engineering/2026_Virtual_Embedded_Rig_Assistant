@@ -72,7 +72,7 @@ const installed = (id: string, version: string): PluginSummary => ({
   sha256: "b".repeat(64),
   enabled: false,
 });
-const reviewOf = (id: string, required: boolean, update = false): PluginCatalogReview => ({
+const reviewOf = (id: string, required: boolean, update = false, version = "1.0.0"): PluginCatalogReview => ({
   review: {
     path: `C:/data/plugins/catalog/${id}.zip`,
     kind: "zip",
@@ -81,7 +81,7 @@ const reviewOf = (id: string, required: boolean, update = false): PluginCatalogR
     manifest: {
       format: 1,
       id,
-      version: "1.0.0",
+      version,
       name: `Name ${id}`,
       description: `About ${id}.`,
       ecosystem: "esp32",
@@ -94,7 +94,7 @@ const reviewOf = (id: string, required: boolean, update = false): PluginCatalogR
     ...(update ? { installed: { version: "1.0.0" } } : {}),
   },
   id,
-  version: "1.0.0",
+  version,
   tier: "official",
   required,
 });
@@ -120,6 +120,7 @@ function stub(options: {
           id,
           options.required?.[id] ?? true,
           Boolean(options.installed?.some((p) => p.id === id)),
+          options.catalog.plugins.find((plugin) => plugin.id === id)?.version,
         );
       }
       case "plugins.catalogInstall":
@@ -405,3 +406,26 @@ it("checks the catalog again on request", async () => {
   await vi.waitFor(() => expect(calls("plugins.catalog")).toContainEqual({ refresh: true }));
   expect(calls("plugins.catalog")[0]).toEqual({ refresh: false });
 });
+
+// REQ-UX-4ef3aa51
+it.each(["en", "ro", "de"])(
+  "shows the Pre-release badge beside a pre-release version on cards and in the review (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    const badge = i18n.t("plugins.maturity.preRelease");
+    stub({
+      catalog: view([entry("serial-monitor", { version: "0.2.0" }), entry("ltspice")]),
+      installed: [installed("git", "0.3.0"), installed("kicad", "1.0.0")],
+    });
+    await render();
+    await vi.waitFor(() => expect($('[data-catalog-plugin="serial-monitor"]')).not.toBeNull());
+    expect($('[data-catalog-plugin="serial-monitor"] [data-maturity="pre-release"]').textContent).toBe(badge);
+    expect($('[data-catalog-plugin="ltspice"] [data-maturity]')).toBeNull();
+    await vi.waitFor(() => expect($('[data-plugin="git"]')).not.toBeNull());
+    expect($('[data-plugin="git"] [data-maturity="pre-release"]').textContent).toBe(badge);
+    expect($('[data-plugin="kicad"] [data-maturity]')).toBeNull();
+    await click('[data-catalog-plugin="serial-monitor"] [data-action="catalog-install"]');
+    await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+    expect($('[data-plugin-review] [data-maturity="pre-release"]').textContent).toBe(badge);
+  },
+);

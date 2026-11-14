@@ -345,3 +345,23 @@ it("keeps installed packages usable when catalog loading fails and provides empt
   await click('[data-action="library-clear"]');
   expect(host.querySelectorAll("[data-plugin]")).toHaveLength(4);
 });
+
+// REQ-UX-3cf252d5
+it("filters by maturity derived from the version and clears it with the other filters", async () => {
+  const state = setup();
+  state.entries[5]!.version = "1.0.0-rc.1";
+  await mount();
+  await vi.waitFor(() => expect(text()).toContain("34"));
+  await select("[data-library-maturity]", "pre-release");
+  // plugin-00/01 and the local and trial packages are installed at 0.9.0; plugin-05 is a release candidate.
+  expect(text()).toContain("5 of 34");
+  expect(ids()).toEqual(expect.arrayContaining(["plugin-05"]));
+  for (const card of host.querySelectorAll("[data-catalog-plugin], [data-plugin]"))
+    expect(card.querySelector('[data-maturity="pre-release"]')).not.toBeNull();
+  await select("[data-library-maturity]", "stable");
+  expect(text()).toContain("29 of 34");
+  expect(host.querySelector('[data-maturity="pre-release"]')).toBeNull();
+  await click('[data-action="library-clear"]');
+  expect(text()).toContain("34 of 34");
+  expect(($("[data-library-maturity]") as HTMLSelectElement).value).toBe("");
+});

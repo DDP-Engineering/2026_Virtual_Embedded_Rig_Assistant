@@ -5,6 +5,6 @@ This folder is the single source of the shared contracts. A plugin never imports
 installed folder; a later plugin that needs it ships its own verified copy.
 """
 
-VERSION = "1.0.0"
+VERSION = "0.3.0"
 FORMAT = 1
 TOOL = "elec-calc"

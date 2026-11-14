@@ -355,7 +355,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "lab-validation",
-      version: "1.0.0",
+      version: "0.2.0",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -450,7 +450,7 @@ describe("package", () => {
 describe("command line and request (REQ-DATA-53797d16)", { timeout: 120_000 }, () => {
   it("prints its version and the registered importers and metrics", () => {
     const version = spawnSync(python, [script, "--version"], { encoding: "utf8", env: baseEnv() });
-    expect(version.stdout.trim()).toMatch(/^lab-validate 1\.0\.0$/);
+    expect(version.stdout.trim()).toMatch(/^lab-validate 0\.2\.0$/);
     const help = spawnSync(python, [script, "--help"], { encoding: "utf8", env: baseEnv() });
     expect(help.status).toBe(0);
     for (const name of [
@@ -1333,7 +1333,7 @@ describe("results and report", { timeout: 180_000 }, () => {
     expect(result).toMatchObject({
       format: 1,
       kind: "lab-validation-result",
-      tool: { name: "lab-validation", version: "1.0.0" },
+      tool: { name: "lab-validation", version: "0.2.0" },
       operation: "compare",
       runId: "docs",
       status: "fail",
@@ -1854,7 +1854,7 @@ it("runs from an ask-mode session without approval through the real runner and l
       settings: () => undefined,
     });
     expect(await provisioner.install("lab-validation")).toEqual([
-      { name: "lab-validate", kind: "script", state: "ready", version: "1.0.0" },
+      { name: "lab-validate", kind: "script", state: "ready", version: "0.2.0" },
     ]);
     const plugin = await store.load("lab-validation");
     const gateway = new ReplayGateway({ dir: join(temp, "scripts"), now: Date.now });
@@ -1910,7 +1910,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(temp, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(temp, "plugins") });
-      await store.install(join(temp, "release/lab-validation-1.0.0.zip"));
+      await store.install(join(temp, "release/lab-validation-0.2.0.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(temp, "runtime"),
@@ -1924,7 +1924,7 @@ it.skipIf(!uv)(
         },
       });
       expect(await provisioner.install("lab-validation")).toEqual([
-        { name: "lab-validate", kind: "script", state: "ready", version: "1.0.0" },
+        { name: "lab-validate", kind: "script", state: "ready", version: "0.2.0" },
       ]);
       const plugin = await store.load("lab-validation");
       const resolved = await provisioner.resolve(plugin, "lab-validate");

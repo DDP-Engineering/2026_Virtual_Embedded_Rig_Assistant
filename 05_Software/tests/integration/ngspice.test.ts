@@ -982,7 +982,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/ngspice-1.0.0.zip"));
+      await store.install(join(root, "release/ngspice-0.3.0.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),

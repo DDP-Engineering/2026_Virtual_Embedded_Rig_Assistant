@@ -20,6 +20,15 @@ export type PluginTier = z.infer<typeof pluginTierSchema>;
 
 const semver =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+export type PluginMaturity = "pre-release" | "stable";
+/**
+ * A plugin's maturity, derived from its version alone: `0.x.y` or a semver pre-release tag is `pre-release`,
+ * any other valid version `stable`. A missing or invalid version is never `stable`.
+ */
+export function pluginMaturity(version: string | undefined): PluginMaturity {
+  const match = version === undefined ? null : semver.exec(version);
+  return match && match[1] !== "0" && match[4] === undefined ? "stable" : "pre-release";
+}
 /** A package-relative path: `/` separated, no empty, `.` or `..` segment, no drive, device or trailing dot. */
 export function isPluginRelativePath(path: string): boolean {
   if (!path || path.length > 1024 || /[\p{Cc}\\:*?"<>|]/u.test(path) || path.startsWith("/")) return false;

@@ -1,6 +1,6 @@
 format: 1
 id: renode
-version: 1.0.0
+version: 0.3.0
 name: Renode virtual boards
 description: Run a firmware ELF on an explicitly supported virtual board with the pinned Renode 1.17.0 - list the supported profiles, check a firmware against a profile's architecture, memory map and boot address before anything runs, boot it headless and capture its UART, and run approved test sets (UART lines, timer ticks, declared button and UART stimuli, the modeled LED) with separate virtual and real time budgets. Only approved platform profiles run; the agent never reaches the Renode monitor, scripts, sockets or host devices, unmodeled peripherals make a result incomplete, and every run folder states what was simulated and what a simulation does not cover.
 ecosystem: lab

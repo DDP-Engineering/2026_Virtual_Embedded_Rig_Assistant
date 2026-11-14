@@ -1,6 +1,6 @@
 format: 1
 id: sigrok
-version: 1.0.0
+version: 0.2.0
 name: sigrok (DDP fork)
 description: Capture and decode digital and analog signals and read or configure bench instruments through sigrok-cli.
 ecosystem: general

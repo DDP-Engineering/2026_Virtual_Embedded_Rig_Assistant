@@ -107,7 +107,7 @@ it("publishes the official parts-search package, its pack group, activity and tw
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "parts-search",
-    version: "1.0.0",
+    version: "0.3.0",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -604,7 +604,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/parts-search-1.0.0.zip"));
+      await store.install(join(root, "release/parts-search-0.3.0.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),
@@ -618,7 +618,7 @@ it.skipIf(!uv)(
         },
       });
       expect(await provisioner.install("parts-search")).toEqual([
-        { name: "parts-compare", kind: "script", state: "ready", version: "1.0.0" },
+        { name: "parts-compare", kind: "script", state: "ready", version: "0.3.0" },
       ]);
       const resolved = await provisioner.resolve(await store.load("parts-search"), "parts-compare");
       if (!resolved) throw Error("parts-compare did not resolve");

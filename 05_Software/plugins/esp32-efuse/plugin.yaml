@@ -1,6 +1,6 @@
 format: 1
 id: esp32-efuse
-version: 1.0.0
+version: 0.2.0
 name: ESP32 eFuses and image security
 description: Review Espressif eFuses and explicitly requested permanent changes with esp32-efuse-review. Read summaries and raw eFuses with espefuse; prepare local keys, signatures and encrypted images with espsecure. Burns are irreversible and can brick a chip. Enable this Security plugin only when needed.
 ecosystem: esp32

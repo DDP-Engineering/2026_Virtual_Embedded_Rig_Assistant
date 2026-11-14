@@ -1,6 +1,6 @@
 format: 1
 id: micropython
-version: 1.0.0
+version: 0.2.0
 name: MicroPython
 description: Finite operations on a MicroPython board that already runs MicroPython 1.22 or newer - list serial ports by identity, identify the board's firmware, list and copy its files, deploy a workbench file through a verified temporary copy, run a workbench script from RAM with a deadline and a verdict, capture its console and reset it - through a pinned mpremote. No interactive REPL, no code given as an argument, no mount of a host folder, no firmware installation and no implicit change of boot.py or main.py.
 ecosystem: micropython

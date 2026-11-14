@@ -1,6 +1,6 @@
 format: 1
 id: mqtt-tools
-version: 1.0.0
+version: 0.2.0
 name: MQTT tools (telemetry and commands)
 description: Bounded MQTT telemetry capture and controlled device commands on a broker the workbench configures - a profile file declares the broker, TLS trust, credential reference, client id prefix, protocol (5 or 3.1.1), topic ACL, QoS, limits, reconnect policy, payload schemas and any status Last Will. Captures are bounded by time, messages and bytes and keep every raw payload with its QoS, retain and dup flags; a publish goes only to a declared topic, once, never retained when it is a command. The broker password stays in VERA's credential store and reaches only an approved run of this plugin on its input. No broker administration and no public broker.
 ecosystem: iot

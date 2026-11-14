@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { isNewCatalogEntry } from "./plugin-library.js";
-import { pluginActivityLabels } from "./plugin-library-controls.js";
+import { MaturityBadge, pluginActivityLabels } from "./plugin-library-controls.js";
 
 /** Under the `plugins` prefix, so every plugin change also reloads the catalog's installed states. */
 export const catalogKey = ["plugins", "catalog"] as const;
@@ -126,6 +126,7 @@ export function CatalogItem({
           <span className="risk-badge">{t("plugins.library.newBadge")}</span>
         )}
         <span>{plugin.version}</span>
+        <MaturityBadge version={plugin.version} />
         <span className="risk-badge" data-tier={plugin.tier}>
           {plugin.tier === "official" ? t("plugins.tier.official") : t("plugins.tier.community")}
         </span>

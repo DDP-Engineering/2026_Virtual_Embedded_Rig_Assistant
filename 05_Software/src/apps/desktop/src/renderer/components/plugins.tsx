@@ -23,6 +23,7 @@ import {
 } from "./plugin-catalog.js";
 import {
   catalogLibraryItems,
+  clearedLibraryFilters,
   combinedLibraryItems,
   initialLibraryState,
   installedLibraryItems,
@@ -35,6 +36,7 @@ import {
   sortLibraryItems,
 } from "./plugin-library.js";
 import {
+  MaturityBadge,
   PluginLibraryControls,
   PluginLibraryPagination,
   pluginActivityLabels,
@@ -218,7 +220,9 @@ function Review({
               <code>{manifest.id}</code>
             </dd>
             <dt>{t("plugins.version")}</dt>
-            <dd>{manifest.version}</dd>
+            <dd>
+              {manifest.version} <MaturityBadge version={manifest.version} />
+            </dd>
             <dt>{t("plugins.platforms")}</dt>
             <dd>{manifest.platforms.join(", ")}</dd>
             <dt>{t("plugins.requires")}</dt>
@@ -473,6 +477,7 @@ function PluginCard({
           <span aria-hidden="true">{expanded ? "\u2212" : "+"}</span>
           <strong>{name}</strong>
           {plugin.version && <span>{plugin.version}</span>}
+          {plugin.version && <MaturityBadge version={plugin.version} />}
         </button>
         {plugin.tier && (
           <span className="risk-badge" data-tier={plugin.tier}>
@@ -901,9 +906,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
               <button
                 type="button"
                 data-action="library-clear"
-                onClick={() =>
-                  changeLibrary({ search: "", ecosystem: "", activity: "", tier: "", status: "all" })
-                }
+                onClick={() => changeLibrary(clearedLibraryFilters)}
               >
                 {t("plugins.library.clear")}
               </button>

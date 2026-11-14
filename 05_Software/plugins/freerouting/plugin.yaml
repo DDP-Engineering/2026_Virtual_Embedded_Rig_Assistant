@@ -1,6 +1,6 @@
 format: 1
 id: freerouting
-version: 1.0.0
+version: 0.3.0
 name: Freerouting autorouter (local)
 description: Autoroute a KiCad 10 board candidate locally with Freerouting 2.5.0 - export a Specctra DSN from the saved candidate of a kicad-layout run, route it offline with a finite budget (existing and locked copper is kept), and turn the new tracks and vias into a kicad-layout request that kicad-layout-tool edit checks, applies to the candidate and verifies with DRC. Nothing leaves the computer and the source board changes only through apply_candidate. Needs KiCad 10; VERA downloads Freerouting and a Java runtime (Eclipse Temurin 25) on Install.
 ecosystem: electronics
