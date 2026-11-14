@@ -383,6 +383,8 @@ export function createMockApi(
   }
   let sequence = 0;
   const webKeyConfigured: Record<WebProviderId, boolean> = { exa: false, tavily: false, brave: false };
+  const mqttCredentialRefs = new Set<string>();
+  const wokwiCredentialRefs = new Set<string>();
   const partsKeyConfigured: Record<PartsSupplierId, boolean> = {
     mouser: false,
     digikey: false,
@@ -1123,6 +1125,42 @@ export function createMockApi(
       case "parts.access.cancel":
         value = {};
         break;
+      case "mqtt.credentials.list":
+        value = {
+          credentials: [...mqttCredentialRefs].sort().map((ref) => ({ ref, storage: "memory" })),
+          secureStorage: true,
+        };
+        break;
+      case "mqtt.credentials.save": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        mqttCredentialRefs.add(channels["mqtt.credentials.save"].request.parse(input.data).ref);
+        value = { status: "saved" };
+        break;
+      }
+      case "mqtt.credentials.remove": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        mqttCredentialRefs.delete(channels["mqtt.credentials.remove"].request.parse(input.data).ref);
+        value = {};
+        break;
+      }
+      case "wokwi.credentials.list":
+        value = {
+          credentials: [...wokwiCredentialRefs].sort().map((ref) => ({ ref, storage: "memory" })),
+          secureStorage: true,
+        };
+        break;
+      case "wokwi.credentials.save": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        wokwiCredentialRefs.add(channels["wokwi.credentials.save"].request.parse(input.data).ref);
+        value = { status: "saved" };
+        break;
+      }
+      case "wokwi.credentials.remove": {
+        if (scenario === "read-only") throw veraError("DENIED");
+        wokwiCredentialRefs.delete(channels["wokwi.credentials.remove"].request.parse(input.data).ref);
+        value = {};
+        break;
+      }
       case "providers.chatgpt.status":
         value = chatgpt;
         break;

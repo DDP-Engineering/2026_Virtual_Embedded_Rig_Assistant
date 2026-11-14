@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-71e25799"
+
+title = "Reserve the power monitor for live power-profiler runs"
+
+status = "active"
+
+requirement = """
+When a power-profile identify, capture or release names a meter with --meter, VERA shall reserve that registry alias through the bench lease registry (ResourceLeases) before the helper starts and report BUSY while another VERA run holds it, and the helper shall refuse an alias that is missing or not of kind power-monitor before opening any device.
+"""
+
+verification = "A runner test claims the meter in one run and sees a second run BUSY; helper tests give an unknown alias and a probe alias and get exit 2 with no device call in the fake driver's log."
+
+affected_paths = ["05_Software/plugins/power-profiler/plugin.yaml", "05_Software/plugins/power-profiler/scripts/power_support/registry.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

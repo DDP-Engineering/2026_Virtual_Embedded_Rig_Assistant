@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e539c51f"
+
+title = "Run to a hardware breakpoint within a bounded time"
+
+status = "active"
+
+requirement = """
+When `gdb-debug break --at <location> --timeout <s>` runs, the helper shall insert one hardware breakpoint, continue the core, report a hit only for a stop of that breakpoint number, interrupt the core when the timeout or a Stop comes first, take a snapshot and delete the breakpoint before applying the exit policy.
+"""
+
+verification = "Integration tests script a hit on the requested breakpoint (status pass, hit true, snapshot present, -break-delete sent), a timeout (interrupt sent, status incomplete, hit false) and a stop for another breakpoint number (hit false)."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

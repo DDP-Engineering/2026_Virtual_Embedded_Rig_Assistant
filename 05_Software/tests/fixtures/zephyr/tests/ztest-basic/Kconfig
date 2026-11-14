@@ -1,0 +1,7 @@
+config VERA_SKIP_DEMO
+	bool "Skip one test case at run time"
+
+config VERA_FAIL_DEMO
+	bool "Fail one test case"
+
+source "Kconfig.zephyr"

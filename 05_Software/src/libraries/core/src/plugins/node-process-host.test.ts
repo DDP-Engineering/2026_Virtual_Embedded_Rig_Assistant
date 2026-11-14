@@ -42,6 +42,33 @@ describe("NodeProcessHost", () => {
     ]);
   });
 
+  // REQ-FUNC-ba0396c0
+  it("pipes stdin only for a run with input, writes it once and closes it", () => {
+    const calls: Parameters<SpawnFunction>[] = [];
+    const written: string[] = [];
+    let ended = 0;
+    const child = Object.assign(new FakeChild(2), {
+      stdin: Object.assign(new EventEmitter(), {
+        end: (data: string) => {
+          written.push(data);
+          ended++;
+        },
+      }),
+    });
+    const host = new NodeProcessHost((...call) => {
+      calls.push(call);
+      return child;
+    });
+    host.spawn("/bin/tool", [], { ...options, input: '{"a":1}\n' });
+    expect(calls[0]?.[2].stdio).toEqual(["pipe", "pipe", "pipe"]);
+    expect(written).toEqual(['{"a":1}\n']);
+    expect(ended).toBe(1);
+    // A program that exits without reading must not crash the host with EPIPE.
+    expect(() =>
+      child.stdin.emit("error", Object.assign(new Error("EPIPE"), { code: "EPIPE" })),
+    ).not.toThrow();
+  });
+
   it("reports a synchronous spawn failure as a program that could not start", async () => {
     const host = new NodeProcessHost(() => {
       throw Object.assign(new Error("spawn EINVAL"), { code: "EINVAL" });

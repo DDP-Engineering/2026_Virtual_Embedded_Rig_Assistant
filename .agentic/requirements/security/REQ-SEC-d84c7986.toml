@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-d84c7986"
+
+title = "Classify every lab-validate operation as a safe offline analysis"
+
+status = "active"
+
+requirement = """
+The lab-validation rules shall classify every `lab-validate` operation (`--version`, `--help`, `inspect`, `normalize`, `measure`, `align`, `compare`, `report`) as `safe`, with notes stating that it reads workbench files and writes only a new run folder.
+"""
+
+verification = "A test classifies each operation through the shared rule matcher and expects `safe` with a note, and an unknown first argument falls to the default device-write risk."
+
+affected_paths = ["05_Software/plugins/lab-validation/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

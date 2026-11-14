@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-36e3ecdd"
+
+title = "Derive a Zephyr test verdict from a real execution record"
+
+status = "active"
+
+requirement = """
+When test-run is requested, the zephyr helper shall take the verdict of a test-build scenario only from a renode or HIL run folder whose firmware SHA-256 equals that scenario's ELF, parse the ztest output of that run into case results in which a failed case stays failed, report fail when any case failed, incomplete when a case was skipped or missing, the output ended early, the firmware rebooted or the execution run itself stopped, and pass only otherwise.
+"""
+
+verification = "Run test-run with run folders whose UART logs hold the pass, skip, fail, truncated, fail-then-rerun-pass and rebooted ztest outputs: pass, incomplete with the case skipped, fail, incomplete output-ended, fail with the case failed, incomplete rebooted; a stopped execution run makes a pass incomplete; a run folder of another firmware hash is refused evidence-mismatch, one outside the workbench evidence; manual: the real Renode 1.17.0 runs of the pass, skip and fail scenarios give pass, incomplete and fail."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/tests.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ztest.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,12 @@
+{
+  "type": "tool",
+  "name": "framework-cmsis",
+  "version": "2.50501.200527",
+  "spec": {
+    "owner": "platformio",
+    "id": null,
+    "name": "framework-cmsis",
+    "requirements": null,
+    "uri": null
+  }
+}

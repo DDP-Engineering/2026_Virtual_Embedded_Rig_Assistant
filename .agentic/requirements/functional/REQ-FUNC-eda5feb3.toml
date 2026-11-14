@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-eda5feb3"
+
+title = "Import power-profiler captures into lab-validate"
+
+status = "active"
+
+requirement = """
+When a lab-validate source names the importer power-capture, the engine shall read the capture folder's result.json and samples.csv after checking their SHA-256, keep the time axis and units as recorded, treat missing samples as gaps and overflow samples as clipped, and report the capture's conditions and meter and firmware identity.
+"""
+
+verification = "lab-validation tests import a fake-driver capture and an imported fixture: channels current, voltage, power, gpi0; gaps and clipped samples as recorded; a changed samples.csv is refused as source-changed."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

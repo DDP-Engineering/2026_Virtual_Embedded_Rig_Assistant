@@ -34,6 +34,13 @@ import {
   pluginCatalogViewSchema,
 } from "./plugin-catalog.js";
 import {
+  mqttCredentialSaveSchema,
+  pluginCredentialListSchema,
+  pluginCredentialRemoveSchema,
+  pluginCredentialSaveResultSchema,
+  wokwiCredentialSaveSchema,
+} from "./plugin-credentials.js";
+import {
   pluginArchiveRequestSchema,
   pluginIdSchema,
   pluginInstalledSchema,
@@ -150,6 +157,36 @@ export const channels = {
   ),
   "parts.access.test": defineChannel("parts.access.test", partsAccessTestSchema, partsAccessTestResultSchema),
   "parts.access.cancel": defineChannel("parts.access.cancel", partsAccessCancelSchema, z.strictObject({})),
+  "mqtt.credentials.list": defineChannel(
+    "mqtt.credentials.list",
+    z.strictObject({}),
+    pluginCredentialListSchema,
+  ),
+  "mqtt.credentials.save": defineChannel(
+    "mqtt.credentials.save",
+    mqttCredentialSaveSchema,
+    pluginCredentialSaveResultSchema,
+  ),
+  "mqtt.credentials.remove": defineChannel(
+    "mqtt.credentials.remove",
+    pluginCredentialRemoveSchema,
+    z.strictObject({}),
+  ),
+  "wokwi.credentials.list": defineChannel(
+    "wokwi.credentials.list",
+    z.strictObject({}),
+    pluginCredentialListSchema,
+  ),
+  "wokwi.credentials.save": defineChannel(
+    "wokwi.credentials.save",
+    wokwiCredentialSaveSchema,
+    pluginCredentialSaveResultSchema,
+  ),
+  "wokwi.credentials.remove": defineChannel(
+    "wokwi.credentials.remove",
+    pluginCredentialRemoveSchema,
+    z.strictObject({}),
+  ),
   "window.menu": defineChannel(
     "window.menu",
     z.strictObject({

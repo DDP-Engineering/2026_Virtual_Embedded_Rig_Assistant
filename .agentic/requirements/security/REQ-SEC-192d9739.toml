@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-192d9739"
+
+title = "Block direct engine calls"
+
+status = "active"
+
+requirement = """
+The renode plugin shall rate every direct call of the engine program blocked, so the agent reaches Renode only through renode-sim.
+"""
+
+verification = "Rule tests: renode with any arguments is blocked; every renode-sim operation is safe, the simulation rules carry the 3600 s timeout and a note saying the run is host simulation and virtual evidence; an unknown renode-sim operation falls to the default risk."
+
+affected_paths = ["05_Software/plugins/renode/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

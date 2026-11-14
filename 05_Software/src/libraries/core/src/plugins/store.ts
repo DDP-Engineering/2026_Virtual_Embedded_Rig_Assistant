@@ -105,8 +105,8 @@ interface Names {
   folders: Map<string, string>;
 }
 const names = (): Names => ({ files: new Set(), folders: new Map() });
-/** Adds one file under the import limits, refusing names that collide by case or as file and folder. */
-function admit(files: Files, seen: Names, path: string, data: Uint8Array, total: number): number {
+/** Adds one file under the file-count limit, refusing names that collide by case or as file and folder. */
+function admit(files: Files, seen: Names, path: string, data: Uint8Array): void {
   if (!isPluginRelativePath(path)) throw fails("INVALID");
   const parts = path.split("/");
   for (let i = 1; i < parts.length; i++) {
@@ -119,18 +119,11 @@ function admit(files: Files, seen: Names, path: string, data: Uint8Array, total:
   const key = path.toLowerCase();
   if (seen.files.has(key) || seen.folders.has(key) || files.size >= PLUGIN_LIMITS.files)
     throw fails("INVALID");
-  const next = total + data.length;
-  if (next > PLUGIN_LIMITS.bytes) throw fails("INVALID");
   seen.files.add(key);
   files.set(path, data);
-  return next;
 }
 /** Reads the file lstat saw: a link or another file swapped in after lstat is DENIED. */
-async function readSeen(
-  path: string,
-  seen: Awaited<ReturnType<typeof lstat>>,
-  room: number,
-): Promise<Uint8Array> {
+async function readSeen(path: string, seen: Awaited<ReturnType<typeof lstat>>): Promise<Uint8Array> {
   let handle: Awaited<ReturnType<typeof open>>;
   try {
     handle = await open(path, READ_FLAGS);
@@ -141,7 +134,6 @@ async function readSeen(
   try {
     const opened = await handle.stat();
     if (!opened.isFile() || opened.ino !== seen.ino || opened.dev !== seen.dev) throw fails("DENIED");
-    if (opened.size > room) throw fails("INVALID");
     return await handle.readFile();
   } finally {
     await handle.close();
@@ -152,7 +144,6 @@ async function readSeen(
 async function readFolder(root: string, installed: boolean): Promise<Files> {
   const files: Files = new Map();
   const seen = names();
-  let total = 0;
   let scanned = 0;
   const top = await lstat(root);
   if (top.isSymbolicLink() || !top.isDirectory()) throw fails("DENIED");
@@ -171,8 +162,7 @@ async function readFolder(root: string, installed: boolean): Promise<Files> {
         if (!isPluginRelativePath(path)) throw fails("INVALID");
         await walk(path);
       } else if (info.isFile()) {
-        if (total + info.size > PLUGIN_LIMITS.bytes) throw fails("INVALID");
-        total = admit(files, seen, path, await readSeen(full, info, PLUGIN_LIMITS.bytes - total), total);
+        admit(files, seen, path, await readSeen(full, info));
       } else throw fails("DENIED");
     }
   };
@@ -181,12 +171,12 @@ async function readFolder(root: string, installed: boolean): Promise<Files> {
 }
 
 /**
- * The archive's directory is walked first and refused over the limits; only then is it inflated.
+ * The archive's directory is walked first and refused over the file-count limit or with unsafe names; only then is
+ * it inflated.
  * The package is either at the root or inside one top folder, which names the package.
  */
 function readZip(data: Uint8Array): { files: Files; folder?: string } {
   let count = 0;
-  let declared = 0;
   let inflated: Record<string, Uint8Array>;
   try {
     unzipSync(data, {
@@ -195,8 +185,7 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
         count++;
         // A stored entry is copied by its compressed size, whatever the directory claims.
         if (file.compression === 0 && file.size !== file.originalSize) throw fails("INVALID");
-        declared += Math.max(file.size, file.originalSize);
-        if (count > PLUGIN_LIMITS.files || declared > PLUGIN_LIMITS.bytes) throw fails("INVALID");
+        if (count > PLUGIN_LIMITS.files) throw fails("INVALID");
         if (!isPluginRelativePath(file.name)) throw fails("INVALID");
         return false;
       },
@@ -218,11 +207,10 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
   }
   const files: Files = new Map();
   const seen = names();
-  let total = 0;
   for (const name of entries.sort(order)) {
     const path = name.slice(strip.length);
     if (path === RECORD) throw fails("INVALID");
-    total = admit(files, seen, path, inflated[name] ?? new Uint8Array(), total);
+    admit(files, seen, path, inflated[name] ?? new Uint8Array());
   }
   return { files, ...(folder ? { folder } : {}) };
 }
@@ -292,7 +280,6 @@ export async function readPluginPackage(path: string): Promise<PluginPackage> {
   if (info.isDirectory())
     pkg = { source, files: await readFolder(source, false), folder: basename(source), kind: "folder" };
   else if (info.isFile() && /\.zip$/i.test(source)) {
-    if (info.size > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
     pkg = { source, ...readZip(await readFile(source)), kind: "zip" };
   } else throw fails("INVALID");
   const { manifest, issues } = examine(pkg.files, pkg.folder);
@@ -734,7 +721,6 @@ export class PluginStore {
       const bytes = zipSync(Object.fromEntries([...files].sort(([a], [b]) => order(a, b))), {
         mtime: new Date(1980, 0, 1),
       });
-      if (bytes.length > PLUGIN_LIMITS.zipBytes) throw fails("INVALID");
       return bytes;
     });
   }

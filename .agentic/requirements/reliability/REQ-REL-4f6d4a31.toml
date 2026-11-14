@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-4f6d4a31"
+
+title = "Diagnose transfer and connection failures distinctly"
+
+status = "active"
+
+requirement = """
+If a block transfer is truncated, a VISA call times out, the instrument is absent, PyVISA or its backend or a transport driver is missing, or the connection is lost, then the scpi helper shall report the distinct problem code `truncated-transfer`, `visa-timeout`, `instrument-absent`, `driver-missing` or `connection-lost` (with `reconnected` after a successful reconnection) and close every VISA session it opened.
+"""
+
+verification = "Fake-instrument tests trigger each failure and read the problem code and status, and the fake's open-session counter is zero after every run; a run without any PyVISA on the path reports driver-missing."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/session.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/errors.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/classes.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

@@ -1,0 +1,6 @@
+# Machine of the VERA profile stm32f4-discovery. renode-sim parses these lines and sends only approved commands;
+# the firmware, the UART file backends and the time slices are added by renode-sim itself.
+using sysbus
+mach create "stm32f4-discovery"
+machine LoadPlatformDescription @platform.repl
+cpu PerformanceInMips 125

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-44f315bd"
+title = "Summarize micropython-tool run folders"
+status = "active"
+requirement = "When report runs with one or more --run folders, micropython-tool shall write a new run folder whose result.json and report.md list each run's operation, status, port, identity, firmware and file hashes, and shall refuse a folder without a micropython-tool result."
+verification = "Two run folders from identify and deploy-file: report lists both with their hashes; a folder holding an arduino-tool result is blocked run-invalid."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/report.py", "05_Software/plugins/micropython/scripts/micropython_support/cli.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "low"
+created = 2026-11-14
+updated = 2026-11-14

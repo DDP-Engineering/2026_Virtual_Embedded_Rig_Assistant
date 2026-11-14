@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-53db2460"
+
+title = "Show, start and stop only listed user services"
+
+status = "active"
+
+requirement = "When service-status, service-start or service-stop names a unit, pi-tool shall act only on a `.service` unit listed in the project manifest, through `systemctl --user` with no sudo or system scope, report its load, active and sub state, main PID, whether it is declared to stay running and whether lingering is enabled for the user (warning no-linger when a service declared to stay running would stop with VERA's SSH session), and refuse any other unit with service-not-allowed."
+
+verification = "With a runtime user unit in the WSL systemd user manager: start gives active with a main PID, linger as a boolean and the keeps-running or no-linger warning, status reports it active, stop gives inactive; an unlisted unit (ssh.service, sshd.service) gives service-not-allowed and the server logs no exec for it."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

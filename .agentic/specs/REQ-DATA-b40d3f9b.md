@@ -122,7 +122,7 @@ one release; a mirror is a plain copy of that folder.
 Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `description`, `ecosystem`,
 `platforms` and `requires` follow the manifest schema; `url` is a bare file name
 (`[A-Za-z0-9][A-Za-z0-9._+-]*\.zip`, at most 255 characters, no `/`), resolved against the catalog folder
-URL; `bytes` is 1..64 MiB (the zip import limit). At most 1024 plugins with distinct ids and 64 packs. An
+URL; `bytes` is the zip's exact size, at least 1 (no upper limit). At most 1024 plugins with distinct ids and 64 packs. An
 index larger than 4 MiB is invalid.
 
 Every released entry includes `activities` and `keywords` arrays and preserves supplied optional
@@ -142,7 +142,7 @@ both remote and bundled views, including when installed state/update markers are
   `<folder><url>`. A read whose final redirected URL is neither https nor http on a loopback host counts as
   a failed read (a query is fine there: release hosts redirect to signed storage links). A configured value
   that breaks the rule counts as no catalog.
-- **Bundled catalog.** `<resources>/plugins/` in a package, `05_Software/src/bundled-plugins/` in
+- **Bundled catalog.** `<resources>/plugins/` in a package, `07_Delivery/plugins/` in
   development (`npm run prepare:plugins`): a release folder of the official plugins. The client reads it
   with the same index and zip checks.
 - **View.** `plugins.catalog {refresh}` returns `{source: remote|bundled|none, url?, problem?:
@@ -153,8 +153,8 @@ both remote and bundled views, including when installed state/update markers are
   `installed {version?, tier?}` when installed and `update: true` when its index version is higher than
   the installed one (semantic version precedence). `refresh: false` returns the last view, reading one
   when there is none.
-- **Download.** `plugins.catalogReview {id}` reads the entry's zip from the view's source, streamed with a
-  64 MiB cap. A size different from `bytes`, or a SHA-256 different from `sha256`, is refused with
+- **Download.** `plugins.catalogReview {id}` reads the entry's zip from the view's source, streamed and
+  stopped past `bytes`. A size different from `bytes`, or a SHA-256 different from `sha256`, is refused with
   INVALID `plugins.catalogError.sha256` and nothing is kept. A failed transfer is OFFLINE
   `plugins.catalogError.download`. The verified zip is kept as `<userData>/plugins/catalog/<sha256>.zip`
   (written through a temporary file and a rename). A review first empties that folder, so only the zip

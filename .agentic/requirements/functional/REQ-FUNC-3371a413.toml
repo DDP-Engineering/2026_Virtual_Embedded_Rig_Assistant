@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-3371a413"
+title = "Capture the run an autoreload starts after a deploy"
+status = "active"
+requirement = "When deploy runs with --capture and --port, circuitpython-tool shall open the bound serial port before the first write and report the console run that follows the writes with its verdict, ending fail with code exception on a traceback and incomplete with code no-run-observed when no run starts within the capture time."
+verification = "Fake console with autoreload on: deploy of a printing code.py with --capture 5 reports run finished and its output; of a raising code.py fail exception with the traceback, files confirmed; with autoreload off (no banner is printed): incomplete no-run-observed, autoreload unknown; a --port not bound to the volume is blocked port-mismatch before any write."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/deploy.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/console.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   buildSystemPrompt,
@@ -7,11 +8,13 @@ import {
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
+  leaseRoot,
   officialPartsPlugin,
   PluginStore,
   type ProgramHost,
   ProgramRunner,
   programPromptEntries,
+  ResourceLeases,
   SessionService,
   SettingsService,
   unavailablePartsTools,
@@ -32,6 +35,7 @@ import {
   nodeClock,
 } from "./host-ports.js";
 import { cliPartsProvider, partsFromEnvironment } from "./parts-env.js";
+import { cliProgramCredentials, pluginCredentialsFromEnvironment } from "./plugin-credentials-env.js";
 import { createCliProcessHost } from "./process-host.js";
 import { createCliProvisioner } from "./provisioning.js";
 import { scrubReplayOutput } from "./replay-output.js";
@@ -97,6 +101,9 @@ export async function runTurn(
       (secret) => logger.registerSecret(secret),
     );
     const parts = cliPartsProvider(store, partsSettings, () => config.webAccess.enabled);
+    // MQTT broker credentials and Wokwi tokens, also environment-only and in memory: approved runs of the official
+    // mqtt-tools and wokwi plugins read them.
+    await pluginCredentialsFromEnvironment(process.env, store, (secret) => logger.registerSecret(secret));
     resources.push(() => parts.close());
     let gateway: LlmGateway, model: string;
     if (options.provider === "replay") {
@@ -168,7 +175,17 @@ export async function runTurn(
     );
     resources.push(() => workbench.close());
     // Plugin program runs end with the CLI run: closing resources stops every run's process tree.
-    const programs = new ProgramRunner({ host: createCliProcessHost(), clock: nodeClock });
+    // Bench resources are leased in the per-user folder the desktop app also uses (spec REQ-DATA-f2cbfc23 §5).
+    const leases = new ResourceLeases({
+      root: leaseRoot({
+        platform: process.platform,
+        env: process.env,
+        tmpdir: tmpdir(),
+        uid: process.getuid?.(),
+      }),
+      app: "cli",
+    });
+    const programs = new ProgramRunner({ host: createCliProcessHost(), clock: nodeClock, leases });
     resources.push(() => programs.stopAll());
     const snapshot = await workbench.open(options.workbench);
     signal.throwIfAborted();
@@ -189,6 +206,7 @@ export async function runTurn(
         () => config.plugins,
       ),
       plugins: () => workbench.loadPlugins(snapshot.config.id),
+      credentials: cliProgramCredentials(store),
     };
     const programEntries = await programPromptEntries(programHost, skillList);
     const partsPlugin = (await workbench.loadPlugins(snapshot.config.id)).some(officialPartsPlugin);

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4bf35c2a"
+
+title = "Boot a firmware on the virtual platform and capture its UART"
+
+status = "active"
+
+requirement = """
+When run is requested for a validated firmware, renode-sim shall start the pinned engine headless with the approved profile, load the copy of the ELF in the run folder at the stated boot address, advance virtual time up to the virtual budget, and record the selected UART's output with the virtual time of each line in the run folder.
+"""
+
+verification = "Run the boot fixture with a virtual budget of 0.35 s: result pass, uart lines hold the banner and the version at virtual 0.01 s and ticks at 0.1, 0.2 and 0.3 s, the run folder holds firmware.elf with the same SHA-256 and the engine log; with the real engine (opt-in) board-basics finds the same lines."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/engine.py", "05_Software/plugins/renode/scripts/renode_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

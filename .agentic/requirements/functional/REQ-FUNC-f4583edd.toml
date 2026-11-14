@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f4583edd"
+
+title = "Build an environment with hashed artifacts, versions and provenance"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio build` with a clean preflight, the platformio helper shall run PlatformIO for exactly the requested environment in the owned build folder and record, in a new run folder, copies of firmware.elf, firmware.bin and firmware.hex where produced with SHA-256 and size, the effective options of the environment, the PlatformIO Core, platform, package and library versions with the SHA-256 of their manifests, the SHA-256 of every project input file before and after, and the build log.
+"""
+
+verification = "Stand-in build of each MCU environment into its own build folder: two run folders whose artifacts differ by hash, versions and checksums of the stand-in packages recorded; real opt-in build (VERA_PIO_REAL) of the fixture for disco and disco_fast with distinct ELF hashes and recorded ststm32/toolchain versions."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/artifacts.py", "05_Software/plugins/platformio/scripts/pio_support/packages.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

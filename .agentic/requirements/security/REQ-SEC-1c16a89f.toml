@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-1c16a89f"
+
+title = "Validate a device profile completely before the radio is used"
+
+status = "active"
+
+requirement = "If a device profile has an unknown field, an invalid UUID, a unit outside the closed unit set, an operation no declared property supports, a write operation on a characteristic without the write operation, or an identity characteristic that is not a side-effect-free readable text or byte value, then ble-tool shall refuse it with code profile before using the radio."
+
+verification = "capabilities --profile on profiles with each defect is blocked profile naming the field; the example profile is accepted; the fake log stays empty."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/profile.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

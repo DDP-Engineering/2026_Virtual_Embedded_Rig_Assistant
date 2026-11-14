@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-cf1a9ecb"
+
+title = "Refuse timestamps that are not on the meter clock"
+
+status = "active"
+
+requirement = """
+When a segment timestamp file declares a clock other than the capture's own (the meter's sample clock, or the file's time for an import), such as the PC arrival time of a UART line, or names another capture, the analyzer shall refuse it with problem code sync before writing anything.
+"""
+
+verification = "A test gives a timestamp file with clock host-receive and one with a capture id of another run; both exit 2 with code sync and no run folder."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/segment.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

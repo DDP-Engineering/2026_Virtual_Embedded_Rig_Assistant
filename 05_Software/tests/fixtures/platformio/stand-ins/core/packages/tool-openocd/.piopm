@@ -1,0 +1,12 @@
+{
+  "type": "tool",
+  "name": "tool-openocd",
+  "version": "3.1200.7",
+  "spec": {
+    "owner": "platformio",
+    "id": null,
+    "name": "tool-openocd",
+    "requirements": null,
+    "uri": null
+  }
+}

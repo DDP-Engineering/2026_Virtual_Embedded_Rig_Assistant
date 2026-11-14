@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b9a25608"
+title = "Reserve a serial port a run names across VERA processes"
+status = "active"
+requirement = "When the program runner has a lease registry and starts a run whose arguments name serial ports, it shall take a lease of kind serial with key serial:<port> for each port together with the run's other claims, refuse the run with BUSY naming the port and the holding process when another live VERA process holds one, and release the leases when the run ends."
+verification = "Runner test with two ResourceLeases on one folder and different pids: a run naming COM5 in the first makes a run naming com5 in the second BUSY {resource COM5, holder process <pid>}; after the first run ends the second starts; a stale lease of a dead pid is replaced; a run without ports takes no lease; the arduino-cli upload and micropython-tool argument forms (--port COM5) are covered."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

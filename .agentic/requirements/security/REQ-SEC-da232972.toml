@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-da232972"
+
+title = "Refuse a host key that is not pinned before authenticating"
+
+status = "active"
+
+requirement = "When the SSH server presents a host key whose SHA-256 fingerprint is not among the registry entry's hostKeys, pi-tool shall end blocked with code host-key-changed (host-key-unpinned when the list is empty), naming the presented fingerprint, without authenticating or sending any request."
+
+verification = "Test SSH server with a second host key: identify ends host-key-changed exit 2 naming the new fingerprint, also when no agent is reachable, and the server log has no authentication attempt and no exec; with hostKeys [] check-host-key ends host-key-unpinned; known_hosts is a callable returning no key and config=None, so no ~/.ssh file is consulted."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

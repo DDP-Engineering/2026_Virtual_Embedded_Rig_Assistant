@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-00c788bb"
+title = "Refuse a run whose credential reference cannot be resolved"
+status = "active"
+requirement = "If a call names the credentials option more than once, without a valid reference, while the host has no credential port, or with a reference whose credential is not stored, then the program tools shall refuse it with a message naming the reference and start no process."
+verification = "Core test: a repeated option, 'Bad_Ref', no credential port and an unknown reference each throw at prepare with the reference or reason in the message; a credential removed between prepare and apply throws at apply with no spawn."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-credentials.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

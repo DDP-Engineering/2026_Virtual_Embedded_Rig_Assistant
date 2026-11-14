@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-85d446fd"
+
+title = "Run the zephyr plugin on Windows x64 and native Ubuntu x64"
+
+status = "active"
+
+requirement = """
+The zephyr plugin shall run its operations on Windows x64 and native Ubuntu x64 with its pinned host tools and a user-provided Zephyr SDK, without installing anything system-wide.
+"""
+
+verification = "Manual: the opt-in real-tool suite on Windows x64 and on native Ubuntu x64 (WSL does not count) builds the fixtures with the pinned west/CMake/Ninja wheels and SDK 1.0.1 from a scratch folder; when no Ubuntu machine is available that half stays open."
+
+affected_paths = ["05_Software/plugins/zephyr/plugin.yaml", "05_Software/plugins/zephyr/scripts/zephyr_support/environment.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

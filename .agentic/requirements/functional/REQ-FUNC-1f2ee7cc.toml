@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-1f2ee7cc"
+title = "Publish the official bus-tools plugin"
+status = "active"
+requirement = "The repository shall publish bus-tools as an official plugin with its README, skills bus-transactions and bus-profiles, catalog and pack entries, and a resources declaration (option --adapter, kind bus-adapter, cleanup release) that makes every adapter call reserved and supervised."
+verification = "Package test validates the manifest, the resources declaration, the skills and the catalog and pack entries; prepare-plugins lists bus-tools."
+affected_paths = ["05_Software/plugins/bus-tools/plugin.yaml", "05_Software/plugins/bus-tools/README.md", "05_Software/plugins/bus-tools/skills/bus-transactions/SKILL.md", "05_Software/plugins/bus-tools/skills/bus-profiles/SKILL.md", "05_Software/plugins/bus-tools/profiles/bme280-i2c.json", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

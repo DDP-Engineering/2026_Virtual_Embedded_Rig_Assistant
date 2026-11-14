@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-90a99d8d"
+
+title = "Refuse unsafe project paths and task commands"
+
+status = "active"
+
+requirement = "pi-tool and the remote helper shall refuse project file paths that are absolute, contain `.` or `..` segments, control characters or backslashes or start with `.vera-pi`, and task commands whose program is neither python3 nor a project file (sudo, su, sh, env and absolute paths included), with code path or command-not-allowed, while spaces and shell characters in names and arguments are passed literally."
+
+verification = "inspect-project refuses `../x`, `/etc/x` and a task running sudo or sh; a file `dir with space/a b.txt` deploys and a task argument `; touch pwned` arrives literally while pwned is never created."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/project.py", "05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

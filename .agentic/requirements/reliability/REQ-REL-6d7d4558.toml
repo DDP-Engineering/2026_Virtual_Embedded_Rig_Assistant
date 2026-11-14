@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6d7d4558"
+
+title = "Bound the captured output of a run"
+
+status = "active"
+
+requirement = """
+If serial.log exceeds 16 MiB or wokwi-cli's stdout or stderr exceeds 4 MiB, then wokwi-tool shall stop the CLI and report outcome output-limit with status incomplete and remote state unknown.
+"""
+
+verification = "Helper test: a fake CLI writing 5 MiB to stdout gives output-limit, cli-stdout.log at most 4 MiB plus the truncation marker, remote unknown."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/run.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

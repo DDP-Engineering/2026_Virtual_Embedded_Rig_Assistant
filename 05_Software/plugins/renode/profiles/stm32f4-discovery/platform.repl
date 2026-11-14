@@ -1,0 +1,12 @@
+// Platform of the VERA profile stm32f4-discovery: platforms/boards/stm32f4_discovery.repl of Renode 1.17.0
+// (SHA-256 6421c6838e1a4e72007519806134fc33616bbbd8c49b18e34e79fc3b86121c1e, MIT licence, (c) Antmicro) with its
+// using line pointed at stm32f4.repl beside this file, the CPU model without the SVD download.
+using "stm32f4.repl"
+
+UserButton: Miscellaneous.Button @ gpioPortA
+    -> gpioPortA@0
+
+UserLED: Miscellaneous.LED @ gpioPortD
+
+gpioPortD:
+    12 -> UserLED@0

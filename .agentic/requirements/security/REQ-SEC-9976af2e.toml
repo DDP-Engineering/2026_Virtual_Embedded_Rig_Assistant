@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-9976af2e"
+title = "Revoke credential access when the plugin is disabled"
+status = "active"
+requirement = "If the plugin declaring credentials is no longer enabled for the workbench when an approved run starts, then the program tools shall refuse the run as undeclared without reading the credential or starting a process."
+verification = "Core test: prepare succeeds, the host's plugin list becomes empty, apply throws the undeclared-program error, the credential port records no read and the process host no spawn."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-credentials.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

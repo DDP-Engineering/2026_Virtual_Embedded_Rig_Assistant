@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-7f9bd395"
+
+title = "Read only permitted target memory"
+
+status = "active"
+
+requirement = """
+When gdb-debug reads target memory for variables, locals or the stacked frame, GDB shall be limited to the profile's RAM and flash regions and the fixed System Control Block fault registers (`mem` regions with inaccessible-by-default), and a `--read` whose address range lies outside the profile's RAM or exceeds 256 bytes shall be reported refused without reading it.
+"""
+
+verification = "Integration tests check the mem commands sent from the profile (flash and RAM read-only, the SCB fault registers), a --read of a RAM variable returned with address, size, type and bytes, and a --read resolving to 0x40020014 (peripheral) or of 640 bytes reported refused with no -data-read-memory-bytes sent for it; a variable whose read GDB refuses is reported with its error."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/profiles.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

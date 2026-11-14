@@ -1,0 +1,47 @@
+format: 1
+id: power-profiler
+version: 1.0.0
+name: Power profiling
+description: Measure a board's current, voltage, power, energy and charge with a Joulescope JS220 through the official pyjoulescope_driver - captures on the meter's own sample clock with gaps and overflow kept explicit (never zero), firmware build identity, GPI markers for events - and analyse them offline - mean/min/max current, energy and charge integrals, time in states, energy per event, A/B firmware comparison that separates setup differences from firmware changes (judged by lab-validate), and a battery-life interval with its assumptions. The meter is reserved for the run, opened without its defaults, its current path never switched, and changed settings restored and read back.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://github.com/jetperch/joulescope_driver", "https://pypi.org/project/pyjoulescope-driver/2.5.5/"]
+programs:
+  power-profile:
+    install: { script: scripts/power_profile.py }
+    version: { args: [--version], match: '^power-profile (\d+\.\d+\.\d+)' }
+    timeout: 120
+    env:
+      POWER_PROFILE_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --meter, kinds: [power-monitor], grace: 10, cleanup: [release], cleanupTimeout: 30 }
+  power-analyze:
+    install: { script: scripts/power_analyze.py }
+    version: { args: [--version], match: '^power-analyze (\d+\.\d+\.\d+)' }
+    timeout: 600
+# The highest risk of all matching rules wins. A capture configures the meter (sample rate, current and voltage
+# range): that changes the burden in series with the DUT, so it is device-write, never a plain read.
+rules:
+  - { match: "power-profile {--version,--help,-h}", risk: safe }
+  - match: "power-profile tools"
+    risk: safe
+    note: Imports pyjoulescope_driver and checks the USB prerequisites (WinUSB, udev rule); opens no device and changes no driver or rule.
+  - match: "power-profile tools --list *"
+    risk: device-read
+    note: Lists the connected Joulescope device paths through the driver's USB enumeration; opens none of them.
+  - match: "power-profile identify *"
+    risk: device-read
+    note: Opens the declared meter without applying its defaults and reads its versions and range settings; changes nothing.
+  - match: "power-profile capture *"
+    risk: device-write
+    timeout: 3600
+    note: Sets the meter's sample rate and current/voltage range (which changes the burden in series with the DUT), streams current, voltage, power and the chosen GPI markers, then restores the previous settings and reads them back. It never switches the DUT's current path, never drives an output and never updates the meter's firmware.
+  - match: "power-profile release *"
+    risk: device-write
+    note: VERA's cleanup after an interrupted capture - switches the meter's signals off and its current range back to auto-ranging, then reads it back; it never switches the current path.
+  - { match: "power-analyze {--version,--help,-h}", risk: safe }
+  - match: "power-analyze {acquisition,inspect} *"
+    risk: safe
+    note: Offline. Checks an acquisition plan against the meter profile, or reads a capture folder; writes nothing.
+  - match: "power-analyze {import,measure-energy,segment,compare,battery,report} *"
+    risk: safe
+    note: Offline analysis. Reads the named files and run folders in the workbench (hash-checked), never changes them, and creates a new run folder under the results directory (default embedded-lab-results); no device, network or other program.

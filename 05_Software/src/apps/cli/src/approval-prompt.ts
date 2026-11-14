@@ -39,6 +39,10 @@ function describe(request: ApprovalRequest): string {
       `Executable: ${program.executable}`,
       ...program.notes.map((note) => `Note: ${note}`),
       ...program.files.map((file) => `File: ${file.path} ${file.sha256}`),
+      ...(program.resources ?? []).map(
+        (resource) => `Reserves: ${resource.alias} (${resource.kind} ${resource.resource})`,
+      ),
+      ...(program.registry ? [`Registry: ${program.registry.path} ${program.registry.sha256}`] : []),
       "",
     ].join("\n");
   return request.tool === "web_download" && request.download

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-adb91424"
+
+title = "Hand the SSH agent socket only to programs that declare it"
+
+status = "active"
+
+requirement = "When a program of an official plugin declares sshAgent: true, the runner shall add the host's SSH_AUTH_SOCK to that program's environment and its cleanup run, and shall refuse such a declaration of a non-official plugin before approval, while every other program's environment stays the allowlist."
+
+verification = "runner tests: a run with inherit [SSH_AUTH_SOCK] receives the host value and one without does not; program-tools refuses a trial plugin declaring sshAgent; the shared schema accepts only true."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-credentials.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

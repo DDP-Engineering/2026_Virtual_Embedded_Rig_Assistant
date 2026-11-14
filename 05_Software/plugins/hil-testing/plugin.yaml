@@ -1,0 +1,25 @@
+format: 1
+id: hil-testing
+version: 1.0.0
+name: HIL testing
+description: Run finite hardware-in-the-loop test plans on a real board - VERA compiles a declarative JSON plan (setup, firmware and hash, wiring, steps, budget, cleanup) into operations of the enabled probe-rs, esp32-esptool, serial-monitor, scpi-instruments and lab-validation plugins, asks one approval at the plan's highest risk, reserves the probe, serial ports and instruments for the plan, flashes, resets, talks to the UART, waits for events, captures and judges the results, always runs the cleanup on Stop or timeout, and writes a JSON/JUnit/HTML report.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md]
+programs:
+  hil:
+    install: { script: scripts/hil_tool.py }
+    version: { args: [--version], match: '^hil-testing (\d+\.\d+\.\d+)' }
+    plan: hil
+    timeout: 120
+rules:
+  - { match: "hil {--version,--help,-h}", risk: safe }
+  - match: "hil check *"
+    risk: safe
+    note: VERA compiles the plan and lists every operation with its risk, files and reserved resources; nothing is started and no device is opened.
+  - match: "hil run *"
+    risk: device-read
+    note: VERA runs the plan's compiled operations through their own plugins; the approval's risk is the highest of those operations and of the firmware's declared effect, and never lower than device-read.
+  - match: "hil report *"
+    risk: safe
+    note: Writes report.html, report.md and junit.xml into a finished HIL run folder; reads nothing else.

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6b92ea2f"
+
+title = "Report compile errors as diagnostics of the sketch without a binary"
+
+status = "active"
+
+requirement = """
+If arduino-cli reports a compile failure, then the arduino-tool helper shall exit 3 with status fail, list each compiler error and warning with its sketch-relative file, line and column, and list no binary.
+"""
+
+verification = "Compiling the broken fixture gives exit 3, status fail and an error at VeraBroken.ino line 2 column 3; the missing-library fixture gives a fatal error at line 1 naming the header and no install call; neither result lists a binary."
+
+affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

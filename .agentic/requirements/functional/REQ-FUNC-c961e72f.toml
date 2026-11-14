@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c961e72f"
+
+title = "Retry only declared repeatable HIL steps"
+
+status = "active"
+
+requirement = """
+The HIL executor shall repeat a step `repeat` times and retry a failed attempt up to `retries` times only for repeatable adapters, and shall run flash, reset, output and configure operations once.
+"""
+
+verification = "A test runs a serial send that fails twice then passes with retries 2 (pass after three attempts) and a flash that fails (error after one attempt); retries on a flash step is refused at compilation."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/src/libraries/core/src/plugins/hil/adapters.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

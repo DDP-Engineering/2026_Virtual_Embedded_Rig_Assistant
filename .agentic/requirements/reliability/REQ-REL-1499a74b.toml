@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-1499a74b"
+title = "Report missing space distinctly"
+status = "active"
+requirement = "If the board's file system has less free space than the copy needs, then micropython-tool shall refuse the deploy with status blocked and code no-space before writing, and if the board reports no space during the transfer, it shall end with status fail and code no-space, remove the temporary file and leave the target unchanged."
+verification = "Fake free space 1 block below the source size: blocked no-space, nothing written; fake raising ENOSPC after 300 bytes: fail no-space, target unchanged, no .vera-part left."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

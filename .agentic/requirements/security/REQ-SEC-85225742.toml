@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-85225742"
+title = "Transfer only to devices that allow raw transfers, within limits"
+status = "active"
+requirement = "If transfer names a device that does not declare rawTransfer true, or more bytes than the profile's limits or the adapter's current maximum write or read size, bus-tool shall end blocked (transfer-not-allowed or limit) before any data request."
+verification = "transfer to the BME280 without rawTransfer: exit 2 transfer-not-allowed, no open; --read beyond maxReadBytes: exit 2 limit, no open; beyond the adapter's mode_max_read: exit 2 limit with no data request on the wire."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/profile.py", "05_Software/plugins/bus-tools/scripts/bus_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

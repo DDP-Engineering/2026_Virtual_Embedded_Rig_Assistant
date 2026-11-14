@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-b829232e"
+title = "Identify a MicroPython board"
+status = "active"
+requirement = "When identify runs on a compatible board, micropython-tool shall report the port, identity key, implementation, version, machine, platform, unique id, free memory, the root file system's size and free space, and that the running program was interrupted."
+verification = "Fake board micropython 1.24.1 on 'Raspberry Pi Pico with RP2040': result.json holds every field with the fake's values and application interrupted; the board is left out of the raw REPL."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/device.py", "05_Software/plugins/micropython/scripts/micropython_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

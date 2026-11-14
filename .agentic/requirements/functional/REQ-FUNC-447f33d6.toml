@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-447f33d6"
+
+title = "Inspect a Wokwi project offline"
+
+status = "active"
+
+requirement = """
+When inspect-project names a project folder, wokwi-tool shall report the wokwi.toml facts, the firmware and ELF with path, form, size, SHA-256 and origin, the diagram's parts and boards and the problems found, and shall write no file.
+"""
+
+verification = "Helper test: a project with wokwi.toml, an Intel HEX inside a fixture arduino-tool compile run whose result.json lists its hash, an ELF and a diagram gives firmware.origin arduino-cli with that run and fqbn, buildMatch same-run, the board uno and the files' hashes; the project tree is byte-identical afterwards; a .pio/build/uno/firmware.hex gives origin platformio environment uno."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/project.py", "05_Software/plugins/wokwi/scripts/wokwi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

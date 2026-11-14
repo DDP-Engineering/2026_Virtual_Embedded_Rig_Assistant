@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-TEST-5af7bf4a"
+title = "Gate real-circup, real-bundle and board tests behind environment variables"
+status = "active"
+requirement = "The circuitpython integration tests shall run the real pinned circup only when VERA_CIRCUITPYTHON_UV names a uv, download a real bundle only when VERA_CIRCUITPYTHON_BUNDLE_TAG names a tag in that real-circup run, and touch a real board only when VERA_TEST_CIRCUITPY_VOLUME and VERA_TEST_CIRCUITPY_IDENTITY name it, skipping each block otherwise."
+verification = "Inspection: a default run of circuitpython.test.ts shows the real-circup and hardware blocks skipped and the offline tests passing; with VERA_CIRCUITPYTHON_UV set the real-circup block installs the pinned packages through VERA's provisioner and passes."
+affected_paths = ["05_Software/tests/integration/circuitpython.test.ts"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

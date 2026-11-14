@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-dd778299"
+
+title = "Scan for BLE advertisers for a bounded time and device count"
+
+status = "active"
+
+requirement = "When ble-tool scan runs, it shall scan for at most --duration seconds (1 to 30) and stop early once --max-devices distinct addresses (1 to 500) were seen, without connecting to any device, and shall list each advertiser by address with the names it advertised, its last, lowest and highest RSSI, service UUIDs, manufacturer ids, transmit power and advertisement count."
+
+verification = "A fake Bleak advertising three devices: the result lists three addresses with RSSI ranges; with --max-devices 2 the scan ends early with two; the fake log shows no connect; --duration 31 is refused."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/operations.py", "05_Software/plugins/ble-tools/scripts/ble_support/scan.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

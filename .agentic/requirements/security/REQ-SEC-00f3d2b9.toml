@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-00f3d2b9"
+
+title = "Rate debug operations by execution control and firmware effect"
+
+status = "active"
+
+requirement = """
+The gdb-debug plugin's rules shall rate `gdb-elf` operations and `gdb-debug tools` and `release` safe, `gdb-debug snapshot`, `break` and `step` device-write, any gdb-debug call with `--firmware-effect actuates` irreversible, and every direct call of `arm-none-eabi-gdb` or `openocd` blocked; the helper shall refuse a live operation without `--firmware-effect` or `--on-exit`.
+"""
+
+verification = "Rule tests classify each operation with classifyCommand, including `--firmware-effect=actuates` and the blocked direct tools; helper tests omit --firmware-effect and --on-exit and expect exit 2."
+
+affected_paths = ["05_Software/plugins/gdb-debug/plugin.yaml", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

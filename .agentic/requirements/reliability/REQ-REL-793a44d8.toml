@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-793a44d8"
+title = "Refuse a port that does not answer as BPIO2"
+status = "active"
+requirement = "If the binary port does not answer the status request with a valid COBS-framed BPIO2 response within 2 seconds, bus-tool shall end blocked (not-bpio2) and send no configuration or data request."
+verification = "Simulated port answering terminal text, and one answering nothing: exit 2 not-bpio2, the wire log holds the one status request only."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/adapter.py", "05_Software/plugins/bus-tools/scripts/bus_support/cobs.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

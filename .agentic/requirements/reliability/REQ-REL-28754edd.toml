@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-28754edd"
+title = "Fail a configuration the adapter refuses or does not apply"
+status = "active"
+requirement = "If the configuration response carries an error or the status read back differs from the request, bus-tool shall end fail (config-error or config-mismatch), send no data request and apply the final state."
+verification = "Simulated adapter answering a configuration error, and one that ignores pull-up enable: exit 1 with config-error and config-mismatch; no data request on the wire; final HiZ applied."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

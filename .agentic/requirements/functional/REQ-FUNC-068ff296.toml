@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-068ff296"
+
+title = "Run power captures as HIL steps"
+
+status = "active"
+
+requirement = """
+When a HIL plan uses the steps power.identify or power.capture, the executor shall run them through the power-profile program with the meter reserved, power.capture may run in the background, and a later lab-validate.compare source may name a power.capture step, which binds to the step's capture folder.
+"""
+
+verification = "hil tests compile a plan with power.identify, a background power.capture (arguments with the plan firmware and the conditions), an await and a lab-validate source naming the power step; a source naming the identify step is refused; the executor writes the bound folder into the generated request."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/adapters.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/hil/executor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

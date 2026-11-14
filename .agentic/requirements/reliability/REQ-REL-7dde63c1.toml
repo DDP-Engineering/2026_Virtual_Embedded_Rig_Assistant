@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-7dde63c1"
+
+title = "Bind each owned PlatformIO build folder to one configuration"
+
+status = "active"
+
+requirement = """
+When a build or test build is requested into a build folder that already holds VERA's marker for another project, environment or core folder (the operation families are subfolders of one build folder), the platformio helper shall refuse with code build-dir-mismatch unless --pristine is given, and it shall refuse with code build-dir-foreign any existing build folder without the marker or reached through a link.
+"""
+
+verification = "Build disco into build/a, then request disco_fast into build/a: build-dir-mismatch; with --pristine it rebuilds; an unmarked folder build/x with a file is refused build-dir-foreign and keeps its file."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/builddir.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-68c33dd4"
+
+title = "Confine lab-validate paths to the working directory"
+
+status = "active"
+
+requirement = """
+When a request, source, `--path`, `--run` or `--results-dir` path lies outside the working directory by its text or after links are followed, or a results directory lies inside `.vera`, `lab-validate` shall refuse with exit 2 before reading the file or creating a folder.
+"""
+
+verification = "Tests pass an absolute outside path, a `..` path, a link to outside `.vera/x` as results dir and an outside `--run` and expect exit 2 with a `path` problem and no new folder."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/workspace.py", "05_Software/plugins/lab-validation/scripts/lab_validation/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts", "05_Software/tests/integration/ngspice.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

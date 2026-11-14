@@ -51,7 +51,9 @@
     "shortcuts": "Comenzi rapide",
     "storage": "Stocare",
     "configuration": "Configurare",
-    "partsSearch": "Căutare componente"
+    "partsSearch": "Căutare componente",
+    "mqttCredentials": "Credențiale MQTT",
+    "wokwiTokens": "Tokenuri Wokwi"
   },
   "appearance": {
     "theme": "Temă",
@@ -329,6 +331,8 @@
     "executable": "Executabil",
     "notes": "Note ale regulilor",
     "files": "Fișierele workbenchului și SHA-256 al lor",
+    "resources": "Resursele de laborator rezervate",
+    "registry": "Declarate în",
     "typeToConfirm": "Această modificare este permanentă. Tastați {{word}} pentru a confirma.",
     "confirmMismatch": "Cuvântul tastat nu se potrivește. Tastați cuvântul afișat pe card."
   },
@@ -629,6 +633,33 @@
       "disabled": "Web access este dezactivat.",
       "cancelled": "Test anulat."
     }
+  },
+  "mqttCredentials": {
+    "description": "Autentificări de broker pentru pluginul oficial mqtt-tools. Un profil de broker din workbench numește o credențială prin referința ei; VERA transmite numele de utilizator și parola numai unei rulări aprobate a mqtt-tool din pluginul activ pentru acel workbench, pe intrarea programului, niciodată în argumente, mediu, loguri sau rezultate. Agentul nu le vede niciodată.",
+    "loading": "Se încarcă credențialele MQTT…",
+    "none": "Nu este stocată nicio credențială MQTT.",
+    "stored": "Stocată ({{storage}})",
+    "remove": "Elimină",
+    "add": "Adaugă sau înlocuiește o credențială",
+    "reference": "Referință",
+    "referenceHint": "1-64 litere mici, cifre și cratime, așa cum o numește câmpul credential al profilului de broker.",
+    "username": "Nume de utilizator (opțional)",
+    "password": "Parolă",
+    "save": "Salvează credențiala",
+    "saved": "Salvat."
+  },
+  "wokwiTokens": {
+    "description": "Tokenuri Wokwi CI pentru pluginul oficial wokwi, care rulează simulări de firmware în cloudul Wokwi. Un job de simulare numește un token prin referința lui; VERA dă tokenul numai unei rulări aprobate a wokwi-tool din pluginul activat pentru acel workbench, pe intrarea programului, niciodată în argumente, loguri sau rezultate. Agentul nu îl vede niciodată. Fiecare rulare în cloud trimite firmware-ul și diagrama jobului la Wokwi și se contorizează în planul tău Wokwi.",
+    "loading": "Se încarcă tokenurile Wokwi…",
+    "none": "Niciun token Wokwi nu este salvat.",
+    "stored": "Salvat ({{storage}})",
+    "remove": "Elimină",
+    "add": "Adaugă sau înlocuiește un token",
+    "reference": "Referință",
+    "referenceHint": "1-64 litere mici, cifre și cratime, așa cum o numește contul jobului de simulare.",
+    "token": "Token",
+    "save": "Salvează tokenul",
+    "saved": "Salvat."
   },
   "web": {
     "openTitle": "Deschizi un site extern?",

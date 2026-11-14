@@ -51,7 +51,9 @@
     "shortcuts": "Tastenkombinationen",
     "storage": "Speicher",
     "configuration": "Konfiguration",
-    "partsSearch": "Bauteilsuche"
+    "partsSearch": "Bauteilsuche",
+    "mqttCredentials": "MQTT-Zugangsdaten",
+    "wokwiTokens": "Wokwi-Tokens"
   },
   "appearance": {
     "theme": "Design",
@@ -329,6 +331,8 @@
     "executable": "Programmdatei",
     "notes": "Hinweise der Regeln",
     "files": "Workbench-Dateien und ihr SHA-256",
+    "resources": "Reservierte Laborressourcen",
+    "registry": "Deklariert in",
     "typeToConfirm": "Diese Änderung ist dauerhaft. Geben Sie {{word}} zur Bestätigung ein.",
     "confirmMismatch": "Das eingegebene Wort stimmt nicht überein. Geben Sie das auf der Karte angezeigte Wort ein."
   },
@@ -629,6 +633,33 @@
       "disabled": "Web access ist deaktiviert.",
       "cancelled": "Test abgebrochen."
     }
+  },
+  "mqttCredentials": {
+    "description": "Broker-Anmeldungen für das offizielle Plugin mqtt-tools. Ein Broker-Profil im Workbench nennt Zugangsdaten über ihre Referenz; VERA übergibt Benutzername und Passwort nur einem genehmigten mqtt-tool-Lauf des für diesen Workbench aktivierten Plugins, über die Eingabe des Programms, nie in Argumenten, Umgebung, Logs oder Ergebnissen. Der Agent sieht sie nie.",
+    "loading": "MQTT-Zugangsdaten werden geladen…",
+    "none": "Keine MQTT-Zugangsdaten gespeichert.",
+    "stored": "Gespeichert ({{storage}})",
+    "remove": "Entfernen",
+    "add": "Zugangsdaten hinzufügen oder ersetzen",
+    "reference": "Referenz",
+    "referenceHint": "1-64 Kleinbuchstaben, Ziffern und Bindestriche, wie das Feld credential des Broker-Profils sie nennt.",
+    "username": "Benutzername (optional)",
+    "password": "Passwort",
+    "save": "Zugangsdaten speichern",
+    "saved": "Gespeichert."
+  },
+  "wokwiTokens": {
+    "description": "Wokwi-CI-Tokens für das offizielle wokwi-Plugin, das Firmware-Simulationen in der Wokwi-Cloud ausführt. Ein Simulationsjob nennt ein Token über seine Referenz; VERA übergibt das Token nur einem genehmigten wokwi-tool-Lauf des für diese Workbench aktivierten Plugins, über die Eingabe des Programms, nie in Argumenten, Logs oder Ergebnissen. Der Agent sieht es nie. Jeder Cloud-Lauf sendet Firmware und Diagramm des Jobs an Wokwi und wird auf deinen Wokwi-Plan angerechnet.",
+    "loading": "Wokwi-Tokens werden geladen…",
+    "none": "Kein Wokwi-Token gespeichert.",
+    "stored": "Gespeichert ({{storage}})",
+    "remove": "Entfernen",
+    "add": "Token hinzufügen oder ersetzen",
+    "reference": "Referenz",
+    "referenceHint": "1-64 Kleinbuchstaben, Ziffern und Bindestriche, wie das Konto des Simulationsjobs sie nennt.",
+    "token": "Token",
+    "save": "Token speichern",
+    "saved": "Gespeichert."
   },
   "web": {
     "openTitle": "Externe Website öffnen?",

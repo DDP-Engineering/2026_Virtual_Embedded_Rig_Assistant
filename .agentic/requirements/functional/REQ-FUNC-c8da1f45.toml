@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c8da1f45"
+
+title = "Judge each HIL step by its program's outcome"
+
+status = "active"
+
+requirement = """
+The HIL executor shall classify each attempt as pass, fail, blocked, error or incomplete by its adapter's exit-code mapping, `expect` and stop state, and turn any non-pass outcome of a setup step into blocked.
+"""
+
+verification = "Tests run fake programs exiting 0, 1, 2, 3 and 4 and timing out, in test and setup phase, and expect the spec's statuses."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/src/libraries/core/src/plugins/hil/adapters.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

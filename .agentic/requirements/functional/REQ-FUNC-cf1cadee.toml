@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cf1cadee"
+
+title = "Prepare a Zephyr workspace through a separate network operation"
+
+status = "active"
+
+requirement = """
+When prepare-workspace is requested, the zephyr helper shall initialize the workspace from the local manifest when it has no .west folder and update the manifest's projects, which the preflight has limited to the listed ones, and shall report error with the differing projects when a checked-out head differs from its requested revision afterwards.
+"""
+
+verification = "Offline with the real west and git against local file:// repositories: init -l then update, .west/config names the manifest folder and both projects are checked out at their requested SHAs; a branch pin that moved on gives status error project-checkout; a manifest pinning another SHA is refused preflight before any fetch. Open: the operation itself against the network (the real workspace was fetched by hand with the same west commands)."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/prepare.py", "05_Software/plugins/zephyr/scripts/zephyr_support/preflight.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

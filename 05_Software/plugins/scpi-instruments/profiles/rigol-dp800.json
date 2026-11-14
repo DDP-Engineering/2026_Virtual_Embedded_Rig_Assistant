@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "rigol-dp800",
+  "class": "psu",
+  "title": "Rigol DP832 / DP832A programmable DC power supply",
+  "source": "RIGOL DP800 Series Programming Guide (commands :SOURce, :OUTPut, :MEASure)",
+  "verification": { "status": "unverified", "instruments": [] },
+  "identity": {
+    "manufacturers": ["RIGOL TECHNOLOGIES"],
+    "models": ["DP832", "DP832A"],
+    "firmware": "^\\d{2}\\.\\d{2}\\.\\d{2}"
+  },
+  "transport": { "readTermination": "\n", "writeTermination": "\n", "timeoutMs": 3000, "chunkBytes": 20480 },
+  "channels": {
+    "CH1": { "index": 1, "limits": { "voltage": 30.0, "current": 3.0 } },
+    "CH2": { "index": 2, "limits": { "voltage": 30.0, "current": 3.0 } },
+    "CH3": { "index": 3, "limits": { "voltage": 5.0, "current": 3.0 } }
+  },
+  "commands": {
+    "setVoltage": ":SOUR{index}:VOLT {value}",
+    "setCurrent": ":SOUR{index}:CURR {value}",
+    "voltageSetpoint": ":SOUR{index}:VOLT?",
+    "currentSetpoint": ":SOUR{index}:CURR?",
+    "outputOn": ":OUTP CH{index},ON",
+    "outputOff": ":OUTP CH{index},OFF",
+    "outputState": ":OUTP? CH{index}",
+    "measureVoltage": ":MEAS:VOLT? CH{index}",
+    "measureCurrent": ":MEAS:CURR? CH{index}"
+  },
+  "outputStates": { "on": ["ON", "1"], "off": ["OFF", "0"] }
+}

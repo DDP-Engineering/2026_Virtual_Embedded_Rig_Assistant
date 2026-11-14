@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-de25fd47"
+
+title = "Prove real compiles with the pinned arduino-cli and keep hardware proofs explicit"
+
+status = "active"
+
+requirement = """
+Where VERA_TEST_ARDUINO_CLI names arduino-cli and VERA_ARDUINO_HOME an environment with arduino:avr 1.8.8 and arduino:samd 1.8.14, the arduino-cli integration tests shall compile the fixture sketches for both platforms with the real tool, and the upload and serial readback tests shall run only where VERA_TEST_ARDUINO_PORT and VERA_TEST_ARDUINO_IDENTITY name a connected board.
+"""
+
+verification = "Manual: run the integration test file with and without the variables; without them the real-tool and hardware tests report skipped with the variable they need; with them the real compiles pass and the hardware tests stay skipped when no board variable is set."
+
+affected_paths = ["05_Software/tests/integration/arduino-cli.test.ts", "05_Software/tests/support/fake-arduino-cli.py", "05_Software/tests/fixtures/arduino-cli/"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

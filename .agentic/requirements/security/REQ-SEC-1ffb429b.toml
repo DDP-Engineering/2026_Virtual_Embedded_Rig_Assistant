@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-1ffb429b"
+title = "Store and remove MQTT credentials from Settings without returning them"
+status = "active"
+requirement = "The desktop app shall let the user store an MQTT credential (reference, optional username, password) as mqtt:<ref> and remove it, asking for consent before weak storage, and its list response shall hold only the references and their storage, never a username or password."
+verification = "Main test: save stores {type api_key, key, env.username}; without secure storage and no choice it returns consent-required and stores nothing; list returns refs and storage and containsSecret(list) is false; remove deletes; an invalid ref or a control character in the password is INVALID."
+affected_paths = ["05_Software/src/apps/desktop/src/main/plugin-credentials.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/libraries/shared/src/plugin-credentials.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/plugin-credentials.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

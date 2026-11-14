@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-6bac4741"
+
+title = "Re-check plan files before every operation"
+
+status = "active"
+
+requirement = """
+If the plan file, the firmware or an operation's bound files differ from the approved hashes when that operation is about to start, then the HIL run shall end with status `error` and problem `changed` without starting that operation.
+"""
+
+verification = "A test approves a plan, changes the firmware while an earlier step runs, and expects the following flash step not to start, status error and problem changed."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/executor.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,43 @@
+format: 1
+id: scpi-instruments
+version: 1.0.0
+name: SCPI bench instruments
+description: Identify declared bench instruments (multimeter, oscilloscope, power supply) through PyVISA, read values, capture waveforms, change settings and power a DUT output for a bounded hold - only through the package's validated profiles, with each instrument reserved for the run and its outputs switched off after Stop, timeout or a crash, or the state reported unknown when that cannot be confirmed.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://pyvisa.readthedocs.io/en/1.16.2/", "https://pyvisa.readthedocs.io/projects/pyvisa-py/en/latest/"]
+programs:
+  scpi:
+    install: { script: scripts/scpi_tool.py }
+    version: { args: [--version], match: '^scpi-instruments (\d+\.\d+\.\d+)' }
+    timeout: 120
+    env:
+      SCPI_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --instrument, kinds: [visa], grace: 10, cleanup: [close], cleanupTimeout: 60 }
+rules:
+  - { match: "scpi {--version,--help,-h}", risk: safe }
+  - match: "scpi {capabilities,discover-configured} *"
+    risk: safe
+    note: Reads the package's profiles and lab/resources.json only; no instrument is opened.
+  - match: "scpi discover-configured * --list-local *"
+    risk: device-read
+    note: Lists this computer's serial ports (pyserial) and USBTMC devices (pyusb); it never uses VISA's resource search and never scans the network.
+  - match: "scpi decode *"
+    risk: safe
+    note: Recomputes a capture's series from its kept raw block and preamble; no instrument is opened.
+  - match: "scpi {identify,read,status} *"
+    risk: device-read
+    note: Opens the declared instrument, checks its identity against the profile and sends queries only.
+  - match: "scpi capture *"
+    risk: device-read
+    note: Sets the oscilloscope's waveform transfer source, mode and format (not the acquisition) and reads the waveform in memory.
+  - match: "scpi configure *"
+    risk: device-write
+    note: Changes instrument settings after the identity check and reads them back; a power supply's set-points change only while its output is off.
+  - match: "scpi close *"
+    risk: device-write
+    note: Switches every output of the instrument off and reads it back. VERA runs the same command as the cleanup after Stop, timeout or a crash.
+  - match: "scpi output *"
+    risk: irreversible
+    timeout: 3600
+    note: Energizes a power supply output at the given voltage and current limit for --hold seconds, then switches it off and reads it back; Stop and timeout switch it off first.

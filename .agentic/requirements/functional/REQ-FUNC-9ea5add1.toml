@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-9ea5add1"
+
+title = "Show the host key a board presents without authenticating"
+
+status = "active"
+
+requirement = "When check-host-key runs, pi-tool shall connect, record the presented host key's type and SHA-256 fingerprint and whether it is pinned, and close the connection before authentication, ending pass when it is pinned and blocked with host-key-changed or host-key-unpinned otherwise."
+
+verification = "check-host-key against the test server reports the fingerprint of its generated key with pinned true; an entry with hostKeys [] ends host-key-unpinned naming that fingerprint; the server log shows no public-key attempt."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

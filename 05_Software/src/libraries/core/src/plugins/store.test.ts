@@ -1,16 +1,5 @@
 import { existsSync } from "node:fs";
-import {
-  mkdir,
-  mkdtemp,
-  open,
-  readdir,
-  readFile,
-  rename,
-  rm,
-  symlink,
-  unlink,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { zipSync } from "fflate";
@@ -186,7 +175,7 @@ it("refuses an invalid manifest and leaves the installed plugins unchanged", asy
 });
 
 // REQ-SEC-9b266629
-it("refuses unsafe and oversized packages without installing anything", async () => {
+it("refuses unsafe packages without installing anything", async () => {
   const f = await fixture();
   const files = packageFiles();
   for (const extra of [
@@ -198,7 +187,6 @@ it("refuses unsafe and oversized packages without installing anything", async ()
     { "A.txt": "x", "a.txt": "y" },
     { "install.json": "{}" },
     Object.fromEntries(Array.from({ length: 4096 }, (_, i) => [`f/${i}.txt`, "x"])),
-    { "big.bin": new Uint8Array(64 * 1024 * 1024 + 1) },
   ])
     await expectInvalid(f.store.install(await f.zip({ ...files, ...extra })));
   await expectInvalid(f.store.install(await f.folder(packageFiles({ "install.json": "{}" }))));
@@ -208,11 +196,6 @@ it("refuses unsafe and oversized packages without installing anything", async ()
     ),
     { issue: "manifest" },
   );
-  const large = join(f.root, "large.zip");
-  const handle = await open(large, "w");
-  await handle.truncate(64 * 1024 * 1024 + 1);
-  await handle.close();
-  await expectInvalid(f.store.install(large));
   await expect(f.store.install(join(f.root, "missing-folder"))).rejects.toMatchObject({ code: "NOT_FOUND" });
   const linked = await f.folder(files);
   await mkdir(join(f.root, "elsewhere"));

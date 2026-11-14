@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-a7bab79f"
+
+title = "Refuse side-effect expressions and raw debugger commands"
+
+status = "active"
+
+requirement = """
+When a gdb-debug request names a variable, location or option value outside the allowed syntax (identifiers, `.member`, constant `[index]`, `file:line`, a flash `*address`), or any assignment, call, increment, dereference, convenience variable, register, `monitor`, `shell`, `python`, `source` or `define` text, the helper shall refuse it with exit 2 before starting GDB or OpenOCD, and it shall send GDB only its own fixed MI command set.
+"""
+
+verification = "Integration tests pass assignment, call, increment, dereference, register, $-variable, monitor, shell and python texts as --read values and monitor, condition, peripheral-address, call and line-0 texts as --at values and expect exit 2 with no stand-in invocation; internals.py refuses the same classes plus newlines, source/define and over-long values in the validators; every passing integration test checks that the GDB stand-in received only commands of the fixed set."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/validate.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/mi.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

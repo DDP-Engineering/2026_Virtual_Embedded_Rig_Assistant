@@ -1,0 +1,12 @@
+{
+  "type": "platform",
+  "name": "ststm32",
+  "version": "20.0.0",
+  "spec": {
+    "owner": "platformio",
+    "id": null,
+    "name": "ststm32",
+    "requirements": null,
+    "uri": null
+  }
+}

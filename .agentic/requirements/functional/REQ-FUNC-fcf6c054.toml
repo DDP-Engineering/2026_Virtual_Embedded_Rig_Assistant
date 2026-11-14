@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-fcf6c054"
+
+title = "Inspect a Zephyr workspace and application offline with a preflight report"
+
+status = "active"
+
+requirement = """
+When inspect is requested, the zephyr helper shall report offline the resolved board, the effective input files with their hashes, the workspace projects with revisions and heads, the declared extension commands and module hooks and every preflight finding, and shall exit 0 only when no finding refuses.
+"""
+
+verification = "Inspect the fixture request: board stm32f4_disco with its target, inputs hashed, three projects matching, zephyr's own extension commands listed, no refusing finding, exit 0; a workspace with an extra project gives a refusing finding and exit 2, and no process was started in either case."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/ops.py", "05_Software/plugins/zephyr/scripts/zephyr_support/preflight.py", "05_Software/plugins/zephyr/scripts/zephyr_support/model.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

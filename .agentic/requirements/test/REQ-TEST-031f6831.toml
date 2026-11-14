@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-TEST-031f6831"
+
+title = "Test pi-tool against a local SSH server with the remote helper on real Linux"
+
+status = "active"
+
+requirement = "The raspberry-pi-linux tests shall run pi-tool against a local asyncssh test server and agent, run its exec requests in a real Linux shell (the host on Linux, WSL on Windows, skipped when neither exists) and connect to no other host."
+
+verification = "Inspection: raspberry-pi-linux.test.ts starts pi-test-sshd.py on 127.0.0.1 with generated keys; remote cases are skipIf no Linux shell; no test names another host."
+
+affected_paths = ["05_Software/tests/integration/raspberry-pi-linux.test.ts", "05_Software/tests/support/pi-test-sshd.py", "05_Software/tests/support/pi-test-agent.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

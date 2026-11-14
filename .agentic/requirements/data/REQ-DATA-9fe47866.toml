@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-9fe47866"
+title = "Declare a bus adapter in the bench registry"
+status = "active"
+requirement = "The plugin platform shall accept in lab/resources.json an entry of identity kind bus-adapter with alias, backend bus-pirate-bpio2, resource (the adapter's binary serial port), terminal (its other serial port, not the same port), identity (usb:<vid>:<pid>:<serial>), optional power limits (maxMv 800 to 5000, maxMa 1 to 500) and an optional note, and shall refuse a bus-adapter entry with any other field or value as an invalid registry."
+verification = "Shared tests accept a bus-adapter entry beside a visa entry and refuse terminal equal to resource (COM5 and com5), a resource that is not a serial port, an identity without a serial number, maxMv 6000 and an unknown key."
+affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

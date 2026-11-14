@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-a96b34b5"
+
+title = "Rate a HIL plan at its highest compiled risk"
+
+status = "active"
+
+requirement = """
+The risk of `hil run <plan>` shall be the highest rule risk of every compiled step and cleanup operation and, when a step flashes or resets the board, of the setup's declared firmware effect.
+"""
+
+verification = "Tests compile a plan of device-read steps with firmwareEffect irreversible plus a reset step and expect irreversible with the plan id as confirmation word; without the reset step they expect device-read."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/hil/compile.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/hil/hil.test.ts"]
+
+
+spec = "specs/REQ-DATA-5f714098.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

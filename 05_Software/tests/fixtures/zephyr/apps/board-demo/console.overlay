@@ -1,0 +1,4 @@
+/* Restates the console speed of the board: a harmless overlay the request lists explicitly. */
+&usart2 {
+	current-speed = <115200>;
+};

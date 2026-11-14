@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-693a8fbf"
+
+title = "Ship arduino-cli as an official plugin with skills, catalog entry and pack"
+
+status = "active"
+
+requirement = """
+The VERA plugin catalog shall list arduino-cli as an official plugin requiring serial-monitor, with activities build and flash, in an Arduino pack, carrying the skills arduino-build-fix, arduino-libraries and arduino-test-sketch.
+"""
+
+verification = "The catalog source check passes; catalog.yaml lists arduino-cli under official with activities build and flash; packs.yaml has pack arduino with the group holding arduino-cli; each skill installed through the plugin store is readable through the skill catalog and names the arduino-tool operations it guides (arduino-test-sketch also names serial-monitor's `serial capture` for the readback)."
+
+affected_paths = ["05_Software/plugins/arduino-cli/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

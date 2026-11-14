@@ -1,11 +1,11 @@
 import { z } from "zod";
+import { labResourceKindSchema } from "./lab-resources.js";
+import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
 import { workbenchIdSchema } from "./workbench.js";
 
-/** Import limits of one plugin package (folder or zip). */
+/** Import limits of one plugin package (folder or zip); its size in bytes is not limited. */
 export const PLUGIN_LIMITS = {
   files: 4096,
-  bytes: 64 * 1024 * 1024,
-  zipBytes: 64 * 1024 * 1024,
   manifestBytes: 256 * 1024,
   issues: 64,
 } as const;
@@ -209,6 +209,8 @@ const programSchema = z
     launcher: args.min(1).optional(),
     launcherMode: z.enum(["argv", "string"]).optional(),
     optionSyntax: z.enum(["sigrok-cli", "git", "tshark", "pymcuprog", "stm32cubeprog"]).optional(),
+    /** `hil`: VERA core compiles and runs this program's `check` and `run` operations (spec REQ-DATA-5f714098 §1). */
+    plan: z.literal("hil").optional(),
     prefix: z
       .array(arg.refine(placeholders(["pluginDir"]), "Only the pluginDir placeholder is substituted."))
       .max(64)
@@ -229,6 +231,37 @@ const programSchema = z
     timeout: z.number().int().min(1).max(3600).optional(),
     /** Find or download programs of the same plugin whose paths the run receives as VERA_PROGRAM_<NAME>. */
     uses: z.array(pluginProgramNameSchema).min(1).max(8).refine(unique, "List each program once.").optional(),
+    /**
+     * Calls naming a `lab/resources.json` alias with `option` reserve that resource for the run; a stop request,
+     * `grace` seconds and the authorized `cleanup` run supervise it (spec REQ-DATA-f2cbfc23 §3).
+     */
+    resources: z
+      .strictObject({
+        option: z.string().regex(/^--[a-z][a-z0-9-]{0,31}$/),
+        kinds: z.array(labResourceKindSchema).min(1).max(8).refine(unique, "List each kind once."),
+        grace: z.number().int().min(1).max(60),
+        cleanup: z
+          .array(arg.refine(placeholders([]), "No placeholder is substituted."))
+          .min(1)
+          .max(8),
+        cleanupTimeout: z.number().int().min(1).max(300),
+      })
+      .optional(),
+    /**
+     * Calls naming `option` with a credential reference receive the stored credential `<scope>:<ref>` as one JSON
+     * line on stdin, only for an official plugin enabled at run start (spec REQ-DATA-96d18686 section 1).
+     */
+    credentials: z
+      .strictObject({
+        option: z.string().regex(/^--[a-z][a-z0-9-]{0,31}$/),
+        scope: pluginCredentialScopeSchema,
+      })
+      .optional(),
+    /**
+     * The program authenticates through the system SSH agent: the runner gives it (and its cleanup run) the host's
+     * SSH_AUTH_SOCK, only for an official plugin (REQ-SEC-adb91424). The agent's keys never leave the agent.
+     */
+    sshAgent: z.literal(true).optional(),
     /**
      * The program opens windows on the user's desktop: its runs receive the display variables (DISPLAY,
      * WAYLAND_DISPLAY, XAUTHORITY, XDG_RUNTIME_DIR) that other programs never get.

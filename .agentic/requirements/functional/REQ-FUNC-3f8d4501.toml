@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3f8d4501"
+
+title = "Check an acquisition plan offline against the meter profile"
+
+status = "active"
+
+requirement = """
+When acquisition checks an acquisition plan, the analyzer shall validate the sample rate, current and voltage ranges, markers and duration against the meter profile and print the effective settings, the sample budget and the measurement burden description, refusing a plan the profile does not support.
+"""
+
+verification = "Tests check a valid plan (settings, budget, burden note) and refuse a rate not in the profile, a sample budget above the limit and an unknown range label."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/acquisition.py", "05_Software/plugins/power-profiler/scripts/power_support/profiles.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

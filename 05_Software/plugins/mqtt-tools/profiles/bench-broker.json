@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "kind": "mqtt-tools-profile",
+  "name": "bench broker",
+  "broker": { "host": "broker.bench.lan", "port": 8883 },
+  "tls": { "enabled": true, "ca": "mqtt/bench-ca.pem" },
+  "credential": "bench",
+  "client": { "idPrefix": "vera-bench", "protocol": "5", "keepaliveS": 30 },
+  "connect": { "timeoutMs": 5000 },
+  "reconnect": { "attempts": 2, "delayMs": 1000 },
+  "limits": { "maxDurationS": 300, "maxMessages": 1000, "maxBytes": 1048576, "maxPayloadBytes": 65536 },
+  "subscribe": [{ "filter": "vera-test/bench1/telemetry/#", "qos": 1, "schema": "telemetry" }],
+  "publish": [
+    {
+      "topic": "vera-test/bench1/cmd/led",
+      "kind": "command",
+      "qos": 1,
+      "schema": "led",
+      "response": { "topic": "vera-test/bench1/cmd/led/reply", "timeoutMs": 3000, "correlationField": "id" }
+    },
+    { "topic": "vera-test/bench1/status/vera", "kind": "status", "qos": 1, "retain": true }
+  ],
+  "will": { "topic": "vera-test/bench1/status/vera", "payload": "offline", "qos": 1, "retain": true },
+  "schemas": {
+    "telemetry": {
+      "format": "json",
+      "maxBytes": 4096,
+      "required": { "temp": "number", "seq": "integer" },
+      "sequence": "seq"
+    },
+    "led": { "format": "json", "maxBytes": 256, "required": { "on": "boolean" } }
+  }
+}

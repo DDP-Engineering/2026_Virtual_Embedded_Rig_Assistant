@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-9aa4693c"
+title = "Keep each captured message raw with its flags and time"
+status = "active"
+requirement = "For every message received, mqtt-tool shall append one line to messages.jsonl with its sequence, receive time, topic, QoS, retain and dup flags, size, SHA-256, the raw payload in base64 and, where it is UTF-8, its text."
+verification = "Helper test: a binary payload with a 0x00 byte round-trips byte for byte through payloadBase64 with a matching sha256; qos and retain match what the publisher used; receivedAt is ISO UTC."
+affected_paths = ["05_Software/plugins/mqtt-tools/scripts/mqtt_support/operations.py", "05_Software/plugins/mqtt-tools/scripts/mqtt_support/report.py"]
+linked_tests = ["05_Software/tests/integration/mqtt-tools.test.ts"]
+spec = "specs/REQ-DATA-96d18686.md"
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

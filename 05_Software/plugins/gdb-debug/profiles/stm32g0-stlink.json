@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "stm32g0-stlink",
+  "status": "unverified",
+  "description": "STM32G0 (Cortex-M0+) through an ST-LINK/V2-1 or V3 over SWD, for example NUCLEO-G071RB.",
+  "probe": { "vid": "0483", "pids": ["374b", "374e", "374f", "3752", "3753", "3754"] },
+  "openocd": { "interface": "interface/stlink.cfg", "target": "target/stm32g0x.cfg", "speedKhz": 1000 },
+  "gdb": { "architecture": "armv6-m" },
+  "core": { "name": "cortex-m0+", "partno": "0xc60", "arch": "v6-M", "faults": "v6m" },
+  "memory": {
+    "flash": [{ "start": "0x08000000", "size": 524288 }],
+    "ram": [{ "start": "0x20000000", "size": 147456 }]
+  },
+  "rtos": "none"
+}

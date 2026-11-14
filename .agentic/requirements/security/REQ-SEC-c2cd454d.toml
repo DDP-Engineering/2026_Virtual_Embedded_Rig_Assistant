@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-c2cd454d"
+
+title = "Refuse a remote root that is missing, linked, foreign-owned or writable by others"
+
+status = "active"
+
+requirement = "When the registry's remote root does not exist, is not a directory, is a symbolic link or lies below one, is not owned by the login user or is writable by group or others, the remote helper shall refuse every project operation with code root-invalid."
+
+verification = "Remote tests: a missing root, a root replaced by a link and a root with mode 0777 each give root-invalid and change nothing."
+
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
+
+linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+
+
+spec = "specs/REQ-DATA-44547a17.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-74530dd0"
+
+title = "Write only named write operations of the profile"
+
+status = "active"
+
+requirement = "When ble-tool write-characteristic runs, it shall send only the payload of the named write operation of the characteristic: the fixed data it declares, or a --value encoded with the characteristic's payload schema, and it shall accept no raw bytes from the call."
+
+verification = "write --write off sends 00 and write --write set-level --value 40 sends 28 in the fake log; an undeclared write name is blocked write-unknown and --value on a fixed write is refused."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/write.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

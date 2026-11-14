@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-af9aefa3"
+title = "Refuse a deploy when the target changed"
+status = "active"
+requirement = "If the current target differs from --expect-sha256 or exists despite --expect-absent, or the target changes while the copy is transferred, then micropython-tool shall leave the target unchanged, remove the temporary file and end with code conflict, blocked before any write or fail after the transfer."
+verification = "--expect-sha256 of other bytes is blocked conflict with no write, also with --mkdir (no folder created); --expect-absent on an existing file is blocked conflict; the fake rewriting the target during the transfer ends fail conflict with the target holding the fake's bytes and no .vera-part left."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/deploy.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

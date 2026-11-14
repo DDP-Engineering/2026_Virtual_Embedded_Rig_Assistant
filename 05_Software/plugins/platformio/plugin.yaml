@@ -1,0 +1,51 @@
+format: 1
+id: platformio
+version: 1.0.0
+name: PlatformIO projects
+description: Inspect, build and test existing PlatformIO projects from an explicit request (project folder, environment, core folder, owned build folder) with a pinned PlatformIO Core 6.2.0; read platformio.ini with PlatformIO's own parser, refuse extra scripts, library scripts, custom runners and upload commands unless approved by hash, keep ELF/BIN/HEX with hashes, versions and logs, install packages in a separate network step and build offline afterwards, run native Unity tests on the host, build device tests only and take their verdict from a real Renode or HIL run, and upload through the verified ST-Link protocol with a reserved probe.
+ecosystem: lab
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://docs.platformio.org/en/latest/core/userguide/cmd_run.html", "https://docs.platformio.org/en/latest/core/userguide/cmd_test.html", "https://docs.platformio.org/en/latest/projectconf/sections/env/options/advanced/extra_scripts.html"]
+programs:
+  platformio:
+    install: { script: scripts/pio_tool.py }
+    version: { args: [--version], match: '^platformio (\d+\.\d+\.\d+)' }
+    timeout: 1800
+  platformio-upload:
+    install: { script: scripts/pio_upload.py }
+    version: { args: [--version], match: '^platformio-upload (\d+\.\d+\.\d+)' }
+    timeout: 300
+    env:
+      PLATFORMIO_UPLOAD_REGISTRY: "${workbench}/lab/resources.json"
+    resources: { option: --probe, kinds: [probe], grace: 30, cleanup: [release], cleanupTimeout: 30 }
+# The agent never reaches `pio` directly: SCons extra scripts, library scripts, custom test runners and custom upload
+# commands run project code. The helpers compose fixed command lines from a checked request; the highest risk of all
+# matching rules wins, and a call no rule matches is device-write.
+rules:
+  - { match: "platformio {--version,--help,-h}", risk: safe }
+  - { match: "platformio tools", risk: safe, note: "Reports the helper's PlatformIO Core and Python." }
+  - match: "platformio {tools,inspect-project,inspect-environments,artifacts,test-run} *"
+    risk: safe
+    note: Reads the request, platformio.ini with PlatformIO's own parser, the core folder, an owned build folder or run folders; starts no build, no project code and no network access. artifacts and test-run write a new run folder.
+  - match: "platformio {build,test-host,test-device} *"
+    risk: device-write
+    timeout: 3600
+    note: Host execution. PlatformIO's build engine, the platform's builder and the project's approved scripts run on this computer, and test-host runs the project's test program here (approval is not a sandbox); writes the owned build folder and a run folder. Never contacts the network.
+  - match: "platformio clean *"
+    risk: device-write
+    note: Deletes the build, test-host and test-device folders inside the request's buildDir, only when it carries VERA's marker; the project, its .pio folder, the core folder and libdeps are untouched.
+  - match: "platformio prepare-packages *"
+    risk: device-write
+    timeout: 3600
+    note: Contacts the network. PlatformIO's package manager downloads the environment's platform, packages and libraries from the PlatformIO registry into the core and libdeps folders and may run a package's own install script.
+  - { match: "platformio-upload {--version,--help,-h}", risk: safe }
+  - { match: "platformio-upload tools", risk: safe, note: Reports the helper and the verified upload protocols; opens no probe. }
+  - match: "platformio-upload release *"
+    risk: safe
+    note: VERA's cleanup after an interrupted upload; starts nothing and does not touch the target.
+  - match: "platformio-upload upload *"
+    risk: device-write
+    note: Overwrites the target's flash through the reserved probe with the owned build's firmware and starts it.
+  - match: "platformio-upload * --firmware-effect actuates *"
+    risk: irreversible
+    note: The uploaded firmware drives actuators once it starts.

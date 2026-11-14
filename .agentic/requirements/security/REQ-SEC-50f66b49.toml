@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-50f66b49"
+
+title = "Classify zephyr operations by their effective host and device risk"
+
+status = "active"
+
+requirement = """
+The zephyr plugin's rules shall rate tools, inspect, artifacts and test-run safe, build, test-build, clean and prepare-workspace device-write as host execution or workspace change, flash device-write and irreversible with --firmware-effect actuates, and every direct call of the STM32CubeProgrammer CLI blocked.
+"""
+
+verification = "Evaluate the manifest rules for each operation line through VERA's rule matcher: the risks are as stated and a direct stm32_programmer_cli call is blocked."
+
+affected_paths = ["05_Software/plugins/zephyr/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

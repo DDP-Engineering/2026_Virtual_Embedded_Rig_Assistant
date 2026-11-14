@@ -5,7 +5,11 @@ import { createRequire } from "node:module";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prepareBundledModel } from "../environment/prepare-model.mjs";
-import { checkBundledPlugins, prepareBundledPlugins } from "../environment/prepare-plugins.mjs";
+import {
+  bundledPluginsFolder,
+  checkBundledPlugins,
+  prepareBundledPlugins,
+} from "../environment/prepare-plugins.mjs";
 import { checkUvBinary, prepareBundledUv, uvEntry, uvPlatform } from "../environment/prepare-uv.mjs";
 import { prepareBundledWindowsRuntime } from "../environment/prepare-windows-runtime.mjs";
 import { importSoftware, software, softwareRequire } from "../environment/software.mjs";
@@ -157,7 +161,7 @@ export async function stageUv(stage, entry, platform = uvPlatform(), source = jo
 }
 
 /** Copies the bundled catalog release (prepare:plugins) to `<stage>/resources/plugins/` (`<resources>/plugins/`). */
-export async function stageBundledPlugins(stage, source = join(root, "src/bundled-plugins")) {
+export async function stageBundledPlugins(stage, source = bundledPluginsFolder) {
   try {
     await checkBundledPlugins(source);
   } catch (error) {

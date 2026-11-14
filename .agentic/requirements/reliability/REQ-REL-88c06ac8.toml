@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-88c06ac8"
+
+title = "Stop the CLI when VERA stops the run and report the remote state unknown"
+
+status = "active"
+
+requirement = """
+When the helper receives a termination signal during run-scenario, it shall ask wokwi-cli to stop, kill it after 5 s and report outcome stopped with status incomplete, remote state unknown and cancel connection-closed-requested.
+"""
+
+verification = "Helper test (POSIX signal path; on Windows the runner's tree kill applies, covered by the interrupted case): SIGTERM to the helper while the fake CLI waits gives stopped, remote unknown; with VERA's real ProgramRunner, Stop of a hanging run leaves result.json incomplete code running, and collect-results then reports interrupted with remote unknown."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/run.py", "05_Software/plugins/wokwi/scripts/wokwi_support/outcome.py", "05_Software/plugins/wokwi/scripts/wokwi_support/collect.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ba432613"
+
+title = "Declare target and model differences when a Zephyr build runs on a virtual profile or in HIL"
+
+status = "active"
+
+requirement = """
+When test-run or differences uses a run on a virtual profile or in HIL, the zephyr helper shall state the build's board and target, the run's profile or setup and the evidence class, and shall list the differences it can establish - the target against the profile, the firmware's SysTick clock against the model's, every register access the model left unimplemented - and, for virtual evidence, that the board's other peripherals, real timing and electrical behavior are not covered.
+"""
+
+verification = "Run test-run and differences with renode run folders whose profile copy clocks SysTick at 72 MHz and whose result lists an unmodeled DBGMCU access: the result names board stm32f4_disco/stm32f407xx, profile stm32f4-discovery, evidence virtual, differences target, clock (168000000 vs 72000000) and unmodeled, and a non-empty not-covered list; with a HIL run folder the evidence is hardware; manual: the same on the real Renode 1.17.0 runs of the fixtures."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/tests.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

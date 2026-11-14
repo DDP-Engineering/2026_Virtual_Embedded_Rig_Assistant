@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-33fb01a8"
+title = "Inspect the code files of a CircuitPython volume"
+status = "active"
+requirement = "When inspect-code runs, circuitpython-tool shall list the volume's files with sizes and SHA-256 (at most 2000 entries), name the startup file CircuitPython runs (the first of code.txt, code.py, main.txt, main.py) and copy that file and boot.py into the run folder, never reading or copying settings.toml or secrets.py."
+verification = "Bench volume with code.py, main.py, boot.py, lib/ and settings.toml: inspect-code reports startup /code.py, copies code.py and boot.py to files/, lists settings.toml with size and no sha256, and no run-folder file holds its content; with only main.py the startup is /main.py."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/inspection.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

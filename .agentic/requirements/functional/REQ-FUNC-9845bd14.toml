@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-9845bd14"
+title = "Capture a CircuitPython console run with its verdict and autoreload state"
+status = "active"
+requirement = "When capture-output runs, circuitpython-tool shall read the selected serial port for --duration seconds (with --reload: after Ctrl-C and Ctrl-D, until the restarted run has finished or raised, at most --duration seconds) and report the captured text, the autoreload state, the last run's output and its verdict: finished, exception with the traceback, running or unknown."
+verification = "Fake console running a code.py that prints and ends: application finished, output holds the prints, autoreload on; code.py raising ValueError: status fail code exception with the traceback; a looping code.py: running, status pass; without --reload nothing is written to the port; with --reload the console records Ctrl-C, Ctrl-D."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/console.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/cli.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f22a86bb"
+
+title = "Import a power export file as a normalized capture"
+
+status = "active"
+
+requirement = """
+When import runs on a CSV export with declared time, current and voltage columns and units, the analyzer shall write a normalized capture folder with the same samples on their own time axis, empty cells kept as missing samples, and the meter identity recorded as declared, not measured.
+"""
+
+verification = "Tests import a uniform and a non-uniform CSV and check samples, gaps and the declared identity; a non-increasing time or a non-number cell is refused with its row."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/importer.py", "05_Software/plugins/power-profiler/scripts/power_support/capfile.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

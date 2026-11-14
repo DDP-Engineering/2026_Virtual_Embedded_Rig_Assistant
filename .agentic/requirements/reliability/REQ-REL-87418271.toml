@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-87418271"
+title = "Report a missing answer as incomplete"
+status = "active"
+requirement = "If the adapter does not answer a configuration or data request within the profile's timeout (at most 10 seconds), bus-tool shall end incomplete (no-response) without repeating it, request the final state once and report the physical state unknown unless that final state is read back."
+verification = "Simulated adapter that swallows the data request: exit 3 no-response, one data request on the wire, physical unknown when the release also gets no answer and confirmed when it does."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/adapter.py", "05_Software/plugins/bus-tools/scripts/bus_support/operations.py"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

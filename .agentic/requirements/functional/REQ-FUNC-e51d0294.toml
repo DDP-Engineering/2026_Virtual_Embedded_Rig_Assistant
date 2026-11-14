@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-e51d0294"
+title = "Inspect the libraries of a CircuitPython volume against the firmware ABI"
+status = "active"
+requirement = "When inspect-libraries runs, circuitpython-tool shall list each module in the volume's /lib with its kind, version and ABI verdict, marking a .mpy module incompatible when any of its .mpy files does not start with the CircuitPython 9+ header C\\x06, and shall warn mpy-incompatible for each such module."
+verification = "Bench /lib with a C\\x06 .mpy module, a C\\x05 (CircuitPython 8) .mpy module, an M\\x06 (MicroPython) .mpy module, a .py module and a package: verdicts compatible, incompatible, incompatible, source, compatible; two mpy-incompatible warnings; status pass."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/inspection.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/conventions.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

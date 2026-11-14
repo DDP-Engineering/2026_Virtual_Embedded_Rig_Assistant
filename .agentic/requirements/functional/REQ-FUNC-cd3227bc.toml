@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-cd3227bc"
+title = "Release the adapter as VERA's cleanup"
+status = "active"
+requirement = "When release runs, also as the runner's cleanup run after an interrupted actuation, bus-tool shall set HiZ mode with pull-ups and supply off, read the status back and report phase released with physical confirmed, or unknown when the readback differs or the adapter does not answer."
+verification = "Runner integration test: a read-register run stuck in its configuration and killed by its timeout gets the cleanup run release, the run's physical state is confirmed and the simulated adapter is in HiZ; release on an adapter that does not answer reports unknown."
+affected_paths = ["05_Software/plugins/bus-tools/scripts/bus_support/operations.py", "05_Software/plugins/bus-tools/plugin.yaml"]
+linked_tests = ["05_Software/tests/integration/bus-tools.test.ts"]
+spec = "specs/REQ-DATA-634d35da.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

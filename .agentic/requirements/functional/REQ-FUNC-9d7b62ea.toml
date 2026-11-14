@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9d7b62ea"
+
+title = "Estimate battery life as an interval with its assumptions"
+
+status = "active"
+
+requirement = """
+When battery runs with a usage profile and a declared battery and conversion, the analyzer shall report the battery life as an interval rounded outwards to two significant figures together with every assumption and input range used.
+"""
+
+verification = "Independent examples computed by hand (a linear regulator in the charge domain, a buck converter in the energy domain with efficiency and quiescent current, a self-discharge case) match the reported interval."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/battery.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

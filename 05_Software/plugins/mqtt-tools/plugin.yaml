@@ -1,0 +1,33 @@
+format: 1
+id: mqtt-tools
+version: 1.0.0
+name: MQTT tools (telemetry and commands)
+description: Bounded MQTT telemetry capture and controlled device commands on a broker the workbench configures - a profile file declares the broker, TLS trust, credential reference, client id prefix, protocol (5 or 3.1.1), topic ACL, QoS, limits, reconnect policy, payload schemas and any status Last Will. Captures are bounded by time, messages and bytes and keep every raw payload with its QoS, retain and dup flags; a publish goes only to a declared topic, once, never retained when it is a command. The broker password stays in VERA's credential store and reaches only an approved run of this plugin on its input. No broker administration and no public broker.
+ecosystem: iot
+platforms: [windows-x64, linux-x64]
+docs: [README.md, "https://pypi.org/project/paho-mqtt/2.1.0/", "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html"]
+programs:
+  mqtt-tool:
+    install: { script: scripts/mqtt_tool.py }
+    version: { args: [--version], match: '^mqtt-tool (\d+\.\d+\.\d+)' }
+    timeout: 120
+    # A call naming --credential REF receives the stored credential mqtt:REF as one line on stdin, only while this
+    # official plugin is enabled for the workbench; never in argv, environment, logs or results.
+    credentials: { option: --credential, scope: mqtt }
+# Every network operation opens one connection to the profile's broker with a clean session. Subscribing never
+# publishes, except the profile's declared status Last Will, which the broker sends when the connection ends abnormally.
+rules:
+  - { match: "mqtt-tool {--version,--help,-h}", risk: safe }
+  - match: "mqtt-tool {capabilities,check-profile} *"
+    risk: safe
+    note: Offline. Describes the client or validates a broker profile file; no connection is opened and nothing is written.
+  - match: "mqtt-tool {connect-test,subscribe} *"
+    risk: device-read
+    note: Connects to the profile's broker (TLS verified when enabled, the stored credential when named), and for subscribe records the declared topics for a bounded time into a new run folder. Nothing is published, except the profile's status Last Will if the connection ends abnormally.
+    timeout: 3600
+  - match: "mqtt-tool {publish,request} *"
+    risk: device-write
+    note: Publishes one message, once, to a topic the profile declares; a command topic may make a device act. request then waits for the matching response. The broker may deliver a QoS 1 message twice; a sent message is not revoked by Stop or a disconnect, and it is never sent again automatically.
+  - match: "mqtt-tool publish * --retain *"
+    risk: irreversible
+    note: Publishes a retained message the broker keeps and delivers to every later subscriber of that topic until it is replaced or cleared; only data or status topics that allow retain, never a command.

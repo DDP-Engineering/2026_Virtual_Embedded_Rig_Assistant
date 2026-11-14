@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b1992f05"
+
+title = "Import ngspice and LTspice run folders"
+
+status = "active"
+
+requirement = """
+When a source uses importer `spice`, `lab-validate` shall read an ngspice-tool or ltspice-tool run folder's transient `series.csv` without either plugin installed, with unit V for `v(...)` and A for `i(...)` columns.
+"""
+
+verification = "A test imports an ngspice-tool and an ltspice-tool run folder written to the REQ-DATA-29b9a988 contract and compares a measured CSV pulse with them (a simulation starting at -50 us and one starting at 0 s); neither plugin is installed in the test."
+
+affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

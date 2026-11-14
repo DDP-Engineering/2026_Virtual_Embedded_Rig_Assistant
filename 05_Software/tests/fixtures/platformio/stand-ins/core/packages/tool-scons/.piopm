@@ -1,0 +1,12 @@
+{
+  "type": "tool",
+  "name": "tool-scons",
+  "version": "4.41101.0",
+  "spec": {
+    "owner": "platformio",
+    "id": null,
+    "name": "tool-scons",
+    "requirements": null,
+    "uri": null
+  }
+}

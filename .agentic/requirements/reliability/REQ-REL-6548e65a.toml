@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6548e65a"
+
+title = "Refuse requests without an explicit environment or with invalid paths before any process"
+
+status = "active"
+
+requirement = """
+If a request names no environment for an environment-specific operation, an environment the project does not define, a project folder without platformio.ini, a core folder or build folder that is not a local absolute or workbench-relative path, a build folder inside or containing the project, core, .vera or embedded-lab-results folder, or a hook entry without a valid SHA-256, then the platformio helper shall refuse with the matching code (environment, input, request or build-dir) and exit 2 before any process starts or any folder is written, whatever default_envs the project declares.
+"""
+
+verification = "Refusal cases each checked for code, exit 2 and an unchanged workbench (no embedded-lab-results entry, no build folder): environment omitted while the project sets default_envs, an unknown environment, a project without platformio.ini, an absolute or '..' buildDir, a core folder that does not exist, a build folder inside the project or inside embedded-lab-results, an unknown request field, a malformed hook hash and a suite name with '..'; the fixture under a path with spaces and Unicode is accepted."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/request.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

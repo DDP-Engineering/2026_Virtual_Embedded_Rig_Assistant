@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-4706f92a"
+
+title = "Send a write once and report its delivery"
+
+status = "active"
+
+requirement = "When ble-tool sends a write, it shall send it exactly once, never retry it, and record delivery acknowledged, refused (with the ATT error), sent (without response) or unknown (timeout or lost link), with retried false, and with readBack it shall read the value once and record whether it matches."
+
+verification = "A fake refusing the write with ATT 0x13 gives delivery refused and one write in the log; a write-without-response gives sent; a lost link while writing gives unknown with one write; read-back records matches true."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/write.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

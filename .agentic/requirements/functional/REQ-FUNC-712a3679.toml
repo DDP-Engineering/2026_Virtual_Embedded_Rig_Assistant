@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-712a3679"
+
+title = "Capture and decode a waveform with its preamble"
+
+status = "active"
+
+requirement = """
+When `scpi capture` runs on a declared oscilloscope channel, the helper shall read the profile's preamble and IEEE 488.2 definite-length block, convert samples with the declared width, signedness, endianness, scale, offset and time base into time and voltage series, record probe attenuation, vertical scale, trigger state and clipped sample counts, and keep the raw block and preamble so `scpi decode` recomputes identical series.
+"""
+
+verification = "Tests capture a fake DS1104Z waveform with a known preamble and check the first, middle and last samples against hand-computed times and volts, the clipped count, a 16-bit little- and big-endian block in the parser, and that decode of the kept raw files reproduces the series CSV byte for byte."
+
+affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/waveform.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/classes.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/cli.py"]
+
+linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+
+
+spec = "specs/REQ-DATA-b3e2930f.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

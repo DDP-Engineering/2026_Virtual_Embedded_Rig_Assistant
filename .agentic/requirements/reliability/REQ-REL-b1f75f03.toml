@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-b1f75f03"
+
+title = "Turn every started subscription off before disconnecting"
+
+status = "active"
+
+requirement = "When a subscription ends for any reason while the link is up, ble-tool shall call stop_notify once before disconnecting and record subscription stopped when it returned or unknown when it failed or the link was lost, so no run leaves a subscription it started reported as stopped without having stopped it."
+
+verification = "After a duration, a bound, an overflow and a stop request the fake log shows stop_notify before disconnect; a fake stop_notify failure records subscription unknown and physical unknown."
+
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/notify.py", "05_Software/plugins/ble-tools/scripts/ble_support/device.py"]
+
+linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-e8502710.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-884fed95"
+title = "List serial ports with their identity keys"
+status = "active"
+requirement = "When ports runs, micropython-tool shall list every serial port with its address, its identity key (usb:<vid>:<pid>:<serial number>, else usb:<vid>:<pid>, else serial:<address>), whether that key is stable, and the USB bridge it recognises, and shall never name a board model behind a common USB-to-serial bridge."
+verification = "Fake port list with a Raspberry Pi Pico (2e8a:0005, serial E661), a CP2102 bridge (10c4:ea60, serial 01) and a port without USB data: the document lists usb:2e8a:0005:E661 stable, the bridge entry with bridge Silicon Labs CP210x and no board, and serial:COM9 unstable; no port is opened."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_support/ports.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-c0479ece"
+
+title = "Rate the cloud run irreversible and every other operation safe"
+
+status = "active"
+
+requirement = """
+The wokwi plugin's rules shall rate run-scenario irreversible, because it transmits the job's files to Wokwi's cloud, and capabilities, inspect-project, validate-diagram, prepare-job, collect-results, report, --version and --help safe.
+"""
+
+verification = "Helper test of plugin.yaml with the shared rule classifier: run-scenario --job x --credential y gives irreversible with the cloud note; each other operation and --version give safe; an unknown subcommand matches no rule (VERA's default device-write with no note)."
+
+affected_paths = ["05_Software/plugins/wokwi/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-4d0db53e"
+
+title = "Report a failed Zephyr build with log-cited diagnostics and unchanged inputs"
+
+status = "active"
+
+requirement = """
+If a build fails, the zephyr helper shall report status fail with diagnostics that cite the log file and line of each recognized CMake, Kconfig, devicetree, compiler, linker or toolchain error and shall leave the configuration and overlay files unchanged, reporting input-changed if any of them changed during the build.
+"""
+
+verification = "Build a fixture whose extra .conf sets an undefined symbol and one whose overlay has a syntax error: exit 1, status fail, a kconfig or devicetree diagnostic whose line in build.log holds the cited text, and the input hashes before and after are equal."
+
+affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/diagnostics.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

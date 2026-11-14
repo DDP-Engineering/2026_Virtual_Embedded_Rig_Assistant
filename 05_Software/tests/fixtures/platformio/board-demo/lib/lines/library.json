@@ -1,0 +1,7 @@
+{
+  "name": "lines",
+  "version": "1.0.0",
+  "description": "Line assembly and number text of the platformio fixture (LAB-08).",
+  "frameworks": "*",
+  "platforms": "*"
+}

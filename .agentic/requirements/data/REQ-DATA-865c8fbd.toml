@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-865c8fbd"
+
+title = "PlatformIO helper operations, request, result and build-folder formats"
+
+status = "active"
+
+requirement = """
+The platformio helpers shall accept and write exactly the request, result, inspection, build-folder marker and exit-code formats of spec REQ-DATA-865c8fbd (format 1): a platformio-request naming the project, environment, core folder and owned build folder, and a platformio-result in embedded-lab-results/<run-id>/ with state, status, code, tools, environment, inputs, artifacts, packages, findings, steps and tests.
+"""
+
+verification = "Offline tests run every operation against the stand-ins and check each written document against the spec's field lists; a request with an unknown field, another kind or format 2 is refused with code request and exit 2, nothing written."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/request.py", "05_Software/plugins/platformio/scripts/pio_support/result.py", "05_Software/plugins/platformio/scripts/pio_support/builddir.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = "specs/REQ-DATA-865c8fbd.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

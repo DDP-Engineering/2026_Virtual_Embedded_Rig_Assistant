@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-c7579edf"
+
+title = "Stop a run with no process left and an identified partial report"
+
+status = "active"
+
+requirement = """
+When a run is stopped or killed, renode-sim shall leave no engine process, and the run folder shall keep a result.json with the run id, firmware and profile identity, the cases finished so far and state running, which report then completes as status stopped with code interrupted.
+"""
+
+verification = "Start a long test through VERA's real runner, Stop it: no stand-in process remains, result.json names the run id and finished cases, report marks it stopped/interrupted; a real-time budget end stops the engine itself and ends with no engine process."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/engine.py", "05_Software/plugins/renode/scripts/renode_support/operations.py", "05_Software/plugins/renode/scripts/renode_support/report.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

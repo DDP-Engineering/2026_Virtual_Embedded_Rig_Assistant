@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-3ab66bb9"
+
+title = "Give the token to the wokwi-cli child only in its environment"
+
+status = "active"
+
+requirement = """
+When run-scenario starts wokwi-cli, wokwi-tool shall pass the token only as WOKWI_CLI_TOKEN in that child's environment, built from the helper's environment without any other WOKWI_ variable, and never in an argument.
+"""
+
+verification = "Helper test: with WOKWI_CLI_SERVER and WOKWI_X set in the helper's environment, the fake CLI records an environment with WOKWI_CLI_TOKEN equal to the stdin token, no WOKWI_CLI_SERVER or WOKWI_X, NO_COLOR=1, and an argv without the token; validate-diagram's lint child has no WOKWI_CLI_TOKEN."
+
+affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/engine.py", "05_Software/plugins/wokwi/scripts/wokwi_support/run.py"]
+
+linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+
+
+spec = "specs/REQ-DATA-d985bb3d.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

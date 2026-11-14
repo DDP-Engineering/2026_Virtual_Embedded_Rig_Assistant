@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-cb0ccbea"
+title = "Define the micropython-tool operations, run folders and result documents"
+status = "active"
+requirement = "The micropython-tool program of the micropython plugin shall accept only the operations ports, identify, files, read-file, deploy-file, run-file, capture-output, reset and report with the arguments, limits, exit codes and format 1 result documents written to a new folder under arduino-iot-results/<run-id>/ that its specification defines."
+verification = "Offline integration tests with the fake mpremote run every operation and check each printed JSON document and result.json against the specification: format 1, kind, operation, status, the exit code (0 pass, 1 fail, 2 blocked, 3 incomplete or error), a new run folder per device operation and report, refusal of an existing --run-id and of a --results-dir inside .vera."
+affected_paths = ["05_Software/plugins/micropython/scripts/micropython_tool.py", "05_Software/plugins/micropython/scripts/micropython_support/cli.py", "05_Software/plugins/micropython/scripts/micropython_support/report.py", "05_Software/plugins/micropython/scripts/micropython_support/workspace.py"]
+linked_tests = ["05_Software/tests/integration/micropython.test.ts"]
+spec = "specs/REQ-DATA-cb0ccbea.md"
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

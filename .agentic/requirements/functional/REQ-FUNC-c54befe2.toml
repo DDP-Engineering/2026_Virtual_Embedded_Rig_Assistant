@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c54befe2"
+
+title = "Report artifacts and memory use of an owned PlatformIO build"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio artifacts` for a request whose owned build folder holds a finished build, the platformio helper shall report the ELF, BIN and HEX with SHA-256, the ELF's sections and the flash and RAM use against the board's limits without building, and status incomplete with code build-unfinished when the last build did not pass.
+"""
+
+verification = "After a stand-in build artifacts reports the hashes equal to the build run's and sections/regions from the fixture ELF; after a stopped build it reports incomplete/build-unfinished."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/artifacts.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

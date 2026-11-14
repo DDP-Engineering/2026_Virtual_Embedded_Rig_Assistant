@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-e63e58bc"
+
+title = "Publish the lab-validation plugin package"
+
+status = "active"
+
+requirement = """
+The official plugin package lab-validation shall declare program `lab-validate` (a standard-library PEP 723 script for Windows x64 and Linux x64), the skills `validation-planning` and `difference-explanation`, and be registered in the official catalog with activity `measurement` and in the Embedded lab pack.
+"""
+
+verification = "A test validates plugin.yaml, finds both skills with their names and the program's install script, reads the catalog's official list, metadata and the lab pack group, and builds the catalog release without issues."
+
+affected_paths = ["05_Software/plugins/lab-validation/plugin.yaml", "05_Software/plugins/lab-validation/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
+
+linked_tests = ["05_Software/tests/integration/lab-validation.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = "specs/REQ-DATA-53797d16.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-13
+updated = 2026-11-13

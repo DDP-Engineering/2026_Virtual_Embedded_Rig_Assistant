@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-93ac5faa"
+
+title = "Report power runs in Markdown and HTML"
+
+status = "active"
+
+requirement = """
+When report runs on power-profiler run folders, the analyzer shall write report.md and report.html with each run's identity, settings, metrics, status and problems, a current-versus-time SVG for captures and links to the runs, after checking each run's artifact hashes.
+"""
+
+verification = "A test reports a capture, a measure-energy run and a segment run and checks report.md, report.html, the links to each run and the capture's SVG; a changed samples.csv is refused as source-changed."
+
+affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/render.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
+
+linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+
+
+spec = ""
+
+priority = "low"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-78cf222a"
+
+title = "Report failed PlatformIO builds with log-cited diagnostics and unchanged inputs"
+
+status = "active"
+
+requirement = """
+If PlatformIO exits non-zero during a build or test build, the platformio helper shall record status fail with code build-failed and the diagnostics of the log with file and line, and if any project input file changed during the run it shall record status error with code input-changed, never editing a project file itself.
+"""
+
+verification = "A fixture variant with a compile error (and the stand-in's error output) yields fail/build-failed with a diagnostic citing build.log and the source line; a stand-in that edits a source during the build yields error/input-changed; project file hashes are otherwise unchanged."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/diagnostics.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -39,6 +39,173 @@ scripts/freerouting_support/{cli,ses}.py and scripts/export_dsn.py (run by KiCad
 .agentic/specs/REQ-FUNC-2a80da7f.md; tests/integration/freerouting.test.ts owns its coverage (real router under
 VERA_TEST_FREEROUTING_JAR + VERA_TEST_JAVA, the golden path through kicad-layout under VERA_TEST_KICAD_GUI).
 
+For arduino-cli, start at plugins/arduino-cli/plugin.yaml, scripts/arduino_tool.py and scripts/arduino_support/
+(environment.py for VERA's Arduino environment, configurations and staging; sketch.py, boards.py for identity keys,
+indexes.py for offline searches, compile.py, upload.py, report.py, cli.py) with spec .agentic/specs/REQ-DATA-e444904d.md;
+tests/integration/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
+coverage. Its workspace.py is a byte-identical copy of ngspice-tool's.
+
+For micropython, start at plugins/micropython/plugin.yaml, scripts/micropython_tool.py and scripts/micropython_support/
+(cli.py dispatch and argument limits, device.py session and board snippets, deploy.py, operations.py, ports.py identity
+keys, remote.py board paths, report.py) with spec .agentic/specs/REQ-DATA-cb0ccbea.md; tests/integration/micropython.test.ts
+and tests/fixtures/micropython/ (fake-serial: a simulated board speaking the raw REPL; fake-mpremote: a minimal
+SerialTransport client - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy of arduino-tool's.
+For circuitpython, start at plugins/circuitpython/plugin.yaml, scripts/circuitpython_tool.py and scripts/circuitpython_support/
+(cli.py dispatch and argument limits, volumes.py CIRCUITPY enumeration, boot_out.txt, identity and binding, ports.py,
+conventions.py the only circup imports, inspection.py, bundle.py prepare-libraries, deploy.py, console.py, report.py) with
+spec .agentic/specs/REQ-DATA-8f309a53.md; tests/integration/circuitpython.test.ts, tests/support/make-circuitpython-bundle.py
+and tests/fixtures/circuitpython/ (fake-serial: a CircuitPython console that reruns code.py on drive changes; fake-circup:
+the circup names the helper imports - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy
+of micropython-tool's.
+For bus-tools, start at plugins/bus-tools/plugin.yaml, scripts/bus_tool.py and scripts/bus_support/ (cli.py dispatch
+and argument limits, registry.py bus-adapter entries, profile.py bus profiles, ports.py identity keys, adapter.py the
+binary-port link, bpio.py FlatBuffers slots, cobs.py, operations.py the operation flow and final state, lifecycle.py,
+report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/integration/bus-tools.test.ts and
+tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets - offline
+evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
+cleanup are platform behaviour, see [Plugins](plugins.md).
+For mqtt-tools, start at plugins/mqtt-tools/plugin.yaml, scripts/mqtt_tool.py and scripts/mqtt_support/ (cli.py dispatch,
+profile.py the broker profile, topics.py filter coverage, schema.py payload checks, credential.py the stdin line,
+connection.py the paho connection and error codes, operations.py capture/publish/request, report.py) with spec
+.agentic/specs/REQ-DATA-96d18686.md; tests/integration/mqtt-tools.test.ts with tests/support/mqtt-test-broker.py (a
+stdlib MQTT 3.1.1/5 test broker on 127.0.0.1 with TLS, users, ACL and fault switches), make-mqtt-certs.py and
+mqtt-fixture-device.py own its coverage - evidence for the helper, not for a product broker or a device. Its
+workspace.py is a byte-identical copy of bus-tool's; the credential hand-off is platform behaviour, see
+[Plugins](plugins.md).
+For ble-tools, start at plugins/ble-tools/plugin.yaml, scripts/ble_tool.py and scripts/ble_support/ (cli.py dispatch and
+argument bounds, registry.py ble-device entries, profile.py device profiles and UUIDs, payload.py decode/encode,
+backend.py the pinned Bleak and error mapping, scan.py, device.py the managed link and identity, notify.py, write.py,
+operations.py read/discover/release, report.py) with spec .agentic/specs/REQ-DATA-e8502710.md;
+tests/integration/ble-tools.test.ts with the fake Bleak in tests/fixtures/ble-tools/fake-bleak owns its coverage -
+offline evidence plus one opt-in real scan, not proof of a device. Its workspace.py is a byte-identical copy of
+circuitpython-tool's and lifecycle.py of bus-tool's; the device lease is platform behaviour, see [Plugins](plugins.md).
+For wokwi, start at plugins/wokwi/plugin.yaml, scripts/wokwi_tool.py and scripts/wokwi_support/ (cli.py dispatch,
+engine.py the pinned wokwi-cli, its child environment and offline lint, project.py wokwi.toml/firmware/origin, diagram.py,
+scenario.py, job.py the job folder and its verification, credential.py the stdin token, run.py the one cloud run with its
+watch loop, outcome.py the outcome table, collect.py, redact.py, report.py) with spec .agentic/specs/REQ-DATA-d985bb3d.md;
+tests/integration/wokwi.test.ts with tests/support/fake-wokwi-cli.py owns its coverage - offline evidence plus the real
+wokwi-cli 0.29.1 offline (VERA_TEST_WOKWI_CLI), never a cloud run. Its workspace.py is a byte-identical copy of mqtt-tool's;
+the token hand-off is platform behaviour, see [Plugins](plugins.md).
+For raspberry-pi-linux, start at plugins/raspberry-pi-linux/plugin.yaml, scripts/pi_tool.py and scripts/pi_support/ (cli.py
+dispatch, registry.py the linux-board entries, project.py vera-pi.json and its files, ssh.py the pinned host key, agent
+authentication and remote calls, remote.py the two constant commands, operations.py every operation, report.py) and the
+board-side scripts/remote/vera_pi_remote.py, with spec .agentic/specs/REQ-DATA-44547a17.md;
+tests/integration/raspberry-pi-linux.test.ts with tests/support/pi-test-sshd.py and pi-test-agent.py owns its coverage -
+SSH protocol and real-Linux evidence (WSL on Windows), never proof of a Raspberry Pi. Its workspace.py and lifecycle.py
+are byte-identical copies of ble-tool's; the board lease and the agent socket are platform behaviour, see
+[Plugins](plugins.md).
+For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
+(cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
+classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
+.agentic/specs/REQ-DATA-b3e2930f.md; tests/integration/scpi-instruments.test.ts and tests/fixtures/scpi-instruments/ (a
+fake PyVISA/pyserial/pyusb - offline evidence only) own its coverage. Its reservation and cleanup are platform
+behaviour, see [Plugins](plugins.md) and spec .agentic/specs/REQ-DATA-f2cbfc23.md.
+
+For lab-validation, start at plugins/lab-validation/plugin.yaml, scripts/lab_validate.py and scripts/lab_validation/
+(cli.py operations and pipeline, request.py validation and bind, importers.py importer registry, signals.py and
+preprocess.py normalization and preprocessing, series.py windows/gaps/interpolation, metrics.py metric registry,
+align.py comparisons, decide.py criteria and verdict, diagnostics.py codes, report.py run folder and report.md,
+aggregate.py `report`) with spec .agentic/specs/REQ-DATA-53797d16.md; tests/integration/lab-validation.test.ts and
+tests/fixtures/lab-validation/ (hand-derived solutions in its README, a no-network sitecustomize guard) own its
+coverage; it imports real scpi-instruments capture folders written by the scpi helper on its fake PyVISA. Its
+workspace.py is a byte-identical copy of the electronics plugins' (ngspice.test.ts checks every copy). New metrics and
+importers are registrations in metrics.py and importers.py, never a second engine.
+
+For hil-testing, start at plugins/hil-testing/plugin.yaml (program `hil` with `plan: hil`), the core HIL module
+(src/libraries/core/src/plugins/hil/: adapters.ts registry, compile.ts, executor.ts, run.ts) and scripts/hil_report/cli.py
+(the report renderer) with spec .agentic/specs/REQ-DATA-5f714098.md; core hil/hil.test.ts (scripted process host) and
+tests/integration/hil-testing.test.ts (real runner and real serial-monitor, scpi, lab-validate and hil helpers on
+their fakes, probe-rs replay stand-in) own its coverage. New step kinds are adapter registrations, never a second
+executor.
+
+For gdb-debug, start at plugins/gdb-debug/plugin.yaml (programs `gdb-elf`, `gdb-debug` with `uses` and `resources`,
+find-only `arm-none-eabi-gdb` and `openocd`, both blocked), scripts/gdb_elf.py, scripts/gdb_debug.py and
+scripts/gdb_support/ (elf.py and dwarf.py the offline reader, cli_elf.py inspect/diagnose, cli_debug.py validation,
+tools and release, operations.py the session flow, session.py and mi.py GDB/MI, openocd.py, faults.py, symbols.py,
+validate.py, profiles.py with profiles/*.json, registry.py, lifecycle.py, report.py, workspace.py the shared copy) with
+spec .agentic/specs/REQ-DATA-d7da2a71.md; tests/integration/gdb-debug.test.ts and tests/fixtures/gdb-debug/ (fixture
+ELFs built by firmware/build.py with zig cc, the GDB/OpenOCD stand-ins fake_gdb.py and fake_openocd.py made executable
+by make_tools.py, internals.py unit checks) own its coverage - offline evidence, never a real GDB, OpenOCD or target.
+Its probe reservation is the platform's `probe` registry kind, see [Plugins](plugins.md).
+
+For power-profiler, start at plugins/power-profiler/plugin.yaml (programs `power-profile` with `resources {option:
+--meter, kinds: [power-monitor]}` and `power-analyze`), scripts/power_profile.py, scripts/power_analyze.py and
+scripts/power_support/ (capture.py the live flows and stream assembler, meter.py the allow-listed driver wrapper,
+capfile.py the capture folder, signals.py/measure.py/segment.py the analysis on the copied series.py, compare.py,
+battery.py, importer.py, render.py, acquisition.py and profiles.py with profiles/joulescope-js220.json, registry.py,
+firmware.py with the copied elf.py, usb.py, result.py, lifecycle.py, workspace.py the shared copy) with spec
+.agentic/specs/REQ-DATA-dd3e4fe1.md; tests/integration/power-profiler.test.ts and tests/fixtures/power-profiler/ (the
+pyjoulescope_driver stand-in fake-driver/, closed-form CSV fixtures from make_fixtures.py) own its coverage - offline
+evidence, never a real JS220 - plus the opt-in `VERA_POWER_REAL_PYTHON` suite with the real driver and no meter. Its
+meter reservation is the platform's `power-monitor` registry kind, see [Plugins](plugins.md); criteria go through
+lab-validation's `integral` metric and `power-capture` importer; HIL steps `power.identify`/`power.capture`.
+
+For renode, start at plugins/renode/plugin.yaml (programs `renode`, the engine: find or the pinned Renode 1.17.0
+portable download, every direct rule blocked; `renode-sim` with `uses: [renode]`), scripts/renode_sim.py and
+scripts/renode_support/:
+- cli.py: operations and refusals;
+- profiles.py: profile.json, the quote-aware `.repl` validator, the `.resc` parser and the engine-file check;
+- firmware.py: ELF checks with the copied elf.py;
+- testsets.py: data-only step kinds and parameters;
+- engine.py: the headless console session, UART segments, the log watch and process-tree kill;
+- operations.py: slices, steps and statuses;
+- result.py: the progressive result.json;
+- report.py: md/html/junit and the `--hil` table;
+- workspace.py: the shared copy.
+
+The spec is .agentic/specs/REQ-DATA-8a943977.md (section 9 records the observed engine facts). The plugin's
+profiles/stm32f4-discovery/ holds Renode's board and CPU descriptions without the SVD download, and
+testsets/board-basics/ is the approved test set.
+
+Coverage:
+- tests/integration/renode.test.ts with tests/fixtures/renode/: the engine stand-in fake_renode.py made executable
+  by make_engine.py, firmware/ ELFs built with zig cc plus variants.json, the stock vendor .resc, and engine/platforms/
+  vendor copies. This is offline evidence.
+- The opt-in `VERA_RENODE_REAL` suite runs against the real engine.
+
+No platform (core/shared/host) seam was added. A run reserves no bench resource, so VERA's Stop is the runner's
+tree kill, and the progressive result.json carries the partial report.
+
+For zephyr, start at plugins/zephyr/plugin.yaml (programs `zephyr`, `zephyr-flash` with `uses: [stm32_programmer_cli]`
+and the probe lease, and the find-only, blocked `stm32_programmer_cli`), scripts/zephyr_tool.py, scripts/zephyr_flash.py
+and scripts/zephyr_support/:
+- request.py: the zephyr-request document and the build-folder fingerprint;
+- model.py: the west workspace read offline (west's Manifest with a file importer, heads from `.git` files);
+- boards.py and sdk.py: exact board identifiers and the named SDK folder;
+- preflight.py: findings and hook approvals by SHA-256; cmake_scan.py: the CMake tokenizer it reads listfiles with;
+- environment.py: the scrubbed, offline process environment;
+- builddir.py: owned build folders (marker, safe deletion);
+- ops.py: inspect, build, artifacts, clean and the shared checks; diagnostics.py and artifacts.py;
+- tests.py and ztest.py: Twister build-only, test-run, differences; prepare.py; tools.py;
+- flash.py, registry.py and lifecycle.py: the verified runner; elf.py and workspace.py are the shared copies.
+
+The spec is .agentic/specs/REQ-DATA-d8ecee6a.md (section 9 records the observed Zephyr, SDK, Twister, Renode and
+STM32CubeProgrammer facts). Coverage: tests/integration/zephyr.test.ts with tests/fixtures/zephyr/ (apps/board-demo,
+tests/ztest-basic, workspace/manifest/west.yml, stand-ins/: a fake Zephyr tree with a Twister stand-in and a `flash`
+extension the real west loads, fake_cmake.py, fake_cli.py), run with a Python holding the pinned dependencies
+(`VERA_ZEPHYR_PYTHON`); the opt-in `VERA_ZEPHYR_REAL` suite builds with the real tools, with `VERA_RENODE_REAL` and
+`VERA_ZEPHYR_REAL_CLI` also on the real Renode and STM32CubeProgrammer. No platform seam was added: the probe lease is
+LAB-04's `probe` kind, the runner unchanged.
+
+For platformio, start at plugins/platformio/plugin.yaml (programs `platformio` and `platformio-upload` with the
+probe lease), scripts/pio_tool.py, scripts/pio_upload.py and scripts/pio_support/:
+- request.py: the platformio-request document and the build-folder fingerprint;
+- config.py: platformio.ini through PlatformIO's own ProjectConfig under the scrubbed environment (effective options
+  keyed by PlatformIO's canonical option names, with their source sections);
+- preflight.py: findings and hook approvals by SHA-256; packages.py: the core and libdeps folders read offline;
+- environment.py: the scrubbed process environment and the closed proxy; builddir.py: owned build folders;
+- ops.py: tools, inspections, build, artifacts, clean and the shared checks; prepare.py; diagnostics.py, artifacts.py;
+- tests.py and unity.py: test-host, test-device, test-run; upload.py, registry.py and lifecycle.py: the verified
+  upload; elf.py and workspace.py are the shared copies.
+
+The spec is .agentic/specs/REQ-DATA-865c8fbd.md (section 9 records the observed PlatformIO facts). Coverage:
+tests/integration/platformio.test.ts with tests/fixtures/platformio/ (board-demo: two STM32F4DISCOVERY environments,
+one extending the other, a native environment, common.ini through extra_configs, Unity suites test_lines, test_skip,
+test_fail and a custom unity_config for the CMSIS framework; stand-ins/: fake_pio.py and a fake core), run with a
+Python holding the pinned dependencies (`VERA_PIO_PYTHON`); platformio.ini is always read by the real PlatformIO
+parser. The opt-in `VERA_PIO_REAL` suite builds and tests with the real PlatformIO, with `VERA_PIO_REAL_GCC` also the
+native host tests and with `VERA_RENODE_REAL` the firmware on the real Renode profile. No platform seam was added.
+
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
 tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
@@ -48,7 +215,21 @@ programs and rules, helper scripts, Agent Skills and README; today `serial-monit
 serial ports with board family, capture a console with an optional DTR/RTS reset, send one line; skills
 `serial-console` and `esp32-identify`) and `esp32-esptool` (program `esptool`, esptool v5 from PyPI: identify, flash,
 verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf` (EIM-activated idf.py, Xtensa/RISC-V addr2line;
-skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
+skills `esp32-build-fix` and `esp32-panic`); `binutils` (ARM/RISC-V size, nm, readelf, objdump and addr2line, with firmware-size, crash-decode and elf-inspect); probe-rs (local debug probes, flash/memory/RTT with four skills); sigrok (logic, analog and instrument work with five skills); git (workbench version control, three skills and Git option-role classification); wireshark-tshark (capture-file analysis and bounded live capture through the user's TShark, tshark option-role classification, two skills); can-python (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills can-capture and can-transmit) and can-dbc (pip cantools plus the `can-decode` script; skill can-decode); microchip-pymcuprog (pip pymcuprog with pymcuprog option-role classification; skills microchip-flash and microchip-fuses); stm32-cubeprog (find-only STM32_Programmer_CLI with command-line classification; skills stm32-flash and stm32-option-bytes); electronics-calc (program `elec-calc`, a standard-library PEP 723 script for electrical and thermal calculations; skills electronics-sizing and thermal-analysis); kicad (find `kicad-cli` for the user's KiCad 10 and the `kicad-tool` script that analyses a project on a copy: inspect, ERC, DRC, BOM, netlist, exports, review report; skills schematic-review and pcb-review); parts-search (the `parts-compare` standard-library script that compares candidates on datasheet evidence and writes a comparison and proposed BOM, with VERA's `parts_search` tool for supplier catalogs; skills component-selection and component-families); ngspice (the ngspice engine, found or on Windows the pinned official ngspice-47 7z, and the `ngspice-tool` script that checks netlists before the engine and runs validate, run, sweep, measure, compare and report; skill circuit-simulation); ltspice (Windows only: find-only LTspice 26 or newer and the `ltspice-tool` script that checks netlists and schematics before LTspice runs, with ngspice-tool's request model plus convert; skill ltspice-simulation); arduino-cli (pinned arduino-cli 1.6.0 and the `arduino-tool` script: inspect, boards, cores, libraries, install, compile, upload, report, clean in VERA's own Arduino environment; skills arduino-build-fix, arduino-libraries and arduino-test-sketch); micropython (the pinned-mpremote `micropython-tool` script: ports, identify, files, read-file, deploy-file through a verified temporary copy, run-file from RAM, capture-output, reset, report; skills micropython-deploy and micropython-test-script); circuitpython (the pinned-circup `circuitpython-tool` script: devices, identify, inspect-code, inspect-libraries, prepare-libraries from a pinned bundle tag, deploy to the CIRCUITPY drive one verified file at a time, capture-output, report; skills circuitpython-deploy and circuitpython-libraries); bus-tools (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script: bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills bus-transactions and bus-profiles); mqtt-tools (program `mqtt-tool`, a pinned paho-mqtt PEP 723 script: capabilities, check-profile, connect-test, bounded subscribe, publish and correlated request on a broker a workbench profile declares, with the password handed over on stdin; skills mqtt-telemetry and mqtt-commands); scpi-instruments (program `scpi`, a PEP 723
+PyVISA script that acts on the instruments declared in `lab/resources.json` only through validated profiles, with the
+platform's resource leases and supervised cleanup; skills bench-instruments and instrument-profiles); lab-validation
+(program `lab-validate`, a standard-library PEP 723 script that compares captures, CSV/sigrok exports and SPICE run
+folders with requirements offline; skills validation-planning and difference-explanation); hil-testing (program `hil`
+whose `check` and `run` VERA core compiles and executes as hardware-in-the-loop plans over the other plugins, plus a
+standard-library report helper; skill hil-planning); gdb-debug (programs `gdb-elf` for offline ELF/DWARF inspection and
+fault re-diagnosis and `gdb-debug` for finite supervised GDB/OpenOCD sessions on a declared probe; skill
+debug-sessions); power-profiler (programs `power-profile` for Joulescope JS220 captures on pyjoulescope_driver 2.5.5 and
+`power-analyze` for offline energy, charge, events, A/B and battery analysis; skills power-measurement and
+energy-analysis). renode (programs `renode`, the pinned Renode 1.17.0 engine whose direct calls are blocked, and `renode-sim`,
+which validates firmware against approved virtual-board profiles and runs it headless with UART capture and data-only
+test sets; skill virtual-boards). zephyr (programs `zephyr` for inspect, prepare-workspace, build, artifacts,
+test-build, test-run, differences and clean of Zephyr applications from an explicit request, and `zephyr-flash` for the
+verified stm32cubeprogrammer runner on a reserved probe; skill zephyr-builds). platformio (programs `platformio` for tools, inspections, prepare-packages, build, artifacts, test-host, test-device, test-run and clean of PlatformIO projects from an explicit request, and `platformio-upload` for the verified stlink upload on a reserved probe; skill platformio-projects). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
 serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
@@ -58,10 +239,10 @@ plugin skill discovery is [Skills](skills.md).
 
 Each folder is an ordinary plugin package in format 1 that the user installs from the folder (`vera plugin
 install --path`, IPC `plugins.install`) or from the catalog, and enables per workbench. The folder is also a catalog
-source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32 and Electronics design groups, default on except Security), `catalog.yaml` (all packaged plugins
+source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32, Electronics design and Embedded lab groups, default on except Security), `catalog.yaml` (all packaged plugins
 `official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
-catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
+catalog release `07_Delivery/plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
 an offline first install. Nothing installs them automatically. A package holds content only: a manifest, PEP 723
 scripts that the provisioner runs with the bundled uv, and Markdown skills; a pip program such as esptool comes from
 PyPI at install time and is not part of the folder. `requires`: esp32-esptool lists `serial-monitor`; `vera catalog check`
@@ -69,7 +250,7 @@ reports a `requires` that names no catalog plugin, and catalog installs review r
 from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
-Catalog discovery metadata for the sixteen real packages lives in the maintainers' catalog.yaml map,
+Catalog discovery metadata for the twenty real packages lives in the maintainers' catalog.yaml map,
 not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain
 absent without catalog release evidence; no commit/build/install timestamps are substituted.
 Shared/source tests validate bounds/references; prepare-plugins and focused CLI acceptance prove
@@ -193,7 +374,130 @@ that source metadata reaches the deterministic bundled index unchanged.
   run (`vera_point` with `table()` parameters; temperature ascending) and writes no absolute path into results
   (`<LTspice library>`, workbench-relative paths, file names). Verified with LTspice 26.1.1 on Windows 11
   (2026-11-13), including the same requests against ngspice-47.
+- `arduino-cli` 1.0.0, ecosystem `arduino` (Arduino pack, group "Sketches (Arduino CLI)", default on; activities
+  `build`, `flash`), Windows x64 and Linux x64, requires serial-monitor. Program `arduino-cli`: the official 1.6.0 zip
+  (Windows) or tar.gz (Linux) by SHA-256, `preferDownload`, else PATH (`/usr/local/bin`, `/usr/bin` on Linux) in
+  range `>=1.6,<2`; every `arduino-cli *` command blocked. Program `arduino-tool` = `scripts/arduino_tool.py` (PEP 723,
+  standard library), `uses: [arduino-cli]`, timeout 1800 s. Risks: `inspect`, `report`, `clean`, `boards details`,
+  `boards search`, `cores *`, `libraries *` safe; `boards list` and `compile` device-read (discovery tools; core
+  recipes and hooks run on the host); `install *` device-write (3600 s); `upload *` device-write (600 s). VERA's
+  Arduino environment is `$VERA_ARDUINO_HOME` or `~/.vera-arduino` (`data`, `downloads`, `user`, `cache`,
+  `staging/<run-id>-<hex>` with `owner.json`, `environment.json` format 1 with https index URLs); every arduino-cli
+  call is `--config-file <generated> --json <command>` with cwd the staging folder (created as `.starting-*` with
+  `owner.json`, then renamed) and closed stdin, and no agent value may start with `-`; the offline configuration
+  (everything but install) sets `network.proxy: http://127.0.0.1:9`. `cores search` and `libraries search` read the
+  downloaded index files themselves (arduino-cli would refresh a day-old index first and fail offline). An
+  arduino-cli call that fails where its answer is needed is `error`/`tool-failed`, exit 3; a run folder holds an
+  `incomplete` result while arduino-cli compiles or uploads, so an interrupted run reads as such. Install: `index
+  [--index-url https]`, `core VENDOR:ARCH@VERSION --skip-post-install` (records a replaced version), `library
+  NAME@VERSION --no-deps` (missing dependencies are warnings). Compile refuses before arduino-cli compiles
+  (`fqbn-invalid`, `core-missing`, `core-version`, `local-override` for platform.local.txt/boards.local.txt,
+  `fqbn-unknown` with up to ten close candidates, `fqbn-option` with the declared values, `library-missing`,
+  `library-version`, `sketch-invalid`), copies the sketch (without sketch.yaml/sketch.json, a top-level build folder,
+  hidden entries; links refused) and `--library-dir` folders into the run folder, builds in staging, exports to
+  `binary/`, and records FQBN/options, platform with recipe hash and hooks, arduino-cli version, configuration hash,
+  source files and combined hash, libraries (platform/index/local, declared), sizes, binaries and sketch-relative
+  diagnostics; an undeclared index library makes it `fail`, "Multiple libraries were found" a warning. Upload takes
+  the compile's `result.json` (approval-bound), re-hashes the sketch copy, the binaries and the original sketch
+  (`conflict`), checks the port by identity (`port-missing`, `identity-mismatch`, `identity-ambiguous`,
+  `board-mismatch`, `board-unverified` without `--board-unverified`, `programmer-unknown`), copies the binaries to
+  staging together with exactly the recorded sketch files, verifies them and uploads those copies with `--protocol serial`, then lists the ports again for `port.after` (null with `identity-not-found`, `identity-ambiguous` or, when the list fails, `ports-unlisted`; the upload's status stands).
+  Identity: `usb:vid:pid:serial` (stable), `usb:vid:pid` or `serial:<address>` (unstable); FTDI, WCH, Silicon Labs
+  and Prolific bridge VID:PIDs are never identified (matches become candidates); network ports are ignored. Results:
+  `arduino-iot-results/<run-id>/` (`result.json` kind `arduino-tool-result`, `report.md`, logs), no absolute path;
+  exit 0 pass, 2 blocked, 3 fail or error. Verified with arduino-cli 1.6.0, arduino:avr 1.8.8 and arduino:samd 1.8.14
+  on Windows 11 (2026-11-13); real upload, serial readback, two boards and native Ubuntu are pending hardware.
 
+- `scpi-instruments` 1.0.0, ecosystem `lab` (pack Embedded lab, group Bench instruments (SCPI), default on; activity
+  `measurement`), Windows x64/Linux x64. Program `scpi` = `scripts/scpi_tool.py` (PEP 723: PyVISA 1.16.2, pyvisa-py 0.8.1,
+  pyserial 3.5, pyusb 1.3.1), env `SCPI_REGISTRY=${workbench}/lab/resources.json`, `resources {option: --instrument,
+  kinds: [visa], grace: 10, cleanup: [close], cleanupTimeout: 60}`, timeout 120 s. Operations (first argument only, any
+  other first argument or option refused with exit 2): `capabilities (--profile|--alias)`, `discover-configured`,
+  `decode --capture` (safe); `discover-configured --list-local` (serial ports via pyserial, USBTMC via pyusb, never VISA's
+  resource search), `identify`, `read [--channel]`, `capture --channel`, `status` (device-read); `configure --set
+  NAME=VALUE` (1..16), `close` (device-write); `output --channel --voltage --current --hold 1..3500` (irreversible, word
+  `output`, rule timeout 3600 s). Every instrument operation checks `*IDN?` (manufacturer, model, firmware pattern,
+  declared serial) before anything else, validates channels and values against the profile and the entry's bench
+  limits before opening, writes `embedded-lab-results/<run-id>/result.json` (format 1, kind `scpi-result`, status
+  pass/fail/incomplete/blocked/error, identity, profile verification, lifecycle with `physical`, values/series with units,
+  problems, commands sent, artifacts with SHA-256) and exits 0 pass, 1 fail, 2 refused/blocked before any effect, 3
+  incomplete/error. Profiles (all `unverified`): `keysight-34461a`, `rigol-ds1000z`, `rigol-dp800`. A power supply's
+  set-points change only with that output off; `output` switches off and reads back at the end, on a stop request and
+  after reconnecting; `configure`/`output` are blocked while `VERA_RESOURCE_STATE` marks the alias unknown. Captures keep
+  `raw-<CH>.bin` and `preamble-<CH>.json`; `decode` recomputes `waveform-<CH>.csv` identically. Problem codes:
+  truncated-transfer, visa-timeout, instrument-absent, driver-missing, connection-lost, reconnected, unexpected-reply,
+  identity-mismatch, profile-unknown, registry-changed (the registry differs from `VERA_REGISTRY_SHA256`), state-unknown,
+  readback-mismatch, output-on, clipped, stopped, limit, request, internal. `decode` reads only `preamble-<CH>.json` and
+  `raw-<CH>.bin` (safe channel names, regular files, at most the profile's maxPoints x width bytes; a capture refuses a
+  larger announced block before reading it) and checks them before creating its folder; refusals before the
+  checks pass print without a folder; meter and scope `close` confirm only that no output exists to energize. Verified offline on
+  Windows 11 against a fake PyVISA and with VERA's real runner, and with the opt-in `VERA_SCPI_UV` run (real PyVISA
+  1.16.2 + pyvisa-py 0.8.1 through the provisioner, TCPIP SOCKET to local simulated servers, 2026-11-13); no real
+  instrument or native Ubuntu run yet.
+
+- `lab-validation` 1.0.0, ecosystem `lab` (pack Embedded lab, group Measurement validation, default on; activity
+  `measurement`), Windows x64/Linux x64. Program `lab-validate` = `scripts/lab_validate.py` (PEP 723, standard library,
+  Python >= 3.11), timeout 600 s; every operation is `safe`: `inspect --path|--request` (prints, writes nothing),
+  `normalize`, `measure`, `align`, `compare --request FILE`, `report --run DIR (1-20)`. A format 1 request (at most
+  1 MiB; required `decisionRule` simple|guarded and `missingData` incomplete|exclude) names sources through the
+  importer registry - `scpi-capture` (a scpi capture folder: result.json kind scpi-result and waveform-<CH>.csv
+  checked against its artifact SHA-256, clipping from the required raw-<CH>.bin codes equal to the preamble's clip
+  limits, captured conditions and identity; a decode folder is refused with its capture folder named), `csv` (declared time column or sample rate, channel columns with units, clip limits,
+  `uniform`), `sigrok-csv` (`;` comments, `; Samplerate:`), `spice` (ngspice-tool/ltspice-tool transient folders,
+  series.csv hash-checked, v(...) V, i(...) A; other analyses refused `domain`) - and signals with explicit sign, scale
+  and ordered preprocessing (linear resample, moving average; never inside a gap). Metrics registry: min, max, mean,
+  rms (trapezoid), peak-to-peak, ripple, frequency, duty-cycle, rise-time, fall-time, overshoot, settling-time (bound
+  when unsettled), delay (same source only, else `clock`). Comparisons align by none/offset/marker (same source per
+  side)/cross-correlation within maxLag (N x (2K+1) <= 1e7, the reference evaluated only where a lag needs it) and
+  report max-abs, rms, mean, lag and correlation; `reference-short` limits the differences, not the lag.
+  Criteria `<=`/`>=`/`==` (tolerance) under simple or guarded rules with the supplied uncertainty; limiting
+  diagnostics (gap, clipped, source-incomplete, aliasing-suspect, aliasing-risk, under-sampled, bandwidth-unknown,
+  bandwidth-limited, conditions-unknown, conditions-differ, lag-at-limit, reference-short) make a criterion
+  incomplete; lag-unjudged and resampled-up are notes. Verdict fail > incomplete > pass. Results in
+  `embedded-lab-results/<run-id>/` (exclusive, never in .vera): result.json kind `lab-validation-result`, report.md
+  with relative source links, series-<signal>.csv, compare-<id>.csv/.svg; `report` writes report.json kind
+  `lab-validation-report` after checking each run's artifacts. Exit 0 pass, 1 fail, 2 refused before any folder,
+  3 incomplete/error; printed documents at most 11 000 UTF-16 units. No network, process or language model. Verified
+  on Windows 11 (toolchain CPython 3.12 and 3.11, VERA's real runner, real uv 0.11.25 provisioning, 2026-11-13); no
+  real capture of a real circuit and no native Ubuntu run yet.
+- `hil-testing` 1.0.0, ecosystem `lab` (pack Embedded lab, group Hardware-in-the-loop tests, default on; activities
+  `measurement`, `debug`, `flash`), Windows x64/Linux x64. Program `hil` = `scripts/hil_tool.py` (PEP 723, standard
+  library) with `plan: hil`: `hil check <plan>` (safe, compiled by core, nothing started) and `hil run <plan>` (rule
+  device-read, raised to the plan's highest operation risk and the firmware effect; one approval; core executes) never
+  start the helper; `hil report --run DIR` (safe) writes report.html, report.md and junit.xml once into a finished run
+  folder (exit 0, or 2 refused). Plan format 1 (setup with required `firmwareEffect`, firmware path + SHA-256, budget
+  <= 3600 s, 1-64 steps, 0-16 cleanup steps) and step kinds probe-rs.list|flash|verify|reset,
+  esptool.identify|flash|verify, serial.capture|send, scpi.identify|status|read|capture|configure|output|close,
+  lab-validate.compare, await. Results in `embedded-lab-results/<run-id>/` (plan.json, result.json kind
+  `hil-test-result`, events.jsonl, steps/). Verified on Windows 11 offline and with real helper processes (2026-11-14);
+  no real board, probe or native Ubuntu run yet.
+- `gdb-debug` 1.0.0, ecosystem `lab` (pack Embedded lab, group Debugging (GDB and OpenOCD), default on; activities
+  `debug`, `firmware-analysis`), Windows x64/Linux x64. `gdb-elf inspect <elf>` and `gdb-elf diagnose <run> [--elf]`
+  (safe, standard library, no process): SHA-256, class, machine, ARM Tag_CPU_name/arch/profile, float ABI, entry,
+  segments, symbol counts, GNU build id, DWARF 2-5 unit versions, producers, languages and the `-O` level when a
+  producer records it; diagnose recomputes a saved snapshot's fault and attribution, none for another ELF.
+  `gdb-debug tools` (safe; versions, GDB target, `set architecture` support per profile), `snapshot|break|step --probe
+  <alias> --elf <elf> --firmware-effect none|actuates --on-exit halted|resume [--read VAR]... [--frames 1-64]` (break:
+  `--at <function|file:line|*0xflash>` `--timeout 1-3000`; step: `--count 1-100` `[--instruction]`; device-write,
+  irreversible with `actuates`; rule timeout 3600 for break) and the cleanup `release --probe` (safe, touches nothing,
+  physical unknown). Profiles `stm32f4-stlink` (Cortex-M4F, v7m faults) and `stm32g0-stlink` (Cortex-M0+, v6m), both
+  `unverified`. Results in `embedded-lab-results/<run-id>/` (result.json kind `gdb-debug-result`, mi.log,
+  openocd.log). Exit 0 pass, 2 refused before any process, 3 incomplete/blocked/error. Verified on Windows 11 offline
+  (fixture ELFs from zig cc 0.13.0, pyelftools 0.32 oracle, GDB/OpenOCD stand-ins, VERA's real runner, 2026-11-14); no
+  real GDB, OpenOCD, probe, board or native Ubuntu run yet.
+- `power-profiler` 1.0.0, ecosystem `lab` (pack Embedded lab, group Power profiling (Joulescope), default on; activity
+  `measurement`), Windows x64/Linux x64. `power-profile` (PEP 723, Python >= 3.12, `pyjoulescope_driver==2.5.5`):
+  `tools` (safe; driver version, WinUSB DLL / Joulescope udev rule, nothing changed), `tools --list` (device-read;
+  device paths), `identify --meter <alias>` (device-read), `capture --meter <alias> --duration <0.01-3500> --rate
+  <profile rate> [--current-range auto|<label>] [--voltage-range <label>] [--markers 0..3] [--firmware] [--board]
+  [--condition]... [--label]` (device-write, rule timeout 3600; at most 1 000 000 samples) and the cleanup `release
+  --meter` (device-write; signals off, current range auto, read back). `power-analyze` (standard library, all safe):
+  `acquisition`, `import`, `inspect`, `measure-energy`, `segment`, `compare`, `battery`, `report`. Profile
+  `joulescope-js220` `unverified`. Results in `embedded-lab-results/<run-id>/` (result.json kind `power-result`,
+  samples.csv, events.csv, lab-validation-request.json, report.md/html, current-<n>.svg). Exit 0 pass, 2 refused or
+  blocked before any setting changed, 3 incomplete, 4 error. Verified on Windows 11 offline (closed-form fixtures, the
+  driver stand-in, VERA's real runner, lab-validate on the written requests) and with the real pyjoulescope_driver 2.5.5
+  from PyPI without a meter (2026-11-14); no JS220, board or native Ubuntu run yet.
 - `kicad-layout` 1.0.0, ecosystem `electronics` (Electronics design pack, group "PCB placement and local routing
   (KiCad)", default off; activity `design`), Windows x64 and Linux x64. Program `kicad-cli`: found as the kicad
   plugin finds it, range `>=10.0,<11`, every `kicad-cli {sch,pcb,fp,sym,jobset}` command blocked. Program
@@ -220,6 +524,68 @@ that source metadata reaches the deterministic bundled index unchanged.
   with KiCad 10.0.8 on Windows 11 (2026-11-13); native Ubuntu has not been run. Requests hold at most 1024
   operations (a routed request from freerouting).
 
+- `renode` 1.0.0, ecosystem `lab` (pack Embedded lab, group Virtual boards (Renode), default on; activities
+  testing/firmware-analysis), Windows x64/Linux x64.
+  - Engine program `renode`: found (`==1.17.0`), or downloaded and SHA-256-checked from the 1.17.0 portable archives
+    (`renode_1.17.0-portable/renode[.exe]`). Every direct call is blocked.
+  - `renode-sim` (standard library, all rules safe, host simulation):
+    - `tools`;
+    - `profiles [--profile ID]`;
+    - `validate --profile --firmware --arch --boot-address` (offline);
+    - `run`, `capture-uart --until REGEX` and `test --test-set ID [--param N=V]...`, with `--virtual-budget` up to
+      3600 virtual s and `--real-timeout` up to 3500 s (rule timeout 3600);
+    - `report --run DIR [--hil DIR]`.
+  - Profile `stm32f4-discovery` (`unverified`: Windows only) and test set `board-basics` (boot/version, UART echo,
+    10 Hz timer, button/LED).
+  - Results in `embedded-lab-results/<run-id>/`: result.json kind `renode-result` (state running/done), firmware.elf,
+    profile/, uart-<name>.log, engine.log, monitor.log and junit.xml. `report` adds report.md/html.
+  - Exit codes: 0 pass, 1 fail/timeout, 2 refused, 3 incomplete/blocked/error/stopped.
+  - Verified on Windows 11 with offline fixtures (the stand-in, VERA's real runner and Stop) and with the real
+    Renode 1.17.0 (2026-11-14): board-basics passes twice with equal virtual results, the wrong version fails, silence
+    times out, the DAC write is unmodeled, the engine owns no TCP/UDP endpoint, and engine.log shows no download. The
+    network was not disabled for that run. No native Ubuntu run yet.
+
+- `zephyr` 1.0.0, ecosystem `lab` (pack Embedded lab, group Zephyr builds and tests, default on; activities
+  build/testing/flash), Windows x64/Linux x64. Supported: Zephyr >=4.4,<4.6, Zephyr SDK >=1.0.1 (toolchain variant
+  `zephyr`, GNU toolchain in `<sdk>/gnu/`), verified board `stm32f4_disco`.
+  - `zephyr` (PEP 723, pinned west 1.5.0, cmake 4.4.4, ninja 1.13.2, pytest 9.2.0 and Zephyr's build/Twister imports):
+    `tools [--request]`, `inspect`, `artifacts`, `test-run --test-build --scenario --evidence`, `differences --build
+    --evidence` (safe); `build [--pristine]`, `test-build [--pristine]`, `clean` (device-write, host execution or
+    deletion; build/test-build rule timeout 3600); `prepare-workspace` (device-write, network).
+  - `zephyr-flash` (PEP 723, west and the runner's imports): `tools`, `release` (safe), `flash --request --build
+    --probe --firmware-effect none|actuates` (device-write, irreversible with actuates), resources `--probe` kind
+    probe, grace 30 s, cleanup release. `stm32_programmer_cli` is find-only and blocked.
+  - The request (format 1, kind zephyr-request) names workspace, manifest folder, every project at its full SHA, the
+    SDK folder, the app, the exact board, configs/extraConfigs/overlays, the owned buildDir, optional tests and hooks.
+  - Results in `embedded-lab-results/<run-id>/`: result.json kind `zephyr-result` (state running/done), step logs,
+    `artifacts/` for build (zephyr.elf/hex/bin, config, zephyr.dts, zephyr.map, build_info.yml, runners.yaml with
+    SHA-256), junit.xml for test-build/test-run. Exit 0 pass (test-build: built), 1 fail, 2 refused, 3 incomplete,
+    blocked, error or stopped.
+  - Verified on Windows 11 offline (stand-ins, real west and git for prepare-workspace, VERA's real runner for Stop and
+    the probe lease) and with the real tools (2026-11-14): Zephyr 4.4.2 + SDK 1.0.1 builds of the fixtures, Twister
+    build-only, ztest pass/skip/fail on the real Renode 1.17.0 profile, west flash through the real STM32CubeProgrammer
+    2.23.0 with no probe attached. No board flashed, no native Ubuntu run yet.
+
+- `platformio` 1.0.0, ecosystem `lab` (pack Embedded lab, group PlatformIO projects, default on; activities
+  build/testing/flash), Windows x64/Linux x64. PlatformIO Core 6.2.0 pinned with its dependency closure; verified:
+  `platformio/ststm32@20.0.0` + board `disco_f407vg` + framework `cmsis` (upload `stlink`), `platformio/native@1.2.1`,
+  Unity 2.6.1.
+  - `platformio` (PEP 723): `tools [--request]`, `inspect-project`, `inspect-environments`, `artifacts`, `test-run
+    --test-device --suite --evidence` (safe); `build [--pristine]`, `test-host [--pristine]`, `test-device
+    [--pristine]`, `clean` (device-write, host execution or deletion; rule timeout 3600); `prepare-packages`
+    (device-write, network).
+  - `platformio-upload` (PEP 723): `tools`, `release` (safe), `upload --request --build --probe --firmware-effect
+    none|actuates` (device-write, irreversible with actuates), resources `--probe` kind probe, grace 30 s, cleanup
+    release.
+  - The request (format 1, kind platformio-request) names the project folder, the environment, the core folder, the
+    owned buildDir, optional tests, hostToolchain and hooks.
+  - Results in `embedded-lab-results/<run-id>/`: result.json kind `platformio-result` (state running/done), step logs,
+    `artifacts/` (firmware.elf/bin/hex, program for native, per-suite test ELFs) with SHA-256, junit.xml for tests,
+    PlatformIO's own JSON/JUnit test reports. Exit 0 pass (test-device: built), 1 fail, 2 refused, 3 incomplete,
+    blocked, error or stopped.
+  - Verified on Windows 11 offline (real PlatformIO parser, stand-in commands, VERA's real runner) and with the real
+    tools (2026-11-14): ststm32 20.0.0/CMSIS builds of two environments offline, native Unity on WinLibs GCC 16.2.0,
+    device suites and board-basics on the real Renode 1.17.0. No board uploaded, no native Ubuntu run yet.
 - `freerouting` 1.0.0, ecosystem `electronics` (group "PCB autorouting (Freerouting)", default off; activity
   `design`), Windows x64 and Linux x64, requires kicad-layout.
   - Programs: `java` (Eclipse Temurin 25.0.5+8 JRE download, `java *` blocked); `freerouting` (the 2.5.0 jar, a
@@ -373,8 +739,306 @@ that source metadata reaches the deterministic bundled index unchanged.
   program timeout 120 s. Skill `esp32-flash`: port and chip first, offsets and images from `build/flasher_args.json`
   as explicit pairs, stop for encrypted or secure-boot builds, `Hash of data verified.` per file or `verify-flash`,
   boot log with `serial capture --port P --reset`.
+- `micropython` 1.0.0, ecosystem `micropython` (Arduino pack, group "MicroPython", default on; activities `flash`,
+  `testing`), Windows x64 and Linux x64. Program `micropython-tool` = `scripts/micropython_tool.py` (PEP 723,
+  `mpremote==1.29.0`, `pyserial==3.5`, `platformdirs==4.14.0`), timeout 300 s. Risks: `ports`, `report` safe;
+  `identify`, `files`, `read-file`, `capture-output`, `reset` device-read (notes: interrupts or restarts the running
+  program; read-file 900 s, capture-output 660 s); `deploy-file`, `run-file` device-write (900 s, 3600 s); `deploy-file * --startup *` irreversible. The helper
+  uses mpremote's `SerialTransport` and sends only fixed snippets: no REPL, connect, exec, eval, mount or firmware
+  operation. Device operations list the ports first (`port-missing`, `identity-mismatch`), open the raw REPL without a
+  soft reset (run-file with one), refuse firmware other than MicroPython >=1.22 (`incompatible-firmware`), and leave the
+  raw REPL and close the port at the end (`--restart` soft-resets so main.py runs). Remote paths are absolute, <=255
+  characters, <=16 segments, no `.`/`..`/empty segment, backslash, control character or `.vera-part` (`remote-path`);
+  boot.py/main.py need `--startup` (`startup-file`). deploy-file: parent (`--mkdir`), `before` hash, `--expect-sha256`/
+  `--expect-absent` (`conflict`), stale part removed, space check (`no-space`), `incomplete` result.json phase
+  `transfer`, 256-byte chunks to `<target>.vera-part`, board hash (`hash-mismatch`; read-back without hashlib), target
+  re-check (`conflict`), phase `replace`, rename or, on EEXIST only, `remove-then-rename` (other errors `write-failed`),
+  verify (`verify-failed`); every refusal precedes the first write (`--mkdir` folders, stale part removal). Loss: `disconnected`
+  (port gone), `device-reset` (`soft reboot`/banner read during the failing exchange), `no-response` (Ctrl-C, Ctrl-B sent once); `application: unknown`. run-file: <=256 KiB
+  UTF-8, raw-REPL (raw-paste) execution, serial reads bounded at 10 s, output capped by `--max-output`, deadline `--timeout` (<=3500 s) then Ctrl-C (`incomplete
+  timeout`), verdict from the traceback. capture-output reads without sending (`firmware: null`), or checks the firmware and restarts first; reset hard waits up to
+  15 s for the identity (`port-lost`). Results `arduino-iot-results/<run-id>/` (`result.json` kind
+  `micropython-tool-result`, `report.md`, `files/`, `output.txt`); exit 0 pass, 1 fail, 2 blocked, 3 incomplete or
+  error. Verified against the simulated board with the fake client and with the real mpremote 1.29.0 (opt-in); no real
+  board yet.
+- `circuitpython` 1.0.0, ecosystem `circuitpython` (Arduino pack, group "CircuitPython", default on; activities `flash`,
+  `testing`), Windows x64 and Linux x64. Program `circuitpython-tool` = `scripts/circuitpython_tool.py` (PEP 723,
+  `circup==3.1.0`, `pyserial==3.5`), timeout 300 s. Risks: `devices`, `report` safe; `identify`, `inspect-code`,
+  `inspect-libraries`, `capture-output` device-read (660 s); `capture-output * --reload *`, `prepare-libraries` (900 s,
+  network) and `deploy` (900 s; note: code.py reloads, Stop does not stop board code) device-write; `deploy * --boot *`
+  irreversible. The board is reached through its CIRCUITPY drive (file I/O) and serial console (read; Ctrl-C/Ctrl-D only
+  for --reload); circup supplies only bundle conventions (platforms, supported majors 9-11, name cleaning, requirements,
+  versions), never its CLI. Volumes: Windows labels via GetVolumeInformationW (read-only flag, serial), Linux
+  /proc/self/mounts with by-label/by-uuid; identity = the bound port's `usb:<vid>:<pid>:<serial>` when boot_out.txt's UID
+  equals exactly one port's serial number, else `circuitpy-uid:<uid>`, else `volume-serial:<serial>` (unstable); refusals
+  `volume-missing`, `identity-mismatch`, `identity-insufficient`, deploy `ambiguous`; firmware other than 9-11 or no
+  boot_out.txt `incompatible-firmware`. inspect-code lists (2000 entries, depth 8) with hashes, names the startup file
+  (code.txt, code.py, main.txt, main.py) and copies it and boot.py; settings.toml/secrets.py never read. inspect-libraries
+  marks .mpy without header `C\x06` incompatible (`mpy-incompatible` warning). prepare-libraries: tag = 8 digits, assets
+  `adafruit-circuitpython-bundle-{py,<major>.x-mpy}-<tag>.zip` from the Adafruit bundle releases, cached in
+  `~/.vera-circuitpython/bundles/<tag>/` with `hashes.json` (`cache-changed`, `download-failed`), dependencies from the py
+  zip's requirements and pyproject `circup_dependencies` (`unknown-library`, warning `dependency-not-in-bundle`), every .mpy
+  `C\x06` (`mpy-incompatible`), writes `libraries/` + `library-set.json` (format 1, kind `circuitpython-library-set`,
+  per-file SHA-256). deploy: refusals before any write (`target-path`, `startup-file`, selection, firmware,
+  `library-set-invalid`/`incompatible-libraries`/`library-set-changed`, `read-only`, `--expect-from` `conflict`,
+  `no-space`, `port-mismatch`); order libraries, other files, boot.py, startup files; per file `.vera-part` + fsync,
+  read-back (`hash-mismatch`), target re-check (`conflict`), `os.replace`, `os.sync` where present, read-back
+  (`verify-failed`), `confirmed`; a shadowing startup file warns `startup-shadowed`; settings.toml/secrets.py targets keep
+  no hash in the result;
+  incomplete result.json after each file; ENOSPC `no-space`, EROFS/EACCES/write-protect `read-only`, volume gone, EIO/ENODEV/ENXIO
+  or Windows device-gone errors `incomplete disconnected`; `application` updated/partially-updated/unchanged/unknown; `--capture N --port` reads the
+  console from before the first write and judges the run after the last (`exception`, `no-run-observed`). capture-output
+  parses `Auto-reload is on/off`, `<file> output:`, `Code done running.` and tracebacks (`fail exception`). Results
+  `arduino-iot-results/<run-id>/` (`circuitpython-tool-result`, `report.md`, `files/`, `console.txt`); exit 0/1/2/3.
+  Test seams `VERA_CIRCUITPYTHON_FAKE_BENCH` (volumes, deploy faults) and `VERA_CIRCUITPYTHON_DOWNLOAD_BASE` (127.0.0.1
+  only); the runner never passes them. Verified on simulated volumes and console with the fake and the real circup
+  3.1.0 (opt-in); no real board or real bundle download yet.
+
+- `bus-tools` 1.0.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
+  `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
+  `flatbuffers==25.12.19`, `pyserial==3.5`), timeout 120 s, env `BUS_REGISTRY=${workbench}/lab/resources.json`,
+  `resources {option: --adapter, kinds: [bus-adapter], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
+  `devices`, `capabilities`, `report` safe; `identify` device-read; `configure-bus`, `read-register`, `transfer`,
+  `capture` (120 s), `release` device-write; any call with `--power` irreversible. Backend `bus-pirate-bpio2` only:
+  StatusResponse hardware major 5 or 6 and FlatBuffers major 2 (`adapter-unsupported`; a packet-level error too); a port
+  that answers no valid COBS/BPIO2 status in 2 s is `not-bpio2`. Order per adapter call: registry (hash
+  `registry-changed`, alias `adapter-unknown`), profile (`profile-invalid`: format 1, commonGround true, logicMv
+  1200-5000, I2C 1 kHz-1 MHz, SPI 10 kHz-20 MHz, UART 300-1 000 000 baud, I2C addresses 0x08-0x77, registers <=4 bytes
+  written and 1-64 read, limits <=512 bytes and <=10 s), request (`register-unknown`, `clears-flags`,
+  `transfer-not-allowed`, `limit`, `power-not-allowed`, `capture-mode`), VERA's unknown marker (`state-unknown` except
+  identify/release), both ports by identity (`port-missing`, `identity-mismatch`), then only the binary port is opened.
+  Wire: COBS frames ending in 0x00; RequestPacket version 2, minimum minor 0; one status, one configuration (mode
+  I2C/SPI/UART, ModeConfiguration fields, pull-ups, psu_enable with mV/mA only for `power.source: adapter` + `--power`
+  within the registry's `power`, else psu_disable), one status read-back (`config-error`, `config-mismatch`), byte limits
+  also from the adapter's mode_max_write/read (`limit`), one DataRequest (I2C: address<<1 first, start/stop; SPI:
+  start/stop as chip select; UART unframed); async DataResponses are kept apart for capture. Data errors: text naming
+  NACK `nack`, else `adapter-error`; `count-mismatch`; `unexpected-value` names SPI mode, wiring and logic voltage;
+  `no-response` (incomplete); serial failure `disconnected` (nothing more sent, physical unknown). Nothing is repeated.
+  Final state after configure-bus failures and every read-register, transfer and capture: `release` (HiZ, pull-ups and
+  supply off) or `keep`, read back -> `final.physical` confirmed/unknown; configure-bus leaves `configured`. Stop file
+  checked before configuration, data and during capture (`stopped`, release applied). Results
+  `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`, capture.bin and capture.csv); exit 0/1/2/3.
+  Verified only against the simulated adapter; no real Bus Pirate yet (NACK text, UART async receive and per-mode limits
+  unconfirmed).
+- `mqtt-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "MQTT telemetry and commands", default on; activities
+  `testing`, `communication`), Windows x64 and Linux x64. Program `mqtt-tool` = `scripts/mqtt_tool.py` (PEP 723,
+  `paho-mqtt==2.1.0`), timeout 120 s, `credentials {option: --credential, scope: mqtt}`, no env. Risks: `capabilities`,
+  `check-profile` safe; `connect-test`, `subscribe` device-read (3600 s); `publish`, `request` device-write; `publish`
+  with `--retain` irreversible. Profile (`mqtt-tools-profile` format 1, 64 KiB, unknown fields refused): broker
+  host/port, TLS with a workbench CA or the system store (chain and host name always verified), credential reference
+  (plaintext only to loopback), client id prefix + 8 random hex, protocol 5 or 3.1.1, clean session only, keepalive,
+  connect timeout, reconnect attempts 0-5 (subscribe only), limits, subscribe filters (first level literal, no `$`),
+  publish topics (literal, command/data/status, QoS 0/1, retain never on command, response topic/timeout and the 3.1.1
+  correlation field), optional Will on a status topic, json/text/binary schemas with an optional integer sequence field.
+  Every refusal (`profile-invalid`, `topic-denied`, `payload-invalid`, `retain-refused`, `credential-missing`,
+  `credential-mismatch`, `plaintext-credential`, `path`, `run-exists`, `usage`) comes before the run folder and any packet,
+  exit 2. Connection codes `broker-unreachable`, `connect-timeout`, `tls-failed`, `auth-failed`, `not-authorized`,
+  `protocol-error` (exit 3). Capture: every message appended and flushed to `messages.jsonl` (raw base64, text, QoS,
+  retain, dup, size, SHA-256, receive time, schema check, event retained/duplicate/stale/new, MQTT 5 properties); ends at
+  duration, messages or bytes; a lost connection is a gap, reconnected per policy, `auth-revoked` or `disconnected`
+  (incomplete). Publish/request: one PUBLISH, delivery not-sent/sent/acknowledged/refused/unknown, `retried` false,
+  command physical unknown or reported; request subscribes first, correlates (MQTT 5 correlation data, 3.1.1 JSON
+  field), lists uncorrelated replies, `response-timeout` (exit 1). `result.json` is rewritten as incomplete while the run
+  goes on; SIGTERM (Linux) unsubscribes and disconnects (`stopped`); a Windows Stop leaves the last written state.
+  Results `arduino-iot-results/<run-id>/` (`mqtt-tool-result`, `report.md`, `messages.jsonl`); exit 0/1/2/3. Verified
+  against the local test broker only; no product broker or device yet, native Ubuntu not run.
+- `ble-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "BLE devices (GATT)", default on; activities `testing`,
+  `communication`), Windows x64 and Linux x64. Program `ble-tool` = `scripts/ble_tool.py` (PEP 723, `bleak==3.1.0` with
+  `winrt-runtime==4.1.0`, eight `winrt-windows-*==4!10.0.28000.2957` projections and `typing-extensions==4.16.0` on win32,
+  `dbus-fast==5.2.0` on linux), timeout 120 s, env `BLE_REGISTRY=${workbench}/lab/resources.json`,
+  `resources {option: --device, kinds: [ble-device], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
+  `capabilities`, `report` safe; `scan`, `identify`, `discover-services`, `read-characteristic`,
+  `subscribe-notifications` device-read (3600 s); with `--side-effects` device-write; `write-characteristic` and
+  `release` device-write; `--persistent` irreversible. The helper refuses any installed Bleak other than 3.1.0
+  (`backend-version`), a backend other than WinRT/BlueZ or Windows older than build 22000 (`os-unsupported`); it uses
+  only the central role and never pairs, unpairs, enters a PIN, writes descriptors itself, advertises or changes the
+  adapter. Scan: passive by default (Linux refuses passive, `passive-unsupported`; `--active`), 1-30 s, at most 500
+  addresses, one entry per address with names, RSSI last/min/max, service UUIDs, manufacturer ids/data, tx power,
+  count, registry alias, `candidate` (registry address or profile advertisement hints) and `ambiguousName`; never
+  `confirmed`. Device calls: registry entry (kind `ble-device`), profile (`ble-tools-profile` format 1, 64 KiB, unknown
+  fields refused, closed unit set, `sideEffects` required, named writes with class configure/actuate/persistent and
+  fixed or typed value) whose `id` must equal the entry's `profile` (`profile-device`), then `find_device_by_address`
+  within `connectTimeoutS` (`not-found`), one connect with `pair=False` (WinRT `address_type`, no cached services),
+  the GATT check (`profile-mismatch` lists what is missing) and the identity characteristic against the entry's
+  `serial` (`identity-mismatch`; `identity-unchecked` warning when either is absent). Reads (1-100, interval 0.1-60 s)
+  and notifications keep raw hex, length, receive time, UUID, the payload schema and the decoded value; a wrong length,
+  invalid UTF-8 or a non-finite float gives `value: null`, `valid: false`; out-of-range keeps the value with `valid:
+  false`. Notifications: callback into a 1024 queue, `notifications.jsonl` and `series.csv`, ends at duration, count,
+  bytes, stop request, disconnect or `overflow` (rate above `maxNotificationsPerSecond` or a full queue); `stop_notify`
+  once before the disconnect, `subscription` stopped/unknown. Writes: named operation only (`write-unknown`), typed
+  values checked (`value-required`, `value-out-of-range`, `value-not-representable`), persistent only with
+  `--persistent` (`write-class`), one ATT write (`payload-too-large`: with response min(512, MTU-3), without response
+  `max_write_without_response_size`), sent once, `delivery` acknowledged/refused/sent/unknown, `retried` false,
+  optional read-back (`read-back` fail when it differs), `effect` unknown unless the read-back matched. ATT
+  0x05/0x08/0x0C/0x0F and access denied give `pairing-required` (blocked, the user pairs in the OS); 0x02/0x03
+  `not-permitted`. Nothing is retried and a lost link is `disconnected`, never re-opened. Lifecycle physical = the
+  managed link: confirmed once disconnected with every started subscription stopped, else unknown. `release` polls the
+  system's connected devices for 10 s: absent -> confirmed; Linux -> one connect/disconnect; Windows -> `held-by-system`
+  unknown. Results `arduino-iot-results/<run-id>/` (`ble-tool-result`, `report.md`, notification files); exit 0/1/2/3.
+  Verified against the fake Bleak and with one real passive scan on Windows 11; no real device read, notify, write or
+  pairing yet, native Ubuntu/BlueZ not run.
+- `wokwi` 1.0.0, ecosystem `arduino` (Arduino pack, group "Cloud simulation (Wokwi)", default off; activity `testing`),
+  Windows x64 and Linux x64. Program `wokwi-cli` = the official wokwi-cli 0.29.1 (sha 0aa185144b92) downloaded by
+  SHA-256 from its GitHub release (`wokwi-cli-win-x64.exe`, `wokwi-cli-linuxstatic-x64`), version probe
+  `--short-version` in range >=0.29.1,<0.29.2, every direct command blocked. Program `wokwi-tool` = `scripts/wokwi_tool.py`
+  (PEP 723, `pyyaml==6.0.3`), `uses: [wokwi-cli]`, `credentials {option: --credential, scope: wokwi}`, timeout 120 s.
+  Risks: `capabilities`, `inspect-project`, `validate-diagram`, `prepare-job`, `collect-results`, `report` safe;
+  `run-scenario` irreversible (timeout 1900 s; transmits the job's files to wss://wokwi.com/api/ws/beta). The helper
+  refuses another wokwi-cli version or build sha (`cli-version`) or none (`cli-unavailable`); every wokwi-cli child gets the helper's
+  environment without any `WOKWI_*` variable plus `NO_COLOR=1`, and only run-scenario adds `WOKWI_CLI_TOKEN`.
+  inspect-project reports wokwi.toml, firmware/ELF (form hex/bin/uf2/elf/ESP-IDF flasher_args.json, size, SHA-256,
+  origin arduino-cli run+FQBN by result.json hash, PlatformIO environment, ESP-IDF target, else unknown; buildMatch),
+  diagram parts and boards. validate-diagram runs structural checks and `wokwi-cli lint --offline`. prepare-job refuses
+  wokwi.toml tables/keys beyond version/firmware/elf, chips, SD cards, GDB/RFC 2217 (`unsupported-input`), mismatched
+  firmware (`firmware-invalid`), lint errors (`diagram-invalid`), not exactly one board, scenarios outside delay,
+  wait-serial, write-serial, set-control, expect-pin (`scenario-invalid`/`unsupported-input`), no assertion
+  (`assertion-missing`) or scenario plus expect-text; then writes `arduino-iot-results/<run-id>/` with `send/` (exact
+  copies and a generated wokwi.toml), `job.json` (`wokwi-job`: files with role, source, size, SHA-256, transmitted;
+  account, endpoint, board, limits virtual 100-600000 ms and real budget 10-1800 s, attempts 1, usage note) and
+  `job.md`. run-scenario accepts only fields of the form prepare-job writes (`job-invalid`), verifies that send/ holds
+  exactly the job's fixed layout with listed roles and hashes, a wokwi.toml byte-equal to the generated one and the
+  flash files flasher_args.json names (`job-changed`), checks the copies again (one board equal to the job's,
+  screenshot part, scenario, offline lint), then the account (`credential-mismatch`) and the CLI build sha before it
+  reads the stdin token; a stop before the CLI starts sends nothing; writes result.json incomplete/running, runs
+  wokwi-cli once on send/ with `--no-sdcard`, the virtual timeout and exit code 42, a 200 ms watch loop (real budget,
+  serial log 16 MiB, stdout/stderr 4 MiB each, stop signal -> CTRL_BREAK_EVENT/SIGTERM, kill after 5 s), redacts the
+  token from all CLI output it writes, then `exit.json` and the outcome: passed / virtual-timeout / fail-text /
+  assertion-failed / auth-failed / network-error / connection-lost / api-error / credential-missing / cli-failed /
+  stopped / real-budget-exceeded / output-limit / interrupted, with remote `not-started` (confirmed),
+  `closed-by-client` or `unknown`, virtual and real time apart, `connectRetries`. Results `wokwi-run`, `report.md`,
+  `serial.log`, optional `trace.vcd`/`screenshot.png`; report writes report.json/.md/.html and junit.xml; exit 0/1/2/3.
+  Verified offline against the fake CLI and with the real wokwi-cli 0.29.1 (version, offline lint, argument
+  acceptance up to its missing-token check); no cloud run (no token by the user's decision), native Ubuntu not run.
+- `raspberry-pi-linux` 1.0.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
+  activities `testing`, `debug`), Windows x64 and Linux x64; VERA stays on the host and reaches the board over SSH.
+  Program `pi-tool` = `scripts/pi_tool.py` (PEP 723, `asyncssh==2.24.1`, `cryptography==49.0.0`,
+  `typing-extensions==4.16.0`), env `PI_REGISTRY`, `resources {option: --board, kinds: [linux-board], grace: 10,
+  cleanup: [stop-owned], cleanupTimeout: 60}`, `sshAgent: true`, timeout 120 s. Rules: capabilities, inspect-project,
+  report safe; check-host-key, identify, task-status, service-status, collect-logs device-read; install-helper,
+  deploy-candidate, apply-candidate (600 s), run-task (3600 s), service-start/stop, stop-owned device-write;
+  apply-candidate `--overwrite` irreversible. The host key is accepted only when its SHA-256 fingerprint is in the
+  entry's hostKeys (callable known_hosts, `~/.ssh/known_hosts` and `~/.ssh/config` never read, no host certificates):
+  otherwise `host-key-unpinned`/`host-key-changed` before authentication; check-host-key stops before login.
+  Authentication is public key from the system agent only (SSH_AUTH_SOCK, else Pageant or the OpenSSH pipe on Windows,
+  `agentKey` filters), codes `agent-unavailable`, `agent-key-missing`, `auth-failed`, `unreachable`, `timeout`. Exec
+  requests are only `/usr/bin/python3 -I -c '<install stub>'` and `... '<run stub>'` built from the helper version and
+  SHA-256; requests and file bytes go on stdin. install-helper writes `~/.local/share/vera-pi/1.0.0/vera_pi_remote.py`
+  (0600, hash-checked; installed / already-installed / replaced); the run stub refuses `helper-missing` /
+  `helper-changed`. The helper checks the login user (not root), the declared serial/machine id/model
+  (`identity-mismatch`) and the root (exists, not a link, owned, not group/world-writable: `root-invalid`). vera-pi.json:
+  name, files (folders expand, `exclude`, no `..`/absolute/backslash/`.vera-pi`/links, 512 files, 16 MiB each, 64 MiB),
+  hardware, tasks (argv[0] `python3` or a listed file, else `command-not-allowed`; budgetS 1-3500, output 1 KiB-16 MiB,
+  extraArgs, actuates) and services (user `.service` units). deploy-candidate stages into
+  `<root>/.vera-pi/candidates/<id>/` and classifies new/changed/unchanged/conflict (neither the candidate's nor the last
+  applied hash) plus remoteOnly; candidate.json in the run folder. apply-candidate checks the board's own plan, staged
+  hashes (`candidate-changed`) and base hashes (`conflict`) before renaming new/changed/`--overwrite` files, records
+  `projects/<name>.json`, unlinks only its staged files and never deletes a project file. run-task: a detached supervisor
+  (new session) starts the task in its own process group, copies stdout/stderr through itself up to the limit, ends the
+  group at budget/limit/stop file (SIGTERM, SIGKILL after 3 s) and records handle, PID, `/proc` start time, boot id
+  and the end; states exited, budget-exceeded, output-limit, stopped, start-failed, supervisor-lost, lost-by-reboot
+  (never signalled). pi-tool polls task-wait, forwards VERA's stop file (remote `confirmed` or `unknown`), and on a
+  lost connection ends `connection-lost` with remote unknown; stop-owned retries an unreachable board 3 times, 3 s
+  apart. Services: `systemctl --user --no-ask-password start|stop|show` on listed units only (`service-not-allowed`),
+  results report `linger` (/var/lib/systemd/linger/<user>) and keepRunning warns `keeps-running`, or `no-linger` when
+  the service would stop with the SSH session; a starting record whose supervisor is gone is start-failed; group members
+  that outlive a lost supervisor keep the task running and pi-tool ends them (`supervisor-lost`); staging removes the
+  project's earlier candidates and its own partial folder; an ELF built on Windows deploys 0755; collect-logs writes `journalctl --user -o json -n N -u UNIT` lines (N 1-2000) and
+  task log tails. Results `pi-tool-result`, `report.md`, report.html for report; exit 0/1/2/3. Verified against the
+  local asyncssh test server with commands in WSL Ubuntu 24.04 (systemd user manager); no Raspberry Pi, native Ubuntu
+  not run.
 
 ## Invariants
+
+- gdb-debug: the agent never reaches GDB's or OpenOCD's input - the direct programs are blocked, the helper owns the
+  pipes and sends only its fixed MI command set; `--read` and `--at` values pass a whitelist (identifiers, `.member`,
+  `[index]`, function, `file:line`, flash `*0x`) before any process starts; GDB starts with `-nx` and auto-load,
+  debuginfod, history and target function calls (`may-call-functions`) off; OpenOCD runs only the profile's own scripts with the probe serial (charset without Tcl
+  metacharacters), GDB port on 127.0.0.1, telnet/Tcl off, GDB flash programming off, hardware breakpoints.
+- gdb-debug reads target memory only inside the profile's flash and RAM and the SCB fault registers (`mem` regions,
+  all read-only, inaccessible by default); OpenOCD runs in an empty temporary folder outside the workbench and never writes target memory or flash; the ELF match reads flash back (GDB
+  `compare-sections` is not used: OpenOCD would run a CRC routine in target RAM); a mismatch withholds every symbol,
+  source, variable and fault-site attribution, as does an ELF of which no byte could be compared (`unchecked`, compared
+  0); a partly compared, all-equal ELF keeps them with an `elf-unchecked` problem and a limit.
+- power-profiler opens the meter with `restore` (never its defaults) and writes only the sample rate, the current
+  range mode (`auto` or `manual`, never `off`) and selection, the voltage range mode/selection and the signal controls;
+  a meter whose current path is off is blocked before any write; changed settings are restored and read back, and only
+  a matching readback reports `confirmed`. A sample-id skip or NaN stays an empty cell and a gap, a sample beyond its
+  range limit an overflow flag; energy and charge over either are null (covered values reported), never zero.
+  Segmentation trusts only the meter's clock (GPI markers, timestamps on the capture's own clock, the current itself);
+  verdicts are lab-validate's.
+- renode: the agent never reaches the Renode monitor.
+  - renode-sim sends only commands composed from an approved profile and fixed templates, with absolute run-folder
+    `@` paths (8.3 short form, else blocked). Any answer to a setup or run command is an engine error.
+  - Profiles: `.repl` files are validated line by line (quote-aware comments, using allowlist, denied host-binding
+    words, no init or @file paths), and `.resc` files are parsed into five allowed commands. Engine files that a
+    profile uses must be hashed and free of init blocks and URLs.
+  - Firmware is checked against the profile's architecture, memory map, boot address and vector table before the
+    engine starts, and the engine's initial PC/SP must match that vector table.
+  - Unmodeled accesses make a run incomplete, never pass. Virtual and real time are separate fields.
+- zephyr: builds call CMake and Ninja directly (never `west build`) with `ZEPHYR_MODULES` = the listed modules,
+  `-DDTC_OVERLAY_FILE` always defined, no sysbuild, a scrubbed environment (no ZEPHYR_*/WEST_*/CMAKE_* or VERA
+  variables, empty west/git global configs, a closed loopback proxy, `GIT_ALLOW_PROTOCOL=file`). Only
+  prepare-workspace runs `west update`.
+  - Every refusal happens before a run folder or process exists. Unlisted projects, other revisions or checkouts,
+    extension commands of projects other than zephyr, module build roots or runners, CMake commands outside the
+    allowlist (read by a tokenizer: BOM, bracket and quoted arguments, comments; find_package only for Zephyr, with
+    `-DZephyr_DIR` pinned), Kconfig macros/sources, sysbuild files, implicit board inputs, Twister harnesses other than
+    ztest and nested or sample.yaml suites are findings; a file approved by SHA-256 in `hooks` passes while unchanged;
+    shadowing build/flash/twister, project and nested-suite findings never. zephyr-flash reruns the workspace part.
+  - A build folder is VERA's only with its marker of the same family and fingerprint; `--pristine` and `clean` delete
+    only such folders, re-checked, without following links or junctions. build_info.yml user files beyond the
+    request make the build `error` (undeclared-input).
+  - Twister runs build-only; every case is `not-run`, the run `incomplete`. test-run takes the verdict from a renode or
+    HIL run of exactly the scenario's ELF (SHA-256); a failure stays failed across reruns, a reboot or a skip or missing
+    case is `incomplete`, never pass, and virtual
+    verdicts carry the target/model differences (clock, unmodeled registers).
+  - Flash: only stm32cubeprogrammer, runners.yaml arguments `--port=swd`/`--reset-mode=hw`, the HEX equal to the
+    build run's and inside the build devicetree's `zephyr,flash` region; physical state `unknown` once flashing starts.
+  - Results are always `evidence: virtual`, with a fixed not-covered list (electrical timing, power, EMI, SPICE).
+  - Renode's Robot keyword server is never started: it listens on every interface on Linux.
+- platformio: platformio.ini is read only by PlatformIO's own ProjectConfig, in the project folder and under the
+  scrubbed environment the build gets; effective options are judged under PlatformIO's canonical names (old spellings
+  such as extra_script or lib_install included). PlatformIO runs as the helper's `python -m platformio` with
+  `-e <environment>` and explicit targets (`buildprog`; `nobuild` + `upload` only in platformio-upload), its workspace
+  and libdeps in the owned build folder, telemetry and upgrade checks off and, except prepare-packages, a closed
+  loopback proxy and PlatformIO's registry cache disabled (it otherwise installs from its caches with no network).
+  No PLATFORMIO_* variable of the caller reaches it.
+  - Every refusal happens before a run folder or process exists. Extra scripts, library build scripts, custom test
+    runners and local board files are findings approvable by SHA-256 in `hooks`; '!' items (raw after PlatformIO's
+    split and effective), ${sysenv.*}, `$` in script/library paths, `$` substitutions SCons would evaluate as Python
+    (also in library.properties and mbed manifests), `.pio-link` libraries, more than 256 library folders, platform
+    packages, non-registry or inexact platforms and libraries, custom upload commands, `targets`, PlatformIO folder
+    options and extra_configs outside the project never. A missing platform, framework package, toolchain, tool-scons
+    or library - the test framework whenever the project has `test_*` suites - is `packages-missing`.
+  - A build folder is VERA's only with its marker of the same project, environment and core; `--pristine` and
+    `clean` delete only its build/test-host/test-device folders, without following links; libdeps and the project's
+    own .pio stay.
+  - test-host runs only native environments and named suites; a skipped or errored case is never a pass.
+    test-device builds only (`incomplete`, `build-only`); test-run takes a verdict from a renode or HIL run of exactly
+    the suite's ELF (SHA-256) and Unity's output; a failure stays failed, a missing summary or count mismatch is
+    `incomplete`.
+  - Upload: protocol `stlink` only, no upload_flags of the project, the firmware equal to the build run's, every
+    uploader the platform declares installed (prepare-packages installs them only with `upload: true`), the probe
+    serial passed to OpenOCD through PLATFORMIO_UPLOAD_FLAGS; physical state `unknown` once the upload starts.
+- gdb-debug's exit policy is applied by OpenOCD's gdb-detach event on every end (also when GDB is killed); only its
+  printed state confirms the physical state; `release` never reconnects. An MI result is matched only to its own
+  token; stale and untokened results are events.
+- mqtt-tool drives paho's `loop()` itself (never `loop_forever`/`loop_start`), so paho never reconnects or resends; a
+  PUBLISH is sent once per run, publish and request never reconnect, and the password read from stdin is never printed,
+  written or put in an error. TLS verification has no off switch.
+- bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
+  self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
+  `--power` within the registry's limits.
+- circuitpython-tool sets `sys.dont_write_bytecode`, reaches the network only in prepare-libraries, writes a volume only in
+  deploy (never boot.py without `--boot`, never boot_out.txt) and never reads settings.toml or secrets.py.
+- micropython-tool sets `sys.dont_write_bytecode` before importing `micropython_support`, writes only run folders under the
+  workbench, never stores run-file code on the board and never writes boot.py/main.py without `--startup`.
+- arduino-tool never names the Arduino IDE's folders and never installs during compile or upload: the offline
+  configuration's dead loopback proxy makes any HTTP access fail, and a missing core or library is a refusal naming
+  the install command. A compile never changes the sketch (it builds a copy) and never uses sketch.yaml defaults or
+  profiles; an upload sends only a staged, re-verified copy of a passing build's binaries, never a recompile.
+- arduino-tool sets `sys.dont_write_bytecode` before importing `arduino_support`, so a run leaves the installed package
+  unchanged; it writes only run folders under the workbench and the VERA Arduino environment.
 
 - elec-calc sets `sys.dont_write_bytecode` and puts its own folder on `sys.path` before importing
   `elec_support`: a run writes nothing into the installed package, so the integrity hash holds. Requests are
@@ -539,6 +1203,17 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
+| A gdb-debug board/probe profile | `plugins/gdb-debug/profiles/*.json`, `gdb_support/profiles.py` | profile tests in `tests/fixtures/gdb-debug/internals.py`, OpenOCD argument test in `gdb-debug.test.ts`; a real board run before `verified` |
+| A gdb-debug operation or MI handling | `gdb_support/operations.py`, `session.py`, `mi.py`, `tests/fixtures/gdb-debug/fake_gdb.py` | the session tests of `gdb-debug.test.ts` and the session checks of `internals.py` |
+| A renode profile or a profile validator rule | `plugins/renode/profiles/<id>/`, `renode_support/profiles.py` | the profile tests of `renode.test.ts`; the opt-in `VERA_RENODE_REAL` suite for a new profile before `verified` |
+| A renode step kind, status or engine command | `renode_support/testsets.py`, `operations.py`, `engine.py`, `tests/fixtures/renode/fake_renode.py` | the stand-in tests and the allow-list test of `renode.test.ts`; the real-engine suite for any new monitor command |
+| A zephyr preflight finding or allowlist | `zephyr_support/preflight.py`, spec REQ-DATA-d8ecee6a §4 | the preflight test of `zephyr.test.ts` |
+| A zephyr build/test command line or environment | `zephyr_support/ops.py`, `tests.py`, `environment.py`, `tests/fixtures/zephyr/stand-ins/` | the stand-in build/test-build tests of `zephyr.test.ts`; the opt-in `VERA_ZEPHYR_REAL` suite |
+| Another zephyr flash runner | `zephyr_support/flash.py`, `plugin.yaml` (a find program per tool) | the flash tests of `zephyr.test.ts`; a real board before it is called verified |
+| A platformio preflight finding | `pio_support/preflight.py`, `config.py`, spec REQ-DATA-865c8fbd §4 | the preflight test of `platformio.test.ts` (real ProjectConfig) |
+| A platformio command line, environment or package check | `pio_support/ops.py`, `tests.py`, `environment.py`, `packages.py`, `tests/fixtures/platformio/stand-ins/` | the stand-in tests of `platformio.test.ts`; the opt-in `VERA_PIO_REAL` suite |
+| Another platformio upload protocol | `pio_support/upload.py` (PROTOCOLS), `prepare.py` (UPLOADERS) | the upload tests of `platformio.test.ts`; a real board before it is called verified |
+| ELF/DWARF facts or fault decoding | `gdb_support/elf.py`, `dwarf.py`, `faults.py`, `symbols.py` | inspect and diagnose tests, `internals.py`, opt-in `VERA_GDB_ORACLE_PYTHON` (pyelftools) |
 | A calculation model, formula, check or limit | `plugins/electronics-calc/scripts/elec_support/{electrical,losses,thermal}.py`, spec REQ-DATA-3d15fdfc §5 | that model's group in `tests/fixtures/electronics-calc/cases.json`, derived by hand in its README |
 | Units, prefixes, the quantity or result contract | `elec_support/quantities.py`, `contract.py` | "quantities" groups and the result-document test of `electronics-calc.test.ts` |
 | Corners or Monte Carlo | `elec_support/tolerance.py` | tolerance groups and the Monte Carlo tests |
@@ -574,6 +1249,14 @@ that source metadata reaches the deterministic bundled index unchanged.
 | A new esptool release | re-record `fixtures/esp32-esptool/esptool-<v>-help.txt`, then rules and `version.range` | "names only esptool 5.6.0 commands" |
 | Flashing guidance | `plugins/esp32-esptool/skills/esp32-flash/SKILL.md` | "offers esp32-flash" test |
 | Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
+| An arduino-tool operation, option or refusal | `plugins/arduino-cli/scripts/arduino_support/{cli,compile,upload}.py`, spec REQ-DATA-e444904d | the operation's describe block in `arduino-cli.test.ts` (fake arduino-cli), then the real-tool block |
+| Arduino environment, configurations, staging, clean | `arduino_support/environment.py` | "runs arduino-cli only with VERA's own folders", "Stop and clean" |
+| Board identity keys or the bridge list | `arduino_support/boards.py` | "lists serial ports by identity", upload identity refusals |
+| A new arduino-cli release | the manifest's download pins and range; rerun the real-tool tests (`VERA_TEST_ARDUINO_CLI`, `VERA_ARDUINO_HOME`) | package test and real compiles |
+| A micropython-tool operation, snippet or refusal | `plugins/micropython/scripts/micropython_support/{cli,device,deploy,operations}.py`, spec REQ-DATA-cb0ccbea | micropython.test.ts |
+| A new mpremote release | the script header pins; rerun the opt-in test (`VERA_MICROPYTHON_UV`) | micropython.test.ts opt-in |
+| A circuitpython-tool operation or refusal | `plugins/circuitpython/scripts/circuitpython_support/{cli,volumes,inspection,bundle,deploy,console}.py`, spec REQ-DATA-8f309a53 | circuitpython.test.ts |
+| A new circup release or CircuitPython major | the script header pin, `conventions.py`; rerun the opt-in test (`VERA_CIRCUITPYTHON_UV`) | circuitpython.test.ts opt-in |
 
 ## Key behaviors
 
@@ -650,9 +1333,91 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `REQ-TEST-fe972de0` — a replay session identifies, flashes with image hashes on the card and captures the boot log.
 - `REQ-PLAT-d2b3fa4a` — real boards on Windows 11 and Ubuntu (manual).
 - `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` (Plugins) — write-flash approvals list each image's SHA-256; a rebuilt image fails CONFLICT.
-- `REQ-SEC-016c9aad` (Plugins) — a background capture makes another run naming its port BUSY.
+- `REQ-SEC-016c9aad` (Plugins) — a run naming a port that another unfinished run names (a background capture, a foreground upload) is BUSY.
+- `REQ-FUNC-5b49327c` / `REQ-SEC-93d5fc98` / `REQ-FUNC-693a8fbf` — arduino-cli pinned 1.6.0 with direct use blocked, arduino-tool risks, catalog, Arduino pack and three skills.
+- `REQ-DATA-e444904d` / `REQ-FUNC-32924acc` / `REQ-FUNC-9fceeea6` — arduino-tool contract, VERA's own environment offline outside install, exact-version installs.
+- `REQ-FUNC-d02a9d01` / `REQ-FUNC-cbd22972` / `REQ-FUNC-91c2c9a8` — inspect, identity keys without bridge inference, offline queries.
+- `REQ-FUNC-6678cab1` / `REQ-REL-6b92ea2f` / `REQ-REL-c731bd06` / `REQ-SEC-f5477b64` / `REQ-SEC-37d5b2a2` / `REQ-SEC-8faa1e1d` — traceable compile of a copy and its refusals and failures.
+- `REQ-FUNC-f2b3eb7d` / `REQ-SEC-ea1a5b7d` / `REQ-SEC-77af299d` / `REQ-FUNC-165776d6` — upload of the verified binary, conflict and identity refusals, port re-bound after upload.
+- `REQ-REL-fa13ca61` / `REQ-FUNC-e2eea361` / `REQ-TEST-de25fd47` — Stop leaves no process and clean removes ended staging; report; real-tool and gated hardware tests.
+- `REQ-DATA-cb0ccbea` / `REQ-SEC-bf7892ca` / `REQ-SEC-d8ec50bc` / `REQ-FUNC-f030cffe` — micropython-tool contract, pinned
+  mpremote, no REPL/exec/mount, risks, catalog and pack.
+- `REQ-FUNC-884fed95` / `REQ-SEC-dee0e930` / `REQ-REL-2eaebfec` / `REQ-FUNC-b829232e` / `REQ-FUNC-d8afbfa0` /
+  `REQ-FUNC-9d90c56e` — ports, identity refusals, firmware gate, identify, files, read-file.
+- `REQ-SEC-d31255bc` / `REQ-SEC-b493a006` / `REQ-FUNC-9dc200c3` / `REQ-REL-af9aefa3` / `REQ-REL-1499a74b` /
+  `REQ-REL-8d35cfbd` — remote paths, startup files, verified deploy, conflict, space, loss.
+- `REQ-FUNC-ab3282a4` / `REQ-FUNC-eddae180` / `REQ-FUNC-2c9933c0` / `REQ-FUNC-44f315bd` / `REQ-TEST-6073fccf` — run-file,
+  capture-output, reset, report, gated real-mpremote and board tests.
+- `REQ-DATA-8f309a53` / `REQ-SEC-a6773cd2` / `REQ-SEC-1102b4a6` / `REQ-FUNC-998ebdb7` — circuitpython-tool contract, pinned
+  circup conventions, no REPL/UF2/update-all, risks, catalog and pack.
+- `REQ-FUNC-1bb6b2bb` / `REQ-FUNC-3f98ad97` / `REQ-SEC-b561dad0` / `REQ-SEC-8ddddfbb` / `REQ-REL-e00b3fb2` /
+  `REQ-FUNC-96d699ae` / `REQ-FUNC-33fb01a8` / `REQ-FUNC-e51d0294` — devices, UID binding, selection refusals, firmware gate,
+  identify, inspect-code, inspect-libraries.
+- `REQ-FUNC-37730607` / `REQ-REL-33085a32` / `REQ-REL-ca9500d0` / `REQ-SEC-15d58156` — library sets from a pinned tag,
+  .mpy ABI, unknown library and download failure, verified cache.
+- `REQ-SEC-1d4b7f0a` / `REQ-FUNC-5a6f4aec` / `REQ-SEC-a59697a3` / `REQ-REL-aa8de0c7` / `REQ-REL-3542e56c` /
+  `REQ-REL-dff06f35` / `REQ-REL-b71b5cab` — deploy: set check, verified files, boot.py, read-only, space, unplug, conflict.
+- `REQ-FUNC-9845bd14` / `REQ-FUNC-3371a413` / `REQ-FUNC-52e12d99` / `REQ-TEST-5af7bf4a` — console capture, deploy capture,
+  report, gated real-circup, bundle and board tests.
 
 ## Files
+
+- `05_Software/plugins/gdb-debug/` — manifest, README (operations, guarantees, limits), profiles `stm32f4-stlink.json` and `stm32g0-stlink.json`, skill debug-sessions, `scripts/gdb_elf.py` and `scripts/gdb_debug.py` (entries), `scripts/gdb_support/` (`elf`, `dwarf`, `symbols`, `faults`, `validate`, `profiles`, `registry`, `mi`, `session`, `openocd`, `operations`, `lifecycle`, `report`, `errors`, `cli_elf`, `cli_debug`, `workspace` shared).
+- `05_Software/tests/integration/gdb-debug.test.ts`, `tests/fixtures/gdb-debug/` (`firmware/` sources, linker scripts, `build.py` and the four ELFs; `fake_gdb.py`, `fake_openocd.py`, `make_tools.py`, `internals.py`).
+- `05_Software/plugins/renode/`:
+  - the manifest and README;
+  - `profiles/stm32f4-discovery/` (`profile.json`, `platform.repl`, `stm32f4.repl`, `machine.resc`);
+  - `testsets/board-basics/testset.json`;
+  - skill virtual-boards;
+  - `scripts/renode_sim.py`;
+  - `scripts/renode_support/`: `cli`, `profiles`, `firmware`, `testsets`, `engine`, `operations`, `result`, `report`,
+    `errors`, plus `elf` and `workspace` (copies).
+- `05_Software/tests/integration/renode.test.ts` and `tests/fixtures/renode/`:
+  - `firmware/`: `demo.c`, `startup.c`, linker scripts, `build.py`, five ELFs and `variants.json`;
+  - `fake_renode.py` and `make_engine.py`;
+  - `engine/platforms/` (Renode's two STM32F4 descriptions);
+  - `stock/stm32f4_discovery.resc`.
+- `05_Software/plugins/platformio/` — manifest, README, skill platformio-projects, `scripts/pio_tool.py` and
+  `scripts/pio_upload.py` (entries), `scripts/pio_support/` (`cli`, `request`, `config`, `preflight`, `packages`,
+  `environment`, `builddir`, `ops`, `prepare`, `tests`, `unity`, `diagnostics`, `artifacts`, `upload`, `registry`,
+  `lifecycle`, `result`, `errors`, `elf`, `workspace`).
+- `05_Software/tests/integration/platformio.test.ts` and `tests/fixtures/platformio/` (`board-demo/`, `stand-ins/`).
+- `05_Software/plugins/zephyr/` — manifest, README, skill zephyr-builds, `scripts/zephyr_tool.py` and
+  `scripts/zephyr_flash.py` (entries), `scripts/zephyr_support/` (`cli`, `request`, `model`, `boards`, `sdk`,
+  `preflight`, `cmake_scan`, `environment`, `builddir`, `ops`, `diagnostics`, `artifacts`, `prepare`, `tests`, `ztest`, `tools`,
+  `flash`, `registry`, `lifecycle`, `result`, `errors`, plus `elf` and `workspace` copies).
+- `05_Software/tests/integration/zephyr.test.ts` and `tests/fixtures/zephyr/` (`apps/board-demo/`,
+  `tests/ztest-basic/`, `workspace/manifest/west.yml`, `stand-ins/`).
+- `05_Software/plugins/arduino-cli/` — manifest, README (pins, environment, risk table), skills arduino-build-fix, arduino-libraries and arduino-test-sketch, `scripts/arduino_tool.py` (entry), `scripts/arduino_support/` (`environment`, `sketch`, `boards`, `indexes`, `compile`, `upload`, `report`, `cli`, `workspace` shared).
+- `05_Software/tests/integration/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
+- `05_Software/plugins/mqtt-tools/` — manifest, README, skills mqtt-telemetry and mqtt-commands, profiles/bench-broker.json,
+  `scripts/mqtt_tool.py` (entry), `scripts/mqtt_support/` (`cli`, `profile`, `topics`, `schema`, `credential`, `connection`,
+  `operations`, `report`, `workspace` shared).
+- `05_Software/tests/integration/mqtt-tools.test.ts`, `tests/support/mqtt-test-broker.py`, `make-mqtt-certs.py`,
+  `mqtt-fixture-device.py`.
+- `05_Software/plugins/ble-tools/` — manifest, README, skills ble-devices and ble-profiles, profiles/bench-thermometer.json,
+  `scripts/ble_tool.py` (entry), `scripts/ble_support/` (`cli`, `registry`, `profile`, `payload`, `backend`, `scan`, `device`,
+  `notify`, `write`, `operations`, `report`, `lifecycle` and `workspace` shared).
+- `05_Software/tests/integration/ble-tools.test.ts`, `tests/fixtures/ble-tools/fake-bleak/` (fake Bleak 3.1.0 driven by a bench
+  file, logging every radio call).
+- `05_Software/plugins/wokwi/` — manifest, README, skills wokwi-simulation and wokwi-scenarios, `scripts/wokwi_tool.py`
+  (entry), `scripts/wokwi_support/` (`cli`, `engine`, `project`, `diagram`, `scenario`, `job`, `credential`, `redact`, `run`,
+  `outcome`, `collect`, `operations`, `report`, `workspace` shared).
+- `05_Software/tests/integration/wokwi.test.ts`, `tests/support/fake-wokwi-cli.py` (scripted wokwi-cli recording argv, cwd,
+  WOKWI_* environment and the project listing).
+- `05_Software/plugins/raspberry-pi-linux/` — manifest, README, skills raspberry-pi-projects and raspberry-pi-tasks,
+  `scripts/pi_tool.py` (entry), `scripts/pi_support/` (`cli`, `registry`, `project`, `ssh`, `remote`, `operations`,
+  `report`, `lifecycle` and `workspace` shared), `scripts/remote/vera_pi_remote.py` (board-side helper, stdlib only).
+- `05_Software/tests/integration/raspberry-pi-linux.test.ts`, `tests/support/pi-test-sshd.py` (asyncssh server running
+  exec requests as `sh -c` on this Linux host or in WSL, logging auth and exec), `tests/support/pi-test-agent.py` (SSH agent
+  on a named pipe or Unix socket), `tests/fixtures/raspberry-pi-linux/project/`.
+- `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
+  support package.
+- `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).
+- `05_Software/plugins/circuitpython/` — manifest, README, skills circuitpython-deploy and circuitpython-libraries, helper and
+  support package.
+- `05_Software/tests/integration/circuitpython.test.ts`, `tests/support/make-circuitpython-bundle.py`,
+  `tests/fixtures/circuitpython/` (fake-serial console, fake-circup).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).

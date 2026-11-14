@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-335f12b1"
+
+title = "Prepare packages as the separate network step"
+
+status = "active"
+
+requirement = """
+When the agent runs `platformio prepare-packages` with a request, the platformio helper shall, as the only operation that contacts the network, run PlatformIO's package installation for exactly the requested environment, the build engine tool-scons and, only when the request sets upload, every uploader the platform declares for a verified upload protocol into the request's core folder and the owned libdeps folder, with the caller's proxy and CA-bundle variables, without saving anything into platformio.ini, and record the installed platform, packages and libraries with versions and checksums and the project file hashes before and after.
+"""
+
+verification = "Stand-in run: the recorded argv is `pkg install -d <project> -e <env> --no-save`, then `pkg install -g -t platformio/tool-scons@4.41101.0` and, with upload true, `pkg install -g -t platformio/tool-openocd@~3.1200.7` (no uploader without it), each with the caller's HTTPS_PROXY (never the closed one) and the core and libdeps folders set; platformio.ini keeps its hash; the result lists the installed packages; real opt-in after approval installs ststm32/native and Unity into D:/Temp/vera-pio."
+
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/prepare.py", "05_Software/plugins/platformio/scripts/pio_support/packages.py"]
+
+linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

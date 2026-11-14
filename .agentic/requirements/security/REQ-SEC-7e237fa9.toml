@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-7e237fa9"
+
+title = "Withhold symbol diagnosis when the ELF does not match the target"
+
+status = "active"
+
+requirement = """
+When the ELF's read-only sections read back from the target's memory differ from the ELF, or none of them could be compared, or the target's CPUID core differs from the profile, the helper shall report `elf.match` `mismatched` or `unchecked` (or blocked for a core mismatch) and shall leave every symbol name, source location, local, variable value and fault-site attribution out of the result, keeping raw addresses only; when only part of the image could be compared and all of it matched, it shall report `unchecked` with an `elf-unchecked` problem and a limit stating that the attributions are not fully verified.
+"""
+
+verification = "Integration tests let the GDB stand-in serve a different ELF (fault-m4-v2.elf) for the flash reads (mismatched, frames and sites without names, no variable reads), make one flash chunk unreadable (unchecked, compared bytes, elf-unchecked problem and limit, names kept) and the whole flash unreadable (unchecked, compared 0, names withheld), and report a foreign CPUID (blocked, no register read)."
+
+affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/symbols.py"]
+
+linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7da2a71.md"
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

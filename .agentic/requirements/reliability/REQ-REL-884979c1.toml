@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-884979c1"
+
+title = "Report assertion failures and timeouts distinctly"
+
+status = "active"
+
+requirement = """
+When a test step's failure pattern matches or an observable has the wrong value, renode-sim shall mark the case fail; when the virtual budget of a step or run is used without the expected event, it shall mark the case timeout with code virtual-timeout; and when the real-time budget ends, it shall stop the engine and mark the run timeout with code real-timeout.
+"""
+
+verification = "Run board-basics on the wrong-version fixture (fail, assertion), on the silent fixture (timeout, virtual-timeout) and with a real budget the stand-in exceeds (timeout, real-timeout): the three results differ in status and code and junit.xml shows failure versus error."
+
+affected_paths = ["05_Software/plugins/renode/scripts/renode_support/operations.py", "05_Software/plugins/renode/scripts/renode_support/result.py"]
+
+linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

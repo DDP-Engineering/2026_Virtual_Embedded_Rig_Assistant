@@ -1,7 +1,10 @@
 import { createContext, Script } from "node:vm";
 import {
   classifyCommand,
+  credentialReferenceSchema,
   gitExecutionArguments,
+  type PluginCredentialScope,
+  type PluginProgram,
   pluginProgramNameSchema,
   programPolicy,
   type SkillSummary,
@@ -12,6 +15,7 @@ import type { ProgramPromptEntry } from "../agent/prompt.js";
 import type { Clock } from "../ports.js";
 import type { PreparedChange } from "../tools/changes.js";
 import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { prepareHilCall } from "./hil/run.js";
 import { type LauncherMode, programInvocation } from "./launcher.js";
 import {
   findProgram,
@@ -19,8 +23,9 @@ import {
   prepareProgramRequest,
   verifyProgramFiles,
 } from "./program-request.js";
+import { claimedResources } from "./resource-registry.js";
 import { TailBuffer } from "./run-output.js";
-import type { ProgramRun, ProgramRunner, RunResult } from "./runner.js";
+import type { ProgramRun, ProgramRunner, RunRequest, RunResult } from "./runner.js";
 import type { LoadedPlugin } from "./store.js";
 
 /** Where a declared program's executable lives, plus fixed leading arguments (for example a download prefix). */
@@ -42,6 +47,18 @@ export interface ProgramResolver {
 }
 /** The resolver of a host without provisioning: no program resolves. */
 export const unresolvedPrograms: ProgramResolver = { resolve: async () => undefined };
+/**
+ * Stored plugin credentials (spec REQ-DATA-96d18686 section 1): desktop main reads its CredentialStore, the CLI its
+ * memory-only entries from the environment. `has` never returns a secret.
+ */
+export interface ProgramCredentials {
+  has(scope: PluginCredentialScope, ref: string, signal?: AbortSignal): Promise<boolean>;
+  read(
+    scope: PluginCredentialScope,
+    ref: string,
+    signal?: AbortSignal,
+  ): Promise<{ username?: string | undefined; password: string } | undefined>;
+}
 /** What a session needs to run plugin programs; desktop main and the CLI compose it per workbench. */
 export interface ProgramHost {
   runner: ProgramRunner;
@@ -49,6 +66,8 @@ export interface ProgramHost {
   /** The enabled, issue-free plugins of the workbench, loaded now. */
   plugins(signal?: AbortSignal): Promise<readonly LoadedPlugin[]>;
   resolver: ProgramResolver;
+  /** Stored credentials for programs that declare them; absent, such calls are refused. */
+  credentials?: ProgramCredentials | undefined;
 }
 /** Program state of one session's tools. The session's approval path sets the call fields per call. */
 export interface ProgramContext {
@@ -144,11 +163,19 @@ export function programError(error: unknown, program?: string): Error {
       }
       if (params.cwd !== undefined)
         return Error(`The working directory ${params.cwd} is not a workbench folder.`);
+      if (params.reason === "leases")
+        return Error("The lease folder of bench resources cannot be used; the resource was not reserved.");
       return Error("The run is refused.");
     case "BUSY":
       if (params.limit !== undefined)
         return Error(`At most ${params.limit} background runs per session; stop one with program_stop.`);
-      return Error(`Port ${params.port} is held by background run ${params.handle}; stop that run first.`);
+      if (params.resource !== undefined)
+        return Error(
+          params.handle !== undefined
+            ? `Resource ${params.resource} is reserved by run ${params.handle}; wait for it to end or stop it first.`
+            : `Resource ${params.resource} is reserved by ${params.holder} (another VERA window or the CLI); wait for it to end.`,
+        );
+      return Error(`Port ${params.port} is held by run ${params.handle}; stop that run first.`);
     case "CONFLICT":
       return Error(
         "The program, its plugin, a file it names or the permission mode changed after approval. Request the run again.",
@@ -165,7 +192,6 @@ const runParams = z.strictObject({
   timeout: z.number().int().min(1).max(3600).optional(),
   background: z.boolean().optional(),
 });
-type RunArgs = z.infer<typeof runParams>;
 
 function programContext(ctx: ToolContext): ProgramContext {
   if (!ctx.programs) throw Error("Plugin programs are unavailable.");
@@ -187,7 +213,17 @@ async function locate(ctx: ProgramContext, program: string, signal: AbortSignal)
     throw Error(`Program ${program} is not available: it is not installed or not supported yet.`);
   return { plugin, declared, resolved };
 }
-async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs, signal: AbortSignal) {
+/**
+ * Prepares one call of a declared program exactly as run_program does: the enabled plugin, the resolved executable,
+ * the argument refusals, rule classification, workbench file binding and registry aliases. HIL plans reuse it for
+ * every operation they compile.
+ */
+export async function prepareCall(
+  ctx: ToolContext,
+  programs: ProgramContext,
+  args: { program: string; args?: string[] | undefined; cwd?: string | undefined },
+  signal: AbortSignal,
+) {
   const { plugin, declared, resolved } = await locate(programs, args.program, signal);
   try {
     const programArgs = [
@@ -195,6 +231,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
       ...(declared.optionSyntax === "git" ? gitExecutionArguments(args.args ?? []) : (args.args ?? [])),
     ];
     const invocation = programInvocation(resolved, programArgs);
+    const claimed = await claimedResources(ctx.root, declared, args.args ?? [], signal);
     const prepared = await prepareProgramRequest({
       workbench: ctx.root,
       plugin,
@@ -207,6 +244,7 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
       turnId: programs.turnId ?? "",
       callId: programs.callId ?? "",
       signal,
+      claimed,
     });
     return { prepared, plugin, declared, resolved, programArgs, invocation };
   } catch (error) {
@@ -214,13 +252,71 @@ async function request(ctx: ToolContext, programs: ProgramContext, args: RunArgs
     throw programError(error, args.program);
   }
 }
-const refusal = (request: ProgramChangeRequest, mode: string) =>
+/**
+ * The credential a call names with its program's declared option, or undefined when it names none. Refuses a plugin
+ * that is not official, a host without credentials, a repeated option and an invalid reference.
+ */
+function credentialReference(
+  host: ProgramHost,
+  plugin: LoadedPlugin,
+  declared: PluginProgram,
+  args: readonly string[],
+): { scope: PluginCredentialScope; ref: string } | undefined {
+  const declaration = declared.credentials;
+  if (!declaration) return undefined;
+  const { option, scope } = declaration;
+  const values: (string | undefined)[] = [];
+  args.forEach((arg, index) => {
+    if (arg === option) values.push(args[index + 1]);
+    else if (arg.startsWith(`${option}=`)) values.push(arg.slice(option.length + 1));
+  });
+  if (values.length === 0) return undefined;
+  if (plugin.record.tier !== "official")
+    throw Error(
+      `Program ${Object.keys(plugin.manifest.programs).join(", ")} of plugin ${plugin.manifest.id} asks for stored credentials, which only official plugins receive.`,
+    );
+  if (!host.credentials) throw Error("Stored credentials are unavailable in this VERA host.");
+  if (values.length > 1) throw Error(`Name ${option} once.`);
+  const ref = values[0];
+  if (ref === undefined || !credentialReferenceSchema.safeParse(ref).success)
+    throw Error(`${option} needs a credential reference of 1-64 lowercase letters, digits and dashes.`);
+  return { scope, ref };
+}
+const notStored = (scope: PluginCredentialScope, ref: string) => {
+  const name = ref.toUpperCase().replaceAll("-", "_");
+  const where =
+    scope === "mqtt"
+      ? `Settings > MQTT credentials, or for the CLI in VERA_MQTT_PASSWORD_${name}`
+      : `Settings > Wokwi tokens, or for the CLI in VERA_WOKWI_TOKEN_${name}`;
+  return Error(`The ${scope} credential ${ref} is not stored. The user adds it in ${where}.`);
+};
+/** The stdin line of a run naming a credential: read now, after the plugin list was loaded again. */
+async function credentialInput(
+  host: ProgramHost,
+  current: PreparedCall,
+  args: readonly string[],
+  signal: AbortSignal,
+): Promise<string | undefined> {
+  const reference = credentialReference(host, current.plugin, current.declared, args);
+  if (!reference || !host.credentials) return undefined;
+  const value = await host.credentials.read(reference.scope, reference.ref, signal);
+  if (!value) throw notStored(reference.scope, reference.ref);
+  return `${JSON.stringify({
+    format: 1,
+    scope: reference.scope,
+    ref: reference.ref,
+    ...(value.username === undefined ? {} : { username: value.username }),
+    password: value.password,
+  })}\n`;
+}
+
+export const refusal = (request: ProgramChangeRequest, mode: string) =>
   Error(
     request.risk === "blocked"
       ? `Refused: plugin ${request.pluginId} rates this command blocked; it never runs, in ${mode} mode or any other. ${request.notes.join(" ")}`.trim()
       : `Refused: ${request.risk} commands${request.trial ? ` of trial plugin ${request.pluginId}` : ""} do not run in ${mode} mode.`,
   );
-function foreground(result: RunResult, risk: string): Record<string, unknown> {
+export function foreground(result: RunResult, risk: string): Record<string, unknown> {
   return {
     exitCode: result.exitCode,
     durationMs: result.durationMs,
@@ -232,7 +328,109 @@ function foreground(result: RunResult, risk: string): Record<string, unknown> {
     ...(result.stopped ? { stopped: true } : {}),
     ...(result.signal ? { signal: result.signal } : {}),
     ...(result.error ? { error: result.error } : {}),
+    ...(result.physical ? { physical: result.physical, cleanup: result.cleanup } : {}),
   };
+}
+/**
+ * The lease of a call that names registry resources: claims (actuating when the risk can change the physical
+ * state), the stop grace and the authorized cleanup with the program's own prefix (spec REQ-DATA-f2cbfc23 §6).
+ */
+export type PreparedCall = Awaited<ReturnType<typeof prepareCall>>;
+function lease(current: PreparedCall): RunRequest["lease"] {
+  const { prepared, declared, resolved, plugin } = current;
+  const resources = declared.resources;
+  if (!resources || !prepared.resources) return undefined;
+  const actuates = prepared.risk === "device-write" || prepared.risk === "irreversible";
+  const shown = [
+    ...resources.cleanup,
+    ...prepared.resources.flatMap((resource) => [resources.option, resource.alias]),
+  ];
+  const cleanupArgs = programInvocation(resolved, [
+    ...(declared.prefix ?? []).map((value) => value.replaceAll(PLUGIN_DIR, plugin.folder)),
+    ...shown,
+  ]);
+  return {
+    claims: prepared.resources.map(({ alias, kind, resource, keys }) => ({
+      alias,
+      kind,
+      resource,
+      keys,
+      actuates,
+    })),
+    graceMs: resources.grace * 1000,
+    cleanup: { args: cleanupArgs, shown, timeoutMs: resources.cleanupTimeout * 1000 },
+  };
+}
+
+/** Starts a prepared call through the session's runner, re-hashing its files right before the spawn. */
+export function startCall(
+  ctx: ToolContext,
+  programs: ProgramContext,
+  current: PreparedCall,
+  options: {
+    background: boolean;
+    timeoutMs?: number | undefined;
+    signal?: AbortSignal | undefined;
+    verifySignal?: AbortSignal | undefined;
+    /** A plan hold whose reservations this run uses (HIL). */
+    parent?: string | undefined;
+    /** Further checks right before the spawn (HIL: the plan file and the firmware). */
+    check?: (() => Promise<void>) | undefined;
+    /** The stdin line of a run naming a stored credential. */
+    input?: string | undefined;
+  },
+): Promise<ProgramRun> {
+  const pluginDir = current.plugin.folder;
+  return programs.host.runner.start({
+    sessionId: programs.sessionId,
+    workbench: ctx.root,
+    executable: current.resolved.executable,
+    args: current.invocation,
+    ...(current.resolved.launcher ? { programArgs: current.programArgs } : {}),
+    cwd: current.prepared.cwd,
+    env: {
+      ...Object.fromEntries(
+        Object.entries(current.declared.env ?? {}).map(([name, value]) => [
+          name,
+          value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
+        ]),
+      ),
+      ...current.resolved.env,
+      // The helper refuses a registry other than the approved one (also in the cleanup run).
+      ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
+    },
+    // The agent socket only for an official program declaring it (REQ-SEC-adb91424); its keys stay in the agent.
+    ...(current.declared.sshAgent && current.plugin.record.tier === "official"
+      ? { inherit: ["SSH_AUTH_SOCK"] }
+      : {}),
+    ...(current.declared.gui ? { display: true } : {}),
+    ...(options.input === undefined ? {} : { input: options.input }),
+    ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    background: options.background,
+    ...(options.signal ? { signal: options.signal } : {}),
+    beforeSpawn: async () => {
+      await options.check?.();
+      await verifyProgramFiles(current.prepared, options.verifySignal);
+      await current.plugin.verify?.();
+    },
+    label: {
+      plugin: current.plugin.manifest.id,
+      program: current.prepared.program,
+      args: [...current.prepared.args],
+    },
+    lease: lease(current),
+    ...(options.parent === undefined ? {} : { parent: options.parent }),
+  });
+}
+/** The timeout cap of a prepared call in seconds: its largest matching rule timeout, else the program's, else 600. */
+export function timeoutCap(current: PreparedCall): number {
+  const rule = classifyCommand(
+    current.plugin.manifest.rules,
+    current.prepared.program,
+    current.prepared.args,
+    current.declared.optionSyntax,
+  ).timeout;
+  return rule ?? current.declared.timeout ?? DEFAULT_PROGRAM_TIMEOUT;
 }
 
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
@@ -242,10 +440,34 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
   // Only a session's approval path sets these; without them nothing could consume an approval.
   const consume = programs.consume;
   if (!programs.turnId || !programs.callId || !consume) throw Error("Plugin programs are unavailable.");
-  const first = await request(ctx, programs, args, signal);
+  const first = await prepareCall(ctx, programs, args, signal);
   const mode = ctx.permissionMode?.() ?? "ask";
+  // A plan program's check and run are compiled and executed by VERA itself (spec REQ-DATA-5f714098 §1).
+  if (first.declared.plan === "hil" && (args.args?.[0] === "check" || args.args?.[0] === "run"))
+    return prepareHilCall({
+      ctx,
+      programs,
+      args: { ...args, args: args.args },
+      first,
+      mode,
+      consume,
+      signal,
+      refusal,
+      foreground,
+      prepareCall,
+      startCall,
+      timeoutCap,
+      programError,
+    });
   if (programPolicy(mode, first.prepared.risk, first.prepared.trial) === "refuse")
     throw refusal(first.prepared, mode);
+  if (first.declared.sshAgent && first.plugin.record.tier !== "official")
+    throw Error(
+      `Plugin ${first.plugin.manifest.id} asks for the system SSH agent, which only official plugins receive.`,
+    );
+  const reference = credentialReference(programs.host, first.plugin, first.declared, args.args ?? []);
+  if (reference && !(await programs.host.credentials?.has(reference.scope, reference.ref, signal)))
+    throw notStored(reference.scope, reference.ref);
   let used = false;
   return Object.freeze({
     request: first.prepared,
@@ -253,14 +475,15 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       if (used) throw Error("This prepared program run was already used.");
       used = true;
       // The approval covers the request as prepared then; the run uses only what still matches it.
-      const current = await request(ctx, programs, args, applySignal);
+      const current = await prepareCall(ctx, programs, args, applySignal);
       try {
         consume(current.prepared);
       } catch (error) {
         throw programError(error, args.program);
       }
+      // The credential is read only now: a plugin disabled since approval is undeclared above and reads nothing.
+      const input = await credentialInput(programs.host, current, args.args ?? [], applySignal);
       const background = args.background === true;
-      const pluginDir = current.plugin.folder;
       const timeoutMs = programTimeout({
         rule: classifyCommand(
           current.plugin.manifest.rules,
@@ -274,31 +497,12 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       });
       let run: ProgramRun;
       try {
-        run = await programs.host.runner.start({
-          sessionId: programs.sessionId,
-          workbench: ctx.root,
-          executable: current.resolved.executable,
-          args: current.invocation,
-          ...(current.resolved.launcher ? { programArgs: current.programArgs } : {}),
-          cwd: current.prepared.cwd,
-          env: {
-            ...Object.fromEntries(
-              Object.entries(current.declared.env ?? {}).map(([name, value]) => [
-                name,
-                value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
-              ]),
-            ),
-            ...current.resolved.env,
-          },
-          ...(current.declared.gui ? { display: true } : {}),
-          ...(timeoutMs === undefined ? {} : { timeoutMs }),
+        run = await startCall(ctx, programs, current, {
+          ...(input === undefined ? {} : { input }),
           background,
+          timeoutMs,
           ...(background ? {} : { signal: applySignal }),
-          beforeSpawn: async () => {
-            await verifyProgramFiles(current.prepared, applySignal);
-            await current.plugin.verify?.();
-          },
-          label: { plugin: current.plugin.manifest.id, program: args.program, args: args.args ?? [] },
+          verifySignal: applySignal,
         });
       } catch (error) {
         if ((error as Error | undefined)?.name === "AbortError") throw error;
@@ -384,6 +588,7 @@ export const programOutputTool: ToolDefinition = {
           truncated: truncated || gathered.total > output.length,
           running: read.running,
           ...(read.running ? {} : { exitCode: read.exitCode ?? null }),
+          ...(read.physical ? { physical: read.physical, cleanup: read.cleanup } : {}),
           ...(matches ? { matched } : {}),
         };
       }
@@ -415,6 +620,7 @@ export const programStopTool: ToolDefinition = {
       output: unread.output,
       truncated: unread.truncated,
       log: result.log,
+      ...(result.physical ? { physical: result.physical, cleanup: result.cleanup } : {}),
     };
   },
 };

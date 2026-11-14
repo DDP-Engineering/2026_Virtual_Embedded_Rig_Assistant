@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-e00b3fb2"
+title = "Refuse firmware other than CircuitPython 9 to 11"
+status = "active"
+requirement = "If a volume's boot_out.txt is missing, cannot be parsed or names a CircuitPython major version that circup 3.1.0 does not support (9, 10 and 11), then circuitpython-tool shall end every operation on that volume with status blocked and code incompatible-firmware, reporting what it read."
+verification = "Bench: boot_out.txt of CircuitPython 8.2.10 -> identify, inspect-libraries and deploy blocked incompatible-firmware with firmware.version 8.2.10; a missing boot_out.txt -> blocked incompatible-firmware with firmware null; 9.2.1 and 10.0.3 pass identify; deploy writes nothing when blocked."
+affected_paths = ["05_Software/plugins/circuitpython/scripts/circuitpython_support/volumes.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/inspection.py", "05_Software/plugins/circuitpython/scripts/circuitpython_support/conventions.py"]
+linked_tests = ["05_Software/tests/integration/circuitpython.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14
