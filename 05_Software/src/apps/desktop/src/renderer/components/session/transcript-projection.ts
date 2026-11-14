@@ -3,6 +3,19 @@ import type { ChatDetail, SessionState } from "@vera/shared";
 
 type Item = SessionState["items"][number];
 export type ToolItem = Extract<Item, { kind: "tool" }>;
+
+/** Lower-cased message text per item object; an unchanged item keeps its identity (PERF-02). */
+const lowered = new WeakMap<Item, string>();
+/** Whether a user or assistant message contains `needle`, which the caller has lower-cased. */
+export function searchMatch(item: Item, needle: string): boolean {
+  if (!needle || (item.kind !== "user" && item.kind !== "assistant")) return false;
+  let text = lowered.get(item);
+  if (text === undefined) {
+    text = item.text.toLocaleLowerCase();
+    lowered.set(item, text);
+  }
+  return text.includes(needle);
+}
 type Row = { kind: "item"; item: Item } | { kind: "group"; id: string; tools: ToolItem[] };
 
 /** A presentation projection only. Essential interactions split groups and never disappear. */

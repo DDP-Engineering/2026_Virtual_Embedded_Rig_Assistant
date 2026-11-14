@@ -1,6 +1,6 @@
 // REQ-UX-4bea0002 REQ-UX-4bea0005 REQ-UX-2bbfd052 REQ-REL-47308c01 REQ-REL-c8ac2ecc
 import type { ChatDetail, SessionState } from "@vera/shared";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
@@ -10,7 +10,7 @@ import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
-import { type ToolItem, transcriptRows } from "./transcript-projection.js";
+import { searchMatch, type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
 export function Transcript({
   state,
@@ -32,7 +32,6 @@ export function Transcript({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const openDocument = useDocumentViewer();
   const scroll = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const transcriptId = useId();
@@ -77,13 +76,28 @@ export function Transcript({
     highlightTimer.current = setTimeout(() => setHighlight(null), 1500);
     return true;
   };
-  const latestError = [...state.items].reverse().find((i) => i.kind === "error")?.id;
-  const rows = transcriptRows(state, detail);
-  const userMessages = rows.flatMap((row): NavigatorMessage[] =>
-    row.kind !== "group" && row.item.kind === "user"
-      ? [{ id: row.item.id, text: row.item.text, pending: !!row.item.pending }]
-      : [],
+  // Stable for memoized rows: the workspace passes a new retry function on every render.
+  const retryRef = useRef(retry);
+  retryRef.current = retry;
+  const onRetry = useCallback(() => retryRef.current(), []);
+  const latestError = useMemo(() => state.items.findLast((i) => i.kind === "error")?.id, [state.items]);
+  const rows = useMemo(() => transcriptRows(state, detail), [state, detail]);
+  const userMessages = useMemo(
+    () =>
+      rows.flatMap((row): NavigatorMessage[] =>
+        row.kind !== "group" && row.item.kind === "user"
+          ? [{ id: row.item.id, text: row.item.text, pending: !!row.item.pending }]
+          : [],
+      ),
+    [rows],
   );
+  const approvalsByCall = useMemo(() => {
+    const byCall = new Map<string, Approval[]>();
+    for (const approval of state.approvals)
+      byCall.set(approval.callId, [...(byCall.get(approval.callId) ?? []), approval]);
+    return byCall;
+  }, [state.approvals]);
+  const needle = search.toLocaleLowerCase();
   const stopped = new Set([
     ...state.interrupted,
     ...state.turns.filter((turn) => turn.stopReason === "aborted").map((turn) => turn.turnId),
@@ -129,117 +143,41 @@ export function Transcript({
             ))}
           {rows.map((row) => {
             if (row.kind === "group")
-              return (
-                <div key={`group/${row.id}`} className="transcript-item tool" data-tool-group>
-                  <Disclosure
-                    title={
-                      <>
-                        {t("chatDetail.operations", { count: row.tools.length })}
-                        {row.tools.some((tool) => tool.status === "running")
-                          ? ` · ${t("chat.running")}`
-                          : ` · ${t("chat.toolOk")}`}
-                      </>
-                    }
-                  >
-                    {row.tools.map((item) => (
-                      <ToolDetails key={item.id} item={item} updates={updates} />
-                    ))}
-                  </Disclosure>
-                </div>
-              );
+              return <ToolGroupRow key={`group/${row.id}`} tools={row.tools} updates={updates} />;
             const item = row.item;
+            const key = `${item.kind}/${item.id}`;
+            if (item.kind === "tool")
+              return (
+                <ToolRow
+                  key={key}
+                  item={item}
+                  detail={detail}
+                  update={updates[item.id]}
+                  approvals={approvalsByCall.get(item.id) ?? NO_APPROVALS}
+                  sessionId={sessionId}
+                  disabled={disabled}
+                />
+              );
+            if (item.kind === "error")
+              return (
+                <ErrorRow
+                  key={key}
+                  item={item}
+                  canRetry={item.id === latestError && !state.activeTurnId && item.retryable}
+                  retry={onRetry}
+                />
+              );
             return (
-              <article
-                key={`${item.kind}/${item.id}`}
-                ref={
-                  item.kind === "user"
-                    ? (node) => {
-                        if (!node) return;
-                        anchors.set(item.id, node);
-                        return () => {
-                          if (anchors.get(item.id) === node) anchors.delete(item.id);
-                        };
-                      }
-                    : undefined
+              <MessageRow
+                key={key}
+                item={item}
+                match={searchMatch(item, needle)}
+                highlighted={
+                  item.kind === "user" && highlight?.sessionId === sessionId && highlight?.id === item.id
                 }
-                data-message-kind={item.kind}
-                data-nav-highlight={
-                  highlight?.sessionId === sessionId && highlight?.id === item.id && item.kind === "user"
-                    ? ""
-                    : undefined
-                }
-                className={`transcript-item ${item.kind}`}
-                data-search-match={
-                  search &&
-                  (item.kind === "user" || item.kind === "assistant") &&
-                  item.text.toLocaleLowerCase().includes(search.toLocaleLowerCase())
-                    ? "true"
-                    : undefined
-                }
-              >
-                {search &&
-                  (item.kind === "user" || item.kind === "assistant") &&
-                  item.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()) && (
-                    <span className="sr-only">{t("chat.searchMatch")}</span>
-                  )}
-                {item.kind === "user" && (
-                  <>
-                    <strong>{t("chat.you")}</strong>
-                    {item.pending && (
-                      <span role="status" data-message-pending>
-                        {t("chat.pending")}
-                      </span>
-                    )}
-                    <Markdown text={item.text} />
-                  </>
-                )}
-                {item.kind === "assistant" && (
-                  <>
-                    <strong>VERA</strong>
-                    <Markdown
-                      text={item.text}
-                      citations={item.citations}
-                      onCitation={
-                        sessionId
-                          ? (ref) => openDocument?.({ sessionId, messageId: item.id, ref })
-                          : undefined
-                      }
-                    />
-                    {item.streaming && <span role="status">{t("chat.streaming")}</span>}
-                  </>
-                )}
-                {item.kind === "tool" && (
-                  <>
-                    {(detail === "verbose" || item.status === "error") && (
-                      <ToolDetails item={item} updates={updates} />
-                    )}
-                    {item.name === "web_download" && item.status === "ok" && (
-                      <DownloadCard result={item.preview ?? item.summary ?? ""} />
-                    )}
-                    {state.approvals
-                      .filter((a) => a.callId === item.id)
-                      .map((approval) => (
-                        <ApprovalCard
-                          key={approval.approvalId}
-                          approval={approval}
-                          sessionId={sessionId}
-                          disabled={disabled}
-                        />
-                      ))}
-                  </>
-                )}
-                {item.kind === "error" && (
-                  <>
-                    <ErrorMessage error={{ code: item.code, messageKey: item.messageKey }} />
-                    {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}
-                    {item.id === latestError && !state.activeTurnId && item.retryable && (
-                      <button type="button" onClick={retry}>
-                        {t("settings.retry")}
-                      </button>
-                    )}
-                  </>
-                )}
-              </article>
+                sessionId={sessionId}
+                anchors={anchors}
+              />
             );
           })}
           {Array.from(stopped).map((id) => (
@@ -257,8 +195,159 @@ export function Transcript({
     </div>
   );
 }
+type Item = SessionState["items"][number];
+type Approval = SessionState["approvals"][number];
+const NO_APPROVALS: Approval[] = [];
+/*
+ * Transcript rows are memoized on shallow props (PERF-03). With PERF-02 a live event gives a new
+ * object only to the item it touches, so an unchanged row is skipped on every later render.
+ */
+const MessageRow = memo(function MessageRow({
+  item,
+  match,
+  highlighted,
+  sessionId,
+  anchors,
+}: {
+  item: Extract<Item, { kind: "user" | "assistant" }>;
+  match: boolean;
+  highlighted: boolean;
+  sessionId: string | undefined;
+  anchors: Map<string, HTMLElement>;
+}) {
+  const { t } = useTranslation();
+  const openDocument = useDocumentViewer();
+  const { kind, id } = item;
+  const anchor = useCallback(
+    (node: HTMLElement | null) => {
+      if (!node) return;
+      anchors.set(id, node);
+      return () => {
+        if (anchors.get(id) === node) anchors.delete(id);
+      };
+    },
+    [anchors, id],
+  );
+  const onCitation = useMemo(
+    () =>
+      kind === "assistant" && sessionId
+        ? (ref: string) => openDocument?.({ sessionId, messageId: id, ref })
+        : undefined,
+    [kind, id, sessionId, openDocument],
+  );
+  return (
+    <article
+      ref={kind === "user" ? anchor : undefined}
+      data-message-kind={kind}
+      data-nav-highlight={highlighted ? "" : undefined}
+      className={`transcript-item ${kind}`}
+      data-search-match={match ? "true" : undefined}
+    >
+      {match && <span className="sr-only">{t("chat.searchMatch")}</span>}
+      {item.kind === "user" ? (
+        <>
+          <strong>{t("chat.you")}</strong>
+          {item.pending && (
+            <span role="status" data-message-pending>
+              {t("chat.pending")}
+            </span>
+          )}
+          <Markdown text={item.text} />
+        </>
+      ) : (
+        <>
+          <strong>VERA</strong>
+          <Markdown text={item.text} citations={item.citations} onCitation={onCitation} />
+          {item.streaming && <span role="status">{t("chat.streaming")}</span>}
+        </>
+      )}
+    </article>
+  );
+});
+const ToolRow = memo(function ToolRow({
+  item,
+  detail,
+  update,
+  approvals,
+  sessionId,
+  disabled,
+}: {
+  item: ToolItem;
+  detail: ChatDetail;
+  update: string | undefined;
+  approvals: Approval[];
+  sessionId: string | undefined;
+  disabled: boolean;
+}) {
+  return (
+    <article data-message-kind="tool" className="transcript-item tool">
+      {(detail === "verbose" || item.status === "error") && <ToolDetails item={item} update={update} />}
+      {item.name === "web_download" && item.status === "ok" && (
+        <DownloadCard result={item.preview ?? item.summary ?? ""} />
+      )}
+      {approvals.map((approval) => (
+        <ApprovalCard
+          key={approval.approvalId}
+          approval={approval}
+          sessionId={sessionId}
+          disabled={disabled}
+        />
+      ))}
+    </article>
+  );
+});
+const ErrorRow = memo(function ErrorRow({
+  item,
+  canRetry,
+  retry,
+}: {
+  item: Extract<Item, { kind: "error" }>;
+  canRetry: boolean;
+  retry: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <article data-message-kind="error" className="transcript-item error">
+      <ErrorMessage error={{ code: item.code, messageKey: item.messageKey }} />
+      {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}
+      {canRetry && (
+        <button type="button" onClick={retry}>
+          {t("settings.retry")}
+        </button>
+      )}
+    </article>
+  );
+});
+/** A Normal-detail group of routine tools; its details mount only when opened. */
+function ToolGroupRow({ tools, updates }: { tools: ToolItem[]; updates: Record<string, string> }) {
+  const { t } = useTranslation();
+  return (
+    <div className="transcript-item tool" data-tool-group>
+      <Disclosure
+        title={
+          <>
+            {t("chatDetail.operations", { count: tools.length })}
+            {tools.some((tool) => tool.status === "running")
+              ? ` · ${t("chat.running")}`
+              : ` · ${t("chat.toolOk")}`}
+          </>
+        }
+      >
+        {tools.map((item) => (
+          <ToolDetails key={item.id} item={item} update={updates[item.id]} />
+        ))}
+      </Disclosure>
+    </div>
+  );
+}
 /** Shared by full tool rows and expandable Normal activity groups. */
-function ToolDetails({ item, updates }: { item: ToolItem; updates: Record<string, string> }) {
+const ToolDetails = memo(function ToolDetails({
+  item,
+  update,
+}: {
+  item: ToolItem;
+  update: string | undefined;
+}) {
   const { t } = useTranslation();
   return (
     <Disclosure
@@ -284,7 +373,7 @@ function ToolDetails({ item, updates }: { item: ToolItem; updates: Record<string
       <h4>{t("chat.arguments")}</h4>
       <pre>{JSON.stringify(item.args, null, 2)}</pre>
       <h4>{t("chat.preview")}</h4>
-      <pre>{item.preview ?? updates[item.id] ?? item.summary ?? t("chat.noPreview")}</pre>
+      <pre>{item.preview ?? update ?? item.summary ?? t("chat.noPreview")}</pre>
     </Disclosure>
   );
-}
+});

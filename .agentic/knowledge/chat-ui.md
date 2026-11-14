@@ -107,6 +107,13 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
+- `Disclosure` mounts its content only while open (transcript, groups, reasoning and ActivityLog); its empty
+  hidden container keeps `aria-controls` resolvable. Collapsed content is not in the DOM, so find-in-page
+  and copy-all skip it.
+- Transcript rows (`MessageRow`, `ToolRow`, `ErrorRow`, `ToolDetails`) and `Markdown` are `React.memo` with
+  shallow props; they rely on `applySessionEvent` keeping untouched items' identity, so a live event re-renders
+  only its row. Every value a row shows must arrive as a prop (or a stable callback); search text is lower-cased
+  once per item object (`searchMatch`).
 - Dialog closure restores connected opener focus with fallback after removed session actions; rename save/cancel restores its action. Named diff/artifact regions support keyboard scrolling; keyboard controls and wrapping rem layout use en/ro/de catalogs.
 
 ## Change map
@@ -121,6 +128,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Conversation scroll rail | transcript.tsx, transcript-scroll.tsx, styles.css | tests/e2e/session-scroll.spec.ts |
+| Transcript render cost (lazy disclosures, memoized rows/Markdown) | disclosure, transcript, markdown, transcript-projection | transcript-render.test.ts; `npm run perf:sessions` |
 | User-message navigator (lane, groups, preview, jump, follow suspension) | transcript-navigation.ts (pure geometry), transcript-navigator.tsx, transcript.tsx (anchors, navigate, follow), styles.css | transcript-navigation.test.ts; transcript-navigator.test.ts; tests/e2e/session-navigation.spec.ts (VERA_NAV_SCREENSHOT) |
 
 ## Key behaviors

@@ -119,6 +119,9 @@ it("switches levels reversibly without mutating history and keeps complete Activ
     root.render(createElement(ActivityLog, { state, reasoning: { turn1: "Live reasoning" }, updates: {} })),
   );
   expect(container.querySelectorAll('[data-activity-kind="tool"]')).toHaveLength(3);
+  // Disclosure content mounts only when opened (PERF-03).
+  for (const toggle of container.querySelectorAll<HTMLButtonElement>(".disclosure-toggle"))
+    await act(async () => toggle.click());
   expect(container.textContent).toContain("Live reasoning");
   expect(JSON.stringify(state)).toBe(before);
 });
@@ -147,11 +150,14 @@ it.each(["minimal", "normal", "verbose"] as const)(
     state.turns.push({ turnId: "turn2", steps: 2, stopReason: "aborted" });
     await render(state, detail, retry);
     expect(container.querySelector("[data-approval-card]")?.closest("[hidden]")).toBeNull();
+    // Collapsed details are not mounted (PERF-03): the failed row is found by its title.
     const failed = [...container.querySelectorAll('[data-tool-row="read"]')].find((n) =>
-      n.textContent?.includes("output-failed"),
+      n.textContent?.includes("failed.txt"),
     );
     expect(failed).toBeDefined();
     expect(failed?.closest("[data-tool-group]")).toBeNull();
+    await act(async () => userEvent.setup().click(failed?.querySelector("button") as HTMLButtonElement));
+    expect(failed?.textContent).toContain("output-failed");
     expect(container.textContent).toContain("Stopped");
     const buttons = [...container.querySelectorAll<HTMLButtonElement>("button")];
     await act(async () =>

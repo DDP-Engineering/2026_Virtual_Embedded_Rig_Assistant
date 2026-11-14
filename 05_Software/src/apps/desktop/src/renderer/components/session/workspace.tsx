@@ -12,6 +12,7 @@ import { ErrorMessage } from "../error-message.js";
 import { Composer } from "./composer.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
+import { searchMatch } from "./transcript-projection.js";
 import { ContextIndicator } from "./usage-meter.js";
 
 export function SessionWorkspace({
@@ -182,11 +183,8 @@ export function SessionWorkspace({
             {search
               ? t("chat.searchMatches", {
                   count:
-                    view?.state.items.filter(
-                      (item) =>
-                        (item.kind === "user" || item.kind === "assistant") &&
-                        item.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
-                    ).length ?? 0,
+                    view?.state.items.filter((item) => searchMatch(item, search.toLocaleLowerCase()))
+                      .length ?? 0,
                 })
               : t("chat.searchHint")}
           </p>

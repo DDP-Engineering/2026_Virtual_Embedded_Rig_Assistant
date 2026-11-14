@@ -2,7 +2,7 @@
 
 import { parseRef, type Reference, referenceLabel } from "@vera/shared";
 import { File, Files, Hash, List, Package, TriangleAlert } from "lucide-react";
-import { type ReactNode, useMemo, useRef } from "react";
+import { memo, type ReactNode, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -83,9 +83,16 @@ function CitationIcon({ kind }: { kind: Reference["kind"] }) {
   const Icon = { page: File, "page-range": Files, heading: Hash, lines: List, artifact: Package }[kind];
   return <Icon width="1em" height="1em" aria-hidden="true" />;
 }
-export function Markdown({
+const remarkPlugins = [remarkGfm, remarkCitations];
+const rehypePlugins = [rehypeHighlight];
+const NO_CITATIONS: { ref: string; valid: boolean }[] = [];
+/**
+ * Renders message Markdown. Memoized on its props: the unified pipeline (GFM, citations, code
+ * highlighting) runs again only when the text, the citations or the citation handler change (PERF-03).
+ */
+export const Markdown = memo(function Markdown({
   text,
-  citations = [],
+  citations = NO_CITATIONS,
   onCitation,
 }: {
   text: string;
@@ -95,42 +102,40 @@ export function Markdown({
   const options = useRef({ citations, onCitation });
   options.current = { citations, onCitation };
   // Keep chip DOM identity and keyboard focus through transcript refresh and modal updates.
-  const custom = useMemo<Record<string, (props: Record<string, unknown>) => ReactNode>>(
+  const components = useMemo<Components>(
     () => ({
-      a: (props) => (
-        <ExternalSourceLink href={String(props.href ?? "")}>{props.children as ReactNode}</ExternalSourceLink>
+      a: (props) => <ExternalSourceLink href={String(props.href ?? "")}>{props.children}</ExternalSourceLink>,
+      ...({
+        "vera-citation": (props: Record<string, unknown>): ReactNode => {
+          const reference = String(props["data-ref"] ?? "");
+          return (
+            <CitationChip
+              reference={reference}
+              valid={options.current.citations.some((c) => c.ref === reference && c.valid)}
+              onOpen={options.current.onCitation}
+            />
+          );
+        },
+      } as Components),
+      img: ({ alt }) => <span>{alt}</span>,
+      table: ({ children }) => (
+        <div className="markdown-table">
+          <table>{children}</table>
+        </div>
       ),
-      "vera-citation": (props) => {
-        const reference = String(props["data-ref"] ?? "");
-        return (
-          <CitationChip
-            reference={reference}
-            valid={options.current.citations.some((c) => c.ref === reference && c.valid)}
-            onOpen={options.current.onCitation}
-          />
-        );
-      },
     }),
     [],
   );
   return (
     <div className="markdown">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkCitations]}
-        rehypePlugins={[rehypeHighlight]}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
         skipHtml
-        components={{
-          ...(custom as Components),
-          img: ({ alt }) => <span>{alt}</span>,
-          table: ({ children }) => (
-            <div className="markdown-table">
-              <table>{children}</table>
-            </div>
-          ),
-        }}
+        components={components}
       >
         {text}
       </ReactMarkdown>
     </div>
   );
-}
+});
