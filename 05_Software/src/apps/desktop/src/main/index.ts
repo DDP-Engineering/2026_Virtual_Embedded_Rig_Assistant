@@ -237,7 +237,7 @@ const bundledPlugins =
     ? process.env.VERA_TEST_BUNDLED_PLUGINS || undefined
     : app.isPackaged
       ? join(process.resourcesPath, "plugins")
-      : join(here, "../../../../../src/bundled-plugins");
+      : join(here, "../../../../../../07_Delivery/plugins");
 /** The catalog folder from settings, else the build default; the bundled release stands in without one. */
 const catalogLocation = () =>
   settings.get().settings.plugins?.catalog ?? (__VERA_PLUGIN_CATALOG_URL__ || undefined);

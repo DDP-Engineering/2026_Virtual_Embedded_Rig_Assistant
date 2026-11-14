@@ -200,7 +200,7 @@ trial, does not enable or provision, and permits the agent to replace only anoth
 `plugins.promote {id,sha256}` is a user-only IPC action bound to a healthy trial's displayed hash;
 it atomically changes install.json tier to local. The Plugins button asks the user to confirm trust.
 `plugins.export {id,sha256}` verifies a healthy package and saves a zip through the native save picker,
-without install.json or runtime files. A generated zip above the existing 64 MiB archive cap is INVALID before the save picker opens. Promotion and export invalidate/reload the relevant UI state.
+without install.json or runtime files; its size is not limited. Promotion and export invalidate/reload the relevant UI state.
 The agent has no promotion, enablement or session-mode tools. Its file tools refuse workbench.yaml,
 managed application data and multiply linked write targets even in bypass. Trials retain the existing
 per-command override and irreversible typed confirmation in every writable mode. The official
@@ -333,9 +333,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   exactly one capture group, placeholders other than `${workbench}`/`${pluginDir}` (env) or
   `${pluginDir}` (prefix) are field issues with dotted paths. `id` equals the folder name.
 - Imports refuse symbolic links and junctions (DENIED), unsafe or case-colliding paths, a root
-  `install.json`, more than 4096 files, 64 MiB of content, a 64 MiB zip or a 256 KiB manifest
-  (INVALID), before anything is written. Zip sizes are summed from the central directory before
-  inflating.
+  `install.json`, more than 4096 files or a 256 KiB manifest (INVALID), before anything is written; the
+  package size is not limited. Zip entries are counted from the central directory before inflating.
 - An invalid manifest refuses install with INVALID and `params {issue, path?}`; the installed
   plugins stay unchanged. A valid reinstall replaces the whole folder through `staging/`.
 - The integrity hash covers every file except the root install.json, in sorted path order, framed

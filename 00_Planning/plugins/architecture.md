@@ -403,7 +403,7 @@ Disk use, measured 2026-11-02 on Windows x64 (apparent bytes; Ubuntu still to me
   has the reviewed hash (CONFLICT otherwise). The CLI installs without a review.
 - Install accepts a folder named as the id, or a zip with the package at its root or in one top folder
   named as the id. It refuses links, unsafe or case-colliding paths, a root `install.json`, more than 4096
-  files, 64 MiB of content, a 64 MiB zip or a 256 KiB manifest, and an invalid manifest (INVALID with the
+  files or a 256 KiB manifest (the package size is not limited), and an invalid manifest (INVALID with the
   first issue's code and field path). A reinstall replaces the whole folder through `plugins/staging/`.
 - Listing reports every issue per plugin (`manifest`, `yaml`, `field`, `id`, `record`, `changed`,
   `unavailable`); a plugin with any issue never loads.

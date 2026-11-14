@@ -79,9 +79,9 @@ the relative `/`-separated path compared by UTF-16 code units. Each file contrib
 
 ### Import limits
 
-At most 4096 files and 64 MiB of file content; a zip file of at most 64 MiB; `plugin.yaml` at most
-256 KiB. Directory entries in a zip are ignored. Each zip entry counts the larger of its compressed and
-declared size, and a stored entry whose declared size differs from its stored size is refused. Two file or
+At most 4096 files; `plugin.yaml` at most 256 KiB. The package size (file content and zip file) is not
+limited; a zip is read into memory, so the computer's memory bounds it. Directory entries in a zip are
+ignored, and a stored entry whose declared size differs from its stored size is refused. Two file or
 folder names that are equal after lowercasing, or a file and a folder of the same name, are a collision.
 Files of a folder are read through a handle that does not follow links and must be the entry first seen. A root `install.json` in a package is reserved. Symbolic links, junctions and other
 non-regular entries of a source folder are refused with DENIED; every other defect with INVALID.

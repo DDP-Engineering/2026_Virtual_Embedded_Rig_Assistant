@@ -125,7 +125,7 @@ install --path`, IPC `plugins.install`) or from the catalog, and enables per wor
 source: `packs.yaml` (ESP32, Firmware analysis, Wireshark, CAN, Microchip, STM32, Electronics design and Embedded lab groups, default on except Security), `catalog.yaml` (all packaged plugins
 `official`, reviewed low-risk rules for esp32-efuse and stm32-cubeprog, discovery metadata), `CONTRIBUTING.md` and the hosted repository's CI template `.ci/catalog.yml`; `vera
 catalog check --source 05_Software/plugins` finds no issue. `npm run prepare:plugins` builds it into the bundled
-catalog release `05_Software/src/bundled-plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
+catalog release `07_Delivery/plugins/` (git-ignored), which packaging ships as `<resources>/plugins/` for
 an offline first install. Nothing installs them automatically. A package holds content only: a manifest, PEP 723
 scripts that the provisioner runs with the bundled uv, and Markdown skills; a pip program such as esptool comes from
 PyPI at install time and is not part of the folder. `requires`: esp32-esptool lists `serial-monitor`; `vera catalog check`

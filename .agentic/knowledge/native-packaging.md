@@ -54,7 +54,7 @@ From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only)
 `npm run prepare:uv` (pinned uv 0.13.7 from `src/uv/uv-manifest.json`: archive and binary SHA-256 verified, archive cache addressed by its SHA rather than a reused release filename,
 binary written to `src/uv/<platform>/`, archive cached in `src/uv/.cache/`; `-- --offline` uses the cache only),
 `npm run prepare:plugins` (the official plugins of `plugins/` built with `vera catalog build` into the catalog
-release `src/bundled-plugins/`, each zip checked against its index),
+release `../07_Delivery/plugins/`, each zip checked against its index),
 `npm run package` (compiled release; it prepares the bundled plugins, stages them as `<resources>/plugins/` and checks
 them again in the unpacked output) and `npm run package:test` (compiled instrumented).
 Outputs are `release_tmp/{test,release}/` host-native NSIS/portableZIP or AppImage/deb artifacts and schema2 `package-report.json`. ZIP carries vera.portable; NSIS is per-user without that marker. VERA Test product/appId/executable/staged package name and filenames identify instrumented artifacts.

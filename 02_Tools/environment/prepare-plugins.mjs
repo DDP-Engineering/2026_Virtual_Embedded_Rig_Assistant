@@ -7,6 +7,8 @@ import { importSoftware, software } from "./software.mjs";
 
 const { build } = await importSoftware("esbuild");
 const root = software;
+/** Where the official plugins' catalog release is built: the repository's delivery folder (git-ignored). */
+export const bundledPluginsFolder = resolve(root, "..", "07_Delivery", "plugins");
 
 /** Each zip of a bundled catalog release has the size and SHA-256 its index lists; returns the index. */
 export async function checkBundledPlugins(folder) {
@@ -50,12 +52,12 @@ async function buildCli() {
 
 /**
  * Builds the official plugins (`plugins/`, a catalog source) into a catalog release with
- * `vera catalog build`: `src/bundled-plugins/` by default, which development runs read and packaging
+ * `vera catalog build`: `07_Delivery/plugins/` by default, which development runs read and packaging
  * ships as `<resources>/plugins/`. The folder is replaced as a whole.
  */
 export async function prepareBundledPlugins({
   source = join(root, "plugins"),
-  target = join(root, "src/bundled-plugins"),
+  target = bundledPluginsFolder,
 } = {}) {
   const cli = await buildCli();
   const staging = `${target}.staging`;
@@ -78,5 +80,5 @@ export async function prepareBundledPlugins({
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const index = await prepareBundledPlugins();
-  console.log(`Bundled ${index.plugins.length} official plugins: ${join(root, "src/bundled-plugins")}`);
+  console.log(`Bundled ${index.plugins.length} official plugins: ${bundledPluginsFolder}`);
 }

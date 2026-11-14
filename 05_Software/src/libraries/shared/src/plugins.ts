@@ -3,11 +3,9 @@ import { labResourceKindSchema } from "./lab-resources.js";
 import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
 import { workbenchIdSchema } from "./workbench.js";
 
-/** Import limits of one plugin package (folder or zip). */
+/** Import limits of one plugin package (folder or zip); its size in bytes is not limited. */
 export const PLUGIN_LIMITS = {
   files: 4096,
-  bytes: 64 * 1024 * 1024,
-  zipBytes: 64 * 1024 * 1024,
   manifestBytes: 256 * 1024,
   issues: 64,
 } as const;
