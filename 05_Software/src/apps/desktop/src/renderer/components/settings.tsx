@@ -234,6 +234,7 @@ export function Settings({
           ({ id }) =>
             id !== "providers" &&
             id !== "web" &&
+            id !== "parts" &&
             id !== "appearance" &&
             id !== "language" &&
             id !== "updates" &&

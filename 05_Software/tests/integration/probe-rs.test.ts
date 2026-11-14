@@ -269,7 +269,8 @@ it("finds PATH before cargo, never installs implicitly and rejects an unsupporte
       ]);
       version = "0.32.0";
       await rm(path);
-      provisioner.invalidate();
+      // A failure the install observed stays authoritative until the user checks again ("Check again").
+      await provisioner.check("probe-rs");
     }
     expect(await provisioner.resolve(plugin, "probe-rs")).toBeUndefined();
     expect(await provisioner.statuses("probe-rs")).toMatchObject([{ state: "missing" }]);

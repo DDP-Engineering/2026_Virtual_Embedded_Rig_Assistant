@@ -1469,10 +1469,11 @@ test("Settings selects one page with vertical tabs, including placeholders and k
   await settle();
   expect(container.querySelector("#sidebar")?.getAttribute("data-collapsed")).toBe("false");
   const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tablist"] [role="tab"]')];
-  // Web access joined the pages with the web providers.
+  // Web access and parts search joined the pages with the web providers.
   expect(tabs.map((tab) => tab.dataset.section)).toEqual([
     "providers",
     "web",
+    "parts",
     "appearance",
     "language",
     "notifications",
