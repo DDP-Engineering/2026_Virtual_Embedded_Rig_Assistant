@@ -1,9 +1,9 @@
 import {
   Activity,
   ArrowLeft,
+  CircleQuestionMark,
   Folder,
   Home,
-  Info,
   PanelLeft,
   PanelRight,
   Plus,
@@ -42,7 +42,7 @@ export function Shell({
   newWorkbench,
   openWorkbench,
   showPlugins,
-  showAbout,
+  showHelp,
   newSelected,
   pluginsSelected,
   context,
@@ -59,7 +59,7 @@ export function Shell({
   newWorkbench?: () => void;
   openWorkbench?: () => void;
   showPlugins?: () => void;
-  showAbout?: () => void;
+  showHelp?: () => void;
   newSelected?: boolean;
   pluginsSelected?: boolean;
   context?: ReactNode;
@@ -284,15 +284,15 @@ export function Shell({
           ))}
         </div>
         <div className="topbar-spacer" />
-        {showAbout && (
+        {showHelp && (
           <button
             type="button"
-            data-action="show-about"
-            aria-label={t("about.open")}
-            title={t("about.open")}
-            onClick={showAbout}
+            data-action="show-help"
+            aria-label={t("help.open")}
+            title={t("help.open")}
+            onClick={showHelp}
           >
-            <Info aria-hidden="true" />
+            <CircleQuestionMark aria-hidden="true" />
           </button>
         )}
         <button

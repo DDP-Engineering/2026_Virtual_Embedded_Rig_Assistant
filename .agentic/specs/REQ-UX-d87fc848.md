@@ -5,7 +5,7 @@
 One draggable title/menu row replaces separate native title/menu and renderer branding rows.
 Main exposes native Windows/Linux window controls through the native overlay, reserving
 its safe area. Menus are File/Edit/View; native fixed role templates own commands.
-Header additionally holds sidebar and right-panel toggles and an About (Info) button that opens Settings > About. Native close semantics persist.
+Header additionally holds sidebar and right-panel toggles and a Help (?) button that opens the Help view. Native close semantics persist.
 
 Expanded navigation has VERA branding, Home, existing project/session or settings-section
 navigation, and bottom Settings. Collapse retains an icon rail with Home, project navigation

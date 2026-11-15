@@ -1132,7 +1132,6 @@
     }
   },
   "about": {
-    "open": "About VERA",
     "fullName": "Virtual Embedded Rig Assistant",
     "version": "Version {{version}}",
     "application": "Application",
@@ -1148,5 +1147,10 @@
     "previous": "Previous",
     "next": "Next",
     "page": "{{page}} / {{pages}}"
+  },
+  "help": {
+    "open": "Help",
+    "title": "Help",
+    "pages": "Help pages"
   }
 }

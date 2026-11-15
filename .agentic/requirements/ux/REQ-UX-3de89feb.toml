@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3de89feb"
+
+title = "Show the help page list and the selected page"
+
+status = "active"
+
+requirement = """While the Help view is open, VERA shall list the help pages of the interface language on the right and render the selected page's Markdown in the interface language, showing the English page when that language lacks it."""
+
+verification = """Component test with the mock API: Help in French lists pages and renders the English page when no French page exists; selecting a list entry renders it and marks it current; browser E2E repeats for each interface language."""
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/help.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/help.test.ts", "05_Software/tests/e2e/help.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

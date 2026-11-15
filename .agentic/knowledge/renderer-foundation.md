@@ -21,7 +21,8 @@ The shell presents one compact title/menu row, with native window controls suppl
 Expanded navigation has VERA branding, Home, project/session or settings-section content,
 and bottom Settings. A collapsed sidebar retains Home/project/Settings icons and accessible
 labels. Project navigation expands the sidebar; Home and Settings remain usable in rail mode.
-Application metadata is displayed in Settings About, which an Info button beside the right-panel toggle also opens;
+Application metadata is displayed in Settings About; a Help (?) button beside the right-panel toggle opens the
+[Help](help.md) view;
 the title bar has File/Edit/View menus and no Help menu. F10 focuses the native-menu triggers;
 left/right/Home/End move focus and Down or Enter opens the selected native menu.
 

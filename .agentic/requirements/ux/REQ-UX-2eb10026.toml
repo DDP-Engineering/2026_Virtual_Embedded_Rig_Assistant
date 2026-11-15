@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-2eb10026"
+
+title = "Follow links between help pages"
+
+status = "active"
+
+requirement = """When the user activates a link to another help page (name.md) inside a help page, VERA shall show that page in the Help view."""
+
+verification = """Component and browser E2E tests: activate an internal page link and observe the linked page rendered; an https link still opens the external-link confirmation instead."""
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/help.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/help.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

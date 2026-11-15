@@ -3489,3 +3489,36 @@ legend {
   justify-self: stretch;
   text-align: left;
 }
+/* Help: the page on the left, the page list on the right; they stack when the content area is narrow. */
+.help-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  gap: 1.5rem;
+  align-items: start;
+  container-type: inline-size;
+}
+.help-page {
+  min-width: 0;
+  max-width: 52rem;
+}
+.help-pages ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.help-pages button {
+  width: 100%;
+  text-align: start;
+}
+.help-pages button[aria-current="page"] {
+  border-color: var(--primary);
+  background: var(--accent);
+}
+@media (max-width: 56rem) {
+  .help-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

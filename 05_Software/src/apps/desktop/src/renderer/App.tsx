@@ -8,6 +8,7 @@ import { DocsTab } from "./components/documents/docs-tab.js";
 import { DocumentTabs } from "./components/documents/document-tabs.js";
 import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
+import { HelpView } from "./components/help.js";
 import { Plugins } from "./components/plugins.js";
 import { RunsTab } from "./components/runs-tab.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
@@ -28,12 +29,15 @@ import { SessionViewProvider } from "./hooks/session-view.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 import { ATTACHMENT_LIMIT, addAttachment } from "./lib/attachments.js";
 import { removeTabs } from "./lib/document-tabs-store.js";
-import { ShortcutContext, shortcutCommand } from "./lib/shortcuts.js";
+import { screenHelpPage } from "./lib/help-pages.js";
+import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "./lib/shortcuts.js";
 
 export function App() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState(false);
   const [plugins, setPlugins] = useState(false);
+  /** The open help page; Help is a detour like Plugins, so hidden drafts survive it. */
+  const [help, setHelp] = useState<string>();
   const [newWorkbench, setNewWorkbench] = useState(false);
   const [editor, setEditor] = useState<WorkbenchSnapshot>();
   const [createdCount, setCreatedCount] = useState(0);
@@ -108,6 +112,7 @@ export function App() {
       if (!configOnly) {
         setNewWorkbench(false);
         setPlugins(false);
+        setHelp(undefined);
         setActiveSession(undefined);
         setChat(false);
       }
@@ -148,6 +153,7 @@ export function App() {
       setActiveSession(id);
       setChat(true);
       setPlugins(false);
+      setHelp(undefined);
       setNewWorkbench(false);
       setSettings(false);
       setEditor(undefined);
@@ -246,6 +252,7 @@ export function App() {
   const emptyCanvas =
     !settings &&
     !plugins &&
+    help === undefined &&
     !newWorkbench &&
     !activeWorkbench &&
     !bench.isPending &&
@@ -260,6 +267,7 @@ export function App() {
       if (!leaveEditor()) return;
       setSettings(value);
       setPlugins(false);
+      setHelp(undefined);
       setNewWorkbench(false);
       setEditor(undefined);
       if (!value) setChat(false);
@@ -273,6 +281,7 @@ export function App() {
     setChat(true);
     setSettings(false);
     setPlugins(false);
+    setHelp(undefined);
     setNewWorkbench(false);
     setEditor(undefined);
   }, [leaveEditor]);
@@ -282,8 +291,33 @@ export function App() {
     setEditor(undefined);
     setSettings(false);
     setPlugins(false);
+    setHelp(undefined);
     setChat(false);
   }, [leaveEditor]);
+  /** Opens Help as a detour: hidden drafts (New Workbench, the workbench editor) stay mounted. */
+  const showHelp = useCallback((page: string) => {
+    setHelp(page);
+    setSettings(false);
+    setPlugins(false);
+    setChat(false);
+  }, []);
+  const helpPage = screenHelpPage({
+    help: help !== undefined,
+    settings,
+    section,
+    plugins,
+    workbench: newWorkbench || !!editor || !!activeWorkbench,
+    chat: chat && !!benchId,
+  });
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => {
+      if (event.key !== "F1" || event.ctrlKey || event.metaKey || globalShortcutBlocked(event)) return;
+      event.preventDefault();
+      showHelp(helpPage);
+    };
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, [helpPage, showHelp]);
   const openWorkbench = useCallback(() => {
     if (sessionPending || !leaveEditor()) return;
     void operation(async () => {
@@ -386,6 +420,7 @@ export function App() {
               benchChanged(await api.invoke("workbench.open", { folder }));
             setNewWorkbench(false);
             setPlugins(false);
+            setHelp(undefined);
             setChat(false);
             if (!resume) setEditor(undefined);
             await recent.refetch();
@@ -414,6 +449,7 @@ export function App() {
               if (value.config.id !== benchId) benchChanged(value);
               setNewWorkbench(false);
               setPlugins(false);
+              setHelp(undefined);
               setChat(false);
               openEditor(value);
             }
@@ -506,7 +542,7 @@ export function App() {
         >
           {/* One session view per window (PERF-05): the chat and its side tabs share one read. */}
           <SessionViewProvider
-            id={benchId && chat && !settings && !plugins ? activeSession : undefined}
+            id={benchId && chat && !settings && !plugins && help === undefined ? activeSession : undefined}
             changed={changed}
           >
             <Shell
@@ -518,14 +554,12 @@ export function App() {
               showPlugins={() => {
                 // Installing a package is a reversible detour; the editor remains its draft owner.
                 setPlugins(true);
+                setHelp(undefined);
                 setSettings(false);
                 setChat(false);
               }}
               navigate={navigate}
-              showAbout={() => {
-                navigate(true);
-                setSection("about");
-              }}
+              showHelp={() => showHelp("index")}
               navigation={navigation}
               context={
                 benchId && chat && !settings ? (
@@ -566,7 +600,7 @@ export function App() {
               <UpdateBanner />
               <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
                 <h2
-                  hidden={!settings && !plugins && !newWorkbench && !activeWorkbench}
+                  hidden={!settings && !plugins && help === undefined && !newWorkbench && !activeWorkbench}
                   className="page-title"
                   key={settings ? "settings" : "welcome"}
                   ref={focusHeading}
@@ -574,13 +608,15 @@ export function App() {
                 >
                   {settings
                     ? t("settings.title")
-                    : plugins
-                      ? t("projects.plugins")
-                      : newWorkbench
-                        ? t("projects.new")
-                        : editor
-                          ? t("projects.edit")
-                          : t("overview.title")}
+                    : help !== undefined
+                      ? t("help.title")
+                      : plugins
+                        ? t("projects.plugins")
+                        : newWorkbench
+                          ? t("projects.new")
+                          : editor
+                            ? t("projects.edit")
+                            : t("overview.title")}
                 </h2>
                 {(info.isPending || snapshot.isPending) && (
                   <p role="status" data-i18n="home.loading">
@@ -613,10 +649,10 @@ export function App() {
                   />
                 )}
                 {/* Stays mounted while hidden so an unsaved draft survives navigation. */}
-                <div hidden={settings || plugins || !newWorkbench}>
+                <div hidden={settings || plugins || help !== undefined || !newWorkbench}>
                   <WorkbenchCreate
                     key={createdCount}
-                    shown={!settings && !plugins && newWorkbench}
+                    shown={!settings && !plugins && help === undefined && newWorkbench}
                     created={(value) => {
                       setCreatedCount((count) => count + 1);
                       benchChanged(value);
@@ -627,7 +663,7 @@ export function App() {
                 {editor && (
                   <WorkbenchEditor
                     key={editor.config.id}
-                    shown={!settings && !plugins && !newWorkbench}
+                    shown={!settings && !plugins && help === undefined && !newWorkbench}
                     workbench={editor}
                     close={closeEditor}
                     dirtyChanged={setEditorDirty}
@@ -637,7 +673,11 @@ export function App() {
                     }}
                   />
                 )}
-                <div hidden={settings || plugins || newWorkbench || !!editor || !activeWorkbench}>
+                <div
+                  hidden={
+                    settings || plugins || help !== undefined || newWorkbench || !!editor || !activeWorkbench
+                  }
+                >
                   {info.data && snapshot.data && (
                     <Workbench
                       active={activeWorkbench}
@@ -652,6 +692,7 @@ export function App() {
                     />
                   )}
                 </div>
+                {help !== undefined && !settings && <HelpView page={help} open={setHelp} />}
                 {plugins && (
                   <Plugins
                     workbench={
@@ -667,6 +708,7 @@ export function App() {
                       // Plugins are enabled in the workbench editor; with no workbench open, open one first.
                       if (!activeWorkbench) return openWorkbench();
                       setPlugins(false);
+                      setHelp(undefined);
                       if (!editor) openEditor(activeWorkbench);
                     }}
                   />
@@ -678,7 +720,7 @@ export function App() {
                   <span>VERA</span>
                 </div>
               )}
-              {chat && !settings && !plugins && benchId && (
+              {chat && !settings && !plugins && help === undefined && benchId && (
                 <DocumentTabs
                   chat={
                     <SessionWorkspace

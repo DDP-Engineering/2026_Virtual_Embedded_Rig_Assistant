@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-d753f9fb"
+
+title = "Open the help page of the current screen with F1"
+
+status = "active"
+
+requirement = """When the user presses F1 without modifiers and no dialog or shortcut recording owns the key, VERA shall open the Help view at the page of the current screen: providers for Settings Providers, shortcuts for Settings Keyboard shortcuts, settings for the other Settings sections, plugins for Plugins, workbenches for the workbench overview, New Workbench and the workbench editor, chat-and-sessions for an open session, getting-started for Home and index for Help."""
+
+verification = """Unit test of the screen-to-page mapping for every screen; browser E2E presses F1 on Settings Providers and on Plugins and observes the matching page; Ctrl+F1 does nothing."""
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/lib/help-pages.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/lib/help-pages.test.ts", "05_Software/tests/e2e/help.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

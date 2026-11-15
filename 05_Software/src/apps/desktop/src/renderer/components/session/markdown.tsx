@@ -94,17 +94,30 @@ export const Markdown = memo(function Markdown({
   text,
   citations = NO_CITATIONS,
   onCitation,
+  link,
 }: {
   text: string;
   citations?: { ref: string; valid: boolean }[];
   onCitation?: ((ref: string) => void) | undefined;
+  /** An in-app target for a link (help pages); other links stay external-confirmed or inert. */
+  link?: ((href: string) => { page: string; open: () => void } | undefined) | undefined;
 }) {
-  const options = useRef({ citations, onCitation });
-  options.current = { citations, onCitation };
+  const options = useRef({ citations, onCitation, link });
+  options.current = { citations, onCitation, link };
   // Keep chip DOM identity and keyboard focus through transcript refresh and modal updates.
   const components = useMemo<Components>(
     () => ({
-      a: (props) => <ExternalSourceLink href={String(props.href ?? "")}>{props.children}</ExternalSourceLink>,
+      a: (props) => {
+        const href = String(props.href ?? "");
+        const target = options.current.link?.(href);
+        return target ? (
+          <button type="button" className="markdown-link" data-help-link={target.page} onClick={target.open}>
+            {props.children}
+          </button>
+        ) : (
+          <ExternalSourceLink href={href}>{props.children}</ExternalSourceLink>
+        );
+      },
       ...({
         "vera-citation": (props: Record<string, unknown>): ReactNode => {
           const reference = String(props["data-ref"] ?? "");

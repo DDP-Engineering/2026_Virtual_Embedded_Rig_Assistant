@@ -9,6 +9,15 @@ schemas in `05_Software/src/libraries/shared/src/help.ts`. Focused tests: `core/
 documents and their viewer belong to [Document viewer](document-viewer.md); interface catalogs to
 [Renderer foundation](renderer-foundation.md).
 
+## Help view
+
+- A Help (?) button (`data-action="show-help"`) beside the right-panel toggle opens Help at `index`; F1 (no modifiers,
+  not while a dialog or shortcut recording owns keys) opens `screenHelpPage(screen)` (`renderer/lib/help-pages.ts`).
+- `renderer/components/help.tsx` `HelpView`: the page (session `Markdown` with the `link` hook, so `name.md` links open
+  that page) on the left, the `help.list` page list on the right (`aria-current="page"`), in the resolved interface
+  language. Help is a detour like Plugins in `App.tsx`: paths that leave Plugins leave Help, hidden drafts stay mounted.
+- Tests: `components/help.test.ts`, `lib/help-pages.test.ts`, `tests/e2e/help.spec.ts` (browser mock on a free port).
+
 ## Purpose and boundaries
 
 App help is Markdown in `05_Software/help/<en|ro|de|fr>/<page>.md`, shipped read-only as `<resources>/help`. Core

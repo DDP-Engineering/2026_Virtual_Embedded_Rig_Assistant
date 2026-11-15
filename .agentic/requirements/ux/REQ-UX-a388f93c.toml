@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-a388f93c"
+
+title = "Open Help from the top-bar Help button"
+
+status = "active"
+
+requirement = """When the user activates the Help button (?) in the top bar beside the right-panel toggle, VERA shall open the Help view at the index page."""
+
+verification = """Browser mock E2E: click [data-action=show-help]; the Help view shows the index page title; the button sits immediately before the right-panel toggle."""
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/help.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
