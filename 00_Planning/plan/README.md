@@ -20,6 +20,10 @@ tickets in Gitea.
   #126…#132 / epic [#122](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/122)**
   — common project model, industrial catalog, network and cable sizing, protection, motors and
   drives, reactive power compensation and lighting, on branch `feature/122-electrical-power`.
+- Electrical schematics and panels: [electrical-schematics.md](electrical-schematics.md), **CAD-01…CAD-04
+  #133…#136 / epic [#123](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/123)**
+  — QElectroTech schematics, panel engineering, consistent documentation and an EPLAN adapter, on
+  branch `feature/123-electrical-schematics`.
 - Further plugins: [../plugins/plan.md](../plugins/plan.md); analysis capabilities:
   [../capabilities/README.md](../capabilities/README.md).
 
