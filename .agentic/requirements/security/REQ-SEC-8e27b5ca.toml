@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-8e27b5ca"
+
+title = "Confine help reads to the help folders"
+
+status = "active"
+
+requirement = """If a help request names a page outside lowercase letters, digits and hyphens or a language other than en, ro, de or fr, or a help file resolves outside the help root, then VERA shall read no file outside the help root, rejecting the request as INVALID or treating the file as absent."""
+
+verification = """Schema tests reject ../index, index.md, an uppercase name and language it; a library test with a symlinked page pointing outside the root returns NOT_FOUND and never its content."""
+
+affected_paths = ["05_Software/src/libraries/shared/src/help.ts", "05_Software/src/libraries/core/src/help/library.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/help-ipc.test.ts", "05_Software/src/libraries/core/src/help/library.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

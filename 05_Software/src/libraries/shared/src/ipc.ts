@@ -18,6 +18,12 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import {
+  helpListRequestSchema,
+  helpPageSchema,
+  helpPageSummarySchema,
+  helpReadRequestSchema,
+} from "./help.js";
+import {
   partsAccessCancelSchema,
   partsAccessSaveResultSchema,
   partsAccessSaveSchema,
@@ -650,6 +656,8 @@ export const channels = {
   "providers.save": defineChannel("providers.save", providerSaveSchema, providerSaveResultSchema),
   "providers.remove": defineChannel("providers.remove", providerRemoveSchema, z.strictObject({})),
   "app.info": defineChannel("app.info", z.strictObject({}), appInfoSchema),
+  "help.list": defineChannel("help.list", helpListRequestSchema, z.array(helpPageSummarySchema).max(256)),
+  "help.read": defineChannel("help.read", helpReadRequestSchema, helpPageSchema),
   "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
   "app.settings.update": defineChannel("app.settings.update", settingsPatchSchema, settingsSnapshotSchema),
   "app.chooseFolder": defineChannel(

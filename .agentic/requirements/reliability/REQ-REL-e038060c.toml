@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-e038060c"
+
+title = "Report a missing help page as not found"
+
+status = "active"
+
+requirement = """If a requested help page exists neither in the requested language nor in English, then VERA shall fail the help.read request with NOT_FOUND."""
+
+verification = """Temporary help root: read a page that exists only in German with language fr, and a page that exists nowhere, both fail with code NOT_FOUND."""
+
+affected_paths = ["05_Software/src/libraries/core/src/help/library.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/help/library.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

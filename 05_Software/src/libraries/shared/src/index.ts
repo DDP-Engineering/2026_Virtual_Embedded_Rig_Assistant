@@ -8,6 +8,7 @@ export * from "./documents.js";
 export * from "./downloads.js";
 export * from "./events.js";
 export { gitExecutionArguments } from "./git-options.js";
+export * from "./help.js";
 export * from "./hil-plan.js";
 export * from "./ipc.js";
 export * from "./keyboard-shortcuts.js";

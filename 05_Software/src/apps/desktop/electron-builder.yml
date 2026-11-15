@@ -39,6 +39,11 @@ extraResources:
     to: plugins
     filter:
       - '**/*'
+  # The app help pages, read offline by the Help view and the agent (05_Software/help).
+  - from: resources/help
+    to: help
+    filter:
+      - '**/*.md'
 # VERA's license next to the executable (staged from the repository root LICENSE.txt).
 extraFiles:
   - from: resources/LICENSE.txt

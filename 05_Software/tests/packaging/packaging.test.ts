@@ -423,3 +423,22 @@ it("stages the uv binary as a package resource and verifies the packaged bytes",
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+// REQ-PLAT-73bc566c
+it("stages the app help as <resources>/help and refuses a help folder without the English index", async () => {
+  const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));
+  expect(config.extraResources).toContainEqual({ from: "resources/help", to: "help", filter: ["**/*.md"] });
+  const { stageHelp } = await import(pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href);
+  const dir = await mkdtemp(join(tmpdir(), "vera-help-stage-"));
+  try {
+    await mkdir(join(dir, "help", "en"), { recursive: true });
+    await writeFile(join(dir, "help", "en", "index.md"), "# VERA help\n");
+    await stageHelp(join(dir, "stage"), join(dir, "help"));
+    expect(await readFile(join(dir, "stage", "resources", "help", "en", "index.md"), "utf8")).toBe(
+      "# VERA help\n",
+    );
+    await expect(stageHelp(join(dir, "other"), join(dir, "missing"))).rejects.toThrow(/help.*en.*index\.md/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

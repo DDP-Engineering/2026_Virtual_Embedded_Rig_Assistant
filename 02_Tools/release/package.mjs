@@ -171,6 +171,16 @@ export async function stageBundledPlugins(stage, source = bundledPluginsFolder) 
   await cp(source, join(stage, "resources", "plugins"), { recursive: true });
 }
 
+/** Copies the app help (`05_Software/help/<language>/*.md`) to `<stage>/resources/help/` (`<resources>/help/`). */
+export async function stageHelp(stage, source = join(root, "help")) {
+  try {
+    await stat(join(source, "en", "index.md"));
+  } catch {
+    throw new Error(`app help missing: ${join(source, "en", "index.md")}`);
+  }
+  await cp(source, join(stage, "resources", "help"), { recursive: true });
+}
+
 export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp")) {
   const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
@@ -187,6 +197,7 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
   const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
   await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
   await stageBundledPlugins(stage);
+  await stageHelp(stage);
   // VERA's license ships next to the executable (extraFiles), as its Notices section requires.
   await cp(join(root, "../LICENSE.txt"), join(stage, "resources/LICENSE.txt"));
   await cp(
@@ -393,6 +404,7 @@ async function packageApp() {
     }
     await checkUvBinary(join(unpacked, "resources/uv", uvBinary.binary), uvBinary);
     await checkBundledPlugins(join(unpacked, "resources/plugins"));
+    await stat(join(unpacked, "resources/help/en/index.md"));
     for (const file of windowsRuntime?.files ?? []) {
       const bytes = await readFile(
         join(

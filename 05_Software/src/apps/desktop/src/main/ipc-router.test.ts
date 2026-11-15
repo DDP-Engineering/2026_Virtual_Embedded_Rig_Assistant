@@ -138,6 +138,8 @@ const workbenchHandlers = {
   "workbench.pinned.get": unused,
   "workbench.pinned.update": unused,
   "workbench.files": unused,
+  "help.list": unused,
+  "help.read": unused,
 };
 beforeAll(async () => {
   expect(existsSync(new URL("./ipc-router.ts", import.meta.url)), "validated IPC router exists").toBe(true);

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a2db3ddc"
+
+title = "Read an app help page with English fallback"
+
+status = "active"
+
+requirement = """When the renderer requests help.read for a page and language, VERA shall return that page's Markdown and title in the requested language, or the English page with language en when the requested language has no such page."""
+
+verification = """Temporary help root: read an existing French page returns fr content; read a page present only in English with language fr returns the English content and language en."""
+
+affected_paths = ["05_Software/src/libraries/core/src/help/library.ts", "05_Software/src/libraries/shared/src/help.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/help.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/help/library.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

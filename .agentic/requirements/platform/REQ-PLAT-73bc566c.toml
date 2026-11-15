@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-PLAT-73bc566c"
+
+title = "Ship app help in the package resources"
+
+status = "active"
+
+requirement = """The packaged application shall read app help from <resources>/help, which packaging copies from 05_Software/help, and a development build shall read 05_Software/help directly."""
+
+verification = """Tooling test stages a temporary help folder with stageHelp and finds resources/help/en/index.md; staging without help/en/index.md fails naming the folder; inspection of electron-builder.yml extraResources and the main help root."""
+
+affected_paths = ["02_Tools/release/package.mjs", "05_Software/src/apps/desktop/electron-builder.yml", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/help/en/index.md"]
+
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

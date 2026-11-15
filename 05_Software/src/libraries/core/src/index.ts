@@ -7,6 +7,7 @@ export * from "./agent/runtime.js";
 export * from "./agent/tool.js";
 export * from "./agent/types.js";
 export * from "./artifacts/store.js";
+export * from "./help/library.js";
 export * from "./knowledge/embedding.js";
 export * from "./knowledge/ingest.js";
 export * from "./knowledge/inspect.js";

@@ -47,6 +47,7 @@ import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
 import { mockDocument, mockDocuments } from "./documents.js";
 import { mockAppInfo } from "./fixtures.js";
+import { mockHelpList, mockHelpRead } from "./help.js";
 import { MockSessions } from "./sessions.js";
 
 const openAiFixture = {
@@ -1432,6 +1433,14 @@ export function createMockApi(
       case "app.info":
         value = info;
         break;
+      case "help.list":
+        value = mockHelpList(channels["help.list"].request.parse(input.data).language);
+        break;
+      case "help.read": {
+        const { page, language } = channels["help.read"].request.parse(input.data);
+        value = mockHelpRead(page, language);
+        break;
+      }
       case "window.menu":
         value = {};
         break;

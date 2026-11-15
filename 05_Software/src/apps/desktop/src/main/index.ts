@@ -8,6 +8,7 @@ import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import {
   createDownloadPdfExtractor,
   embeddingModelId,
+  HelpLibrary,
   type LlmGateway,
   leaseRoot,
   modelSchema,
@@ -141,6 +142,10 @@ const models = app.isPackaged
 const manifest = app.isPackaged
   ? join(process.resourcesPath, "model-manifest.json")
   : join(models, "model-manifest.json");
+/** App help pages, read-only: <resources>/help when packaged, 05_Software/help in development. */
+const help = new HelpLibrary(
+  app.isPackaged ? join(process.resourcesPath, "help") : join(here, "../../../../../help"),
+);
 // Selection, hashing, extraction, chunking and embeddings run in the VERA Indexer process; main
 // keeps every SQLite write (TASK-f09609fd).
 const indexer = new IndexerHost({
@@ -979,6 +984,8 @@ ipcMain.handle(
       "providers.save": (request) => providers.save(request),
       "providers.remove": (request) => providers.remove(request),
       "app.info": () => getAppInfo(dataLocations.portable),
+      "help.list": ({ language }) => help.list(language),
+      "help.read": ({ page, language }) => help.read(page, language),
       "window.menu": (request) => popupWindowMenu(window, request),
       "app.settings.get": () => {
         const snapshot = settings.get();

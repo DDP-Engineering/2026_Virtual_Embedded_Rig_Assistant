@@ -357,3 +357,16 @@ it("mock runs list, read a log and stop a running run of the open workbench", as
     code: "CONFLICT",
   });
 });
+
+it("serves the source-tree app help with English fallback (REQ-FUNC-a2db3ddc, REQ-REL-e038060c)", async () => {
+  const { api } = createMockApi();
+  expect(await api.invoke("help.read", { page: "index", language: "en" })).toMatchObject({
+    page: "index",
+    title: "VERA help",
+    language: "en",
+  });
+  expect((await api.invoke("help.list", { language: "en" }))[0]).toMatchObject({ page: "index" });
+  await expect(api.invoke("help.read", { page: "no-such-page", language: "en" })).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+});

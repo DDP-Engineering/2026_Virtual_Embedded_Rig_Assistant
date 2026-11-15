@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-2e84bc58"
+
+title = "List app help pages by language"
+
+status = "active"
+
+requirement = """When the renderer requests help.list for a language, VERA shall return the app help pages of that language with their page name, title (first level-one heading, else the page name) and served language, adding the English page for every page that exists only in English, ordered with index first, then the pages index.md links in link order, then the remaining pages by name."""
+
+verification = """Temporary help root with en and de pages, one English-only page and an index linking two pages in reverse name order: list de returns German titles, the English-only page marked en, and the index link order; a page without a heading is titled by its name."""
+
+affected_paths = ["05_Software/src/libraries/core/src/help/library.ts", "05_Software/src/libraries/shared/src/help.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/help.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/help/library.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
