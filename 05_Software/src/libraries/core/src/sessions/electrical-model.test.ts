@@ -81,7 +81,7 @@ it("asks for approval in ask mode and writes the model only when approved (REQ-F
     expect(catalogs[0]).toEqual(
       expect.arrayContaining(["electrical_model", "electrical_model_change", "electrical_network"]),
     );
-    for (const other of ["industrial_catalog", "protection_coordination", "motor_drives"])
+    for (const other of ["industrial_catalog", "protection_coordination", "motor_drives", "power_quality"])
       expect(catalogs[0]).not.toContain(other);
     expect(approval.diff).toContain('+      "name": "Duty pump"');
     expect(await model()).toBe(fixture);
@@ -115,6 +115,7 @@ it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4df
     "electrical-network",
     "protection-coordination",
     "motor-drives",
+    "power-quality-pfc",
   ]);
   const session = service.create(null, "read-only");
   service.send(session.id, "rename the pump");
@@ -127,6 +128,7 @@ it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4df
     expect(catalog).not.toContain("electrical_network");
     expect(catalog).not.toContain("protection_coordination");
     expect(catalog).not.toContain("motor_drives");
+    expect(catalog).not.toContain("power_quality");
   }
   expect(await model()).toBe(fixture);
   expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
@@ -144,6 +146,7 @@ it("offers no electrical tool without an electrical or automation plugin (REQ-SE
     expect(catalog).not.toContain("electrical_network");
     expect(catalog).not.toContain("protection_coordination");
     expect(catalog).not.toContain("motor_drives");
+    expect(catalog).not.toContain("power_quality");
   }
   expect(await model()).toBe(fixture);
 });
@@ -159,7 +162,13 @@ it("offers each plugin tool only while its own plugin is loaded (REQ-SEC-4dfa2a5
     "protection_coordination",
   ]);
   expect(
-    offered(["industrial-catalog", "electrical-network", "protection-coordination", "motor-drives"]),
+    offered([
+      "industrial-catalog",
+      "electrical-network",
+      "protection-coordination",
+      "motor-drives",
+      "power-quality-pfc",
+    ]),
   ).toEqual(core.electricalToolNames);
   expect(core.electricalToolOffered("read", [])).toBe(true);
 });

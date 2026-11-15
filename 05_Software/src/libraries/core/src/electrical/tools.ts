@@ -34,6 +34,7 @@ export const electricalPluginTools: Readonly<Record<string, string>> = {
   electrical_network: "electrical-network",
   protection_coordination: "protection-coordination",
   motor_drives: "motor-drives",
+  power_quality: "power-quality-pfc",
 };
 /** Every tool a host offers only with electrical or automation plugins loaded. */
 export const electricalToolNames: readonly string[] = [

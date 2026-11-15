@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-6e83340d"
+
+title = "Assess parallel resonance from the network fault level and measured harmonic orders and limit the verdict when data are missing"
+
+status = "active"
+
+requirement = """
+When power_quality evaluates a bank, VERA shall compute for each bank state the parallel resonance order 1/sqrt(p + Q/Ssc) from the board's maximum fault level in the network result and the step detuning, fail a state whose order lies within the stated margin of a measured significant harmonic order, pass it only when every order it could meet was measured, and give unknown when the fault level, the margin, the harmonic measurement or the measured order range is missing or the bank has more than 64 states.
+"""
+
+verification = "Core engine tests: the EIG example (Ssc 10 MVA, 350 kvar) gives 5.35 against the guide's 5.5 within 5 %; a plain bank resonating near the measured 17th fails; a 7 % detuned step passes below the 5th; no network run, no margin, no harmonic columns or an order above the measured range each give unknown and an incomplete run; a 20-step bank is checked up to state 20 and more than 64 steps give unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

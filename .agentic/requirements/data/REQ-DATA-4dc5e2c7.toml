@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-4dc5e2c7"
+
+title = "Accept only a strictly valid power quality request and read only named model, result, measurement and catalog data"
+
+status = "active"
+
+requirement = """
+When power_quality is called, VERA shall accept only a strict request (a model board or busbar, optional current network run, measurement file and catalog, a displacement-factor target, optional total power factor minimum, voltage tolerance, resonance margin, harmonic threshold, step limit, harmonic generator power, an explicit undeclared-Q assumption and 1..4 step candidates with optional contactor and protection items of that catalog) and shall otherwise throw before anything is prepared.
+"""
+
+verification = "Core engine tests: the fixture request validates; an unknown key, a load object as board, an item missing from the catalog, a target outside 0.8..1 and a fifth step candidate each throw with the reason and nothing is prepared."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

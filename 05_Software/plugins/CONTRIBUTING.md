@@ -95,7 +95,18 @@ Motor starting and drives come from VERA's `motor_drives` tool (plugin `motor-dr
 `assemblies`: device tags, roles and order codes, power and control connections and mechanical, electrical and sequence
 interlocks per motor - the logical scheme an ECAD adapter reads.
 
-Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`) is offered
+Reactive power compensation comes from VERA's `power_quality` tool (plugin `power-quality-pfc`, spec
+`.agentic/specs/REQ-DATA-4dc5e2c7.md`) at one board, on an optional current network result and a measurement file
+`electrical-automation-measurements/<id>.json` (kind `vera-power-measurements`, format 1: origin, licensed source,
+board, interval, sign and reactive-power conventions, typed columns, rows inline or in `<id>.csv`). It reads catalog
+items of categories `capacitor` (`reactivePower` at conditions `voltage` and `frequency`, `overcurrentRatio`,
+`capacitanceToleranceMax`, `nonLinearShareMax`, attribute `duty`), `detuned-reactor` (`tuningFactor`,
+`overcurrentRatio`), `capacitor-contactor` (`reactivePowerMax` at `voltage`) and the step protection; a
+capacitor/reactor pair counts only through a cited coordination table of kind `detuned step` (`reactivePower`,
+`tuningFactor`, optional `overcurrentRatio`, `harmonicVoltageMax` at `harmonicOrder`, `thdVoltageMax`).
+
+Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
+`power_quality`) is offered
 only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
 cleanly when they are missing or stale.
 

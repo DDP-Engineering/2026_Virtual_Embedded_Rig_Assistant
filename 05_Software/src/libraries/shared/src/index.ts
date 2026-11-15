@@ -22,6 +22,7 @@ export * from "./plugin-catalog.js";
 export * from "./plugin-credentials.js";
 export * from "./plugin-settings.js";
 export * from "./plugins.js";
+export * from "./power-measurements.js";
 export * from "./program-rules.js";
 export * from "./provider-discovery.js";
 export * from "./providers.js";

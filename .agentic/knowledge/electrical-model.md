@@ -16,7 +16,10 @@ let-through energy, RCD, selectivity/cascading/starter tables (spec .agentic/spe
 electrical/protection.ts, protection-tool.ts, result-change.ts), the motor drives engine: `motor_drives`, DOL,
 reversing, star-delta, softstarter and VFD comparison, acceleration model, starter and drive sizing, the result's
 `assemblies` connection and interlock scheme (spec .agentic/specs/REQ-DATA-79118f9a.md, core electrical/motor-drives.ts,
-motor-drives-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+motor-drives-tool.ts), the power factor correction engine: `power_quality`, measurement files
+`electrical-automation-measurements/<id>.json` (+ `.csv`), displacement versus total power factor, compensation need,
+fixed or automatic capacitor banks, detuned steps and resonance (spec .agentic/specs/REQ-DATA-4dc5e2c7.md, core
+electrical/measurements.ts, power-quality.ts, power-quality-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -25,7 +28,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine and the motor drives engine. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine and the power factor correction engine with its measurement files. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -109,13 +112,36 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   it names (both refused when missing, invalid, foreign or stale) and the catalog, and prepares one new result through
   `prepareResultChange`; the result copies the protection result's inputs plus the motors, circuits, cables and
   relations it read.
+- Measurement files (spec REQ-DATA-4dc5e2c7): shared `powerMeasurementsSchema` (kind `vera-power-measurements`,
+  format 1), `powerMeasurementsDir` (`electrical-automation-measurements`), `powerMeasurementLimits` (64 columns,
+  20000 rows, 4 MiB per file); core `checkMeasurements`/`parseMeasurements(json, csv?, id)` -> series {file, times,
+  values by `columnKey` (`activePower`, `harmonicVoltage@5`, ...) in kW, kvar, kVA, V, A and shares, intervalSeconds,
+  gaps}, `readMeasurementFile(root, id)` -> {series, stamp {id, sha256 of JSON + CSV, path, rows, origin}} (PathGuard).
+- Power factor correction engine (spec REQ-DATA-4dc5e2c7): pure `analyzePowerQuality({model, network|null,
+  measurements|null, catalog|null, catalogStamp|null, request, runId, now})` with `powerQualityRequestSchema` {board,
+  network?, measurements?, catalog?, targetPowerFactor 0.8..1, totalPowerFactorMin?, voltageTolerance? (%),
+  resonanceMargin?, harmonicThreshold? (%), maxSteps? 1..32, harmonicGeneratorPower? (kVA), reactiveAsFundamental?,
+  steps? 1..4 {capacitor,
+  reactor?, units? 1..8}, contactor?, protection?}; exported `compensationNeed`, `displacementFactor`,
+  `powerFactorAfter`, `resonanceOrder`, `stepCurrent`, `capacitorCurrentRatio`. Producer `power-quality-pfc` /
+  `pfc`. Criteria (subject = board) `fixed-bank`, `fixed-share`, `step-size|step-count|step-combination|
+  capacitor-voltage|harmonic-duty|non-linear-share|configuration|resonance|contactor|protection|inrush|step:<step>`,
+  `target:<s>`, `total-power-factor:<s>`, `proposal`; values per scenario `<s>` (network IDs, `measured-peak`,
+  `measured-light`) `activePower|reactivePower|displacementFactor|totalPowerFactor|compensationNeed|
+  displacementFactorAfter|totalPowerFactorAfter:<s>`, per step `stepOutput|stepCurrent|permissibleCurrent|steps|
+  capacitorCurrentRatio:<step>`, `resonanceOrder:<step>@<n>`; conditions `bankType`, `step`, `stepOutput`, `steps`,
+  `bankOutput`, `controlLogic`, `measurements`, `networkRun`.
+- Tool `power_quality` (write): reads the model, the named network result (refused when missing, invalid, foreign or
+  stale), the measurement file (refused when invalid or of another board) and the catalog, and prepares one new result
+  through `prepareResultChange`; the result copies the network result's inputs plus the board, its subtree and its
+  source.
 - Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
   devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
   interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
 - Tool gating: `electricalModelToolNames` (`electrical_model`, `electrical_model_change`) are offered while any plugin
   of manifest ecosystem `electrical` or `automation` is loaded (`electricalModelPlugin`); each tool of
   `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
-  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives) only while its own plugin ID
+  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc) only while its own plugin ID
   is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
   desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
@@ -176,6 +202,17 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   REQ-FUNC-31a5706e, REQ-FUNC-179328ee, REQ-FUNC-12507326, REQ-FUNC-f19b1719, REQ-FUNC-028689c0). `motor_drives`
   refuses a stale protection or network result and writes only a new result file (REQ-REL-6bf4730e,
   REQ-FUNC-285949c8).
+- A measurement file is read strictly: declared origin, licensed source, board, interval and conventions, units of the
+  quantity's dimension, one time column first with strictly increasing ISO times, CSV header equal to the column names;
+  anything else refuses the file (REQ-DATA-fec8378b). The PFC engine converts declared generator or capacitive-positive
+  data to the load convention, keeps Q1, DPF and the need unknown when the reactive convention does not establish them (an `undeclared` Q only with
+  the request's `reactiveAsFundamental` assumption), evaluates at most 64 bank states for resonance,
+  computes the total power factor only from S, a PF column or (stated approximation) THDi, fails a fixed bank that
+  exceeds Q1 in any scenario or interval, accepts a capacitor/reactor pair only through a cited `detuned step` entry,
+  never passes a resonance without fault level, margin and measured orders around the resonance, designs no filter and
+  switches nothing (REQ-FUNC-936473de, REQ-FUNC-7484dcd8, REQ-FUNC-9ef28234, REQ-FUNC-a7193330, REQ-FUNC-6e83340d,
+  REQ-FUNC-5f29d1c6). `power_quality` refuses a stale network result or another board's measurements and writes only a
+  new result file (REQ-REL-0f24c593, REQ-FUNC-7c320847).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -197,6 +234,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Protection tool, shared result write | electrical/protection-tool.ts, result-change.ts | electrical/protection-tool.test.ts, network-tool.test.ts |
 | Motor drives engine, request, criteria, scheme | electrical/motor-drives.ts, spec REQ-DATA-79118f9a | electrical/motor-drives.test.ts |
 | Motor drives tool | electrical/motor-drives-tool.ts, result-change.ts | electrical/motor-drives-tool.test.ts |
+| Measurement file format and reading | shared power-measurements.ts, electrical/measurements.ts, spec REQ-DATA-4dc5e2c7 | electrical/measurements.test.ts |
+| PFC engine, request, criteria | electrical/power-quality.ts, spec REQ-DATA-4dc5e2c7 | electrical/power-quality.test.ts |
+| PFC tool | electrical/power-quality-tool.ts, result-change.ts | electrical/power-quality-tool.test.ts |
 | Result assemblies | shared electrical-model.ts, results.ts, report.ts | electrical/motor-drives.test.ts |
 | Offering the tools | electrical/tools.ts (`electricalPluginTools`), sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
@@ -260,6 +300,17 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-FUNC-285949c8 — motor results stored through an approved prepared change, stale with the motors read.
 - REQ-TEST-c04129a0 — three load fixtures, cited catalog, preset reference tolerances.
 - REQ-DATA-e3d5c15f — strict assemblies in the result and the report.
+- REQ-DATA-4dc5e2c7 — accept only a strictly valid power quality request.
+- REQ-DATA-fec8378b — import a declared measurement file or refuse it.
+- REQ-FUNC-936473de — P, Q1, displacement and total power factor with declared conventions.
+- REQ-FUNC-7484dcd8 — compensation need per scenario to the stated target.
+- REQ-FUNC-9ef28234 — fixed or automatic bank, steps, control logic, overcompensation criteria.
+- REQ-FUNC-a7193330 — capacitor, reactor, contactor and protection only from cited data.
+- REQ-FUNC-6e83340d — resonance from fault level and measured orders; missing data unknown.
+- REQ-FUNC-5f29d1c6 — Gh/Ssc configuration rule; no filter designed.
+- REQ-REL-0f24c593 — a stale or foreign network result or another board's measurements is refused.
+- REQ-FUNC-7c320847 — PFC results stored through an approved prepared change, switching nothing.
+- REQ-TEST-37973c6e — guide references with preset tolerances, labelled fictional measurement set.
 
 ## Files
 
@@ -301,3 +352,11 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/motor-drives.test.ts` — hand calculations, ABB example, three loads, assembly, drive.
 - `05_Software/src/libraries/core/src/electrical/motor-drives-tool.test.ts` — prepared result, stale refusal, plugin gating.
 - `05_Software/tests/fixtures/motor-drives/` — fictional plant M and the cited motor-drives catalog.
+- `05_Software/src/libraries/shared/src/power-measurements.ts` — measurement file format-1 schema, folder and limits.
+- `05_Software/src/libraries/core/src/electrical/measurements.ts` — measurement checks, CSV rows, confined reading.
+- `05_Software/src/libraries/core/src/electrical/power-quality.ts` — the PFC engine and its request schema.
+- `05_Software/src/libraries/core/src/electrical/power-quality-tool.ts` — the power_quality write tool.
+- `05_Software/src/libraries/core/src/electrical/measurements.test.ts` — format, CSV/rows, refusals, fixture reading.
+- `05_Software/src/libraries/core/src/electrical/power-quality.test.ts` — guide examples, conventions, bank, equipment, resonance.
+- `05_Software/src/libraries/core/src/electrical/power-quality-tool.test.ts` — prepared result, stale and board refusals, plugin.
+- `05_Software/tests/fixtures/power-quality-pfc/` — fictional plant Q, fictional measurement day, HIPE real excerpt (CC BY 4.0), cited PFC catalog.

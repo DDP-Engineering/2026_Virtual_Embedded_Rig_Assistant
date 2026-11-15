@@ -113,6 +113,14 @@ export const knownProperties: Readonly<Record<string, string>> = {
   ambientDeratingPerKelvin: "ratio",
   altitudeDeratingPer100m: "ratio",
   switchingFrequency: "frequency",
+  reactivePowerMax: "reactive-power",
+  overcurrentRatio: "ratio",
+  capacitanceToleranceMax: "ratio",
+  nonLinearShareMax: "ratio",
+  tuningFactor: "ratio",
+  harmonicOrder: "ratio",
+  harmonicVoltageMax: "ratio",
+  thdVoltageMax: "ratio",
 };
 
 /** Factor (and offset, for °C) to the base unit of each unit's dimension: value * factor + offset. */

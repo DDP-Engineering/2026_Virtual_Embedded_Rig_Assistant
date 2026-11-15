@@ -16,7 +16,10 @@ skills/network-sizing; the engine, the cable-table format, the `electrical_netwo
 plugins/protection-coordination/plugin.yaml (no program, ecosystem `electrical`) and skills/protection-selection; the
 engine, the `protection_coordination` tool and their tests belong to [electrical model](electrical-model.md). For
 motor-drives, start at plugins/motor-drives/plugin.yaml (no program, ecosystem `electrical`) and skills/motor-starting;
-the engine, the `motor_drives` tool and their tests belong to [electrical model](electrical-model.md).
+the engine, the `motor_drives` tool and their tests belong to [electrical model](electrical-model.md). For
+power-quality-pfc, start at plugins/power-quality-pfc/plugin.yaml (no program, ecosystem `electrical`) and
+skills/power-factor-correction; the engine, the measurement format, the `power_quality` tool and their tests belong
+to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -366,6 +369,13 @@ that source metadata reaches the deterministic bundled index unchanged.
   completed through `electrical_model_change`, cited contactors, relays, softstarters or drives picked, VERA's
   `motor_drives` tool run and the comparison, proposal, assembly and scheme explained; no device configured, no
   safety function claimed. Engine and tool: [electrical model](electrical-model.md), spec REQ-DATA-79118f9a.
+- `power-quality-pfc` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Power quality and
+  reactive compensation, default on; activity `design`), Windows x64/Linux x64, no program. Skill
+  `power-factor-correction`: a current network result confirmed, measurements imported with every convention asked,
+  the target and limits agreed with the user, cited capacitors, reactors, contactors and protection picked, VERA's
+  `power_quality` tool run and displacement versus total power factor, the bank, overcompensation, equipment and
+  resonance explained; no step switched, no regulator set, no filter designed. Engine and tool:
+  [electrical model](electrical-model.md), spec REQ-DATA-4dc5e2c7.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

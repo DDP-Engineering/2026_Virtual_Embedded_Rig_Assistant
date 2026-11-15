@@ -64,6 +64,14 @@ it("converts every tool schema and validates samples while filtering disabled na
       catalog: "cat-motor-drives",
       motors: [{ motor: "mot-p2", startingCurrentMax: 70, switchover: 0.8, contactor: "itm-lc1d18p7" }],
     },
+    power_quality: {
+      board: "brd-main",
+      network: "20261115-100000-aaaa",
+      measurements: "meas-fictional-mdb-day",
+      catalog: "cat-pfc",
+      targetPowerFactor: 0.95,
+      steps: [{ capacitor: "itm-blrch125a150b48" }],
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -102,6 +110,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "electrical_network",
     "protection_coordination",
     "motor_drives",
+    "power_quality",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

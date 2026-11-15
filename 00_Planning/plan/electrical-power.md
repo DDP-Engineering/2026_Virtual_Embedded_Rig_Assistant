@@ -21,7 +21,8 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
 2026-11-15 (AEGIS TASK-662ede41), native Ubuntu and licensed IEC cable tables open. PWR-03 implemented 2026-11-15
 (AEGIS TASK-0184d2d1), native Ubuntu, public selectivity/type-2 tables with Iq and numeric tripping bands open. PWR-04
 implemented 2026-11-15 (AEGIS TASK-37f3835b), native Ubuntu and data the public pages do not give (softstarter starts
-per hour, drive EMC category and motor cable length, GV2ME trip class) open.
+per hour, drive EMC category and motor cable length, GV2ME trip class) open. PWR-05 implemented 2026-11-15 (AEGIS TASK-b30a9859) with a fictional measurement set and a real HIPE excerpt
+(CC BY 4.0, Q convention undeclared); a public capacitor/reactor pairing table and native Ubuntu open.
 
 ## Order
 
@@ -32,7 +33,7 @@ per hour, drive EMC category and motor cable length, GV2ME trip class) open.
 | 3 | PWR-02 | [#128](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/128) | `electrical-network`: load balance, cable sizing, voltage drop, short circuit on radial LV networks | PWR-00 | implemented |
 | 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | implemented |
 | 5 | PWR-04 | [#130](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/130) | `motor-drives`: DOL, reversing, star-delta, softstarter or VFD choice and starter assembly | PWR-01, PWR-03 | implemented |
-| 6 | PWR-05 | [#131](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/131) | `power-quality-pfc`: P/Q/S and harmonic profiles, compensation need, capacitor bank steps | PWR-01, PWR-02 | planned |
+| 6 | PWR-05 | [#131](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/131) | `power-quality-pfc`: P/Q/S and harmonic profiles, compensation need, capacitor bank steps | PWR-01, PWR-02 | implemented |
 | 7 | PWR-06 | [#132](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/132) | `lighting-design`: preliminary estimate, IES/LDT import, DIALux exchange and report check | PWR-00, PWR-01 | planned |
 
 ## Decisions for this epic (user, 2026-11-15)
@@ -158,3 +159,32 @@ per hour, drive EMC category and motor cable length, GV2ME trip class) open.
   2026-11-15.
 - Open: native Ubuntu (WSL2 only); softstarter starts per hour, the drive's EMC category and maximum motor cable length
   and the GV2ME trip class are not on the public pages, so those checks stay unknown with the real fixture.
+
+## PWR-05 #131 - power quality and reactive compensation
+
+- Engine `vera-pfc-1` in product code (core `electrical/power-quality.ts`, pure), measurement reader
+  `electrical/measurements.ts` and tool `power_quality` (write: one new result through `result-change.ts`), spec
+  `.agentic/specs/REQ-DATA-4dc5e2c7.md`. Plugin `power-quality-pfc` (ecosystem electrical, no program) brings the skill
+  `power-factor-correction` and joins the Electrical power and distribution pack; the tool is gated on its own plugin.
+- Inputs: the board, an optional CURRENT `electrical-network` result (scenario P/Q at the board, nominal voltage,
+  maximum fault level), a measurement file `electrical-automation-measurements/<id>.json` (format 1: origin, licensed
+  source, board, interval, sign and reactive-power conventions, typed columns, rows inline or in `<id>.csv`) and one
+  catalog; target displacement factor, total power factor minimum, voltage tolerance, resonance margin, harmonic
+  threshold, regulator outputs and Gh in the request.
+- Per scenario and measured interval: P, Q1, displacement factor and total power factor, the need to the target and
+  both factors after compensation with the distortion kept. Bank: fixed only without overcompensation at any scenario
+  and within the guide's 15 % rule, else automatic equal steps that reach the target without leading operation, within
+  the regulator's outputs, with a control-logic proposal that is never applied. Equipment from cited data: capacitor
+  output and voltage, harmonic current, non-linear share, capacitor contactor kvar, protection for IMP and 10 x IN;
+  capacitor/reactor pairs only from a cited `detuned step` table. Resonance 1/sqrt(p + Q/Ssc) per bank state against the
+  measured significant orders; the guide's Gh/Ssc rule; no filter designed.
+- References fixed before the comparison: the guide's simplified compensation example and ratio (1 %), its resonance
+  example (5 %; 5.35 vs 5.5), its capacitor protection examples (1 %) and hand calculations for the total power factor
+  (0.5 %).
+- Fixtures: fictional plant Q, a FICTIONAL labelled measurement day (CC0), a REAL excerpt of the HIPE main terminal
+  (2017-10-24, one raw reading per minute, CC BY 4.0, Q undeclared - read as fundamental only with the request's stated
+  assumption; need 6.34 kvar, largest workable step 1.81 kvar, so the 8.68 kvar step fails) and `cat-pfc.json` with VarPlus Can HDuty
+  BLRCH125A150B48, LVR07125A40T and LC1DFKP7 from se.com UK pages read 2026-11-15 plus the C10G fuses. With them the
+  plain HDuty bank fails resonance near the 17th and the detuned candidate stays unknown (no cited pairing table), so the
+  proposal is conditional.
+- Open: a public capacitor/reactor pairing table; whether HIPE's Q is fundamental (undocumented); minimum fault level at boards (PWR-02 gives the maximum only); native Ubuntu.

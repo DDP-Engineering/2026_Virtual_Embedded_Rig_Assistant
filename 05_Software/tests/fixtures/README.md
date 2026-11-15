@@ -44,6 +44,19 @@ Bussmann C10G20/C10G32 fuses copied from the fixtures above, TeSys LRD21 and LAD
 Altivar Process ATV930U75N4 (se.com UK product pages), and the class 10A tripping band from se.com FAQ FA22893. It
 holds no softstarter starts per hour, drive EMC category or motor cable length because the pages give none.
 
+`power-quality-pfc/plant-q.json` is a fictional plant (the network A transformer and a main board with three motor
+groups, a drive group and lighting). `power-quality-pfc/meas-fictional-mdb-day.json` + `.csv` is a FICTIONAL
+measurement day at that board (declared `origin: fictional`, CC0), generated from a made-up brief: 96 x 15 min of
+P, Q1, S, PF, U, THD and harmonic orders up to 25. `power-quality-pfc/cat-pfc.json` is typed from public se.com UK
+product pages read 2026-11-15 (cited per value): VarPlus Can HDuty BLRCH125A150B48, detuned reactor LVR07125A40T,
+capacitor contactor LC1DFKP7, plus the Bussmann C10G20/C10G32 fuses copied from the protection fixture. It holds no
+capacitor/reactor pairing table because no public one was found; the tests add a fictional one in memory.
+`power-quality-pfc/meas-hipe-main-terminal-2017-10-24.json` + `.csv` is REAL data: an excerpt of the HIPE data set
+1.0.1 (Bischof, Trittenbach, Vollmer, Werle, Blank, Boehm, KIT; ACM e-Energy 2018, doi 10.1145/3208903.3210278;
+https://www.energystatusdata.kit.edu/hipe.php), licensed CC BY 4.0. Changed: main terminal only, 2017-10-24 only,
+the first raw reading of each minute (1440 rows, no averaging), 31 of 362 columns renamed, float32 values written with
+at most 3 decimals; HIPE does not document whether Q is fundamental, so the file declares `reactive: undeclared`.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

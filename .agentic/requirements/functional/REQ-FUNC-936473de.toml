@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-936473de"
+
+title = "Give P, fundamental Q, displacement factor and total power factor per scenario with declared sign conventions"
+
+status = "active"
+
+requirement = """
+When power_quality evaluates a scenario, VERA shall convert the declared generator or capacitive-positive conventions to the load convention with inductive Q positive, report active power, fundamental reactive power, displacement factor with its lagging or leading character and total power factor P/S, derive the total power factor from THDi only as a stated approximation, read an undeclared reactive power as fundamental only when the request states that assumption, and keep a value unknown when its inputs or the reactive-power convention do not establish it.
+"""
+
+verification = "Core engine tests: generator-convention and capacitive-positive rows give the same Q1 and character as load-convention rows; a distorted row gives total PF below DPF (S measured) and DPF/sqrt(1+THDi^2) within 0.5 % of the hand value; a nonactive-Q file without a displacement column leaves DPF and the need unknown; the undeclared-Q HIPE excerpt is blocked without reactiveAsFundamental and records the assumption with it; export intervals are counted and not compensated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

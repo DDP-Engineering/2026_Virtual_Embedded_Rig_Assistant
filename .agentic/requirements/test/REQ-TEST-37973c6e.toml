@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-37973c6e"
+
+title = "Power quality fixtures check the engine against independent references and a labelled measurement set"
+
+status = "active"
+
+requirement = """
+The power quality tests shall use a fictional plant model, a clearly labelled fictional measurement day at its main board, a small excerpt of a real publicly licensed measurement set with attribution (HIPE main terminal, CC BY 4.0) checked against a recomputation of its CSV, a catalog typed from cited public manufacturer pages and references fixed before the comparison: the guide's simplified compensation example and ratio (1 %), its resonance example (5 %), its capacitor protection examples (1 %) and hand calculations for the total power factor under distortion (0.5 %).
+"""
+
+verification = "Inspection and core engine tests: every fixture catalog value carries its source, page/table and read date; the fictional measurement fixture says origin fictional and the HIPE excerpt origin measured with its licence and changes; the excerpt's need and largest step match the recomputation within 0.5 %; the reference comparisons hold with the stated tolerances; the fixture run gives an automatic proposal and a traceable report with limits."
+
+affected_paths = ["05_Software/tests/fixtures/power-quality-pfc/"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

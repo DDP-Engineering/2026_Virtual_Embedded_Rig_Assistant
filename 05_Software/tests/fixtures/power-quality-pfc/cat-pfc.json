@@ -1,0 +1,627 @@
+{
+  "kind": "vera-industrial-catalog",
+  "format": 1,
+  "id": "cat-pfc",
+  "version": "2026-11-15.1",
+  "title": "PFC step equipment: VarPlus Can HDuty capacitor, LVR detuned reactor, TeSys D capacitor contactor, Bussmann C10G gG (test fixture)",
+  "sources": [
+    {
+      "id": "src-se-blrch125a150b48",
+      "kind": "datasheet",
+      "title": "BLRCH125A150B48 product page (VarPlus Can HDuty Capacitor - 12.5/15 kvar - 480 V - 50/60Hz), Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/BLRCH125A150B48/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lvr07125a40t",
+      "kind": "datasheet",
+      "title": "LVR07125A40T product page (Anti Harmonic detuned reactor 12.5kvar 190Hz (3.8) 7% 50Hz 400V), Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LVR07125A40T/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lc1dfkp7",
+      "kind": "datasheet",
+      "title": "LC1DFKP7 product page (Capacitor contactor, TeSys D, 12.5 kVAR at 400 V/50 Hz, coil 230 V AC 50/60 Hz), Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1DFKP7/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-eig-switching-devices",
+      "kind": "other",
+      "title": "Electrical Installation Guide - Elementary switching devices (Fig. H10)",
+      "publisher": "Schneider Electric (electrical-installation.org)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.electrical-installation.org/enw/index.php?title=Elementary_switching_devices",
+      "license": "Public Schneider Electric Electrical Installation Guide wiki page; individual values quoted with citation, no copy of the guide"
+    },
+    {
+      "id": "src-eaton-c10g20",
+      "kind": "datasheet",
+      "title": "C10G20 product page, Specifications",
+      "publisher": "Eaton (eaton.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.eaton.com/gb/en-gb/skuPage.C10G20.html",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-eaton-c10g32",
+      "kind": "datasheet",
+      "title": "C10G32 product page, Specifications",
+      "publisher": "Eaton (eaton.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.eaton.com/gb/en-gb/skuPage.C10G32.html",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    }
+  ],
+  "families": [
+    {
+      "id": "fam-varplus-can-hduty",
+      "manufacturer": "Schneider Electric",
+      "name": "VarPlus Can HDuty capacitors (PowerLogic)",
+      "category": "capacitor"
+    },
+    {
+      "id": "fam-lvr-detuned",
+      "manufacturer": "Schneider Electric",
+      "name": "PowerLogic PFC detuned reactors LVR",
+      "category": "detuned-reactor",
+      "note": "The product page names no capacitor to pair with; no cited capacitor/reactor combination table is part of this catalog."
+    },
+    {
+      "id": "fam-tesys-d-capacitor",
+      "manufacturer": "Schneider Electric",
+      "name": "TeSys Deca capacitor duty contactors LC1D.K",
+      "category": "capacitor-contactor"
+    },
+    {
+      "id": "fam-bussmann-c10g",
+      "manufacturer": "Eaton",
+      "name": "Bussmann series 10 x 38 mm cylindrical fuses gG",
+      "category": "fuse-link",
+      "note": "Product pages give no time-current data or I2t. Fig. H10 of the cited guide covers 4 < In < 16 A and 16 < In <= 63 A, so no conventional fusing current is cited for 16 A."
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-blrch125a150b48",
+      "family": "fam-varplus-can-hduty",
+      "orderCode": "BLRCH125A150B48",
+      "name": "VarPlus Can HDuty Capacitor - 12.5/15 kvar - 480 V - 50/60Hz",
+      "attributes": {
+        "duty": "heavy-duty",
+        "standards": "IEC 60831-1, IEC 60831-2"
+      },
+      "parameters": [
+        {
+          "name": "reactivePower",
+          "value": 12.5,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Electrical parameters 12.5 kvar 480 V 50 Hz",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 480,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 50,
+              "unit": "Hz"
+            }
+          }
+        },
+        {
+          "name": "reactivePower",
+          "value": 15,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Electrical parameters 15 kvar 480 V 60 Hz",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 480,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 60,
+              "unit": "Hz"
+            }
+          }
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 480,
+          "unit": "V",
+          "basis": "input",
+          "note": "Rated voltage 480 V AC 50/60 Hz",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "overcurrentRatio",
+          "value": 1.8,
+          "unit": "1",
+          "basis": "input",
+          "note": "continuous overcurrent capacity 1.8 x In",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "nonLinearShareMax",
+          "value": 20,
+          "unit": "%",
+          "basis": "input",
+          "note": "Network harmonic content <= 20 %",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "capacitanceToleranceMax",
+          "value": 10,
+          "unit": "%",
+          "basis": "input",
+          "note": "Capacitance tolerance - 5 % to 10 %",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 55,
+          "unit": "°C",
+          "basis": "input",
+          "note": "Ambient air temperature for operation -25...55 °C",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMin",
+          "value": -25,
+          "unit": "°C",
+          "basis": "input",
+          "note": "Ambient air temperature for operation -25...55 °C",
+          "source": {
+            "id": "src-se-blrch125a150b48",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-lvr07125a40t",
+      "family": "fam-lvr-detuned",
+      "orderCode": "LVR07125A40T",
+      "name": "Anti Harmonic detuned reactor 12.5kvar 190Hz (3.8) 7% 50Hz 400V",
+      "attributes": {
+        "tuningOrder": "3.8 - 190 Hz - 7 % - 50 Hz",
+        "harmonicCurrentSpectrum": "3.7 % x I3, 38.2 % x I5, 13.6 % x I7, 4.9 % x I11"
+      },
+      "parameters": [
+        {
+          "name": "tuningFactor",
+          "value": 7,
+          "unit": "%",
+          "basis": "input",
+          "note": "Tuning order 3.8 - 190 Hz - 7 % - 50 Hz",
+          "source": {
+            "id": "src-se-lvr07125a40t",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "reactivePower",
+          "value": 12.5,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Reactive power rating 12.5 kvar for 400 V AC 50 Hz",
+          "source": {
+            "id": "src-se-lvr07125a40t",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 400,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 50,
+              "unit": "Hz"
+            }
+          }
+        },
+        {
+          "name": "inductance",
+          "value": 2.987,
+          "unit": "mH",
+          "basis": "input",
+          "note": "Value of inductance 2.987 mH",
+          "source": {
+            "id": "src-se-lvr07125a40t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 18,
+          "unit": "A",
+          "basis": "input",
+          "note": "Fundamental current rating 18 A",
+          "source": {
+            "id": "src-se-lvr07125a40t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "overcurrentRatio",
+          "value": 1.2,
+          "unit": "1",
+          "basis": "input",
+          "note": "[Imp] maximum permanent current 1.2 x I1",
+          "source": {
+            "id": "src-se-lvr07125a40t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 55,
+          "unit": "°C",
+          "basis": "input",
+          "note": "Ambient air temperature for operation 0...55 °C at <= 1000 m",
+          "source": {
+            "id": "src-se-lvr07125a40t",
+            "table": "Environment"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "altitudeMax": {
+              "value": 1000,
+              "unit": "m"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "itm-lc1dfkp7",
+      "family": "fam-tesys-d-capacitor",
+      "orderCode": "LC1DFKP7",
+      "name": "Capacitor contactor, TeSys D, 12.5 kVAR at 400 V/50 Hz, coil 230 V AC 50/60 Hz",
+      "attributes": {
+        "utilisationCategory": "AC-6b",
+        "controlVoltage": "230 V AC 50/60 Hz",
+        "currentLimitation": "front mounted early make poles and pre-wired damping resistors"
+      },
+      "parameters": [
+        {
+          "name": "reactivePowerMax",
+          "value": 7,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Reactive power rating 7 kvar at 230 V AC 50 Hz 60 °C",
+          "source": {
+            "id": "src-se-lc1dfkp7",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 230,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 50,
+              "unit": "Hz"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            }
+          }
+        },
+        {
+          "name": "reactivePowerMax",
+          "value": 12.5,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Reactive power rating 12.5 kvar at 400 V AC 50 Hz 60 °C",
+          "source": {
+            "id": "src-se-lc1dfkp7",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 400,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 50,
+              "unit": "Hz"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            }
+          }
+        },
+        {
+          "name": "reactivePowerMax",
+          "value": 13,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Reactive power rating 13 kvar at 440 V AC 50 Hz 60 °C",
+          "source": {
+            "id": "src-se-lc1dfkp7",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 50,
+              "unit": "Hz"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            }
+          }
+        },
+        {
+          "name": "reactivePowerMax",
+          "value": 21,
+          "unit": "kvar",
+          "basis": "input",
+          "note": "Reactive power rating 21 kvar at 690 V AC 50 Hz 60 °C",
+          "source": {
+            "id": "src-se-lc1dfkp7",
+            "table": "Main"
+          },
+          "status": "confirmed",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "frequency": {
+              "value": 50,
+              "unit": "Hz"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            }
+          }
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "note": "[Ue] rated operational voltage Power circuit: 690 V AC 50/60 Hz",
+          "source": {
+            "id": "src-se-lc1dfkp7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "operatingRateMax",
+          "value": 240,
+          "unit": "1/h",
+          "basis": "input",
+          "note": "Maximum operating rate 240 cyc/h",
+          "source": {
+            "id": "src-se-lc1dfkp7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-c10g20",
+      "family": "fam-bussmann-c10g",
+      "orderCode": "C10G20",
+      "name": "Eaton Bussmann 10 x 38 mm cylindrical fuse 20 A gG 500 V AC",
+      "attributes": {
+        "fuseClass": "gG",
+        "size": "10 x 38 mm"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 20,
+          "unit": "A",
+          "basis": "input",
+          "note": "Amperage Rating",
+          "source": {
+            "id": "src-eaton-c10g20",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 500,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Voltage rating, Voltage type AC",
+          "source": {
+            "id": "src-eaton-c10g20",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 120,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMax": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60269"
+            }
+          },
+          "note": "Breaking capacity 120 kA; the page gives one rated breaking capacity and one rated voltage (IEC 60269 rates it at the rated voltage)",
+          "source": {
+            "id": "src-eaton-c10g20",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.6,
+          "unit": "1",
+          "basis": "input",
+          "conditions": {
+            "fuseClass": {
+              "text": "gG"
+            }
+          },
+          "note": "Conventional fusing current I2 = 1.6 In for gG fuses, 16 A < In <= 63 A, conventional time 1 h",
+          "source": {
+            "id": "src-se-eig-switching-devices",
+            "table": "Fig. H10"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-c10g32",
+      "family": "fam-bussmann-c10g",
+      "orderCode": "C10G32",
+      "name": "Eaton Bussmann 10 x 38 mm cylindrical fuse 32 A gG 400 V AC",
+      "attributes": {
+        "fuseClass": "gG",
+        "size": "10 x 38 mm"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 32,
+          "unit": "A",
+          "basis": "input",
+          "note": "Amperage Rating",
+          "source": {
+            "id": "src-eaton-c10g32",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 400,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Voltage rating, Voltage type AC",
+          "source": {
+            "id": "src-eaton-c10g32",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 120,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60269"
+            }
+          },
+          "note": "Breaking capacity 120 kA; the page gives one rated breaking capacity and one rated voltage (IEC 60269 rates it at the rated voltage)",
+          "source": {
+            "id": "src-eaton-c10g32",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.6,
+          "unit": "1",
+          "basis": "input",
+          "conditions": {
+            "fuseClass": {
+              "text": "gG"
+            }
+          },
+          "note": "Conventional fusing current I2 = 1.6 In for gG fuses, 16 A < In <= 63 A, conventional time 1 h",
+          "source": {
+            "id": "src-se-eig-switching-devices",
+            "table": "Fig. H10"
+          },
+          "status": "confirmed"
+        }
+      ]
+    }
+  ],
+  "coordination": []
+}

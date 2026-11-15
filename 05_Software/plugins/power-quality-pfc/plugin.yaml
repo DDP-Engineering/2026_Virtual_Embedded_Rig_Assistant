@@ -1,0 +1,9 @@
+format: 1
+id: power-quality-pfc
+version: 0.1.0
+name: Power quality and reactive compensation
+summary: Import P/Q/S and harmonic measurements, size a fixed or automatic capacitor bank and check overcompensation, equipment and resonance.
+description: Evaluate reactive power compensation at one board with VERA's power_quality tool - per network scenario and per measured interval (CSV or JSON with declared time, units and sign conventions) the active and fundamental reactive power, the displacement factor and the total power factor under distortion, the kvar need to a target, a fixed or automatic bank of equal steps with a control-logic proposal, overcompensation at light load, capacitor, detuned reactor, capacitor contactor and step protection checks against cited catalog data (combinations only from cited tables) and the parallel resonance from the network fault level and the measured harmonic orders. Missing data stays unknown; no step is switched, no regulator is set and no filter is designed. Capacitor banks here are reactive compensation, not batteries or UPS.
+ecosystem: electrical
+platforms: [windows-x64, linux-x64]
+docs: [README.md]
