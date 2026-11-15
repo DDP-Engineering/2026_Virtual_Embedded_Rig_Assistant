@@ -1830,9 +1830,6 @@ legend {
 }
 .workbench-documents-preview {
   margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 0.6rem;
-  background: var(--muted);
   font-weight: 600;
 }
 .workbench-documents-list {
@@ -2291,7 +2288,8 @@ legend {
 }
 .transcript-item.user {
   border-radius: 1.25rem;
-  background: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--border);
   padding: 0.8rem 1rem;
   max-width: 85%;
 }
@@ -2552,23 +2550,6 @@ legend {
   margin: 0;
   color: var(--muted-foreground);
 }
-.agent-activity ol {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 0.6rem;
-}
-.agent-activity .disclosure-toggle {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.agent-activity svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
 .activity-preview {
   color: var(--muted-foreground);
   overflow: hidden;
@@ -2587,13 +2568,6 @@ legend {
 }
 .activity-prompt-usage span {
   overflow-wrap: anywhere;
-}
-.agent-activity pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  padding: 0.75rem;
-  background: var(--muted);
-  font-size: var(--code-font-size);
 }
 .session-entry {
   position: relative;
