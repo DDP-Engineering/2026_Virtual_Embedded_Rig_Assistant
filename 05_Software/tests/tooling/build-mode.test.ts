@@ -31,10 +31,8 @@ beforeAll(() => {
   mkdirSync(checkout);
   copyFileSync(join(root, "package.json"), join(checkout, "package.json"));
   mkdirSync(join(repo, "02_Tools/release"), { recursive: true });
-  copyFileSync(
-    join(root, "../02_Tools/release/update-config.mjs"),
-    join(repo, "02_Tools/release/update-config.mjs"),
-  );
+  for (const file of ["update-config.mjs", "catalog-signing-key.pub.pem"])
+    copyFileSync(join(root, "../02_Tools/release", file), join(repo, "02_Tools/release", file));
   for (const relative of ["src/apps/desktop", "src/libraries/core", "src/libraries/shared"]) {
     mkdirSync(join(checkout, relative), { recursive: true });
     copyFileSync(join(root, relative, "package.json"), join(checkout, relative, "package.json"));

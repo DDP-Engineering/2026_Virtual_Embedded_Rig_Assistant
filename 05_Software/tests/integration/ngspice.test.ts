@@ -87,11 +87,12 @@ it("publishes the official ngspice package with a pinned engine, its rules, skil
   expect(Object.keys(m.programs)).toEqual(["ngspice", "ngspice-tool"]);
   expect(m.programs["ngspice-tool"]?.uses).toEqual(["ngspice"]);
   const install = m.programs.ngspice?.install as {
-    download: Record<string, { url: string; sha256: string; path: string }>;
+    download: Record<string, { url: string; sha256: string; bytes?: number; path: string }>;
   };
   expect(install.download["windows-x64"]).toEqual({
     url: "https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/47/ngspice-47_64.7z",
     sha256: "59225971bd68cdd1199443649aa4615a9e6d684933f205ab49006a3942518f5a",
+    bytes: 13814879,
     path: "Spice64/bin/ngspice_con.exe",
   });
   const risk = (program: string, args: string[]) => classifyCommand(m.rules ?? [], program, args).risk;

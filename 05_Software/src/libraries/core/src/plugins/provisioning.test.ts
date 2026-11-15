@@ -1756,6 +1756,7 @@ it("invalidates only the named plugin's resolutions", async () => {
       id: "other",
       version: "1.0.0",
       name: "Other",
+      summary: "Other tools.",
       description: "Other tools.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],

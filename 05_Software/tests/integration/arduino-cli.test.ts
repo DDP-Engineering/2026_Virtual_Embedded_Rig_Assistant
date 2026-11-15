@@ -193,18 +193,20 @@ describe("package", { timeout: 30_000 }, () => {
     expect(m.requires).toEqual(["serial-monitor"]);
     expect(m.programs["arduino-tool"]?.uses).toEqual(["arduino-cli"]);
     const install = m.programs["arduino-cli"]?.install as {
-      download: Record<string, { url: string; sha256: string; path: string }>;
+      download: Record<string, { url: string; sha256: string; bytes?: number; path: string }>;
       preferDownload: boolean;
     };
     expect(install.preferDownload).toBe(true);
     expect(install.download["windows-x64"]).toEqual({
       url: "https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Windows_64bit.zip",
       sha256: "2769b9b282ce597db9679d8ec14d726d57004ca4205ef4d7a795bf36b6cdc9d8",
+      bytes: 20404890,
       path: "arduino-cli.exe",
     });
     expect(install.download["linux-x64"]).toEqual({
       url: "https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Linux_64bit.tar.gz",
       sha256: "321ee249f44c78053234fec0f36101092bc6021bf24939e15e0cc2449c5ed250",
+      bytes: 20111675,
       path: "arduino-cli",
     });
     const version = m.programs["arduino-cli"]?.version;
