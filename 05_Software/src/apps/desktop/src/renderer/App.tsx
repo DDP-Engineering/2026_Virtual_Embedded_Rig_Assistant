@@ -614,7 +614,6 @@ export function App() {
                 )}
                 {/* Stays mounted while hidden so an unsaved draft survives navigation. */}
                 <div hidden={settings || plugins || !newWorkbench}>
-                  <p className="muted">{t("welcome.description")}</p>
                   <WorkbenchCreate
                     key={createdCount}
                     shown={!settings && !plugins && newWorkbench}

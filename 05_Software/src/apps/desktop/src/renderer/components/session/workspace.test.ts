@@ -510,17 +510,9 @@ test("New Workbench creates only and submits the configured draft with prefilled
   expect(page.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("new-board");
   expect(
     [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual([
-    "general",
-    "documents",
-    "instructions",
-    "agent",
-    "chat",
-    "tools",
-    "skills",
-    "embeddings",
-    "plugins",
-  ]);
+  ).toEqual(["general", "documents", "instructions", "tools", "skills", "embeddings"]);
+  // Model, permissions, chat detail and plugins are in Essentials, not in Advanced options.
+  expect(page.querySelector("[data-create-essentials] [data-project-model]")).not.toBeNull();
   await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
   await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
   await act(async () =>
@@ -598,7 +590,6 @@ test("New Workbench drafts skills, keeps existing instructions, ignores Enter an
   const instructions = page.querySelector<HTMLTextAreaElement>("#pinned-content");
   expect(instructions?.value).toBe("Existing bench notes\n");
   expect(instructions?.readOnly).toBe(true);
-  await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="agent"]')?.click());
   const model = page.querySelector<HTMLInputElement>("[data-project-model]");
   if (!model) throw Error("Missing model field");
   const user = userEvent.setup();

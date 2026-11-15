@@ -31,7 +31,6 @@
     "skipToContent": "Skip to main content"
   },
   "welcome": {
-    "description": "A workbench holds your board’s documents, notes and skills. Your workspace starts here.",
     "workbenches": "Workbenches",
     "create": "Create a workbench"
   },
@@ -782,7 +781,10 @@
     "saved": "Saved locally"
   },
   "create": {
-    "folderHint": "Choose the folder that holds the board's documents and notes. VERA keeps its own data in .vera inside it.",
+    "folder": "Folder",
+    "noFolder": "No folder selected",
+    "essentials": "Essentials",
+    "advanced": "Advanced options",
     "existing": "This folder is already a workbench.",
     "openExisting": "Open this workbench",
     "instructionsKept": "This folder already has .vera/WORKBENCH.md. Creating the workbench keeps it unchanged; edit it afterwards from the workbench editor.",

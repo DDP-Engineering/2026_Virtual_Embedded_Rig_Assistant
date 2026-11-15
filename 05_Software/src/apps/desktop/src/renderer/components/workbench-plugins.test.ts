@@ -334,7 +334,7 @@ it.each([false, true])(
     stub(wb);
     await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
     await click('[data-action="choose-create"]');
-    await click('[data-project-section="plugins"]');
+    // On New workbench the plugin selection is in Essentials, without a section to open.
     await vi.waitFor(() => expect(toggle()).not.toBeNull());
     expect(toggle()?.checked).toBe(false);
     if (select) await click('[data-workbench-plugin="echo-tools"] input');

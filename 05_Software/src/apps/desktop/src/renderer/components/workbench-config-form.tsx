@@ -39,6 +39,7 @@ export function WorkbenchConfigForm({
   skills,
   workbenchId,
   shown = true,
+  exclude = [],
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -55,6 +56,8 @@ export function WorkbenchConfigForm({
   skills: ReactNode;
   workbenchId?: string | undefined;
   shown?: boolean;
+  /** Sections the caller shows elsewhere (New workbench shows agent, chat and plugins up front). */
+  exclude?: readonly ConfigSection[];
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -73,7 +76,8 @@ export function WorkbenchConfigForm({
     normal: t("chatDetail.normalInfo"),
     minimal: t("chatDetail.minimalInfo"),
   };
-  const [section, setSection] = useState<ConfigSection>("general");
+  const sections = configSections.filter((key) => !exclude.includes(key));
+  const [section, setSection] = useState<ConfigSection>(sections[0] ?? "general");
   const content = useRef<HTMLDivElement>(null);
   const instructionsInput = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -82,7 +86,7 @@ export function WorkbenchConfigForm({
   return (
     <div className="workbench-editor-layout">
       <nav aria-label={label}>
-        {configSections.map((key) => (
+        {sections.map((key) => (
           <button
             key={key}
             type="button"
