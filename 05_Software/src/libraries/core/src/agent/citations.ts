@@ -35,6 +35,17 @@ export async function validateCitations(
 ) {
   const issued = new Set<string>();
   const logs = issuedLogRefs(messages);
+  // Help refs count only when the help tool itself returned them.
+  const help = new Set<string>();
+  for (const message of messages)
+    if (message.role === "toolResult" && message.toolName === "help" && !message.isError)
+      for (const block of message.content)
+        if (block.type === "text")
+          try {
+            refs(JSON.parse(block.text), help);
+          } catch {
+            /* plain text issues no refs */
+          }
   for (const message of messages)
     if (message.role === "toolResult" && !message.isError)
       for (const block of message.content)
@@ -64,6 +75,8 @@ export async function validateCitations(
       if (parsed && issued.has(ref))
         try {
           if (parsed.kind === "artifact") valid = !!artifactExists?.(parsed.name);
+          // Help pages ship with the application; the help tool issued this ref.
+          else if (parsed.kind === "help") valid = help.has(ref);
           else if (parsed.kind === "lines") {
             const window = await readWindow(
               guard,

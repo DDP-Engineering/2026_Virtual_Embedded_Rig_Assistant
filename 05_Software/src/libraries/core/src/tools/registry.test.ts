@@ -31,6 +31,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     plugin_install: { path: "plugins/fixture" },
     program_stop: { handle: "01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
     apply_candidate: { run: "electronics-results/r1" },
+    help: { page: "permissions" },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -63,6 +64,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "plugin_validate",
     "plugin_install",
     "apply_candidate",
+    "help",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

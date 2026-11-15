@@ -357,3 +357,60 @@ it("offers apply_candidate only while the official kicad-layout plugin is enable
     await rm(root, { recursive: true, force: true });
   }
 });
+
+// REQ-FUNC-4fa3e396, REQ-SEC-3cb78ea6
+it("gives sessions the help host with the enabled plugins and names it in the prompt while offered", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-host-help-"));
+  await mkdir(join(root, ".vera"));
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  let config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const serial = {
+    manifest: { id: "serial-monitor", description: "Serial.", programs: {} },
+    record: { programs: {}, sha256: "a".repeat(64), tier: "official" },
+    folder: join(root, "serial-monitor"),
+  };
+  const options = (help: boolean) =>
+    ({
+      workbench: {
+        getSnapshot: () => ({ folder: root, config, readOnly: false }),
+        getDatabase: () => storage.db,
+        getConfig: async () => ({ config }),
+        getPinned: async () => ({ content: "" }),
+        skillCatalog: () => ({ list: async () => [] }),
+        // loadPlugins returns only the plugins the workbench enables.
+        loadPlugins: async () => [serial],
+        getWriteQueue: () => new WriteQueue(),
+        assertSessionWritable: () => {},
+      },
+      settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+      gateway: () => ({ api: gateway }),
+      clock: { now: () => new Date(), sleep: async () => {} },
+      credentials: { scrub: (s: string) => s },
+      version: "0",
+      ...(help ? { help: { app: {}, language: () => "fr" } } : {}),
+    }) as never;
+  type Host = {
+    help?: { language(): string; plugins(): Promise<{ id: string; folder: string }[]> };
+    prompt(mode: string): string;
+  };
+  const host = new SessionsHost(options(true));
+  const without = new SessionsHost(options(false));
+  try {
+    const seen = await host.run((service) => (service as unknown as { host: Host }).host);
+    expect(seen.help?.language()).toBe("fr");
+    expect(await seen.help?.plugins()).toEqual([{ id: "serial-monitor", folder: serial.folder }]);
+    expect(seen.prompt("ask")).toContain("help tool");
+    config = { ...config, tools: { ...config.tools, disabled: ["help"] } };
+    const disabled = await host.run((service) => (service as unknown as { host: Host }).host);
+    expect(disabled.prompt("ask")).not.toContain("help tool");
+    const plain = await without.run((service) => (service as unknown as { host: Host }).host);
+    expect(plain.help).toBeUndefined();
+    expect(plain.prompt("ask")).not.toContain("help tool");
+  } finally {
+    await host.close();
+    await without.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});

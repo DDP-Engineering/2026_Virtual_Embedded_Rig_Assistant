@@ -28,6 +28,19 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
   under a paged Plugins heading, and `HelpContext` lets each plugin row's Help button open its page.
 - Tests: `core/src/help/library.test.ts`, `components/plugins.test.ts`, `tests/e2e/help-plugins.spec.ts`.
 
+## Agent help tool
+
+- Built-in read-only tool `help` (`core/src/tools/help.ts`) over the `HelpHost` port on `ToolContext.help`
+  (`app` HelpLibrary, `language()` the interface language, `plugins()` the workbench's enabled plugins with folders).
+  `{}` lists `{language, pages, plugins}` with refs; `{page}` or `{plugin}` (optional `language`) returns
+  `{ref, title, language, text}`; a plugin that is not enabled, or has no help, is an error naming it.
+- Refs `help:<page>` and `help:plugin/<id>` are a shared `parseRef` kind; `validateCitations` accepts them when the
+  session's tool results issued them. The transcript routes a help citation to `HelpContext` (`helpCitationKey`).
+- Desktop main passes `help` to `SessionsHost`; the session drops the tool without a host and the prompt gains one rule
+  when it is offered. The headless CLI composes no help host.
+- Tests: `core/src/tools/help.test.ts`, `shared/src/refs.test.ts`, `core/src/agent/citations.test.ts`,
+  `core/src/agent/prompt.test.ts`, `components/help.test.ts`.
+
 ## Purpose and boundaries
 
 App help is Markdown in `05_Software/help/<en|ro|de|fr>/<page>.md`, shipped read-only as `<resources>/help`. Core

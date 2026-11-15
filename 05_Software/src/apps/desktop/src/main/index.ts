@@ -30,6 +30,7 @@ import {
   type HelpLanguage,
   type HelpPage,
   type HelpPageSummary,
+  helpLanguages,
   type PluginProgramStatus,
   veraError,
   type WorkbenchSnapshot,
@@ -327,7 +328,15 @@ let chatgpt = new ChatgptAuth({
   },
 });
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
+/** The interface language the user sees: the setting, else the system locale, else English. */
+function interfaceLanguage(): HelpLanguage {
+  const language = settings.get().settings.language;
+  return language !== "system"
+    ? language
+    : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
+}
 const sessions = new SessionsHost({
+  help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
   managedRoots: [dataLocations.paths.userData],
   web: webAccess.provider,
@@ -444,7 +453,6 @@ const openers = () =>
   (detected ??= detectOpeners({ platform: process.platform, env: process.env, exists: pathExists }));
 /** Linux applications registered for a file type (TASK-c49f03d5); the UI language picks their names. */
 const systemAppDeps = (): SystemAppDeps => {
-  const language = settings.get().settings.language;
   return {
     platform: process.platform,
     run: runTool,
@@ -454,10 +462,7 @@ const systemAppDeps = (): SystemAppDeps => {
     ],
     readText: readOptionalText,
     // The names follow the UI language, which falls back to English like the renderer does.
-    lang:
-      language !== "system"
-        ? language
-        : (["en", "ro", "de", "fr"].find((code) => app.getLocale().startsWith(code)) ?? "en"),
+    lang: interfaceLanguage(),
     openers: openers(),
   };
 };

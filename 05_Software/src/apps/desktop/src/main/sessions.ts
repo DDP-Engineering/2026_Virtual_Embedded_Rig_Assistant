@@ -3,6 +3,7 @@ import {
   type Clock,
   type ConfiguredPartsProvider,
   type EmbeddingPort,
+  type HelpLibrary,
   officialLayoutPlugin,
   officialPartsPlugin,
   type PermissionEngine,
@@ -25,6 +26,7 @@ import {
 } from "@vera/core";
 import {
   type EventEnvelope,
+  type HelpLanguage,
   partsSearchDefaults,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
@@ -78,6 +80,8 @@ export class SessionsHost {
       programs?: { runner: ProgramRunner; resolver: ProgramResolver; credentials?: ProgramCredentials };
       pluginBuilder?: PluginStore;
       managedRoots?: readonly string[];
+      /** VERA's help for the agent's help tool: the app help and the interface language. */
+      help?: { app: HelpLibrary; language: () => HelpLanguage };
     },
   ) {}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
@@ -167,6 +171,19 @@ export class SessionsHost {
               }
             : {}),
           ...(options.downloads ? { downloads: options.downloads(snapshot.folder) } : {}),
+          ...(options.help
+            ? {
+                help: {
+                  ...options.help,
+                  // Only the workbench's enabled plugins, whose packages loaded without issues (REQ-SEC-3cb78ea6).
+                  plugins: async () =>
+                    (await options.workbench.loadPlugins(workbenchId)).map((plugin) => ({
+                      id: plugin.manifest.id,
+                      folder: plugin.folder,
+                    })),
+                },
+              }
+            : {}),
           get applyCandidate() {
             return self.layoutPlugin;
           },
@@ -205,6 +222,8 @@ export class SessionsHost {
               pinned: this.pinned,
               skills: this.skillMetadata,
               programs: this.programEntries,
+              // The rule names the tool only while the workbench offers it (REQ-FUNC-4fa3e396).
+              help: !!options.help && !(this.config?.tools.disabled ?? []).includes("help"),
               env: {
                 clock: options.clock,
                 osFamily: process.platform === "win32" ? "windows" : "linux",

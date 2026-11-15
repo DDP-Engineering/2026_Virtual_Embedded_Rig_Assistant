@@ -663,7 +663,8 @@
     "plugin_install": "Demander un examen et installer un brouillon comme plugin d’essai.",
     "apply_candidate": "Écrire un candidat kicad-layout vérifié sur sa carte source lorsque vous demandez de l’appliquer. Nécessite le plugin kicad-layout ; demande une approbation comme une écriture.",
     "decode_register": "Décoder une valeur de registre capturée à l’aide d’une définition JSON locale, avec les valeurs exactes des champs et les sources citées. Ne lit aucun appareil.",
-    "parts_search": "Rechercher dans les catalogues des distributeurs activés (Mouser, DigiKey, TME, Farnell, Rutronik) par mot-clé ou référence. Nécessite l’accès web, le plugin parts-search et un distributeur configuré dans la Configuration du plugin sur la page Plugins."
+    "parts_search": "Rechercher dans les catalogues des distributeurs activés (Mouser, DigiKey, TME, Farnell, Rutronik) par mot-clé ou référence. Nécessite l’accès web, le plugin parts-search et un distributeur configuré dans la Configuration du plugin sur la page Plugins.",
+    "help": "Lire les pages d’aide de VERA et l’aide des plugins activés dans le banc de travail, pour répondre aux questions sur VERA. Lecture seule."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",

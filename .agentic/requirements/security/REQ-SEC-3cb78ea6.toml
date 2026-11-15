@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-3cb78ea6"
+
+title = "Refuse help of plugins not enabled in the workbench"
+
+status = "active"
+
+requirement = """If the agent asks the help tool for a plugin that is not enabled in the workbench or that has no help, then VERA shall return an error naming the plugin and read none of its files."""
+
+verification = """Core tool test: a plugin installed but absent from the host's enabled list fails with an error naming it and the host's folder is never read; an enabled plugin without help fails too."""
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/help.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/help.test.ts", "05_Software/src/apps/desktop/src/main/sessions.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

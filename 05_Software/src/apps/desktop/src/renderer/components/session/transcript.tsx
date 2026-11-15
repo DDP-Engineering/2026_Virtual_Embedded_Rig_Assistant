@@ -4,6 +4,7 @@ import {
   memo,
   startTransition,
   useCallback,
+  useContext,
   useEffect,
   useId,
   useLayoutEffect,
@@ -15,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
+import { HelpContext, helpCitationKey } from "../help.js";
 import { ApprovalCard } from "./approval-card.js";
 import { argsText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
@@ -298,6 +300,7 @@ const MessageRow = memo(function MessageRow({
 }) {
   const { t } = useTranslation();
   const openDocument = useDocumentViewer();
+  const openHelp = useContext(HelpContext);
   const { kind, id } = item;
   const anchor = useCallback(
     (node: HTMLElement | null) => {
@@ -312,9 +315,14 @@ const MessageRow = memo(function MessageRow({
   const onCitation = useMemo(
     () =>
       kind === "assistant" && sessionId
-        ? (ref: string) => openDocument?.({ sessionId, messageId: id, ref })
+        ? (ref: string) => {
+            // Help citations open the cited page in Help (REQ-UX-a318156e); others open the document viewer.
+            const help = helpCitationKey(ref);
+            if (help !== undefined && openHelp) openHelp(help);
+            else openDocument?.({ sessionId, messageId: id, ref });
+          }
         : undefined,
-    [kind, id, sessionId, openDocument],
+    [kind, id, sessionId, openDocument, openHelp],
   );
   return (
     <article

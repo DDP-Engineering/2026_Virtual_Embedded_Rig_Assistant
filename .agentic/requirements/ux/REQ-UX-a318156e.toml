@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-a318156e"
+
+title = "Open cited help pages in the Help view"
+
+status = "active"
+
+requirement = """When an answer cites a help: ref that the session's help tool returned, VERA shall show it as a valid citation that opens the cited page in the Help view."""
+
+verification = """Shared ref tests parse help:permissions and help:plugin/serial-monitor and reject help:../x; citation validation marks an issued help ref valid and an unissued one invalid; a renderer test clicks a help citation and observes the Help opener called with the page key."""
+
+affected_paths = ["05_Software/src/libraries/shared/src/refs.ts", "05_Software/src/libraries/core/src/agent/citations.ts", "05_Software/src/apps/desktop/src/renderer/components/session/markdown.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/help.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/refs.test.ts", "05_Software/src/libraries/core/src/agent/citations.test.ts", "05_Software/src/apps/desktop/src/renderer/components/help.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-help.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

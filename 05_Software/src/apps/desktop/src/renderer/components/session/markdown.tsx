@@ -1,7 +1,7 @@
 // REQ-UX-4bea0002
 
 import { parseRef, type Reference, referenceLabel } from "@vera/shared";
-import { File, Files, Hash, List, Package, TriangleAlert } from "lucide-react";
+import { CircleQuestionMark, File, Files, Hash, List, Package, TriangleAlert } from "lucide-react";
 import { memo, type ReactNode, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -80,7 +80,14 @@ function CitationChip({
   );
 }
 function CitationIcon({ kind }: { kind: Reference["kind"] }) {
-  const Icon = { page: File, "page-range": Files, heading: Hash, lines: List, artifact: Package }[kind];
+  const Icon = {
+    page: File,
+    "page-range": Files,
+    heading: Hash,
+    lines: List,
+    artifact: Package,
+    help: CircleQuestionMark,
+  }[kind];
   return <Icon width="1em" height="1em" aria-hidden="true" />;
 }
 const remarkPlugins = [remarkGfm, remarkCitations];

@@ -44,6 +44,7 @@ import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.j
 import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
+import type { HelpHost } from "../tools/help.js";
 import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
@@ -71,6 +72,8 @@ export interface SessionHost {
   web?: WebProvider;
   /** Supplier catalog search; absent hosts never offer parts_search. */
   parts?: PartsSearcher;
+  /** VERA's own help; absent hosts never offer the help tool. */
+  help?: HelpHost;
   /** Writing kicad-layout candidates over their boards; only hosts that enable it (with the official plugin) offer apply_candidate. */
   applyCandidate?: boolean;
   downloads?: WebDownloads;
@@ -655,6 +658,8 @@ export class SessionService {
     else delete ctx.web;
     if (this.host.parts) ctx.parts = this.host.parts;
     else delete ctx.parts;
+    if (this.host.help) ctx.help = this.host.help;
+    else delete ctx.help;
     if (this.host.downloads) ctx.downloads = this.host.downloads;
     else delete ctx.downloads;
     if (this.host.skills) ctx.skills = this.host.skills;
@@ -707,6 +712,7 @@ export class SessionService {
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
       .filter((tool) => tool.name !== "parts_search" || !!this.host.parts)
+      .filter((tool) => tool.name !== "help" || !!this.host.help)
       .filter((tool) => tool.name !== "apply_candidate" || !!this.host.applyCandidate)
       .filter(
         (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,

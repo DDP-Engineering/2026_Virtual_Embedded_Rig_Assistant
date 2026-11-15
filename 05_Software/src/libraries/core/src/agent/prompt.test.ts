@@ -215,3 +215,13 @@ describe("programs block (REQ-FUNC-48cc01a9)", () => {
     }
   });
 });
+
+// REQ-FUNC-4fa3e396
+it("names the help tool for questions about VERA only when the session offers it", () => {
+  const plain = prompt.buildSystemPrompt(input()).text;
+  const helped = prompt.buildSystemPrompt({ ...input(), help: true }).text;
+  expect(plain).not.toContain("help tool");
+  expect(helped).toContain("For questions about VERA itself");
+  expect(helped).toContain("help tool");
+  expect(helped.replace(/\n- For questions about VERA itself[^\n]*/, "")).toBe(plain);
+});

@@ -116,3 +116,14 @@ it("round trips an empty heading slug as the untitled leading section", () => {
     expect(api.parseRef(ref), ref).toBeUndefined();
   expect(() => api.formatRef({ kind: "heading", path: "../a", slug: "" })).toThrow();
 });
+
+// REQ-UX-a318156e
+it("parses help refs of app pages and plugin pages and refuses other forms", () => {
+  expect(api.parseRef("help:permissions")).toEqual({ kind: "help", page: "permissions" });
+  expect(api.parseRef("help:plugin/serial-monitor")).toEqual({ kind: "help", plugin: "serial-monitor" });
+  expect(api.formatRef({ kind: "help", page: "permissions" })).toBe("help:permissions");
+  expect(api.formatRef({ kind: "help", plugin: "serial-monitor" })).toBe("help:plugin/serial-monitor");
+  expect(api.referenceLabel("help:plugin/serial-monitor")).toBe("serial-monitor");
+  for (const ref of ["help:../x", "help:Permissions", "help:plugin/", "help:a/b", "help:"])
+    expect(api.parseRef(ref)).toBeUndefined();
+});

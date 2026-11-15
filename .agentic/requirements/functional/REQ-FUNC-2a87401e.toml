@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-2a87401e"
+
+title = "List help topics and read app and enabled plugin help through the help tool"
+
+status = "active"
+
+requirement = """When the agent calls the help tool without a page or plugin, VERA shall return the app help pages and the help pages of the plugins enabled in the workbench with titles and help: refs, and when it names an app page or such a plugin, the page's Markdown and help: ref in the requested language, else the user's interface language, falling back to English."""
+
+verification = """Core tool test with a temporary app help root and a fake host: list returns pages and an enabled plugin with refs help:index and help:plugin/<id>; reading permissions in fr returns the French text, reading a page missing in de returns English, no language uses the host language; an unknown page fails."""
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/help.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/help.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

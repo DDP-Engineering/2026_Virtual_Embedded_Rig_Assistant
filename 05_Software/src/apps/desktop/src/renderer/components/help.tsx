@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { type HelpLanguage, type HelpPageSummary, helpLanguageSchema } from "@vera/shared";
+import { type HelpLanguage, type HelpPageSummary, helpLanguageSchema, parseRef } from "@vera/shared";
 import { createContext, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -15,6 +15,13 @@ export function helpLanguage(language: string | undefined): HelpLanguage {
 /** The Help view's page key of a plugin's help page; app pages use their page name. */
 export function pluginHelpKey(id: string): string {
   return `plugin/${id}`;
+}
+
+/** The Help view's page key of a `help:` citation, else undefined (REQ-UX-a318156e). */
+export function helpCitationKey(ref: string): string | undefined {
+  const parsed = parseRef(ref);
+  if (parsed?.kind !== "help") return undefined;
+  return "plugin" in parsed ? pluginHelpKey(parsed.plugin) : parsed.page;
 }
 
 /** Opens Help at a page key from anywhere in the shell (the plugin rows' Help buttons). */

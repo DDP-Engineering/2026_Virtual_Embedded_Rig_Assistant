@@ -417,7 +417,7 @@ export class WorkbenchService {
         const current = [];
         for (const hit of result.results) {
           const ref = parseRef(hit.ref);
-          if (!ref || ref.kind === "artifact" || ref.path !== hit.path) continue;
+          if (!ref || ref.kind === "artifact" || ref.kind === "help" || ref.path !== hit.path) continue;
           if (!checked.has(hit.path)) checked.set(hit.path, await viewer.currentBounds(hit.path));
           const bounds = checked.get(hit.path);
           if (!bounds) continue;
