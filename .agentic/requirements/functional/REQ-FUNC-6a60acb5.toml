@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-6a60acb5"
+
+title = "Balance P, Q and S per scenario with simultaneity and phase loading"
+
+status = "active"
+
+requirement = """
+When the network tool runs, VERA shall compute for each scenario and each board or busbar the active, reactive and apparent power and the current of the loads it feeds, applying each load's demand factor, the scenario's load factors and the scenario's simultaneity factor of that board, and shall compute the phase currents and neutral current where every single-phase load names its phase.
+"""
+
+verification = "Core unit tests against hand calculations: two boards, a 3-phase motor, two single-phase loads on L1 and L2 and a scenario with ks 0.9 on the main board give the hand-computed P, Q, S, current, phase currents and neutral current within 0.1 %; a second scenario switching one load off changes only that scenario; a single-phase load without a phase makes the phase currents unknown but keeps P, Q, S."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

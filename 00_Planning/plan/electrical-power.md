@@ -17,7 +17,8 @@ branch `feature/122-electrical-power` cut from `master` at a8b26c1, in the sibli
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
 Each ticket runs only its focused tests; the complete suite runs once after PWR-06.
 STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. PWR-01 implemented
-2026-11-15 (AEGIS TASK-15cb5dad), native Ubuntu and licensed coordination tables open.
+2026-11-15 (AEGIS TASK-15cb5dad), native Ubuntu and licensed coordination tables open. PWR-02 implemented
+2026-11-15 (AEGIS TASK-662ede41), native Ubuntu and licensed IEC cable tables open.
 
 ## Order
 
@@ -25,7 +26,7 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
 |---|---|---|---|---|---|
 | 1 | PWR-00 | [#126](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/126) | common project model: stable IDs, quantities with units, relations, provenance, stale results (product code, not a plugin) | - | implemented |
 | 2 | PWR-01 | [#127](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/127) | `industrial-catalog`: manufacturer + order code + variant + accessories, conditioned parameters, documented selection | PWR-00 | implemented |
-| 3 | PWR-02 | [#128](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/128) | `electrical-network`: load balance, cable sizing, voltage drop, short circuit on radial LV networks | PWR-00 | planned |
+| 3 | PWR-02 | [#128](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/128) | `electrical-network`: load balance, cable sizing, voltage drop, short circuit on radial LV networks | PWR-00 | implemented |
 | 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | planned |
 | 5 | PWR-04 | [#130](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/130) | `motor-drives`: DOL, reversing, star-delta, softstarter or VFD choice and starter assembly | PWR-01, PWR-03 | planned |
 | 6 | PWR-05 | [#131](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/131) | `power-quality-pfc`: P/Q/S and harmonic profiles, compensation need, capacitor bank steps | PWR-01, PWR-02 | planned |
@@ -82,3 +83,24 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
   types 1 and 2 published on those pages.
 - Open: native Ubuntu (WSL2 only); licensed manufacturer coordination tables (for example GV2 + LC1D type 2) are
   not in the fixture.
+
+## PWR-02 #128 - electrical network
+
+- Engine `vera-radial-lv-1` in product code (core `electrical/network.ts`, pure), tool `electrical_network` (write:
+  one new result file through the prepared change, never the model) and the generic report view `electrical_model`
+  view `report`; spec `.agentic/specs/REQ-DATA-42ce122f.md`. Plugin `electrical-network` (ecosystem electrical, no
+  program) brings the skill `network-sizing` and joins the Electrical power and distribution pack.
+- Scope: one transformer or LV supply point, three-phase AC up to 1000 V, radial feeds, one cable per circuit;
+  load balance per scenario (demand, load and simultaneity factors), phase and neutral currents, design currents,
+  cable sections checked or proposed with the governing criterion, voltage drop, Ik3 max/peak, Ik3 min and Ik1 min
+  (TN, Dyn) by the impedance method with the c factors and KT of IEC 60909-0:2016; ties, parallel cables, other
+  sources and DC are blocked or not evaluated.
+- Cable tables `electrical-automation-tables/<id>.json` (kind `vera-cable-table`, format 1) with one cited source;
+  factors at the next tabulated point, never interpolated. Fixtures: a fictional test table and
+  `tbl-nexans-nym-j.json`, typed from the public Nexans NYM-J page (read 2026-11-15; R20 and 30 °C ratings, no
+  factors, reactance or k).
+- References: hand calculations in the test and pandapower 3.1.2 IEC 60909 values (tolerance 1 %), recomputed by
+  the opt-in test `VERA_PANDAPOWER_PYTHON` with `tests/support/pandapower_network_check.py`; pandapower is not a
+  runtime dependency.
+- Open: native Ubuntu (WSL2 only); licensed IEC 60364-5-52 tables and manufacturer correction factors are not in
+  the fixtures.

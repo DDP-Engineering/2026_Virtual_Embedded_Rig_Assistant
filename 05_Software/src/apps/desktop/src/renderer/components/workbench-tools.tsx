@@ -40,6 +40,7 @@ export function WorkbenchTools({
     electrical_model: t("workbenchTools.electrical_model"),
     electrical_model_change: t("workbenchTools.electrical_model_change"),
     industrial_catalog: t("workbenchTools.industrial_catalog"),
+    electrical_network: t("workbenchTools.electrical_network"),
   };
   // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
   const { rows, pager } = usePaged(builtinToolNames, 50);

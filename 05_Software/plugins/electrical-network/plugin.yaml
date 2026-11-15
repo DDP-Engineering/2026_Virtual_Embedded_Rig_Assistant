@@ -1,0 +1,9 @@
+format: 1
+id: electrical-network
+version: 0.1.0
+name: Electrical network and cable sizing
+summary: Load balance, cable sizing, voltage drop and fault currents for radial LV networks of the electrical model, with cited cable tables.
+description: Calculate a radial low-voltage network of the workbench's electrical model with VERA's electrical_network tool - P/Q/S balance per scenario with simultaneity and load factors, phase and neutral currents, design currents, cable cross-sections checked or proposed from a cited cable table (installation method, ambient temperature, grouping), single- and three-phase voltage drop and maximum/minimum fault currents by the impedance method after IEC 60909-0:2016. Results are stored as electrical results with their inputs, so a later model change marks them stale; missing data stays unknown and unsupported sources or topologies are not evaluated. The model, schematics and approved selections are never changed.
+ecosystem: electrical
+platforms: [windows-x64, linux-x64]
+docs: [README.md]

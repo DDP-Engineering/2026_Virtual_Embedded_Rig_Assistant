@@ -10,6 +10,10 @@ For industrial-catalog, start at plugins/industrial-catalog/plugin.yaml (no prog
 skills/industrial-selection; the catalog format, the `industrial_catalog` tool and their tests belong to
 [electrical model](electrical-model.md).
 
+For electrical-network, start at plugins/electrical-network/plugin.yaml (no program, ecosystem `electrical`) and
+skills/network-sizing; the engine, the cable-table format, the `electrical_network` tool and their tests belong to
+[electrical model](electrical-model.md).
+
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
 projects, make_fixtures.py, internals.py) own its refusal, real-KiCad, integrity and provisioner coverage. The path
@@ -340,6 +344,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   applied only through `electrical_model_change`. Loading it enables the electrical tools (`electrical_model`,
   `electrical_model_change`, `industrial_catalog`). Live supplier offers stay with parts-search; this plugin holds no
   credentials. Format and tool: [electrical model](electrical-model.md), spec REQ-DATA-d7e27def.
+- `electrical-network` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Network, cable
+  sizing and short circuit, default on; activity `design`), Windows x64/Linux x64, no program. Skill
+  `network-sizing`: model inputs checked, a cited cable table and scenarios agreed, VERA's `electrical_network`
+  tool run, the governing criterion, unknowns and limits explained, a proposed section applied only through
+  `electrical_model_change`. Engine, table format and tool: [electrical model](electrical-model.md), spec
+  REQ-DATA-42ce122f.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

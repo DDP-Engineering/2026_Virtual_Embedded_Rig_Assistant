@@ -23,6 +23,12 @@ reading stdin, flooding output, ANSI output, or starting a grandchild that runs 
 source, the main board, two pump feeders and a lighting circuit with their breakers, cables, contactors,
 the PLC I/O, the level transmitter and tags. Its values cite a made-up brief, not a product datasheet.
 
+`electrical-network/network-a.json` is a fictional radial LV network (630 kVA Dyn11 transformer, main and
+sub-board, a motor, lighting and a socket circuit) for the electrical-network engine; `tbl-test-cu-pvc.json`
+is a fictional cable table with values chosen for the tests. `tbl-nexans-nym-j.json` holds real values typed from
+the public Nexans NYM-J product page (read 2026-11-15, cited in the file): DC resistance and the 30 °C current
+ratings of each cross-section; it has no correction factors, reactance or k because the page gives none.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

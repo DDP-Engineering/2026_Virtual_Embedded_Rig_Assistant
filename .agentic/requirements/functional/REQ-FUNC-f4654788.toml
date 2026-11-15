@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f4654788"
+
+title = "Store network results as PWR-00 results through an approved prepared change without changing the model"
+
+status = "active"
+
+requirement = """
+When the agent calls electrical_network with a request, VERA shall prepare one new file electrical-automation-results/<run-id>/result.json holding a valid format-1 electrical result with a snapshot of every model entity the run read, write it only after approval like a write, and leave the model file unchanged.
+"""
+
+verification = "Core tool tests on a temporary workbench: the prepared change creates exactly the result file, the written result passes the result check and lists as current; changing a cable length makes it stale naming that cable; the model bytes are identical before and after; an existing run folder is never overwritten."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network-tool.ts", "05_Software/src/libraries/core/src/electrical/tools.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/shared/src/tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network-tool.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

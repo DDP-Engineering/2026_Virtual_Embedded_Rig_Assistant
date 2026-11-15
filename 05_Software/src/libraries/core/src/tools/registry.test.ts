@@ -47,6 +47,12 @@ it("converts every tool schema and validates samples while filtering disabled na
       catalog: "cat-schneider-tesys",
       requirements: [{ id: "ie", parameter: "ratedCurrent", op: ">=", value: { value: 9, unit: "A" } }],
     },
+    electrical_network: {
+      cableTable: "tbl-test-cu-pvc",
+      voltageTolerance: 10,
+      scenarios: [{ id: "normal", title: "Normal operation", simultaneity: { "brd-main": 0.9 } }],
+      voltageDropLimit: { value: 4, unit: "%" },
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -82,6 +88,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "electrical_model",
     "electrical_model_change",
     "industrial_catalog",
+    "electrical_network",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

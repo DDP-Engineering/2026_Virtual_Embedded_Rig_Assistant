@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-42ce122f"
+
+title = "Accept only a strictly valid format-1 cable table"
+
+status = "active"
+
+requirement = """
+VERA shall read a cable table file electrical-automation-tables/<id>.json only when it is a strictly valid format-1 document of kind vera-cable-table whose id equals its file name, with a cited source (title, publisher, revision, read date, page or table, licence terms), and shall refuse any other file with its problems and never size a cable from it.
+"""
+
+verification = "Core unit tests: the fixture table parses; an unknown key, another format, a file name that differs from the id, a missing licence, a duplicate cross-section, a rating without conductor data and a factor list that is not ascending each give a problem; the network tool with an invalid table is refused with the problems and writes nothing."
+
+affected_paths = ["05_Software/src/libraries/shared/src/cable-table.ts", "05_Software/src/libraries/core/src/electrical/cable-table.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/cable-table.test.ts", "05_Software/src/libraries/core/src/electrical/network-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = "Cable sizing is only as good as the cited table it rests on."        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

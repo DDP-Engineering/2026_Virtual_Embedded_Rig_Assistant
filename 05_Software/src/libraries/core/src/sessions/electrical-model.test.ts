@@ -78,7 +78,12 @@ it("asks for approval in ask mode and writes the model only when approved (REQ-F
     const approval = await waiting(service, session.id);
     expect(approval).toMatchObject({ tool: "electrical_model_change", path: MODEL });
     expect(catalogs[0]).toEqual(
-      expect.arrayContaining(["electrical_model", "electrical_model_change", "industrial_catalog"]),
+      expect.arrayContaining([
+        "electrical_model",
+        "electrical_model_change",
+        "industrial_catalog",
+        "electrical_network",
+      ]),
     );
     expect(approval.diff).toContain('+      "name": "Duty pump"');
     expect(await model()).toBe(fixture);
@@ -116,6 +121,7 @@ it("offers only the read tool in read-only mode and writes nothing (REQ-SEC-4dfa
     expect(catalog).toContain("electrical_model");
     expect(catalog).toContain("industrial_catalog");
     expect(catalog).not.toContain("electrical_model_change");
+    expect(catalog).not.toContain("electrical_network");
   }
   expect(await model()).toBe(fixture);
   expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
@@ -130,6 +136,7 @@ it("offers neither tool when the host does not enable the electrical model (REQ-
     expect(catalog).not.toContain("electrical_model");
     expect(catalog).not.toContain("electrical_model_change");
     expect(catalog).not.toContain("industrial_catalog");
+    expect(catalog).not.toContain("electrical_network");
   }
   expect(await model()).toBe(fixture);
 });

@@ -7,10 +7,10 @@ title = "Describe the electrical tools in the workbench tools editor"
 status = "active"
 
 requirement = """
-The workbench tools editor shall list electrical_model, electrical_model_change and industrial_catalog with a description in English, Romanian, German and French.
+The workbench tools editor shall list electrical_model, electrical_model_change, industrial_catalog and electrical_network with a description in English, Romanian, German and French.
 """
 
-verification = "check:i18n passes with the three keys in en, ro, de and fr; the workbench tools component maps the three built-in names to their descriptions (typecheck enforces the record)."
+verification = "check:i18n passes with the four keys in en, ro, de and fr; the workbench tools component maps the four built-in names to their descriptions (typecheck enforces the record)."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/libraries/shared/src/tools.ts"]
 

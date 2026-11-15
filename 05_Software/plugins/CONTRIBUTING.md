@@ -65,6 +65,15 @@ coordination questions for exact products and conditions; a result that used a c
 version}` from the stamp the tool returns. A helper that reads a catalog file follows the same format and never
 treats an extracted, absent or off-condition value as a pass.
 
+Network calculations come from VERA's `electrical_network` tool (plugin `electrical-network`, spec
+`.agentic/specs/REQ-DATA-42ce122f.md`): it reads the model and one cable table,
+`electrical-automation-tables/<id>.json` (kind `vera-cable-table`, format 1, every value from one cited source with
+its licence terms), and stores a result with stable intermediate names per subject - `designCurrent`,
+`ik3MaxStart`, `peakCurrentStart`, `ik3MinEnd`, `ik1MinEnd` on circuits, `crossSection` and `currentCapacity` on
+cables, `activePower:<scenario>` and `ik3Max` on boards. Protection, motor and power-quality helpers read those
+values from the stored result (and check its freshness with `electrical_model` view `results`) instead of
+recomputing them; `electrical_model` view `report` renders any stored result as Markdown.
+
 ## Draft with the agent
 
 Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the

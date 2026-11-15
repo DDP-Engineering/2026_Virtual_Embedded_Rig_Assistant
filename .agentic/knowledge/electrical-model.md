@@ -7,7 +7,10 @@ Select for the electrical project model, `electrical-automation-model.json`, `el
 references (M1, QF1), relation rules, result freshness/stale results, explicit-mapping imports and the
 `electricalModel` host flag, and the industrial catalog: `electrical-automation-catalogs/<id>.json`, the
 `industrial_catalog` tool, order codes versus distributor SKUs, firm-requirement selection and coordination
-lookups (spec .agentic/specs/REQ-DATA-d7e27def.md, core electrical/catalog.ts and catalog-tool.ts). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+lookups (spec .agentic/specs/REQ-DATA-d7e27def.md, core electrical/catalog.ts and catalog-tool.ts), and the
+radial LV network engine: `electrical_network`, cable tables `electrical-automation-tables/<id>.json`, load
+balance, cable sizing, voltage drop, fault currents and the `electrical_model` report view (spec
+.agentic/specs/REQ-DATA-42ce122f.md, core electrical/network.ts, network-tool.ts, cable-table.ts, report.ts). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -16,7 +19,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, with no calculation engine. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, and the radial LV network engine with its cable tables. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -54,7 +57,21 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   category?, offset?, requirements? <=32, items? <=4, conditions?}: list gives each file valid or invalid with its
   problem; items <=50 per page; select and coordination return the catalog stamp. Files only: no network, no
   credential store.
-- `SessionHost.electricalModel` offers the three tools (`industrial_catalog` included); `electricalModelPlugin(plugin)` is true for manifest ecosystem
+- Network engine (spec REQ-DATA-42ce122f): shared `cableTableSchema` (kind `vera-cable-table`, format 1, fixed
+  units mm², A, °C, Ω/km), `cableTableDir` (`electrical-automation-tables`); core `checkCableTable`/
+  `parseCableTable`, `readCableTableFile(root, id)` -> {table, stamp}, `temperatureFactor`/`groupingFactor`/
+  `tableRating` (next tabulated point, never interpolated); pure `analyzeNetwork({model, table, request, runId,
+  now, ...})` -> ElectricalResult with `networkRequestSchema` {cableTable, source?, voltageTolerance 6|10,
+  scenarios 1..8 {id, title, simultaneity?, loads?}, voltageDropLimit, voltageDropLimitLighting?, faultDuration?,
+  assumedReactance?}; stable intermediate names (`designCurrent`, `ik3MaxStart`, `ik3MinEnd`, `ik1MinEnd`,
+  `crossSection`, `currentCapacity`, `activePower:<s>`, `ik3Max`, ...) and criteria `current-capacity`,
+  `voltage-drop`, `short-circuit-withstand`, `cable-section`, `short-circuit`.
+- Tool `electrical_network` (write): runs the engine and prepares one new
+  `electrical-automation-results/<run-id>/result.json` (run ID `YYYYMMDD-HHMMSS-<4 hex>`, before = absent) through
+  `commitChange`; apply returns {path, runId, sha256, bytes, status, criteria counts, report}. `electrical_model`
+  view `report` {runId} returns {runId, freshness, changed?, removed?, report} from `renderResultReport`, for any
+  plugin's result (64 KiB at most).
+- `SessionHost.electricalModel` offers the four tools (`industrial_catalog` and `electrical_network` included); `electricalModelPlugin(plugin)` is true for manifest ecosystem
   `electrical` or `automation`, and the desktop sets the flag while such a plugin is loaded. The headless CLI does
   not set it.
 
@@ -84,6 +101,16 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   item that lists them; a distributor SKU never matches an order code (REQ-DATA-b3d86b99).
 - A coordination entry applies only to exactly its item set and only when the request names and satisfies every
   table condition (REQ-FUNC-ca8c6870).
+- The network engine evaluates only a radial three-phase AC LV network (50..1000 V) from one transformer or
+  supply point; a tie between busbars, another phase count, DC or an unknown voltage blocks the run; another
+  source kind, TT/IT earth faults, a circuit with no or parallel cables are not evaluated; an absent or null input
+  makes the value null and its criteria unknown (`cable-section` fails only when every table cross-section was
+  evaluated and none fits; `earth-fault`, `short-circuit-minimum` and `network-coverage` criteria keep such runs
+  incomplete); a cross-section is proposed only with installation method,
+  ambient temperature and grouping covered by the table (REQ-REL-60a7e063, REQ-FUNC-bc6a2e50).
+- Fault currents follow the equivalent voltage source with cmax 1.05/1.10, cmin 0.95, feeder cQ 1.1/1.0 and KT
+  for max and min, as pandapower 3.1.2 does; results state the method, edition and simplifications
+  (REQ-FUNC-6a025b48). `electrical_network` writes only a new result file, never the model (REQ-FUNC-f4654788).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -98,6 +125,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Views, freshness listing, write preparation | electrical/tools.ts, results.ts | electrical/tools.test.ts |
 | Catalog format, selection, coordination | shared industrial-catalog.ts, electrical/catalog.ts, spec REQ-DATA-d7e27def | electrical/catalog.test.ts |
 | Catalog files and the industrial_catalog tool | electrical/catalog-tool.ts | electrical/catalog-tool.test.ts |
+| Network engine, request, result names | electrical/network.ts, spec REQ-DATA-42ce122f | electrical/network.test.ts |
+| Cable table format and lookups | shared cable-table.ts, electrical/cable-table.ts | electrical/cable-table.test.ts |
+| Network tool, report view | electrical/network-tool.ts, report.ts, tools.ts | electrical/network-tool.test.ts |
 | Offering the tools | sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -127,6 +157,15 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-REL-003c3adc — list unreadable or invalid catalogs without stopping the others.
 - REQ-REL-6546e9a4 — return the same selection for the same catalog and request.
 - REQ-TEST-647c2266 — two real Schneider Electric families typed from cited public pages.
+- REQ-DATA-42ce122f — accept only a strictly valid format-1 cable table.
+- REQ-FUNC-6a60acb5 — balance P, Q and S per scenario with simultaneity and phase loading.
+- REQ-FUNC-f1d93773 — design currents and single- and three-phase voltage drop along the path.
+- REQ-FUNC-bc6a2e50 — size or check cables with installation method, temperature and grouping.
+- REQ-FUNC-6a025b48 — maximum and minimum fault currents with the implemented method shown.
+- REQ-REL-60a7e063 — unsupported networks and missing data never pass.
+- REQ-FUNC-f4654788 — store network results through an approved prepared change, model unchanged.
+- REQ-FUNC-8b895a77 — render a stored result as a report with its freshness.
+- REQ-TEST-e3eb9076 — independent references (hand calculations, pandapower 3.1.2) with preset tolerances.
 - REQ-UX-d32cc9db — electrical tool descriptions in the workbench tools editor (en/ro/de/fr).
 
 ## Files
@@ -148,3 +187,13 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/results.test.ts` — result format and freshness.
 - `05_Software/src/libraries/core/src/electrical/tools.test.ts` — views, prepared change, conflicts, import.
 - `05_Software/src/libraries/core/src/sessions/electrical-model.test.ts` — approval, auto-edit, read-only, gating.
+- `05_Software/src/libraries/shared/src/cable-table.ts` — cable table format-1 schema, folder and limits.
+- `05_Software/src/libraries/core/src/electrical/cable-table.ts` — table checks, confined reading, factor lookups.
+- `05_Software/src/libraries/core/src/electrical/network.ts` — the radial LV network engine and its request schema.
+- `05_Software/src/libraries/core/src/electrical/network-tool.ts` — the electrical_network write tool.
+- `05_Software/src/libraries/core/src/electrical/report.ts` — Markdown report of a stored result.
+- `05_Software/src/libraries/core/src/electrical/network.test.ts` — hand calculations, pandapower references, sizing, refusals.
+- `05_Software/src/libraries/core/src/electrical/network-tool.test.ts` — prepared result, freshness, report view, plugin.
+- `05_Software/src/libraries/core/src/electrical/cable-table.test.ts` — table format, lookups, the Nexans fixture.
+- `05_Software/tests/fixtures/electrical-network/` — fictional network A, fictional test table, cited Nexans NYM-J table.
+- `05_Software/tests/support/pandapower_network_check.py` — independent pandapower 3.1.2 fault-current references.

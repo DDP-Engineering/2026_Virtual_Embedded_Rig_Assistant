@@ -67,3 +67,4 @@
   name: Electrical power and distribution
   groups:
     - { name: Industrial catalog and selection, plugins: [industrial-catalog], default: true }
+    - { name: "Network, cable sizing and short circuit", plugins: [electrical-network], default: true }

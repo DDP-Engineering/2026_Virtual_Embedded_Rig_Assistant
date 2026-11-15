@@ -665,6 +665,7 @@
     "electrical_model": "Liest das elektrische Projektmodell, seine Vollständigkeitsprobleme und Plugin-Ergebnisse mit ihrer Aktualität. Erfordert ein Elektro- oder Automatisierungs-Plugin.",
     "electrical_model_change": "Ändert das elektrische Projektmodell durch geprüfte Operationen oder einen Import mit expliziter ID-Zuordnung. Erfordert ein Elektro- oder Automatisierungs-Plugin; braucht eine Freigabe wie ein Schreibvorgang.",
     "industrial_catalog": "Liest die Industriekataloge des Arbeitsbereichs: findet Artikel nach Bestellnummer oder Händler-SKU, wählt nach festen Anforderungen mit belegten Werten aus und sucht die Koordination für genau diese Produkte. Benötigt ein Elektro- oder Automatisierungs-Plugin.",
+    "electrical_network": "Berechnet ein radiales NS-Netz des elektrischen Modells: Leistungsbilanz je Szenario, Phasenströme, Kabelquerschnitte aus einer zitierten Kabeltabelle, Spannungsfall und Kurzschlussströme; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang. Erfordert ein Elektro- oder Automatisierungs-Plugin.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus.",
     "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten."
   },

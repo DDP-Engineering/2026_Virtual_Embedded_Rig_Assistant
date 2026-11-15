@@ -665,6 +665,7 @@
     "electrical_model": "Citește modelul proiectului electric, problemele de completitudine și rezultatele pluginurilor cu actualitatea lor. Necesită un plugin de electrică sau automatizări.",
     "electrical_model_change": "Modifică modelul proiectului electric prin operații validate sau printr-un import cu mapare explicită a ID-urilor. Necesită un plugin de electrică sau automatizări; cere aprobare ca o scriere.",
     "industrial_catalog": "Citește cataloagele industriale ale spațiului de lucru: găsește articole după codul de comandă sau SKU-ul distribuitorului, selectează după cerințe ferme cu valori citate și caută coordonarea pentru produse exacte. Necesită un plugin de electrică sau automatizări.",
+    "electrical_network": "Calculează o rețea JT radială din modelul electric: bilanț de puteri pe scenarii, curenți pe faze, secțiuni de cablu dintr-un tabel de cabluri citat, cădere de tensiune și curenți de scurtcircuit; salvează rezultatul după aprobare, ca o scriere. Necesită un plugin de electrică sau automatizări.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive.",
     "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri."
   },

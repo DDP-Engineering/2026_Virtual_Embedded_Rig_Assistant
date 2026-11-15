@@ -130,6 +130,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
         "plugin_install",
         "apply_candidate",
         "electrical_model_change",
+        "electrical_network",
       ]),
       path: z.string(),
       diff: z.string(),

@@ -1,0 +1,285 @@
+{
+  "kind": "vera-cable-table",
+  "format": 1,
+  "id": "tbl-nexans-nym-j",
+  "title": "Nexans NYM-J 300/500 V copper PVC installation cable",
+  "version": "2026-11-15",
+  "source": {
+    "title": "NYM-J product page (variants and characteristics)",
+    "publisher": "Nexans (La Triveneta Cavi)",
+    "revision": "web page, no document revision shown",
+    "readAt": "2026-11-15",
+    "uri": "https://latrivenetacavi.nexans.com/en/products/industrial-and-logistics/industrial-Eca-class/NYM-J38596.html",
+    "pages": "variant list (30 products): DC resistance and permitted current ratings; tab Characteristics: usage characteristics",
+    "license": "public product page; individual values typed with attribution for verification, no document copied"
+  },
+  "cable": {
+    "designation": "NYM-J 300/500 V",
+    "material": "copper",
+    "insulation": "PVC",
+    "maxConductorTemperature": 70,
+    "shortCircuitTemperature": 160,
+    "k": null,
+    "note": "Plain copper, PVC insulation and sheath; maximum operating temperature 70 °C and short-circuit maximum conductor temperature 160 °C (tab Characteristics). The page gives no reactance and no k."
+  },
+  "conductors": [
+    {
+      "crossSection": 1.5,
+      "resistance20": 12.1,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090225044"
+    },
+    {
+      "crossSection": 2.5,
+      "resistance20": 7.41,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090227044"
+    },
+    {
+      "crossSection": 4,
+      "resistance20": 4.61,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090229044"
+    },
+    {
+      "crossSection": 6,
+      "resistance20": 3.08,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090231044"
+    },
+    {
+      "crossSection": 10,
+      "resistance20": 1.83,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090233044"
+    },
+    {
+      "crossSection": 16,
+      "resistance20": 1.15,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090235044"
+    },
+    {
+      "crossSection": 25,
+      "resistance20": 0.727,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090237044"
+    },
+    {
+      "crossSection": 35,
+      "resistance20": 0.524,
+      "reactance": null,
+      "note": "Max. DC resistance at 20 °C, Nexans ref. 090239044"
+    }
+  ],
+  "methods": [
+    {
+      "id": "air",
+      "title": "Perm. current rating in air 30 °C",
+      "referenceTemperature": 30,
+      "note": "The page lists the same values for the 3G and 5G constructions and does not state the number of loaded conductors: VERA files the 3G values under 2 and the 5G values under 3 loaded conductors.",
+      "ratings": [
+        {
+          "crossSection": 1.5,
+          "loadedConductors": 2,
+          "current": 18,
+          "note": "NYM-J 3G1,5 ref. 090121044"
+        },
+        {
+          "crossSection": 1.5,
+          "loadedConductors": 3,
+          "current": 18,
+          "note": "NYM-J 5G1,5 ref. 090225044"
+        },
+        {
+          "crossSection": 2.5,
+          "loadedConductors": 2,
+          "current": 24,
+          "note": "NYM-J 3G2,5 ref. 090123044"
+        },
+        {
+          "crossSection": 2.5,
+          "loadedConductors": 3,
+          "current": 24,
+          "note": "NYM-J 5G2,5 ref. 090227044"
+        },
+        {
+          "crossSection": 4,
+          "loadedConductors": 2,
+          "current": 32,
+          "note": "NYM-J 3G4 ref. 090125044"
+        },
+        {
+          "crossSection": 4,
+          "loadedConductors": 3,
+          "current": 32,
+          "note": "NYM-J 5G4 ref. 090229044"
+        },
+        {
+          "crossSection": 6,
+          "loadedConductors": 2,
+          "current": 41,
+          "note": "NYM-J 3G6 ref. 090127044"
+        },
+        {
+          "crossSection": 6,
+          "loadedConductors": 3,
+          "current": 41,
+          "note": "NYM-J 5G6 ref. 090231044"
+        },
+        {
+          "crossSection": 10,
+          "loadedConductors": 2,
+          "current": 57,
+          "note": "NYM-J 3G10 ref. 090129044"
+        },
+        {
+          "crossSection": 10,
+          "loadedConductors": 3,
+          "current": 57,
+          "note": "NYM-J 5G10 ref. 090233044"
+        },
+        {
+          "crossSection": 16,
+          "loadedConductors": 2,
+          "current": 76,
+          "note": "NYM-J 3G16 ref. 090131044"
+        },
+        {
+          "crossSection": 16,
+          "loadedConductors": 3,
+          "current": 76,
+          "note": "NYM-J 5G16 ref. 090235044"
+        },
+        {
+          "crossSection": 25,
+          "loadedConductors": 3,
+          "current": 96,
+          "note": "NYM-J 5G25 ref. 090237044"
+        },
+        {
+          "crossSection": 35,
+          "loadedConductors": 3,
+          "current": 119,
+          "note": "NYM-J 5G35 ref. 090239044"
+        }
+      ]
+    },
+    {
+      "id": "pipe-air",
+      "title": "Perm. current rating in pipe/air 30 °C",
+      "referenceTemperature": 30,
+      "note": "As for air: 3G values under 2, 5G values under 3 loaded conductors.",
+      "ratings": [
+        {
+          "crossSection": 1.5,
+          "loadedConductors": 2,
+          "current": 15,
+          "note": "NYM-J 3G1,5 ref. 090121044"
+        },
+        {
+          "crossSection": 1.5,
+          "loadedConductors": 3,
+          "current": 15,
+          "note": "NYM-J 5G1,5 ref. 090225044"
+        },
+        {
+          "crossSection": 2.5,
+          "loadedConductors": 2,
+          "current": 20,
+          "note": "NYM-J 3G2,5 ref. 090123044"
+        },
+        {
+          "crossSection": 2.5,
+          "loadedConductors": 3,
+          "current": 20,
+          "note": "NYM-J 5G2,5 ref. 090227044"
+        },
+        {
+          "crossSection": 4,
+          "loadedConductors": 2,
+          "current": 27,
+          "note": "NYM-J 3G4 ref. 090125044"
+        },
+        {
+          "crossSection": 4,
+          "loadedConductors": 3,
+          "current": 27,
+          "note": "NYM-J 5G4 ref. 090229044"
+        },
+        {
+          "crossSection": 6,
+          "loadedConductors": 2,
+          "current": 34,
+          "note": "NYM-J 3G6 ref. 090127044"
+        },
+        {
+          "crossSection": 6,
+          "loadedConductors": 3,
+          "current": 34,
+          "note": "NYM-J 5G6 ref. 090231044"
+        },
+        {
+          "crossSection": 10,
+          "loadedConductors": 2,
+          "current": 46,
+          "note": "NYM-J 3G10 ref. 090129044"
+        },
+        {
+          "crossSection": 10,
+          "loadedConductors": 3,
+          "current": 46,
+          "note": "NYM-J 5G10 ref. 090233044"
+        },
+        {
+          "crossSection": 16,
+          "loadedConductors": 2,
+          "current": 62,
+          "note": "NYM-J 3G16 ref. 090131044"
+        },
+        {
+          "crossSection": 16,
+          "loadedConductors": 3,
+          "current": 62,
+          "note": "NYM-J 5G16 ref. 090235044"
+        },
+        {
+          "crossSection": 25,
+          "loadedConductors": 3,
+          "current": 80,
+          "note": "NYM-J 5G25 ref. 090237044"
+        },
+        {
+          "crossSection": 35,
+          "loadedConductors": 3,
+          "current": 99,
+          "note": "NYM-J 5G35 ref. 090239044"
+        }
+      ]
+    }
+  ],
+  "temperatureFactors": [
+    {
+      "methods": ["air", "pipe-air"],
+      "note": "The page gives ratings at 30 °C only and no correction factors: other ambient temperatures are not covered.",
+      "points": [
+        {
+          "ambient": 30,
+          "factor": 1
+        }
+      ]
+    }
+  ],
+  "groupingFactors": [
+    {
+      "methods": ["air", "pipe-air"],
+      "note": "The page rates one cable; no grouping factors: grouped circuits are not covered.",
+      "points": [
+        {
+          "circuits": 1,
+          "factor": 1
+        }
+      ]
+    }
+  ]
+}

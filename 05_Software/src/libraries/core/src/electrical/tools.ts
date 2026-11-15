@@ -6,6 +6,7 @@ import { lstat, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   type ElectricalModel,
+  type ElectricalResult,
   electricalIdSchema,
   electricalLimits,
   electricalModelPath,
@@ -22,6 +23,7 @@ import { toolPathGuard } from "../tools/context.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { applyOperations, electricalOperationSchema } from "./edit.js";
 import { checkModel, entityHash, modelIssues, parseModel, problemsText, serializeModel } from "./model.js";
+import { renderResultReport } from "./report.js";
 import { checkResult, resultFreshness } from "./results.js";
 
 /** The tools a host offers only with the electrical model enabled. */
@@ -29,6 +31,7 @@ export const electricalToolNames: readonly string[] = [
   "electrical_model",
   "electrical_model_change",
   "industrial_catalog",
+  "electrical_network",
 ];
 /** Plugins of these ecosystems build on the electrical model; the desktop enables its tools while one is loaded. */
 export const electricalModelEcosystems: readonly string[] = ["electrical", "automation"];
@@ -147,9 +150,31 @@ export async function listResults(root: string, model: ElectricalModel | null): 
   return entries;
 }
 
+/** One stored result, strictly read; throws when it is missing or invalid. */
+export async function readResultFile(root: string, runId: string): Promise<ElectricalResult> {
+  const path = `${electricalResultsDir}/${runId}/${electricalResultFile}`;
+  const target = await (await PathGuard.create(root)).resolve(path);
+  const bytes = await fileBytes(target.absolute, electricalLimits.resultBytes, "result");
+  if (bytes === null) throw Error(`The result ${runId} does not exist.`);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(bytes.toString("utf8"));
+  } catch {
+    throw Error(`The result ${runId} is invalid: ${electricalResultFile} is not JSON.`);
+  }
+  const checked = checkResult(raw, runId);
+  if ("problem" in checked)
+    throw Error(`The result ${runId} is invalid: ${checked.problem.path}: ${checked.problem.message}`);
+  return checked.result;
+}
+
 export const electricalModelParams = z.strictObject({
-  view: z.enum(["summary", "objects", "relations", "results"]),
+  view: z.enum(["summary", "objects", "relations", "results", "report"]),
   type: z.enum(electricalObjectTypes).optional(),
+  runId: z
+    .string()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)
+    .optional(),
   ids: z.array(electricalIdSchema).max(100).optional(),
   offset: z.number().int().nonnegative().optional(),
 });
@@ -159,6 +184,17 @@ async function readView(ctx: ToolContext, raw: unknown): Promise<Record<string, 
   const file = await readModelFile(ctx.root);
   if (args.view === "results")
     return { path: electricalResultsDir, results: await listResults(ctx.root, file?.model ?? null) };
+  if (args.view === "report") {
+    if (args.runId === undefined) throw Error("view report needs a runId.");
+    const result = await readResultFile(ctx.root, args.runId);
+    const fresh = resultFreshness(result, file?.model ?? null);
+    return {
+      runId: args.runId,
+      freshness: fresh.freshness,
+      ...(fresh.freshness === "stale" ? { changed: fresh.changed, removed: fresh.removed } : {}),
+      report: renderResultReport(result, fresh, file?.model ?? null),
+    };
+  }
   if (!file) return { exists: false, path: electricalModelPath };
   const { model } = file;
   const offset = args.offset ?? 0;
@@ -208,7 +244,7 @@ export const electricalModelTool: ToolDefinition = {
   name: "electrical_model",
   class: "read",
   description:
-    "Read the workbench's electrical project model (electrical-automation-model.json) and its plugin results. view summary: project, normative profile, counts and completeness issues; objects: objects (optionally by type or ids) with their sha256; relations: relations (optionally touching ids); results: runs under electrical-automation-results with status, criteria and freshness - a stale result names the changed inputs and is not a current result. value null means unknown, never zero.",
+    "Read the workbench's electrical project model (electrical-automation-model.json) and its plugin results. view summary: project, normative profile, counts and completeness issues; objects: objects (optionally by type or ids) with their sha256; relations: relations (optionally touching ids); results: runs under electrical-automation-results with status, criteria and freshness - a stale result names the changed inputs and is not a current result; report (with runId): the Markdown report of one stored result with its freshness. value null means unknown, never zero.",
   params: electricalModelParams,
   execute: (ctx, args, signal) => {
     signal.throwIfAborted();
@@ -220,7 +256,7 @@ export const electricalModelChangeParams = z.strictObject({
   operations: z.array(electricalOperationSchema).min(1).max(200),
 });
 
-function modelDiff(path: string, before: string, after: string) {
+export function fileDiff(path: string, before: string, after: string) {
   const patch = structuredPatch(path, path, before, after, "", "", { maxEditLength: DIFF_EDITS });
   if (!patch) return { diff: `The model differs in more than ${DIFF_EDITS} lines.\n`, added: 0, removed: 0 };
   const lines = patch.hunks.flatMap((hunk) => hunk.lines);
@@ -272,7 +308,7 @@ export async function prepareElectricalModelChange(
   const after = Buffer.from(output, "utf8");
   const afterSha256 = hash(after);
   const changePath = inside.relative;
-  const { diff, added, removed } = modelDiff(changePath, original, output);
+  const { diff, added, removed } = fileDiff(changePath, original, output);
   const request = Object.freeze({
     workbench: ctx.root,
     sessionId: host.sessionId,
