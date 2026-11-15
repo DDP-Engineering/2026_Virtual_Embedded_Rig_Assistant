@@ -3149,15 +3149,28 @@ legend {
   font-size: 0.85rem;
 }
 /* Sidebar footer: the maker's logo, theme-matched. */
+.sidebar-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.sidebar-bottom .sidebar-settings {
+  flex: 1;
+  min-width: 0;
+}
 .sidebar-maker {
   flex-shrink: 0;
   display: flex;
-  justify-content: center;
-  padding: 0.5rem 0.75rem 0.25rem;
-  border-top: 1px solid var(--border);
+  align-items: center;
+  padding-right: 0.5rem;
+}
+.sidebar-maker[hidden] {
+  display: none;
 }
 .maker-logo {
-  height: 2.6rem;
+  height: 1.8rem;
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -3473,4 +3486,14 @@ legend {
   .library-split {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+/* Library state buttons in the left column: one aligned list, never wrapping mid-row. */
+.library-side .plugin-library-statuses {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+}
+.library-side .plugin-library-statuses button {
+  justify-self: stretch;
+  text-align: left;
 }

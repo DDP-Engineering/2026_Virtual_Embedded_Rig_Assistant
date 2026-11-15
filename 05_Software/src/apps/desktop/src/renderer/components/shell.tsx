@@ -385,22 +385,24 @@ export function Shell({
           <div id="sidebar-details" className="sidebar-details" hidden={layout.sidebarCollapsed}>
             {navigation}
           </div>
-          <button
-            type="button"
-            className="sidebar-settings sidebar-action"
-            data-i18n="nav.settings"
-            aria-label={t("nav.settings")}
-            title={t("nav.settings")}
-            aria-current={settings ? "page" : undefined}
-            onClick={() => navigate(true)}
-          >
-            <SettingsIcon aria-hidden="true" />
-            <span className="nav-label">{t("nav.settings")}</span>
-          </button>
-          {/* The maker's mark: the color logo on the light theme, the pale one on the dark theme. */}
-          <div className="sidebar-maker" data-sidebar-maker hidden={layout.sidebarCollapsed}>
-            <img className="maker-logo maker-logo-light" src={ddpLogoLight} alt="DDP Engineering" />
-            <img className="maker-logo maker-logo-dark" src={ddpLogoDark} alt="" aria-hidden="true" />
+          <div className="sidebar-bottom">
+            <button
+              type="button"
+              className="sidebar-settings sidebar-action"
+              data-i18n="nav.settings"
+              aria-label={t("nav.settings")}
+              title={t("nav.settings")}
+              aria-current={settings ? "page" : undefined}
+              onClick={() => navigate(true)}
+            >
+              <SettingsIcon aria-hidden="true" />
+              <span className="nav-label">{t("nav.settings")}</span>
+            </button>
+            {/* The maker's mark beside Settings: no extra row, so the workbench list keeps its height. */}
+            <div className="sidebar-maker" data-sidebar-maker hidden={layout.sidebarCollapsed}>
+              <img className="maker-logo maker-logo-light" src={ddpLogoLight} alt="DDP Engineering" />
+              <img className="maker-logo maker-logo-dark" src={ddpLogoDark} alt="" aria-hidden="true" />
+            </div>
           </div>
           {!layout.sidebarCollapsed && separator("sidebar")}
         </aside>

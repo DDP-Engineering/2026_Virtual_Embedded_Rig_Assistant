@@ -127,6 +127,37 @@ it("treats calls the mode approved automatically as routine, but keeps user deci
   await render(state, "verbose");
   expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(3);
 });
+it("keeps an irreversible program approved by the mode visible at every detail level", async () => {
+  const state = fixture();
+  state.approvals.push({
+    approvalId: "grant-one",
+    callId: "one",
+    requestSha256: "a".repeat(64),
+    tool: "run_program",
+    path: "scpi",
+    diff: "",
+    bytes: 0,
+    decision: "approved",
+    by: "mode",
+    program: {
+      pluginId: "scpi-instruments",
+      trial: false,
+      program: "scpi",
+      programVersion: "0.2.0",
+      executable: "/opt/uv",
+      args: ["output", "--hold", "60"],
+      cwd: ".",
+      risk: "irreversible",
+      confirm: "output",
+      notes: ["Turns on a physical output."],
+      files: [],
+    },
+  } as unknown as SessionState["approvals"][number]);
+  for (const detail of ["minimal", "normal"] as const) {
+    await render(state, detail);
+    expect(container.querySelectorAll('[data-approval-card][data-risk="irreversible"]')).toHaveLength(1);
+  }
+});
 it("shows per-question usage only at the verbose detail level", async () => {
   const state = fixture();
   state.items[0] = {

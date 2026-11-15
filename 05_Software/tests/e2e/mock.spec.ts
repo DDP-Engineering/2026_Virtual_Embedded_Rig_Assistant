@@ -78,7 +78,11 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     for (const language of ["ro", "de", "en"]) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       await expect(page.locator('[data-i18n="settings.appearance"]')).toHaveText(
-        language === "ro" ? "Aspect" : language === "de" ? "Darstellung" : "Appearance",
+        language === "ro"
+          ? "Aspect și limbă"
+          : language === "de"
+            ? "Darstellung und Sprache"
+            : "Appearance and language",
       );
     }
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
@@ -94,7 +98,13 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await page.keyboard.press("Home");
       await expect(page.locator('[data-resize="right"]')).toHaveAttribute("aria-valuenow", "14");
       await page.keyboard.press("End");
-      await expect(page.locator('[data-resize="right"]')).toHaveAttribute("aria-valuenow", "28");
+      // The right panel can grow to half the window (in rem, rounded down).
+      const half = await page.evaluate(() =>
+        String(
+          Math.floor(innerWidth / 2 / Number.parseFloat(getComputedStyle(document.documentElement).fontSize)),
+        ),
+      );
+      await expect(page.locator('[data-resize="right"]')).toHaveAttribute("aria-valuenow", half);
       const centre = await page.locator("main").boundingBox();
       const panel = await page.locator('[data-panel="right"]').boundingBox();
       if (!centre || !panel) throw new Error("Missing panel bounds");
@@ -297,7 +307,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath("keyboard-focus.png") });
     // Every section is reachable, with future capabilities represented explicitly as placeholders.
-    for (const section of ["providers", "updates", "data", "about", "language", "appearance"]) {
+    for (const section of ["providers", "updates", "data", "about", "appearance"]) {
       await page.locator(`[data-section="${section}"]`).click();
       await expect(page.locator(`[data-settings-section="${section}"]`)).toBeInViewport();
     }
