@@ -1,0 +1,9 @@
+format: 1
+id: lighting-design
+version: 0.1.0
+name: Lighting design
+summary: Estimate interior lighting from IES or LDT photometry and verify it against a photometric engine report such as DIALux evo.
+description: Design interior lighting with VERA's lighting_design tool from a lighting project file (rectangular room, reflectances, calculation plane, luminaire types with IES LM-63 or EULUMDAT photometry, positions and orientations, scenarios, maintenance factor and user-entered requirements with their source). The preliminary level gives a lumen-method estimate with cited utilisation factors and the direct component on the calculation grid, with diagnostics for wrong scale, units, orientation and photometry. The verification level maps the values of a demonstrated photometric engine's report for the same room - DIALux evo through an assisted flow - and only then gives maintained illuminance, uniformity and glare verdicts. VERA computes no uniformity or UGR itself, runs no engine and writes no proprietary project format; emergency and exterior lighting are separate profiles not supported yet.
+ecosystem: electrical
+platforms: [windows-x64, linux-x64]
+docs: [README.md]

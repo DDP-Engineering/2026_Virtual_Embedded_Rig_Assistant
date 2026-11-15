@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-98dceeb1"
+
+title = "Store the lighting result through a prepared change with input snapshots"
+
+status = "active"
+
+requirement = """
+When lighting_design completes a run, VERA shall prepare one new result file through the approved write flow with input snapshots of the model project and of every model load the luminaire types name, record the sha256 of the lighting project, photometry and report files in the result, and shall write nothing else.
+"""
+
+verification = "Tool tests: the prepared change creates exactly one result.json; the model, project, photometry and report files are unchanged; the result lists the project and the named loads as inputs and goes stale when such a load changes; the sources name each file with its sha256."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

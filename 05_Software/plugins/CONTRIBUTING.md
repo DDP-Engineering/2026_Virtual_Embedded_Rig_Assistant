@@ -105,8 +105,17 @@ items of categories `capacitor` (`reactivePower` at conditions `voltage` and `fr
 capacitor/reactor pair counts only through a cited coordination table of kind `detuned step` (`reactivePower`,
 `tuningFactor`, optional `overcurrentRatio`, `harmonicVoltageMax` at `harmonicOrder`, `thdVoltageMax`).
 
+Interior lighting comes from VERA's `lighting_design` tool (plugin `lighting-design`, spec
+`.agentic/specs/REQ-DATA-affb2e6b.md`): a lighting project `electrical-automation-lighting/<id>.json` (kind
+`vera-lighting-project`, format 1: declared length unit, rectangular room, reflectances, plane, maintenance factor,
+luminaire types with photometry, positions and orientations, user-entered requirements with their source, scenarios,
+cited utilisation factors), photometry files in `electrical-automation-photometry/` (IES LM-63 type C, EULUMDAT) and,
+for verification, a report record (kind `vera-lighting-report`) mapped from a photometric engine's report such as
+DIALux evo. A luminaire catalog item has category `luminaire`, attribute `photometry` and cited `luminousFlux` and
+`activePower`. VERA computes no uniformity or UGR and starts no engine.
+
 Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
-`power_quality`) is offered
+`power_quality`, `lighting_design`) is offered
 only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
 cleanly when they are missing or stale.
 

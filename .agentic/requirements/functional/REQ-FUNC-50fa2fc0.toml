@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-50fa2fc0"
+
+title = "Check luminaire catalog items against the photometry"
+
+status = "active"
+
+requirement = """
+When a luminaire type names an order code and the request names a catalog, lighting_design shall find that item in the industrial catalog, check its category luminaire, its photometry attribute against the type's file and its cited luminousFlux and activePower against the photometry within 10 %, and record the outcome as a catalog criterion that is unknown when a value is absent or not confirmed.
+"""
+
+verification = "Core engine tests with an in-memory catalog: matching flux and power pass; a flux 1000 times the photometry's fails; another photometry attribute fails; an extracted or absent value is unknown; an order code missing from the catalog or an item of another category is refused; the result carries catalog {id, version}."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

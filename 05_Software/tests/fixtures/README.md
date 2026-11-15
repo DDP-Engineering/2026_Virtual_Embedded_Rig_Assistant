@@ -57,6 +57,15 @@ https://www.energystatusdata.kit.edu/hipe.php), licensed CC BY 4.0. Changed: mai
 the first raw reading of each minute (1440 rows, no averaging), 31 of 362 columns renamed, float32 values written with
 at most 3 decimals; HIPE does not document whether Q is fundamental, so the file declares `reactive: undeclared`.
 
+`lighting-design/` holds only FICTIONAL data written for the tests by a generator kept outside the repository (no real
+product, room or report): `fict-downlight.ies`
+(IES LM-63-2002, absolute, Lambertian I0 = 1000 cd, 30 W) and `fict-panel.ldt` (EULUMDAT symmetry 4, I(C, g) =
+I0 cos g (1 + 0.3 cos 2C), lamp flux 4800 lm, LORL 90 %, 36 W) are analytic distributions with known flux;
+`lgt-office-a.json` is an 8 x 6 x 3 m office with 12 panels, two scenarios, user-entered fictional requirements and a
+fictional UF table; `rep-office-a.json` is a fictional DIALux report record (`origin: fictional`, no engine was run);
+`model-office-a.json` is a minimal electrical model with the lighting load; `cat-lighting.json` a fictional luminaire
+catalog item.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

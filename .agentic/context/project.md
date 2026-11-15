@@ -166,7 +166,11 @@ reactive compensation at one board from a current network result and a measureme
 (`electrical-automation-measurements/<id>.json`, format 1 with declared units and sign conventions, rows inline or in
 CSV): displacement versus total power factor, the kvar need, a fixed or automatic bank of equal steps,
 overcompensation, cited capacitor/reactor/contactor/protection checks and resonance against measured harmonics; it
-stores one new result after approval and switches nothing; the official plugin power-quality-pfc brings its skill; see [electrical model](../knowledge/electrical-model.md).
+stores one new result after approval and switches nothing; the official plugin power-quality-pfc brings its skill; see [electrical model](../knowledge/electrical-model.md). `lighting_design` estimates interior
+lighting from a lighting project (`electrical-automation-lighting/<id>.json`, format 1) and IES/EULUMDAT photometry
+(lumen method with cited utilisation factors, direct component, scale/units/orientation diagnostics) and verifies it
+only against a mapped photometric engine report such as DIALux evo; it computes no uniformity or UGR, starts no engine
+and stores one new result after approval; the official plugin lighting-design brings its skill.
 Parts search: Settings > Parts search holds supplier switches, credentials (Mouser, DigiKey, TME, Farnell, Rutronik; `parts:<id>` slots with the same consent and rollback) and region; the host tool `parts_search` is offered only with Web access on, the official parts-search plugin enabled for the workbench and a supplier enabled, contacts fixed supplier endpoints only, stores no result and never orders. The CLI reads MOUSER_API_KEY, DIGIKEY_CLIENT_ID/SECRET, TME_API_TOKEN/SECRET, FARNELL_API_KEY and RUTRONIK_API_KEY into memory. Live supplier probes need the user's own keys; see [parts search](../knowledge/parts-search.md).
 
 PCB layout candidates: the kicad-layout plugin (Electronics design pack, default off) edits a candidate copy of a

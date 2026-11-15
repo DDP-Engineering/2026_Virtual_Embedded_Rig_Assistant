@@ -19,7 +19,9 @@ motor-drives, start at plugins/motor-drives/plugin.yaml (no program, ecosystem `
 the engine, the `motor_drives` tool and their tests belong to [electrical model](electrical-model.md). For
 power-quality-pfc, start at plugins/power-quality-pfc/plugin.yaml (no program, ecosystem `electrical`) and
 skills/power-factor-correction; the engine, the measurement format, the `power_quality` tool and their tests belong
-to [electrical model](electrical-model.md).
+to [electrical model](electrical-model.md). For lighting-design, start at plugins/lighting-design/plugin.yaml (no
+program, ecosystem `electrical`) and skills/lighting-design; the photometry readers, the lighting formats, the engine,
+the `lighting_design` tool and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -376,6 +378,13 @@ that source metadata reaches the deterministic bundled index unchanged.
   `power_quality` tool run and displacement versus total power factor, the bank, overcompensation, equipment and
   resonance explained; no step switched, no regulator set, no filter designed. Engine and tool:
   [electrical model](electrical-model.md), spec REQ-DATA-4dc5e2c7.
+- `lighting-design` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Lighting design,
+  default on; activity `design`), Windows x64/Linux x64, no program. Skill `lighting-design`: the lighting project
+  written with every value asked, IES/LDT files and cited utilisation factors collected, VERA's `lighting_design` tool
+  run at the preliminary level and its estimate, direct component and diagnostics explained, then the assisted DIALux
+  evo flow (same room and photometry built in DIALux by the engineer, report exported, record mapped and verified); no
+  DIALux automation, no proprietary file written. Engine and tool: [electrical model](electrical-model.md), spec
+  REQ-DATA-affb2e6b.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

@@ -72,6 +72,12 @@ it("converts every tool schema and validates samples while filtering disabled na
       targetPowerFactor: 0.95,
       steps: [{ capacitor: "itm-blrch125a150b48" }],
     },
+    lighting_design: {
+      project: "lgt-office-a",
+      level: "verification",
+      report: "rep-office-a",
+      catalog: "cat-lighting",
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -111,6 +117,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "protection_coordination",
     "motor_drives",
     "power_quality",
+    "lighting_design",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

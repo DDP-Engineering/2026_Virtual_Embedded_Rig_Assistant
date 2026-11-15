@@ -19,7 +19,11 @@ reversing, star-delta, softstarter and VFD comparison, acceleration model, start
 motor-drives-tool.ts), the power factor correction engine: `power_quality`, measurement files
 `electrical-automation-measurements/<id>.json` (+ `.csv`), displacement versus total power factor, compensation need,
 fixed or automatic capacitor banks, detuned steps and resonance (spec .agentic/specs/REQ-DATA-4dc5e2c7.md, core
-electrical/measurements.ts, power-quality.ts, power-quality-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+electrical/measurements.ts, power-quality.ts, power-quality-tool.ts), the lighting engine: `lighting_design`,
+lighting projects and report records `electrical-automation-lighting/<id>.json`, photometry files
+`electrical-automation-photometry/` (IES LM-63, EULUMDAT), lumen method, utilisation and maintenance factor, direct
+component, DIALux evo report mapping (spec .agentic/specs/REQ-DATA-affb2e6b.md, core electrical/photometry.ts,
+lighting-files.ts, lighting.ts, lighting-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -135,13 +139,37 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   stale), the measurement file (refused when invalid or of another board) and the catalog, and prepares one new result
   through `prepareResultChange`; the result copies the network result's inputs plus the board, its subtree and its
   source.
+- Photometry (spec REQ-DATA-affb2e6b "Photometry"): pure `parsePhotometry(name, latin1Text)` -> {format ies|ldt,
+  standard, identity, symmetry rotational|quadrant|bilateral|full, cAngles, gammas, candela[c][g] absolute cd,
+  absolute, lampFlux|null, luminaireFlux (integrated: 1-degree C steps, 0.5-degree gamma zones), lightOutputRatio,
+  declaredLightOutputRatio, inputWatts|null, dimensions m, messages}; `intensityAt(p, C, gamma)` (bilinear, 0 outside
+  the gamma range), `integrateFlux`. IES type C with TILT=NONE and horizontal ranges 0/90/180/360; EULUMDAT symmetry
+  0, 1, 2, 4. Throws `Invalid photometry file <name>: <reason>.` otherwise.
+- Lighting files: shared `lighting-project.ts` (`lightingProjectSchema`, `lightingReportSchema`, `lightingDir`,
+  `photometryDir`, `lightingLimits`); core `lighting-files.ts` (`checkLightingProject`, `checkLightingReport`,
+  `parseLightingProject`, `parseLightingReport`, confined `readLightingProject`, `readLightingReport`,
+  `readPhotometryFile` -> {photometry, stamp {name, path, sha256}}, `hashEvidenceFile` streamed, <= 64 MiB).
+- Lighting engine: pure `analyzeLighting({model, project, projectStamp, photometry Map<type, {photometry, stamp}>,
+  catalog|null, catalogStamp|null, report {report, stamp, evidenceSha256|null}|null, request, runId, now})` with
+  `lightingRequestSchema` {project, level preliminary|verification, report? (exactly at verification), catalog?,
+  scenarios?}; exported `roomIndex`, `utilisationFactorAt`, `directIlluminance`. Producer `lighting-design` /
+  `lighting`, engine `vera-lighting` 1.0.0. Criteria `profile`, `geometry` (project), `photometry`, `catalog` (type),
+  `placement` (luminaire, failures only), per scenario `estimated-average-illuminance`, `maintained-illuminance`,
+  `uniformity`, `glare-ugr`, `report-match`, `report-consistency`; values `roomArea` (m²), per type `luminaireFlux`,
+  `lampFlux`, `inputPower`, `efficacy`, `lightOutputRatio`, per scenario `luminaireCount`, `mountingHeight`,
+  `roomIndex`, `utilisationFactor`, `estimatedAverageIlluminance`, `luminairesNeeded`, `gridPoints`,
+  `directIlluminanceMin|Average|Max`, `installedPower`, `powerDensity` (W/m²), `reportAverage|Minimum|Uniformity|Ugr`.
+- Tool `lighting_design` (write): reads the model, the project, every type's photometry, the optional catalog and
+  report record (refused when it belongs to another project; its evidence file hashed) and prepares one new result
+  through `prepareResultChange`; inputs = the model project + the lighting loads the types name; the files' sha256
+  are in `sources` (file freshness not tracked, a stated limit).
 - Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
   devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
   interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
 - Tool gating: `electricalModelToolNames` (`electrical_model`, `electrical_model_change`) are offered while any plugin
   of manifest ecosystem `electrical` or `automation` is loaded (`electricalModelPlugin`); each tool of
   `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
-  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc) only while its own plugin ID
+  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design) only while its own plugin ID
   is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
   desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
@@ -213,6 +241,14 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   switches nothing (REQ-FUNC-936473de, REQ-FUNC-7484dcd8, REQ-FUNC-9ef28234, REQ-FUNC-a7193330, REQ-FUNC-6e83340d,
   REQ-FUNC-5f29d1c6). `power_quality` refuses a stale network result or another board's measurements and writes only a
   new result file (REQ-REL-0f24c593, REQ-FUNC-7c320847).
+- The lighting engine labels the preliminary level preliminary, takes utilisation factors only from cited entries of
+  the project (exact k or linear between two tabulated k, same reflectances), reports the grid only as the direct
+  component, computes no uniformity or UGR, keeps maintained illuminance, uniformity and glare not-evaluated without a
+  matched engine report, blocks scenarios with a failed placement or photometry, blocks the run on failed geometry or
+  an emergency/exterior profile, and gives preliminary false only for a matched `origin: engine` record whose evidence
+  sha256 VERA verified (REQ-FUNC-ca72aaff, REQ-FUNC-b78b7b15, REQ-FUNC-dafae3f1, REQ-FUNC-e087cb4d, REQ-FUNC-addd6a2f,
+  REQ-FUNC-e86a35c5, REQ-FUNC-50fa2fc0). `lighting_design` refuses missing, invalid, lightless or foreign inputs and
+  a non-lighting load, and writes only a new result file (REQ-REL-840d2785, REQ-FUNC-98dceeb1).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -360,3 +396,13 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/power-quality.test.ts` — guide examples, conventions, bank, equipment, resonance.
 - `05_Software/src/libraries/core/src/electrical/power-quality-tool.test.ts` — prepared result, stale and board refusals, plugin.
 - `05_Software/tests/fixtures/power-quality-pfc/` — fictional plant Q, fictional measurement day, HIPE real excerpt (CC BY 4.0), cited PFC catalog.
+- `05_Software/src/libraries/shared/src/lighting-project.ts` — lighting project and report record format-1 schemas.
+- `05_Software/src/libraries/core/src/electrical/photometry.ts` — IES LM-63 and EULUMDAT reading, intensity, flux.
+- `05_Software/src/libraries/core/src/electrical/lighting-files.ts` — reference checks and confined lighting file reads.
+- `05_Software/src/libraries/core/src/electrical/lighting.ts` — the lighting engine and its request schema.
+- `05_Software/src/libraries/core/src/electrical/lighting-tool.ts` — the lighting_design write tool.
+- `05_Software/src/libraries/core/src/electrical/photometry.test.ts` — analytic flux, symmetries, scaling, refusals.
+- `05_Software/src/libraries/core/src/electrical/lighting-files.test.ts` — formats, references, confined reads.
+- `05_Software/src/libraries/core/src/electrical/lighting.test.ts` — hand calculations, diagnostics, profiles, catalog, report mapping.
+- `05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts` — prepared result, staleness, evidence hash, refusals, plugin.
+- `05_Software/tests/fixtures/lighting-design/` — fictional office, hand-written IES/LDT, fictional report record and catalog.

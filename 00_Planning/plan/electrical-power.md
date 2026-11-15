@@ -22,7 +22,10 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
 (AEGIS TASK-0184d2d1), native Ubuntu, public selectivity/type-2 tables with Iq and numeric tripping bands open. PWR-04
 implemented 2026-11-15 (AEGIS TASK-37f3835b), native Ubuntu and data the public pages do not give (softstarter starts
 per hour, drive EMC category and motor cable length, GV2ME trip class) open. PWR-05 implemented 2026-11-15 (AEGIS TASK-b30a9859) with a fictional measurement set and a real HIPE excerpt
-(CC BY 4.0, Q convention undeclared); a public capacitor/reactor pairing table and native Ubuntu open.
+(CC BY 4.0, Q convention undeclared); a public capacitor/reactor pairing table and native Ubuntu open. PWR-06
+implemented 2026-11-15 (AEGIS TASK-bab20aa3) with fictional hand-written photometry and a fictional report record;
+PWR-06-B (a real room calculated in DIALux evo with authorized photometry), public manufacturer IES/LDT files and
+native Ubuntu open.
 
 ## Order
 
@@ -34,7 +37,7 @@ per hour, drive EMC category and motor cable length, GV2ME trip class) open. PWR
 | 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | implemented |
 | 5 | PWR-04 | [#130](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/130) | `motor-drives`: DOL, reversing, star-delta, softstarter or VFD choice and starter assembly | PWR-01, PWR-03 | implemented |
 | 6 | PWR-05 | [#131](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/131) | `power-quality-pfc`: P/Q/S and harmonic profiles, compensation need, capacitor bank steps | PWR-01, PWR-02 | implemented |
-| 7 | PWR-06 | [#132](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/132) | `lighting-design`: preliminary estimate, IES/LDT import, DIALux exchange and report check | PWR-00, PWR-01 | planned |
+| 7 | PWR-06 | [#132](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/132) | `lighting-design`: preliminary estimate, IES/LDT import, DIALux exchange and report check | PWR-00, PWR-01 | implemented |
 
 ## Decisions for this epic (user, 2026-11-15)
 
@@ -188,3 +191,33 @@ per hour, drive EMC category and motor cable length, GV2ME trip class) open. PWR
   plain HDuty bank fails resonance near the 17th and the detuned candidate stays unknown (no cited pairing table), so the
   proposal is conditional.
 - Open: a public capacitor/reactor pairing table; whether HIPE's Q is fundamental (undocumented); minimum fault level at boards (PWR-02 gives the maximum only); native Ubuntu.
+
+## PWR-06 #132 - lighting design
+
+- Engine `vera-lighting-1` in product code (core `electrical/lighting.ts`, pure), photometry reader
+  `electrical/photometry.ts` (IES LM-63 type C TILT=NONE, EULUMDAT symmetry 0/1/2/4), file readers
+  `electrical/lighting-files.ts` and tool `lighting_design` (write: one new result through `result-change.ts`), spec
+  `.agentic/specs/REQ-DATA-affb2e6b.md`. Plugin `lighting-design` (ecosystem electrical, no program) brings the skill
+  `lighting-design` and joins the Electrical power and distribution pack; the tool is gated on its own plugin.
+- Inputs: a lighting project `electrical-automation-lighting/<id>.json` (declared length unit, rectangular room,
+  reflectances, plane, MF with source, luminaire types with photometry, positions/rotation/tilt, user-entered
+  requirements with source, scenarios with dimming, cited UF entries), photometry files, an optional luminaire catalog
+  and, for verification, a report record of a photometric engine.
+- Preliminary level: room index, UF exact or linear between two tabulated k, lumen-method estimate and luminaires
+  needed, direct component on the grid (lower bound only), installed power and density; diagnostics for scale
+  (geometry), placement, a luminaire giving almost no direct light, light output ratio above 1.05, IES units and catalog
+  flux/power; maintained illuminance, uniformity and UGR not-evaluated. Emergency and exterior profiles blocked as not
+  supported.
+- Verification level: the record must match room, plane, MF, photometry files, luminaire count and the evidence file's
+  sha256; only then maintained-illuminance, uniformity and glare verdicts from the engine; the engine average is
+  compared with VERA's direct component; preliminary false only for an `origin: engine` record with verified evidence.
+- DIALux evo: target engine through an assisted flow (the engineer rebuilds the room from the project and the same
+  IES/LDT files, calculates, exports the report; the record is transcribed). No headless interface, no STF or DIALux
+  project written (STF documentation is sent to CAD vendors on request, DIAL knowledge base 9000073210, read
+  2026-11-15). DIALux evo was not installed during PWR-06, so the capability probe on an installed version and
+  PWR-06-B stay open.
+- References fixed before the comparison: analytic Lambertian flux pi I0 (0.5 %), inverse-square cosine law (0.5 %),
+  hand lumen-method values (0.5 %; 1 % against nominal flux) and an independent Python midpoint sum of the fixture's
+  direct component (580.42 vs 580.29 lx, tolerance 1 %).
+- Open: PWR-06-B (DIALux evo installation, a real room, authorized manufacturer photometry); the results-export format
+  of the installed DIALux version; emergency and exterior profiles; native Ubuntu.

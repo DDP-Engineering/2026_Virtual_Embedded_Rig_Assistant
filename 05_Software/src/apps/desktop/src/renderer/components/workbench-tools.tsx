@@ -44,6 +44,7 @@ export function WorkbenchTools({
     protection_coordination: t("workbenchTools.protection_coordination"),
     motor_drives: t("workbenchTools.motor_drives"),
     power_quality: t("workbenchTools.power_quality"),
+    lighting_design: t("workbenchTools.lighting_design"),
   };
   // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
   const { rows, pager } = usePaged(builtinToolNames, 50);

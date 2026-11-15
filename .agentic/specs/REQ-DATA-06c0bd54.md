@@ -92,6 +92,8 @@ One table (`core/src/electrical/units.ts`), spelled like electronics-calc (`Ω` 
 | luminous-flux | lm |
 | illuminance | lx |
 | luminous-efficacy | lm/W |
+| floor-area | m² |
+| power-density | W/m² |
 
 Known properties and their dimension: ratedVoltage, voltage: voltage; ratedCurrent, current,
 startingCurrent, shortCircuitCurrent, breakingCapacity: current; ratedPower, power: power;

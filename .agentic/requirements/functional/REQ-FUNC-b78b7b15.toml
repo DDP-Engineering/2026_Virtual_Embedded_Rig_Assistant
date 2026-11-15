@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b78b7b15"
+
+title = "Calculate the direct illuminance component on the calculation grid"
+
+status = "active"
+
+requirement = """
+When lighting_design runs a scenario, VERA shall calculate the direct illuminance component on the calculation plane from each luminaire's photometry, position, rotation, tilt, the maintenance factor and the scenario's dimming at the centres of a grid of the given spacing inside the border, report its minimum, average and maximum as direct-component values, and shall never present them as maintained illuminance or uniformity verdicts.
+"""
+
+verification = "Core engine tests: a point below one luminaire at height h gets I(0) MF / h^2 within 0.5 %; an off-axis point gets I(g) cos(g) / d^2 at its angle; a 90-degree rotation of an asymmetric luminaire moves the C90 intensity onto the x axis; the values appear as directIlluminanceMin/Average/Max intermediates only; a grid above 10000 points is refused."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

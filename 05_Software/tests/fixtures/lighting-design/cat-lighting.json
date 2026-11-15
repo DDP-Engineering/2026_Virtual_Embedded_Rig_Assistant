@@ -1,0 +1,58 @@
+{
+  "kind": "vera-industrial-catalog",
+  "format": 1,
+  "id": "cat-lighting",
+  "version": "2026-11-15.1",
+  "title": "Fictional luminaires for the lighting-design tests",
+  "sources": [
+    {
+      "id": "src-fict-lighting",
+      "kind": "other",
+      "title": "Fictional luminaire data written for VERA tests",
+      "date": "2026-11-15",
+      "license": "CC0 1.0 (fictional test data)"
+    }
+  ],
+  "families": [
+    {
+      "id": "fam-fict-panel",
+      "manufacturer": "Fictional Lighting",
+      "name": "Fictional panels",
+      "category": "luminaire"
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-fict-p40",
+      "family": "fam-fict-panel",
+      "orderCode": "FICT-P40",
+      "name": "Fictional panel 600x600",
+      "attributes": {
+        "photometry": "fict-panel.ldt"
+      },
+      "parameters": [
+        {
+          "name": "luminousFlux",
+          "value": 4320,
+          "unit": "lm",
+          "basis": "input",
+          "source": {
+            "id": "src-fict-lighting"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "activePower",
+          "value": 36,
+          "unit": "W",
+          "basis": "input",
+          "source": {
+            "id": "src-fict-lighting"
+          },
+          "status": "confirmed"
+        }
+      ]
+    }
+  ],
+  "coordination": []
+}

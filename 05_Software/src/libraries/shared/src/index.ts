@@ -16,6 +16,7 @@ export * from "./industrial-catalog.js";
 export * from "./ipc.js";
 export * from "./keyboard-shortcuts.js";
 export * from "./lab-resources.js";
+export * from "./lighting-project.js";
 export * from "./ordering.js";
 export * from "./parts-search.js";
 export * from "./plugin-catalog.js";

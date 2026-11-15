@@ -81,7 +81,13 @@ it("asks for approval in ask mode and writes the model only when approved (REQ-F
     expect(catalogs[0]).toEqual(
       expect.arrayContaining(["electrical_model", "electrical_model_change", "electrical_network"]),
     );
-    for (const other of ["industrial_catalog", "protection_coordination", "motor_drives", "power_quality"])
+    for (const other of [
+      "industrial_catalog",
+      "protection_coordination",
+      "motor_drives",
+      "power_quality",
+      "lighting_design",
+    ])
       expect(catalogs[0]).not.toContain(other);
     expect(approval.diff).toContain('+      "name": "Duty pump"');
     expect(await model()).toBe(fixture);
@@ -116,6 +122,7 @@ it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4df
     "protection-coordination",
     "motor-drives",
     "power-quality-pfc",
+    "lighting-design",
   ]);
   const session = service.create(null, "read-only");
   service.send(session.id, "rename the pump");
@@ -129,6 +136,7 @@ it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4df
     expect(catalog).not.toContain("protection_coordination");
     expect(catalog).not.toContain("motor_drives");
     expect(catalog).not.toContain("power_quality");
+    expect(catalog).not.toContain("lighting_design");
   }
   expect(await model()).toBe(fixture);
   expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
@@ -147,6 +155,7 @@ it("offers no electrical tool without an electrical or automation plugin (REQ-SE
     expect(catalog).not.toContain("protection_coordination");
     expect(catalog).not.toContain("motor_drives");
     expect(catalog).not.toContain("power_quality");
+    expect(catalog).not.toContain("lighting_design");
   }
   expect(await model()).toBe(fixture);
 });
@@ -168,6 +177,7 @@ it("offers each plugin tool only while its own plugin is loaded (REQ-SEC-4dfa2a5
       "protection-coordination",
       "motor-drives",
       "power-quality-pfc",
+      "lighting-design",
     ]),
   ).toEqual(core.electricalToolNames);
   expect(core.electricalToolOffered("read", [])).toBe(true);

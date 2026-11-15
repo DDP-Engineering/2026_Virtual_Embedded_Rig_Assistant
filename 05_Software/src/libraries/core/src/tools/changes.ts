@@ -49,7 +49,8 @@ export interface FileChangeRequest {
     | "electrical_network"
     | "protection_coordination"
     | "motor_drives"
-    | "power_quality";
+    | "power_quality"
+    | "lighting_design";
   readonly path: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly existed: boolean;
