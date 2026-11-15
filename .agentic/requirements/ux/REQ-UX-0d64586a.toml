@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-0d64586a"
+
+title = "Open a plugin's help from its plugin page"
+
+status = "active"
+
+requirement = """When the user activates Help on an installed plugin's row that has help, VERA shall open the Help view at that plugin's help page in the interface language."""
+
+verification = """Browser mock E2E: on Plugins, the serial-monitor row's Help button opens Help with that plugin's page current; a plugin without help shows no Help button (component test)."""
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/help.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/help-plugins.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

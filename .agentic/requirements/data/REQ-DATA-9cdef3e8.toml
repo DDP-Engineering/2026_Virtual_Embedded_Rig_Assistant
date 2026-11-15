@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-9cdef3e8"
+
+title = "Ship plugin help in the package and list its languages"
+
+status = "active"
+
+requirement = """The catalog build shall pack a plugin's help/*.md files into its zip, and the installed plugin's composition shall list the languages of its help/<language>.md files without listing them as data files."""
+
+verification = """Catalog build test unzips a fixture plugin with help/en.md and help/fr.md and finds both; store test reads the composition help languages [en, fr] and data files without help/."""
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/src/libraries/core/src/plugins/store.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

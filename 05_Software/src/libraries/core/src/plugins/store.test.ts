@@ -497,13 +497,16 @@ it("carries the skills and data files of a package in its review and its install
 it("lists the operations of official bus-tools from the rules its approvals classify with", async () => {
   const f = await fixture();
   const official = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../plugins/bus-tools");
-  expect((await f.store.review(official)).composition).toEqual({
-    skills: [
-      { name: "bus-profiles", description: expect.stringContaining("bus profile") },
-      { name: "bus-transactions", description: expect.any(String) },
-    ],
-    files: ["profiles/bme280-i2c.json", "profiles/uart-console.json", "profiles/w25q-spi.json"],
-  });
+  // Its help pages are listed as help languages, not as data files.
+  expect((await f.store.review(official)).composition).toEqual(
+    expect.objectContaining({
+      skills: [
+        { name: "bus-profiles", description: expect.stringContaining("bus profile") },
+        { name: "bus-transactions", description: expect.any(String) },
+      ],
+      files: ["profiles/bme280-i2c.json", "profiles/uart-console.json", "profiles/w25q-spi.json"],
+    }),
+  );
   await f.store.install(official);
   const [listed] = await f.store.list();
   const { manifest } = await f.store.load("bus-tools");
@@ -573,4 +576,19 @@ it("declares the parameters of the official plugins in their manifests", async (
     { name: "ssh-agent", kind: "value", value: expect.stringContaining("SSH agent") },
   ]);
   expect(await declared("kicad")).toEqual([]);
+});
+
+// REQ-DATA-9cdef3e8
+it("lists the languages of a package's help and keeps help out of its data files", async () => {
+  const f = await fixture();
+  const source = await f.folder(
+    packageFiles({
+      "help/en.md": "# Help\n\nText.\n",
+      "help/fr.md": "# Aide\n\nTexte.\n",
+      "data/x.csv": "a\n",
+    }),
+  );
+  const { composition } = await f.store.review(source);
+  expect(composition?.help).toEqual(["en", "fr"]);
+  expect(composition?.files).toEqual(["data/x.csv"]);
 });

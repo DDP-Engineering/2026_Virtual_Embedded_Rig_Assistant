@@ -102,6 +102,7 @@ export const catalogEntrySchema = z.strictObject({
   name: manifest.name,
   summary: manifest.summary,
   description: manifest.description,
+  translations: manifest.translations,
   /** The highest rule risk of the manifest below blocked (`pluginHighestRisk`), for the card's warning. */
   risk: pluginRiskSchema.exclude(["blocked"]),
   requires: ids(64),

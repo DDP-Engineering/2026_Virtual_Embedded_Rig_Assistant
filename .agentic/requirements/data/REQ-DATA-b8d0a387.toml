@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-b8d0a387"
+
+title = "Accept per-language catalog texts in plugin.yaml"
+
+status = "active"
+
+requirement = """The plugin.yaml format shall accept an optional translations map from ro, de or fr to a summary of at most 160 characters and a description of at most 1024 characters, reject any other language or field, and carry the translations into the plugin's catalog index entry."""
+
+verification = """Manifest tests: fr and de translations validate; an it entry, an extra field and a 161-character summary are issues; a catalog build of a fixture source writes the translations into index.json."""
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/plugins/CONTRIBUTING.md"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

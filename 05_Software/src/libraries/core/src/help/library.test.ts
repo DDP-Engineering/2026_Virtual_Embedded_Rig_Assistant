@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { HelpLibrary } from "./library.js";
+import { HelpLibrary, readPluginHelp } from "./library.js";
 
 let root: string;
 let outside: string;
@@ -67,4 +67,25 @@ it("never reads a file that resolves outside the help root (REQ-SEC-8e27b5ca)", 
   await expect(help.read("secret", "ro")).rejects.toMatchObject({ code: "NOT_FOUND" });
   expect((await help.list("ro")).map((page) => page.page)).not.toContain("secret");
   await expect(help.read("../outside/secret" as string, "en")).rejects.toMatchObject({ code: "INVALID" });
+});
+
+// REQ-FUNC-559bba00
+it("reads a plugin's help in the language, else English, never outside its help folder", async () => {
+  const temporary = join(root, "..");
+  const plugin = join(temporary, "plugin");
+  await mkdir(join(plugin, "help"), { recursive: true });
+  await writeFile(join(plugin, "help", "en.md"), "# Serial monitor\n\nCapture consoles.\n");
+  await writeFile(join(plugin, "help", "fr.md"), "# Moniteur série\n\nCapturer.\n");
+  expect(await readPluginHelp(plugin, "fr")).toEqual({
+    title: "Moniteur série",
+    language: "fr",
+    content: "# Moniteur série\n\nCapturer.\n",
+  });
+  expect(await readPluginHelp(plugin, "de")).toMatchObject({ title: "Serial monitor", language: "en" });
+  expect(await readPluginHelp(join(temporary, "none"), "en")).toBeUndefined();
+  const escaped = join(temporary, "escaped");
+  await mkdir(escaped);
+  await writeFile(join(outside, "en.md"), "# Outside\n\nSecret.\n");
+  await symlink(outside, join(escaped, "help"), process.platform === "win32" ? "junction" : "dir");
+  expect(await readPluginHelp(escaped, "en")).toBeUndefined();
 });

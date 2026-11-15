@@ -220,6 +220,7 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
 }
 
 const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
+const HELP_FILE = /^help\/(en|ro|de|fr)\.md$/;
 /**
  * The skills (each skills/<name>/SKILL.md with its front-matter description, none when it does not parse) and the
  * data files (outside plugin.yaml, skills/, scripts/ and the package-relative documents) of a package, in path order.
@@ -227,7 +228,13 @@ const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
 function compose(files: Files, manifest: PluginManifest): PluginComposition {
   const composition: PluginComposition = { skills: [], files: [] };
   const docs = new Set(manifest.docs);
+  const help: NonNullable<PluginComposition["help"]> = [];
   for (const path of [...files.keys()].sort(order)) {
+    const language = HELP_FILE.exec(path)?.[1] as (typeof help)[number] | undefined;
+    if (language) {
+      help.push(language);
+      continue;
+    }
     const skill = SKILL_FILE.exec(path)?.[1];
     if (skill !== undefined) {
       let description: string | undefined;
@@ -239,6 +246,7 @@ function compose(files: Files, manifest: PluginManifest): PluginComposition {
     } else if (path !== MANIFEST && !/^(?:skills|scripts)\//.test(path) && !docs.has(path))
       composition.files.push(path);
   }
+  if (help.length) composition.help = help;
   return composition;
 }
 

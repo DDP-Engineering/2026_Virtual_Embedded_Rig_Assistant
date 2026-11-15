@@ -7,6 +7,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
+import { HelpContext } from "./help.js";
 import { Plugins } from "./plugins.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
@@ -930,4 +931,30 @@ it("names a missing vendor program as external and keeps its guide", async () =>
   expect(($(`${card} [data-action="plugin-provision"]`) as HTMLButtonElement).disabled).toBe(true);
   await click(`${card} [data-action="plugin-expand"]`);
   expect($(`${card} [data-program="echo"]`).textContent).toContain("Install Node.js.");
+});
+
+// REQ-UX-0d64586a
+it("opens a plugin's help from its row and shows no Help for a plugin without help", async () => {
+  await i18n.changeLanguage("en");
+  const helped = { ...echo, composition: { skills: [], files: [], help: ["en", "fr"] as ("en" | "fr")[] } };
+  stub({ installed: [helped, { ...echo, id: "plain-tools", name: "Plain tools" }], programs: [] });
+  const open = vi.fn();
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  await act(async () => {
+    root.render(
+      createElement(
+        HelpContext.Provider,
+        { value: open },
+        createElement(QueryClientProvider, { client }, createElement(Plugins, { workbench })),
+      ),
+    );
+  });
+  await click('[data-library-status="installed"]');
+  await vi.waitFor(() => expect($('[data-plugin="plain-tools"]')).not.toBeNull());
+  expect($('[data-plugin="plain-tools"] [data-action="plugin-help"]')).toBeNull();
+  await click('[data-plugin="echo-tools"] [data-action="plugin-help"]');
+  expect(open).toHaveBeenCalledExactlyOnceWith("plugin/echo-tools");
 });

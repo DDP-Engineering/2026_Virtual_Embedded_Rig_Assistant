@@ -1091,7 +1091,8 @@
       "skippedCatalog": "Nu există în acest catalog.",
       "alreadyInstalled": "Deja instalate: {{names}}",
       "install": "Instalează cu dependențele ({{count}})"
-    }
+    },
+    "help": "Ajutor"
   },
   "runs": {
     "session": "Sesiune: {{title}}",
@@ -1151,6 +1152,7 @@
   "help": {
     "open": "Ajutor",
     "title": "Ajutor",
-    "pages": "Pagini de ajutor"
+    "pages": "Pagini de ajutor",
+    "plugins": "Pluginuri"
   }
 }

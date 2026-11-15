@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-559bba00"
+
+title = "List and read installed plugin help with English fallback"
+
+status = "active"
+
+requirement = """When Help lists or reads plugin help, VERA shall list after the app pages every installed plugin without issues that has help, by title, and serve a plugin's help/<language>.md, else its help/en.md, failing NOT_FOUND for a plugin that is not installed, has issues or has no help, and reading no file whose real path leaves the plugin's help folder."""
+
+verification = """Library tests with a temporary plugin folder: fr served, de falls back to en, no help is undefined, a junctioned help folder pointing outside is not read; the browser mock E2E lists plugin pages after the app pages and reads one in French."""
+
+affected_paths = ["05_Software/src/libraries/core/src/help/library.ts", "05_Software/src/libraries/shared/src/help.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/help.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/help.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/help/library.test.ts", "05_Software/tests/e2e/help-plugins.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

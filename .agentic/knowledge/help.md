@@ -18,6 +18,16 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
   language. Help is a detour like Plugins in `App.tsx`: paths that leave Plugins leave Help, hidden drafts stay mounted.
 - Tests: `components/help.test.ts`, `lib/help-pages.test.ts`, `tests/e2e/help.spec.ts` (browser mock on a free port).
 
+## Plugin help
+
+- An installed plugin's `help/<language>.md` (else `help/en.md`) is read by core `readPluginHelp(folder, language)`;
+  the realpath of `<folder>/help` must be the package's own `help` folder and each file must stay inside it.
+- `help.list` appends, after the app pages, the healthy plugins of the open workbench's plugin view whose composition
+  lists help, sorted by title, as `{page: id, plugin: id, title, language}`; `help.read {plugin, language}` serves
+  one (NOT_FOUND when not installed, with issues or without help). The renderer keys them `plugin/<id>`, lists them
+  under a paged Plugins heading, and `HelpContext` lets each plugin row's Help button open its page.
+- Tests: `core/src/help/library.test.ts`, `components/plugins.test.ts`, `tests/e2e/help-plugins.spec.ts`.
+
 ## Purpose and boundaries
 
 App help is Markdown in `05_Software/help/<en|ro|de|fr>/<page>.md`, shipped read-only as `<resources>/help`. Core

@@ -412,7 +412,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `plugins.list` carries it. An issue-free summary (global or trusted scoped) also carries `manifest` and
   `composition`; a review carries `composition` whenever its manifest parses. Composition: each
   `skills/<name>/SKILL.md` with the front-matter description of core `parseSkill` (none when it does not parse), and
-  the data files outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative docs, in path order.
+  the data files outside `plugin.yaml`, `skills/`, `scripts/`, `help/<en|ro|de|fr>.md` and the package-relative docs,
+  in path order; `help` lists the languages of the package's `help/<language>.md` pages when it has any.
+- Manifest `translations` (optional): `ro|de|fr` → `{summary, description}` with the English limits; catalog index
+  entries carry it, and shared `pluginText(entry, language)` picks the interface language's texts, else English, for
+  catalog cards, the pack chooser, the review and installed rows. Plugin help pages are shown by [Help](help.md).
 - Runs (shared): `programRunIdSchema` (ULID), `programRunRecordSchema` (format 1), `programRunSchema` (adds
   `state: running|exited|stopped|timedOut|interrupted` and `log`), `programRunLogSchema`. IPC `runs.list
   {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id

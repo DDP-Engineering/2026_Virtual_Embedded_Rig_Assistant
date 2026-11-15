@@ -39,7 +39,7 @@ function serve() {
         return { page, title: /^# (.+)$/m.exec(pages[`${served}/${page}`] ?? "")?.[1], language: served };
       });
     }
-    const { page, language } = request as Request<"help.read">;
+    const { page, language } = request as { page: string; language: string };
     const served = pages[`${language}/${page}`] ? language : "en";
     const content = pages[`${served}/${page}`] ?? "";
     return { page, language: served, title: /^# (.+)$/m.exec(content)?.[1], content };

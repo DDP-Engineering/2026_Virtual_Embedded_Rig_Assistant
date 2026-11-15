@@ -18,6 +18,7 @@ import {
   Provisioner,
   pluginPlatform,
   ResourceLeases,
+  readPluginHelp,
   SettingsService,
   settingStates,
   splitModelReference,
@@ -26,6 +27,9 @@ import {
 } from "@vera/core";
 import {
   eventEnvelopeSchema,
+  type HelpLanguage,
+  type HelpPage,
+  type HelpPageSummary,
   type PluginProgramStatus,
   veraError,
   type WorkbenchSnapshot,
@@ -368,6 +372,34 @@ function openWorkbenchFolder(workbenchId: string): string {
   const snapshot = workbench.getSnapshot();
   if (snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
   return snapshot.folder;
+}
+/** The help pages of the installed plugins without issues that ship help, by title (REQ-FUNC-559bba00). */
+async function pluginHelpPages(language: HelpLanguage): Promise<HelpPageSummary[]> {
+  const store = activePluginStore();
+  const pages: HelpPageSummary[] = [];
+  for (const plugin of await store.list()) {
+    if (plugin.issues.length || !plugin.composition?.help?.length) continue;
+    try {
+      const { page, title, language: served } = await pluginHelpPage(plugin.id, language, store);
+      pages.push({ page, title, language: served, plugin: plugin.id });
+    } catch {}
+  }
+  return pages.sort((a, b) => a.title.localeCompare(b.title, language));
+}
+async function pluginHelpPage(
+  id: string,
+  language: HelpLanguage,
+  store = activePluginStore(),
+): Promise<HelpPage> {
+  let folder: string;
+  try {
+    folder = (await store.load(id)).folder;
+  } catch {
+    throw veraError("NOT_FOUND");
+  }
+  const found = await readPluginHelp(folder, language);
+  if (!found) throw veraError("NOT_FOUND");
+  return { page: id, plugin: id, ...found };
 }
 /** Workbench-bound view for user plugin actions; explicit ids reject stale windows. */
 function activePluginStore(workbenchId?: string): PluginStore {
@@ -984,8 +1016,14 @@ ipcMain.handle(
       "providers.save": (request) => providers.save(request),
       "providers.remove": (request) => providers.remove(request),
       "app.info": () => getAppInfo(dataLocations.portable),
-      "help.list": ({ language }) => help.list(language),
-      "help.read": ({ page, language }) => help.read(page, language),
+      "help.list": async ({ language }) => [
+        ...(await help.list(language)),
+        ...(await pluginHelpPages(language)),
+      ],
+      "help.read": (request) =>
+        "plugin" in request
+          ? pluginHelpPage(request.plugin, request.language)
+          : help.read(request.page, request.language),
       "window.menu": (request) => popupWindowMenu(window, request),
       "app.settings.get": () => {
         const snapshot = settings.get();

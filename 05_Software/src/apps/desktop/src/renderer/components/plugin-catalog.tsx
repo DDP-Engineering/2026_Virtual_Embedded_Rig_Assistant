@@ -5,6 +5,7 @@ import {
   catalogUrl,
   type PluginCatalogView,
   type PluginPlatform,
+  pluginText,
   type SettingsSnapshot,
 } from "@vera/shared";
 import { useId, useState } from "react";
@@ -201,7 +202,7 @@ export function CatalogItem({
   /** `programs`: Install with dependencies also installs the programs of every installed plugin. */
   install: (id: string, programs: boolean) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const unsupported = platform !== undefined && !plugin.platforms.includes(platform);
   const risky = plugin.risk === "device-write" || plugin.risk === "irreversible";
   return (
@@ -227,7 +228,7 @@ export function CatalogItem({
           </span>
         )}
       </p>
-      <p>{plugin.summary}</p>
+      <p>{pluginText(plugin, i18n.language).summary}</p>
       {unsupported && (
         <p role="note" data-catalog-warning="platform">
           {t("plugins.catalog.platformWarning", { platforms: plugin.platforms.join(", ") })}

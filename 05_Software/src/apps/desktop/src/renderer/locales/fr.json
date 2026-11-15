@@ -1091,7 +1091,8 @@
       "skippedCatalog": "Absent de ce catalogue.",
       "alreadyInstalled": "Déjà installés : {{names}}",
       "install": "Installer avec les dépendances ({{count}})"
-    }
+    },
+    "help": "Aide"
   },
   "runs": {
     "session": "Session : {{title}}",
@@ -1151,6 +1152,7 @@
   "help": {
     "open": "Aide",
     "title": "Aide",
-    "pages": "Pages d’aide"
+    "pages": "Pages d’aide",
+    "plugins": "Plugins"
   }
 }

@@ -226,6 +226,7 @@ export async function buildCatalogRelease(
       name: manifest.name,
       summary: manifest.summary,
       description: manifest.description,
+      ...(manifest.translations ? { translations: manifest.translations } : {}),
       risk: pluginHighestRisk(manifest.rules),
       requires: manifest.requires,
       dependencies: pluginDependencies(manifest),

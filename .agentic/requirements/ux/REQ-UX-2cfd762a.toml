@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-2cfd762a"
+
+title = "Show plugin catalog texts in the interface language"
+
+status = "active"
+
+requirement = """Where a plugin manifest or catalog entry has a translation for the interface language, VERA shall show that summary and description on catalog cards, the pack chooser, the install review and installed plugin rows, and the English texts otherwise."""
+
+verification = """Unit test of the text selection: French translation used; a German interface without a German translation and the English interface use the English texts."""
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

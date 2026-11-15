@@ -8,11 +8,12 @@ import type {
   PluginReview,
   PluginSummary,
 } from "@vera/shared";
-import { configurationNeeds, pluginPlatform } from "@vera/shared";
-import { useEffect, useId, useRef, useState } from "react";
+import { configurationNeeds, pluginPlatform, pluginText } from "@vera/shared";
+import { useContext, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { HelpContext, pluginHelpKey } from "./help.js";
 import {
   CatalogItem,
   CatalogSettings,
@@ -146,7 +147,7 @@ function Review({
   installed: () => void;
   cancel: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels = useLabels();
   const title = useId();
   const [busy, setBusy] = useState(false);
@@ -216,7 +217,7 @@ function Review({
       </dl>
       {manifest && (
         <>
-          <p>{manifest.description}</p>
+          <p>{pluginText(manifest, i18n.language).description}</p>
           <PluginContents manifest={manifest} composition={review.composition} />
         </>
       )}
@@ -326,6 +327,7 @@ function PluginCard({
   update?: { entry: CatalogPlugin; start: () => void; busy: boolean } | undefined;
 }) {
   const { t, i18n } = useTranslation();
+  const openHelp = useContext(HelpContext);
   const labels = useLabels(),
     client = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -463,7 +465,11 @@ function PluginCard({
           </span>
         )}
       </div>
-      {plugin.description && <p className="plugin-row-description">{plugin.description}</p>}
+      {plugin.description && (
+        <p className="plugin-row-description">
+          {plugin.manifest ? pluginText(plugin.manifest, i18n.language).description : plugin.description}
+        </p>
+      )}
       {!healthy && (
         <div role="alert" data-plugin-issues>
           <p>{t("plugins.broken")}</p>
@@ -538,6 +544,11 @@ function PluginCard({
       {programs.isError && <ErrorMessage error={programs.error} />}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="plugin-actions">
+        {healthy && openHelp && plugin.composition?.help?.length && (
+          <button type="button" data-action="plugin-help" onClick={() => openHelp(pluginHelpKey(plugin.id))}>
+            {t("plugins.help")}
+          </button>
+        )}
         {plugin.source === "workbench" && workbench && (
           <button type="button" data-action="plugin-scoped-review" disabled={working} onClick={reviewScoped}>
             {t("plugins.reviewScoped")}

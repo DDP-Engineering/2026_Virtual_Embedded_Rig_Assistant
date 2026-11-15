@@ -1,5 +1,11 @@
 // REQ-UX-5d984350 REQ-FUNC-0817ec80 REQ-UX-21440e02
-import type { CatalogPack, CatalogPlugin, PluginCatalogView, PluginPlatform } from "@vera/shared";
+import {
+  type CatalogPack,
+  type CatalogPlugin,
+  type PluginCatalogView,
+  type PluginPlatform,
+  pluginText,
+} from "@vera/shared";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { installOrder } from "./plugin-catalog.js";
@@ -152,7 +158,7 @@ export function PackReview({
   install: () => void;
   cancel: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const title = useId();
   const names = new Map(plan.install.map((item) => [item.entry.id, item.entry.name]));
   const reason = (item: PackSkipped) =>
@@ -186,7 +192,7 @@ export function PackReview({
                   </span>
                 )}
               </p>
-              <p>{entry.summary}</p>
+              <p>{pluginText(entry, i18n.language).summary}</p>
               {(entry.risk === "device-write" || entry.risk === "irreversible") && (
                 <p role="note" data-catalog-warning="risk" data-risk={entry.risk}>
                   {entry.risk === "irreversible"
