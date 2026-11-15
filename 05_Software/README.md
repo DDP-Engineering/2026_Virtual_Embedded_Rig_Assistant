@@ -93,9 +93,11 @@ Node.js into `02_Tools/runtime/` and runs `npm ci` here. Then, from this folder:
 
 | Command | Does |
 |---|---|
-| `npm run verify` | lint, typecheck, catalog audit and tests |
+| `npm run verify` | lint, typecheck, catalog audit, help check and tests |
 | `npm run lint` / `npm run format` | Biome: check / apply formatting and safe fixes |
-| `npm run check:i18n` | English usage plus en/ro/de completeness; rejects missing, unused and translation-only keys |
+| `npm run check:i18n` | English usage plus en/ro/de/fr completeness; rejects missing, unused and translation-only keys |
+| `npm run check:help` | App help pages and official plugin help in en/ro/de/fr, valid `name.md` links, no title-only page, `shortcuts.md` current |
+| `npm run help:shortcuts` | Regenerates `help/<language>/shortcuts.md` from the shortcut registry and the interface catalogs |
 | `npm run typecheck` | `tsc -b` |
 | `npm test` | Vitest |
 | `npm run dev` | Electron main, sandboxed preload and React renderer with loopback Vite/HMR |

@@ -84,7 +84,9 @@ as the software. `runtime/` and `cache/` are never linted.
 | File | Purpose | Invocation and result |
 |---|---|---|
 | `build-cli.mjs` | Bundles the CLI entry and its grep, PDF and embedding workers with esbuild | `npm run build:cli`; writes `05_Software/src/apps/cli/dist/`. `npm run vera -- …` runs it first. |
-| `check-i18n.mjs` | Compares the EN/RO/DE catalogs with the translation keys the renderer uses: missing, unused and translation-only keys | `npm run check:i18n`; non-zero exit on errors. `--fixture <json>` checks a negative scenario; its tests are in `05_Software/tests/tooling/i18n.test.ts`. |
+| `check-i18n.mjs` | Compares the EN/RO/DE/FR catalogs with the translation keys the renderer uses: missing, unused and translation-only keys | `npm run check:i18n`; non-zero exit on errors. `--fixture <json>` checks a negative scenario; its tests are in `05_Software/tests/tooling/i18n.test.ts`. |
+| `check-help.mjs` | Checks the app help (`05_Software/help/<lang>/`) and the official plugins' `help/<lang>.md`: the same page set in en/ro/de/fr, relative links naming an app page, no title-only page, and a current generated `shortcuts.md` | `npm run check:help`; non-zero exit on errors; `--fixture <json>` checks a negative scenario; tests in `05_Software/tests/tooling/help.test.ts`. |
+| `generate-help-shortcuts.mjs` | Writes `help/<lang>/shortcuts.md` from the shared shortcut registry and the interface catalogs | `npm run help:shortcuts`; tested by `05_Software/tests/tooling/help-shortcuts.test.ts`. |
 
 ## Release
 

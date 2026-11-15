@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-TEST-af2cc3f5"
+
+title = "Reject broken help links and empty help pages"
+
+status = "active"
+
+requirement = """When the help check runs, it shall fail and name the page for each relative link that does not name an existing app page as name.md and for each page without text besides its title."""
+
+verification = """Tooling test: links to missing.md, ../README.md and permissions.md#modes are reported while permissions.md and an https link pass; a title-only page is reported empty; the CLI with the broken-link fixture exits 1 naming the link."""
+
+affected_paths = ["02_Tools/build/check-help.mjs", "05_Software/tests/fixtures/help/broken-link.json"]
+
+linked_tests = ["05_Software/tests/tooling/help.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

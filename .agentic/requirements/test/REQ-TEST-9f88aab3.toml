@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-TEST-9f88aab3"
+
+title = "Check app and plugin help pages in four languages"
+
+status = "active"
+
+requirement = """When the help check runs, it shall fail and name the language and page for each app page that English has and ro, de or fr lacks or that a language has and English lacks, and for each of en, ro, de and fr that an official plugin's help/<lang>.md lacks, while accepting a community plugin with English help only."""
+
+verification = """Tooling test: auditHelp on fixtures with a French page missing, a German-only page and an official plugin without ro help reports exactly those three messages; a community plugin with only en passes; complete fixtures return no errors."""
+
+affected_paths = ["02_Tools/build/check-help.mjs", "05_Software/package.json", ".agentic/aegis.toml"]
+
+linked_tests = ["05_Software/tests/tooling/help.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
