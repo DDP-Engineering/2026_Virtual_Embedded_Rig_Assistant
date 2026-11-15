@@ -14,7 +14,7 @@ verification = "Fake-driver tests: a stop file mid-capture ends incomplete with 
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/capture.py", "05_Software/plugins/power-profiler/scripts/power_support/meter.py", "05_Software/plugins/power-profiler/scripts/power_support/lifecycle.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

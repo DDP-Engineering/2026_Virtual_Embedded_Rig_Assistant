@@ -14,7 +14,7 @@ verification = "With the real plugin store, provisioner (a uv stand-in that runs
 
 affected_paths = ["05_Software/plugins/electronics-calc/plugin.yaml", "05_Software/plugins/electronics-calc/scripts/elec_calc.py"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = ""

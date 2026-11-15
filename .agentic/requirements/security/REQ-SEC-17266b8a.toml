@@ -14,7 +14,7 @@ verification = "Fixture variants each with one hook: refused with its finding co
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/preflight.py", "05_Software/plugins/platformio/scripts/pio_support/config.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

@@ -7,6 +7,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
+import { HelpContext } from "./help.js";
 import { Plugins } from "./plugins.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
@@ -150,15 +151,14 @@ it("groups top actions and starts with compact accessible rows and explicit depe
   await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).not.toBeNull());
   expect($('[data-library-status="all"]')).not.toBeNull();
   const toggle = $('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
-  expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  expect((toggle.closest("details") as HTMLDetailsElement).open).toBe(false);
   expect(container.textContent).toContain(echo.description);
   expect(calls("plugins.programs")).toEqual([]);
   await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
   expect(calls("plugins.programs")).toEqual([]);
   await click('[data-action="plugin-check"]');
   await vi.waitFor(() => expect($('[data-program="echo"]')).not.toBeNull());
-  expect(toggle.getAttribute("aria-expanded")).toBe("true");
-  expect(toggle.textContent).toContain("\u2212");
+  expect((toggle.closest("details") as HTMLDetailsElement).open).toBe(true);
   expect(container.textContent).not.toMatch(/[\u00c3\u00c2]/);
   expect(container.textContent).toContain(echo.description);
   expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(true);
@@ -439,6 +439,24 @@ it("reviews both find roots and pinned fallback downloads", async () => {
   expect(container.textContent).toContain("https://example.test/tool.zip");
   expect(container.textContent).toContain("c".repeat(64));
   expect(calls("plugins.provision")).toEqual([]);
+});
+
+// REQ-UX-e6056763, REQ-UX-f0f43fda
+it("puts Install and Cancel in the review header and shows the package's help page", async () => {
+  await i18n.changeLanguage("fr");
+  stub({ review: { ...review, help: { en: "# Echo tools\n\nEcho arguments in a test.\n" } } });
+  await render();
+  await click('[data-action="plugin-install-folder"]');
+  await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+  const header = $("[data-plugin-review] .plugin-review-header");
+  expect(header.querySelector('[data-action="plugin-install"]')).not.toBeNull();
+  expect(header.querySelector('[data-action="plugin-review-cancel"]')).not.toBeNull();
+  // French has no page here, so the English one is shown.
+  expect($('[data-plugin-review] [data-plugin-section="help"]').textContent).toContain(
+    "Echo arguments in a test.",
+  );
+  expect($('[data-plugin-review] [data-plugin-section="operations"]')).not.toBeNull();
+  await i18n.changeLanguage("en");
 });
 
 it("cancels a review without installing", async () => {
@@ -847,22 +865,19 @@ function withPrograms(statuses: PluginProgramStatus[]) {
 }
 const check = (card: string, name: string) => $(`${card} [data-status-check="${name}"]`);
 
-// REQ-UX-492e89fb, REQ-UX-50e2dc6b, REQ-UX-05e0ed17
+// REQ-UX-492e89fb, REQ-UX-05e0ed17
 it.each(["en", "ro", "de"])(
-  "shows Dependencies ready, Configuration missing by name and the workbench for mqtt-tools (%s)",
+  "shows Dependencies ready and Configuration missing by name for mqtt-tools (%s)",
   async (language) => {
     await i18n.changeLanguage(language);
     configurationStub([{ ...mqtt, enabled: true }]);
     withPrograms([{ name: "mqtt", kind: "pip", state: "ready", version: "2.1.0" }]);
-    const openWorkbench = vi.fn();
-    await render({ workbench, openWorkbench });
+    await render({ workbench });
     const card = '[data-plugin="mqtt-tools"]';
     await click(`${card} [data-action="plugin-check"]`);
     await vi.waitFor(() => expect(check(card, "dependencies").getAttribute("data-state")).toBe("ready"));
     await vi.waitFor(() => expect(check(card, "configuration").getAttribute("data-state")).toBe("missing"));
     expect(check(card, "configuration").textContent).toContain("broker-credential");
-    expect(check(card, "use").getAttribute("data-state")).toBe("ready");
-    expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.enabledIn", { name: "Board" }));
     const block = $(`${card} [data-plugin-status]`);
     expect(block.getAttribute("data-plugin-status")).toBe("attention");
     expect(block.querySelector("[data-status-summary]")?.textContent).toBe(
@@ -871,15 +886,13 @@ it.each(["en", "ro", "de"])(
     // Configure opens the card on its Configuration section.
     await click(`${card} [data-action="status-configure"]`);
     expect($(`${card} [data-plugin-configuration]`)).not.toBeNull();
-    await click(`${card} [data-action="status-open-workbench"]`);
-    expect(openWorkbench).toHaveBeenCalledTimes(1);
     await act(async () => root.unmount());
     container.remove();
   },
 );
 
-// REQ-UX-492e89fb, REQ-UX-50e2dc6b
-it("is Ready only with ready programs, nothing to configure and use in the open workbench", async () => {
+// REQ-UX-492e89fb
+it("is Ready only with ready programs and nothing to configure", async () => {
   await i18n.changeLanguage("en");
   stub({
     installed: [{ ...echo, enabled: true }],
@@ -899,18 +912,6 @@ it("is Ready only with ready programs, nothing to configure and use in the open 
   expect($(`${card} [data-status-summary]`).textContent).toBe(i18n.t("plugins.status.ready"));
   await act(async () => root.unmount());
   container.remove();
-  // Not enabled in the open workbench, then no workbench open at all.
-  stub({ installed: [echo], programs: [{ name: "echo", kind: "find", state: "ready" }] });
-  await render();
-  expect(check(card, "use").getAttribute("data-state")).toBe("missing");
-  expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.notEnabledIn", { name: "Board" }));
-  await act(async () => root.unmount());
-  container.remove();
-  const openWorkbench = vi.fn();
-  await render({ workbench: undefined, openWorkbench });
-  expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.noWorkbench"));
-  await click(`${card} [data-action="status-open-workbench"]`);
-  expect(openWorkbench).toHaveBeenCalledTimes(1);
 });
 
 // REQ-UX-157f139c
@@ -930,4 +931,30 @@ it("names a missing vendor program as external and keeps its guide", async () =>
   expect(($(`${card} [data-action="plugin-provision"]`) as HTMLButtonElement).disabled).toBe(true);
   await click(`${card} [data-action="plugin-expand"]`);
   expect($(`${card} [data-program="echo"]`).textContent).toContain("Install Node.js.");
+});
+
+// REQ-UX-0d64586a
+it("opens a plugin's help from its row and shows no Help for a plugin without help", async () => {
+  await i18n.changeLanguage("en");
+  const helped = { ...echo, composition: { skills: [], files: [], help: ["en", "fr"] as ("en" | "fr")[] } };
+  stub({ installed: [helped, { ...echo, id: "plain-tools", name: "Plain tools" }], programs: [] });
+  const open = vi.fn();
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  await act(async () => {
+    root.render(
+      createElement(
+        HelpContext.Provider,
+        { value: open },
+        createElement(QueryClientProvider, { client }, createElement(Plugins, { workbench })),
+      ),
+    );
+  });
+  await click('[data-library-status="installed"]');
+  await vi.waitFor(() => expect($('[data-plugin="plain-tools"]')).not.toBeNull());
+  expect($('[data-plugin="plain-tools"] [data-action="plugin-help"]')).toBeNull();
+  await click('[data-plugin="echo-tools"] [data-action="plugin-help"]');
+  expect(open).toHaveBeenCalledExactlyOnceWith("plugin/echo-tools");
 });

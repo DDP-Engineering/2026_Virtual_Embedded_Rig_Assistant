@@ -14,7 +14,7 @@ verification = "A program-tools test checks the variable in the started run's en
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/program-resources.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-resources.test.ts", "05_Software/tests/plugins/scpi-instruments.test.ts"]
 
 
 spec = "specs/REQ-DATA-f2cbfc23.md"

@@ -671,7 +671,8 @@
     "power_quality": "Bewertet die Blindleistungskompensation an einer Verteilung aus einem aktuellen Netzergebnis und einer Messdatei mit erklärten Einheiten und Konventionen: Verschiebungsfaktor gegenüber Gesamtleistungsfaktor, kvar-Bedarf bis zu einem Ziel, feste oder automatische Anlage mit Stufen, Überkompensation, Prüfungen von Kondensatoren, Drosseln, Schützen und Schutzgeräten aus belegten Daten sowie Resonanz gegenüber gemessenen Oberschwingungen; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang und schaltet keine Stufe. Erfordert das Plugin power-quality-pfc.",
     "lighting_design": "Plant die Innenbeleuchtung aus einem Beleuchtungsprojekt mit IES- oder LDT-Photometrie: eine vorläufige Schätzung nach dem Wirkungsgradverfahren mit belegten Raumwirkungsgraden und der Direktanteil auf dem Berechnungsraster, Diagnosen für Maßstab, Einheiten, Ausrichtung und Photometrie sowie die Prüfung von Wartungswert, Gleichmäßigkeit und Blendung nur aus einem passenden Bericht eines photometrischen Rechenprogramms wie DIALux evo; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang und startet kein Rechenprogramm. Erfordert das Plugin lighting-design.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus.",
-    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten."
+    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten.",
+    "help": "Liest die Hilfeseiten von VERA und die Hilfe der in der Workbench aktivierten Plugins, um Fragen zu VERA zu beantworten. Nur lesend."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",
@@ -820,7 +821,6 @@
     "noPrograms": "Keine Programme: Dieses Plugin fügt nur Skills hinzu.",
     "docs": "Dokumente",
     "composition": {
-      "title": "Zusammensetzung",
       "noPrograms": "Führt keine Programme aus.",
       "skills": "Skills",
       "files": "Profile und Datendateien"
@@ -902,7 +902,6 @@
         "stable": "Stabil (Version 1.0.0 und höher)",
         "pre-release": "Vorabversion (alle Plugins, auch 0.x-Versionen)"
       },
-      "channelHint": "Stabil listet Plugins, die mit echten Werkzeugen und echter Hardware nachgewiesen sind. Vorabversion listet auch Plugins, deren Nachweis noch offen ist.",
       "check": "Nach Updates suchen",
       "checking": "Suche läuft…",
       "url": "Katalog-URL",
@@ -940,8 +939,6 @@
     "trust": "Diesem Paket vertrauen",
     "scopedTrustIntro": "Diesem genauen Paket für diese Workbench auf diesem Computer vertrauen. Vertrauen aktiviert das Plugin nicht und installiert keine Programme. Jede Paketänderung erfordert eine neue Prüfung.",
     "refresh": "Liste aktualisieren",
-    "expand": "Details für {{name}} anzeigen",
-    "collapse": "Details für {{name}} ausblenden",
     "checkDependencies": "Abhängigkeiten prüfen",
     "checkAll": "Alle Abhängigkeiten prüfen",
     "checkingAll": "Abhängigkeiten werden geprüft…",
@@ -1062,7 +1059,6 @@
       "notReady": "Nicht bereit: {{checks}}",
       "dependencies": "Abhängigkeiten",
       "configuration": "Konfiguration",
-      "use": "Verwendung",
       "missingNames": "Fehlt: {{names}}",
       "externalNames": "Beim Hersteller installieren: {{names}}",
       "unavailableNames": "Nicht verfügbar: {{names}}",
@@ -1070,17 +1066,12 @@
       "nothingToConfigure": "Nichts zu konfigurieren",
       "configurationFailed": "Die Konfiguration konnte nicht geprüft werden.",
       "configure": "Konfigurieren",
-      "enabledIn": "Aktiviert in {{name}}",
-      "notEnabledIn": "Nicht aktiviert in {{name}}",
-      "noWorkbench": "Keine Workbench ist geöffnet.",
-      "openWorkbench": "Workbench öffnen",
       "state": {
         "ready": "Bereit",
         "missing": "Fehlt",
         "unavailable": "Nicht verfügbar",
         "external": "Extern",
-        "unchecked": "Nicht geprüft",
-        "off": "Nicht aktiviert"
+        "unchecked": "Nicht geprüft"
       }
     },
     "packs": {
@@ -1099,6 +1090,13 @@
       "skippedCatalog": "Nicht in diesem Katalog.",
       "alreadyInstalled": "Bereits installiert: {{names}}",
       "install": "Mit Abhängigkeiten installieren ({{count}})"
+    },
+    "help": "Hilfe",
+    "details": {
+      "description": "Beschreibung",
+      "about": "Über dieses Plugin",
+      "license": "Lizenz",
+      "loading": "Details des Plugins werden geladen…"
     }
   },
   "runs": {
@@ -1147,7 +1145,13 @@
     "thirdParty": "Komponenten von Drittanbietern ({{count}})",
     "component": "Komponente",
     "componentVersion": "Version",
-    "license": "Lizenz"
+    "license": "Lizenz",
+    "whatsNew": "Neuigkeiten",
+    "unreleased": "Unveröffentlicht",
+    "release": "Version {{version}} · {{date}}",
+    "categoryNew": "Neu",
+    "categoryImproved": "Verbessert",
+    "categoryFixed": "Behoben"
   },
   "pager": {
     "range": "{{first}}–{{last}} von {{count}} Ergebnissen",
@@ -1159,6 +1163,7 @@
   "help": {
     "open": "Hilfe",
     "title": "Hilfe",
-    "pages": "Hilfeseiten"
+    "pages": "Hilfeseiten",
+    "plugins": "Plugins"
   }
 }

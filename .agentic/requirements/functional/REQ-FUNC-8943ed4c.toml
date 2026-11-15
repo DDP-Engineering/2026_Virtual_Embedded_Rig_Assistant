@@ -14,7 +14,7 @@ verification = "`resistor` and `mosfet` with `{rms: 2 A}` and 50 mΩ give 0.2 W;
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/waveforms.py", "05_Software/plugins/electronics-calc/scripts/elec_support/losses.py", "05_Software/tests/fixtures/electronics-calc/"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

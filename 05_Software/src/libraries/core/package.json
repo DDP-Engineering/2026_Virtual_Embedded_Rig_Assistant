@@ -1,6 +1,6 @@
 {
   "name": "@vera/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "LicenseRef-PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
@@ -31,7 +31,7 @@
     "@huggingface/tokenizers": "0.2.0",
     "@huggingface/transformers": "4.3.1",
     "@modelcontextprotocol/sdk": "1.32.2",
-    "@vera/shared": "0.0.0",
+    "@vera/shared": "0.1.0",
     "@xmldom/xmldom": "0.8.15",
     "better-sqlite3": "13.0.3",
     "chokidar": "5.0.0",

@@ -14,7 +14,7 @@ verification = "Integration tests run snapshot against the GDB stand-in replayin
 
 affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/faults.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/symbols.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

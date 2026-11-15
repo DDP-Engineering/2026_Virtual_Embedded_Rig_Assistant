@@ -14,7 +14,7 @@ verification = "Classify each cantools subcommand with and without a global opti
 
 affected_paths = ["05_Software/plugins/can-dbc/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts"]
 
 
 spec = ""

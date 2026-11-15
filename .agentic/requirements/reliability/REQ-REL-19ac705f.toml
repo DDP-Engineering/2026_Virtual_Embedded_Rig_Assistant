@@ -14,7 +14,7 @@ verification = "Offline: `--board ../outside.kicad_pcb`, an absolute path outsid
 
 affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/workspace.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = "specs/REQ-DATA-891d5b5d.md"

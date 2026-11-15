@@ -14,7 +14,7 @@ verification = "classifyCommand gives `safe` for --version, --help, -h, each ope
 
 affected_paths = ["05_Software/plugins/electronics-calc/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = ""

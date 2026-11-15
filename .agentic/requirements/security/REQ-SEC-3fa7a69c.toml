@@ -14,7 +14,7 @@ verification = "Classify every rule row with short, grouped, long, abbreviated-l
 
 affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml", "05_Software/src/libraries/shared/src/tshark-options.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
 
-linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
 
 
 spec = ""

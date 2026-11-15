@@ -14,7 +14,7 @@ verification = "Validate the Cortex-M4 fixture for stm32f4-discovery with cortex
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/firmware.py", "05_Software/plugins/renode/scripts/renode_support/elf.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

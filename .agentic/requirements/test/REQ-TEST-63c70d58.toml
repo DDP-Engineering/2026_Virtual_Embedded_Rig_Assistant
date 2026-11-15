@@ -12,9 +12,9 @@ The kicad-layout test suite shall run its PCB editor tests against a real KiCad 
 
 verification = "Without VERA_TEST_KICAD_GUI the PCB editor tests are skipped with the reason and the offline and core tests pass; with it set on Windows with KiCad 10.0.8 the open, edit, refusal, objective, report, close, Stop and apply tests pass."
 
-affected_paths = ["05_Software/tests/integration/kicad-layout.test.ts", "05_Software/tests/fixtures/kicad-layout/make_fixtures.py", "05_Software/tests/fixtures/kicad-layout/hooks/hook.py", "05_Software/tests/fixtures/kicad-layout/hooks/nudge.py", "05_Software/tests/fixtures/kicad-layout/hooks/editor_stub.py"]
+affected_paths = ["05_Software/tests/plugins/kicad-layout.test.ts", "05_Software/tests/fixtures/kicad-layout/make_fixtures.py", "05_Software/tests/fixtures/kicad-layout/hooks/hook.py", "05_Software/tests/fixtures/kicad-layout/hooks/nudge.py", "05_Software/tests/fixtures/kicad-layout/hooks/editor_stub.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = "specs/REQ-DATA-891d5b5d.md"

@@ -14,7 +14,7 @@ verification = "Classify every rule row including options before the subcommand,
 
 affected_paths = ["05_Software/plugins/can-python/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts"]
 
 
 spec = ""

@@ -3,7 +3,7 @@
 ## Routing
 
 For electronics-calc, start at plugins/electronics-calc/plugin.yaml, scripts/elec_calc.py and
-scripts/elec_support/ with spec .agentic/specs/REQ-DATA-3d15fdfc.md; tests/integration/electronics-calc.test.ts
+scripts/elec_support/ with spec .agentic/specs/REQ-DATA-3d15fdfc.md; tests/plugins/electronics-calc.test.ts
 and tests/fixtures/electronics-calc/ own its numeric, refusal, report, integrity and session coverage.
 
 For industrial-catalog, start at plugins/industrial-catalog/plugin.yaml (no program, ecosystem `electrical`) and
@@ -24,67 +24,67 @@ program, ecosystem `electrical`) and skills/lighting-design; the photometry read
 the `lighting_design` tool and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
-.agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
+.agentic/specs/REQ-DATA-c32834e3.md; tests/plugins/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
 projects, make_fixtures.py, internals.py) own its refusal, real-KiCad, integrity and provisioner coverage. The path
 rules of the electronics plugins live in `workspace.py`, a byte-identical copy in elec_support, kicad_support and
 parts_support (a test checks all three).
 
 For parts-search, start at plugins/parts-search/plugin.yaml, scripts/parts_compare.py and scripts/parts_support/
-with spec .agentic/specs/REQ-DATA-6b26f2a5.md; tests/integration/parts-search.test.ts and
+with spec .agentic/specs/REQ-DATA-6b26f2a5.md; tests/plugins/parts-search.test.ts and
 tests/fixtures/parts-search/ (hand-derived README) own its evidence, identity, pricing, refusal and provisioner
 coverage. Its supplier search is VERA's own tool, see [parts search](parts-search.md).
 
 For ngspice, start at plugins/ngspice/plugin.yaml, scripts/ngspice_tool.py and scripts/ngspice_support/ with spec
-.agentic/specs/REQ-DATA-29b9a988.md; tests/integration/ngspice.test.ts and tests/fixtures/ngspice/ (analytic
+.agentic/specs/REQ-DATA-29b9a988.md; tests/plugins/ngspice.test.ts and tests/fixtures/ngspice/ (analytic
 references and tolerances in its README, hostile netlists) own its refusal, real-engine and provisioner coverage.
 
 For ltspice, start at plugins/ltspice/plugin.yaml, scripts/ltspice_tool.py and scripts/ltspice_support/ (netlist.py
 for the LTspice dialect checks, raw.py for raw files, engine.py, schematic.py) with spec
-.agentic/specs/REQ-DATA-0f9e36a3.md; tests/integration/ltspice.test.ts and tests/fixtures/ltspice/ (references and
+.agentic/specs/REQ-DATA-0f9e36a3.md; tests/plugins/ltspice.test.ts and tests/fixtures/ltspice/ (references and
 tolerances in its README, hostile files, raw files written by LTspice 26.1.1) own its coverage. Its workspace.py,
 measure.py and sweep.py are byte-identical copies of ngspice-tool's.
 
 For kicad-layout, start at plugins/kicad-layout/plugin.yaml, scripts/kicad_layout_tool.py and
 scripts/kicad_layout_support/ (cli.py for open/edit/close, kicad.py for the editor process, API session and binding,
 operations.py for the checks and the commit, drc.py, report.py, state.py, candidate.py) with spec
-.agentic/specs/REQ-DATA-891d5b5d.md; tests/integration/kicad-layout.test.ts and tests/fixtures/kicad-layout/ (board
+.agentic/specs/REQ-DATA-891d5b5d.md; tests/plugins/kicad-layout.test.ts and tests/fixtures/kicad-layout/ (board
 generator, hooks) own its coverage, the PCB editor tests only under VERA_TEST_KICAD_GUI. Applying a candidate is
 core's apply_candidate ([File tools](file-tools.md)). Its workspace.py is a byte-identical copy of kicad-tool's.
 
 For freerouting, start at plugins/freerouting/plugin.yaml, scripts/freerouting_tool.py,
 scripts/freerouting_support/{cli,ses}.py and scripts/export_dsn.py (run by KiCad's Python) with spec
-.agentic/specs/REQ-FUNC-2a80da7f.md; tests/integration/freerouting.test.ts owns its coverage (real router under
+.agentic/specs/REQ-FUNC-2a80da7f.md; tests/plugins/freerouting.test.ts owns its coverage (real router under
 VERA_TEST_FREEROUTING_JAR + VERA_TEST_JAVA, the golden path through kicad-layout under VERA_TEST_KICAD_GUI).
 
 For arduino-cli, start at plugins/arduino-cli/plugin.yaml, scripts/arduino_tool.py and scripts/arduino_support/
 (environment.py for VERA's Arduino environment, configurations and staging; sketch.py, boards.py for identity keys,
 indexes.py for offline searches, compile.py, upload.py, report.py, cli.py) with spec .agentic/specs/REQ-DATA-e444904d.md;
-tests/integration/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
+tests/plugins/arduino-cli.test.ts, tests/support/fake-arduino-cli.py and tests/fixtures/arduino-cli/ own its
 coverage. Its workspace.py is a byte-identical copy of ngspice-tool's.
 
 For micropython, start at plugins/micropython/plugin.yaml, scripts/micropython_tool.py and scripts/micropython_support/
 (cli.py dispatch and argument limits, device.py session and board snippets, deploy.py, operations.py, ports.py identity
-keys, remote.py board paths, report.py) with spec .agentic/specs/REQ-DATA-cb0ccbea.md; tests/integration/micropython.test.ts
+keys, remote.py board paths, report.py) with spec .agentic/specs/REQ-DATA-cb0ccbea.md; tests/plugins/micropython.test.ts
 and tests/fixtures/micropython/ (fake-serial: a simulated board speaking the raw REPL; fake-mpremote: a minimal
 SerialTransport client - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy of arduino-tool's.
 For circuitpython, start at plugins/circuitpython/plugin.yaml, scripts/circuitpython_tool.py and scripts/circuitpython_support/
 (cli.py dispatch and argument limits, volumes.py CIRCUITPY enumeration, boot_out.txt, identity and binding, ports.py,
 conventions.py the only circup imports, inspection.py, bundle.py prepare-libraries, deploy.py, console.py, report.py) with
-spec .agentic/specs/REQ-DATA-8f309a53.md; tests/integration/circuitpython.test.ts, tests/support/make-circuitpython-bundle.py
+spec .agentic/specs/REQ-DATA-8f309a53.md; tests/plugins/circuitpython.test.ts, tests/support/make-circuitpython-bundle.py
 and tests/fixtures/circuitpython/ (fake-serial: a CircuitPython console that reruns code.py on drive changes; fake-circup:
 the circup names the helper imports - offline evidence only) own its coverage. Its workspace.py is a byte-identical copy
 of micropython-tool's.
 For bus-tools, start at plugins/bus-tools/plugin.yaml, scripts/bus_tool.py and scripts/bus_support/ (cli.py dispatch
 and argument limits, registry.py bus-adapter entries, profile.py bus profiles, ports.py identity keys, adapter.py the
 binary-port link, bpio.py FlatBuffers slots, cobs.py, operations.py the operation flow and final state, lifecycle.py,
-report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/integration/bus-tools.test.ts and
+report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/plugins/bus-tools.test.ts and
 tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets - offline
 evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
 cleanup are platform behaviour, see [Plugins](plugins.md).
 For mqtt-tools, start at plugins/mqtt-tools/plugin.yaml, scripts/mqtt_tool.py and scripts/mqtt_support/ (cli.py dispatch,
 profile.py the broker profile, topics.py filter coverage, schema.py payload checks, credential.py the stdin line,
 connection.py the paho connection and error codes, operations.py capture/publish/request, report.py) with spec
-.agentic/specs/REQ-DATA-96d18686.md; tests/integration/mqtt-tools.test.ts with tests/support/mqtt-test-broker.py (a
+.agentic/specs/REQ-DATA-96d18686.md; tests/plugins/mqtt-tools.test.ts with tests/support/mqtt-test-broker.py (a
 stdlib MQTT 3.1.1/5 test broker on 127.0.0.1 with TLS, users, ACL and fault switches), make-mqtt-certs.py and
 mqtt-fixture-device.py own its coverage - evidence for the helper, not for a product broker or a device. Its
 workspace.py is a byte-identical copy of bus-tool's; the credential hand-off is platform behaviour, see
@@ -93,28 +93,28 @@ For ble-tools, start at plugins/ble-tools/plugin.yaml, scripts/ble_tool.py and s
 argument bounds, registry.py ble-device entries, profile.py device profiles and UUIDs, payload.py decode/encode,
 backend.py the pinned Bleak and error mapping, scan.py, device.py the managed link and identity, notify.py, write.py,
 operations.py read/discover/release, report.py) with spec .agentic/specs/REQ-DATA-e8502710.md;
-tests/integration/ble-tools.test.ts with the fake Bleak in tests/fixtures/ble-tools/fake-bleak owns its coverage -
+tests/plugins/ble-tools.test.ts with the fake Bleak in tests/fixtures/ble-tools/fake-bleak owns its coverage -
 offline evidence plus one opt-in real scan, not proof of a device. Its workspace.py is a byte-identical copy of
 circuitpython-tool's and lifecycle.py of bus-tool's; the device lease is platform behaviour, see [Plugins](plugins.md).
 For wokwi, start at plugins/wokwi/plugin.yaml, scripts/wokwi_tool.py and scripts/wokwi_support/ (cli.py dispatch,
 engine.py the pinned wokwi-cli, its child environment and offline lint, project.py wokwi.toml/firmware/origin, diagram.py,
 scenario.py, job.py the job folder and its verification, credential.py the stdin token, run.py the one cloud run with its
 watch loop, outcome.py the outcome table, collect.py, redact.py, report.py) with spec .agentic/specs/REQ-DATA-d985bb3d.md;
-tests/integration/wokwi.test.ts with tests/support/fake-wokwi-cli.py owns its coverage - offline evidence plus the real
+tests/plugins/wokwi.test.ts with tests/support/fake-wokwi-cli.py owns its coverage - offline evidence plus the real
 wokwi-cli 0.29.1 offline (VERA_TEST_WOKWI_CLI), never a cloud run. Its workspace.py is a byte-identical copy of mqtt-tool's;
 the token hand-off is platform behaviour, see [Plugins](plugins.md).
 For raspberry-pi-linux, start at plugins/raspberry-pi-linux/plugin.yaml, scripts/pi_tool.py and scripts/pi_support/ (cli.py
 dispatch, registry.py the linux-board entries, project.py vera-pi.json and its files, ssh.py the pinned host key, agent
 authentication and remote calls, remote.py the two constant commands, operations.py every operation, report.py) and the
 board-side scripts/remote/vera_pi_remote.py, with spec .agentic/specs/REQ-DATA-44547a17.md;
-tests/integration/raspberry-pi-linux.test.ts with tests/support/pi-test-sshd.py and pi-test-agent.py owns its coverage -
+tests/plugins/raspberry-pi-linux.test.ts with tests/support/pi-test-sshd.py and pi-test-agent.py owns its coverage -
 SSH protocol and real-Linux evidence (WSL on Windows), never proof of a Raspberry Pi. Its workspace.py and lifecycle.py
 are byte-identical copies of ble-tool's; the board lease and the agent socket are platform behaviour, see
 [Plugins](plugins.md).
 For scpi-instruments, start at plugins/scpi-instruments/plugin.yaml, scripts/scpi_tool.py and scripts/scpi_support/
 (cli.py dispatch, request.py limits, registry.py, profiles.py with profiles/*.json, session.py PyVISA and diagnostics,
 classes.py operations per class, waveform.py, lifecycle.py, local.py, report.py) with spec
-.agentic/specs/REQ-DATA-b3e2930f.md; tests/integration/scpi-instruments.test.ts and tests/fixtures/scpi-instruments/ (a
+.agentic/specs/REQ-DATA-b3e2930f.md; tests/plugins/scpi-instruments.test.ts and tests/fixtures/scpi-instruments/ (a
 fake PyVISA/pyserial/pyusb - offline evidence only) own its coverage. Its reservation and cleanup are platform
 behaviour, see [Plugins](plugins.md) and spec .agentic/specs/REQ-DATA-f2cbfc23.md.
 
@@ -122,7 +122,7 @@ For lab-validation, start at plugins/lab-validation/plugin.yaml, scripts/lab_val
 (cli.py operations and pipeline, request.py validation and bind, importers.py importer registry, signals.py and
 preprocess.py normalization and preprocessing, series.py windows/gaps/interpolation, metrics.py metric registry,
 align.py comparisons, decide.py criteria and verdict, diagnostics.py codes, report.py run folder and report.md,
-aggregate.py `report`) with spec .agentic/specs/REQ-DATA-53797d16.md; tests/integration/lab-validation.test.ts and
+aggregate.py `report`) with spec .agentic/specs/REQ-DATA-53797d16.md; tests/plugins/lab-validation.test.ts and
 tests/fixtures/lab-validation/ (hand-derived solutions in its README, a no-network sitecustomize guard) own its
 coverage; it imports real scpi-instruments capture folders written by the scpi helper on its fake PyVISA. Its
 workspace.py is a byte-identical copy of the electronics plugins' (ngspice.test.ts checks every copy). New metrics and
@@ -131,7 +131,7 @@ importers are registrations in metrics.py and importers.py, never a second engin
 For hil-testing, start at plugins/hil-testing/plugin.yaml (program `hil` with `plan: hil`), the core HIL module
 (src/libraries/core/src/plugins/hil/: adapters.ts registry, compile.ts, executor.ts, run.ts) and scripts/hil_report/cli.py
 (the report renderer) with spec .agentic/specs/REQ-DATA-5f714098.md; core hil/hil.test.ts (scripted process host) and
-tests/integration/hil-testing.test.ts (real runner and real serial-monitor, scpi, lab-validate and hil helpers on
+tests/plugins/hil-testing.test.ts (real runner and real serial-monitor, scpi, lab-validate and hil helpers on
 their fakes, probe-rs replay stand-in) own its coverage. New step kinds are adapter registrations, never a second
 executor.
 
@@ -140,7 +140,7 @@ find-only `arm-none-eabi-gdb` and `openocd`, both blocked), scripts/gdb_elf.py, 
 scripts/gdb_support/ (elf.py and dwarf.py the offline reader, cli_elf.py inspect/diagnose, cli_debug.py validation,
 tools and release, operations.py the session flow, session.py and mi.py GDB/MI, openocd.py, faults.py, symbols.py,
 validate.py, profiles.py with profiles/*.json, registry.py, lifecycle.py, report.py, workspace.py the shared copy) with
-spec .agentic/specs/REQ-DATA-d7da2a71.md; tests/integration/gdb-debug.test.ts and tests/fixtures/gdb-debug/ (fixture
+spec .agentic/specs/REQ-DATA-d7da2a71.md; tests/plugins/gdb-debug.test.ts and tests/fixtures/gdb-debug/ (fixture
 ELFs built by firmware/build.py with zig cc, the GDB/OpenOCD stand-ins fake_gdb.py and fake_openocd.py made executable
 by make_tools.py, internals.py unit checks) own its coverage - offline evidence, never a real GDB, OpenOCD or target.
 Its probe reservation is the platform's `probe` registry kind, see [Plugins](plugins.md).
@@ -151,7 +151,7 @@ scripts/power_support/ (capture.py the live flows and stream assembler, meter.py
 capfile.py the capture folder, signals.py/measure.py/segment.py the analysis on the copied series.py, compare.py,
 battery.py, importer.py, render.py, acquisition.py and profiles.py with profiles/joulescope-js220.json, registry.py,
 firmware.py with the copied elf.py, usb.py, result.py, lifecycle.py, workspace.py the shared copy) with spec
-.agentic/specs/REQ-DATA-dd3e4fe1.md; tests/integration/power-profiler.test.ts and tests/fixtures/power-profiler/ (the
+.agentic/specs/REQ-DATA-dd3e4fe1.md; tests/plugins/power-profiler.test.ts and tests/fixtures/power-profiler/ (the
 pyjoulescope_driver stand-in fake-driver/, closed-form CSV fixtures from make_fixtures.py) own its coverage - offline
 evidence, never a real JS220 - plus the opt-in `VERA_POWER_REAL_PYTHON` suite with the real driver and no meter. Its
 meter reservation is the platform's `power-monitor` registry kind, see [Plugins](plugins.md); criteria go through
@@ -175,7 +175,7 @@ profiles/stm32f4-discovery/ holds Renode's board and CPU descriptions without th
 testsets/board-basics/ is the approved test set.
 
 Coverage:
-- tests/integration/renode.test.ts with tests/fixtures/renode/: the engine stand-in fake_renode.py made executable
+- tests/plugins/renode.test.ts with tests/fixtures/renode/: the engine stand-in fake_renode.py made executable
   by make_engine.py, firmware/ ELFs built with zig cc plus variants.json, the stock vendor .resc, and engine/platforms/
   vendor copies. This is offline evidence.
 - The opt-in `VERA_RENODE_REAL` suite runs against the real engine.
@@ -197,7 +197,7 @@ and scripts/zephyr_support/:
 - flash.py, registry.py and lifecycle.py: the verified runner; elf.py and workspace.py are the shared copies.
 
 The spec is .agentic/specs/REQ-DATA-d8ecee6a.md (section 9 records the observed Zephyr, SDK, Twister, Renode and
-STM32CubeProgrammer facts). Coverage: tests/integration/zephyr.test.ts with tests/fixtures/zephyr/ (apps/board-demo,
+STM32CubeProgrammer facts). Coverage: tests/plugins/zephyr.test.ts with tests/fixtures/zephyr/ (apps/board-demo,
 tests/ztest-basic, workspace/manifest/west.yml, stand-ins/: a fake Zephyr tree with a Twister stand-in and a `flash`
 extension the real west loads, fake_cmake.py, fake_cli.py), run with a Python holding the pinned dependencies
 (`VERA_ZEPHYR_PYTHON`); the opt-in `VERA_ZEPHYR_REAL` suite builds with the real tools, with `VERA_RENODE_REAL` and
@@ -216,7 +216,7 @@ probe lease), scripts/pio_tool.py, scripts/pio_upload.py and scripts/pio_support
   upload; elf.py and workspace.py are the shared copies.
 
 The spec is .agentic/specs/REQ-DATA-865c8fbd.md (section 9 records the observed PlatformIO facts). Coverage:
-tests/integration/platformio.test.ts with tests/fixtures/platformio/ (board-demo: two STM32F4DISCOVERY environments,
+tests/plugins/platformio.test.ts with tests/fixtures/platformio/ (board-demo: two STM32F4DISCOVERY environments,
 one extending the other, a native environment, common.ini through extra_configs, Unity suites test_lines, test_skip,
 test_fail and a custom unity_config for the CMSIS framework; stand-ins/: fake_pio.py and a fake core), run with a
 Python holding the pinned dependencies (`VERA_PIO_PYTHON`); platformio.ini is always read by the real PlatformIO
@@ -224,7 +224,7 @@ parser. The opt-in `VERA_PIO_REAL` suite builds and tests with the real Platform
 native host tests and with `VERA_RENODE_REAL` the firmware on the real Renode profile. No platform seam was added.
 
 For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
-tests/integration/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
+tests/plugins/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
 and opt-in real virtual acceptance through the unchanged plugin platform.
 
 Select for the plugin packages VERA maintainers ship in `05_Software/plugins/<id>/`: their `plugin.yaml`
@@ -247,7 +247,7 @@ which validates firmware against approved virtual-board profiles and runs it hea
 test sets; skill virtual-boards). zephyr (programs `zephyr` for inspect, prepare-workspace, build, artifacts,
 test-build, test-run, differences and clean of Zephyr applications from an explicit request, and `zephyr-flash` for the
 verified stm32cubeprogrammer runner on a reserved probe; skill zephyr-builds). platformio (programs `platformio` for tools, inspections, prepare-packages, build, artifacts, test-host, test-device, test-run and clean of PlatformIO projects from an explicit request, and `platformio-upload` for the verified stlink upload on a reserved probe; skill platformio-projects). Start at `05_Software/plugins/<id>/plugin.yaml`, and for
-serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/integration/serial-monitor.test.ts` and
+serial-monitor at `scripts/serial_monitor.py`; tests are in `05_Software/tests/plugins/serial-monitor.test.ts` and
 `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in `05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`. The platform that installs, classifies, approves and runs these
 programs (store, provisioner, rules, gate, runner, serial-port guard, run_program) is [Plugins](plugins.md);
 plugin skill discovery is [Skills](skills.md).
@@ -684,11 +684,11 @@ that source metadata reaches the deterministic bundled index unchanged.
   and an artifact_save session plan before any irreversible call; no batch or implicit burns.
   Actual closed-stdin virtual argv includes --chip esp32 --virt --path-efuse-file FILE
   --do-not-confirm burn-efuse JTAG_DISABLE 1. The upstream BURN prompt is separate from VERA's
-  burn-efuse confirmation; bypass creates mode decisions. tests/integration/esp32-efuse.test.ts
+  burn-efuse confirmation; bypass creates mode decisions. tests/plugins/esp32-efuse.test.ts
   optionally provisions real v5 using VERA_EFUSE_UV and records raw process output/exit codes,
   replay events, durable approvals and persistent virtual-state effects. No hardware burn runs.
 
-- `git` 0.3.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/integration/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
+- `git` 0.3.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/plugins/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
 
 - `stm32-cubeprog` 0.2.0, ecosystem `stm32` (STM32 pack, Programming (STM32CubeProgrammer), default on), Windows
   x64/Linux x64: find-only program `stm32_programmer_cli` (program names are lower case; Windows matches the file
@@ -1426,7 +1426,7 @@ that source metadata reaches the deterministic bundled index unchanged.
 ## Files
 
 - `05_Software/plugins/gdb-debug/` — manifest, README (operations, guarantees, limits), profiles `stm32f4-stlink.json` and `stm32g0-stlink.json`, skill debug-sessions, `scripts/gdb_elf.py` and `scripts/gdb_debug.py` (entries), `scripts/gdb_support/` (`elf`, `dwarf`, `symbols`, `faults`, `validate`, `profiles`, `registry`, `mi`, `session`, `openocd`, `operations`, `lifecycle`, `report`, `errors`, `cli_elf`, `cli_debug`, `workspace` shared).
-- `05_Software/tests/integration/gdb-debug.test.ts`, `tests/fixtures/gdb-debug/` (`firmware/` sources, linker scripts, `build.py` and the four ELFs; `fake_gdb.py`, `fake_openocd.py`, `make_tools.py`, `internals.py`).
+- `05_Software/tests/plugins/gdb-debug.test.ts`, `tests/fixtures/gdb-debug/` (`firmware/` sources, linker scripts, `build.py` and the four ELFs; `fake_gdb.py`, `fake_openocd.py`, `make_tools.py`, `internals.py`).
 - `05_Software/plugins/renode/`:
   - the manifest and README;
   - `profiles/stm32f4-discovery/` (`profile.json`, `platform.repl`, `stm32f4.repl`, `machine.resc`);
@@ -1435,7 +1435,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   - `scripts/renode_sim.py`;
   - `scripts/renode_support/`: `cli`, `profiles`, `firmware`, `testsets`, `engine`, `operations`, `result`, `report`,
     `errors`, plus `elf` and `workspace` (copies).
-- `05_Software/tests/integration/renode.test.ts` and `tests/fixtures/renode/`:
+- `05_Software/tests/plugins/renode.test.ts` and `tests/fixtures/renode/`:
   - `firmware/`: `demo.c`, `startup.c`, linker scripts, `build.py`, five ELFs and `variants.json`;
   - `fake_renode.py` and `make_engine.py`;
   - `engine/platforms/` (Renode's two STM32F4 descriptions);
@@ -1444,81 +1444,81 @@ that source metadata reaches the deterministic bundled index unchanged.
   `scripts/pio_upload.py` (entries), `scripts/pio_support/` (`cli`, `request`, `config`, `preflight`, `packages`,
   `environment`, `builddir`, `ops`, `prepare`, `tests`, `unity`, `diagnostics`, `artifacts`, `upload`, `registry`,
   `lifecycle`, `result`, `errors`, `elf`, `workspace`).
-- `05_Software/tests/integration/platformio.test.ts` and `tests/fixtures/platformio/` (`board-demo/`, `stand-ins/`).
+- `05_Software/tests/plugins/platformio.test.ts` and `tests/fixtures/platformio/` (`board-demo/`, `stand-ins/`).
 - `05_Software/plugins/zephyr/` — manifest, README, skill zephyr-builds, `scripts/zephyr_tool.py` and
   `scripts/zephyr_flash.py` (entries), `scripts/zephyr_support/` (`cli`, `request`, `model`, `boards`, `sdk`,
   `preflight`, `cmake_scan`, `environment`, `builddir`, `ops`, `diagnostics`, `artifacts`, `prepare`, `tests`, `ztest`, `tools`,
   `flash`, `registry`, `lifecycle`, `result`, `errors`, plus `elf` and `workspace` copies).
-- `05_Software/tests/integration/zephyr.test.ts` and `tests/fixtures/zephyr/` (`apps/board-demo/`,
+- `05_Software/tests/plugins/zephyr.test.ts` and `tests/fixtures/zephyr/` (`apps/board-demo/`,
   `tests/ztest-basic/`, `workspace/manifest/west.yml`, `stand-ins/`).
 - `05_Software/plugins/arduino-cli/` — manifest, README (pins, environment, risk table), skills arduino-build-fix, arduino-libraries and arduino-test-sketch, `scripts/arduino_tool.py` (entry), `scripts/arduino_support/` (`environment`, `sketch`, `boards`, `indexes`, `compile`, `upload`, `report`, `cli`, `workspace` shared).
-- `05_Software/tests/integration/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
+- `05_Software/tests/plugins/arduino-cli.test.ts`, `tests/support/fake-arduino-cli.py` (scripted arduino-cli recording argv and configuration), `tests/fixtures/arduino-cli/` (VeraBlink with an ignored sketch.yaml, VeraLibrary with the local VeraCounter library, VeraBroken, VeraMissingLib, Misnamed).
 - `05_Software/plugins/mqtt-tools/` — manifest, README, skills mqtt-telemetry and mqtt-commands, profiles/bench-broker.json,
   `scripts/mqtt_tool.py` (entry), `scripts/mqtt_support/` (`cli`, `profile`, `topics`, `schema`, `credential`, `connection`,
   `operations`, `report`, `workspace` shared).
-- `05_Software/tests/integration/mqtt-tools.test.ts`, `tests/support/mqtt-test-broker.py`, `make-mqtt-certs.py`,
+- `05_Software/tests/plugins/mqtt-tools.test.ts`, `tests/support/mqtt-test-broker.py`, `make-mqtt-certs.py`,
   `mqtt-fixture-device.py`.
 - `05_Software/plugins/ble-tools/` — manifest, README, skills ble-devices and ble-profiles, profiles/bench-thermometer.json,
   `scripts/ble_tool.py` (entry), `scripts/ble_support/` (`cli`, `registry`, `profile`, `payload`, `backend`, `scan`, `device`,
   `notify`, `write`, `operations`, `report`, `lifecycle` and `workspace` shared).
-- `05_Software/tests/integration/ble-tools.test.ts`, `tests/fixtures/ble-tools/fake-bleak/` (fake Bleak 3.1.0 driven by a bench
+- `05_Software/tests/plugins/ble-tools.test.ts`, `tests/fixtures/ble-tools/fake-bleak/` (fake Bleak 3.1.0 driven by a bench
   file, logging every radio call).
 - `05_Software/plugins/wokwi/` — manifest, README, skills wokwi-simulation and wokwi-scenarios, `scripts/wokwi_tool.py`
   (entry), `scripts/wokwi_support/` (`cli`, `engine`, `project`, `diagram`, `scenario`, `job`, `credential`, `redact`, `run`,
   `outcome`, `collect`, `operations`, `report`, `workspace` shared).
-- `05_Software/tests/integration/wokwi.test.ts`, `tests/support/fake-wokwi-cli.py` (scripted wokwi-cli recording argv, cwd,
+- `05_Software/tests/plugins/wokwi.test.ts`, `tests/support/fake-wokwi-cli.py` (scripted wokwi-cli recording argv, cwd,
   WOKWI_* environment and the project listing).
 - `05_Software/plugins/raspberry-pi-linux/` — manifest, README, skills raspberry-pi-projects and raspberry-pi-tasks,
   `scripts/pi_tool.py` (entry), `scripts/pi_support/` (`cli`, `registry`, `project`, `ssh`, `remote`, `operations`,
   `report`, `lifecycle` and `workspace` shared), `scripts/remote/vera_pi_remote.py` (board-side helper, stdlib only).
-- `05_Software/tests/integration/raspberry-pi-linux.test.ts`, `tests/support/pi-test-sshd.py` (asyncssh server running
+- `05_Software/tests/plugins/raspberry-pi-linux.test.ts`, `tests/support/pi-test-sshd.py` (asyncssh server running
   exec requests as `sh -c` on this Linux host or in WSL, logging auth and exec), `tests/support/pi-test-agent.py` (SSH agent
   on a named pipe or Unix socket), `tests/fixtures/raspberry-pi-linux/project/`.
 - `05_Software/plugins/micropython/` — manifest, README, skills micropython-deploy and micropython-test-script, helper and
   support package.
-- `05_Software/tests/integration/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).
+- `05_Software/tests/plugins/micropython.test.ts`, `tests/fixtures/micropython/` (fake-serial board, fake-mpremote client).
 - `05_Software/plugins/circuitpython/` — manifest, README, skills circuitpython-deploy and circuitpython-libraries, helper and
   support package.
-- `05_Software/tests/integration/circuitpython.test.ts`, `tests/support/make-circuitpython-bundle.py`,
+- `05_Software/tests/plugins/circuitpython.test.ts`, `tests/support/make-circuitpython-bundle.py`,
   `tests/fixtures/circuitpython/` (fake-serial console, fake-circup).
 
 - `05_Software/plugins/electronics-calc/` — manifest, README (interface, limits), `scripts/elec_calc.py` (entry), `scripts/elec_support/` (`quantities`, `contract`, `waveforms`, `electrical`, `losses`, `thermal`, `tolerance`, `report`, `engine`, `cli`), skills electronics-sizing and thermal-analysis.
 - `05_Software/plugins/kicad/` — manifest, README, skills schematic-review and pcb-review, `scripts/kicad_tool.py` (entry), `scripts/kicad_support/` (`workspace` shared, `sexpr`, `discovery`, `project`, `kicad`, `netlist`, `board`, `checks`, `bom`, `exports`, `review`, `document`, `operations`, `cli`).
-- `05_Software/tests/integration/kicad.test.ts`, `tests/fixtures/kicad/` (`hier`, `erc`, `board` projects, `make_fixtures.py`, README with the design-derived expectations, `internals.py` seams).
+- `05_Software/tests/plugins/kicad.test.ts`, `tests/fixtures/kicad/` (`hier`, `erc`, `board` projects, `make_fixtures.py`, README with the design-derived expectations, `internals.py` seams).
 - `05_Software/plugins/kicad-layout/` — manifest, README, skill kicad-layout, `scripts/kicad_layout_tool.py` (entry, PEP 723 pins), `scripts/kicad_layout_support/` (`cli`, `request`, `state`, `candidate`, `kicad`, `operations`, `drc`, `report`, `workspace` shared).
-- `05_Software/tests/integration/kicad-layout.test.ts`, `tests/fixtures/kicad-layout/` (`make_fixtures.py` reusing the kicad fixture writers, `board/`, `hooks/` with the in-process hook, the second API client `nudge.py` and the editor stub).
-- `05_Software/tests/integration/electronics-calc.test.ts`, `tests/fixtures/electronics-calc/` (`cases.json`, README with the hand derivations, `montecarlo_reference.py`, `odd_name.py`, `internals.py`) — package, rules, numeric and refusal cases, output limit, help, Monte Carlo against the independent reference, report, path guards, exit 3, integrity, replay session, opt-in real uv.
+- `05_Software/tests/plugins/kicad-layout.test.ts`, `tests/fixtures/kicad-layout/` (`make_fixtures.py` reusing the kicad fixture writers, `board/`, `hooks/` with the in-process hook, the second API client `nudge.py` and the editor stub).
+- `05_Software/tests/plugins/electronics-calc.test.ts`, `tests/fixtures/electronics-calc/` (`cases.json`, README with the hand derivations, `montecarlo_reference.py`, `odd_name.py`, `internals.py`) — package, rules, numeric and refusal cases, output limit, help, Monte Carlo against the independent reference, report, path guards, exit 3, integrity, replay session, opt-in real uv.
 
 - `05_Software/plugins/stm32-cubeprog/` — manifest, README (risk table, parsing, limits), skills stm32-flash and stm32-option-bytes.
-- `05_Software/src/libraries/shared/src/stm32-options.ts`, `05_Software/tests/integration/stm32-cubeprog.test.ts`, `tests/fixtures/stm32/` (recorded 2.23.0 help, blink.hex) — projection and tests.
+- `05_Software/src/libraries/shared/src/stm32-options.ts`, `05_Software/tests/plugins/stm32-cubeprog.test.ts`, `tests/fixtures/stm32/` (recorded 2.23.0 help, blink.hex) — projection and tests.
 - `05_Software/plugins/microchip-pymcuprog/` — manifest, README (risk table, argument parsing, limits), skills microchip-flash and microchip-fuses.
-- `05_Software/src/libraries/shared/src/pymcuprog-options.ts`, `05_Software/tests/integration/microchip-pymcuprog.test.ts`, `tests/fixtures/microchip/app.hex` — projection, matrix, gate, opt-in real run.
+- `05_Software/src/libraries/shared/src/pymcuprog-options.ts`, `05_Software/tests/plugins/microchip-pymcuprog.test.ts`, `tests/fixtures/microchip/app.hex` — projection, matrix, gate, opt-in real run.
 - `05_Software/plugins/can-python/` — manifest, README (drivers, listen-only), `scripts/can_bus.py`, skills can-capture and can-transmit.
 - `05_Software/plugins/can-dbc/` — manifest, README, `scripts/can_decode.py`, skill can-decode.
-- `05_Software/tests/integration/can.test.ts`, `tests/fixtures/can/` — rules, stdlib fake python-can (`fake-python-can/can`, records Bus kwargs and frames), typed gate with a fake uv, fictional DBC and candump log, opt-in real acceptance.
+- `05_Software/tests/plugins/can.test.ts`, `tests/fixtures/can/` — rules, stdlib fake python-can (`fake-python-can/can`, records Bus kwargs and frames), typed gate with a fake uv, fictional DBC and candump log, opt-in real acceptance.
 
 - `05_Software/plugins/wireshark-tshark/` — manifest, README (risk table, capture setup, limits) and two skills.
 - `05_Software/src/libraries/shared/src/tshark-options.ts` — tshark role projection for rules only.
-- `05_Software/tests/integration/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
+- `05_Software/tests/plugins/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
   find/hint with a fake host, generated CoAP/Modbus `sample.pcapng` (`build.py`) and real-TShark replay.
 
 - `05_Software/plugins/probe-rs/` — manifest, four skills and measured upstream evidence/limits.
-- `05_Software/tests/integration/probe-rs.test.ts`, `tests/fixtures/probe-rs/replay.mjs` — exhaustive
+- `05_Software/tests/plugins/probe-rs.test.ts`, `tests/fixtures/probe-rs/replay.mjs` — exhaustive
   risk matrix, discovery/range, installed skills, exact-ELF approval/refusal, real closed-stdin
   fixture RTT and optional real local-archive CLI acceptance.
 
 - `05_Software/plugins/binutils/` — manifest, measured source pins README and three skills.
-- `05_Software/tests/integration/binutils.test.ts`, `tests/fixtures/elf/` — genuine cross-architecture corpus, fake-root discovery and real offline archive/replay acceptance.
+- `05_Software/tests/plugins/binutils.test.ts`, `tests/fixtures/elf/` — genuine cross-architecture corpus, fake-root discovery and real offline archive/replay acceptance.
 
 - `05_Software/plugins/esp32-idf/` — manifest, measured EIM transport README, build-fix and panic skills.
-- `05_Software/tests/integration/esp32-idf.test.ts`, `tests/fixtures/esp32-idf/` — deterministic vendor executable/parser and session replay; no hardware or network.
+- `05_Software/tests/plugins/esp32-idf.test.ts`, `tests/fixtures/esp32-idf/` — deterministic vendor executable/parser and session replay; no hardware or network.
 
 - `05_Software/plugins/serial-monitor/plugin.yaml` — manifest: program `serial`, version probe, rules, docs.
 - `05_Software/plugins/serial-monitor/scripts/serial_monitor.py` — PEP 723 script: list, capture, send.
 - `05_Software/plugins/serial-monitor/skills/serial-console/SKILL.md` — how to use the program.
 - `05_Software/plugins/serial-monitor/skills/esp32-identify/SKILL.md` — identifying ESP32 boards and bridges.
 - `05_Software/plugins/serial-monitor/README.md` — catalog description.
-- `05_Software/tests/integration/serial-monitor.test.ts` — package, rules, script behaviour, guard, replay session, skills.
+- `05_Software/tests/plugins/serial-monitor.test.ts` — package, rules, script behaviour, guard, replay session, skills.
 - `05_Software/tests/fixtures/serial-monitor/fake-pyserial/` — fake `serial` package driven by `FAKE_SERIAL_SCENARIO`, recording to `FAKE_SERIAL_RECORD`.
 - `05_Software/tests/fixtures/serial-monitor/by_id.py` — runs `list` with a test by-id folder.
 - `05_Software/tests/fixtures/serial-monitor/esp32s3-boot.log` — sample ESP32-S3 boot log.
@@ -1528,7 +1528,7 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `05_Software/plugins/packs.yaml`, `catalog.yaml` — packs and the maintainers' file of the catalog source.
 - `05_Software/plugins/CONTRIBUTING.md`, `.ci/catalog.yml` — contribution guide and CI template for `vera-plugins`.
 - `02_Tools/environment/prepare-plugins.mjs` — builds and checks the bundled catalog release.
-- `05_Software/tests/integration/esp32-esptool.test.ts` — package, provisioning, rules, replay session, skill.
+- `05_Software/tests/plugins/esp32-esptool.test.ts` — package, provisioning, rules, replay session, skill.
 - `05_Software/tests/fixtures/esp32-esptool/fake_esptool.py` — stub esptool a fake uv installs as the pip entry point (distlib `.exe` launcher on Windows); records arguments and file hashes.
 - `05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt` — recorded `esptool --help` of 5.6.0.
 - `05_Software/tests/fixtures/esp32-esptool/flasher_args.json` — ESP-IDF esp32s3 hello_world flash layout.

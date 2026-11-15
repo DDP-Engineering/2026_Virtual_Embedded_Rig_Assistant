@@ -14,7 +14,7 @@ verification = "taskkill /T /F on the helper of a long run (as VERA's runner sto
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

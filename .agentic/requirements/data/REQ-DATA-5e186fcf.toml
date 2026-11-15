@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-DATA-5e186fcf"
+title = "Declare a plugin's license as an SPDX identifier"
+status = "active"
+requirement = "plugin.yaml shall accept an optional license field holding an SPDX identifier or LicenseRef (letters, digits, dot, plus and hyphen, at most 128 characters) and refuse any other text; every official plugin declares LicenseRef-PolyForm-Noncommercial-1.0.0."
+verification = "Shared schema test: SPDX identifiers pass and free text is refused at path license; tooling test: every official plugin.yaml declares the VERA license."
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/plugins/"]
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/tooling/plugin-license.test.ts"]
+priority = "normal"
+rationale = "Plugin zips travel separately from the installer and must name their license."
+created = 2026-11-15
+updated = 2026-11-15

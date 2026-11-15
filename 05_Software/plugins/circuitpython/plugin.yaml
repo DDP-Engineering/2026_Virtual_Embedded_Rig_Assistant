@@ -1,9 +1,20 @@
 format: 1
 id: circuitpython
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CircuitPython
 summary: Deploy code and pinned libraries to a CircuitPython board and capture its console run.
 description: Code and compatible libraries on a board that already runs CircuitPython 9, 10 or 11 - list CIRCUITPY drives and serial ports by identity, identify the firmware, inspect the code and /lib, prepare a library set from a pinned Adafruit bundle tag for the board's major version, deploy approved files one verified file at a time and capture the console run that follows - through a pinned circup's bundle conventions. No REPL, no code given as an argument, no UF2 or firmware installation and no update of all libraries.
+translations:
+  ro:
+    summary: "Implementează cod și biblioteci fixate pe o placă CircuitPython și capturează rularea din consolă."
+    description: "Cod și biblioteci compatibile pe o placă ce rulează deja CircuitPython 9, 10 sau 11 - listează unitățile CIRCUITPY și porturile seriale după identitate, identifică firmware-ul, inspectează codul și /lib, pregătește un set de biblioteci dintr-un tag fixat al bundle-ului Adafruit pentru versiunea majoră a plăcii, implementează fișierele aprobate pe rând, fiecare verificat, și capturează rularea din consolă care urmează - prin convențiile de bundle ale unui circup fixat. Fără REPL, fără cod dat ca argument, fără instalare UF2 sau de firmware și fără actualizarea tuturor bibliotecilor."
+  de:
+    summary: "Code und festgelegte Bibliotheken auf ein CircuitPython-Board übertragen und die anschließende Konsolenausgabe aufzeichnen."
+    description: "Code und kompatible Bibliotheken auf einem Board, auf dem bereits CircuitPython 9, 10 oder 11 läuft - CIRCUITPY-Laufwerke und serielle Ports nach Identität auflisten, die Firmware identifizieren, den Code und /lib untersuchen, einen Bibliothekssatz aus einem festgelegten Tag des Adafruit-Bundles für die Hauptversion des Boards vorbereiten, freigegebene Dateien einzeln und geprüft übertragen und die anschließende Konsolenausgabe aufzeichnen - nach den Bundle-Konventionen eines festgelegten circup. Kein REPL, kein als Argument übergebener Code, keine UF2- oder Firmware-Installation und keine Aktualisierung aller Bibliotheken."
+  fr:
+    summary: "Déployez du code et des bibliothèques épinglées sur une carte CircuitPython et capturez son exécution dans la console."
+    description: "Code et bibliothèques compatibles sur une carte qui exécute déjà CircuitPython 9, 10 ou 11 - lister les lecteurs CIRCUITPY et les ports série par leur identité, identifier le firmware, examiner le code et /lib, préparer un ensemble de bibliothèques à partir d’une étiquette de bundle Adafruit épinglée pour la version majeure de la carte, déployer les fichiers approuvés un par un en vérifiant chacun et capturer l’exécution qui suit dans la console - selon les conventions de bundle d’un circup épinglé. Pas de REPL, pas de code passé en argument, pas d’installation d’UF2 ou de firmware ni de mise à jour de toutes les bibliothèques."
 ecosystem: circuitpython
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pypi.org/project/circup/3.1.0/", "https://circuitpython.org/libraries", "https://docs.circuitpython.org/en/latest/docs/workflows.html"]

@@ -14,7 +14,7 @@ verification = "Classify every listed command in each help spelling alone and af
 
 affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml", "05_Software/src/libraries/shared/src/stm32-options.ts"]
 
-linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/stm32-cubeprog.test.ts"]
 
 
 spec = ""

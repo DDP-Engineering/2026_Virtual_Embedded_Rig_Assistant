@@ -14,7 +14,7 @@ verification = "Integration tests run every operation of gdb-elf and gdb-debug (
 
 affected_paths = ["05_Software/plugins/gdb-debug/plugin.yaml", "05_Software/plugins/gdb-debug/scripts/gdb_support/report.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_elf.py", "05_Software/plugins/gdb-debug/profiles/stm32f4-stlink.json", "05_Software/plugins/gdb-debug/profiles/stm32g0-stlink.json", "05_Software/plugins/gdb-debug/scripts/gdb_debug.py", "05_Software/plugins/gdb-debug/scripts/gdb_elf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/__init__.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/errors.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

@@ -14,7 +14,7 @@ verification = "A real run reports the kicad-cli of `C:/Program Files/KiCad/10.0
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/discovery.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

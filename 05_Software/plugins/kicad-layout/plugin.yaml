@@ -1,9 +1,20 @@
 format: 1
 id: kicad-layout
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: KiCad PCB placement and local routing
 summary: Place footprints and add local tracks on a candidate copy of a KiCad 10 board, checked by DRC.
 description: Move and rotate footprints, align them, add keepouts and explicit local tracks and vias on a candidate copy of a KiCad 10 board through KiCad's official IPC API, check every request (locked items, nets, layers, the outline), verify the candidate with DRC and unconnected items, and report the changes with before/after previews. The source board changes only when you ask to apply a passing candidate, through VERA's approval. Needs a user-installed KiCad 10 with its API enabled (Preferences > Plugins); the candidate opens in a KiCad PCB editor window.
+translations:
+  ro:
+    summary: "Plasează footprint-uri și adaugă trasee locale pe o copie candidată a unei plăci KiCad 10, verificată prin DRC."
+    description: "Mută și rotește footprint-uri, le aliniază, adaugă zone keepout și trasee și via-uri locale explicite pe o copie candidată a unei plăci KiCad 10, prin API-ul IPC oficial al KiCad, verifică fiecare cerere (elemente blocate, net-uri, straturi, conturul), validează candidatul prin DRC și elemente neconectate și raportează modificările cu previzualizări înainte/după. Placa sursă se modifică doar când ceri aplicarea unui candidat care trece verificările, prin aprobarea VERA. Necesită KiCad 10 instalat de utilizator, cu API-ul activat (Preferences > Plugins); candidatul se deschide într-o fereastră de editor PCB KiCad."
+  de:
+    summary: "Footprints platzieren und lokale Leiterbahnen auf einer Kandidatenkopie einer KiCad-10-Platine hinzufügen, per DRC geprüft."
+    description: "Footprints verschieben, drehen und ausrichten, Sperrflächen sowie explizite lokale Leiterbahnen und Vias auf einer Kandidatenkopie einer KiCad-10-Platine über die offizielle IPC-API von KiCad hinzufügen, jede Anfrage prüfen (gesperrte Elemente, Netze, Lagen, die Kontur), den Kandidaten mit DRC und auf nicht verbundene Elemente prüfen und die Änderungen mit Vorher-Nachher-Vorschauen melden. Die Quellplatine ändert sich nur, wenn Sie das Übernehmen eines bestandenen Kandidaten verlangen, über VERAs Freigabe. Benötigt ein vom Benutzer installiertes KiCad 10 mit aktivierter API (Preferences > Plugins); der Kandidat öffnet sich in einem Fenster des KiCad-PCB-Editors."
+  fr:
+    summary: "Placez des empreintes et ajoutez des pistes locales sur une copie candidate d’une carte KiCad 10, vérifiée par DRC."
+    description: "Déplacez et faites pivoter des empreintes, alignez-les, ajoutez des zones d’exclusion ainsi que des pistes et vias locaux explicites sur une copie candidate d’une carte KiCad 10 au moyen de l’API IPC officielle de KiCad, vérifiez chaque requête (éléments verrouillés, nets, couches, contour), contrôlez le candidat par DRC et recherche d’éléments non connectés, et présentez les modifications avec des aperçus avant/après. La carte source n’est modifiée que si vous demandez d’appliquer un candidat conforme, avec l’approbation de VERA. Nécessite un KiCad 10 installé par l’utilisateur avec son API activée (Preferences > Plugins) ; le candidat s’ouvre dans une fenêtre d’éditeur de PCB KiCad."
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://dev-docs.kicad.org/en/apis-and-binding/ipc-api/"]

@@ -126,6 +126,6 @@ Permission denied. Add your user to ...                     (stderr; exit 3)
 
 ## Acceptance
 
-The integration tests in `05_Software/tests/integration/serial-monitor.test.ts` run the installed script
+The integration tests in `05_Software/tests/plugins/serial-monitor.test.ts` run the installed script
 under the toolchain's Python with a fake `serial` package and observe standard output, standard error,
 the exit code and the fake's recorded port operations.

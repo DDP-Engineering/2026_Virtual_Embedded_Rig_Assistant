@@ -14,7 +14,7 @@ verification = "Refusal cases each checked for code, exit 2 and an unchanged wor
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/request.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

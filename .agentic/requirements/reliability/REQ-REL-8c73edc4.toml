@@ -14,7 +14,7 @@ verification = "Repeating a report with the same `--run-id` gives code `output`,
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/report.py"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

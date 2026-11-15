@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-d7846d7a"
+title = "Carry the package's help pages in a plugin review"
+status = "active"
+requirement = "A plugin review and a catalog preview shall include the package's help/<language>.md pages for en, ro, de and fr that are valid UTF-8 and at most 256 KiB, keyed by language, and none when the package has no help page."
+verification = "Core test: the preview of a catalog package returns its manifest with no issues; renderer test: a preview's English help page is shown in the card details."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+priority = "normal"
+created = 2026-11-15
+updated = 2026-11-15

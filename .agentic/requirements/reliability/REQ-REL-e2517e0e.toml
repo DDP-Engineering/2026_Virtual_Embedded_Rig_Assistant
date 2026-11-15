@@ -14,7 +14,7 @@ verification = "`{rms: 2 A, duty: 0.5}` gives `contradiction` on the current fie
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/waveforms.py", "05_Software/tests/fixtures/electronics-calc/"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

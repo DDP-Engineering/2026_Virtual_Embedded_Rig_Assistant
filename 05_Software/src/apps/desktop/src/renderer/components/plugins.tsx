@@ -8,11 +8,12 @@ import type {
   PluginReview,
   PluginSummary,
 } from "@vera/shared";
-import { configurationNeeds, pluginPlatform } from "@vera/shared";
-import { useEffect, useId, useRef, useState } from "react";
+import { configurationNeeds, pluginPlatform, pluginText } from "@vera/shared";
+import { useContext, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { HelpContext, helpLanguage, pluginHelpKey } from "./help.js";
 import {
   CatalogItem,
   CatalogSettings,
@@ -22,7 +23,7 @@ import {
   PluginDiscoveryFacts,
 } from "./plugin-catalog.js";
 import { type ConfigurationView, PluginConfiguration } from "./plugin-configuration.js";
-import { PluginContents, useRiskLabels } from "./plugin-contents.js";
+import { PluginDetails, reviewHelp, useRiskLabels } from "./plugin-contents.js";
 import { automaticProgram, RequiredPlugins, VendorGuide } from "./plugin-dependencies.js";
 import {
   catalogLibraryItems,
@@ -146,7 +147,7 @@ function Review({
   installed: () => void;
   cancel: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels = useLabels();
   const title = useId();
   const [busy, setBusy] = useState(false);
@@ -166,14 +167,42 @@ function Review({
       setBusy(false);
     }
   }
+  const source = (
+    <dl className="plugin-facts">
+      <dt>{t("plugins.source.label")}</dt>
+      <dd>
+        <code>{review.path}</code>
+      </dd>
+      <dt>SHA-256</dt>
+      <dd className="plugin-sha">
+        <code>{review.sha256}</code>
+      </dd>
+    </dl>
+  );
   return (
     <section className="plugin-review" aria-labelledby={title} data-plugin-review>
-      <h3 id={title}>{t("plugins.reviewTitle", { name: manifest?.name ?? review.path })}</h3>
-      <p className="muted">{t("plugins.reviewIntro")}</p>
+      <header className="plugin-review-header">
+        <div>
+          <h3 id={title}>{t("plugins.reviewTitle", { name: manifest?.name ?? review.path })}</h3>
+          <p className="muted">{t("plugins.reviewIntro")}</p>
+        </div>
+        <div className="workbench-actions">
+          <button
+            type="button"
+            className="primary"
+            data-action="plugin-install"
+            disabled={busy || review.issues.length > 0 || !manifest}
+            onClick={() => void install()}
+          >
+            {scoped ? t("plugins.trust") : t("plugins.install")}
+          </button>
+          <button type="button" data-action="plugin-review-cancel" disabled={busy} onClick={cancel}>
+            {t("plugins.cancel")}
+          </button>
+        </div>
+      </header>
+      {error !== undefined && <ErrorMessage error={error} />}
       {scoped && <p>{t("plugins.scopedTrustIntro")}</p>}
-      <p className="plugin-sha">
-        SHA-256 <code>{review.sha256}</code>
-      </p>
       {catalog && (
         <p data-catalog-review>
           {t("plugins.catalog.reviewFrom", {
@@ -192,48 +221,16 @@ function Review({
           <Issues issues={review.issues} />
         </div>
       )}
-      <dl className="plugin-facts">
-        {manifest && (
-          <>
-            <dt>{t("plugins.id")}</dt>
-            <dd>
-              <code>{manifest.id}</code>
-            </dd>
-            <dt>{t("plugins.version")}</dt>
-            <dd>
-              {manifest.version} <MaturityBadge version={manifest.version} />
-            </dd>
-            <dt>{t("plugins.platforms")}</dt>
-            <dd>{manifest.platforms.join(", ")}</dd>
-            <dt>{t("plugins.requires")}</dt>
-            <dd>{manifest.requires.length ? manifest.requires.join(", ") : t("plugins.nothing")}</dd>
-          </>
-        )}
-        <dt>{t("plugins.source.label")}</dt>
-        <dd>
-          <code>{review.path}</code>
-        </dd>
-      </dl>
-      {manifest && (
-        <>
-          <p>{manifest.description}</p>
-          <PluginContents manifest={manifest} composition={review.composition} />
-        </>
+      {manifest ? (
+        <PluginDetails
+          manifest={manifest}
+          composition={review.composition}
+          help={reviewHelp(review, i18n.language)}
+          facts={source}
+        />
+      ) : (
+        source
       )}
-      {error !== undefined && <ErrorMessage error={error} />}
-      <div className="workbench-actions">
-        <button
-          type="button"
-          data-action="plugin-install"
-          disabled={busy || review.issues.length > 0 || !manifest}
-          onClick={() => void install()}
-        >
-          {scoped ? t("plugins.trust") : t("plugins.install")}
-        </button>
-        <button type="button" data-action="plugin-review-cancel" disabled={busy} onClick={cancel}>
-          {t("plugins.cancel")}
-        </button>
-      </div>
     </section>
   );
 }
@@ -309,11 +306,8 @@ function PluginCard({
   discovery,
   installedIds,
   configuration,
-  openWorkbench,
 }: {
   plugin: PluginSummary;
-  /** Opens the open workbench's editor, or the folder chooser when none is open. */
-  openWorkbench?: (() => void) | undefined;
   /** The declared parameters' states, when the manifest declares any. */
   configuration?: ConfigurationView | undefined;
   /** The ids of the installed plugins, for the plugins this one requires. */
@@ -326,11 +320,12 @@ function PluginCard({
   update?: { entry: CatalogPlugin; start: () => void; busy: boolean } | undefined;
 }) {
   const { t, i18n } = useTranslation();
+  const openHelp = useContext(HelpContext);
   const labels = useLabels(),
     client = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [configure, setConfigure] = useState(false);
-  const configurationRef = useRef<HTMLDivElement>(null);
+  const configurationRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!configure || !expanded) return;
     setConfigure(false);
@@ -363,6 +358,12 @@ function PluginCard({
     enabled: false,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+  });
+  const helpCode = helpLanguage(i18n.resolvedLanguage ?? i18n.language);
+  const help = useQuery({
+    queryKey: ["help.read", "plugin", plugin.id, helpCode],
+    queryFn: () => api.invoke("help.read", { plugin: plugin.id, language: helpCode }),
+    enabled: expanded && healthy && Boolean(plugin.composition?.help?.length),
   });
   const needs = configuration?.needs ?? [];
   const readiness = programReadiness(plugin, programs.data, programs.isError, needs);
@@ -440,60 +441,51 @@ function PluginCard({
       if (alive.current) setCheckedAt(new Date().toLocaleTimeString(i18n.language));
     });
   }
+  // What only an installed plugin has: its dependency checks and its configuration.
+  const installedSections = healthy && (
+    <>
+      <section className="plugin-section" data-plugin-section="dependencies">
+        <h4>{t("plugins.dependencies.title")}</h4>
+        {plugin.manifest && <RequiredPlugins ids={plugin.manifest.requires} installed={installedIds} />}
+        {programs.data ? (
+          <Programs
+            statuses={programs.data}
+            archive={(program) => void dependencyAction("archive", program)}
+            busy={working}
+          />
+        ) : (
+          <p className="muted">{t("plugins.notChecked")}</p>
+        )}
+        {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
+      </section>
+      {settings && configuration && Object.keys(settings).length > 0 && (
+        <section
+          className="plugin-section"
+          data-plugin-section="configuration"
+          ref={configurationRef}
+          tabIndex={-1}
+        >
+          <h4>{t("plugins.configuration.title")}</h4>
+          <PluginConfiguration settings={settings} view={configuration} workbench={workbench !== undefined} />
+        </section>
+      )}
+    </>
+  );
   return (
     <li className="plugin-card" data-plugin={plugin.id}>
-      <div className="plugin-card-header">
-        <button
-          type="button"
-          className="plugin-expand"
-          data-action="plugin-expand"
-          aria-expanded={expanded}
-          aria-controls={detailsId}
-          aria-label={expanded ? t("plugins.collapse", { name }) : t("plugins.expand", { name })}
-          onClick={() => setExpanded((value) => !value)}
-        >
-          <span aria-hidden="true">{expanded ? "\u2212" : "+"}</span>
+      <div className="plugin-card-top">
+        <p className="plugin-heading">
           <strong>{name}</strong>
           {plugin.version && <span>{plugin.version}</span>}
           {plugin.version && <MaturityBadge version={plugin.version} />}
-        </button>
-        {plugin.tier && (
-          <span className="risk-badge" data-tier={plugin.tier}>
-            {labels.tier[plugin.tier]}
-          </span>
-        )}
-      </div>
-      {plugin.description && <p className="plugin-row-description">{plugin.description}</p>}
-      {!healthy && (
-        <div role="alert" data-plugin-issues>
-          <p>{t("plugins.broken")}</p>
-          <Issues issues={plugin.issues} />
-        </div>
-      )}
-      {update && (
-        <p role="status" data-plugin-update>
-          {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
-        </p>
-      )}
-      {healthy && (
-        <PluginStatus
-          readiness={readiness}
-          programs={summary}
-          dependencies={dependencyCheck(
-            programs.data,
-            programs.isError,
-            (plugin.manifest?.requires ?? []).filter((id) => !installedIds.has(id)),
+          {plugin.tier && (
+            <span className="risk-badge" data-tier={plugin.tier}>
+              {labels.tier[plugin.tier]}
+            </span>
           )}
-          configuration={configurationCheck(settings, configuration)}
-          declared={Boolean(settings && Object.keys(settings).length)}
-          configure={() => {
-            setExpanded(true);
-            setConfigure(true);
-          }}
-          enabled={plugin.enabled}
-          workbench={workbench?.name}
-          openWorkbench={openWorkbench}
-          dependencyActions={
+        </p>
+        <div className="workbench-actions plugin-top-actions">
+          {healthy && (
             <>
               <button
                 type="button"
@@ -532,116 +524,167 @@ function PluginCard({
                 {busy === "reinstall" ? t("plugins.reinstalling") : t("plugins.reinstall")}
               </button>
             </>
-          }
+          )}
+          {healthy && openHelp && plugin.composition?.help?.length && (
+            <button
+              type="button"
+              data-action="plugin-help"
+              onClick={() => openHelp(pluginHelpKey(plugin.id))}
+            >
+              {t("plugins.help")}
+            </button>
+          )}
+          {plugin.source === "workbench" && workbench && (
+            <button
+              type="button"
+              data-action="plugin-scoped-review"
+              disabled={working}
+              onClick={reviewScoped}
+            >
+              {t("plugins.reviewScoped")}
+            </button>
+          )}
+          {update && (
+            <button
+              type="button"
+              data-action="plugin-update"
+              disabled={working || update.busy}
+              onClick={update.start}
+            >
+              {t("plugins.catalog.update", { version: update.entry.version })}
+            </button>
+          )}
+          <details className="plugin-more">
+            <summary>{t("plugins.moreActions")}</summary>
+            <div>
+              {healthy && plugin.tier === "trial" && plugin.sha256 && (
+                <button
+                  type="button"
+                  data-action="plugin-promote"
+                  disabled={working}
+                  onClick={() => {
+                    if (window.confirm(t("plugins.promoteConfirm", { name })))
+                      void perform("promote", async () => {
+                        await api.invoke("plugins.promote", { id: plugin.id, sha256: plugin.sha256 ?? "" });
+                        await changed();
+                      });
+                  }}
+                >
+                  {t("plugins.promote")}
+                </button>
+              )}
+              {healthy && plugin.sha256 && plugin.source !== "workbench" && (
+                <button
+                  type="button"
+                  data-action="plugin-export"
+                  disabled={working}
+                  onClick={() =>
+                    void perform("export", async () => {
+                      const result = await api.invoke("plugins.export", {
+                        id: plugin.id,
+                        sha256: plugin.sha256 ?? "",
+                      });
+                      if (result.path && alive.current) setExported(result.path);
+                    })
+                  }
+                >
+                  {t("plugins.export")}
+                </button>
+              )}
+              {plugin.source !== "workbench" && (
+                <button
+                  type="button"
+                  data-action="plugin-uninstall"
+                  disabled={working}
+                  onClick={() => {
+                    if (window.confirm(t("plugins.uninstallConfirm", { name })))
+                      void perform("uninstall", async () => {
+                        await api.invoke("plugins.uninstall", { id: plugin.id });
+                        await changed();
+                      });
+                  }}
+                >
+                  {t("plugins.uninstall")}
+                </button>
+              )}
+            </div>
+          </details>
+        </div>
+      </div>
+      {(name !== plugin.id || plugin.ecosystem) && (
+        <p className="muted">
+          {name !== plugin.id && <code>{plugin.id}</code>}
+          {name !== plugin.id && plugin.ecosystem && <span> · </span>}
+          {plugin.ecosystem && <span>{plugin.ecosystem}</span>}
+        </p>
+      )}
+      {plugin.description && (
+        <p className="plugin-row-description">
+          {plugin.manifest ? pluginText(plugin.manifest, i18n.language).summary : plugin.description}
+        </p>
+      )}
+      {!healthy && (
+        <div role="alert" data-plugin-issues>
+          <p>{t("plugins.broken")}</p>
+          <Issues issues={plugin.issues} />
+        </div>
+      )}
+      {update && (
+        <p role="status" data-plugin-update>
+          {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
+        </p>
+      )}
+      {healthy && (
+        <PluginStatus
+          readiness={readiness}
+          programs={summary}
+          dependencies={dependencyCheck(
+            programs.data,
+            programs.isError,
+            (plugin.manifest?.requires ?? []).filter((id) => !installedIds.has(id)),
+          )}
+          configuration={configurationCheck(settings, configuration)}
+          declared={Boolean(settings && Object.keys(settings).length)}
+          configure={() => {
+            setExpanded(true);
+            setConfigure(true);
+          }}
         />
       )}
       {programs.isError && <ErrorMessage error={programs.error} />}
       {error !== undefined && <ErrorMessage error={error} />}
-      <div className="plugin-actions">
-        {plugin.source === "workbench" && workbench && (
-          <button type="button" data-action="plugin-scoped-review" disabled={working} onClick={reviewScoped}>
-            {t("plugins.reviewScoped")}
-          </button>
-        )}
-        {update && (
-          <button
-            type="button"
-            data-action="plugin-update"
-            disabled={working || update.busy}
-            onClick={update.start}
-          >
-            {t("plugins.catalog.update", { version: update.entry.version })}
-          </button>
-        )}
-        <details className="plugin-more">
-          <summary>{t("plugins.moreActions")}</summary>
-          <div>
-            {healthy && plugin.tier === "trial" && plugin.sha256 && (
-              <button
-                type="button"
-                data-action="plugin-promote"
-                disabled={working}
-                onClick={() => {
-                  if (window.confirm(t("plugins.promoteConfirm", { name })))
-                    void perform("promote", async () => {
-                      await api.invoke("plugins.promote", { id: plugin.id, sha256: plugin.sha256 ?? "" });
-                      await changed();
-                    });
-                }}
+      <details className="plugin-details" open={expanded}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: summary is the native disclosure control; React owns open. */}
+        <summary
+          data-action="plugin-expand"
+          onClick={(event) => {
+            event.preventDefault();
+            setExpanded((value) => !value);
+          }}
+        >
+          {t("plugins.library.details")}
+        </summary>
+        {expanded && (
+          <div id={detailsId} className="plugin-expanded">
+            {plugin.source === "workbench" && <p data-plugin-scope>{t("plugins.workbenchSource")}</p>}
+            {healthy && plugin.manifest ? (
+              <PluginDetails
+                manifest={plugin.manifest}
+                composition={plugin.composition}
+                help={help.data?.content}
+                facts={<PluginDiscoveryFacts entry={discovery} />}
               >
-                {t("plugins.promote")}
-              </button>
-            )}
-            {healthy && plugin.sha256 && plugin.source !== "workbench" && (
-              <button
-                type="button"
-                data-action="plugin-export"
-                disabled={working}
-                onClick={() =>
-                  void perform("export", async () => {
-                    const result = await api.invoke("plugins.export", {
-                      id: plugin.id,
-                      sha256: plugin.sha256 ?? "",
-                    });
-                    if (result.path && alive.current) setExported(result.path);
-                  })
-                }
-              >
-                {t("plugins.export")}
-              </button>
-            )}
-            {plugin.source !== "workbench" && (
-              <button
-                type="button"
-                data-action="plugin-uninstall"
-                disabled={working}
-                onClick={() => {
-                  if (window.confirm(t("plugins.uninstallConfirm", { name })))
-                    void perform("uninstall", async () => {
-                      await api.invoke("plugins.uninstall", { id: plugin.id });
-                      await changed();
-                    });
-                }}
-              >
-                {t("plugins.uninstall")}
-              </button>
+                {installedSections}
+              </PluginDetails>
+            ) : (
+              <>
+                <PluginDiscoveryFacts entry={discovery} />
+                {installedSections}
+              </>
             )}
           </div>
-        </details>
-      </div>
-      {expanded && (
-        <div id={detailsId} className="plugin-expanded">
-          <p className="muted">
-            <code>{plugin.id}</code>
-            {plugin.ecosystem && <span> · {plugin.ecosystem}</span>}
-          </p>
-          <PluginDiscoveryFacts entry={discovery} />
-          {plugin.source === "workbench" && <p data-plugin-scope>{t("plugins.workbenchSource")}</p>}
-          {healthy && plugin.manifest && (
-            <RequiredPlugins ids={plugin.manifest.requires} installed={installedIds} />
-          )}
-          {healthy && programs.data && (
-            <Programs
-              statuses={programs.data}
-              archive={(program) => void dependencyAction("archive", program)}
-              busy={working}
-            />
-          )}
-          {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
-          {settings && configuration && Object.keys(settings).length > 0 && (
-            <div ref={configurationRef} tabIndex={-1}>
-              <PluginConfiguration
-                settings={settings}
-                view={configuration}
-                workbench={workbench !== undefined}
-              />
-            </div>
-          )}
-          {healthy && plugin.manifest && (
-            <PluginContents manifest={plugin.manifest} composition={plugin.composition} />
-          )}
-        </div>
-      )}
+        )}
+      </details>
       {exported && <p role="status">{t("plugins.exported", { path: exported })}</p>}
     </li>
   );
@@ -650,14 +693,7 @@ function PluginCard({
  * Global discovery and package management, with explicit dependency setup and reviewed imports.
  * Workbench activation belongs to the separate workbench settings draft.
  */
-export function Plugins({
-  workbench,
-  openWorkbench,
-}: {
-  workbench?: PluginsWorkbench | undefined;
-  /** The Use check's Open workbench: the open workbench's editor, or the folder chooser when none is open. */
-  openWorkbench?: (() => void) | undefined;
-}) {
+export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefined }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const [library, setLibrary] = useState<LibraryState>(() => {
@@ -1140,7 +1176,6 @@ export function Plugins({
                         installedIds={installedIds}
                         configuration={configured.get(plugin)}
                         workbench={workbench}
-                        openWorkbench={openWorkbench}
                         changed={changed}
                         reviewScoped={() => {
                           if (!workbench) return;

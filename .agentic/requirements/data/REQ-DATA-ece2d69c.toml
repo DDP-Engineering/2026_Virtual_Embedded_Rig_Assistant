@@ -14,7 +14,7 @@ verification = "`vera catalog check` of the plugin source reports no issue; the 
 
 affected_paths = ["05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
 
 
 spec = ""

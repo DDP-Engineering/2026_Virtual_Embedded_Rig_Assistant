@@ -28,6 +28,29 @@ export async function readHelpFile(root: string, path: string): Promise<string |
   }
 }
 
+/**
+ * An installed plugin's help: `<folder>/help/<language>.md`, else `help/en.md`; undefined when it has neither. The
+ * file's real path must stay below `<folder>/help`.
+ */
+export async function readPluginHelp(
+  folder: string,
+  language: HelpLanguage,
+): Promise<{ title: string; language: HelpLanguage; content: string } | undefined> {
+  const root = join(folder, "help");
+  // The help folder itself must be the package's own folder, not a link that leaves the package.
+  try {
+    const [base, real] = await Promise.all([realpath(folder), realpath(root)]);
+    if (relative(base, real) !== "help") return undefined;
+  } catch {
+    return undefined;
+  }
+  for (const served of language === "en" ? (["en"] as const) : [language, "en" as const]) {
+    const content = await readHelpFile(root, join(root, `${served}.md`));
+    if (content !== undefined) return { title: helpTitle(content, served), language: served, content };
+  }
+  return undefined;
+}
+
 /** App help: `<root>/<language>/<page>.md`, read-only, English when a language lacks a page. */
 export class HelpLibrary {
   constructor(private readonly root: string) {}

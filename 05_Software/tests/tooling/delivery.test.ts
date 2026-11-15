@@ -113,3 +113,19 @@ test("zipFiles stores the files under the prefix", async () => {
   expect(Object.keys(entries).sort()).toEqual(["vera-kit/files/tool.bin", "vera-kit/kit.json"]);
   expect(Buffer.from(entries["vera-kit/files/tool.bin"] ?? []).toString()).toBe("binary");
 });
+
+test("release notes Markdown lists entries by category in English and says when there are none", () => {
+  const entry = (category: string, en: string) => ({ category, topic: { en: "Plugins" }, text: { en } });
+  expect(
+    common.formatReleaseNotes(
+      { date: "2026-11-15", entries: [entry("fixed", "Fix."), entry("new", "New.")] },
+      "0.1.0",
+    ),
+  ).toBe(
+    "# VERA 0.1.0 release notes\n\n2026-11-15\n\n## New\n\n- **Plugins:** New.\n\n## Fixed\n\n- **Plugins:** Fix.\n\n" +
+      "Settings > About > What's new shows these notes in the interface language.\n",
+  );
+  expect(common.formatReleaseNotes({ date: null, entries: [] }, "0.1.1")).toContain(
+    "No user-visible changes.",
+  );
+});

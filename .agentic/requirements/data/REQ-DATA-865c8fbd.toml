@@ -14,7 +14,7 @@ verification = "Offline tests run every operation against the stand-ins and chec
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/request.py", "05_Software/plugins/platformio/scripts/pio_support/result.py", "05_Software/plugins/platformio/scripts/pio_support/builddir.py", "05_Software/plugins/platformio/scripts/pio_support/__init__.py", "05_Software/plugins/platformio/scripts/pio_support/cli.py", "05_Software/plugins/platformio/scripts/pio_support/elf.py", "05_Software/plugins/platformio/scripts/pio_support/errors.py", "05_Software/plugins/platformio/scripts/pio_support/lifecycle.py", "05_Software/plugins/platformio/scripts/pio_support/workspace.py", "05_Software/plugins/platformio/scripts/pio_tool.py", "05_Software/plugins/platformio/scripts/pio_upload.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = "specs/REQ-DATA-865c8fbd.md"

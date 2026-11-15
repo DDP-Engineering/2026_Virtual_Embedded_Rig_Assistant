@@ -1,6 +1,6 @@
 # kicad-layout fixtures
 
-Input data of `tests/integration/kicad-layout.test.ts`. Everything here is fictional.
+Input data of `tests/plugins/kicad-layout.test.ts`. Everything here is fictional.
 
 ## board/
 

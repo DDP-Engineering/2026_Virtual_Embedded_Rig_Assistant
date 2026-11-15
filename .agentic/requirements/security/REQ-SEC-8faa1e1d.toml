@@ -14,7 +14,7 @@ verification = "A fake platform folder with platform.local.txt makes compile exi
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

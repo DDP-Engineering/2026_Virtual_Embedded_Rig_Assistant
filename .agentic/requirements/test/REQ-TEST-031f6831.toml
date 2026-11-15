@@ -10,9 +10,9 @@ requirement = "The raspberry-pi-linux tests shall run pi-tool against a local as
 
 verification = "Inspection: raspberry-pi-linux.test.ts starts pi-test-sshd.py on 127.0.0.1 with generated keys; remote cases are skipIf no Linux shell; no test names another host."
 
-affected_paths = ["05_Software/tests/integration/raspberry-pi-linux.test.ts", "05_Software/tests/support/pi-test-sshd.py", "05_Software/tests/support/pi-test-agent.py"]
+affected_paths = ["05_Software/tests/plugins/raspberry-pi-linux.test.ts", "05_Software/tests/support/pi-test-sshd.py", "05_Software/tests/support/pi-test-agent.py"]
 
-linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+linked_tests = ["05_Software/tests/plugins/raspberry-pi-linux.test.ts"]
 
 
 spec = "specs/REQ-DATA-44547a17.md"

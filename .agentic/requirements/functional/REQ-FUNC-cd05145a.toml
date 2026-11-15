@@ -14,7 +14,7 @@ verification = "A 5 V divider of two 10 kΩ 1 % resistors gives `vout` nominal 2
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/tolerance.py", "05_Software/plugins/electronics-calc/scripts/elec_support/engine.py", "05_Software/tests/fixtures/electronics-calc/"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

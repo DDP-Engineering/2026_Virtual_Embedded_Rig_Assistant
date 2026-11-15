@@ -14,7 +14,7 @@ verification = "Windows: the opt-in real-engine tests record artefacts, the erro
 
 affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ngspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

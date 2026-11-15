@@ -1,4 +1,4 @@
-// REQ-UX-492e89fb REQ-UX-157f139c REQ-UX-50e2dc6b
+// REQ-UX-492e89fb REQ-UX-157f139c
 import type { PluginParameters, PluginProgramStatus } from "@vera/shared";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -62,35 +62,25 @@ export function configurationCheck(
 export function PluginStatus({
   dependencies,
   programs,
-  dependencyActions,
   configuration,
   declared,
   configure,
-  enabled,
-  workbench,
-  openWorkbench,
   readiness,
 }: {
   dependencies: StatusCheck;
   /** The program summary: checking, n/m ready, no programs or not checked. */
   programs: string;
-  dependencyActions: ReactNode;
   configuration: StatusCheck;
   /** The manifest declares parameters: Configure opens them. */
   declared: boolean;
   configure: () => void;
-  enabled: boolean;
-  workbench?: string | undefined;
-  openWorkbench?: (() => void) | undefined;
   /** The library readiness (filter Needs configuration), kept on the block for the library and its tests. */
   readiness: ProgramReadiness;
 }) {
   const { t } = useTranslation();
-  const use: CheckState = workbench !== undefined && enabled ? "ready" : "missing";
   const label = {
     dependencies: t("plugins.status.dependencies"),
     configuration: t("plugins.status.configuration"),
-    use: t("plugins.status.use"),
   };
   const state: Record<CheckState, string> = {
     ready: t("plugins.status.state.ready"),
@@ -99,9 +89,7 @@ export function PluginStatus({
     external: t("plugins.status.state.external"),
     unchecked: t("plugins.status.state.unchecked"),
   };
-  const badge = (key: "dependencies" | "configuration" | "use") =>
-    key === "use" && use !== "ready" ? t("plugins.status.state.off") : state[open[key]];
-  const open = { dependencies: dependencies.state, configuration: configuration.state, use };
+  const open = { dependencies: dependencies.state, configuration: configuration.state };
   const pending = (Object.keys(open) as (keyof typeof open)[]).filter((key) => open[key] !== "ready");
   const names = dependencies.names.join(", ");
   const dependencyText =
@@ -126,17 +114,11 @@ export function PluginStatus({
           : declared
             ? t("plugins.status.configured")
             : t("plugins.status.nothingToConfigure");
-  const useText =
-    workbench === undefined
-      ? t("plugins.status.noWorkbench")
-      : enabled
-        ? t("plugins.status.enabledIn", { name: workbench })
-        : t("plugins.status.notEnabledIn", { name: workbench });
   const row = (key: keyof typeof open, text: string, action: ReactNode) => (
     <li data-status-check={key} data-state={open[key]}>
       <strong>{label[key]}</strong>
       <span className="risk-badge" data-state={open[key]}>
-        {badge(key)}
+        {state[open[key]]}
       </span>
       <span className="muted">{text}</span>
       <span className="workbench-actions">{action}</span>
@@ -155,22 +137,13 @@ export function PluginStatus({
           : t("plugins.status.ready")}
       </p>
       <ul>
-        {row("dependencies", dependencyText, dependencyActions)}
+        {row("dependencies", dependencyText, undefined)}
         {row(
           "configuration",
           configurationText,
           declared && (
             <button type="button" data-action="status-configure" onClick={configure}>
               {t("plugins.status.configure")}
-            </button>
-          ),
-        )}
-        {row(
-          "use",
-          useText,
-          openWorkbench && (
-            <button type="button" data-action="status-open-workbench" onClick={openWorkbench}>
-              {t("plugins.status.openWorkbench")}
             </button>
           ),
         )}

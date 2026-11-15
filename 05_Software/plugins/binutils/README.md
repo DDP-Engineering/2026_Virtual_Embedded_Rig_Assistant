@@ -43,7 +43,7 @@ names each exact URL/member. Sources: [ARM release](https://github.com/xpack-dev
 
 Tests use tiny genuine ELF fixtures in `tests/fixtures/elf/` with source/debug info and reproduction
 instructions. Normal tests need no network. For real x64 acceptance, supply the official archives
-locally using `VERA_BINUTILS_ARCHIVES=<folder>` and run `vitest run tests/integration/binutils.test.ts`.
+locally using `VERA_BINUTILS_ARCHIVES=<folder>` and run `vitest run tests/plugins/binutils.test.ts`.
 The local transport still goes through VERA's SHA-256 verification/extraction, runner and replay agent.
 Linux arm64 archives have verified hashes, members and AArch64 executable headers; execution needs
 an arm64 host and is not established by x64 acceptance.

@@ -14,7 +14,7 @@ verification = "Stand-in run: the recorded argv is `pkg install -d <project> -e 
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/prepare.py", "05_Software/plugins/platformio/scripts/pio_support/packages.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

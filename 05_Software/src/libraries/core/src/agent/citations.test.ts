@@ -180,3 +180,44 @@ it("contains resolver errors and validates only parsed successful ref fields", a
     await rm(root, { recursive: true, force: true });
   }
 });
+
+// REQ-UX-a318156e
+it("accepts a help ref only when the help tool returned it", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-help-citations-"));
+  try {
+    const ref = "help:permissions";
+    const message: Message = {
+      role: "toolResult",
+      toolName: "help",
+      toolCallId: "help",
+      content: [{ type: "text", text: JSON.stringify({ ref, title: "Permissions", text: "# Permissions" }) }],
+      isError: false,
+      timestamp: 0,
+    };
+    expect(await validateCitations(root, `See [[${ref}]].`, [message])).toEqual([{ ref, valid: true }]);
+    expect(await validateCitations(root, "See [[help:plugins]].", [message])).toEqual([
+      { ref: "help:plugins", valid: false },
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-UX-a318156e
+it("does not accept a help ref that another tool's result carried", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-help-citations-"));
+  try {
+    const ref = "help:permissions";
+    const message: Message = {
+      role: "toolResult",
+      toolName: "read",
+      toolCallId: "read",
+      content: [{ type: "text", text: JSON.stringify({ ref }) }],
+      isError: false,
+      timestamp: 0,
+    };
+    expect(await validateCitations(root, `[[${ref}]]`, [message])).toEqual([{ ref, valid: false }]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

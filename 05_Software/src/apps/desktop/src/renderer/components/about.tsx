@@ -1,12 +1,15 @@
 import type { AppInfo } from "@vera/shared";
 import { useTranslation } from "react-i18next";
 import ddpLogo from "../assets/ddp-logo-dark.png";
+import { type ReleaseCategory, releasesFor } from "../lib/release-notes.js";
 import { Metadata } from "./metadata.js";
 
 /** Third-party runtime libraries of the desktop app, read from package-lock.json at build time. */
 declare const __VERA_THIRD_PARTY__: { name: string; version: string; license: string }[];
 /** VERA's license text (repository LICENSE.txt), embedded at build time. */
 declare const __VERA_LICENSE__: string;
+/** The release-notes files of 05_Software/release-notes, embedded at build time. */
+declare const __VERA_RELEASE_NOTES__: unknown[];
 /** The license name (first line) and the "Required Notice:" lines the license asks every copy to carry. */
 const licenseLines = __VERA_LICENSE__.split("\n");
 const licenseName = licenseLines[0]?.trim() ?? "";
@@ -15,7 +18,13 @@ const notices = licenseLines
   .map((line) => line.slice("Required Notice:".length).trim());
 
 export function About({ info }: { info: AppInfo }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const releases = releasesFor(__VERA_RELEASE_NOTES__, i18n.resolvedLanguage ?? "en");
+  const category: Record<ReleaseCategory, string> = {
+    new: t("about.categoryNew"),
+    improved: t("about.categoryImproved"),
+    fixed: t("about.categoryFixed"),
+  };
   const runtime = info.runtime
     ? [
         ["Electron", info.runtime.electron],
@@ -46,6 +55,34 @@ export function About({ info }: { info: AppInfo }) {
         </div>
         <img className="about-logo" src={ddpLogo} alt="DDP Engineering" />
       </header>
+      {releases.length > 0 && (
+        <details className="about-block about-notices" data-about-whats-new open>
+          <summary>
+            <h3>{t("about.whatsNew")}</h3>
+          </summary>
+          {releases.map((release) => (
+            <section key={release.version} className="about-release" data-release={release.version}>
+              <h4>
+                {release.version === "Unreleased"
+                  ? t("about.unreleased")
+                  : t("about.release", { version: release.version, date: release.date ?? "" })}
+              </h4>
+              {release.groups.map((group) => (
+                <div key={group.category} data-release-category={group.category}>
+                  <h5>{category[group.category]}</h5>
+                  <ul>
+                    {group.items.map((item) => (
+                      <li key={`${item.topic}:${item.text}`}>
+                        <strong>{item.topic}:</strong> {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </section>
+          ))}
+        </details>
+      )}
       <section className="about-block">
         <h3>{t("about.application")}</h3>
         <Metadata info={info} />

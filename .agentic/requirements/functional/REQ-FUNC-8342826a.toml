@@ -14,7 +14,7 @@ verification = "A test runs the real scpi helper's capture against its fake PyVI
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
 
-linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+linked_tests = ["05_Software/tests/plugins/lab-validation.test.ts"]
 
 
 spec = "specs/REQ-DATA-53797d16.md"

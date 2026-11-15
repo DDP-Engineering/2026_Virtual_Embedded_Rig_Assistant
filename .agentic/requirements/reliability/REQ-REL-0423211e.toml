@@ -14,7 +14,7 @@ verification = "Validate and test the RV32 fixture (machine), the Cortex-M0+ fix
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/firmware.py", "05_Software/plugins/renode/scripts/renode_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

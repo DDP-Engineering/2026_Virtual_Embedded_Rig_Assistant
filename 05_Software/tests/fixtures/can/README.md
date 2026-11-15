@@ -1,6 +1,6 @@
 # CAN fixtures
 
-Fictional data for `tests/integration/can.test.ts`:
+Fictional data for `tests/plugins/can.test.ts`:
 
 - `board.dbc`: `BoardStatus` (0x100, 4 bytes: Temperature int16 x 0.1 degC,
   Voltage uint16 mV) and `MotorCommand` (0x200, 3 bytes: Speed uint16 rpm,

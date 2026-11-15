@@ -12,7 +12,7 @@ verification = "A task sleeping past a 2 s budget ends budget-exceeded in under 
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/remote/vera_pi_remote.py"]
 
-linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+linked_tests = ["05_Software/tests/plugins/raspberry-pi-linux.test.ts"]
 
 
 spec = "specs/REQ-DATA-44547a17.md"

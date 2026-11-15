@@ -220,6 +220,7 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
 }
 
 const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
+const HELP_FILE = /^help\/(en|ro|de|fr)\.md$/;
 /**
  * The skills (each skills/<name>/SKILL.md with its front-matter description, none when it does not parse) and the
  * data files (outside plugin.yaml, skills/, scripts/ and the package-relative documents) of a package, in path order.
@@ -227,7 +228,13 @@ const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
 function compose(files: Files, manifest: PluginManifest): PluginComposition {
   const composition: PluginComposition = { skills: [], files: [] };
   const docs = new Set(manifest.docs);
+  const help: NonNullable<PluginComposition["help"]> = [];
   for (const path of [...files.keys()].sort(order)) {
+    const language = HELP_FILE.exec(path)?.[1] as (typeof help)[number] | undefined;
+    if (language) {
+      help.push(language);
+      continue;
+    }
     const skill = SKILL_FILE.exec(path)?.[1];
     if (skill !== undefined) {
       let description: string | undefined;
@@ -239,7 +246,41 @@ function compose(files: Files, manifest: PluginManifest): PluginComposition {
     } else if (path !== MANIFEST && !/^(?:skills|scripts)\//.test(path) && !docs.has(path))
       composition.files.push(path);
   }
+  if (help.length) composition.help = help;
   return composition;
+}
+
+const HELP_BYTES = 256 * 1024;
+/** The package's help pages by language; a page that is too large or not UTF-8 is left out. */
+function helpPages(files: Files): NonNullable<PluginReview["help"]> {
+  const pages: NonNullable<PluginReview["help"]> = {};
+  for (const [path, bytes] of files) {
+    const language = HELP_FILE.exec(path)?.[1] as keyof typeof pages | undefined;
+    if (!language || bytes.length > HELP_BYTES) continue;
+    try {
+      pages[language] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {}
+  }
+  return pages;
+}
+
+/**
+ * A plugin zip held in memory, read for its details before install: the manifest, composition, issues and help
+ * pages a review shows. Nothing is written and nothing is kept.
+ */
+export function previewPluginZip(data: Uint8Array, source: string): PluginReview {
+  const { files, folder } = readZip(data);
+  const { manifest, composition, issues } = examine(files, folder);
+  const help = manifest ? helpPages(files) : {};
+  return {
+    path: source,
+    kind: "zip",
+    sha256: pluginIntegrity(files),
+    issues: issues.slice(0, PLUGIN_LIMITS.issues),
+    ...(manifest ? { manifest } : {}),
+    ...(composition ? { composition } : {}),
+    ...(Object.keys(help).length ? { help } : {}),
+  };
 }
 
 /** Manifest issues of a package; the manifest and its composition are returned whenever it parses, for listing. */
@@ -636,6 +677,7 @@ export class PluginStore {
    */
   async review(path: string): Promise<PluginReview> {
     const { manifest, composition, issues, ...pkg } = await readPluginPackage(path);
+    const help = manifest ? helpPages(pkg.files) : {};
     const installed =
       manifest && (await this.ids()).includes(manifest.id) ? await this.summary(manifest.id) : undefined;
     return {
@@ -645,6 +687,7 @@ export class PluginStore {
       issues,
       ...(manifest ? { manifest } : {}),
       ...(composition ? { composition } : {}),
+      ...(Object.keys(help).length ? { help } : {}),
       ...(installed
         ? { installed: installed.version === undefined ? {} : { version: installed.version } }
         : {}),

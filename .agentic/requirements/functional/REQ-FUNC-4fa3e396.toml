@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-4fa3e396"
+
+title = "Name the help tool in the system prompt for questions about VERA"
+
+status = "active"
+
+requirement = """Where the session offers the help tool, the system prompt shall direct the agent to read VERA's help with the help tool for questions about VERA itself and to cite the returned help: ref."""
+
+verification = """Prompt test: with help the rules contain the help-tool rule; without help the prompt is unchanged."""
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/prompt.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/prompt.test.ts", "05_Software/src/apps/desktop/src/main/sessions.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

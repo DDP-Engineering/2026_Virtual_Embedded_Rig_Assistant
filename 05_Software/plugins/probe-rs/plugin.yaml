@@ -1,9 +1,20 @@
 format: 1
 id: probe-rs
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: probe-rs
 summary: Flash, verify, reset, read memory and stream RTT on ARM, RISC-V and Xtensa targets through debug probes.
 description: Identify, flash, verify, reset, read memory and stream RTT on ARM, RISC-V and supported Xtensa targets through local debug probes.
+translations:
+  ro:
+    summary: "Programează, verifică, resetează, citește memoria și transmite RTT pe ținte ARM, RISC-V și Xtensa prin probe-uri de depanare."
+    description: "Identifică, programează, verifică, resetează, citește memoria și transmite RTT pe ținte ARM, RISC-V și Xtensa suportate, prin probe-uri de depanare locale."
+  de:
+    summary: "Flashen, verifizieren, zurücksetzen, Speicher lesen und RTT streamen auf ARM-, RISC-V- und Xtensa-Targets über Debug-Probes."
+    description: "Identifizieren, flashen, verifizieren, zurücksetzen, Speicher lesen und RTT streamen auf ARM-, RISC-V- und unterstützten Xtensa-Targets über lokale Debug-Probes."
+  fr:
+    summary: "Flashez, vérifiez, réinitialisez, lisez la mémoire et diffusez le RTT sur cibles ARM, RISC-V et Xtensa via des sondes de débogage."
+    description: "Identifiez, flashez, vérifiez, réinitialisez, lisez la mémoire et diffusez le RTT sur des cibles ARM, RISC-V et Xtensa prises en charge via des sondes de débogage locales."
 ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
 programs:

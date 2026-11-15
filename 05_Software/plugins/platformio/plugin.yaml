@@ -1,9 +1,20 @@
 format: 1
 id: platformio
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: PlatformIO projects
 summary: Inspect, build and test existing PlatformIO projects with a pinned PlatformIO Core.
 description: Inspect, build and test existing PlatformIO projects from an explicit request (project folder, environment, core folder, owned build folder) with a pinned PlatformIO Core 6.2.0; read platformio.ini with PlatformIO's own parser, refuse extra scripts, library scripts, custom runners and upload commands unless approved by hash, keep ELF/BIN/HEX with hashes, versions and logs, install packages in a separate network step and build offline afterwards, run native Unity tests on the host, build device tests only and take their verdict from a real Renode or HIL run, and upload through the verified ST-Link protocol with a reserved probe.
+translations:
+  ro:
+    summary: "Inspectează, compilează și testează proiecte PlatformIO existente cu un PlatformIO Core fixat."
+    description: "Inspectează, compilează și testează proiecte PlatformIO existente pe baza unei cereri explicite (folderul proiectului, mediul, folderul core, un folder de build propriu) cu un PlatformIO Core 6.2.0 fixat; citește platformio.ini cu parserul propriu al PlatformIO, refuză scripturile extra, scripturile bibliotecilor, runner-ele personalizate și comenzile de încărcare dacă nu sunt aprobate după hash, păstrează ELF/BIN/HEX cu hash-uri, versiuni și loguri, instalează pachetele într-un pas de rețea separat și compilează apoi offline, rulează testele Unity native pe gazdă, doar compilează testele pentru dispozitiv și le ia verdictul dintr-o rulare reală Renode sau HIL și încarcă prin protocolul ST-Link verificat, cu un probe rezervat."
+  de:
+    summary: "Bestehende PlatformIO-Projekte mit einem festgelegten PlatformIO Core untersuchen, bauen und testen."
+    description: "Bestehende PlatformIO-Projekte aus einer expliziten Anfrage (Projektordner, Umgebung, Core-Ordner, eigener Build-Ordner) mit festgelegtem PlatformIO Core 6.2.0 untersuchen, bauen und testen; platformio.ini mit dem Parser von PlatformIO lesen, Extra-Skripte, Bibliotheksskripte, eigene Runner und Upload-Befehle ohne Freigabe per Hash ablehnen, ELF/BIN/HEX mit Hashes, Versionen und Logs aufbewahren, Pakete in einem separaten Netzwerkschritt installieren und danach offline bauen, native Unity-Tests auf dem Host ausführen, Gerätetests nur bauen und ihr Urteil aus einem echten Renode- oder HIL-Lauf übernehmen und über das geprüfte ST-Link-Protokoll mit reservierter Probe hochladen."
+  fr:
+    summary: "Examinez, compilez et testez des projets PlatformIO existants avec un PlatformIO Core épinglé."
+    description: "Examinez, compilez et testez des projets PlatformIO existants à partir d’une requête explicite (dossier du projet, environnement, dossier core, dossier de build dédié) avec un PlatformIO Core 6.2.0 épinglé ; lire platformio.ini avec l’analyseur de PlatformIO, refuser les extra scripts, les scripts de bibliothèque, les exécuteurs personnalisés et les commandes de téléversement sauf approbation par hash, conserver ELF/BIN/HEX avec hashs, versions et journaux, installer les paquets lors d’une étape réseau séparée puis compiler hors ligne, exécuter les tests Unity natifs sur l’hôte, seulement compiler les tests sur appareil et tirer leur verdict d’une vraie exécution Renode ou HIL, et téléverser via le protocole ST-Link vérifié avec une sonde réservée."
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.platformio.org/en/latest/core/userguide/cmd_run.html", "https://docs.platformio.org/en/latest/core/userguide/cmd_test.html", "https://docs.platformio.org/en/latest/projectconf/sections/env/options/advanced/extra_scripts.html"]

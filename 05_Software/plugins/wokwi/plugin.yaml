@@ -1,9 +1,20 @@
 format: 1
 id: wokwi
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wokwi cloud simulation
 summary: Run firmware simulations and scenarios in Wokwi's cloud with a pinned wokwi-cli after approval.
 description: Firmware simulation jobs and finite scenarios in Wokwi's cloud with the pinned wokwi-cli 0.29.1 - inspect a project, validate its diagram offline, prepare a job of exact copies (firmware, ELF, diagram, scenario) bound by hash with the send list, account, limits and time budget, run it once in the cloud after approval, then collect pass, fail, timeout and error outcomes with serial output, VCD and screenshots, and report. The Wokwi token stays in VERA's credential store and reaches only an approved run of this plugin on its input. A cloud simulation is not an electrical test or a test on the real board.
+translations:
+  ro:
+    summary: "Rulează simulări de firmware și scenarii în cloudul Wokwi cu un wokwi-cli fixat, după aprobare."
+    description: "Joburi de simulare de firmware și scenarii finite în cloudul Wokwi, cu wokwi-cli 0.29.1 fixat - inspectează un proiect, îi validează diagrama offline, pregătește un job din copii exacte (firmware, ELF, diagramă, scenariu) legate prin hash, cu lista de trimitere, contul, limitele și bugetul de timp, îl rulează o singură dată în cloud după aprobare, apoi colectează rezultatele trecut, picat, timeout și eroare cu ieșirea serială, VCD și capturi de ecran și face un raport. Tokenul Wokwi rămâne în depozitul de credențiale al VERA și ajunge doar la o rulare aprobată a acestui plugin, pe intrarea programului. O simulare în cloud nu este un test electric și nici un test pe placa reală."
+  de:
+    summary: "Firmware-Simulationen und Szenarien nach Freigabe in der Cloud von Wokwi mit festgelegtem wokwi-cli ausführen."
+    description: "Firmware-Simulationsjobs und begrenzte Szenarien in der Cloud von Wokwi mit dem festgelegten wokwi-cli 0.29.1 - ein Projekt untersuchen, sein Diagramm offline validieren, einen Job aus exakten Kopien (Firmware, ELF, Diagramm, Szenario) vorbereiten, per Hash an Sendeliste, Konto, Grenzwerte und Zeitbudget gebunden, ihn nach Freigabe einmal in der Cloud ausführen, dann die Ergebnisse Bestanden, Nicht bestanden, Zeitüberschreitung und Fehler mit serieller Ausgabe, VCD und Screenshots abholen und berichten. Das Wokwi-Token bleibt im Zugangsdatenspeicher von VERA und erreicht nur einen freigegebenen Lauf dieses Plugins über seine Eingabe. Eine Cloud-Simulation ist kein elektrischer Test und kein Test auf dem echten Board."
+  fr:
+    summary: "Exécutez des simulations de firmware et des scénarios dans le cloud de Wokwi avec un wokwi-cli épinglé, après approbation."
+    description: "Tâches de simulation de firmware et scénarios finis dans le cloud de Wokwi avec wokwi-cli 0.29.1 épinglé - examiner un projet, valider son diagramme hors ligne, préparer une tâche de copies exactes (firmware, ELF, diagramme, scénario) liées par hash avec la liste des envois, le compte, les limites et le budget de temps, l’exécuter une seule fois dans le cloud après approbation, puis récupérer les résultats réussi, échoué, délai dépassé et erreur avec la sortie série, le VCD et les captures d’écran, et rédiger un rapport. Le jeton Wokwi reste dans le magasin d’identifiants de VERA et n’est transmis qu’à une exécution approuvée de ce plugin, sur son entrée. Une simulation dans le cloud n’est ni un test électrique ni un test sur la vraie carte."
 ecosystem: arduino
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.wokwi.com/wokwi-ci/cli-usage", "https://github.com/wokwi/wokwi-cli/releases/tag/v0.29.1"]

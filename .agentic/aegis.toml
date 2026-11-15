@@ -12,6 +12,7 @@ test_impacted = "python ../02_Tools/environment/npmw.py npx vitest run {tests}" 
 lint = "python ../02_Tools/environment/npmw.py npm run lint"
 typecheck = "python ../02_Tools/environment/npmw.py npm run typecheck"
 i18n = "python ../02_Tools/environment/npmw.py npm run check:i18n"
+help = "python ../02_Tools/environment/npmw.py npm run check:help"
 workdir = "05_Software"                   # npm workspaces root (01-system.md §5)
 # timeout = 0                           # seconds allowed per command; 0 or
 #                                       # absent means no limit at all
@@ -121,4 +122,4 @@ secret_patterns_extra = []
 ignore = []
 strict_promote = []
 # Targeted tests run separately; see 02_Tools/verification-policy.md.
-run = ["lint", "typecheck", "i18n"]
+run = ["lint", "typecheck", "i18n", "help"]

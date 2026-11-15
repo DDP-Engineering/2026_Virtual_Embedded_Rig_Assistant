@@ -51,11 +51,25 @@ export type Reference =
   | { kind: "page-range"; path: string; start: number; end: number }
   | { kind: "heading"; path: string; slug: string }
   | ({ kind: "lines" } & LineRef)
-  | { kind: "artifact"; name: string };
+  | { kind: "artifact"; name: string }
+  | { kind: "help"; page: string }
+  | { kind: "help"; plugin: string };
+const helpName = /^[a-z0-9][a-z0-9-]{0,63}$/;
+/** `help:<page>` names an app help page, `help:plugin/<id>` a plugin's help page (the help tool issues them). */
+function parseHelpRef(text: string): Reference | undefined {
+  if (!text.startsWith("help:")) return undefined;
+  const target = text.slice(5);
+  if (target.startsWith("plugin/")) {
+    const plugin = target.slice(7);
+    return helpName.test(plugin) ? { kind: "help", plugin } : undefined;
+  }
+  return helpName.test(target) ? { kind: "help", page: target } : undefined;
+}
 
 /** Pure syntax only; source/provenance/session bounds belong to core. */
 export function parseRef(text: string): Reference | undefined {
   if (/[\r\n\u2028\u2029]/.test(text)) return undefined;
+  if (text.startsWith("help:")) return parseHelpRef(text);
   const artifact = parseArtifactRef(text);
   if (artifact) return { kind: "artifact", ...artifact };
   const lines = parseLineRef(text);
@@ -78,6 +92,9 @@ export function formatRef(value: Reference): string {
   switch (value.kind) {
     case "artifact":
       return formatArtifactRef(value.name);
+    case "help":
+      ref = "plugin" in value ? `help:plugin/${value.plugin}` : `help:${value.page}`;
+      break;
     case "lines":
       return formatLineRef(value);
     case "page":
@@ -106,6 +123,7 @@ export function referenceLabel(ref: string): string {
   const value = parseRef(ref);
   if (!value) return ref;
   if (value.kind === "artifact") return value.name;
+  if (value.kind === "help") return "plugin" in value ? value.plugin : value.page;
   const file = value.path.split("/").at(-1) ?? value.path;
   switch (value.kind) {
     case "page":

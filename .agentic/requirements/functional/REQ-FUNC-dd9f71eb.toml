@@ -14,7 +14,7 @@ verification = "With VERA_MCU_UV, provision the package from PyPI and check the 
 
 affected_paths = ["05_Software/plugins/microchip-pymcuprog/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/microchip-pymcuprog.test.ts"]
 
 
 spec = ""

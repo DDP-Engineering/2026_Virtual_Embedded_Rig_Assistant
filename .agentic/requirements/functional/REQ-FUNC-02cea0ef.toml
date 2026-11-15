@@ -14,7 +14,7 @@ verification = "Tests run the constant fixture with --sign -1 (charge, negative 
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/measure.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

@@ -14,6 +14,8 @@ unrelated cleanup, refactoring and polish.
   only affected or failed checks. Journal-only handover edits do not require tests.
 - No complete suites between milestone gates; address concrete risks with focused
   checks. Static checks are not test results.
+- `npm run test:plugins` (tests/plugins, one suite per official plugin) runs for a change to
+  a plugin or to the plugin system, and before a delivery; app-only changes skip it.
 
 ## Milestone
 
@@ -25,7 +27,7 @@ full proof for the integrated commit when source/test/configuration match; other
 the coordinator runs it after commit. Never both. Record owner, commit and results
 in implementation-cycle.json before starting the next milestone.
 
-The gate is npm run verify, the complete Electron/browser suite, applicable CLI
+The gate is npm run verify:all (verify and the plugin suite), the complete Electron/browser suite, applicable CLI
 regressions and strict AEGIS. Avoid repeated tests/statics already covered by these
 commands. A failed gate reruns only its failed/affected checks unless the integrated
 candidate changes their coverage.

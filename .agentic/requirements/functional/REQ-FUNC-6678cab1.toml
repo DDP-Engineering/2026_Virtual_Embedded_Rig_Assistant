@@ -14,7 +14,7 @@ verification = "Compiling the blink and library fixtures for arduino:avr:uno and
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/report.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

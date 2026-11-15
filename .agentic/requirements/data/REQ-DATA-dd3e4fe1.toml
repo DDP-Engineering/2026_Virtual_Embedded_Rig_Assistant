@@ -14,7 +14,7 @@ verification = "Integration tests run every operation of power-profile (against 
 
 affected_paths = ["05_Software/plugins/power-profiler/plugin.yaml", "05_Software/plugins/power-profiler/profiles/joulescope-js220.json", "05_Software/plugins/power-profiler/scripts/power_support/cli_profile.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py", "05_Software/plugins/power-profiler/scripts/power_support/capfile.py", "05_Software/plugins/power-profiler/scripts/power_support/profiles.py", "05_Software/plugins/power-profiler/scripts/power_support/result.py", "05_Software/plugins/power-profiler/README.md", "05_Software/plugins/power-profiler/scripts/power_analyze.py", "05_Software/plugins/power-profiler/scripts/power_profile.py", "05_Software/plugins/power-profiler/scripts/power_support/__init__.py", "05_Software/plugins/power-profiler/scripts/power_support/errors.py", "05_Software/plugins/power-profiler/scripts/power_support/workspace.py", "05_Software/plugins/power-profiler/skills/energy-analysis/SKILL.md", "05_Software/plugins/power-profiler/skills/power-measurement/SKILL.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = "specs/REQ-DATA-dd3e4fe1.md"

@@ -84,6 +84,7 @@ export * from "./tools/context.js";
 export * from "./tools/edit.js";
 export * from "./tools/glob.js";
 export * from "./tools/grep.js";
+export * from "./tools/help.js";
 export * from "./tools/list.js";
 export * from "./tools/read.js";
 export * from "./tools/registry.js";

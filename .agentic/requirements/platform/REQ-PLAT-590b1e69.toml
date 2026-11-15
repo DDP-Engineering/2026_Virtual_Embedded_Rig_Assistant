@@ -14,7 +14,7 @@ verification = "plugin.yaml lists platforms [windows-x64] and no download; VERA 
 
 affected_paths = ["05_Software/plugins/ltspice/plugin.yaml", "05_Software/plugins/ltspice/README.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

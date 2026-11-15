@@ -256,7 +256,7 @@ the status block's Configuration check "Needs configuration: <names>". `renderer
 its state and embeds `PluginCredentialsPanel` (mqtt, wokwi) or `PartsAccessPanel` (parts); both forms invalidate
 `["plugin-configuration"]` after a change, and Check again re-asks for workbench files.
 
-Status block and packs (REQ-UX-492e89fb, REQ-UX-157f139c, REQ-UX-50e2dc6b, REQ-UX-5d984350, REQ-FUNC-0817ec80,
+Status block and packs (REQ-UX-492e89fb, REQ-UX-157f139c, REQ-UX-5d984350, REQ-FUNC-0817ec80,
 REQ-UX-21440e02, REQ-REL-baf16878): `renderer/components/plugin-status.tsx` renders one block per healthy installed
 card with Dependencies (`dependencyCheck`: unavailable, missing required plugins or VERA-installed programs, external
 vendor programs, not checked, ready; holds Check, Install and Re-install), Configuration (`configurationCheck`; Configure
@@ -412,7 +412,11 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `plugins.list` carries it. An issue-free summary (global or trusted scoped) also carries `manifest` and
   `composition`; a review carries `composition` whenever its manifest parses. Composition: each
   `skills/<name>/SKILL.md` with the front-matter description of core `parseSkill` (none when it does not parse), and
-  the data files outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative docs, in path order.
+  the data files outside `plugin.yaml`, `skills/`, `scripts/`, `help/<en|ro|de|fr>.md` and the package-relative docs,
+  in path order; `help` lists the languages of the package's `help/<language>.md` pages when it has any.
+- Manifest `translations` (optional): `ro|de|fr` → `{summary, description}` with the English limits; catalog index
+  entries carry it, and shared `pluginText(entry, language)` picks the interface language's texts, else English, for
+  catalog cards, the pack chooser, the review and installed rows. Plugin help pages are shown by [Help](help.md).
 - Runs (shared): `programRunIdSchema` (ULID), `programRunRecordSchema` (format 1), `programRunSchema` (adds
   `state: running|exited|stopped|timedOut|interrupted` and `log`), `programRunLogSchema`. IPC `runs.list
   {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id
@@ -669,16 +673,16 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Workbench enablement or warnings | `workbench.ts` (`plugins`, `configWarnings`), `WorkbenchService.togglePlugin` | `shared/src/workbench.test.ts`, `core/src/workbench/service.test.ts` |
 | IPC or mock | `ipc.ts` `plugins.*`, desktop `main/index.ts`, `renderer/mocks/mockApi.ts` | `shared/src/plugins-ipc.test.ts`, `renderer/mocks/mockApi.test.ts` |
 | Run policy: env, cwd, log, retention, background, serial guard | `core/src/plugins/runner.ts` | `core/src/plugins/runner.test.ts` |
-| Bench registry, identity keys, leases, supervised cleanup | shared `lab-resources.ts`, core `leases.ts`, `resource-registry.ts`, `runner.ts` (`lease`) | `lab-resources.test.ts`, `leases.test.ts`, `runner-leases.test.ts`, `program-resources.test.ts`, `tests/integration/scpi-instruments.test.ts` |
-| HIL plans: schema, adapters, compilation, approval, executor, plan holds | shared `hil-plan.ts`, core `plugins/hil/*`, `program-tools.ts` (hand-off, `prepareCall`, `startCall`), `runner.ts` (`hold`, `parent`), `leases.ts` (`parent`) | `hil-plan.test.ts`, `hil/hil.test.ts`, `runner-leases.test.ts`, `tests/integration/hil-testing.test.ts` |
+| Bench registry, identity keys, leases, supervised cleanup | shared `lab-resources.ts`, core `leases.ts`, `resource-registry.ts`, `runner.ts` (`lease`) | `lab-resources.test.ts`, `leases.test.ts`, `runner-leases.test.ts`, `program-resources.test.ts`, `tests/plugins/scpi-instruments.test.ts` |
+| HIL plans: schema, adapters, compilation, approval, executor, plan holds | shared `hil-plan.ts`, core `plugins/hil/*`, `program-tools.ts` (hand-off, `prepareCall`, `startCall`), `runner.ts` (`hold`, `parent`), `leases.ts` (`parent`) | `hil-plan.test.ts`, `hil/hil.test.ts`, `runner-leases.test.ts`, `tests/plugins/hil-testing.test.ts` |
 | Spawn options or tree kill | `node-process-host.ts`, `process-tree.ts` | `node-process-host.test.ts`, `process-tree.test.ts`, `tests/integration/process-hosts.test.ts` |
 | Decoding, ANSI, tail | `core/src/plugins/run-output.ts` | `run-output.test.ts` |
 | Launcher quoting | `core/src/plugins/launcher.ts` | `launcher.test.ts` |
 | Runner lifecycle in the apps | desktop `main/index.ts`, `cli/src/run.ts` | inspection; `process-hosts.test.ts` for the hosts |
-| Git option roles, helpers, listings and destructive escalation | `shared/src/git-options.ts`, `ProgramTools.request`, manifest `optionSyntax: git` | `tests/integration/git.test.ts` |
-| STM32_Programmer_CLI command map (canonical names, displ/<write>, debugauth, <list-only>, <unknown>) | `shared/src/stm32-options.ts`, manifest `optionSyntax: stm32cubeprog` | `tests/integration/stm32-cubeprog.test.ts` |
-| pymcuprog option roles (action, info, protect, high-voltage, locked, unknown) | `shared/src/pymcuprog-options.ts`, manifest `optionSyntax: pymcuprog` | `tests/integration/microchip-pymcuprog.test.ts` |
-| tshark option roles (info, file, capture, unknown, execute, credentials) | `shared/src/tshark-options.ts`, manifest `optionSyntax: tshark` | `tests/integration/wireshark-tshark.test.ts` |
+| Git option roles, helpers, listings and destructive escalation | `shared/src/git-options.ts`, `ProgramTools.request`, manifest `optionSyntax: git` | `tests/plugins/git.test.ts` |
+| STM32_Programmer_CLI command map (canonical names, displ/<write>, debugauth, <list-only>, <unknown>) | `shared/src/stm32-options.ts`, manifest `optionSyntax: stm32cubeprog` | `tests/plugins/stm32-cubeprog.test.ts` |
+| pymcuprog option roles (action, info, protect, high-voltage, locked, unknown) | `shared/src/pymcuprog-options.ts`, manifest `optionSyntax: pymcuprog` | `tests/plugins/microchip-pymcuprog.test.ts` |
+| tshark option roles (info, file, capture, unknown, execute, credentials) | `shared/src/tshark-options.ts`, manifest `optionSyntax: tshark` | `tests/plugins/wireshark-tshark.test.ts` |
 | Matching, policy table, confirmation word | `shared/src/program-rules.ts` | `shared/src/program-rules.test.ts` |
 | Program request, files, lookup | `core/src/plugins/program-request.ts` | `program-request.test.ts` |
 | Gate decisions for run_program | `core/src/agent/approvals.ts` | `core/src/agent/program-approvals.test.ts` |
@@ -809,7 +813,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 
 ## Files
 
-- `tests/integration/binutils.test.ts` — ordered find roots, prompt filtering and optional offline real-archive acceptance of combined provisioning.
+- `tests/plugins/binutils.test.ts` — ordered find roots, prompt filtering and optional offline real-archive acceptance of combined provisioning.
 
 - `05_Software/src/libraries/shared/src/plugins.ts` — manifest, issue, summary and request schemas; limits.
 - `05_Software/src/libraries/shared/src/plugins.test.ts` — manifest validity and field paths.

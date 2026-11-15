@@ -14,7 +14,7 @@ verification = "Build configuration A into folder X, then request configuration 
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/request.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

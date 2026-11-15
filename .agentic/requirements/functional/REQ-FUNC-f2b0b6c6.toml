@@ -14,7 +14,7 @@ verification = "A fixture where the cheapest candidate fails one constraint rank
 
 affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py"]
 
-linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+linked_tests = ["05_Software/tests/plugins/parts-search.test.ts"]
 
 
 spec = "specs/REQ-DATA-6b26f2a5.md"

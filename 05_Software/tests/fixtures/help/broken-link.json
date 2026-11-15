@@ -1,0 +1,10 @@
+{
+  "app": {
+    "en": { "index": "# VERA help\n\nSee [the missing page](missing.md).\n" },
+    "ro": { "index": "# Ajutor VERA\n\nText.\n" },
+    "de": { "index": "# VERA-Hilfe\n\nText.\n" },
+    "fr": { "index": "# Aide de VERA\n\nTexte.\n" }
+  },
+  "plugins": {},
+  "official": []
+}

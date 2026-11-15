@@ -14,7 +14,7 @@ verification = "With VERA_TSHARK_LIVE_INTERFACE naming a loopback interface, run
 
 affected_paths = ["05_Software/plugins/wireshark-tshark/plugin.yaml", "05_Software/plugins/wireshark-tshark/skills/wireshark-capture/SKILL.md", "05_Software/plugins/wireshark-tshark/README.md"]
 
-linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
 
 
 spec = ""

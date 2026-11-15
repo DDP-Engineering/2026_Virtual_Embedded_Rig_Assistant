@@ -14,7 +14,7 @@ verification = "Tests evaluate criteria over a gap, over the clipped start of a 
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/diagnostics.py", "05_Software/plugins/lab-validation/scripts/lab_validation/decide.py"]
 
-linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+linked_tests = ["05_Software/tests/plugins/lab-validation.test.ts"]
 
 
 spec = "specs/REQ-DATA-53797d16.md"

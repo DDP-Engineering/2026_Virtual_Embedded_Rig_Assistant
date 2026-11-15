@@ -14,7 +14,7 @@ verification = "Clean an owned folder that contains a link to a folder of source
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

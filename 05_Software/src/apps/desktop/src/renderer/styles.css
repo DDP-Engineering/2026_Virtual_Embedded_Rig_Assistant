@@ -1501,14 +1501,25 @@ legend {
   overflow-y: auto;
 }
 /* Updates remain readable at large text sizes and in the minimum window. */
+/* One line at any width or text size, so the banner never pushes the conversation out of the window. */
 .update-banner {
   flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
+}
+.update-banner > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.update-banner > button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .update-notes {
   white-space: pre-wrap;
@@ -2760,9 +2771,33 @@ legend {
 .plugin-actions {
   margin-top: 0.25rem;
 }
+/* The card's first line: name and badges on the left, its actions and More actions on the right. */
+.plugin-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.plugin-top-actions {
+  margin-inline-start: auto;
+  align-items: center;
+}
 .plugin-more {
   margin-inline-start: auto;
   min-width: 0;
+  position: relative;
+}
+.plugin-top-actions .plugin-more > div {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 5;
+  background: var(--card, var(--background));
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.35rem;
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 0.12);
 }
 .plugin-more summary,
 .plugin-technical summary {
@@ -2807,6 +2842,53 @@ legend {
 .plugin-review-list ul {
   margin: 0.25rem 0 0;
   padding-left: 1.25rem;
+}
+/* Plugin details: one titled section per kind of information, before and after install and in the review. */
+.plugin-review-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.plugin-review-header h3,
+.plugin-review-header p {
+  margin: 0;
+}
+.plugin-review-header .workbench-actions {
+  margin-left: auto;
+}
+.plugin-details > summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.plugin-details-body {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+.plugin-section {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.85rem 0;
+  border-top: 0.0625rem solid var(--border);
+  min-width: 0;
+}
+.plugin-section:first-child {
+  border-top: none;
+  padding-top: 0.25rem;
+}
+.plugin-section > h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.plugin-help {
+  padding: 0.6rem 0.8rem;
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.35rem;
+  max-height: 24rem;
+  overflow-y: auto;
 }
 .plugin-facts {
   display: grid;
@@ -2855,6 +2937,17 @@ legend {
 .plugin-catalog-settings > summary {
   cursor: pointer;
   padding-block: 0.4rem;
+}
+.catalog-settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(12rem, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 56rem) {
+  .catalog-settings-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .plugin-catalog-settings .catalog-url,
 .plugin-catalog-settings .catalog-channel {
@@ -3108,6 +3201,18 @@ legend {
 }
 .about-notices > summary h3 {
   display: inline;
+}
+.about-release h4 {
+  margin: 0.8rem 0 0.2rem;
+  font-weight: 600;
+}
+.about-release h5 {
+  margin: 0.4rem 0 0.1rem;
+  font-weight: 600;
+}
+.about-release ul {
+  margin: 0;
+  padding-left: 1.2rem;
 }
 .about-notices table {
   width: 100%;
@@ -3489,17 +3594,31 @@ legend {
   justify-self: stretch;
   text-align: left;
 }
-/* Help: the page on the left, the page list on the right; they stack when the content area is narrow. */
+/* Help: the page on the left, the page list on the right; they stack when the content area is narrow.
+   Side by side, only the page scrolls: the title and the page list stay in place. */
+.page-content:has(> .help-view) {
+  overflow-y: hidden;
+}
 .help-view {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  grid-template-rows: minmax(0, 1fr);
   gap: 1.5rem;
-  align-items: start;
+  flex: 1;
+  min-height: 0;
   container-type: inline-size;
 }
 .help-page {
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.help-page > * {
   max-width: 52rem;
+}
+.help-pages {
+  min-height: 0;
+  overflow-y: auto;
 }
 .help-pages ul {
   list-style: none;
@@ -3520,5 +3639,16 @@ legend {
 @media (max-width: 56rem) {
   .help-view {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .page-content:has(> .help-view) {
+    overflow-y: auto;
+  }
+  .help-view {
+    flex: none;
+    grid-template-rows: none;
+  }
+  .help-page,
+  .help-pages {
+    overflow-y: visible;
   }
 }

@@ -8,7 +8,8 @@ măsurători și scoruri sunt în [`../evaluators/`](../evaluators/README.md).
 | Director | Rol |
 |---|---|
 | `tooling/` | Configurație, compilare, reguli de import, traduceri, infrastructura testelor și uneltele de evaluare. |
-| `integration/` | CLI, procesarea documentelor, workeri și evaluarea căutării. |
+| `integration/` | CLI, procesarea documentelor, workeri, evaluarea căutării și sistemul de pluginuri cu pluginuri de test. |
+| `plugins/` | One suite per official plugin (`<id>.test.ts`), often with the plugin's real programs. Not part of `npm test`; run with `npm run test:plugins`. |
 | `packaging/` | Pregătirea distribuției, smoke-ul de pachet, proba de actualizare și actualizările. |
 | `e2e/` | Fluxuri complete în Electron și browser, rulate cu Playwright. |
 | [fixtures/](fixtures/README.md) | Date fictive și scenarii de intrare; nu sunt rezultate de teste și nu conțin cod de evaluare. |
@@ -58,6 +59,16 @@ python ../02_Tools/environment/npmw.py npm test -- --project tooling
 python ../02_Tools/environment/npmw.py npm test -- --project integration
 python ../02_Tools/environment/npmw.py npm test -- --project packaging
 ```
+
+The official plugins have their own suite, outside `npm test` and `npm run verify`:
+
+```powershell
+python ../02_Tools/environment/npmw.py npm run test:plugins
+python ../02_Tools/environment/npmw.py npx vitest run tests/plugins/kicad.test.ts
+```
+
+Run it when a plugin or the plugin system changes and before a delivery; `npm run verify:all`
+runs `verify` and then the plugin suite.
 
 Pentru un singur fișier:
 

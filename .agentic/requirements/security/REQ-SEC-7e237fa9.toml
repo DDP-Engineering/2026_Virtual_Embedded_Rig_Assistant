@@ -14,7 +14,7 @@ verification = "Integration tests let the GDB stand-in serve a different ELF (fa
 
 affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/symbols.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

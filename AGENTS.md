@@ -30,10 +30,12 @@ folders are listed in `README.md`.
 - Product code never imports tests or evaluators. Run npm and node from `05_Software` through
   `python ../02_Tools/environment/npmw.py`.
 
-## Development compatibility policy
+## Pre-release policy (until 1.0.0)
 
-VERA is currently in development. Treat the current project layout, configuration and data
-contracts as authoritative. Unless the user explicitly requests otherwise:
+Every VERA version below 1.0.0 is a pre-release. Much of VERA will still change, and compatibility
+code during this period would grow the code's complexity enormously, so pre-releases implement no
+migration and no compatibility with earlier builds. Treat the current project layout,
+configuration and data contracts as authoritative. Unless the user explicitly requests otherwise:
 
 - Do not implement data migrations, backups made before an upgrade, legacy-layout detection,
   readers or fallbacks for earlier formats, guards for data written by a newer version
@@ -45,9 +47,32 @@ contracts as authoritative. Unless the user explicitly requests otherwise:
 - Change a stored format in place at version 1, and update code, tests, fixtures and documentation
   together. Any other version value is invalid data, reported like other invalid data. Data written
   by an earlier development build may stop loading; delete or recreate it instead of converting it.
-- Upgrade and migration safety (00_Planning rule L10, WP-32) is deferred until the first public
-  release. The application's update feature itself (download, SHA-512 check, install) is a feature,
-  not compatibility, and stays.
+- Upgrade and migration safety (00_Planning rule L10, WP-32) is deferred until 1.0.0, the first
+  public release. The application's update feature itself (download, SHA-512 check, install) is a
+  feature, not compatibility, and stays.
+- CHANGELOG entries and release notes never promise an upgrade path from an earlier pre-release;
+  a breaking change to stored data gets one CHANGELOG line saying what to delete.
+
+## Language
+
+Code, comments, commit messages, CHANGELOG and internal documents (planning, specifications,
+READMEs, AEGIS records) are written in English. User-facing text (interface, help, release notes)
+exists in English, Romanian, German and French.
+
+## Changes, versions and release notes
+
+- Every notable change adds one line under `## [Unreleased]` in `CHANGELOG.md`; a change a user can
+  see also adds an entry to `05_Software/release-notes/unreleased.yaml`. Format, limits and the
+  release procedure: `01_Documentation/Releases.md`. Read only the top of `CHANGELOG.md`.
+- The app version has one source, `05_Software/src/apps/desktop/package.json`; change it only with
+  `02_Tools/release/set-version.mjs`. A changed plugin raises the `version` in its `plugin.yaml`.
+
+## Code style and license
+
+- Read `01_Documentation/Code_Style.md` before writing code; Biome, TypeScript and the `check:*`
+  scripts enforce the rest.
+- Licensing is declared once in `REUSE.toml` and `LICENSE.txt`. Do not add license or copyright
+  headers to files.
 
 ## Implementation branch and commits
 
@@ -78,6 +103,8 @@ at milestone gates, once, owned by the last ticket OR the coordinator. Reuse val
 proof; no routine handover retesting or historical-cache audits. Keep handover
 concise and clean owned scratch data. Prioritize implementation; defer unrelated
 refactoring and polish. Final release checks and publication authority still apply.
+`npm run verify` covers the app; the official plugins' suite (`tests/plugins`, `npm run test:plugins`)
+runs for a plugin or plugin-system change and before a delivery (`npm run verify:all`).
 
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 

@@ -437,7 +437,8 @@ export class DocumentKnowledge {
   /** Issuance is checked by citations; validate current source and extraction bounds without output caps. */
   async validDocumentRef(ref: string): Promise<boolean> {
     const parsed = parseRef(ref);
-    if (!parsed || parsed.kind === "artifact" || parsed.kind === "lines") return false;
+    if (!parsed || parsed.kind === "artifact" || parsed.kind === "lines" || parsed.kind === "help")
+      return false;
     try {
       const target = await (await PathGuard.create(this.root)).resolve(parsed.path);
       const doc = new DocumentsRepository(this.db).get(target.relative);

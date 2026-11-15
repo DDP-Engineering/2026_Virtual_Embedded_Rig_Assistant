@@ -671,7 +671,8 @@
     "power_quality": "Evaluează compensarea factorului de putere la un tablou dintr-un rezultat de rețea actual și un fișier de măsurători cu unități și convenții declarate: factorul de deplasare față de factorul de putere total, necesarul de kvar până la o țintă, o baterie fixă sau automată cu trepte, supracompensarea, verificări ale condensatoarelor, reactoarelor, contactoarelor și protecțiilor din date citate și rezonanța față de armonicile măsurate; salvează rezultatul după aprobare, ca o scriere, și nu comută nicio treaptă. Necesită pluginul power-quality-pfc.",
     "lighting_design": "Proiectează iluminatul interior dintr-un proiect de iluminat cu fotometrii IES sau LDT: o estimare preliminară prin metoda fluxului cu factori de utilizare citați și componenta directă pe grila de calcul, diagnostic pentru scară, unități, orientare și fotometrie, iar verificarea iluminării menținute, a uniformității și a orbirii numai dintr-un raport potrivit al unui motor fotometric precum DIALux evo; salvează rezultatul după aprobare ca o scriere și nu rulează niciun motor. Necesită pluginul lighting-design.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive.",
-    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri."
+    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
+    "help": "Citește paginile de ajutor ale VERA și ajutorul pluginurilor activate în workbench, pentru întrebări despre VERA. Doar citire."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",
@@ -820,7 +821,6 @@
     "noPrograms": "Fără programe: acest plugin adaugă doar abilități.",
     "docs": "Documente",
     "composition": {
-      "title": "Componență",
       "noPrograms": "Nu rulează niciun program.",
       "skills": "Abilități",
       "files": "Profiluri și fișiere de date"
@@ -902,7 +902,6 @@
         "stable": "Stabil (versiunea 1.0.0 și mai mare)",
         "pre-release": "Pre-lansare (toate pluginurile, inclusiv versiunile 0.x)"
       },
-      "channelHint": "Stabil listează pluginurile dovedite pe unelte și hardware reale. Pre-lansare listează și pluginurile a căror dovadă este încă deschisă.",
       "check": "Caută actualizări",
       "checking": "Se caută…",
       "url": "URL-ul catalogului",
@@ -940,8 +939,6 @@
     "trust": "Acordă încredere pachetului",
     "scopedTrustIntro": "Acordă încredere acestui pachet exact pentru acest workbench pe această mașină. Încrederea nu activează pluginul și nu instalează programele. Orice modificare cere o nouă revizuire.",
     "refresh": "Actualizează lista",
-    "expand": "Arată detaliile pentru {{name}}",
-    "collapse": "Ascunde detaliile pentru {{name}}",
     "checkDependencies": "Verifică dependențele",
     "checkAll": "Verifică toate dependențele",
     "checkingAll": "Se verifică dependențele…",
@@ -1062,7 +1059,6 @@
       "notReady": "Nu este gata: {{checks}}",
       "dependencies": "Dependențe",
       "configuration": "Configurare",
-      "use": "Utilizare",
       "missingNames": "Lipsesc: {{names}}",
       "externalNames": "Instalează de la producător: {{names}}",
       "unavailableNames": "Indisponibile: {{names}}",
@@ -1070,17 +1066,12 @@
       "nothingToConfigure": "Nimic de configurat",
       "configurationFailed": "Configurarea nu a putut fi verificată.",
       "configure": "Configurează",
-      "enabledIn": "Activat în {{name}}",
-      "notEnabledIn": "Neactivat în {{name}}",
-      "noWorkbench": "Niciun workbench nu este deschis.",
-      "openWorkbench": "Deschide workbench-ul",
       "state": {
         "ready": "Gata",
         "missing": "Lipsește",
         "unavailable": "Indisponibil",
         "external": "Extern",
-        "unchecked": "Neverificat",
-        "off": "Neactivat"
+        "unchecked": "Neverificat"
       }
     },
     "packs": {
@@ -1099,6 +1090,13 @@
       "skippedCatalog": "Nu există în acest catalog.",
       "alreadyInstalled": "Deja instalate: {{names}}",
       "install": "Instalează cu dependențele ({{count}})"
+    },
+    "help": "Ajutor",
+    "details": {
+      "description": "Descriere",
+      "about": "Despre acest plugin",
+      "license": "Licență",
+      "loading": "Se încarcă detaliile pluginului…"
     }
   },
   "runs": {
@@ -1147,7 +1145,13 @@
     "thirdParty": "Componente terțe ({{count}})",
     "component": "Componentă",
     "componentVersion": "Versiune",
-    "license": "Licență"
+    "license": "Licență",
+    "whatsNew": "Noutăți",
+    "unreleased": "Nelansat",
+    "release": "Versiunea {{version}} · {{date}}",
+    "categoryNew": "Nou",
+    "categoryImproved": "Îmbunătățit",
+    "categoryFixed": "Corectat"
   },
   "pager": {
     "range": "{{first}}–{{last}} din {{count}} rezultate",
@@ -1159,6 +1163,7 @@
   "help": {
     "open": "Ajutor",
     "title": "Ajutor",
-    "pages": "Pagini de ajutor"
+    "pages": "Pagini de ajutor",
+    "plugins": "Pluginuri"
   }
 }

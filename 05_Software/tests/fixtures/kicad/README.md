@@ -1,6 +1,6 @@
 # kicad fixtures
 
-Fictional KiCad 10 projects for `tests/integration/kicad.test.ts`, written by `make_fixtures.py` (run it from
+Fictional KiCad 10 projects for `tests/plugins/kicad.test.ts`, written by `make_fixtures.py` (run it from
 this folder with any Python 3.10+; UUIDs derive from names, so the output is deterministic). Every expected
 value below follows from the design the script draws, and was written down before the helper existed; KiCad
 10.0.8 confirmed each one. None was copied from `kicad-tool` output. Part numbers (`FX-...`) and circuits are

@@ -12,7 +12,7 @@ verification = "lab-resources tests validate an entry and see the key ssh:pi.loc
 
 affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/registry.py"]
 
-linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/plugins/raspberry-pi-linux.test.ts"]
 
 
 spec = "specs/REQ-DATA-f2cbfc23.md"

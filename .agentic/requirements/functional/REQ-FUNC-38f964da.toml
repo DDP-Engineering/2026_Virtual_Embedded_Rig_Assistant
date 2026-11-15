@@ -14,7 +14,7 @@ verification = "A fixture plugin with a script program using a found program rec
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/src/libraries/shared/src/plugin-provisioning.test.ts", "05_Software/tests/plugins/ngspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

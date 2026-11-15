@@ -31,6 +31,7 @@ export const builtinToolNames = [
   "motor_drives",
   "power_quality",
   "lighting_design",
+  "help",
 ] as const;
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];

@@ -7,7 +7,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
-import { HelpView } from "./help.js";
+import { HelpView, helpCitationKey } from "./help.js";
+import { Markdown } from "./session/markdown.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn() } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -39,7 +40,7 @@ function serve() {
         return { page, title: /^# (.+)$/m.exec(pages[`${served}/${page}`] ?? "")?.[1], language: served };
       });
     }
-    const { page, language } = request as Request<"help.read">;
+    const { page, language } = request as { page: string; language: string };
     const served = pages[`${language}/${page}`] ? language : "en";
     const content = pages[`${served}/${page}`] ?? "";
     return { page, language: served, title: /^# (.+)$/m.exec(content)?.[1], content };
@@ -89,4 +90,28 @@ it("opens another help page from an internal link and keeps external links confi
     container.querySelector<HTMLElement>('.help-page [data-help-link="permissions"]')?.click(),
   );
   await vi.waitFor(() => expect(container.querySelector(".help-page h1")?.textContent).toBe("Permissions"));
+});
+
+// REQ-UX-a318156e
+it("shows an issued help citation as a valid chip whose key opens the page in Help", async () => {
+  expect(helpCitationKey("help:permissions")).toBe("permissions");
+  expect(helpCitationKey("help:plugin/serial-monitor")).toBe("plugin/serial-monitor");
+  expect(helpCitationKey("docs/a.pdf#p=2")).toBeUndefined();
+  const opened: string[] = [];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => {
+    root.render(
+      createElement(Markdown, {
+        text: "See [[help:permissions]].",
+        citations: [{ ref: "help:permissions", valid: true }],
+        onCitation: (ref: string) => opened.push(helpCitationKey(ref) ?? ref),
+      }),
+    );
+  });
+  const chip = container.querySelector<HTMLElement>('[data-citation="valid"][data-citation-kind="help"]');
+  expect(chip?.textContent).toContain("permissions");
+  await act(async () => chip?.click());
+  expect(opened).toEqual(["permissions"]);
 });

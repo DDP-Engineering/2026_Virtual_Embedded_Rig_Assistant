@@ -47,7 +47,7 @@ import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
 import { mockDocument, mockDocuments } from "./documents.js";
 import { mockAppInfo } from "./fixtures.js";
-import { mockHelpList, mockHelpRead } from "./help.js";
+import { mockHelpList, mockHelpRead, mockPluginHelpLanguages, mockPluginHelpRead } from "./help.js";
 import { MockSessions } from "./sessions.js";
 
 const openAiFixture = {
@@ -251,6 +251,9 @@ export function createMockApi(
       ecosystem: manifest.ecosystem,
       platforms: manifest.platforms,
       irreversible: irreversibleRules[id] ?? [],
+      ...(mockPluginHelpLanguages(id).length
+        ? { composition: { skills: [], files: [], help: mockPluginHelpLanguages(id) } }
+        : {}),
       tier: entry?.tier ?? "local",
       source: entry ? "catalog" : /\.zip$/i.test(path) ? "zip" : "folder",
       sha256,
@@ -727,6 +730,21 @@ export function createMockApi(
         if (!entry) throw veraError("NOT_FOUND");
         const review = mockPackage(`/mock/catalog/${id}.zip`);
         value = { review, id, version: entry.version, tier: entry.tier, required: !installedPlugins.has(id) };
+        break;
+      }
+      case "plugins.catalogPreview": {
+        const { id } = channels["plugins.catalogPreview"].request.parse(input.data);
+        if (!catalogEntries.some((item) => item.id === id)) throw veraError("NOT_FOUND");
+        const review = mockPackage(`/mock/catalog/${id}.zip`);
+        value = {
+          ...review,
+          help: {
+            en: `# ${review.manifest?.name ?? id}
+
+What this plugin does.
+`,
+          },
+        };
         break;
       }
       case "plugins.catalogInstall": {
@@ -1433,12 +1451,26 @@ export function createMockApi(
       case "app.info":
         value = info;
         break;
-      case "help.list":
-        value = mockHelpList(channels["help.list"].request.parse(input.data).language);
+      case "help.list": {
+        const { language } = channels["help.list"].request.parse(input.data);
+        value = [
+          ...mockHelpList(language),
+          ...[...installedPlugins.values()]
+            .filter((plugin) => plugin.composition?.help?.length)
+            .map((plugin) => {
+              const { content: _, ...summary } = mockPluginHelpRead(plugin.id, language);
+              return summary;
+            })
+            .sort((a, b) => a.title.localeCompare(b.title)),
+        ];
         break;
+      }
       case "help.read": {
-        const { page, language } = channels["help.read"].request.parse(input.data);
-        value = mockHelpRead(page, language);
+        const request = channels["help.read"].request.parse(input.data);
+        if ("plugin" in request) {
+          if (!installedPlugins.has(request.plugin)) throw veraError("NOT_FOUND");
+          value = mockPluginHelpRead(request.plugin, request.language);
+        } else value = mockHelpRead(request.page, request.language);
         break;
       }
       case "window.menu":

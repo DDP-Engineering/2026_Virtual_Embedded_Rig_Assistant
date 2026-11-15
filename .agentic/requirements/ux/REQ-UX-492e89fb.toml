@@ -2,17 +2,15 @@ schema = 1
 
 id = "REQ-UX-492e89fb"
 
-title = "Plugin status block with three checks"
+title = "Plugin status block with two checks"
 
 status = "active"
 
-requirement = """
-The Plugins page shall show on each installed plugin card without issues one status block with a Dependencies, a Configuration and a Use check, each with its state and its action (Check, Install and Re-install; Configure; Open workbench), and shall show Ready only when all three checks are ready, otherwise naming each check that is not ready.
-"""
+requirement = "The Plugins page shall show on each installed plugin card without issues one status block with a Dependencies and a Configuration check, each with its state, Configure on the Configuration check when the plugin declares parameters, and shall show Ready only when both checks are ready, otherwise naming each check that is not ready."
 
-verification = "Renderer page test: a plugin with ready programs, no parameters and enabled in the open workbench shows Ready; mqtt-tools with a missing broker credential shows Dependencies ready, Configuration missing naming broker-credential, Use enabled in the workbench, and a summary naming Configuration; Configure expands the card to the Configuration section; en, ro and de texts."
+verification = "Renderer page test: a plugin with ready programs and no parameters shows Ready; mqtt-tools with a missing broker credential shows Dependencies ready, Configuration missing naming broker-credential and a summary naming Configuration; Configure opens the card's details on the Configuration section; en, ro and de texts."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-status.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-status.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
 

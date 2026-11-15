@@ -1,4 +1,4 @@
-import { copyFile, readFile, rm } from "node:fs/promises";
+import { copyFile, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { software } from "../environment/software.mjs";
@@ -9,6 +9,8 @@ import {
   describeFile,
   printPart,
   recordPart,
+  releaseNotesFor,
+  releaseNotesName,
   repository,
   requireHost,
   run,
@@ -17,7 +19,8 @@ import {
 } from "./delivery-common.mjs";
 
 // Builds the release installers of this host with `npm run package` and collects them in
-// 07_Delivery/vera-<version>/vera-<platform>/ with SHA256SUMS. Never the instrumented (--test) build.
+// 07_Delivery/vera-<version>/vera-<platform>/ with RELEASE-NOTES.md and SHA256SUMS. Never the instrumented
+// (--test) build.
 const { values } = parseArgs({
   options: { platform: { type: "string" }, replace: { type: "boolean", default: false } },
 });
@@ -43,6 +46,11 @@ try {
       throw new Error(`${artifact.path} differs from package-report.json`);
     files.push(file);
   }
+  await writeFile(
+    join(staging, releaseNotesName),
+    await releaseNotesFor(delivery.desktopVersion, delivery.version),
+  );
+  files.push(await describeFile(staging, releaseNotesName));
   await writeSums(staging, files);
   await commitPart(staging, target, values.replace);
 } finally {

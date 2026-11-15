@@ -14,7 +14,7 @@ verification = "After every test run the plugin's `scripts` folder holds no `__p
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_tool.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = ""

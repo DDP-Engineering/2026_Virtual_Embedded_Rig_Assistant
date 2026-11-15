@@ -1,9 +1,20 @@
 format: 1
 id: microchip-pymcuprog
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Microchip pymcuprog (AVR, PIC)
 summary: Identify, program, verify and erase Microchip AVR and PIC parts with pymcuprog.
 description: Identify, program, verify and erase Microchip AVR (UPDI) and PIC parts with pymcuprog through a Curiosity Nano/Xplained nEDBG kit, PICkit 4 or MPLAB Snap (AVR mode), Atmel-ICE or a SerialUPDI adapter, and read or change fuses. Use to flash a hex image or inspect a part's memories.
+translations:
+  ro:
+    summary: "Identifică, programează, verifică și șterge componente Microchip AVR și PIC cu pymcuprog."
+    description: "Identifică, programează, verifică și șterge componente Microchip AVR (UPDI) și PIC cu pymcuprog, printr-un kit Curiosity Nano/Xplained cu nEDBG, PICkit 4 sau MPLAB Snap (mod AVR), Atmel-ICE sau un adaptor SerialUPDI, și citește sau modifică fuse-uri. Folosește-l pentru a programa o imagine hex sau pentru a inspecta memoriile unei componente."
+  de:
+    summary: "Microchip-AVR- und PIC-Bausteine mit pymcuprog identifizieren, programmieren, verifizieren und löschen."
+    description: "Microchip-AVR- (UPDI) und PIC-Bausteine mit pymcuprog identifizieren, programmieren, verifizieren und löschen, über ein Curiosity-Nano/Xplained-Kit mit nEDBG, PICkit 4 oder MPLAB Snap (AVR-Modus), Atmel-ICE oder einen SerialUPDI-Adapter, sowie Fuses lesen oder ändern. Verwenden Sie es, um ein Hex-Image zu flashen oder die Speicher eines Bausteins zu untersuchen."
+  fr:
+    summary: "Identifiez, programmez, vérifiez et effacez des composants Microchip AVR et PIC avec pymcuprog."
+    description: "Identifiez, programmez, vérifiez et effacez des composants Microchip AVR (UPDI) et PIC avec pymcuprog via un kit Curiosity Nano/Xplained nEDBG, un PICkit 4 ou un MPLAB Snap (mode AVR), un Atmel-ICE ou un adaptateur SerialUPDI, et lisez ou modifiez les fusibles. Pour flasher une image hex ou examiner les mémoires d’un composant."
 ecosystem: microchip
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://github.com/microchip-pic-avr-tools/pymcuprog"]

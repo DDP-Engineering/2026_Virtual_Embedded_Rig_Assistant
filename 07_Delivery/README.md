@@ -7,10 +7,10 @@ dependency kits. A plugin fix never needs a new installer. Everything here excep
 07_Delivery/
   plugins/                   working catalog release, built by npm run prepare:plugins
   vera-<version>/
-    vera-windows-x64/        VERA-<v>-win-x64.exe (installer), VERA-<v>-win-x64.zip (portable), SHA256SUMS
-    vera-linux-x64/          VERA-<v>-linux-*.AppImage, VERA-<v>-linux-*.deb, SHA256SUMS
+    vera-windows-x64/        VERA-<v>-win-x64.exe (installer), VERA-<v>-win-x64.zip (portable), RELEASE-NOTES.md, SHA256SUMS
+    vera-linux-x64/          VERA-<v>-linux-*.AppImage, VERA-<v>-linux-*.deb, RELEASE-NOTES.md, SHA256SUMS
     plugins/                 <id>-<version>.zip, index.json, index-stable.json, index-pre-release.json,
-                             (*.sig when signed), vera-plugins-<version>.zip, SHA256SUMS
+                             (*.sig when signed), vera-plugins-<version>.zip, LICENSE.txt, SHA256SUMS
     plugin-deps/             vera-plugin-deps-<version>-windows-x64.zip, …-linux-x64.zip, SHA256SUMS
     delivery.json            version, commit and host per part, files with SHA-256 and size
 ```

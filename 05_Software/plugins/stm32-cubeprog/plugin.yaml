@@ -1,9 +1,20 @@
 format: 1
 id: stm32-cubeprog
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: STM32CubeProgrammer
 summary: Program, verify and erase STM32 parts and read or change option bytes with STM32CubeProgrammer.
 description: Connect to STM32 parts through an ST-LINK, UART, USB DFU, SPI, I2C or CAN bootloader with STM32_Programmer_CLI, read memories, flash and verify images, erase, reset, and read or change option bytes. Use to program an STM32 board or inspect its protection state.
+translations:
+  ro:
+    summary: "Programează, verifică și șterge componente STM32 și citește sau modifică option bytes cu STM32CubeProgrammer."
+    description: "Se conectează la componente STM32 printr-un ST-LINK sau printr-un bootloader UART, USB DFU, SPI, I2C ori CAN cu STM32_Programmer_CLI, citește memorii, programează și verifică imagini, șterge, resetează și citește sau modifică option bytes. Folosește-l pentru a programa o placă STM32 sau pentru a-i inspecta starea de protecție."
+  de:
+    summary: "STM32-Bausteine programmieren, verifizieren und löschen und Option Bytes mit STM32CubeProgrammer lesen oder ändern."
+    description: "Über einen ST-LINK- oder einen UART-, USB-DFU-, SPI-, I2C- oder CAN-Bootloader mit STM32_Programmer_CLI eine Verbindung zu STM32-Bausteinen aufbauen, Speicher lesen, Images flashen und verifizieren, löschen, zurücksetzen und Option Bytes lesen oder ändern. Verwenden Sie es, um ein STM32-Board zu programmieren oder seinen Schutzstatus zu prüfen."
+  fr:
+    summary: "Programmez, vérifiez et effacez des composants STM32, et lisez ou modifiez les option bytes avec STM32CubeProgrammer."
+    description: "Connectez-vous à des composants STM32 par un ST-LINK ou par un bootloader UART, USB DFU, SPI, I2C ou CAN avec STM32_Programmer_CLI, lisez les mémoires, flashez et vérifiez des images, effacez, réinitialisez, et lisez ou modifiez les option bytes. Pour programmer une carte STM32 ou examiner son état de protection."
 ecosystem: stm32
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://www.st.com/resource/en/user_manual/um2237-stm32cubeprogrammer-software-description-stmicroelectronics.pdf"]

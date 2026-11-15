@@ -14,7 +14,7 @@ verification = "The offline and real-process tests pass on Windows x64 and on na
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/leases.ts", "05_Software/plugins/scpi-instruments/plugin.yaml"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/tests/plugins/scpi-instruments.test.ts"]
 
 
 spec = "specs/REQ-DATA-f2cbfc23.md"

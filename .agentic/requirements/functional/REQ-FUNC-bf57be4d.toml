@@ -14,7 +14,7 @@ verification = "Integration tests step 3 lines and 2 instructions against the st
 
 affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

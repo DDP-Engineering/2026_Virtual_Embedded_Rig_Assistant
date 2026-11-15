@@ -12,9 +12,9 @@ The ltspice integration tests shall run the divider, RC transient, RC AC and noi
 
 verification = "With VERA_TEST_LTSPICE and VERA_TEST_NGSPICE set, the divider op, RC at one time constant, the -3 dB point and the resistor noise each lie within their README tolerance of the analytic value and of the ngspice value; a difference beyond tolerance fails the test with both values printed."
 
-affected_paths = ["05_Software/tests/integration/ltspice.test.ts", "05_Software/tests/fixtures/ltspice/README.md"]
+affected_paths = ["05_Software/tests/plugins/ltspice.test.ts", "05_Software/tests/fixtures/ltspice/README.md"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

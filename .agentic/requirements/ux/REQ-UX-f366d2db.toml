@@ -14,7 +14,7 @@ verification = "Inspection: both SKILL.md files are listed by the installed plug
 
 affected_paths = ["05_Software/plugins/kicad/skills/"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = ""

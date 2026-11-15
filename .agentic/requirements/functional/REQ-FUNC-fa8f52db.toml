@@ -14,7 +14,7 @@ verification = "Inspect the fixture project (folder with a space and non-ASCII l
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/config.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/preflight.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

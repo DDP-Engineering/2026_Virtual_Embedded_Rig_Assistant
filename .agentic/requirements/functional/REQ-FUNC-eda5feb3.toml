@@ -14,7 +14,7 @@ verification = "lab-validation tests import a fake-driver capture and an importe
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/importers.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "A legacy `EESchema Schematic File Version 4` file, a board with 
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

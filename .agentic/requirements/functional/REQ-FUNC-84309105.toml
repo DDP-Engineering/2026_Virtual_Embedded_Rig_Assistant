@@ -14,7 +14,7 @@ verification = "In the fixture comparison every pass or fail check lists its evi
 
 affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/evaluate.py", "05_Software/plugins/parts-search/scripts/parts_support/report.py"]
 
-linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+linked_tests = ["05_Software/tests/plugins/parts-search.test.ts"]
 
 
 spec = "specs/REQ-DATA-6b26f2a5.md"

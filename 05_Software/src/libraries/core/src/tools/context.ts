@@ -11,6 +11,7 @@ import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
+import type { HelpHost } from "./help.js";
 import type { TodoHost } from "./todo.js";
 
 export interface ReadFingerprint {
@@ -32,6 +33,8 @@ export interface ToolContext {
   /** Supplier catalog search of the official parts-search plugin; the host keeps every credential. */
   parts?: PartsSearcher;
   skills?: SkillCatalog;
+  /** VERA's own help; absent hosts never offer the help tool. */
+  help?: HelpHost;
   /** Plugin programs of the session; absent when the host composes no program host. */
   programs?: ProgramContext;
   pluginBuilder?: PluginStore;

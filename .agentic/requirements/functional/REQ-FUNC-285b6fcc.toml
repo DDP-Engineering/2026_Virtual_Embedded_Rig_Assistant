@@ -14,7 +14,7 @@ verification = "Manifest tests: plugin.yaml validates, program `ltspice` has onl
 
 affected_paths = ["05_Software/plugins/ltspice/plugin.yaml", "05_Software/plugins/ltspice/README.md", "05_Software/plugins/ltspice/skills/ltspice-simulation/SKILL.md", "05_Software/plugins/ltspice/scripts/ltspice_tool.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

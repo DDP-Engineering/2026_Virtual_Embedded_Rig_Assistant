@@ -6,6 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
 import type { Plugin } from "vite";
+import { parse as parseYaml } from "yaml";
 // @ts-expect-error build helper is a Node ESM module.
 import * as updateConfig from "../../../../02_Tools/release/update-config.mjs";
 import { productionCsp } from "./src/main/content-policy.js";
@@ -23,6 +24,18 @@ function licenseText(): string {
   }
 }
 /** The desktop app's third-party runtime libraries with version and license, for the About page. */
+/** The release notes in 05_Software/release-notes, for Settings → About → What's new. */
+function releaseNotes(): unknown[] {
+  const folder = resolve(root, "../../../release-notes");
+  try {
+    return readdirSync(folder)
+      .filter((name) => name.endsWith(".yaml"))
+      .map((name) => parseYaml(readFileSync(resolve(folder, name), "utf8")));
+  } catch {
+    return [];
+  }
+}
+
 function thirdPartyComponents(): { name: string; version: string; license: string }[] {
   try {
     const dependencies = Object.keys(
@@ -171,6 +184,7 @@ export default defineConfig(({ command }) => ({
       ),
       __VERA_THIRD_PARTY__: JSON.stringify(thirdPartyComponents()),
       __VERA_LICENSE__: JSON.stringify(licenseText()),
+      __VERA_RELEASE_NOTES__: JSON.stringify(releaseNotes()),
     },
     root: resolve(root, "src/renderer"),
     resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },

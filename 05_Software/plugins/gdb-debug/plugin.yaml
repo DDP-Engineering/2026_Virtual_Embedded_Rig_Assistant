@@ -1,9 +1,20 @@
 format: 1
 id: gdb-debug
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: GDB debugging
 summary: Inspect firmware ELF files and debug a Cortex-M target through a probe in supervised GDB sessions.
 description: Inspect firmware ELF files offline (architecture, hash, symbols, DWARF) and debug a Cortex-M target through a declared probe with finite, supervised GDB sessions - snapshot of registers, backtrace, locals, permitted RAM and decoded fault state with symbols checked against the target's flash, a hardware breakpoint with a timeout, bounded stepping - with OpenOCD from verified profiles on 127.0.0.1 only, no GDB console, scripts or monitor commands, the probe reserved for the run and the declared halt/resume policy applied at every exit.
+translations:
+  ro:
+    summary: "Inspectează fișiere ELF de firmware și depanează o țintă Cortex-M printr-un probe, în sesiuni GDB supravegheate."
+    description: "Inspectează offline fișiere ELF de firmware (arhitectură, hash, simboluri, DWARF) și depanează o țintă Cortex-M printr-un probe declarat, în sesiuni GDB finite și supravegheate - snapshot al registrelor, backtrace, variabile locale, RAM permis și starea de fault decodată, cu simbolurile verificate față de flash-ul țintei, un breakpoint hardware cu timeout, pas cu pas limitat - cu OpenOCD din profiluri verificate doar pe 127.0.0.1, fără consolă GDB, scripturi sau comenzi monitor, cu probe-ul rezervat pe durata rulării și politica declarată de oprire/reluare aplicată la fiecare ieșire."
+  de:
+    summary: "Firmware-ELF-Dateien untersuchen und ein Cortex-M-Target über eine Probe in überwachten GDB-Sitzungen debuggen."
+    description: "Firmware-ELF-Dateien offline untersuchen (Architektur, Hash, Symbole, DWARF) und ein Cortex-M-Target über eine deklarierte Probe in begrenzten, überwachten GDB-Sitzungen debuggen - Snapshot von Registern, Backtrace, lokalen Variablen, erlaubtem RAM und dekodiertem Fault-Zustand mit gegen den Flash des Targets geprüften Symbolen, ein Hardware-Breakpoint mit Zeitlimit, begrenztes Schrittweise-Ausführen - mit OpenOCD aus geprüften Profilen nur auf 127.0.0.1, ohne GDB-Konsole, Skripte oder Monitor-Befehle, mit für den Lauf reservierter Probe und der deklarierten Halt/Resume-Regel bei jedem Beenden."
+  fr:
+    summary: "Examinez des fichiers ELF de firmware et déboguez une cible Cortex-M via une sonde dans des sessions GDB supervisées."
+    description: "Examinez hors ligne des fichiers ELF de firmware (architecture, hash, symboles, DWARF) et déboguez une cible Cortex-M via une sonde déclarée dans des sessions GDB finies et supervisées - instantané des registres, backtrace, variables locales, RAM autorisée et état de faute décodé, avec des symboles vérifiés par rapport à la flash de la cible, un point d’arrêt matériel avec délai d’expiration, un pas à pas limité - avec OpenOCD à partir de profils vérifiés sur 127.0.0.1 uniquement, sans console GDB, scripts ni commandes monitor, la sonde réservée pour l’exécution et la politique d’arrêt/reprise déclarée appliquée à chaque sortie."
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://sourceware.org/gdb/current/onlinedocs/gdb.html/GDB_002fMI.html", "https://openocd.org/doc/html/GDB-and-OpenOCD.html"]

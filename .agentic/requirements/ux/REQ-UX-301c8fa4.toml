@@ -14,7 +14,7 @@ verification = "Install the package, list its skills through the skill catalog a
 
 affected_paths = ["05_Software/plugins/stm32-cubeprog/skills/"]
 
-linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/stm32-cubeprog.test.ts"]
 
 
 spec = ""

@@ -12,6 +12,7 @@ export default defineConfig({
     __VERA_VERSION__: JSON.stringify("0.0.0"),
     __VERA_THIRD_PARTY__: JSON.stringify([]),
     __VERA_LICENSE__: JSON.stringify(""),
+    __VERA_RELEASE_NOTES__: JSON.stringify([]),
   },
   test: {
     setupFiles: [fileURLToPath(new URL("../../../tests/support/network-setup.ts", import.meta.url))],

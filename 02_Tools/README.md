@@ -84,7 +84,10 @@ as the software. `runtime/` and `cache/` are never linted.
 | File | Purpose | Invocation and result |
 |---|---|---|
 | `build-cli.mjs` | Bundles the CLI entry and its grep, PDF and embedding workers with esbuild | `npm run build:cli`; writes `05_Software/src/apps/cli/dist/`. `npm run vera -- …` runs it first. |
-| `check-i18n.mjs` | Compares the EN/RO/DE catalogs with the translation keys the renderer uses: missing, unused and translation-only keys | `npm run check:i18n`; non-zero exit on errors. `--fixture <json>` checks a negative scenario; its tests are in `05_Software/tests/tooling/i18n.test.ts`. |
+| `check-i18n.mjs` | Compares the EN/RO/DE/FR catalogs with the translation keys the renderer uses: missing, unused and translation-only keys | `npm run check:i18n`; non-zero exit on errors. `--fixture <json>` checks a negative scenario; its tests are in `05_Software/tests/tooling/i18n.test.ts`. |
+| `check-help.mjs` | Checks the app help (`05_Software/help/<lang>/`) and the official plugins' `help/<lang>.md`: the same page set in en/ro/de/fr, relative links naming an app page, no title-only page, and a current generated `shortcuts.md` | `npm run check:help`; non-zero exit on errors; `--fixture <json>` checks a negative scenario; tests in `05_Software/tests/tooling/help.test.ts`. |
+| `check-release-notes.mjs` | Checks `05_Software/release-notes/*.yaml`: file names and versions, categories, all four languages, at most 100 characters per text, no file names or ids, at most 10 entries per category; warns when `CHANGELOG.md` changed without release notes | `npm run check:release-notes`, part of `npm run verify`; tests in `05_Software/tests/tooling/release-version.test.ts`. Rules: [01_Documentation/Releases.md](../01_Documentation/Releases.md). |
+| `generate-help-shortcuts.mjs` | Writes `help/<lang>/shortcuts.md` from the shared shortcut registry and the interface catalogs | `npm run help:shortcuts`; tested by `05_Software/tests/tooling/help-shortcuts.test.ts`. |
 
 ## Release
 
@@ -95,6 +98,7 @@ as the software. `runtime/` and `cache/` are never linted.
 | `update-config.mjs` | Validates the update-feed URL and builds the electron-builder publish configuration | Imported by the desktop Vite configuration and `package.mjs`. Release requires HTTPS; the instrumented build also allows loopback HTTP. |
 | [catalog-release.md](release/catalog-release.md) | Plugin catalog release per VERA version: channel indexes, Ed25519 index signing, where the private key lives, publishing | Read before publishing a catalog; `catalog-signing-key.pub.pem` is the public key the desktop build pins (`pluginCatalogKey` in `update-config.mjs`). |
 | `update-feed.mjs` | Serves a local update feed and records its requests | `startUpdateFeed(directory, port)`, loopback only; used by the update probe and its tests. |
+| `set-version.mjs` | Sets the app version in the four workspace packages and the lockfile, rolls `## [Unreleased]` of `CHANGELOG.md` into the release and archives older releases, and turns `release-notes/unreleased.yaml` into `<version>.yaml` | `node ../02_Tools/release/set-version.mjs <x.y.z>` from `05_Software`; refuses a version that is not SemVer or not higher. Procedure: [01_Documentation/Releases.md](../01_Documentation/Releases.md). |
 | `smoke-live.mjs` | Builds a release build and launches the app's real-provider check | `npm run smoke:live -- --provider openai` or `--provider custom:slug`, optional `--data <userData>`. Uses the app's configuration and credentials and may send real requests to the provider. |
 | `probe-windows-offline.ps1` | Verifies the hash of an instrumented Windows ZIP, confirms existing network isolation, extracts it and launches the packaging probe | `-Artifact <zip> -ExpectedSha256 <sha256> -EvidenceDirectory <directory>`. Refuses active non-loopback adapters, interfaces or routes; never disconnects the host itself. Writes metadata, logs, `probe.json` and `completion.json`. |
 | `probe-windows-sandbox.ps1` | Prepares the `.wsb` configuration, the guest start script and hashes for the offline Windows probe | `-Artifact <instrumented-zip> -EvidenceDirectory <directory>`, optional `-Launch` to open Windows Sandbox and start the probe in the guest. |
@@ -132,10 +136,10 @@ prints the part folder, its files with sizes and the next step.
   README.md
   plugins/                   working catalog release (prepare:plugins), bundled into the installer
   vera-<version>/
-    vera-windows-x64/        VERA-<v>-win-x64.exe (NSIS), VERA-<v>-win-x64.zip (portable), SHA256SUMS
-    vera-linux-x64/          VERA-<v>-linux-*.AppImage, VERA-<v>-linux-*.deb, SHA256SUMS
+    vera-windows-x64/        VERA-<v>-win-x64.exe (NSIS), VERA-<v>-win-x64.zip (portable), RELEASE-NOTES.md, SHA256SUMS
+    vera-linux-x64/          VERA-<v>-linux-*.AppImage, VERA-<v>-linux-*.deb, RELEASE-NOTES.md, SHA256SUMS
     plugins/                 <id>-<version>.zip, index.json, index-stable.json, index-pre-release.json,
-                             (*.sig when signed), vera-plugins-<version>.zip, SHA256SUMS
+                             (*.sig when signed), vera-plugins-<version>.zip, LICENSE.txt, SHA256SUMS
     plugin-deps/             vera-plugin-deps-<version>-windows-x64.zip, …-linux-x64.zip, SHA256SUMS
     delivery.json            version, commit and host per part, files with SHA-256 and size
 ```

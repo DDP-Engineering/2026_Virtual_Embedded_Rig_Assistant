@@ -342,6 +342,12 @@ const ruleSchema = z.strictObject({
   note: z.string().trim().min(1).max(512).optional(),
   timeout: z.number().int().min(1).max(3600).optional(),
 });
+/** The languages a plugin may translate its catalog texts into; English is the manifest's own text. */
+export const pluginTextLanguages = ["ro", "de", "fr"] as const;
+const pluginTextsSchema = z.strictObject({
+  summary: z.string().trim().min(1).max(160),
+  description: z.string().trim().min(1).max(1024),
+});
 /** plugin.yaml format 1. */
 export const pluginManifestSchema = z.strictObject({
   format: z.literal(1),
@@ -351,6 +357,13 @@ export const pluginManifestSchema = z.strictObject({
   /** One line for the catalog card; `description` holds the details for the review. */
   summary: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(1024),
+  /** The catalog summary and description in other interface languages. */
+  translations: z.partialRecord(z.enum(pluginTextLanguages), pluginTextsSchema).optional(),
+  /** The plugin's license as an SPDX identifier or `LicenseRef-…`. */
+  license: z
+    .string()
+    .regex(/^[A-Za-z0-9.+-]{1,128}$/)
+    .optional(),
   ecosystem: z.string().regex(/^[a-z0-9-]{1,64}$/),
   platforms: z.array(pluginPlatformSchema).min(1).refine(unique, "List each platform once."),
   requires: z.array(pluginIdSchema).max(64).refine(unique, "List each plugin once.").default([]),
@@ -455,6 +468,12 @@ export const pluginCompositionSchema = z.strictObject({
     )
     .max(PLUGIN_LIMITS.files),
   files: z.array(z.string().min(1).max(1024)).max(PLUGIN_LIMITS.files),
+  /** The languages of the package's help/<language>.md pages, when it has any. */
+  help: z
+    .array(z.enum(["en", "ro", "de", "fr"]))
+    .min(1)
+    .max(4)
+    .optional(),
 });
 export type PluginComposition = z.infer<typeof pluginCompositionSchema>;
 /** An installed plugin as the store lists it: manifest and record metadata where they are valid. */
@@ -497,6 +516,8 @@ export const pluginReviewSchema = z.strictObject({
   manifest: pluginManifestSchema.optional(),
   /** Present whenever the manifest parses. */
   composition: pluginCompositionSchema.optional(),
+  /** The package's help pages (`help/<language>.md`) by language, when it has any. */
+  help: z.partialRecord(z.enum(["en", "ro", "de", "fr"]), z.string().max(256 * 1024)).optional(),
   installed: z.strictObject({ version: z.string().max(128).optional() }).optional(),
 });
 export type PluginReview = z.infer<typeof pluginReviewSchema>;
@@ -679,3 +700,16 @@ export const programRunLogSchema = z.strictObject({
   running: z.boolean(),
 });
 export type ProgramRunLog = z.infer<typeof programRunLogSchema>;
+
+/** The catalog summary and description in `language` where the plugin translates them, else in English. */
+export function pluginText(
+  entry: Pick<PluginManifest, "summary" | "description" | "translations">,
+  language: string | undefined,
+): { summary: string; description: string } {
+  const own = pluginTextLanguages.find((code) => code === language);
+  const translated = own ? entry.translations?.[own] : undefined;
+  return {
+    summary: translated?.summary ?? entry.summary,
+    description: translated?.description ?? entry.description,
+  };
+}

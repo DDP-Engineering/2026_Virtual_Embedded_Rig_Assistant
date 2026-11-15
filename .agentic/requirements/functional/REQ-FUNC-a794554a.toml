@@ -14,7 +14,7 @@ verification = "The thermal fixture (1 W into 50 K/W from 40 °C ambient, with a
 
 affected_paths = ["05_Software/plugins/ngspice/skills/"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ngspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

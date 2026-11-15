@@ -117,6 +117,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "plugins.scopedTrust"
     | "plugins.catalog"
     | "plugins.catalogReview"
+    | "plugins.catalogPreview"
     | "plugins.catalogInstall"
     | "runs.list"
     | "runs.log"

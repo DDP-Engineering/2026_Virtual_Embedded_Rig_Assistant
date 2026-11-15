@@ -14,7 +14,7 @@ verification = "SHA-256 of every fixture before and after all runs is unchanged;
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/cli.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/tests/fixtures/ltspice/change_input.py", "05_Software/tests/fixtures/ltspice/write_fail.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

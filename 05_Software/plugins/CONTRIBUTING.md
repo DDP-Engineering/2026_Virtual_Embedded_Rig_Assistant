@@ -10,6 +10,13 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
 1. Create `<id>/plugin.yaml` (format 1); the folder name is the plugin id. `summary` (at most 160
    characters) is the one line on the catalog card; `description` holds the details for the install review. Add skills under
    `<id>/skills/<name>/SKILL.md` and helper scripts under `<id>/scripts/`, and a short `<id>/README.md`.
+   `translations` gives the `summary` and `description` in `ro`, `de` and `fr` (same limits); the catalog shows
+   the interface language's text and English otherwise.
+   Write the user help as `<id>/help/en.md` (one `# ` title: what the plugin does, what it needs, how to ask the
+   agent, risk and approvals) and translate it to `help/ro.md`, `help/de.md` and `help/fr.md`. Help shows the
+   page of the interface language and English otherwise; `npm run check:help` requires all four for official
+   plugins. Links between help pages use the app page names, such as `[Permissions](permissions.md)`.
+   `README.md` stays the technical reference.
 2. Declare every program with a reproducible install source: a pinned pip requirement range, a PEP 723
    script in the package, a download with its SHA-256 per platform, or a `find` search with a `hint`.
    Give each published download its size in `bytes` (the catalog card shows it before any download; a longer

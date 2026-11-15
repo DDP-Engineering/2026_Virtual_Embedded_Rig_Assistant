@@ -14,7 +14,7 @@ verification = "A load sweep of RLOAD 1k and 3k gives 5 V and 7.5 V at the two p
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/sweep.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

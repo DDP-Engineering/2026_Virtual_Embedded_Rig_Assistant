@@ -671,7 +671,8 @@
     "power_quality": "Evaluate power factor correction at one board from a current network result and a measurement file with declared units and conventions: displacement versus total power factor, the kvar need to a target, a fixed or automatic bank with steps, overcompensation, capacitor, reactor, contactor and protection checks from cited data and resonance against measured harmonics; stores the result after approval like a write and switches no step. Needs the power-quality-pfc plugin.",
     "lighting_design": "Design interior lighting from a lighting project with IES or LDT photometry: a preliminary lumen-method estimate with cited utilisation factors and the direct component on the calculation grid, diagnostics for scale, units, orientation and photometry, and verification of maintained illuminance, uniformity and glare only from a matched photometric engine report such as DIALux evo; stores the result after approval like a write and runs no engine. Needs the lighting-design plugin.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device.",
-    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page."
+    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page.",
+    "help": "Read VERA's own help pages and the help of the workbench's enabled plugins, to answer questions about VERA. Read-only."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",
@@ -820,7 +821,6 @@
     "noPrograms": "No programs: this plugin only adds skills.",
     "docs": "Documents",
     "composition": {
-      "title": "Composition",
       "noPrograms": "Runs no programs.",
       "skills": "Skills",
       "files": "Profiles and data files"
@@ -902,7 +902,6 @@
         "stable": "Stable (version 1.0.0 and higher)",
         "pre-release": "Pre-release (every plugin, including 0.x versions)"
       },
-      "channelHint": "Stable lists plugins proven on real tools and hardware. Pre-release also lists plugins whose proof is still open.",
       "check": "Check for updates",
       "checking": "Checking…",
       "url": "Catalog URL",
@@ -940,8 +939,6 @@
     "trust": "Trust this package",
     "scopedTrustIntro": "Trust this exact package for this workbench on this machine. Trust does not enable the plugin or install its programs. Any package change requires another review.",
     "refresh": "Refresh list",
-    "expand": "Show details for {{name}}",
-    "collapse": "Hide details for {{name}}",
     "checkDependencies": "Check dependencies",
     "checkAll": "Check all dependencies",
     "checkingAll": "Checking dependencies…",
@@ -1062,7 +1059,6 @@
       "notReady": "Not ready: {{checks}}",
       "dependencies": "Dependencies",
       "configuration": "Configuration",
-      "use": "Use",
       "missingNames": "Missing: {{names}}",
       "externalNames": "Install from the vendor: {{names}}",
       "unavailableNames": "Unavailable: {{names}}",
@@ -1070,17 +1066,12 @@
       "nothingToConfigure": "Nothing to configure",
       "configurationFailed": "The configuration could not be checked.",
       "configure": "Configure",
-      "enabledIn": "Enabled in {{name}}",
-      "notEnabledIn": "Not enabled in {{name}}",
-      "noWorkbench": "No workbench is open.",
-      "openWorkbench": "Open workbench",
       "state": {
         "ready": "Ready",
         "missing": "Missing",
         "unavailable": "Unavailable",
         "external": "External",
-        "unchecked": "Not checked",
-        "off": "Not enabled"
+        "unchecked": "Not checked"
       }
     },
     "packs": {
@@ -1099,6 +1090,13 @@
       "skippedCatalog": "Not in this catalog.",
       "alreadyInstalled": "Already installed: {{names}}",
       "install": "Install with dependencies ({{count}})"
+    },
+    "help": "Help",
+    "details": {
+      "description": "Description",
+      "about": "About this plugin",
+      "license": "License",
+      "loading": "Loading the plugin's details…"
     }
   },
   "runs": {
@@ -1147,7 +1145,13 @@
     "thirdParty": "Third-party components ({{count}})",
     "component": "Component",
     "componentVersion": "Version",
-    "license": "License"
+    "license": "License",
+    "whatsNew": "What's new",
+    "unreleased": "Unreleased",
+    "release": "Version {{version}} · {{date}}",
+    "categoryNew": "New",
+    "categoryImproved": "Improved",
+    "categoryFixed": "Fixed"
   },
   "pager": {
     "range": "{{first}}–{{last}} of {{count}} results",
@@ -1159,6 +1163,7 @@
   "help": {
     "open": "Help",
     "title": "Help",
-    "pages": "Help pages"
+    "pages": "Help pages",
+    "plugins": "Plugins"
   }
 }

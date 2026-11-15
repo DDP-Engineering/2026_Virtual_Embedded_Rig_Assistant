@@ -18,6 +18,7 @@ import {
   Provisioner,
   pluginPlatform,
   ResourceLeases,
+  readPluginHelp,
   SettingsService,
   settingStates,
   splitModelReference,
@@ -26,6 +27,10 @@ import {
 } from "@vera/core";
 import {
   eventEnvelopeSchema,
+  type HelpLanguage,
+  type HelpPage,
+  type HelpPageSummary,
+  helpLanguages,
   type PluginProgramStatus,
   veraError,
   type WorkbenchSnapshot,
@@ -323,7 +328,15 @@ let chatgpt = new ChatgptAuth({
   },
 });
 let modelGateway = new ProviderGateway(settings, credentials, providers, systemClock);
+/** The interface language the user sees: the setting, else the system locale, else English. */
+function interfaceLanguage(): HelpLanguage {
+  const language = settings.get().settings.language;
+  return language !== "system"
+    ? language
+    : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
+}
 const sessions = new SessionsHost({
+  help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
   managedRoots: [dataLocations.paths.userData],
   web: webAccess.provider,
@@ -369,6 +382,34 @@ function openWorkbenchFolder(workbenchId: string): string {
   if (snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
   return snapshot.folder;
 }
+/** The help pages of the installed plugins without issues that ship help, by title (REQ-FUNC-559bba00). */
+async function pluginHelpPages(language: HelpLanguage): Promise<HelpPageSummary[]> {
+  const store = activePluginStore();
+  const pages: HelpPageSummary[] = [];
+  for (const plugin of await store.list()) {
+    if (plugin.issues.length || !plugin.composition?.help?.length) continue;
+    try {
+      const { page, title, language: served } = await pluginHelpPage(plugin.id, language, store);
+      pages.push({ page, title, language: served, plugin: plugin.id });
+    } catch {}
+  }
+  return pages.sort((a, b) => a.title.localeCompare(b.title, language));
+}
+async function pluginHelpPage(
+  id: string,
+  language: HelpLanguage,
+  store = activePluginStore(),
+): Promise<HelpPage> {
+  let folder: string;
+  try {
+    folder = (await store.load(id)).folder;
+  } catch {
+    throw veraError("NOT_FOUND");
+  }
+  const found = await readPluginHelp(folder, language);
+  if (!found) throw veraError("NOT_FOUND");
+  return { page: id, plugin: id, ...found };
+}
 /** Workbench-bound view for user plugin actions; explicit ids reject stale windows. */
 function activePluginStore(workbenchId?: string): PluginStore {
   if (workbenchId) return plugins.forWorkbench(openWorkbenchFolder(workbenchId));
@@ -412,7 +453,6 @@ const openers = () =>
   (detected ??= detectOpeners({ platform: process.platform, env: process.env, exists: pathExists }));
 /** Linux applications registered for a file type (TASK-c49f03d5); the UI language picks their names. */
 const systemAppDeps = (): SystemAppDeps => {
-  const language = settings.get().settings.language;
   return {
     platform: process.platform,
     run: runTool,
@@ -422,10 +462,7 @@ const systemAppDeps = (): SystemAppDeps => {
     ],
     readText: readOptionalText,
     // The names follow the UI language, which falls back to English like the renderer does.
-    lang:
-      language !== "system"
-        ? language
-        : (["en", "ro", "de", "fr"].find((code) => app.getLocale().startsWith(code)) ?? "en"),
+    lang: interfaceLanguage(),
     openers: openers(),
   };
 };
@@ -544,6 +581,7 @@ ipcMain.handle(
       },
       "plugins.catalog": ({ refresh }) => catalog.view({ refresh }),
       "plugins.catalogReview": ({ id }) => catalog.review(id),
+      "plugins.catalogPreview": ({ id }) => catalog.preview(id),
       "plugins.catalogInstall": async ({ id, sha256 }) => {
         const installed = await catalog.install(id, sha256);
         pluginsChanged(id);
@@ -984,8 +1022,14 @@ ipcMain.handle(
       "providers.save": (request) => providers.save(request),
       "providers.remove": (request) => providers.remove(request),
       "app.info": () => getAppInfo(dataLocations.portable),
-      "help.list": ({ language }) => help.list(language),
-      "help.read": ({ page, language }) => help.read(page, language),
+      "help.list": async ({ language }) => [
+        ...(await help.list(language)),
+        ...(await pluginHelpPages(language)),
+      ],
+      "help.read": (request) =>
+        "plugin" in request
+          ? pluginHelpPage(request.plugin, request.language)
+          : help.read(request.page, request.language),
       "window.menu": (request) => popupWindowMenu(window, request),
       "app.settings.get": () => {
         const snapshot = settings.get();

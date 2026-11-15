@@ -14,7 +14,7 @@ verification = "With the generated sample pcapng and an installed tshark, run th
 
 affected_paths = ["05_Software/tests/fixtures/wireshark-tshark/"]
 
-linked_tests = ["05_Software/tests/integration/wireshark-tshark.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wireshark-tshark.test.ts"]
 
 
 spec = ""

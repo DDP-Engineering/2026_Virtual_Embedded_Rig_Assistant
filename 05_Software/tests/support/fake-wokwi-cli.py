@@ -1,4 +1,4 @@
-"""A scripted stand-in for wokwi-cli 0.29.1, for tests/integration/wokwi.test.ts. It never opens a network connection.
+"""A scripted stand-in for wokwi-cli 0.29.1, for tests/plugins/wokwi.test.ts. It never opens a network connection.
 
 The test launches it through a generated wrapper named wokwi-cli(.cmd). VERA_FAKE_WOKWI names a scenario JSON file;
 every call is appended to `<scenario>.calls.jsonl` with its argv, working directory, the WOKWI_*/NO_COLOR variables it

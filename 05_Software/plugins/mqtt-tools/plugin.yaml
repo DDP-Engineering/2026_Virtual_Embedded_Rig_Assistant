@@ -1,9 +1,20 @@
 format: 1
 id: mqtt-tools
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: MQTT tools (telemetry and commands)
 summary: Capture MQTT telemetry and send controlled device commands on a broker the workbench configures.
 description: Bounded MQTT telemetry capture and controlled device commands on a broker the workbench configures - a profile file declares the broker, TLS trust, credential reference, client id prefix, protocol (5 or 3.1.1), topic ACL, QoS, limits, reconnect policy, payload schemas and any status Last Will. Captures are bounded by time, messages and bytes and keep every raw payload with its QoS, retain and dup flags; a publish goes only to a declared topic, once, never retained when it is a command. The broker password stays in VERA's credential store and reaches only an approved run of this plugin on its input. No broker administration and no public broker.
+translations:
+  ro:
+    summary: "Capturează telemetrie MQTT și trimite comenzi controlate către dispozitive, pe un broker configurat de workbench."
+    description: "Captură limitată de telemetrie MQTT și comenzi controlate către dispozitive, pe un broker configurat de workbench - un fișier de profil declară brokerul, încrederea TLS, referința credențialei, prefixul client id, protocolul (5 sau 3.1.1), ACL-ul topicurilor, QoS, limitele, politica de reconectare, schemele payload-urilor și un eventual Last Will de stare. Capturile sunt limitate în timp, mesaje și octeți și păstrează fiecare payload brut cu flag-urile QoS, retain și dup; o publicare ajunge doar la un topic declarat, o singură dată, și nu este niciodată reținută când este o comandă. Parola brokerului rămâne în depozitul de credențiale al VERA și ajunge doar la o rulare aprobată a acestui plugin, pe intrarea programului. Fără administrare de broker și fără broker public."
+  de:
+    summary: "MQTT-Telemetrie aufzeichnen und kontrollierte Gerätebefehle über einen von der Workbench konfigurierten Broker senden."
+    description: "Begrenzte MQTT-Telemetrieaufzeichnung und kontrollierte Gerätebefehle über einen von der Workbench konfigurierten Broker - eine Profildatei deklariert Broker, TLS-Vertrauen, Referenz der Zugangsdaten, Präfix der Client-ID, Protokoll (5 oder 3.1.1), Topic-ACL, QoS, Grenzwerte, Reconnect-Regel, Nutzlastschemata und einen etwaigen Status-Last-Will. Aufzeichnungen sind nach Zeit, Nachrichten und Bytes begrenzt und behalten jede Rohnutzlast mit ihren QoS-, Retain- und Dup-Flags; eine Veröffentlichung geht nur an ein deklariertes Topic, einmal, und ist als Befehl nie retained. Das Broker-Passwort bleibt im Zugangsdatenspeicher von VERA und erreicht nur einen freigegebenen Lauf dieses Plugins über seine Eingabe. Keine Broker-Administration und kein öffentlicher Broker."
+  fr:
+    summary: "Capturez de la télémétrie MQTT et envoyez des commandes contrôlées sur un broker configuré par le banc de travail."
+    description: "Capture limitée de télémétrie MQTT et commandes contrôlées d’appareils sur un broker configuré par le banc de travail - un fichier de profil déclare le broker, la confiance TLS, la référence de l’identifiant, le préfixe d’ID client, le protocole (5 ou 3.1.1), l’ACL des topics, la QoS, les limites, la politique de reconnexion, les schémas de charge utile et un éventuel Last Will d’état. Les captures sont limitées en durée, en messages et en octets et conservent chaque charge utile brute avec ses indicateurs QoS, retain et dup ; une publication ne va que vers un topic déclaré, une seule fois, jamais retenue s’il s’agit d’une commande. Le mot de passe du broker reste dans le magasin d’identifiants de VERA et n’est transmis qu’à une exécution approuvée de ce plugin, sur son entrée. Pas d’administration de broker ni de broker public."
 ecosystem: iot
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pypi.org/project/paho-mqtt/2.1.0/", "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html"]

@@ -14,7 +14,7 @@ verification = "Real KiCad: with the fixture's locked footprint, a place of it a
 
 affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/operations.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = "specs/REQ-DATA-891d5b5d.md"

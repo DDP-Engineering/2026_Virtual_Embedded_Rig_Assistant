@@ -12,9 +12,9 @@ The wokwi plugin tests shall run wokwi-tool against a fake wokwi-cli by default 
 
 verification = "Inspection: wokwi.test.ts sets VERA_PROGRAM_WOKWI_CLI to the fake wrapper for every default case; its real-CLI block is skipIf(!VERA_TEST_WOKWI_CLI) and runs only --short-version, lint --offline and a run without WOKWI_CLI_TOKEN that ends at the CLI's missing-token check."
 
-affected_paths = ["05_Software/tests/integration/wokwi.test.ts"]
+affected_paths = ["05_Software/tests/plugins/wokwi.test.ts"]
 
-linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wokwi.test.ts"]
 
 
 spec = "specs/REQ-DATA-d985bb3d.md"

@@ -14,7 +14,7 @@ verification = "Fake tests list the registry, check that --list-local enumerated
 
 affected_paths = ["05_Software/plugins/scpi-instruments/scripts/scpi_support/cli.py", "05_Software/plugins/scpi-instruments/scripts/scpi_support/local.py"]
 
-linked_tests = ["05_Software/tests/integration/scpi-instruments.test.ts"]
+linked_tests = ["05_Software/tests/plugins/scpi-instruments.test.ts"]
 
 
 spec = "specs/REQ-DATA-b3e2930f.md"

@@ -14,7 +14,7 @@ verification = "Inspect the stand-in's recorded argv and every monitor command f
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/engine.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

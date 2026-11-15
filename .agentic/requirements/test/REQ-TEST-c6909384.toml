@@ -12,9 +12,9 @@ The ltspice integration tests shall record real LTspice batch runs on Windows x6
 
 verification = "With VERA_TEST_LTSPICE set to the installed LTspice 26.1.1 the tests run the fixtures for E05-A..F and pass; without it the real-engine tests are skipped with the reason \"LTspice not installed (set VERA_TEST_LTSPICE)\" and the parser unit tests still run."
 
-affected_paths = ["05_Software/tests/integration/ltspice.test.ts"]
+affected_paths = ["05_Software/tests/plugins/ltspice.test.ts"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

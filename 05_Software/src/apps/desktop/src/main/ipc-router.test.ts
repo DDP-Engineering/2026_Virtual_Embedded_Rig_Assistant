@@ -46,6 +46,7 @@ const workbenchHandlers = {
   "plugins.scopedTrust": unused,
   "plugins.catalog": unused,
   "plugins.catalogReview": unused,
+  "plugins.catalogPreview": unused,
   "plugins.catalogInstall": unused,
   "runs.list": unused,
   "runs.log": unused,

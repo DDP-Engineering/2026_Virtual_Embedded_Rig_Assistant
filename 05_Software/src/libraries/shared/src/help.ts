@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pluginIdSchema } from "./plugins.js";
 
 /** The languages help is written in; the same codes as the interface languages. */
 export const helpLanguages = ["en", "ro", "de", "fr"] as const;
@@ -9,15 +10,19 @@ export const helpPageNameSchema = z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/);
 export const HELP_PAGE_BYTES = 256 * 1024;
 export const helpListRequestSchema = z.strictObject({ language: helpLanguageSchema });
 export const helpPageSummarySchema = z.strictObject({
+  /** An app page name, or the plugin id of a plugin's help page. */
   page: helpPageNameSchema,
   title: z.string().min(1).max(256),
   /** The language served: the requested one, or en when the page exists only in English. */
   language: helpLanguageSchema,
+  /** Set on a plugin's help page (`help/<language>.md` of that installed plugin). */
+  plugin: pluginIdSchema.optional(),
 });
-export const helpReadRequestSchema = z.strictObject({
-  page: helpPageNameSchema,
-  language: helpLanguageSchema,
-});
+/** An app page by name, or an installed plugin's help page by plugin id. */
+export const helpReadRequestSchema = z.union([
+  z.strictObject({ page: helpPageNameSchema, language: helpLanguageSchema }),
+  z.strictObject({ plugin: pluginIdSchema, language: helpLanguageSchema }),
+]);
 export const helpPageSchema = helpPageSummarySchema.extend({ content: z.string().max(HELP_PAGE_BYTES) });
 export type HelpPageSummary = z.infer<typeof helpPageSummarySchema>;
 export type HelpPage = z.infer<typeof helpPageSchema>;

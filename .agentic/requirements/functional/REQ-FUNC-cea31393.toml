@@ -14,7 +14,7 @@ verification = "Capture the boot fixture until the version pattern: pass with th
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/operations.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

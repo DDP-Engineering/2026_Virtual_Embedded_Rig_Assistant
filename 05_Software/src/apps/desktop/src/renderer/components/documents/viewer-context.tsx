@@ -63,7 +63,7 @@ export function documentKey(target: ViewerTarget): string {
   if ("textPath" in target) return `file:${target.textPath}`;
   if ("path" in target) return `file:${target.path}`;
   const parsed = parseRef(target.ref);
-  if (!parsed) return `ref:${target.ref}`;
+  if (!parsed || parsed.kind === "help") return `ref:${target.ref}`;
   return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${parsed.path}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
@@ -71,7 +71,7 @@ function describe(target: ViewerTarget, download: string): { label: string; titl
   if ("textPath" in target) return { label: fileName(target.textPath), title: target.textPath };
   if ("path" in target) return { label: fileName(target.path), title: target.path };
   const parsed = parseRef(target.ref);
-  if (!parsed) return { label: referenceLabel(target.ref), title: target.ref };
+  if (!parsed || parsed.kind === "help") return { label: referenceLabel(target.ref), title: target.ref };
   return parsed.kind === "artifact"
     ? { label: parsed.name, title: parsed.name }
     : { label: fileName(parsed.path), title: parsed.path };

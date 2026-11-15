@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CATALOG_LIMITS, catalogIndexSchema } from "@vera/shared";
+import { unzipSync } from "fflate";
 import { afterEach, expect, it } from "vitest";
 import { stringify } from "yaml";
 import {
@@ -523,4 +524,22 @@ it("signs both channel indexes of a release and refuses a key that is not the pi
   roots.push(empty);
   await expect(signCatalogRelease(empty, pair.privatePem)).rejects.toThrow(/index-stable.json/);
   expect(await readdir(empty)).toEqual([]);
+});
+
+// REQ-DATA-b8d0a387, REQ-DATA-9cdef3e8
+it("packs plugin help into the zip and carries catalog translations into the index", async () => {
+  const translations = { fr: { summary: "Plugin de test alpha.", description: "Un plugin de test." } };
+  const root = await source({
+    plugins: { alpha: plugin("alpha", { translations }), beta: plugin("beta", { requires: ["alpha"] }) },
+    files: { "alpha/help/en.md": "# Alpha\n\nHelp.\n", "alpha/help/fr.md": "# Alpha\n\nAide.\n" },
+  });
+  const out = join(root, "..", `${Math.random().toString(36).slice(2)}-release`);
+  roots.push(out);
+  const release = await buildCatalogRelease(root, out);
+  expect(release.issues).toEqual([]);
+  const alpha = release.index?.plugins.find((entry) => entry.id === "alpha");
+  expect(alpha?.translations).toEqual(translations);
+  expect(release.index?.plugins.find((entry) => entry.id === "beta")).not.toHaveProperty("translations");
+  const files = Object.keys(unzipSync(await readFile(join(out, "alpha-1.0.0.zip"))));
+  expect(files).toEqual(expect.arrayContaining(["alpha/help/en.md", "alpha/help/fr.md"]));
 });

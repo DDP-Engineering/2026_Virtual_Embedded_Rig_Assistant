@@ -27,6 +27,8 @@ export interface SystemPromptInput {
   skills: readonly { name: string; description: string }[];
   /** Enabled programs that resolve to an executable, in display order. */
   programs?: readonly ProgramPromptEntry[];
+  /** The session offers the help tool. */
+  help?: boolean;
   env: PromptEnvironment;
 }
 
@@ -48,6 +50,8 @@ const rules = [
   "When documents are in English, search in English even if the conversation is not.",
   "Answer in the user's language.",
 ];
+const helpRule =
+  "For questions about VERA itself (its screens, settings, permissions, providers, plugins or how to do something in VERA), read VERA's help with the help tool and cite the returned help ref as [[ref]].";
 const programRule =
   "Run external programs only with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.";
 function programLine({ name, version, plugin, description, skills }: ProgramPromptEntry): string {
@@ -75,9 +79,10 @@ export function buildSystemPrompt({
   pinned,
   skills,
   programs = [],
+  help = false,
   env,
 }: SystemPromptInput): SystemPrompt {
-  const active = programs.length > 0 ? [...rules, programRule] : rules;
+  const active = [...rules, ...(help ? [helpRule] : []), ...(programs.length > 0 ? [programRule] : [])];
   const blocks = [
     `You are VERA, an engineering assistant for electronics and embedded work on the workbench "${workbench.name}".`,
     `Rules:\n${active.map((rule) => `- ${rule}`).join("\n")}`,

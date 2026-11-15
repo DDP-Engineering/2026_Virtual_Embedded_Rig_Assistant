@@ -14,7 +14,7 @@ verification = "Tests integrate a fake-driver capture's power (J) and current (C
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/metrics.py", "05_Software/plugins/lab-validation/scripts/lab_validation/units.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "Integration tests end runs normally, by a VERA stop file during 
 
 affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/operations.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/openocd.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/lifecycle.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

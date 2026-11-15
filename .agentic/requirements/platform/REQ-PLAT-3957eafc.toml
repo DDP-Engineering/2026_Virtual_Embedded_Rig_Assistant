@@ -14,7 +14,7 @@ verification = "Manifest tests: plugin.yaml validates with platforms windows-x64
 
 affected_paths = ["05_Software/plugins/kicad-layout/plugin.yaml", "05_Software/plugins/kicad-layout/scripts/kicad_layout_tool.py", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = "specs/REQ-DATA-891d5b5d.md"

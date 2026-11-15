@@ -1,12 +1,12 @@
 {
   "name": "@vera/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "LicenseRef-PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@vera/shared": "0.0.0",
-    "@vera/core": "0.0.0"
+    "@vera/shared": "0.1.0",
+    "@vera/core": "0.1.0"
   },
   "bin": {
     "vera": "dist/index.js"

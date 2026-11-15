@@ -14,7 +14,7 @@ verification = "The manifest validates as format 1 for windows-x64 and linux-x64
 
 affected_paths = ["05_Software/plugins/electronics-calc/plugin.yaml", "05_Software/plugins/electronics-calc/scripts/elec_calc.py", "05_Software/plugins/electronics-calc/scripts/elec_support/__init__.py"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = ""

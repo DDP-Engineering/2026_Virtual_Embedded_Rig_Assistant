@@ -14,7 +14,7 @@ verification = "Tests check a valid plan (settings, budget, burden note) and ref
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/acquisition.py", "05_Software/plugins/power-profiler/scripts/power_support/profiles.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

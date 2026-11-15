@@ -14,7 +14,7 @@ verification = "Run board-basics on the wrong-version fixture (fail, assertion),
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/operations.py", "05_Software/plugins/renode/scripts/renode_support/result.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

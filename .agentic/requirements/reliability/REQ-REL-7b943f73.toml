@@ -14,7 +14,7 @@ verification = "A negative resistance, a zero capacitance, a duty of 1.5, an amb
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/contract.py", "05_Software/plugins/electronics-calc/scripts/elec_support/engine.py", "05_Software/tests/fixtures/electronics-calc/"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

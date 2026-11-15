@@ -14,7 +14,7 @@ verification = "The erc fixture plants two resistors annotated R1 on the root sh
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/project.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py", "05_Software/tests/fixtures/kicad/"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

@@ -1,7 +1,7 @@
 #!python
 """A stand-in for esptool 5 in tests; it never opens a serial port.
 
-The fake uv of tests/integration/esp32-esptool.test.ts installs this file as the esptool entry point after replacing
+The fake uv of tests/plugins/esp32-esptool.test.ts installs this file as the esptool entry point after replacing
 the CONFIG line with the run's settings: `version`, the text `esptool version` prints, and `record`, a JSON-lines
 file that gets one line per run with the arguments, the working directory and the SHA-256 of every argument that
 names an existing file. The chip-id and write-flash outputs follow esptool v5's format; they are representative,

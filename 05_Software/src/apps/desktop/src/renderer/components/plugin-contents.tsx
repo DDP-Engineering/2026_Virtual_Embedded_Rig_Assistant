@@ -1,6 +1,16 @@
-import type { PluginComposition, PluginManifest, PluginProgram, PluginRisk } from "@vera/shared";
-import { pluginOperations } from "@vera/shared";
+import type {
+  PluginComposition,
+  PluginManifest,
+  PluginProgram,
+  PluginReview,
+  PluginRisk,
+} from "@vera/shared";
+import { pluginOperations, pluginText } from "@vera/shared";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { helpLanguage } from "./help.js";
+import { MaturityBadge } from "./plugin-library-controls.js";
+import { Markdown } from "./session/markdown.js";
 
 /** The approval prompt's risk labels, so the page and the prompt name a risk the same way. */
 export function useRiskLabels(): Record<PluginRisk, string> {
@@ -43,8 +53,8 @@ function InstallSource({ program }: { program: PluginProgram }) {
 }
 /**
  * What a plugin brings and what it may do, from its manifest and package composition: the same view before
- * install (the reviewed package) and after (the installed package). Operations are the manifest rules the approval
- * policy classifies with, one collapsed group per risk so large plugins stay readable.
+ * install (the reviewed package) and after (the installed package), one section per kind. Operations are the
+ * manifest rules the approval policy classifies with, one collapsed group per risk so large plugins stay readable.
  */
 export function PluginContents({
   manifest,
@@ -60,10 +70,9 @@ export function PluginContents({
   const files = composition?.files ?? [];
   const groups = pluginOperations(manifest.rules);
   return (
-    <div className="plugin-contents" data-plugin-contents>
-      <section data-plugin-composition>
-        <h4>{t("plugins.composition.title")}</h4>
-        <h5>{t("plugins.programs")}</h5>
+    <>
+      <section className="plugin-section" data-plugin-section="programs">
+        <h4>{t("plugins.programs")}</h4>
         {programs.length === 0 ? (
           <p data-no-programs>{t("plugins.composition.noPrograms")}</p>
         ) : (
@@ -78,45 +87,45 @@ export function PluginContents({
             ))}
           </ul>
         )}
-        {skills.length > 0 && (
-          <>
-            <h5>{t("plugins.composition.skills")}</h5>
-            <ul className="plugin-review-list">
-              {skills.map((skill) => (
-                <li key={skill.name} data-skill={skill.name}>
-                  <code>{skill.name}</code>
-                  {skill.description && <span> {skill.description}</span>}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        {files.length > 0 && (
-          <>
-            <h5>{t("plugins.composition.files")}</h5>
-            <ul className="plugin-review-list">
-              {files.map((file) => (
-                <li key={file} data-file={file}>
-                  <code>{file}</code>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        {manifest.docs.length > 0 && (
-          <>
-            <h5>{t("plugins.docs")}</h5>
-            <ul className="plugin-review-list">
-              {manifest.docs.map((doc) => (
-                <li key={doc} data-doc={doc}>
-                  <code>{doc}</code>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
       </section>
-      <section data-plugin-operations>
+      {skills.length > 0 && (
+        <section className="plugin-section" data-plugin-section="skills">
+          <h4>{t("plugins.composition.skills")}</h4>
+          <ul className="plugin-review-list">
+            {skills.map((skill) => (
+              <li key={skill.name} data-skill={skill.name}>
+                <code>{skill.name}</code>
+                {skill.description && <span> {skill.description}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {files.length > 0 && (
+        <section className="plugin-section" data-plugin-section="files">
+          <h4>{t("plugins.composition.files")}</h4>
+          <ul className="plugin-review-list">
+            {files.map((file) => (
+              <li key={file} data-file={file}>
+                <code>{file}</code>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {manifest.docs.length > 0 && (
+        <section className="plugin-section" data-plugin-section="docs">
+          <h4>{t("plugins.docs")}</h4>
+          <ul className="plugin-review-list">
+            {manifest.docs.map((doc) => (
+              <li key={doc} data-doc={doc}>
+                <code>{doc}</code>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <section className="plugin-section" data-plugin-section="operations" data-plugin-operations>
         <h4>{t("plugins.operations.title")}</h4>
         {groups.length === 0 && <p>{t("plugins.operations.none")}</p>}
         {groups.map((group) => (
@@ -142,6 +151,75 @@ export function PluginContents({
           </details>
         ))}
       </section>
+    </>
+  );
+}
+
+/**
+ * Everything about one plugin, in the same sections before install, in the review and after install:
+ * description, facts, any installed-only sections (`children`), its help page and its contents.
+ */
+export function PluginDetails({
+  manifest,
+  composition,
+  help,
+  facts,
+  children,
+}: {
+  manifest: PluginManifest;
+  composition?: PluginComposition | undefined;
+  /** The plugin's help page in the interface language (English when it has no page in that language). */
+  help?: string | undefined;
+  /** More facts under the plugin's own, such as the catalog's activity and dates. */
+  facts?: ReactNode;
+  children?: ReactNode;
+}) {
+  const { t, i18n } = useTranslation();
+  return (
+    <div className="plugin-details-body" data-plugin-contents>
+      <section className="plugin-section" data-plugin-section="description">
+        <h4>{t("plugins.details.description")}</h4>
+        <p>{pluginText(manifest, i18n.language).description}</p>
+      </section>
+      <section className="plugin-section" data-plugin-section="about">
+        <h4>{t("plugins.details.about")}</h4>
+        <dl className="plugin-facts">
+          <dt>{t("plugins.id")}</dt>
+          <dd>
+            <code>{manifest.id}</code>
+          </dd>
+          <dt>{t("plugins.version")}</dt>
+          <dd>
+            {manifest.version} <MaturityBadge version={manifest.version} />
+          </dd>
+          {manifest.license && (
+            <>
+              <dt>{t("plugins.details.license")}</dt>
+              <dd>{manifest.license}</dd>
+            </>
+          )}
+          <dt>{t("plugins.platforms")}</dt>
+          <dd>{manifest.platforms.join(", ")}</dd>
+          <dt>{t("plugins.requires")}</dt>
+          <dd>{manifest.requires.length ? manifest.requires.join(", ") : t("plugins.nothing")}</dd>
+        </dl>
+        {facts}
+      </section>
+      {children}
+      {help && (
+        <section className="plugin-section" data-plugin-section="help">
+          <h4>{t("plugins.help")}</h4>
+          <div className="plugin-help">
+            <Markdown text={help} />
+          </div>
+        </section>
+      )}
+      <PluginContents manifest={manifest} composition={composition} />
     </div>
   );
+}
+
+/** The help page of a review in `language`, else the English one. */
+export function reviewHelp(review: PluginReview | undefined, language: string): string | undefined {
+  return review?.help?.[helpLanguage(language)] ?? review?.help?.en;
 }

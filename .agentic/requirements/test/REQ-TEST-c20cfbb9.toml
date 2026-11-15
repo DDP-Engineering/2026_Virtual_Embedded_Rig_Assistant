@@ -12,9 +12,9 @@ When the opt-in real provisioning runs, VERA shall capture frames from a udp_mul
 
 verification = "With VERA_CAN_UV, provision both packages from PyPI and run replay sessions: two background captures (.asc, .blf) on a per-run group, a send and a replay approved with their typed words, can-decode of both captures and cantools dump; a missing or wrong word starting no process is covered by the default fake-uv test."
 
-affected_paths = ["05_Software/tests/integration/can.test.ts", "05_Software/tests/fixtures/can/"]
+affected_paths = ["05_Software/tests/plugins/can.test.ts", "05_Software/tests/fixtures/can/"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts"]
 
 
 spec = ""

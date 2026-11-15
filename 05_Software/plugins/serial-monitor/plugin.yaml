@@ -1,9 +1,20 @@
 format: 1
 id: serial-monitor
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Serial monitor
 summary: List serial ports by USB ID, capture a board's console and send it one line.
 description: List serial ports with their USB IDs and board family, capture a board's console (optionally after a DTR/RTS reset) and send it one line. Use to find a board's port and to read its boot log or console output.
+translations:
+  ro:
+    summary: "Listează porturile seriale după ID-ul USB, capturează consola unei plăci și îi trimite o linie."
+    description: "Listează porturile seriale cu ID-urile USB și familia plăcii, capturează consola unei plăci (opțional după un reset prin DTR/RTS) și îi trimite o linie. Folosește-l pentru a afla portul unei plăci și pentru a-i citi logul de pornire sau ieșirea din consolă."
+  de:
+    summary: "Serielle Ports nach USB-ID auflisten, die Konsole eines Boards aufzeichnen und ihm eine Zeile senden."
+    description: "Serielle Ports mit ihren USB-IDs und ihrer Board-Familie auflisten, die Konsole eines Boards aufzeichnen (optional nach einem Reset über DTR/RTS) und ihm eine Zeile senden. Verwenden Sie es, um den Port eines Boards zu finden und sein Boot-Log oder seine Konsolenausgabe zu lesen."
+  fr:
+    summary: "Listez les ports série par ID USB, capturez la console d’une carte et envoyez-lui une ligne."
+    description: "Listez les ports série avec leurs ID USB et leur famille de cartes, capturez la console d’une carte (éventuellement après une réinitialisation par DTR/RTS) et envoyez-lui une ligne. Pour trouver le port d’une carte et lire son journal de démarrage ou sa sortie console."
 ecosystem: general
 platforms: [windows-x64, linux-x64]
 programs:

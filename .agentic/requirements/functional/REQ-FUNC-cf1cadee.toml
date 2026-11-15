@@ -14,7 +14,7 @@ verification = "Offline with the real west and git against local file:// reposit
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/prepare.py", "05_Software/plugins/zephyr/scripts/zephyr_support/preflight.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

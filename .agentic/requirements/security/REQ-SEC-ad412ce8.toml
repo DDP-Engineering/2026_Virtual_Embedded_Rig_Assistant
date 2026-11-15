@@ -14,7 +14,7 @@ verification = "Runner tests hold a gdb-debug lease on a probe and start a probe
 
 affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/plugins/gdb-debug/plugin.yaml"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/integration/gdb-debug.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/plugins/gdb-debug.test.ts"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

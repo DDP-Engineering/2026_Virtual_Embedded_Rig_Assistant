@@ -14,7 +14,7 @@ verification = "The stand-in records its environment: no PLATFORMIO_* variable o
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/environment.py", "05_Software/plugins/platformio/scripts/pio_support/packages.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

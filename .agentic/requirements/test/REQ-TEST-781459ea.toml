@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-TEST-781459ea"
+
+title = "Reject a shortcuts help page that differs from the registry"
+
+status = "active"
+
+requirement = """When the help check runs on the repository, it shall fail and name the language for each help/<language>/shortcuts.md that differs from the page npm run help:shortcuts generates from the shortcut registry."""
+
+verification = """Tooling test: auditShortcuts returns no error for pages equal to the generated ones and names en and fr when one differs and one is missing; the CLI on the repository exits 0."""
+
+affected_paths = ["02_Tools/build/check-help.mjs", "02_Tools/build/generate-help-shortcuts.mjs"]
+
+linked_tests = ["05_Software/tests/tooling/help.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

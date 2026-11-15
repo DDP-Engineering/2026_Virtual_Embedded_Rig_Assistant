@@ -14,7 +14,7 @@ verification = "Through `tests/fixtures/electronics-calc/internals.py change`, r
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/tests/fixtures/electronics-calc/internals.py"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

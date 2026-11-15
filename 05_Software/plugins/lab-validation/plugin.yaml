@@ -1,9 +1,20 @@
 format: 1
 id: lab-validation
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Measurement validation
 summary: Compare bench captures and simulations with requirements offline - measurements, limits and a report.
 description: Compare bench captures and simulations with requirements, offline and reproducibly - import scpi-instruments captures, CSV and sigrok CSV files and ngspice/LTspice run folders; normalize units and signs; measure RMS, frequency, duty cycle, rise/fall, overshoot, settling, ripple and delay over declared windows; align by declared markers or bounded cross-correlation; decide each criterion by its declared rule and uncertainty (pass, fail or incomplete) and write a report with overlays, differences, conditions and links to the sources.
+translations:
+  ro:
+    summary: "Compară offline capturile de laborator și simulările cu cerințele - măsurători, limite și un raport."
+    description: "Compară capturile de laborator și simulările cu cerințele, offline și reproductibil - importă capturi scpi-instruments, fișiere CSV și CSV sigrok și foldere de rulare ngspice/LTspice; normalizează unitățile și semnele; măsoară RMS, frecvența, factorul de umplere, creșterea/căderea, supracreșterea, stabilizarea, riplul și întârzierea pe ferestre declarate; aliniază după markeri declarați sau prin corelație încrucișată limitată; decide fiecare criteriu după regula și incertitudinea declarate (trecut, picat sau incomplet) și scrie un raport cu suprapuneri, diferențe, condiții și legături către surse."
+  de:
+    summary: "Laboraufzeichnungen und Simulationen offline mit Anforderungen vergleichen - Messungen, Grenzwerte und ein Bericht."
+    description: "Laboraufzeichnungen und Simulationen offline und reproduzierbar mit Anforderungen vergleichen - Aufzeichnungen von scpi-instruments, CSV- und sigrok-CSV-Dateien sowie ngspice/LTspice-Laufordner importieren; Einheiten und Vorzeichen normalisieren; Effektivwert, Frequenz, Tastverhältnis, Anstieg/Abfall, Überschwingen, Einschwingen, Welligkeit und Verzögerung über deklarierte Fenster messen; über deklarierte Marker oder begrenzte Kreuzkorrelation ausrichten; jedes Kriterium nach seiner deklarierten Regel und Unsicherheit entscheiden (bestanden, nicht bestanden oder unvollständig) und einen Bericht mit Überlagerungen, Differenzen, Bedingungen und Verweisen auf die Quellen schreiben."
+  fr:
+    summary: "Comparez hors ligne des captures de banc et des simulations à des exigences - mesures, limites et rapport."
+    description: "Comparez des captures de banc et des simulations à des exigences, hors ligne et de façon reproductible - importer des captures scpi-instruments, des fichiers CSV et CSV sigrok et des dossiers d’exécution ngspice/LTspice ; normaliser les unités et les signes ; mesurer RMS, fréquence, rapport cyclique, montée/descente, dépassement, établissement, ondulation et retard sur des fenêtres déclarées ; aligner sur des marqueurs déclarés ou par corrélation croisée bornée ; décider de chaque critère selon sa règle et son incertitude déclarées (réussi, échoué ou incomplet) et rédiger un rapport avec superpositions, écarts, conditions et liens vers les sources."
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md]

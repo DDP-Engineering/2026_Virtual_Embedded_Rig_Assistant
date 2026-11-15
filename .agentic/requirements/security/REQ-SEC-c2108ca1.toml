@@ -14,7 +14,7 @@ verification = "Classify setsupplyvoltage and -H/--high-voltage in short, long, 
 
 affected_paths = ["05_Software/plugins/microchip-pymcuprog/plugin.yaml", "05_Software/src/libraries/shared/src/pymcuprog-options.ts"]
 
-linked_tests = ["05_Software/tests/integration/microchip-pymcuprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/microchip-pymcuprog.test.ts"]
 
 
 spec = ""

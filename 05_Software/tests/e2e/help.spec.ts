@@ -74,3 +74,20 @@ test("F1 opens the page of the current screen and About stays in Settings", asyn
   await expect(page.locator('[data-settings-section="about"] [data-about]')).toHaveCount(1);
   await expect(page.locator('[data-settings-section="about"]')).toContainText("Version");
 });
+
+test("the page list stays in place while a long help page scrolls", async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 700 });
+  await page.goto(url);
+  await page.locator('[data-action="show-help"]').click();
+  await page.locator('.help-pages [data-help-page="troubleshooting"]').click();
+  await expect(page.locator('[data-help-current="troubleshooting"] h1')).toBeVisible();
+  const list = page.locator(".help-pages");
+  const before = await list.boundingBox();
+  await page.locator('[data-help-current="troubleshooting"]').hover();
+  await page.mouse.wheel(0, 600);
+  await expect(page.locator('[data-help-current="troubleshooting"] h1')).not.toBeInViewport();
+  expect(await page.locator(".help-page").evaluate((article) => article.scrollTop)).toBeGreaterThan(0);
+  expect((await list.boundingBox())?.y).toBe(before?.y);
+  await expect(page.locator(".page-title")).toBeInViewport();
+  await expect(page.locator('.help-pages [data-help-page="index"]')).toBeInViewport();
+});

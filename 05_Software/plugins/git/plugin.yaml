@@ -1,9 +1,20 @@
 format: 1
 id: git
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Git
 summary: Read the workbench Git history freely; commit, branch and contact remotes with approval.
 description: Inspect and change the workbench Git repository. Read history, diffs and blame freely; stage, commit, manage branches and contact remotes with approval. Use for version-control questions and tasks.
+translations:
+  ro:
+    summary: "Citește liber istoricul Git al workbenchului; fă commit, lucrează cu branch-uri și contactează remote-uri cu aprobare."
+    description: "Inspectează și modifică depozitul Git al workbenchului. Citește liber istoricul, diferențele și blame; fă staging și commit, administrează branch-uri și contactează remote-uri cu aprobare. Folosește-l pentru întrebări și sarcini de versionare."
+  de:
+    summary: "Den Git-Verlauf der Workbench frei lesen; Commits, Branches und Kontakt zu Remotes mit Freigabe."
+    description: "Das Git-Repository der Workbench untersuchen und ändern. Verlauf, Diffs und Blame frei lesen; Staging, Commits, Branch-Verwaltung und Kontakt zu Remotes mit Freigabe. Für Fragen und Aufgaben der Versionsverwaltung."
+  fr:
+    summary: "Lisez librement l’historique Git du banc de travail ; commits, branches et dépôts distants avec approbation."
+    description: "Examinez et modifiez le dépôt Git du banc de travail. Lisez librement l’historique, les diffs et le blame ; indexez, committez, gérez les branches et contactez les dépôts distants avec approbation. Pour les questions et les tâches de gestion de versions."
 ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
 docs: [README.md]

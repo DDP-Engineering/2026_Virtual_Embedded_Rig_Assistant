@@ -5,12 +5,14 @@ import {
   catalogUrl,
   type PluginCatalogView,
   type PluginPlatform,
+  pluginText,
   type SettingsSnapshot,
 } from "@vera/shared";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { PluginDetails, reviewHelp } from "./plugin-contents.js";
 import { CatalogDependencies } from "./plugin-dependencies.js";
 import { isNewCatalogEntry } from "./plugin-library.js";
 import { MaturityBadge, pluginActivityLabels } from "./plugin-library-controls.js";
@@ -158,7 +160,6 @@ function CatalogChannelSetting({ changed }: { changed: () => void }) {
         <option value="stable">{t("plugins.catalog.channels.stable")}</option>
         <option value="pre-release">{t("plugins.catalog.channels.pre-release")}</option>
       </select>
-      <p className="muted">{t("plugins.catalog.channelHint")}</p>
       {error !== undefined && <ErrorMessage error={error} />}
     </div>
   );
@@ -201,22 +202,66 @@ export function CatalogItem({
   /** `programs`: Install with dependencies also installs the programs of every installed plugin. */
   install: (id: string, programs: boolean) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  // The package itself, read only when the details open: everything the review shows, before install.
+  const preview = useQuery({
+    queryKey: ["plugins", "catalogPreview", plugin.id, plugin.sha256],
+    queryFn: () => api.invoke("plugins.catalogPreview", { id: plugin.id }),
+    enabled: open,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  });
+  const dependencies = <CatalogDependencies entry={plugin} platform={platform} installed={installed} />;
   const unsupported = platform !== undefined && !plugin.platforms.includes(platform);
   const risky = plugin.risk === "device-write" || plugin.risk === "irreversible";
   return (
     <li className="plugin-card" data-catalog-plugin={plugin.id}>
-      <p className="plugin-heading">
-        <strong>{plugin.name}</strong>
-        {isNewCatalogEntry(plugin.addedAt) && (
-          <span className="risk-badge">{t("plugins.library.newBadge")}</span>
-        )}
-        <span>{plugin.version}</span>
-        <MaturityBadge version={plugin.version} />
-        <span className="risk-badge" data-tier={plugin.tier}>
-          {plugin.tier === "official" ? t("plugins.tier.official") : t("plugins.tier.community")}
-        </span>
-      </p>
+      <div className="plugin-card-top">
+        <p className="plugin-heading">
+          <strong>{plugin.name}</strong>
+          {isNewCatalogEntry(plugin.addedAt) && (
+            <span className="risk-badge">{t("plugins.library.newBadge")}</span>
+          )}
+          <span>{plugin.version}</span>
+          <MaturityBadge version={plugin.version} />
+          <span className="risk-badge" data-tier={plugin.tier}>
+            {plugin.tier === "official" ? t("plugins.tier.official") : t("plugins.tier.community")}
+          </span>
+        </p>
+        <div className="workbench-actions plugin-top-actions">
+          {!plugin.installed && (
+            <>
+              <button
+                type="button"
+                data-action="catalog-install"
+                disabled={busy}
+                onClick={() => install(plugin.id, false)}
+              >
+                {t("plugins.catalog.installAction")}
+              </button>
+              <button
+                type="button"
+                data-action="catalog-install-all"
+                disabled={busy}
+                onClick={() => install(plugin.id, true)}
+              >
+                {t("plugins.catalog.installWithDependencies")}
+              </button>
+            </>
+          )}
+          {plugin.update && (
+            <button
+              type="button"
+              data-action="catalog-update"
+              disabled={busy}
+              onClick={() => install(plugin.id, false)}
+            >
+              {t("plugins.catalog.update", { version: plugin.version })}
+            </button>
+          )}
+        </div>
+      </div>
       <p className="muted">
         <code>{plugin.id}</code>
         <span> · {plugin.ecosystem}</span>
@@ -227,7 +272,7 @@ export function CatalogItem({
           </span>
         )}
       </p>
-      <p>{plugin.summary}</p>
+      <p>{pluginText(plugin, i18n.language).summary}</p>
       {unsupported && (
         <p role="note" data-catalog-warning="platform">
           {t("plugins.catalog.platformWarning", { platforms: plugin.platforms.join(", ") })}
@@ -245,43 +290,41 @@ export function CatalogItem({
           {t("plugins.catalog.installed", { version: plugin.installed.version ?? "?" })}
         </p>
       )}
-      <details>
-        <summary>{t("plugins.library.details")}</summary>
-        <PluginDiscoveryFacts entry={plugin} />
-        <CatalogDependencies entry={plugin} platform={platform} installed={installed} />
+      <details className="plugin-details" open={open}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: summary is the native disclosure control; React owns open. */}
+        <summary
+          data-action="plugin-expand"
+          onClick={(event) => {
+            event.preventDefault();
+            setOpen((value) => !value);
+          }}
+        >
+          {t("plugins.library.details")}
+        </summary>
+        {open && (
+          <div className="plugin-expanded">
+            {preview.isError && <ErrorMessage error={preview.error} />}
+            {preview.data?.manifest ? (
+              <PluginDetails
+                manifest={preview.data.manifest}
+                composition={preview.data.composition}
+                help={reviewHelp(preview.data, i18n.language)}
+                facts={<PluginDiscoveryFacts entry={plugin} />}
+              >
+                <section className="plugin-section" data-plugin-section="dependencies">
+                  {dependencies}
+                </section>
+              </PluginDetails>
+            ) : (
+              <>
+                {preview.isPending && <p className="muted">{t("plugins.details.loading")}</p>}
+                <PluginDiscoveryFacts entry={plugin} />
+                {dependencies}
+              </>
+            )}
+          </div>
+        )}
       </details>
-      <div className="workbench-actions">
-        {!plugin.installed && (
-          <>
-            <button
-              type="button"
-              data-action="catalog-install"
-              disabled={busy}
-              onClick={() => install(plugin.id, false)}
-            >
-              {t("plugins.catalog.installAction")}
-            </button>
-            <button
-              type="button"
-              data-action="catalog-install-all"
-              disabled={busy}
-              onClick={() => install(plugin.id, true)}
-            >
-              {t("plugins.catalog.installWithDependencies")}
-            </button>
-          </>
-        )}
-        {plugin.update && (
-          <button
-            type="button"
-            data-action="catalog-update"
-            disabled={busy}
-            onClick={() => install(plugin.id, false)}
-          >
-            {t("plugins.catalog.update", { version: plugin.version })}
-          </button>
-        )}
-      </div>
     </li>
   );
 }
@@ -352,8 +395,10 @@ export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCat
       {view?.problem && <CatalogProblem problem={view.problem} />}
       <details className="plugin-catalog-settings">
         <summary>{t("plugins.library.catalogSettings")}</summary>
-        <CatalogUrl changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
-        <CatalogChannelSetting changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
+        <div className="catalog-settings-row">
+          <CatalogUrl changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
+          <CatalogChannelSetting changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
+        </div>
       </details>
     </section>
   );

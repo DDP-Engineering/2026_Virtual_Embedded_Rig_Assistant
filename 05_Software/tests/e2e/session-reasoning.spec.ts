@@ -100,6 +100,8 @@ test("native reasoning persists per session and sends selected or provider-defau
       },
       { folder, port: address.port },
     );
+    // Open it from the sidebar so the renderer shows it active even if it missed the IPC create.
+    await page.locator(".workbench-group-name", { hasText: "Reasoning workbench" }).click();
     await page.locator('[data-action="new-session"]').click();
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     if (!id) throw Error("Missing session");
@@ -127,10 +129,9 @@ test("native reasoning persists per session and sends selected or provider-defau
     await running().close();
     app = undefined;
     page = await boot();
-    await page.evaluate(
-      async (folder) => (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.open", { folder }),
-      folder,
-    );
+    // Reopen it as a user does: the sidebar entry opens and expands it. A direct IPC open right after
+    // the restart can land before the renderer listens and leave the entry collapsed.
+    await page.locator(".workbench-group-name", { hasText: "Reasoning workbench" }).click();
     await page.locator(`[data-session="${id}"]`).click();
     picker = page.locator("[data-reasoning-picker]");
     await expect(picker).toHaveValue("high");

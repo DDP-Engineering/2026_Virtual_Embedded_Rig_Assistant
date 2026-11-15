@@ -14,7 +14,7 @@ verification = "Flash with runners.yaml argument --tool-opt=-script x, a HEX edi
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/flash.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

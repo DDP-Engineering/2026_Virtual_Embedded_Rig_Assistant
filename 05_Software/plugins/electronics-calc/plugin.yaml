@@ -1,9 +1,20 @@
 format: 1
 id: electronics-calc
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Electronics calculations
 summary: Reproducible electrical and thermal calculations with units, tolerances and a report, fully offline.
 description: Reproducible electrical and thermal calculations with explicit units, assumptions, formulas and limits - Ohm's law, dividers, RC filters, regulator, MOSFET, diode and passive losses, junction temperatures, worst-case and Monte Carlo tolerance analysis, and a JSON/Markdown report. Use for any number a design decision rests on; it runs offline and touches no hardware.
+translations:
+  ro:
+    summary: "Calcule electrice și termice reproductibile, cu unități, toleranțe și raport, complet offline."
+    description: "Calcule electrice și termice reproductibile, cu unități, ipoteze, formule și limite explicite - legea lui Ohm, divizoare, filtre RC, pierderi în regulatoare, MOSFET-uri, diode și componente pasive, temperaturi de joncțiune, analiza toleranțelor în cel mai defavorabil caz și Monte Carlo și un raport JSON/Markdown. Folosește-l pentru orice număr pe care se sprijină o decizie de proiectare; rulează offline și nu atinge hardware."
+  de:
+    summary: "Reproduzierbare elektrische und thermische Berechnungen mit Einheiten, Toleranzen und Bericht, vollständig offline."
+    description: "Reproduzierbare elektrische und thermische Berechnungen mit expliziten Einheiten, Annahmen, Formeln und Grenzen - ohmsches Gesetz, Spannungsteiler, RC-Filter, Verluste in Reglern, MOSFETs, Dioden und passiven Bauteilen, Sperrschichttemperaturen, Worst-Case- und Monte-Carlo-Toleranzanalyse sowie ein JSON/Markdown-Bericht. Für jede Zahl, auf der eine Designentscheidung beruht; es läuft offline und berührt keine Hardware."
+  fr:
+    summary: "Calculs électriques et thermiques reproductibles avec unités, tolérances et rapport, entièrement hors ligne."
+    description: "Calculs électriques et thermiques reproductibles avec unités, hypothèses, formules et limites explicites - loi d’Ohm, ponts diviseurs, filtres RC, pertes des régulateurs, MOSFET, diodes et composants passifs, températures de jonction, analyse de tolérances au pire cas et par Monte Carlo, et rapport JSON/Markdown. Pour toute valeur sur laquelle repose une décision de conception ; fonctionne hors ligne et ne touche à aucun matériel."
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://www.ti.com/lit/an/spra953d/spra953d.pdf"]

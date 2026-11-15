@@ -14,7 +14,7 @@ verification = "Manual: the opt-in VERA_POWER_REAL_PYTHON test (real pyjoulescop
 
 affected_paths = ["05_Software/plugins/power-profiler/plugin.yaml", "05_Software/plugins/power-profiler/scripts/power_support/usb.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

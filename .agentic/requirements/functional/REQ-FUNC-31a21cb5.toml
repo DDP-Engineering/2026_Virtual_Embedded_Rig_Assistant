@@ -14,7 +14,7 @@ verification = "Report a virtual run with a hil-testing result fixture: the comp
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/report.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

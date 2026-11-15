@@ -14,7 +14,7 @@ verification = "A test gives a timestamp file with clock host-receive and one wi
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/segment.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

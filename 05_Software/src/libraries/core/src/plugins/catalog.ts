@@ -18,7 +18,7 @@ import {
   type VeraError,
   veraError,
 } from "@vera/shared";
-import type { PluginStore } from "./store.js";
+import { type PluginStore, previewPluginZip } from "./store.js";
 
 export interface PluginCatalogOptions {
   store: PluginStore;
@@ -312,6 +312,24 @@ export class PluginCatalog {
    */
   review(id: string, signal?: AbortSignal): Promise<PluginCatalogReview> {
     return this.serial(() => this.download(id, signal));
+  }
+
+  /**
+   * The entry's package read in memory for its details before install, verified against the index like a
+   * review. Nothing is written, so a review in progress keeps its zip.
+   */
+  async preview(id: string, signal?: AbortSignal): Promise<PluginReview> {
+    const { entry, origin } = this.entry(await this.snapshot(false, signal), id);
+    let read: { bytes: Uint8Array; over: boolean };
+    try {
+      read = await this.read(origin, entry.url, entry.bytes, signal);
+    } catch (error) {
+      if (error instanceof Unreachable) throw failure("OFFLINE", "download");
+      throw error;
+    }
+    if (read.over || read.bytes.length !== entry.bytes || sha256(read.bytes) !== entry.sha256)
+      throw failure("INVALID", "sha256");
+    return previewPluginZip(read.bytes, entry.url);
   }
   private async download(id: string, signal?: AbortSignal): Promise<PluginCatalogReview> {
     const { entry, origin } = this.entry(await this.snapshot(false, signal), id);

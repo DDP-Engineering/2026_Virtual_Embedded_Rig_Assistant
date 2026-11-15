@@ -35,10 +35,10 @@ Everything below `07_Delivery/` except `README.md` is git-ignored.
 07_Delivery/
   README.md
   vera-<version>/
-    vera-windows-x64/   VERA installer (.exe), portable zip, SHA256SUMS
-    vera-linux-x64/     AppImage, deb, SHA256SUMS
+    vera-windows-x64/   VERA installer (.exe), portable zip, RELEASE-NOTES.md, SHA256SUMS
+    vera-linux-x64/     AppImage, deb, RELEASE-NOTES.md, SHA256SUMS
     plugins/            <id>-<version>.zip, index.json, index-stable.json, index-pre-release.json
-                        (+ signatures when signed), vera-plugins-<version>.zip, SHA256SUMS
+                        (+ signatures when signed), vera-plugins-<version>.zip, LICENSE.txt, SHA256SUMS
     plugin-deps/        vera-plugin-deps-<version>-windows-x64.zip, …-linux-x64.zip, SHA256SUMS
     delivery.json       what was built: version, commit, host per part, files with SHA-256 and size
 ```

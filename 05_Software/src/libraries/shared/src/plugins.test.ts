@@ -4,6 +4,7 @@ import {
   pluginHighestRisk,
   pluginMaturity,
   pluginOperations,
+  pluginText,
   validatePluginManifest,
 } from "./plugins.js";
 
@@ -305,4 +306,46 @@ it("summarises each program's dependency in name order and accepts a declared do
   for (const bad of [0, 1.5, "7"])
     expect(paths(sized(bad))[0], String(bad)).toMatch(/^programs\.cli\.install/);
   expect(paths(sized(7))).toEqual([]);
+});
+
+// REQ-DATA-b8d0a387
+it("accepts ro, de and fr catalog texts and refuses other languages, fields and lengths", () => {
+  const translations = {
+    fr: {
+      summary: "Identifier et flasher les puces Espressif.",
+      description: "Identifier, flasher et effacer.",
+    },
+    de: { summary: "Espressif-Chips erkennen und flashen.", description: "Erkennen, flashen und löschen." },
+  };
+  expect(validatePluginManifest({ ...canonical, translations }).issues).toEqual([]);
+  for (const bad of [
+    { it: translations.fr },
+    { fr: { ...translations.fr, name: "x" } },
+    { fr: { ...translations.fr, summary: "x".repeat(161) } },
+    { fr: { summary: "Only a summary." } },
+  ])
+    expect(validatePluginManifest({ ...canonical, translations: bad }).issues.length).toBeGreaterThan(0);
+});
+
+// REQ-UX-2cfd762a
+it("picks the catalog texts of the interface language, else the English ones", () => {
+  const fr = { summary: "Résumé.", description: "Description en français." };
+  const manifest = { ...canonical, translations: { fr } };
+  expect(pluginText(manifest, "fr")).toEqual(fr);
+  expect(pluginText(manifest, "de")).toEqual({
+    summary: canonical.summary,
+    description: canonical.description,
+  });
+  expect(pluginText(canonical, "en")).toEqual({
+    summary: canonical.summary,
+    description: canonical.description,
+  });
+});
+
+it("accepts an SPDX license identifier and refuses free text", () => {
+  expect(
+    validatePluginManifest({ ...canonical, license: "LicenseRef-PolyForm-Noncommercial-1.0.0" }).issues,
+  ).toEqual([]);
+  expect(validatePluginManifest({ ...canonical, license: "MIT" }).issues).toEqual([]);
+  expect(paths({ ...canonical, license: "All rights reserved" })).toContain("license");
 });

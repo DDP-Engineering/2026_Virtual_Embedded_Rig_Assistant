@@ -19,6 +19,7 @@ import { readDocTool, searchDocsTool } from "./documents.js";
 import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
 import { grepTool } from "./grep.js";
+import { helpTool } from "./help.js";
 import { listTool } from "./list.js";
 import { loadSkillTool } from "./load-skill.js";
 import { parseLogTool } from "./parse-log.js";
@@ -61,6 +62,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   motor_drives: motorDrivesTool,
   power_quality: powerQualityTool,
   lighting_design: lightingDesignTool,
+  help: helpTool,
 };
 /** Tools offered only when the host composes a program host. */
 export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];

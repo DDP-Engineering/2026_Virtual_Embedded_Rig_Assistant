@@ -14,7 +14,7 @@ verification = "Helper test: a job with --real-budget-s 10 and a fake CLI that h
 
 affected_paths = ["05_Software/plugins/wokwi/scripts/wokwi_support/run.py"]
 
-linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wokwi.test.ts"]
 
 
 spec = "specs/REQ-DATA-d985bb3d.md"

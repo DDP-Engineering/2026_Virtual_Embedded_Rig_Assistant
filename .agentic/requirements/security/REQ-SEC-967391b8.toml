@@ -14,7 +14,7 @@ verification = "Classify each command family in help, mixed-case and long spelli
 
 affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml", "05_Software/src/libraries/shared/src/stm32-options.ts", "05_Software/plugins/catalog.yaml", "05_Software/tests/fixtures/stm32/"]
 
-linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/stm32-cubeprog.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "An op gives v(out) 2.163934 V; a dc sweep of V1 has the axis `v-
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/raw.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

@@ -1,9 +1,20 @@
 format: 1
 id: can-dbc
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CAN databases (cantools)
 summary: Decode CAN logs into named signals with DBC, KCD, SYM or ARXML databases using cantools.
 description: Decode CAN log files (ASC, BLF, candump) with DBC, KCD, SYM or ARXML databases, and dump, list or convert those databases with cantools. Use to turn captured frames into named signals with units.
+translations:
+  ro:
+    summary: "Decodează loguri CAN în semnale cu nume, cu baze de date DBC, KCD, SYM sau ARXML, folosind cantools."
+    description: "Decodează fișiere de log CAN (ASC, BLF, candump) cu baze de date DBC, KCD, SYM sau ARXML și afișează, listează sau convertește acele baze de date cu cantools. Folosește-l pentru a transforma cadrele capturate în semnale cu nume și unități."
+  de:
+    summary: "CAN-Logs mit DBC-, KCD-, SYM- oder ARXML-Datenbanken über cantools in benannte Signale dekodieren."
+    description: "CAN-Logdateien (ASC, BLF, candump) mit DBC-, KCD-, SYM- oder ARXML-Datenbanken dekodieren und diese Datenbanken mit cantools ausgeben, auflisten oder konvertieren. Verwenden Sie es, um erfasste Frames in benannte Signale mit Einheiten zu übersetzen."
+  fr:
+    summary: "Décodez des journaux CAN en signaux nommés avec des bases de données DBC, KCD, SYM ou ARXML grâce à cantools."
+    description: "Décodez des fichiers journaux CAN (ASC, BLF, candump) avec des bases de données DBC, KCD, SYM ou ARXML, et affichez, listez ou convertissez ces bases de données avec cantools. Pour transformer des trames capturées en signaux nommés avec leurs unités."
 ecosystem: can
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://cantools.readthedocs.io/en/latest/"]
