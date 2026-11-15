@@ -17,7 +17,7 @@ Mesajul **Acest spațiu de lucru este deschis doar pentru citire deoarece alt pr
 1. Deschide fila **Fișiere** și uită-te la starea documentului.
 2. **Necesită OCR**: PDF-ul este o scanare fără text. Folosește un PDF cu strat de text.
 3. **Eșuat** sau **Neacceptat**: motivul este afișat pe document și în **Proprietăți**. Fișierele vechi `.doc`, `.ppt` și `.xls` nu sunt indexate.
-4. Documentul nu este marcat deloc: se află în afara folderelor indexate. Adaugă-i folderul la **Editează workbenchul** → **Documente și RAG** și verifică dacă `.vera/.veraignore` nu îl exclude.
+4. Documentul nu este marcat deloc: se află în afara folderelor indexate. Adaugă-i folderul la **Editează workbenchul** → **Documente și RAG** și verifică dacă nu îl exclude `.vera/.veraignore` sau, cu **Folosește .gitignore** bifat, un fișier `.gitignore`.
 5. Selectează **Reindexează**. Dacă indexarea s-a oprit, selectează **Repornește indexarea**.
 
 Vezi [Documente și căutare](documents-and-search.md).

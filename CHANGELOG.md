@@ -6,6 +6,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Added
+
+- The document selection, its preview and the Files tab honor the workbench's .gitignore files (switch on by default).
+
 ## [0.2.0] - 2026-11-15
 
 ### Added

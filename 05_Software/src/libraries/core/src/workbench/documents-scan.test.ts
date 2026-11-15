@@ -75,25 +75,35 @@ it("does not follow symbolic links while scanning", async () => {
 // REQ-FUNC-ad5868a2
 it("previews what the ingest selection admits, with modern office files indexed and legacy ones pending", async () => {
   const root = await bench();
-  expect(await previewDocuments(root, { include: ["datasheets/**"], exclude: [] }, ignored)).toEqual({
+  expect(
+    await previewDocuments(root, { include: ["datasheets/**"], exclude: [], gitignore: false }, ignored),
+  ).toEqual({
     files: 2,
     bytes: 26,
     officePending: 0,
     truncated: false,
   });
-  expect(await previewDocuments(root, { include: ["datasheets/**", "notes"], exclude: [] }, ignored)).toEqual(
-    { files: 4, bytes: 43, officePending: 1, truncated: false },
-  );
   expect(
     await previewDocuments(
       root,
-      { include: ["datasheets/**", "notes/**"], exclude: ["notes/deep"] },
+      { include: ["datasheets/**", "notes"], exclude: [], gitignore: false },
+      ignored,
+    ),
+  ).toEqual({ files: 4, bytes: 43, officePending: 1, truncated: false });
+  expect(
+    await previewDocuments(
+      root,
+      { include: ["datasheets/**", "notes/**"], exclude: ["notes/deep"], gitignore: false },
       ignored,
     ),
   ).toEqual({ files: 4, bytes: 43, officePending: 0, truncated: false });
   // Source code is not a document type and is not indexed (TASK-e5310cdb).
-  expect((await previewDocuments(root, { include: ["src/**"], exclude: [] }, ignored)).files).toBe(0);
-  await expect(previewDocuments(root, { include: ["../**"], exclude: [] }, ignored)).rejects.toMatchObject({
+  expect(
+    (await previewDocuments(root, { include: ["src/**"], exclude: [], gitignore: false }, ignored)).files,
+  ).toBe(0);
+  await expect(
+    previewDocuments(root, { include: ["../**"], exclude: [], gitignore: false }, ignored),
+  ).rejects.toMatchObject({
     code: "INVALID",
   });
 });
@@ -145,7 +155,9 @@ it("skips unreadable folders as a partial scan instead of failing", async () => 
     const scan = await scanDocuments(root, ignored);
     expect(scan.truncated).toBe(true);
     expect(scan.folders.map((f) => f.path)).toEqual(["datasheets", "notes"]);
-    expect((await previewDocuments(root, { include: ["**"], exclude: [] }, ignored)).truncated).toBe(true);
+    expect(
+      (await previewDocuments(root, { include: ["**"], exclude: [], gitignore: false }, ignored)).truncated,
+    ).toBe(true);
   } finally {
     await chmod(join(root, "locked"), 0o700);
   }
@@ -154,7 +166,7 @@ it("skips unreadable folders as a partial scan instead of failing", async () => 
 // REQ-FUNC-ad5868a2
 it("previews nothing for an empty selection and skips files over the ingest size limits", async () => {
   const root = await bench();
-  expect(await previewDocuments(root, { include: [], exclude: [] }, ignored)).toEqual({
+  expect(await previewDocuments(root, { include: [], exclude: [], gitignore: false }, ignored)).toEqual({
     files: 0,
     bytes: 0,
     officePending: 0,
@@ -163,10 +175,16 @@ it("previews nothing for an empty selection and skips files over the ingest size
   const large = await open(join(root, "datasheets/huge.txt"), "w");
   await large.truncate(TEXT_LIMIT + 1);
   await large.close();
-  expect((await previewDocuments(root, { include: ["datasheets/**"], exclude: [] }, ignored)).files).toBe(2);
   expect(
-    (await previewDocuments(root, { include: ["datasheets/**"], exclude: [] }, ignored, { maxEntries: 2 }))
-      .truncated,
+    (await previewDocuments(root, { include: ["datasheets/**"], exclude: [], gitignore: false }, ignored))
+      .files,
+  ).toBe(2);
+  expect(
+    (
+      await previewDocuments(root, { include: ["datasheets/**"], exclude: [], gitignore: false }, ignored, {
+        maxEntries: 2,
+      })
+    ).truncated,
   ).toBe(true);
 });
 

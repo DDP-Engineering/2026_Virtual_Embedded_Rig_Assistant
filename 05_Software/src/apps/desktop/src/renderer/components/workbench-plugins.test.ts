@@ -61,6 +61,8 @@ function stub(wb: WorkbenchSnapshot, entries: PluginSummary[] = [echo]) {
     if (channel === "workbench.inspect")
       return { folder: "/new-bench", name: "New bench", existing: false, instructions: null, skills: [] };
     if (channel === "workbench.scanDocs") return { folders: [] };
+    if (channel === "workbench.previewDocs")
+      return { files: 0, bytes: 0, officePending: 0, truncated: false };
     if (channel === "workbench.create")
       return {
         ...wb,
@@ -345,6 +347,30 @@ it.each([false, true])(
     expect(calls("plugins.list").at(-1)?.[1]).toEqual({});
   },
 );
+
+// REQ-UX-adae0c2f
+it("saves the Use .gitignore switch with the editor's patch", async () => {
+  const wb = snapshot();
+  stub(wb);
+  await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close: vi.fn() }));
+  await click('[data-project-section="documents"]');
+  expect(container.querySelector<HTMLInputElement>("[data-docs-gitignore] input")?.checked).toBe(true);
+  await click("[data-docs-gitignore] input");
+  await click("[data-project-save]");
+  expect(calls("workbench.config.update")[0]?.[1]).toMatchObject({ patch: { docs: { gitignore: false } } });
+});
+
+it.each([true, false])("creates a workbench with Use .gitignore=%s", async (gitignore) => {
+  stub(snapshot());
+  await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
+  await click('[data-action="choose-create"]');
+  await click('[data-project-section="documents"]');
+  expect(container.querySelector<HTMLInputElement>("[data-docs-gitignore] input")?.checked).toBe(true);
+  if (!gitignore) await click("[data-docs-gitignore] input");
+  await click('[data-action="create-workbench"]');
+  expect(calls("workbench.scanDocs")[0]?.[1]).toEqual({ folder: "/new-bench", gitignore: true });
+  expect(calls("workbench.create")[0]?.[1]).toMatchObject({ config: { docs: { gitignore } } });
+});
 
 it("retains the selected draft after a failed save and can retry", async () => {
   const wb = snapshot();

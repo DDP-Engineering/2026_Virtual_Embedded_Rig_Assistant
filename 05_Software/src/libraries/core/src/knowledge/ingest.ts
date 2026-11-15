@@ -73,6 +73,9 @@ function watchTargets(root: string, docs: WorkbenchConfig["docs"]): string[] {
   } catch {
     // Invalid selection remains a reconcile error; never expand its monitoring outside the root.
   }
+  // The .gitignore files in the folders above each target apply to it; the ones inside a target
+  // are watched with it.
+  const gitignores = docs.gitignore ? [join(root, ".gitignore")] : [];
   const roots = include.map((pattern) => {
     const parts = picomatch.scan(pattern).base.split("/").filter(Boolean);
     // An explicit nested target must not bypass followSymlinks=false on its ancestors.
@@ -84,11 +87,20 @@ function watchTargets(root: string, docs: WorkbenchConfig["docs"]): string[] {
         if (!missing(error)) return ancestor;
         break;
       }
+      if (docs.gitignore) gitignores.push(join(ancestor, ".gitignore"));
     }
     return join(root, ...parts);
   });
-  return [...new Set([...roots, join(root, ".vera/workbench.yaml"), join(root, ".vera/.veraignore")])].sort();
+  return [
+    ...new Set([
+      ...roots,
+      ...gitignores,
+      join(root, ".vera/workbench.yaml"),
+      join(root, ".vera/.veraignore"),
+    ]),
+  ].sort();
 }
+const isGitignore = (rel: string) => rel === ".gitignore" || rel.endsWith("/.gitignore");
 
 /** One serial ingest queue owned by one writable workbench, independent of session writes. */
 export class Ingester {
@@ -107,6 +119,8 @@ export class Ingester {
   private closePromise: Promise<void> | undefined;
   private ignored = createIgnoreRules();
   private ignoreText = "";
+  /** Counts .gitignore edits, so the watcher registers the folders an edit lets back in. */
+  private gitignoreEdits = 0;
   private patterns = "";
   private matches = (_path: string) => false;
   private excluded = (_path: string) => false;
@@ -121,11 +135,11 @@ export class Ingester {
     return skipEntry(rel, directory, this.ignored, this.excluded);
   }
   private refreshPolicy(): void {
-    const policy = readIgnorePolicy(this.options.root);
+    const docs = this.options.config().docs;
+    const policy = readIgnorePolicy(this.options.root, docs.gitignore);
     this.ignoreText = policy.text;
     this.ignored = policy.ignored;
-    const docs = this.options.config().docs;
-    const key = JSON.stringify([docs.include, docs.exclude]);
+    const key = JSON.stringify([docs.include, docs.exclude, docs.gitignore]);
     if (key === this.patterns) return;
     this.patterns = key;
     try {
@@ -168,6 +182,8 @@ export class Ingester {
         )
           return false;
         if (!rel || targets.includes(path)) return false;
+        if (this.options.config().docs.gitignore && isGitignore(rel) && !stats?.isDirectory())
+          return this.ignored(rel);
         // Excluded folders are never registered, so their contents are not walked or watched.
         if (stats?.isDirectory()) return this.skipped(rel, true);
         if (stats?.isFile()) return this.skipped(rel, false);
@@ -186,6 +202,10 @@ export class Ingester {
       const rel = relative(this.options.root, path).split(sep).join("/");
       const policyPath = process.platform === "win32" ? rel.toLowerCase() : rel;
       if (policyPath === ".vera/.veraignore" || policyPath === ".vera/workbench.yaml") {
+        this.refreshPolicy();
+        this.request();
+      } else if (this.options.config().docs.gitignore && isGitignore(rel) && !this.ignored(rel)) {
+        this.gitignoreEdits++;
         this.refreshPolicy();
         this.request();
       } else if (
@@ -218,7 +238,7 @@ export class Ingester {
         return [target, "missing"];
       }
     });
-    return JSON.stringify([roots, this.ignoreText, this.patterns]);
+    return JSON.stringify([roots, this.ignoreText, this.patterns, this.gitignoreEdits]);
   }
   private refreshWatcher(): void {
     const next = watchTargets(this.options.root, this.options.config().docs);
@@ -255,7 +275,7 @@ export class Ingester {
   request(): void {
     if (this.closed) return;
     const docs = this.options.config().docs;
-    if (this.patterns !== JSON.stringify([docs.include, docs.exclude])) this.refreshPolicy();
+    if (this.patterns !== JSON.stringify([docs.include, docs.exclude, docs.gitignore])) this.refreshPolicy();
     this.refreshWatcher();
     this.requested = true;
     if (this.timer) clearTimeout(this.timer);

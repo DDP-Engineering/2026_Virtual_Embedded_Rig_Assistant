@@ -5,6 +5,8 @@ export const workbenchIdSchema = z.string().regex(/^wb_[0-7][0-9A-HJKMNP-TV-Z]{2
 const docs = z.looseObject({
   include: z.array(z.string()).default(["docs/**"]),
   exclude: z.array(z.string()).default([]),
+  /** The root and nested .gitignore files also exclude paths from indexing and the Files tab. */
+  gitignore: z.boolean().default(true),
 });
 export const workbenchEmbeddingsSchema = z
   .strictObject({
@@ -47,7 +49,7 @@ export const workbenchSchema = z.looseObject({
     chunkSize: 1400,
     overlap: 200,
   }),
-  docs: docs.default({ include: ["docs/**"], exclude: [] }),
+  docs: docs.default({ include: ["docs/**"], exclude: [], gitignore: true }),
   retrieval: workbenchRetrievalSchema.default({ results: 8, mode: "hybrid" }),
   skills: disabled.default({ disabled: [] }),
   tools: disabled.default({ disabled: [] }),
@@ -66,7 +68,11 @@ export const workbenchPatchSchema = z.strictObject({
   name: z.string().trim().min(1).max(80).optional(),
   description: z.string().optional(),
   docs: z
-    .strictObject({ include: z.array(z.string()).optional(), exclude: z.array(z.string()).optional() })
+    .strictObject({
+      include: z.array(z.string()).optional(),
+      exclude: z.array(z.string()).optional(),
+      gitignore: z.boolean().optional(),
+    })
     .optional(),
   retrieval: z
     .strictObject({

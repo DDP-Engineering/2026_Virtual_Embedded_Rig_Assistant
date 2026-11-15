@@ -33,7 +33,7 @@ it("validates format1, defaults and retains nested extensions with warning paths
     vendor: { enabled: true },
     agent: { extension: 42 },
   });
-  expect(config.docs).toEqual({ include: ["docs/**"], exclude: [] });
+  expect(config.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: true });
   expect(config.agent).toEqual({ permission_mode: "ask", model: null, extension: 42 });
   expect(config.vendor).toEqual({ enabled: true });
   expect(warnings(config)).toEqual([
@@ -84,4 +84,14 @@ it("warns about enabled plugins that are not installed and unknown plugins keys"
     { code: "UNKNOWN_KEY", path: "plugins.other" },
     { code: "UNKNOWN_NAME", path: "plugins.enabled.ghost" },
   ]);
+});
+
+// REQ-UX-adae0c2f
+it("turns docs.gitignore on by default and lets a patch turn it off", () => {
+  const config = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
+  expect(config.docs.gitignore).toBe(true);
+  const off = mergeWorkbench(config, { docs: { gitignore: false } });
+  expect(off.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: false });
+  expect(warnings(off)).toEqual([]);
+  expect(workbenchPatchSchema.safeParse({ docs: { gitignore: "yes" } }).success).toBe(false);
 });

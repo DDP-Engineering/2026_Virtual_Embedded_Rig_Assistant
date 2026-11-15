@@ -796,6 +796,7 @@
     "addedByHand": "manuell hinzugefügt",
     "truncated": "Ein Teil des Ordners konnte nicht durchsucht werden (zu groß oder nicht lesbar).",
     "addFolder": "Ordner hinzufügen…",
+    "gitignore": ".gitignore verwenden",
     "preview": "Zu indizierende Dokumente: {{count}} ({{size}}).",
     "officePending": "Ältere Office- und RTF-Dateien werden nicht indiziert: {{count}}.",
     "advanced": "Erweitert: Einschluss- und Ausschlussmuster",

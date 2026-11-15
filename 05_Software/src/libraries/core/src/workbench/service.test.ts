@@ -1050,20 +1050,68 @@ it("documentation scan, preview and relative folders apply the folder's ignore r
   await writeFile(join(h.folder, "datasheets/a.pdf"), "%PDF");
   await writeFile(join(h.folder, "drafts/b.pdf"), "%PDF");
   await writeFile(join(h.folder, ".vera/.veraignore"), "drafts/\n");
-  expect((await h.service.scanDocuments(h.folder)).folders.map((f) => f.path)).toEqual(["datasheets"]);
+  expect((await h.service.scanDocuments(h.folder, true)).folders.map((f) => f.path)).toEqual(["datasheets"]);
   expect(
-    (await h.service.previewDocuments(h.folder, { include: ["datasheets/**", "drafts/**"], exclude: [] }))
-      .files,
+    (
+      await h.service.previewDocuments(h.folder, {
+        include: ["datasheets/**", "drafts/**"],
+        exclude: [],
+        gitignore: true,
+      })
+    ).files,
   ).toBe(1);
   expect(await h.service.relativeFolder(h.folder, join(h.folder, "datasheets"))).toBe("datasheets");
   await expect(h.service.relativeFolder(h.folder, join(h.folder, "drafts"))).rejects.toMatchObject({
     code: "DENIED",
   });
   await expect(h.service.relativeFolder(h.folder, "datasheets")).rejects.toMatchObject({ code: "INVALID" });
-  await expect(h.service.scanDocuments(join(h.root, "absent"))).rejects.toMatchObject({ code: "NOT_FOUND" });
-  await expect(h.service.previewDocuments("relative", { include: [], exclude: [] })).rejects.toMatchObject({
+  await expect(h.service.scanDocuments(join(h.root, "absent"), true)).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  await expect(
+    h.service.previewDocuments("relative", { include: [], exclude: [], gitignore: true }),
+  ).rejects.toMatchObject({
     code: "INVALID",
   });
+});
+// REQ-FUNC-eade110e REQ-UX-adae0c2f
+it("writes docs.gitignore on create and save and applies it to the scan and preview", async () => {
+  const h = await harness();
+  const layout: Record<string, string> = {
+    ".gitignore": ".venv/\nhtmlcov/\nbuild/html/\n",
+    ".venv/lib/readme.md": "# venv",
+    "htmlcov/index.html": "<p>coverage</p>",
+    "build/html/index.html": "<p>generated</p>",
+    "build/manual.pdf": "%PDF",
+    "manuals/a.pdf": "%PDF",
+    "manuals/.gitignore": "draft.md\n",
+    "manuals/draft.md": "# below manuals",
+    "notes/draft.md": "# elsewhere",
+  };
+  for (const [path, text] of Object.entries(layout)) {
+    await mkdir(join(h.folder, path, ".."), { recursive: true });
+    await writeFile(join(h.folder, path), text);
+  }
+  const folders = async (gitignore: boolean) =>
+    (await h.service.scanDocuments(h.folder, gitignore)).folders.map((f) => f.path);
+  expect(await folders(true)).toEqual(["build", "manuals", "notes"]);
+  expect(await folders(false)).toEqual([".venv", "build", "htmlcov", "manuals", "notes"]);
+  const files = async (gitignore: boolean) =>
+    (await h.service.previewDocuments(h.folder, { include: ["**"], exclude: [], gitignore })).files;
+  // build/manual.pdf, manuals/a.pdf and notes/draft.md; the nested file drops only manuals/draft.md.
+  expect(await files(true)).toBe(3);
+  expect(await files(false)).toBe(7);
+  try {
+    const created = await h.service.create(h.folder, "Board");
+    expect(created.config.docs.gitignore).toBe(true);
+    expect(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).toContain("gitignore: true");
+    await h.service.updateConfig({ docs: { gitignore: false } });
+    const saved = parseConfig(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8"));
+    expect(saved.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: false });
+    expect(saved.format).toBe(1);
+  } finally {
+    await h.service.close();
+  }
 });
 
 // REQ-FUNC-41f5c03b, REQ-FUNC-0c4bc419

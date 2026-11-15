@@ -17,7 +17,7 @@ Die Meldung **Dieser Arbeitsbereich ist schreibgeschützt, da ein anderer Prozes
 1. Öffnen Sie den Tab **Dateien** und sehen Sie sich den Status des Dokuments an.
 2. **OCR erforderlich**: Das PDF ist ein Scan ohne Text. Verwenden Sie ein PDF mit Textebene.
 3. **Fehlgeschlagen** oder **Nicht unterstützt**: Der Grund wird am Dokument und unter **Eigenschaften** angezeigt. Ältere `.doc`-, `.ppt`- und `.xls`-Dateien werden nicht indiziert.
-4. Das Dokument ist gar nicht gekennzeichnet: Es liegt außerhalb der indizierten Ordner. Fügen Sie seinen Ordner unter **Workbench bearbeiten** → **Dokumente & RAG** hinzu und prüfen Sie, dass `.vera/.veraignore` es nicht ausschließt.
+4. Das Dokument ist gar nicht gekennzeichnet: Es liegt außerhalb der indizierten Ordner. Fügen Sie seinen Ordner unter **Workbench bearbeiten** → **Dokumente & RAG** hinzu und prüfen Sie, dass weder `.vera/.veraignore` noch, wenn **.gitignore verwenden** aktiviert ist, eine `.gitignore`-Datei es ausschließt.
 5. Wählen Sie **Neu indizieren**. Wurde die Indizierung angehalten, wählen Sie **Indexierung neu starten**.
 
 Siehe [Dokumente und Suche](documents-and-search.md).

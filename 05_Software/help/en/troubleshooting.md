@@ -17,7 +17,7 @@ The message **This workbench is open read-only because another process or lock o
 1. Open the **Files** tab and look at the document's status.
 2. **Needs OCR**: the PDF is a scan without text. Use a PDF with a text layer.
 3. **Failed** or **Unsupported**: the reason is shown on the document and in **Properties**. Legacy `.doc`, `.ppt` and `.xls` files are not indexed.
-4. The document is not marked at all: it is outside the indexed folders. Add its folder under **Edit workbench** → **Documents & RAG**, and check that `.vera/.veraignore` does not exclude it.
+4. The document is not marked at all: it is outside the indexed folders. Add its folder under **Edit workbench** → **Documents & RAG**, and check that neither `.vera/.veraignore` nor, with **Use .gitignore** checked, a `.gitignore` file excludes it.
 5. Select **Reindex**. If indexing stopped, select **Restart indexing**.
 
 See [Documents and search](documents-and-search.md).

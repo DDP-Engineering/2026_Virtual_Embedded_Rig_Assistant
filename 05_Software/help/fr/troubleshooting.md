@@ -17,7 +17,7 @@ Le message **Ce banc de travail est ouvert en lecture seule, car un autre proces
 1. Ouvrez l’onglet **Fichiers** et regardez l’état du document.
 2. **OCR requis** : le PDF est une numérisation sans texte. Utilisez un PDF avec une couche de texte.
 3. **Échec** ou **Non pris en charge** : la raison est affichée sur le document et dans **Propriétés**. Les anciens fichiers `.doc`, `.ppt` et `.xls` ne sont pas indexés.
-4. Le document n’a aucun état : il se trouve en dehors des dossiers indexés. Ajoutez son dossier dans **Modifier le banc** → **Documents et RAG**, et vérifiez que `.vera/.veraignore` ne l’exclut pas.
+4. Le document n’a aucun état : il se trouve en dehors des dossiers indexés. Ajoutez son dossier dans **Modifier le banc** → **Documents et RAG**, et vérifiez que ni `.vera/.veraignore` ni, si **Utiliser .gitignore** est coché, un fichier `.gitignore` ne l’exclut.
 5. Sélectionnez **Réindexer**. Si l’indexation s’est arrêtée, sélectionnez **Relancer l’indexation**.
 
 Consultez [Documents et recherche](documents-and-search.md).

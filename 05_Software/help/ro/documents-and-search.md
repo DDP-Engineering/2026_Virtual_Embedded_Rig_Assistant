@@ -12,6 +12,8 @@ Se indexează folderele bifate la **Editează workbenchul** → **Documente și 
 
 Fișierele vechi `.doc`, `.ppt`, `.xls` și RTF nu sunt indexate; salvează-le într-un format modern. Fișierele care se potrivesc cu `.vera/.veraignore` și tot ce se află în `.vera`, `.git` sau `node_modules` nu sunt indexate niciodată. Nici codul sursă și jurnalele nu sunt indexate; agentul le citește direct cu instrumentele sale pentru fișiere.
 
+Cu **Folosește .gitignore** bifat (implicit pentru workbenchurile noi), nici fișierele și folderele excluse de fișierele `.gitignore` ale workbenchului nu sunt indexate: cel din folderul workbenchului și cele din subfoldere, fiecare pentru folderul său, ca în Git. O linie care începe cu `!` în `.vera/.veraignore` readuce un fișier sau un folder exclus de `.gitignore`, cu tot conținutul lui; `.vera`, `.git` și `node_modules` rămân ignorate. Instrumentele agentului pentru fișiere citesc în continuare fișierele excluse doar de `.gitignore`.
+
 Indexarea rulează în fundal și urmărește modificările: fișierele noi, modificate și șterse sunt preluate automat.
 
 ## Starea indexului

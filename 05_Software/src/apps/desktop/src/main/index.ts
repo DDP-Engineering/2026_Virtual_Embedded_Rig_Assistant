@@ -1060,9 +1060,9 @@ ipcMain.handle(
         return { folder: result.canceled ? null : (result.filePaths[0] ?? null) };
       },
       "workbench.inspect": ({ folder }) => workbench.inspect(folder),
-      "workbench.scanDocs": ({ folder }) => workbench.scanDocuments(folder),
-      "workbench.previewDocs": ({ folder, include, exclude }) =>
-        workbench.previewDocuments(folder, { include, exclude }),
+      "workbench.scanDocs": ({ folder, gitignore }) => workbench.scanDocuments(folder, gitignore),
+      "workbench.previewDocs": ({ folder, include, exclude, gitignore }) =>
+        workbench.previewDocuments(folder, { include, exclude, gitignore }),
       "workbench.relativeFolder": async ({ root, folder }) => ({
         path: await workbench.relativeFolder(root, folder),
       }),

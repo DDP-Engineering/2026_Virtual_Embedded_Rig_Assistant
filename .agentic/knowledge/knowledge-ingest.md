@@ -55,8 +55,12 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
   or replacement. Schema chunk triggers atomically maintain chunks_fts/chunks_tri;
   [keyword search](keyword-search.md) reads persisted candidates and locators.
 
-Policy reads .vera/.veraignore with ordinary-parent checks. The watcher admits events
-for .vera/workbench.yaml and .vera/.veraignore (Windows case aliases included),
+Policy reads .vera/.veraignore with ordinary-parent checks and, while docs.gitignore is on,
+the root and nested .gitignore files (ordinary files only; links and unreadable files add no
+rules) through readIgnorePolicy(root, gitignore) (REQ-FUNC-eade110e). The watcher admits events
+for .vera/workbench.yaml and .vera/.veraignore (Windows case aliases included) and, with the
+switch on, for .gitignore files: the root one and those above each include target are watch
+targets, an edit refreshes the policy and re-registers the watcher,
 while .vera content stays permanently excluded from indexed documents.
 
 ## Invariants

@@ -796,6 +796,7 @@
     "addedByHand": "adăugat manual",
     "truncated": "O parte din folder nu a putut fi scanată (prea mare sau inaccesibilă).",
     "addFolder": "Adaugă folder…",
+    "gitignore": "Folosește .gitignore",
     "preview": "Documente de indexat: {{count}} ({{size}}).",
     "officePending": "Fișierele Office vechi și RTF nu sunt indexate: {{count}}.",
     "advanced": "Avansat: pattern-uri de includere și excludere",

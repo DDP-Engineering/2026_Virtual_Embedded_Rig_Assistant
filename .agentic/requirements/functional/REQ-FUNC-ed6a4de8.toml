@@ -1,0 +1,23 @@
+schema = 1
+
+id = "REQ-FUNC-ed6a4de8"
+
+title = "Mark gitignored entries in the Files tab"
+
+status = "active"
+
+requirement = "While the active workbench's docs.gitignore setting is true, the Files tab shall list the entries that its .gitignore files exclude marked as ignored and leave them out of its file search."
+
+verification = "Core tree tests: with the switch on, listFolder marks a .gitignored folder, its contents and a .gitignored file as ignored and findFiles does not return them; with the switch off they are unmarked and found."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/tree.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/tree.test.ts::marks .gitignored entries as ignored and leaves them out of the search while the switch is on"]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15

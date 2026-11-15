@@ -1,0 +1,23 @@
+schema = 1
+
+id = "REQ-FUNC-2336bfd2"
+
+title = "Ignore precedence over gitignore"
+
+status = "active"
+
+requirement = "VERA shall decide whether a workbench path is ignored by the permanent .vera, .git and node_modules rules first, then by the workbench .veraignore, whose negation lines re-include a path that .gitignore excludes, and only then by the .gitignore files."
+
+verification = "Core ignore-policy tests: a .gitignore negation cannot re-include .git or node_modules content; a .veraignore line `!docs/gen.md` re-includes docs/gen.md excluded by .gitignore; a .veraignore exclusion wins over a .gitignore negation."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/ignore.ts", "05_Software/src/libraries/core/src/knowledge/selection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/ignore.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::leaves out what the root and nested .gitignore files exclude while docs.gitignore is on"]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15

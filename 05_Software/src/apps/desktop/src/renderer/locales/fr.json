@@ -796,6 +796,7 @@
     "addedByHand": "ajouté manuellement",
     "truncated": "Une partie du dossier n’a pas pu être analysée (trop volumineuse ou illisible).",
     "addFolder": "Ajouter un dossier…",
+    "gitignore": "Utiliser .gitignore",
     "preview": "Documents à indexer : {{count}} ({{size}}).",
     "officePending": "Fichiers Office anciens et RTF non indexés : {{count}}.",
     "advanced": "Avancé : motifs d’inclusion et d’exclusion",

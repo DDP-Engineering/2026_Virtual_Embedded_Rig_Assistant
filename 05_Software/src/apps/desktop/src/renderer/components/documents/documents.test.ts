@@ -776,7 +776,7 @@ it("warns about a large selection in Docs and in the Documents section, never at
             { client },
             createElement(WorkbenchDocuments, {
               folder: "/mock/demo-board",
-              docs: { include: [include], exclude: [] },
+              docs: { include: [include], exclude: [], gitignore: true },
               setDocs: () => {},
             }),
           ),
@@ -801,6 +801,51 @@ it("warns about a large selection in Docs and in the Documents section, never at
   } finally {
     invoke.mockRestore();
     spy.mockRestore();
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+// REQ-UX-adae0c2f
+it("offers Use .gitignore, changes the draft and sends the switch with the scan and the preview", async () => {
+  const invoke = vi.spyOn(api, "invoke");
+  const changed: { gitignore: boolean }[] = [];
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const render = (gitignore: boolean) =>
+    act(async () =>
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(WorkbenchDocuments, {
+            folder: "/mock/demo-board",
+            docs: { include: ["docs/**"], exclude: [], gitignore },
+            setDocs: (docs) => changed.push(docs),
+          }),
+        ),
+      ),
+    );
+  try {
+    await render(true);
+    const box = () => container.querySelector<HTMLInputElement>("[data-docs-gitignore] input");
+    expect(box()?.checked).toBe(true);
+    expect(container.querySelector("[data-docs-gitignore]")?.textContent).toBe("Use .gitignore");
+    await act(async () => box()?.click());
+    expect(changed.at(-1)).toMatchObject({ include: ["docs/**"], gitignore: false });
+    invoke.mockClear();
+    await render(false);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 400)));
+    await settle();
+    expect(box()?.checked).toBe(false);
+    const sent = (channel: string) =>
+      invoke.mock.calls.filter(([name]) => name === channel).map(([, request]) => request);
+    expect(sent("workbench.scanDocs")).toContainEqual({ folder: "/mock/demo-board", gitignore: false });
+    expect(sent("workbench.previewDocs")).toContainEqual(expect.objectContaining({ gitignore: false }));
+  } finally {
+    invoke.mockRestore();
     await act(async () => root.unmount());
     container.remove();
   }

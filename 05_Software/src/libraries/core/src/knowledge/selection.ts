@@ -4,15 +4,36 @@ import { join, relative, sep } from "node:path";
 import { veraError, type WorkbenchConfig } from "@vera/shared";
 import picomatch from "picomatch";
 import { glob } from "tinyglobby";
-import { createIgnoreRules } from "../workbench/ignore.js";
+import { createGitignoreRules, createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { documentKind, documentSelection, missing } from "./kinds.js";
 
 /**
- * The workbench .veraignore policy, read without following a redirected .vera folder or file.
- * A missing file ignores only the permanent folders; a redirected or unreadable one ignores all.
+ * The root's and nested .gitignore files, each read on first use. Only an ordinary file counts: a
+ * link, a folder or an unreadable file adds no rules.
  */
-export function readIgnorePolicy(root: string): { text: string; ignored: (path: string) => boolean } {
+export function readGitignores(root: string): (path: string) => boolean {
+  return createGitignoreRules((folder) => {
+    try {
+      const path = join(root, folder, ".gitignore");
+      const info = lstatSync(path);
+      return info.isFile() && !info.isSymbolicLink() ? readFileSync(path, "utf8") : undefined;
+    } catch {
+      return undefined;
+    }
+  });
+}
+
+/**
+ * The workbench ignore policy: .veraignore, read without following a redirected .vera folder or
+ * file, and the .gitignore files when `gitignore` is on. A missing .veraignore adds no rules; a
+ * redirected or unreadable one ignores all.
+ */
+export function readIgnorePolicy(
+  root: string,
+  gitignore: boolean,
+): { text: string; ignored: (path: string) => boolean } {
+  const git = gitignore ? readGitignores(root) : undefined;
   try {
     const metadata = lstatSync(join(root, ".vera"));
     if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw veraError("DENIED");
@@ -20,9 +41,9 @@ export function readIgnorePolicy(root: string): { text: string; ignored: (path: 
     const info = lstatSync(path);
     if (!info.isFile() || info.isSymbolicLink()) throw veraError("DENIED");
     const text = readFileSync(path, "utf8");
-    return { text, ignored: createIgnoreRules(text) };
+    return { text, ignored: createIgnoreRules(text, git) };
   } catch (error) {
-    if (missing(error)) return { text: "", ignored: createIgnoreRules() };
+    if (missing(error)) return { text: "", ignored: createIgnoreRules("", git) };
     return { text: "denied", ignored: () => true };
   }
 }
@@ -87,13 +108,14 @@ export interface Selection {
   retry: boolean;
 }
 /**
- * The documents a workbench selects: include minus exclude, .veraignore and permanent rules,
+ * The documents a workbench selects: include minus exclude, the ignore policy (permanent rules,
+ * .veraignore and, when docs.gitignore is on, .gitignore),
  * document types only, ordinary files without links. Runs in the desktop indexer process.
  */
 export async function selectDocuments({ root, docs, signal }: SelectInput): Promise<Selection> {
   const guard = await PathGuard.create(root);
   const { include, exclude } = documentSelection(docs);
-  const { ignored } = readIgnorePolicy(root);
+  const { ignored } = readIgnorePolicy(root, docs.gitignore);
   const excluded = picomatch(exclude, { dot: true, posix: true });
   const listed = include.length
     ? await glob(include, {

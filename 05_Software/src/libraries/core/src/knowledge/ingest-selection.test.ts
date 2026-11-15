@@ -45,7 +45,10 @@ const cleanup: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
   for (const close of cleanup.reverse().splice(0)) await close();
 });
-async function harness(layout: Record<string, string>, docs: { include: string[]; exclude?: string[] }) {
+async function harness(
+  layout: Record<string, string>,
+  docs: { include: string[]; exclude?: string[]; gitignore?: boolean },
+) {
   const root = await mkdtemp(join(tmpdir(), "vera-select-"));
   cleanup.push(() => rm(root, { recursive: true, force: true }));
   const folder = join(root, "bench");
@@ -90,7 +93,9 @@ async function harness(layout: Record<string, string>, docs: { include: string[]
   });
   cleanup.push(() => service.close());
   await service.create(folder, "Select");
-  await service.updateConfig({ docs: { include: docs.include, exclude: docs.exclude ?? [] } });
+  await service.updateConfig({
+    docs: { include: docs.include, exclude: docs.exclude ?? [], gitignore: docs.gitignore ?? true },
+  });
   record.listed.length = 0;
   record.opened.length = 0;
   await service.reindexDocuments();
@@ -126,6 +131,39 @@ it("selects, reads and records only document files, in any letter case", async (
   const announced = h.events.flatMap((e) => (e.event.type === "index.document" ? [e.event.path] : []));
   for (const path of documents) expect(announced).toContain(path);
   for (const path of others) expect(announced).not.toContain(path);
+});
+
+// REQ-FUNC-eade110e REQ-FUNC-2336bfd2
+it("leaves out what the root and nested .gitignore files exclude while docs.gitignore is on", async () => {
+  const layout = {
+    ".gitignore": ".venv/\nhtmlcov/\nbuild/html/\ndocs/gen.md\n!.git/\n!node_modules/\n",
+    ".venv/lib/site/readme.md": "# venv",
+    "htmlcov/index.html": "<p>coverage</p>",
+    "build/html/index.html": "<p>generated</p>",
+    "build/manual.pdf": "%PDF-1.4",
+    "docs/guide.md": "# Guide",
+    "docs/.gitignore": "draft.md\n",
+    "docs/draft.md": "# below docs",
+    "draft.md": "# at the root",
+    "docs/gen.md": "# brought back by .veraignore",
+    ".vera/.veraignore": "!docs/gen.md\n",
+    ".git/notes.md": "# vcs",
+    "node_modules/pkg/readme.md": "# dependency",
+  };
+  const real = ["build/manual.pdf", "docs/gen.md", "docs/guide.md", "draft.md"];
+  const on = await harness(layout, { include: ["**/*"] });
+  expect(on.rows()).toEqual(real);
+  expect(record.opened.map(on.rel).filter((path) => path.startsWith(".venv"))).toEqual([]);
+  const off = await harness(layout, { include: ["**/*"], gitignore: false });
+  expect(off.rows()).toEqual(
+    [
+      ...real,
+      ".venv/lib/site/readme.md",
+      "build/html/index.html",
+      "docs/draft.md",
+      "htmlcov/index.html",
+    ].sort(),
+  );
 });
 
 it("keeps folders that an allowlist .veraignore re-includes", async () => {
@@ -170,6 +208,23 @@ it("lists and watches no folder excluded by docs.exclude, .veraignore or node_mo
   await vi.waitFor(() => expect(registered()).toContain("ignored"), { timeout: 8000, interval: 100 });
   expect(registered().filter((path) => path === "skipped" || path === "node_modules")).toEqual([]);
 });
+
+// REQ-FUNC-eade110e
+it("follows root and nested .gitignore edits while the workbench is open", async () => {
+  const h = await harness(
+    { ".gitignore": "", "docs/a.md": "# A", "docs/b.md": "# B", "docs/sub/c.md": "# C" },
+    { include: ["docs/**"] },
+  );
+  expect(h.rows()).toEqual(["docs/a.md", "docs/b.md", "docs/sub/c.md"]);
+  const until = (rows: string[]) =>
+    vi.waitFor(() => expect(h.rows()).toEqual(rows), { timeout: 8000, interval: 100 });
+  await writeFile(join(h.folder, ".gitignore"), "docs/a.md\n");
+  await until(["docs/b.md", "docs/sub/c.md"]);
+  await writeFile(join(h.folder, "docs/sub/.gitignore"), "*.md\n");
+  await until(["docs/b.md"]);
+  await writeFile(join(h.folder, ".gitignore"), "");
+  await until(["docs/a.md", "docs/b.md"]);
+}, 30000);
 
 it("drops a stored row of a non-document file on the next reconciliation and keeps document rows", async () => {
   const h = await harness(

@@ -220,7 +220,7 @@ it("documentation preview counts exactly the documents ingest admits for the sam
     "docs/c.docx",
     "notes/keep.md",
   ]);
-  const preview = await h.service.previewDocuments(h.folder, docs);
+  const preview = await h.service.previewDocuments(h.folder, { ...docs, gitignore: true });
   expect(preview.files).toBe(admitted.length);
   expect(preview.officePending).toBe(1);
 }, 15000);
@@ -680,7 +680,7 @@ it.each(["rebind", "close"])("settles startup waitIdle when %s cancels readiness
   const pending = ingest.waitIdle();
   await Promise.resolve();
   if (action === "rebind") {
-    config.docs = { include: ["reference/**"], exclude: [] };
+    config.docs = { include: ["reference/**"], exclude: [], gitignore: true };
     ingest.request();
   } else await ingest.close();
   await pending;

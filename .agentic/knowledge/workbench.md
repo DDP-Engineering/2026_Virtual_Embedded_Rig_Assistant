@@ -76,7 +76,12 @@ mode offers empty, missing, read-only and warning fixtures.
 - Registry retrieval/removal/pinning retains application settings entries until explicit removal; folder existence derives missing state.
   Reopen refreshes known metadata.
 - files(query) returns up to50 slash-separated relative ordinary-file paths, case-insensitive substring
-  matches. createIgnoreRules applies case-insensitive permanent .vera/.git/node_modules segments before project-relative rules from .vera/.veraignore.
+  matches. createIgnoreRules applies case-insensitive permanent .vera/.git/node_modules segments before project-relative rules from .vera/.veraignore;
+  given createGitignoreRules (root and nested .gitignore, deepest decisive level first, read lazily), it decides each folder above an entry, then the entry:
+  permanent, then .veraignore (ignored wins; a negation that re-includes a folder .gitignore drops re-includes its contents), then .gitignore
+  (REQ-FUNC-2336bfd2). Shared docs.gitignore (default true, format 1) switches the .gitignore part for indexing, the documentation
+  scan/preview (workbench.scanDocs/previewDocs carry `gitignore`) and the Files tab; the agent PathGuard, files(query) and
+  relativeFolder keep .veraignore only (REQ-FUNC-eade110e, REQ-UX-adae0c2f).
 - Shared workbenchSchema/configWarnings/mergeWorkbench/workbenchTemplate supply format1 defaults,
   passthrough extensions, unresolved disabled-name warnings and the specified English pinned template.
 - Native app.chooseFolder uses Electron dialog; instrumented compilation accepts VERA_TEST_DIALOG_PATH.

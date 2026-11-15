@@ -37,6 +37,7 @@ import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
 import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
+import { readGitignores } from "../knowledge/selection.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
@@ -372,11 +373,15 @@ export class WorkbenchService {
   }
   /** One folder of the active workbench for the Docs tree (TASK-66b7d4aa). */
   listFolder(workbenchId: string, path: string) {
-    return this.run(async () => listFolder(this.activeFolder(workbenchId), path));
+    return this.run(async () =>
+      listFolder(this.activeFolder(workbenchId), path, this.current().config.docs.gitignore),
+    );
   }
   /** Visible files of the active workbench whose path contains the fragment (first 200). */
   findFiles(workbenchId: string, query: string) {
-    return this.run(async () => findFiles(this.activeFolder(workbenchId), query));
+    return this.run(async () =>
+      findFiles(this.activeFolder(workbenchId), query, this.current().config.docs.gitignore),
+    );
   }
   /** A text file of the active workbench, ignored or not, for the Source tab. */
   readText(workbenchId: string, path: string) {
@@ -492,13 +497,17 @@ export class WorkbenchService {
       if (code(error) !== "EEXIST") throw error;
     }
   }
-  /** The folder's own ignore rules, as ingest applies them; unreadable or redirected rules hide everything. */
-  private async ignoreRules(folder: string): Promise<(path: string) => boolean> {
+  /**
+   * The folder's own ignore rules, as ingest applies them, with its .gitignore files when `gitignore`
+   * is on; unreadable or redirected rules hide everything.
+   */
+  private async ignoreRules(folder: string, gitignore = false): Promise<(path: string) => boolean> {
+    const git = gitignore ? readGitignores(folder) : undefined;
     try {
       await ordinary(join(folder, ".vera"), true);
       const path = join(folder, ".vera/.veraignore");
-      if (!(await ordinary(path, false))) return createIgnoreRules();
-      return createIgnoreRules((await this.host.files.read(path)) ?? "");
+      if (!(await ordinary(path, false))) return createIgnoreRules("", git);
+      return createIgnoreRules((await this.host.files.read(path)) ?? "", git);
     } catch {
       return () => true;
     }
@@ -506,14 +515,14 @@ export class WorkbenchService {
   // Scans and previews only read directory entries, so they stay outside the lifecycle queue and
   // never hold up create, open or saves.
   /** Documentation folders below a chosen folder; reads directory entries only. */
-  async scanDocuments(input: string): Promise<DocumentScan> {
+  async scanDocuments(input: string, gitignore: boolean): Promise<DocumentScan> {
     const folder = await this.folder(input);
-    return scanDocuments(folder, await this.ignoreRules(folder));
+    return scanDocuments(folder, await this.ignoreRules(folder, gitignore));
   }
   /** What a documentation selection would index in a chosen folder. */
   async previewDocuments(input: string, docs: WorkbenchConfig["docs"]): Promise<DocumentPreview> {
     const folder = await this.folder(input);
-    return previewDocuments(folder, docs, await this.ignoreRules(folder));
+    return previewDocuments(folder, docs, await this.ignoreRules(folder, docs.gitignore));
   }
   /** A picked folder as a path relative to a workbench folder; ignored folders are refused. */
   async relativeFolder(rootInput: string, input: string): Promise<string> {

@@ -125,7 +125,8 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 - Docs tree (TASK-66b7d4aa, documents/docs-tree.tsx) lists the whole workbench folder.
   docs.tree({workbenchId,path}) lists one folder (folders first, natural order, at most 5,000
   with `truncated`, links left out); a folder's entries load when it is expanded. Entries the
-  .vera, .git, node_modules and .veraignore rules hide from the agent and the index come with
+  .vera, .git, node_modules and .veraignore rules hide from the agent and the index, or that a
+  .gitignore excludes while docs.gitignore is on (REQ-FUNC-ed6a4de8; left out of Find too), come with
   `ignored: true` (inherited inside ignored folders) and render in italic muted text at AA
   contrast with faded icons (`data-ignored`, screen-reader "Ignored by VERA"); they expand, are
   remembered and open as text like other rows, but never offer Open in default app, which

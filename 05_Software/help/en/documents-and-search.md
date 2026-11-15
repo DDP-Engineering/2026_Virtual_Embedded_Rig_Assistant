@@ -12,6 +12,8 @@ The folders checked under **Edit workbench** → **Documents & RAG** are indexed
 
 Legacy `.doc`, `.ppt`, `.xls` and RTF files are not indexed; save them in a modern format. Files matched by `.vera/.veraignore`, and anything in `.vera`, `.git` or `node_modules`, are never indexed. Source code and logs are not indexed either; the agent reads them directly with its file tools.
 
+With **Use .gitignore** checked (the default for new workbenches), files and folders that the workbench's `.gitignore` files exclude are not indexed either: the one in the workbench folder and those in its subfolders, each for its own folder, as in Git. A line starting with `!` in `.vera/.veraignore` brings back a file or folder that `.gitignore` excludes, with everything inside it; `.vera`, `.git` and `node_modules` stay ignored. The agent's file tools still read files that only `.gitignore` excludes.
+
 Indexing runs in the background and follows changes: new, changed and deleted files are picked up automatically.
 
 ## Index status

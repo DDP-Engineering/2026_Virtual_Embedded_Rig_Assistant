@@ -55,16 +55,17 @@ export function WorkbenchDocuments({
   };
   const include = clean(docs.include);
   const exclude = clean(docs.exclude);
+  const gitignore = docs.gitignore;
   const scan = useQuery({
-    queryKey: ["workbench.scanDocs", folder],
-    queryFn: () => api.invoke("workbench.scanDocs", { folder }),
+    queryKey: ["workbench.scanDocs", folder, gitignore],
+    queryFn: () => api.invoke("workbench.scanDocs", { folder, gitignore }),
     ...fresh,
   });
   // Typing a pattern under Advanced walks the folder once it pauses, not on every keystroke.
   const settled = useSettled({ include, exclude }, 300);
   const preview = useQuery({
-    queryKey: ["workbench.previewDocs", folder, settled.include, settled.exclude],
-    queryFn: () => api.invoke("workbench.previewDocs", { folder, ...settled }),
+    queryKey: ["workbench.previewDocs", folder, settled.include, settled.exclude, gitignore],
+    queryFn: () => api.invoke("workbench.previewDocs", { folder, ...settled, gitignore }),
     placeholderData: keepPreviousData,
     ...fresh,
   });
@@ -145,6 +146,15 @@ export function WorkbenchDocuments({
         >
           {t("documentsSetup.addFolder")}
         </button>
+        <label className="workbench-tool-option" data-docs-gitignore>
+          <input
+            type="checkbox"
+            disabled={disabled}
+            checked={gitignore}
+            onChange={(e) => setDocs({ ...docs, gitignore: e.currentTarget.checked })}
+          />
+          <span>{t("documentsSetup.gitignore")}</span>
+        </label>
         {error !== undefined && <ErrorMessage error={error} />}
         {/* Said once: the indexing summary already ends with it when the preview was cut short. */}
         {scan.data?.truncated && !preview.data?.truncated && (

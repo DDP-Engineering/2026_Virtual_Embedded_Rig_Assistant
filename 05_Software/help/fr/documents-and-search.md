@@ -12,6 +12,8 @@ Sont indexés les dossiers cochés dans **Modifier le banc** → **Documents et 
 
 Les anciens fichiers `.doc`, `.ppt`, `.xls` et RTF ne sont pas indexés ; enregistrez-les dans un format moderne. Les fichiers correspondant à `.vera/.veraignore` et tout ce qui se trouve dans `.vera`, `.git` ou `node_modules` ne sont jamais indexés. Le code source et les journaux ne sont pas indexés non plus ; l’agent les lit directement avec ses outils de fichiers.
 
+Lorsque **Utiliser .gitignore** est coché (par défaut pour les nouveaux bancs), les fichiers et dossiers exclus par les fichiers `.gitignore` du banc ne sont pas indexés non plus : celui du dossier du banc et ceux de ses sous-dossiers, chacun pour son propre dossier, comme dans Git. Une ligne commençant par `!` dans `.vera/.veraignore` rétablit un fichier ou un dossier exclu par `.gitignore`, avec tout son contenu ; `.vera`, `.git` et `node_modules` restent ignorés. Les outils de fichiers de l’agent lisent toujours les fichiers exclus uniquement par `.gitignore`.
+
 L’indexation s’exécute en arrière-plan et suit les changements : les fichiers nouveaux, modifiés et supprimés sont pris en compte automatiquement.
 
 ## État de l’index

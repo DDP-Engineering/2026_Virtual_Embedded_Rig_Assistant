@@ -16,7 +16,10 @@ export interface TreeEntry {
   name: string;
   path: string;
   type: "folder" | "file";
-  /** Hidden from the agent and the index by the .vera, .git, node_modules and .veraignore rules. */
+  /**
+   * Left out of the index by the .vera, .git, node_modules and .veraignore rules (which also hide it
+   * from the agent) or, with docs.gitignore on, by a .gitignore file.
+   */
   ignored: boolean;
 }
 export interface EntryProperties {
@@ -81,14 +84,16 @@ async function ordinary(root: string, parts: string[], last: "folder" | "file"):
 
 /**
  * One folder of the workbench for the Docs tree: folders then files in natural name order, without
- * links, at most 5,000. Entries the permanent and .veraignore rules hide from the agent and the
- * index are listed and marked `ignored`, and so is everything inside an ignored folder.
+ * links, at most 5,000. Entries the ignore policy leaves out of the index (permanent and .veraignore
+ * rules, and .gitignore files when `gitignore` is on) are listed and marked `ignored`, and so is
+ * everything inside an ignored folder.
  */
 export async function listFolder(
   root: string,
   path: string,
+  gitignore: boolean,
 ): Promise<{ entries: TreeEntry[]; truncated: boolean }> {
-  const { ignored } = readIgnorePolicy(root);
+  const { ignored } = readIgnorePolicy(root, gitignore);
   const parts = segments(path);
   if (parts.length) await ordinary(root, parts, "folder");
   const inherited = parts.some((_, n) => ignored(`${parts.slice(0, n + 1).join("/")}/`));
@@ -115,10 +120,11 @@ export async function listFolder(
 export async function findFiles(
   root: string,
   fragment: string,
+  gitignore: boolean,
 ): Promise<{ paths: string[]; truncated: boolean }> {
   const needle = fragment.trim().toLowerCase();
   if (!needle) throw veraError("INVALID");
-  const { ignored } = readIgnorePolicy(root);
+  const { ignored } = readIgnorePolicy(root, gitignore);
   const queue = [""];
   const paths: string[] = [];
   let visited = 0;

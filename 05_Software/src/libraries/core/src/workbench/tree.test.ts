@@ -52,7 +52,7 @@ async function bench(extra: Record<string, string | Buffer> = {}) {
 
 it("lists every entry but links, folders first, in natural name order, marking ignored ones", async () => {
   const b = await bench();
-  const top = await tree.listFolder(b.root, "");
+  const top = await tree.listFolder(b.root, "", true);
   expect(top).toEqual({
     entries: [
       { name: ".git", path: ".git", type: "folder", ignored: true },
@@ -66,16 +66,16 @@ it("lists every entry but links, folders first, in natural name order, marking i
     truncated: false,
   });
   // Everything inside an ignored folder is ignored too.
-  expect((await tree.listFolder(b.root, ".git")).entries).toEqual([
+  expect((await tree.listFolder(b.root, ".git", true)).entries).toEqual([
     { name: "config", path: ".git/config", type: "file", ignored: true },
   ]);
-  expect((await tree.listFolder(b.root, "node_modules/x")).entries).toEqual([
+  expect((await tree.listFolder(b.root, "node_modules/x", true)).entries).toEqual([
     { name: "y.js", path: "node_modules/x/y.js", type: "file", ignored: true },
   ]);
-  expect((await tree.listFolder(b.root, "ignored")).entries).toEqual([
+  expect((await tree.listFolder(b.root, "ignored", true)).entries).toEqual([
     { name: "z.md", path: "ignored/z.md", type: "file", ignored: true },
   ]);
-  expect((await tree.listFolder(b.root, "docs")).entries.map((e) => e.name)).toEqual([
+  expect((await tree.listFolder(b.root, "docs", true)).entries.map((e) => e.name)).toEqual([
     "sub",
     "a.pdf",
     "b.md",
@@ -83,35 +83,54 @@ it("lists every entry but links, folders first, in natural name order, marking i
     "doc10.md",
   ]);
   for (const path of ["../x", "/abs"])
-    await expect(tree.listFolder(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
-  if (b.linked) await expect(tree.listFolder(b.root, "link")).rejects.toMatchObject({ code: "DENIED" });
-  await expect(tree.listFolder(b.root, "missing")).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(tree.listFolder(b.root, path, true), path).rejects.toMatchObject({ code: "DENIED" });
+  if (b.linked) await expect(tree.listFolder(b.root, "link", true)).rejects.toMatchObject({ code: "DENIED" });
+  await expect(tree.listFolder(b.root, "missing", true)).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
 
 it("caps a folder at 5,000 entries and says so", async () => {
   const b = await bench();
   await mkdir(join(b.root, "many"));
   await Promise.all(Array.from({ length: 5001 }, (_, n) => writeFile(join(b.root, "many", `f${n}.txt`), "")));
-  const many = await tree.listFolder(b.root, "many");
+  const many = await tree.listFolder(b.root, "many", true);
   expect(many.entries).toHaveLength(5000);
   expect(many.truncated).toBe(true);
 }, 30000);
 
 it("finds visible files by a case-insensitive name fragment, at most 200 with a flag", async () => {
   const b = await bench();
-  expect(await tree.findFiles(b.root, "MAIN")).toEqual({ paths: ["firmware/main.c"], truncated: false });
-  expect((await tree.findFiles(b.root, "z.md")).paths).toEqual([]);
-  expect((await tree.findFiles(b.root, "y.js")).paths).toEqual([]);
-  expect((await tree.findFiles(b.root, "config")).paths).toEqual([]);
-  await expect(tree.findFiles(b.root, "  ")).rejects.toMatchObject({ code: "INVALID" });
+  expect(await tree.findFiles(b.root, "MAIN", true)).toEqual({
+    paths: ["firmware/main.c"],
+    truncated: false,
+  });
+  expect((await tree.findFiles(b.root, "z.md", true)).paths).toEqual([]);
+  expect((await tree.findFiles(b.root, "y.js", true)).paths).toEqual([]);
+  expect((await tree.findFiles(b.root, "config", true)).paths).toEqual([]);
+  await expect(tree.findFiles(b.root, "  ", true)).rejects.toMatchObject({ code: "INVALID" });
   await mkdir(join(b.root, "hits"));
   await Promise.all(
     Array.from({ length: 250 }, (_, n) => writeFile(join(b.root, "hits", `hit${n}.txt`), "")),
   );
-  const hits = await tree.findFiles(b.root, "hit");
+  const hits = await tree.findFiles(b.root, "hit", true);
   expect(hits.paths).toHaveLength(200);
   expect(hits.truncated).toBe(true);
   expect(hits.paths[0]).toBe("hits/hit0.txt");
+});
+
+// REQ-FUNC-ed6a4de8
+it("marks .gitignored entries as ignored and leaves them out of the search while the switch is on", async () => {
+  const b = await bench({ ".gitignore": "build/\n*.log\n", "build/out.md": "# out", "run.log": "log" });
+  const marks = async (gitignore: boolean) =>
+    Object.fromEntries(
+      (await tree.listFolder(b.root, "", gitignore)).entries.map((entry) => [entry.name, entry.ignored]),
+    );
+  expect(await marks(true)).toMatchObject({ build: true, "run.log": true, docs: false, ".gitignore": false });
+  expect((await tree.listFolder(b.root, "build", true)).entries).toEqual([
+    { name: "out.md", path: "build/out.md", type: "file", ignored: true },
+  ]);
+  expect((await tree.findFiles(b.root, "out", true)).paths).toEqual([]);
+  expect(await marks(false)).toMatchObject({ build: false, "run.log": false, ignored: true });
+  expect((await tree.findFiles(b.root, "out", false)).paths).toEqual(["build/out.md"]);
 });
 
 it("reads a text file, ignored or not, and refuses binary, large, linked and outside paths", async () => {
@@ -142,7 +161,7 @@ it("reads a text file, ignored or not, and refuses binary, large, linked and out
 it("refuses Windows aliases that would reach hidden or ignored entries", async () => {
   const b = await bench();
   for (const path of [".git.", ".git ", "ignored.", "docs::$INDEX_ALLOCATION", "CON", "docs/nul"])
-    await expect(tree.listFolder(b.root, path), path).rejects.toMatchObject({ code: "DENIED" });
+    await expect(tree.listFolder(b.root, path, true), path).rejects.toMatchObject({ code: "DENIED" });
   for (const path of [
     ".git./config",
     "ignored./z.md",

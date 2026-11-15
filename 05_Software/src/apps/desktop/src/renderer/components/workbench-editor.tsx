@@ -97,6 +97,7 @@ export function WorkbenchEditor({
         docs: {
           include: lines(config.docs.include.join("\n")),
           exclude: lines(config.docs.exclude.join("\n")),
+          gitignore: config.docs.gitignore,
         },
         embeddings: config.embeddings,
         retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },

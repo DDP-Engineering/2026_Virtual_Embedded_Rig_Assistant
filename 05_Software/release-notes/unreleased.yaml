@@ -1,3 +1,10 @@
 version: Unreleased
 date: null
-entries: []
+entries:
+  - category: new
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: Indexing skips what the repository's Git ignore rules exclude, such as build output.
+      ro: Indexarea omite ce exclud regulile Git ignore ale depozitului, de exemplu rezultatele build-ului.
+      de: Die Indizierung überspringt, was die Git-Ignore-Regeln des Repositorys ausschließen, etwa Builds.
+      fr: L’indexation ignore ce que les règles Git ignore du dépôt excluent, comme les sorties de build.

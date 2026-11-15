@@ -571,6 +571,7 @@ export function createMockApi(
         break;
       }
       case "workbench.scanDocs": {
+        // The mock folders hold no .gitignore files, so the switch changes nothing here.
         const { folder } = channels["workbench.scanDocs"].request.parse(input.data);
         if (folder === "/mock/locked-board") throw veraError("DENIED");
         const folders = new Map<string, { bytes: number; kinds: Record<string, number> }>();

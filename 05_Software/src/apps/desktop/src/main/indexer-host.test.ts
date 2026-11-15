@@ -97,7 +97,7 @@ it("runs document processing, selection and inspection in the indexer and return
   expect(await pending).toEqual(result);
   const selection = h.host.processor.select?.({
     root: "/bench",
-    docs: { include: ["docs/**"], exclude: [] },
+    docs: { include: ["docs/**"], exclude: [], gitignore: true },
     signal: new AbortController().signal,
   });
   await flush();

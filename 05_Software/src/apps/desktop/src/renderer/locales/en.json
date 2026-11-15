@@ -796,6 +796,7 @@
     "addedByHand": "added by hand",
     "truncated": "Part of the folder could not be scanned (too large or unreadable).",
     "addFolder": "Add folder…",
+    "gitignore": "Use .gitignore",
     "preview": "Documents to index: {{count}} ({{size}}).",
     "officePending": "Legacy Office and RTF files are not indexed: {{count}}.",
     "advanced": "Advanced: include and exclude patterns",

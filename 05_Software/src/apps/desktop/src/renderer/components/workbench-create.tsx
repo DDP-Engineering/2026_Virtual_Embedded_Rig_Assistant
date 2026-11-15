@@ -65,7 +65,11 @@ export function WorkbenchCreate({
         name,
         config: {
           description: config.description ?? "",
-          docs: { include: lines(config.docs.include), exclude: lines(config.docs.exclude) },
+          docs: {
+            include: lines(config.docs.include),
+            exclude: lines(config.docs.exclude),
+            gitignore: config.docs.gitignore,
+          },
           embeddings: config.embeddings,
           retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },
           agent: config.agent,
@@ -97,8 +101,12 @@ export function WorkbenchCreate({
                 // (shown again in the Documents section), keeps the defaults.
                 const scan = await client
                   .fetchQuery({
-                    queryKey: ["workbench.scanDocs", found.folder],
-                    queryFn: () => api.invoke("workbench.scanDocs", { folder: found.folder }),
+                    queryKey: ["workbench.scanDocs", found.folder, config.docs.gitignore],
+                    queryFn: () =>
+                      api.invoke("workbench.scanDocs", {
+                        folder: found.folder,
+                        gitignore: config.docs.gitignore,
+                      }),
                     staleTime: 0,
                   })
                   .catch(() => undefined);

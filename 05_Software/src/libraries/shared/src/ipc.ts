@@ -686,7 +686,7 @@ export const channels = {
   "workbench.create": defineChannel("workbench.create", workbenchCreateSchema, workbenchSnapshotSchema),
   "workbench.scanDocs": defineChannel(
     "workbench.scanDocs",
-    z.strictObject({ folder: z.string().min(1) }),
+    z.strictObject({ folder: z.string().min(1), gitignore: z.boolean() }),
     documentScanSchema,
   ),
   "workbench.previewDocs": defineChannel(
@@ -695,6 +695,7 @@ export const channels = {
       folder: z.string().min(1),
       include: z.array(z.string()).max(1000),
       exclude: z.array(z.string()).max(1000),
+      gitignore: z.boolean(),
     }),
     documentPreviewSchema,
   ),

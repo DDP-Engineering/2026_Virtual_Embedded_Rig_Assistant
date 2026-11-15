@@ -1,0 +1,23 @@
+schema = 1
+
+id = "REQ-FUNC-eade110e"
+
+title = "Honor gitignore files in the document selection"
+
+status = "active"
+
+requirement = "While a workbench's docs.gitignore setting is true, VERA shall leave out of the document selection, the documentation-folder scan and the selection preview every path that the workbench root's .gitignore or a nested .gitignore excludes under Git's rules, where a nested file applies only below its own folder and an excluded folder is not entered."
+
+verification = "Core tests on a fixture with .venv/, htmlcov/ and build/html/ listed in the root .gitignore and a docs/.gitignore: selectDocuments, scanDocuments and previewDocuments return only the real documents with the switch on and include the ignored ones with it off; a pattern in docs/.gitignore drops a file below docs/ but not the same name elsewhere."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/ignore.ts", "05_Software/src/libraries/core/src/knowledge/selection.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/help/en/troubleshooting.md"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/ignore.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::leaves out what the root and nested .gitignore files exclude while docs.gitignore is on", "05_Software/src/libraries/core/src/workbench/service.test.ts::writes docs.gitignore on create and save and applies it to the scan and preview", "05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::follows root and nested .gitignore edits while the workbench is open"]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Repositories list virtual environments, build output and generated documentation in .gitignore; indexing them is slow and fills search results with generated text."
+
+created = 2026-11-15
+updated = 2026-11-15

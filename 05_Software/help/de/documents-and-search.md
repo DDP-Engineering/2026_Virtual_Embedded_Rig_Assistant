@@ -12,6 +12,8 @@ Indiziert werden die Ordner, die unter **Workbench bearbeiten** → **Dokumente 
 
 Ältere `.doc`-, `.ppt`-, `.xls`- und RTF-Dateien werden nicht indiziert; speichern Sie sie in einem modernen Format. Dateien, auf die `.vera/.veraignore` zutrifft, und alles in `.vera`, `.git` oder `node_modules` werden nie indiziert. Auch Quellcode und Protokolle werden nicht indiziert; der Agent liest sie direkt mit seinen Dateiwerkzeugen.
 
+Ist **.gitignore verwenden** aktiviert (Standard für neue Workbenches), werden auch Dateien und Ordner nicht indiziert, die die `.gitignore`-Dateien der Workbench ausschließen: die im Workbench-Ordner und die in seinen Unterordnern, jede für ihren eigenen Ordner, wie in Git. Eine Zeile, die in `.vera/.veraignore` mit `!` beginnt, holt eine Datei oder einen Ordner zurück, den `.gitignore` ausschließt, mit allem darin; `.vera`, `.git` und `node_modules` bleiben ignoriert. Die Dateiwerkzeuge des Agenten lesen Dateien, die nur `.gitignore` ausschließt, weiterhin.
+
 Die Indizierung läuft im Hintergrund und folgt Änderungen: Neue, geänderte und gelöschte Dateien werden automatisch erfasst.
 
 ## Indexstatus

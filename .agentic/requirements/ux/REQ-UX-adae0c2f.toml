@@ -1,0 +1,23 @@
+schema = 1
+
+id = "REQ-UX-adae0c2f"
+
+title = "Use gitignore switch in Documents and RAG"
+
+status = "active"
+
+requirement = "The Documents & RAG section of New Workbench and of the workbench editor shall offer a localized \"Use .gitignore\" checkbox, checked for a new workbench, whose value is saved as docs.gitignore in .vera/workbench.yaml format 1 and applied to the section's scan and preview."
+
+verification = "Shared schema test: a configuration without docs.gitignore parses to true and a patch sets it false; core test: creating a workbench writes gitignore: true and saving a patch writes false; renderer test: the Documents section renders the checkbox checked for the default draft, a click sets docs.gitignore false in the draft, and the scan and preview requests carry the switch."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/help/en/documents-and-search.md", "05_Software/help/ro/documents-and-search.md", "05_Software/help/de/documents-and-search.md", "05_Software/help/fr/documents-and-search.md"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts::turns docs.gitignore on by default and lets a patch turn it off", "05_Software/src/libraries/core/src/workbench/service.test.ts::writes docs.gitignore on create and save and applies it to the scan and preview", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::offers Use .gitignore, changes the draft and sends the switch with the scan and the preview", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts::saves the Use .gitignore switch with the editor's patch", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts"]
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15
