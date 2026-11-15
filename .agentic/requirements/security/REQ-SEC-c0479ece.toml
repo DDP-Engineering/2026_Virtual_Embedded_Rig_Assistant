@@ -14,7 +14,7 @@ verification = "Helper test of plugin.yaml with the shared rule classifier: run-
 
 affected_paths = ["05_Software/plugins/wokwi/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wokwi.test.ts"]
 
 
 spec = "specs/REQ-DATA-d985bb3d.md"

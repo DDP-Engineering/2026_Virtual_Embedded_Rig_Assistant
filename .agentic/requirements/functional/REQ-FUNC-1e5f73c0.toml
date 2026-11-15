@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-1e5f73c0"
+title = "Preview a catalog plugin's package without keeping it"
+status = "active"
+requirement = "When the renderer asks for plugins.catalogPreview of a catalog entry, the desktop app shall read the entry's package into memory, verify its size and SHA-256 against the index, and return its manifest, composition, issues and help pages without writing or keeping any file, so the zip kept by a review in progress stays installable."
+verification = "Core test: preview esp32-esptool while serial-monitor's review keeps its zip; the kept zips are unchanged and serial-monitor still installs; a changed SHA-256 in the index is refused as INVALID sha256."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/core/src/plugins/store.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+priority = "normal"
+rationale = "The full plugin information must be readable before install, and the review keeps only its latest zip."
+created = 2026-11-15
+updated = 2026-11-15

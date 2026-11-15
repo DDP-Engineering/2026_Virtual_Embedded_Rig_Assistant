@@ -14,7 +14,7 @@ verification = "Tests run a plan whose step uses COM5 and the scope alias, and d
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/leases.ts", "05_Software/src/libraries/core/src/plugins/hil/compile.ts", "05_Software/src/libraries/core/src/plugins/hil/run.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/integration/hil-testing.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/tests/plugins/hil-testing.test.ts"]
 
 
 spec = "specs/REQ-DATA-5f714098.md"

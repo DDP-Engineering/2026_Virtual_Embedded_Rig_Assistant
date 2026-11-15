@@ -14,7 +14,7 @@ verification = "Manual: the opt-in VERA_RENODE_REAL suite with the extracted pin
 
 affected_paths = ["05_Software/plugins/renode/plugin.yaml", "05_Software/plugins/renode/scripts/renode_support/engine.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

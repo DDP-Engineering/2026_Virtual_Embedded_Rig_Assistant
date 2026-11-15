@@ -14,7 +14,7 @@ verification = "Unit tests on raw files written by LTspice 26.1.1 (transient rea
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/raw.py", "05_Software/tests/fixtures/ltspice/raw_dump.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

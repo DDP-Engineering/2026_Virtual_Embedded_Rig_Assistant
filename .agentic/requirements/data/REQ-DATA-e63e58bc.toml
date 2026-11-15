@@ -14,7 +14,7 @@ verification = "A test validates plugin.yaml, finds both skills with their names
 
 affected_paths = ["05_Software/plugins/lab-validation/plugin.yaml", "05_Software/plugins/lab-validation/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/lab-validation.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+linked_tests = ["05_Software/tests/plugins/lab-validation.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
 
 
 spec = "specs/REQ-DATA-53797d16.md"

@@ -14,7 +14,7 @@ verification = "Tests capture with an ELF fixture (hash, build id) and a binary 
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/firmware.py", "05_Software/plugins/power-profiler/scripts/power_support/elf.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "Real KiCad 10.0.8 and Freerouting 2.5.0: on the fixture run with
 
 affected_paths = ["05_Software/plugins/freerouting/"]
 
-linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+linked_tests = ["05_Software/tests/plugins/freerouting.test.ts"]
 
 
 spec = "specs/REQ-FUNC-2a80da7f.md"

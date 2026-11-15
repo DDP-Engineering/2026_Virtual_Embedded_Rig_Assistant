@@ -14,7 +14,7 @@ verification = "Hostile fixtures - `.wave C:\\x.wav`, `.savebias`, `.loadstate`,
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/netlist.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

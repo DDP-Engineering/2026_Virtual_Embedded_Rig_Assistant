@@ -14,7 +14,7 @@ verification = "The fake arduino-cli receives `core install arduino:avr@1.8.8 --
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/environment.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

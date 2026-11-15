@@ -14,7 +14,7 @@ verification = "report of a compile and an upload run folder lists both with FQB
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/report.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

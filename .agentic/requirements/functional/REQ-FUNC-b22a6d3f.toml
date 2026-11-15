@@ -14,7 +14,7 @@ verification = "A sleep/wake fixture with a GPI marker gives the expected number
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/segment.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

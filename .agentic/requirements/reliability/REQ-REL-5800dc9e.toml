@@ -14,7 +14,7 @@ verification = "Through VERA's real runner a stand-in build that sleeps is stopp
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/result.py", "05_Software/plugins/platformio/scripts/pio_support/ops.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

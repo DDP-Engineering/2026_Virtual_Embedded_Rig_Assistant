@@ -14,7 +14,7 @@ verification = "The package validates, its rules classify `ngspice -b x.cir` and
 
 affected_paths = ["05_Software/plugins/ngspice/plugin.yaml", "05_Software/plugins/ngspice/README.md", "05_Software/plugins/ngspice/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/plugins/ngspice/skills/circuit-simulation/SKILL.md"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ngspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

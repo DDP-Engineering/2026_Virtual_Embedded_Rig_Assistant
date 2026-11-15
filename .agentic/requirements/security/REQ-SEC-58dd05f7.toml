@@ -14,7 +14,7 @@ verification = "A test runs every operation with sockets, subprocess and os.syst
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/"]
 
-linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+linked_tests = ["05_Software/tests/plugins/lab-validation.test.ts"]
 
 
 spec = "specs/REQ-DATA-53797d16.md"

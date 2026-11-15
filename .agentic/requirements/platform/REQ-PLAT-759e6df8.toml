@@ -14,7 +14,7 @@ verification = "The integration test runs plans with VERA's real runner and real
 
 affected_paths = ["05_Software/plugins/hil-testing/", "05_Software/src/libraries/core/src/plugins/hil/"]
 
-linked_tests = ["05_Software/tests/integration/hil-testing.test.ts"]
+linked_tests = ["05_Software/tests/plugins/hil-testing.test.ts"]
 
 
 spec = "specs/REQ-DATA-5f714098.md"

@@ -14,7 +14,7 @@ verification = "A resistor driven by a 50 % square wave through a sense source g
 
 affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/measure.py", "05_Software/plugins/ltspice/scripts/ltspice_support/measure.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ngspice.test.ts", "05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

@@ -14,7 +14,7 @@ verification = "The path cases of `elec-calc` (parent traversal, absolute path e
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/workspace.py", "05_Software/plugins/kicad/scripts/kicad_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/workspace.py", "05_Software/plugins/electronics-calc/scripts/elec_support/report.py", "05_Software/plugins/electronics-calc/scripts/elec_support/cli.py", "05_Software/plugins/electronics-calc/scripts/elec_support/quantities.py", "05_Software/plugins/electronics-calc/scripts/elec_support/contract.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

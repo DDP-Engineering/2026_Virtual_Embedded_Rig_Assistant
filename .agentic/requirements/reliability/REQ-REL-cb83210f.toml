@@ -14,7 +14,7 @@ verification = "Run build with each faulty variant of the fixture request (stm32
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/request.py", "05_Software/plugins/zephyr/scripts/zephyr_support/boards.py", "05_Software/plugins/zephyr/scripts/zephyr_support/sdk.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "Manual: the opt-in real-tool suite on Windows x64 and on native 
 
 affected_paths = ["05_Software/plugins/zephyr/plugin.yaml", "05_Software/plugins/zephyr/scripts/zephyr_support/environment.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

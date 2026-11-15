@@ -14,7 +14,7 @@ verification = "The effective netlist of every fixture contains no `.option` the
 
 affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/engine.py", "05_Software/plugins/ltspice/scripts/ltspice_support/engine.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts", "05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ngspice.test.ts", "05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

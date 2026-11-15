@@ -14,7 +14,7 @@ verification = "Rule tests: renode with any arguments is blocked; every renode-s
 
 affected_paths = ["05_Software/plugins/renode/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

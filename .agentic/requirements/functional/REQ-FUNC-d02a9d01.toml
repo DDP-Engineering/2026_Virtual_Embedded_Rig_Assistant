@@ -14,7 +14,7 @@ verification = "inspect of the fixture sketch with sketch.yaml lists its files a
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/sketch.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

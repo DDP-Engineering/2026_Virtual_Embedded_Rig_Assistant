@@ -14,7 +14,7 @@ verification = "Install both packages into a store, list their skills through th
 
 affected_paths = ["05_Software/plugins/can-python/skills/", "05_Software/plugins/can-dbc/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
 
 
 spec = ""

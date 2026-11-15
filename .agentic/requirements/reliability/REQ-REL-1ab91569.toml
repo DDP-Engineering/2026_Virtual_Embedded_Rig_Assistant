@@ -14,7 +14,7 @@ verification = "The in-process probe hands the document writer 5000 violations w
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/document.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

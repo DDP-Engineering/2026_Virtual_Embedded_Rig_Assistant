@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-35f4bcf7"
+title = "Show the release notes in Settings About"
+status = "active"
+requirement = "Settings About shall show What's new: the bundled release notes of 05_Software/release-notes, unreleased first and then releases newest first, grouped as New, Improved and Fixed, in the interface language with English where a text is missing."
+verification = "Unit test: ordering of Unreleased, releases and pre-releases, grouping and language fallback, malformed files left out; native E2E: About lists the entries of the app's own version."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/about.tsx", "05_Software/src/apps/desktop/src/renderer/lib/release-notes.ts", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/lib/release-notes.test.ts", "05_Software/tests/e2e/shell.spec.ts"]
+priority = "normal"
+rationale = "Users see what changed in each version without leaving the app."
+created = 2026-11-15
+updated = 2026-11-15

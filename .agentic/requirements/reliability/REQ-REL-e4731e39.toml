@@ -14,7 +14,7 @@ verification = "Resolve with an empty PATH and no install folder; check the miss
 
 affected_paths = ["05_Software/plugins/stm32-cubeprog/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/stm32-cubeprog.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "The gap fixture gives energy and charge null with the covered va
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/measure.py", "05_Software/plugins/power-profiler/scripts/power_support/segment.py", "05_Software/plugins/power-profiler/scripts/power_support/signals.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

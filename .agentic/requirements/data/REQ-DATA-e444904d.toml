@@ -14,7 +14,7 @@ verification = "Each operation of the spec run against the fake arduino-cli and,
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_tool.py", "05_Software/plugins/arduino-cli/scripts/arduino_support/"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = "specs/REQ-DATA-e444904d.md"

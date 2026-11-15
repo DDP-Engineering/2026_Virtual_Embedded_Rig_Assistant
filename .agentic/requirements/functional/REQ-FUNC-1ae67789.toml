@@ -14,7 +14,7 @@ verification = "The package validates as format 1; the provisioner resolves `kic
 
 affected_paths = ["05_Software/plugins/kicad/plugin.yaml", "05_Software/plugins/kicad/README.md", "05_Software/plugins/kicad/scripts/kicad_tool.py", "05_Software/src/libraries/core/src/plugins/provisioning.ts"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = ""

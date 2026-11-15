@@ -14,7 +14,7 @@ verification = "catalog.yaml lists it under official with its metadata; packs.ya
 
 affected_paths = ["05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml", "05_Software/plugins/electronics-calc/plugin.yaml", "05_Software/plugins/electronics-calc/README.md"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
 
 
 spec = ""

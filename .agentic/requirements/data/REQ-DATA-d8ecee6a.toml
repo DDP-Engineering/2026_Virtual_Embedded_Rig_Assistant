@@ -14,7 +14,7 @@ verification = "Run each operation on the fixtures and compare result.json, juni
 
 affected_paths = ["05_Software/plugins/zephyr/plugin.yaml", "05_Software/plugins/zephyr/scripts/zephyr_support/request.py", "05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/tests.py", "05_Software/plugins/zephyr/scripts/zephyr_support/__init__.py", "05_Software/plugins/zephyr/scripts/zephyr_support/errors.py", "05_Software/plugins/zephyr/scripts/zephyr_support/workspace.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = "specs/REQ-DATA-d8ecee6a.md"

@@ -14,7 +14,7 @@ verification = "Offline: a run folder whose candidate has a .kicad_dru with a ru
 
 affected_paths = ["05_Software/plugins/freerouting/"]
 
-linked_tests = ["05_Software/tests/integration/freerouting.test.ts"]
+linked_tests = ["05_Software/tests/plugins/freerouting.test.ts"]
 
 
 spec = "specs/REQ-FUNC-2a80da7f.md"

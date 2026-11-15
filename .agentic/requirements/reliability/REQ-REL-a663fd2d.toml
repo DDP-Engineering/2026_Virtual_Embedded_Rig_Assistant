@@ -14,7 +14,7 @@ verification = "Run board-basics twice on the boot fixture (stand-in and, opt-in
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/operations.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "Helper test of plugin.yaml: both downloads name the v0.29.1 rele
 
 affected_paths = ["05_Software/plugins/wokwi/plugin.yaml", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/wokwi.test.ts"]
+linked_tests = ["05_Software/tests/plugins/wokwi.test.ts"]
 
 
 spec = "specs/REQ-DATA-d985bb3d.md"

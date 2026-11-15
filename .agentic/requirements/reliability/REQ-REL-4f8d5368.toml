@@ -14,7 +14,7 @@ verification = "A request without quantity, with a quantity without a number, a 
 
 affected_paths = ["05_Software/plugins/parts-search/scripts/parts_support/cli.py", "05_Software/plugins/parts-search/scripts/parts_support/request.py", "05_Software/plugins/parts-search/scripts/parts_support/report.py"]
 
-linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+linked_tests = ["05_Software/tests/plugins/parts-search.test.ts"]
 
 
 spec = "specs/REQ-DATA-6b26f2a5.md"

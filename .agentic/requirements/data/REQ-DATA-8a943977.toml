@@ -14,7 +14,7 @@ verification = "Integration tests run every operation against fixture ELFs and t
 
 affected_paths = ["05_Software/plugins/renode/plugin.yaml", "05_Software/plugins/renode/scripts/renode_sim.py", "05_Software/plugins/renode/scripts/renode_support/cli.py", "05_Software/plugins/renode/scripts/renode_support/result.py", "05_Software/plugins/renode/scripts/renode_support/__init__.py", "05_Software/plugins/renode/scripts/renode_support/errors.py", "05_Software/plugins/renode/scripts/renode_support/workspace.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = "specs/REQ-DATA-8a943977.md"

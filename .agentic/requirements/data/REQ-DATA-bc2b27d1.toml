@@ -12,7 +12,7 @@ verification = "lab-resources tests validate an entry, see the key ble:c4:7f:51:
 
 affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts"]
 
-linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/integration/ble-tools.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/plugins/ble-tools.test.ts"]
 
 
 spec = "specs/REQ-DATA-e8502710.md"

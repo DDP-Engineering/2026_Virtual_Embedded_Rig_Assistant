@@ -14,7 +14,7 @@ verification = "Tests compare A/B fixtures with equal setup and different builds
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/compare.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

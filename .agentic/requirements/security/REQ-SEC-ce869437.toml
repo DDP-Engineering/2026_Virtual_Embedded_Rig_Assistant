@@ -14,7 +14,7 @@ verification = "Fixtures including `../outside.lib`, `C:/Windows/win.ini`, `\\\\
 
 affected_paths = ["05_Software/plugins/ngspice/scripts/ngspice_support/netlist.py", "05_Software/plugins/ngspice/scripts/ngspice_support/workspace.py"]
 
-linked_tests = ["05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ngspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-29b9a988.md"

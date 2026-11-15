@@ -6,13 +6,11 @@ title = "Dependencies on the catalog card"
 
 status = "active"
 
-requirement = """
-When the user opens the details of a catalog card, the Plugins page shall list, from the index alone, the required plugins with whether each is installed and each program with whether VERA installs it into its program folder automatically (with the pip requirement, script path, or this platform's download size and SHA-256) or it stays manual (with the supported range and vendor guide).
-"""
+requirement = "When the user opens the details of a catalog card, the Plugins page shall list, from the index, the required plugins with whether each is installed and each program with whether VERA installs it into its program folder automatically (with the pip requirement, script path, or this platform's download size and SHA-256) or it stays manual (with the supported range and vendor guide), beside the package details read for that card."
 
-verification = "Renderer test: arduino-cli's card details show serial-monitor, arduino-cli as an automatic download with its size and SHA-256 and arduino-tool as an automatic script, before any plugins.catalogReview call; KiCad's card shows kicad-cli manual with range and vendor guide link; en/ro/de texts exist (check:i18n)."
+verification = "Renderer test: arduino-cli's card details show serial-monitor, arduino-cli as an automatic download with its size and SHA-256 and arduino-tool as an automatic script, without any plugins.catalogReview call; KiCad's card shows kicad-cli manual with range and vendor guide link; en/ro/de/fr texts exist (check:i18n)."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
 

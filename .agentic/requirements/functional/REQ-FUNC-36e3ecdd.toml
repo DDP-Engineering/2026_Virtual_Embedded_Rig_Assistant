@@ -14,7 +14,7 @@ verification = "Run test-run with run folders whose UART logs hold the pass, ski
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/tests.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ztest.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

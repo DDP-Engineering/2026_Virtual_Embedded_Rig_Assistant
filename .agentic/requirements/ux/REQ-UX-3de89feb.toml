@@ -6,9 +6,9 @@ title = "Show the help page list and the selected page"
 
 status = "active"
 
-requirement = """While the Help view is open, VERA shall list the help pages of the interface language on the right and render the selected page's Markdown in the interface language, showing the English page when that language lacks it."""
+requirement = "While the Help view is open, VERA shall list the help pages of the interface language on the right and render the selected page's Markdown in the interface language, showing the English page when that language lacks it; side by side, only the page scrolls while the title and the page list stay in place."
 
-verification = """Component test with the mock API: Help in French lists pages and renders the English page when no French page exists; selecting a list entry renders it and marks it current; browser E2E repeats for each interface language."""
+verification = "Component test with the mock API: Help in French lists pages and renders the English page when no French page exists; selecting a list entry renders it and marks it current; browser E2E repeats for each interface language and scrolls a long page with the page list and title unmoved."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/help.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
 

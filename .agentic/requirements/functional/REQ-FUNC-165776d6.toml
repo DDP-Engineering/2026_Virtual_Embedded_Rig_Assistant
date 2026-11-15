@@ -14,7 +14,7 @@ verification = "The fake upload reports updated_upload_port COM7 and the second 
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/upload.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

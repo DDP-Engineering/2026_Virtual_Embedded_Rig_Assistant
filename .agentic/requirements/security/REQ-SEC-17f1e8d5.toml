@@ -14,7 +14,7 @@ verification = "classifyCommand gives `safe` for `kicad-tool --version`, each op
 
 affected_paths = ["05_Software/plugins/kicad/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = ""

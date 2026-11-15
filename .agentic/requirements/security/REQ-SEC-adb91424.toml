@@ -12,7 +12,7 @@ verification = "runner tests: a run with inherit [SSH_AUTH_SOCK] receives the ho
 
 affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-credentials.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-credentials.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/plugins/raspberry-pi-linux.test.ts"]
 
 
 spec = ""

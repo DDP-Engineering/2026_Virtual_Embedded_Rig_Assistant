@@ -12,7 +12,7 @@ verification = "A registry address no fake device advertises: identify is blocke
 
 affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/device.py"]
 
-linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ble-tools.test.ts"]
 
 
 spec = "specs/REQ-DATA-e8502710.md"

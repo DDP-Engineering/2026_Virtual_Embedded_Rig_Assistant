@@ -14,7 +14,7 @@ verification = "lab-resources tests parse a registry with a power-monitor entry 
 
 affected_paths = ["05_Software/src/libraries/shared/src/lab-resources.ts", "05_Software/plugins/scpi-instruments/scripts/scpi_support/registry.py", "05_Software/plugins/power-profiler/scripts/power_support/registry.py"]
 
-linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/lab-resources.test.ts", "05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

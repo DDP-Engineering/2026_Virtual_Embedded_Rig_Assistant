@@ -14,7 +14,7 @@ verification = "`--fqbn arduino:avr:unoo` exits 2 with fqbn-unknown and arduino:
 
 affected_paths = ["05_Software/plugins/arduino-cli/scripts/arduino_support/compile.py"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

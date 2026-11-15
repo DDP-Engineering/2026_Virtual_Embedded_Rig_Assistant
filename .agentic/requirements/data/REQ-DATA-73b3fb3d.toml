@@ -12,7 +12,7 @@ verification = "A read run ends physical confirmed; a run whose fake stop_notify
 
 affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/lifecycle.py", "05_Software/plugins/ble-tools/scripts/ble_support/device.py", "05_Software/plugins/ble-tools/scripts/ble_support/operations.py"]
 
-linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ble-tools.test.ts"]
 
 
 spec = "specs/REQ-DATA-e8502710.md"

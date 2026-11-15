@@ -14,7 +14,7 @@ verification = "5 V with 10 kΩ and 10 kΩ gives 2.5 V and Thevenin 5 kΩ; a 10 
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/electrical.py", "05_Software/tests/fixtures/electronics-calc/"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

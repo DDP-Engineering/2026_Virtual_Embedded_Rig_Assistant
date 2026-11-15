@@ -14,7 +14,7 @@ verification = "Inspection: read skills/kicad-layout/SKILL.md and README.md and 
 
 affected_paths = ["05_Software/plugins/kicad-layout/skills/kicad-layout/SKILL.md", "05_Software/plugins/kicad-layout/README.md"]
 
-linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = "specs/REQ-DATA-891d5b5d.md"

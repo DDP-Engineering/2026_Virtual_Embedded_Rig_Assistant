@@ -14,7 +14,7 @@ verification = "List the skills of the installed package: both names with source
 
 affected_paths = ["05_Software/plugins/electronics-calc/skills/electronics-sizing/SKILL.md", "05_Software/plugins/electronics-calc/skills/thermal-analysis/SKILL.md"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = ""

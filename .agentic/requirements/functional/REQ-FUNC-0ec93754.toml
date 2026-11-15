@@ -12,7 +12,7 @@ verification = "A fake temperature of 0x0915 little endian with scale 0.01 reads
 
 affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/operations.py", "05_Software/plugins/ble-tools/scripts/ble_support/payload.py"]
 
-linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ble-tools.test.ts"]
 
 
 spec = "specs/REQ-DATA-e8502710.md"

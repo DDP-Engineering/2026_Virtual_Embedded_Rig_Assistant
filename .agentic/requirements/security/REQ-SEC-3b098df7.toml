@@ -12,7 +12,7 @@ verification = "A persistent write without --persistent and an actuate write wit
 
 affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/write.py", "05_Software/plugins/ble-tools/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ble-tools.test.ts"]
 
 
 spec = "specs/REQ-DATA-e8502710.md"

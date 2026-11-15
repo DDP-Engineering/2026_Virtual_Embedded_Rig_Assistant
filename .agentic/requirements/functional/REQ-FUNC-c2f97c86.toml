@@ -14,7 +14,7 @@ verification = "The fixture's `nets.json` holds the nets and nodes recorded in t
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/netlist.py", "05_Software/plugins/kicad/scripts/kicad_support/operations.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

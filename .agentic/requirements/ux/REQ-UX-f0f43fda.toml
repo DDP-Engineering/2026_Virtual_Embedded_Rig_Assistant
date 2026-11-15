@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-f0f43fda"
+title = "Show one plugin's details in the same sections everywhere"
+status = "active"
+requirement = "When the user opens a plugin's Details in the catalog, opens an installed plugin's Details or reviews a plugin, the Plugins page shall show the same titled sections - description, facts, its help page in the interface language with English as fallback, programs, skills, profiles and data files, documents and operations - adding Dependencies and Configuration for an installed plugin; a catalog card reads its package only when its Details open."
+verification = "Renderer tests: opening arduino-cli's catalog Details calls plugins.catalogPreview once and shows its description, operations and help, without a review or an install; an installed plugin's Details show the dependency and configuration sections; the review shows the help section."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+priority = "normal"
+rationale = "A user decides what to install from all of a plugin's information, not only its one-line summary."
+created = 2026-11-15
+updated = 2026-11-15

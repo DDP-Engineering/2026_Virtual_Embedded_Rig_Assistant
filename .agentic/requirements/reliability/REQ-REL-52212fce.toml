@@ -14,7 +14,7 @@ verification = "A leases test writes a lease for a dead pid with actuates true a
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/leases.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/tests/integration/scpi-instruments.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/leases.test.ts", "05_Software/tests/plugins/scpi-instruments.test.ts"]
 
 
 spec = "specs/REQ-DATA-f2cbfc23.md"

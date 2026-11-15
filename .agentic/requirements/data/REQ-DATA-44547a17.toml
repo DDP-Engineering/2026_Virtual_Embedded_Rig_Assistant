@@ -12,7 +12,7 @@ verification = "Integration tests run each operation and check the documented fi
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/cli.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/report.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/__init__.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/lifecycle.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/workspace.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_tool.py"]
 
-linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+linked_tests = ["05_Software/tests/plugins/raspberry-pi-linux.test.ts"]
 
 
 spec = "specs/REQ-DATA-44547a17.md"

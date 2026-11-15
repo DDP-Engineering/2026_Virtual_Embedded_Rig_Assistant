@@ -14,7 +14,7 @@ verification = "Tests refuse a missing decisionRule, values of a wrong JSON type
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/request.py"]
 
-linked_tests = ["05_Software/tests/integration/lab-validation.test.ts"]
+linked_tests = ["05_Software/tests/plugins/lab-validation.test.ts"]
 
 
 spec = "specs/REQ-DATA-53797d16.md"

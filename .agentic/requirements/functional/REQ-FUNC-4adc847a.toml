@@ -14,7 +14,7 @@ verification = "Against the fake python-can, send three frames and check the rec
 
 affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py", "05_Software/tests/fixtures/can/fake-python-can/"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts"]
 
 
 spec = ""

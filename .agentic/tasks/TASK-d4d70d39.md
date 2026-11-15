@@ -4,7 +4,7 @@ stage: done
 type: feature
 path: full
 interaction: autopilot
-requirements: REQ-UX-492e89fb, REQ-UX-157f139c, REQ-UX-50e2dc6b, REQ-UX-5d984350, REQ-FUNC-0817ec80, REQ-UX-21440e02, REQ-REL-baf16878, REQ-UX-27a41e3d
+requirements: REQ-UX-492e89fb, REQ-UX-157f139c, REQ-UX-5d984350, REQ-FUNC-0817ec80, REQ-UX-21440e02, REQ-REL-baf16878, REQ-UX-27a41e3d
 parent:
 branch: feature/261-plugin-management
 base: cfae1fbe3e342274492cb050808145cf0a175156

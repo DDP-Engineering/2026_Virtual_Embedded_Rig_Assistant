@@ -14,7 +14,7 @@ verification = "Evaluate the manifest rules for each operation line through VERA
 
 affected_paths = ["05_Software/plugins/zephyr/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

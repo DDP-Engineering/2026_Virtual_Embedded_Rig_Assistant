@@ -14,7 +14,7 @@ verification = "A test reports a capture, a measure-energy run and a segment run
 
 affected_paths = ["05_Software/plugins/power-profiler/scripts/power_support/render.py", "05_Software/plugins/power-profiler/scripts/power_support/cli_analyze.py"]
 
-linked_tests = ["05_Software/tests/integration/power-profiler.test.ts"]
+linked_tests = ["05_Software/tests/plugins/power-profiler.test.ts"]
 
 
 spec = ""

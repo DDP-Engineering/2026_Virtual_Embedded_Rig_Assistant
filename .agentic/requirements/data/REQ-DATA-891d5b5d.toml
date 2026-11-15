@@ -14,7 +14,7 @@ verification = "After open and edits of the fixture board the run folder holds c
 
 affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/state.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/report.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/request.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/candidate.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/__init__.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = "specs/REQ-DATA-891d5b5d.md"

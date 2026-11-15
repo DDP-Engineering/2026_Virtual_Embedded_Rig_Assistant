@@ -14,7 +14,7 @@ verification = "Integration tests run tools with the stand-ins and expect versio
 
 affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/cli_debug.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/session.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

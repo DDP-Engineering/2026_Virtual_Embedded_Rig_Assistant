@@ -5,7 +5,7 @@ status = "active"
 requirement = "When a program run names a volume with --volume, the program runner shall reserve volume:<volume> (a Windows drive letter upper-cased with its colon, another path resolved) in the lease registry for the run, so that another VERA run naming the same volume in this or another process is refused with BUSY until the run settles."
 verification = "Runner with a lease folder: a run with --volume e:\\ holds volume:E:; a second run with --volume E: in the same process is BUSY {handle, resource}; a second runner sharing the lease folder is BUSY; after the first run ends both succeed; --volume=E: is recognised."
 affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts"]
-linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/integration/circuitpython.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner-leases.test.ts", "05_Software/tests/plugins/circuitpython.test.ts"]
 spec = ""
 priority = "high"
 created = 2026-11-14

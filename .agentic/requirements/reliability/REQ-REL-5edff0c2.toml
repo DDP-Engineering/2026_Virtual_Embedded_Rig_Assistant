@@ -14,7 +14,7 @@ verification = "Run can-decode with a missing log, a missing database and an inv
 
 affected_paths = ["05_Software/plugins/can-dbc/scripts/can_decode.py"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts"]
 
 
 spec = ""

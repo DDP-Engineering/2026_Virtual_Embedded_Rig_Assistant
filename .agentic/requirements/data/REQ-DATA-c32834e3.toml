@@ -14,7 +14,7 @@ verification = "Each operation on the fixture project prints a document with exa
 
 affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/cli.py", "05_Software/plugins/kicad/scripts/kicad_support/document.py", "05_Software/plugins/kicad/scripts/kicad_support/review.py", "05_Software/plugins/kicad/scripts/kicad_tool.py", "05_Software/plugins/kicad/scripts/kicad_support/__init__.py"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = "specs/REQ-DATA-c32834e3.md"

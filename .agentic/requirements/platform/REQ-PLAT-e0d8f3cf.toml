@@ -14,7 +14,7 @@ verification = "Unit tests: programEnvironment with a host environment holding t
 
 affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/plugins/kicad-layout/plugin.yaml"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/integration/kicad-layout.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/tests/plugins/kicad-layout.test.ts"]
 
 
 spec = ""

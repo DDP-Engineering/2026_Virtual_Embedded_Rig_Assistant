@@ -14,7 +14,7 @@ verification = "Run tools without and with the fixture request: versions are rep
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/tools.py", "05_Software/plugins/zephyr/scripts/zephyr_support/sdk.py", "05_Software/plugins/zephyr/scripts/zephyr_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

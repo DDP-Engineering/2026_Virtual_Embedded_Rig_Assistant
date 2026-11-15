@@ -12,7 +12,7 @@ verification = "Fake adapters missing and powered off: scan and identify are blo
 
 affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/backend.py"]
 
-linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ble-tools.test.ts"]
 
 
 spec = "specs/REQ-DATA-e8502710.md"

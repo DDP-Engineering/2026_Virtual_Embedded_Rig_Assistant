@@ -14,7 +14,7 @@ verification = "Run list against the fake python-can and check the six driver en
 
 affected_paths = ["05_Software/plugins/can-python/scripts/can_bus.py"]
 
-linked_tests = ["05_Software/tests/integration/can.test.ts"]
+linked_tests = ["05_Software/tests/plugins/can.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "The divider run reads result.json and checks format 1, the kind,
 
 affected_paths = ["05_Software/plugins/ltspice/scripts/ltspice_support/cli.py", "05_Software/plugins/ltspice/scripts/ltspice_support/report.py", "05_Software/plugins/ltspice/scripts/ltspice_support/request.py", "05_Software/plugins/ltspice/scripts/ltspice_support/__init__.py", "05_Software/plugins/ltspice/scripts/ltspice_support/workspace.py"]
 
-linked_tests = ["05_Software/tests/integration/ltspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/ltspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-0f9e36a3.md"

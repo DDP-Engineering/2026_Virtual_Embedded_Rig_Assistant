@@ -14,7 +14,7 @@ verification = "The package validates, its skills load, each of the seven famili
 
 affected_paths = ["05_Software/plugins/parts-search/plugin.yaml", "05_Software/plugins/parts-search/skills/component-selection/SKILL.md", "05_Software/plugins/parts-search/skills/component-families/SKILL.md", "05_Software/plugins/parts-search/README.md", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/parts-search.test.ts"]
+linked_tests = ["05_Software/tests/plugins/parts-search.test.ts"]
 
 
 spec = "specs/REQ-DATA-6b26f2a5.md"

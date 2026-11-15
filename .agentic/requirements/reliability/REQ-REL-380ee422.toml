@@ -14,7 +14,7 @@ verification = "The provisioner unit test installs a pip program on a Windows an
 
 affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts", "05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = ""

@@ -14,7 +14,7 @@ verification = "Integration tests inspect committed fixture ELFs built with zig 
 
 affected_paths = ["05_Software/plugins/gdb-debug/scripts/gdb_support/elf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/dwarf.py", "05_Software/plugins/gdb-debug/scripts/gdb_support/cli_elf.py"]
 
-linked_tests = ["05_Software/tests/integration/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
+linked_tests = ["05_Software/tests/plugins/gdb-debug.test.ts", "05_Software/tests/fixtures/gdb-debug/internals.py"]
 
 
 spec = "specs/REQ-DATA-d7da2a71.md"

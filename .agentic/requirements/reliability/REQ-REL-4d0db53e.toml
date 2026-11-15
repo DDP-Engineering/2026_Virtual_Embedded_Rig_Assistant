@@ -14,7 +14,7 @@ verification = "Build a fixture whose extra .conf sets an undefined symbol and o
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/diagnostics.py", "05_Software/plugins/zephyr/scripts/zephyr_support/ops.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

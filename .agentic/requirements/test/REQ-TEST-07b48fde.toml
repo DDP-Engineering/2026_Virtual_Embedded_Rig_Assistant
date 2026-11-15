@@ -12,7 +12,7 @@ The kicad tests shall use fictional KiCad 10 projects made for them, whose expec
 
 verification = "Inspection: the fixture README derives every expected value from the designed circuit and board; the tests compare against those values and run the real KiCad when the helper finds KiCad 10, and say so when they skip."
 
-affected_paths = ["05_Software/tests/fixtures/kicad/", "05_Software/tests/integration/kicad.test.ts"]
+affected_paths = ["05_Software/tests/fixtures/kicad/", "05_Software/tests/plugins/kicad.test.ts"]
 
 linked_tests = []
 

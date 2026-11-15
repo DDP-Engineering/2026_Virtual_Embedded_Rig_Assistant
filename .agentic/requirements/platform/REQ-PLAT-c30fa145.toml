@@ -14,7 +14,7 @@ verification = "The opt-in test (VERA_KICAD_UV naming a uv executable) provision
 
 affected_paths = ["05_Software/plugins/kicad/plugin.yaml"]
 
-linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
+linked_tests = ["05_Software/tests/plugins/kicad.test.ts"]
 
 
 spec = ""

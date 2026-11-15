@@ -14,7 +14,7 @@ verification = "Stages 1 K/W with tau 1 ms and 2 K/W with capacitance 0.05 J/K, 
 
 affected_paths = ["05_Software/plugins/electronics-calc/scripts/elec_support/thermal.py", "05_Software/tests/fixtures/electronics-calc/"]
 
-linked_tests = ["05_Software/tests/integration/electronics-calc.test.ts"]
+linked_tests = ["05_Software/tests/plugins/electronics-calc.test.ts"]
 
 
 spec = "specs/REQ-DATA-3d15fdfc.md"

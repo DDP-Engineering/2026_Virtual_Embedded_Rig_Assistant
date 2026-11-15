@@ -14,7 +14,7 @@ verification = "Validate plugin.yaml with the shared manifest schema: the downlo
 
 affected_paths = ["05_Software/plugins/arduino-cli/plugin.yaml", "05_Software/plugins/arduino-cli/README.md"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

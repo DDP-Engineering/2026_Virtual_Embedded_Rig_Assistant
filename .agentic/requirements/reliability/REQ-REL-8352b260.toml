@@ -12,7 +12,7 @@ verification = "Killing the test server during a long task gives connection-lost
 
 affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/ssh.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/operations.py"]
 
-linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
+linked_tests = ["05_Software/tests/plugins/raspberry-pi-linux.test.ts"]
 
 
 spec = "specs/REQ-DATA-44547a17.md"

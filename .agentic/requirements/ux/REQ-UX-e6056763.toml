@@ -6,11 +6,11 @@ title = "Review a plugin before installing it"
 
 status = "active"
 
-requirement = "When the user picks a plugin folder or .zip file, the Plugins page shall show a review screen with the plugin's name, id, version, description, platforms, required plugins, source path, every program with its install source and supported version range, every rule with its risk and note, and Install and Cancel."
+requirement = "When the user picks a plugin folder or .zip file or installs a catalog plugin, the Plugins page shall show a review screen with Install and Cancel at its top right, then the plugin's details in the shared plugin sections (description, id, version, license, platforms, required plugins, its help page, every program with its install source and supported version range, every rule with its risk and note) and the source path with its SHA-256."
 
-verification = "Component test and both e2e runs: picking echo-tools shows program echo with its find entries and hint and all five rules with Safe, Device write, Irreversible and Blocked badges and the notes Writes the device. and Burns a fuse.; Cancel returns to the list without installing."
+verification = "Component test and both e2e runs: picking echo-tools shows Install and Cancel in the review header, program echo with its find entries and hint, its help page and all five rules with Safe, Device write, Irreversible and Blocked badges and the notes Writes the device. and Burns a fuse.; Cancel returns to the list without installing."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-03
+updated = 2026-11-15

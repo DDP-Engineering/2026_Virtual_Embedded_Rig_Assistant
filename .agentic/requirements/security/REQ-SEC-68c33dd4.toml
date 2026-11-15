@@ -14,7 +14,7 @@ verification = "Tests pass an absolute outside path, a `..` path, a link to outs
 
 affected_paths = ["05_Software/plugins/lab-validation/scripts/lab_validation/workspace.py", "05_Software/plugins/lab-validation/scripts/lab_validation/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/lab-validation.test.ts", "05_Software/tests/integration/ngspice.test.ts"]
+linked_tests = ["05_Software/tests/plugins/lab-validation.test.ts", "05_Software/tests/plugins/ngspice.test.ts"]
 
 
 spec = "specs/REQ-DATA-53797d16.md"

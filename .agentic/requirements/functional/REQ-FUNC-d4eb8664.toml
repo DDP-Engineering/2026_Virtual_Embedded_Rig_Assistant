@@ -14,7 +14,7 @@ verification = "Manual: with the real Zephyr v4.4.2 workspace and SDK 1.0.1, bui
 
 affected_paths = ["05_Software/plugins/zephyr/scripts/zephyr_support/ops.py", "05_Software/plugins/zephyr/scripts/zephyr_support/artifacts.py", "05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_tool.py"]
 
-linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
+linked_tests = ["05_Software/tests/plugins/zephyr.test.ts"]
 
 
 spec = ""

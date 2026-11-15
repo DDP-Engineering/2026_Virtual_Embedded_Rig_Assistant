@@ -14,7 +14,7 @@ verification = "The catalog source check passes; catalog.yaml lists arduino-cli 
 
 affected_paths = ["05_Software/plugins/arduino-cli/skills/", "05_Software/plugins/catalog.yaml", "05_Software/plugins/packs.yaml"]
 
-linked_tests = ["05_Software/tests/integration/arduino-cli.test.ts"]
+linked_tests = ["05_Software/tests/plugins/arduino-cli.test.ts"]
 
 
 spec = ""

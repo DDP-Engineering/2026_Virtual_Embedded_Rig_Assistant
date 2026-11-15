@@ -14,7 +14,7 @@ verification = "Run profiles in a workbench with one valid and one invalid profi
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/profiles.py", "05_Software/plugins/renode/scripts/renode_support/cli.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""

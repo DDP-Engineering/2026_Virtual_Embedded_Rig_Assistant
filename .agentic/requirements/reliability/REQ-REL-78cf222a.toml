@@ -14,7 +14,7 @@ verification = "A fixture variant with a compile error (and the stand-in's error
 
 affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/ops.py", "05_Software/plugins/platformio/scripts/pio_support/diagnostics.py"]
 
-linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
+linked_tests = ["05_Software/tests/plugins/platformio.test.ts"]
 
 
 spec = ""

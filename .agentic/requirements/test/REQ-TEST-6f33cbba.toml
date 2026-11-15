@@ -12,9 +12,9 @@ When the stm32-cubeprog tests run with STM32_Programmer_CLI installed, VERA shal
 
 verification = "With the real CLI found on this host: ask session runs --version, -l st-link-only and -fchecksum on a fixture without approval; -c port=SWD sn=VERA0000000000000000000 waits for device-read approval and fails; a stub-resolver session proves -ob RDP=0xBB waits for '-ob' and a missing or wrong word starts nothing; the test skips the real part where the CLI is missing."
 
-affected_paths = ["05_Software/tests/integration/stm32-cubeprog.test.ts", "05_Software/tests/fixtures/stm32/"]
+affected_paths = ["05_Software/tests/plugins/stm32-cubeprog.test.ts", "05_Software/tests/fixtures/stm32/"]
 
-linked_tests = ["05_Software/tests/integration/stm32-cubeprog.test.ts"]
+linked_tests = ["05_Software/tests/plugins/stm32-cubeprog.test.ts"]
 
 
 spec = ""

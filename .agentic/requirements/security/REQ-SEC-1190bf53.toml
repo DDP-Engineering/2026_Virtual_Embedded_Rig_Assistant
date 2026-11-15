@@ -14,7 +14,7 @@ verification = "Validate the stock stm32f4_discovery.resc and workbench profiles
 
 affected_paths = ["05_Software/plugins/renode/scripts/renode_support/profiles.py"]
 
-linked_tests = ["05_Software/tests/integration/renode.test.ts"]
+linked_tests = ["05_Software/tests/plugins/renode.test.ts"]
 
 
 spec = ""
