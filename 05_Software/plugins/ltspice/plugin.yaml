@@ -4,6 +4,16 @@ version: 1.0.0
 name: LTspice circuit simulation
 summary: Batch-simulate netlists and schematics with your own LTspice on Windows, with measurements and pass/fail.
 description: Reproducible batch simulation with your own LTspice on Windows - operating point, DC, AC, transient and noise analyses of a netlist or an .asc schematic, parameter, temperature and Monte Carlo steps, measurements over declared windows (ripple, overshoot, settling, RMS, average power), pass/fail criteria, run comparison and reports, in the same request and result model as the ngspice plugin. Netlists and schematics are checked before LTspice runs, every run writes a new folder with the log, raw file, series, plot and report, and nothing is downloaded or installed.
+translations:
+  ro:
+    summary: "Simulează în mod batch netlisturi și scheme cu propriul tău LTspice pe Windows, cu măsurători și trecut/picat."
+    description: "Simulare batch reproductibilă cu propriul tău LTspice pe Windows - analize de punct de funcționare, DC, AC, tranzitorii și de zgomot pentru un netlist sau o schemă .asc, pași de parametri, temperatură și Monte Carlo, măsurători pe ferestre declarate (riplu, supracreștere, stabilizare, RMS, putere medie), criterii de trecere/picare, compararea rulărilor și rapoarte, în același model de cerere și rezultat ca pluginul ngspice. Netlisturile și schemele sunt verificate înainte să ruleze LTspice, fiecare rulare scrie un folder nou cu logul, fișierul raw, seriile, graficul și raportul și nu se descarcă sau instalează nimic."
+  de:
+    summary: "Netzlisten und Schaltpläne mit Ihrem eigenen LTspice unter Windows im Batch simulieren, mit Messungen und Bestanden/Nicht bestanden."
+    description: "Reproduzierbare Batch-Simulation mit Ihrem eigenen LTspice unter Windows - Arbeitspunkt-, DC-, AC-, Transienten- und Rauschanalysen einer Netzliste oder eines .asc-Schaltplans, Parameter-, Temperatur- und Monte-Carlo-Schritte, Messungen über deklarierte Fenster (Welligkeit, Überschwingen, Einschwingen, Effektivwert, mittlere Leistung), Bestanden/Nicht-bestanden-Kriterien, Vergleich von Läufen und Berichte, im selben Anfrage- und Ergebnismodell wie das Plugin ngspice. Netzlisten und Schaltpläne werden geprüft, bevor LTspice läuft, jeder Lauf schreibt einen neuen Ordner mit Log, Raw-Datei, Messreihen, Plot und Bericht, und nichts wird heruntergeladen oder installiert."
+  fr:
+    summary: "Simulez en batch des netlists et des schémas avec votre propre LTspice sous Windows, avec mesures et réussite/échec."
+    description: "Simulation batch reproductible avec votre propre LTspice sous Windows - analyses de point de fonctionnement, DC, AC, transitoires et de bruit d’une netlist ou d’un schéma .asc, variations de paramètres et de température et Monte Carlo, mesures sur des fenêtres déclarées (ondulation, dépassement, établissement, RMS, puissance moyenne), critères de réussite/échec, comparaison d’exécutions et rapports, avec le même modèle de requête et de résultat que le plugin ngspice. Les netlists et les schémas sont vérifiés avant l’exécution de LTspice, chaque exécution écrit un nouveau dossier avec le journal, le fichier raw, les séries, le graphique et le rapport, et rien n’est téléchargé ni installé."
 ecosystem: electronics
 platforms: [windows-x64]
 docs: [README.md, "https://www.analog.com/ltspice"]

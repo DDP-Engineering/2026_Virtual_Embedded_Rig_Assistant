@@ -4,6 +4,16 @@ version: 0.2.0
 name: MicroPython
 summary: Copy files, deploy and run scripts on a MicroPython board and capture its console.
 description: Finite operations on a MicroPython board that already runs MicroPython 1.22 or newer - list serial ports by identity, identify the board's firmware, list and copy its files, deploy a workbench file through a verified temporary copy, run a workbench script from RAM with a deadline and a verdict, capture its console and reset it - through a pinned mpremote. No interactive REPL, no code given as an argument, no mount of a host folder, no firmware installation and no implicit change of boot.py or main.py.
+translations:
+  ro:
+    summary: "Copiază fișiere, implementează și rulează scripturi pe o placă MicroPython și capturează-i consola."
+    description: "Operații finite pe o placă ce rulează deja MicroPython 1.22 sau mai nou - listează porturile seriale după identitate, identifică firmware-ul plăcii, îi listează și îi copiază fișierele, implementează un fișier din workbench printr-o copie temporară verificată, rulează din RAM un script din workbench cu un termen limită și un verdict, îi capturează consola și o resetează - printr-un mpremote fixat. Fără REPL interactiv, fără cod dat ca argument, fără montarea unui folder de pe gazdă, fără instalare de firmware și fără modificarea implicită a boot.py sau main.py."
+  de:
+    summary: "Dateien kopieren, Skripte auf ein MicroPython-Board übertragen und ausführen und seine Konsole aufzeichnen."
+    description: "Begrenzte Operationen auf einem Board, auf dem bereits MicroPython 1.22 oder neuer läuft - serielle Ports nach Identität auflisten, die Firmware des Boards identifizieren, seine Dateien auflisten und kopieren, eine Workbench-Datei über eine geprüfte temporäre Kopie übertragen, ein Workbench-Skript mit Frist und Urteil aus dem RAM ausführen, seine Konsole aufzeichnen und es zurücksetzen - über ein festgelegtes mpremote. Kein interaktiver REPL, kein als Argument übergebener Code, kein Einhängen eines Host-Ordners, keine Firmware-Installation und keine implizite Änderung von boot.py oder main.py."
+  fr:
+    summary: "Copiez des fichiers, déployez et exécutez des scripts sur une carte MicroPython et capturez sa console."
+    description: "Opérations finies sur une carte qui exécute déjà MicroPython 1.22 ou plus récent - lister les ports série par leur identité, identifier le firmware de la carte, lister et copier ses fichiers, déployer un fichier du banc de travail via une copie temporaire vérifiée, exécuter un script du banc de travail depuis la RAM avec une échéance et un verdict, capturer sa console et la réinitialiser - avec un mpremote épinglé. Pas de REPL interactif, pas de code passé en argument, pas de montage d’un dossier de l’hôte, pas d’installation de firmware ni de modification implicite de boot.py ou main.py."
 ecosystem: micropython
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pypi.org/project/mpremote/1.29.0/", "https://docs.micropython.org/en/latest/reference/mpremote.html"]

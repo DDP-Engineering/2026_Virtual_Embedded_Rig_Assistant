@@ -4,6 +4,16 @@ version: 0.3.0
 name: Parts search and component selection
 summary: Search supplier catalogs and choose components on datasheet evidence, with a comparison and BOM.
 description: Choose electronic components on evidence - search the supplier catalogs you enable (Mouser, DigiKey, TME, Farnell, Rutronik) through VERA's parts_search tool, then compare candidates against hard constraints first and preferences second, with every value traced to its datasheet page and conditions, and write a comparison and a proposed BOM. Supplier keys stay in VERA's credential store and are set on this plugin's page; nothing is ordered and no schematic or BOM is changed.
+translations:
+  ro:
+    summary: "Caută în cataloagele furnizorilor și alege componente pe baza datasheeturilor, cu o comparație și un BOM."
+    description: "Alege componente electronice pe baza dovezilor - caută în cataloagele furnizorilor pe care le activezi (Mouser, DigiKey, TME, Farnell, Rutronik) prin instrumentul parts_search al VERA, apoi compară candidații mai întâi cu constrângerile obligatorii și apoi cu preferințele, cu fiecare valoare urmărită până la pagina și condițiile din datasheet, și scrie o comparație și un BOM propus. Cheile furnizorilor rămân în depozitul de credențiale al VERA și se setează pe pagina acestui plugin; nu se comandă nimic și nu se modifică nicio schemă și niciun BOM."
+  de:
+    summary: "Lieferantenkataloge durchsuchen und Bauteile anhand von Datenblattbelegen auswählen, mit Vergleich und Stückliste."
+    description: "Elektronische Bauteile anhand von Belegen auswählen - die von Ihnen aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) über VERAs Werkzeug parts_search durchsuchen, dann die Kandidaten zuerst mit harten Anforderungen und danach mit Präferenzen vergleichen, wobei jeder Wert auf seine Datenblattseite und Bedingungen zurückgeführt wird, und einen Vergleich sowie eine vorgeschlagene Stückliste schreiben. Lieferantenschlüssel bleiben im Zugangsdatenspeicher von VERA und werden auf der Seite dieses Plugins festgelegt; nichts wird bestellt, und kein Schaltplan und keine Stückliste werden geändert."
+  fr:
+    summary: "Cherchez dans les catalogues des distributeurs et choisissez des composants sur la foi des datasheets, avec comparaison et BOM."
+    description: "Choisissez des composants électroniques sur des preuves - cherchez dans les catalogues des distributeurs que vous activez (Mouser, DigiKey, TME, Farnell, Rutronik) avec l’outil parts_search de VERA, puis comparez les candidats d’abord aux contraintes impératives, ensuite aux préférences, chaque valeur étant rattachée à sa page de datasheet et à ses conditions, et rédigez une comparaison et une proposition de BOM. Les clés des distributeurs restent dans le magasin d’identifiants de VERA et se définissent sur la page de ce plugin ; rien n’est commandé et aucun schéma ni aucune BOM n’est modifié."
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]
 docs: [README.md]

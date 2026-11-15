@@ -4,6 +4,16 @@ version: 0.2.0
 name: HIL testing
 summary: Run finite hardware-in-the-loop test plans on a real board through the enabled lab plugins.
 description: Run finite hardware-in-the-loop test plans on a real board - VERA compiles a declarative JSON plan (setup, firmware and hash, wiring, steps, budget, cleanup) into operations of the enabled probe-rs, esp32-esptool, serial-monitor, scpi-instruments and lab-validation plugins, asks one approval at the plan's highest risk, reserves the probe, serial ports and instruments for the plan, flashes, resets, talks to the UART, waits for events, captures and judges the results, always runs the cleanup on Stop or timeout, and writes a JSON/JUnit/HTML report.
+translations:
+  ro:
+    summary: "Rulează planuri de test hardware-in-the-loop finite pe o placă reală, prin pluginurile de laborator activate."
+    description: "Rulează planuri de test hardware-in-the-loop finite pe o placă reală - VERA compilează un plan JSON declarativ (pregătire, firmware și hash, cablaj, pași, buget, curățare) în operații ale pluginurilor activate probe-rs, esp32-esptool, serial-monitor, scpi-instruments și lab-validation, cere o singură aprobare la cel mai mare risc al planului, rezervă pentru plan probe-ul, porturile seriale și instrumentele, programează, resetează, comunică prin UART, așteaptă evenimente, capturează și evaluează rezultatele, rulează întotdeauna curățarea la Oprește sau la timeout și scrie un raport JSON/JUnit/HTML."
+  de:
+    summary: "Begrenzte Hardware-in-the-Loop-Testpläne über die aktivierten Labor-Plugins auf einem echten Board ausführen."
+    description: "Begrenzte Hardware-in-the-Loop-Testpläne auf einem echten Board ausführen - VERA übersetzt einen deklarativen JSON-Plan (Aufbau, Firmware und Hash, Verdrahtung, Schritte, Budget, Aufräumen) in Operationen der aktivierten Plugins probe-rs, esp32-esptool, serial-monitor, scpi-instruments und lab-validation, fragt eine einzige Freigabe auf der höchsten Risikostufe des Plans an, reserviert Probe, serielle Ports und Messgeräte für den Plan, flasht, setzt zurück, kommuniziert über den UART, wartet auf Ereignisse, zeichnet die Ergebnisse auf und bewertet sie, führt bei Stoppen oder Zeitüberschreitung immer das Aufräumen aus und schreibt einen JSON/JUnit/HTML-Bericht."
+  fr:
+    summary: "Exécutez des plans de test hardware-in-the-loop finis sur une vraie carte avec les plugins de labo activés."
+    description: "Exécutez des plans de test hardware-in-the-loop finis sur une vraie carte - VERA compile un plan JSON déclaratif (préparation, firmware et hash, câblage, étapes, budget, nettoyage) en opérations des plugins activés probe-rs, esp32-esptool, serial-monitor, scpi-instruments et lab-validation, demande une seule approbation au risque le plus élevé du plan, réserve la sonde, les ports série et les instruments pour le plan, flashe, réinitialise, dialogue avec l’UART, attend des événements, capture et évalue les résultats, exécute toujours le nettoyage après Arrêter ou un dépassement de délai, et rédige un rapport JSON/JUnit/HTML."
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md]

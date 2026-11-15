@@ -4,6 +4,16 @@ version: 0.2.0
 name: sigrok (DDP fork)
 summary: Capture and decode digital and analog signals and control bench instruments with sigrok-cli.
 description: Capture and decode digital and analog signals and read or configure bench instruments through sigrok-cli.
+translations:
+  ro:
+    summary: "Capturează și decodează semnale digitale și analogice și controlează instrumente de laborator cu sigrok-cli."
+    description: "Capturează și decodează semnale digitale și analogice și citește sau configurează instrumente de laborator prin sigrok-cli."
+  de:
+    summary: "Digitale und analoge Signale aufzeichnen und dekodieren und Labormessgeräte mit sigrok-cli steuern."
+    description: "Digitale und analoge Signale aufzeichnen und dekodieren sowie Labormessgeräte über sigrok-cli auslesen oder konfigurieren."
+  fr:
+    summary: "Capturez et décodez des signaux numériques et analogiques et pilotez des instruments de banc avec sigrok-cli."
+    description: "Capturez et décodez des signaux numériques et analogiques, et lisez ou configurez des instruments de banc avec sigrok-cli."
 ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
 docs: [README.md]

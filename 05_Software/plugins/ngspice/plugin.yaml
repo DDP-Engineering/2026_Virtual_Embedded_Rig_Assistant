@@ -4,6 +4,16 @@ version: 0.3.0
 name: ngspice circuit simulation
 summary: Reproducible local circuit simulation with ngspice - analyses, sweeps, Monte Carlo and pass/fail.
 description: Reproducible local circuit simulation with ngspice - operating point, DC, AC, transient and noise analyses on your netlist and local models, measurements over declared windows (ripple, overshoot, settling, RMS, average power), pass/fail criteria, parameter and temperature sweeps, seeded Monte Carlo, run comparison and reports. Netlists are checked before the engine runs and every run writes a new folder with the log, series, plot and report. Uses your ngspice or, on Windows, installs the pinned official ngspice-47.
+translations:
+  ro:
+    summary: "Simulare locală reproductibilă de circuite cu ngspice - analize, baleieri, Monte Carlo și trecut/picat."
+    description: "Simulare locală reproductibilă de circuite cu ngspice - analize de punct de funcționare, DC, AC, tranzitorii și de zgomot pe netlistul tău și modele locale, măsurători pe ferestre declarate (riplu, supracreștere, stabilizare, RMS, putere medie), criterii de trecere/picare, baleieri de parametri și temperatură, Monte Carlo cu seed, compararea rulărilor și rapoarte. Netlisturile sunt verificate înainte să ruleze motorul, iar fiecare rulare scrie un folder nou cu logul, seriile, graficul și raportul. Folosește ngspice-ul tău sau, pe Windows, instalează build-ul oficial fixat ngspice-47."
+  de:
+    summary: "Reproduzierbare lokale Schaltungssimulation mit ngspice - Analysen, Sweeps, Monte Carlo und Bestanden/Nicht bestanden."
+    description: "Reproduzierbare lokale Schaltungssimulation mit ngspice - Arbeitspunkt-, DC-, AC-, Transienten- und Rauschanalysen Ihrer Netzliste mit lokalen Modellen, Messungen über deklarierte Fenster (Welligkeit, Überschwingen, Einschwingen, Effektivwert, mittlere Leistung), Bestanden/Nicht-bestanden-Kriterien, Parameter- und Temperatur-Sweeps, Monte Carlo mit festem Seed, Vergleich von Läufen und Berichte. Netzlisten werden geprüft, bevor der Simulator läuft, und jeder Lauf schreibt einen neuen Ordner mit Log, Messreihen, Plot und Bericht. Verwendet Ihr ngspice oder installiert unter Windows das festgelegte offizielle ngspice-47."
+  fr:
+    summary: "Simulation locale et reproductible de circuits avec ngspice - analyses, balayages, Monte Carlo et réussite/échec."
+    description: "Simulation locale et reproductible de circuits avec ngspice - analyses de point de fonctionnement, DC, AC, transitoires et de bruit sur votre netlist et vos modèles locaux, mesures sur des fenêtres déclarées (ondulation, dépassement, établissement, RMS, puissance moyenne), critères de réussite/échec, balayages de paramètres et de température, Monte Carlo avec graine, comparaison d’exécutions et rapports. Les netlists sont vérifiées avant l’exécution du moteur et chaque exécution écrit un nouveau dossier avec le journal, les séries, le graphique et le rapport. Utilise votre ngspice ou, sous Windows, installe le ngspice-47 officiel épinglé."
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://ngspice.sourceforge.io/docs.html"]

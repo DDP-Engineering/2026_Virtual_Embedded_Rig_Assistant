@@ -4,6 +4,16 @@ version: 0.1.0
 name: ESP32 ESP-IDF
 summary: Build ESP-IDF projects, flash firmware and decode ESP32 panics with a user-installed ESP-IDF.
 description: Build and repair ESP-IDF projects, flash firmware, and analyse ESP32 panic backtraces and core dumps with the matching toolchain and ELF. Requires a user-installed EIM and ESP-IDF toolchain.
+translations:
+  ro:
+    summary: "Compilează proiecte ESP-IDF, programează firmware și decodează panicile ESP32 cu un ESP-IDF instalat de utilizator."
+    description: "Compilează și repară proiecte ESP-IDF, programează firmware și analizează backtrace-urile de panică și core dump-urile ESP32 cu toolchain-ul și ELF-ul corespunzătoare. Necesită EIM și un toolchain ESP-IDF instalate de utilizator."
+  de:
+    summary: "ESP-IDF-Projekte bauen, Firmware flashen und ESP32-Panics mit einem selbst installierten ESP-IDF dekodieren."
+    description: "ESP-IDF-Projekte bauen und reparieren, Firmware flashen sowie Panic-Backtraces und Core Dumps des ESP32 mit der passenden Toolchain und dem passenden ELF analysieren. Erfordert ein vom Benutzer installiertes EIM und eine ESP-IDF-Toolchain."
+  fr:
+    summary: "Compilez des projets ESP-IDF, flashez le firmware et décodez les paniques ESP32 avec un ESP-IDF installé par vos soins."
+    description: "Compilez et réparez des projets ESP-IDF, flashez le firmware, et analysez les backtraces de panique et les core dumps ESP32 avec la chaîne d’outils et l’ELF correspondants. Nécessite EIM et une chaîne d’outils ESP-IDF installés par l’utilisateur."
 ecosystem: esp32
 platforms: [windows-x64, linux-x64]
 requires: [serial-monitor]

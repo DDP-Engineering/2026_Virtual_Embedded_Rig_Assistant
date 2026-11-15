@@ -4,6 +4,16 @@ version: 0.2.0
 name: ESP32 eFuses and image security
 summary: Review ESP32 eFuses and prepare secure-boot keys and encrypted images; burns are permanent.
 description: Review Espressif eFuses and explicitly requested permanent changes with esp32-efuse-review. Read summaries and raw eFuses with espefuse; prepare local keys, signatures and encrypted images with espsecure. Burns are irreversible and can brick a chip. Enable this Security plugin only when needed.
+translations:
+  ro:
+    summary: "Examinează eFuse-urile ESP32 și pregătește chei de secure boot și imagini criptate; arderile sunt permanente."
+    description: "Examinează eFuse-urile Espressif și modificările permanente cerute explicit, cu esp32-efuse-review. Citește rezumate și eFuse-uri brute cu espefuse; pregătește local chei, semnături și imagini criptate cu espsecure. Arderile sunt ireversibile și pot distruge definitiv un cip. Activează acest plugin de securitate doar când este nevoie."
+  de:
+    summary: "ESP32-eFuses prüfen und Secure-Boot-Schlüssel sowie verschlüsselte Images vorbereiten; Brennvorgänge sind dauerhaft."
+    description: "Espressif-eFuses und ausdrücklich angeforderte dauerhafte Änderungen mit esp32-efuse-review prüfen. Zusammenfassungen und rohe eFuses mit espefuse lesen; lokale Schlüssel, Signaturen und verschlüsselte Images mit espsecure vorbereiten. Brennvorgänge sind irreversibel und können einen Chip unbrauchbar machen. Aktivieren Sie dieses Sicherheits-Plugin nur bei Bedarf."
+  fr:
+    summary: "Examinez les eFuses ESP32 et préparez des clés de secure boot et des images chiffrées ; les programmations sont définitives."
+    description: "Examinez les eFuses Espressif et effectuez les modifications permanentes explicitement demandées avec esp32-efuse-review. Lisez les résumés et les eFuses bruts avec espefuse ; préparez localement des clés, des signatures et des images chiffrées avec espsecure. Les programmations sont irréversibles et peuvent rendre une puce inutilisable. N’activez ce plugin de sécurité qu’en cas de besoin."
 ecosystem: esp32
 platforms: [windows-x64, linux-x64]
 programs:

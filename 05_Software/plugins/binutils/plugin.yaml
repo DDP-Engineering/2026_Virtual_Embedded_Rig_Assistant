@@ -4,6 +4,16 @@ version: 0.3.0
 name: GNU binutils (ARM, RISC-V)
 summary: Inspect ARM and RISC-V firmware ELF files - size growth, memory layout, disassembly and crash addresses.
 description: Inspect local ARM and RISC-V firmware ELF files for section and symbol size growth, memory layout, targeted disassembly and crash PC/LR source lines. Use the ELF from the exact build.
+translations:
+  ro:
+    summary: "Inspectează fișiere ELF de firmware ARM și RISC-V - creșterea dimensiunii, organizarea memoriei, dezasamblare și adrese de crash."
+    description: "Inspectează fișiere ELF locale de firmware ARM și RISC-V pentru creșterea dimensiunii secțiunilor și simbolurilor, organizarea memoriei, dezasamblare țintită și liniile de cod sursă pentru PC/LR la crash. Folosește ELF-ul build-ului exact."
+  de:
+    summary: "ARM- und RISC-V-Firmware-ELF-Dateien untersuchen - Größenzuwachs, Speicherlayout, Disassembly und Absturzadressen."
+    description: "Lokale ARM- und RISC-V-Firmware-ELF-Dateien auf Größenzuwachs von Sektionen und Symbolen, Speicherlayout, gezielte Disassembly und Quellzeilen zu PC/LR eines Absturzes untersuchen. Verwenden Sie das ELF genau des betreffenden Builds."
+  fr:
+    summary: "Examinez des fichiers ELF de firmware ARM et RISC-V - croissance de taille, organisation mémoire, désassemblage et adresses de crash."
+    description: "Examinez des fichiers ELF de firmware ARM et RISC-V locaux : croissance de la taille des sections et des symboles, organisation mémoire, désassemblage ciblé et lignes de source des PC/LR d’un crash. Utilisez l’ELF du build exact."
 ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
 programs:

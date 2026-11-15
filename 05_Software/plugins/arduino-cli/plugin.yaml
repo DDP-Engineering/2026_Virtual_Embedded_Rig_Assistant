@@ -4,6 +4,16 @@ version: 0.2.0
 name: Arduino CLI
 summary: Compile Arduino sketches with a pinned arduino-cli and upload the verified binary to an identified board.
 description: Native Arduino sketches with a pinned arduino-cli - inspect a sketch, list connected boards by identity, look up boards, cores and libraries, install cores and libraries in exact versions into VERA's own Arduino environment, compile a copy of the sketch into a traceable run folder (flash and RAM, libraries, core, hashes) and upload exactly that verified binary to an identified board. The Arduino IDE's own folders are never touched; no daemon, interactive monitor, bootloader, fuses or OTA.
+translations:
+  ro:
+    summary: "Compilează sketch-uri Arduino cu un arduino-cli fixat și încarcă binarul verificat pe o placă identificată."
+    description: "Sketch-uri Arduino native cu un arduino-cli fixat - inspectează un sketch, listează plăcile conectate după identitate, caută plăci, core-uri și biblioteci, instalează core-uri și biblioteci în versiuni exacte în mediul Arduino propriu al VERA, compilează o copie a sketch-ului într-un folder de rulare trasabil (flash și RAM, biblioteci, core, hash-uri) și încarcă exact acel binar verificat pe o placă identificată. Folderele proprii ale Arduino IDE nu sunt atinse niciodată; fără daemon, monitor interactiv, bootloader, fuse-uri sau OTA."
+  de:
+    summary: "Arduino-Sketches mit festgelegtem arduino-cli kompilieren und das geprüfte Binary auf ein identifiziertes Board hochladen."
+    description: "Native Arduino-Sketches mit festgelegtem arduino-cli - einen Sketch untersuchen, angeschlossene Boards nach Identität auflisten, Boards, Cores und Bibliotheken suchen, Cores und Bibliotheken in exakten Versionen in VERAs eigene Arduino-Umgebung installieren, eine Kopie des Sketches in einen nachvollziehbaren Laufordner kompilieren (Flash und RAM, Bibliotheken, Core, Hashes) und genau dieses geprüfte Binary auf ein identifiziertes Board hochladen. Die Ordner der Arduino IDE werden nie berührt; kein Daemon, kein interaktiver Monitor, kein Bootloader, keine Fuses und kein OTA."
+  fr:
+    summary: "Compilez des sketches Arduino avec un arduino-cli épinglé et téléversez le binaire vérifié sur une carte identifiée."
+    description: "Sketches Arduino natifs avec un arduino-cli épinglé - examiner un sketch, lister les cartes connectées par leur identité, rechercher des cartes, des cores et des bibliothèques, installer des cores et des bibliothèques en versions exactes dans l’environnement Arduino propre à VERA, compiler une copie du sketch dans un dossier d’exécution traçable (flash et RAM, bibliothèques, core, hashs) et téléverser exactement ce binaire vérifié sur une carte identifiée. Les dossiers propres à l’IDE Arduino ne sont jamais touchés ; pas de démon, de moniteur interactif, de bootloader, de fusibles ni d’OTA."
 ecosystem: arduino
 platforms: [windows-x64, linux-x64]
 requires: [serial-monitor]

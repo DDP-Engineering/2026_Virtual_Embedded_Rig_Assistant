@@ -4,6 +4,16 @@ version: 0.3.0
 name: Wireshark (TShark)
 summary: Analyse network capture files and capture live traffic with TShark.
 description: Analyse network capture files with TShark (filters, field export, protocol statistics, packet details) and capture live traffic from an interface. Use for questions about .pcap/.pcapng captures of a board's Ethernet, Wi-Fi or USB traffic.
+translations:
+  ro:
+    summary: "Analizează fișiere de captură de rețea și capturează trafic live cu TShark."
+    description: "Analizează fișiere de captură de rețea cu TShark (filtre, export de câmpuri, statistici de protocol, detalii de pachete) și capturează trafic live de pe o interfață. Folosește-l pentru întrebări despre capturi .pcap/.pcapng ale traficului Ethernet, Wi-Fi sau USB al unei plăci."
+  de:
+    summary: "Netzwerk-Aufzeichnungsdateien analysieren und Live-Verkehr mit TShark aufzeichnen."
+    description: "Netzwerk-Aufzeichnungsdateien mit TShark analysieren (Filter, Feldexport, Protokollstatistiken, Paketdetails) und Live-Verkehr von einer Schnittstelle aufzeichnen. Für Fragen zu .pcap/.pcapng-Aufzeichnungen des Ethernet-, WLAN- oder USB-Verkehrs eines Boards."
+  fr:
+    summary: "Analysez des fichiers de capture réseau et capturez du trafic en direct avec TShark."
+    description: "Analysez des fichiers de capture réseau avec TShark (filtres, export de champs, statistiques de protocoles, détail des paquets) et capturez du trafic en direct sur une interface. Pour les questions sur des captures .pcap/.pcapng du trafic Ethernet, Wi-Fi ou USB d’une carte."
 ecosystem: wireshark
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://www.wireshark.org/docs/man-pages/tshark.html"]

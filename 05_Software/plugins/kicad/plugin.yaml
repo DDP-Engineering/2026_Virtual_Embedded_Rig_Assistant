@@ -4,6 +4,16 @@ version: 0.3.0
 name: KiCad schematic and PCB analysis
 summary: Analyse KiCad 10 schematics and boards without changing them - ERC, DRC, BOM, netlists and exports.
 description: Analyse KiCad 10 projects without changing them - sheet hierarchy, symbol instances, nets, board layers, stackup, tracks and net classes; ERC and DRC with their objects and positions; BOM, netlist and inspection or fabrication exports (PDF, SVG, Gerber, drill, position files), each checked. kicad-cli runs on a copy of the project. Requires a user-installed KiCad 10.
+translations:
+  ro:
+    summary: "Analizează scheme și plăci KiCad 10 fără să le modifice - ERC, DRC, BOM, netlisturi și exporturi."
+    description: "Analizează proiecte KiCad 10 fără să le modifice - ierarhia foilor, instanțele de simboluri, net-urile, straturile plăcii, stackup-ul, traseele și clasele de net-uri; ERC și DRC cu obiectele și pozițiile lor; BOM, netlist și exporturi de inspecție sau de fabricație (PDF, SVG, Gerber, fișiere de găurire și de poziții), fiecare verificat. kicad-cli rulează pe o copie a proiectului. Necesită KiCad 10 instalat de utilizator."
+  de:
+    summary: "KiCad-10-Schaltpläne und -Platinen analysieren, ohne sie zu ändern - ERC, DRC, Stückliste, Netzlisten und Exporte."
+    description: "KiCad-10-Projekte analysieren, ohne sie zu ändern - Blatthierarchie, Symbolinstanzen, Netze, Platinenlagen, Lagenaufbau, Leiterbahnen und Netzklassen; ERC und DRC mit ihren Objekten und Positionen; Stückliste, Netzliste und Prüf- oder Fertigungsexporte (PDF, SVG, Gerber, Bohr- und Bestückungsdateien), jeweils geprüft. kicad-cli läuft auf einer Kopie des Projekts. Erfordert ein vom Benutzer installiertes KiCad 10."
+  fr:
+    summary: "Analysez des schémas et des cartes KiCad 10 sans les modifier - ERC, DRC, BOM, netlists et exports."
+    description: "Analysez des projets KiCad 10 sans les modifier - hiérarchie des feuilles, instances de symboles, nets, couches de la carte, empilement, pistes et classes de nets ; ERC et DRC avec leurs objets et leurs positions ; BOM, netlist et exports d’inspection ou de fabrication (PDF, SVG, Gerber, perçage, fichiers de position), chacun vérifié. kicad-cli s’exécute sur une copie du projet. Nécessite un KiCad 10 installé par l’utilisateur."
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.kicad.org/10.0/en/cli/cli.html"]

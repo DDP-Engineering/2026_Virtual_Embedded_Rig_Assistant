@@ -4,6 +4,16 @@ version: 0.2.0
 name: CAN bus (python-can)
 summary: Capture CAN traffic listen-only and send or replay frames through python-can adapters.
 description: List CAN interfaces and driver availability, capture a bus listen-only to an ASC, BLF or candump log, and send or replay frames through python-can (PEAK, Vector, Kvaser, slcan, gs_usb, SocketCAN). Use to record or stimulate a board's CAN traffic.
+translations:
+  ro:
+    summary: "Capturează trafic CAN în mod listen-only și trimite sau redă cadre prin adaptoare python-can."
+    description: "Listează interfețele CAN și disponibilitatea driverelor, capturează o magistrală în mod listen-only într-un log ASC, BLF sau candump și trimite sau redă cadre prin python-can (PEAK, Vector, Kvaser, slcan, gs_usb, SocketCAN). Folosește-l pentru a înregistra sau a stimula traficul CAN al unei plăci."
+  de:
+    summary: "CAN-Verkehr im Listen-only-Modus aufzeichnen und Frames über python-can-Adapter senden oder wiedergeben."
+    description: "CAN-Schnittstellen und die Verfügbarkeit ihrer Treiber auflisten, einen Bus im Listen-only-Modus in ein ASC-, BLF- oder candump-Log aufzeichnen und Frames über python-can senden oder wiedergeben (PEAK, Vector, Kvaser, slcan, gs_usb, SocketCAN). Verwenden Sie es, um den CAN-Verkehr eines Boards aufzuzeichnen oder anzuregen."
+  fr:
+    summary: "Capturez du trafic CAN en écoute seule et envoyez ou rejouez des trames avec des adaptateurs python-can."
+    description: "Listez les interfaces CAN et la disponibilité des pilotes, capturez un bus en écoute seule vers un journal ASC, BLF ou candump, et envoyez ou rejouez des trames avec python-can (PEAK, Vector, Kvaser, slcan, gs_usb, SocketCAN). Pour enregistrer ou stimuler le trafic CAN d’une carte."
 ecosystem: can
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://python-can.readthedocs.io/en/v4.6.1/"]

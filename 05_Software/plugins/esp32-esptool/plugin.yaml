@@ -4,6 +4,16 @@ version: 0.2.0
 name: ESP32 esptool
 summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
 description: Identify, flash, erase and read Espressif chips over a serial port with esptool v5. Use for any ESP32 programming task, such as confirming the chip type, writing the images of an ESP-IDF build, verifying them or erasing the flash.
+translations:
+  ro:
+    summary: "Identifică, programează, verifică, șterge și citește cipuri Espressif printr-un port serial, cu esptool."
+    description: "Identifică, programează, șterge și citește cipuri Espressif printr-un port serial, cu esptool v5. Folosește-l pentru orice sarcină de programare ESP32, de exemplu confirmarea tipului cipului, scrierea imaginilor unui build ESP-IDF, verificarea lor sau ștergerea flash-ului."
+  de:
+    summary: "Espressif-Chips über einen seriellen Port mit esptool identifizieren, flashen, verifizieren, löschen und auslesen."
+    description: "Espressif-Chips über einen seriellen Port mit esptool v5 identifizieren, flashen, löschen und auslesen. Für jede ESP32-Programmieraufgabe, etwa den Chiptyp bestätigen, die Images eines ESP-IDF-Builds schreiben, sie verifizieren oder den Flash löschen."
+  fr:
+    summary: "Identifiez, flashez, vérifiez, effacez et lisez des puces Espressif sur un port série avec esptool."
+    description: "Identifiez, flashez, effacez et lisez des puces Espressif sur un port série avec esptool v5. Pour toute tâche de programmation ESP32, comme confirmer le type de puce, écrire les images d’un build ESP-IDF, les vérifier ou effacer la flash."
 ecosystem: esp32
 platforms: [windows-x64, linux-x64]
 requires: [serial-monitor]
