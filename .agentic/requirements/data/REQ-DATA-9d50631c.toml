@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9d50631c"
+
+title = "Refuse units that are unknown or belong to another dimension"
+
+status = "active"
+
+requirement = """
+If a quantity in the model or in a result uses a unit outside the electrical unit table, or a known property uses a unit of another dimension, then VERA shall refuse the document as invalid, naming the path, the unit and the units the property accepts.
+"""
+
+verification = "Core unit tests: ratedPower in V and crossSection in mm (not mm²) are refused with the accepted units listed; an unknown unit on a free property is refused; kW and W on ratedPower are both accepted."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/units.ts", "05_Software/src/libraries/core/src/electrical/model.ts", "05_Software/src/libraries/core/src/electrical/results.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts", "05_Software/src/libraries/core/src/electrical/results.test.ts", "05_Software/src/libraries/core/src/electrical/tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

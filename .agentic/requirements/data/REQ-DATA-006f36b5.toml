@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-006f36b5"
+
+title = "Keep an unknown quantity unknown and never zero"
+
+status = "active"
+
+requirement = """
+The electrical model shall represent an unknown quantity as value null with its unit and basis, keep it null through reading and writing, and report it as unknown, never as zero.
+"""
+
+verification = "Core unit tests: a motor quantity whose value is null (efficiency in the fixture) round-trips with null and its unit; the objects view returns null for the unknown rated current; a value 0 stays 0 and is distinct from null; a quantity without the value key is refused rather than defaulted."
+
+affected_paths = ["05_Software/src/libraries/shared/src/electrical-model.ts", "05_Software/src/libraries/core/src/electrical/model.ts", "05_Software/src/libraries/core/src/electrical/tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts", "05_Software/src/libraries/core/src/electrical/tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

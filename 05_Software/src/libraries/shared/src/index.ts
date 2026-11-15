@@ -6,6 +6,7 @@ export * from "./changes.js";
 export * from "./chatgpt.js";
 export * from "./documents.js";
 export * from "./downloads.js";
+export * from "./electrical-model.js";
 export * from "./events.js";
 export { gitExecutionArguments } from "./git-options.js";
 export * from "./help.js";

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-46374a53"
+
+title = "Change the electrical model through an approved prepared change"
+
+status = "active"
+
+requirement = """
+When the agent calls electrical_model_change with operations that produce a valid model, VERA shall prepare one change of electrical-automation-model.json with its before and after SHA-256 and a unified diff, and write the canonical bytes through the write queue only when the change is approved or allowed by the session mode.
+"""
+
+verification = "Core unit tests: adding a motor and its feeds relation prepares a request with tool electrical_model_change, the path, both hashes and a diff, and applying writes canonical bytes and records the change; the target is the workbench model also in bypass mode, a model file linked outside the workbench is refused, and operations giving an invalid model are refused before any write. Session tests: in ask mode the approval carries the tool, the path and the diff; denial leaves the file unchanged and approval writes it; auto-edit writes without a prompt."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/edit.ts", "05_Software/src/libraries/core/src/electrical/tools.ts", "05_Software/src/libraries/core/src/tools/changes.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/tools.test.ts", "05_Software/src/libraries/core/src/sessions/electrical-model.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/tools/write-edit.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

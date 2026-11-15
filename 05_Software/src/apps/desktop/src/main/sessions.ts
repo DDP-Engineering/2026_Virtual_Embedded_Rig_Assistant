@@ -3,6 +3,7 @@ import {
   type Clock,
   type ConfiguredPartsProvider,
   type EmbeddingPort,
+  electricalModelPlugin,
   officialLayoutPlugin,
   officialPartsPlugin,
   type PermissionEngine,
@@ -53,6 +54,8 @@ export class SessionsHost {
   private partsPlugin = false;
   /** Whether the open workbench has the official kicad-layout plugin loaded (apply_candidate); refreshed by run(). */
   private layoutPlugin = false;
+  /** Whether a loaded plugin builds on the electrical model (electrical, automation); refreshed by run(). */
+  private electricalPlugin = false;
   private readonly subscriptions = new Map<string, () => void>();
   private queue = Promise.resolve();
   private pending = 0;
@@ -116,6 +119,7 @@ export class SessionsHost {
             : [];
         this.partsPlugin = loaded.some(officialPartsPlugin);
         this.layoutPlugin = loaded.some(officialLayoutPlugin);
+        this.electricalPlugin = loaded.some(electricalModelPlugin);
         const key = JSON.stringify([
           snapshot.folder,
           snapshot.config.id,
@@ -169,6 +173,9 @@ export class SessionsHost {
           ...(options.downloads ? { downloads: options.downloads(snapshot.folder) } : {}),
           get applyCandidate() {
             return self.layoutPlugin;
+          },
+          get electricalModel() {
+            return self.electricalPlugin;
           },
           ...(options.pluginBuilder ? { pluginBuilder: options.pluginBuilder } : {}),
           ...(options.managedRoots ? { managedRoots: options.managedRoots } : {}),

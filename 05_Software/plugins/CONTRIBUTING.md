@@ -42,6 +42,20 @@ The check rejects schema errors, a folder whose manifest id differs from its nam
 that do not exist, a program without any rule, and a rule at `safe` or `device-read` whose pattern contains
 `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send`.
 
+## Electrical and automation plugins
+
+Plugins with `ecosystem: electrical` or `ecosystem: automation` build on the workbench's electrical
+project model, `electrical-automation-model.json` (kind `vera-electrical-model`, format 1). While such a
+plugin is loaded, sessions offer `electrical_model` (read views and result freshness) and
+`electrical_model_change` (validated operations and explicit-mapping imports, approved like a write).
+A helper reads the model file and never writes it. It writes its result to a new run folder,
+`electrical-automation-results/<run-id>/result.json` (kind `vera-electrical-result`, format 1), with the
+method, engine version, assumptions, sources, conditions, intermediate values, limits, a status per run
+and a verdict per criterion. `inputs` copies every model entity the run read (`{id, snapshot}`); VERA
+marks the result stale when one of them changes. Entity IDs (`mot-p1`) are stable and differ from the
+visible references (`ref`: M1, QF1); a quantity is `{value, unit, basis}` and `value: null` means
+unknown. Units come from one table; the format is in `.agentic/specs/REQ-DATA-06c0bd54.md`.
+
 ## Draft with the agent
 
 Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the

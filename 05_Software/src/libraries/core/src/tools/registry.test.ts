@@ -31,6 +31,17 @@ it("converts every tool schema and validates samples while filtering disabled na
     plugin_install: { path: "plugins/fixture" },
     program_stop: { handle: "01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
     apply_candidate: { run: "electronics-results/r1" },
+    electrical_model: { view: "objects", type: "motor" },
+    electrical_model_change: {
+      operations: [
+        {
+          op: "update-object",
+          id: "mot-p1",
+          properties: { ratedPower: { value: null, unit: "kW", basis: "input" } },
+        },
+        { op: "import", path: "export.json", mapping: { "mot-x": "new" } },
+      ],
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -63,6 +74,8 @@ it("converts every tool schema and validates samples while filtering disabled na
     "plugin_validate",
     "plugin_install",
     "apply_candidate",
+    "electrical_model",
+    "electrical_model_change",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

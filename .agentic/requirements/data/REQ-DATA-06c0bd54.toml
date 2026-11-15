@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-06c0bd54"
+
+title = "Accept only a strictly valid format-1 electrical model"
+
+status = "active"
+
+requirement = """
+When VERA reads the electrical model file electrical-automation-model.json, it shall accept only a document of kind vera-electrical-model and format 1 that passes the strict schema, limits and rules of the electrical model spec, and otherwise refuse it as invalid with up to 20 problems, each with its JSON path.
+"""
+
+verification = "Core unit tests: the two-pump fixture validates; a document with format 2, an unknown key, a missing project, more objects than the limit or a non-JSON text is refused with a problem naming its path; no field is defaulted or migrated."
+
+affected_paths = ["05_Software/src/libraries/shared/src/electrical-model.ts", "05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-05117b78"
+
+title = "Refuse relations and citations to entities that do not exist"
+
+status = "active"
+
+requirement = """
+If a relation endpoint or a quantity's source citation names an ID that no entity of the required kind holds, then VERA shall refuse the model as invalid and name the missing ID and its path.
+"""
+
+verification = "Core unit tests: a relation to a removed motor and a quantity citing an unknown source are refused with the missing ID and path; removing the relation as well makes the model valid again."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

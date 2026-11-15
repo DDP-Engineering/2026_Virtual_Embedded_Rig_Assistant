@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-183b71d2"
+
+title = "Refuse duplicate IDs and visible references that repeat or equal an ID"
+
+status = "active"
+
+requirement = """
+If two model entities (objects, relations, sources and the project) share one ID, or two objects share one visible reference, or a visible reference equals an entity ID, then VERA shall refuse the model as invalid and name each repeated value.
+"""
+
+verification = "Core unit tests on the fixture with a second object reusing a motor's ID, a second QF1 reference, and a reference spelled like an existing ID: each is refused with the repeated value in the problem; distinct IDs with the same name are accepted."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

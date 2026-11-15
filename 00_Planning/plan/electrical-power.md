@@ -16,13 +16,13 @@ branch `feature/122-electrical-power` cut from `master` at a8b26c1, in the sibli
 `F:\2026_Virtual_Embedded_Rig_Assistant_pwr`. The implementer hands the candidate back without a
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
 Each ticket runs only its focused tests; the complete suite runs once after PWR-06.
-STATE: planned; no package implemented yet.
+STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open.
 
 ## Order
 
 | Order | Package | Issue | Result | Depends on | State |
 |---|---|---|---|---|---|
-| 1 | PWR-00 | [#126](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/126) | common project model: stable IDs, quantities with units, relations, provenance, stale results (product code, not a plugin) | - | planned |
+| 1 | PWR-00 | [#126](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/126) | common project model: stable IDs, quantities with units, relations, provenance, stale results (product code, not a plugin) | - | implemented |
 | 2 | PWR-01 | [#127](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/127) | `industrial-catalog`: manufacturer + order code + variant + accessories, conditioned parameters, documented selection | PWR-00 | planned |
 | 3 | PWR-02 | [#128](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/128) | `electrical-network`: load balance, cable sizing, voltage drop, short circuit on radial LV networks | PWR-00 | planned |
 | 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | planned |
@@ -43,3 +43,19 @@ STATE: planned; no package implemented yet.
   `electronics-calc`, `parts-search` or the LAB lease registry already provide a piece, the PWR child
   reuses it and records that choice in its AEGIS task.
 - Every stored format stays at version 1, with no migrations.
+
+## PWR-00 #126 - common project model
+
+- Model file `electrical-automation-model.json` at the workbench root (kind `vera-electrical-model`,
+  format 1); results in `electrical-automation-results/<run-id>/result.json` (kind
+  `vera-electrical-result`, format 1). Spec `.agentic/specs/REQ-DATA-06c0bd54.md`, knowledge
+  `.agentic/knowledge/electrical-model.md`, plugin-author notes in `05_Software/plugins/CONTRIBUTING.md`.
+- A result copies each model entity it read; freshness (current/stale/invalid) is derived on every
+  listing, never stored. Helpers write only results, never the model.
+- Tools `electrical_model` (read) and `electrical_model_change` (write through the prepared change and
+  write queue) appear only while a loaded plugin has `ecosystem: electrical` or `automation`; PWR
+  plugins must set it. The headless CLI does not offer them.
+- One unit table in `core/src/electrical/units.ts` with electronics-calc spellings; new units go there.
+- Catalog: results carry only `catalog: {id, version} | null`; PWR-01 defines the catalog item format
+  with the model's quantity, unit and provenance shape (RULING-004, confirmed by the coordinator).
+- Open: native Ubuntu (WSL2 only).

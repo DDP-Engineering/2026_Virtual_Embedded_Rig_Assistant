@@ -37,6 +37,8 @@ export function WorkbenchTools({
     plugin_validate: t("workbenchTools.plugin_validate"),
     plugin_install: t("workbenchTools.plugin_install"),
     apply_candidate: t("workbenchTools.apply_candidate"),
+    electrical_model: t("workbenchTools.electrical_model"),
+    electrical_model_change: t("workbenchTools.electrical_model_change"),
   };
   // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
   const { rows, pager } = usePaged(builtinToolNames, 50);

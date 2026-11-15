@@ -19,6 +19,10 @@ reading stdin, flooding output, ANSI output, or starting a grandchild that runs 
 `echo.mjs` (prefix `${pluginDir}/echo.mjs`), its rules cover every risk level, and it ships the skill
 `echo-guide`. Core session tests, the CLI integration test and the native e2e install it.
 
+`electrical-model/two-pump-panel.json` is a fictional electrical project model (format 1): one LV
+source, the main board, two pump feeders and a lighting circuit with their breakers, cables, contactors,
+the PLC I/O, the level transmitter and tags. Its values cite a made-up brief, not a product datasheet.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

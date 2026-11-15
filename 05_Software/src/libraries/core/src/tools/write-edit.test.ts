@@ -67,7 +67,7 @@ it("registers sequential write/edit and creates UTF8 files and parent folders", 
       .filter((t) => t.class === "write")
       .map((t) => t.name),
     // web_download also writes (a managed download under .vera) and needs the same approval.
-  ).toEqual(["write", "edit", "web_download", "apply_candidate"]);
+  ).toEqual(["write", "edit", "web_download", "apply_candidate", "electrical_model_change"]);
   const result = await registry.execute(
     context(),
     "write",

@@ -662,6 +662,8 @@
     "plugin_validate": "Valider un brouillon de plugin et signaler les problèmes de schéma et les avertissements.",
     "plugin_install": "Demander un examen et installer un brouillon comme plugin d’essai.",
     "apply_candidate": "Écrire un candidat kicad-layout vérifié sur sa carte source lorsque vous demandez de l’appliquer. Nécessite le plugin kicad-layout ; demande une approbation comme une écriture.",
+    "electrical_model": "Lire le modèle de projet électrique, ses lacunes et les résultats des plugins avec leur actualité. Nécessite un plugin d’électricité ou d’automatisme.",
+    "electrical_model_change": "Modifier le modèle de projet électrique par des opérations validées ou un import avec une correspondance explicite des ID. Nécessite un plugin d’électricité ou d’automatisme ; demande une approbation comme une écriture.",
     "decode_register": "Décoder une valeur de registre capturée à l’aide d’une définition JSON locale, avec les valeurs exactes des champs et les sources citées. Ne lit aucun appareil.",
     "parts_search": "Rechercher dans les catalogues des distributeurs activés (Mouser, DigiKey, TME, Farnell, Rutronik) par mot-clé ou référence. Nécessite l’accès web, le plugin parts-search et un distributeur configuré dans la Configuration du plugin sur la page Plugins."
   },

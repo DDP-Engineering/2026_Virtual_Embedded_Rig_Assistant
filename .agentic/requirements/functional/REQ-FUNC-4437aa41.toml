@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4437aa41"
+
+title = "Read the electrical model through finite views"
+
+status = "active"
+
+requirement = """
+When the agent calls electrical_model with view summary, objects, relations or results, VERA shall return the bounded view of the workbench's valid electrical model, with each object's canonical SHA-256, the completeness issues and the results' freshness, and refuse an invalid model as invalid.
+"""
+
+verification = "Core unit tests on a temporary workbench: summary counts objects by type and lists unfed and unprotected issues; objects filtered by type and IDs return hashes; relations filtered by an ID return its relations; results return freshness; a missing model gives exists false; an invalid model returns its problems."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/tools.ts", "05_Software/src/libraries/core/src/electrical/model.ts", "05_Software/src/libraries/core/src/electrical/results.ts", "05_Software/src/libraries/core/src/tools/registry.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/tools.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
