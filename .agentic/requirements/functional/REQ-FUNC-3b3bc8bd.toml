@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-3b3bc8bd"
+
+title = "Generate the shortcuts help page from the shortcut registry"
+
+status = "active"
+
+requirement = """When npm run help:shortcuts runs, it shall write help/<language>/shortcuts.md for en, ro, de and fr listing every shortcut command of the shared registry with its default keys (Mod shown as Ctrl, Unassigned when none) and the action name and description of that language's interface catalog (the Keyboard shortcuts command naming its Settings page instead of the catalog's "Open this page"), followed by the fixed keys F1 and F10."""
+
+verification = """Tooling test: shortcutPages() returns four pages; each starts with the catalog's Keyboard shortcuts title, holds a row with each command's label and default keys or the Unassigned label, an F1 row, and equals the committed help/<language>/shortcuts.md."""
+
+affected_paths = ["02_Tools/build/generate-help-shortcuts.mjs", "05_Software/package.json", "05_Software/help/en/shortcuts.md", "05_Software/help/ro/shortcuts.md", "05_Software/help/de/shortcuts.md", "05_Software/help/fr/shortcuts.md"]
+
+linked_tests = ["05_Software/tests/tooling/help-shortcuts.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

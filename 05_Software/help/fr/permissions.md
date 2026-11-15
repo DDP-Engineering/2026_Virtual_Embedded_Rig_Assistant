@@ -1,0 +1,52 @@
+# Autorisations
+
+Le mode d’autorisation détermine ce que l’agent peut faire sans vous demander : modifier des fichiers, télécharger des fichiers et exécuter les programmes des plugins sur votre poste de test. La lecture du banc de travail, la recherche dans les documents et l’enregistrement d’artefacts ne demandent jamais d’approbation.
+
+## Choisir un mode
+
+Choisissez le mode avec **Mode d’autorisation** à côté de la zone de message. Il s’applique à cette session et peut être changé à tout moment, y compris pendant un tour. Les nouvelles sessions démarrent avec le mode par défaut du banc de travail, défini dans **Modifier le banc** → **Agent et conversation** → **Autorisations** ; un nouveau banc de travail démarre avec **Demander**.
+
+| Mode | Modifications de fichiers | Programmes |
+|---|---|---|
+| **Lecture seule** | Interdites ; l’agent n’a aucun outil d’écriture | Uniquement les commandes classées **Sûr** |
+| **Demander** | Chaque modification attend votre approbation | **Lecture appareil** et **Écriture appareil** demandent une approbation ; **Irréversible** demande une approbation avec un mot à saisir |
+| **Modification auto** | Les modifications dans le banc de travail sont appliquées sans demande ; les téléchargements demandent toujours une approbation ; les fichiers de `.vera/` ne peuvent pas être modifiés | **Lecture appareil** s’exécute ; **Écriture appareil** demande une approbation ; **Irréversible** demande une approbation avec un mot à saisir |
+| **Contournement — accès complet** | Lit et modifie des fichiers partout où votre compte a accès, sans demander | Tout sauf **Bloqué** s’exécute sans demander |
+
+Passer à un mode plus strict annule les approbations accordées à l’agent dans le mode précédent.
+
+## Contournement
+
+Le mode Contournement affiche d’abord un avertissement : l’agent peut alors endommager des projets, des fichiers ou des paramètres d’application en dehors du banc de travail. L’avertissement liste aussi les règles de vos plugins activés qui effectuent des modifications permanentes ou agissent en dehors de l’appareil, car en mode Contournement elles s’exécutent sans demander. **Ne plus afficher ce message** masque l’avertissement ; le mode Contournement sélectionné reste signalé en rouge.
+
+Même en mode Contournement, seuls les outils activés sont disponibles, les autorisations du système d’exploitation s’appliquent, l’agent ne peut pas modifier `.vera/workbench.yaml` ni `.vera/plugins`, et les commandes des plugins d’essai demandent toujours une approbation.
+
+## Approuver ou refuser
+
+Lorsque l’agent a besoin de votre décision, une carte d’approbation apparaît dans la conversation et la session affiche **En attente d’approbation**.
+
+- Pour une modification de fichier, la carte affiche le fichier et un **Diff unifié** de la modification.
+- Pour un téléchargement, elle affiche l’adresse source et la taille maximale.
+- Pour un programme, elle affiche le niveau de risque, le **Plugin**, la **Ligne de commande**, le **Répertoire de travail**, l’**Exécutable**, les **Notes de la règle** et les fichiers du banc de travail utilisés par la commande, avec leur SHA-256.
+
+Sélectionnez **Approuver** ou **Refuser**. **Approuver et passer en Modification auto** approuve et fait passer la session en **Modification auto**. Lorsque la carte a le focus, A approuve et D refuse.
+
+Pour une commande irréversible, la carte indique que la modification est permanente et désigne un mot, généralement la commande, par exemple `burn-efuse`. Saisissez ce mot, puis approuvez. Si le mot ne correspond pas, la carte reste en attente.
+
+## Niveaux de risque des programmes
+
+Chaque plugin classe ses commandes. VERA compare la ligne de commande exacte à ces règles avant d’exécuter quoi que ce soit.
+
+| Niveau | Signification |
+|---|---|
+| **Sûr** | Ne lit rien sur un appareil et ne modifie rien, par exemple l’affichage d’une version |
+| **Lecture appareil** | Lit sur un appareil connecté, par exemple un identifiant de puce ou la mémoire |
+| **Écriture appareil** | Écrit sur un appareil, par exemple pour la programmation flash ou l’effacement |
+| **Irréversible** | Modifie un appareil de façon permanente, par exemple en grillant des eFuses ou en le verrouillant |
+| **Bloqué** | Ne s’exécute jamais, quel que soit le mode |
+
+Une commande qui ne correspond à aucune règle est traitée comme **Écriture appareil**. Lorsque plusieurs règles correspondent, le niveau le plus élevé s’applique. Vous pouvez voir les règles d’un plugin avant de l’installer, dans sa section **Opérations** ; consultez [Plugins](plugins.md).
+
+## Examiner les modifications
+
+L’onglet **Modifications** du panneau droit liste les fichiers modifiés dans la session, dans l’ordre, avec le nombre de lignes ajoutées et supprimées. Sélectionnez une entrée pour voir son diff ; **Afficher dans le dossier** montre le fichier dans votre gestionnaire de fichiers. Consultez aussi [Discussion et sessions](chat-and-sessions.md).
