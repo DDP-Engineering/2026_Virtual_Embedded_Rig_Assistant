@@ -917,17 +917,12 @@ it("CLI checks a catalog source and builds its release", async () => {
   expect(clean.stdout).toBe("");
   const built = await launch(["catalog", "build", "--source", source, "--out", out]).result;
   expect(built.code).toBe(0);
-  const officialIds = [
-    "analysis-skills",
-    "binutils",
-    "esp32-efuse",
-    "esp32-esptool",
-    "esp32-idf",
-    "git",
-    "probe-rs",
-    "serial-monitor",
-    "sigrok",
-  ];
+  // Every bundled plugin is official (catalog.yaml `official`); the index lists them by id.
+  const officialIds = (await readdir(source, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && existsSync(join(source, entry.name, "plugin.yaml")))
+    .map((entry) => entry.name)
+    .sort();
+  expect(officialIds.length).toBeGreaterThan(30);
   expect(built.stdout.trim()).toBe(`${officialIds.length} plugins written to ${out}`);
   const index = JSON.parse(await readFile(join(out, "index.json"), "utf8"));
   expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual(

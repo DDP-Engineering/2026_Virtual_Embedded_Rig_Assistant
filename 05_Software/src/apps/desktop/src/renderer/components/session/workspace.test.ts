@@ -39,6 +39,13 @@ async function settle() {
     await new Promise((resolve) => setTimeout(resolve, 30));
   });
 }
+/** Opens every collapsed disclosure now shown; their content mounts only when open (PERF-03). */
+async function expandAll() {
+  for (const toggle of container.querySelectorAll<HTMLButtonElement>(
+    '.disclosure-toggle[aria-expanded="false"]',
+  ))
+    await act(async () => toggle.click());
+}
 function button(text: string) {
   const node = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
     (b) => b.textContent === text,
@@ -1090,6 +1097,7 @@ test("chat fixtures render tool arguments, invalid citations, provider Retry and
       ?.click(),
   );
   await settle();
+  await expandAll();
   expect(container.querySelectorAll("[data-tool-row]")).toHaveLength(2);
   expect(container.querySelectorAll("[data-citation]")).toHaveLength(1);
   await act(async () => container.querySelector<HTMLElement>("[data-tool-row] button")?.click());
@@ -1461,10 +1469,13 @@ test("Settings selects one page with vertical tabs, including placeholders and k
   await settle();
   expect(container.querySelector("#sidebar")?.getAttribute("data-collapsed")).toBe("false");
   const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tablist"] [role="tab"]')];
-  // Web access joined the pages with the web providers.
+  // Web access, parts search and the plugin credential pages joined the pages with the web providers.
   expect(tabs.map((tab) => tab.dataset.section)).toEqual([
     "providers",
     "web",
+    "parts",
+    "mqtt",
+    "wokwi",
     "appearance",
     "language",
     "notifications",
@@ -1547,6 +1558,8 @@ test("agent activity projects real prompt/reply and tool arguments, updates and 
     }),
   );
   expect(container.querySelectorAll("[data-activity-kind]")).toHaveLength(3);
+  expect(container.textContent).not.toContain('"path": "board.txt"');
+  await expandAll();
   expect(container.textContent).toContain("Inspect board");
   expect(container.textContent).toContain('"path": "board.txt"');
   expect(container.textContent).toContain("Live result");
@@ -1561,6 +1574,7 @@ test("agent activity projects real prompt/reply and tool arguments, updates and 
     durationMs: 5,
   });
   await act(async () => root.render(createElement(ActivityLog, { state, reasoning: {}, updates: {} })));
+  await expandAll();
   expect(container.textContent).toContain("Completed result");
   expect(container.textContent).not.toContain("Visible provider reasoning");
 });

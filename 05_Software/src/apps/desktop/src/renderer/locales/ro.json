@@ -242,6 +242,7 @@
     "arguments": "Argumente",
     "preview": "Previzualizare",
     "noPreview": "Previzualizare indisponibilă.",
+    "showFull": "Afișează tot rezultatul ({{size}} KB)",
     "contextAdvice": "Redu textul sau ajustează fereastra de context a modelului personalizat în setările Furnizori. Transcriptul integral este păstrat.",
     "tokens": "Tokenuri intrare / ieșire",
     "estimated": "Tokenuri de context estimate",

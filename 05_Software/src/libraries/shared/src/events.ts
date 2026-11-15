@@ -102,6 +102,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     callId: z.string(),
     name: z.string(),
     args: z.unknown(),
+    /** Set only on events sent to the renderer (PERF-06): full UTF-8 size of the cut args JSON. */
+    truncated: z.strictObject({ args: count }).optional(),
   }),
   z.strictObject({ type: z.literal("tool.update"), callId: z.string(), text: z.string() }),
   z.strictObject({
@@ -111,6 +113,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     summary: z.string(),
     preview: z.string().optional(),
     durationMs: count,
+    /** Set only on events sent to the renderer (PERF-06): full UTF-8 size of the cut preview. */
+    truncated: z.strictObject({ preview: count }).optional(),
   }),
   z
     .strictObject({
@@ -124,6 +128,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
       bytes: count,
       download: downloadApprovalSchema.optional(),
       program: programApprovalSchema.optional(),
+      /** Set only on events sent to the renderer (PERF-06): full UTF-8 size of the cut diff. */
+      truncated: z.strictObject({ diff: count }).optional(),
     })
     .refine(validDownloadApproval)
     .refine(validProgramApproval),

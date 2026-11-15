@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { defaultSettings } from "@vera/shared";
+import { defaultSettings, foldSessionEvents } from "@vera/shared";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const info = {
@@ -113,6 +113,7 @@ const workbenchHandlers = {
   "session.stop": unused,
   "session.model.set": unused,
   "session.reasoning.get": unused,
+  "session.item.detail": unused,
   "session.reasoning.set": unused,
   "session.mode.set": unused,
   "providers.discover": unused,
@@ -171,6 +172,33 @@ describe("validated invoke router", () => {
     expect(await router()(event, "app.info", {})).toEqual({ ok: true, value: info });
     expect(handler).toHaveBeenCalledWith({});
     expect(log).not.toHaveBeenCalled();
+  });
+  it("holds authorized requests until the credential load settles and denies others at once", async () => {
+    let settle = () => {};
+    const ready = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: "vera://app/index.html" }),
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": unused,
+        "app.settings.update": unused,
+      },
+      log,
+      ready: () => ready,
+    });
+    expect(await invoke({ sender: {}, senderFrame: frame } as never, "app.info", {})).toEqual({
+      ok: false,
+      error: { code: "DENIED", messageKey: "errors.DENIED" },
+    });
+    const pending = invoke(event, "app.info", {});
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(handler).not.toHaveBeenCalled();
+    settle();
+    expect(await pending).toEqual({ ok: true, value: info });
+    expect(handler).toHaveBeenCalledTimes(1);
   });
   it("dispatches settings patches only after strict validation and validates the snapshot", async () => {
     const snapshot = { settings: defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19") };
@@ -343,5 +371,31 @@ describe("validated invoke router", () => {
     });
     handler.mockRejectedValueOnce(new Error("unknown"));
     expect(await router()(event, "app.info", {})).toMatchObject({ ok: false, error: { code: "INTERNAL" } });
+  });
+  // REQ-FUNC-2b462360 (PERF-05: stored rows are folded without per-event parsing)
+  it("answers session.get with INTERNAL when a corrupt stored row breaks the folded snapshot", async () => {
+    const rows = ['{"type":"session.updated","title":42}', "{"];
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: frame.url }),
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": unused,
+        "app.settings.update": unused,
+        "session.get": () => ({
+          snapshot: foldSessionEvents([JSON.parse(rows.shift() ?? "{}")]),
+          seq: 1,
+        }),
+      },
+      log,
+    });
+    const request = { sessionId: "ses_00000000000000000000000001" };
+    for (const reason of ["response", "handler"]) {
+      expect(await invoke(event, "session.get", request)).toEqual({
+        ok: false,
+        error: { code: "INTERNAL", messageKey: "errors.INTERNAL" },
+      });
+      expect(log).toHaveBeenLastCalledWith({ channel: "session.get", reason });
+    }
   });
 });

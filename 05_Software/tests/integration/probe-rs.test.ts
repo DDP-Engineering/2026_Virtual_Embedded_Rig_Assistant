@@ -256,7 +256,9 @@ it("finds PATH before cargo, never installs implicitly and rejects an unsupporte
         executable: path,
         version: "0.32.0",
       });
+      // An in-place downgrade rewrites the program; found versions are reused while the file is unchanged.
       version = "0.31.0";
+      await writeFile(path, `fake ${version}`, { mode: 0o755 });
       provisioner.invalidate();
       expect(await provisioner.statuses("probe-rs")).toMatchObject([
         { state: "unavailable", problem: "range", version },
@@ -267,7 +269,8 @@ it("finds PATH before cargo, never installs implicitly and rejects an unsupporte
       ]);
       version = "0.32.0";
       await rm(path);
-      provisioner.invalidate();
+      // A failure the install observed stays authoritative until the user checks again ("Check again").
+      await provisioner.check("probe-rs");
     }
     expect(await provisioner.resolve(plugin, "probe-rs")).toBeUndefined();
     expect(await provisioner.statuses("probe-rs")).toMatchObject([{ state: "missing" }]);

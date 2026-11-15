@@ -49,6 +49,8 @@ export function createInvokeRouter(options: {
   handlers: ChannelHandlers;
   log: (failure: IpcFailure) => void;
   sanitize?: <T>(value: T) => T;
+  /** Settles once the credential store has loaded, so responses are redacted with every stored secret. */
+  ready?: () => Promise<void>;
 }) {
   function authorized(event: InvokeSender): boolean {
     // Native frame accessors can throw once a renderer/frame has been detached.
@@ -78,6 +80,7 @@ export function createInvokeRouter(options: {
     const channel = channels[name];
     const request = channel.request.safeParse(payload);
     if (!request.success) return { ok: false, error: veraError("INVALID") };
+    await options.ready?.();
     try {
       const value = await dispatch(name, request.data);
       const response = channel.response.safeParse(value);

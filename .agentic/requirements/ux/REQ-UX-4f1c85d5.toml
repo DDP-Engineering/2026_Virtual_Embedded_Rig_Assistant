@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-4f1c85d5"
+
+title = "Show the full tool or approval output on demand"
+
+status = "active"
+
+requirement = """
+While a tool's arguments or output or an approval's diff is shown as an excerpt, the chat shall show a "Show full output (N KB)" button that loads the full text through session.item.detail and replaces the excerpt with it, and shall show no button for a field that was not cut.
+"""
+
+verification = "Renderer transcript-detail.test.ts: a cut tool preview shows the excerpt and exactly one \"Show full output (64 KB)\" button (none for the small arguments or other tools); clicking it calls session.item.detail once and shows the full text; check:i18n covers en/ro/de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/bounded-text.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-inspector.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

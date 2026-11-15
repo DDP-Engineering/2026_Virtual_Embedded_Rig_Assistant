@@ -25,9 +25,17 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
   database backups. Existing metadata is preserved without interpreting extra keys. No old-schema detection, repair, reset or compatibility path exists.
 - StorageOptions supplies workbenchId, appVersion and optional readOnly.
   openDb returns db and idempotent close(preserveSource?).
-- inspectDatabase validates a private temporary DB/WAL copy before lock acquisition
-  or writable opening. Read-only handles reject writes and remove their temporary
-  copies on close. Unstable concurrent captures return BUSY.
+- A writable openDb is for a database whose workbench lock the caller holds: it
+  opens the file in place with no copy and checks the schema with query_only ON
+  before any pragma or write. A refused database keeps its DB/WAL bytes while
+  another connection holds it open; with a leftover WAL and no other connection,
+  the refusing writer's close lets SQLite checkpoint those committed frames.
+- A read-only openDb queries a private temporary DB/WAL copy made with async
+  fs.promises.copyFile (COPYFILE_FICLONE), so the source DB/WAL/SHM stay untouched
+  and the main process is not blocked. dev/ino/size/mtimeNs and the 32-byte header of
+  DB and WAL are compared around the copy; a change is retried once, then returns BUSY, as do
+  EBUSY/EPERM from the copy. Read-only handles reject writes and remove their
+  temporary copies on close.
 - Database and sidecar paths reject symlinks and nonordinary file types. Storage
   creates no backups.
 - Writable connections use WAL, foreign_keys ON, busy_timeout 5000 and synchronous

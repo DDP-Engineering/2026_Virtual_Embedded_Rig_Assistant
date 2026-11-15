@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-93a4a5e0"
+
+title = "Snapshot a foreign workbench database asynchronously"
+
+status = "active"
+
+requirement = """
+When VERA opens a workbench read-only, core shall query an asynchronously made private copy of its vera.db and WAL, and shall fail BUSY when the source changes during both the copy and one retry or the copy is refused with EBUSY or EPERM.
+"""
+
+verification = "Live foreign owner with WAL rows: read-only open sees the WAL rows, refuses writes, and the source DB/WAL/SHM bytes stay unchanged; a source whose WAL changes during each copy attempt fails BUSY after two attempts; a copy rejected with EBUSY fails BUSY."
+
+affected_paths = ["05_Software/src/libraries/core/src/storage/db.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/storage/db.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/core/src/workbench/open-timing.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/storage/db.test.ts", "05_Software/src/libraries/core/src/workbench/open-timing.test.ts"]
+
+
+spec = "specs/REQ-PLAT-f0d13546.md"
+
+priority = "normal"   # low | normal | high
+rationale = "SQLite must not create or recover WAL/SHM files of a database VERA does not own; the copy must not block the main process."
+
+created = 2026-11-14
+updated = 2026-11-14

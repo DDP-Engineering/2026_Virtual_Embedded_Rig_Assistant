@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import { Socket } from "node:net";
 import { EventsRepository, SessionHub } from "@vera/core";
+import { channels } from "@vera/shared";
 import { app, ipcMain } from "electron";
 
 export function installSessionPerformance() {
@@ -38,6 +39,7 @@ export function installSessionPerformance() {
   let storageMs = 0;
   let snapshotMs = 0;
   let mainHandlerMs = 0;
+  let validateMs = 0;
   let payloadBytes = 0;
   let providerRequests = 0;
   let maxGap = 0;
@@ -58,8 +60,11 @@ export function installSessionPerformance() {
       if (id === target) storageMs += performance.now() - start;
     }
   };
+  /** The hub that served each opened session; the stream injector emits through the real hub. */
+  const hubs = new Map<string, SessionHub>();
   const get = SessionHub.prototype.get;
   SessionHub.prototype.get = function (id) {
+    hubs.set(id, this);
     const start = performance.now(),
       before = storageMs;
     if (id === target && stall) {
@@ -71,6 +76,17 @@ export function installSessionPerformance() {
       return get.call(this, id);
     } finally {
       if (id === target) snapshotMs += performance.now() - start - (storageMs - before);
+    }
+  };
+  // The router's one response validation of session.get (PERF-05), timed while a load is measured.
+  const sessionGet = channels["session.get"].response;
+  const safeParse = sessionGet.safeParse.bind(sessionGet);
+  sessionGet.safeParse = (value, params) => {
+    const start = performance.now();
+    try {
+      return safeParse(value, params);
+    } finally {
+      if (target) validateMs += performance.now() - start;
     }
   };
   const handle = ipcMain.handle.bind(ipcMain);
@@ -95,11 +111,49 @@ export function installSessionPerformance() {
   Object.assign(globalThis, {
     veraSessionPerformance: {
       traffic: () => earlyTraffic,
+      /**
+       * Replays one reply into an opened session through its real hub: durable events are recorded
+       * (the renderer cursor stays equal to session.revision) and every event reaches the renderer as
+       * its own IPC message. Deltas are paced at `intervalMs`; a late timer sends every due delta.
+       */
+      async stream(id: string, options: { deltas: number; intervalMs: number; marker: string }) {
+        const hub = hubs.get(id);
+        if (!hub) throw Error("stream target not opened");
+        target = id;
+        maxGap = providerRequests = 0;
+        last = performance.now();
+        const turnId = `turn_${options.marker}`,
+          messageId = `assistant_${options.marker}`;
+        // 20 characters each; every 40th ends a paragraph so the Markdown keeps growing in blocks.
+        const piece = (index: number) =>
+          index % 40 === 39 ? "sit amet consecte.\n\n" : "lorem ipsum dolor s ";
+        const start = performance.now();
+        hub.emit(id, { type: "turn.started", turnId });
+        let text = "";
+        for (let sent = 0; sent < options.deltas; ) {
+          const due = Math.min(
+            options.deltas,
+            Math.floor((performance.now() - start) / options.intervalMs) + 1,
+          );
+          for (; sent < due; sent++) {
+            const delta = piece(sent);
+            text += delta;
+            hub.emit(id, { type: "message.delta", messageId, text: delta });
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1));
+        }
+        hub.emit(id, { type: "message.done", messageId, text: `${text}${options.marker}`, citations: [] });
+        hub.emit(id, { type: "turn.done", turnId, stopReason: "end" });
+        const emitMs = performance.now() - start;
+        maxGap = Math.max(maxGap, performance.now() - last);
+        target = "";
+        return { emitMs, mainGapMs: maxGap, providerRequests };
+      },
       begin(id: string, delay = 0) {
         response = undefined;
         target = id;
         stall = delay;
-        storageMs = snapshotMs = mainHandlerMs = payloadBytes = maxGap = providerRequests = 0;
+        storageMs = snapshotMs = mainHandlerMs = validateMs = payloadBytes = maxGap = providerRequests = 0;
         last = performance.now();
       },
       end() {
@@ -129,6 +183,7 @@ export function installSessionPerformance() {
           storageMs,
           snapshotMs,
           mainHandlerMs,
+          validateMs,
           payloadBytes,
           mainGapMs: maxGap,
           providerRequests,

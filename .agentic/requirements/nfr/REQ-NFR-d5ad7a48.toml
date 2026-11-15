@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-NFR-d5ad7a48"
+title = "Probe plugin programs concurrently with a shared bound"
+status = "active"
+requirement = "When the provisioner lists a plugin's program statuses, it shall inspect the programs concurrently, run at most four version probe processes at a time across all provisioners of the process, and return the statuses sorted by program name."
+verification = "Unit tests: two found programs whose fake probes each take 200 ms list in well under 400 ms, sorted by name; six programs with hanging probes have at most four probe processes started at once."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "high"
+created = 2026-11-14
+updated = 2026-11-14

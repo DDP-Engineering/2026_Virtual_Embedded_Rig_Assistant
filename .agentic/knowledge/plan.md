@@ -14,7 +14,7 @@ Core owns validated ordered session task lists and atomic database/event updates
 - Registered todo is session class with strict {items}; returns {items:stored list}, replacing the whole list. ToolRegistry/runtime failures return actionable errors to the model.
 - TodosRepository.get(sessionId) reads its row; replace(sessionId,items,updatedAt) independently validates and parameterizes the existing schema1 upsert. SQLite session deletion cascades todos.
 - SessionService binds TodoHost database/repository/session/Clock/ownership/scrub/hub callbacks; todo validates scrubbed fields, checks abort/authority and upserts+records one event within a synchronous transaction, publishing after commit.
-- PlanTab keys workbench/session identity and consumes useSessionEvents. List text is escaped, order is authoritative; Circle/CircleDot/CircleCheck expose localized status image names and visible status labels. Empty/loading/retry states share application conventions.
+- PlanTab keys workbench/session identity and consumes the shared session view (useSessionView over useSessionEvents). List text is escaped, order is authoritative; Circle/CircleDot/CircleCheck expose localized status image names and visible status labels. Empty/loading/retry states share application conventions.
 
 ## Invariants
 
@@ -29,7 +29,7 @@ Core owns validated ordered session task lists and atomic database/event updates
 |---|---|---|
 | Bounds/registration/order | shared session.ts;tools/todo.ts/registry.ts | shared todos.test.ts;core sessions/todos.test.ts/registry.test.ts |
 | Atomic storage/events/authority | TodosRepository;SessionService TodoHost | core sessions/todos.test.ts;native plan.spec.ts |
-| Snapshot/live/status/navigation | PlanTab;useSessionEvents;mock sessions | plan-tab.test.ts;native/browser plan.spec.ts |
+| Snapshot/live/status/navigation | PlanTab;useSessionView;mock sessions | plan-tab.test.ts;native/browser plan.spec.ts |
 | CLI composition | same SessionService/registry | tooling/cli.test.ts Plan process case |
 
 ## Key behaviors

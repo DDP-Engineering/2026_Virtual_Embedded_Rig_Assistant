@@ -1,15 +1,49 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import Database from "better-sqlite3";
-import { afterEach, expect, it } from "vitest";
-import { inspectDatabase, openDb, type WorkbenchDatabase } from "./db.js";
+import { afterEach, expect, it, vi } from "vitest";
+import { openDb, type WorkbenchDatabase } from "./db.js";
+
+// Observe private copies: a temporary vera-storage-* folder, and a hook run before each file copy.
+const copies = vi.hoisted(() => ({
+  folders: [] as string[],
+  before: undefined as undefined | ((source: string) => Promise<void>),
+}));
+vi.mock("node:fs", async (original) => {
+  const actual = await original<typeof import("node:fs")>();
+  return {
+    ...actual,
+    mkdtempSync: (prefix: string) => {
+      copies.folders.push(prefix);
+      return actual.mkdtempSync(prefix);
+    },
+  };
+});
+vi.mock("node:fs/promises", async (original) => {
+  const actual = await original<typeof import("node:fs/promises")>();
+  return {
+    ...actual,
+    mkdtemp: (prefix: string) => {
+      copies.folders.push(prefix);
+      return actual.mkdtemp(prefix);
+    },
+    copyFile: async (source: string, target: string, mode?: number) => {
+      await copies.before?.(source);
+      return actual.copyFile(source, target, mode);
+    },
+  };
+});
+const privateCopies = () => copies.folders.filter((prefix) => prefix.includes("vera-storage-"));
 
 const roots: string[] = [];
 const handles: WorkbenchDatabase[] = [];
 const options = { workbenchId: "wb_test", appVersion: "0.0.0" };
 afterEach(async () => {
+  copies.folders.length = 0;
+  copies.before = undefined;
   for (const handle of handles.splice(0)) handle.close();
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
 });
@@ -33,6 +67,11 @@ async function bytes(file: string) {
       .digest("hex");
   }
   return result;
+}
+/** An owned database's DB and WAL bytes; the SHM index is SQLite's shared memory for live readers. */
+async function content(file: string) {
+  const { [`${basename(file)}-shm`]: _shm, ...rest } = await bytes(file);
+  return rest;
 }
 it("creates the complete current schema directly, with SQLite pragmas", async () => {
   const file = await path();
@@ -105,15 +144,14 @@ it("reopens current data and metadata unchanged, including committed WAL rows", 
 });
 // Version 1 is the only database format during development (AGENTS.md).
 it.each(["0", "2", "99", "not-a-version"])(
-  "refuses a schema version other than the current one (%s) without changing DB/WAL/SHM",
+  "refuses a schema version other than the current one (%s) without changing DB/WAL",
   async (version) => {
     const file = await path();
     const { db } = await opened(file);
     db.prepare("UPDATE meta SET value=? WHERE key='schema_version'").run(version);
-    const before = await bytes(file);
-    await expect(inspectDatabase(file, options)).rejects.toMatchObject({ code: "INVALID" });
+    const before = await content(file);
     await expect(openDb(file, options)).rejects.toMatchObject({ code: "INVALID" });
-    expect(await bytes(file)).toEqual(before);
+    expect(await content(file)).toEqual(before);
   },
 );
 it.each(["TABLE document_extractions", "INDEX idx_chunks_doc", "TRIGGER chunks_keyword_insert"])(
@@ -168,4 +206,74 @@ it("initializes an empty writable database but never initializes a read-only one
   await expect(openDb(file, { ...options, readOnly: true })).rejects.toMatchObject({ code: "INVALID" });
   expect(await bytes(file)).toEqual(before);
   expect((await opened(file)).db.prepare("SELECT COUNT(*) FROM sessions").pluck().get()).toBe(0);
+});
+// REQ-REL-c12f79d2
+it("opens an owned database in place, without a private copy", async () => {
+  const file = await path();
+  const h = await opened(file);
+  h.db.exec("CREATE TABLE keep(x); INSERT INTO keep VALUES (7)");
+  h.close();
+  copies.folders.length = 0;
+  const next = await opened(file);
+  expect(privateCopies()).toEqual([]);
+  expect(next.db.prepare("SELECT x FROM keep").pluck().get()).toBe(7);
+  next.db.exec("INSERT INTO keep VALUES (8)");
+});
+// REQ-REL-e939f88a
+it("refuses an owned database in another schema before any write, with a live WAL", async () => {
+  const file = await path();
+  const h = await opened(file);
+  h.db.prepare("UPDATE meta SET value='99' WHERE key='schema_version'").run();
+  const before = await content(file);
+  expect(Object.keys(before)).toContain("vera.db-wal");
+  await expect(openDb(file, options)).rejects.toMatchObject({ code: "INVALID" });
+  expect(await content(file)).toEqual(before);
+  expect(h.db.prepare("SELECT value FROM meta WHERE key='schema_version'").pluck().get()).toBe("99");
+});
+// REQ-REL-93a4a5e0
+it("read-only opens query an asynchronous private copy that close removes", async () => {
+  const file = await path();
+  const h = await opened(file);
+  h.db.exec("CREATE TABLE keep(x); INSERT INTO keep VALUES (5)");
+  const copied: string[] = [];
+  copies.before = async (source) => {
+    copied.push(source);
+  };
+  const readOnly = await opened(file, { readOnly: true });
+  expect(copied).toEqual([file, `${file}-wal`]);
+  expect(privateCopies()).toHaveLength(1);
+  expect(readOnly.db.name).not.toBe(file);
+  expect(readOnly.db.prepare("SELECT x FROM keep").pluck().get()).toBe(5);
+  readOnly.close();
+  expect(existsSync(dirname(readOnly.db.name))).toBe(false);
+});
+it("a source that changes during the copy and its retry fails BUSY", async () => {
+  const file = await path();
+  const h = await opened(file);
+  const attempts: string[] = [];
+  copies.before = async (source) => {
+    attempts.push(source);
+    if (source === file)
+      h.db.exec("CREATE TABLE IF NOT EXISTS churn(x); INSERT INTO churn VALUES (randomblob(9000))");
+  };
+  await expect(openDb(file, { ...options, readOnly: true })).rejects.toMatchObject({ code: "BUSY" });
+  expect(attempts.filter((source) => source === file)).toHaveLength(2);
+  let once = false;
+  copies.before = async (source) => {
+    if (source === file && !once) {
+      once = true;
+      h.db.exec("INSERT INTO churn VALUES (1)");
+    }
+  };
+  const settled = await opened(file, { readOnly: true });
+  expect(settled.db.prepare("SELECT count(*) FROM churn").pluck().get()).toBe(3);
+});
+it.each(["EBUSY", "EPERM"])("a copy refused with %s fails BUSY", async (code) => {
+  const file = await path();
+  (await opened(file)).close();
+  copies.before = async () => {
+    throw Object.assign(new Error(code), { code });
+  };
+  await expect(openDb(file, { ...options, readOnly: true })).rejects.toMatchObject({ code: "BUSY" });
+  expect(privateCopies()).toHaveLength(1);
 });

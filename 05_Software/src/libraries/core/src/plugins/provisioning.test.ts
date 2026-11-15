@@ -918,6 +918,11 @@ it("reports failed transfers and archives without the declared path", async () =
   expect(await readdir(join(downloads, ".staging"))).toEqual([]);
 });
 
+/** A newer modification time: the found program changed. */
+async function touch(path: string) {
+  const later = new Date(Date.now() + 60_000);
+  await utimes(path, later, later);
+}
 async function executable(path: string) {
   await mkdir(join(path, ".."), { recursive: true });
   await writeFile(path, "", { mode: 0o755 });
@@ -962,10 +967,14 @@ it("finds programs on PATH and through globs, highest name first", async () => {
     join(base, "home", "tools", "tool-1.10", "bin", exe("tool")),
   );
   expect((await s.provisioner.resolve(plugin, "exact"))?.executable).toBe(join(base, "opt", exe("exact")));
-  // Resolutions are cached until an install or an invalidation.
+  // Resolutions are cached until an install or an invalidation; a found file is probed again once it changed.
   const spawned = s.host.programs.length;
   await s.provisioner.resolve(plugin, "git");
   expect(s.host.programs.length).toBe(spawned);
+  s.provisioner.invalidate();
+  await s.provisioner.resolve(plugin, "git");
+  expect(s.host.programs.length).toBe(spawned);
+  await touch(join(base, "second", exe("git")));
   s.provisioner.invalidate();
   await s.provisioner.resolve(plugin, "git");
   expect(s.host.programs.length).toBe(spawned + 1);
@@ -1038,6 +1047,7 @@ it("checks the probed version against the supported range", async () => {
     { name: "plain", kind: "find", state: "ready", version: "2.44.0" },
     { name: "ranged", kind: "find", state: "ready", version: "2.44.0", range: ">=2.40" },
   ]);
+  await touch(join(base, "git"));
   s.provisioner.invalidate();
   text = "git version 2.39.1\n";
   code = 1;
@@ -1428,4 +1438,158 @@ it("refuses a .tar.gz whose bsdtar exits 1 even with only skip notices", async (
   };
   const [status] = await s.provisioner.install("tools");
   expect([status?.state, status?.problem]).toEqual(["missing", "archive"]);
+});
+
+/** Found programs `names` under the test root; each prints `git version 2.<n>.0` after `ms`. */
+async function foundPrograms(root: string, names: string[]) {
+  const programs: Record<string, unknown> = {};
+  for (const name of names) {
+    const path = join(root, "found", name);
+    await executable(path);
+    programs[name] = find({ linux: [path] });
+  }
+  return programs;
+}
+const answerAfter = (ms: number) => (p: FakeProcess) =>
+  setTimeout(() => {
+    p.print(`git version 2.${p.executable.length}.0\n`);
+    p.finish(ok);
+  }, ms);
+
+// REQ-NFR-d5ad7a48
+it("probes a plugin's programs concurrently, at most four at a time, sorted by name", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-concurrent-"));
+  roots.push(root);
+  const s = await setup({ programs: await foundPrograms(root, ["b", "a"]) });
+  s.host.handle = answerAfter(200);
+  const started = performance.now();
+  const statuses = await s.provisioner.statuses("tools");
+  expect(performance.now() - started).toBeLessThan(380);
+  expect(statuses.map((status) => [status.name, status.state])).toEqual([
+    ["a", "ready"],
+    ["b", "ready"],
+  ]);
+  const wide = await setup({ programs: await foundPrograms(root, ["c1", "c2", "c3", "c4", "c5", "c6"]) });
+  wide.host.handle = answerAfter(50);
+  expect((await wide.provisioner.statuses("tools")).every((status) => status.state === "ready")).toBe(true);
+  expect(wide.host.maxRunning).toBe(4);
+});
+
+// REQ-FUNC-295dafd1
+it("reuses a found program's version across provisioners until its file changes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-probe-cache-"));
+  roots.push(root);
+  const s = await setup({ programs: await foundPrograms(root, ["git"]) });
+  s.host.handle = (p) => {
+    p.print("git version 2.44.0\n");
+    p.finish(ok);
+  };
+  expect((await s.provisioner.statuses("tools"))[0]).toMatchObject({ state: "ready", version: "2.44.0" });
+  expect(s.host.programs).toHaveLength(1);
+  const stored = JSON.parse(await readFile(join(s.root, "plugins", "runtime", "probes.json"), "utf8"));
+  expect(stored.format).toBe(1);
+  expect(Object.values(stored.probes)).toMatchObject([{ version: "2.44.0" }]);
+  const restarted = s.create(s.store);
+  expect((await restarted.statuses("tools"))[0]).toMatchObject({ state: "ready", version: "2.44.0" });
+  expect(s.host.programs).toHaveLength(1);
+  // An explicit check always probes.
+  await restarted.check("tools");
+  expect(s.host.programs).toHaveLength(2);
+  await touch(join(root, "found", "git"));
+  s.host.handle = (p) => {
+    p.print("git version 2.45.0\n");
+    p.finish(ok);
+  };
+  expect((await s.create(s.store).statuses("tools"))[0]).toMatchObject({ version: "2.45.0" });
+  expect(s.host.programs).toHaveLength(3);
+  await restarted.drain();
+});
+
+// REQ-FUNC-b34243de
+it("invalidates only the named plugin's resolutions", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-invalidate-"));
+  roots.push(root);
+  const s = await setup({ programs: await foundPrograms(root, ["git"]) });
+  const other = join(root, "src", "other");
+  await mkdir(other, { recursive: true });
+  await writeFile(
+    join(other, "plugin.yaml"),
+    stringify({
+      format: 1,
+      id: "other",
+      version: "1.0.0",
+      name: "Other",
+      description: "Other tools.",
+      ecosystem: "general",
+      platforms: ["windows-x64", "linux-x64"],
+      programs: await foundPrograms(root, ["make"]),
+    }),
+  );
+  await s.store.install(other);
+  s.host.handle = answerAfter(1);
+  await s.provisioner.statuses("tools");
+  await s.provisioner.statuses("other");
+  expect(s.host.programs).toHaveLength(2);
+  // New file stamps defeat the persisted cache, so only in-memory resolutions avoid a probe.
+  for (const name of ["git", "make"]) await touch(join(root, "found", name));
+  s.provisioner.invalidate("tools");
+  await s.provisioner.statuses("tools");
+  await s.provisioner.statuses("other");
+  expect(s.host.programs.map((p) => p.executable.endsWith("git"))).toEqual([true, false, true]);
+});
+
+// REQ-REL-3691e000
+it("times out a hanging found probe after 8 s while the other programs complete", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-probe-timeout-"));
+  roots.push(root);
+  const s = await setup({ probeMs: null, programs: await foundPrograms(root, ["hang", "quick"]) });
+  s.host.handle = (p) => {
+    if (p.executable.endsWith("quick")) {
+      p.print("git version 2.44.0\n");
+      p.finish(ok);
+    }
+  };
+  vi.useFakeTimers();
+  try {
+    const listed = s.provisioner.statuses("tools");
+    await vi.waitFor(() => expect(s.host.programs).toHaveLength(2));
+    await vi.advanceTimersByTimeAsync(7_000);
+    expect(s.host.signals).toEqual([]);
+    await vi.advanceTimersByTimeAsync(1_500);
+    const [hang, quick] = await listed;
+    expect(hang).toMatchObject({ state: "unavailable", problem: "version" });
+    expect(hang?.detail).toContain("timed out after 8 s");
+    expect(quick).toMatchObject({ state: "ready", version: "2.44.0" });
+    expect(s.host.signals.some(([pid, signal]) => pid < 0 && signal === "SIGTERM")).toBe(true);
+  } finally {
+    vi.useRealTimers();
+    await s.provisioner.drain();
+  }
+});
+
+// REQ-FUNC-295dafd1: a scoped check's stored version is not written back over by another provisioner.
+it("keeps a scoped check's stored version when another provisioner writes later", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-probe-shared-"));
+  roots.push(root);
+  const s = await setup({ programs: await foundPrograms(root, ["git", "make"]) });
+  let version = "2.44.0";
+  s.host.handle = (p) => {
+    p.print(`git version ${version}\n`);
+    p.finish(ok);
+  };
+  await s.provisioner.statuses("tools");
+  version = "2.45.0";
+  const scoped = s.create(s.store);
+  await scoped.check("tools", undefined, s.provisioner);
+  await scoped.drain();
+  // The main provisioner probes another program and so writes the file again.
+  await touch(join(root, "found", "make"));
+  s.provisioner.invalidate("tools");
+  const statuses = await s.provisioner.statuses("tools");
+  expect(statuses.map((status) => status.version)).toEqual(["2.45.0", "2.45.0"]);
+  const file = JSON.parse(await readFile(join(s.root, "plugins", "runtime", "probes.json"), "utf8"));
+  expect(Object.values(file.probes).map((entry) => (entry as { version: string }).version)).toEqual([
+    "2.45.0",
+    "2.45.0",
+  ]);
 });

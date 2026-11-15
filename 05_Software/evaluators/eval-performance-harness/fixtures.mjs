@@ -36,10 +36,10 @@ export function fixtures() {
             args: { path: "board.txt" },
             status: "ok",
             summary: "Captured board output",
-            preview:
-              tier === "payload"
-                ? "captured output\n".repeat(4096).padEnd(65536, ".").slice(0, 65536)
-                : "board ready",
+            // The renderer receives the 8 KiB excerpt of the 64 KiB payload preview (PERF-06).
+            ...(tier === "payload"
+              ? { preview: "captured output\n".repeat(512), truncated: { preview: 65536 } }
+              : { preview: "board ready" }),
             durationMs: 1,
           });
           events.push(

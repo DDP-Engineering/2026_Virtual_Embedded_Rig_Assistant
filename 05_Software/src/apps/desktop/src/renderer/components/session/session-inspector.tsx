@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
 import { SkillSettings } from "../skills.js";
+import { ToolOutput } from "./bounded-text.js";
 import { ContextTab } from "./context-tab.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
@@ -50,10 +51,12 @@ export function ActivityLog({
   state,
   reasoning,
   updates,
+  sessionId,
 }: {
   state: SessionState;
   reasoning: Record<string, string>;
   updates: Record<string, string>;
+  sessionId?: string | undefined;
 }) {
   const { t } = useTranslation();
   return (
@@ -110,10 +113,7 @@ export function ActivityLog({
                   </>
                 }
               >
-                <h4>{t("chat.arguments")}</h4>
-                <pre>{JSON.stringify(item.args, null, 2)}</pre>
-                <h4>{t("chat.preview")}</h4>
-                <pre>{item.preview ?? updates[item.id] ?? item.summary ?? t("chat.noPreview")}</pre>
+                <ToolOutput item={item} update={updates[item.id]} sessionId={sessionId} />
                 {item.durationMs !== undefined && <p>{item.durationMs} ms</p>}
               </Disclosure>
             )}
@@ -138,11 +138,13 @@ export function SessionInspector({
   workbenchId,
   reasoning,
   updates,
+  sessionId,
   close,
 }: {
   mode: "context" | "activity";
   state: SessionState;
   workbenchId: string;
+  sessionId?: string | undefined;
   reasoning: Record<string, string>;
   updates: Record<string, string>;
   close: () => void;
@@ -184,7 +186,7 @@ export function SessionInspector({
             <ContextTab workbenchId={workbenchId} readOnly showSkillSettings={false} />
           </>
         ) : (
-          <ActivityLog state={state} reasoning={reasoning} updates={updates} />
+          <ActivityLog state={state} reasoning={reasoning} updates={updates} sessionId={sessionId} />
         )}
       </div>
       <footer>

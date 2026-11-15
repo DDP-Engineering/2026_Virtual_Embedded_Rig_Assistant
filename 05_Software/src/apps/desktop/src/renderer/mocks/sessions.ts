@@ -1,9 +1,8 @@
 import {
   type ArtifactContent,
-  applySessionEvent,
   type ChangeDetail,
   confirmationMatches,
-  emptySessionState,
+  foldSessionEvents,
   isLiveSessionEvent,
   type ProgramApproval,
   programPolicy,
@@ -239,7 +238,7 @@ export class MockSessions {
         if (request.reasoning !== null && !options.includes(request.reasoning)) throw veraError("INVALID");
         this.emit(id, { type: "session.updated", reasoning: request.reasoning });
       }
-      const saved = row.events.reduce(applySessionEvent, emptySessionState()).reasoning;
+      const saved = foldSessionEvents(row.events).reasoning;
       return { modelRef, options, selected: saved && options.includes(saved) ? saved : null };
     }
     if (channel === "session.export") return { exported: true };
@@ -248,8 +247,20 @@ export class MockSessions {
     if (channel === "changes.list")
       return row.changes.map(({ diff: _, ...summary }) => structuredClone(summary));
     if (channel === "session.revision") return { seq: row.events.length };
-    if (channel === "session.get")
-      return { snapshot: row.events.reduce(applySessionEvent, emptySessionState()), seq: row.events.length };
+    if (channel === "session.item.detail") {
+      // Mock snapshots are never cut; this mirrors main's lookup of the item's latest stored event.
+      const { itemId, field } = raw as { itemId: string; field: "preview" | "args" | "diff" };
+      for (const event of [...row.events].reverse()) {
+        if (field === "diff" && event.type === "approval.requested" && event.approvalId === itemId)
+          return { text: event.diff };
+        if (field === "preview" && event.type === "tool.done" && event.callId === itemId && event.preview)
+          return { text: event.preview };
+        if (field === "args" && event.type === "tool.started" && event.callId === itemId)
+          return { text: JSON.stringify(event.args, null, 2) };
+      }
+      throw veraError("NOT_FOUND");
+    }
+    if (channel === "session.get") return { snapshot: foldSessionEvents(row.events), seq: row.events.length };
     if (channel === "session.stop") {
       this.writable();
       row.stop = true;
@@ -331,7 +342,7 @@ export class MockSessions {
     }
     if (channel === "session.model.set") {
       row.summary.modelRef = request.modelRef;
-      const saved = row.events.reduce(applySessionEvent, emptySessionState()).reasoning;
+      const saved = foldSessionEvents(row.events).reasoning;
       const model = request.modelRef ?? this.current().model;
       this.emit(id, {
         type: "session.updated",
@@ -535,9 +546,9 @@ export class MockSessions {
               );
             }
           if (!row.stop) {
-            const pending = row.events
-              .reduce(applySessionEvent, emptySessionState())
-              .items.filter((item) => item.kind === "user" && item.pending);
+            const pending = foldSessionEvents(row.events).items.filter(
+              (item) => item.kind === "user" && item.pending,
+            );
             if (pending.length)
               this.emit(id, { type: "message.delivered", messageIds: pending.map((item) => item.id) }, key);
             if (/artifact/i.test(request.text)) {

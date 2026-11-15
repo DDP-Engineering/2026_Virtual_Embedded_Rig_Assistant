@@ -38,6 +38,11 @@ async function rig(delay = 0) {
   };
   return { root, folder, launch };
 }
+/** Opens every collapsed routine-tool group; its tool rows mount only when opened. */
+async function openToolGroups(page: Page) {
+  const closed = page.locator('[data-tool-group] > section > .disclosure-toggle[aria-expanded="false"]');
+  while ((await closed.count()) > 0) await closed.first().click();
+}
 async function create(page: Page, model: string) {
   await page.locator('[data-i18n="nav.welcome"]').click();
   await page.locator("#workbench-name").fill("Board");
@@ -102,11 +107,13 @@ test("chat UI read-then-answer renders two tool rows and one cited answer, ident
     const id = await create(page, "replay/read-then-answer");
     await page.getByRole("textbox", { name: "Message", exact: true }).fill("Read the board");
     await page.getByRole("textbox", { name: "Message", exact: true }).press("Enter");
-    await expect(page.locator("[data-tool-row]")).toHaveCount(2);
     await expect(page.locator('[data-citation="valid"]')).toHaveCount(1);
     await expect.poll(async () => (await snapshot(page, id)).activeTurnId).toBeNull();
+    // Compared after restart with the tool group collapsed, as a reopened session shows it.
     const text = await page.locator("[data-transcript]").textContent();
     const before = await snapshot(page, id);
+    await openToolGroups(page);
+    await expect(page.locator("[data-tool-row]")).toHaveCount(2);
     expect(await outboundAttempts(app)).toEqual([]);
     await app.close();
     app = await host.launch();
@@ -179,6 +186,8 @@ test("session Stop aborts a real pathological grep while app.info responds; next
       id = await create(page, "replay/auto");
     await page.getByRole("textbox", { name: "Message", exact: true }).fill("Pathological grep");
     await page.getByRole("textbox", { name: "Message", exact: true }).press("Enter");
+    await expect(page.locator("[data-tool-group]")).toContainText("Running");
+    await openToolGroups(page);
     await expect(page.locator('[data-tool-row="grep"]')).toContainText("Running");
     // Give the worker time to enter its actual catastrophic regex, well before its 10s deadline.
     await page.waitForTimeout(300);
@@ -198,8 +207,9 @@ test("session Stop aborts a real pathological grep while app.info responds; next
     });
     await page.getByRole("textbox", { name: "Message", exact: true }).fill("Normal grep");
     await page.getByRole("textbox", { name: "Message", exact: true }).press("Enter");
-    await expect(page.locator('[data-tool-row="grep"]')).toHaveCount(2);
     await expect(page.locator('[data-message-kind="assistant"]').last()).toContainText("Grep recovered");
+    await openToolGroups(page);
+    await expect(page.locator('[data-tool-row="grep"]')).toHaveCount(2);
     await expect(page.getByRole("textbox", { name: "Message", exact: true })).toBeEnabled();
     const completed = await snapshot(page, id);
     expect(completed.turns.at(-1)?.stopReason).toBe("end");

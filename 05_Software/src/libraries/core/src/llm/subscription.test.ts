@@ -162,6 +162,40 @@ describe("ChatGPT subscription collection", () => {
     expect((await c.api.getAuth("openai"))?.auth.apiKey).toBe("fake-api");
     expect((await c.subscription.getAuth("openai"))?.auth.apiKey).toBe("fake-access");
   });
+  it("prepares a ChatGPT model twice with one model-list request", async () => {
+    const h = store();
+    h.entries.set("chatgpt", {
+      type: "oauth",
+      access: "fake-access",
+      refresh: "fake-refresh",
+      expires: Date.now() + 600000,
+    });
+    const settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
+    let requests = 0;
+    const g = createPiAiGateway({
+      settings: () => settings,
+      credentials: h.credentials,
+      scrub: (t) => t,
+      now: () => 0,
+      fetch: async () => {
+        requests++;
+        return Response.json({
+          models: [
+            {
+              slug: "gpt-4.1",
+              display_name: "GPT-4.1",
+              visibility: "list",
+              context_window: 1047576,
+              supported_reasoning_levels: [],
+            },
+          ],
+        });
+      },
+    });
+    await g.prepareModel?.("chatgpt/gpt-4.1");
+    await g.prepareModel?.("chatgpt/gpt-4.1");
+    expect(requests).toBe(1);
+  });
   it("catalogs subscription references and resolves fresh budgets", async () => {
     const h = store();
     h.entries.set("chatgpt", {

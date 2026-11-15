@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-613bf976"
+
+title = "Gate renderer IPC on the settled credential load"
+
+status = "active"
+
+requirement = """
+While the credential file is still loading, the IPC boundary shall hold each authorized invoke and session subscription request until the load has settled, so every response is redacted with the loaded secrets.
+"""
+
+verification = "Unit test: a router whose ready promise is pending does not call the handler; after it resolves the handler runs once and the response is returned; an unauthorized sender is still denied without waiting."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/ipc-router.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+
+
+spec = ""
+
+priority = "high"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14

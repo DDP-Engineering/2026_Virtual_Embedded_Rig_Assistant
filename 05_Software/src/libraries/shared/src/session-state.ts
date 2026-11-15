@@ -23,6 +23,13 @@ const tool = z.strictObject({
   summary: z.string().optional(),
   preview: z.string().optional(),
   durationMs: z.number().optional(),
+  /** Full UTF-8 sizes of the fields cut for the renderer (PERF-06); `args` then holds a JSON prefix. */
+  truncated: z
+    .strictObject({
+      preview: z.number().int().nonnegative().optional(),
+      args: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
 });
 export const sessionStateSchema = z.strictObject({
   title: z.string(),
@@ -77,6 +84,7 @@ export const sessionStateSchema = z.strictObject({
         bytes: z.number(),
         download: downloadApprovalSchema.optional(),
         program: programApprovalSchema.optional(),
+        truncated: z.strictObject({ diff: z.number().int().nonnegative() }).optional(),
         decision: z.enum(["approved", "denied", "aborted"]).nullable(),
         by: z.enum(["user", "mode"]).optional(),
       })
@@ -108,10 +116,82 @@ export function emptySessionState(): SessionState {
     usage: { inputTokens: 0, outputTokens: 0 },
   };
 }
-/** Pure shared projection. Terminal messages are authoritative even when deltas were missed. */
-export function applySessionEvent(state: SessionState, input: SessionEvent): SessionState {
-  const event: SessionEvent = JSON.parse(JSON.stringify(input));
-  const s: SessionState = JSON.parse(JSON.stringify(state));
+type SessionItem = SessionState["items"][number];
+type Collection = "interrupted" | "items" | "turns" | "approvals" | "changes" | "artifacts";
+type Records = "items" | "turns" | "approvals";
+
+/**
+ * Write access to one state for the shared reducer. A fold owns the whole state and mutates it in
+ * place, with an id index over `items`; a live update (`copyOnWrite`) copies a collection and an
+ * element the first time it writes to them, so everything the event does not touch keeps its identity.
+ */
+class Draft {
+  private readonly fresh = new Set<unknown>();
+  private ids: Map<string, number> | undefined;
+  private errors: number | undefined;
+  constructor(
+    readonly s: SessionState,
+    private readonly copyOnWrite: boolean,
+  ) {}
+  /** The collection, safe to push to and to replace elements of. */
+  list<K extends Collection>(key: K): SessionState[K] {
+    if (this.copyOnWrite && !this.fresh.has(this.s[key])) {
+      this.s[key] = [...this.s[key]] as SessionState[K];
+      this.fresh.add(this.s[key]);
+    }
+    return this.s[key];
+  }
+  /** Element `index` of the collection, safe to mutate. */
+  at<K extends Records>(key: K, index: number): SessionState[K][number] {
+    const list = this.list(key) as SessionState[K][number][];
+    let value = list[index] as SessionState[K][number];
+    if (this.copyOnWrite && !this.fresh.has(value)) {
+      value = { ...value };
+      list[index] = value;
+      this.fresh.add(value);
+    }
+    return value;
+  }
+  /** Index of the first item with this id (and kind), or -1. */
+  find(id: string, kind?: SessionItem["kind"]): number {
+    const items = this.s.items;
+    if (!this.copyOnWrite) {
+      if (!this.ids) {
+        const ids = new Map<string, number>();
+        items.forEach((item, index) => {
+          if (!ids.has(item.id)) ids.set(item.id, index);
+        });
+        this.ids = ids;
+      }
+      const first = this.ids.get(id);
+      if (first === undefined) return -1;
+      if (!kind || items[first]?.kind === kind) return first;
+    }
+    return items.findIndex((i) => i.id === id && (!kind || i.kind === kind));
+  }
+  push(value: SessionItem): void {
+    const items = this.list("items");
+    if (this.ids && !this.ids.has(value.id)) this.ids.set(value.id, items.length);
+    if (value.kind === "error" && this.errors !== undefined) this.errors++;
+    items.push(value);
+    this.fresh.add(value);
+  }
+  replaceItems(items: SessionItem[]): void {
+    this.s.items = items;
+    this.fresh.add(items);
+    this.ids = undefined;
+  }
+  /** Number of error items, counted once per fold and kept current by `push`. */
+  errorCount(): number {
+    const count = this.errors ?? this.s.items.filter((i) => i.kind === "error").length;
+    if (!this.copyOnWrite) this.errors = count;
+    return count;
+  }
+}
+
+/** The single event switch shared by the fold and the live update. It never writes to `event`. */
+function reduce(d: Draft, event: SessionEvent): void {
+  const s = d.s;
   const turnId = s.activeTurnId;
   switch (event.type) {
     case "session.updated": {
@@ -120,34 +200,37 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
       break;
     }
     case "session.interrupted":
-      s.interrupted.push(event.turnId);
+      d.list("interrupted").push(event.turnId);
       break;
     case "turn.started":
       s.activeTurnId = event.turnId;
       s.usage = { inputTokens: 0, outputTokens: 0 };
       s.status = "running";
-      s.turns.push({ turnId: event.turnId, steps: 0, stopReason: null });
+      d.list("turns").push({ turnId: event.turnId, steps: 0, stopReason: null });
       break;
-    case "turn.done":
+    case "turn.done": {
       s.activeTurnId = null;
       s.status = event.stopReason === "error" ? "error" : "idle";
-      for (const t of s.turns) if (t.turnId === event.turnId) t.stopReason = event.stopReason;
-      s.items = s.items.filter((item) => item.kind !== "assistant" || !item.streaming);
-      for (const i of s.items) {
-        if (i.kind === "assistant") i.streaming = false;
-        if (i.kind === "tool" && i.status === "running") {
-          i.status = "error";
-          i.summary = "Interrupted.";
-        }
+      for (let i = 0; i < s.turns.length; i++)
+        if (s.turns[i]?.turnId === event.turnId) d.at("turns", i).stopReason = event.stopReason;
+      // Unfinalized live text is dropped; every remaining assistant item is therefore finalized.
+      const kept = s.items.filter((i) => i.kind !== "assistant" || !i.streaming);
+      if (kept.length !== s.items.length) d.replaceItems(kept);
+      for (let i = 0; i < s.items.length; i++) {
+        const current = s.items[i];
+        if (current?.kind !== "tool" || current.status !== "running") continue;
+        const tool = d.at("items", i) as typeof current;
+        tool.status = "error";
+        tool.summary = "Interrupted.";
       }
       break;
+    }
     case "message.user":
-      if (!s.items.some((i) => i.id === event.messageId))
-        s.items.push({ kind: "user", id: event.messageId, text: event.text });
+      if (d.find(event.messageId) < 0) d.push({ kind: "user", id: event.messageId, text: event.text });
       break;
     case "message.queued":
-      if (!s.items.some((i) => i.id === event.messageId))
-        s.items.push({
+      if (d.find(event.messageId) < 0)
+        d.push({
           kind: "user",
           id: event.messageId,
           text: event.text,
@@ -156,66 +239,77 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
         });
       break;
     case "message.delivered":
-      for (const item of s.items)
-        if (item.kind === "user" && event.messageIds.includes(item.id)) delete item.pending;
+      for (let i = 0; i < s.items.length; i++) {
+        const current = s.items[i];
+        if (current?.kind === "user" && "pending" in current && event.messageIds.includes(current.id))
+          delete (d.at("items", i) as typeof current).pending;
+      }
       break;
     case "reasoning.delta":
       break; // ephemeral reasoning has no durable projection
     case "message.delta": {
-      let i = s.items.find((i) => i.kind === "assistant" && i.id === event.messageId);
-      if (!i) {
-        i = { kind: "assistant", id: event.messageId, turnId, text: "", streaming: true, citations: [] };
-        s.items.push(i);
-      }
-      if (i.kind === "assistant") i.text += event.text;
+      const index = d.find(event.messageId, "assistant");
+      if (index < 0)
+        d.push({
+          kind: "assistant",
+          id: event.messageId,
+          turnId,
+          text: event.text,
+          streaming: true,
+          citations: [],
+        });
+      else (d.at("items", index) as Extract<SessionItem, { kind: "assistant" }>).text += event.text;
       break;
     }
     case "message.done": {
-      const item = {
-        kind: "assistant" as const,
+      const done: SessionItem = {
+        kind: "assistant",
         id: event.messageId,
         turnId,
         text: event.text,
         streaming: false,
         citations: event.citations,
       };
-      const index = s.items.findIndex((i) => i.kind === "assistant" && i.id === event.messageId);
-      if (index < 0) s.items.push(item);
-      else s.items[index] = item;
+      const index = d.find(event.messageId, "assistant");
+      if (index < 0) d.push(done);
+      else d.list("items")[index] = done;
       break;
     }
     case "tool.started":
-      s.items.push({
+      d.push({
         kind: "tool",
         id: event.callId,
         turnId,
         name: event.name,
         args: event.args,
         status: "running",
+        ...(event.truncated ? { truncated: { ...event.truncated } } : {}),
       });
-      for (const t of s.turns) if (t.turnId === turnId) t.steps++;
+      for (let i = 0; i < s.turns.length; i++) if (s.turns[i]?.turnId === turnId) d.at("turns", i).steps++;
       break;
     case "tool.update":
       break;
     case "tool.done": {
-      const i = s.items.find((i) => i.kind === "tool" && i.id === event.callId);
-      if (i?.kind === "tool") {
-        i.status = event.ok ? "ok" : "error";
-        i.summary = event.summary;
-        i.durationMs = event.durationMs;
-        if (event.preview !== undefined) i.preview = event.preview;
-      }
+      const index = d.find(event.callId, "tool");
+      if (index < 0) break;
+      const tool = d.at("items", index) as Extract<SessionItem, { kind: "tool" }>;
+      tool.status = event.ok ? "ok" : "error";
+      tool.summary = event.summary;
+      tool.durationMs = event.durationMs;
+      if (event.preview !== undefined) tool.preview = event.preview;
+      if (event.truncated) tool.truncated = { ...tool.truncated, ...event.truncated };
       break;
     }
     case "approval.requested": {
       const { type: _, ...a } = event;
-      s.approvals.push({ ...a, decision: null });
+      d.list("approvals").push({ ...a, decision: null });
       s.status = "awaiting_approval";
       break;
     }
     case "approval.decided": {
-      const a = s.approvals.find((a) => a.approvalId === event.approvalId);
-      if (a) {
+      const index = s.approvals.findIndex((a) => a.approvalId === event.approvalId);
+      if (index >= 0) {
+        const a = d.at("approvals", index);
         a.decision = event.decision;
         a.by = event.by;
       }
@@ -224,12 +318,12 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
     }
     case "change.recorded": {
       const { type: _, ...c } = event;
-      s.changes.push(c);
+      d.list("changes").push(c);
       break;
     }
     case "artifact.saved": {
       const { type: _, ...a } = event;
-      s.artifacts.push(a);
+      d.list("artifacts").push(a);
       break;
     }
     case "todo.updated":
@@ -239,9 +333,11 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
       const input = Math.max(0, event.inputTokens - s.usage.inputTokens);
       const output = Math.max(0, event.outputTokens - s.usage.outputTokens);
       const owners = new Set(event.promptIds);
-      for (const item of s.items) {
-        if (item.kind !== "user" || item.pending || !owners.has(item.id)) continue;
-        const usage = item.usage ?? {};
+      for (let i = 0; owners.size && i < s.items.length; i++) {
+        const current = s.items[i];
+        if (current?.kind !== "user" || current.pending || !owners.has(current.id)) continue;
+        const user = d.at("items", i) as typeof current;
+        const usage = { ...user.usage };
         if (input || output) {
           usage.inputTokens = (usage.inputTokens ?? 0) + input;
           usage.outputTokens = (usage.outputTokens ?? 0) + output;
@@ -256,7 +352,7 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
           usage.estimated = event.estimated ?? true;
         }
         if (owners.size > 1) usage.shared = true;
-        item.usage = usage;
+        user.usage = usage;
       }
       const { type: _, ...u } = event;
       s.usage = { ...s.usage, ...u };
@@ -264,9 +360,33 @@ export function applySessionEvent(state: SessionState, input: SessionEvent): Ses
     }
     case "error": {
       const { type: _, ...e } = event;
-      s.items.push({ kind: "error", id: `error-${s.items.filter((i) => i.kind === "error").length}`, ...e });
+      d.push({ kind: "error", id: `error-${d.errorCount()}`, ...e });
       break;
     }
   }
-  return s;
+}
+
+/**
+ * Folds stored events into one snapshot in linear time, mutating a single fresh state in place.
+ * The fold never writes to the events, but the snapshot keeps references to their nested data
+ * (tool args, citations, todos, approval details): pass events the caller owns, such as freshly
+ * parsed rows (JSON-derived, so no field is explicitly `undefined`), and treat the snapshot as
+ * read-only while the events are still in use.
+ * Terminal messages are authoritative even when deltas were missed.
+ */
+export function foldSessionEvents(events: Iterable<SessionEvent>): SessionState {
+  const draft = new Draft(emptySessionState(), false);
+  for (const event of events) reduce(draft, event);
+  return draft.s;
+}
+
+/**
+ * Pure live projection for the renderer: returns a new state that shares every collection and item
+ * the event does not change with `state`, and never mutates `state`. The event is detached first,
+ * so the result does not alias the caller's event objects.
+ */
+export function applySessionEvent(state: SessionState, input: SessionEvent): SessionState {
+  const draft = new Draft({ ...state }, true);
+  reduce(draft, JSON.parse(JSON.stringify(input)));
+  return draft.s;
 }

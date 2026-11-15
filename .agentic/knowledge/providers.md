@@ -25,7 +25,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
   preserves the credential and callback rejection propagates unchanged; mutations and delete share a global store mutex.
 - CredentialFile load/read/list/modify/delete/checkpoint/close supplies schema1 encrypted base64 records and
   registered logging/scrub. storage returns encrypted/unprotected/memory/null; secureStorage identifies
-  an available non-basic_text backend. Explicit storageConsent controls weak writes. Main-only checkpoint returns an undo operation that restores the exact encoded entry, value and location without crypto or new consent.
+  an available non-basic_text backend. Main starts load() at app ready beside the settings load; a failed load
+  stays memoized, so read/list/modify reject with INVALID and the file is never rewritten; close() still resolves so shutdown
+  goes on to settings and logs. Explicit storageConsent controls weak writes. Main-only checkpoint returns an undo operation that restores the exact encoded entry, value and location without crypto or new consent.
 - ProviderSettings list/save/remove/recordToolSupport/close serializes provider edits and supplies configured/hint metadata.
 - providers.list({}) returns OpenAI/custom configurations and secureStorage. Public schemas
   select known non-secret fields. providers.save returns saved or consent-required; remove returns{}.

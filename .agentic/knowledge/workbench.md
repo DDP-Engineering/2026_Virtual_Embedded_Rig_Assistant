@@ -65,8 +65,9 @@ mode offers empty, missing, read-only and warning fixtures.
   reports path/line, and any format other than 1 reports CONFIG_INVALID at path format before runtime writes.
 - Core-only getSnapshot supplies a detached current snapshot and assertSessionWritable immediately checks ordinary lock paths plus the owned pid/token before session database changes. Main session lifecycle drains active turns before switches/close.
 - Core-only getWriteQueue supplies the shared queue for application config/pinned saves and every session write. File saves validate ownership/current state inside their queue callback; close and replacement drain admitted writes before storage disposal.
-- Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open validates
-  the database schema before lock/recents writes; failed replacement preparation closes its handle
+- Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open acquires
+  the lock (or falls back to read-only), then openDb checks the schema before any database or recents
+  write; an INVALID/CONFLICT database releases the newly taken lock. Failed replacement preparation closes its handle
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
   Owned release checkpoints under the token guard before unlink; failed unlink retains usable storage.
   Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.

@@ -33,6 +33,8 @@ const sameLayout = (a: Layout, b: Layout) =>
   a.ids.every((id, index) => id === b.ids[index] && a.starts[index] === b.starts[index]);
 /** Appended to repeat an identical announcement, so live regions read it again. */
 const NO_BREAK_SPACE = "\u00a0";
+/** While a turn streams, anchors are measured at most this often; the turn's end measures at once. */
+const LIVE_MEASURE_MS = 250;
 const moves: Record<string, (index: number, last: number) => number> = {
   ArrowUp: (index) => Math.max(0, index - 1),
   ArrowDown: (index, last) => Math.min(last, index + 1),
@@ -42,13 +44,15 @@ const moves: Record<string, (index: number, last: number) => number> = {
 
 /**
  * Lane of user-message markers beside the scroll rail, never inside role="scrollbar". Anchors are
- * measured at most once per frame after layout changes; scrolling only reads scrollTop.
+ * measured at most once per frame after layout changes (about 4 Hz while `live`); scrolling only
+ * reads scrollTop.
  */
 export function TranscriptNavigator({
   viewport,
   content,
   anchors,
   messages,
+  live = false,
   controls,
   onNavigate,
 }: {
@@ -56,6 +60,8 @@ export function TranscriptNavigator({
   content: RefObject<HTMLDivElement | null>;
   anchors: ReadonlyMap<string, HTMLElement>;
   messages: readonly NavigatorMessage[];
+  /** A turn is streaming: content grows every frame, so measuring is throttled. */
+  live?: boolean;
   controls: string;
   onNavigate: (id: string) => boolean;
 }) {
@@ -75,6 +81,10 @@ export function TranscriptNavigator({
   const measuredKey = useRef<string | null>(null);
   const latest = useRef(messages);
   const frame = useRef(0);
+  const delay = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const measuredAt = useRef(Number.NEGATIVE_INFINITY);
+  const liveRef = useRef(live);
+  liveRef.current = live;
   const hide = useRef<ReturnType<typeof setTimeout>>(undefined);
   const focusWithin = useRef(false);
   const pressing = useRef(false);
@@ -85,6 +95,7 @@ export function TranscriptNavigator({
   }, [viewport]);
   const measure = useCallback(() => {
     frame.current = 0;
+    measuredAt.current = performance.now();
     const node = viewport.current;
     if (!node) return;
     const offset = contentOffset(node);
@@ -108,8 +119,22 @@ export function TranscriptNavigator({
     updateCurrent();
   }, [viewport, anchors, updateCurrent]);
   const schedule = useCallback(() => {
-    if (!frame.current) frame.current = requestAnimationFrame(measure);
+    if (frame.current || delay.current !== undefined) return;
+    const wait = liveRef.current ? measuredAt.current + LIVE_MEASURE_MS - performance.now() : 0;
+    if (wait <= 0) frame.current = requestAnimationFrame(measure);
+    else
+      delay.current = setTimeout(() => {
+        delay.current = undefined;
+        frame.current = requestAnimationFrame(measure);
+      }, wait);
   }, [measure]);
+  // The turn's end measures on the next frame instead of waiting out the throttle.
+  useEffect(() => {
+    if (live) return;
+    clearTimeout(delay.current);
+    delay.current = undefined;
+    schedule();
+  }, [live, schedule]);
   // Passive, so the article refs of the same commit are attached (the lane precedes the transcript);
   // a new or removed message is measured on the next frame like every other invalidation.
   useEffect(() => {
@@ -135,12 +160,14 @@ export function TranscriptNavigator({
       mutation.observe(inner, {
         childList: true,
         subtree: true,
-        characterData: true,
+        // No characterData: streamed text changes sizes, which the ResizeObserver reports.
         attributeFilter: ["hidden", "open"],
       });
     return () => {
       cancelAnimationFrame(frame.current);
       frame.current = 0;
+      clearTimeout(delay.current);
+      delay.current = undefined;
       // A remount (StrictMode) measures again instead of relying on an observer's first callback.
       measuredKey.current = null;
       resize?.disconnect();

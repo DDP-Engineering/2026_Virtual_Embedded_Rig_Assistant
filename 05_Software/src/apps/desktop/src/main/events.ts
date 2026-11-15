@@ -1,4 +1,6 @@
 import {
+  boundSessionEvent,
+  boundSessionState,
   type EventEnvelope,
   eventEnvelopeSchema,
   modelReferenceSchema,
@@ -52,33 +54,54 @@ function sanitizeTodos(items: TodoItem[], scrub: (text: string) => string): Todo
     ...(item.id === undefined ? {} : { id: scrub(item.id) }),
   }));
 }
+type SessionItem = SessionState["items"][number];
+function sanitizeItem(item: SessionItem, scrub: (text: string) => string): SessionItem {
+  if (item.kind === "user") return { ...item, text: scrub(item.text) };
+  if (item.kind === "assistant")
+    return {
+      ...item,
+      text: scrub(item.text),
+      citations: item.citations.map((c) => ({ ...c, ref: scrub(c.ref) })),
+    };
+  if (item.kind === "tool") {
+    const tool = { ...item, name: scrub(item.name), args: scrubExtra(item.args, scrub) };
+    if (tool.summary !== undefined) tool.summary = scrub(tool.summary);
+    if (tool.preview !== undefined) tool.preview = scrub(tool.preview);
+    return tool;
+  }
+  return item;
+}
+/**
+ * Builds the scrubbed copy in one pass (PERF-05): only objects holding a scrubbed string are copied,
+ * everything else is shared with the input, which is never written to. No full structuredClone.
+ */
 export function sanitizeSessionSnapshot(
   snapshot: SessionState,
   scrub: (text: string) => string,
 ): SessionState {
-  const state = structuredClone(snapshot);
-  state.title = scrub(state.title).slice(0, 60);
-  state.modelRef = scrubModel(state.modelRef, scrub);
-  for (const item of state.items) {
-    if (item.kind === "user" || item.kind === "assistant") item.text = scrub(item.text);
-    if (item.kind === "assistant") item.citations = item.citations.map((c) => ({ ...c, ref: scrub(c.ref) }));
-    if (item.kind === "tool") {
-      item.name = scrub(item.name);
-      item.args = scrubExtra(item.args, scrub);
-      if (item.summary !== undefined) item.summary = scrub(item.summary);
-      if (item.preview !== undefined) item.preview = scrub(item.preview);
-    }
-  }
-  state.approvals = state.approvals.map((a) => ({
-    ...a,
-    path: scrub(a.path),
-    diff: scrub(a.diff),
-    ...(a.program ? { program: scrubProgram(a.program, scrub) } : {}),
-  }));
-  state.changes = state.changes.map((c) => ({ ...c, path: scrub(c.path) }));
-  state.artifacts = state.artifacts.map((a) => ({ ...a, name: scrub(a.name) }));
-  state.todos = sanitizeTodos(state.todos, scrub);
-  return state;
+  return {
+    ...snapshot,
+    title: scrub(snapshot.title).slice(0, 60),
+    modelRef: scrubModel(snapshot.modelRef, scrub),
+    items: snapshot.items.map((item) => sanitizeItem(item, scrub)),
+    approvals: snapshot.approvals.map((a) => ({
+      ...a,
+      path: scrub(a.path),
+      diff: scrub(a.diff),
+      ...(a.program ? { program: scrubProgram(a.program, scrub) } : {}),
+    })),
+    changes: snapshot.changes.map((c) => ({ ...c, path: scrub(c.path) })),
+    artifacts: snapshot.artifacts.map((a) => ({ ...a, name: scrub(a.name) })),
+    todos: sanitizeTodos(snapshot.todos, scrub),
+  };
+}
+
+/** The snapshot main sends to the renderer: scrubbed first, then bounded (PERF-06), so no cut splits a secret. */
+export function rendererSessionSnapshot(
+  snapshot: SessionState,
+  scrub: (text: string) => string,
+): SessionState {
+  return boundSessionState(sanitizeSessionSnapshot(snapshot, scrub));
 }
 
 /** Preserve schema fields/identities; redact user text and arbitrary extension keys/values. */
@@ -216,7 +239,13 @@ export function createEventEmitter(target: () => EventTarget | undefined, scrub?
     const parsed = scrub ? eventEnvelopeSchema.parse(sanitizeEvent(input, scrub)) : input;
     const contents = target();
     if (!contents || contents.isDestroyed()) return false;
-    contents.send("vera:event", parsed);
+    // Session events reach the renderer bounded like its snapshot; stored events keep full content.
+    let value = parsed;
+    if (parsed.topic === "session") {
+      const event = boundSessionEvent(parsed.event);
+      if (event !== parsed.event) value = { ...parsed, event };
+    }
+    contents.send("vera:event", value);
     return true;
   };
 }

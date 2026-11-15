@@ -210,6 +210,8 @@ describe("main encrypted credential store", () => {
     ).rejects.toBeDefined();
     expect(h.disk.get("/data/credentials.json")).toBe(raw);
     expect(h.files.writeAtomic).not.toHaveBeenCalled();
+    // Shutdown continues to settings and logs after a credential file that failed to load.
+    await expect(h.store.close()).resolves.toBeUndefined();
   });
   it("failed atomic save and cancellation preserve both memory and disk and close drains mutations", async () => {
     const h = harness();

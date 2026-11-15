@@ -3,6 +3,7 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
+import { BoundedText, PLAIN_TEXT_CHARS } from "./bounded-text.js";
 import { DiffViewer } from "./diff-viewer.js";
 
 function ProgramDetails({ program }: { program: ProgramApproval }) {
@@ -159,9 +160,19 @@ export function ApprovalCard({
       {approval.tool === "plugin_install" ? (
         <>
           <p>{t("plugins.trialReview")}</p>
-          <pre className="approval-command" data-plugin-install-review>
-            {approval.diff}
-          </pre>
+          <BoundedText
+            sessionId={sessionId}
+            itemId={approval.approvalId}
+            field="diff"
+            text={approval.diff}
+            totalBytes={approval.truncated?.diff}
+          >
+            {(text) => (
+              <pre className="approval-command" data-plugin-install-review>
+                {text}
+              </pre>
+            )}
+          </BoundedText>
         </>
       ) : program ? (
         <ProgramDetails program={program} />
@@ -174,7 +185,21 @@ export function ApprovalCard({
         <>
           <p>{t("approval.bytes", { count: approval.bytes })}</p>
           <p className="sr-only">{t("approval.diff")}</p>
-          <DiffViewer diff={approval.diff} identity={approval.approvalId} />
+          <BoundedText
+            sessionId={sessionId}
+            itemId={approval.approvalId}
+            field="diff"
+            text={approval.diff}
+            totalBytes={approval.truncated?.diff}
+          >
+            {(text) =>
+              text.length > PLAIN_TEXT_CHARS ? (
+                <pre className="approval-diff">{text}</pre>
+              ) : (
+                <DiffViewer diff={text} identity={approval.approvalId} />
+              )
+            }
+          </BoundedText>
         </>
       )}
       {error !== undefined && <ErrorMessage error={error} />}
