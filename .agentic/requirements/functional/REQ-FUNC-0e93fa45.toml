@@ -21,7 +21,7 @@ verification = "Seed the frozen ordered demo corpus, execute all raw questions t
 
 affected_paths = ["05_Software/package.json", "05_Software/src/libraries/core/src/knowledge/keyword.test.ts", "05_Software/src/libraries/core/src/knowledge/keyword.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/evaluators/eval-retrieval-harness/eval-retrieval.mjs", "05_Software/evaluators/eval-retrieval-harness/product-eval.mjs"]
 
-linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/keyword.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/keyword.test.ts", "05_Software/tests/integration/retrieval.test.ts"]
 
 
 spec = "specs/REQ-FUNC-0e93fa45.md"
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-12
-updated = 2026-10-12
+updated = 2026-11-15

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-a7aade23"
+title = "Never forward a saved key to a changed discovery endpoint"
+status = "active"
+requirement = "When model discovery runs for a custom endpoint whose base URL differs from the saved one, VERA shall not send the saved API key, and it shall reject endpoints that embed credentials, a query or an unrelated path, and invalid or oversized responses."
+verification = "Unit: change the base URL of a configuration with a saved key and inspect the outgoing request headers; submit endpoints with user info, a query and a foreign path, and responses that are malformed or over the size limit; each is refused before any key leaves the process."
+affected_paths = ["05_Software/src/apps/desktop/src/main/provider-discovery.ts", "05_Software/src/libraries/shared/src/provider-discovery.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-discovery.test.ts"]
+priority = "normal"
+rationale = "A saved key belongs to the endpoint it was saved for; a typed URL must not exfiltrate it."
+created = 2026-11-15
+updated = 2026-11-15

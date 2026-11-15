@@ -10,7 +10,7 @@ requirement = "The program ble-tool of the ble-tools plugin shall accept exactly
 
 verification = "Integration tests parse the printed document of each operation (format, kind, operation, status, errors), find the same document in the run folder, and see exit 0 (read), 1 (profile-mismatch), 2 (not-found) and 3 (disconnected); a --run-id whose folder exists is refused run-exists and an unknown operation is refused arguments."
 
-affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/cli.py", "05_Software/plugins/ble-tools/scripts/ble_support/report.py", "05_Software/plugins/ble-tools/scripts/ble_support/profile.py"]
+affected_paths = ["05_Software/plugins/ble-tools/scripts/ble_support/cli.py", "05_Software/plugins/ble-tools/scripts/ble_support/report.py", "05_Software/plugins/ble-tools/scripts/ble_support/profile.py", "05_Software/plugins/ble-tools/scripts/ble_support/__init__.py", "05_Software/plugins/ble-tools/scripts/ble_support/workspace.py", "05_Software/plugins/ble-tools/scripts/ble_tool.py"]
 
 linked_tests = ["05_Software/tests/integration/ble-tools.test.ts"]
 
@@ -21,4 +21,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-15

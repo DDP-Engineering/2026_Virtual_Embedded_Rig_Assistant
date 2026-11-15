@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-e857b89c"
+title = "Fetch approved downloads anonymously and only from public addresses"
+status = "active"
+requirement = "When an approved web_download transfer runs in the desktop app, VERA shall fetch through an anonymous Chromium session that is cleaned before reuse, reject private DNS results and redirect targets before Chromium contacts them, tunnel only the exact approved authority to the resolved public IP, and release the tunnel when a stalled request is aborted."
+verification = "Unit with scripted DNS and sockets: a private address or redirect target is refused before any connection; a different authority is not tunnelled; a stalled transfer aborts and closes its tunnel; reused sessions carry no cookies or cache."
+affected_paths = ["05_Software/src/apps/desktop/src/main/download-transfer.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/download-transfer.test.ts"]
+priority = "normal"
+rationale = "Agent-chosen URLs must not reach the user's local network (L6, architecture 01 section 8)."
+created = 2026-11-15
+updated = 2026-11-15

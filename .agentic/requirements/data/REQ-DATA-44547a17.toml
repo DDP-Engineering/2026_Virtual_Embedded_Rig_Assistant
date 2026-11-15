@@ -10,7 +10,7 @@ requirement = "The raspberry-pi-linux plugin's pi-tool shall accept exactly the 
 
 verification = "Integration tests run each operation and check the documented fields; an unknown operation, an unknown option (--password) and a missing --board each end blocked with code usage and exit 2."
 
-affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/cli.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/report.py"]
+affected_paths = ["05_Software/plugins/raspberry-pi-linux/scripts/pi_support/cli.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/report.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/__init__.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/lifecycle.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_support/workspace.py", "05_Software/plugins/raspberry-pi-linux/scripts/pi_tool.py"]
 
 linked_tests = ["05_Software/tests/integration/raspberry-pi-linux.test.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-15

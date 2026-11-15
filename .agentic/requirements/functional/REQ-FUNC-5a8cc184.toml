@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-5a8cc184"
+title = "Discover LM Studio models and keep per-model settings"
+status = "active"
+requirement = "When an engineer adds or edits an LM Studio endpoint, VERA shall list the endpoint's models with their loaded context length from LM Studio's model metadata without running inference, persist the settings chosen per model and send only the optional parameters the engineer set."
+verification = "Unit: discovery against a scripted endpoint returns current metadata without inference, embeddings or persisted keys. Native E2E: discover models, save per-model settings, restart and run a turn that carries the optional parameters through IPC."
+affected_paths = ["05_Software/src/apps/desktop/src/main/provider-discovery.ts", "05_Software/src/libraries/shared/src/provider-discovery.ts", "05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/apps/desktop/src/renderer/components/lmstudio-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/providers.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-discovery.test.ts", "05_Software/tests/e2e/lmstudio.spec.ts"]
+priority = "normal"
+rationale = "Local models through LM Studio are a supported provider preset (architecture 04 section 2)."
+created = 2026-11-15
+updated = 2026-11-15

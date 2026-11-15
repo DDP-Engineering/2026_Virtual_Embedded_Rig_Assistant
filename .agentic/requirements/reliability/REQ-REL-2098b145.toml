@@ -21,7 +21,7 @@ verification = "Seed both active statuses and completed/partial tool pairs; inst
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/storage/session-recovery.test.ts"]
 
 
 spec = "specs/REQ-FUNC-5e2438d5.md"
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-11
-updated = 2026-10-11
+updated = 2026-11-15
