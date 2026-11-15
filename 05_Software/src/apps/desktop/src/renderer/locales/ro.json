@@ -101,7 +101,6 @@
     "close": "Închide spațiul de lucru",
     "pinnedOversized": "Contextul depășește 16 KB. Agentul va folosi primii 16 KB. Textul complet este salvat.",
     "readOnly": "Acest spațiu de lucru este deschis doar pentru citire deoarece alt proces sau o blocare îl deține.",
-    "working": "Se procesează…",
     "save": "Salvează",
     "cancel": "Anulează",
     "unknownKey": "Cheie de configurare necunoscută păstrată:",
@@ -667,6 +666,7 @@
     "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri."
   },
   "projects": {
+    "embeddingsGroup": "Embeddings",
     "new": "Workbench nou",
     "open": "Deschide workbench",
     "plugins": "Pluginuri",
@@ -694,14 +694,11 @@
     "save": "Salvează",
     "cancel": "Anulează",
     "empty": "Niciun workbench. Creează sau deschide unul pentru a începe.",
-    "embeddingInfo": "Embeddings rulează local. BGE Small EN v1.5 este modelul instalat și suportat în prezent. Intrările rămân sub 512 tokenuri.",
-    "sourceInfo": "Regulile sunt relative la folderul workbenchului. Folderele externe independente nu sunt încă suportate. VERA își păstrează datele în .vera și păstrează folderele tale de documente.",
     "changed": "Workbenchul activ s-a schimbat. Redeschide editorul.",
     "saving": "Se salvează…",
     "embeddingModel": "Model embeddings",
     "chunkSize": "Dimensiune fragment (caractere)",
     "overlap": "Suprapunere (caractere)",
-    "reindexNotice": "Schimbarea acestor setări reconstruiește indexul documentelor workbenchului.",
     "partialSave": "Setările proiectului au fost salvate, dar instrucțiunile nu au putut fi salvate. Reîncearcă salvarea; închiderea păstrează setările deja salvate.",
     "loadingInstructions": "Se încarcă instrucțiunile workbenchului…",
     "skillsIndependent": "Modificările Skills sunt salvate în managerul Skills, separat de formularul proiectului.",
@@ -801,7 +798,6 @@
   },
   "retrieval": {
     "title": "Căutare în documente",
-    "info": "Valori implicite pentru search_docs al agentului; agentul poate cere totuși alt număr sau alt mod.",
     "results": "Rezultate per căutare (1–20)",
     "mode": "Mod de căutare",
     "hybrid": "Hibrid (cuvinte cheie și sens)",

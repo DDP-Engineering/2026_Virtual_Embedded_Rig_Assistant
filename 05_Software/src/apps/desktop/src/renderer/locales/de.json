@@ -101,7 +101,6 @@
     "close": "Arbeitsbereich schließen",
     "pinnedOversized": "Der Kontext überschreitet 16 KB. Der Agent verwendet die ersten 16 KB. Der vollständige Text wird gespeichert.",
     "readOnly": "Dieser Arbeitsbereich ist schreibgeschützt, da ein anderer Prozess oder eine Sperre ihn besitzt.",
-    "working": "Wird verarbeitet…",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "unknownKey": "Unbekannter Konfigurationsschlüssel erhalten:",
@@ -667,6 +666,7 @@
     "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten."
   },
   "projects": {
+    "embeddingsGroup": "Embeddings",
     "new": "Neue Workbench",
     "open": "Workbench öffnen",
     "plugins": "Plugins",
@@ -694,14 +694,11 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "empty": "Keine Workbenches. Erstellen oder öffnen Sie eine Workbench.",
-    "embeddingInfo": "Embeddings laufen lokal. BGE Small EN v1.5 ist das derzeit installierte unterstützte Modell. Eingaben bleiben unter 512 Tokens.",
-    "sourceInfo": "Muster beziehen sich auf den Workbench-Ordner. Unabhängige externe Ordner werden noch nicht unterstützt. VERA speichert ihre Daten in .vera und behält Ihre Dokumentordner bei.",
     "changed": "Die aktive Workbench wurde geändert. Öffnen Sie den Editor erneut.",
     "saving": "Wird gespeichert…",
     "embeddingModel": "Embedding-Modell",
     "chunkSize": "Chunk-Größe (Zeichen)",
     "overlap": "Überlappung (Zeichen)",
-    "reindexNotice": "Geänderte Embedding-Einstellungen bauen den Dokumentindex dieser Workbench neu auf.",
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",
     "loadingInstructions": "Workbench-Anweisungen werden geladen…",
     "skillsIndependent": "Skill-Änderungen werden im Skills-Manager unabhängig vom Projektformular gespeichert.",
@@ -801,7 +798,6 @@
   },
   "retrieval": {
     "title": "Dokumentsuche",
-    "info": "Standardwerte für search_docs des Agenten; der Agent kann dennoch eine andere Anzahl oder einen anderen Modus anfordern.",
     "results": "Ergebnisse pro Suche (1–20)",
     "mode": "Suchmodus",
     "hybrid": "Hybrid (Schlüsselwörter und Bedeutung)",

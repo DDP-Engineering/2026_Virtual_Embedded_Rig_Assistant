@@ -207,86 +207,88 @@ export function WorkbenchConfigForm({
             />
           )}
           {section === "embeddings" && (
-            <>
-              <p>{t("projects.embeddingInfo")}</p>
-              <label>
-                {t("projects.embeddingModel")}
-                <select value={config.embeddings.model} disabled>
-                  <option value="Xenova/bge-small-en-v1.5">BGE Small EN v1.5 (local)</option>
-                </select>
-              </label>
-              <label>
-                {t("projects.chunkSize")}
-                <input
-                  type="number"
-                  min={200}
-                  max={1400}
-                  data-project-chunk
-                  value={config.embeddings.chunkSize}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      embeddings: { ...config.embeddings, chunkSize: Number(e.target.value) },
-                    })
-                  }
-                />
-              </label>
-              <label>
-                {t("projects.overlap")}
-                <input
-                  type="number"
-                  min={0}
-                  max={Math.min(600, config.embeddings.chunkSize - 1)}
-                  data-project-overlap
-                  value={config.embeddings.overlap}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      embeddings: { ...config.embeddings, overlap: Number(e.target.value) },
-                    })
-                  }
-                />
-              </label>
-              <p>{t("projects.reindexNotice")}</p>
-              <h4>{t("retrieval.title")}</h4>
-              <p className="muted">{t("retrieval.info")}</p>
-              <label>
-                {t("retrieval.results")}
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  data-retrieval-results
-                  value={config.retrieval.results}
-                  onChange={(e) =>
-                    setConfig((current) => ({
-                      ...current,
-                      retrieval: { ...current.retrieval, results: Number(e.target.value) },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                {t("retrieval.mode")}
-                <select
-                  data-retrieval-mode
-                  value={config.retrieval.mode}
-                  onChange={(e) =>
-                    setConfig((current) => ({
-                      ...current,
-                      retrieval: {
-                        ...current.retrieval,
-                        mode: e.target.value as WorkbenchConfig["retrieval"]["mode"],
-                      },
-                    }))
-                  }
-                >
-                  <option value="hybrid">{t("retrieval.hybrid")}</option>
-                  <option value="keyword">{t("retrieval.keyword")}</option>
-                  <option value="semantic">{t("retrieval.semantic")}</option>
-                </select>
-              </label>
-            </>
+            <div className="index-columns">
+              <div className="overview-card index-card">
+                <h4>{t("projects.embeddingsGroup")}</h4>
+                <label>
+                  {t("projects.embeddingModel")}
+                  <select value={config.embeddings.model} disabled>
+                    <option value="Xenova/bge-small-en-v1.5">BGE Small EN v1.5 (local)</option>
+                  </select>
+                </label>
+                <label>
+                  {t("projects.chunkSize")}
+                  <input
+                    type="number"
+                    min={200}
+                    max={1400}
+                    data-project-chunk
+                    value={config.embeddings.chunkSize}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        embeddings: { ...config.embeddings, chunkSize: Number(e.target.value) },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  {t("projects.overlap")}
+                  <input
+                    type="number"
+                    min={0}
+                    max={Math.min(600, config.embeddings.chunkSize - 1)}
+                    data-project-overlap
+                    value={config.embeddings.overlap}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        embeddings: { ...config.embeddings, overlap: Number(e.target.value) },
+                      })
+                    }
+                  />
+                </label>
+              </div>
+              <div className="overview-card index-card">
+                <h4>{t("retrieval.title")}</h4>
+                <label>
+                  {t("retrieval.results")}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    data-retrieval-results
+                    value={config.retrieval.results}
+                    onChange={(e) =>
+                      setConfig((current) => ({
+                        ...current,
+                        retrieval: { ...current.retrieval, results: Number(e.target.value) },
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  {t("retrieval.mode")}
+                  <select
+                    data-retrieval-mode
+                    value={config.retrieval.mode}
+                    onChange={(e) =>
+                      setConfig((current) => ({
+                        ...current,
+                        retrieval: {
+                          ...current.retrieval,
+                          mode: e.target.value as WorkbenchConfig["retrieval"]["mode"],
+                        },
+                      }))
+                    }
+                  >
+                    <option value="hybrid">{t("retrieval.hybrid")}</option>
+                    <option value="keyword">{t("retrieval.keyword")}</option>
+                    <option value="semantic">{t("retrieval.semantic")}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
           )}
           {section === "plugins" && shown && (
             <WorkbenchPlugins

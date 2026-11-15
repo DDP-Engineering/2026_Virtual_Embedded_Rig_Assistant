@@ -174,7 +174,8 @@ export function WorkbenchCreate({
         </div>
       </header>
       {/* Create submits only from its button: Enter in a draft field must not create the workbench. */}
-      <form className="workbench-form" onSubmit={(event) => event.preventDefault()}>
+      {/* No visible "working" line: it would push the buttons down. aria-busy tells assistive tech instead. */}
+      <form className="workbench-form" aria-busy={pending} onSubmit={(event) => event.preventDefault()}>
         {shown && (
           <WorkbenchConfigForm
             label={t("projects.new")}
@@ -188,12 +189,7 @@ export function WorkbenchCreate({
             locked={!ready}
             instructionsReadOnly={kept !== null}
             instructionsNotice={kept !== null && <p role="status">{t("create.instructionsKept")}</p>}
-            notices={
-              <>
-                {error !== undefined && <ErrorMessage error={error} />}
-                {pending && <p role="status">{t("workbench.working")}</p>}
-              </>
-            }
+            notices={<>{error !== undefined && <ErrorMessage error={error} />}</>}
             general={generalFields}
             skills={
               <fieldset disabled={disabled} className="workbench-create-skills" data-create-skills>

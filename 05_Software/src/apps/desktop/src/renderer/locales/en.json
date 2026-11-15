@@ -101,7 +101,6 @@
     "close": "Close workbench",
     "pinnedOversized": "Context exceeds 16 KB. The agent will use the first 16 KB. Your full text is saved.",
     "readOnly": "This workbench is open read-only because another process or lock owns it.",
-    "working": "Working…",
     "save": "Save",
     "cancel": "Cancel",
     "unknownKey": "Unknown configuration key preserved:",
@@ -667,6 +666,7 @@
     "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page."
   },
   "projects": {
+    "embeddingsGroup": "Embeddings",
     "new": "New Workbench",
     "open": "Open Workbench",
     "plugins": "Plugins",
@@ -694,14 +694,11 @@
     "save": "Save",
     "cancel": "Cancel",
     "empty": "No workbenches yet. Create or open one to begin.",
-    "embeddingInfo": "Embeddings run locally. BGE Small EN v1.5 is the currently installed supported model. Inputs remain below 512 tokens.",
-    "sourceInfo": "Patterns are relative to this workbench folder. External independent folders are not supported yet. VERA stores its data in .vera and preserves your document folders.",
     "changed": "The active workbench changed. Reopen this editor.",
     "saving": "Saving…",
     "embeddingModel": "Embedding model",
     "chunkSize": "Chunk size (characters)",
     "overlap": "Overlap (characters)",
-    "reindexNotice": "Saving changed embedding settings rebuilds this workbench’s document index.",
     "partialSave": "Project settings were saved, but instructions could not be saved. Retry Save to finish; closing keeps the saved settings.",
     "loadingInstructions": "Loading workbench instructions…",
     "skillsIndependent": "Skill changes are saved in the Skills manager independently of the project form.",
@@ -801,7 +798,6 @@
   },
   "retrieval": {
     "title": "Document search",
-    "info": "Defaults for the agent's search_docs; the agent may still ask for a different number or mode.",
     "results": "Results per search (1–20)",
     "mode": "Search mode",
     "hybrid": "Hybrid (keywords and meaning)",

@@ -5,7 +5,7 @@ import {
   documentPatternFolder,
   type WorkbenchConfig,
 } from "@vera/shared";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { useBytes } from "../lib/bytes.js";
@@ -44,7 +44,6 @@ export function WorkbenchDocuments({
 }) {
   const { t } = useTranslation();
   const bytes = useBytes();
-  const heading = useId();
   const [error, setError] = useState<unknown>();
   const kinds: Record<DocumentScanKind, string> = {
     pdf: t("documentsSetup.kindPdf"),
@@ -174,9 +173,6 @@ export function WorkbenchDocuments({
         </details>
       </div>
       <div className="workbench-documents-folders">
-        <p id={heading} className="workbench-documents-heading">
-          {t("projects.sourceInfo")}
-        </p>
         {scan.isError && <ErrorMessage error={scan.error} />}
         {scan.isPending && <p role="status">{t("documentsSetup.scanning")}</p>}
         {scan.data && detected.length === 0 && (
@@ -184,7 +180,7 @@ export function WorkbenchDocuments({
             {t("documentsSetup.noneDetected")}
           </p>
         )}
-        <ul className="workbench-documents-list" aria-labelledby={heading}>
+        <ul className="workbench-documents-list" aria-label={t("projects.documents")}>
           {detected.map((entry) => row(entry.path, summary(entry)))}
           {others.map((path) => row(path, t("documentsSetup.addedByHand")))}
         </ul>

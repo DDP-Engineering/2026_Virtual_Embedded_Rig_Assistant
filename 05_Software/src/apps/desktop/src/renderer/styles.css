@@ -1833,9 +1833,6 @@ legend {
   background: var(--muted);
   font-weight: 600;
 }
-.workbench-documents-heading {
-  margin: 0;
-}
 .workbench-documents-list {
   list-style: none;
   padding: 0;
@@ -3336,4 +3333,18 @@ legend {
 }
 .create-folder button {
   flex-shrink: 0;
+}
+/* Indexing: Embeddings and Search side by side, one column when narrow. */
+.index-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.index-card {
+  display: grid;
+  gap: 0.75rem;
+}
+.index-card h4 {
+  margin: 0;
 }
