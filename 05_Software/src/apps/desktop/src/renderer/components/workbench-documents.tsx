@@ -130,58 +130,65 @@ export function WorkbenchDocuments({
   );
   return (
     <div className="workbench-documents" data-docs>
-      <p id={heading}>{t("projects.sourceInfo")}</p>
-      {error !== undefined && <ErrorMessage error={error} />}
-      {scan.isError && <ErrorMessage error={scan.error} />}
-      {scan.isPending && <p role="status">{t("documentsSetup.scanning")}</p>}
-      {scan.data && detected.length === 0 && (
-        <p className="muted" data-docs-none>
-          {t("documentsSetup.noneDetected")}
+      {/* Left: actions and what will be indexed; right: the folder selection, visible without scrolling. */}
+      <div className="workbench-documents-side">
+        <button
+          type="button"
+          data-action="add-docs-folder"
+          disabled={disabled}
+          onClick={() => void addFolder()}
+        >
+          {t("documentsSetup.addFolder")}
+        </button>
+        {error !== undefined && <ErrorMessage error={error} />}
+        {preview.data && (
+          <p role="status" className="workbench-documents-preview" data-docs-preview>
+            {t("documentsSetup.preview", { count: preview.data.files, size: bytes(preview.data.bytes) })}
+            {preview.data.officePending > 0 &&
+              ` ${t("documentsSetup.officePending", { count: preview.data.officePending })}`}
+            {preview.data.truncated && ` ${t("documentsSetup.truncated")}`}
+          </p>
+        )}
+        {preview.data && <VolumeWarning volume={preview.data} preview />}
+        {preview.isError && <ErrorMessage error={preview.error} />}
+        <details className="workbench-documents-advanced" data-docs-advanced>
+          <summary>{t("documentsSetup.advanced")}</summary>
+          <label>
+            {t("projects.include")}
+            <textarea
+              data-project-include
+              disabled={disabled}
+              value={docs.include.join("\n")}
+              onChange={(e) => setDocs({ ...docs, include: e.target.value.split("\n") })}
+            />
+          </label>
+          <label>
+            {t("projects.exclude")}
+            <textarea
+              disabled={disabled}
+              value={docs.exclude.join("\n")}
+              onChange={(e) => setDocs({ ...docs, exclude: e.target.value.split("\n") })}
+            />
+          </label>
+        </details>
+      </div>
+      <div className="workbench-documents-folders">
+        <p id={heading} className="workbench-documents-heading">
+          {t("projects.sourceInfo")}
         </p>
-      )}
-      <ul className="workbench-documents-list" aria-labelledby={heading}>
-        {detected.map((entry) => row(entry.path, summary(entry)))}
-        {others.map((path) => row(path, t("documentsSetup.addedByHand")))}
-      </ul>
-      {scan.data?.truncated && <p className="muted">{t("documentsSetup.truncated")}</p>}
-      <button
-        type="button"
-        data-action="add-docs-folder"
-        disabled={disabled}
-        onClick={() => void addFolder()}
-      >
-        {t("documentsSetup.addFolder")}
-      </button>
-      {preview.data && (
-        <p role="status" data-docs-preview>
-          {t("documentsSetup.preview", { count: preview.data.files, size: bytes(preview.data.bytes) })}
-          {preview.data.officePending > 0 &&
-            ` ${t("documentsSetup.officePending", { count: preview.data.officePending })}`}
-          {preview.data.truncated && ` ${t("documentsSetup.truncated")}`}
-        </p>
-      )}
-      {preview.data && <VolumeWarning volume={preview.data} preview />}
-      {preview.isError && <ErrorMessage error={preview.error} />}
-      <details className="workbench-documents-advanced" data-docs-advanced>
-        <summary>{t("documentsSetup.advanced")}</summary>
-        <label>
-          {t("projects.include")}
-          <textarea
-            data-project-include
-            disabled={disabled}
-            value={docs.include.join("\n")}
-            onChange={(e) => setDocs({ ...docs, include: e.target.value.split("\n") })}
-          />
-        </label>
-        <label>
-          {t("projects.exclude")}
-          <textarea
-            disabled={disabled}
-            value={docs.exclude.join("\n")}
-            onChange={(e) => setDocs({ ...docs, exclude: e.target.value.split("\n") })}
-          />
-        </label>
-      </details>
+        {scan.isError && <ErrorMessage error={scan.error} />}
+        {scan.isPending && <p role="status">{t("documentsSetup.scanning")}</p>}
+        {scan.data && detected.length === 0 && (
+          <p className="muted" data-docs-none>
+            {t("documentsSetup.noneDetected")}
+          </p>
+        )}
+        <ul className="workbench-documents-list" aria-labelledby={heading}>
+          {detected.map((entry) => row(entry.path, summary(entry)))}
+          {others.map((path) => row(path, t("documentsSetup.addedByHand")))}
+        </ul>
+        {scan.data?.truncated && <p className="muted">{t("documentsSetup.truncated")}</p>}
+      </div>
     </div>
   );
 }

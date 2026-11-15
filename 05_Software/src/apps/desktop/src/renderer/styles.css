@@ -1803,9 +1803,36 @@ legend {
   display: grid;
   gap: 0.5rem;
 }
+/* Documents: actions and indexing summary on the left, the folder selection on the right. */
 .workbench-documents {
   display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+@media (width < 900px) {
+  .workbench-documents {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.workbench-documents-side,
+.workbench-documents-folders {
+  display: grid;
   gap: 0.8rem;
+  min-width: 0;
+}
+.workbench-documents-side > button {
+  justify-self: start;
+}
+.workbench-documents-preview {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--muted);
+  font-weight: 600;
+}
+.workbench-documents-heading {
+  margin: 0;
 }
 .workbench-documents-list {
   list-style: none;
@@ -1813,9 +1840,8 @@ legend {
   margin: 0;
   display: grid;
   gap: 0.5rem;
-}
-.workbench-documents > button {
-  justify-self: start;
+  max-height: 60vh;
+  overflow: auto;
 }
 .workbench-documents-advanced > summary {
   cursor: pointer;

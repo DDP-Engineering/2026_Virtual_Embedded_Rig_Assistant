@@ -81,13 +81,6 @@ export function WorkbenchCreate({
     <>
       <div className="create-folder">
         <span className="create-label">{t("create.folder")}</span>
-        {inspection ? (
-          <span className="path-text" data-selected-folder>
-            {inspection.folder}
-          </span>
-        ) : (
-          <span className="muted">{t("create.noFolder")}</span>
-        )}
         <button
           type="button"
           data-action="choose-create"
@@ -125,6 +118,13 @@ export function WorkbenchCreate({
         >
           {t("workbench.chooseFolder")}
         </button>
+        {inspection ? (
+          <span className="path-text" data-selected-folder>
+            {inspection.folder}
+          </span>
+        ) : (
+          <span className="muted">{t("create.noFolder")}</span>
+        )}
       </div>
       {inspection?.existing && (
         <div role="status" data-existing-workbench>
