@@ -15,7 +15,7 @@ branch `feature/261-plugin-management` cut from `master` at 920457e, in the sibl
 `F:\2026_Virtual_Embedded_Rig_Assistant_plg`. The implementer hands the candidate back without a commit;
 the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed. Each ticket
 runs only its focused tests; the complete suite runs once after PLG-08.
-STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06 implemented 2026-11-15 (AEGIS TASK-d4d70d39); PLG-07 implemented 2026-11-15 (AEGIS TASK-2b84817f), publishing open; PLG-08 planned.
+STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06 implemented 2026-11-15 (AEGIS TASK-d4d70d39); PLG-07 implemented 2026-11-15 (AEGIS TASK-2b84817f), publishing open; PLG-08 implemented 2026-11-15 (AEGIS TASK-3b46b9a6, TASK-a793c9bd); kits built without sigrok.
 
 ## Order
 
@@ -28,7 +28,7 @@ STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2
 | 5 | PLG-05 | [#266](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/266) | manifest `settings`; Parts search, MQTT and Wokwi move from App settings to their plugins; configured state | implemented |
 | 6 | PLG-06 | [#267](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/267) | one status block (dependencies, configuration, use) and pack install from the catalog | implemented |
 | 7 | PLG-07 | [#268](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/268) | catalog release from `07_Delivery/plugins/`, signed index, stable and pre-release channels | implemented (publishing open) |
-| 8 | PLG-08 | [#269](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/269) | offline kit per platform of pinned pip and download dependencies | planned |
+| 8 | PLG-08 | [#269](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/269) | offline kit per platform of pinned pip and download dependencies | implemented |
 
 Each package builds on the page parts of the previous one. PLG-07 and PLG-08 touch delivery only.
 
@@ -131,6 +131,35 @@ is refused as `untrusted`; the bundled release stands in and needs no signature.
 choose the channel (Stable by default). Update checks keep their 24 h rhythm. The procedure is
 `02_Tools/release/catalog-release.md`. Open: the hosted https release and the default `VERA_PLUGIN_CATALOG_URL`,
 waiting for the user's go-ahead.
+
+## PLG-08 #269 - offline dependency kit per platform
+
+`vera catalog kit --source plugins --platform <windows-x64|linux-x64> --out ../07_Delivery/kit-<platform>` builds
+a kit next to the catalog release. It holds, for the official plugins of that platform:
+
+- the pinned download files at `files/<sha256>/<name>`, checked against the manifest SHA-256 and size;
+- the wheels of every pip and script program in `wheels/`, resolved for CPython 3.13 with the platform's
+  markers by the pinned uv and downloaded by pip with `--require-hashes`;
+- the CPython archive that uv installs, in `python/`;
+- `kit.json` and a `README.md` with the size and the vendor (find) programs and their download pages.
+
+A failed build leaves no kit. On the bench, the setting `plugins.kit` (settings.json) points Install dependencies
+at the kit. Download files go through the same verification as Install from dependency archive, so trust stays with
+the manifest hashes, and a changed file is refused and named. uv installs only from the kit's wheels and Python.
+
+Wheels carry no manifest hash. The kit's wheel folder has the trust of the package index the user configures, and
+CPython is checked by uv's built-in SHA-256. Hash-pinned wheels (uv lock files per script) are a possible follow-up.
+Source-only packages are built into wheels during the kit build. `uptime` (can-python) compiles code, so each kit
+is built on its own platform.
+
+Built 2026-11-15 with `--skip sigrok`, whose package is not published:
+- `kit-windows-x64`: 9 downloads, 106 wheels and CPython, 1178.0 MiB;
+- `kit-linux-x64`: 8 downloads, 97 wheels and CPython, 1095.5 MiB, built on Linux.
+
+Offline installs from them made every managed program of the official plugins ready: 52 on Windows and 50 on WSL2
+Ubuntu, with CPython installed from the kit.
+
+Open: sigrok (its package is not published), and a native Ubuntu run.
 
 ## Shared rules
 

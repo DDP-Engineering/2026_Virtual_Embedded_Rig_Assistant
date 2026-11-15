@@ -19,6 +19,8 @@ __pycache__/
 # The official plugins as a catalog release, built by npm run prepare:plugins.
 /07_Delivery/plugins/
 /07_Delivery/plugins.staging/
+# Offline dependency kits per platform and their staging folders, built by vera catalog kit.
+/07_Delivery/kit-*
 *.tsbuildinfo
 
 # Generated evaluator runs. Retained evidence is selected deliberately (git add -f).

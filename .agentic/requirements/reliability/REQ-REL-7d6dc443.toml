@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-7d6dc443"
+
+title = "Publish no partial dependency kit"
+
+status = "active"
+
+requirement = """
+If any kit file cannot be fetched, a download's size or SHA-256 differs from its manifest, a wheel cannot be resolved or downloaded for the platform, or the output folder is not empty, the CLI shall exit 1 with a message naming the failing plugin program or file and leave no kit folder and no staging folder behind.
+"""
+
+verification = "Core kit test: a fetch serving bytes with a different SHA-256 rejects naming the plugin program, and neither the output folder nor a staging sibling exists afterwards; a non-empty output folder is refused before any fetch; a failing wheel tool leaves no output folder."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/dependency-kit.ts", "05_Software/src/apps/cli/src/kit-tools.ts", "05_Software/src/apps/cli/src/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/dependency-kit.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

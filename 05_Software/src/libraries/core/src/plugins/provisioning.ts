@@ -15,6 +15,7 @@ import {
   unlink,
 } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createContext, Script } from "node:vm";
 import {
   downloadForm,
@@ -32,6 +33,7 @@ import {
 } from "@vera/shared";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
 import { ArchiveError, bsdtarSkipsOnly, checkTree, extractZip, tarCommand } from "./archive.js";
+import { dependencyKitFile } from "./dependency-kit.js";
 import { programInvocation } from "./launcher.js";
 import { hostVariable, killProcessTree } from "./process-tree.js";
 import type { ProgramResolver, ResolvedProgram } from "./program-tools.js";
@@ -221,7 +223,11 @@ export class Provisioner implements ProgramResolver {
       plugin.manifest.id,
     );
   }
-  /** The uv variables of every call (spec REQ-FUNC-714e26bc.md): nothing outside the runtime folder. */
+  /**
+   * The uv variables of every call (spec REQ-FUNC-714e26bc.md): nothing outside the runtime folder. With a
+   * dependency kit, uv resolves only from its wheels and installs CPython only from its mirror folder, whose
+   * archive uv checks against the SHA-256 built into it.
+   */
   uvEnvironment(plugin: LoadedPlugin): Record<string, string> {
     const { root } = this.options;
     const tools = this.tools(plugin);
@@ -238,7 +244,15 @@ export class Provisioner implements ProgramResolver {
       UV_PYTHON_INSTALL_REGISTRY: "0",
       UV_NO_CONFIG: "1",
       UV_NO_PROGRESS: "1",
-      ...(settings.index ? { UV_DEFAULT_INDEX: settings.index } : {}),
+      ...(settings.kit
+        ? {
+            UV_OFFLINE: "1",
+            UV_FIND_LINKS: join(settings.kit, "wheels"),
+            UV_PYTHON_INSTALL_MIRROR: pathToFileURL(join(settings.kit, "python")).href,
+          }
+        : settings.index
+          ? { UV_DEFAULT_INDEX: settings.index }
+          : {}),
       ...(settings.proxy ? { HTTPS_PROXY: settings.proxy, HTTP_PROXY: settings.proxy } : {}),
     };
   }
@@ -973,6 +987,19 @@ export class Provisioner implements ProgramResolver {
     const installMs = this.options.timeouts?.installMs ?? INSTALL_MS;
     if ("pip" in install || "script" in install) {
       const uv = this.options.uv as ResolvedProgram;
+      if (this.options.settings()?.kit) {
+        // Offline uv never downloads CPython on its own; this installs the kit's archive (once) after uv checks it.
+        const python = await this.execute(
+          uv.executable,
+          [...(uv.prefix ?? []), "python", "install"],
+          this.uvEnvironment(plugin),
+          installMs,
+          signal,
+          plugin.verify,
+        );
+        if (python.exit.error) return failed("install", python.exit.error);
+        if (python.timedOut || python.exit.code !== 0) return failed("install", python.tail);
+      }
       const args =
         "pip" in install
           ? ["tool", "install", ...(repair ? ["--reinstall"] : []), install.pip]
@@ -1014,8 +1041,18 @@ export class Provisioner implements ProgramResolver {
       if (!entry || !file) return failed("download");
       const folder = join(this.downloads, entry.sha256);
       if ((repair && !fetched?.has(folder)) || !(await exists(folder))) {
-        const problem = await this.download(entry, file, folder, signal, undefined, undefined, repair);
-        if (problem) return failed(problem);
+        // The dependency kit's file goes through the same verification as a selected dependency archive.
+        const kit = this.options.settings()?.kit;
+        const local = kit ? join(kit, ...dependencyKitFile(entry).split("/")) : undefined;
+        const fromKit = local !== undefined && (await exists(local)) ? local : undefined;
+        const problem = await this.download(entry, file, folder, signal, fromKit, undefined, repair);
+        if (problem)
+          return failed(
+            problem,
+            fromKit && problem === "sha256"
+              ? `The kit file ${fromKit} does not match the SHA-256 this plugin pins.`
+              : undefined,
+          );
         fetched?.add(folder);
       }
       const executable = join(folder, ...file.split("/"));
@@ -1095,7 +1132,7 @@ export class Provisioner implements ProgramResolver {
       if (hash.digest("hex") !== entry.sha256) return "sha256";
       await verifyIdentity?.();
       // Local bytes are always verified first, including when a prior extraction already exists.
-      if (localPath && (await exists(folder))) return undefined;
+      if (localPath && !replace && (await exists(folder))) return undefined;
       const tree = join(staging, "tree");
       await mkdir(tree);
       const form = downloadForm(entry.url);

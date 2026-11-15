@@ -226,3 +226,19 @@ it("binds scoped review and trust to a workbench id and exact hash", () => {
     false,
   );
 });
+
+// REQ-DATA-6cd3e1ec
+it("accepts the dependency kit setting only as an absolute local folder", () => {
+  for (const kit of ["D:\\vera-kit", "C:/kits/windows-x64", "/opt/vera-kit"])
+    expect(pluginSettingsSchema.parse({ kit })).toEqual({ kit });
+  const refused = [
+    "kit",
+    "..\\kit",
+    "\\\\server\\share",
+    "//server/share",
+    "D:",
+    "/opt/a\0b",
+    `/${"a".repeat(1024)}`,
+  ];
+  for (const kit of refused) expect(pluginSettingsSchema.safeParse({ kit }).success).toBe(false);
+});

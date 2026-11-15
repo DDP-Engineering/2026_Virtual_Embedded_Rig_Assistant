@@ -16,6 +16,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { PluginSettings } from "@vera/shared";
 import { strToU8, zipSync } from "fflate";
 import { afterEach, expect, it, vi } from "vitest";
@@ -897,6 +898,117 @@ it("treats a transfer longer than the declared size as a hash mismatch and keeps
   const downloads = join(s.root, "plugins", "runtime", "downloads");
   expect(await readdir(downloads)).toEqual([".staging"]);
   expect(await readdir(join(downloads, ".staging"))).toEqual([]);
+});
+
+/** A dependency kit folder holding `bytes` as the kit file of `url`'s pinned entry. */
+async function kitWith(root: string, url: string, bytes: Uint8Array, pinned = bytes) {
+  const kit = join(root, "kit");
+  const file = join(kit, "files", sha(pinned), url.split("/").at(-1) as string);
+  await mkdir(join(file, ".."), { recursive: true });
+  await writeFile(file, bytes);
+  return { kit, file };
+}
+
+// REQ-FUNC-b1afbd8c
+it("installs and re-installs a download program from the dependency kit without the network", async () => {
+  const image = strToU8("\x7fELF kit");
+  const url = "https://h.test/r/tool.AppImage";
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const { kit } = await kitWith(root, url, image);
+  const s = await setup({ programs: { tool: download(url, image) }, settings: { kit } });
+  s.host.handle = (process) => {
+    process.print("tool 1.0\n");
+    process.finish(ok);
+  };
+  expect(await s.provisioner.install("tools")).toEqual([
+    { name: "tool", kind: "download", state: "ready", version: "1.0" },
+  ]);
+  const stored = join(s.root, "plugins", "runtime", "downloads", sha(image), "tool.AppImage");
+  await writeFile(stored, "damaged");
+  expect((await s.provisioner.reinstall("tools"))[0]).toMatchObject({ state: "ready" });
+  expect(await readFile(stored)).toEqual(Buffer.from(image));
+  expect(s.fetches).toEqual([]);
+});
+
+// REQ-FUNC-b1afbd8c
+it("fetches the pinned URL when the dependency kit has no file for the entry", async () => {
+  const image = strToU8("\x7fELF url");
+  const url = "https://h.test/r/tool.AppImage";
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const s = await setup({ programs: { tool: download(url, image) }, settings: { kit: join(root, "kit") } });
+  s.served.set(url, () => new Response(image));
+  s.host.handle = (process) => {
+    process.print("tool 1.0\n");
+    process.finish(ok);
+  };
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready" });
+  expect(s.fetches).toEqual([url]);
+});
+
+// REQ-SEC-51f93776
+it("refuses a changed dependency kit file, names it and falls back to nothing", async () => {
+  const image = strToU8("\x7fELF good");
+  const url = "https://h.test/r/tool.AppImage";
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const { kit, file } = await kitWith(root, url, strToU8("\x7fELF evil"), image);
+  const s = await setup({ programs: { tool: download(url, image) }, settings: { kit } });
+  s.served.set(url, () => new Response(image));
+  const [status] = await s.provisioner.install("tools");
+  expect(status).toMatchObject({ name: "tool", kind: "download", state: "missing", problem: "sha256" });
+  expect(status?.detail).toContain(file);
+  expect(s.fetches).toEqual([]);
+  expect(existsSync(join(s.root, "plugins", "runtime", "downloads", sha(image)))).toBe(false);
+  expect((await s.record()).programs).toEqual({});
+});
+
+// REQ-FUNC-41582b95
+it("points uv at the dependency kit's wheels and Python only", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const kit = join(root, "kit");
+  const s = await setup({
+    programs: { esptool: pip("esptool") },
+    settings: { kit, index: "https://mirror.example/simple" },
+  });
+  uvActs(s.host, s.uv, "esptool");
+  await s.provisioner.install("tools");
+  const env = s.host.programs[0]?.options.env;
+  expect(env).toMatchObject({
+    UV_OFFLINE: "1",
+    UV_FIND_LINKS: join(kit, "wheels"),
+    UV_PYTHON_INSTALL_MIRROR: pathToFileURL(join(kit, "python")).href,
+  });
+  expect(env).not.toHaveProperty("UV_DEFAULT_INDEX");
+  // Offline uv never downloads CPython on its own: the kit's archive is installed explicitly first.
+  expect(s.host.programs.map((p) => p.args.slice(0, 2))).toEqual([
+    ["python", "install"],
+    ["tool", "install"],
+    ["version"],
+  ]);
+  const plain = await setup({ programs: { esptool: pip("esptool") } });
+  uvActs(plain.host, plain.uv, "esptool");
+  await plain.provisioner.install("tools");
+  expect(plain.host.programs[0]?.args.slice(0, 2)).toEqual(["tool", "install"]);
+  for (const name of ["UV_OFFLINE", "UV_FIND_LINKS", "UV_PYTHON_INSTALL_MIRROR"])
+    expect(plain.host.programs[0]?.options.env).not.toHaveProperty(name);
+});
+
+// REQ-FUNC-41582b95
+it("reports a failed CPython install from the dependency kit and runs no uv install", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const s = await setup({ programs: { esptool: pip("esptool") }, settings: { kit: join(root, "kit") } });
+  s.host.handle = (process) => {
+    process.print("error: Failed to install cpython-3.13.18 (hash mismatch)\n");
+    process.finish({ code: 2, signal: null });
+  };
+  const [status] = await s.provisioner.install("tools");
+  expect(status).toMatchObject({ name: "esptool", state: "missing", problem: "install" });
+  expect(status?.detail).toContain("hash mismatch");
+  expect(s.host.programs.map((p) => p.args.slice(0, 2))).toEqual([["python", "install"]]);
 });
 
 // REQ-FUNC-751e430e, REQ-REL-4cef9c7b

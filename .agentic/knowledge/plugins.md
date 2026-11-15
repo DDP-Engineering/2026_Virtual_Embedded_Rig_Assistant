@@ -301,6 +301,13 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 - `plugins.check` explicitly refreshes all program probes without installing. Pending checks share package/runtime identity and serialize with provisioning; fresh per-program cache entries are populated together, so passive reads cannot replace a fresh check with a recorded version. A replaced package rejects the pending check. Scoped check observations, including negative states, propagate atomically into the singleton session resolver; concurrent runtime invalidation rejects the older pending check. Scoped passive status reads use the same resolver observations for the verified scoped package, so reopening the page cannot restore a rejected Ready state. Completed checked failures survive later unrelated invalidation, bound to runtime/plugin/program, package SHA, installation timestamp and per-program record. A fresh check or actual provisioning supersedes them. Ready observations clear prior failures and remain in the ordinary resolution cache so missing discovered files are detected after invalidation. Invalid archive selection preserves healthy runtime authority. Ordinary version probes allow30s; declared activation launchers allow120s because observed EIM startup can exceed the ordinary boundary.
 - `plugins.installArchive {id,program,sha256,workbenchId?}` uses a native archive picker. Current workbench/database, package hash, program/platform and trust are checked before and after selection. Selected regular bytes are streamed through SHA-256 before cache reuse; staging, extraction confinement and a second identity check precede publication. No URL or hash comes from the selected file. Verified blobs may remain when a later version probe fails.
+- Offline dependency kit (spec REQ-DATA-532b02f5): settings `plugins.kit` (an absolute local folder). Install and Re-install
+  take a download program's file from `<kit>/files/<sha256>/<name>` (`dependencyKitFile(entry)`) through the same
+  `download(..., localPath)` verification as `plugins.installArchive`. A mismatch is `missing/sha256` with a detail naming
+  the kit file, and there is no URL fallback. A kit without that file uses the pinned URL. uv gets `UV_OFFLINE=1`,
+  `UV_FIND_LINKS=<kit>/wheels` and `UV_PYTHON_INSTALL_MIRROR=<file URL of kit/python>`, never `UV_DEFAULT_INDEX`, and each
+  pip/script install first runs `uv python install` (offline uv never downloads CPython implicitly). The bench
+  never reads `kit.json`.
 - Desktop package listing runs the complete PluginStore integrity path in `plugin-list-worker`, with only identical pending scopes coalesced and shutdown termination. No completed integrity result is reused by this seam. Main rechecks current workbench/database before returning.
 - The global manager starts with compact accessible rows and unknown dependency state, grouped top catalog/folder/zip/refresh/check-all actions, explicit Check/Install controls, expandable descriptions/program diagnostics, and secondary export/uninstall actions. Find-only tools retain vendor guidance, including when ready, and never enable automatic installation. Ready managed fallbacks keep a correctly labeled Install action. Managed version/range failures permit repair (uv reinstall); discovered hybrid tools explicitly mark external:true and retain the no-replacement policy unless preferDownload permits it. Same-hash reinstallation clears old dependency UI observations. Redaction is followed by schema-length caps. Workbench selection stays draft-only and compact, with no implicit enablement.
 - Windows minimal program environments preserve PATHEXT case-insensitively. Managed Python uses pinned uv0.13.7; an exact known minor-link failure can retry once after unlinking only an independently validated runtime-owned alias, never its patch interpreter or an escaping nested Python directory.
@@ -421,7 +428,12 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 - Catalog (core): `checkCatalogSource(folder)` -> `CatalogIssue[] {where, code, detail}`;
   `buildCatalogRelease(folder, out)` -> `{issues, index?}`; `catalogChannel(index, channel)`;
   `generateCatalogKeys(privatePath, publicPath)` (no overwrite); `signCatalogRelease(folder, privatePem, publicPem?)`
-  -> signed index names; `new PluginCatalog({store, root, location, channel?, publicKey?, bundled?, fetch,
+  -> signed index names; `readCatalogSource(folder)` -> `{issues, packages, official}`;
+  `buildDependencyKit(source, platform, out, tools, {skip?})` -> `{issues, kit?}` (kit.json, `skipped`; an unknown
+  skipped id throws), throws `DependencyKitError` naming
+  the program or file and leaves no `out` or staging folder; tools `{fetch, wheels(platform, {requirement}|{script},
+  folder), python(platform)}` (CLI `cliKitTools(uv)` in `kit-tools.ts`); `DEPENDENCY_KIT_PLATFORMS` windows-x64 and linux-x64;
+  `new PluginCatalog({store, root, location, channel?, publicKey?, bundled?, fetch,
   now?, uuid?})` with `view({refresh?, signal?})`, `review(id, signal?)`, `install(id, sha256)`; store
   `readPluginPackage(path)` and `install(path, sha256?, origin?: {tier, url})` (source kind `catalog`).
 - IPC: `plugins.catalog {refresh}` -> view `{source: remote|bundled|none, url?, problem?: unreachable|invalid|unsigned|untrusted,
@@ -679,6 +691,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Plugins page or Runs tab | renderer `plugins.tsx`, `runs-tab.tsx`, `shell.tsx`, `App.tsx`, locales | `plugins.test.ts`, `runs-tab.test.ts`, `tests/e2e/plugins-ui.spec.ts` (native), `plugins-mock.spec.ts` (languages, themes, sizes) |
 | Catalog formats, token lint, URL rule, version order | shared `plugin-catalog.ts` | `plugin-catalog.test.ts` |
 | Catalog check, release build, channel indexes, keygen and sign, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts`; procedure `02_Tools/release/catalog-release.md` | `catalog-source.test.ts`, `tests/integration/cli.test.ts`, `tests/packaging/prepare-plugins.test.ts` |
+| Offline dependency kit: build, layout, `vera catalog kit`, bench use (`plugins.kit`) | core `dependency-kit.ts`, `catalog-source.ts` (`readCatalogSource`), `provisioning.ts` (`installOne`, `uvEnvironment`), CLI `kit-tools.ts`, `catalog.ts`, `args.ts`, shared `settings.ts`; procedure `02_Tools/release/catalog-release.md` | `dependency-kit.test.ts`, `provisioning.test.ts` (dependency kit), `catalog-args.test.ts`, `plugins-ipc.test.ts` (kit setting) |
 | Catalog client: sources, channel, signature, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server, throwaway keys) |
 | Catalog IPC, checks, build-time URL and pinned key | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `02_Tools/release/update-config.mjs`, `catalog-signing-key.pub.pem` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
 | Catalog section, review queue, update buttons | renderer `plugin-catalog.tsx`, `plugins.tsx`, `mocks/mockApi.ts`, locales | `plugin-catalog.test.ts`, `mockApi.test.ts`, `tests/e2e/plugins-catalog.spec.ts`, `plugins-mock.spec.ts` |
@@ -781,6 +794,9 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-UX-714c27e6` / `REQ-UX-b3fb479b` / `REQ-FUNC-34191c6f` — dependencies on the catalog card and the installed card,
   Install with dependencies.
 - `REQ-FUNC-751e430e` / `REQ-REL-4cef9c7b` — Re-install of managed programs, hash mismatch of an installed download.
+- `REQ-DATA-532b02f5` / `REQ-REL-7d6dc443` — `vera catalog kit` builds a complete platform kit or none.
+  `REQ-FUNC-b1afbd8c` / `REQ-SEC-51f93776` / `REQ-FUNC-41582b95` / `REQ-DATA-6cd3e1ec` — the bench installs from it
+  with the manifest hashes, refuses a changed file, and points uv at it.
 
 ## Files
 
@@ -840,6 +856,8 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/tests/fixtures/llm-scripts/program-serve.jsonl` — replay script starting `echo serve` in the background.
 - `05_Software/src/libraries/shared/src/plugin-catalog.ts`, `plugin-catalog.test.ts` — catalog formats and rules.
 - `05_Software/src/libraries/core/src/plugins/catalog-source.ts`, `catalog-source.test.ts` — catalog check and build.
+- `05_Software/src/libraries/core/src/plugins/dependency-kit.ts`, `dependency-kit.test.ts` — offline dependency kit plan and writer.
+- `05_Software/src/apps/cli/src/kit-tools.ts` — the kit build's uv/pip tools; `catalog-args.test.ts` — `catalog kit` arguments.
 - `05_Software/src/libraries/core/src/plugins/catalog.ts`, `catalog.test.ts` — catalog client.
 - `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build|keygen|sign`.
 - `02_Tools/release/catalog-signing-key.pub.pem` — the catalog signing public key the desktop build pins; `catalog-release.md` — the release procedure.

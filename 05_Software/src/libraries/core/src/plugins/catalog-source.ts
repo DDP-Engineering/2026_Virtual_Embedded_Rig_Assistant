@@ -165,6 +165,21 @@ async function examineSource(folder: string): Promise<Examined> {
   };
 }
 
+/**
+ * A catalog source as `vera catalog build` reads it: its issues, its valid packages by folder name (ascending) and
+ * the ids `catalog.yaml` marks official.
+ */
+export async function readCatalogSource(
+  folder: string,
+): Promise<{ issues: CatalogIssue[]; packages: Map<string, PluginPackage>; official: Set<string> }> {
+  const examined = await examineSource(folder);
+  return {
+    issues: examined.issues,
+    packages: examined.packages,
+    official: new Set(examined.maintainers?.official ?? []),
+  };
+}
+
 /** The CI check of a catalog source: every issue, in source order; none means the source may merge. */
 export async function checkCatalogSource(folder: string): Promise<CatalogIssue[]> {
   return (await examineSource(folder)).issues;

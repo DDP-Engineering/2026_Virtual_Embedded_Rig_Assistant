@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-51f93776"
+
+title = "Refuse a kit file that does not match its manifest hash"
+
+status = "active"
+
+requirement = """
+If the kit file of a download program has a different SHA-256 or a larger size than the manifest pins, the provisioner shall report the program missing with problem `sha256` and a detail naming the kit file, install and record nothing, and not fall back to the pinned URL.
+"""
+
+verification = "Core provisioning test: a kit file with changed bytes gives status missing/sha256 whose detail contains the kit file path, no download folder for that hash exists, no version is recorded and fetch is never called."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

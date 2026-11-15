@@ -25,13 +25,23 @@ const plainUrl = z
   .url({ protocol: /^https?$/ })
   .max(2048)
   .refine((value) => !urlParts(value)?.authority.includes("@"), "Use a URL without credentials.");
-/** Package index and proxy that uv uses to install plugin programs, and the plugin catalog folder. */
+/** Package index, proxy and offline kit that uv uses to install plugin programs, and the plugin catalog folder. */
 export const pluginSettingsSchema = z.strictObject({
   index: plainUrl.optional(),
   proxy: plainUrl.optional(),
   catalog: catalogUrlSchema.optional(),
   /** The remote catalog's release channel; readers use `stable` when unset. */
   channel: catalogChannelSchema.optional(),
+  /** An offline dependency kit folder: download files and uv's wheels and Python come from it. */
+  kit: z
+    .string()
+    .min(1)
+    .max(1024)
+    .refine(
+      (value) => !/\p{Cc}/u.test(value) && (/^[A-Za-z]:[\\/]/.test(value) || /^\/(?!\/)/.test(value)),
+      "Use an absolute local folder path.",
+    )
+    .optional(),
 });
 export type PluginSettings = z.infer<typeof pluginSettingsSchema>;
 

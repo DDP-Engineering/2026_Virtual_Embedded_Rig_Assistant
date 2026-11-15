@@ -42,7 +42,8 @@ try {
     options.kind === "catalog-check" ||
     options.kind === "catalog-build" ||
     options.kind === "catalog-keygen" ||
-    options.kind === "catalog-sign"
+    options.kind === "catalog-sign" ||
+    options.kind === "catalog-kit"
   )
     process.exitCode = await runCatalog(options);
   else if (options.kind === "plugin-install")

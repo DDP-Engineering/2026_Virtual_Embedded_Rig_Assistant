@@ -72,3 +72,66 @@ From `05_Software` (`python ../02_Tools/environment/npmw.py run …` uses the lo
    folder URL as the catalog URL.
 
 The installer always carries `07_Delivery/plugins/` as its bundled catalog, whatever the channel.
+
+## Offline dependency kit
+
+A kit per platform lets a bench without network make the official plugins' programs ready. It is built next to
+the catalog release, from the same source, and published beside it (for example as more assets of the same
+release, zipped per platform).
+
+| Path in `kit-<platform>/` | Content |
+|---|---|
+| `files/<sha256>/<name>` | each pinned download file of the platform, exactly as the manifests pin it (SHA-256 and size) |
+| `wheels/` | the wheels of every pip and script program, resolved for CPython 3.13 on the platform |
+| `python/<release>/<archive>` | the CPython 3.13 archive that VERA's pinned uv installs |
+| `kit.json` | the index: plugins, files, wheels, CPython, vendor programs and the total size |
+| `README.md` | how to use the kit, its size, and the vendor programs with their official download pages |
+
+Vendor (find) programs such as KiCad, LTspice or STM32CubeProgrammer are never in a kit. Their sizes and
+licenses do not allow it, and they update on their own. The kit's README lists each one with its download page.
+
+**Build** (needs network and the pinned uv, `npm run prepare:uv`), from `05_Software`:
+
+```
+npm run vera -- catalog kit --source plugins --platform windows-x64 --out ../07_Delivery/kit-windows-x64 --skip sigrok
+npm run vera -- catalog kit --source plugins --platform linux-x64 --out ../07_Delivery/kit-linux-x64 --skip sigrok
+```
+
+`--skip <id>,...` leaves official plugins out whose pinned files this computer cannot reach. Today that is sigrok,
+whose package is not published. `kit.json` (`skipped`) and the kit README name them. An id that is not an official
+plugin is refused. On Linux, run the CLI with `node src/apps/cli/dist/index.js` after a build on any system,
+and put the pinned uv in `src/uv/linux-x64/`.
+
+Each command prints the number of files and the kit size. It refuses
+a non-empty `--out`, so move the old kit away first. Any failure exits 1, names the program or file, and leaves
+no kit folder; a kit is complete or absent. Failures include a download whose bytes differ from its pin, a
+requirement with no wheel for the platform, or a source-only package that is not pure Python.
+
+- Download files are fetched from their pinned URLs and checked against the manifest SHA-256 and size.
+- Wheels: `uv pip compile --python-platform` resolves each program's requirement (pip) or PEP 723 block
+  (script) with the target's markers. pip 26.1.2, run by the same uv, downloads exactly the resolved files with
+  `--require-hashes`. A package published only as source is built into a wheel during the kit build, so a bench
+  never builds one. A pure Python wheel is accepted on any build host. A compiled one is accepted only when the
+  kit is built on its own platform. Today `uptime` 3.0.1 (can-python) compiles an optional C extension, so build
+  `kit-linux-x64` on Linux and `kit-windows-x64` on Windows. Linux wheels are manylinux_2_28 or older, so the
+  bench needs glibc 2.28 or newer.
+- The same manifests give the same download files and the same `kit.json` entries for them. Pip requirements
+  are ranges, so a later build can pick a newer wheel within the range.
+
+**Trust.** A kit is not a trust source.
+
+- On the bench, each download file must match the SHA-256 in the installed plugin's manifest. A changed file is
+  refused (problem `sha256`, named in the detail), and nothing is installed or recorded.
+- uv checks the CPython archive against the SHA-256 built into the pinned uv.
+- Wheels carry no manifest hash: manifests pin pip ranges and script versions only. The kit's `wheels/` folder
+  takes the role of the package index the user already sets with `plugins.index`, so its trust is the same as
+  for online PyPI installs.
+
+**Use on the bench.** Copy the kit and set `plugins.kit` in VERA's `settings.json` to its absolute folder,
+for example `"plugins": { "kit": "D:\\vera-kit" }`. The CLI reads the same setting from its data folder. Then
+choose Install dependencies on the plugin page, or run `vera plugin provision`. Download programs install from
+the kit's file through the same verification as Install from dependency archive. A kit without a file for a
+program falls back to its pinned URL. pip and script programs install from `wheels/` only (`UV_OFFLINE`,
+`UV_FIND_LINKS`), and CPython from `python/` only (`UV_PYTHON_INSTALL_MIRROR`). Offline uv never downloads CPython
+by itself, so VERA runs `uv python install` before the first of these installs. Remove the setting to install
+from the network again.

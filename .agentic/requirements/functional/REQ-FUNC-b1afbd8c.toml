@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b1afbd8c"
+
+title = "Install download programs from the dependency kit"
+
+status = "active"
+
+requirement = """
+While the plugin setting `kit` names a folder, when the provisioner installs or re-installs a download program whose manifest entry for this platform has a file at `<kit>/files/<sha256>/<file name>`, it shall install from that file through the same SHA-256 verification, staging and extraction as a selected dependency archive without a network request, and it shall fetch the pinned URL when the kit has no such file.
+"""
+
+verification = "Core provisioning test: with kit set and the file present, install reports ready and the injected fetch is never called; re-install with the kit replaces the stored copy; boundary: with kit set but no file for that SHA-256 the pinned URL is fetched."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/libraries/core/src/plugins/dependency-kit.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

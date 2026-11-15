@@ -1,12 +1,15 @@
 import { readFile } from "node:fs/promises";
 import {
   buildCatalogRelease,
+  buildDependencyKit,
   type CatalogIssue,
   checkCatalogSource,
   generateCatalogKeys,
   signCatalogRelease,
 } from "@vera/core";
 import type { CatalogOptions } from "./args.js";
+import { cliKitTools } from "./kit-tools.js";
+import { cliUv } from "./provisioning.js";
 
 const line = (issue: CatalogIssue) => `${issue.where}: ${issue.code}: ${issue.detail}\n`;
 /** The reason only: a key file's content never reaches the output. */
@@ -20,8 +23,9 @@ const failed = (error: unknown) => {
 
 /**
  * `vera catalog check` prints one line per issue of a catalog source; `vera catalog build` writes its
- * release (zips and index.json) only when there is none; `keygen` writes a new signing key pair and
- * `sign` the channel index signatures of a release. Exit 0 on success, 1 otherwise.
+ * release (zips and index.json) only when there is none; `keygen` writes a new signing key pair,
+ * `sign` the channel index signatures of a release and `kit` the offline dependency kit of one platform, whose
+ * size it prints. Exit 0 on success, 1 otherwise.
  */
 export async function runCatalog(options: CatalogOptions): Promise<number> {
   if (options.kind === "catalog-check") {
@@ -48,6 +52,30 @@ export async function runCatalog(options: CatalogOptions): Promise<number> {
         options.publicKey === undefined ? undefined : await readFile(options.publicKey, "utf8"),
       );
       process.stdout.write(`signed ${signed.length} indexes in ${options.release}\n`);
+      return 0;
+    } catch (error) {
+      return failed(error);
+    }
+  }
+  if (options.kind === "catalog-kit") {
+    const uv = cliUv();
+    if (!uv) {
+      process.stderr.write("vera: the pinned uv is missing; run npm run prepare:uv\n");
+      return 1;
+    }
+    try {
+      const { issues, kit } = await buildDependencyKit(
+        options.source,
+        options.platform,
+        options.out,
+        cliKitTools(uv),
+        { skip: options.skip ?? [] },
+      );
+      for (const issue of issues) process.stdout.write(line(issue));
+      if (!kit) return 1;
+      process.stdout.write(
+        `kit ${kit.platform}: ${kit.downloads.length} downloads, ${kit.wheels.length} wheels, python ${kit.python ? "yes" : "no"}, ${kit.skipped ? `skipped ${kit.skipped.join(", ")}, ` : ""}${kit.bytes} bytes (${(kit.bytes / 1024 ** 2).toFixed(1)} MiB) in ${options.out}\n`,
+      );
       return 0;
     } catch (error) {
       return failed(error);
