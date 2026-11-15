@@ -1,6 +1,6 @@
 # arduino-cli fixtures
 
-Data for `tests/integration/arduino-cli.test.ts`; the fake arduino-cli lives in `tests/support/fake-arduino-cli.py`.
+Data for `tests/plugins/arduino-cli.test.ts`; the fake arduino-cli lives in `tests/support/fake-arduino-cli.py`.
 
 | Fixture | Purpose |
 |---|---|

@@ -67,7 +67,7 @@ attempt, then the final state is applied and read back (`physical: confirmed` or
 
 ## Tests
 
-`tests/integration/bus-tools.test.ts` runs the helper against a simulated Bus Pirate (a fake pyserial in
+`tests/plugins/bus-tools.test.ts` runs the helper against a simulated Bus Pirate (a fake pyserial in
 `tests/fixtures/bus-tools/fake-serial`, which needs the toolchain Python to have flatbuffers 25.12.19). It is offline
 evidence only. With a real adapter set `VERA_TEST_BUS_PIRATE_PORT`, `VERA_TEST_BUS_PIRATE_TERMINAL` and
 `VERA_TEST_BUS_PIRATE_IDENTITY` to run the read-only identify against it.

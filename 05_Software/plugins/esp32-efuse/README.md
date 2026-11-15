@@ -50,7 +50,7 @@ needs `--chip`; its state persists only with `--path-efuse-file`. The above chan
 Check process exitCode 0 and the read-back field (`False (0b0)` to `True (0b1)`), not tool transport
 success alone. All acceptance burns use `--virt`; no physical eFuse burn is tested or authorized.
 
-Tests: `tests/integration/esp32-efuse.test.ts` includes offline package/rule/skill checks. Set
+Tests: `tests/plugins/esp32-efuse.test.ts` includes offline package/rule/skill checks. Set
 `VERA_EFUSE_UV` to the pinned bundled uv for explicit real provisioner/runner/replay acceptance;
 this can download managed Python and esptool. `VERA_EFUSE_SCRATCH` selects the owned scratch parent;
 `VERA_TEST_EVIDENCE_DIR` retains process argv, parsed results, events and durable approval rows.

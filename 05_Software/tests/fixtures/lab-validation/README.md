@@ -1,6 +1,6 @@
 # lab-validation fixtures
 
-`tests/integration/lab-validation.test.ts` generates its synthetic signals from the closed forms below (in
+`tests/plugins/lab-validation.test.ts` generates its synthetic signals from the closed forms below (in
 TypeScript, never through the plugin), writes them as CSV files or as ngspice-tool/ltspice-tool run folders that follow
 spec REQ-DATA-29b9a988 section 6, and compares `lab-validate` with the solutions derived here. Every expected value and
 tolerance was fixed by hand before the helper existed (work package criterion L02-A); none was copied from program

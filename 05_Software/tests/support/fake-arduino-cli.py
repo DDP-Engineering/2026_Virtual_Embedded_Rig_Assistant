@@ -1,4 +1,4 @@
-"""A scripted stand-in for arduino-cli 1.6.0, for tests/integration/arduino-cli.test.ts.
+"""A scripted stand-in for arduino-cli 1.6.0, for tests/plugins/arduino-cli.test.ts.
 
 The test launches it through a generated wrapper named arduino-cli(.cmd). VERA_FAKE_ARDUINO names a scenario JSON file;
 every call is appended to `<scenario>.calls.jsonl` with its argv and the text of the configuration it received, so a

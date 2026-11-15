@@ -8,7 +8,8 @@ export default defineConfig({
     projects: [
       "src/libraries/*",
       "src/apps/*",
-      ...["tooling", "integration", "packaging"].map((name) => ({
+      // `plugins` holds one suite per official plugin; npm test leaves it out (npm run test:plugins).
+      ...["tooling", "integration", "packaging", "plugins"].map((name) => ({
         test: {
           name,
           setupFiles: ["tests/support/network-setup.ts"],

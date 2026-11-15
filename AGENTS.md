@@ -103,6 +103,8 @@ at milestone gates, once, owned by the last ticket OR the coordinator. Reuse val
 proof; no routine handover retesting or historical-cache audits. Keep handover
 concise and clean owned scratch data. Prioritize implementation; defer unrelated
 refactoring and polish. Final release checks and publication authority still apply.
+`npm run verify` covers the app; the official plugins' suite (`tests/plugins`, `npm run test:plugins`)
+runs for a plugin or plugin-system change and before a delivery (`npm run verify:all`).
 
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 

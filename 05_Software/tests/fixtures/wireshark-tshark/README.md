@@ -12,4 +12,4 @@ host (192.168.7.1) and a board (192.168.7.10):
 | 7-8 | CoAP GET `/sensors/humidity`, MID 4661, answered 2.05 Content `41` |
 
 IPv4, UDP and TCP checksums are valid; TShark 4.6.8 reports no expert warnings.
-`tests/integration/wireshark-tshark.test.ts` asks a replay session about it.
+`tests/plugins/wireshark-tshark.test.ts` asks a replay session about it.

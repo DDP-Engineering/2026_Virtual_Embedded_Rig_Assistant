@@ -1,6 +1,6 @@
 # electronics-calc fixtures
 
-`cases.json` drives `tests/integration/electronics-calc.test.ts`: each case is a
+`cases.json` drives `tests/plugins/electronics-calc.test.ts`: each case is a
 request for `elec-calc` and what the result must hold. A case names result
 values (`results`, relative tolerance `rel`, default 1e-9), result units
 (`units`), check statuses (`checks`), text that an assumption or warning must

@@ -1,5 +1,5 @@
 {
-  "comment": "Requests and hand-derived expectations for tests/integration/electronics-calc.test.ts. README.md shows each derivation; no value here was produced by the program.",
+  "comment": "Requests and hand-derived expectations for tests/plugins/electronics-calc.test.ts. README.md shows each derivation; no value here was produced by the program.",
   "groups": [
     {
       "requirement": "REQ-FUNC-a7be6767",

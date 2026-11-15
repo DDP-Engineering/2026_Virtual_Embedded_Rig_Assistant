@@ -78,6 +78,6 @@ unknown` unless a read-back matched. After a write run ends without that confirm
 
 ## Tests
 
-`tests/integration/ble-tools.test.ts` runs the helper against a fake Bleak (`tests/fixtures/ble-tools/fake-bleak`) and
+`tests/plugins/ble-tools.test.ts` runs the helper against a fake Bleak (`tests/fixtures/ble-tools/fake-bleak`) and
 through VERA's ProgramRunner with a lease folder. `VERA_TEST_BLE_PYTHON` names a Python with the pinned Bleak for one
 real passive scan; no test connects to a real device.

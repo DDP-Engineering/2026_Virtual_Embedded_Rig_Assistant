@@ -11,6 +11,7 @@
     "vitest.config.ts",
     "tests/tooling/**/*.ts",
     "tests/integration/**/*.ts",
+    "tests/plugins/**/*.ts",
     "evaluators/**/*.ts",
     "tests/packaging/**/*.ts",
     "playwright.config.ts",
