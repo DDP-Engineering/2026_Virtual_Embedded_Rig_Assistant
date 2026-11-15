@@ -63,7 +63,6 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   opener when it is still shown, else the Chat tab. In the panel Ctrl+F asks a PDF or text body for its
   find field (or focuses an open one) and Ctrl+G asks a text body for its go-to-line field, by
   bumping `findRequest` / `gotoRequest` (REQ-UX-d64f086f, REQ-UX-58cf59b2).
-  The right panel has no Source tab or Source width (REQ-UX-aa068a49, REQ-UX-b3231a55 retired).
 - The document panel shows only the document (or its load error with Retry): no path line or
   buttons; the path is the tab's tooltip (REQ-UX-968b89b0). A tab menu action's error or notice
   shows in `[data-tab-notices]`, the row between the tab strip and the panels, also while Chat is

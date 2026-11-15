@@ -1344,7 +1344,7 @@ it("resolves and lists programs without installing anything", async () => {
   expect(s.fetches).toEqual([]);
 });
 
-// REQ-FUNC-5491d410, REQ-FUNC-06eaa9a5
+// REQ-FUNC-5491d410
 it("reports programs this platform cannot run and missing launchers", async () => {
   const s = await setup({
     programs: {

@@ -13,7 +13,7 @@ stage: done
 type: feature
 path: full
 interaction: autopilot
-requirements: REQ-DATA-4a030001, REQ-DATA-4a030002, REQ-SEC-fe4d5c4c, REQ-SEC-47e726a7, REQ-SEC-cf3aa5a4, REQ-FUNC-f19cac5e, REQ-DATA-87619ef8, REQ-SEC-0b898261, REQ-FUNC-6c666347, REQ-UX-fb4b9424
+requirements: REQ-DATA-4a030001, REQ-SEC-fe4d5c4c, REQ-SEC-47e726a7, REQ-SEC-cf3aa5a4, REQ-FUNC-f19cac5e, REQ-SEC-0b898261, REQ-FUNC-6c666347, REQ-UX-fb4b9424
 parent:
 branch: master
 base: 580ecccf726861f99ff3d7dadb34f825c5fdc195

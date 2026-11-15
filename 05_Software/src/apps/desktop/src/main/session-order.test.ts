@@ -1,4 +1,4 @@
-// REQ-FUNC-7871b582 REQ-REL-514e47d3
+// REQ-FUNC-7871b582
 import { existsSync } from "node:fs";
 import { SettingsService } from "@vera/core";
 import { beforeAll, expect, it, vi } from "vitest";

@@ -101,7 +101,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   rename, confirmed delete, archive/restore. Exports remain available in read-only
   workbenches. Mutations lock for read-only workbenches and active/approval turns.
   Archived sessions remain accessible in a collapsible section and can be restored.
-- REQ-UX-cb7b704e, REQ-UX-bdd845d0, REQ-UX-b0da5193 and REQ-FUNC-f7ef5641
+- REQ-UX-cb7b704e, REQ-UX-bdd845d0 and REQ-FUNC-f7ef5641
   attach to workspace/usage tests and tests/e2e/session-workspace.spec.ts.
 
 ## Invariants

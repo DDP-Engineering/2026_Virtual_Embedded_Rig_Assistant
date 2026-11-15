@@ -360,14 +360,12 @@ test("removing the only selected session leaves New session usable without a sta
   ).not.toBe(session.id);
   expect(document.activeElement?.id).toBe("chat-message");
 });
-test("Welcome offers user workbenches without a bundled demo or guided sessions", async () => {
+test("Welcome offers workbench creation without starting a session", async () => {
   const observed = vi.spyOn(api, "invoke");
   await mount();
   expect(container.querySelector(".metadata")).toBeNull();
   expect(container.querySelector('[data-action="choose-create"]')).toBeTruthy();
   expect(container.querySelector('[data-action="create-workbench"]')).toBeTruthy();
-  expect(container.querySelector("[data-demo-offer], [data-demo-guide], [data-demo-prompt]")).toBeNull();
-  expect(container.querySelector('[data-action="open-demo"]')).toBeNull();
   expect(
     observed.mock.calls.some(([channel]) => channel === "session.create" || channel === "session.send"),
   ).toBe(false);
@@ -390,17 +388,6 @@ test("an ordinary composer starts empty and accepts user text without sending au
   await typeText(input, "My project question");
   expect(input.value).toBe("My project question");
   expect(send).not.toHaveBeenCalled();
-});
-
-test("an existing workbench with the former example name opens as an ordinary user project", async () => {
-  await api.invoke("workbench.create", { folder: "/mock/former-example", name: "VERA-DEMO-01" });
-  const observed = vi.spyOn(api, "invoke");
-  await mount();
-  expect(container.querySelector('[data-workbench="active"]')?.textContent).toContain("VERA-DEMO-01");
-  expect(container.querySelector("[data-demo-guide], [data-demo-prompt]")).toBeNull();
-  expect(
-    observed.mock.calls.some(([channel]) => channel === "session.create" || channel === "session.send"),
-  ).toBe(false);
 });
 
 // REQ-UX-8b320385 REQ-UX-3001bd00: authored; execution deferred.

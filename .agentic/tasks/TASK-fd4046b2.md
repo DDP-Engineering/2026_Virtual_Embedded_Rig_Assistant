@@ -13,7 +13,7 @@ stage: done
 type: feature
 path: full
 interaction: autopilot
-requirements: REQ-TEST-91b404ff, REQ-NFR-5a0d14ee
+requirements: REQ-NFR-5a0d14ee
 parent:
 branch: master
 base: 1da07ec9ef90e0c74b6e2519b52d96d02111f383
