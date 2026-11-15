@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 
 export function Workbench({
   active,
@@ -45,6 +46,7 @@ export function Workbench({
     };
   }, [activeId, active, changed, closed]);
   const number = new Intl.NumberFormat(i18n.resolvedLanguage ?? i18n.language);
+  const { rows: sessionRows, pager: sessionPager } = usePaged(sessions ?? []);
   const warningLabels = {
     UNKNOWN_KEY: t("workbench.unknownKey"),
     UNKNOWN_NAME: t("workbench.unknownName"),
@@ -153,7 +155,7 @@ export function Workbench({
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.map((session) => (
+                  {sessionRows.map((session) => (
                     <tr key={session.id} data-overview-session={session.id}>
                       <td>
                         <button
@@ -179,6 +181,7 @@ export function Workbench({
                 </tbody>
               </table>
             )}
+            <Pager {...sessionPager} />
           </section>
         </section>
       )}
