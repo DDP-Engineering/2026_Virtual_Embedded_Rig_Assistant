@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-4eb926f2"
+
+title = "Verify the lighting engine against analytic and hand-calculated references"
+
+status = "active"
+
+requirement = """
+The lighting engine tests shall compare against analytic and hand-calculated references with tolerances fixed before the comparison and shall use only fictional photometry, project and report fixtures labelled as such, with their origin in the file.
+"""
+
+verification = "Inspection: the photometry, engine and tool tests state each oracle and its tolerance next to the assertion; the fixtures under tests/fixtures/lighting-design/ declare origin fictional and the fixtures README lists them."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/photometry.test.ts", "05_Software/src/libraries/core/src/electrical/lighting.test.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/photometry.test.ts", "05_Software/src/libraries/core/src/electrical/lighting.test.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

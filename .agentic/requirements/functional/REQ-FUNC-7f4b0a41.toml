@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7f4b0a41"
+
+title = "Mark exactly the results whose input entities changed as stale"
+
+status = "active"
+
+requirement = """
+When VERA lists electrical results, it shall report a valid result as stale, naming the changed and the removed entity IDs, exactly when the canonical hash of one of its input snapshots differs from the current entity or the entity no longer exists, and as current otherwise.
+"""
+
+verification = "Core unit tests with the fixture: results reading motor M1, the lighting circuit and the project; changing the rated power of M1 marks only the results that read M1 stale with M1 named; removing an input names it removed; a reordered but equal object stays current; with no model file every result is stale."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/results.ts", "05_Software/src/libraries/core/src/electrical/tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/results.test.ts", "05_Software/src/libraries/core/src/electrical/tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

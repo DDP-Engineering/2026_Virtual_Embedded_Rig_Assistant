@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a7193330"
+
+title = "Check capacitors, detuned reactors, contactors and step protection only against cited catalog data"
+
+status = "active"
+
+requirement = """
+When power_quality evaluates a step candidate, VERA shall derive the step output at the network voltage from the capacitor's cited rating, accept a capacitor and reactor pair only through an applicable cited detuned-step table entry, check capacitor rated voltage against the network voltage with tolerance and detuning, capacitor current with the measured harmonic voltages against its cited overcurrent capacity, non-linear share against its cited limit, a capacitor-duty contactor's cited kvar rating, and the protective device against the permissible current and the 10 x IN inrush rule, and shall give unknown for any absent, uncited or off-condition value.
+"""
+
+verification = "Core engine tests: the cited HDuty capacitor delivers 8.68 kvar at 400 V; LC1DFKP7 passes a 8.68 kvar step and fails a 26 kvar step; a capacitor with a reactor and no table entry is unknown; a fictional table entry passes; the EIG examples give IN 72 A and 108 A / 94 A within 1 %; a fuse below the permissible current fails."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

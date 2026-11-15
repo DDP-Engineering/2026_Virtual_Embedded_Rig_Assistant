@@ -1,0 +1,39 @@
+{
+  "kind": "vera-lighting-report",
+  "format": 1,
+  "id": "rep-office-a",
+  "project": "lgt-office-a",
+  "origin": "fictional",
+  "engine": {
+    "name": "DIALux evo",
+    "version": "fictional"
+  },
+  "mapping": "FICTIONAL record written by hand to exercise the mapping; no engine was run.",
+  "room": {
+    "length": 8,
+    "width": 6,
+    "height": 3
+  },
+  "lengthUnit": "m",
+  "maintenanceFactor": 0.8,
+  "photometry": [
+    {
+      "type": "typ-panel",
+      "file": "fict-panel.ldt"
+    }
+  ],
+  "surfaces": [
+    {
+      "scenario": "scn-work",
+      "name": "Working plane",
+      "height": 0.75,
+      "border": 0.5,
+      "luminaires": 12,
+      "average": 640,
+      "minimum": 430,
+      "maximum": 720,
+      "uniformity": 0.67,
+      "ugr": null
+    }
+  ]
+}

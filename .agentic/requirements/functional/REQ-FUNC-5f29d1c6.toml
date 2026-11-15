@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5f29d1c6"
+
+title = "Classify the harmonic configuration by the guide rule and leave harmonic filtering undesigned"
+
+status = "active"
+
+requirement = """
+When power_quality knows the harmonic generator power and the board fault level, VERA shall classify the installation by Gh/Ssc into standard, heavy-duty, detuned or filtering-needed per the cited guide rule, check each candidate's duty against that class and state that harmonic filtering is not designed when it is needed, and shall give unknown when Gh or Ssc is missing.
+"""
+
+verification = "Core engine tests: Gh 43 kVA at Ssc 11 MVA gives standard; Gh above Ssc/30 gives filtering-needed, fails every candidate and names that no filter is designed; no Gh gives unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

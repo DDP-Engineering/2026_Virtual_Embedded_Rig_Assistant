@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-b75d05b0"
+
+title = "Refuse relations that break endpoint types, cardinalities or a radial feed"
+
+status = "active"
+
+requirement = """
+If a relation joins object types its relation type does not allow, exceeds the relation type's cardinality, joins an object to itself, or closes a cycle of feeds relations, then VERA shall refuse the model as invalid and name the relation.
+"""
+
+verification = "Core unit tests on the fixture: feeds from a motor to a board, a second feeds into an already fed motor, a self-relation and a feeds cycle are each refused with the relation ID; the fixture's own relations are accepted; an unfed circuit is accepted and reported only as an issue."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

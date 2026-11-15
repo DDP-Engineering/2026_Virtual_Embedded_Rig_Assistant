@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-894dce2a"
+
+title = "Evaluate selectivity cascading and starter coordination only from manufacturer coordination tables"
+
+status = "active"
+
+requirement = """
+When the request names a selectivity, cascading or starter pair, VERA shall evaluate it only from a coordination table of the catalog for exactly those items - selectivity and cascading entries in the order [upstream, downstream] - whose kind and every condition the request covers - selectivity limit or enhanced breaking capacity against the maximum fault current, maximum gG fuse rating against the fuse - and shall report not-evaluated when no table applies and unknown when the table leaves a requested condition, such as the prospective current, unevaluated, never deriving coordination from curve overlap.
+"""
+
+verification = "Core unit tests: the real LC1D type-2 table gives the 20 A gG fuse a passing rating but the starter check is unknown because the table states no prospective current; a fuse above the table rating fails; a GV2ME14 + LC1D pair without a breaker table is not evaluated; a test selectivity table passes up to its limit and fails above it; a pair without a table, or with an entry for the reverse direction only, is not evaluated; a fuse rating that names no fuse class is unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

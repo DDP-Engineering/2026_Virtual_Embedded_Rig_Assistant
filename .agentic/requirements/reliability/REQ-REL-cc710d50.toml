@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-cc710d50"
+
+title = "Refuse a model change when the file changed after preparation"
+
+status = "active"
+
+requirement = """
+If the electrical model file changed between the preparation and the application of an electrical_model_change, then VERA shall refuse the write as a conflict and leave the file as it is.
+"""
+
+verification = "Core unit tests: two changes prepared on the same model; the first applies, the second fails with a conflict and the file holds only the first change; a change prepared before the file was created fails when another change created it."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/tools.ts", "05_Software/src/libraries/core/src/tools/changes.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

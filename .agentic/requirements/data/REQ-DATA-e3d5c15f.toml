@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-e3d5c15f"
+
+title = "Carry a structured logical connection and interlock scheme in the electrical result"
+
+status = "active"
+
+requirement = """
+When an electrical result carries assemblies, VERA shall accept them only as a strict list of at most 16 assemblies each naming a model motor and circuit, a method, a conditional flag, at most 16 devices (tag, role, catalog item or null, order code or null, optional setting), at most 32 power or control connections and at most 8 mechanical, electrical or sequence interlocks, and the report shall list them.
+"""
+
+verification = "Core unit tests: a result with an assembly validates and its report lists devices, connections and interlocks; an unknown key, a connection kind other than power or control and a 17th device are refused with the path."
+
+affected_paths = ["05_Software/src/libraries/shared/src/electrical-model.ts", "05_Software/src/libraries/core/src/electrical/report.ts", "05_Software/src/libraries/core/src/electrical/results.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

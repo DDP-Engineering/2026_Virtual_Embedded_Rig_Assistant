@@ -41,7 +41,16 @@ export interface FileChangeRequest {
   readonly sessionId: string;
   readonly turnId: string;
   readonly callId: string;
-  readonly tool: "write" | "edit" | "apply_candidate";
+  readonly tool:
+    | "write"
+    | "edit"
+    | "apply_candidate"
+    | "electrical_model_change"
+    | "electrical_network"
+    | "protection_coordination"
+    | "motor_drives"
+    | "power_quality"
+    | "lighting_design";
   readonly path: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly existed: boolean;

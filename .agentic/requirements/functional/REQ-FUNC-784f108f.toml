@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-784f108f"
+
+title = "Import an exchange file only through an explicit mapping"
+
+status = "active"
+
+requirement = """
+When an electrical_model_change imports a format-1 exchange file from the workbench, VERA shall merge its sources, objects and relations only through a mapping that names every imported ID as new or as an existing entity of the same kind and type, and refuse an invalid file, an unmapped ID or a mapping that gives an invalid model without preparing a write.
+"""
+
+verification = "Core unit tests: an exchange file with a new motor and its relation imports when every ID is mapped; one unmapped ID, a mapping to an object of another type, an exchange file with format 2 and a new ID colliding with an existing one are each refused and the model file stays unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/edit.ts", "05_Software/src/libraries/core/src/electrical/tools.ts", "05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

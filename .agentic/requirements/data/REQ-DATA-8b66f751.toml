@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-8b66f751"
+
+title = "Accept only strictly valid format-1 electrical results"
+
+status = "active"
+
+requirement = """
+When VERA reads a result file electrical-automation-results/<run-id>/result.json, it shall accept only a document of kind vera-electrical-result and format 1 whose run ID matches its folder and which passes the strict result schema and unit table, and otherwise list the result as invalid with its problem, never as current.
+"""
+
+verification = "Core unit tests: a completed result with pass, fail, unknown and not-evaluated criteria validates; checkResult refuses an unknown status or verdict, a wrong kind, a run ID different from its folder and a criterion in an unknown unit with the path; the results view lists a result whose run ID differs from its folder as invalid with that problem."
+
+affected_paths = ["05_Software/src/libraries/shared/src/electrical-model.ts", "05_Software/src/libraries/core/src/electrical/results.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/results.test.ts", "05_Software/src/libraries/core/src/electrical/tools.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-60a7e063"
+
+title = "Report unsupported topologies, sources and missing data as not evaluated or unknown, never pass"
+
+status = "active"
+
+requirement = """
+If the network is not radial LV three-phase AC from one supported source, a source is of another kind, a circuit has parallel or no cables, or an input a criterion needs is unknown, then VERA shall give the affected criteria the verdict not-evaluated or unknown with the reason, set the run status incomplete or blocked, and never report them as pass.
+"""
+
+verification = "Core unit tests: a generator source gives not-evaluated short-circuit values; an IT system gives no line-to-earth fault current; a DC or single-phase source and a cable tying two busbars block the run; a circuit with two parallel cables or none is not evaluated; an unknown motor efficiency gives unknown design current and verdicts, never zero; an IT system, missing minimum fault data, objects fed from no source, a given section without installation data and an unknown reactance give not-evaluated or unknown criteria; status is incomplete or blocked in each case and completed only when every criterion is pass or fail."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

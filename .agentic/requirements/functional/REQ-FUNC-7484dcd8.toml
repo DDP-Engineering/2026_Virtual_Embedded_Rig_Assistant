@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7484dcd8"
+
+title = "Compute the reactive compensation need per scenario to the stated displacement-factor target"
+
+status = "active"
+
+requirement = """
+When power_quality has P and Q1 for a scenario, VERA shall compute the compensation need P(tan phi1 - tan phi target), zero for a scenario already at or above the target or leading, for each network-result scenario at the board and for the measured intervals, and report the governing need and the resulting displacement and total power factor after compensation with the harmonic distortion power kept unchanged.
+"""
+
+verification = "Core engine tests: the EIG simplified example (500 kW, 0.75 to 0.93) gives 244 kvar within 1 %; the 0.8 to 0.93 ratio 0.355 kvar/kW within 1 %; network scenarios from a stored network result give the board's need; the total PF after compensation stays below the displacement factor when distortion power is non-zero."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

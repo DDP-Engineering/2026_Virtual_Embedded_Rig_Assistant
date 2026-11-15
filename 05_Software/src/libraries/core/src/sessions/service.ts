@@ -30,6 +30,7 @@ import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
 import { ArtifactStore } from "../artifacts/store.js";
+import { electricalToolOffered } from "../electrical/tools.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
@@ -76,6 +77,8 @@ export interface SessionHost {
   help?: HelpHost;
   /** Writing kicad-layout candidates over their boards; only hosts that enable it (with the official plugin) offer apply_candidate. */
   applyCandidate?: boolean;
+  /** IDs of the loaded electrical/automation plugins: the model tools need one, each plugin tool its own plugin. */
+  electricalPlugins?: readonly string[];
   downloads?: WebDownloads;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
@@ -714,6 +717,7 @@ export class SessionService {
       .filter((tool) => tool.name !== "parts_search" || !!this.host.parts)
       .filter((tool) => tool.name !== "help" || !!this.host.help)
       .filter((tool) => tool.name !== "apply_candidate" || !!this.host.applyCandidate)
+      .filter((tool) => electricalToolOffered(tool.name, this.host.electricalPlugins ?? []))
       .filter(
         (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,
       )

@@ -358,6 +358,58 @@ it("offers apply_candidate only while the official kicad-layout plugin is enable
   }
 });
 
+// REQ-SEC-4dfa2a5b
+it("enables the electrical model tools only while an electrical or automation plugin is loaded", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-host-electrical-"));
+  await mkdir(join(root, ".vera"));
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Panel" });
+  const plugin = (id: string, ecosystem: string) => ({
+    manifest: { id, ecosystem, description: "Plugin.", programs: {} },
+    record: { programs: {}, sha256: id.padEnd(64, "0"), tier: "official" },
+  });
+  let enabled: object[] = [];
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getConfig: async () => ({ config }),
+      getPinned: async () => ({ content: "" }),
+      skillCatalog: () => ({ list: async () => [] }),
+      loadPlugins: async () => enabled,
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+    gateway: () => ({ api: gateway }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (s: string) => s },
+    programs: { runner: {}, resolver: { resolve: async () => undefined } },
+  } as never);
+  const offered = () =>
+    host.run(
+      (service) =>
+        (service as unknown as { host: { electricalPlugins?: readonly string[] } }).host.electricalPlugins,
+    );
+  try {
+    expect(await offered()).toEqual([]);
+    enabled = [plugin("electrical-network", "electrical")];
+    host.invalidatePrograms();
+    expect(await offered()).toEqual(["electrical-network"]);
+    enabled = [plugin("plc-engineering", "automation"), plugin("kicad", "electronics")];
+    host.invalidatePrograms();
+    expect(await offered()).toEqual(["plc-engineering"]);
+    enabled = [plugin("kicad", "electronics")];
+    host.invalidatePrograms();
+    expect(await offered()).toEqual([]);
+  } finally {
+    await host.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 // REQ-FUNC-4fa3e396, REQ-SEC-3cb78ea6
 it("gives sessions the help host with the enabled plugins and names it in the prompt while offered", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-host-help-"));

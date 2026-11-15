@@ -31,6 +31,53 @@ it("converts every tool schema and validates samples while filtering disabled na
     plugin_install: { path: "plugins/fixture" },
     program_stop: { handle: "01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
     apply_candidate: { run: "electronics-results/r1" },
+    electrical_model: { view: "objects", type: "motor" },
+    electrical_model_change: {
+      operations: [
+        {
+          op: "update-object",
+          id: "mot-p1",
+          properties: { ratedPower: { value: null, unit: "kW", basis: "input" } },
+        },
+        { op: "import", path: "export.json", mapping: { "mot-x": "new" } },
+      ],
+    },
+    industrial_catalog: {
+      view: "select",
+      catalog: "cat-schneider-tesys",
+      requirements: [{ id: "ie", parameter: "ratedCurrent", op: ">=", value: { value: 9, unit: "A" } }],
+    },
+    electrical_network: {
+      cableTable: "tbl-test-cu-pvc",
+      voltageTolerance: 10,
+      scenarios: [{ id: "normal", title: "Normal operation", simultaneity: { "brd-main": 0.9 } }],
+      voltageDropLimit: { value: 4, unit: "%" },
+    },
+    protection_coordination: {
+      network: "20261115-100000-aaaa",
+      catalog: "cat-lv-protection",
+      breakingCapacity: "Icu",
+      circuits: [{ circuit: "cir-l1", candidates: ["itm-a9f74216"] }],
+    },
+    motor_drives: {
+      protection: "20261115-110000-bbbb",
+      catalog: "cat-motor-drives",
+      motors: [{ motor: "mot-p2", startingCurrentMax: 70, switchover: 0.8, contactor: "itm-lc1d18p7" }],
+    },
+    power_quality: {
+      board: "brd-main",
+      network: "20261115-100000-aaaa",
+      measurements: "meas-fictional-mdb-day",
+      catalog: "cat-pfc",
+      targetPowerFactor: 0.95,
+      steps: [{ capacitor: "itm-blrch125a150b48" }],
+    },
+    lighting_design: {
+      project: "lgt-office-a",
+      level: "verification",
+      report: "rep-office-a",
+      catalog: "cat-lighting",
+    },
     help: { page: "permissions" },
   };
   for (const tool of registry.available()) {
@@ -64,6 +111,14 @@ it("converts every tool schema and validates samples while filtering disabled na
     "plugin_validate",
     "plugin_install",
     "apply_candidate",
+    "electrical_model",
+    "electrical_model_change",
+    "industrial_catalog",
+    "electrical_network",
+    "protection_coordination",
+    "motor_drives",
+    "power_quality",
+    "lighting_design",
     "help",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");

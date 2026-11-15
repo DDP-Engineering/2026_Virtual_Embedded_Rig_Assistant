@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-840d2785"
+
+title = "Refuse invalid lighting inputs without preparing a result"
+
+status = "active"
+
+requirement = """
+If the lighting project, a photometry file, the report record or the catalog is missing, invalid, outside the workbench or (photometry) emits no light, the report record belongs to another project, the verification level has no report, or a type names a model load that is not a lighting load, then lighting_design shall refuse with the reason and prepare no result.
+"""
+
+verification = "Tool tests: an absent project, a report of another project, verification without report, a photometry name with a path separator, an absent and an unreadable photometry file, a load of category socket and a missing catalog each throw their message and leave the results folder empty."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting-tool.ts", "05_Software/src/libraries/core/src/electrical/lighting-files.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

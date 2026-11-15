@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-285949c8"
+
+title = "Store motor drives results through an approved prepared change with inputs that make them stale"
+
+status = "active"
+
+requirement = """
+When motor_drives is approved, VERA shall write exactly one new electrical-automation-results/<run-id>/result.json with producer motor-drives, the protection and network runs, the catalog reference and the input snapshots of the motors, circuits and cables it read, shall never change the model or configure any device, and shall return the same result for the same inputs.
+"""
+
+verification = "Core tool tests: applying writes one result and leaves the model bytes unchanged; changing the pump's inertia lists the result stale; two engine runs give identical criteria; the report view renders the assemblies."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives-tool.ts", "05_Software/src/libraries/core/src/electrical/result-change.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives-tool.test.ts", "05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-79118f9a"
+
+title = "Accept only a strictly valid motor drives request and read only named motor and catalog data"
+
+status = "active"
+
+requirement = """
+When motor_drives is called, VERA shall accept only a strict request (protection run, catalog, optional panel ambient and altitude, 1..4 unique model motors each fed by one circuit, process function flags, limits and catalog items of that catalog) and read only the named motor properties, results and catalog parameters, and shall otherwise throw before anything is prepared.
+"""
+
+verification = "Core engine tests: the fixture request validates; an unknown key, a load object as motor, an item missing from the catalog, a repeated motor and a fifth motor each throw with the reason and nothing is prepared."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

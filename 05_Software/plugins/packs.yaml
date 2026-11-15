@@ -63,3 +63,12 @@
     - { name: BLE devices (GATT), plugins: [ble-tools], default: true }
     - { name: Cloud simulation (Wokwi), plugins: [wokwi], default: false }
     - { name: Raspberry Pi Linux projects, plugins: [raspberry-pi-linux], default: false }
+- id: electrical
+  name: Electrical power and distribution
+  groups:
+    - { name: Industrial catalog and selection, plugins: [industrial-catalog], default: true }
+    - { name: "Network, cable sizing and short circuit", plugins: [electrical-network], default: true }
+    - { name: "Protection and coordination", plugins: [protection-coordination], default: true }
+    - { name: "Motor starting and drives", plugins: [motor-drives], default: true }
+    - { name: "Power quality and reactive compensation", plugins: [power-quality-pfc], default: true }
+    - { name: "Lighting design", plugins: [lighting-design], default: true }

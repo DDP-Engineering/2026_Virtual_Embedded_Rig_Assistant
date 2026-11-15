@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ca8c6870"
+
+title = "Apply a coordination table only to its exact products and conditions"
+
+status = "active"
+
+requirement = """
+When asked for coordination, the industrial catalog shall return only the entries whose item set equals the requested items and whose conditions the requested conditions satisfy, and shall report every other entry of the requested items as not applicable with the reason.
+"""
+
+verification = "Core unit tests: LC1D09P7 at 400 V on the power circuit returns the type 2 fuse entry 20 A gG; a request for LC1D12P7 returns only LC1D12P7 entries (25 A); LC1D09P7 at 1000 V is not applicable with reason conditions and without a voltage with reason missing-condition; an entry pairing LC1D09P7 with another item is not applicable with reason other-products; requested conditions a table does not name are listed as unevaluated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

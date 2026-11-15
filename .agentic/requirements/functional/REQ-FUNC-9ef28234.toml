@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9ef28234"
+
+title = "Propose a fixed or automatic bank with steps and control logic and check overcompensation with explicit criteria"
+
+status = "active"
+
+requirement = """
+When power_quality has a compensation need, VERA shall check a fixed bank of the governing need against every scenario's fundamental reactive power (overcompensation fails when the bank exceeds Q1 at any scenario) and against the commonly applied 15 % of transformer rating rule, and otherwise propose an automatic bank of equal steps whose count covers the need, whose step size reaches the target in every scenario without leading operation and whose count stays within the stated step limit, with a control-logic proposal that switches no step and sets no regulator.
+"""
+
+verification = "Core engine tests: a plant whose night Q1 is below the day need fails the fixed bank with the scenario named and gets an automatic proposal; a step larger than the target window at light load fails step-size; a step count above maxSteps fails; a constant load passes the fixed bank; the control logic text (at most 200 characters) names target, steps and the discharge delay and the result has no device setting."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-11cf80d0"
+
+title = "Write the electrical model in one canonical form that round-trips"
+
+status = "active"
+
+requirement = """
+When VERA writes the electrical model, it shall serialize it as two-space indented JSON with keys in schema order and a final newline, so that reading and writing a valid model keeps its IDs, references, relations, units, bases, conditions and provenance unchanged byte for byte.
+"""
+
+verification = "Core unit tests: the fixture file read and written again is byte-identical; a model built in another key order serializes to the same canonical bytes; every ID, relation, unit and source citation survives."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/model.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

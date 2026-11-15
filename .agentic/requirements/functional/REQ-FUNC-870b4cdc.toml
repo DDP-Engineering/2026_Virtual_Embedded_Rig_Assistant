@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-870b4cdc"
+
+title = "Check RCD type against the equipment requirement and sensitivity against the profile"
+
+status = "active"
+
+requirement = """
+When a circuit feeds equipment that states allowed RCD types or the request names an RCD or a maximum residual operating current, VERA shall pass the RCD type only when the RCD's cited type is one the equipment allows and the sensitivity only when its rated residual operating current is at most the requested maximum, shall fail a required RCD that is missing or of another type, and shall report not-evaluated when the equipment states no type.
+"""
+
+verification = "Core unit tests: a drive allowing only type B fails with a type A RCD and passes with type B; a drive with an allowed type and no RCD named fails; 30 mA passes a 30 mA maximum and 300 mA fails it; a load stating no type gives rcd-type not evaluated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

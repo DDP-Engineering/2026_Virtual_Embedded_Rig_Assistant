@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-003c3adc"
+
+title = "List unreadable or invalid catalogs without stopping the others"
+
+status = "active"
+
+requirement = """
+When a file in electrical-automation-catalogs is not valid JSON, invalid, too large, not an ordinary file or unreadable, the industrial catalog tool shall list it as invalid with the problem and still list and use the other catalogs, and shall refuse a selection from that catalog with the same problem.
+"""
+
+verification = "Core tool tests in a temporary workbench: a broken JSON file, a folder named *.json, a format-2 file and a file over 4 MiB are listed invalid with their problems next to the valid fixture; select on the broken one fails naming the problem; select on the valid one succeeds; a missing folder lists no catalogs."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

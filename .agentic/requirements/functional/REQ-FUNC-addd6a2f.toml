@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-addd6a2f"
+
+title = "Verify a scenario against a mapped photometric engine report"
+
+status = "active"
+
+requirement = """
+When lighting_design runs at level verification with a report record of a photometric engine, VERA shall check the record against the lighting project (room size, length unit, plane, maintenance factor, photometry files, luminaire count per scenario, evidence file sha256), give maintained-illuminance, uniformity and glare-ugr verdicts from the engine's values only when the record matches, keep them unknown with report-match failed when the record's surface for the scenario does not match (a record without such a surface fails report-match and leaves them not-evaluated), keep glare not-evaluated when the engine gives no UGR, compare the engine average with VERA's direct-component average, and mark the result not preliminary only for a matched record of origin engine with a verified evidence file.
+"""
+
+verification = "Core engine and tool tests: the fictional record matching the fixture gives pass/fail verdicts from its values and stays preliminary (origin fictional); a record with another room length or maintenance factor fails report-match and leaves the verdicts unknown; a record of origin engine with a workbench evidence file of the stated sha256 gives preliminary false, a wrong sha256 fails report-match; a UGR of null keeps glare-ugr not-evaluated; an engine average below 0.95 times the direct average fails report-consistency."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

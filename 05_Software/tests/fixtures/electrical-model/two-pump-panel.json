@@ -1,0 +1,791 @@
+{
+  "kind": "vera-electrical-model",
+  "format": 1,
+  "project": {
+    "id": "prj-two-pump",
+    "name": "Two-pump control panel",
+    "profile": {
+      "jurisdiction": "RO",
+      "domain": "LV industrial control panel",
+      "standards": [
+        {
+          "id": "IEC 60364",
+          "edition": null
+        },
+        {
+          "id": "IEC 60204-1",
+          "edition": null
+        }
+      ],
+      "limits": [
+        "Fictional verification fixture: the values come from a made-up brief, not from a real installation or product; no conformity is stated."
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "src-brief",
+      "kind": "user",
+      "title": "Two-pump panel brief (fictional VERA verification fixture)",
+      "revision": "1",
+      "date": "2026-11-15"
+    }
+  ],
+  "objects": [
+    {
+      "id": "sup-t1",
+      "type": "source",
+      "ref": "T1",
+      "name": "LV supply",
+      "attributes": {
+        "system": "TN-S"
+      },
+      "properties": {
+        "frequency": {
+          "value": 50,
+          "unit": "Hz",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        },
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        },
+        "shortCircuitCurrent": {
+          "value": null,
+          "unit": "kA",
+          "basis": "input",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          },
+          "note": "Not given by the brief; ask the network operator."
+        }
+      }
+    },
+    {
+      "id": "brd-main",
+      "type": "board",
+      "ref": "MCP1",
+      "name": "Main control panel",
+      "attributes": {
+        "ingressProtection": "IP54"
+      }
+    },
+    {
+      "id": "cir-m1",
+      "type": "circuit",
+      "ref": "C1",
+      "name": "Pump 1 feeder"
+    },
+    {
+      "id": "cir-m2",
+      "type": "circuit",
+      "ref": "C2",
+      "name": "Pump 2 feeder"
+    },
+    {
+      "id": "cir-l1",
+      "type": "circuit",
+      "ref": "C3",
+      "name": "Lighting"
+    },
+    {
+      "id": "prt-qf1",
+      "type": "protection",
+      "ref": "QF1",
+      "name": "Pump 1 motor protection breaker",
+      "attributes": {
+        "category": "motor-protection"
+      },
+      "properties": {
+        "ratedCurrent": {
+          "value": null,
+          "unit": "A",
+          "basis": "proposal",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          },
+          "note": "Selected by protection coordination."
+        }
+      }
+    },
+    {
+      "id": "prt-qf2",
+      "type": "protection",
+      "ref": "QF2",
+      "name": "Pump 2 motor protection breaker",
+      "attributes": {
+        "category": "motor-protection"
+      },
+      "properties": {
+        "ratedCurrent": {
+          "value": null,
+          "unit": "A",
+          "basis": "proposal",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          },
+          "note": "Selected by protection coordination."
+        }
+      }
+    },
+    {
+      "id": "prt-qf3",
+      "type": "protection",
+      "ref": "QF3",
+      "name": "Lighting breaker",
+      "attributes": {
+        "category": "mcb"
+      },
+      "properties": {
+        "ratedCurrent": {
+          "value": 10,
+          "unit": "A",
+          "basis": "proposal",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        }
+      }
+    },
+    {
+      "id": "cbl-w1",
+      "type": "cable",
+      "ref": "W1",
+      "name": "Pump 1 cable",
+      "properties": {
+        "crossSection": {
+          "value": null,
+          "unit": "mm²",
+          "basis": "proposal",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        },
+        "length": {
+          "value": 25,
+          "unit": "m",
+          "basis": "requirement",
+          "conditions": {
+            "ambientTemperature": {
+              "value": 30,
+              "unit": "°C"
+            }
+          },
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        }
+      }
+    },
+    {
+      "id": "cbl-w2",
+      "type": "cable",
+      "ref": "W2",
+      "name": "Pump 2 cable",
+      "properties": {
+        "crossSection": {
+          "value": null,
+          "unit": "mm²",
+          "basis": "proposal",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        },
+        "length": {
+          "value": 30,
+          "unit": "m",
+          "basis": "requirement",
+          "conditions": {
+            "ambientTemperature": {
+              "value": 30,
+              "unit": "°C"
+            }
+          },
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        }
+      }
+    },
+    {
+      "id": "cbl-w3",
+      "type": "cable",
+      "ref": "W3",
+      "name": "Lighting cable",
+      "properties": {
+        "crossSection": {
+          "value": 1.5,
+          "unit": "mm²",
+          "basis": "assumption",
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        },
+        "length": {
+          "value": 40,
+          "unit": "m",
+          "basis": "requirement",
+          "conditions": {
+            "ambientTemperature": {
+              "value": 30,
+              "unit": "°C"
+            }
+          },
+          "source": {
+            "id": "src-brief",
+            "page": "1"
+          }
+        }
+      }
+    },
+    {
+      "id": "mot-p1",
+      "type": "motor",
+      "ref": "M1",
+      "name": "Pump 1",
+      "attributes": {
+        "start": "direct-on-line"
+      },
+      "properties": {
+        "efficiency": {
+          "value": null,
+          "unit": "%",
+          "basis": "input",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        },
+        "powerFactor": {
+          "value": 0.82,
+          "unit": "1",
+          "basis": "assumption",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        },
+        "ratedCurrent": {
+          "value": null,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          },
+          "note": "Nameplate value not known yet."
+        },
+        "ratedPower": {
+          "value": 4,
+          "unit": "kW",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        }
+      }
+    },
+    {
+      "id": "mot-p2",
+      "type": "motor",
+      "ref": "M2",
+      "name": "Pump 2",
+      "attributes": {
+        "start": "direct-on-line"
+      },
+      "properties": {
+        "efficiency": {
+          "value": null,
+          "unit": "%",
+          "basis": "input",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        },
+        "powerFactor": {
+          "value": 0.82,
+          "unit": "1",
+          "basis": "assumption",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        },
+        "ratedCurrent": {
+          "value": null,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          },
+          "note": "Nameplate value not known yet."
+        },
+        "ratedPower": {
+          "value": 4,
+          "unit": "kW",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "2"
+          }
+        }
+      }
+    },
+    {
+      "id": "lod-e1",
+      "type": "load",
+      "ref": "E1",
+      "name": "Pump room lighting",
+      "attributes": {
+        "category": "lighting"
+      },
+      "properties": {
+        "power": {
+          "value": 600,
+          "unit": "W",
+          "basis": "requirement",
+          "source": {
+            "id": "src-brief",
+            "page": "3"
+          }
+        },
+        "powerFactor": {
+          "value": 0.95,
+          "unit": "1",
+          "basis": "assumption",
+          "source": {
+            "id": "src-brief",
+            "page": "3"
+          }
+        }
+      }
+    },
+    {
+      "id": "dev-km1",
+      "type": "device",
+      "ref": "KM1",
+      "name": "Pump 1 contactor",
+      "attributes": {
+        "category": "contactor"
+      }
+    },
+    {
+      "id": "dev-km2",
+      "type": "device",
+      "ref": "KM2",
+      "name": "Pump 2 contactor",
+      "attributes": {
+        "category": "contactor"
+      }
+    },
+    {
+      "id": "dev-a1",
+      "type": "device",
+      "ref": "A1",
+      "name": "PLC",
+      "attributes": {
+        "category": "plc"
+      }
+    },
+    {
+      "id": "sen-lt1",
+      "type": "sensor",
+      "ref": "LT1",
+      "name": "Tank level transmitter",
+      "attributes": {
+        "measures": "level",
+        "output": "4-20 mA"
+      }
+    },
+    {
+      "id": "io-di0",
+      "type": "io",
+      "ref": "I0.0",
+      "name": "Pump 1 running",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "io-di1",
+      "type": "io",
+      "ref": "I0.1",
+      "name": "Pump 2 running",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "io-di2",
+      "type": "io",
+      "ref": "I0.2",
+      "name": "Pump 1 fault",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "io-di3",
+      "type": "io",
+      "ref": "I0.3",
+      "name": "Pump 2 fault",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "io-do0",
+      "type": "io",
+      "ref": "Q0.0",
+      "name": "Pump 1 run command",
+      "attributes": {
+        "signal": "DO"
+      }
+    },
+    {
+      "id": "io-do1",
+      "type": "io",
+      "ref": "Q0.1",
+      "name": "Pump 2 run command",
+      "attributes": {
+        "signal": "DO"
+      }
+    },
+    {
+      "id": "io-ai0",
+      "type": "io",
+      "ref": "IW64",
+      "name": "Tank level",
+      "attributes": {
+        "signal": "AI"
+      },
+      "properties": {
+        "current": {
+          "value": null,
+          "unit": "mA",
+          "basis": "input",
+          "source": {
+            "id": "src-brief",
+            "page": "3"
+          },
+          "note": "4-20 mA scaling set at commissioning."
+        }
+      }
+    },
+    {
+      "id": "tag-p1-run",
+      "type": "tag",
+      "ref": "P1_Running"
+    },
+    {
+      "id": "tag-p2-run",
+      "type": "tag",
+      "ref": "P2_Running"
+    },
+    {
+      "id": "tag-p1-cmd",
+      "type": "tag",
+      "ref": "P1_Cmd"
+    },
+    {
+      "id": "tag-p2-cmd",
+      "type": "tag",
+      "ref": "P2_Cmd"
+    },
+    {
+      "id": "tag-level",
+      "type": "tag",
+      "ref": "Tank_Level"
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel-feed-board",
+      "type": "feeds",
+      "from": "sup-t1",
+      "to": "brd-main"
+    },
+    {
+      "id": "rel-feed-c1",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-feed-c2",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-m2"
+    },
+    {
+      "id": "rel-feed-c3",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-l1"
+    },
+    {
+      "id": "rel-feed-m1",
+      "type": "feeds",
+      "from": "cir-m1",
+      "to": "mot-p1"
+    },
+    {
+      "id": "rel-feed-m2",
+      "type": "feeds",
+      "from": "cir-m2",
+      "to": "mot-p2"
+    },
+    {
+      "id": "rel-feed-e1",
+      "type": "feeds",
+      "from": "cir-l1",
+      "to": "lod-e1"
+    },
+    {
+      "id": "rel-board-prt-qf1",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "prt-qf1"
+    },
+    {
+      "id": "rel-board-prt-qf2",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "prt-qf2"
+    },
+    {
+      "id": "rel-board-prt-qf3",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "prt-qf3"
+    },
+    {
+      "id": "rel-board-dev-km1",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-km1"
+    },
+    {
+      "id": "rel-board-dev-km2",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-km2"
+    },
+    {
+      "id": "rel-board-dev-a1",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-a1"
+    },
+    {
+      "id": "rel-plc-io-di0",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-di0"
+    },
+    {
+      "id": "rel-plc-io-di1",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-di1"
+    },
+    {
+      "id": "rel-plc-io-di2",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-di2"
+    },
+    {
+      "id": "rel-plc-io-di3",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-di3"
+    },
+    {
+      "id": "rel-plc-io-do0",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-do0"
+    },
+    {
+      "id": "rel-plc-io-do1",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-do1"
+    },
+    {
+      "id": "rel-plc-io-ai0",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-ai0"
+    },
+    {
+      "id": "rel-protect-c1",
+      "type": "protects",
+      "from": "prt-qf1",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-protect-c2",
+      "type": "protects",
+      "from": "prt-qf2",
+      "to": "cir-m2"
+    },
+    {
+      "id": "rel-protect-c3",
+      "type": "protects",
+      "from": "prt-qf3",
+      "to": "cir-l1"
+    },
+    {
+      "id": "rel-route-w1",
+      "type": "routes",
+      "from": "cbl-w1",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-route-w2",
+      "type": "routes",
+      "from": "cbl-w2",
+      "to": "cir-m2"
+    },
+    {
+      "id": "rel-route-w3",
+      "type": "routes",
+      "from": "cbl-w3",
+      "to": "cir-l1"
+    },
+    {
+      "id": "rel-control-m1",
+      "type": "controls",
+      "from": "dev-km1",
+      "to": "mot-p1"
+    },
+    {
+      "id": "rel-control-m2",
+      "type": "controls",
+      "from": "dev-km2",
+      "to": "mot-p2"
+    },
+    {
+      "id": "rel-command-km1",
+      "type": "controls",
+      "from": "io-do0",
+      "to": "dev-km1"
+    },
+    {
+      "id": "rel-command-km2",
+      "type": "controls",
+      "from": "io-do1",
+      "to": "dev-km2"
+    },
+    {
+      "id": "rel-signal-km1",
+      "type": "signals",
+      "from": "dev-km1",
+      "to": "io-di0"
+    },
+    {
+      "id": "rel-signal-km2",
+      "type": "signals",
+      "from": "dev-km2",
+      "to": "io-di1"
+    },
+    {
+      "id": "rel-signal-qf1",
+      "type": "signals",
+      "from": "prt-qf1",
+      "to": "io-di2"
+    },
+    {
+      "id": "rel-signal-qf2",
+      "type": "signals",
+      "from": "prt-qf2",
+      "to": "io-di3"
+    },
+    {
+      "id": "rel-signal-lt1",
+      "type": "signals",
+      "from": "sen-lt1",
+      "to": "io-ai0"
+    },
+    {
+      "id": "rel-tag-p1-run",
+      "type": "tag-of",
+      "from": "tag-p1-run",
+      "to": "io-di0"
+    },
+    {
+      "id": "rel-tag-p2-run",
+      "type": "tag-of",
+      "from": "tag-p2-run",
+      "to": "io-di1"
+    },
+    {
+      "id": "rel-tag-p1-cmd",
+      "type": "tag-of",
+      "from": "tag-p1-cmd",
+      "to": "io-do0"
+    },
+    {
+      "id": "rel-tag-p2-cmd",
+      "type": "tag-of",
+      "from": "tag-p2-cmd",
+      "to": "io-do1"
+    },
+    {
+      "id": "rel-tag-level",
+      "type": "tag-of",
+      "from": "tag-level",
+      "to": "io-ai0"
+    }
+  ]
+}

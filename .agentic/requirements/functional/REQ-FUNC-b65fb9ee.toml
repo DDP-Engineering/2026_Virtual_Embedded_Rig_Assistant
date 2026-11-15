@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b65fb9ee"
+
+title = "Check breaking capacity with the capacity kind the profile names at the circuit voltage"
+
+status = "active"
+
+requirement = """
+When a candidate is evaluated on a circuit, VERA shall compare the breaking capacity of the kind the request names - Icu (ultimateBreakingCapacity), Ics (serviceBreakingCapacity, or serviceBreakingCapacityRatio times Icu at the same conditions) or Icn (ratedBreakingCapacity) for breakers, and ratedBreakingCapacity for fuse links - whose conditions cover the circuit voltage, with the maximum three-phase fault current at the circuit origin from the network result, and shall report pass when it is at least that current and fail when it is lower.
+"""
+
+verification = "Core unit tests with the cited fixture and network A (Ik3max at the main board 16.15 kA): iC60N 3P C40 fails Icu (10 kA at 380..415 V), GV2ME14 passes (100 kA), a gG fuse passes (120 kA); with basis Icn the iC60N 3P C16 fails at the sub-board (6000 A < 6.40 kA); with basis Icn the iC60N 2P on a 230 V circuit is unknown (Icn only at 400 V); with basis Ics the GV2ME14 uses 100 % x 100 kA."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ca72aaff"
+
+title = "Estimate average illuminance with the lumen method as a preliminary result"
+
+status = "active"
+
+requirement = """
+When lighting_design runs at level preliminary for an interior scenario, VERA shall compute the room index k = L W / (hm (L + W)), take the utilisation factor only from a cited entry of the lighting project for the same luminaire type and reflectances at k or interpolated linearly between the two neighbouring tabulated room indices, estimate the maintained average illuminance N Phi UF MF d / A and the number of luminaires needed, label the result preliminary, and keep the estimate unknown when no such entry exists or the luminaires are not at one mounting height.
+"""
+
+verification = "Core engine tests: a hand-calculated room (8 x 6 x 3 m, plane 0.75 m, luminaires at 2.8 m) gives k within 0.5 % and the estimate within 0.5 % of N Phi UF MF / A; a k between two entries interpolates linearly; entries with other reflectances or no entry leave the estimate unknown; mixed mounting heights leave it unknown; the result has preliminary true and the criterion estimated-average-illuminance."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

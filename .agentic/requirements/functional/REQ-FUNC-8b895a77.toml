@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8b895a77"
+
+title = "Render a stored electrical result as a report with its freshness"
+
+status = "active"
+
+requirement = """
+When the agent calls electrical_model with view report and a run ID, VERA shall return a Markdown report of that stored result with its producer, method, status, preliminary notice, freshness with the changed or removed inputs, conditions, assumptions, criteria with verdicts, intermediate values and limits, and refuse a missing or invalid run with its problem.
+"""
+
+verification = "Core tool tests: the report of a stored network result names the method, the scenarios (conditions), each criterion with its verdict and governing note, the fault currents and the table conditions; after a cable change it shows stale with that cable; an unknown run ID is refused."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/report.ts", "05_Software/src/libraries/core/src/electrical/tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

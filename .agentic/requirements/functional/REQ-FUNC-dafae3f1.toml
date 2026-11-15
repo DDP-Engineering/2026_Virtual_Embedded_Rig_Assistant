@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-dafae3f1"
+
+title = "Diagnose wrong scale, units and orientation and missing photometry"
+
+status = "active"
+
+requirement = """
+If a lighting project or its photometry shows a wrong scale, unit or orientation or inconsistent photometric data, then lighting_design shall report it as a failed geometry, placement or photometry criterion with the reason and shall block the scenarios it affects, or shall name it in a message when the calculation can continue.
+"""
+
+verification = "Core engine tests: a room of 6000 m (mm entered as m) fails geometry and blocks; a luminaire above the ceiling, below the plane or outside the room fails placement; a luminaire tilted 180 degrees is named as giving almost no direct light to the plane; an IES with a luminous dimension above 5 m names the units type; a relative photometry with a light output ratio above 1.05 fails photometry and blocks its scenarios."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts", "05_Software/src/libraries/core/src/electrical/photometry.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts", "05_Software/src/libraries/core/src/electrical/photometry.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,77 @@
+{
+  "kind": "vera-electrical-model",
+  "format": 1,
+  "project": {
+    "id": "prj-office-a",
+    "name": "Office A (fictional lighting fixture)",
+    "profile": {
+      "jurisdiction": null,
+      "domain": null,
+      "standards": [],
+      "limits": [
+        "Fictional verification fixture for the lighting-design engine: made-up room and products, no real installation; no conformity is stated."
+      ]
+    }
+  },
+  "sources": [],
+  "objects": [
+    {
+      "id": "brd-sdb",
+      "type": "board",
+      "ref": "SDB",
+      "name": "Sub-distribution board"
+    },
+    {
+      "id": "cir-l1",
+      "type": "circuit",
+      "ref": "L1",
+      "name": "Office lighting"
+    },
+    {
+      "id": "lod-l1",
+      "type": "load",
+      "ref": "E1",
+      "name": "Office A luminaires",
+      "attributes": {
+        "category": "lighting"
+      },
+      "properties": {
+        "activePower": {
+          "value": 0.432,
+          "unit": "kW",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "lod-s1",
+      "type": "load",
+      "ref": "X1",
+      "name": "Sockets",
+      "attributes": {
+        "category": "socket"
+      },
+      "properties": {
+        "activePower": {
+          "value": 2,
+          "unit": "kW",
+          "basis": "input"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel-sdb-l1",
+      "type": "feeds",
+      "from": "brd-sdb",
+      "to": "cir-l1"
+    },
+    {
+      "id": "rel-l1-e1",
+      "type": "feeds",
+      "from": "cir-l1",
+      "to": "lod-l1"
+    }
+  ]
+}

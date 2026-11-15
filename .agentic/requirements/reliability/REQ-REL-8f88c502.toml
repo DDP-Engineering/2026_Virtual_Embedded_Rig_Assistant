@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-8f88c502"
+
+title = "Report incomplete data, other product kinds and uncovered conditions as unknown or not evaluated"
+
+status = "active"
+
+requirement = """
+If a value, band, tolerance, operating time, condition or product kind needed by a criterion is absent, only extracted, outside the requested conditions or of another capacity kind, then VERA shall report that criterion unknown or not-evaluated with the reason and shall never report pass for it; a candidate passes its selection only when every criterion passes, and the run is completed only when every criterion is pass or fail.
+"""
+
+verification = "Core unit tests: GV2ME14 with only average curves and no magnetic tolerance gives disconnection unknown; a family of another category gives device-kind not-evaluated; an extracted value and a band point stated for other conditions are unknown; the generic breakingCapacity parameter is never used; a run with any unknown criterion is incomplete and the candidate selection unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

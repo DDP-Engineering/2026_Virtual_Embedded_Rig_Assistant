@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e86a35c5"
+
+title = "Declare emergency and exterior lighting profiles not supported"
+
+status = "active"
+
+requirement = """
+If the lighting project's profile is emergency or exterior, then lighting_design shall store a blocked result whose profile criterion is not-evaluated with the statement that the profile has its own criteria and sources and is not supported in this delivery, and shall evaluate nothing else.
+"""
+
+verification = "Core engine tests: the fixture with profile emergency and with profile exterior gives status blocked, one not-evaluated profile criterion naming the profile, and no illuminance values."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

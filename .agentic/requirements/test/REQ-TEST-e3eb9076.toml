@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-e3eb9076"
+
+title = "Network calculations agree with independent references within preset tolerances"
+
+status = "active"
+
+requirement = """
+The network tests shall compare load balance, voltage drop and fault currents with independent references - hand calculations written out in the test and values computed by pandapower 3.1.2 - within tolerances fixed in the test before the comparison.
+"""
+
+verification = "Inspection: the test file states each reference with its source and tolerance before the assertion; the opt-in pandapower test (VERA_PANDAPOWER_PYTHON) recomputes the recorded values with tests/support/pandapower_network_check.py and agrees within the same tolerance."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network.test.ts", "05_Software/tests/support/pandapower_network_check.py"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

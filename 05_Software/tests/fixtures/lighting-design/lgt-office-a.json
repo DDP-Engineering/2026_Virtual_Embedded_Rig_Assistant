@@ -1,0 +1,197 @@
+{
+  "kind": "vera-lighting-project",
+  "format": 1,
+  "id": "lgt-office-a",
+  "title": "Office A, 8 x 6 x 3 m, 12 panels (FICTIONAL test project)",
+  "origin": "fictional",
+  "profile": "interior",
+  "lengthUnit": "m",
+  "room": {
+    "length": 8,
+    "width": 6,
+    "height": 3
+  },
+  "reflectances": {
+    "ceiling": 0.7,
+    "walls": 0.5,
+    "floor": 0.2
+  },
+  "plane": {
+    "height": 0.75,
+    "border": 0.5,
+    "spacing": 0.25
+  },
+  "maintenanceFactor": {
+    "value": 0.8,
+    "source": "user-entered for this fictional fixture (LED, clean office)"
+  },
+  "types": [
+    {
+      "id": "typ-panel",
+      "photometry": "fict-panel.ldt",
+      "orderCode": "FICT-P40",
+      "load": "lod-l1"
+    }
+  ],
+  "luminaires": [
+    {
+      "id": "lum-1",
+      "type": "typ-panel",
+      "x": 1,
+      "y": 1,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-2",
+      "type": "typ-panel",
+      "x": 3,
+      "y": 1,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-3",
+      "type": "typ-panel",
+      "x": 5,
+      "y": 1,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-4",
+      "type": "typ-panel",
+      "x": 7,
+      "y": 1,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-5",
+      "type": "typ-panel",
+      "x": 1,
+      "y": 3,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-6",
+      "type": "typ-panel",
+      "x": 3,
+      "y": 3,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-7",
+      "type": "typ-panel",
+      "x": 5,
+      "y": 3,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-8",
+      "type": "typ-panel",
+      "x": 7,
+      "y": 3,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-9",
+      "type": "typ-panel",
+      "x": 1,
+      "y": 5,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-10",
+      "type": "typ-panel",
+      "x": 3,
+      "y": 5,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-11",
+      "type": "typ-panel",
+      "x": 5,
+      "y": 5,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    },
+    {
+      "id": "lum-12",
+      "type": "typ-panel",
+      "x": 7,
+      "y": 5,
+      "z": 2.8,
+      "rotation": 0,
+      "tilt": 0
+    }
+  ],
+  "requirements": [
+    {
+      "id": "req-office",
+      "title": "Writing, typing, reading (fictional values)",
+      "maintainedIlluminance": 500,
+      "uniformityMin": 0.6,
+      "ugrMax": 19,
+      "source": "user-entered fictional requirement, not copied from a standard"
+    },
+    {
+      "id": "req-cleaning",
+      "title": "Cleaning (fictional value)",
+      "maintainedIlluminance": 100,
+      "source": "user-entered fictional requirement"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "scn-work",
+      "title": "Work",
+      "requirement": "req-office"
+    },
+    {
+      "id": "scn-cleaning",
+      "title": "Cleaning, dimmed to 50 %",
+      "requirement": "req-cleaning",
+      "dimming": 0.5
+    }
+  ],
+  "utilisationFactors": [
+    {
+      "type": "typ-panel",
+      "roomIndex": 1.5,
+      "ceiling": 0.7,
+      "walls": 0.5,
+      "floor": 0.2,
+      "value": 0.7,
+      "basis": "luminaire",
+      "source": "fictional UF table of FICT-P40, row k = 1.5"
+    },
+    {
+      "type": "typ-panel",
+      "roomIndex": 2,
+      "ceiling": 0.7,
+      "walls": 0.5,
+      "floor": 0.2,
+      "value": 0.76,
+      "basis": "luminaire",
+      "source": "fictional UF table of FICT-P40, row k = 2.0"
+    }
+  ]
+}

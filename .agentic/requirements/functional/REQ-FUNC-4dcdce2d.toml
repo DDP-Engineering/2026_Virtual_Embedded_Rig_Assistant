@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4dcdce2d"
+
+title = "Store protection results through an approved prepared change with inputs that make them stale"
+
+status = "active"
+
+requirement = """
+When protection_coordination is approved, VERA shall write exactly one new electrical-automation-results/<run-id>/result.json with producer protection-coordination, the catalog reference, the network run and the input snapshots of every model entity the network result and the run read, shall never change the model or any device, and shall return the same criteria for the same model, network result, catalog and request.
+"""
+
+verification = "Core tool tests: preparing and applying writes one result file and leaves the model bytes unchanged; the result lists the network inputs; changing a cable length afterwards lists the protection result as stale; two runs with the same inputs give identical criteria; the report view renders it."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection-tool.ts", "05_Software/src/libraries/core/src/electrical/protection.ts", "05_Software/src/libraries/core/src/electrical/result-change.ts", "05_Software/src/libraries/core/src/electrical/network-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

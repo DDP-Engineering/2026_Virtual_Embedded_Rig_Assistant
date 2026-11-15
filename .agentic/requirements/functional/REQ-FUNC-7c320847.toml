@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7c320847"
+
+title = "Store power quality results through an approved prepared change, stale with the board inputs, switching nothing"
+
+status = "active"
+
+requirement = """
+When power_quality runs, VERA shall prepare one new result file through the write flow with the network result's inputs and the board's subtree copied as input snapshots, the measurement and catalog stamps in its conditions and a preliminary-result statement, and shall never change the model, switch a step or apply a regulator setting.
+"""
+
+verification = "Core tool tests: the prepared change creates only electrical-automation-results/<run-id>/result.json; after apply the result lists as current; changing a load under the board marks it stale; the conditions carry the measurement sha256; the model bytes are unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality-tool.ts", "05_Software/src/libraries/core/src/electrical/result-change.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
