@@ -3072,6 +3072,8 @@ legend {
 .about-hero {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1.5rem;
   padding: 1.25rem 1.5rem;
   border-radius: var(--radius);
@@ -3079,7 +3081,7 @@ legend {
   color: #e6f4f1;
 }
 .about-logo {
-  height: 5rem;
+  height: 6rem;
   width: auto;
   flex-shrink: 0;
 }
@@ -3163,4 +3165,96 @@ legend {
 }
 :root[data-theme="dark"] .maker-logo-dark {
   display: block;
+}
+/* Workbench overview: header, two cards of label/value rows, and a sessions card. */
+.workbench-overview .overview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.overview-title h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+.overview-title p {
+  margin: 0.25rem 0 0;
+}
+.overview-folder {
+  color: var(--muted-foreground);
+}
+.overview-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: 1rem;
+}
+.overview-card {
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--muted);
+  min-width: 0;
+}
+.overview-card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+.overview-card dl {
+  margin: 0;
+}
+.overview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+}
+.overview-row + .overview-row {
+  border-top: 1px solid var(--border);
+}
+.overview-row dt {
+  color: var(--muted-foreground);
+}
+.overview-row dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.overview-sessions {
+  width: 100%;
+  border-collapse: collapse;
+}
+.overview-sessions th {
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+}
+.overview-sessions td {
+  padding: 0.45rem 0.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.overview-sessions th:not(:first-child),
+.overview-sessions td:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+}
+.overview-session-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.overview-session-link:hover,
+.overview-session-link:focus-visible {
+  text-decoration: underline;
 }

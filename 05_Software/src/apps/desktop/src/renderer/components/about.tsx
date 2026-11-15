@@ -27,7 +27,6 @@ export function About({ info }: { info: AppInfo }) {
   return (
     <div className="about" data-about>
       <header className="about-hero">
-        <img className="about-logo" src={ddpLogo} alt="DDP Engineering" />
         <div>
           <p className="about-name">{info.name}</p>
           <p className="about-full-name">{t("about.fullName")}</p>
@@ -45,6 +44,7 @@ export function About({ info }: { info: AppInfo }) {
             </p>
           ))}
         </div>
+        <img className="about-logo" src={ddpLogo} alt="DDP Engineering" />
       </header>
       <section className="about-block">
         <h3>{t("about.application")}</h3>

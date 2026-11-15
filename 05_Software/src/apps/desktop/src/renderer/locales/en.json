@@ -724,8 +724,9 @@
     "unsavedChanges": "Unsaved changes"
   },
   "overview": {
+    "agentGroup": "Agent",
+    "indexGroup": "Documents and index",
     "title": "Workbench overview",
-    "folder": "Folder",
     "model": "Conversation model",
     "appDefault": "Application default",
     "permissions": "Permissions",

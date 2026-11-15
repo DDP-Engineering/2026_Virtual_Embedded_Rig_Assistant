@@ -724,8 +724,9 @@
     "unsavedChanges": "Modificări nesalvate"
   },
   "overview": {
+    "agentGroup": "Agent",
+    "indexGroup": "Documente și index",
     "title": "Prezentare workbench",
-    "folder": "Folder",
     "model": "Model conversație",
     "appDefault": "Setarea aplicației",
     "permissions": "Permisiuni",

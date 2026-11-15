@@ -724,8 +724,9 @@
     "unsavedChanges": "Ungespeicherte Änderungen"
   },
   "overview": {
+    "agentGroup": "Agent",
+    "indexGroup": "Dokumente und Index",
     "title": "Workbench-Übersicht",
-    "folder": "Ordner",
     "model": "Gesprächsmodell",
     "appDefault": "App-Standard",
     "permissions": "Berechtigungen",
