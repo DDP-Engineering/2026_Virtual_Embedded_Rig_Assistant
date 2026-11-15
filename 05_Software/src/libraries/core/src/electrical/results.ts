@@ -40,6 +40,13 @@ export function checkResult(
         return value ? [[`criteria[${index}].${end}.unit`, value.unit] as [string, string]] : [];
       }),
     ),
+    ...(result.assemblies ?? []).flatMap((assembly, index) =>
+      assembly.devices.flatMap((device, at) =>
+        device.setting
+          ? [[`assemblies[${index}].devices[${at}].setting.unit`, device.setting.unit] as [string, string]]
+          : [],
+      ),
+    ),
   ];
   for (const [path, unit] of units) {
     const message = unitProblem(unit);

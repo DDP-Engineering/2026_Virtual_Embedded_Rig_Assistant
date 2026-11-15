@@ -69,3 +69,4 @@
     - { name: Industrial catalog and selection, plugins: [industrial-catalog], default: true }
     - { name: "Network, cable sizing and short circuit", plugins: [electrical-network], default: true }
     - { name: "Protection and coordination", plugins: [protection-coordination], default: true }
+    - { name: "Motor starting and drives", plugins: [motor-drives], default: true }

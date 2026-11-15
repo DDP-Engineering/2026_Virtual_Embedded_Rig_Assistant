@@ -19,7 +19,9 @@ Each ticket runs only its focused tests; the complete suite runs once after PWR-
 STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. PWR-01 implemented
 2026-11-15 (AEGIS TASK-15cb5dad), native Ubuntu and licensed coordination tables open. PWR-02 implemented
 2026-11-15 (AEGIS TASK-662ede41), native Ubuntu and licensed IEC cable tables open. PWR-03 implemented 2026-11-15
-(AEGIS TASK-0184d2d1), native Ubuntu, public selectivity/type-2 tables with Iq and numeric tripping bands open.
+(AEGIS TASK-0184d2d1), native Ubuntu, public selectivity/type-2 tables with Iq and numeric tripping bands open. PWR-04
+implemented 2026-11-15 (AEGIS TASK-37f3835b), native Ubuntu and data the public pages do not give (softstarter starts
+per hour, drive EMC category and motor cable length, GV2ME trip class) open.
 
 ## Order
 
@@ -29,7 +31,7 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
 | 2 | PWR-01 | [#127](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/127) | `industrial-catalog`: manufacturer + order code + variant + accessories, conditioned parameters, documented selection | PWR-00 | implemented |
 | 3 | PWR-02 | [#128](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/128) | `electrical-network`: load balance, cable sizing, voltage drop, short circuit on radial LV networks | PWR-00 | implemented |
 | 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | implemented |
-| 5 | PWR-04 | [#130](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/130) | `motor-drives`: DOL, reversing, star-delta, softstarter or VFD choice and starter assembly | PWR-01, PWR-03 | planned |
+| 5 | PWR-04 | [#130](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/130) | `motor-drives`: DOL, reversing, star-delta, softstarter or VFD choice and starter assembly | PWR-01, PWR-03 | implemented |
 | 6 | PWR-05 | [#131](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/131) | `power-quality-pfc`: P/Q/S and harmonic profiles, compensation need, capacitor bank steps | PWR-01, PWR-02 | planned |
 | 7 | PWR-06 | [#132](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/132) | `lighting-design`: preliminary estimate, IES/LDT import, DIALux exchange and report check | PWR-00, PWR-01 | planned |
 
@@ -128,3 +130,31 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
 - Open: native Ubuntu (WSL2 only); public manufacturer selectivity/cascading and type-2 breaker tables with the
   prospective current Iq, numeric instantaneous operating times, fuse time-current gates and I2t values (download- or
   licence-only), so those criteria stay unknown or not evaluated with the real fixture.
+
+## PWR-04 #130 - motor starting and drives
+
+- Engine `vera-motor-drives-1` in product code (core `electrical/motor-drives.ts`, pure), tool `motor_drives` (write: one
+  new result through `result-change.ts`), spec `.agentic/specs/REQ-DATA-79118f9a.md`. Plugin `motor-drives` (ecosystem
+  electrical, no program) brings the skill `motor-starting` and joins the Electrical power and distribution pack.
+- Inputs: one CURRENT `protection-coordination` result and the network result it names (stale, missing or foreign ones
+  are refused), one catalog, the motors of the model with nameplate, torque ratios, inertias, load torque and
+  characteristic; process function and limits (reversing, speed control, inching, starting-current limit, acceleration
+  and stop time, star-delta switch-over, softstarter current limit, panel ambient and altitude) in the request.
+- Per motor: DOL, reversing, star-delta, softstarter and VFD against the process function, star-delta eligibility
+  (6 terminals, delta winding at the network voltage), line starting current, accelerating torque (Kloss above
+  breakdown speed, the pull-up torque below it) and acceleration time by integration, starts per hour; the simplest
+  passing method is proposed, conditional when a simpler one or the assembly is open. Assembly: contactors at their
+  position current and utilisation category, the mechanical-interlock accessory, overload relay setting and cited
+  class band, softstarter or drive by continuous and transient current per duty class with cited derating; braking,
+  EMC and motor cable only from cited data; protection and starter verdicts copied from PWR-03. The result carries a
+  logical connection and interlock scheme (`assemblies`) for the CAD epic's panel-engineering adapter.
+- Tool gating (coordinator decision): each plugin tool is offered only while its own plugin is loaded; the model tools
+  while any electrical or automation plugin is loaded.
+- References fixed before the comparison: closed-form hand calculations (0.5 %) and ABB's worked starting-time example
+  (25 %; -5.6 % constant and +0.5 % quadratic load).
+- Fixtures: fictional plant M (fan -> DOL, pump -> star-delta, conveyor -> VFD with star-delta not admitted) and
+  `cat-motor-drives.json` with TeSys LRD21, LAD9V2, Altistart 22 ATS22D32Q and Altivar Process ATV930U75N4 from se.com UK
+  pages, the class 10A band from se.com FAQ FA22893 and the GV2ME10, LC1D and C10G items of the earlier fixtures, read
+  2026-11-15.
+- Open: native Ubuntu (WSL2 only); softstarter starts per hour, the drive's EMC category and maximum motor cable length
+  and the GV2ME trip class are not on the public pages, so those checks stay unknown with the real fixture.

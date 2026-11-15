@@ -8,7 +8,7 @@ export const unitDimensions: Readonly<Record<string, readonly string[]>> = {
   "apparent-power": ["VA", "kVA", "MVA"],
   "reactive-power": ["var", "kvar", "Mvar"],
   energy: ["J", "Wh", "kWh", "MWh"],
-  frequency: ["Hz"],
+  frequency: ["Hz", "kHz"],
   resistance: ["Ω", "mΩ", "kΩ"],
   capacitance: ["F", "mF", "µF"],
   inductance: ["H", "mH", "µH"],
@@ -23,6 +23,8 @@ export const unitDimensions: Readonly<Record<string, readonly string[]>> = {
   illuminance: ["lx"],
   "luminous-efficacy": ["lm/W"],
   "let-through-energy": ["A²s", "kA²s"],
+  inertia: ["kg·m²"],
+  rate: ["1/h"],
 };
 
 /** Property names whose unit must belong to one dimension; any other name takes any unit of the table. */
@@ -84,6 +86,33 @@ export const knownProperties: Readonly<Record<string, string>> = {
   capacitance: "capacitance",
   inductance: "inductance",
   startTime: "time",
+  startingTorqueRatio: "ratio",
+  pullUpTorqueRatio: "ratio",
+  breakdownTorqueRatio: "ratio",
+  inertia: "inertia",
+  loadInertia: "inertia",
+  loadTorque: "torque",
+  breakawayTorque: "torque",
+  lockedRotorTime: "time",
+  startsPerHour: "rate",
+  startsPerHourMax: "rate",
+  terminals: "ratio",
+  altitude: "length",
+  altitudeMin: "length",
+  altitudeMax: "length",
+  overloadCurrent: "current",
+  overloadTime: "time",
+  currentMultiple: "ratio",
+  tripTimeMin: "time",
+  tripTimeMax: "time",
+  currentLimitMax: "ratio",
+  inputCurrentMax: "current",
+  supplyVoltageMin: "voltage",
+  supplyVoltageMax: "voltage",
+  motorCableLengthMax: "length",
+  ambientDeratingPerKelvin: "ratio",
+  altitudeDeratingPer100m: "ratio",
+  switchingFrequency: "frequency",
 };
 
 /** Factor (and offset, for °C) to the base unit of each unit's dimension: value * factor + offset. */
@@ -108,6 +137,7 @@ const unitScales: Readonly<Record<string, readonly [number, number?]>> = {
   kWh: [3.6e6],
   MWh: [3.6e9],
   Hz: [1],
+  kHz: [1e3],
   Ω: [1],
   mΩ: [1e-3],
   kΩ: [1e3],
@@ -136,6 +166,8 @@ const unitScales: Readonly<Record<string, readonly [number, number?]>> = {
   "lm/W": [1],
   "A²s": [1],
   "kA²s": [1e6],
+  "kg·m²": [1],
+  "1/h": [1],
 };
 
 /** A value of a unit of the table expressed in its dimension's base unit (A, V, W, K, ...). */

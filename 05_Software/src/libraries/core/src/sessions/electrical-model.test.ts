@@ -1,5 +1,6 @@
 // The electrical model tools under the session's permission modes: approved or denied in ask mode, applied by
-// auto-edit, the change tool hidden in read-only mode, and both tools offered only when the host enables them.
+// auto-edit, the change tool hidden in read-only mode, the model tools offered only with an electrical or automation
+// plugin loaded and each plugin tool only with its own plugin.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,7 +19,7 @@ afterEach(async () => {
   for (const close of closes.splice(0).reverse()) await close();
 });
 
-async function setup(offered = true) {
+async function setup(plugins: readonly string[] = ["electrical-network"]) {
   const root = await mkdtemp(join(tmpdir(), "vera-electrical-session-"));
   closes.push(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, ".vera"));
@@ -42,13 +43,7 @@ async function setup(offered = true) {
     db: handle.db,
     gateway: {
       selectedModel: (id) => gateway.selectedModel(id),
-      // The replay model's 32k window (counted at one token per byte) no longer holds every electrical tool's
-      // schema in auto-edit mode; this test checks approvals, not context budgets, so it gets a 64k window.
-      capabilities: (model) => ({
-        ...gateway.capabilities(model),
-        contextWindow: 65536,
-        inputBudget: 65536 - 4096 - 3277,
-      }),
+      capabilities: (model) => gateway.capabilities(model),
       models: (id, signal) => gateway.models(id, signal),
       async *stream(request: LlmRequest) {
         catalogs.push(request.tools?.map((tool) => tool.name) ?? []);
@@ -58,7 +53,7 @@ async function setup(offered = true) {
     clock: { now: () => new Date(), sleep: async () => {} },
     model: () => "replay/change",
     prompt: () => "Test",
-    ...(offered ? { electricalModel: true } : {}),
+    electricalPlugins: plugins,
   };
   const service = new core.SessionService(host);
   closes.push(() => service.close());
@@ -84,14 +79,10 @@ it("asks for approval in ask mode and writes the model only when approved (REQ-F
     const approval = await waiting(service, session.id);
     expect(approval).toMatchObject({ tool: "electrical_model_change", path: MODEL });
     expect(catalogs[0]).toEqual(
-      expect.arrayContaining([
-        "electrical_model",
-        "electrical_model_change",
-        "industrial_catalog",
-        "electrical_network",
-        "protection_coordination",
-      ]),
+      expect.arrayContaining(["electrical_model", "electrical_model_change", "electrical_network"]),
     );
+    for (const other of ["industrial_catalog", "protection_coordination", "motor_drives"])
+      expect(catalogs[0]).not.toContain(other);
     expect(approval.diff).toContain('+      "name": "Duty pump"');
     expect(await model()).toBe(fixture);
     service.decideApproval({
@@ -118,8 +109,13 @@ it("writes in auto-edit mode without a prompt (REQ-FUNC-46374a53)", async () => 
   expect(handle.db.prepare("SELECT decided_by FROM approvals").get()).toEqual({ decided_by: "mode" });
 });
 
-it("offers only the read tool in read-only mode and writes nothing (REQ-SEC-4dfa2a5b)", async () => {
-  const { service, model, catalogs, handle, fixture } = await setup();
+it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4dfa2a5b)", async () => {
+  const { service, model, catalogs, handle, fixture } = await setup([
+    "industrial-catalog",
+    "electrical-network",
+    "protection-coordination",
+    "motor-drives",
+  ]);
   const session = service.create(null, "read-only");
   service.send(session.id, "rename the pump");
   expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
@@ -130,13 +126,14 @@ it("offers only the read tool in read-only mode and writes nothing (REQ-SEC-4dfa
     expect(catalog).not.toContain("electrical_model_change");
     expect(catalog).not.toContain("electrical_network");
     expect(catalog).not.toContain("protection_coordination");
+    expect(catalog).not.toContain("motor_drives");
   }
   expect(await model()).toBe(fixture);
   expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
 });
 
-it("offers neither tool when the host does not enable the electrical model (REQ-SEC-4dfa2a5b)", async () => {
-  const { service, model, catalogs, fixture } = await setup(false);
+it("offers no electrical tool without an electrical or automation plugin (REQ-SEC-4dfa2a5b)", async () => {
+  const { service, model, catalogs, fixture } = await setup([]);
   const session = service.create(null, "auto-edit");
   service.send(session.id, "rename the pump");
   expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
@@ -146,8 +143,25 @@ it("offers neither tool when the host does not enable the electrical model (REQ-
     expect(catalog).not.toContain("industrial_catalog");
     expect(catalog).not.toContain("electrical_network");
     expect(catalog).not.toContain("protection_coordination");
+    expect(catalog).not.toContain("motor_drives");
   }
   expect(await model()).toBe(fixture);
+});
+
+it("offers each plugin tool only while its own plugin is loaded (REQ-SEC-4dfa2a5b)", () => {
+  const offered = (plugins: string[]) =>
+    core.electricalToolNames.filter((name) => core.electricalToolOffered(name, plugins));
+  expect(offered([])).toEqual([]);
+  expect(offered(["plc-engineering"])).toEqual(["electrical_model", "electrical_model_change"]);
+  expect(offered(["protection-coordination"])).toEqual([
+    "electrical_model",
+    "electrical_model_change",
+    "protection_coordination",
+  ]);
+  expect(
+    offered(["industrial-catalog", "electrical-network", "protection-coordination", "motor-drives"]),
+  ).toEqual(core.electricalToolNames);
+  expect(core.electricalToolOffered("read", [])).toBe(true);
 });
 
 it("enables the electrical model for plugins of the electrical and automation ecosystems (REQ-SEC-4dfa2a5b)", () => {

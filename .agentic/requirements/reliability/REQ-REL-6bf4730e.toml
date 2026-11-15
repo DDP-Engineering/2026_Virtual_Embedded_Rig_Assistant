@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6bf4730e"
+
+title = "Refuse a motor drives run on a missing, invalid, stale or foreign protection or network result"
+
+status = "active"
+
+requirement = """
+When motor_drives names a protection run that is missing, invalid, not produced by protection-coordination or stale, or whose network result is missing, invalid, foreign or stale, VERA shall refuse the run with the reason and prepare nothing.
+"""
+
+verification = "Core tool tests: a missing run, a network result named as protection run and a protection result made stale by a model change are each refused with the reason; no file is written."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

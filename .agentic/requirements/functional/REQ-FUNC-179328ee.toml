@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-179328ee"
+
+title = "Propose the simplest feasible method per motor and mark an unestablished proposal conditional"
+
+status = "active"
+
+requirement = """
+When motor_drives has evaluated a motor's methods, VERA shall propose the first passing method in the order dol, reversing, star-delta, softstarter, vfd, shall mark the proposal unknown (conditional) when an earlier method or the proposed assembly is not established, and shall fail it when every method fails.
+"""
+
+verification = "Core engine tests: the three load fixtures propose dol, star-delta and vfd; with the fan's pull-up torque removed the fan proposal is conditional; with speed control and no drive item the proposal is unknown, not pass."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

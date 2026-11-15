@@ -14,7 +14,9 @@ For electrical-network, start at plugins/electrical-network/plugin.yaml (no prog
 skills/network-sizing; the engine, the cable-table format, the `electrical_network` tool and their tests belong to
 [electrical model](electrical-model.md). For protection-coordination, start at
 plugins/protection-coordination/plugin.yaml (no program, ecosystem `electrical`) and skills/protection-selection; the
-engine, the `protection_coordination` tool and their tests belong to [electrical model](electrical-model.md).
+engine, the `protection_coordination` tool and their tests belong to [electrical model](electrical-model.md). For
+motor-drives, start at plugins/motor-drives/plugin.yaml (no program, ecosystem `electrical`) and skills/motor-starting;
+the engine, the `motor_drives` tool and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -343,8 +345,8 @@ that source metadata reaches the deterministic bundled index unchanged.
   catalog and selection, default on; activity `design`), Windows x64/Linux x64, no program. Skill
   `industrial-selection`: firm requirements with conditions, selection through VERA's `industrial_catalog` tool,
   eliminations and unknowns explained, coordination only for the exact products and voltage, and a proposal
-  applied only through `electrical_model_change`. Loading it enables the electrical tools (`electrical_model`,
-  `electrical_model_change`, `industrial_catalog`). Live supplier offers stay with parts-search; this plugin holds no
+  applied only through `electrical_model_change`. Loading it enables `electrical_model`, `electrical_model_change`
+  and its own `industrial_catalog`; each other electrical plugin tool needs its own plugin. Live supplier offers stay with parts-search; this plugin holds no
   credentials. Format and tool: [electrical model](electrical-model.md), spec REQ-DATA-d7e27def.
 - `electrical-network` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Network, cable
   sizing and short circuit, default on; activity `design`), Windows x64/Linux x64, no program. Skill
@@ -358,6 +360,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   sensitivity) agreed with the user, cited catalog candidates picked, VERA's `protection_coordination` tool run and
   every unknown or not-evaluated criterion explained. Engine and tool: [electrical model](electrical-model.md), spec
   REQ-DATA-a5673202.
+- `motor-drives` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Motor starting and
+  drives, default on; activity `design`), Windows x64/Linux x64, no program. Skill `motor-starting`: current network
+  and protection results confirmed, the process function and limits agreed with the user, motor and load data
+  completed through `electrical_model_change`, cited contactors, relays, softstarters or drives picked, VERA's
+  `motor_drives` tool run and the comparison, proposal, assembly and scheme explained; no device configured, no
+  safety function claimed. Engine and tool: [electrical model](electrical-model.md), spec REQ-DATA-79118f9a.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

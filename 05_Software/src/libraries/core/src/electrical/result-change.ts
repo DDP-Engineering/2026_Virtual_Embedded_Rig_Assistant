@@ -1,6 +1,6 @@
 // Prepares ONE new electrical result file electrical-automation-results/<run-id>/result.json through the write flow
 // (approval, before hash = absent, write queue) for the engines that store results: electrical_network and
-// protection_coordination. The model is never written here.
+// protection_coordination and motor_drives. The model is never written here.
 import { createHash, randomBytes } from "node:crypto";
 import {
   type ElectricalModel,
@@ -30,7 +30,7 @@ export function newRun(now = new Date()): { runId: string; now: string } {
 export async function prepareResultChange(options: {
   ctx: ToolContext;
   signal: AbortSignal;
-  tool: "electrical_network" | "protection_coordination";
+  tool: "electrical_network" | "protection_coordination" | "motor_drives";
   args: Record<string, unknown>;
   result: ElectricalResult;
   model: ElectricalModel;

@@ -174,6 +174,36 @@ export type ElectricalProject = z.infer<typeof electricalProjectSchema>;
 export type ElectricalModel = z.infer<typeof electricalModelSchema>;
 
 const resultValue = z.strictObject({ value: number.nullable(), unit });
+const tag = z
+  .string()
+  .regex(/^[A-Za-z0-9][A-Za-z0-9:,.+-]{0,63}$/, "must be a device tag or terminal reference");
+/** A logical starter or drive assembly with its connections and interlocks, for a later ECAD adapter (REQ-DATA-e3d5c15f). */
+export const electricalAssemblySchema = z.strictObject({
+  motor: electricalIdSchema,
+  circuit: electricalIdSchema,
+  method: short,
+  conditional: z.boolean(),
+  devices: bounded(
+    z.strictObject({
+      tag,
+      role: short,
+      item: electricalIdSchema.nullable(),
+      orderCode: text(64).nullable(),
+      setting: z.strictObject({ value: number, unit }).optional(),
+    }),
+    16,
+  ),
+  connections: bounded(z.strictObject({ from: tag, to: tag, kind: z.enum(["power", "control"]) }), 32),
+  interlocks: bounded(
+    z.strictObject({
+      kind: z.enum(["mechanical", "electrical", "sequence"]),
+      devices: z.array(tag).min(1).max(8),
+      note: long,
+    }),
+    8,
+  ),
+});
+export type ElectricalAssembly = z.infer<typeof electricalAssemblySchema>;
 export const electricalResultSchema = z.strictObject({
   kind: z.literal("vera-electrical-result"),
   format: z.literal(1),
@@ -215,6 +245,7 @@ export const electricalResultSchema = z.strictObject({
   ),
   limits: bounded(long, electricalLimits.resultList),
   messages: bounded(long, electricalLimits.resultList),
+  assemblies: bounded(electricalAssemblySchema, 16).optional(),
 });
 export type ElectricalResult = z.infer<typeof electricalResultSchema>;
 export type ElectricalFreshness = "current" | "stale" | "invalid";

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-31a5706e"
+
+title = "Compute starting torque, current and acceleration time per method within the modelled domain"
+
+status = "active"
+
+requirement = """
+When motor_drives has the motor torque ratios, inertias and the load torque, VERA shall compute per method the starting current, starting torque and acceleration time with the documented torque curve and method factors, shall fail starting-torque on a stall, and shall leave the values and verdicts unknown with the missing data named when any input is absent.
+"""
+
+verification = "Core engine tests: the integrator matches closed-form hand calculations within 0.5 %; the ABB worked example (160 kW) is within 25 % for constant and quadratic loads; star-delta with a constant load above Tm/3 stalls; removing the load inertia makes acceleration-time unknown; the conveyor VFD time equals J w / (Tv - Tl) within 0.5 %."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

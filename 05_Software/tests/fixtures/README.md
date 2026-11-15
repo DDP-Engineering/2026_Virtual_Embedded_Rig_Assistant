@@ -36,6 +36,14 @@ pages: In, rated voltage, 120 kA), TeSys GV2ME14, LC1D09P7 and LC1D18P7 with the
 from the industrial-catalog fixture, and conventional tripping ratios from Schneider Electric's public Electrical
 Installation Guide. It holds no time-current points, I2t values or selectivity tables because the pages give none.
 
+`motor-drives/plant-m.json` is a fictional plant (the network A transformer, a main board and three motor circuits:
+a 2.2 kW fan, an 11 kW pump with a 400 V delta winding and a 5.5 kW conveyor with a 230/400 V winding) whose motor
+and load values come from a made-up brief. `motor-drives/cat-motor-drives.json` is an industrial catalog typed from
+public pages read 2026-11-15 (cited per value): TeSys GV2ME10, LC1D09P7/LC1D18P7 with their gG fuse tables and the
+Bussmann C10G20/C10G32 fuses copied from the fixtures above, TeSys LRD21 and LAD9V2, Altistart 22 ATS22D32Q and
+Altivar Process ATV930U75N4 (se.com UK product pages), and the class 10A tripping band from se.com FAQ FA22893. It
+holds no softstarter starts per hour, drive EMC category or motor cable length because the pages give none.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

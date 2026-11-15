@@ -132,6 +132,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
         "electrical_model_change",
         "electrical_network",
         "protection_coordination",
+        "motor_drives",
       ]),
       path: z.string(),
       diff: z.string(),

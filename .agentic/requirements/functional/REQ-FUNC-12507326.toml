@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-12507326"
+
+title = "Size the starter assembly with utilisation categories, cited derating, overload relay and interlock accessories"
+
+status = "active"
+
+requirement = """
+When motor_drives sizes the proposed assembly, VERA shall check each contactor against its position current in the utilisation category of the method (AC-3, AC-4 for inching, AC-1 for an external bypass), the overload relay setting range and its cited tripping band against the start, the mechanical interlock accessory for reversing and star-delta and the softstarter rating after cited derating, and shall give unknown when a cited value or accessory is missing.
+"""
+
+verification = "Core engine tests: star-delta with LC1D18P7, LC1D09P7 and LRD21 passes at 0.58 In and 0.33 In with LAD9V2 listed; LC1D09P7 as line contactor of the pump fails; inching without an AC-4 rating is unknown; a 50 degC panel derates the ATS22 IcL by 2.2 %/K."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

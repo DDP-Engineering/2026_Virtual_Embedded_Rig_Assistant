@@ -390,19 +390,19 @@ it("enables the electrical model tools only while an electrical or automation pl
   const offered = () =>
     host.run(
       (service) =>
-        (service as unknown as { host: { electricalModel?: boolean } }).host.electricalModel === true,
+        (service as unknown as { host: { electricalPlugins?: readonly string[] } }).host.electricalPlugins,
     );
   try {
-    expect(await offered()).toBe(false);
+    expect(await offered()).toEqual([]);
     enabled = [plugin("electrical-network", "electrical")];
     host.invalidatePrograms();
-    expect(await offered()).toBe(true);
-    enabled = [plugin("plc-engineering", "automation")];
+    expect(await offered()).toEqual(["electrical-network"]);
+    enabled = [plugin("plc-engineering", "automation"), plugin("kicad", "electronics")];
     host.invalidatePrograms();
-    expect(await offered()).toBe(true);
+    expect(await offered()).toEqual(["plc-engineering"]);
     enabled = [plugin("kicad", "electronics")];
     host.invalidatePrograms();
-    expect(await offered()).toBe(false);
+    expect(await offered()).toEqual([]);
   } finally {
     await host.close();
     storage.close();

@@ -85,6 +85,20 @@ kind `selectivity`, `cascading`, `fuse coordination type 1|2` and `breaker coord
 `disconnection-time`, `let-through-energy`, `selection`, ...); a motor helper reads the `selection` and starter
 verdicts from the stored result. The generic `breakingCapacity` names no capacity kind and is never used.
 
+Motor starting and drives come from VERA's `motor_drives` tool (plugin `motor-drives`, spec
+`.agentic/specs/REQ-DATA-79118f9a.md`) on a current protection result. It reads motor properties by name
+(`startingTorqueRatio`, `pullUpTorqueRatio`, `breakdownTorqueRatio`, `inertia`, `loadInertia` in kg·m², `loadTorque`,
+`breakawayTorque`, `lockedRotorTime`, `startsPerHour` in 1/h, `terminals`, attributes `connection` and
+`loadCharacteristic`) and catalog items of categories `contactor`, `overload-relay` (`settingCurrentMin`/`Max`,
+`tripTimeMin`/`Max` at condition `currentMultiple`), `softstarter` and `variable-speed-drive` (`ratedCurrent` and
+`overloadCurrent` per condition `dutyClass`, `ambientDeratingPerKelvin`, `altitudeDeratingPer100m`). Its result adds
+`assemblies`: device tags, roles and order codes, power and control connections and mechanical, electrical and sequence
+interlocks per motor - the logical scheme an ECAD adapter reads.
+
+Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`) is offered
+only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
+cleanly when they are missing or stale.
+
 ## Draft with the agent
 
 Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the

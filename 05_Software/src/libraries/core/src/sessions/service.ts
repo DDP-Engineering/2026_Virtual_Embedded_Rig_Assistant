@@ -30,7 +30,7 @@ import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
 import { ArtifactStore } from "../artifacts/store.js";
-import { electricalToolNames } from "../electrical/tools.js";
+import { electricalToolOffered } from "../electrical/tools.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
@@ -74,8 +74,8 @@ export interface SessionHost {
   parts?: PartsSearcher;
   /** Writing kicad-layout candidates over their boards; only hosts that enable it (with the official plugin) offer apply_candidate. */
   applyCandidate?: boolean;
-  /** The electrical project model tools; hosts enable them with an electrical or automation plugin. */
-  electricalModel?: boolean;
+  /** IDs of the loaded electrical/automation plugins: the model tools need one, each plugin tool its own plugin. */
+  electricalPlugins?: readonly string[];
   downloads?: WebDownloads;
   permissions?: PermissionEngine;
   contextPolicy?: ContextPolicy;
@@ -711,7 +711,7 @@ export class SessionService {
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
       .filter((tool) => tool.name !== "parts_search" || !!this.host.parts)
       .filter((tool) => tool.name !== "apply_candidate" || !!this.host.applyCandidate)
-      .filter((tool) => !electricalToolNames.includes(tool.name) || !!this.host.electricalModel)
+      .filter((tool) => electricalToolOffered(tool.name, this.host.electricalPlugins ?? []))
       .filter(
         (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,
       )

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-c04129a0"
+
+title = "Motor drives fixtures distinguish three loads and check the acceleration model against independent references"
+
+status = "active"
+
+requirement = """
+The motor drives tests shall use a fictional three-motor plant (fan, pump, conveyor) that distinguishes DOL, star-delta and VFD including a motor that does not admit star-delta, a catalog typed from cited public manufacturer pages, and acceleration references fixed before the comparison: closed-form hand calculations (0.5 %) and the ABB worked example (25 %).
+"""
+
+verification = "Inspection and core engine tests: every fixture catalog value carries its source, page/table and read date; the three proposals and the reference comparisons hold with the stated tolerances."
+
+affected_paths = ["05_Software/tests/fixtures/motor-drives/"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

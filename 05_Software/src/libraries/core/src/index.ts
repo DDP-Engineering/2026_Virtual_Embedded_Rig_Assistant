@@ -12,6 +12,8 @@ export * from "./electrical/catalog.js";
 export * from "./electrical/catalog-tool.js";
 export * from "./electrical/edit.js";
 export * from "./electrical/model.js";
+export * from "./electrical/motor-drives.js";
+export * from "./electrical/motor-drives-tool.js";
 export * from "./electrical/network.js";
 export * from "./electrical/network-tool.js";
 export * from "./electrical/protection.js";

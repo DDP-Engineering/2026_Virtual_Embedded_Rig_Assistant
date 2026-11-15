@@ -71,6 +71,27 @@ export function renderResultReport(
       lines.push(`| ${cell(subject(entry.subject))} | ${cell(entry.name)} | ${cell(amount(entry))} |`);
     lines.push("");
   }
+  for (const assembly of result.assemblies ?? []) {
+    lines.push(
+      `## Assembly ${cell(subject(assembly.motor))} - ${assembly.method}${assembly.conditional ? " (conditional)" : ""}`,
+      "",
+      `Circuit ${subject(assembly.circuit)}. Logical scheme for an ECAD adapter; no device is configured.`,
+      "",
+      "| Tag | Role | Order code | Setting |",
+      "|---|---|---|---|",
+      ...assembly.devices.map(
+        (device) =>
+          `| ${cell(device.tag)} | ${cell(device.role)} | ${cell(device.orderCode ?? "not chosen")} | ${device.setting ? `${device.setting.value} ${device.setting.unit}` : ""} |`,
+      ),
+      "",
+      `Connections: ${assembly.connections.map((link) => `${link.from} -> ${link.to} (${link.kind})`).join("; ") || "none"}`,
+      "",
+      ...assembly.interlocks.map(
+        (lock) => `- ${lock.kind} interlock ${lock.devices.join("/")}: ${lock.note}`,
+      ),
+      "",
+    );
+  }
   list("Limits", result.limits);
   list("Messages", result.messages);
   const text = lines.join("\n");

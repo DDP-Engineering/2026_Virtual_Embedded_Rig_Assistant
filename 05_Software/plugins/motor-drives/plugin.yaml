@@ -1,0 +1,9 @@
+format: 1
+id: motor-drives
+version: 0.1.0
+name: Motor starting and drives
+summary: Compare DOL, reversing, star-delta, softstarter and VFD per motor, size the starter or drive and give a logical connection and interlock scheme.
+description: Compare direct-on-line, reversing, star-delta, softstarter and variable-speed drive per motor with VERA's motor_drives tool, against the process function and a current protection-coordination result - motor nameplate, load torque and inertia, acceleration, starts per hour, panel ambient and altitude, motor cable. It proposes the simplest feasible method, sizes contactors by utilisation category, the overload relay, a softstarter or a drive by current and overload (never by power alone) with cited derating, and returns a logical connection and interlock scheme for a later ECAD adapter. Results are stored with their inputs, so a model change marks them stale; missing data stays unknown, no device is configured and no safety function is claimed.
+ecosystem: electrical
+platforms: [windows-x64, linux-x64]
+docs: [README.md]

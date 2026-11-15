@@ -13,7 +13,10 @@ balance, cable sizing, voltage drop, fault currents and the `electrical_model` r
 .agentic/specs/REQ-DATA-42ce122f.md, core electrical/network.ts, network-tool.ts, cable-table.ts, report.ts), and the
 LV protection engine: `protection_coordination`, breaking capacity Icu/Ics/Icn, overload, disconnection bands,
 let-through energy, RCD, selectivity/cascading/starter tables (spec .agentic/specs/REQ-DATA-a5673202.md, core
-electrical/protection.ts, protection-tool.ts, result-change.ts). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+electrical/protection.ts, protection-tool.ts, result-change.ts), the motor drives engine: `motor_drives`, DOL,
+reversing, star-delta, softstarter and VFD comparison, acceleration model, starter and drive sizing, the result's
+`assemblies` connection and interlock scheme (spec .agentic/specs/REQ-DATA-79118f9a.md, core electrical/motor-drives.ts,
+motor-drives-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -22,7 +25,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, and the LV protection engine. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine and the motor drives engine. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -89,9 +92,32 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   sha256 prefix still matches) and prepares one new result through `prepareResultChange` (`result-change.ts`, shared
   with `electrical_network`: `newRun()`, checked result, one new file, report). The result copies the network
   result's inputs, so it goes stale with them.
-- `SessionHost.electricalModel` offers the five tools (`industrial_catalog`, `electrical_network` and `protection_coordination` included); `electricalModelPlugin(plugin)` is true for manifest ecosystem
-  `electrical` or `automation`, and the desktop sets the flag while such a plugin is loaded. The headless CLI does
-  not set it.
+- Motor drives engine (spec REQ-DATA-79118f9a): pure `analyzeMotorDrives({model, protection, network, catalog,
+  catalogStamp, request, runId, now})` -> ElectricalResult with `motorDrivesRequestSchema` {protection run ID, catalog,
+  ambientTemperature? (°C), altitude? (m), motors 1..4 {motor, reversing?, speedControl?, inching?, startingCurrentMax?
+  (A), accelerationTimeMax?, stopTimeMax? (s), switchover? (share of rated speed), currentLimit? (x In), protection?,
+  contactor?, starContactor?, overloadRelay?, softstarter?, drive? (catalog items)}}; exported `motorTorque`,
+  `breakdownSpeed`, `accelerationTime` (midpoint rule) for the hand-calculation tests. Criteria per motor (subject =
+  motor) `function|star-delta-eligibility|starting-current|starting-torque|acceleration-time|starts-per-hour:<method>`,
+  `method:<method>`, `proposal`, and for the proposed method `protection:<code>`, `contactor-<line|reverse|delta|star|
+  bypass>:<code>`, `mechanical-interlock:<code>`, `overload-relay:<code>`, `overload-start:<code>`,
+  `starter-coordination:<p>/<c>`, `softstarter:<code>`, `drive-current|drive-overload-time|drive-voltage|motor-cable|
+  emc|braking|rcd-requirement:<code>`; values `ratedTorque`, `synchronousSpeed`, `totalInertia`,
+  `startingCurrent|startingTorque|accelerationTime:<method>`, `motorTorque:<method>@<pct>`, `loadTorque@<pct>`,
+  `brakingEnergy`, `brakingPower`; conditions `protectionRun`, `networkRun`, `proposal<N>`.
+- Tool `motor_drives` (write): reads the model, the named CURRENT protection-coordination result and the network result
+  it names (both refused when missing, invalid, foreign or stale) and the catalog, and prepares one new result through
+  `prepareResultChange`; the result copies the protection result's inputs plus the motors, circuits, cables and
+  relations it read.
+- Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
+  devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
+  interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
+- Tool gating: `electricalModelToolNames` (`electrical_model`, `electrical_model_change`) are offered while any plugin
+  of manifest ecosystem `electrical` or `automation` is loaded (`electricalModelPlugin`); each tool of
+  `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
+  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives) only while its own plugin ID
+  is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
+  desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
 ## Invariants
 
@@ -139,6 +165,17 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   condition is unknown, no table is not-evaluated; nothing is derived from curves (REQ-FUNC-b65fb9ee,
   REQ-FUNC-b9c2bc7d, REQ-FUNC-894dce2a, REQ-REL-8f88c502). `protection_coordination` refuses a stale network result
   and writes only a new result file (REQ-REL-62b1aee8, REQ-FUNC-4dcdce2d).
+- The motor drives engine compares methods only on stated data: an absent or null nameplate, torque, inertia or load
+  value leaves the dependent values null and their verdicts unknown; without a stated pull-up torque the starting
+  torque stands in and the torque check stays unknown; a limit that is not stated gives not-evaluated, never pass.
+  The proposal is the first passing method in the order dol, reversing, star-delta, softstarter, vfd and is conditional
+  (unknown) when a simpler method or the assembly is not established. Contactors are checked at their position
+  current in the method's utilisation category, drives by continuous and transient current per duty class (never by
+  power), derating only from cited per-kelvin or per-100 m factors; protective-device and starter verdicts are copied
+  from the protection result. Nothing is configured and no safety function is claimed (REQ-FUNC-30561076,
+  REQ-FUNC-31a5706e, REQ-FUNC-179328ee, REQ-FUNC-12507326, REQ-FUNC-f19b1719, REQ-FUNC-028689c0). `motor_drives`
+  refuses a stale protection or network result and writes only a new result file (REQ-REL-6bf4730e,
+  REQ-FUNC-285949c8).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -158,7 +195,10 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Network tool, report view | electrical/network-tool.ts, report.ts, tools.ts | electrical/network-tool.test.ts |
 | Protection engine, request, criteria | electrical/protection.ts, spec REQ-DATA-a5673202 | electrical/protection.test.ts |
 | Protection tool, shared result write | electrical/protection-tool.ts, result-change.ts | electrical/protection-tool.test.ts, network-tool.test.ts |
-| Offering the tools | sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
+| Motor drives engine, request, criteria, scheme | electrical/motor-drives.ts, spec REQ-DATA-79118f9a | electrical/motor-drives.test.ts |
+| Motor drives tool | electrical/motor-drives-tool.ts, result-change.ts | electrical/motor-drives-tool.test.ts |
+| Result assemblies | shared electrical-model.ts, results.ts, report.ts | electrical/motor-drives.test.ts |
+| Offering the tools | electrical/tools.ts (`electricalPluginTools`), sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
 
@@ -208,6 +248,18 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-FUNC-4dcdce2d — protection results stored through an approved prepared change, stale with the network inputs.
 - REQ-TEST-4ef52f14 — cited protection fixture and hand calculations.
 - REQ-UX-d32cc9db — electrical tool descriptions in the workbench tools editor (en/ro/de/fr).
+- REQ-DATA-79118f9a — accept only a strictly valid motor drives request.
+- REQ-FUNC-30561076 — five methods against the process function and limits.
+- REQ-FUNC-270a3c8e — star-delta eligibility from terminals, connection and voltage.
+- REQ-FUNC-31a5706e — starting current, torque and acceleration time in the modelled domain.
+- REQ-FUNC-179328ee — simplest feasible method proposed, conditional when not established.
+- REQ-FUNC-12507326 — contactors per position and utilisation category, relay, interlock, softstarter derating.
+- REQ-FUNC-f19b1719 — drive by current, overload and duty class; braking, EMC, cable from data.
+- REQ-FUNC-028689c0 — protection and starter verdicts copied from the protection result.
+- REQ-REL-6bf4730e — a missing, invalid, foreign or stale protection or network result is refused.
+- REQ-FUNC-285949c8 — motor results stored through an approved prepared change, stale with the motors read.
+- REQ-TEST-c04129a0 — three load fixtures, cited catalog, preset reference tolerances.
+- REQ-DATA-e3d5c15f — strict assemblies in the result and the report.
 
 ## Files
 
@@ -244,3 +296,8 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/protection.test.ts` — criteria with hand calculations, refusals, fixture.
 - `05_Software/src/libraries/core/src/electrical/protection-tool.test.ts` — prepared result, stale refusal, k check, plugin.
 - `05_Software/tests/fixtures/protection-coordination/cat-lv-protection.json` — cited iC60N, C10G, GV2ME14 and LC1D data.
+- `05_Software/src/libraries/core/src/electrical/motor-drives.ts` — the motor drives engine and its request schema.
+- `05_Software/src/libraries/core/src/electrical/motor-drives-tool.ts` — the motor_drives write tool.
+- `05_Software/src/libraries/core/src/electrical/motor-drives.test.ts` — hand calculations, ABB example, three loads, assembly, drive.
+- `05_Software/src/libraries/core/src/electrical/motor-drives-tool.test.ts` — prepared result, stale refusal, plugin gating.
+- `05_Software/tests/fixtures/motor-drives/` — fictional plant M and the cited motor-drives catalog.

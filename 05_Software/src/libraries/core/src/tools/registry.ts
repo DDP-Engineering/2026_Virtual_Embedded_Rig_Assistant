@@ -2,6 +2,7 @@ import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { industrialCatalogTool } from "../electrical/catalog-tool.js";
+import { motorDrivesTool } from "../electrical/motor-drives-tool.js";
 import { electricalNetworkTool } from "../electrical/network-tool.js";
 import { protectionCoordinationTool } from "../electrical/protection-tool.js";
 import { electricalModelChangeTool, electricalModelTool } from "../electrical/tools.js";
@@ -55,6 +56,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   industrial_catalog: industrialCatalogTool,
   electrical_network: electricalNetworkTool,
   protection_coordination: protectionCoordinationTool,
+  motor_drives: motorDrivesTool,
 };
 /** Tools offered only when the host composes a program host. */
 export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];

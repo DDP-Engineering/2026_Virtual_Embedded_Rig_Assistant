@@ -59,6 +59,11 @@ it("converts every tool schema and validates samples while filtering disabled na
       breakingCapacity: "Icu",
       circuits: [{ circuit: "cir-l1", candidates: ["itm-a9f74216"] }],
     },
+    motor_drives: {
+      protection: "20261115-110000-bbbb",
+      catalog: "cat-motor-drives",
+      motors: [{ motor: "mot-p2", startingCurrentMax: 70, switchover: 0.8, contactor: "itm-lc1d18p7" }],
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -96,6 +101,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "industrial_catalog",
     "electrical_network",
     "protection_coordination",
+    "motor_drives",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });
