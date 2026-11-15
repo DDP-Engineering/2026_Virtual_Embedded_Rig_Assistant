@@ -5,6 +5,14 @@ import { Metadata } from "./metadata.js";
 
 /** Third-party runtime libraries of the desktop app, read from package-lock.json at build time. */
 declare const __VERA_THIRD_PARTY__: { name: string; version: string; license: string }[];
+/** VERA's license text (repository LICENSE.txt), embedded at build time. */
+declare const __VERA_LICENSE__: string;
+/** The license name (first line) and the "Required Notice:" lines the license asks every copy to carry. */
+const licenseLines = __VERA_LICENSE__.split("\n");
+const licenseName = licenseLines[0]?.trim() ?? "";
+const notices = licenseLines
+  .filter((line) => line.startsWith("Required Notice:"))
+  .map((line) => line.slice("Required Notice:".length).trim());
 
 export function About({ info }: { info: AppInfo }) {
   const { t } = useTranslation();
@@ -26,6 +34,16 @@ export function About({ info }: { info: AppInfo }) {
           <p className="about-version" data-about-version>
             {t("about.version", { version: info.version })}
           </p>
+          {licenseName && (
+            <p className="about-license" data-about-license>
+              {licenseName}
+            </p>
+          )}
+          {notices.map((notice) => (
+            <p key={notice} className="about-notice">
+              {notice}
+            </p>
+          ))}
         </div>
       </header>
       <section className="about-block">
@@ -44,6 +62,14 @@ export function About({ info }: { info: AppInfo }) {
             ))}
           </dl>
         </section>
+      )}
+      {__VERA_LICENSE__ && (
+        <details className="about-block about-notices" data-about-license-text>
+          <summary>
+            <h3>{t("about.license")}</h3>
+          </summary>
+          <pre className="about-license-text">{__VERA_LICENSE__}</pre>
+        </details>
       )}
       {__VERA_THIRD_PARTY__.length > 0 && (
         <details className="about-block about-notices" data-about-notices>

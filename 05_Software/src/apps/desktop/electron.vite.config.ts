@@ -14,6 +14,14 @@ const root = dirname(fileURLToPath(import.meta.url));
 // Build-time isolation for verification; ordinary development and release output is unchanged.
 const buildRoot = process.env.VERA_BUILD_ROOT ? resolve(process.env.VERA_BUILD_ROOT) : resolve(root, "out");
 const shared = resolve(root, "../../libraries/shared/src/index.ts");
+/** VERA's own license text from the repository root, for the About page. */
+function licenseText(): string {
+  try {
+    return readFileSync(resolve(root, "../../../../LICENSE.txt"), "utf8").replace(/\r\n/g, "\n");
+  } catch {
+    return "";
+  }
+}
 /** The desktop app's third-party runtime libraries with version and license, for the About page. */
 function thirdPartyComponents(): { name: string; version: string; license: string }[] {
   try {
@@ -162,6 +170,7 @@ export default defineConfig(({ command }) => ({
         JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version,
       ),
       __VERA_THIRD_PARTY__: JSON.stringify(thirdPartyComponents()),
+      __VERA_LICENSE__: JSON.stringify(licenseText()),
     },
     root: resolve(root, "src/renderer"),
     resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },
