@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b0b55ff0"
+
+title = "Store a panel result through an approved prepared change"
+
+status = "active"
+
+requirement = """
+When asked to check a panel, VERA shall prepare one new electrical result (producer panel-engineering/panel, preliminary) holding the BOM, terminals, placements, verification report, criteria and values, the model entities it read as inputs and the panel, catalog and schematic files with their sha256 as sources, through the prepared change with an absent base, and shall write nothing else.
+"""
+
+verification = "Tool tests: preparing gives a FileChangeRequest for electrical-automation-results/<run>/result.json with before null and nothing on disk; applying writes it; the model, panel, catalogs and .qet files are unchanged; the result goes stale when the board's motor changes; a read-only session is refused."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel-tool.ts", "05_Software/src/libraries/core/src/electrical/result-change.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

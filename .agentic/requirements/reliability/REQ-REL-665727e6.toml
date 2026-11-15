@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-665727e6"
+
+title = "Refuse a panel check on a missing, stale or foreign motor_drives result"
+
+status = "active"
+
+requirement = """
+If the named motor_drives result is missing, invalid, of another producer or stale against the model, or the panel names a board that is not a board of the model, then VERA shall refuse the panel check before preparing any change and say which input to fix.
+"""
+
+verification = "Tool tests: a missing run, a protection result named as the motor run, a run made stale by changing M1 and a panel naming a circuit as board are each refused with the reason and no change is prepared."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

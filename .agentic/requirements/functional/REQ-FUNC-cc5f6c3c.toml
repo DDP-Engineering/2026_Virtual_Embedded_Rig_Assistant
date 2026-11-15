@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cc5f6c3c"
+
+title = "Accept an accessory only when its host's catalog item lists it"
+
+status = "active"
+
+requirement = """
+VERA shall accept an accessory (an equipment mounted on a host, and the enclosure's mounting plate) as compatible only when the host's catalog item lists the accessory's item among its accessories, citing that entry's role and note, and shall otherwise give the accessory criterion unknown with the reason that compatibility is not established in the catalog, never assuming it.
+"""
+
+verification = "Unit tests: LRD21 under LC1D18P7 passes citing the LRD21 page note; NSYMM64 in NSYS3D6420 passes; LRD21 under LC1D09P7 (not listed) is unknown with the reason; an accessory without item is unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts", "05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

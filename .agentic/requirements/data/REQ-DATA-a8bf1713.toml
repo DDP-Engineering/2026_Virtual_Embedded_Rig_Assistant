@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-a8bf1713"
+
+title = "Accept only a strictly valid format-1 panel file"
+
+status = "active"
+
+requirement = """
+VERA shall read a panel file electrical-automation-panels/<id>.json only when it is strictly valid format 1 (kind vera-panel, file name equal to its id, no unknown keys, unique tags across equipment, terminal strips, rails, ducts, zones and rules, every referenced rail, zone, host, supply, scenario tag and source existing, quantities with units of their property's dimension), and shall otherwise refuse it with `Invalid panel file <id>:` and at most 20 problems with their JSON paths.
+"""
+
+verification = "Unit tests: the fixture panel parses; an unknown key, format 2, a duplicate tag, a rail naming a missing zone, an equipment naming a missing host or supply, a file name differing from the id and an ambient temperature in A are each refused with the path named."
+
+affected_paths = ["05_Software/src/libraries/shared/src/panel.ts", "05_Software/src/libraries/core/src/electrical/panel-file.ts", "05_Software/src/libraries/core/src/electrical/units.ts", "05_Software/src/libraries/shared/src/electrical-model.ts", "05_Software/src/libraries/core/src/electrical/report.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

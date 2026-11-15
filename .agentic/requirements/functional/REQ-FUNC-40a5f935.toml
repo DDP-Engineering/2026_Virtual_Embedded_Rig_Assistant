@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-40a5f935"
+
+title = "Show the parts of a stored panel result that a changed device affects"
+
+status = "active"
+
+requirement = """
+When asked for the impact on a stored panel result, VERA shall compare each BOM line's fingerprint (panel entry, catalog item and model object) and the panel frame with the current files and model, and shall return the changed, added and removed tags and the affected parts - BOM lines, the rails holding them, the 24 V budgets they feed or whose air temperature they change, and the dissipation and thermal scenarios in which they are active - and the compared schematics that changed, with the result's model freshness, reporting nothing affected when nothing changed.
+"""
+
+verification = "Tool tests: after the stored check, impact reports nothing affected; replacing KM1-M1's item in the panel file lists KM1-M1, its rail, every scenario where it is active and G1's budget in those scenarios; changing the PLC lists the 24 V budgets; changing the enclosure marks the whole layout and thermal evaluation; a changed schematic is listed."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel-tool.ts", "05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

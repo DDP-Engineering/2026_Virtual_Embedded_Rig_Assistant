@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7a0835ed"
+
+title = "Draft panel equipment from current motor_drives assemblies"
+
+status = "active"
+
+requirement = """
+When asked for a panel draft from a current motor_drives result, VERA shall return one equipment entry per assembly device of the chosen motors with tag, role, catalog item, motor and schematic tag, and the accessories its catalog item lists with their cited role and note as hints, writing nothing and refusing a stale or foreign result.
+"""
+
+verification = "Tool tests: the draft of the fixture run lists Q1-M1 GV2ME10 and KM1-M1 LC1D09P7 for M1, the LC1D18P7 hints list LRD21 and LAD9V2 with their notes; a stale run is refused."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

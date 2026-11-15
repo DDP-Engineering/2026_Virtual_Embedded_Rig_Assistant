@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f761244d"
+
+title = "Record an assembly verification report without a conformity claim"
+
+status = "active"
+
+requirement = """
+When a panel is checked, VERA shall store an assembly verification report listing each design verification characteristic of low-voltage switchgear assemblies with the method VERA used, the criteria that serve as evidence and whether it is partly covered or not covered, and shall state in the result that no IEC 61439 conformity is claimed.
+"""
+
+verification = "Unit tests: the report lists the thirteen characteristics; temperature rise, terminals, incorporation of devices and short-circuit name their criteria and are partly covered when evaluated, the others are not covered; the result's limits state that no IEC 61439 conformity is claimed and the word compliant appears nowhere."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

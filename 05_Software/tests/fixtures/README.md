@@ -43,6 +43,19 @@ public pages read 2026-11-15 (cited per value): TeSys GV2ME10, LC1D09P7/LC1D18P7
 Bussmann C10G20/C10G32 fuses copied from the fixtures above, TeSys LRD21 and LAD9V2, Altistart 22 ATS22D32Q and
 Altivar Process ATV930U75N4 (se.com UK product pages), and the class 10A tripping band from se.com FAQ FA22893. It
 holds no softstarter starts per hour, drive EMC category or motor cable length because the pages give none.
+Read 2026-11-16 from the same pages: the height, width and depth of LC1D09P7, LC1D18P7, GV2ME10 and LRD21, the coil
+heat dissipation (upper value of 2...3 W) and maximum ambient of the contactors, and LRD21 as accessory of LC1D18P7
+(LRD21 page: product compatibility LC1D18...LC1D38, mounting under the contactor); the pages state no loss for LRD21.
+
+`panel-engineering/cat-panel.json` is an industrial catalog typed from public se.com UK product pages read 2026-11-16
+(cited per value): Modicon ABLS1A24050 (24 V 5 A, efficiency, 25 W dissipation, 2.5 %/K derating above 50 °C),
+Modicon M221 TM221CE16T (4.6 W / 11 W at 24 V, 55 °C horizontal / 35 °C vertical), PanelSeT S3D NSYS3D6420
+(600 x 400 x 200 mm) with its plate NSYMM64 (550 x 350 mm), Linergy TR NSYTRV42 terminal blocks and Harmony XB5AA31 /
+XB5AA42 push buttons. `panel-engineering/pnl-plant-m.json` is a FICTIONAL panel over plant M (rails, ducts, zones,
+rules, scenarios, reserve, the 35 °C ambient and the 5 W wiring allowance come from a made-up brief); its heat-transfer
+coefficient 5.5 W/(m²·K) is the painted sheet steel value of the Schneider Electric enclosure catalogue p. 8/110.
+It keeps real gaps: no cited data for the LAD9V2 size, the C10G32 fuse holder or the star-delta timer KT1.
+`tests/support/panel_thermal_check.py` recomputes its dissipation and temperatures independently.
 
 `power-quality-pfc/plant-q.json` is a fictional plant (the network A transformer and a main board with three motor
 groups, a drive group and lighting). `power-quality-pfc/meas-fictional-mdb-day.json` + `.csv` is a FICTIONAL

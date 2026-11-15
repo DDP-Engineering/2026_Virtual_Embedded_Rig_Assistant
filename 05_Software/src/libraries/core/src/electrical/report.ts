@@ -92,6 +92,38 @@ export function renderResultReport(
       "",
     );
   }
+  const panel = result.panel;
+  if (panel) {
+    lines.push(
+      `## Panel ${panel.id} - ${subject(panel.board)}`,
+      "",
+      `File ${panel.path}; plate ${panel.plate ? `${panel.plate.width} x ${panel.plate.height} mm` : "size unknown"}.`,
+      "",
+      "| Tag | Kind | Role | Location | Qty | Manufacturer | Order code | Motor | Mounted on |",
+      "|---|---|---|---|---|---|---|---|---|",
+      ...panel.bom.map(
+        (line) =>
+          `| ${cell(line.tag)} | ${line.kind} | ${cell(line.role)} | ${line.location} | ${line.quantity} | ${cell(line.manufacturer ?? "")} | ${cell(line.orderCode ?? "no item")} | ${cell(line.motor ? subject(line.motor) : "")} | ${cell(line.mountedOn ?? "")} |`,
+      ),
+      "",
+      "| Placement | Rail | x mm | y mm | Width mm | Height mm | State |",
+      "|---|---|---|---|---|---|---|",
+      ...panel.placements.map(
+        (entry) =>
+          `| ${cell(entry.tag)} | ${cell(entry.rail ?? "")} | ${entry.x ?? ""} | ${entry.y ?? ""} | ${entry.width ?? ""} | ${entry.height ?? ""} | ${entry.state} |`,
+      ),
+      "",
+      "### Assembly verification report",
+      "",
+      "| Characteristic | State | Method | Evidence |",
+      "|---|---|---|---|",
+      ...panel.verification.map(
+        (entry) =>
+          `| ${cell(entry.characteristic)} | ${entry.state} | ${cell(entry.method)} | ${cell(entry.evidence.join(", "))} |`,
+      ),
+      "",
+    );
+  }
   list("Limits", result.limits);
   list("Messages", result.messages);
   const text = lines.join("\n");

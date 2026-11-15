@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-dd7ad54a"
+
+title = "Export the BOM and the 2D layout of a stored panel result"
+
+status = "active"
+
+requirement = """
+When asked to export a stored panel result, VERA shall return, without writing anything, the BOM as CSV (one line per equipment and terminal strip, fields quoted where needed, formula-like cells neutralised) or the 2D layout as SVG drawn in millimetres (plate, zones, ducts, rails and each placed equipment with its tag; unplaced tags listed), and shall refuse a result of another producer.
+"""
+
+verification = "Tool tests: the CSV header and the KM1-M1 line hold tag, order code and manufacturer a field with a comma is quoted and a cell starting with = is prefixed; the SVG has the plate's viewBox and one rect per placement with escaped tags; a motor_drives result is refused; no file is written."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

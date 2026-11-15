@@ -61,6 +61,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["motor-drives", "official"],
     ["mqtt-tools", "official"],
     ["ngspice", "official"],
+    ["panel-engineering", "official"],
     ["parts-search", "official"],
     ["platformio", "official"],
     ["power-profiler", "official"],

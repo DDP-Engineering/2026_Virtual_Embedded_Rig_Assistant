@@ -144,7 +144,7 @@ describe("motor_drives (REQ-FUNC-285949c8)", () => {
     expect(String(result.report)).toContain("## Assembly M2 (mot-p2) - star-delta");
     const written = JSON.parse(await readFile(join(root, pathOf(prepared)), "utf8"));
     expect("result" in api.checkResult(written, runOf(prepared))).toBe(true);
-    expect(written.catalog).toEqual({ id: "cat-motor-drives", version: "2026-11-15.1" });
+    expect(written.catalog).toEqual({ id: "cat-motor-drives", version: "2026-11-16.1" });
     expect(written.conditions).toMatchObject({
       protectionRun: { text: protection },
       networkRun: { text: network },

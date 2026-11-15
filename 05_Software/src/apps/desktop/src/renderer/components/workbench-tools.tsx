@@ -49,6 +49,8 @@ export function WorkbenchTools({
     qelectrotech: t("workbenchTools.qelectrotech"),
     qelectrotech_change: t("workbenchTools.qelectrotech_change"),
     qelectrotech_check: t("workbenchTools.qelectrotech_check"),
+    panel_engineering: t("workbenchTools.panel_engineering"),
+    panel_engineering_check: t("workbenchTools.panel_engineering_check"),
   };
   // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
   const { rows, pager } = usePaged(builtinToolNames, 50);

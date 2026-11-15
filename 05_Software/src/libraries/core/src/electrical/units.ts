@@ -27,6 +27,8 @@ export const unitDimensions: Readonly<Record<string, readonly string[]>> = {
   "let-through-energy": ["A²s", "kA²s"],
   inertia: ["kg·m²"],
   rate: ["1/h"],
+  "heat-transfer": ["W/(m²·K)"],
+  airflow: ["m³/h"],
 };
 
 /** Property names whose unit must belong to one dimension; any other name takes any unit of the table. */
@@ -123,6 +125,20 @@ export const knownProperties: Readonly<Record<string, string>> = {
   harmonicOrder: "ratio",
   harmonicVoltageMax: "ratio",
   thdVoltageMax: "ratio",
+  width: "length",
+  height: "length",
+  depth: "length",
+  powerLoss: "power",
+  coilPowerLoss: "power",
+  powerConsumption: "power",
+  wiringLoss: "power",
+  outputCurrent: "current",
+  outputVoltage: "voltage",
+  inputVoltage: "voltage",
+  airflow: "airflow",
+  heatTransferCoefficient: "heat-transfer",
+  internalTemperatureMax: "temperature",
+  shortCircuitRating: "current",
 };
 
 /** Factor (and offset, for °C) to the base unit of each unit's dimension: value * factor + offset. */
@@ -180,6 +196,8 @@ const unitScales: Readonly<Record<string, readonly [number, number?]>> = {
   "kA²s": [1e6],
   "kg·m²": [1],
   "1/h": [1],
+  "W/(m²·K)": [1],
+  "m³/h": [1],
 };
 
 /** A value of a unit of the table expressed in its dimension's base unit (A, V, W, K, ...). */

@@ -90,6 +90,8 @@ it("converts every tool schema and validates samples while filtering disabled na
       motorDrivesRun: "20261115-110000-cccc",
       motor: "mot-p2",
     },
+    panel_engineering: { view: "export", runId: "20261116-120000-pppp", format: "bom-csv" },
+    panel_engineering_check: { panel: "pnl-plant-m", motorDrivesRun: "20261115-110000-cccc" },
     help: { page: "permissions" },
   };
   for (const tool of registry.available()) {
@@ -134,6 +136,8 @@ it("converts every tool schema and validates samples while filtering disabled na
     "qelectrotech",
     "qelectrotech_change",
     "qelectrotech_check",
+    "panel_engineering",
+    "panel_engineering_check",
     "help",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");

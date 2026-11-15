@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-865665b6"
+
+title = "Report short-circuit withstand and busbars as not evaluated without assembly data"
+
+status = "active"
+
+requirement = """
+VERA shall report the panel's short-circuit withstand as not evaluated unless the panel declares the assembly's rated short-circuit current, then compare that declared rating with the maximum prospective fault current at the board from the network result the motor_drives result names (unknown when absent), and shall always report busbars as not evaluated because they need the assembly design data, never deriving either from the equipment list.
+"""
+
+verification = "Unit tests: without a declared rating the criterion is not-evaluated with the reason; a declared rating against the network's Ik3max at the board passes or fails with both values; busbars are not-evaluated in every case."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

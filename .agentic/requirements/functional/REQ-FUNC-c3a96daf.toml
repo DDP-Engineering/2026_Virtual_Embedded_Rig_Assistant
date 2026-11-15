@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c3a96daf"
+
+title = "Evaluate the enclosure air temperature by the stated heat-balance method"
+
+status = "active"
+
+requirement = """
+When a panel is checked with thermal conditions, VERA shall compute per scenario the mean enclosure air temperature as the declared maximum ambient plus the dissipation divided by (declared heat-transfer coefficient times the effective surface of the enclosure's stated dimensions for its installation, plus the fan's stated airflow divided by 3.1 m3*K/(W*h)), compare it with the lowest stated maximum ambient of the active equipment and the declared internal maximum, state the method, conditions and domain limits, and give unknown when an input is missing and not-evaluated without thermal conditions.
+"""
+
+verification = "Unit tests: the published example (2000 x 800 x 400 mm against a wall, 800 W, 5.5 W/(m2*K)) gives S = 4.128 m2 and 35.2 K; the fixture's scenarios equal the independent script within 0.5 %; a fan of 100 m3/h lowers the rise accordingly; a missing ambient gives unknown; no thermal block gives not-evaluated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

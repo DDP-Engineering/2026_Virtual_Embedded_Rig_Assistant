@@ -9,6 +9,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Added
 
 - qelectrotech 0.1.0: read QElectroTech projects, draft DOL, reversing and star-delta schematics, check cross-references.
+- panel-engineering 0.1.0: check control panels - BOM, terminals, 24 V budget, rail layout, heat, verification report.
 
 ### Fixed
 

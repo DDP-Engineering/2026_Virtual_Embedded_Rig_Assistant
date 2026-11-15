@@ -2,7 +2,7 @@
   "kind": "vera-industrial-catalog",
   "format": 1,
   "id": "cat-motor-drives",
-  "version": "2026-11-15.1",
+  "version": "2026-11-16.1",
   "title": "Motor starters and drives: TeSys GV2ME, LC1D, LRD, LAD9V2, Altistart 22, Altivar Process ATV930, Bussmann C10G (test fixture)",
   "sources": [
     {
@@ -40,7 +40,7 @@
       "kind": "datasheet",
       "title": "LC1D09P7 product page, Specifications",
       "publisher": "Schneider Electric (se.com UK)",
-      "revision": "web page as read 2026-11-15; no document revision shown",
+      "revision": "web page as read 2026-11-15 and 2026-11-16; no document revision shown",
       "date": "2026-11-15",
       "uri": "https://www.se.com/uk/en/product/LC1D09P7/tesys-d-contactor-3p3-no-ac3-440-v-9-a-230-v-ac-coil/",
       "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
@@ -50,7 +50,7 @@
       "kind": "datasheet",
       "title": "LC1D18P7 product page, Specifications",
       "publisher": "Schneider Electric (se.com UK)",
-      "revision": "web page as read 2026-11-15; no document revision shown",
+      "revision": "web page as read 2026-11-15 and 2026-11-16; no document revision shown",
       "date": "2026-11-15",
       "uri": "https://www.se.com/uk/en/product/LC1D18P7/tesys-d-contactor-3p3-no-ac3-440-v-18-a-230-v-ac-coil/",
       "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
@@ -60,7 +60,7 @@
       "kind": "datasheet",
       "title": "GV2ME10 product page, Specifications",
       "publisher": "Schneider Electric (se.com UK)",
-      "revision": "web page as read 2026-11-15; no document revision shown",
+      "revision": "web page as read 2026-11-15 and 2026-11-16; no document revision shown",
       "date": "2026-11-15",
       "uri": "https://www.se.com/uk/en/product/GV2ME10/motor-circuit-breaker-tesys-gv2-3p-46-3-a-thermal-magnetic-screw-clamp-terminals/",
       "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
@@ -70,7 +70,7 @@
       "kind": "datasheet",
       "title": "LRD21 product page, Specifications",
       "publisher": "Schneider Electric (se.com UK)",
-      "revision": "web page as read 2026-11-15; no document revision shown",
+      "revision": "web page as read 2026-11-15 and 2026-11-16; no document revision shown",
       "date": "2026-11-15",
       "uri": "https://www.se.com/uk/en/product/LRD21/thermal-overload-relay-tesys-lrd-12-18-a-class-10a/",
       "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
@@ -595,6 +595,39 @@
             "table": "Environment"
           },
           "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 45,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 89,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 78.5,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
         }
       ]
     },
@@ -864,6 +897,63 @@
           "source": {
             "id": "src-se-lc1d09p7",
             "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "coilPowerLoss",
+          "value": 3,
+          "unit": "W",
+          "basis": "input",
+          "note": "The page states 2...3 W at 50/60 Hz; the upper value is kept.",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "note": "Permissible ambient air temperature around the device -40...60 °C; 60...70 °C with derating.",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 77,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 45,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 86,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Environment"
           },
           "status": "confirmed"
         }
@@ -1152,6 +1242,63 @@
             "table": "Complementary"
           },
           "status": "confirmed"
+        },
+        {
+          "name": "coilPowerLoss",
+          "value": 3,
+          "unit": "W",
+          "basis": "input",
+          "note": "The page states 2...3 W at 50/60 Hz; the upper value is kept.",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "note": "Permissible ambient air temperature around the device -40...60 °C; 60...70 °C with derating.",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 77,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 45,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 86,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Environment"
+          },
+          "status": "confirmed"
         }
       ],
       "accessories": [
@@ -1159,6 +1306,11 @@
           "item": "itm-lad9v2",
           "role": "mechanical-interlock",
           "note": "LAD9V2 product page, Main: product compatibility LC1D09...LC1D38, electrical circuit type reversing/changeover."
+        },
+        {
+          "item": "itm-lrd21",
+          "role": "overload-relay",
+          "note": "LRD21 product page, Main: product compatibility LC1D18, LC1D25, LC1D32, LC1D38; Complementary: mounting support under contactor."
         }
       ]
     },
@@ -1273,6 +1425,39 @@
           "source": {
             "id": "src-se-lrd21",
             "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 66,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lrd21",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 45,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lrd21",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 70,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lrd21",
+            "table": "Complementary"
           },
           "status": "confirmed"
         }

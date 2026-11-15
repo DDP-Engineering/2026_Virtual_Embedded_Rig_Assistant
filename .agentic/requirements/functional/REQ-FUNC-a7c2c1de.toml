@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a7c2c1de"
+
+title = "Check terminal strips against the schematic and motor terminals"
+
+status = "active"
+
+requirement = """
+When a panel is checked, VERA shall check each terminal strip against the terminals it must provide - the distinct motor terminals of its motor's assembly connections and the connected terminals of the schematic device with the strip's label - passing when the strip's count reaches every requirement, failing when it is smaller with both numbers, giving unknown when no requirement is found, and shall check the declared spare share of each strip as its own criterion.
+"""
+
+verification = "Unit and tool tests: the star-delta motor strip with 6 terminals passes and with 3 fails (3 < 6); the DOL strip needs 3; a strip with no motor and no schematic label is unknown; a strip with 0 spare against a 10 % reserve fails the spare criterion."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts", "05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

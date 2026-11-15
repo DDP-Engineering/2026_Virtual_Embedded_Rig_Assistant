@@ -76,3 +76,4 @@
   name: Electrical schematics and panels
   groups:
     - { name: QElectroTech schematics, plugins: [qelectrotech], default: true }
+    - { name: Panel engineering, plugins: [panel-engineering], default: true }

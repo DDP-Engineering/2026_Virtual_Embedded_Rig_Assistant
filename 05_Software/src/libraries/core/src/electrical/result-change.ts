@@ -36,7 +36,8 @@ export async function prepareResultChange(options: {
     | "motor_drives"
     | "power_quality"
     | "lighting_design"
-    | "qelectrotech_check";
+    | "qelectrotech_check"
+    | "panel_engineering_check";
   args: Record<string, unknown>;
   result: ElectricalResult;
   model: ElectricalModel;

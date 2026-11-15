@@ -34,6 +34,8 @@ export const builtinToolNames = [
   "qelectrotech",
   "qelectrotech_change",
   "qelectrotech_check",
+  "panel_engineering",
+  "panel_engineering_check",
   "help",
 ] as const;
 

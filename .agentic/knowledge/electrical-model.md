@@ -27,7 +27,11 @@ lighting-files.ts, lighting.ts, lighting-tool.ts), QElectroTech projects: `qelec
 `qelectrotech_check`, strict .qet XML (no DTD/XXE), folios, conductors, potentials, master/slave cross-references,
 DOL/reversing/star-delta template candidates, interlock checks, byte-preserving edits, reconcile with the model
 (spec .agentic/specs/REQ-DATA-963cbdf6.md, core electrical/xml-strict.ts, qet.ts, qet-symbols.ts, qet-templates.ts,
-qet-check.ts, qet-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+qet-check.ts, qet-tool.ts), panel engineering: `panel_engineering`, `panel_engineering_check`, panel files
+`electrical-automation-panels/<id>.json`, BOM and reconciliation with assemblies/model/schematics, accessories listed
+by the host item, terminal strips, 24 V budget and derating, 2D rail placement, dissipation, enclosure heat balance,
+short-circuit/busbars not evaluated, verification report, impact of a changed device, BOM CSV and layout SVG (spec
+.agentic/specs/REQ-DATA-a8bf1713.md, core electrical/panel-file.ts, panel.ts, panel-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -36,7 +40,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine, the power factor correction engine with its measurement files, the lighting engine and the QElectroTech schematic reader, templates and checks. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine, the power factor correction engine with its measurement files, the lighting engine, the QElectroTech schematic reader, templates and checks and the panel engineering engine. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -191,13 +195,36 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   | {action edit, path, sha256, title?, elements [{uuid, info}]} (splices of the allowed information names and the title,
   base sha256; elements and conductors must stay the same); `qelectrotech_check` (write) {path, motorDrivesRun?, motor?}
   -> one result (producer qelectrotech/check, engine vera-qet-check 1.0.0) with sources `qet:<path>@sha256:<hex>`.
+- Panel files (spec REQ-DATA-a8bf1713): shared `panelSchema` (kind `vera-panel`, format 1), `panelDir`
+  (`electrical-automation-panels`), `panelLimits`, `panelLocations`, `panelTagSchema`; core `checkPanel`/`parsePanel`
+  (`Invalid panel file <id>:`, unique tags across zones, rules, rails, ducts, equipment and strips, references to rails,
+  zones, hosts, supplies, scenarios and sources, units by property) and confined `readPanelFile(root, id)` -> {panel,
+  stamp {id, path, sha256}} (1 MiB).
+- Panel engine: pure `analyzePanel({model, panel, catalogs Map<id, {catalog, stamp}>, motorDrives, network|null,
+  schematics [{path, sha256, motor, project}], ...})` -> result (producer `panel-engineering` / `panel`, engine
+  `vera-panel` 1.0.0, preliminary, catalog null); exported `effectiveSurface`, `temperatureRise`, `AIR_FACTOR` 3.1,
+  `verificationCharacteristics` (13), `NO_CONFORMITY`, `panelFingerprints`, `draftEquipment`, `panelImpact`,
+  `panelBomCsv`, `panelLayoutSvg`. Criteria `bom-items`, `assembly:<motor ref>`, `model-loads`, `model-devices`,
+  `schematic:<path>`, `accessory:plate|<tag>`, `terminals:<strip>`, `terminal-spare:<strip>`, `rail:<tag>` (failures),
+  `placement:<tag>` (fail/unknown only), `layout`, `segregation:<rule>`, `reserve-rails`, `dissipation:<s>`, `thermal`
+  (not-evaluated) or `thermal:<s>`, `supply:<psu>:<s>`, `short-circuit-withstand`, `busbars`; values `railFree`,
+  `effectiveSurface`, `dissipation|temperatureRise|internalTemperature:<s>`, `loss:<tag>`,
+  `supplyLoad|supplyAvailable:<psu>:<s>`. Result section `panel` {id, path, board, frame, plate, bom (sha256 per line),
+  rails, zones, ducts, placements, verification}.
+- Tool `panel_engineering_check` (write) {panel, motorDrivesRun, schematics? <= 8 {path, motor?}}: reads the model, the
+  panel file, its catalogs plus the motor_drives result's catalog, the CURRENT motor_drives result (refused when
+  missing, foreign or stale), its network result when current, the .qet files, and prepares one new result through
+  `prepareResultChange`; refuses a panel board that is not a board or a motor that is not a motor. Tool
+  `panel_engineering` (read) {view draft {motorDrivesRun, motors?} | impact {runId} | export {runId, format bom-csv |
+  layout-svg}} writes nothing.
 - Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
   devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
   interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
 - Tool gating: `electricalModelToolNames` (`electrical_model`, `electrical_model_change`) are offered while any plugin
   of manifest ecosystem `electrical` or `automation` is loaded (`electricalModelPlugin`); each tool of
   `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
-  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check` -> qelectrotech) only while its own plugin ID
+  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check` -> qelectrotech, `panel_engineering`,
+  `panel_engineering_check` -> panel-engineering) only while its own plugin ID
   is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
   desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
@@ -284,6 +311,14 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   motor-drives assembly of dol, reversing or star-delta (REQ-FUNC-07c03695, REQ-FUNC-2e3af206). A candidate is a new file;
   an edit needs the file's sha256, changes only information spans and the title and keeps every other byte and UUID
   (REQ-REL-3e094ff0, REQ-DATA-6609a3b6). Reconcile never writes the model (REQ-FUNC-3f13f78d).
+- A panel check reads catalog values only as confirmed values whose conditions cover the equipment's, the largest
+  counting; a missing dimension leaves the entry unplaced (unknown), a missing loss leaves the scenario's dissipation
+  and air temperature unknown, never zero; an accessory or plate is compatible only when the host item lists it
+  (REQ-DATA-a8bf1713, REQ-FUNC-cc5f6c3c, REQ-FUNC-0487d376, REQ-FUNC-39b7793a). The thermal estimate is the enclosure
+  heat balance Ti = Te + P / (K S + V / 3.1) with S after IEC 890 (Schneider Electric catalogue p. 8/110-8/111), losses
+  at rating; short-circuit withstand only from a declared assembly rating, busbars never; no IEC 61439 conformity is
+  claimed (REQ-FUNC-c3a96daf, REQ-FUNC-865665b6, REQ-FUNC-f761244d). `panel_engineering_check` refuses a missing,
+  foreign or stale motor_drives result and writes only a new result file (REQ-REL-665727e6, REQ-FUNC-b0b55ff0).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -312,6 +347,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | .qet reading, strict XML | electrical/xml-strict.ts, qet.ts, spec REQ-DATA-963cbdf6 | electrical/qet.test.ts |
 | Templates, symbols, candidate checks | electrical/qet-templates.ts, qet-symbols.ts, qet-check.ts | electrical/qet-templates.test.ts (fixtures tests/fixtures/qelectrotech, VERA_QET_FIXTURES_UPDATE=1) |
 | QET tools, edits, check result | electrical/qet-tool.ts | electrical/qet-tool.test.ts |
+| Panel file format | shared panel.ts, electrical/panel-file.ts, spec REQ-DATA-a8bf1713 | electrical/panel.test.ts |
+| Panel engine: BOM, placement, budget, heat, report | electrical/panel.ts | electrical/panel.test.ts (tests/support/panel_thermal_check.py) |
+| Panel tools, impact, exports, draft | electrical/panel-tool.ts | electrical/panel-tool.test.ts |
 | Offering the tools | electrical/tools.ts (`electricalPluginTools`), sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -395,6 +433,22 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-DATA-6609a3b6 — edits as splices keeping unaffected bytes and UUIDs.
 - REQ-FUNC-b21bd414 — store a QET check result stamped with the project's sha256.
 - REQ-TEST-7eb1927d — self-authored QET fixtures compared byte for byte.
+- REQ-DATA-a8bf1713 — accept only a strictly valid format-1 panel file.
+- REQ-FUNC-a0fb1b98 — BOM reconciled with assemblies, the board's loads and devices and the schematics.
+- REQ-FUNC-cc5f6c3c — an accessory only when its host's catalog item lists it.
+- REQ-FUNC-a7c2c1de — terminal strips against motor terminals and schematic devices, spare.
+- REQ-FUNC-4017a1ee — 24 V budget per scenario with cited derating and declared reserve.
+- REQ-FUNC-0487d376 — 2D placement on rails with collisions, zones, segregation, depth and missing data.
+- REQ-FUNC-39b7793a — dissipation per scenario from stated losses, unknown never zero.
+- REQ-FUNC-c3a96daf — enclosure air temperature by the stated heat balance with its domain.
+- REQ-FUNC-865665b6 — short-circuit withstand and busbars not evaluated without assembly data.
+- REQ-FUNC-f761244d — verification report without a conformity claim.
+- REQ-FUNC-b0b55ff0 — panel result stored through an approved prepared change.
+- REQ-REL-665727e6 — a missing, foreign or stale motor_drives result or a non-board is refused.
+- REQ-FUNC-40a5f935 — impact of a changed device on a stored panel result.
+- REQ-FUNC-dd7ad54a — BOM CSV and layout SVG exports of a stored result.
+- REQ-FUNC-7a0835ed — equipment draft from current assemblies.
+- REQ-TEST-265439fc — cited panel fixture and an independent thermal reference.
 
 ## Files
 
@@ -464,3 +518,11 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/qet-templates.test.ts` — templates against fixtures, mutation checks.
 - `05_Software/src/libraries/core/src/electrical/qet-tool.test.ts` — candidates, refusals, edits, conflicts, check result, reconcile, plugin.
 - `05_Software/tests/fixtures/qelectrotech/` — the three generated candidates (golden files).
+- `05_Software/src/libraries/shared/src/panel.ts` — panel file format-1 schema (result section in electrical-model.ts).
+- `05_Software/src/libraries/core/src/electrical/panel-file.ts` — panel file checks and confined reading.
+- `05_Software/src/libraries/core/src/electrical/panel.ts` — the panel engine, draft, impact and exports.
+- `05_Software/src/libraries/core/src/electrical/panel-tool.ts` — the panel_engineering and panel_engineering_check tools.
+- `05_Software/src/libraries/core/src/electrical/panel.test.ts` — format, heat balance, losses, accessories, terminals, placement, 24 V, report.
+- `05_Software/src/libraries/core/src/electrical/panel-tool.test.ts` — upstream chain, reconcile, refusals, impact, exports, draft.
+- `05_Software/tests/fixtures/panel-engineering/` — cited panel catalog and the fictional plant M panel.
+- `05_Software/tests/support/panel_thermal_check.py` — independent dissipation and heat-balance reference.

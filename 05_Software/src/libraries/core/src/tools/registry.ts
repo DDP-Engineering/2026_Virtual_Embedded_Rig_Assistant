@@ -5,6 +5,7 @@ import { industrialCatalogTool } from "../electrical/catalog-tool.js";
 import { lightingDesignTool } from "../electrical/lighting-tool.js";
 import { motorDrivesTool } from "../electrical/motor-drives-tool.js";
 import { electricalNetworkTool } from "../electrical/network-tool.js";
+import { panelEngineeringCheckTool, panelEngineeringTool } from "../electrical/panel-tool.js";
 import { powerQualityTool } from "../electrical/power-quality-tool.js";
 import { protectionCoordinationTool } from "../electrical/protection-tool.js";
 import { qelectrotechChangeTool, qelectrotechCheckTool, qelectrotechTool } from "../electrical/qet-tool.js";
@@ -66,6 +67,8 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   qelectrotech: qelectrotechTool,
   qelectrotech_change: qelectrotechChangeTool,
   qelectrotech_check: qelectrotechCheckTool,
+  panel_engineering: panelEngineeringTool,
+  panel_engineering_check: panelEngineeringCheckTool,
   help: helpTool,
 };
 /** Tools offered only when the host composes a program host. */

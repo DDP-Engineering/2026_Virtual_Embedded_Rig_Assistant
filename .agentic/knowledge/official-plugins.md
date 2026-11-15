@@ -23,7 +23,10 @@ to [electrical model](electrical-model.md). For lighting-design, start at plugin
 program, ecosystem `electrical`) and skills/lighting-design; the photometry readers, the lighting formats, the engine,
 the `lighting_design` tool and their tests belong to [electrical model](electrical-model.md). For qelectrotech, start at
 plugins/qelectrotech/plugin.yaml (no program, ecosystem `electrical`) and skills/qelectrotech-schematics; the .qet
-reader, templates, checks, the three QET tools and their tests belong to [electrical model](electrical-model.md).
+reader, templates, checks, the three QET tools and their tests belong to [electrical model](electrical-model.md). For
+panel-engineering, start at plugins/panel-engineering/plugin.yaml (no program, ecosystem `electrical`) and
+skills/panel-engineering; the panel file format, the engine, the two panel tools and their tests belong to
+[electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/plugins/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -393,6 +396,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   star-delta candidate from a CURRENT motor_drives result with `qelectrotech_change`, relabel with the base sha256 after
   edits in QElectroTech, store `qelectrotech_check` and apply the reconcile operations only with the user's agreement.
   Reader, templates, checks and tools: [electrical model](electrical-model.md), spec REQ-DATA-963cbdf6.
+- `panel-engineering` 0.1.0, ecosystem `electrical` (pack Electrical schematics and panels, group Panel engineering,
+  default on; activity `design`), Windows x64/Linux x64, no program. Skill `panel-engineering`: draft equipment from a
+  CURRENT motor_drives result (`panel_engineering` view draft, accessories only from the hints the catalog lists), write
+  the panel file with the engineer, store `panel_engineering_check` and report failed and unknown criteria first, never
+  an IEC 61439 conformity; after a change read the impact view; export the BOM (CSV) or the layout (SVG). Engine and
+  tools: [electrical model](electrical-model.md), spec REQ-DATA-a8bf1713.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

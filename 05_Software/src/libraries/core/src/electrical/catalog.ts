@@ -252,7 +252,7 @@ export function findItems(catalog: IndustrialCatalog, query: CatalogItemQuery): 
 }
 
 /** Whether a value's (or table's) conditions cover the requested conditions (spec "Selection algorithm" 2). */
-function covers(offered: Conditions, requested: Conditions): boolean {
+export function covers(offered: Conditions, requested: Conditions): boolean {
   for (const [key, want] of Object.entries(requested)) {
     const exact = offered[key];
     const low = offered[`${key}Min`];

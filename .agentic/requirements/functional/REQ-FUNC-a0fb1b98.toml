@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a0fb1b98"
+
+title = "List the panel equipment and reconcile it with assemblies, model and schematics"
+
+status = "active"
+
+requirement = """
+When a panel is checked, VERA shall list every equipment entry and terminal strip as a BOM line with tag, role, location, catalog item, order code, manufacturer, motor and host, and shall reconcile it as criteria: every device of the motor_drives assembly of each motor in the panel present with the same catalog item, every motor or load fed from the board through its circuits covered by an assembly, an equipment entry or a declared exclusion, every model object the board contains present by tag or model ID, and every labelled device of each named .qet schematic (scoped to its motor) present in the panel and every panel entry of that motor drawn, each difference failing its criterion and a line without catalog item being unknown.
+"""
+
+verification = "Tool tests on the fixture: the BOM holds the M1 and M2 assembly devices with their order codes and the reconciliation passes with M3 excluded; removing KM1-M1 from the panel fails the assembly criterion, giving KM1-M1 another item fails it with both order codes, dropping the exclusion fails the model criterion naming M3, and a schematic label missing from the panel fails the schematic criterion naming it."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts", "05_Software/src/libraries/core/src/electrical/panel-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

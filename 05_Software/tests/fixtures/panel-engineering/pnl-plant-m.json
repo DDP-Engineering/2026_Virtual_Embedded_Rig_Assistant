@@ -1,0 +1,515 @@
+{
+  "kind": "vera-panel",
+  "format": 1,
+  "id": "pnl-plant-m",
+  "title": "Plant M motor control panel MCP1 (fictional verification fixture)",
+  "board": "brd-main",
+  "catalogs": ["cat-panel", "cat-motor-drives"],
+  "sources": [
+    {
+      "id": "src-panel-brief",
+      "kind": "user",
+      "title": "Plant M panel layout brief (fictional VERA verification fixture)",
+      "revision": "1",
+      "date": "2026-11-16"
+    },
+    {
+      "id": "src-se-thermal",
+      "kind": "datasheet",
+      "title": "Enclosures catalogue, Thermal management system: method of determining the thermal solution",
+      "publisher": "Schneider Electric (via storage.electrika.com)",
+      "revision": "catalogue pages 8/110-8/111 as read 2026-11-16",
+      "date": "2026-11-16",
+      "uri": "https://storage.electrika.com/flips/0700-schn-encl-10/files/assets/basic-html/page691.html"
+    }
+  ],
+  "enclosure": {
+    "item": {
+      "catalog": "cat-panel",
+      "item": "itm-nsys3d6420"
+    },
+    "plate": {
+      "catalog": "cat-panel",
+      "item": "itm-nsymm64"
+    },
+    "installation": "wall",
+    "mountingDepth": 160
+  },
+  "zones": [
+    {
+      "tag": "Z1",
+      "title": "Power and 230 V control",
+      "x": 0,
+      "y": 0,
+      "width": 350,
+      "height": 340,
+      "classes": ["power", "control"]
+    },
+    {
+      "tag": "Z2",
+      "title": "24 V SELV and terminals",
+      "x": 0,
+      "y": 340,
+      "width": 350,
+      "height": 210,
+      "classes": ["selv", "control", "terminals"]
+    }
+  ],
+  "rules": [
+    {
+      "tag": "SEG1",
+      "kind": "segregation",
+      "text": "Keep at least 30 mm between the 400/230 V power devices and the 24 V SELV area",
+      "zones": ["Z1", "Z2"],
+      "distance": 30,
+      "source": {
+        "id": "src-panel-brief"
+      }
+    },
+    {
+      "tag": "KO1",
+      "kind": "keep-out",
+      "text": "Keep the 20 mm above the bottom gland plate free for cable entry",
+      "area": {
+        "x": 0,
+        "y": 530,
+        "width": 350,
+        "height": 20
+      },
+      "source": {
+        "id": "src-panel-brief"
+      }
+    }
+  ],
+  "rails": [
+    {
+      "tag": "R1",
+      "zone": "Z1",
+      "x": 10,
+      "y": 70,
+      "length": 330,
+      "profile": "TH35-15",
+      "gap": 5
+    },
+    {
+      "tag": "R2",
+      "zone": "Z1",
+      "x": 10,
+      "y": 230,
+      "length": 330,
+      "profile": "TH35-15",
+      "gap": 5
+    },
+    {
+      "tag": "R3",
+      "zone": "Z2",
+      "x": 10,
+      "y": 450,
+      "length": 330,
+      "profile": "TH35-7.5",
+      "gap": 5
+    }
+  ],
+  "ducts": [
+    {
+      "tag": "D1",
+      "x": 0,
+      "y": 130,
+      "width": 350,
+      "height": 40
+    },
+    {
+      "tag": "D2",
+      "x": 0,
+      "y": 345,
+      "width": 350,
+      "height": 40
+    }
+  ],
+  "equipment": [
+    {
+      "tag": "Q1-M1",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-gv2me10"
+      },
+      "role": "protection",
+      "class": "power",
+      "location": "plate",
+      "rail": "R1",
+      "motor": "mot-f1",
+      "schematicTag": "Q1"
+    },
+    {
+      "tag": "KM1-M1",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-lc1d09p7"
+      },
+      "role": "line-contactor",
+      "class": "power",
+      "location": "plate",
+      "rail": "R1",
+      "motor": "mot-f1",
+      "schematicTag": "KM1",
+      "conditions": {
+        "utilisationCategory": {
+          "text": "AC-3"
+        }
+      }
+    },
+    {
+      "tag": "Q1-M2",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-c10g32"
+      },
+      "role": "protection",
+      "class": "power",
+      "location": "plate",
+      "rail": "R1",
+      "motor": "mot-p2",
+      "schematicTag": "Q1",
+      "note": "Fuse link: its fuse holder is not in the catalogs, so its size and loss stay unknown."
+    },
+    {
+      "tag": "KM1-M2",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-lc1d18p7"
+      },
+      "role": "line-contactor",
+      "class": "power",
+      "location": "plate",
+      "rail": "R2",
+      "motor": "mot-p2",
+      "schematicTag": "KM1",
+      "conditions": {
+        "utilisationCategory": {
+          "text": "AC-3"
+        }
+      }
+    },
+    {
+      "tag": "F1-M2",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-lrd21"
+      },
+      "role": "overload-relay",
+      "class": "power",
+      "location": "plate",
+      "mountedOn": "KM1-M2",
+      "mounting": "below",
+      "motor": "mot-p2",
+      "schematicTag": "F1"
+    },
+    {
+      "tag": "KM2-M2",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-lc1d18p7"
+      },
+      "role": "delta-contactor",
+      "class": "power",
+      "location": "plate",
+      "rail": "R2",
+      "motor": "mot-p2",
+      "schematicTag": "KM2",
+      "conditions": {
+        "utilisationCategory": {
+          "text": "AC-3"
+        }
+      }
+    },
+    {
+      "tag": "KM2-KM3-M2",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-lad9v2"
+      },
+      "role": "mechanical-interlock",
+      "class": "power",
+      "location": "plate",
+      "mountedOn": "KM2-M2",
+      "mounting": "side",
+      "motor": "mot-p2",
+      "schematicTag": "KM2-KM3",
+      "declared": {
+        "powerLoss": {
+          "value": 0,
+          "unit": "W",
+          "basis": "input",
+          "note": "Mechanical interlock: no current path in the power circuit; the engineer counts 0 W.",
+          "source": {
+            "id": "src-panel-brief"
+          }
+        }
+      }
+    },
+    {
+      "tag": "KM3-M2",
+      "item": {
+        "catalog": "cat-motor-drives",
+        "item": "itm-lc1d09p7"
+      },
+      "role": "star-contactor",
+      "class": "power",
+      "location": "plate",
+      "rail": "R2",
+      "motor": "mot-p2",
+      "schematicTag": "KM3",
+      "conditions": {
+        "utilisationCategory": {
+          "text": "AC-3"
+        }
+      }
+    },
+    {
+      "tag": "KT1-M2",
+      "item": null,
+      "role": "star-delta timer",
+      "class": "control",
+      "location": "plate",
+      "motor": "mot-p2",
+      "schematicTag": "KT1",
+      "note": "No cited timer relay chosen yet: order code, size and loss unknown."
+    },
+    {
+      "tag": "S0-M1",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-xb5aa42"
+      },
+      "role": "stop push button",
+      "class": "control",
+      "location": "door",
+      "motor": "mot-f1",
+      "schematicTag": "S0",
+      "declared": {
+        "powerLoss": {
+          "value": 0,
+          "unit": "W",
+          "basis": "input",
+          "note": "Push-button contact element: the page states no loss; the engineer counts 0 W.",
+          "source": {
+            "id": "src-panel-brief"
+          }
+        }
+      }
+    },
+    {
+      "tag": "S1-M1",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-xb5aa31"
+      },
+      "role": "start push button",
+      "class": "control",
+      "location": "door",
+      "motor": "mot-f1",
+      "schematicTag": "S1",
+      "declared": {
+        "powerLoss": {
+          "value": 0,
+          "unit": "W",
+          "basis": "input",
+          "note": "Push-button contact element: the page states no loss; the engineer counts 0 W.",
+          "source": {
+            "id": "src-panel-brief"
+          }
+        }
+      }
+    },
+    {
+      "tag": "S0-M2",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-xb5aa42"
+      },
+      "role": "stop push button",
+      "class": "control",
+      "location": "door",
+      "motor": "mot-p2",
+      "schematicTag": "S0",
+      "declared": {
+        "powerLoss": {
+          "value": 0,
+          "unit": "W",
+          "basis": "input",
+          "note": "Push-button contact element: the page states no loss; the engineer counts 0 W.",
+          "source": {
+            "id": "src-panel-brief"
+          }
+        }
+      }
+    },
+    {
+      "tag": "S1-M2",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-xb5aa31"
+      },
+      "role": "start push button",
+      "class": "control",
+      "location": "door",
+      "motor": "mot-p2",
+      "schematicTag": "S1",
+      "declared": {
+        "powerLoss": {
+          "value": 0,
+          "unit": "W",
+          "basis": "input",
+          "note": "Push-button contact element: the page states no loss; the engineer counts 0 W.",
+          "source": {
+            "id": "src-panel-brief"
+          }
+        }
+      }
+    },
+    {
+      "tag": "G1",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-abls1a24050"
+      },
+      "role": "24 V power supply",
+      "class": "selv",
+      "location": "plate",
+      "rail": "R3",
+      "conditions": {
+        "inputVoltage": {
+          "value": 230,
+          "unit": "V"
+        }
+      }
+    },
+    {
+      "tag": "A1",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-tm221ce16t"
+      },
+      "role": "PLC",
+      "class": "selv",
+      "location": "plate",
+      "rail": "R3",
+      "supply": "G1",
+      "conditions": {
+        "expansion": {
+          "text": "none"
+        },
+        "installation": {
+          "text": "horizontal"
+        }
+      }
+    }
+  ],
+  "strips": [
+    {
+      "tag": "X0",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-nsytrv42"
+      },
+      "class": "terminals",
+      "count": 3,
+      "spare": 1,
+      "rail": "R3",
+      "note": "Incoming supply L1, L2, L3."
+    },
+    {
+      "tag": "X1",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-nsytrv42"
+      },
+      "class": "terminals",
+      "count": 2,
+      "spare": 1,
+      "rail": "R3",
+      "note": "230 V control supply L, N."
+    },
+    {
+      "tag": "XM1",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-nsytrv42"
+      },
+      "class": "terminals",
+      "count": 3,
+      "spare": 1,
+      "rail": "R3",
+      "motor": "mot-f1"
+    },
+    {
+      "tag": "XM2",
+      "item": {
+        "catalog": "cat-panel",
+        "item": "itm-nsytrv42"
+      },
+      "class": "terminals",
+      "count": 6,
+      "spare": 1,
+      "rail": "R3",
+      "motor": "mot-p2"
+    }
+  ],
+  "scenarios": [
+    {
+      "tag": "idle",
+      "title": "Idle, controller on",
+      "active": ["G1", "A1"]
+    },
+    {
+      "tag": "m1-run",
+      "title": "M1 running",
+      "active": ["G1", "A1", "Q1-M1", "KM1-M1", "S0-M1", "S1-M1"]
+    },
+    {
+      "tag": "full",
+      "title": "Everything in operation"
+    }
+  ],
+  "reserve": {
+    "railPercent": 20,
+    "terminalsPercent": 10,
+    "supplyPercent": 20
+  },
+  "thermal": {
+    "ambientTemperatureMax": {
+      "value": 35,
+      "unit": "°C",
+      "basis": "input",
+      "source": {
+        "id": "src-panel-brief"
+      }
+    },
+    "heatTransferCoefficient": {
+      "value": 5.5,
+      "unit": "W/(m²·K)",
+      "basis": "input",
+      "note": "K for an enclosure made of painted sheet steel.",
+      "source": {
+        "id": "src-se-thermal",
+        "page": "8/110"
+      }
+    },
+    "wiringLoss": {
+      "value": 5,
+      "unit": "W",
+      "basis": "assumption",
+      "note": "Allowance for internal wiring and terminals, the engineer's estimate.",
+      "source": {
+        "id": "src-panel-brief"
+      }
+    }
+  },
+  "assembly": {},
+  "excluded": [
+    {
+      "object": "mot-c3",
+      "reason": "The M3 conveyor drive sits in a separate drive cabinet (fictional brief)."
+    }
+  ]
+}

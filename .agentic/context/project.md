@@ -177,7 +177,13 @@ reconciles devices with the model as proposed operations; `qelectrotech_change` 
 candidate from a current motor_drives assembly (checked from its own XML: phases, interlocks as NC contacts on every coil
 path) as a new file, or splices element information into an existing project with its base sha256;
 `qelectrotech_check` stores numbering, cross-reference and device-list checks with the file's sha256; the official
-plugin qelectrotech brings its skill.
+plugin qelectrotech brings its skill. `panel_engineering_check` checks a panel file (`electrical-automation-panels/<id>.json`,
+format 1) against a current motor_drives result, the model, catalogs and .qet schematics: BOM and reconciliation,
+accessories only when the host item lists them, terminals, 24 V budget, 2D rail placement, dissipation and the
+enclosure air temperature by a stated heat balance, short-circuit/busbars not evaluated without assembly data, a
+verification report claiming no IEC 61439 conformity; it stores one new result after approval. `panel_engineering`
+drafts equipment, shows the impact of a changed device and exports the BOM (CSV) and layout (SVG); the official plugin
+panel-engineering brings its skill.
 Parts search: Settings > Parts search holds supplier switches, credentials (Mouser, DigiKey, TME, Farnell, Rutronik; `parts:<id>` slots with the same consent and rollback) and region; the host tool `parts_search` is offered only with Web access on, the official parts-search plugin enabled for the workbench and a supplier enabled, contacts fixed supplier endpoints only, stores no result and never orders. The CLI reads MOUSER_API_KEY, DIGIKEY_CLIENT_ID/SECRET, TME_API_TOKEN/SECRET, FARNELL_API_KEY and RUTRONIK_API_KEY into memory. Live supplier probes need the user's own keys; see [parts search](../knowledge/parts-search.md).
 
 PCB layout candidates: the kicad-layout plugin (Electronics design pack, default off) edits a candidate copy of a

@@ -204,6 +204,102 @@ export const electricalAssemblySchema = z.strictObject({
   ),
 });
 export type ElectricalAssembly = z.infer<typeof electricalAssemblySchema>;
+/** Limits of panel files and of the panel section of a result (spec REQ-DATA-a8bf1713). */
+export const panelLimits = {
+  catalogs: 4,
+  sources: 50,
+  zones: 16,
+  rules: 32,
+  rails: 16,
+  ducts: 32,
+  equipment: 200,
+  strips: 32,
+  scenarios: 8,
+  excluded: 64,
+  fileBytes: 1024 * 1024,
+} as const;
+export const panelLocations = ["plate", "door", "field"] as const;
+export const panelTagSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9][A-Za-z0-9.+-]{0,31}$/, "must be a tag of letters, digits, '.', '+' or '-'");
+const sha = z.string().regex(/^[0-9a-f]{64}$/);
+const tagOrNull = panelTagSchema.nullable();
+const n = z.number().nullable();
+/** The `panel` section of a panel-engineering result (REQ-FUNC-b0b55ff0). */
+export const panelResultSchema = z.strictObject({
+  id: electricalIdSchema,
+  path: short,
+  board: electricalIdSchema,
+  frame: sha,
+  plate: z.strictObject({ width: z.number(), height: z.number() }).nullable(),
+  bom: bounded(
+    z.strictObject({
+      tag: panelTagSchema,
+      kind: z.enum(["equipment", "strip"]),
+      role: short,
+      location: z.enum(panelLocations),
+      quantity: z.number().int().min(1),
+      catalog: electricalIdSchema.nullable(),
+      item: electricalIdSchema.nullable(),
+      orderCode: text(64).nullable(),
+      manufacturer: short.nullable(),
+      name: short.nullable(),
+      motor: electricalIdSchema.nullable(),
+      mountedOn: tagOrNull,
+      supply: tagOrNull,
+      scenarios: z.array(panelTagSchema).max(panelLimits.scenarios),
+      sha256: sha,
+    }),
+    panelLimits.equipment + panelLimits.strips,
+  ),
+  rails: bounded(
+    z.strictObject({ tag: panelTagSchema, x: z.number(), y: z.number(), length: z.number(), used: n }),
+    panelLimits.rails,
+  ),
+  zones: bounded(
+    z.strictObject({
+      tag: panelTagSchema,
+      x: z.number(),
+      y: z.number(),
+      width: z.number(),
+      height: z.number(),
+    }),
+    panelLimits.zones,
+  ),
+  ducts: bounded(
+    z.strictObject({
+      tag: panelTagSchema,
+      x: z.number(),
+      y: z.number(),
+      width: z.number(),
+      height: z.number(),
+    }),
+    panelLimits.ducts,
+  ),
+  placements: bounded(
+    z.strictObject({
+      tag: panelTagSchema,
+      rail: tagOrNull,
+      x: n,
+      y: n,
+      width: n,
+      height: n,
+      state: z.enum(["placed", "unplaced", "mounted", "door", "field"]),
+    }),
+    panelLimits.equipment + panelLimits.strips,
+  ),
+  verification: bounded(
+    z.strictObject({
+      characteristic: short,
+      method: long,
+      evidence: z.array(short).max(32),
+      state: z.enum(["partial", "not-covered"]),
+    }),
+    16,
+  ),
+});
+export type PanelResult = z.infer<typeof panelResultSchema>;
+
 export const electricalResultSchema = z.strictObject({
   kind: z.literal("vera-electrical-result"),
   format: z.literal(1),
@@ -246,6 +342,7 @@ export const electricalResultSchema = z.strictObject({
   limits: bounded(long, electricalLimits.resultList),
   messages: bounded(long, electricalLimits.resultList),
   assemblies: bounded(electricalAssemblySchema, 16).optional(),
+  panel: panelResultSchema.optional(),
 });
 export type ElectricalResult = z.infer<typeof electricalResultSchema>;
 export type ElectricalFreshness = "current" | "stale" | "invalid";

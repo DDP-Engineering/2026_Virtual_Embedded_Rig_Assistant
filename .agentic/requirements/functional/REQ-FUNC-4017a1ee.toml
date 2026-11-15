@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4017a1ee"
+
+title = "Budget the 24 V supply per scenario with declared reserve"
+
+status = "active"
+
+requirement = """
+When a panel is checked, VERA shall budget each 24 V supply per scenario as the sum of the currents of the active equipment it feeds (stated consumption at the supply's output voltage or stated current, the largest stated value whose conditions agree with the equipment's), against the supply's stated output current at the enclosure air temperature (derated only by a cited per-kelvin factor within its stated range) reduced by the declared reserve share, passing or failing with both currents and giving unknown when a consumption, the output current or the air temperature is not established.
+"""
+
+verification = "Unit tests: the PLC on the 5 A supply passes with 0.19 A against 4 A (20 % reserve); a consumer without stated consumption makes the budget unknown naming it; at 60 degC the output is derated by the cited 2.5 %/K to 3.75 A; above the stated 70 degC range the budget is unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts", "05_Software/src/libraries/core/src/electrical/panel-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

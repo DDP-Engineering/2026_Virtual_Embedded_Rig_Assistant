@@ -8,3 +8,10 @@ entries:
       ro: Citiți scheme QElectroTech și propuneți scheme verificate DOL, inversare și stea-triunghi.
       de: QElectroTech-Pläne lesen und geprüfte Pläne für Direkt-, Wende- und Stern-Dreieck-Start entwerfen.
       fr: Lisez des schémas QElectroTech et proposez des schémas vérifiés direct, inverseur, étoile-triangle.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Check control panels - equipment, terminals, 24 V supply, rail layout and enclosure temperature.
+      ro: Verificați tablouri - aparataj, borne, sursa de 24 V, amplasare pe șine și temperatura carcasei.
+      de: Schaltschränke prüfen - Geräte, Klemmen, 24-V-Versorgung, Schienenaufbau und Gehäusetemperatur.
+      fr: Vérifiez des armoires - équipements, bornes, alimentation 24 V, rails et température.

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-39b7793a"
+
+title = "Sum panel dissipation per scenario from stated losses"
+
+status = "active"
+
+requirement = """
+When a panel is checked, VERA shall sum per scenario the losses of the active equipment inside the enclosure - stated whole-device loss or per-pole loss times poles plus stated coil loss (required when the item states a control voltage), a 24 V supply's output power times (1/efficiency - 1), a 24 V consumer's stated consumption, declared losses as assumptions - taking each value at its stated rating without scaling to the load and the largest value whose conditions agree, plus a declared wiring loss, and shall give the scenario's dissipation unknown naming each active device whose loss is not established, never zero.
+"""
+
+verification = "Unit tests and the independent reference: the fixture's idle and M1-running dissipation equal the independent script within 0.5 %; the full scenario is unknown naming its devices; the idle scenario counts only the supply and the PLC; a device without loss data makes the sum unknown and names it; the AC-3 per-pole value is used for a contactor declaring AC-3 and the largest value otherwise."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

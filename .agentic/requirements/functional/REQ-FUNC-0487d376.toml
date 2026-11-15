@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0487d376"
+
+title = "Place equipment on rails with real dimensions and flag collisions and missing data"
+
+status = "active"
+
+requirement = """
+When a panel is checked, VERA shall place each plate equipment and terminal strip on a rail of a zone accepting its class (its own rail and pinned position when given, otherwise the first free position of the first such rail in file order) with its stated width, height and depth centred on the rail, and shall give per-equipment criteria that fail on a collision with another placement, a duct or a keep-out area, on leaving the plate or its rail, on a depth beyond the declared mounting depth, on a zone not accepting its class or on a segregation distance below the documented rule, give unknown and leave the equipment unplaced when a dimension is missing, and check the declared free rail share.
+"""
+
+verification = "Unit tests: the fixture places every entry with known dimensions without collision; pinning two contactors at the same position fails both with the other's tag; a device under a duct fails; a 300 mm deep device fails depth; a selv device on a mains rail fails the zone; a segregation rule of 50 mm fails at 30 mm; a device without width is unknown and unplaced; rails filled beyond the declared reserve fail the rail reserve."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/panel.test.ts"]
+
+
+spec = "specs/REQ-DATA-a8bf1713.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

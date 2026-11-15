@@ -128,8 +128,18 @@ and `attributes.qetProject` through `electrical_model_change`. Candidates are dr
 `assemblies`: a power connection `{from, to}` joins `from`'s outputs 2/4/6 to `to`'s inputs 1/3/5, or to the terminals
 listed after a colon in phase order (`motor:W1,V1,U1`, `F1:5,3,1`); `supply` is the incoming L1 L2 L3.
 
+Panel engineering comes from VERA's `panel_engineering` and `panel_engineering_check` tools (plugin
+`panel-engineering`, spec `.agentic/specs/REQ-DATA-a8bf1713.md`): a panel file
+`electrical-automation-panels/<id>.json` (kind `vera-panel`) names catalog items for the enclosure, plate, devices and
+terminal strips. Panel data in a catalog item are the cited parameters `width`, `height`, `depth` (mm, as mounted on
+the plate), `powerLoss` or `powerLossPerPole` with a `poles` attribute (`3P`) and `coilPowerLoss` (W), `ambientTemperatureMax`,
+for a 24 V supply `outputVoltage`, `outputCurrent` (condition `ambientTemperatureMax`), `ambientDeratingPerKelvin` and
+`efficiency`, for a consumer `powerConsumption`, for a fan `airflow` (m³/h). A mounted accessory or a mounting plate
+counts as compatible only when the host item's `accessories` list names it.
+
 Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
-`power_quality`, `lighting_design`, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check`) is offered
+`power_quality`, `lighting_design`, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check`, `panel_engineering`,
+`panel_engineering_check`) is offered
 only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
 cleanly when they are missing or stale.
 

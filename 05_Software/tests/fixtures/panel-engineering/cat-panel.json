@@ -1,0 +1,647 @@
+{
+  "kind": "vera-industrial-catalog",
+  "format": 1,
+  "id": "cat-panel",
+  "version": "2026-11-16.1",
+  "title": "Panel equipment: Modicon ABLS power supply, Modicon M221 controller, PanelSeT S3D enclosure and plate, Linergy TR terminals, Harmony XB5 push buttons (test fixture)",
+  "sources": [
+    {
+      "id": "src-se-abls1a24050",
+      "kind": "datasheet",
+      "title": "ABLS1A24050 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/ABLS1A24050/regulated-power-supply-100240v-ac-24v-5-a-single-phase-optimized/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-tm221ce16t",
+      "kind": "datasheet",
+      "title": "TM221CE16T product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/TM221CE16T/controller-m221-16-io-transistor-pnp-ethernet/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-nsys3d6420",
+      "kind": "datasheet",
+      "title": "NSYS3D6420 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/NSYS3D6420/wall-mounted-steel-enclosure-panelset-s3d-plain-door-without-mounting-plate-600x400x200mm-ip66-ik10/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-nsymm64",
+      "kind": "datasheet",
+      "title": "NSYMM64 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/NSYMM64/plain-mounting-plate-h600xw400mm-made-of-galvanised-sheet-steel/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-nsytrv42",
+      "kind": "datasheet",
+      "title": "NSYTRV42 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/NSYTRV42/screw-terminal-feed-through-2-points-4mm%C2%B2-grey/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-xb5aa31",
+      "kind": "datasheet",
+      "title": "XB5AA31 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/XB5AA31/push-button-plastic-flush-green-%C3%B822-spring-return-unmarked-1-no/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-xb5aa42",
+      "kind": "datasheet",
+      "title": "XB5AA42 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-16; no document revision shown",
+      "date": "2026-11-16",
+      "uri": "https://www.se.com/uk/en/product/XB5AA42/push-button-plastic-flush-red-%C3%B822-spring-return-unmarked-1-no/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    }
+  ],
+  "families": [
+    {
+      "id": "fam-modicon-abls",
+      "manufacturer": "Schneider Electric",
+      "name": "Modicon Power Supply ABLS (Optimized)",
+      "category": "power-supply"
+    },
+    {
+      "id": "fam-modicon-m221",
+      "manufacturer": "Schneider Electric",
+      "name": "Modicon M221 logic controllers",
+      "category": "plc"
+    },
+    {
+      "id": "fam-panelset-s3d",
+      "manufacturer": "Schneider Electric",
+      "name": "PanelSeT S3D wall-mounted steel enclosures",
+      "category": "enclosure"
+    },
+    {
+      "id": "fam-panelset-plates",
+      "manufacturer": "Schneider Electric",
+      "name": "PanelSeT mounting plates",
+      "category": "mounting-plate"
+    },
+    {
+      "id": "fam-linergy-tr",
+      "manufacturer": "Schneider Electric",
+      "name": "Linergy TR screw terminal blocks",
+      "category": "terminal-block"
+    },
+    {
+      "id": "fam-harmony-xb5",
+      "manufacturer": "Schneider Electric",
+      "name": "Harmony XB5 Ø22 push buttons",
+      "category": "push-button"
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-abls1a24050",
+      "family": "fam-modicon-abls",
+      "orderCode": "ABLS1A24050",
+      "name": "Regulated power supply, 100-240 V AC, 24 V 5 A, single phase, Optimized",
+      "parameters": [
+        {
+          "name": "outputVoltage",
+          "value": 24,
+          "unit": "V",
+          "basis": "input",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "outputCurrent",
+          "value": 5,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "ambientTemperatureMax": {
+              "value": 50,
+              "unit": "°C"
+            },
+            "inputVoltage": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "note": "Main: power supply output current 5 A; Environment: -10...50 °C without derating, mounting position A, 230 V AC, < 2000 m.",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientDeratingPerKelvin",
+          "value": 2.5,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "ambientTemperatureMin": {
+              "value": 50,
+              "unit": "°C"
+            },
+            "ambientTemperatureMax": {
+              "value": 70,
+              "unit": "°C"
+            },
+            "inputVoltage": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "note": "50...70 °C with current derating of 2.5 % per °C, mounting position A, 230 V AC, < 2000 m.",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 70,
+          "unit": "°C",
+          "basis": "input",
+          "note": "Upper end of 50...70 °C with current derating, 230 V AC.",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "efficiency",
+          "value": 88,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "inputVoltage": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLoss",
+          "value": 25,
+          "unit": "W",
+          "basis": "input",
+          "note": "Power dissipation in W: 25 W.",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 120,
+          "unit": "W",
+          "basis": "input",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 117.6,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 123.6,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 40,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-abls1a24050",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-tm221ce16t",
+      "family": "fam-modicon-m221",
+      "orderCode": "TM221CE16T",
+      "name": "Controller M221 16 IO transistor PNP Ethernet",
+      "parameters": [
+        {
+          "name": "powerConsumption",
+          "value": 4.6,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 24,
+              "unit": "V"
+            },
+            "expansion": {
+              "text": "none"
+            }
+          },
+          "note": "Maximum power consumption 4.6 W at 24 V without I/O expansion module.",
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerConsumption",
+          "value": 11,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 24,
+              "unit": "V"
+            },
+            "expansion": {
+              "text": "maximum"
+            }
+          },
+          "note": "Maximum power consumption 11 W at 24 V with the maximum number of I/O expansion modules.",
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 55,
+          "unit": "°C",
+          "basis": "input",
+          "conditions": {
+            "installation": {
+              "text": "horizontal"
+            }
+          },
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 35,
+          "unit": "°C",
+          "basis": "input",
+          "conditions": {
+            "installation": {
+              "text": "vertical"
+            }
+          },
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 90,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 70,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 95,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-tm221ce16t",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-nsys3d6420",
+      "family": "fam-panelset-s3d",
+      "orderCode": "NSYS3D6420",
+      "name": "Wall mounted steel enclosure, PanelSeT S3D, plain door, without mounting plate, 600x400x200 mm, IP66, IK10",
+      "attributes": {
+        "material": "steel",
+        "ingressProtection": "IP66"
+      },
+      "parameters": [
+        {
+          "name": "height",
+          "value": 600,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsys3d6420",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 400,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsys3d6420",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 200,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsys3d6420",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "accessories": [
+        {
+          "item": "itm-nsymm64",
+          "role": "mounting-plate",
+          "note": "NSYMM64 product page, Main: enclosure nominal dimensions H 600 mm W 400 mm, range compatibility PanelSeT S3D."
+        }
+      ]
+    },
+    {
+      "id": "itm-nsymm64",
+      "family": "fam-panelset-plates",
+      "orderCode": "NSYMM64",
+      "name": "Plain mounting plate H600xW400mm made of galvanised sheet steel",
+      "parameters": [
+        {
+          "name": "height",
+          "value": 550,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsymm64",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 350,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsymm64",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-nsytrv42",
+      "family": "fam-linergy-tr",
+      "orderCode": "NSYTRV42",
+      "name": "Screw terminal, feed through, 2 points, 4 mm², grey",
+      "attributes": {
+        "quantityPerSet": "Set of 50"
+      },
+      "parameters": [
+        {
+          "name": "width",
+          "value": 6.2,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsytrv42",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "height",
+          "value": 47.7,
+          "unit": "mm",
+          "basis": "input",
+          "note": "The page's Length (47.7 mm): the extent across the rail, height on the plate.",
+          "source": {
+            "id": "src-se-nsytrv42",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 47.5,
+          "unit": "mm",
+          "basis": "input",
+          "note": "The page's Height (47.5 mm): the extent above the rail.",
+          "source": {
+            "id": "src-se-nsytrv42",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 32,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsytrv42",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 130,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-nsytrv42",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-xb5aa31",
+      "family": "fam-harmony-xb5",
+      "orderCode": "XB5AA31",
+      "name": "Push button, plastic, flush, green, Ø22, spring return, unmarked",
+      "attributes": {
+        "contacts": "1 NO (13-14)"
+      },
+      "parameters": [
+        {
+          "name": "height",
+          "value": 42,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa31",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 30,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa31",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 52,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa31",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 70,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa31",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-xb5aa42",
+      "family": "fam-harmony-xb5",
+      "orderCode": "XB5AA42",
+      "name": "Push button, plastic, flush, red, Ø22, spring return, unmarked",
+      "attributes": {
+        "contacts": "1 NC (21-22)"
+      },
+      "parameters": [
+        {
+          "name": "height",
+          "value": 42,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa42",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "width",
+          "value": 30,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa42",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "depth",
+          "value": 52,
+          "unit": "mm",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa42",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 70,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-xb5aa42",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    }
+  ],
+  "coordination": []
+}
