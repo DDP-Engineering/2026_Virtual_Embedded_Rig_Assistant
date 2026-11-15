@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6546e9a4"
+
+title = "Return the same selection for the same catalog and request"
+
+status = "active"
+
+requirement = """
+The industrial catalog selection shall return identical output for the same catalog bytes and request on Windows and Linux, ordering items by outcome and then by order code without using price, stock or name similarity.
+"""
+
+verification = "Core unit tests run on Windows and Linux (WSL2): two selections of the same request are deeply equal and their JSON is identical; eligible items precede unknown ones, which precede eliminated ones, each sorted by order code."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

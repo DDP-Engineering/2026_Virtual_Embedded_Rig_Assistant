@@ -1,0 +1,2379 @@
+{
+  "kind": "vera-industrial-catalog",
+  "format": 1,
+  "id": "cat-schneider-tesys",
+  "version": "2026-11-15.1",
+  "title": "Schneider Electric TeSys Deca contactors and TeSys GV2 motor circuit breakers (test fixture)",
+  "sources": [
+    {
+      "id": "src-se-lc1d09p7",
+      "kind": "datasheet",
+      "title": "LC1D09P7 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1D09P7/tesys-d-contactor-3p3-no-ac3-440-v-9-a-230-v-ac-coil/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lc1d09b7",
+      "kind": "datasheet",
+      "title": "LC1D09B7 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1D09B7/tesys-d-contactor-3p3-no-ac3-440-v-9-a-24-v-ac-coil/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lc1d12p7",
+      "kind": "datasheet",
+      "title": "LC1D12P7 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1D12P7/tesys-d-contactor-3p3-no-ac3-440-v-12-a-230-v-ac-coil/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lc1d18p7",
+      "kind": "datasheet",
+      "title": "LC1D18P7 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1D18P7/tesys-d-contactor-3p3-no-ac3-440-v-18-a-230-v-ac-coil/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-gv2me08",
+      "kind": "datasheet",
+      "title": "GV2ME08 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/GV2ME08/motor-circuit-breaker-tesys-gv2-3p-2-54-a-thermal-magnetic-screw-clamp-terminals/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-gv2me10",
+      "kind": "datasheet",
+      "title": "GV2ME10 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/GV2ME10/motor-circuit-breaker-tesys-gv2-3p-46-3-a-thermal-magnetic-screw-clamp-terminals/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-gv2me14",
+      "kind": "datasheet",
+      "title": "GV2ME14 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/GV2ME14/motor-circuit-breaker-tesys-gv2-3p-610-a-thermal-magnetic-screw-clamp-terminals/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-ladn11",
+      "kind": "datasheet",
+      "title": "LADN11 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LADN11/auxiliary-contact-block-tesys-d-1no-+-1nc-front-mounting-screw-clamp-terminals/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    }
+  ],
+  "families": [
+    {
+      "id": "fam-tesys-deca-lc1d",
+      "manufacturer": "Schneider Electric",
+      "name": "TeSys Deca Advanced contactors LC1D",
+      "category": "contactor"
+    },
+    {
+      "id": "fam-tesys-gv2me",
+      "manufacturer": "Schneider Electric",
+      "name": "TeSys GV2 motor circuit breakers GV2ME",
+      "category": "motor-circuit-breaker"
+    },
+    {
+      "id": "fam-tesys-deca-ladn",
+      "manufacturer": "Schneider Electric",
+      "name": "TeSys Deca auxiliary contact blocks LADN",
+      "category": "auxiliary-contact-block"
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-lc1d09p7",
+      "family": "fam-tesys-deca-lc1d",
+      "orderCode": "LC1D09P7",
+      "name": "TeSys D contactor 3P (3 NO), AC-3 <= 440 V 9 A, 230 V AC 50/60 Hz coil",
+      "variant": {
+        "base": "LC1D09",
+        "label": "230 V AC 50/60 Hz coil"
+      },
+      "attributes": {
+        "poles": "3P",
+        "auxiliaryContacts": "1 NO + 1 NC",
+        "deviceShortName": "LC1D"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 9,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 25,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-1"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "controlVoltage",
+          "value": 230,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "frequency": {
+              "text": "50/60 Hz"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 2.2,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 415,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 660,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "circuit": {
+              "text": "power"
+            },
+            "standard": {
+              "text": "IEC 60947-4-1"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 0.2,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "accessories": [
+        {
+          "item": "itm-ladn11",
+          "role": "front-mounted auxiliary contact block"
+        }
+      ],
+      "distributors": [
+        {
+          "supplier": "RS Components UK",
+          "sku": "394-9790",
+          "capturedAt": "2026-11-15T13:40:00Z",
+          "uri": "https://uk.rs-online.com/web/p/contactors/3949790"
+        }
+      ]
+    },
+    {
+      "id": "itm-lc1d09b7",
+      "family": "fam-tesys-deca-lc1d",
+      "orderCode": "LC1D09B7",
+      "name": "TeSys D contactor 3P (3 NO), AC-3 <= 440 V 9 A, 24 V AC 50/60 Hz coil",
+      "variant": {
+        "base": "LC1D09",
+        "label": "24 V AC 50/60 Hz coil"
+      },
+      "attributes": {
+        "poles": "3P",
+        "auxiliaryContacts": "1 NO + 1 NC",
+        "deviceShortName": "LC1D"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 9,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 25,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-1"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "controlVoltage",
+          "value": 24,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "frequency": {
+              "text": "50/60 Hz"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 2.2,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 415,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 660,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "circuit": {
+              "text": "power"
+            },
+            "standard": {
+              "text": "IEC 60947-4-1"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 0.2,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09b7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "accessories": [
+        {
+          "item": "itm-ladn11",
+          "role": "front-mounted auxiliary contact block"
+        }
+      ]
+    },
+    {
+      "id": "itm-lc1d12p7",
+      "family": "fam-tesys-deca-lc1d",
+      "orderCode": "LC1D12P7",
+      "name": "TeSys D contactor 3P (3 NO), AC-3 <= 440 V 12 A, 230 V AC 50/60 Hz coil",
+      "variant": {
+        "base": "LC1D12",
+        "label": "230 V AC 50/60 Hz coil"
+      },
+      "attributes": {
+        "poles": "3P",
+        "auxiliaryContacts": "1 NO + 1 NC",
+        "deviceShortName": "LC1D"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 12,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 25,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-1"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "controlVoltage",
+          "value": 230,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "frequency": {
+              "text": "50/60 Hz"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 3,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 415,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 7.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 7.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 660,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "circuit": {
+              "text": "power"
+            },
+            "standard": {
+              "text": "IEC 60947-4-1"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 0.36,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d12p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "accessories": [
+        {
+          "item": "itm-ladn11",
+          "role": "front-mounted auxiliary contact block"
+        }
+      ]
+    },
+    {
+      "id": "itm-lc1d18p7",
+      "family": "fam-tesys-deca-lc1d",
+      "orderCode": "LC1D18P7",
+      "name": "TeSys D contactor 3P (3 NO), AC-3 <= 440 V 18 A, 230 V AC 50/60 Hz coil",
+      "variant": {
+        "base": "LC1D18",
+        "label": "230 V AC 50/60 Hz coil"
+      },
+      "attributes": {
+        "poles": "3P",
+        "auxiliaryContacts": "1 NO + 1 NC",
+        "deviceShortName": "LC1D"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 18,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 32,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-1"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "controlVoltage",
+          "value": 230,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "frequency": {
+              "text": "50/60 Hz"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 7.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 9,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 415,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 10,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 10,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 660,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "circuit": {
+              "text": "power"
+            },
+            "standard": {
+              "text": "IEC 60947-4-1"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 0.8,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "accessories": [
+        {
+          "item": "itm-ladn11",
+          "role": "front-mounted auxiliary contact block"
+        }
+      ]
+    },
+    {
+      "id": "itm-gv2me08",
+      "family": "fam-tesys-gv2me",
+      "orderCode": "GV2ME08",
+      "name": "TeSys GV2 motor circuit breaker 3P, 2.5...4 A, thermal-magnetic",
+      "attributes": {
+        "poles": "3P",
+        "tripUnit": "Thermal-magnetic",
+        "deviceShortName": "GV2ME"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMin",
+          "value": 2.5,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMax",
+          "value": 4,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripCurrent",
+          "value": 74,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 230,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 3,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 100,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 75,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 2.5,
+          "unit": "W",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMin",
+          "value": -20,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me08",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-gv2me10",
+      "family": "fam-tesys-gv2me",
+      "orderCode": "GV2ME10",
+      "name": "TeSys GV2 motor circuit breaker 3P, 4...6.3 A, thermal-magnetic",
+      "attributes": {
+        "poles": "3P",
+        "tripUnit": "Thermal-magnetic",
+        "deviceShortName": "GV2ME"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMin",
+          "value": 4,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMax",
+          "value": 6.3,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripCurrent",
+          "value": 91,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 230,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 50,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 50,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 3,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 100,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 75,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 2.5,
+          "unit": "W",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMin",
+          "value": -20,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me10",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-gv2me14",
+      "family": "fam-tesys-gv2me",
+      "orderCode": "GV2ME14",
+      "name": "TeSys GV2 motor circuit breaker 3P, 6...10 A, thermal-magnetic",
+      "attributes": {
+        "poles": "3P",
+        "tripUnit": "Thermal-magnetic",
+        "deviceShortName": "GV2ME"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMin",
+          "value": 6,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMax",
+          "value": 10,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripCurrent",
+          "value": 149,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 230,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 15,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 10,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "breakingCapacity",
+          "value": 3,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 100,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 75,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 2.5,
+          "unit": "W",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMin",
+          "value": -20,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "distributors": [
+        {
+          "supplier": "RS Components UK",
+          "sku": "395-0239",
+          "capturedAt": "2026-11-15T13:40:00Z",
+          "uri": "https://uk.rs-online.com/web/p/motor-protection/3950239"
+        }
+      ]
+    },
+    {
+      "id": "itm-ladn11",
+      "family": "fam-tesys-deca-ladn",
+      "orderCode": "LADN11",
+      "name": "TeSys D auxiliary contact block 1 NO + 1 NC, front mounting",
+      "attributes": {
+        "contacts": "1 NO + 1 NC",
+        "deviceShortName": "LADN"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "source": {
+            "id": "src-se-ladn11",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 6,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-15"
+            },
+            "voltage": {
+              "value": 120,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-ladn11",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 1.04,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-15"
+            },
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-ladn11",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-5-1"
+            }
+          },
+          "source": {
+            "id": "src-se-ladn11",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMin",
+          "value": -5,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-ladn11",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-ladn11",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        }
+      ]
+    }
+  ],
+  "coordination": [
+    {
+      "id": "tbl-lc1d-fuse-type1",
+      "title": "TeSys D contactor with gG fuses, coordination type 1",
+      "kind": "fuse coordination type 1",
+      "conditions": {
+        "voltageMax": {
+          "value": 690,
+          "unit": "V"
+        },
+        "circuit": {
+          "text": "power"
+        }
+      },
+      "entries": [
+        {
+          "items": ["itm-lc1d09p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 25,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d09p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 25 A gG at <= 690 V coordination type 1 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d09b7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 25,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d09b7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 25 A gG at <= 690 V coordination type 1 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d12p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 40,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d12p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 40 A gG at <= 690 V coordination type 1 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d18p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 50,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d18p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 50 A gG at <= 690 V coordination type 1 for power circuit"
+        }
+      ]
+    },
+    {
+      "id": "tbl-lc1d-fuse-type2",
+      "title": "TeSys D contactor with gG fuses, coordination type 2",
+      "kind": "fuse coordination type 2",
+      "conditions": {
+        "voltageMax": {
+          "value": 690,
+          "unit": "V"
+        },
+        "circuit": {
+          "text": "power"
+        }
+      },
+      "entries": [
+        {
+          "items": ["itm-lc1d09p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 20,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d09p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 20 A gG at <= 690 V coordination type 2 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d09b7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 20,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d09b7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 20 A gG at <= 690 V coordination type 2 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d12p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 25,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d12p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 25 A gG at <= 690 V coordination type 2 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d18p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 35,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d18p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 35 A gG at <= 690 V coordination type 2 for power circuit"
+        }
+      ]
+    }
+  ]
+}

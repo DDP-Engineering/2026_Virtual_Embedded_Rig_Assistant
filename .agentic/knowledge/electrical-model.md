@@ -5,7 +5,9 @@
 Select for the electrical project model, `electrical-automation-model.json`, `electrical-automation-results/`,
 `electrical_model`, `electrical_model_change`, quantities with units and basis, entity IDs versus visible
 references (M1, QF1), relation rules, result freshness/stale results, explicit-mapping imports and the
-`electricalModel` host flag. Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+`electricalModel` host flag, and the industrial catalog: `electrical-automation-catalogs/<id>.json`, the
+`industrial_catalog` tool, order codes versus distributor SKUs, firm-requirement selection and coordination
+lookups (spec .agentic/specs/REQ-DATA-d7e27def.md, core electrical/catalog.ts and catalog-tool.ts). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -14,7 +16,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, its units, its relation graph, provenance and the result contract, with no calculation engine. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, with no calculation engine. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -39,7 +41,20 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   update-object, remove-object, add-relation, remove-relation, import {path, mapping}}: the whole new model is
   validated, serialized canonically and prepared as a FileChangeRequest (tool `electrical_model_change`, path,
   before/after SHA-256, diff cut to 2000 lines); applying is `commitChange`. Result {path, sha256, bytes, ids}.
-- `SessionHost.electricalModel` offers both tools; `electricalModelPlugin(plugin)` is true for manifest ecosystem
+- Industrial catalog (spec REQ-DATA-d7e27def): shared `industrialCatalogSchema` (kind `vera-industrial-catalog`,
+  format 1), `industrialCatalogDir` (`electrical-automation-catalogs`), `industrialCatalogLimits`,
+  `catalogRequirementSchema`. Core pure services `checkCatalog`/`parseCatalog` (file id must equal catalog id,
+  units, unique IDs and (manufacturer, orderCode), references, licence per source, `linkProblem`), `findItems`
+  (match `order-code` or `distributor-sku`), `selectItems` (eligible/unknown/eliminated, reasons absent,
+  conditions, unconfirmed; cited evidence; stamp {id, version, sha256, path}), `coordinationFor`
+  (applicable with `unevaluated` request conditions; notApplicable with other-products, conditions,
+  missing-condition); `toBaseUnit` in units.ts.
+  Access: `readCatalogFile(root, id)`, `listCatalogs(root)` (<=50 files, 4 MiB each, PathGuard).
+- Tool `industrial_catalog` (read) {view list|items|select|coordination, catalog?, orderCode?|sku?, family?,
+  category?, offset?, requirements? <=32, items? <=4, conditions?}: list gives each file valid or invalid with its
+  problem; items <=50 per page; select and coordination return the catalog stamp. Files only: no network, no
+  credential store.
+- `SessionHost.electricalModel` offers the three tools (`industrial_catalog` included); `electricalModelPlugin(plugin)` is true for manifest ecosystem
   `electrical` or `automation`, and the desktop sets the flag while such a plugin is loaded. The headless CLI does
   not set it.
 
@@ -59,6 +74,16 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - The model is written only inside the write queue with the before-hash recheck: a file changed after preparation
   is a conflict and stays as it is; read-only sessions never get the change tool (REQ-REL-cc710d50,
   REQ-SEC-4dfa2a5b).
+- An industrial catalog is read strictly like the model: an invalid file is listed invalid and never selected
+  from; the others stay usable (REQ-DATA-d7e27def, REQ-REL-003c3adc). Links with user information or a
+  credential-like query or fragment parameter make it invalid (REQ-SEC-07040413).
+- A selection decides only on confirmed values whose conditions cover the requested conditions (`xMin`/`xMax`
+  bounds, unit-scaled); the most conservative value counts; absent, off-condition or extracted values are unknown,
+  never pass or zero; order is eligible, unknown, eliminated, then order code - never price or name
+  (REQ-FUNC-742db7ea, REQ-DATA-fd465e9f, REQ-REL-6546e9a4). Accessories are separate items, never evaluated for the
+  item that lists them; a distributor SKU never matches an order code (REQ-DATA-b3d86b99).
+- A coordination entry applies only to exactly its item set and only when the request names and satisfies every
+  table condition (REQ-FUNC-ca8c6870).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -71,6 +96,8 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Relation types or cardinalities | `relationRules` in model.ts | electrical/model.test.ts (relation rules) |
 | Operations or import mapping | electrical/edit.ts | electrical/tools.test.ts |
 | Views, freshness listing, write preparation | electrical/tools.ts, results.ts | electrical/tools.test.ts |
+| Catalog format, selection, coordination | shared industrial-catalog.ts, electrical/catalog.ts, spec REQ-DATA-d7e27def | electrical/catalog.test.ts |
+| Catalog files and the industrial_catalog tool | electrical/catalog-tool.ts | electrical/catalog-tool.test.ts |
 | Offering the tools | sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -90,7 +117,17 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-SEC-4dfa2a5b — offer the tools only to hosts that enable them; never the change tool in read-only.
 - REQ-FUNC-784f108f — import an exchange file only through an explicit mapping.
 - REQ-TEST-033d495e — two-pump panel fixture.
-- REQ-UX-d32cc9db — tool descriptions in the workbench tools editor (en/ro/de/fr).
+- REQ-DATA-d7e27def — accept only a strictly valid format-1 industrial catalog.
+- REQ-DATA-b3d86b99 — keep order code, variant, accessories and distributor SKUs apart.
+- REQ-FUNC-742db7ea — eliminate catalog items that fail a firm requirement with the reason.
+- REQ-DATA-fd465e9f — mark an absent, unconfirmed or off-condition catalog value unknown.
+- REQ-FUNC-b2ae3ed9 — carry the catalog revision and value sources in each selection.
+- REQ-FUNC-ca8c6870 — apply a coordination table only to its exact products and conditions.
+- REQ-SEC-07040413 — refuse catalog links that carry credentials; files only.
+- REQ-REL-003c3adc — list unreadable or invalid catalogs without stopping the others.
+- REQ-REL-6546e9a4 — return the same selection for the same catalog and request.
+- REQ-TEST-647c2266 — two real Schneider Electric families typed from cited public pages.
+- REQ-UX-d32cc9db — electrical tool descriptions in the workbench tools editor (en/ro/de/fr).
 
 ## Files
 
@@ -101,6 +138,12 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/results.ts` — result checks and derived freshness.
 - `05_Software/src/libraries/core/src/electrical/tools.ts` — access port, both tools, host-flag helpers.
 - `05_Software/tests/fixtures/electrical-model/two-pump-panel.json` — fictional two-pump panel model.
+- `05_Software/src/libraries/shared/src/industrial-catalog.ts` — catalog format-1 schema, folder, limits, requirement schema.
+- `05_Software/src/libraries/core/src/electrical/catalog.ts` — catalog checks, lookup, selection, coordination.
+- `05_Software/src/libraries/core/src/electrical/catalog-tool.ts` — catalog files and the industrial_catalog tool.
+- `05_Software/tests/fixtures/industrial-catalog/cat-schneider-tesys.json` — two Schneider families from cited se.com pages.
+- `05_Software/src/libraries/core/src/electrical/catalog.test.ts` — format, links, SKU/variant/accessory, selection, coordination.
+- `05_Software/src/libraries/core/src/electrical/catalog-tool.test.ts` — listing, broken files, tool views, plugin ecosystem.
 - `05_Software/src/libraries/core/src/electrical/model.test.ts` — format, IDs, relations, units, unknowns, round trip, fixture.
 - `05_Software/src/libraries/core/src/electrical/results.test.ts` — result format and freshness.
 - `05_Software/src/libraries/core/src/electrical/tools.test.ts` — views, prepared change, conflicts, import.

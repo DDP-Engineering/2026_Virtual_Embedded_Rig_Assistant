@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-647c2266"
+
+title = "Two real Schneider Electric families typed from cited public pages"
+
+status = "active"
+
+requirement = """
+The test fixtures shall hold one industrial catalog of two real Schneider Electric families, TeSys Deca LC1D contactors and TeSys GV2ME motor circuit breakers, with the LADN11 accessory, each value typed from a public se.com product page cited with its link, table and capture date, and no copied vendor catalog or standard table.
+"""
+
+verification = "Inspection and core unit tests: the fixture validates; every parameter cites a source with a se.com URL and licence terms; the fixture holds at most 10 items."
+
+affected_paths = ["05_Software/tests/fixtures/industrial-catalog/cat-schneider-tesys.json"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

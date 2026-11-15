@@ -42,6 +42,11 @@ it("converts every tool schema and validates samples while filtering disabled na
         { op: "import", path: "export.json", mapping: { "mot-x": "new" } },
       ],
     },
+    industrial_catalog: {
+      view: "select",
+      catalog: "cat-schneider-tesys",
+      requirements: [{ id: "ie", parameter: "ratedCurrent", op: ">=", value: { value: 9, unit: "A" } }],
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -76,6 +81,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "apply_candidate",
     "electrical_model",
     "electrical_model_change",
+    "industrial_catalog",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

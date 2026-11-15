@@ -6,6 +6,10 @@ For electronics-calc, start at plugins/electronics-calc/plugin.yaml, scripts/ele
 scripts/elec_support/ with spec .agentic/specs/REQ-DATA-3d15fdfc.md; tests/integration/electronics-calc.test.ts
 and tests/fixtures/electronics-calc/ own its numeric, refusal, report, integrity and session coverage.
 
+For industrial-catalog, start at plugins/industrial-catalog/plugin.yaml (no program, ecosystem `electrical`) and
+skills/industrial-selection; the catalog format, the `industrial_catalog` tool and their tests belong to
+[electrical model](electrical-model.md).
+
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
 projects, make_fixtures.py, internals.py) own its refusal, real-KiCad, integrity and provisioner coverage. The path
@@ -328,6 +332,14 @@ that source metadata reaches the deterministic bundled index unchanged.
   listed) or 3 (input changed or output failed, run folder removed). Supplier search is not a program: the host
   tool `parts_search` (see [parts search](parts-search.md)). Verified on Windows 11 with the toolchain Python and
   the opt-in `VERA_PARTS_UV` run (real uv, managed CPython 3.13, 2026-11-13); native Ubuntu has not been run.
+
+- `industrial-catalog` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Industrial
+  catalog and selection, default on; activity `design`), Windows x64/Linux x64, no program. Skill
+  `industrial-selection`: firm requirements with conditions, selection through VERA's `industrial_catalog` tool,
+  eliminations and unknowns explained, coordination only for the exact products and voltage, and a proposal
+  applied only through `electrical_model_change`. Loading it enables the electrical tools (`electrical_model`,
+  `electrical_model_change`, `industrial_catalog`). Live supplier offers stay with parts-search; this plugin holds no
+  credentials. Format and tool: [electrical model](electrical-model.md), spec REQ-DATA-d7e27def.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

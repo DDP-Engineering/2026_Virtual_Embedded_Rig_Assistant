@@ -1,6 +1,7 @@
 import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
+import { industrialCatalogTool } from "../electrical/catalog-tool.js";
 import { electricalModelChangeTool, electricalModelTool } from "../electrical/tools.js";
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
@@ -49,6 +50,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   apply_candidate: applyCandidateTool,
   electrical_model: electricalModelTool,
   electrical_model_change: electricalModelChangeTool,
+  industrial_catalog: industrialCatalogTool,
 };
 /** Tools offered only when the host composes a program host. */
 export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];

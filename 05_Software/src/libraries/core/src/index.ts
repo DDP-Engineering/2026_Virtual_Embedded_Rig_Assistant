@@ -7,6 +7,8 @@ export * from "./agent/runtime.js";
 export * from "./agent/tool.js";
 export * from "./agent/types.js";
 export * from "./artifacts/store.js";
+export * from "./electrical/catalog.js";
+export * from "./electrical/catalog-tool.js";
 export * from "./electrical/edit.js";
 export * from "./electrical/model.js";
 export * from "./electrical/results.js";

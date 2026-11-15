@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-07040413"
+
+title = "Refuse catalog source links that carry credentials"
+
+status = "active"
+
+requirement = """
+VERA shall refuse an industrial catalog whose links carry user credentials or a query or fragment parameter named like a key, token, secret, password, signature, credential, session or bearer token, and shall never read the credential store or open a network connection to read or select from a catalog.
+"""
+
+verification = "Core unit tests: a source or distributor uri with user:password@, ?apikey=, ?X-Amz-Signature=, ?sig=, ?X-Amz-Credential=, #access_token= or a file: link makes the catalog invalid with a problem at that path; a catalog file reached through a link leaving the workbench is listed invalid and not read (Linux test); the catalog tool's selection runs from files only (no web or parts host is given to it)."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

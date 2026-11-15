@@ -25,7 +25,11 @@ import { checkModel, entityHash, modelIssues, parseModel, problemsText, serializ
 import { checkResult, resultFreshness } from "./results.js";
 
 /** The tools a host offers only with the electrical model enabled. */
-export const electricalToolNames: readonly string[] = ["electrical_model", "electrical_model_change"];
+export const electricalToolNames: readonly string[] = [
+  "electrical_model",
+  "electrical_model_change",
+  "industrial_catalog",
+];
 /** Plugins of these ecosystems build on the electrical model; the desktop enables its tools while one is loaded. */
 export const electricalModelEcosystems: readonly string[] = ["electrical", "automation"];
 export function electricalModelPlugin(plugin: {

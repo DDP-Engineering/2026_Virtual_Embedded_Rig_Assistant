@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-742db7ea"
+
+title = "Eliminate catalog items that fail a firm requirement with the reason"
+
+status = "active"
+
+requirement = """
+When an item's confirmed value under the requested conditions fails a firm requirement, the industrial catalog selection shall eliminate the item and name the requirement, the value with its unit and the limit.
+"""
+
+verification = "Core unit tests: a requirement of a 230 V coil eliminates LC1D09B7 naming the controlVoltage requirement, 24 V and 230 V; a requirement of Ie >= 12 A at AC-3 400 V eliminates LC1D09P7 with 9 A against 12 A and keeps LC1D12P7; values in kA and A, K and °C compare after unit scaling; with two confirmed values the smallest decides >=, the largest <= and a differing one ==; a request at a Min or Max bound is covered and one beyond it is not."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

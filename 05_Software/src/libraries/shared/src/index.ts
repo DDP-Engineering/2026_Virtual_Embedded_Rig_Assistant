@@ -11,6 +11,7 @@ export * from "./events.js";
 export { gitExecutionArguments } from "./git-options.js";
 export * from "./help.js";
 export * from "./hil-plan.js";
+export * from "./industrial-catalog.js";
 export * from "./ipc.js";
 export * from "./keyboard-shortcuts.js";
 export * from "./lab-resources.js";

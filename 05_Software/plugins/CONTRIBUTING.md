@@ -56,6 +56,15 @@ marks the result stale when one of them changes. Entity IDs (`mot-p1`) are stabl
 visible references (`ref`: M1, QF1); a quantity is `{value, unit, basis}` and `value: null` means
 unknown. Units come from one table; the format is in `.agentic/specs/REQ-DATA-06c0bd54.md`.
 
+Manufacturer data lives in industrial catalogs, `electrical-automation-catalogs/<id>.json` (kind
+`vera-industrial-catalog`, format 1, spec `.agentic/specs/REQ-DATA-d7e27def.md`): an item is a manufacturer's order
+code with an optional variant, accessories that are items of their own and distributor SKUs with their capture
+time; each parameter is a quantity with conditions, a cited source (revision, page or table, licence terms) and the
+status `confirmed` or `extracted`. VERA's `industrial_catalog` tool selects on firm requirements and answers
+coordination questions for exact products and conditions; a result that used a catalog sets `catalog: {id,
+version}` from the stamp the tool returns. A helper that reads a catalog file follows the same format and never
+treats an extracted, absent or off-condition value as a pass.
+
 ## Draft with the agent
 
 Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the
