@@ -39,7 +39,6 @@ export function WorkbenchTools({
   };
   return (
     <div className="workbench-tools">
-      <p className="muted">{t("workbenchTools.hint")}</p>
       <ul>
         {builtinToolNames.map((name) => (
           <li key={name}>

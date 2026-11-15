@@ -1796,11 +1796,13 @@ legend {
 .workbench-editor-content .project-instructions {
   min-height: 18rem;
 }
+/* Tools: two columns on a normal window (three when very wide), one when narrow. */
 .workbench-tools ul {
   list-style: none;
   padding: 0;
-  margin: 1rem 0 0;
+  margin: 0;
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
   gap: 0.5rem;
 }
 /* Documents: actions and indexing summary on the left, the folder selection on the right. */

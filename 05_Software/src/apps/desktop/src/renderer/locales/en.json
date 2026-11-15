@@ -642,7 +642,6 @@
     "openError": "Could not open the link. Try again."
   },
   "workbenchTools": {
-    "hint": "Checked tools are enabled for this workbench. Changes take effect after you save; session permissions still apply.",
     "read": "Read text files or selected line ranges.",
     "list": "List files and subfolders in a directory.",
     "glob": "Find files by name or path patterns, such as **/*.cpp.",

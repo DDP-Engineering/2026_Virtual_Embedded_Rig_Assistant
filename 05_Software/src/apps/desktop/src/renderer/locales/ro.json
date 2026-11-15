@@ -642,7 +642,6 @@
     "openError": "Linkul nu a putut fi deschis. Încearcă din nou."
   },
   "workbenchTools": {
-    "hint": "Tool-urile bifate sunt active pentru acest workbench. Modificările se aplică după salvare; permisiunile sesiunii se păstrează.",
     "read": "Citește fișiere text sau intervale de linii.",
     "list": "Listează fișierele și subfolderele unui director.",
     "glob": "Găsește fișiere după tipare de nume sau cale, precum **/*.cpp.",
