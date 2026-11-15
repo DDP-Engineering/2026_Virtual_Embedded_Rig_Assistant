@@ -543,7 +543,8 @@ test("workbench plugin draft save and cancel persist independently with empty ne
     await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).not.toBeChecked();
     await page.locator('[data-action="create-workbench"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("B");
-    expect((await config(b)).plugins.enabled).toEqual([]);
+    // Like workbench A above, wait for the saved file rather than reading it once.
+    await expect.poll(async () => (await config(b).catch(() => undefined))?.plugins.enabled).toEqual([]);
     expect((await config(a)).plugins.enabled).toEqual(["echo-tools"]);
     await app.close();
     app = await launch(root, a);
