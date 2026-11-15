@@ -16,6 +16,10 @@ tickets in Gitea.
   [#261](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/261)**
   (IDs reused from the first plugin epic, so always cited with their issue number), merged into
   `master` as PR #272; its open proofs are below.
+- Electrical power and distribution: [electrical-power.md](electrical-power.md), **PWR-00…PWR-06
+  #126…#132 / epic [#122](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/122)**
+  — common project model, industrial catalog, network and cable sizing, protection, motors and
+  drives, reactive power compensation and lighting, on branch `feature/122-electrical-power`.
 - Further plugins: [../plugins/plan.md](../plugins/plan.md); analysis capabilities:
   [../capabilities/README.md](../capabilities/README.md).
 
