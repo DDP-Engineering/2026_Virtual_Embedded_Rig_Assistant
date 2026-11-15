@@ -146,6 +146,26 @@ function stub(options: {
           options.catalog.plugins.find((plugin) => plugin.id === id)?.version,
         );
       }
+      case "plugins.catalogPreview": {
+        const id = request.id as string;
+        const { review } = reviewOf(
+          id,
+          true,
+          false,
+          options.catalog.plugins.find((p) => p.id === id)?.version,
+        );
+        return {
+          ...review,
+          help: {
+            en: `# ${id} help
+
+How to use ${id}.
+`,
+            fr: `# Aide ${id}
+`,
+          },
+        };
+      }
       case "plugins.catalogInstall":
         return installed(request.id as string, "1.0.0");
       case "plugins.provision":
@@ -719,4 +739,21 @@ it("installs only the plugins when Install is chosen without dependencies", asyn
   await vi.waitFor(() => expect(calls("plugins.catalogInstall")).toHaveLength(1));
   expect(calls("plugins.provision")).toEqual([]);
   expect($("[data-install-result]")).toBeNull();
+});
+
+// The details of a catalog plugin show its package, including its help page, before any install.
+it("reads a catalog plugin's description, operations and help in its card details before install", async () => {
+  await i18n.changeLanguage("en");
+  stub({ catalog: view(dependencyCatalog) });
+  await render();
+  await vi.waitFor(() => expect($('[data-catalog-plugin="arduino-cli"]')).not.toBeNull());
+  expect(calls("plugins.catalogPreview")).toEqual([]);
+  await click('[data-catalog-plugin="arduino-cli"] [data-action="plugin-expand"]');
+  const card = '[data-catalog-plugin="arduino-cli"]';
+  await vi.waitFor(() => expect($(`${card} [data-plugin-section="description"]`)).not.toBeNull());
+  expect(calls("plugins.catalogPreview")).toEqual([{ id: "arduino-cli" }]);
+  expect($(`${card} [data-plugin-section="operations"]`)).not.toBeNull();
+  expect($(`${card} [data-plugin-section="help"]`).textContent).toContain("How to use arduino-cli.");
+  expect(calls("plugins.catalogReview")).toEqual([]);
+  expect(calls("plugins.catalogInstall")).toEqual([]);
 });

@@ -516,6 +516,8 @@ export const pluginReviewSchema = z.strictObject({
   manifest: pluginManifestSchema.optional(),
   /** Present whenever the manifest parses. */
   composition: pluginCompositionSchema.optional(),
+  /** The package's help pages (`help/<language>.md`) by language, when it has any. */
+  help: z.partialRecord(z.enum(["en", "ro", "de", "fr"]), z.string().max(256 * 1024)).optional(),
   installed: z.strictObject({ version: z.string().max(128).optional() }).optional(),
 });
 export type PluginReview = z.infer<typeof pluginReviewSchema>;

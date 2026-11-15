@@ -325,6 +325,12 @@ export const channels = {
     pluginCatalogIdRequestSchema,
     pluginCatalogReviewSchema,
   ),
+  /** A catalog plugin's package read for its details before install; keeps and installs nothing. */
+  "plugins.catalogPreview": defineChannel(
+    "plugins.catalogPreview",
+    pluginCatalogIdRequestSchema,
+    pluginReviewSchema,
+  ),
   /** Installs the reviewed catalog plugin bound to the integrity hash its review showed. */
   "plugins.catalogInstall": defineChannel(
     "plugins.catalogInstall",

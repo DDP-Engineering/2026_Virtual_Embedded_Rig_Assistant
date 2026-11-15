@@ -813,7 +813,6 @@
     "noPrograms": "Aucun programme : ce plugin ajoute uniquement des compétences.",
     "docs": "Documents",
     "composition": {
-      "title": "Composition",
       "noPrograms": "N’exécute aucun programme.",
       "skills": "Compétences",
       "files": "Profils et fichiers de données"
@@ -895,7 +894,6 @@
         "stable": "Stable (version 1.0.0 et ultérieures)",
         "pre-release": "Préversion (tous les plugins, y compris les versions 0.x)"
       },
-      "channelHint": "Stable liste les plugins éprouvés sur de vrais outils et du vrai matériel. Préversion liste aussi les plugins dont la validation est encore en cours.",
       "check": "Rechercher des mises à jour",
       "checking": "Vérification…",
       "url": "URL du catalogue",
@@ -933,8 +931,6 @@
     "trust": "Faire confiance à ce paquet",
     "scopedTrustIntro": "Faire confiance à ce paquet précis pour ce banc de travail sur cette machine. La confiance n’active pas le plugin et n’installe pas ses programmes. Toute modification du paquet nécessite un nouvel examen.",
     "refresh": "Actualiser la liste",
-    "expand": "Afficher les détails de {{name}}",
-    "collapse": "Masquer les détails de {{name}}",
     "checkDependencies": "Vérifier les dépendances",
     "checkAll": "Vérifier toutes les dépendances",
     "checkingAll": "Vérification des dépendances…",
@@ -1055,7 +1051,6 @@
       "notReady": "Pas prêt : {{checks}}",
       "dependencies": "Dépendances",
       "configuration": "Configuration",
-      "use": "Utilisation",
       "missingNames": "Manquants : {{names}}",
       "externalNames": "À installer depuis le fabricant : {{names}}",
       "unavailableNames": "Indisponibles : {{names}}",
@@ -1063,17 +1058,12 @@
       "nothingToConfigure": "Rien à configurer",
       "configurationFailed": "La configuration n’a pas pu être vérifiée.",
       "configure": "Configurer",
-      "enabledIn": "Activé dans {{name}}",
-      "notEnabledIn": "Non activé dans {{name}}",
-      "noWorkbench": "Aucun banc de travail n’est ouvert.",
-      "openWorkbench": "Ouvrir un banc de travail",
       "state": {
         "ready": "Prêt",
         "missing": "Manquant",
         "unavailable": "Indisponible",
         "external": "Externe",
-        "unchecked": "Non vérifié",
-        "off": "Non activé"
+        "unchecked": "Non vérifié"
       }
     },
     "packs": {
@@ -1093,7 +1083,13 @@
       "alreadyInstalled": "Déjà installés : {{names}}",
       "install": "Installer avec les dépendances ({{count}})"
     },
-    "help": "Aide"
+    "help": "Aide",
+    "details": {
+      "description": "Description",
+      "about": "À propos de ce plugin",
+      "license": "Licence",
+      "loading": "Chargement des détails du plugin…"
+    }
   },
   "runs": {
     "session": "Session : {{title}}",

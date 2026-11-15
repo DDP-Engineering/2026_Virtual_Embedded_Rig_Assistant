@@ -813,7 +813,6 @@
     "noPrograms": "Keine Programme: Dieses Plugin fügt nur Skills hinzu.",
     "docs": "Dokumente",
     "composition": {
-      "title": "Zusammensetzung",
       "noPrograms": "Führt keine Programme aus.",
       "skills": "Skills",
       "files": "Profile und Datendateien"
@@ -895,7 +894,6 @@
         "stable": "Stabil (Version 1.0.0 und höher)",
         "pre-release": "Vorabversion (alle Plugins, auch 0.x-Versionen)"
       },
-      "channelHint": "Stabil listet Plugins, die mit echten Werkzeugen und echter Hardware nachgewiesen sind. Vorabversion listet auch Plugins, deren Nachweis noch offen ist.",
       "check": "Nach Updates suchen",
       "checking": "Suche läuft…",
       "url": "Katalog-URL",
@@ -933,8 +931,6 @@
     "trust": "Diesem Paket vertrauen",
     "scopedTrustIntro": "Diesem genauen Paket für diese Workbench auf diesem Computer vertrauen. Vertrauen aktiviert das Plugin nicht und installiert keine Programme. Jede Paketänderung erfordert eine neue Prüfung.",
     "refresh": "Liste aktualisieren",
-    "expand": "Details für {{name}} anzeigen",
-    "collapse": "Details für {{name}} ausblenden",
     "checkDependencies": "Abhängigkeiten prüfen",
     "checkAll": "Alle Abhängigkeiten prüfen",
     "checkingAll": "Abhängigkeiten werden geprüft…",
@@ -1055,7 +1051,6 @@
       "notReady": "Nicht bereit: {{checks}}",
       "dependencies": "Abhängigkeiten",
       "configuration": "Konfiguration",
-      "use": "Verwendung",
       "missingNames": "Fehlt: {{names}}",
       "externalNames": "Beim Hersteller installieren: {{names}}",
       "unavailableNames": "Nicht verfügbar: {{names}}",
@@ -1063,17 +1058,12 @@
       "nothingToConfigure": "Nichts zu konfigurieren",
       "configurationFailed": "Die Konfiguration konnte nicht geprüft werden.",
       "configure": "Konfigurieren",
-      "enabledIn": "Aktiviert in {{name}}",
-      "notEnabledIn": "Nicht aktiviert in {{name}}",
-      "noWorkbench": "Keine Workbench ist geöffnet.",
-      "openWorkbench": "Workbench öffnen",
       "state": {
         "ready": "Bereit",
         "missing": "Fehlt",
         "unavailable": "Nicht verfügbar",
         "external": "Extern",
-        "unchecked": "Nicht geprüft",
-        "off": "Nicht aktiviert"
+        "unchecked": "Nicht geprüft"
       }
     },
     "packs": {
@@ -1093,7 +1083,13 @@
       "alreadyInstalled": "Bereits installiert: {{names}}",
       "install": "Mit Abhängigkeiten installieren ({{count}})"
     },
-    "help": "Hilfe"
+    "help": "Hilfe",
+    "details": {
+      "description": "Beschreibung",
+      "about": "Über dieses Plugin",
+      "license": "Lizenz",
+      "loading": "Details des Plugins werden geladen…"
+    }
   },
   "runs": {
     "session": "Sitzung: {{title}}",

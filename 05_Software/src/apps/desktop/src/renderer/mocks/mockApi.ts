@@ -732,6 +732,21 @@ export function createMockApi(
         value = { review, id, version: entry.version, tier: entry.tier, required: !installedPlugins.has(id) };
         break;
       }
+      case "plugins.catalogPreview": {
+        const { id } = channels["plugins.catalogPreview"].request.parse(input.data);
+        if (!catalogEntries.some((item) => item.id === id)) throw veraError("NOT_FOUND");
+        const review = mockPackage(`/mock/catalog/${id}.zip`);
+        value = {
+          ...review,
+          help: {
+            en: `# ${review.manifest?.name ?? id}
+
+What this plugin does.
+`,
+          },
+        };
+        break;
+      }
       case "plugins.catalogInstall": {
         const { id, sha256 } = channels["plugins.catalogInstall"].request.parse(input.data);
         const entry = catalogEntries.find((item) => item.id === id);

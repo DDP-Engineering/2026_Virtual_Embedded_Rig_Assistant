@@ -813,7 +813,6 @@
     "noPrograms": "No programs: this plugin only adds skills.",
     "docs": "Documents",
     "composition": {
-      "title": "Composition",
       "noPrograms": "Runs no programs.",
       "skills": "Skills",
       "files": "Profiles and data files"
@@ -895,7 +894,6 @@
         "stable": "Stable (version 1.0.0 and higher)",
         "pre-release": "Pre-release (every plugin, including 0.x versions)"
       },
-      "channelHint": "Stable lists plugins proven on real tools and hardware. Pre-release also lists plugins whose proof is still open.",
       "check": "Check for updates",
       "checking": "Checking…",
       "url": "Catalog URL",
@@ -933,8 +931,6 @@
     "trust": "Trust this package",
     "scopedTrustIntro": "Trust this exact package for this workbench on this machine. Trust does not enable the plugin or install its programs. Any package change requires another review.",
     "refresh": "Refresh list",
-    "expand": "Show details for {{name}}",
-    "collapse": "Hide details for {{name}}",
     "checkDependencies": "Check dependencies",
     "checkAll": "Check all dependencies",
     "checkingAll": "Checking dependencies…",
@@ -1055,7 +1051,6 @@
       "notReady": "Not ready: {{checks}}",
       "dependencies": "Dependencies",
       "configuration": "Configuration",
-      "use": "Use",
       "missingNames": "Missing: {{names}}",
       "externalNames": "Install from the vendor: {{names}}",
       "unavailableNames": "Unavailable: {{names}}",
@@ -1063,17 +1058,12 @@
       "nothingToConfigure": "Nothing to configure",
       "configurationFailed": "The configuration could not be checked.",
       "configure": "Configure",
-      "enabledIn": "Enabled in {{name}}",
-      "notEnabledIn": "Not enabled in {{name}}",
-      "noWorkbench": "No workbench is open.",
-      "openWorkbench": "Open workbench",
       "state": {
         "ready": "Ready",
         "missing": "Missing",
         "unavailable": "Unavailable",
         "external": "External",
-        "unchecked": "Not checked",
-        "off": "Not enabled"
+        "unchecked": "Not checked"
       }
     },
     "packs": {
@@ -1093,7 +1083,13 @@
       "alreadyInstalled": "Already installed: {{names}}",
       "install": "Install with dependencies ({{count}})"
     },
-    "help": "Help"
+    "help": "Help",
+    "details": {
+      "description": "Description",
+      "about": "About this plugin",
+      "license": "License",
+      "loading": "Loading the plugin's details…"
+    }
   },
   "runs": {
     "session": "Session: {{title}}",

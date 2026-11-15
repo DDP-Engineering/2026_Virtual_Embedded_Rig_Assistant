@@ -553,3 +553,28 @@ it("refuses a remote index changed after signing or signed with another key", as
     problem: "untrusted",
   });
 });
+
+it("previews a catalog plugin in memory without disturbing the zip of a review in progress", async () => {
+  const { state, url } = await host();
+  state.folder = await release();
+  const { catalog, store, kept } = await fixture({ location: url });
+  await catalog.view({ refresh: true });
+  const reviewed = await catalog.review("serial-monitor");
+  const before = await kept();
+  const preview = await catalog.preview("esp32-esptool");
+  expect(preview.manifest?.id).toBe("esp32-esptool");
+  expect(preview.issues).toEqual([]);
+  expect(await kept()).toEqual(before);
+  await expect(catalog.install("serial-monitor", reviewed.review.sha256)).resolves.toMatchObject({
+    id: "serial-monitor",
+  });
+  expect((await store.list()).map((plugin) => plugin.id)).toEqual(["serial-monitor"]);
+  await rewriteIndex(state.folder, (index) => {
+    const entry = index.plugins.find((plugin) => plugin.id === "esp32-esptool") as Record<string, unknown>;
+    entry.sha256 = "0".repeat(64);
+  });
+  await catalog.view({ refresh: true });
+  await expect(catalog.preview("esp32-esptool")).rejects.toMatchObject({
+    messageKey: "plugins.catalogError.sha256",
+  });
+});

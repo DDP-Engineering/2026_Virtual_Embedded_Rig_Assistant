@@ -581,6 +581,7 @@ ipcMain.handle(
       },
       "plugins.catalog": ({ refresh }) => catalog.view({ refresh }),
       "plugins.catalogReview": ({ id }) => catalog.review(id),
+      "plugins.catalogPreview": ({ id }) => catalog.preview(id),
       "plugins.catalogInstall": async ({ id, sha256 }) => {
         const installed = await catalog.install(id, sha256);
         pluginsChanged(id);

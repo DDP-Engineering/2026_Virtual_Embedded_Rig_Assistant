@@ -813,7 +813,6 @@
     "noPrograms": "Fără programe: acest plugin adaugă doar abilități.",
     "docs": "Documente",
     "composition": {
-      "title": "Componență",
       "noPrograms": "Nu rulează niciun program.",
       "skills": "Abilități",
       "files": "Profiluri și fișiere de date"
@@ -895,7 +894,6 @@
         "stable": "Stabil (versiunea 1.0.0 și mai mare)",
         "pre-release": "Pre-lansare (toate pluginurile, inclusiv versiunile 0.x)"
       },
-      "channelHint": "Stabil listează pluginurile dovedite pe unelte și hardware reale. Pre-lansare listează și pluginurile a căror dovadă este încă deschisă.",
       "check": "Caută actualizări",
       "checking": "Se caută…",
       "url": "URL-ul catalogului",
@@ -933,8 +931,6 @@
     "trust": "Acordă încredere pachetului",
     "scopedTrustIntro": "Acordă încredere acestui pachet exact pentru acest workbench pe această mașină. Încrederea nu activează pluginul și nu instalează programele. Orice modificare cere o nouă revizuire.",
     "refresh": "Actualizează lista",
-    "expand": "Arată detaliile pentru {{name}}",
-    "collapse": "Ascunde detaliile pentru {{name}}",
     "checkDependencies": "Verifică dependențele",
     "checkAll": "Verifică toate dependențele",
     "checkingAll": "Se verifică dependențele…",
@@ -1055,7 +1051,6 @@
       "notReady": "Nu este gata: {{checks}}",
       "dependencies": "Dependențe",
       "configuration": "Configurare",
-      "use": "Utilizare",
       "missingNames": "Lipsesc: {{names}}",
       "externalNames": "Instalează de la producător: {{names}}",
       "unavailableNames": "Indisponibile: {{names}}",
@@ -1063,17 +1058,12 @@
       "nothingToConfigure": "Nimic de configurat",
       "configurationFailed": "Configurarea nu a putut fi verificată.",
       "configure": "Configurează",
-      "enabledIn": "Activat în {{name}}",
-      "notEnabledIn": "Neactivat în {{name}}",
-      "noWorkbench": "Niciun workbench nu este deschis.",
-      "openWorkbench": "Deschide workbench-ul",
       "state": {
         "ready": "Gata",
         "missing": "Lipsește",
         "unavailable": "Indisponibil",
         "external": "Extern",
-        "unchecked": "Neverificat",
-        "off": "Neactivat"
+        "unchecked": "Neverificat"
       }
     },
     "packs": {
@@ -1093,7 +1083,13 @@
       "alreadyInstalled": "Deja instalate: {{names}}",
       "install": "Instalează cu dependențele ({{count}})"
     },
-    "help": "Ajutor"
+    "help": "Ajutor",
+    "details": {
+      "description": "Descriere",
+      "about": "Despre acest plugin",
+      "license": "Licență",
+      "loading": "Se încarcă detaliile pluginului…"
+    }
   },
   "runs": {
     "session": "Sesiune: {{title}}",
