@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-d7e27def"
+
+title = "Accept only a strictly valid format-1 industrial catalog"
+
+status = "active"
+
+requirement = """
+When VERA reads an industrial catalog file electrical-automation-catalogs/<id>.json, it shall accept only a document of kind vera-industrial-catalog and format 1 whose id matches the file name and that passes the strict schema, units, unique IDs, references and limits of the industrial catalog spec, and otherwise report it invalid with up to 20 problems, each with its JSON path.
+"""
+
+verification = "Core unit tests: the Schneider fixture validates; format 2, an unknown key, a unit of the wrong dimension, a duplicated ID, a parameter citing a missing source, an accessory naming a missing item, a source without licence terms and a file name that differs from the id are each refused with a problem naming its path; nothing is defaulted."
+
+affected_paths = ["05_Software/src/libraries/shared/src/industrial-catalog.ts", "05_Software/src/libraries/core/src/electrical/catalog.ts", "05_Software/src/libraries/core/src/electrical/units.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

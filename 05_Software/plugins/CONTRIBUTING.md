@@ -49,6 +49,83 @@ The check rejects schema errors, a folder whose manifest id differs from its nam
 that do not exist, a program without any rule, and a rule at `safe` or `device-read` whose pattern contains
 `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send`.
 
+## Electrical and automation plugins
+
+Plugins with `ecosystem: electrical` or `ecosystem: automation` build on the workbench's electrical
+project model, `electrical-automation-model.json` (kind `vera-electrical-model`, format 1). While such a
+plugin is loaded, sessions offer `electrical_model` (read views and result freshness) and
+`electrical_model_change` (validated operations and explicit-mapping imports, approved like a write).
+A helper reads the model file and never writes it. It writes its result to a new run folder,
+`electrical-automation-results/<run-id>/result.json` (kind `vera-electrical-result`, format 1), with the
+method, engine version, assumptions, sources, conditions, intermediate values, limits, a status per run
+and a verdict per criterion. `inputs` copies every model entity the run read (`{id, snapshot}`); VERA
+marks the result stale when one of them changes. Entity IDs (`mot-p1`) are stable and differ from the
+visible references (`ref`: M1, QF1); a quantity is `{value, unit, basis}` and `value: null` means
+unknown. Units come from one table; the format is in `.agentic/specs/REQ-DATA-06c0bd54.md`.
+
+Manufacturer data lives in industrial catalogs, `electrical-automation-catalogs/<id>.json` (kind
+`vera-industrial-catalog`, format 1, spec `.agentic/specs/REQ-DATA-d7e27def.md`): an item is a manufacturer's order
+code with an optional variant, accessories that are items of their own and distributor SKUs with their capture
+time; each parameter is a quantity with conditions, a cited source (revision, page or table, licence terms) and the
+status `confirmed` or `extracted`. VERA's `industrial_catalog` tool selects on firm requirements and answers
+coordination questions for exact products and conditions; a result that used a catalog sets `catalog: {id,
+version}` from the stamp the tool returns. A helper that reads a catalog file follows the same format and never
+treats an extracted, absent or off-condition value as a pass.
+
+Network calculations come from VERA's `electrical_network` tool (plugin `electrical-network`, spec
+`.agentic/specs/REQ-DATA-42ce122f.md`): it reads the model and one cable table,
+`electrical-automation-tables/<id>.json` (kind `vera-cable-table`, format 1, every value from one cited source with
+its licence terms), and stores a result with stable intermediate names per subject - `designCurrent`,
+`ik3MaxStart`, `peakCurrentStart`, `ik3MinEnd`, `ik1MinEnd` on circuits, `crossSection` and `currentCapacity` on
+cables, `activePower:<scenario>` and `ik3Max` on boards. Protection, motor and power-quality helpers read those
+values from the stored result (and check its freshness with `electrical_model` view `results`) instead of
+recomputing them; `electrical_model` view `report` renders any stored result as Markdown.
+
+Protective devices are checked by VERA's `protection_coordination` tool (plugin `protection-coordination`, spec
+`.agentic/specs/REQ-DATA-a5673202.md`) against a current network result and one catalog. It reads catalog parameters
+by name - `ultimateBreakingCapacity` (Icu), `serviceBreakingCapacity` or `serviceBreakingCapacityRatio` (Ics),
+`ratedBreakingCapacity` (Icn, or a fuse's rated breaking capacity), `ratedCurrent` or `settingCurrentMin`/`Max`,
+`conventionalTrippingCurrentRatio`, `magneticTripCurrent` or `magneticTripMultiple` with `magneticTripTolerance` and
+`magneticTripTimeMax`, `tripCurrentMax` at condition `tripTime`, `letThroughEnergy` (A²s) - and coordination tables of
+kind `selectivity`, `cascading`, `fuse coordination type 1|2` and `breaker coordination type 1|2`. Criteria are
+`<criterion>:<orderCode>` per circuit (`breaking-capacity`, `rated-current`, `conventional-tripping`,
+`disconnection-time`, `let-through-energy`, `selection`, ...); a motor helper reads the `selection` and starter
+verdicts from the stored result. The generic `breakingCapacity` names no capacity kind and is never used.
+
+Motor starting and drives come from VERA's `motor_drives` tool (plugin `motor-drives`, spec
+`.agentic/specs/REQ-DATA-79118f9a.md`) on a current protection result. It reads motor properties by name
+(`startingTorqueRatio`, `pullUpTorqueRatio`, `breakdownTorqueRatio`, `inertia`, `loadInertia` in kg·m², `loadTorque`,
+`breakawayTorque`, `lockedRotorTime`, `startsPerHour` in 1/h, `terminals`, attributes `connection` and
+`loadCharacteristic`) and catalog items of categories `contactor`, `overload-relay` (`settingCurrentMin`/`Max`,
+`tripTimeMin`/`Max` at condition `currentMultiple`), `softstarter` and `variable-speed-drive` (`ratedCurrent` and
+`overloadCurrent` per condition `dutyClass`, `ambientDeratingPerKelvin`, `altitudeDeratingPer100m`). Its result adds
+`assemblies`: device tags, roles and order codes, power and control connections and mechanical, electrical and sequence
+interlocks per motor - the logical scheme an ECAD adapter reads.
+
+Reactive power compensation comes from VERA's `power_quality` tool (plugin `power-quality-pfc`, spec
+`.agentic/specs/REQ-DATA-4dc5e2c7.md`) at one board, on an optional current network result and a measurement file
+`electrical-automation-measurements/<id>.json` (kind `vera-power-measurements`, format 1: origin, licensed source,
+board, interval, sign and reactive-power conventions, typed columns, rows inline or in `<id>.csv`). It reads catalog
+items of categories `capacitor` (`reactivePower` at conditions `voltage` and `frequency`, `overcurrentRatio`,
+`capacitanceToleranceMax`, `nonLinearShareMax`, attribute `duty`), `detuned-reactor` (`tuningFactor`,
+`overcurrentRatio`), `capacitor-contactor` (`reactivePowerMax` at `voltage`) and the step protection; a
+capacitor/reactor pair counts only through a cited coordination table of kind `detuned step` (`reactivePower`,
+`tuningFactor`, optional `overcurrentRatio`, `harmonicVoltageMax` at `harmonicOrder`, `thdVoltageMax`).
+
+Interior lighting comes from VERA's `lighting_design` tool (plugin `lighting-design`, spec
+`.agentic/specs/REQ-DATA-affb2e6b.md`): a lighting project `electrical-automation-lighting/<id>.json` (kind
+`vera-lighting-project`, format 1: declared length unit, rectangular room, reflectances, plane, maintenance factor,
+luminaire types with photometry, positions and orientations, user-entered requirements with their source, scenarios,
+cited utilisation factors), photometry files in `electrical-automation-photometry/` (IES LM-63 type C, EULUMDAT) and,
+for verification, a report record (kind `vera-lighting-report`) mapped from a photometric engine's report such as
+DIALux evo. A luminaire catalog item has category `luminaire`, attribute `photometry` and cited `luminousFlux` and
+`activePower`. VERA computes no uniformity or UGR and starts no engine.
+
+Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
+`power_quality`, `lighting_design`) is offered
+only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
+cleanly when they are missing or stale.
+
 ## Draft with the agent
 
 Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the

@@ -23,6 +23,14 @@ export const builtinToolNames = [
   "plugin_validate",
   "plugin_install",
   "apply_candidate",
+  "electrical_model",
+  "electrical_model_change",
+  "industrial_catalog",
+  "electrical_network",
+  "protection_coordination",
+  "motor_drives",
+  "power_quality",
+  "lighting_design",
   "help",
 ] as const;
 

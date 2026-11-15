@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-028689c0"
+
+title = "Take protective device and starter coordination verdicts from the stored protection result"
+
+status = "active"
+
+requirement = """
+When motor_drives sizes the proposed assembly, VERA shall copy the protective device's selection verdict and any starter coordination verdict for the motor's circuit from the stored protection result and shall give not-evaluated when that result holds none, never recomputing them.
+"""
+
+verification = "Core engine tests: the pump's protective device verdict equals the protection result's selection verdict; a protective device that was not a candidate of the protection run is not-evaluated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

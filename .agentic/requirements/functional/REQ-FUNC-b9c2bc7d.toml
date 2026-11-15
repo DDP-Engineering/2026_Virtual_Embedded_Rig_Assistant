@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b9c2bc7d"
+
+title = "Check automatic disconnection from cited tripping bands against the minimum fault current"
+
+status = "active"
+
+requirement = """
+When the request gives a required disconnection time for a circuit, VERA shall compare the minimum line-to-protective-conductor fault current at the circuit end with the cited tripping band of the candidate - trip-time points whose time is at most the required time and the upper edge of the instantaneous band (nominal current or multiple plus its tolerance) with a cited or explicitly assumed operating time - and shall report pass when the fault current reaches the lowest such current, fail when it stays below a point given at exactly the required time, and unknown otherwise.
+"""
+
+verification = "Core unit tests: C16 band 8 In +/- 20 % gives 153.6 A; with an assumed 0.1 s instantaneous time and Ik1min 0.2 kA the 0.4 s check passes; with Ik1min 0.12 kA and no point at 0.4 s it is unknown; a test fuse with a point of 80 A at exactly 5 s fails at 70 A; without an operating time or tolerance the check is unknown; without a required time it is not evaluated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

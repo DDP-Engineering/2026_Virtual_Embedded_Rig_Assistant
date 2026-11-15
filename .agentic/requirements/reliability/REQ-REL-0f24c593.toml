@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-0f24c593"
+
+title = "Refuse a missing, invalid, foreign or stale network result or a measurement file of another board"
+
+status = "active"
+
+requirement = """
+If the named network result is missing, invalid, from another producer or stale against the model, or the measurement file is missing, invalid or declares another board, then power_quality shall throw with the reason and prepare nothing.
+"""
+
+verification = "Core tool tests: a stale network result (after a load change) and a foreign result are refused naming the rerun; a measurement file for another board and an invalid one are refused; nothing is written."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/power-quality-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/power-quality-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

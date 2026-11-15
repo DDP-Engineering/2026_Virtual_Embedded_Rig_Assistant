@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-bc6a2e50"
+
+title = "Size or check cables from the cable table with installation method, temperature and grouping"
+
+status = "active"
+
+requirement = """
+When a circuit's cable has an installation method, ambient temperature and number of grouped circuits covered by the cable table, VERA shall correct the table rating by the table's temperature and grouping factors and either check the given cross-section or propose the smallest table cross-section that meets the current, voltage-drop and, with a fault duration, short-circuit withstand criteria, naming the governing criterion; without those inputs it shall propose no cross-section and give the criteria the verdict unknown.
+"""
+
+verification = "Core unit tests: a higher ambient temperature or more grouped circuits lowers the corrected rating by the table factors and raises the proposed section; a long cable is governed by voltage drop and a short one by current; a given section that is too small fails current capacity; a cable without installation method, ambient temperature or grouping gets no proposal and unknown verdicts."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network.ts", "05_Software/src/libraries/core/src/electrical/cable-table.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network.test.ts", "05_Software/src/libraries/core/src/electrical/cable-table.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-884410b3"
+
+title = "Check let-through energy against the cable thermal withstand"
+
+status = "active"
+
+requirement = """
+When a candidate is evaluated on a circuit whose cable section and table k are known, VERA shall compare the candidate's cited let-through energy whose conditions cover the maximum fault current at the circuit origin and the circuit voltage with k squared times the section squared, and shall report pass when it is at most that value, fail when it is higher, and unknown when no cited value covers the conditions.
+"""
+
+verification = "Core unit tests: with k 115 and 2.5 mm² (82 656 A²s) a cited 30 000 A²s at <= 25 kA passes, 100 000 A²s fails, a value for <= 10 kA at Ik 22 kA is unknown; the real fixture without let-through values gives unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

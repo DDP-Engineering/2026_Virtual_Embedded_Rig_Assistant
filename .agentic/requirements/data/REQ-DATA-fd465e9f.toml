@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-fd465e9f"
+
+title = "Mark an absent, unconfirmed or off-condition catalog value unknown"
+
+status = "active"
+
+requirement = """
+When an item has no value for a required parameter, only values marked extracted, or no value whose conditions cover the requested conditions, the industrial catalog selection shall mark that requirement unknown with the reason and shall not count the item as eligible or treat the value as zero.
+"""
+
+verification = "Core unit tests: a breaking-capacity requirement on a contactor and a requirement on a null value are unknown with reason absent; an extracted value gives unknown with reason unconfirmed; a breaking capacity asked at 1000 V is unknown with reason conditions; such an item is ranked after eligible items with outcome unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

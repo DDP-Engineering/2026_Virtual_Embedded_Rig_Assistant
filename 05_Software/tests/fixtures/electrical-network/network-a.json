@@ -1,0 +1,423 @@
+{
+  "kind": "vera-electrical-model",
+  "format": 1,
+  "project": {
+    "id": "prj-network-a",
+    "name": "Network A (fictional verification fixture)",
+    "profile": {
+      "jurisdiction": null,
+      "domain": null,
+      "standards": [],
+      "limits": [
+        "Fictional verification fixture for the electrical-network engine: the values come from a made-up brief, not from a real installation or product; no conformity is stated."
+      ]
+    }
+  },
+  "sources": [],
+  "objects": [
+    {
+      "id": "sup-t1",
+      "type": "source",
+      "ref": "T1",
+      "attributes": {
+        "kind": "transformer",
+        "system": "TN-S",
+        "vectorGroup": "Dyn11"
+      },
+      "properties": {
+        "apparentPower": {
+          "value": 630,
+          "unit": "kVA",
+          "basis": "input"
+        },
+        "impedanceVoltage": {
+          "value": 6,
+          "unit": "%",
+          "basis": "input"
+        },
+        "loadLosses": {
+          "value": 6.5,
+          "unit": "kW",
+          "basis": "input"
+        },
+        "networkShortCircuitPower": {
+          "value": 500,
+          "unit": "MVA",
+          "basis": "input"
+        },
+        "networkShortCircuitPowerMin": {
+          "value": 250,
+          "unit": "MVA",
+          "basis": "input"
+        },
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "primaryVoltage": {
+          "value": 20,
+          "unit": "kV",
+          "basis": "input"
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "brd-main",
+      "type": "board",
+      "ref": "MDB"
+    },
+    {
+      "id": "brd-sub",
+      "type": "board",
+      "ref": "SDB"
+    },
+    {
+      "id": "cir-f1",
+      "type": "circuit",
+      "ref": "F1"
+    },
+    {
+      "id": "cir-m1",
+      "type": "circuit",
+      "ref": "C1"
+    },
+    {
+      "id": "cir-l1",
+      "type": "circuit",
+      "ref": "C2",
+      "attributes": {
+        "phase": "L1"
+      },
+      "properties": {
+        "phases": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cir-s1",
+      "type": "circuit",
+      "ref": "C3",
+      "attributes": {
+        "phase": "L2"
+      },
+      "properties": {
+        "phases": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cbl-w1",
+      "type": "cable",
+      "ref": "W1",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": 35,
+          "unit": "mm²",
+          "basis": "input"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 60,
+          "unit": "m",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cbl-w2",
+      "type": "cable",
+      "ref": "W2",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": null,
+          "unit": "mm²",
+          "basis": "proposal"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 30,
+          "unit": "m",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cbl-w3",
+      "type": "cable",
+      "ref": "W3",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": 2.5,
+          "unit": "mm²",
+          "basis": "input"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 0.04,
+          "unit": "km",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cbl-w4",
+      "type": "cable",
+      "ref": "W4",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": 2.5,
+          "unit": "mm²",
+          "basis": "input"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 20,
+          "unit": "m",
+          "basis": "input"
+        },
+        "protectiveConductorCrossSection": {
+          "value": 1.5,
+          "unit": "mm²",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "mot-p1",
+      "type": "motor",
+      "ref": "M1",
+      "properties": {
+        "efficiency": {
+          "value": 90,
+          "unit": "%",
+          "basis": "input"
+        },
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "powerFactor": {
+          "value": 0.85,
+          "unit": "1",
+          "basis": "input"
+        },
+        "ratedPower": {
+          "value": 11,
+          "unit": "kW",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "lod-e1",
+      "type": "load",
+      "ref": "E1",
+      "attributes": {
+        "category": "lighting"
+      },
+      "properties": {
+        "phases": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "power": {
+          "value": 2000,
+          "unit": "W",
+          "basis": "input"
+        },
+        "powerFactor": {
+          "value": 0.95,
+          "unit": "1",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "lod-s1",
+      "type": "load",
+      "ref": "X1",
+      "properties": {
+        "demandFactor": {
+          "value": 0.5,
+          "unit": "1",
+          "basis": "input"
+        },
+        "phases": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "power": {
+          "value": 3,
+          "unit": "kW",
+          "basis": "input"
+        },
+        "powerFactor": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "prt-q1",
+      "type": "protection",
+      "ref": "Q1",
+      "properties": {
+        "ratedCurrent": {
+          "value": 40,
+          "unit": "A",
+          "basis": "input"
+        }
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel-1",
+      "type": "feeds",
+      "from": "sup-t1",
+      "to": "brd-main"
+    },
+    {
+      "id": "rel-2",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-f1"
+    },
+    {
+      "id": "rel-3",
+      "type": "feeds",
+      "from": "cir-f1",
+      "to": "brd-sub"
+    },
+    {
+      "id": "rel-4",
+      "type": "feeds",
+      "from": "brd-sub",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-5",
+      "type": "feeds",
+      "from": "cir-m1",
+      "to": "mot-p1"
+    },
+    {
+      "id": "rel-6",
+      "type": "feeds",
+      "from": "brd-sub",
+      "to": "cir-l1"
+    },
+    {
+      "id": "rel-7",
+      "type": "feeds",
+      "from": "cir-l1",
+      "to": "lod-e1"
+    },
+    {
+      "id": "rel-8",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-s1"
+    },
+    {
+      "id": "rel-9",
+      "type": "feeds",
+      "from": "cir-s1",
+      "to": "lod-s1"
+    },
+    {
+      "id": "rel-10",
+      "type": "routes",
+      "from": "cbl-w1",
+      "to": "cir-f1"
+    },
+    {
+      "id": "rel-11",
+      "type": "routes",
+      "from": "cbl-w2",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-12",
+      "type": "routes",
+      "from": "cbl-w3",
+      "to": "cir-l1"
+    },
+    {
+      "id": "rel-13",
+      "type": "routes",
+      "from": "cbl-w4",
+      "to": "cir-s1"
+    },
+    {
+      "id": "rel-14",
+      "type": "protects",
+      "from": "prt-q1",
+      "to": "cir-f1"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-21405311"
+
+title = "Import IES and EULUMDAT photometry within the validated domain"
+
+status = "active"
+
+requirement = """
+When lighting_design reads a photometry file, VERA shall parse IES photometry files of the LM 63 standard (no header or the 1991, 1995, 2002 or 2019 header, type C, TILT=NONE) and EULUMDAT files with symmetry 0, 1, 2 or 4 into absolute candela values with the luminaire flux integrated over the sphere, and shall refuse a file outside that domain (type A or B, TILT=INCLUDE, EULUMDAT symmetry 3, a C range VERA cannot expand, too few values) with the reason.
+"""
+
+verification = "Core photometry tests: a hand-written Lambertian IES (I0 cos g) integrates to pi I0 within 0.5 %; IES multiplier and ballast factor scale the candela; an EULUMDAT file in cd/klm scales with the lamp flux and the conversion factor; quadrant, bilateral, rotational and full symmetries give the same intensity at mirrored angles; type B, TILT=INCLUDE, Isym 3 and a truncated file are refused with their reason."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/photometry.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/photometry.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -27,7 +27,9 @@ The registry also exposes web_download as a prepared write operation with its ow
   unified diff cut to 2000 lines (`maxEditLength` 20000). Apply is `commitChange` with an extra check run with
   every target recheck: the candidate still has the approved hash and no lock file appeared. See spec
   REQ-DATA-891d5b5d §10.
-- `commitChange(options)` is the apply body shared by write/edit and apply_candidate: inside the write queue it
+- electrical_model_change prepares the canonical bytes of the workbench's electrical model and applies them with
+  `commitChange`; [Electrical project model](electrical-model.md) owns its validation and operations.
+- `commitChange(options)` is the apply body shared by write/edit, apply_candidate and electrical_model_change: inside the write queue it
   rechecks the target (path identity, agent-writable, before hash, the caller's `check`) before mkdir, after it
   and before the rename, records the pending/applied change row and refreshes the fingerprint.
 

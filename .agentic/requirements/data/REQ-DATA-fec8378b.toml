@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-fec8378b"
+
+title = "Import a declared power measurement file with time, units and conventions or refuse it"
+
+status = "active"
+
+requirement = """
+When power_quality names a measurement file, VERA shall read electrical-automation-measurements/<id>.json of kind vera-power-measurements format 1 with declared origin, licensed source, board, interval, sign and reactive-power conventions, nominal voltage, frequency and typed columns, with rows inline or in a CSV file whose header repeats the column names, and shall refuse the file with the first problem when a key, unit, convention, column, timestamp order or value is invalid.
+"""
+
+verification = "Core tests: the fictional fixture (CSV form) and an inline-rows file parse to the same samples; an unknown unit, a unit of another dimension, a CSV header that differs from the columns, a non-increasing timestamp, an unparsable number and a missing licence each refuse with the row or path; empty cells stay unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/measurements.ts", "05_Software/src/libraries/shared/src/power-measurements.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/measurements.test.ts"]
+
+
+spec = "specs/REQ-DATA-4dc5e2c7.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

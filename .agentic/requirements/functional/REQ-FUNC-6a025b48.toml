@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-6a025b48"
+
+title = "Compute maximum and minimum short-circuit currents on radial LV networks with the implemented method shown"
+
+status = "active"
+
+requirement = """
+When the source is a transformer or an LV supply point of a radial three-phase AC network up to 1000 V, VERA shall compute the maximum three-phase fault current and peak current at each board and at each circuit's origin, and the minimum three-phase and, in TN systems, minimum line-to-protective-conductor fault current at each circuit's end, by the impedance method with the voltage factors and transformer correction of IEC 60909-0:2016, and shall state that method, its edition and its simplifications in the result.
+"""
+
+verification = "Core unit tests: a 630 kVA Dyn11 transformer network and a supply point give fault currents within the preset tolerance of independent references (pandapower 3.1.2 IEC 60909 values and hand calculation); the result's method and assumptions name IEC 60909-0:2016, the c factors and the simplifications; an opt-in test recomputes the references with pandapower."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

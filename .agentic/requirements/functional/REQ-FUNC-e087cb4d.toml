@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e087cb4d"
+
+title = "Keep uniformity and glare not-evaluated without an engine report"
+
+status = "active"
+
+requirement = """
+While a scenario has no surface in a photometric engine report (level preliminary, or a report record without a surface for that scenario), lighting_design shall record maintained illuminance, uniformity and glare (UGR) as not-evaluated with the reason, and shall never compute uniformity or UGR itself.
+"""
+
+verification = "Core engine tests: a preliminary run with a requirement giving Em, U0 and UGR has maintained-illuminance, uniformity and glare-ugr not-evaluated and the run incomplete; a requirement without U0 or UGR has no such criterion; no result value carries a uniformity or UGR computed by VERA; a verification record without a surface for a scenario leaves that scenario's maintained-illuminance not-evaluated."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/lighting.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

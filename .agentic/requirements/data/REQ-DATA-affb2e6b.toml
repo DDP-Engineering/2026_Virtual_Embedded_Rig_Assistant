@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-affb2e6b"
+
+title = "Lighting project file, report record, request and lighting result format 1"
+
+status = "active"
+
+requirement = """
+VERA shall read lighting project files and lighting report records of format 1 from electrical-automation-lighting/<id>.json and photometry files from electrical-automation-photometry/, accept the lighting_design request and store a lighting result with the names, criteria and conditions defined in the spec.
+"""
+
+verification = "Core tests: the fictional project and report fixtures parse; a wrong kind, format 2, an unknown field, a duplicate ID or a luminaire of an unknown type is refused with its path; the registry converts the request schema; a stored result passes checkResult with the spec's intermediate and criterion names."
+
+affected_paths = ["05_Software/src/libraries/shared/src/lighting-project.ts", "05_Software/src/libraries/core/src/electrical/lighting-files.ts", "05_Software/src/libraries/core/src/electrical/lighting.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/lighting.test.ts", "05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts", "05_Software/src/libraries/core/src/electrical/lighting-files.test.ts"]
+
+
+spec = "specs/REQ-DATA-affb2e6b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-033d495e"
+
+title = "Keep a two-pump panel fixture of the electrical model"
+
+status = "active"
+
+requirement = """
+The repository shall hold an electrical model fixture with one LV source, one main board, three circuits, two motors, a lighting load and the related I/O, sensor and tags, whose values carry their basis and a cited source.
+"""
+
+verification = "Core unit tests load 05_Software/tests/fixtures/electrical-model/two-pump-panel.json, validate it, count the object types named here and check that every quantity has a basis and that every cited source exists."
+
+affected_paths = ["05_Software/tests/fixtures/electrical-model/two-pump-panel.json"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/model.test.ts"]
+
+
+spec = "specs/REQ-DATA-06c0bd54.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

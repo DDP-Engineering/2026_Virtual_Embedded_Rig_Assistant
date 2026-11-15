@@ -1,0 +1,213 @@
+{
+  "kind": "vera-cable-table",
+  "format": 1,
+  "id": "tbl-test-cu-pvc",
+  "title": "Fictional copper PVC test table",
+  "version": "1",
+  "source": {
+    "title": "VERA test values",
+    "publisher": "VERA tests",
+    "revision": "1",
+    "readAt": "2026-11-15",
+    "license": "fictional test data",
+    "uri": "https://example.com/vera-fictional-cable-table",
+    "pages": "fictional values chosen for the VERA tests"
+  },
+  "cable": {
+    "designation": "test Cu/PVC",
+    "material": "copper",
+    "insulation": "PVC",
+    "maxConductorTemperature": 70,
+    "shortCircuitTemperature": 160,
+    "k": 115
+  },
+  "conductors": [
+    {
+      "crossSection": 1.5,
+      "resistance20": 12.1,
+      "reactance": 0.1
+    },
+    {
+      "crossSection": 2.5,
+      "resistance20": 7.41,
+      "reactance": 0.1
+    },
+    {
+      "crossSection": 4,
+      "resistance20": 4.61,
+      "reactance": 0.095
+    },
+    {
+      "crossSection": 6,
+      "resistance20": 3.08,
+      "reactance": 0.09
+    },
+    {
+      "crossSection": 10,
+      "resistance20": 1.83,
+      "reactance": 0.085
+    },
+    {
+      "crossSection": 16,
+      "resistance20": 1.15,
+      "reactance": 0.083
+    },
+    {
+      "crossSection": 25,
+      "resistance20": 0.727,
+      "reactance": 0.081
+    },
+    {
+      "crossSection": 35,
+      "resistance20": 0.524,
+      "reactance": 0.08
+    }
+  ],
+  "methods": [
+    {
+      "id": "air",
+      "title": "In air",
+      "referenceTemperature": 30,
+      "ratings": [
+        {
+          "crossSection": 1.5,
+          "loadedConductors": 3,
+          "current": 18.5
+        },
+        {
+          "crossSection": 1.5,
+          "loadedConductors": 2,
+          "current": 22
+        },
+        {
+          "crossSection": 2.5,
+          "loadedConductors": 3,
+          "current": 25
+        },
+        {
+          "crossSection": 2.5,
+          "loadedConductors": 2,
+          "current": 30
+        },
+        {
+          "crossSection": 4,
+          "loadedConductors": 3,
+          "current": 34
+        },
+        {
+          "crossSection": 4,
+          "loadedConductors": 2,
+          "current": 40
+        },
+        {
+          "crossSection": 6,
+          "loadedConductors": 3,
+          "current": 43
+        },
+        {
+          "crossSection": 6,
+          "loadedConductors": 2,
+          "current": 51
+        },
+        {
+          "crossSection": 10,
+          "loadedConductors": 3,
+          "current": 60
+        },
+        {
+          "crossSection": 10,
+          "loadedConductors": 2,
+          "current": 70
+        },
+        {
+          "crossSection": 16,
+          "loadedConductors": 3,
+          "current": 80
+        },
+        {
+          "crossSection": 16,
+          "loadedConductors": 2,
+          "current": 94
+        },
+        {
+          "crossSection": 25,
+          "loadedConductors": 3,
+          "current": 101
+        },
+        {
+          "crossSection": 25,
+          "loadedConductors": 2,
+          "current": 119
+        },
+        {
+          "crossSection": 35,
+          "loadedConductors": 3,
+          "current": 126
+        },
+        {
+          "crossSection": 35,
+          "loadedConductors": 2,
+          "current": 148
+        }
+      ]
+    }
+  ],
+  "temperatureFactors": [
+    {
+      "methods": ["air"],
+      "points": [
+        {
+          "ambient": 25,
+          "factor": 1.06
+        },
+        {
+          "ambient": 30,
+          "factor": 1
+        },
+        {
+          "ambient": 35,
+          "factor": 0.94
+        },
+        {
+          "ambient": 40,
+          "factor": 0.87
+        },
+        {
+          "ambient": 45,
+          "factor": 0.79
+        },
+        {
+          "ambient": 50,
+          "factor": 0.71
+        }
+      ]
+    }
+  ],
+  "groupingFactors": [
+    {
+      "methods": ["air"],
+      "points": [
+        {
+          "circuits": 1,
+          "factor": 1
+        },
+        {
+          "circuits": 2,
+          "factor": 0.8
+        },
+        {
+          "circuits": 3,
+          "factor": 0.7
+        },
+        {
+          "circuits": 4,
+          "factor": 0.65
+        },
+        {
+          "circuits": 6,
+          "factor": 0.57
+        }
+      ]
+    }
+  ]
+}

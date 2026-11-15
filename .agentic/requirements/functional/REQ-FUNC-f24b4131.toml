@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f24b4131"
+
+title = "Check overload protection with In between Ib and Iz and the cited conventional tripping current"
+
+status = "active"
+
+requirement = """
+When a candidate is evaluated on a circuit, VERA shall pass the overload check only when the design current is at most the device's rated current or, for an adjustable device, the requested setting inside its cited setting range, that current is at most the cable's corrected current-carrying capacity, and the conventional tripping current (cited ratio times that current) is at most 1.45 times that capacity, and shall fail it when any of these comparisons fails.
+"""
+
+verification = "Core unit tests with hand calculations: a 20 A gG fuse (I2 = 1.6 x 20 = 32 A) on a cable with Iz 21 A fails (32 > 30.45 A); a C16 MCB (I2 = 1.45 x 16 = 23.2 A) on Iz 30 A passes (<= 43.5 A); a GV2ME14 with setting 11 A fails the setting range 6..10 A; a GV2ME14 without a setting is unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

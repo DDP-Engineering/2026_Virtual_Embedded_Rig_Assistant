@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f19b1719"
+
+title = "Select a drive by current, overload and duty class and report braking, EMC and motor cable needs from cited data"
+
+status = "active"
+
+requirement = """
+When motor_drives sizes a drive, VERA shall choose the first cited duty class whose continuous current after cited derating reaches the motor current and whose transient current reaches the current the load and acceleration need within the cited overload time, shall never select by power, and shall report braking energy, EMC category, motor cable length and RCD types only from cited data, unknown otherwise.
+"""
+
+verification = "Core engine tests: the conveyor gets ATV930U75N4 heavy duty while normal duty fails the overload; a motor above 16.5 A fails both duty classes; without a cited cable length the cable criterion is unknown; a stop time gives the kinetic energy and an unknown braking verdict."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,273 @@
+{
+  "kind": "vera-power-measurements",
+  "format": 1,
+  "id": "meas-fictional-mdb-day",
+  "title": "Plant Q main board, one working day in 15-minute averages (FICTIONAL)",
+  "origin": "fictional",
+  "source": {
+    "title": "Made-up profile for the power-quality-pfc tests; not a real measurement",
+    "publisher": "VERA test fixtures",
+    "license": "CC0-1.0",
+    "readAt": "2026-11-15",
+    "note": "Generated from a brief: night 22.5 kW / 13.1 kvar, day 130 kW / 80.7 kvar, THDi 18 % at night and 9 % by day, voltage harmonics up to order 25."
+  },
+  "board": "brd-main",
+  "interval": {
+    "value": 15,
+    "unit": "min"
+  },
+  "conventions": {
+    "power": "load",
+    "reactive": "fundamental",
+    "reactiveSign": "inductive-positive",
+    "powerFactor": "unsigned"
+  },
+  "nominalVoltage": {
+    "value": 400,
+    "unit": "V"
+  },
+  "frequency": {
+    "value": 50,
+    "unit": "Hz"
+  },
+  "columns": [
+    {
+      "name": "time",
+      "quantity": "time"
+    },
+    {
+      "name": "P",
+      "quantity": "activePower",
+      "unit": "kW"
+    },
+    {
+      "name": "Q1",
+      "quantity": "reactivePower",
+      "unit": "kvar"
+    },
+    {
+      "name": "S",
+      "quantity": "apparentPower",
+      "unit": "kVA"
+    },
+    {
+      "name": "PF",
+      "quantity": "powerFactor",
+      "unit": "1"
+    },
+    {
+      "name": "U",
+      "quantity": "voltage",
+      "unit": "V"
+    },
+    {
+      "name": "THDi",
+      "quantity": "thdCurrent",
+      "unit": "%"
+    },
+    {
+      "name": "THDu",
+      "quantity": "thdVoltage",
+      "unit": "%"
+    },
+    {
+      "name": "U2",
+      "quantity": "harmonicVoltage",
+      "order": 2,
+      "unit": "%"
+    },
+    {
+      "name": "U3",
+      "quantity": "harmonicVoltage",
+      "order": 3,
+      "unit": "%"
+    },
+    {
+      "name": "U4",
+      "quantity": "harmonicVoltage",
+      "order": 4,
+      "unit": "%"
+    },
+    {
+      "name": "U5",
+      "quantity": "harmonicVoltage",
+      "order": 5,
+      "unit": "%"
+    },
+    {
+      "name": "U6",
+      "quantity": "harmonicVoltage",
+      "order": 6,
+      "unit": "%"
+    },
+    {
+      "name": "U7",
+      "quantity": "harmonicVoltage",
+      "order": 7,
+      "unit": "%"
+    },
+    {
+      "name": "U8",
+      "quantity": "harmonicVoltage",
+      "order": 8,
+      "unit": "%"
+    },
+    {
+      "name": "U9",
+      "quantity": "harmonicVoltage",
+      "order": 9,
+      "unit": "%"
+    },
+    {
+      "name": "U10",
+      "quantity": "harmonicVoltage",
+      "order": 10,
+      "unit": "%"
+    },
+    {
+      "name": "U11",
+      "quantity": "harmonicVoltage",
+      "order": 11,
+      "unit": "%"
+    },
+    {
+      "name": "U12",
+      "quantity": "harmonicVoltage",
+      "order": 12,
+      "unit": "%"
+    },
+    {
+      "name": "U13",
+      "quantity": "harmonicVoltage",
+      "order": 13,
+      "unit": "%"
+    },
+    {
+      "name": "U14",
+      "quantity": "harmonicVoltage",
+      "order": 14,
+      "unit": "%"
+    },
+    {
+      "name": "U15",
+      "quantity": "harmonicVoltage",
+      "order": 15,
+      "unit": "%"
+    },
+    {
+      "name": "U16",
+      "quantity": "harmonicVoltage",
+      "order": 16,
+      "unit": "%"
+    },
+    {
+      "name": "U17",
+      "quantity": "harmonicVoltage",
+      "order": 17,
+      "unit": "%"
+    },
+    {
+      "name": "U18",
+      "quantity": "harmonicVoltage",
+      "order": 18,
+      "unit": "%"
+    },
+    {
+      "name": "U19",
+      "quantity": "harmonicVoltage",
+      "order": 19,
+      "unit": "%"
+    },
+    {
+      "name": "U20",
+      "quantity": "harmonicVoltage",
+      "order": 20,
+      "unit": "%"
+    },
+    {
+      "name": "U21",
+      "quantity": "harmonicVoltage",
+      "order": 21,
+      "unit": "%"
+    },
+    {
+      "name": "U22",
+      "quantity": "harmonicVoltage",
+      "order": 22,
+      "unit": "%"
+    },
+    {
+      "name": "U23",
+      "quantity": "harmonicVoltage",
+      "order": 23,
+      "unit": "%"
+    },
+    {
+      "name": "U24",
+      "quantity": "harmonicVoltage",
+      "order": 24,
+      "unit": "%"
+    },
+    {
+      "name": "U25",
+      "quantity": "harmonicVoltage",
+      "order": 25,
+      "unit": "%"
+    },
+    {
+      "name": "I3",
+      "quantity": "harmonicCurrent",
+      "order": 3,
+      "unit": "%"
+    },
+    {
+      "name": "I5",
+      "quantity": "harmonicCurrent",
+      "order": 5,
+      "unit": "%"
+    },
+    {
+      "name": "I7",
+      "quantity": "harmonicCurrent",
+      "order": 7,
+      "unit": "%"
+    },
+    {
+      "name": "I11",
+      "quantity": "harmonicCurrent",
+      "order": 11,
+      "unit": "%"
+    },
+    {
+      "name": "I13",
+      "quantity": "harmonicCurrent",
+      "order": 13,
+      "unit": "%"
+    },
+    {
+      "name": "I17",
+      "quantity": "harmonicCurrent",
+      "order": 17,
+      "unit": "%"
+    },
+    {
+      "name": "I19",
+      "quantity": "harmonicCurrent",
+      "order": 19,
+      "unit": "%"
+    },
+    {
+      "name": "I23",
+      "quantity": "harmonicCurrent",
+      "order": 23,
+      "unit": "%"
+    },
+    {
+      "name": "I25",
+      "quantity": "harmonicCurrent",
+      "order": 25,
+      "unit": "%"
+    }
+  ],
+  "csv": "meas-fictional-mdb-day.csv"
+}

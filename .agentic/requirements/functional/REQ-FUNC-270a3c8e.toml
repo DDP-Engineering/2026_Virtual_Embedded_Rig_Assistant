@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-270a3c8e"
+
+title = "Check star-delta eligibility from the motor terminals, winding connection and network voltage"
+
+status = "active"
+
+requirement = """
+When motor_drives evaluates star-delta, VERA shall pass its eligibility only for a motor with at least 6 terminals whose winding is delta-connected at a rated voltage within 1 % of the network nominal voltage, shall fail it otherwise and shall give unknown when terminals or connection are not stated.
+"""
+
+verification = "Core engine tests: the 400 V delta pump with 6 terminals passes; the 230/400 V conveyor motor (star at 400 V) fails; removing the terminals gives unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-b3d86b99"
+
+title = "Keep order code, variant, accessories and distributor SKUs apart"
+
+status = "active"
+
+requirement = """
+VERA shall keep a catalog item's manufacturer order code, variant, accessories and distributor SKUs apart: an item lookup shall say whether it matched the order code or a distributor SKU, and the parameters of an accessory shall never be evaluated as the parameters of the item it belongs to.
+"""
+
+verification = "Core unit tests: looking up RS 394-9790 returns LC1D09P7 with match distributor-sku and looking up LC1D09P7 returns match order-code; LC1D09P7 and LC1D09B7 share the variant base LC1D09 but stay two items; a selection of contactors lists LADN11 only as an accessory, and its 6 A AC-15 rating never satisfies the contactor's current requirement."
+
+affected_paths = ["05_Software/src/libraries/shared/src/industrial-catalog.ts", "05_Software/src/libraries/core/src/electrical/catalog.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

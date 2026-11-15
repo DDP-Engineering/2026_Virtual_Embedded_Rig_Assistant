@@ -1,0 +1,20 @@
+format: 1
+id: electrical-network
+version: 0.1.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
+name: Electrical network and cable sizing
+summary: Load balance, cable sizing, voltage drop and fault currents for radial LV networks of the electrical model, with cited cable tables.
+description: Calculate a radial low-voltage network of the workbench's electrical model with VERA's electrical_network tool - P/Q/S balance per scenario with simultaneity and load factors, phase and neutral currents, design currents, cable cross-sections checked or proposed from a cited cable table (installation method, ambient temperature, grouping), single- and three-phase voltage drop and maximum/minimum fault currents by the impedance method after IEC 60909-0:2016. Results are stored as electrical results with their inputs, so a later model change marks them stale; missing data stays unknown and unsupported sources or topologies are not evaluated. The model, schematics and approved selections are never changed.
+translations:
+  ro:
+    summary: "Bilanț de sarcină, cabluri, cădere de tensiune și curenți de defect pentru rețele radiale JT ale modelului electric, cu tabele de cabluri citate."
+    description: "Calculează o rețea radială de joasă tensiune din modelul electric al workbench-ului cu instrumentul electrical_network al VERA - bilanț P/Q/S pe scenarii cu factori de simultaneitate și de încărcare, curenți de fază și de neutru, curenți de calcul, secțiuni de cablu verificate sau propuse dintr-un tabel de cabluri citat (mod de pozare, temperatură ambiantă, grupare), cădere de tensiune monofazată și trifazată și curenți de defect maximi/minimi prin metoda impedanțelor după IEC 60909-0:2016. Rezultatele se stochează ca rezultate electrice împreună cu intrările lor, deci o modificare ulterioară a modelului le marchează ca învechite; datele lipsă rămân necunoscute, iar sursele sau topologiile neacceptate nu sunt evaluate. Modelul, schemele și selecțiile aprobate nu sunt modificate niciodată."
+  de:
+    summary: "Lastbilanz, Kabeldimensionierung, Spannungsfall und Fehlerströme für radiale NS-Netze des elektrischen Modells, mit zitierten Kabeltabellen."
+    description: "Berechnet ein radiales Niederspannungsnetz des elektrischen Modells der Workbench mit dem VERA-Werkzeug electrical_network - P/Q/S-Bilanz je Szenario mit Gleichzeitigkeits- und Auslastungsfaktoren, Phasen- und Neutralleiterströme, Bemessungsströme, anhand einer zitierten Kabeltabelle geprüfte oder vorgeschlagene Kabelquerschnitte (Verlegeart, Umgebungstemperatur, Häufung), ein- und dreiphasiger Spannungsfall sowie maximale und minimale Fehlerströme nach dem Impedanzverfahren gemäß IEC 60909-0:2016. Ergebnisse werden mit ihren Eingaben als elektrische Ergebnisse gespeichert, sodass eine spätere Modelländerung sie als veraltet markiert; fehlende Daten bleiben unbekannt, nicht unterstützte Quellen oder Topologien werden nicht ausgewertet. Modell, Schaltpläne und freigegebene Auswahlen werden nie geändert."
+  fr:
+    summary: "Bilan de charge, câbles, chute de tension et courants de défaut des réseaux BT radiaux du modèle électrique, avec tableaux de câbles cités."
+    description: "Calcule un réseau basse tension radial du modèle électrique du banc de travail avec l’outil electrical_network de VERA - bilan P/Q/S par scénario avec facteurs de simultanéité et d’utilisation, courants de phase et de neutre, courants d’emploi, sections de câble vérifiées ou proposées d’après un tableau de câbles cité (mode de pose, température ambiante, groupement), chute de tension monophasée et triphasée et courants de défaut maximaux/minimaux par la méthode des impédances selon la CEI 60909-0:2016. Les résultats sont enregistrés comme résultats électriques avec leurs entrées, de sorte qu’une modification ultérieure du modèle les marque comme périmés ; les données manquantes restent inconnues et les sources ou topologies non prises en charge ne sont pas évaluées. Le modèle, les schémas et les sélections approuvées ne sont jamais modifiés."
+ecosystem: electrical
+platforms: [windows-x64, linux-x64]
+docs: [README.md]

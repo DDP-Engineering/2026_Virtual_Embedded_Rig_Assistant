@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b2ae3ed9"
+
+title = "Carry the catalog revision and value sources in each selection"
+
+status = "active"
+
+requirement = """
+The industrial catalog selection shall return the catalog id, version and SHA-256 and, for every evaluated value, its source title, publisher, revision, link, licence terms, page or table and the value's conditions.
+"""
+
+verification = "Core unit tests: a selection over the fixture returns catalog {id, version, sha256} equal to the file's, and each criterion with a value cites the se.com page, its table (Main or Complementary) and revision; the catalog id and version are the pair a result's catalog field takes."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/catalog.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/catalog.test.ts", "05_Software/src/libraries/core/src/electrical/catalog-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-d7e27def.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

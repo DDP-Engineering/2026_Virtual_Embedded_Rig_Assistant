@@ -1,6 +1,13 @@
 import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
+import { industrialCatalogTool } from "../electrical/catalog-tool.js";
+import { lightingDesignTool } from "../electrical/lighting-tool.js";
+import { motorDrivesTool } from "../electrical/motor-drives-tool.js";
+import { electricalNetworkTool } from "../electrical/network-tool.js";
+import { powerQualityTool } from "../electrical/power-quality-tool.js";
+import { protectionCoordinationTool } from "../electrical/protection-tool.js";
+import { electricalModelChangeTool, electricalModelTool } from "../electrical/tools.js";
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import { applyCandidateTool } from "./apply-candidate.js";
@@ -47,6 +54,14 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   plugin_validate: pluginValidateTool,
   plugin_install: pluginInstallTool,
   apply_candidate: applyCandidateTool,
+  electrical_model: electricalModelTool,
+  electrical_model_change: electricalModelChangeTool,
+  industrial_catalog: industrialCatalogTool,
+  electrical_network: electricalNetworkTool,
+  protection_coordination: protectionCoordinationTool,
+  motor_drives: motorDrivesTool,
+  power_quality: powerQualityTool,
+  lighting_design: lightingDesignTool,
   help: helpTool,
 };
 /** Tools offered only when the host composes a program host. */

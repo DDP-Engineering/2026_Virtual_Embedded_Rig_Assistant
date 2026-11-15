@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-30561076"
+
+title = "Compare the five starting and drive methods per motor against the process function and the stated limits"
+
+status = "active"
+
+requirement = """
+When motor_drives evaluates a motor, VERA shall give each of dol, reversing, star-delta, softstarter and vfd a function, starting-current, starting-torque, acceleration-time and starts-per-hour verdict against the request's process function and limits and a method verdict that fails on any failed check and is unknown on any unknown one.
+"""
+
+verification = "Core engine tests: speed control fails every method but vfd; reversing fails dol and passes reversing; a starting-current limit below Ist fails dol and passes star-delta; no limit gives not-evaluated, not pass."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/motor-drives.test.ts"]
+
+
+spec = "specs/REQ-DATA-79118f9a.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

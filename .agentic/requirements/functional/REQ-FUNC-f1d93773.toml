@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f1d93773"
+
+title = "Compute design currents and single- and three-phase voltage drop along the radial path"
+
+status = "active"
+
+requirement = """
+When the network tool runs, VERA shall compute each circuit's design current per scenario and the voltage drop at its end, as the three-phase drop sqrt(3) I L (R cos phi + X sin phi) relative to the line voltage or the single-phase loop drop 2 I L (R cos phi + X sin phi) relative to the phase voltage, summed along the radial path from the source, and shall compare the worst scenario with the request's voltage-drop limit.
+"""
+
+verification = "Core unit tests against hand calculations: a 400 V three-phase circuit and a 230 V single-phase circuit with given section and length give the hand-computed design current and voltage drop within 0.5 %, a downstream circuit adds its upstream drop, units kW/W, km/m and kVA convert; a drop above the limit gives the verdict fail, below it pass."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/network.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/network.test.ts"]
+
+
+spec = "specs/REQ-DATA-42ce122f.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15
