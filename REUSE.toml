@@ -1,0 +1,11 @@
+version = 1
+SPDX-PackageName = "VERA - Virtual Embedded Rig Assistant"
+SPDX-PackageSupplier = "DDP Engineering"
+
+# One declaration for the whole repository instead of a header in every file.
+# Files with their own notice (third-party code, models, datasheets) keep it.
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 DDP Engineering"
+SPDX-License-Identifier = "LicenseRef-PolyForm-Noncommercial-1.0.0"

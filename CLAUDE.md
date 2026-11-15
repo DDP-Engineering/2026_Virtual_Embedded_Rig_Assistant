@@ -12,6 +12,18 @@ remotes, labels, configuration, `02_Tools` setup), planning and architecture doc
 
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 
+## Project rules
+
+- **Pre-release until 1.0.0:** no data migrations, no compatibility with earlier builds and no
+  readers for older formats; stored format versions stay `1`. VERA still changes a lot, and
+  compatibility code would grow its complexity enormously. Details: `AGENTS.md`, "Pre-release policy".
+- **English** for code, comments, commit messages, `CHANGELOG.md` and internal documents; user-facing
+  text (interface, help, release notes) in English, Romanian, German and French.
+- A notable change adds one line under `## [Unreleased]` in `CHANGELOG.md`; a user-visible one also
+  adds an entry to `05_Software/release-notes/unreleased.yaml` (`01_Documentation/Releases.md`).
+- Code style: `01_Documentation/Code_Style.md`. No license headers in files (`REUSE.toml`).
+- Repository layout, commits and validation: `AGENTS.md`.
+
 ## AEGIS workflow
 
 This repository uses AEGIS to guide software implementation, one feature,
