@@ -443,7 +443,6 @@
   },
   "skills": {
     "settings": "Skills-Einstellungen",
-    "enabled": "Aktiviert",
     "open": "Öffnen / bearbeiten",
     "name": "Skill-Name (Kleinbuchstaben, Ziffern, Bindestriche)",
     "source": "Speicherort",
@@ -701,7 +700,6 @@
     "overlap": "Überlappung (Zeichen)",
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",
     "loadingInstructions": "Workbench-Anweisungen werden geladen…",
-    "skillsIndependent": "Skill-Änderungen werden im Skills-Manager unabhängig vom Projektformular gespeichert.",
     "back": "Zurück zu Workbenches",
     "skills": "Skills",
     "indexing": "Indizierung",

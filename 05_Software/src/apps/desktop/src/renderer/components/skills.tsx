@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 
 function defineTranslationKeys<const T extends readonly string[]>(keys: T): T {
   return keys;
@@ -58,9 +59,44 @@ function SkillsDialog({
   close: () => void;
 }) {
   const { t } = useTranslation();
-  const client = useQueryClient();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
+  function finish() {
+    dialog.current?.close();
+    close();
+  }
+  useEffect(() => {
+    const node = dialog.current;
+    node?.showModal();
+    return () => node?.close();
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="pinned-dialog skills-dialog"
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        finish();
+      }}
+    >
+      <h2 id={titleId}>{t("skills.settings")}</h2>
+      <SkillsPanel workbenchId={workbenchId} readOnly={readOnly} />
+      <button type="button" onClick={finish}>
+        {t("workbench.cancel")}
+      </button>
+    </dialog>
+  );
+}
+/**
+ * The workbench's skills: creating one on the left, the list on the right (enable, open SKILL.md),
+ * one page at a time. Shown in the workbench editor's Skills section and inside the skills dialog.
+ */
+export function SkillsPanel({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const formId = useId();
   const [name, setName] = useState("");
   const [source, setSource] = useState<"workbench" | "user">("workbench");
   const [editing, setEditing] = useState<EditableSkill>();
@@ -71,15 +107,7 @@ function SkillsDialog({
     queryKey: ["skills", workbenchId],
     queryFn: () => api.invoke("skills.list", { workbenchId }),
   });
-  function finish() {
-    dialog.current?.close();
-    close();
-  }
-  useEffect(() => {
-    const node = dialog.current;
-    node?.showModal();
-    return () => node?.close();
-  }, []);
+  const { rows, pager } = usePaged(skills.data ?? []);
   async function perform(action: () => Promise<unknown>) {
     setBusy(true);
     setError(undefined);
@@ -93,38 +121,60 @@ function SkillsDialog({
     }
   }
   return (
-    <dialog
-      ref={dialog}
-      className="pinned-dialog skills-dialog"
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.stopPropagation();
-        event.preventDefault();
-        if (!busy && !editing) finish();
-      }}
-    >
-      <h2 id={titleId}>{t("skills.settings")}</h2>
-      {readOnly && <p role="status">{t("workbench.readOnly")}</p>}
-      {(error !== undefined || skills.isError) && <ErrorMessage error={error ?? skills.error} />}
-      {skills.isPending && <p role="status">{t("home.loading")}</p>}
-      <button type="button" disabled={busy} onClick={() => void skills.refetch()}>
-        {t("settings.retry")}
-      </button>
-      {skills.data?.length === 0 && <p>{t("chat.noSkills")}</p>}
-      <ul className="skills-list">
-        {skills.data?.map((skill) => (
-          <li key={skill.name}>
-            <strong>{skill.name}</strong>{" "}
-            <span>
-              {skill.source === "plugin"
-                ? t("skills.plugin", { plugin: skill.plugin ?? "" })
-                : skill.source === "official"
-                  ? t("skills.official")
-                  : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
-            </span>
-            {skill.description && <p>{skill.description}</p>}
-            {skill.error && <p role="status">{t(errorKeys[errorIndex[skill.error]])}</p>}
-            <label>
+    <div className="skills-panel" data-skills-panel>
+      <div className="skills-panel-side">
+        {readOnly && <p role="status">{t("workbench.readOnly")}</p>}
+        {(error !== undefined || skills.isError) && <ErrorMessage error={error ?? skills.error} />}
+        <form
+          className="workbench-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void perform(async () => {
+              await api.invoke("skills.create", { workbenchId, name, source });
+              setName("");
+            });
+          }}
+        >
+          <label htmlFor={`${formId}-name`}>{t("skills.name")}</label>
+          <input
+            id={`${formId}-name`}
+            data-skill-name
+            required
+            pattern="[a-z0-9-]{1,64}"
+            maxLength={64}
+            value={name}
+            disabled={busy || readOnly}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <label htmlFor={`${formId}-source`}>{t("skills.source")}</label>
+          <select
+            id={`${formId}-source`}
+            value={source}
+            disabled={busy || readOnly}
+            onChange={(event) => setSource(event.target.value as "workbench" | "user")}
+          >
+            <option value="workbench">{t("skills.workbench")}</option>
+            <option value="user">{t("skills.user")}</option>
+          </select>
+          <button
+            type="submit"
+            data-action="create-skill"
+            className="primary"
+            disabled={busy || readOnly || !/^[a-z0-9-]{1,64}$/.test(name)}
+          >
+            {t("skills.create")}
+          </button>
+        </form>
+        <button type="button" disabled={busy} onClick={() => void skills.refetch()}>
+          {t("settings.retry")}
+        </button>
+      </div>
+      <div className="skills-panel-list">
+        {skills.isPending && <p role="status">{t("home.loading")}</p>}
+        {skills.data?.length === 0 && <p className="muted">{t("chat.noSkills")}</p>}
+        <ul className="skills-list">
+          {rows.map((skill) => (
+            <li key={skill.name} className="workbench-tool-option" data-skill={skill.name}>
               <input
                 type="checkbox"
                 aria-label={t("skills.enabledNamed", { name: skill.name })}
@@ -140,67 +190,37 @@ function SkillsDialog({
                   )
                 }
               />
-              {t("skills.enabled")}
-            </label>
-            {editable(skill) && (
-              <button
-                type="button"
-                disabled={busy}
-                data-action="open-skill"
-                aria-label={t("skills.openNamed", { name: skill.name })}
-                onClick={(event) => {
-                  editorTrigger.current = event.currentTarget;
-                  setEditing(skill);
-                }}
-              >
-                {t("skills.open")}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      <form
-        className="workbench-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void perform(async () => {
-            await api.invoke("skills.create", { workbenchId, name, source });
-            setName("");
-          });
-        }}
-      >
-        <label htmlFor={`${titleId}-name`}>{t("skills.name")}</label>
-        <input
-          id={`${titleId}-name`}
-          data-skill-name
-          required
-          pattern="[a-z0-9-]{1,64}"
-          maxLength={64}
-          value={name}
-          disabled={busy || readOnly}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <label htmlFor={`${titleId}-source`}>{t("skills.source")}</label>
-        <select
-          id={`${titleId}-source`}
-          value={source}
-          disabled={busy || readOnly}
-          onChange={(event) => setSource(event.target.value as "workbench" | "user")}
-        >
-          <option value="workbench">{t("skills.workbench")}</option>
-          <option value="user">{t("skills.user")}</option>
-        </select>
-        <button
-          type="submit"
-          data-action="create-skill"
-          disabled={busy || readOnly || !/^[a-z0-9-]{1,64}$/.test(name)}
-        >
-          {t("skills.create")}
-        </button>
-      </form>
-      <button type="button" disabled={busy} onClick={finish}>
-        {t("workbench.cancel")}
-      </button>
+              <span className="skill-text">
+                <strong>{skill.name}</strong>{" "}
+                <span className="muted">
+                  {skill.source === "plugin"
+                    ? t("skills.plugin", { plugin: skill.plugin ?? "" })
+                    : skill.source === "official"
+                      ? t("skills.official")
+                      : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
+                </span>
+                {skill.description && <span className="muted skill-description">{skill.description}</span>}
+                {skill.error && <span role="status">{t(errorKeys[errorIndex[skill.error]])}</span>}
+              </span>
+              {editable(skill) && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  data-action="open-skill"
+                  aria-label={t("skills.openNamed", { name: skill.name })}
+                  onClick={(event) => {
+                    editorTrigger.current = event.currentTarget;
+                    setEditing(skill);
+                  }}
+                >
+                  {t("skills.open")}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        <Pager {...pager} />
+      </div>
       {editing && (
         <SkillEditor
           key={`${editing.source}:${editing.name}`}
@@ -214,7 +234,7 @@ function SkillsDialog({
           }}
         />
       )}
-    </dialog>
+    </div>
   );
 }
 function SkillEditor({

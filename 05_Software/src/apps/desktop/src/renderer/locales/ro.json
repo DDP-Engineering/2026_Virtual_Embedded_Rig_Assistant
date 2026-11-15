@@ -443,7 +443,6 @@
   },
   "skills": {
     "settings": "Setări pentru skill-uri",
-    "enabled": "Activ",
     "open": "Deschide / editează",
     "name": "Nume skill (litere mici, cifre, cratime)",
     "source": "Locație",
@@ -701,7 +700,6 @@
     "overlap": "Suprapunere (caractere)",
     "partialSave": "Setările proiectului au fost salvate, dar instrucțiunile nu au putut fi salvate. Reîncearcă salvarea; închiderea păstrează setările deja salvate.",
     "loadingInstructions": "Se încarcă instrucțiunile workbenchului…",
-    "skillsIndependent": "Modificările Skills sunt salvate în managerul Skills, separat de formularul proiectului.",
     "back": "Înapoi la workbenchuri",
     "skills": "Skills",
     "indexing": "Indexare",

@@ -443,7 +443,6 @@
   },
   "skills": {
     "settings": "Skills settings",
-    "enabled": "Enabled",
     "open": "Open / edit",
     "name": "Skill name (lowercase letters, digits, hyphens)",
     "source": "Location",
@@ -701,7 +700,6 @@
     "overlap": "Overlap (characters)",
     "partialSave": "Project settings were saved, but instructions could not be saved. Retry Save to finish; closing keeps the saved settings.",
     "loadingInstructions": "Loading workbench instructions…",
-    "skillsIndependent": "Skill changes are saved in the Skills manager independently of the project form.",
     "back": "Back to workbenches",
     "skills": "Skills",
     "indexing": "Indexing",
