@@ -1,25 +1,13 @@
 // The electrical_network write tool (spec REQ-DATA-42ce122f): runs the radial LV network engine on the workbench's
 // model and a cable table, and prepares ONE new result file electrical-automation-results/<run-id>/result.json
 // through the write flow (approval, before hash = absent, write queue). The model is only read.
-import { createHash, randomBytes } from "node:crypto";
-import {
-  electricalLimits,
-  electricalModelPath,
-  electricalResultFile,
-  electricalResultsDir,
-} from "@vera/shared";
-import { assertAgentWritable, commitChange, type PreparedChange } from "../tools/changes.js";
+import { electricalModelPath } from "@vera/shared";
+import type { PreparedChange } from "../tools/changes.js";
 import type { ToolContext, ToolDefinition } from "../tools/context.js";
-import { toolPathGuard } from "../tools/context.js";
-import { PathGuard } from "../workbench/path-guard.js";
 import { readCableTableFile } from "./cable-table.js";
 import { analyzeNetwork, networkRequestSchema } from "./network.js";
-import { renderResultReport } from "./report.js";
-import { checkResult } from "./results.js";
-import { fileDiff, readModelFile } from "./tools.js";
-
-const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
-const two = (value: number) => String(value).padStart(2, "0");
+import { newRun, prepareResultChange } from "./result-change.js";
+import { readModelFile } from "./tools.js";
 
 /** Runs the engine and prepares the new result file; nothing is written before the change is applied. */
 export async function prepareElectricalNetwork(
@@ -36,8 +24,7 @@ export async function prepareElectricalNetwork(
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
   const { table, stamp } = await readCableTableFile(ctx.root, request.cableTable);
   signal.throwIfAborted();
-  const now = new Date();
-  const runId = `${now.getUTCFullYear()}${two(now.getUTCMonth() + 1)}${two(now.getUTCDate())}-${two(now.getUTCHours())}${two(now.getUTCMinutes())}${two(now.getUTCSeconds())}-${randomBytes(2).toString("hex")}`;
+  const { runId, now } = newRun();
   const result = analyzeNetwork({
     model: file.model,
     modelPath: electricalModelPath,
@@ -46,67 +33,16 @@ export async function prepareElectricalNetwork(
     tableStamp: stamp,
     request,
     runId,
-    now: now.toISOString().replace(/\.\d{3}Z$/, "Z"),
+    now,
   });
-  const checked = checkResult(result, runId);
-  if ("problem" in checked)
-    throw Error(
-      `The network result is not a valid result (${checked.problem.path}: ${checked.problem.message}).`,
-    );
-  const path = `${electricalResultsDir}/${runId}/${electricalResultFile}`;
-  const inside = await (await PathGuard.create(ctx.root)).resolve(path);
-  const target = await (await toolPathGuard(ctx)).resolve(path);
-  if (target.key !== inside.key) throw Error("The result must be inside the workbench.");
-  await assertAgentWritable(ctx, target);
-  const output = `${JSON.stringify(result, null, 2)}\n`;
-  const after = Buffer.from(output, "utf8");
-  if (after.length > electricalLimits.resultBytes)
-    throw Error("The network result is larger than 4 MiB: analyse a smaller network.");
-  const afterSha256 = hash(after);
-  const { diff, added, removed } = fileDiff(inside.relative, "", output);
-  const criteria: Record<string, number> = {};
-  for (const entry of result.criteria) criteria[entry.verdict] = (criteria[entry.verdict] ?? 0) + 1;
-  const report = renderResultReport(result, { freshness: "current", changed: [], removed: [] }, file.model);
-  const changeRequest = Object.freeze({
-    workbench: ctx.root,
-    sessionId: host.sessionId,
-    turnId: host.turnId,
-    callId: host.callId,
-    tool: "electrical_network" as const,
-    path: inside.relative,
-    args: Object.freeze({ ...request }),
-    existed: false,
-    beforeSha256: null,
-    afterSha256,
-    diff,
-    bytes: after.length,
-    protected: false,
-  });
-  return Object.freeze({
-    request: changeRequest,
-    apply: commitChange({
-      ctx,
-      signal,
-      target,
-      path,
-      before: null,
-      beforeSha256: null,
-      after,
-      afterSha256,
-      changePath: inside.relative,
-      diff,
-      added,
-      removed,
-      result: {
-        path: inside.relative,
-        runId,
-        sha256: afterSha256,
-        bytes: after.length,
-        status: result.status,
-        criteria,
-        report,
-      },
-    }),
+  return prepareResultChange({
+    ctx,
+    signal,
+    tool: "electrical_network",
+    args: request,
+    result,
+    model: file.model,
+    label: "network",
   });
 }
 

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-62b1aee8"
+
+title = "Refuse a protection run on a missing, invalid, stale or foreign network result"
+
+status = "active"
+
+requirement = """
+If the named network result does not exist, is invalid, was not produced by electrical-network, is stale against the current model or misses the values a circuit needs, then VERA shall refuse the run (missing, invalid, foreign or stale) or report the affected criteria unknown (missing values), and shall never use another result.
+"""
+
+verification = "Core tool tests: a run naming a missing run id or a result of another producer throws; after a cable length change the stale network result throws 'is stale' and nothing is prepared; a circuit with a null designCurrent gives overload unknown."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/protection.ts", "05_Software/src/libraries/core/src/electrical/protection-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts", "05_Software/src/libraries/core/src/electrical/protection-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

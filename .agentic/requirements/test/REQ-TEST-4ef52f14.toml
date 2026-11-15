@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-4ef52f14"
+
+title = "Protection fixtures are cited public manufacturer data checked against independent hand calculations"
+
+status = "active"
+
+requirement = """
+The protection fixture catalog shall hold only values typed from public manufacturer pages or the manufacturer's public installation guide, each with its URL, read date, section and licence terms, and the protection tests shall compare its verdicts with hand calculations written out in the test before the comparison.
+"""
+
+verification = "Inspection and core unit test: every source of the fixture has an https URI, a 2026-11-15 read date and licence terms and every parameter is confirmed with a table or section; the test file states each hand-calculated limit (1.45 Iz, k²S², 8 In x 1.2, Ics = ratio x Icu) before asserting the verdict."
+
+affected_paths = ["05_Software/tests/fixtures/protection-coordination/cat-lv-protection.json", "05_Software/src/libraries/core/src/electrical/protection.test.ts", "05_Software/tests/fixtures/industrial-catalog/cat-schneider-tesys.json"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/protection.test.ts"]
+
+
+spec = "specs/REQ-DATA-a5673202.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

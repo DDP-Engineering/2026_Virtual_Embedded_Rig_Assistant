@@ -10,7 +10,10 @@ references (M1, QF1), relation rules, result freshness/stale results, explicit-m
 lookups (spec .agentic/specs/REQ-DATA-d7e27def.md, core electrical/catalog.ts and catalog-tool.ts), and the
 radial LV network engine: `electrical_network`, cable tables `electrical-automation-tables/<id>.json`, load
 balance, cable sizing, voltage drop, fault currents and the `electrical_model` report view (spec
-.agentic/specs/REQ-DATA-42ce122f.md, core electrical/network.ts, network-tool.ts, cable-table.ts, report.ts). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+.agentic/specs/REQ-DATA-42ce122f.md, core electrical/network.ts, network-tool.ts, cable-table.ts, report.ts), and the
+LV protection engine: `protection_coordination`, breaking capacity Icu/Ics/Icn, overload, disconnection bands,
+let-through energy, RCD, selectivity/cascading/starter tables (spec .agentic/specs/REQ-DATA-a5673202.md, core
+electrical/protection.ts, protection-tool.ts, result-change.ts). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -19,7 +22,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, and the radial LV network engine with its cable tables. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, and the LV protection engine. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -71,7 +74,22 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   `commitChange`; apply returns {path, runId, sha256, bytes, status, criteria counts, report}. `electrical_model`
   view `report` {runId} returns {runId, freshness, changed?, removed?, report} from `renderResultReport`, for any
   plugin's result (64 KiB at most).
-- `SessionHost.electricalModel` offers the four tools (`industrial_catalog` and `electrical_network` included); `electricalModelPlugin(plugin)` is true for manifest ecosystem
+- Protection engine (spec REQ-DATA-a5673202): pure `analyzeProtection({model, network, catalog, catalogStamp, cable
+  {k, text}, request, runId, now})` -> ElectricalResult with `protectionRequestSchema` {network run ID, catalog,
+  breakingCapacity Icu|Ics|Icn, assumedInstantaneousTripTime? (s), circuits 1..16 {circuit, protection?, candidates
+  1..8 (16 in all), setting? (A), disconnectionTime? (s), rcd?, residualCurrentMax? (mA)}, coordination? <=16 {kind
+  selectivity|cascading, upstream, upstreamItem, downstream, downstreamItem}, starters? <=16 {circuit, protection,
+  contactor, type 1|2}}; criteria `<name>:<orderCode>` (`device-kind`, `rated-voltage`, `poles`,
+  `breaking-capacity`, `rated-current`, `conventional-tripping`, `disconnection-time`, `let-through-energy`,
+  `selection`), `rcd-type`, `rcd-sensitivity`, `selectivity|cascading:<up>/<down>`, `starter-type-<n>:<p>/<c>`.
+  Catalog values go through `selectItems` on a one-item catalog (coverage, conservative value, unconfirmed rules);
+  band points through `findItems`; tables through `coordinationFor`.
+- Tool `protection_coordination` (write): reads the model, the named network result (`readResultFile`; refuses a
+  missing, invalid, foreign or stale one), the catalog and the cable table the network result names (k only when its
+  sha256 prefix still matches) and prepares one new result through `prepareResultChange` (`result-change.ts`, shared
+  with `electrical_network`: `newRun()`, checked result, one new file, report). The result copies the network
+  result's inputs, so it goes stale with them.
+- `SessionHost.electricalModel` offers the five tools (`industrial_catalog`, `electrical_network` and `protection_coordination` included); `electricalModelPlugin(plugin)` is true for manifest ecosystem
   `electrical` or `automation`, and the desktop sets the flag while such a plugin is loaded. The headless CLI does
   not set it.
 
@@ -111,6 +129,16 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - Fault currents follow the equivalent voltage source with cmax 1.05/1.10, cmin 0.95, feeder cQ 1.1/1.0 and KT
   for max and min, as pandapower 3.1.2 does; results state the method, edition and simplifications
   (REQ-FUNC-6a025b48). `electrical_network` writes only a new result file, never the model (REQ-FUNC-f4654788).
+- The protection engine reads only the capacity kind the request names (Icu `ultimateBreakingCapacity`, Ics
+  `serviceBreakingCapacity` or ratio x Icu at the same conditions, Icn / fuse `ratedBreakingCapacity`) at the
+  circuit voltage; the generic `breakingCapacity` is never read. Disconnection passes only when Ik1min reaches a
+  cited band point at or below the required time (or the instantaneous band's upper edge with a cited or assumed
+  operating time), fails only below a point at exactly that time, and is unknown otherwise; selectivity, cascading
+  and starter coordination come only from an applicable table for the exact items (selectivity and cascading entries
+  only in the order [upstream, downstream], the upstream circuit feeding the downstream one), an unevaluated requested
+  condition is unknown, no table is not-evaluated; nothing is derived from curves (REQ-FUNC-b65fb9ee,
+  REQ-FUNC-b9c2bc7d, REQ-FUNC-894dce2a, REQ-REL-8f88c502). `protection_coordination` refuses a stale network result
+  and writes only a new result file (REQ-REL-62b1aee8, REQ-FUNC-4dcdce2d).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -128,6 +156,8 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Network engine, request, result names | electrical/network.ts, spec REQ-DATA-42ce122f | electrical/network.test.ts |
 | Cable table format and lookups | shared cable-table.ts, electrical/cable-table.ts | electrical/cable-table.test.ts |
 | Network tool, report view | electrical/network-tool.ts, report.ts, tools.ts | electrical/network-tool.test.ts |
+| Protection engine, request, criteria | electrical/protection.ts, spec REQ-DATA-a5673202 | electrical/protection.test.ts |
+| Protection tool, shared result write | electrical/protection-tool.ts, result-change.ts | electrical/protection-tool.test.ts, network-tool.test.ts |
 | Offering the tools | sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -166,6 +196,17 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-FUNC-f4654788 — store network results through an approved prepared change, model unchanged.
 - REQ-FUNC-8b895a77 — render a stored result as a report with its freshness.
 - REQ-TEST-e3eb9076 — independent references (hand calculations, pandapower 3.1.2) with preset tolerances.
+- REQ-DATA-a5673202 — accept only a strictly valid protection request.
+- REQ-FUNC-b65fb9ee — breaking capacity of the named kind at the circuit voltage against Ik3max.
+- REQ-FUNC-f24b4131 — Ib <= In <= Iz and I2 <= 1.45 Iz with the cited ratio and setting range.
+- REQ-FUNC-b9c2bc7d — automatic disconnection from cited band points against Ik1min.
+- REQ-FUNC-884410b3 — let-through energy against k²S².
+- REQ-FUNC-894dce2a — selectivity, cascading and starter coordination only from manufacturer tables.
+- REQ-FUNC-870b4cdc — RCD type from the equipment, sensitivity from the profile.
+- REQ-REL-8f88c502 — missing, extracted, off-condition or other-kind data never passes.
+- REQ-REL-62b1aee8 — a missing, invalid, foreign or stale network result is refused.
+- REQ-FUNC-4dcdce2d — protection results stored through an approved prepared change, stale with the network inputs.
+- REQ-TEST-4ef52f14 — cited protection fixture and hand calculations.
 - REQ-UX-d32cc9db — electrical tool descriptions in the workbench tools editor (en/ro/de/fr).
 
 ## Files
@@ -197,3 +238,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/cable-table.test.ts` — table format, lookups, the Nexans fixture.
 - `05_Software/tests/fixtures/electrical-network/` — fictional network A, fictional test table, cited Nexans NYM-J table.
 - `05_Software/tests/support/pandapower_network_check.py` — independent pandapower 3.1.2 fault-current references.
+- `05_Software/src/libraries/core/src/electrical/protection.ts` — the LV protection engine and its request schema.
+- `05_Software/src/libraries/core/src/electrical/protection-tool.ts` — the protection_coordination write tool.
+- `05_Software/src/libraries/core/src/electrical/result-change.ts` — run IDs and the prepared write of a new result.
+- `05_Software/src/libraries/core/src/electrical/protection.test.ts` — criteria with hand calculations, refusals, fixture.
+- `05_Software/src/libraries/core/src/electrical/protection-tool.test.ts` — prepared result, stale refusal, k check, plugin.
+- `05_Software/tests/fixtures/protection-coordination/cat-lv-protection.json` — cited iC60N, C10G, GV2ME14 and LC1D data.

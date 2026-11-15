@@ -27,6 +27,7 @@ export const builtinToolNames = [
   "electrical_model_change",
   "industrial_catalog",
   "electrical_network",
+  "protection_coordination",
 ] as const;
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];

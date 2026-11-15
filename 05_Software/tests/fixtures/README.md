@@ -29,6 +29,13 @@ is a fictional cable table with values chosen for the tests. `tbl-nexans-nym-j.j
 the public Nexans NYM-J product page (read 2026-11-15, cited in the file): DC resistance and the 30 °C current
 ratings of each cross-section; it has no correction factors, reactance or k because the page gives none.
 
+`protection-coordination/cat-lv-protection.json` is an industrial catalog typed from public pages read 2026-11-15
+(cited per value): Schneider Electric Acti9 iC60N A9F74316, A9F74216 and A9F74340 (se.com UAE product pages: Icu,
+Ics, Icn, Ue, In, magnetic band 8 x In +/- 20 %), Eaton Bussmann C10G16, C10G20 and C10G32 gG fuses (eaton.com UK
+pages: In, rated voltage, 120 kA), TeSys GV2ME14, LC1D09P7 and LC1D18P7 with their gG fuse coordination tables copied
+from the industrial-catalog fixture, and conventional tripping ratios from Schneider Electric's public Electrical
+Installation Guide. It holds no time-current points, I2t values or selectivity tables because the pages give none.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

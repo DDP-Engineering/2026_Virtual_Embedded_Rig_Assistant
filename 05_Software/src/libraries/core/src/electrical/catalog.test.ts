@@ -239,7 +239,7 @@ describe("firm requirements (REQ-FUNC-742db7ea)", () => {
       requirements: [
         {
           id: "icu",
-          parameter: "breakingCapacity",
+          parameter: "ultimateBreakingCapacity",
           op: ">=",
           value: { value: 20000, unit: "A" },
           conditions: { voltage: { value: 440, unit: "V" } },
@@ -279,7 +279,7 @@ describe("unknown values (REQ-DATA-fd465e9f)", () => {
       category: "contactor",
       requirements: [
         { id: "ie", parameter: "ratedCurrent", op: ">=", value: { value: 9, unit: "A" }, conditions: at400 },
-        { id: "icu", parameter: "breakingCapacity", op: ">=", value: { value: 6, unit: "kA" } },
+        { id: "icu", parameter: "ultimateBreakingCapacity", op: ">=", value: { value: 6, unit: "kA" } },
       ],
     });
     const p7 = byCode(selection.items, "LC1D09P7");
@@ -295,7 +295,7 @@ describe("unknown values (REQ-DATA-fd465e9f)", () => {
       requirements: [
         {
           id: "icu",
-          parameter: "breakingCapacity",
+          parameter: "ultimateBreakingCapacity",
           op: ">=",
           value: { value: 3, unit: "kA" },
           conditions: { voltage: { value: 1000, unit: "V" } },
@@ -482,7 +482,7 @@ describe("conservative values, bounds and condition kinds (REQ-FUNC-742db7ea, RE
   it("covers a request at a Min or Max bound and not beyond it", async () => {
     const icu = (volts: number): CatalogRequirement => ({
       id: "icu",
-      parameter: "breakingCapacity",
+      parameter: "ultimateBreakingCapacity",
       op: ">=",
       value: { value: 50, unit: "kA" },
       conditions: { voltage: { value: volts, unit: "V" } },

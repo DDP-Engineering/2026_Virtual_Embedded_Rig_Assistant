@@ -18,7 +18,8 @@ commit; the coordinator checks the evidence and makes one local commit per ticke
 Each ticket runs only its focused tests; the complete suite runs once after PWR-06.
 STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. PWR-01 implemented
 2026-11-15 (AEGIS TASK-15cb5dad), native Ubuntu and licensed coordination tables open. PWR-02 implemented
-2026-11-15 (AEGIS TASK-662ede41), native Ubuntu and licensed IEC cable tables open.
+2026-11-15 (AEGIS TASK-662ede41), native Ubuntu and licensed IEC cable tables open. PWR-03 implemented 2026-11-15
+(AEGIS TASK-0184d2d1), native Ubuntu, public selectivity/type-2 tables with Iq and numeric tripping bands open.
 
 ## Order
 
@@ -27,7 +28,7 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
 | 1 | PWR-00 | [#126](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/126) | common project model: stable IDs, quantities with units, relations, provenance, stale results (product code, not a plugin) | - | implemented |
 | 2 | PWR-01 | [#127](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/127) | `industrial-catalog`: manufacturer + order code + variant + accessories, conditioned parameters, documented selection | PWR-00 | implemented |
 | 3 | PWR-02 | [#128](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/128) | `electrical-network`: load balance, cable sizing, voltage drop, short circuit on radial LV networks | PWR-00 | implemented |
-| 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | planned |
+| 4 | PWR-03 | [#129](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/129) | `protection-coordination`: breaker and fuse selection, breaking capacity, selectivity from manufacturer tables | PWR-01, PWR-02 | implemented |
 | 5 | PWR-04 | [#130](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/130) | `motor-drives`: DOL, reversing, star-delta, softstarter or VFD choice and starter assembly | PWR-01, PWR-03 | planned |
 | 6 | PWR-05 | [#131](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/131) | `power-quality-pfc`: P/Q/S and harmonic profiles, compensation need, capacitor bank steps | PWR-01, PWR-02 | planned |
 | 7 | PWR-06 | [#132](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/132) | `lighting-design`: preliminary estimate, IES/LDT import, DIALux exchange and report check | PWR-00, PWR-01 | planned |
@@ -104,3 +105,26 @@ STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. 
   runtime dependency.
 - Open: native Ubuntu (WSL2 only); licensed IEC 60364-5-52 tables and manufacturer correction factors are not in
   the fixtures.
+
+## PWR-03 #129 - protection coordination
+
+- Engine `vera-lv-protection-1` in product code (core `electrical/protection.ts`, pure), tool `protection_coordination`
+  (write: one new result through the prepared change, shared with `electrical_network` in `result-change.ts`), spec
+  `.agentic/specs/REQ-DATA-a5673202.md`. Plugin `protection-coordination` (ecosystem electrical, no program) brings the
+  skill `protection-selection` and joins the Electrical power and distribution pack.
+- Inputs: one CURRENT `electrical-network` result (stale, missing or foreign ones are refused; its inputs are copied,
+  so the protection result goes stale with them), one catalog and the cable table the network result names (k).
+- Per candidate and circuit: rated voltage, poles, breaking capacity of the kind the profile names (Icu, Ics or ratio
+  x Icu, Icn; fuses by their rated breaking capacity) against Ik3max, Ib <= In <= Iz (setting for adjustable
+  devices), I2 <= 1.45 Iz with a cited ratio, disconnection from cited band points or the instantaneous band with a
+  cited or stated operating time against Ik1min, let-through energy against k²S², selection verdict; per circuit
+  RCD type (equipment `rcdTypes`) and sensitivity; selectivity, cascading and type 1/2 starters only from the
+  catalog's manufacturer tables for exact products and conditions, never from curves.
+- Reuse: catalog `selectItems`/`findItems`/`coordinationFor`, PWR-02 stored values, generic report. The PWR-01 fixture
+  parameter `breakingCapacity` is now `ultimateBreakingCapacity` (se.com labels it Icu).
+- Fixture `tests/fixtures/protection-coordination/cat-lv-protection.json`: Acti9 iC60N (se.com UAE pages), Eaton
+  Bussmann C10G gG (eaton.com UK pages), TeSys GV2ME14 and LC1D09P7/LC1D18P7 with their real gG fuse coordination
+  tables, conventional ratios from Schneider's public Electrical Installation Guide, all read 2026-11-15.
+- Open: native Ubuntu (WSL2 only); public manufacturer selectivity/cascading and type-2 breaker tables with the
+  prospective current Iq, numeric instantaneous operating times, fuse time-current gates and I2t values (download- or
+  licence-only), so those criteria stay unknown or not evaluated with the real fixture.

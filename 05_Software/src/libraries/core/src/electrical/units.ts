@@ -22,6 +22,7 @@ export const unitDimensions: Readonly<Record<string, readonly string[]>> = {
   "luminous-flux": ["lm"],
   illuminance: ["lx"],
   "luminous-efficacy": ["lm/W"],
+  "let-through-energy": ["A²s", "kA²s"],
 };
 
 /** Property names whose unit must belong to one dimension; any other name takes any unit of the table. */
@@ -36,6 +37,20 @@ export const knownProperties: Readonly<Record<string, string>> = {
   startingCurrent: "current",
   shortCircuitCurrent: "current",
   breakingCapacity: "current",
+  ultimateBreakingCapacity: "current",
+  serviceBreakingCapacity: "current",
+  ratedBreakingCapacity: "current",
+  prospectiveCurrent: "current",
+  tripCurrentMax: "current",
+  selectivityLimit: "current",
+  enhancedBreakingCapacity: "current",
+  residualOperatingCurrent: "current",
+  letThroughEnergy: "let-through-energy",
+  conventionalTrippingCurrentRatio: "ratio",
+  magneticTripMultiple: "ratio",
+  magneticTripTolerance: "ratio",
+  magneticTripTimeMax: "time",
+  tripTime: "time",
   settingCurrentMin: "current",
   settingCurrentMax: "current",
   magneticTripCurrent: "current",
@@ -119,6 +134,8 @@ const unitScales: Readonly<Record<string, readonly [number, number?]>> = {
   lm: [1],
   lx: [1],
   "lm/W": [1],
+  "A²s": [1],
+  "kA²s": [1e6],
 };
 
 /** A value of a unit of the table expressed in its dimension's base unit (A, V, W, K, ...). */

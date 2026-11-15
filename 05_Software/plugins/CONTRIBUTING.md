@@ -74,6 +74,17 @@ cables, `activePower:<scenario>` and `ik3Max` on boards. Protection, motor and p
 values from the stored result (and check its freshness with `electrical_model` view `results`) instead of
 recomputing them; `electrical_model` view `report` renders any stored result as Markdown.
 
+Protective devices are checked by VERA's `protection_coordination` tool (plugin `protection-coordination`, spec
+`.agentic/specs/REQ-DATA-a5673202.md`) against a current network result and one catalog. It reads catalog parameters
+by name - `ultimateBreakingCapacity` (Icu), `serviceBreakingCapacity` or `serviceBreakingCapacityRatio` (Ics),
+`ratedBreakingCapacity` (Icn, or a fuse's rated breaking capacity), `ratedCurrent` or `settingCurrentMin`/`Max`,
+`conventionalTrippingCurrentRatio`, `magneticTripCurrent` or `magneticTripMultiple` with `magneticTripTolerance` and
+`magneticTripTimeMax`, `tripCurrentMax` at condition `tripTime`, `letThroughEnergy` (A²s) - and coordination tables of
+kind `selectivity`, `cascading`, `fuse coordination type 1|2` and `breaker coordination type 1|2`. Criteria are
+`<criterion>:<orderCode>` per circuit (`breaking-capacity`, `rated-current`, `conventional-tripping`,
+`disconnection-time`, `let-through-energy`, `selection`, ...); a motor helper reads the `selection` and starter
+verdicts from the stored result. The generic `breakingCapacity` names no capacity kind and is never used.
+
 ## Draft with the agent
 
 Load the official `create-plugin` skill and provide the CLI manual (or its `--help` output) and the

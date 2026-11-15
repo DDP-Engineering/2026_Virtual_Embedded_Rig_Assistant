@@ -666,6 +666,7 @@
     "electrical_model_change": "Change the electrical project model through validated operations or an import with an explicit ID mapping. Needs an electrical or automation plugin; asks for approval like a write.",
     "industrial_catalog": "Read the workbench's industrial catalogs: find items by order code or distributor SKU, select by firm requirements with cited values and look up coordination for exact products. Needs an electrical or automation plugin.",
     "electrical_network": "Calculate a radial LV network of the electrical model: load balance per scenario, phase currents, cable sections from a cited cable table, voltage drop and fault currents; stores the result after approval like a write. Needs an electrical or automation plugin.",
+    "protection_coordination": "Check fuses and circuit breakers from an industrial catalog against a current network result: breaking capacity of the named kind, overload, disconnection time, let-through energy, and selectivity or starter coordination from manufacturer tables only; stores the result after approval like a write. Needs an electrical or automation plugin.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device.",
     "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page."
   },

@@ -3,6 +3,7 @@ import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { industrialCatalogTool } from "../electrical/catalog-tool.js";
 import { electricalNetworkTool } from "../electrical/network-tool.js";
+import { protectionCoordinationTool } from "../electrical/protection-tool.js";
 import { electricalModelChangeTool, electricalModelTool } from "../electrical/tools.js";
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
@@ -53,6 +54,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   electrical_model_change: electricalModelChangeTool,
   industrial_catalog: industrialCatalogTool,
   electrical_network: electricalNetworkTool,
+  protection_coordination: protectionCoordinationTool,
 };
 /** Tools offered only when the host composes a program host. */
 export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];

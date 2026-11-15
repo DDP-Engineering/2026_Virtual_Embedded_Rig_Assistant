@@ -13,7 +13,7 @@ With the user, write each firm requirement with its conditions before selecting:
 
 - a contactor for a 4 kW, 400 V motor: `ratedCurrent >= 9 A` at `utilisationCategory: AC-3`,
   `voltage: 400 V`; coil `controlVoltage == 230 V`;
-- a motor circuit breaker at a point with a prospective 20 kA at 400 V: `breakingCapacity >= 20 kA` at
+- a motor circuit breaker at a point with a prospective 20 kA at 400 V: `ultimateBreakingCapacity >= 20 kA` (Icu) at
   `voltage: 400 V`, `settingCurrentMin <= 8.5 A`, `settingCurrentMax >= 8.5 A`.
 
 Ask when a value or its condition is missing (the voltage, the utilisation category, the ambient temperature);

@@ -1,0 +1,2299 @@
+{
+  "kind": "vera-industrial-catalog",
+  "format": 1,
+  "id": "cat-lv-protection",
+  "version": "2026-11-15.1",
+  "title": "LV protection devices: Acti9 iC60N, Eaton Bussmann C10G gG, TeSys GV2ME and LC1D (test fixture)",
+  "sources": [
+    {
+      "id": "src-se-eig-protective-scheme",
+      "kind": "other",
+      "title": "Electrical Installation Guide - Practical values for a protective scheme",
+      "publisher": "Schneider Electric (electrical-installation.org)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.electrical-installation.org/enw/index.php?title=Practical_values_for_a_protective_scheme",
+      "license": "Public Schneider Electric Electrical Installation Guide wiki page; individual values quoted with citation, no copy of the guide"
+    },
+    {
+      "id": "src-se-eig-switching-devices",
+      "kind": "other",
+      "title": "Electrical Installation Guide - Elementary switching devices (Fig. H10)",
+      "publisher": "Schneider Electric (electrical-installation.org)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.electrical-installation.org/enw/index.php?title=Elementary_switching_devices",
+      "license": "Public Schneider Electric Electrical Installation Guide wiki page; individual values quoted with citation, no copy of the guide"
+    },
+    {
+      "id": "src-se-a9f74316",
+      "kind": "datasheet",
+      "title": "A9F74316 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UAE)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/ae/en/product/A9F74316/miniature-circuit-breaker-mcb-acti9-ic60n-3p-16a-c-curve-6000a-iec-en-608981-10ka-iec-en-609472/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-a9f74216",
+      "kind": "datasheet",
+      "title": "A9F74216 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UAE)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/ae/en/product/A9F74216/miniature-circuit-breaker-mcb-acti9-ic60n-2p-16a-c-curve-6000a-iec-en-608981-10ka-iec-en-609472/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-a9f74340",
+      "kind": "datasheet",
+      "title": "A9F74340 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UAE)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/ae/en/product/A9F74340/miniature-circuit-breaker-mcb-acti9-ic60n-3p-40a-c-curve-6000a-iec-en-608981-10ka-iec-en-609472/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-eaton-c10g16",
+      "kind": "datasheet",
+      "title": "C10G16 product page, Specifications",
+      "publisher": "Eaton (eaton.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.eaton.com/gb/en-gb/skuPage.C10G16.html",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-eaton-c10g20",
+      "kind": "datasheet",
+      "title": "C10G20 product page, Specifications",
+      "publisher": "Eaton (eaton.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.eaton.com/gb/en-gb/skuPage.C10G20.html",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-eaton-c10g32",
+      "kind": "datasheet",
+      "title": "C10G32 product page, Specifications",
+      "publisher": "Eaton (eaton.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.eaton.com/gb/en-gb/skuPage.C10G32.html",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lc1d09p7",
+      "kind": "datasheet",
+      "title": "LC1D09P7 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1D09P7/tesys-d-contactor-3p3-no-ac3-440-v-9-a-230-v-ac-coil/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-lc1d18p7",
+      "kind": "datasheet",
+      "title": "LC1D18P7 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/LC1D18P7/tesys-d-contactor-3p3-no-ac3-440-v-18-a-230-v-ac-coil/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    },
+    {
+      "id": "src-se-gv2me14",
+      "kind": "datasheet",
+      "title": "GV2ME14 product page, Specifications",
+      "publisher": "Schneider Electric (se.com UK)",
+      "revision": "web page as read 2026-11-15; no document revision shown",
+      "date": "2026-11-15",
+      "uri": "https://www.se.com/uk/en/product/GV2ME14/motor-circuit-breaker-tesys-gv2-3p-610-a-thermal-magnetic-screw-clamp-terminals/",
+      "license": "Public manufacturer product page; individual values quoted with citation, no copy of the catalogue"
+    }
+  ],
+  "families": [
+    {
+      "id": "fam-acti9-ic60n",
+      "manufacturer": "Schneider Electric",
+      "name": "Acti9 iC60N miniature circuit breakers",
+      "category": "miniature-circuit-breaker",
+      "note": "Product pages give the instantaneous band 8 x In +/- 20 % but no operating time, no time-current gates and no let-through energy."
+    },
+    {
+      "id": "fam-bussmann-c10g",
+      "manufacturer": "Eaton",
+      "name": "Bussmann series 10 x 38 mm cylindrical fuses gG",
+      "category": "fuse-link",
+      "note": "Product pages give no time-current data or I2t. Fig. H10 of the cited guide covers 4 < In < 16 A and 16 < In <= 63 A, so no conventional fusing current is cited for 16 A."
+    },
+    {
+      "id": "fam-tesys-gv2me",
+      "manufacturer": "Schneider Electric",
+      "name": "TeSys GV2 motor circuit breakers GV2ME",
+      "category": "motor-circuit-breaker",
+      "note": "The product page gives average operating curves at 20 °C (no band) and a magnetic tripping current without tolerance."
+    },
+    {
+      "id": "fam-tesys-deca-lc1d",
+      "manufacturer": "Schneider Electric",
+      "name": "TeSys Deca Advanced contactors LC1D",
+      "category": "contactor"
+    }
+  ],
+  "items": [
+    {
+      "id": "itm-a9f74316",
+      "family": "fam-acti9-ic60n",
+      "orderCode": "A9F74316",
+      "name": "Acti9 iC60N MCB 3P 16 A C curve",
+      "attributes": {
+        "poles": "3P",
+        "curveCode": "C",
+        "utilisationCategory": "Category A conforming to EN/IEC 60947-2",
+        "limitationClass": "3 conforming to EN/IEC 60898-1",
+        "deviceShortName": "IC60N"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 16,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 440,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Highest AC [Ue] listed (12...133, 220...240, 380...415 and 440 V AC 50/60 Hz)",
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 36,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 12,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 133,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 27,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 12,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 133,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 20,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 15,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 10,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 7.5,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 6,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 4.5,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 6000,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 400,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60898-1"
+            }
+          },
+          "note": "[Icn]",
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripMultiple",
+          "value": 8,
+          "unit": "1",
+          "basis": "input",
+          "note": "Magnetic tripping limit 8 x In +/- 20 %",
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripTolerance",
+          "value": 20,
+          "unit": "%",
+          "basis": "input",
+          "note": "Magnetic tripping limit 8 x In +/- 20 %",
+          "source": {
+            "id": "src-se-a9f74316",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.45,
+          "unit": "1",
+          "basis": "input",
+          "note": "The guide states that for circuit-breakers I2 is always less than 1.45 In; 1.45 is used as the upper bound.",
+          "source": {
+            "id": "src-se-eig-protective-scheme",
+            "table": "Applications - Protection by circuit-breaker"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-a9f74216",
+      "family": "fam-acti9-ic60n",
+      "orderCode": "A9F74216",
+      "name": "Acti9 iC60N MCB 2P 16 A C curve",
+      "attributes": {
+        "poles": "2P",
+        "curveCode": "C",
+        "utilisationCategory": "Category A conforming to EN/IEC 60947-2",
+        "limitationClass": "3 conforming to EN/IEC 60898-1",
+        "deviceShortName": "IC60N"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 16,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 440,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Highest AC [Ue] listed (12...133, 220...240, 380...415 and 440 V AC 50/60 Hz)",
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 36,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 12,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 133,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 27,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 12,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 133,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 20,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 15,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 10,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 7.5,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 6,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 4.5,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 6000,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 400,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60898-1"
+            }
+          },
+          "note": "[Icn]",
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripMultiple",
+          "value": 8,
+          "unit": "1",
+          "basis": "input",
+          "note": "Magnetic tripping limit 8 x In +/- 20 %",
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripTolerance",
+          "value": 20,
+          "unit": "%",
+          "basis": "input",
+          "note": "Magnetic tripping limit 8 x In +/- 20 %",
+          "source": {
+            "id": "src-se-a9f74216",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.45,
+          "unit": "1",
+          "basis": "input",
+          "note": "The guide states that for circuit-breakers I2 is always less than 1.45 In; 1.45 is used as the upper bound.",
+          "source": {
+            "id": "src-se-eig-protective-scheme",
+            "table": "Applications - Protection by circuit-breaker"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-a9f74340",
+      "family": "fam-acti9-ic60n",
+      "orderCode": "A9F74340",
+      "name": "Acti9 iC60N MCB 3P 40 A C curve",
+      "attributes": {
+        "poles": "3P",
+        "curveCode": "C",
+        "utilisationCategory": "Category A conforming to EN/IEC 60947-2",
+        "limitationClass": "3 conforming to EN/IEC 60898-1",
+        "deviceShortName": "IC60N"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 40,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 440,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Highest AC [Ue] listed (12...133, 220...240, 380...415 and 440 V AC 50/60 Hz)",
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 36,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 12,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 133,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 27,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 12,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 133,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 20,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 15,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 10,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 7.5,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 6,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacity",
+          "value": 4.5,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 6000,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 400,
+              "unit": "V"
+            },
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "EN/IEC 60898-1"
+            }
+          },
+          "note": "[Icn]",
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripMultiple",
+          "value": 8,
+          "unit": "1",
+          "basis": "input",
+          "note": "Magnetic tripping limit 8 x In +/- 20 %",
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripTolerance",
+          "value": 20,
+          "unit": "%",
+          "basis": "input",
+          "note": "Magnetic tripping limit 8 x In +/- 20 %",
+          "source": {
+            "id": "src-se-a9f74340",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.45,
+          "unit": "1",
+          "basis": "input",
+          "note": "The guide states that for circuit-breakers I2 is always less than 1.45 In; 1.45 is used as the upper bound.",
+          "source": {
+            "id": "src-se-eig-protective-scheme",
+            "table": "Applications - Protection by circuit-breaker"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-c10g16",
+      "family": "fam-bussmann-c10g",
+      "orderCode": "C10G16",
+      "name": "Eaton Bussmann 10 x 38 mm cylindrical fuse 16 A gG 500 V AC",
+      "attributes": {
+        "fuseClass": "gG",
+        "size": "10 x 38 mm"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 16,
+          "unit": "A",
+          "basis": "input",
+          "note": "Amperage Rating",
+          "source": {
+            "id": "src-eaton-c10g16",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 500,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Voltage rating, Voltage type AC",
+          "source": {
+            "id": "src-eaton-c10g16",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 120,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMax": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60269"
+            }
+          },
+          "note": "Breaking capacity 120 kA; the page gives one rated breaking capacity and one rated voltage (IEC 60269 rates it at the rated voltage)",
+          "source": {
+            "id": "src-eaton-c10g16",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-c10g20",
+      "family": "fam-bussmann-c10g",
+      "orderCode": "C10G20",
+      "name": "Eaton Bussmann 10 x 38 mm cylindrical fuse 20 A gG 500 V AC",
+      "attributes": {
+        "fuseClass": "gG",
+        "size": "10 x 38 mm"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 20,
+          "unit": "A",
+          "basis": "input",
+          "note": "Amperage Rating",
+          "source": {
+            "id": "src-eaton-c10g20",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 500,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Voltage rating, Voltage type AC",
+          "source": {
+            "id": "src-eaton-c10g20",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 120,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMax": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60269"
+            }
+          },
+          "note": "Breaking capacity 120 kA; the page gives one rated breaking capacity and one rated voltage (IEC 60269 rates it at the rated voltage)",
+          "source": {
+            "id": "src-eaton-c10g20",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.6,
+          "unit": "1",
+          "basis": "input",
+          "conditions": {
+            "fuseClass": {
+              "text": "gG"
+            }
+          },
+          "note": "Conventional fusing current I2 = 1.6 In for gG fuses, 16 A < In <= 63 A, conventional time 1 h",
+          "source": {
+            "id": "src-se-eig-switching-devices",
+            "table": "Fig. H10"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-c10g32",
+      "family": "fam-bussmann-c10g",
+      "orderCode": "C10G32",
+      "name": "Eaton Bussmann 10 x 38 mm cylindrical fuse 32 A gG 400 V AC",
+      "attributes": {
+        "fuseClass": "gG",
+        "size": "10 x 38 mm"
+      },
+      "parameters": [
+        {
+          "name": "ratedCurrent",
+          "value": 32,
+          "unit": "A",
+          "basis": "input",
+          "note": "Amperage Rating",
+          "source": {
+            "id": "src-eaton-c10g32",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedVoltage",
+          "value": 400,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            }
+          },
+          "note": "Voltage rating, Voltage type AC",
+          "source": {
+            "id": "src-eaton-c10g32",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedBreakingCapacity",
+          "value": 120,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60269"
+            }
+          },
+          "note": "Breaking capacity 120 kA; the page gives one rated breaking capacity and one rated voltage (IEC 60269 rates it at the rated voltage)",
+          "source": {
+            "id": "src-eaton-c10g32",
+            "table": "Electrical data"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "conventionalTrippingCurrentRatio",
+          "value": 1.6,
+          "unit": "1",
+          "basis": "input",
+          "conditions": {
+            "fuseClass": {
+              "text": "gG"
+            }
+          },
+          "note": "Conventional fusing current I2 = 1.6 In for gG fuses, 16 A < In <= 63 A, conventional time 1 h",
+          "source": {
+            "id": "src-se-eig-switching-devices",
+            "table": "Fig. H10"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-lc1d09p7",
+      "family": "fam-tesys-deca-lc1d",
+      "orderCode": "LC1D09P7",
+      "name": "TeSys D contactor 3P (3 NO), AC-3 <= 440 V 9 A, 230 V AC 50/60 Hz coil",
+      "variant": {
+        "base": "LC1D09",
+        "label": "230 V AC 50/60 Hz coil"
+      },
+      "attributes": {
+        "poles": "3P",
+        "auxiliaryContacts": "1 NO + 1 NC",
+        "deviceShortName": "LC1D"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 9,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 25,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-1"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "controlVoltage",
+          "value": 230,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "frequency": {
+              "text": "50/60 Hz"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 2.2,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 415,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 660,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "circuit": {
+              "text": "power"
+            },
+            "standard": {
+              "text": "IEC 60947-4-1"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 0.2,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d09p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "distributors": [
+        {
+          "supplier": "RS Components UK",
+          "sku": "394-9790",
+          "capturedAt": "2026-11-15T13:40:00Z",
+          "uri": "https://uk.rs-online.com/web/p/contactors/3949790"
+        }
+      ]
+    },
+    {
+      "id": "itm-lc1d18p7",
+      "family": "fam-tesys-deca-lc1d",
+      "orderCode": "LC1D18P7",
+      "name": "TeSys D contactor 3P (3 NO), AC-3 <= 440 V 18 A, 230 V AC 50/60 Hz coil",
+      "variant": {
+        "base": "LC1D18",
+        "label": "230 V AC 50/60 Hz coil"
+      },
+      "attributes": {
+        "poles": "3P",
+        "auxiliaryContacts": "1 NO + 1 NC",
+        "deviceShortName": "LC1D"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 18,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedCurrent",
+          "value": 32,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-1"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            },
+            "ambientTemperatureMax": {
+              "value": 60,
+              "unit": "°C"
+            },
+            "circuit": {
+              "text": "power"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "controlVoltage",
+          "value": 230,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "frequency": {
+              "text": "50/60 Hz"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Main"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 4,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 220,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 230,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 7.5,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 380,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 400,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 9,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 415,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 440,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 10,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedPower",
+          "value": 10,
+          "unit": "kW",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            },
+            "voltageMin": {
+              "value": 660,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 690,
+              "unit": "V"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedInsulationVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "circuit": {
+              "text": "power"
+            },
+            "standard": {
+              "text": "IEC 60947-4-1"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 0.8,
+          "unit": "W",
+          "basis": "input",
+          "conditions": {
+            "utilisationCategory": {
+              "text": "AC-3"
+            }
+          },
+          "source": {
+            "id": "src-se-lc1d18p7",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "itm-gv2me14",
+      "family": "fam-tesys-gv2me",
+      "orderCode": "GV2ME14",
+      "name": "TeSys GV2 motor circuit breaker 3P, 6...10 A, thermal-magnetic",
+      "attributes": {
+        "poles": "3P",
+        "tripUnit": "Thermal-magnetic",
+        "deviceShortName": "GV2ME"
+      },
+      "parameters": [
+        {
+          "name": "ratedVoltage",
+          "value": 690,
+          "unit": "V",
+          "basis": "input",
+          "conditions": {
+            "currentKind": {
+              "text": "AC"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMin",
+          "value": 6,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "settingCurrentMax",
+          "value": 10,
+          "unit": "A",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "magneticTripCurrent",
+          "value": 149,
+          "unit": "A",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 230,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 240,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 100,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 15,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 10,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ultimateBreakingCapacity",
+          "value": 3,
+          "unit": "kA",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 100,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltageMin": {
+              "value": 400,
+              "unit": "V"
+            },
+            "voltageMax": {
+              "value": 415,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 75,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 690,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ratedImpulseVoltage",
+          "value": 6,
+          "unit": "kV",
+          "basis": "input",
+          "conditions": {
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "powerLossPerPole",
+          "value": 2.5,
+          "unit": "W",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMin",
+          "value": -20,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "ambientTemperatureMax",
+          "value": 60,
+          "unit": "°C",
+          "basis": "input",
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Environment"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 100,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 440,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        },
+        {
+          "name": "serviceBreakingCapacityRatio",
+          "value": 100,
+          "unit": "%",
+          "basis": "input",
+          "conditions": {
+            "voltage": {
+              "value": 500,
+              "unit": "V"
+            },
+            "standard": {
+              "text": "IEC 60947-2"
+            }
+          },
+          "source": {
+            "id": "src-se-gv2me14",
+            "table": "Complementary"
+          },
+          "status": "confirmed"
+        }
+      ],
+      "distributors": [
+        {
+          "supplier": "RS Components UK",
+          "sku": "395-0239",
+          "capturedAt": "2026-11-15T13:40:00Z",
+          "uri": "https://uk.rs-online.com/web/p/motor-protection/3950239"
+        }
+      ]
+    }
+  ],
+  "coordination": [
+    {
+      "id": "tbl-lc1d-fuse-type1",
+      "title": "TeSys D contactor with gG fuses, coordination type 1",
+      "kind": "fuse coordination type 1",
+      "conditions": {
+        "voltageMax": {
+          "value": 690,
+          "unit": "V"
+        },
+        "circuit": {
+          "text": "power"
+        }
+      },
+      "entries": [
+        {
+          "items": ["itm-lc1d09p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 25,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d09p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 25 A gG at <= 690 V coordination type 1 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d18p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 50,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d18p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 50 A gG at <= 690 V coordination type 1 for power circuit"
+        }
+      ]
+    },
+    {
+      "id": "tbl-lc1d-fuse-type2",
+      "title": "TeSys D contactor with gG fuses, coordination type 2",
+      "kind": "fuse coordination type 2",
+      "conditions": {
+        "voltageMax": {
+          "value": 690,
+          "unit": "V"
+        },
+        "circuit": {
+          "text": "power"
+        }
+      },
+      "entries": [
+        {
+          "items": ["itm-lc1d09p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 20,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d09p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 20 A gG at <= 690 V coordination type 2 for power circuit"
+        },
+        {
+          "items": ["itm-lc1d18p7"],
+          "parameters": [
+            {
+              "name": "fuseRating",
+              "value": 35,
+              "unit": "A",
+              "basis": "input",
+              "conditions": {
+                "fuseClass": {
+                  "text": "gG"
+                }
+              },
+              "source": {
+                "id": "src-se-lc1d18p7",
+                "table": "Complementary"
+              },
+              "status": "confirmed"
+            }
+          ],
+          "note": "Associated fuse rating, 35 A gG at <= 690 V coordination type 2 for power circuit"
+        }
+      ]
+    }
+  ]
+}

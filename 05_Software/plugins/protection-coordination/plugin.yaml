@@ -1,0 +1,9 @@
+format: 1
+id: protection-coordination
+version: 0.1.0
+name: Protection and coordination
+summary: Fuse and breaker checks on a network result - breaking capacity, overload, disconnection, let-through energy, coordination from manufacturer tables.
+description: Check candidate fuses and circuit breakers from an industrial catalog per circuit with VERA's protection_coordination tool, against a current electrical-network result - rated voltage, poles, breaking capacity of the kind the profile names (Icu, Ics or Icn; fuses by their rated breaking capacity), Ib <= In <= Iz and I2 <= 1.45 Iz, automatic disconnection from cited tripping bands, let-through energy against k²S² and RCD type and sensitivity - and selectivity, cascading or starter coordination only from the manufacturer's tables for exactly those products. Results are stored with their inputs, so a model change marks them stale; missing data stays unknown, coordination is never read from curve overlap and no device is configured.
+ecosystem: electrical
+platforms: [windows-x64, linux-x64]
+docs: [README.md]

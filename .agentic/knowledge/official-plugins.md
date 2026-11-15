@@ -12,7 +12,9 @@ skills/industrial-selection; the catalog format, the `industrial_catalog` tool a
 
 For electrical-network, start at plugins/electrical-network/plugin.yaml (no program, ecosystem `electrical`) and
 skills/network-sizing; the engine, the cable-table format, the `electrical_network` tool and their tests belong to
-[electrical model](electrical-model.md).
+[electrical model](electrical-model.md). For protection-coordination, start at
+plugins/protection-coordination/plugin.yaml (no program, ecosystem `electrical`) and skills/protection-selection; the
+engine, the `protection_coordination` tool and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/integration/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -350,6 +352,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   tool run, the governing criterion, unknowns and limits explained, a proposed section applied only through
   `electrical_model_change`. Engine, table format and tool: [electrical model](electrical-model.md), spec
   REQ-DATA-42ce122f.
+- `protection-coordination` 0.1.0, ecosystem `electrical` (pack Electrical power and distribution, group Protection
+  and coordination, default on; activity `design`), Windows x64/Linux x64, no program. Skill `protection-selection`:
+  a current network result confirmed, the profile values (breaking-capacity kind, disconnection times, RCD
+  sensitivity) agreed with the user, cited catalog candidates picked, VERA's `protection_coordination` tool run and
+  every unknown or not-evaluated criterion explained. Engine and tool: [electrical model](electrical-model.md), spec
+  REQ-DATA-a5673202.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

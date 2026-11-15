@@ -143,7 +143,7 @@ catalog id, version and SHA-256.
 - Requirement `{id: "ie", parameter: "ratedCurrent", op: ">=", value: {value: 9, unit: "A"}, conditions:
   {utilisationCategory: {text: "AC-3"}, voltage: {value: 400, unit: "V"}}}` passes LC1D09P7 (9 A, at
   AC-3, voltageMax 440 V, ambientTemperatureMax 60 °C).
-- `{parameter: "breakingCapacity", ...}` on a contactor → unknown, reason absent.
+- `{parameter: "ultimateBreakingCapacity", ...}` on a contactor → unknown, reason absent.
 - Coordination for [LC1D09P7] at `voltage: 400 V`, `circuit: power` → type 2 entry `fuseRating` 20 A (gG);
   for [LC1D12P7] the LC1D09P7 entry is not returned; at 1000 V → not-applicable, reason conditions; without
   `voltage` → not-applicable, reason missing-condition (`voltageMax`).

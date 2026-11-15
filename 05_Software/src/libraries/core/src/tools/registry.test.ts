@@ -53,6 +53,12 @@ it("converts every tool schema and validates samples while filtering disabled na
       scenarios: [{ id: "normal", title: "Normal operation", simultaneity: { "brd-main": 0.9 } }],
       voltageDropLimit: { value: 4, unit: "%" },
     },
+    protection_coordination: {
+      network: "20261115-100000-aaaa",
+      catalog: "cat-lv-protection",
+      breakingCapacity: "Icu",
+      circuits: [{ circuit: "cir-l1", candidates: ["itm-a9f74216"] }],
+    },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -89,6 +95,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "electrical_model_change",
     "industrial_catalog",
     "electrical_network",
+    "protection_coordination",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

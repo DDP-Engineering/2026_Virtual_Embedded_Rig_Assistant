@@ -32,6 +32,7 @@ export const electricalToolNames: readonly string[] = [
   "electrical_model_change",
   "industrial_catalog",
   "electrical_network",
+  "protection_coordination",
 ];
 /** Plugins of these ecosystems build on the electrical model; the desktop enables its tools while one is loaded. */
 export const electricalModelEcosystems: readonly string[] = ["electrical", "automation"];

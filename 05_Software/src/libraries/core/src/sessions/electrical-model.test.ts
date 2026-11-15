@@ -42,7 +42,13 @@ async function setup(offered = true) {
     db: handle.db,
     gateway: {
       selectedModel: (id) => gateway.selectedModel(id),
-      capabilities: (model) => gateway.capabilities(model),
+      // The replay model's 32k window (counted at one token per byte) no longer holds every electrical tool's
+      // schema in auto-edit mode; this test checks approvals, not context budgets, so it gets a 64k window.
+      capabilities: (model) => ({
+        ...gateway.capabilities(model),
+        contextWindow: 65536,
+        inputBudget: 65536 - 4096 - 3277,
+      }),
       models: (id, signal) => gateway.models(id, signal),
       async *stream(request: LlmRequest) {
         catalogs.push(request.tools?.map((tool) => tool.name) ?? []);
@@ -83,6 +89,7 @@ it("asks for approval in ask mode and writes the model only when approved (REQ-F
         "electrical_model_change",
         "industrial_catalog",
         "electrical_network",
+        "protection_coordination",
       ]),
     );
     expect(approval.diff).toContain('+      "name": "Duty pump"');
@@ -122,6 +129,7 @@ it("offers only the read tool in read-only mode and writes nothing (REQ-SEC-4dfa
     expect(catalog).toContain("industrial_catalog");
     expect(catalog).not.toContain("electrical_model_change");
     expect(catalog).not.toContain("electrical_network");
+    expect(catalog).not.toContain("protection_coordination");
   }
   expect(await model()).toBe(fixture);
   expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
@@ -137,6 +145,7 @@ it("offers neither tool when the host does not enable the electrical model (REQ-
     expect(catalog).not.toContain("electrical_model_change");
     expect(catalog).not.toContain("industrial_catalog");
     expect(catalog).not.toContain("electrical_network");
+    expect(catalog).not.toContain("protection_coordination");
   }
   expect(await model()).toBe(fixture);
 });
