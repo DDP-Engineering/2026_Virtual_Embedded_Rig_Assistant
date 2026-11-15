@@ -432,7 +432,7 @@ test("geometry follows disclosures and detail levels, and each session keeps onl
         .locator(".workbench-group-name")
         .click();
       await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="chat"]').click();
+      await page.locator('[data-project-section="agent"]').click();
       await page.locator("[data-chat-detail] select, select[data-chat-detail]").selectOption(level);
       await page.locator("[data-project-save]").click();
       await expect(page.locator(".workbench-editor")).toHaveCount(0);

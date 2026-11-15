@@ -9,14 +9,13 @@ import { WorkbenchTools } from "./workbench-tools.js";
 
 export const configSections = [
   "general",
-  "documents",
   "instructions",
-  "agent",
-  "chat",
-  "plugins",
-  "tools",
-  "skills",
+  "documents",
   "embeddings",
+  "agent",
+  "skills",
+  "tools",
+  "plugins",
 ] as const;
 export type ConfigSection = (typeof configSections)[number];
 
@@ -68,17 +67,11 @@ export function WorkbenchConfigForm({
     general: t("projects.general"),
     documents: t("projects.documents"),
     agent: t("projects.agent"),
-    chat: t("chatDetail.section"),
     instructions: t("projects.instructions"),
     tools: t("projects.tools"),
     skills: t("projects.skills"),
     embeddings: t("projects.indexing"),
     plugins: t("projects.plugins"),
-  };
-  const detailHelp = {
-    verbose: t("chatDetail.verboseInfo"),
-    normal: t("chatDetail.normalInfo"),
-    minimal: t("chatDetail.minimalInfo"),
   };
   const [section, setSection] = useState<ConfigSection>("general");
   const content = useRef<HTMLDivElement>(null);
@@ -161,15 +154,10 @@ export function WorkbenchConfigForm({
                   setConfig((current) => ({ ...current, agent: { ...current.agent, permission_mode } }))
                 }
               />
-            </>
-          )}
-          {section === "chat" && (
-            <>
               <label>
                 {t("chatDetail.label")}
                 <select
                   data-chat-detail
-                  aria-describedby="chat-detail-help"
                   value={config.chat.detail}
                   onChange={(e) =>
                     setConfig((current) => ({
@@ -183,10 +171,6 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
-              <p id="chat-detail-help" className="muted">
-                {t("chatDetail.info")}
-              </p>
-              <p>{detailHelp[config.chat.detail]}</p>
             </>
           )}
           {section === "instructions" && (

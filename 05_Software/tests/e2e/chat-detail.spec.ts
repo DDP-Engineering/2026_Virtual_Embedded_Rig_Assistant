@@ -80,7 +80,7 @@ async function edit(page: Page) {
   const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
   await page.locator(`[data-workbench-entry="${config.id}"] .workbench-group-name`).click();
   await page.locator('[data-action="edit-workbench-overview"]').click();
-  await page.locator('[data-project-section="chat"]').click();
+  await page.locator('[data-project-section="agent"]').click();
 }
 async function detail(page: Page, id: string, level: string) {
   await edit(page);
@@ -212,7 +212,7 @@ test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged 
       await page.locator("#interface-font-size").selectOption("1.5");
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="chat"]').click();
+      await page.locator('[data-project-section="agent"]').click();
       const picker = page.locator("select[data-chat-detail]");
       await expect(picker).toHaveValue("normal");
       for (const theme of ["light", "dark"]) {

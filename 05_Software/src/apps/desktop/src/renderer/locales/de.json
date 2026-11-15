@@ -168,15 +168,10 @@
     "failure": "Anbieterfehler: {{message}}"
   },
   "chatDetail": {
-    "section": "Chat",
     "label": "Detailgrad",
     "verbose": "Ausführlich",
     "normal": "Normal",
     "minimal": "Minimal",
-    "info": "Gilt für alle Sitzungen dieser Werkbank. Alle Details bleiben unter Aktivität verfügbar. Antwortlänge und Befehlsberechtigungen bleiben unverändert.",
-    "verboseInfo": "Jeden Vorgang mit aufklappbaren Argumenten und Ergebnissen anzeigen.",
-    "normalInfo": "Übliche Vorgänge in aufklappbaren Aktivitätsübersichten gruppieren.",
-    "minimalInfo": "Übliche Vorgänge ausblenden und eine Arbeitsanzeige zeigen. Freigaben, Fehler und Downloads bleiben sichtbar.",
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
     "operations": "Vorgänge: {{count}}"
   },
@@ -688,7 +683,7 @@
     "collapse": "Sitzungen ausblenden",
     "general": "Allgemein",
     "documents": "Dokumente & RAG",
-    "agent": "Agent",
+    "agent": "Agent und Chat",
     "instructions": "Anweisungen",
     "tools": "Werkzeuge",
     "name": "Name",

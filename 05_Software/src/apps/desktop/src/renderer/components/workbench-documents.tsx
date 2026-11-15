@@ -141,6 +141,7 @@ export function WorkbenchDocuments({
           {t("documentsSetup.addFolder")}
         </button>
         {error !== undefined && <ErrorMessage error={error} />}
+        {scan.data?.truncated && <p className="muted">{t("documentsSetup.truncated")}</p>}
         {preview.data && (
           <p role="status" className="workbench-documents-preview" data-docs-preview>
             {t("documentsSetup.preview", { count: preview.data.files, size: bytes(preview.data.bytes) })}
@@ -187,7 +188,6 @@ export function WorkbenchDocuments({
           {detected.map((entry) => row(entry.path, summary(entry)))}
           {others.map((path) => row(path, t("documentsSetup.addedByHand")))}
         </ul>
-        {scan.data?.truncated && <p className="muted">{t("documentsSetup.truncated")}</p>}
       </div>
     </div>
   );
