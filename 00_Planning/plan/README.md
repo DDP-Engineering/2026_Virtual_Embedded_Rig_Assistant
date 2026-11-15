@@ -7,10 +7,15 @@ tickets in Gitea.
 
 ## Open plans
 
+- Delivery packages: [delivery.md](delivery.md), **DEL-01…DEL-06** — VERA for Windows and Linux and
+  the plugins as separate deliverables in `07_Delivery`, built by scripts in `02_Tools/delivery/`.
+- Help and French: [help.md](help.md), **HELP-01…HELP-08** — help pages for VERA and every plugin in
+  en, ro, de and fr (`05_Software/help/`), a Help button in place of the top-bar About button, French
+  in the interface, and a `help` tool for the agent.
 - Plugin management: [plugin-management.md](plugin-management.md), **PLG-01…PLG-08 #262…#269 / epic
   [#261](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/261)**
-  (IDs reused from the first plugin epic, so always cited with their issue number), on branch
-  `feature/261-plugin-management`.
+  (IDs reused from the first plugin epic, so always cited with their issue number), merged into
+  `master` as PR #272; its open proofs are below.
 - Further plugins: [../plugins/plan.md](../plugins/plan.md); analysis capabilities:
   [../capabilities/README.md](../capabilities/README.md).
 
