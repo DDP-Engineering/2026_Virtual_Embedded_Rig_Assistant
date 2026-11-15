@@ -182,7 +182,7 @@ executable hashes, prepack outcomes, unpacked/native/model contributions and lar
 Installer and ZIP sizes are measured and reported; there is no size budget (ADR-0017). ZIP alone ships `vera.portable`. Native libraries are unpacked; models are real
 `extraResources` files. Local pdfjs CMaps/standard fonts/WASM ship with the renderer.
 
-Windows also ships five app-local Microsoft VC++14.44.35211.0 DLLs pinned by
+Windows also ships five app-local Microsoft VC++14.51.36247.0 DLLs pinned by
 `src/windows_runtime/windows-runtime-manifest.json`. `npm run prepare:windows-runtime` verifies the cache or
 materializes the exact bytes from Microsoft-signed source files. `VERA_VC_REDIST_DIR` selects an
 approved redistributable folder; the default is System32. Different bytes fail rather than updating

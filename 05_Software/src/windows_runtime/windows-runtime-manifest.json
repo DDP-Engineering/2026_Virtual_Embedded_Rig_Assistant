@@ -1,35 +1,35 @@
 {
   "schema": 1,
-  "version": "14.44.35211.0",
+  "version": "14.51.36247.0",
   "architecture": "x64",
-  "provenance": "Microsoft Visual C++ x64 Runtime; source bytes verified via Microsoft Windows catalog signature on Windows host; compatible DLL names listed in Visual Studio 2022 REDIST list",
-  "redistribution": "https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution",
+  "provenance": "Microsoft Visual C++ x64 Runtime 14.51.36247.0; source bytes verified via Microsoft Authenticode signature on a Windows host; DLL names of the Visual C++ v14 redistributable",
+  "redistribution": "https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist",
   "license": "https://aka.ms/VCRedistLicense",
   "files": [
     {
       "path": "msvcp140.dll",
-      "bytes": 557728,
-      "sha256": "0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9"
+      "bytes": 643512,
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
     },
     {
       "path": "msvcp140_1.dll",
-      "bytes": 35952,
-      "sha256": "bfad5aef4c63a669e3c140655cdfdf395b6c979b400a447bd5dcb65ed8826c3d"
+      "bytes": 35768,
+      "sha256": "206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982"
     },
     {
       "path": "msvcp140_atomic_wait.dll",
-      "bytes": 50304,
-      "sha256": "640b2aefced484d0368eea5bdd06addd0658a3a70a49256e560d6923b404a479"
+      "bytes": 57792,
+      "sha256": "3d0cbfaa1bf3eecf5a3f4491d2960ee803cb994f30292c6adc4a07c498f60e2b"
     },
     {
       "path": "vcruntime140.dll",
-      "bytes": 124544,
-      "sha256": "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066"
+      "bytes": 178616,
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
     },
     {
       "path": "vcruntime140_1.dll",
-      "bytes": 49792,
-      "sha256": "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f"
+      "bytes": 50112,
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
     }
   ]
 }

@@ -314,7 +314,7 @@ Planned, not implemented as of 2026-11-01 (accepted in ADR-0016, ADR-0017 and AD
 - Windows 10 and 11 x64: NSIS per-user one-click installer (no elevation; app data kept on
   uninstall) and portable ZIP. Linux x64: AppImage and deb. macOS is outside 1.0 (ADR-0001). Each
   platform's packages are built on that platform (`npm run package`). Windows packages carry the
-  VC++ 14.44 runtime DLLs beside onnxruntime-node. Windows builds are signed and verified when a
+  VC++ 14.51 runtime DLLs beside onnxruntime-node. Windows builds are signed and verified when a
   certificate is configured; `app.info` reports `signed` or `unsigned`.
 - In-app update download and install work for NSIS and AppImage installs; the portable ZIP opens the
   release page (`update.openRelease`), and deb installs only notify. Channels are `latest` and

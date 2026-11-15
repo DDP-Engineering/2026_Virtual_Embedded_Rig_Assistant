@@ -38,7 +38,7 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
   cached ones; `-- --offline` only verifies. The model files are git-ignored. `package` verifies them
   again in the unpacked output.
 - Windows VC++ runtime: `src/windows_runtime/windows-runtime-manifest.json` pins five Microsoft VC++
-  x64 DLLs (14.44.35211.0: `msvcp140`, `msvcp140_1`, `msvcp140_atomic_wait`, `vcruntime140`,
+  x64 DLLs (14.51.36247.0: `msvcp140`, `msvcp140_1`, `msvcp140_atomic_wait`, `vcruntime140`,
   `vcruntime140_1`) by size and SHA-256. `npm run prepare:windows-runtime` (also run by `package` on
   Windows) takes them from `System32` or `VERA_VC_REDIST_DIR`, accepts a file only when its hash and its
   Microsoft Authenticode signature match, and writes a `NOTICE.txt`; the DLLs are git-ignored. They are

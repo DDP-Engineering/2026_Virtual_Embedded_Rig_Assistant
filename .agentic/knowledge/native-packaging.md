@@ -79,7 +79,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 - Native CPU libraries and models are real files outside ASAR. Foreign native OS/architecture fails inspection.
 - Windows NSIS budget is250000000bytes; overflow persists a FAIL report with contributors before throwing. ZIP size is recorded.
 - Prepack rejects secret files/material, relative paths longer than160, and missing native/model/pdf assets, with sanitized diagnostics.
-- Microsoft VC++14.44.35211.0 source/catalog signatures and committed SHA256/byte pins materialize five unmodified app-local DLLs; caches and each packaged target are verified. Linux excludes Windows resources.
+- Microsoft VC++14.51.36247.0 source/catalog signatures and committed SHA256/byte pins materialize five unmodified app-local DLLs; caches and each packaged target are verified. Linux excludes Windows resources.
 - Explicit signing credentials/selectors force Windows signing and valid Authenticode verification; missing credentials permit localized unsigned About. app.info exposes immutable test/signing identity.
 - Probes require packaged app and absolute output, use temporary SQLite with cleanup, and keep renderer
   sandbox/CSP/origin/IPC contracts. Worker deadline is five minutes with termination/disposal.
