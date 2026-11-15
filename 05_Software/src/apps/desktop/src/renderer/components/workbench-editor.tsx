@@ -151,6 +151,7 @@ export function WorkbenchEditor({
           <button
             type="button"
             data-project-save
+            className="primary"
             disabled={pending || workbench.readOnly || !loaded || !config.name.trim() || !dirty}
             onClick={() => void save()}
           >

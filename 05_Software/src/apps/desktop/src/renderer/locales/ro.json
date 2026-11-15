@@ -1143,5 +1143,12 @@
     "component": "Componentă",
     "componentVersion": "Versiune",
     "license": "Licență"
+  },
+  "pager": {
+    "range": "{{first}}–{{last}} din {{count}} rezultate",
+    "pageSize": "Pe pagină",
+    "previous": "Înapoi",
+    "next": "Înainte",
+    "page": "{{page}} / {{pages}}"
   }
 }

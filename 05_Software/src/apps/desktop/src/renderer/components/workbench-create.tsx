@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 import { WorkbenchConfigForm } from "./workbench-config-form.js";
 
 /** Defaults for the draft; the real identity is assigned when the workbench is created. */
@@ -36,6 +37,7 @@ export function WorkbenchCreate({
   const [skillsDisabled, setSkillsDisabled] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
+  const skillsPage = usePaged(inspection?.skills ?? []);
   const disabled = pending || busy;
   async function perform(action: () => Promise<void>) {
     if (disabled) return;
@@ -166,6 +168,7 @@ export function WorkbenchCreate({
           <button
             type="button"
             data-action="create-workbench"
+            className="primary"
             disabled={disabled || !ready || !name.trim()}
             onClick={() => void create()}
           >
@@ -195,7 +198,7 @@ export function WorkbenchCreate({
               <fieldset disabled={disabled} className="workbench-create-skills" data-create-skills>
                 <legend>{t("projects.skills")}</legend>
                 {!inspection?.skills.length && <p className="muted">{t("create.noSkills")}</p>}
-                {inspection?.skills.map((skill) => (
+                {skillsPage.rows.map((skill) => (
                   <label key={skill.name} className="workbench-tool-option" data-create-skill={skill.name}>
                     <input
                       type="checkbox"
@@ -215,6 +218,7 @@ export function WorkbenchCreate({
                     </span>
                   </label>
                 ))}
+                <Pager {...skillsPage.pager} />
               </fieldset>
             }
           />

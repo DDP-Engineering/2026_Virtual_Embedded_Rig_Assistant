@@ -622,6 +622,8 @@ main {
   flex-direction: column;
   gap: 1.4rem;
 }
+/* Primary actions (Save, Create): green when they can be used. */
+button.primary:not(:disabled),
 [data-action="create-workbench"]:not(:disabled) {
   color: var(--primary-foreground);
   background: var(--primary);
@@ -3347,4 +3349,40 @@ legend {
 }
 .index-card h4 {
   margin: 0;
+}
+/* Workbench settings: fields in two columns, one when narrow. */
+.settings-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+.settings-columns > :has(.bypass-warning),
+.settings-columns > [data-permission-picker] {
+  grid-column: 1 / -1;
+}
+.index-card h4 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+/* Shared pager under lists and tables: range, rows per page, previous and next. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+.pager label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }

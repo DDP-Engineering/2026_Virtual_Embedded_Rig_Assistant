@@ -1143,5 +1143,12 @@
     "component": "Component",
     "componentVersion": "Version",
     "license": "License"
+  },
+  "pager": {
+    "range": "{{first}}–{{last}} of {{count}} results",
+    "pageSize": "Per page",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "{{page}} / {{pages}}"
   }
 }

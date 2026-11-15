@@ -2,6 +2,7 @@
 import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
+import { Pager, usePaged } from "./pager.js";
 
 export function WorkbenchTools({
   disabled,
@@ -37,10 +38,12 @@ export function WorkbenchTools({
     plugin_install: t("workbenchTools.plugin_install"),
     apply_candidate: t("workbenchTools.apply_candidate"),
   };
+  // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
+  const { rows, pager } = usePaged(builtinToolNames, 50);
   return (
     <div className="workbench-tools">
       <ul>
-        {builtinToolNames.map((name) => (
+        {rows.map((name) => (
           <li key={name}>
             <label className="workbench-tool-option">
               <input
@@ -61,6 +64,7 @@ export function WorkbenchTools({
           </li>
         ))}
       </ul>
+      <Pager {...pager} />
     </div>
   );
 }

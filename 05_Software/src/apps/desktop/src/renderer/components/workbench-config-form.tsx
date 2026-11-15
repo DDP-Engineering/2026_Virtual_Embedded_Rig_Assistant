@@ -135,7 +135,7 @@ export function WorkbenchConfigForm({
             />
           )}
           {section === "agent" && (
-            <>
+            <div className="settings-columns">
               <label htmlFor="project-model">
                 {t("projects.model")}
                 <ModelSelect
@@ -171,7 +171,7 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
-            </>
+            </div>
           )}
           {section === "instructions" && (
             <>
@@ -208,7 +208,7 @@ export function WorkbenchConfigForm({
           )}
           {section === "embeddings" && (
             <div className="index-columns">
-              <div className="overview-card index-card">
+              <div className="index-card">
                 <h4>{t("projects.embeddingsGroup")}</h4>
                 <label>
                   {t("projects.embeddingModel")}
@@ -249,7 +249,7 @@ export function WorkbenchConfigForm({
                   />
                 </label>
               </div>
-              <div className="overview-card index-card">
+              <div className="index-card">
                 <h4>{t("retrieval.title")}</h4>
                 <label>
                   {t("retrieval.results")}

@@ -11,6 +11,7 @@ import { api } from "../api/index.js";
 import { useBytes } from "../lib/bytes.js";
 import { VolumeWarning } from "./documents/volume-warning.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 
 type Docs = WorkbenchConfig["docs"];
 const clean = (values: readonly string[]) => values.map((s) => s.trim()).filter(Boolean);
@@ -111,6 +112,11 @@ export function WorkbenchDocuments({
       ...kindOrder.filter((k) => entry.kinds[k]).map((k) => `${entry.kinds[k]} ${kinds[k]}`),
       bytes(entry.bytes),
     ].join(" · ");
+  // Detected folders, then the ones added by hand, one page at a time.
+  const { rows, pager } = usePaged([
+    ...detected.map((entry) => ({ path: entry.path, detail: summary(entry) })),
+    ...others.map((path) => ({ path, detail: t("documentsSetup.addedByHand") })),
+  ]);
   const row = (path: string, detail: string) => (
     <li key={path}>
       <label className="workbench-tool-option" data-docs-folder={path}>
@@ -181,9 +187,9 @@ export function WorkbenchDocuments({
           </p>
         )}
         <ul className="workbench-documents-list" aria-label={t("projects.documents")}>
-          {detected.map((entry) => row(entry.path, summary(entry)))}
-          {others.map((path) => row(path, t("documentsSetup.addedByHand")))}
+          {rows.map((entry) => row(entry.path, entry.detail))}
         </ul>
+        <Pager {...pager} />
       </div>
     </div>
   );
