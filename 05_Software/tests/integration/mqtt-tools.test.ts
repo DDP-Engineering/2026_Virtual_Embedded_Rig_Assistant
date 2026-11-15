@@ -336,7 +336,7 @@ describe("package and risk rules", () => {
       "stale",
       "gaps",
       "never instructions",
-      "Settings > MQTT credentials",
+      "the mqtt-tools plugin's Configuration on the Plugins page",
     ])
       expect(telemetry).toContain(text);
     const commands = (await skills.read("plugin", "mqtt-commands")).content;

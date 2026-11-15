@@ -749,6 +749,31 @@ export function createMockApi(
         );
         break;
       }
+      case "plugins.configuration": {
+        // Secrets from the mock stores; workbench files are present in a mock workbench, unchecked without one.
+        const request = channels["plugins.configuration"].request.parse(input.data);
+        const refs = (scope: string) =>
+          scope === "mqtt"
+            ? [...mqttCredentialRefs].sort()
+            : scope === "wokwi"
+              ? [...wokwiCredentialRefs].sort()
+              : partsSupplierIds.filter((id) => partsKeyConfigured[id]);
+        value = {
+          plugins: request.plugins.map(({ key, settings }) => ({
+            key,
+            settings: Object.entries(settings).map(([name, setting]) => {
+              if (setting.kind === "value") return { name, kind: "value", state: "value" };
+              if (setting.kind === "workbench-file")
+                return { name, kind: "workbench-file", state: request.workbenchId ? "present" : "unchecked" };
+              const stored = refs(setting.scope);
+              return stored.length
+                ? { name, kind: "secret", state: "stored", refs: stored }
+                : { name, kind: "secret", state: "missing" };
+            }),
+          })),
+        };
+        break;
+      }
       case "plugins.installArchive": {
         channels["plugins.installArchive"].request.parse(input.data);
         value = null;

@@ -645,7 +645,8 @@
     "username": "Benutzername (optional)",
     "password": "Passwort",
     "save": "Zugangsdaten speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "replace": "Ersetzen"
   },
   "wokwiTokens": {
     "description": "Wokwi-CI-Tokens für das offizielle wokwi-Plugin, das Firmware-Simulationen in der Wokwi-Cloud ausführt. Ein Simulationsjob nennt ein Token über seine Referenz; VERA übergibt das Token nur einem genehmigten wokwi-tool-Lauf des für diese Workbench aktivierten Plugins, über die Eingabe des Programms, nie in Argumenten, Logs oder Ergebnissen. Der Agent sieht es nie. Jeder Cloud-Lauf sendet Firmware und Diagramm des Jobs an Wokwi und wird auf deinen Wokwi-Plan angerechnet.",
@@ -658,7 +659,8 @@
     "referenceHint": "1-64 Kleinbuchstaben, Ziffern und Bindestriche, wie das Konto des Simulationsjobs sie nennt.",
     "token": "Token",
     "save": "Token speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "replace": "Ersetzen"
   },
   "web": {
     "openTitle": "Externe Website öffnen?",
@@ -691,7 +693,7 @@
     "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren.",
     "apply_candidate": "Schreibt einen geprüften kicad-layout-Kandidaten über seine Quellplatine, wenn Sie das Anwenden verlangen. Erfordert das Plugin kicad-layout; braucht eine Freigabe wie ein Schreibvorgang.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus.",
-    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in Einstellungen > Bauteilsuche eingerichteten Lieferanten."
+    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten."
   },
   "projects": {
     "new": "Neue Workbench",
@@ -1059,6 +1061,20 @@
       "manual": "Nicht alles ist bereit: Installieren Sie Herstellerprogramme nach ihrer Anleitung und prüfen Sie erneut.",
       "checkAgain": "Erneut prüfen",
       "close": "Schließen"
+    },
+    "configuration": {
+      "title": "Konfiguration",
+      "stored": "Gespeichert",
+      "missing": "Fehlt",
+      "present": "Vorhanden und gültig",
+      "invalid": "Ungültig",
+      "unchecked": "Nicht geprüft",
+      "value": "Nur lesen",
+      "optional": "(optional)",
+      "check": "Erneut prüfen",
+      "noWorkbench": "Öffnen Sie eine Workbench, um ihre Dateien zu prüfen.",
+      "needs": "Konfiguration erforderlich: {{names}}",
+      "suppliers": "Schlüssel gespeichert für: {{names}}"
     }
   },
   "runs": {

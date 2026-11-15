@@ -520,3 +520,57 @@ it("lists the operations of official bus-tools from the rules its approvals clas
   expect(approval.risk).toBe("device-read");
   expect(approval.notes).toEqual([identify?.note]);
 });
+
+// REQ-DATA-af8807e1
+it("reports an invalid settings entry as a field issue and keeps a manifest without settings valid", async () => {
+  const f = await fixture();
+  const plain = await f.store.review(await f.folder(packageFiles()));
+  expect(plain.issues).toEqual([]);
+  expect(plain.manifest?.settings).toBeUndefined();
+  const bad = packageFiles({
+    "plugin.yaml": stringify({
+      ...manifest,
+      settings: { registry: { kind: "workbench-file", path: "../x.json" } },
+    }),
+  });
+  expect((await f.store.review(await f.folder(bad))).issues).toEqual([
+    { code: "field", path: "settings.registry.path", issue: "custom" },
+    { code: "field", path: "settings.registry.description", issue: "invalid_type" },
+  ]);
+});
+
+// REQ-DATA-7c79b1b5
+it("declares the parameters of the official plugins in their manifests", async () => {
+  const f = await fixture();
+  const plugins = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../plugins");
+  const declared = async (id: string) => {
+    const review = await f.store.review(join(plugins, id));
+    expect(review.issues).toEqual([]);
+    return Object.entries(review.manifest?.settings ?? {}).map(([name, setting]) => {
+      const { description, ...rest } = setting;
+      expect(description.length).toBeGreaterThan(20);
+      return { name, ...rest };
+    });
+  };
+  const registry = {
+    name: "lab-resources",
+    kind: "workbench-file",
+    path: "lab/resources.json",
+    format: "lab-resources",
+  };
+  expect(await declared("mqtt-tools")).toEqual([
+    { name: "broker-credential", kind: "secret", scope: "mqtt" },
+  ]);
+  expect(await declared("wokwi")).toEqual([{ name: "wokwi-token", kind: "secret", scope: "wokwi" }]);
+  expect(await declared("parts-search")).toEqual([{ name: "supplier-keys", kind: "secret", scope: "parts" }]);
+  for (const id of ["bus-tools", "ble-tools", "scpi-instruments", "power-profiler"])
+    expect(await declared(id)).toEqual([registry]);
+  for (const id of ["gdb-debug", "platformio", "zephyr"])
+    expect(await declared(id)).toEqual([{ ...registry, optional: true }]);
+  expect(await declared("raspberry-pi-linux")).toEqual([
+    registry,
+    { name: "pi-project", kind: "workbench-file", path: "*/vera-pi.json", format: "json", optional: true },
+    { name: "ssh-agent", kind: "value", value: expect.stringContaining("SSH agent") },
+  ]);
+  expect(await declared("kicad")).toEqual([]);
+});

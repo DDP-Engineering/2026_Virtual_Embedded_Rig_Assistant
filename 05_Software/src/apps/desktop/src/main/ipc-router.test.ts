@@ -39,6 +39,7 @@ const workbenchHandlers = {
   "plugins.installArchive": unused,
   "plugins.provision": unused,
   "plugins.reinstall": unused,
+  "plugins.configuration": unused,
   "plugins.choose": unused,
   "plugins.review": unused,
   "plugins.scopedReview": unused,

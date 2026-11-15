@@ -23,7 +23,7 @@ class Token:
 
 def read(expected_ref: str) -> Token:
     """The stdin line for `expected_ref`; credential-missing when there is none or it is not VERA's wokwi line."""
-    missing = refused("credential-missing", f"No Wokwi token arrived for {expected_ref}: VERA hands it over only to an approved run of the enabled wokwi plugin, from Settings > Wokwi tokens or VERA_WOKWI_TOKEN_<REF> for the CLI.")
+    missing = refused("credential-missing", f"No Wokwi token arrived for {expected_ref}: VERA hands it over only to an approved run of the enabled wokwi plugin, from the wokwi plugin's Configuration on the Plugins page or VERA_WOKWI_TOKEN_<REF> for the CLI.")
     try:
         raw = sys.stdin.buffer.readline(LINE_LIMIT + 1) if sys.stdin is not None else b""
     except (OSError, ValueError):

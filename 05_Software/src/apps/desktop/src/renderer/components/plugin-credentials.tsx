@@ -21,6 +21,7 @@ function useScopeText(scope: PluginCredentialScope) {
       none: t("mqttCredentials.none"),
       stored: (storage: string) => t("mqttCredentials.stored", { storage }),
       remove: t("mqttCredentials.remove"),
+      replace: t("mqttCredentials.replace"),
       add: t("mqttCredentials.add"),
       reference: t("mqttCredentials.reference"),
       referenceHint: t("mqttCredentials.referenceHint"),
@@ -36,6 +37,7 @@ function useScopeText(scope: PluginCredentialScope) {
     none: t("wokwiTokens.none"),
     stored: (storage: string) => t("wokwiTokens.stored", { storage }),
     remove: t("wokwiTokens.remove"),
+    replace: t("wokwiTokens.replace"),
     add: t("wokwiTokens.add"),
     reference: t("wokwiTokens.reference"),
     referenceHint: t("wokwiTokens.referenceHint"),
@@ -69,7 +71,7 @@ const channels = {
 };
 
 /**
- * Settings > MQTT credentials or Wokwi tokens: secrets for official plugins (mqtt-tools, wokwi), never shown back.
+ * MQTT credentials or Wokwi tokens in the Configuration of their plugin (mqtt-tools, wokwi): secrets never shown back.
  */
 export function PluginCredentialsPanel({ scope }: { scope: PluginCredentialScope }) {
   const text = useScopeText(scope);
@@ -78,8 +80,8 @@ export function PluginCredentialsPanel({ scope }: { scope: PluginCredentialScope
     queryFn: () => channels.list(scope),
   });
   return (
-    <section className={`surface web-access ${scope}-credentials`} data-settings-section={scope}>
-      <h2>{text.title}</h2>
+    <section className={`web-access ${scope}-credentials`} data-configuration-form={scope}>
+      <h3>{text.title}</h3>
       <p className="muted">{text.description}</p>
       {query.isPending && <p role="status">{text.loading}</p>}
       {query.error && <ErrorMessage error={query.error} />}
@@ -110,7 +112,13 @@ function PluginCredentialsForm({
   const [error, setError] = useState<unknown>();
   const [consent, setConsent] = useState(false);
   const pending = useRef<Draft>(empty);
-  const refresh = () => client.invalidateQueries({ queryKey: [`${scope}.credentials.list`] });
+  // The plugin page's Configuration states follow every stored or removed reference.
+  const refresh = () =>
+    Promise.all([
+      client.invalidateQueries({ queryKey: [`${scope}.credentials.list`] }),
+      client.invalidateQueries({ queryKey: ["plugin-configuration"] }),
+    ]);
+  const secretField = useRef<HTMLInputElement>(null);
   const run = async (action: () => Promise<boolean>) => {
     setBusy(true);
     setSaved(false);
@@ -151,6 +159,19 @@ function PluginCredentialsForm({
             <li key={ref} data-credential={ref}>
               <code>{ref}</code>{" "}
               <span className="muted">{text.stored(storage[location ?? "encrypted"])}</span>{" "}
+              <button
+                type="button"
+                data-action="credential-replace"
+                disabled={busy}
+                onClick={() => {
+                  // Saving under a stored reference replaces that credential.
+                  setDraft({ ref, username: "", password: "" });
+                  setSaved(false);
+                  secretField.current?.focus();
+                }}
+              >
+                {text.replace}
+              </button>{" "}
               <button
                 type="button"
                 disabled={busy}
@@ -195,6 +216,7 @@ function PluginCredentialsForm({
         <label>
           {text.secret}
           <input
+            ref={secretField}
             type="password"
             autoComplete="off"
             value={draft.password}

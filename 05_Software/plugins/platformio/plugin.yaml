@@ -7,6 +7,13 @@ description: Inspect, build and test existing PlatformIO projects from an explic
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.platformio.org/en/latest/core/userguide/cmd_run.html", "https://docs.platformio.org/en/latest/core/userguide/cmd_test.html", "https://docs.platformio.org/en/latest/projectconf/sections/env/options/advanced/extra_scripts.html"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    optional: true
+    description: The bench registry; declares the probe (probe) an upload names by alias. Not needed for builds and native tests.
 programs:
   platformio:
     install: { script: scripts/pio_tool.py }

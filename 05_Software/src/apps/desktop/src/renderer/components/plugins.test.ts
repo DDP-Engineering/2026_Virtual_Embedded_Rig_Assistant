@@ -679,3 +679,160 @@ it("re-installs VERA's damaged program copy from the installed card", async () =
   ]);
   expect(state.reinstalled).toBe(true);
 });
+
+/** An installed plugin whose manifest declares parameters (PLG-05). */
+function declaring(
+  id: string,
+  settings: NonNullable<NonNullable<PluginSummary["manifest"]>["settings"]>,
+): PluginSummary {
+  return {
+    ...echo,
+    id,
+    name: id,
+    sha256: "c".repeat(64),
+    manifest: { ...(review.manifest as NonNullable<PluginSummary["manifest"]>), id, name: id, settings },
+  };
+}
+const mqtt = declaring("mqtt-tools", {
+  "broker-credential": {
+    kind: "secret",
+    scope: "mqtt",
+    description: "A broker login stored under a reference.",
+  },
+});
+const bus = declaring("bus-tools", {
+  "lab-resources": {
+    kind: "workbench-file",
+    path: "lab/resources.json",
+    format: "lab-resources",
+    description: "The bench registry.",
+  },
+});
+const pi = declaring("raspberry-pi-linux", {
+  "ssh-agent": { kind: "value", value: "System SSH agent", description: "The login key stays in the agent." },
+});
+/** plugins.configuration over an in-memory MQTT store; the bus-tools registry is invalid. */
+function configurationStub(installed: PluginSummary[]) {
+  const refs = new Set<string>();
+  vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
+    switch (channel) {
+      case "plugins.list":
+        return installed;
+      case "plugins.catalog":
+        return { source: "none", plugins: [], packs: [] };
+      case "mqtt.credentials.list":
+        return { credentials: [...refs].map((ref) => ({ ref, storage: "encrypted" })), secureStorage: true };
+      case "mqtt.credentials.save":
+        refs.add(request.ref as string);
+        return { status: "saved" };
+      case "mqtt.credentials.remove":
+        refs.delete(request.ref as string);
+        return {};
+      case "plugins.configuration":
+        return {
+          plugins: (request.plugins as { key: string; settings: Record<string, unknown> }[]).map(
+            ({ key, settings }) => ({
+              key,
+              settings: Object.keys(settings).map((name) =>
+                name === "broker-credential"
+                  ? refs.size
+                    ? { name, kind: "secret", state: "stored", refs: [...refs] }
+                    : { name, kind: "secret", state: "missing" }
+                  : name === "lab-resources"
+                    ? {
+                        name,
+                        kind: "workbench-file",
+                        state: "invalid",
+                        paths: ["lab/resources.json"],
+                        problem: "lab/resources.json is not valid: format: Invalid input",
+                      }
+                    : { name, kind: "value", state: "value" },
+              ),
+            }),
+          ),
+        };
+      default:
+        throw new Error(`Unexpected ${channel}`);
+    }
+  }) as never);
+  return refs;
+}
+
+// REQ-UX-efe126c0, REQ-UX-05e0ed17, REQ-UX-4b90fed2
+it("configures mqtt-tools on its own page and names a missing secret as Needs configuration", async () => {
+  await i18n.changeLanguage("en");
+  configurationStub([mqtt, echo]);
+  await render();
+  const card = '[data-plugin="mqtt-tools"]';
+  await vi.waitFor(() =>
+    expect($(`${card} [data-readiness]`).textContent).toContain("Needs configuration: broker-credential"),
+  );
+  expect($(`${card} [data-readiness]`).getAttribute("data-readiness")).toBe("needs");
+  expect($('[data-plugin="echo-tools"] [data-readiness]').getAttribute("data-readiness")).toBe("unchecked");
+  expect(calls("plugins.configuration")[0]?.[1]).toEqual({
+    workbenchId: workbench.id,
+    plugins: [
+      { key: `folder/mqtt-tools/${"c".repeat(64)}/${echo.installedAt}`, settings: mqtt.manifest?.settings },
+    ],
+  });
+  await click(`${card} [data-action="plugin-expand"]`);
+  const setting = `${card} [data-setting="broker-credential"]`;
+  await vi.waitFor(() => expect($(setting).getAttribute("data-state")).toBe("missing"));
+  expect($(setting).textContent).toContain("A broker login stored under a reference.");
+  const user = userEvent.setup();
+  const input = (label: string) =>
+    [...$(setting).querySelectorAll("label")]
+      .find((element) => element.textContent?.startsWith(label))
+      ?.querySelector("input") as HTMLInputElement;
+  await vi.waitFor(() => expect(input("Reference")).toBeTruthy());
+  expect($(`${setting} [data-configuration-form="mqtt"]`)).not.toBeNull();
+  await act(async () => user.type(input("Reference"), "bench"));
+  await act(async () => user.type(input("Password"), "secret-password"));
+  await click(`${setting} fieldset .workbench-actions button`);
+  await vi.waitFor(() => expect($(setting).getAttribute("data-state")).toBe("stored"));
+  await vi.waitFor(() =>
+    expect($(`${card} [data-readiness]`).textContent).not.toContain("broker-credential"),
+  );
+  expect(container.textContent).not.toContain("secret-password");
+  await click(`${setting} [data-credential="bench"] [data-action="credential-replace"]`);
+  expect(input("Reference").value).toBe("bench");
+  expect(input("Password").value).toBe("");
+  // Removing the only reference makes the secret missing again; the Needs configuration filter lists the plugin.
+  await click(`${setting} [data-credential="bench"] button:not([data-action])`);
+  await vi.waitFor(() => expect($(setting).getAttribute("data-state")).toBe("missing"));
+  await click('[data-library-status="needs"]');
+  await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).toBeNull());
+  expect($(card)).not.toBeNull();
+});
+
+// REQ-UX-efe126c0, REQ-UX-05e0ed17
+it("shows an invalid workbench file with its problem, a read-only value and nothing for plugins without settings", async () => {
+  configurationStub([bus, pi, echo]);
+  for (const [language, invalid, readOnly] of [
+    ["en", "Invalid", "Read-only"],
+    ["ro", "Invalid", "Doar citire"],
+    ["de", "Ungültig", "Nur lesen"],
+  ] as const) {
+    await i18n.changeLanguage(language);
+    await render();
+    await click('[data-plugin="bus-tools"] [data-action="plugin-expand"]');
+    const file = '[data-setting="lab-resources"]';
+    await vi.waitFor(() => expect($(file).getAttribute("data-state")).toBe("invalid"));
+    expect($(file).textContent).toContain(invalid);
+    expect($(file).textContent).toContain("lab/resources.json is not valid: format: Invalid input");
+    expect($('[data-plugin="bus-tools"] [data-readiness]').getAttribute("data-readiness")).toBe("needs");
+    expect($('[data-plugin="bus-tools"] [data-readiness]').textContent).toContain("lab-resources");
+    await click('[data-plugin="raspberry-pi-linux"] [data-action="plugin-expand"]');
+    await vi.waitFor(() => expect($('[data-setting="ssh-agent"]').getAttribute("data-state")).toBe("value"));
+    expect($('[data-setting="ssh-agent"] [data-setting-value]').textContent).toBe("System SSH agent");
+    expect($('[data-setting="ssh-agent"]').textContent).toContain(readOnly);
+    expect($('[data-setting="ssh-agent"] input')).toBeNull();
+    expect($('[data-plugin="raspberry-pi-linux"] [data-readiness]').getAttribute("data-readiness")).toBe(
+      "unchecked",
+    );
+    await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+    expect($('[data-plugin="echo-tools"] [data-plugin-configuration]')).toBeNull();
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});

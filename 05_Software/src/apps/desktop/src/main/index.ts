@@ -18,6 +18,7 @@ import {
   pluginPlatform,
   ResourceLeases,
   SettingsService,
+  settingStates,
   splitModelReference,
   WebDownloads,
   WorkbenchService,
@@ -598,6 +599,38 @@ ipcMain.handle(
         } finally {
           pluginsChanged();
         }
+      },
+      // Parameter states from the stores behind the moved Settings pages: references and supplier ids, never a
+      // secret (REQ-FUNC-cbdb46ac). Workbench files are checked in the open workbench only.
+      "plugins.configuration": async ({ workbenchId, plugins: declared }) => {
+        const snapshot = workbenchId ? workbench.getSnapshot() : undefined;
+        if (workbenchId && snapshot?.config.id !== workbenchId) throw veraError("CONFLICT");
+        const scopes = new Map<string, Promise<readonly string[]>>();
+        const secrets = (scope: "mqtt" | "wokwi" | "parts") => {
+          let refs = scopes.get(scope);
+          if (!refs) {
+            refs =
+              scope === "parts"
+                ? partsAccess.get().then((access) =>
+                    Object.entries(access.keys)
+                      .filter(([, key]) => key?.keyConfigured)
+                      .map(([supplier]) => supplier),
+                  )
+                : (scope === "mqtt" ? mqttCredentials : wokwiCredentials)
+                    .list()
+                    .then((list) => list.credentials.map((entry) => entry.ref));
+            scopes.set(scope, refs);
+          }
+          return refs;
+        };
+        return {
+          plugins: await Promise.all(
+            declared.map(async ({ key, settings }) => ({
+              key,
+              settings: await settingStates(settings, { workbench: snapshot?.folder, secrets }),
+            })),
+          ),
+        };
       },
       // Runs of the open workbench only; another workbench id is CONFLICT like the other workbench channels.
       // Arguments and output cross to the renderer redacted, like program approval payloads and documents.

@@ -7,6 +7,12 @@ description: Measure a board's current, voltage, power, energy and charge with a
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://github.com/jetperch/joulescope_driver", "https://pypi.org/project/pyjoulescope-driver/2.5.5/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares the power monitor (power-monitor) that captures name by alias.
 programs:
   power-profile:
     install: { script: scripts/power_profile.py }

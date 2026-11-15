@@ -15,7 +15,7 @@ branch `feature/261-plugin-management` cut from `master` at 920457e, in the sibl
 `F:\2026_Virtual_Embedded_Rig_Assistant_plg`. The implementer hands the candidate back without a commit;
 the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed. Each ticket
 runs only its focused tests; the complete suite runs once after PLG-08.
-STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05...PLG-08 planned.
+STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06...PLG-08 planned.
 
 ## Order
 
@@ -25,7 +25,7 @@ STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2
 | 2 | PLG-02 | [#263](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/263) | manifest `summary`; pre-install card with name, version, type, summary, platform and risk warnings | implemented |
 | 3 | PLG-03 | [#264](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/264) | composition (programs, scripts, skills, profiles, documents) and operations by risk on the plugin page | implemented |
 | 4 | PLG-04 | [#265](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/265) | dependency summary in the catalog index; install with dependencies (required plugins too); re-install | implemented |
-| 5 | PLG-05 | [#266](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/266) | manifest `settings`; Parts search, MQTT and Wokwi move from App settings to their plugins; configured state | planned |
+| 5 | PLG-05 | [#266](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/266) | manifest `settings`; Parts search, MQTT and Wokwi move from App settings to their plugins; configured state | implemented |
 | 6 | PLG-06 | [#267](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/267) | one status block (dependencies, configuration, use) and pack install from the catalog | planned |
 | 7 | PLG-07 | [#268](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/268) | catalog release from `07_Delivery/plugins/`, signed index, stable and pre-release channels | planned |
 | 8 | PLG-08 | [#269](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/269) | offline kit per platform of pinned pip and download dependencies | planned |
@@ -96,6 +96,17 @@ unpublished, so their size stays unknown until they are). The catalog card's det
 program as automatic (VERA's program folder) or manual (range, vendor guide). Install with dependencies installs the
 plugin, its required plugins and their pip, script and download programs, then shows what is not ready with Check
 again. Re-install fetches VERA's copies again against their SHA-256; find programs are never installed.
+
+## PLG-05 #266 - declared parameters and per-plugin configuration
+
+plugin.yaml `settings` (format 1, optional) declares each parameter: `secret` with a credential scope (mqtt, wokwi,
+parts), `workbench-file` with a workbench-relative path (`*` = one folder level), optional `format` and `optional`, or
+a read-only `value`. Declared by mqtt-tools, wokwi and parts-search (secrets), bus-tools, ble-tools, scpi-instruments,
+power-profiler and raspberry-pi-linux (required `lab/resources.json`), gdb-debug, platformio and zephyr (optional
+`lab/resources.json`, probes only) and raspberry-pi-linux (optional `*/vera-pi.json`, SSH agent value). The plugin
+page's Configuration section shows each state for the open workbench and holds the MQTT credentials, Wokwi tokens and
+parts search forms; App settings has no such pages. A missing secret or a missing required or invalid file marks the
+plugin Needs configuration and names the parameter.
 
 ## Shared rules
 

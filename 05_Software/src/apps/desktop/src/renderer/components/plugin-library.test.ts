@@ -10,7 +10,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
 import { catalogKey } from "./plugin-catalog.js";
-import { isNewCatalogEntry, libraryStateKey, pluginProgramsKey } from "./plugin-library.js";
+import { isNewCatalogEntry, libraryStateKey, pluginProgramsKey, programReadiness } from "./plugin-library.js";
 import { Plugins } from "./plugins.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
@@ -367,4 +367,16 @@ it("filters by maturity derived from the version and clears it with the other fi
   await click('[data-action="library-clear"]');
   expect(text()).toContain("34 of 34");
   expect(($("[data-library-maturity]") as HTMLSelectElement).value).toBe("");
+});
+
+// REQ-UX-05e0ed17
+it("counts a configuration need as Needs configuration unless the programs are unavailable", () => {
+  const plugin = { id: "mqtt-tools", issues: [], enabled: false } as unknown as PluginSummary;
+  const ready = [{ name: "mqtt-tool", kind: "script", state: "ready" }] as never[];
+  const unavailable = [{ name: "mqtt-tool", kind: "script", state: "unavailable" }] as never[];
+  expect(programReadiness(plugin, ready, false, [])).toBe("ready");
+  expect(programReadiness(plugin, ready, false, ["broker-credential"])).toBe("needs");
+  expect(programReadiness(plugin, undefined, false, ["broker-credential"])).toBe("needs");
+  expect(programReadiness(plugin, undefined, false, [])).toBe("unchecked");
+  expect(programReadiness(plugin, unavailable, false, ["broker-credential"])).toBe("unavailable");
 });

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cbdb46ac"
+
+title = "Configuration state of installed plugins"
+
+status = "active"
+
+requirement = """
+When the renderer asks for plugins.configuration, the desktop app shall return for each installed plugin without issues the state of each declared parameter - a secret stored with its references or missing, a workbench file present, missing or invalid with the problem in the open workbench or unchecked without one, and a value with its text - without any secret value.
+"""
+
+verification = "Core test: over a temporary workbench, lab/resources.json missing -> missing, broken JSON or an invalid registry -> invalid with a problem naming the file, a valid registry -> present; */vera-pi.json matches one folder level only; a folder in place of the file and an ignored file -> invalid; no workbench -> unchecked; a secret of scope mqtt with stored references [bench] -> stored [bench], none -> missing. Shared test: the channel request carries declared settings. Inspection: the main handler maps references from the mqtt and wokwi PluginCredentialService lists and configured supplier ids from PartsAccessService.get(), and the strict state schema has no field for a secret value."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/configuration.ts", "05_Software/src/libraries/core/src/plugins/resource-registry.ts", "05_Software/src/libraries/shared/src/plugin-settings.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/configuration.test.ts", "05_Software/src/libraries/shared/src/plugin-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

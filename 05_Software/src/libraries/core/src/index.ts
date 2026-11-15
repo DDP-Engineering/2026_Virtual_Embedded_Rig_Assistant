@@ -27,6 +27,7 @@ export * from "./parts/suppliers.js";
 export * from "./plugins/archive.js";
 export * from "./plugins/catalog.js";
 export * from "./plugins/catalog-source.js";
+export * from "./plugins/configuration.js";
 export * from "./plugins/launcher.js";
 export * from "./plugins/leases.js";
 export * from "./plugins/node-process-host.js";

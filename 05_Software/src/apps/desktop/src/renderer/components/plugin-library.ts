@@ -44,14 +44,20 @@ export const libraryStateKey = ["ui", "plugin-library"] as const;
 export const pluginProgramsKey = (workbenchId: string | undefined, plugin: PluginSummary) =>
   ["plugin-programs", workbenchId ?? null, plugin.id, plugin.sha256, plugin.installedAt] as const;
 export type ProgramReadiness = "unchecked" | "ready" | "needs" | "unavailable";
+/** One installed package: its source, id, integrity and installation time. */
+export const installedKey = (plugin: PluginSummary) =>
+  `${plugin.source ?? "unknown"}/${plugin.id}/${plugin.sha256 ?? ""}/${plugin.installedAt ?? ""}`;
 export function programReadiness(
   plugin: PluginSummary,
   observations?: readonly PluginProgramStatus[],
   failed = false,
+  /** The parameters that need configuration (REQ-UX-05e0ed17); they count even before the programs are checked. */
+  needs: readonly string[] = [],
 ): ProgramReadiness {
   if (failed || plugin.issues.length) return "unavailable";
+  if (observations?.some((program) => program.state === "unavailable")) return "unavailable";
+  if (needs.length) return "needs";
   if (!observations) return "unchecked";
-  if (observations.some((program) => program.state === "unavailable")) return "unavailable";
   return observations.every((program) => program.state === "ready") ? "ready" : "needs";
 }
 export interface LibraryItem {
@@ -99,6 +105,7 @@ export function installedLibraryItems(
   entries: readonly CatalogPlugin[],
   observations: (plugin: PluginSummary) => readonly PluginProgramStatus[] | undefined,
   failed: (plugin: PluginSummary) => boolean = () => false,
+  needs: (plugin: PluginSummary) => readonly string[] = () => [],
 ): LibraryItem[] {
   const catalog = new Map(entries.map((entry) => [entry.id, entry]));
   return plugins.map((plugin) => {
@@ -110,7 +117,7 @@ export function installedLibraryItems(
       plugin.source !== "workbench" &&
       Boolean(published?.update && published.installed && published.installed.version === plugin.version);
     return {
-      key: `${plugin.source ?? "unknown"}/${plugin.id}/${plugin.sha256 ?? ""}/${plugin.installedAt ?? ""}`,
+      key: installedKey(plugin),
       id: plugin.id,
       name: plugin.name ?? plugin.id,
       version: plugin.version,
@@ -124,7 +131,7 @@ export function installedLibraryItems(
       updatedAt: entry?.updatedAt,
       installed: true,
       update,
-      readiness: programReadiness(plugin, observations(plugin), failed(plugin)),
+      readiness: programReadiness(plugin, observations(plugin), failed(plugin), needs(plugin)),
       plugin,
       catalog: entry,
     };

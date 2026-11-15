@@ -286,8 +286,8 @@ const notStored = (scope: PluginCredentialScope, ref: string) => {
   const name = ref.toUpperCase().replaceAll("-", "_");
   const where =
     scope === "mqtt"
-      ? `Settings > MQTT credentials, or for the CLI in VERA_MQTT_PASSWORD_${name}`
-      : `Settings > Wokwi tokens, or for the CLI in VERA_WOKWI_TOKEN_${name}`;
+      ? `the mqtt-tools plugin's Configuration on the Plugins page, or for the CLI in VERA_MQTT_PASSWORD_${name}`
+      : `the wokwi plugin's Configuration on the Plugins page, or for the CLI in VERA_WOKWI_TOKEN_${name}`;
   return Error(`The ${scope} credential ${ref} is not stored. The user adds it in ${where}.`);
 };
 /** The stdin line of a run naming a credential: read now, after the plugin list was loaded again. */

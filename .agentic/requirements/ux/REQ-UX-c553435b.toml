@@ -2,17 +2,17 @@ schema = 1
 
 id = "REQ-UX-c553435b"
 
-title = "Show a Wokwi tokens section in Settings in en, ro and de"
+title = "Show the Wokwi tokens form on the wokwi plugin in en, ro and de"
 
 status = "active"
 
 requirement = """
-The Settings page shall offer a Wokwi tokens section that lists stored references with their storage and has fields for reference and token, a save and a remove action, with every text in English, Romanian and German.
+The Configuration section of the installed wokwi plugin shall offer a Wokwi tokens form that lists stored references with their storage and has fields for reference and token, a save, a replace and a remove action, with every text in English, Romanian and German.
 """
 
-verification = "Renderer test: the wokwi panel renders reference and token fields without a username field and lists refs with storage; check:i18n passes with the new keys in en, ro and de."
+verification = "Renderer test: the wokwi form renders reference and token fields without a username field and lists refs with storage; Replace puts the reference into the reference field; check:i18n passes with the keys in en, ro and de."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-configuration.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-15

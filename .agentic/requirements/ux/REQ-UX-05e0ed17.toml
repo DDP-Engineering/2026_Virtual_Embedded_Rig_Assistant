@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-05e0ed17"
+
+title = "Needs configuration from the plugin parameters"
+
+status = "active"
+
+requirement = """
+When a parameter of an installed plugin is a missing secret, a missing workbench file that is not optional or an invalid workbench file, the plugin shall count as Needs configuration in the library filter and its card shall name that parameter, unless its programs are unavailable.
+"""
+
+verification = "Shared test: configurationNeeds names a missing secret, a missing required file and an invalid file, and leaves out an optional missing file and an unchecked file; renderer library test: programReadiness with ready programs and a need is needs, also before the programs are checked, and stays unavailable with an unavailable program; renderer page test: the mqtt-tools card names broker-credential, bus-tools names lab-resources, and the Needs configuration filter lists mqtt-tools while its secret is missing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-configuration.tsx", "05_Software/src/libraries/shared/src/plugin-settings.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/src/libraries/shared/src/plugin-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

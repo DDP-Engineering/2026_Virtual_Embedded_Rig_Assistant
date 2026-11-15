@@ -25,8 +25,14 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
 3. Give every program rules. Every command line the agent may run should match a rule with the right risk
    level: `safe` (no effect on hardware), `device-read`, `device-write`, `irreversible` or `blocked`. A
    command no rule matches runs as `device-write`, and the highest risk of all matching rules applies.
-4. Add the plugin to a group in `packs.yaml` when it belongs to an ecosystem pack.
-5. Run the check and fix every line it prints:
+4. Declare what the user must provide in `settings`, one entry per parameter with a `description`:
+   `kind: secret` with a `scope` (`mqtt`, `wokwi` or `parts`; the value stays in VERA's credential store),
+   `kind: workbench-file` with a workbench-relative `path` (a `*` segment matches one folder level), an optional
+   `format` (`lab-resources` validates it as `lab/resources.json`, `json` parses it) and `optional: true` when the
+   plugin works without it, or `kind: value` with a read-only `value`. The plugin page shows each parameter's state, and a
+   missing secret or a missing or invalid required file marks the plugin Needs configuration.
+5. Add the plugin to a group in `packs.yaml` when it belongs to an ecosystem pack.
+6. Run the check and fix every line it prints:
 
    ```bash
    vera catalog check --source plugins

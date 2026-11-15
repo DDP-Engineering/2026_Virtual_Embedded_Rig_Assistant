@@ -10,7 +10,7 @@ declare. Tests use a local broker only; this plugin has not been run against a p
 
 The broker password never goes into the profile, `workbench.yaml`, the prompt, arguments or the environment.
 
-- Desktop: **Settings > MQTT credentials** stores a reference (for example `bench`), an optional username and the
+- Desktop: **Plugins > mqtt-tools > Configuration** stores a reference (for example `bench`), an optional username and the
   password in VERA's credential store (encrypted by the operating system; unprotected only with your consent).
 - CLI: `VERA_MQTT_PASSWORD_BENCH` and optional `VERA_MQTT_USERNAME_BENCH` (the reference upper-cased, `-` as `_`),
   held in memory for that run.

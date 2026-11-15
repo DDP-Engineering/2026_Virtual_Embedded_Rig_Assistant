@@ -645,7 +645,8 @@
     "username": "Username (optional)",
     "password": "Password",
     "save": "Save credential",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "replace": "Replace"
   },
   "wokwiTokens": {
     "description": "Wokwi CI tokens for the official wokwi plugin, which runs firmware simulations in Wokwi's cloud. A simulation job names a token by its reference; VERA hands the token only to an approved wokwi-tool run of the plugin enabled for that workbench, on the program's input, never in its arguments, logs or results. The agent never sees it. Each cloud run sends the job's firmware and diagram to Wokwi and counts against your Wokwi plan.",
@@ -658,7 +659,8 @@
     "referenceHint": "1-64 lowercase letters, digits and dashes, as the simulation job's account names it.",
     "token": "Token",
     "save": "Save token",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "replace": "Replace"
   },
   "web": {
     "openTitle": "Open external website?",
@@ -691,7 +693,7 @@
     "plugin_install": "Request review and install a draft as a trial plugin.",
     "apply_candidate": "Write a checked kicad-layout candidate over its source board after you ask to apply it. Needs the kicad-layout plugin; asks for approval like a write.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device.",
-    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in Settings > Parts search."
+    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page."
   },
   "projects": {
     "new": "New Workbench",
@@ -1059,6 +1061,20 @@
       "manual": "Not everything is ready: install vendor programs with their guide, then check again.",
       "checkAgain": "Check again",
       "close": "Close"
+    },
+    "configuration": {
+      "title": "Configuration",
+      "stored": "Stored",
+      "missing": "Missing",
+      "present": "Present and valid",
+      "invalid": "Invalid",
+      "unchecked": "Not checked",
+      "value": "Read-only",
+      "optional": "(optional)",
+      "check": "Check again",
+      "noWorkbench": "Open a workbench to check its files.",
+      "needs": "Needs configuration: {{names}}",
+      "suppliers": "Keys stored for: {{names}}"
     }
   },
   "runs": {

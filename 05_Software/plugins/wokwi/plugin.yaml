@@ -7,6 +7,11 @@ description: Firmware simulation jobs and finite scenarios in Wokwi's cloud with
 ecosystem: arduino
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.wokwi.com/wokwi-ci/cli-usage", "https://github.com/wokwi/wokwi-cli/releases/tag/v0.29.1"]
+settings:
+  wokwi-token:
+    kind: secret
+    scope: wokwi
+    description: A Wokwi CI token stored under the reference a job names as its account; only an approved run-scenario receives it, on its input.
 programs:
   wokwi-cli:
     install:

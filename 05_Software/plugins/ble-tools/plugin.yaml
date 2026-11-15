@@ -7,6 +7,12 @@ description: Bounded Bluetooth Low Energy discovery and controlled GATT operatio
 ecosystem: iot
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://bleak.readthedocs.io/en/latest/", "https://pypi.org/project/bleak/3.1.0/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares each Bluetooth LE device (ble-device) by address and profile that calls name by alias.
 programs:
   ble-tool:
     install: { script: scripts/ble_tool.py }

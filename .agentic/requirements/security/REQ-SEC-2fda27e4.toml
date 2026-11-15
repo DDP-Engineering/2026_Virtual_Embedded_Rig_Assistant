@@ -2,7 +2,7 @@ schema = 1
 
 id = "REQ-SEC-2fda27e4"
 
-title = "Store and remove Wokwi tokens from Settings without returning them"
+title = "Store and remove Wokwi tokens without returning them"
 
 status = "active"
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-15

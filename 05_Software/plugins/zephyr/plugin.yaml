@@ -7,6 +7,13 @@ description: Build Zephyr applications for an exact board from an explicit reque
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.zephyrproject.org/latest/develop/west/build-flash-debug.html", "https://docs.zephyrproject.org/latest/develop/twister/index.html", "https://docs.zephyrproject.org/latest/develop/west/extensions.html"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    optional: true
+    description: The bench registry; declares the probe (probe) a flash names by alias. Not needed for builds, Twister and Renode.
 programs:
   zephyr:
     install: { script: scripts/zephyr_tool.py }

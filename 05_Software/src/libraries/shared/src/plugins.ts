@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { labResourceKindSchema } from "./lab-resources.js";
 import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
+import { pluginParametersSchema } from "./plugin-settings.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 /** Import limits of one plugin package (folder or zip); its size in bytes is not limited. */
@@ -397,6 +398,8 @@ export const pluginManifestSchema = z.strictObject({
     )
     .max(64)
     .default([]),
+  /** Declared parameters: secrets, workbench files and values the plugin needs (REQ-DATA-af8807e1). */
+  settings: pluginParametersSchema.optional(),
 });
 export type PluginManifest = z.infer<typeof pluginManifestSchema>;
 export type PluginProgram = z.infer<typeof programSchema>;

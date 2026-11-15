@@ -109,6 +109,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `programs.*.file` | `true` for a pinned download that is never run (a Java archive): its version comes from its file name through `version.match`, `run_program` refuses it, and programs that `use` it receive its path |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
 | `docs[]` | URLs or plugin-relative files (which must exist in the package) the UI offers to add to the workbench documents |
+| `settings` | optional parameters the user provides, at most 32, each with a `description`: `kind: secret` + `scope` (`mqtt`, `wokwi`, `parts`; stored in the CredentialStore, handed to programs only through the stdin hand-off of `programs.*.credentials`), `kind: workbench-file` + workbench-relative `path` (`*` = one folder level), optional `format` (`lab-resources`, `json`) and `optional`, or `kind: value` + read-only `value`. The plugin page's Configuration section shows each state (`plugins.configuration`: stored/missing, present/missing/invalid/unchecked for the open workbench, value); a missing secret or a missing required or invalid file marks Needs configuration. MQTT credentials, Wokwi tokens and parts search keys are configured there, not in App settings (PLG-05 #266) |
 
 Every object is strict: an unknown key is an error. Arguments (`version.args`, `launcher`, `prefix`) are at most
 64 strings of 1–4096 characters without NUL or line breaks; `rules` holds at most 512 entries, `programs` 64 and

@@ -7,6 +7,13 @@ description: Inspect firmware ELF files offline (architecture, hash, symbols, DW
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://sourceware.org/gdb/current/onlinedocs/gdb.html/GDB_002fMI.html", "https://openocd.org/doc/html/GDB-and-OpenOCD.html"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    optional: true
+    description: The bench registry; declares the debug probe (probe) a debug session names by alias. Not needed without a probe.
 programs:
   arm-none-eabi-gdb:
     install:

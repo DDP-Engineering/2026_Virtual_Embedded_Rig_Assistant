@@ -645,7 +645,8 @@
     "username": "Nume de utilizator (opțional)",
     "password": "Parolă",
     "save": "Salvează credențiala",
-    "saved": "Salvat."
+    "saved": "Salvat.",
+    "replace": "Înlocuiește"
   },
   "wokwiTokens": {
     "description": "Tokenuri Wokwi CI pentru pluginul oficial wokwi, care rulează simulări de firmware în cloudul Wokwi. Un job de simulare numește un token prin referința lui; VERA dă tokenul numai unei rulări aprobate a wokwi-tool din pluginul activat pentru acel workbench, pe intrarea programului, niciodată în argumente, loguri sau rezultate. Agentul nu îl vede niciodată. Fiecare rulare în cloud trimite firmware-ul și diagrama jobului la Wokwi și se contorizează în planul tău Wokwi.",
@@ -658,7 +659,8 @@
     "referenceHint": "1-64 litere mici, cifre și cratime, așa cum o numește contul jobului de simulare.",
     "token": "Token",
     "save": "Salvează tokenul",
-    "saved": "Salvat."
+    "saved": "Salvat.",
+    "replace": "Înlocuiește"
   },
   "web": {
     "openTitle": "Deschizi un site extern?",
@@ -691,7 +693,7 @@
     "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă.",
     "apply_candidate": "Scrie un candidat kicad-layout verificat peste placa sursă după ce ceri aplicarea lui. Necesită pluginul kicad-layout; cere aprobare ca o scriere.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive.",
-    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în Setări > Căutare componente."
+    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri."
   },
   "projects": {
     "new": "Workbench nou",
@@ -1059,6 +1061,20 @@
       "manual": "Nu totul este gata: instalați programele furnizorilor după ghidul lor, apoi verificați din nou.",
       "checkAgain": "Verifică din nou",
       "close": "Închide"
+    },
+    "configuration": {
+      "title": "Configurare",
+      "stored": "Stocat",
+      "missing": "Lipsește",
+      "present": "Prezent și valid",
+      "invalid": "Invalid",
+      "unchecked": "Neverificat",
+      "value": "Doar citire",
+      "optional": "(opțional)",
+      "check": "Verifică din nou",
+      "noWorkbench": "Deschide un workbench pentru a-i verifica fișierele.",
+      "needs": "Necesită configurare: {{names}}",
+      "suppliers": "Chei stocate pentru: {{names}}"
     }
   },
   "runs": {

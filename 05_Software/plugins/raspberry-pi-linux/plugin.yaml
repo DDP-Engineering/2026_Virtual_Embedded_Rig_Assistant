@@ -7,6 +7,22 @@ description: Projects, finite tasks and user services on a Raspberry Pi (Raspber
 ecosystem: linux
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://www.raspberrypi.com/documentation/computers/remote-access.html", "https://pypi.org/project/asyncssh/2.24.1/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares the board (linux-board) with its host, pinned host key, user, identity and remote root that calls name by alias.
+  pi-project:
+    kind: workbench-file
+    path: "*/vera-pi.json"
+    format: json
+    optional: true
+    description: A project manifest in a project folder of the workbench - the files to deploy, the tasks it may run and the user services it may start.
+  ssh-agent:
+    kind: value
+    value: System SSH agent (SSH_AUTH_SOCK; on Windows the OpenSSH Authentication Agent or Pageant)
+    description: The login key stays in the system SSH agent; VERA never handles a password or a key file.
 programs:
   pi-tool:
     install: { script: scripts/pi_tool.py }

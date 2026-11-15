@@ -7,6 +7,12 @@ description: Identify declared bench instruments (multimeter, oscilloscope, powe
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pyvisa.readthedocs.io/en/1.16.2/", "https://pyvisa.readthedocs.io/projects/pyvisa-py/en/latest/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares each instrument (visa) with its VISA resource, profile and limits that calls name by alias.
 programs:
   scpi:
     install: { script: scripts/scpi_tool.py }

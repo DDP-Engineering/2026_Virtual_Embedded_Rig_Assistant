@@ -4,7 +4,8 @@
 
 Select for plugin.yaml validation, the installed plugin store under `<userData>/plugins`,
 workbench-scoped packages under `.vera/plugins`, machine-local hash trust,
-install.json, the integrity hash ("changed since review"), install from a folder or zip, uninstall,
+install.json, the integrity hash ("changed since review"), install from a folder or zip, uninstall, declared
+parameters (`settings`), the plugin page's Configuration section and Needs configuration,
 plugin listing issues, `plugins.enabled` in workbench.yaml and the `plugins.*` IPC channels; also for
 running plugin programs: the `ProcessHost` port, `ProgramRunner`, run logs in `.vera/runs/`, timeouts,
 Stop and process-tree kills, background runs, the serial-port guard and launcher quoting; and for rule
@@ -223,14 +224,30 @@ or `wokwi`) receives the stored credential `<scope>:<ref>` a call names with `op
 nothing else does.
 Prepare refuses a plugin that is not official, a host without `ProgramHost.credentials`, a repeated option, an invalid
 reference or a credential that is not stored; apply loads the enabled plugins again (a disabled plugin is undeclared and
-nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the scope's
-Settings section and CLI variable. Desktop main stores the credentials through one `PluginCredentialService(scope)`
-(`apps/desktop/src/main/plugin-credentials.ts`): Settings > MQTT credentials (`mqtt.credentials.*` IPC: reference,
-optional username, password) and Settings > Wokwi tokens (`wokwi.credentials.*`: reference and token, no username),
-both rendered by `renderer/components/plugin-credentials.tsx`; each list returns only its own scope's references and
-storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
+nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the plugin's
+Configuration on the Plugins page and the CLI variable. Desktop main stores the credentials through one
+`PluginCredentialService(scope)` (`apps/desktop/src/main/plugin-credentials.ts`): the MQTT credentials form
+(`mqtt.credentials.*` IPC: reference, optional username, password) and the Wokwi tokens form (`wokwi.credentials.*`:
+reference and token, no username), both rendered by `renderer/components/plugin-credentials.tsx` inside the
+Configuration section of mqtt-tools and wokwi (with Replace, which puts a stored reference into the form); each list
+returns only its own scope's references and storage. App settings has no MQTT, Wokwi or Parts search page. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
 and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
 changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
+
+Declared parameters (REQ-DATA-af8807e1, REQ-FUNC-cbdb46ac, REQ-UX-efe126c0, REQ-UX-05e0ed17): plugin.yaml `settings`
+(optional, at most 32; shared `plugin-settings.ts`) names each parameter with a description - `secret` + scope (mqtt,
+wokwi, parts), `workbench-file` + workbench-relative path (`*` = one folder level, dot folders skipped, 64 matches),
+optional `format` (`lab-resources` through core `parseRegistry`, `json` parsed) and `optional`, or a read-only `value`.
+An invalid entry is a `field` issue. The renderer sends the declarations of the listed issue-free plugins (key =
+`installedKey`) to `plugins.configuration`; core `settingStates` (`plugins/configuration.ts`) answers stored with
+references (supplier ids for parts) or missing, present/missing/invalid with the first problem through PathGuard
+(256 KiB, regular file, not ignored) in the open workbench or unchecked without one, and value. Main reads references
+from the two `PluginCredentialService`s and configured supplier keys from `PartsAccessService.get()`; a workbench id
+that is not the open one is CONFLICT. `configurationNeeds` (missing secret, missing non-optional file, invalid file)
+feeds `programReadiness` (Needs configuration unless a program is unavailable, also before programs are checked) and
+the card's "Needs configuration: <names>". `renderer/components/plugin-configuration.tsx` lists each parameter with
+its state and embeds `PluginCredentialsPanel` (mqtt, wokwi) or `PartsAccessPanel` (parts); both forms invalidate
+`["plugin-configuration"]` after a change, and Check again re-asks for workbench files.
 
 SSH agent socket (REQ-SEC-adb91424): a program of an official plugin that declares `sshAgent: true` gets
 `RunRequest.inherit: ["SSH_AUTH_SOCK"]`, so the runner copies the host's SSH_AUTH_SOCK (when set) into that run's
@@ -630,6 +647,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Program status schema, range grammar, download form | shared `plugins.ts` | `shared/src/plugin-provisioning.test.ts` |
 | plugins.programs / plugins.provision / plugins.reinstall, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
 | Dependency summary, card dependencies, Install with dependencies, Re-install | shared `plugins.ts`, core `catalog-source.ts`, `provisioning.ts`, renderer `plugin-dependencies.tsx`, `plugin-catalog.tsx`, `plugins.tsx` | `shared/src/plugins.test.ts`, `catalog-source.test.ts`, `provisioning.test.ts`, `plugin-catalog.test.ts`, `plugins.test.ts` |
+| Declared parameters, Configuration section, Needs configuration | shared `plugin-settings.ts`, `ipc.ts`, core `plugins/configuration.ts`, `resource-registry.ts` (`parseRegistry`), desktop `main/index.ts` (`plugins.configuration`), renderer `plugin-configuration.tsx`, `plugin-credentials.tsx`, `parts-access.tsx`, `plugin-library.ts`, `plugins.tsx`, `mocks/mockApi.ts` | `shared/src/plugin-settings.test.ts`, `core/src/plugins/configuration.test.ts`, `store.test.ts`, `plugin-library.test.ts`, `plugins.test.ts`, `plugin-credentials.test.ts` |
 | `vera plugin install` | `cli/src/{args,plugin,provisioning}.ts` | `tests/integration/cli.test.ts` |
 | Review, picker, hash-bound install | `PluginStore.review`/`install` in `store.ts`, `plugins.choose`/`review`/`install` in `main/index.ts` | `store.test.ts`, `plugins-ipc.test.ts`, `mockApi.test.ts` |
 | Run records, list, log, stop | `ProgramRunner` in `runner.ts`, `runs.*` in `main/index.ts`, label in `program-tools.ts` | `runner.test.ts`, `program-tools.test.ts` |

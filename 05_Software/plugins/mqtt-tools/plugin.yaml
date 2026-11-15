@@ -7,6 +7,11 @@ description: Bounded MQTT telemetry capture and controlled device commands on a 
 ecosystem: iot
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pypi.org/project/paho-mqtt/2.1.0/", "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html"]
+settings:
+  broker-credential:
+    kind: secret
+    scope: mqtt
+    description: A broker login (username and password) stored under the reference a broker profile names in credential; only an approved run of this plugin receives it, on its input.
 programs:
   mqtt-tool:
     install: { script: scripts/mqtt_tool.py }

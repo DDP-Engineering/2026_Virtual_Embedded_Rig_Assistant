@@ -7,7 +7,7 @@ import type {
   PluginReview,
   PluginSummary,
 } from "@vera/shared";
-import { pluginPlatform } from "@vera/shared";
+import { configurationNeeds, pluginPlatform } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -20,6 +20,7 @@ import {
   installOrder,
   PluginDiscoveryFacts,
 } from "./plugin-catalog.js";
+import { type ConfigurationView, PluginConfiguration } from "./plugin-configuration.js";
 import { PluginContents, useRiskLabels } from "./plugin-contents.js";
 import { automaticProgram, RequiredPlugins, VendorGuide } from "./plugin-dependencies.js";
 import {
@@ -27,6 +28,7 @@ import {
   clearedLibraryFilters,
   combinedLibraryItems,
   initialLibraryState,
+  installedKey,
   installedLibraryItems,
   type LibraryState,
   libraryStateKey,
@@ -303,8 +305,11 @@ function PluginCard({
   checking = false,
   discovery,
   installedIds,
+  configuration,
 }: {
   plugin: PluginSummary;
+  /** The declared parameters' states, when the manifest declares any. */
+  configuration?: ConfigurationView | undefined;
   /** The ids of the installed plugins, for the plugins this one requires. */
   installedIds: ReadonlySet<string>;
   discovery?: CatalogPlugin | undefined;
@@ -345,7 +350,9 @@ function PluginCard({
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
-  const readiness = programReadiness(plugin, programs.data, programs.isError);
+  const needs = configuration?.needs ?? [];
+  const readiness = programReadiness(plugin, programs.data, programs.isError, needs);
+  const settings = healthy ? plugin.manifest?.settings : undefined;
   const name = plugin.name ?? plugin.id,
     working = busy !== undefined || checking;
   const ready = programs.data?.filter((status) => status.state === "ready").length ?? 0;
@@ -450,7 +457,8 @@ function PluginCard({
             data-readiness={readiness}
           >
             {readiness === "unavailable" && `${t("plugins.library.readinessUnavailable")} · `}
-            {readiness === "needs" && `${t("plugins.library.needsConfiguration")} · `}
+            {readiness === "needs" &&
+              `${needs.length ? t("plugins.configuration.needs", { names: needs.join(", ") }) : t("plugins.library.needsConfiguration")} · `}
             {summary}
           </span>
         )}
@@ -603,6 +611,13 @@ function PluginCard({
             />
           )}
           {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
+          {settings && configuration && Object.keys(settings).length > 0 && (
+            <PluginConfiguration
+              settings={settings}
+              view={configuration}
+              workbench={workbench !== undefined}
+            />
+          )}
           {healthy && plugin.manifest && (
             <PluginContents manifest={plugin.manifest} composition={plugin.composition} />
           )}
@@ -784,6 +799,35 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
       update({ busy: false, error: failure });
     }
   }
+  // One configuration query for every listed plugin that declares parameters (REQ-FUNC-cbdb46ac); re-asked when the
+  // page opens, after a credential form changes and on Check again.
+  const declared = (list.data ?? []).flatMap((plugin) => {
+    const settings = plugin.issues.length ? undefined : plugin.manifest?.settings;
+    return settings && Object.keys(settings).length ? [{ key: installedKey(plugin), settings, plugin }] : [];
+  });
+  const configuration = useQuery({
+    queryKey: ["plugin-configuration", workbench?.id ?? null, declared.map((entry) => entry.key)],
+    queryFn: () =>
+      api.invoke("plugins.configuration", {
+        ...(workbench ? { workbenchId: workbench.id } : {}),
+        plugins: declared.map(({ key, settings }) => ({ key, settings })),
+      }),
+    enabled: declared.length > 0,
+    staleTime: 0,
+  });
+  const configured = new Map(
+    declared.map(({ key, settings, plugin }) => {
+      const states = configuration.data?.plugins.find((entry) => entry.key === key)?.settings;
+      const view: ConfigurationView = {
+        states,
+        needs: configurationNeeds(settings, states),
+        fetching: configuration.isFetching,
+        error: configuration.error ?? undefined,
+        check: () => void configuration.refetch(),
+      };
+      return [plugin, view] as const;
+    }),
+  );
   const installedIds = new Set((list.data ?? []).map((plugin) => plugin.id));
   const updates = new Map(
     (catalog.data?.plugins ?? []).filter((entry) => entry.update).map((entry) => [entry.id, entry]),
@@ -806,6 +850,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
     catalog.data?.plugins ?? [],
     (plugin) => observed.get(plugin)?.data,
     (plugin) => observed.get(plugin)?.isError ?? false,
+    (plugin) => configured.get(plugin)?.needs ?? [],
   );
   const availableItems = catalogLibraryItems(catalog.data?.plugins ?? []);
   const scope = combinedLibraryItems(availableItems, installedItems);
@@ -1014,6 +1059,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
                     checking={checkingAll === plugin.id}
                     plugin={plugin}
                     installedIds={installedIds}
+                    configuration={configured.get(plugin)}
                     workbench={workbench}
                     changed={changed}
                     reviewScoped={() => {

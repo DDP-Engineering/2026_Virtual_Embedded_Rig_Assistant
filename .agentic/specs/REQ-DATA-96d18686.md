@@ -29,10 +29,11 @@ Desktop: IPC `mqtt.credentials.list` `{}` -> `{credentials: [{ref, storage}], se
 username and password are never returned); `mqtt.credentials.save` `{ref, username?, password, storageConsent?}` ->
 `{status: "saved" | "consent-required"}` (consent required when OS encryption is unavailable and no choice was given,
 as for provider keys); `mqtt.credentials.remove` `{ref}` -> `{}`. Username 0-256 and password 1-1024 characters
-without control characters. Settings shows the section "MQTT credentials". The same service, parameterized by scope,
+without control characters. The mqtt-tools plugin's Configuration on the Plugins page shows the form "MQTT
+credentials" (its `settings` declare the secret of scope mqtt). The same service, parameterized by scope,
 serves `wokwi.credentials.list` (same response), `wokwi.credentials.save` `{ref, token, storageConsent?}` (token 1-1024
-characters without control characters; no username) and `wokwi.credentials.remove` `{ref}`; Settings shows the
-section "Wokwi tokens". Each list returns only the entries of its own scope.
+characters without control characters; no username) and `wokwi.credentials.remove` `{ref}`; the wokwi plugin's
+Configuration shows the form "Wokwi tokens". Each list returns only the entries of its own scope.
 
 CLI: `VERA_MQTT_PASSWORD_<REF>` and optional `VERA_MQTT_USERNAME_<REF>`, and `VERA_WOKWI_TOKEN_<REF>`, where `<REF>`
 is the reference upper-cased with `-` as `_`, are put in memory-only entries `mqtt:<ref>` and `wokwi:<ref>` and

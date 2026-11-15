@@ -7,6 +7,12 @@ description: Active, bounded I2C, SPI and UART transactions through a Bus Pirate
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.buspirate.com/docs/binmode-reference/protocol-bpio2/", "https://pypi.org/project/flatbuffers/25.12.19/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares the Bus Pirate adapter (bus-adapter) with its serial ports and power limits that calls name by alias.
 programs:
   bus-tool:
     install: { script: scripts/bus_tool.py }

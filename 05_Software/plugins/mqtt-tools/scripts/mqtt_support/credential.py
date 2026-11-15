@@ -24,7 +24,7 @@ class Credential:
 
 def read(expected_ref: str) -> Credential:
     """The stdin line for `expected_ref`; credential-missing when there is none or it is not VERA's line."""
-    missing = refused("credential-missing", f"No credential arrived for {expected_ref}: VERA hands it over only to an approved run of the enabled mqtt-tools plugin, from Settings > MQTT credentials or VERA_MQTT_PASSWORD_<REF> for the CLI.")
+    missing = refused("credential-missing", f"No credential arrived for {expected_ref}: VERA hands it over only to an approved run of the enabled mqtt-tools plugin, from the mqtt-tools plugin's Configuration on the Plugins page or VERA_MQTT_PASSWORD_<REF> for the CLI.")
     try:
         raw = sys.stdin.buffer.readline(LINE_LIMIT + 1) if sys.stdin is not None else b""
     except (OSError, ValueError):

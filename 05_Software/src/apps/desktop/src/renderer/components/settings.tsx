@@ -5,9 +5,7 @@ import {
   Globe,
   Info,
   Keyboard,
-  KeyRound,
   Languages,
-  PackageSearch,
   Palette,
   RefreshCw,
   Server,
@@ -18,8 +16,6 @@ import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "./error-message.js";
 import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
 import { Metadata } from "./metadata.js";
-import { PartsAccessPanel } from "./parts-access.js";
-import { PluginCredentialsPanel } from "./plugin-credentials.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
@@ -29,9 +25,6 @@ export function useSettingsSections() {
   return [
     { id: "providers", icon: Server, label: t("settings.providers") },
     { id: "web", icon: Globe, label: t("settings.webAccess") },
-    { id: "parts", icon: PackageSearch, label: t("settings.partsSearch") },
-    { id: "mqtt", icon: KeyRound, label: t("settings.mqttCredentials") },
-    { id: "wokwi", icon: KeyRound, label: t("settings.wokwiTokens") },
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "language", icon: Languages, label: t("settings.language") },
     { id: "notifications", icon: Bell, label: t("settings.notifications") },
@@ -96,9 +89,6 @@ export function Settings({
         <Providers />
       </div>
       {section === "web" && <WebAccessPanel />}
-      {section === "parts" && <PartsAccessPanel />}
-      {section === "mqtt" && <PluginCredentialsPanel scope="mqtt" />}
-      {section === "wokwi" && <PluginCredentialsPanel scope="wokwi" />}
       <section
         hidden={section !== "appearance"}
         className="surface"

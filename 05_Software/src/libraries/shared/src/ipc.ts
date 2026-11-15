@@ -40,6 +40,7 @@ import {
   pluginCredentialSaveResultSchema,
   wokwiCredentialSaveSchema,
 } from "./plugin-credentials.js";
+import { pluginConfigurationRequestSchema, pluginConfigurationSchema } from "./plugin-settings.js";
 import {
   pluginArchiveRequestSchema,
   pluginIdSchema,
@@ -296,6 +297,15 @@ export const channels = {
     "plugins.reinstall",
     pluginProgramsRequestSchema,
     z.array(pluginProgramStatusSchema).max(64),
+  ),
+  /**
+   * The state of the declared parameters (manifest `settings`) of listed plugins, for the open workbench when one is
+   * named (REQ-FUNC-cbdb46ac); stored references and supplier ids only, never a secret.
+   */
+  "plugins.configuration": defineChannel(
+    "plugins.configuration",
+    pluginConfigurationRequestSchema,
+    pluginConfigurationSchema,
   ),
   /** The plugin catalog (spec REQ-DATA-b40d3f9b §5): the last read, or a new one with `refresh`. */
   "plugins.catalog": defineChannel("plugins.catalog", pluginCatalogRequestSchema, pluginCatalogViewSchema),
