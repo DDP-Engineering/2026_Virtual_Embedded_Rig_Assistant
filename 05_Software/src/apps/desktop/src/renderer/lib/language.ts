@@ -1,4 +1,7 @@
-export function resolveLanguage(setting: string, locale: string): "en" | "ro" | "de" {
+export const interfaceLanguages = ["en", "ro", "de", "fr"] as const;
+export type InterfaceLanguage = (typeof interfaceLanguages)[number];
+
+export function resolveLanguage(setting: string, locale: string): InterfaceLanguage {
   const language = (setting === "system" ? locale : setting).toLowerCase().split(/[-_]/)[0];
-  return language === "ro" || language === "de" ? language : "en";
+  return interfaceLanguages.find((code) => code === language) ?? "en";
 }

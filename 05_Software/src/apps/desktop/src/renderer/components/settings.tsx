@@ -98,6 +98,7 @@ export function Settings({
             <option value="en">{t("language.en")}</option>
             <option value="ro">{t("language.ro")}</option>
             <option value="de">{t("language.de")}</option>
+            <option value="fr">{t("language.fr")}</option>
           </select>
         </div>
         <fieldset disabled={disabled}>

@@ -32,7 +32,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
 - Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index; documents open as tabs of the chat area beside the Chat tab ([document viewer](document-viewer.md)); Artifacts opens/reveals/exports session content; Plan displays current session todos; Runs lists the open workbench's plugin program runs with their logs and Stop ([Plugins](plugins.md)).
   Below1280px the right panel overlays the centre. Tabs expose stable linked panels and a single Tab stop with Left/Right/Home/End activation.
-- Settings pages are Providers, Web access, Appearance and language (Light/Dark/System, six interface scales, chat and code text sizes, System/en/ro/de), Notifications, Keyboard shortcuts, Updates (distribution-specific state/actions), Data (placeholder) and About; there are no Parts search, MQTT, Wokwi, Storage or Configuration pages (plugin settings live in the plugin Configuration). [Providers](providers.md) owns masked credentials, endpoint forms and consent.
+- Settings pages are Providers, Web access, Appearance and language (Light/Dark/System, six interface scales, chat and code text sizes, System/en/ro/de/fr), Notifications, Keyboard shortcuts, Updates (distribution-specific state/actions), Data (placeholder) and About; there are no Parts search, MQTT, Wokwi, Storage or Configuration pages (plugin settings live in the plugin Configuration). [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - About renders a brand band (DDP logo, name, version, license name and Required Notice lines), the application name, version, platform, architecture, portable state and system locale
   from strict app.info, optional runtime versions (Electron, Chromium, Node.js, V8 from AppInfo.runtime), the license text (repo-root LICENSE.txt) and a third-party components table. Home contains workbench actions and recents. Build/signing labels do not
   appear in the presentation; native packaging owns compiled identity and signature checks.
@@ -40,8 +40,9 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
   and cleans up its app subscription. Failure displays localized structured errors and retry.
 - System theme follows prefers-color-scheme; root data-theme is light/dark. Main nativeTheme.themeSource
   follows the persisted setting. Root font is14px times scale; geometry and code use rem.
-- System language resolves app.info.locale to en/ro/de, otherwise en. All labels/accessibility/error
-  text comes from English-source and Romanian/German catalogs.
+- System language resolves app.info.locale to en/ro/de/fr, otherwise en. All labels/accessibility/error
+  text comes from English-source and Romanian/German/French catalogs; dates and numbers format with the interface
+  language.
 - lib/layout.ts validates version1 renderer-local geometry. Exact contract:
   [foundation spec](../specs/REQ-UX-4a040001.md).
 - check:i18n uses TypeScript AST translation references and finite registered key collections;

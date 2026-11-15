@@ -61,7 +61,7 @@ const mutable = {
   /** Absent until the user first saves Settings > Parts search; readers apply partsSearchDefaults. */
   partsSearch: partsSearchSettingsSchema.optional(),
   keyboardShortcuts: shortcutOverridesSchema.optional(),
-  language: z.enum(["system", "en", "ro", "de"]),
+  language: z.enum(["system", "en", "ro", "de", "fr"]),
   theme: z.enum(["system", "light", "dark"]),
   textScale: z.union([
     z.literal(0.75),

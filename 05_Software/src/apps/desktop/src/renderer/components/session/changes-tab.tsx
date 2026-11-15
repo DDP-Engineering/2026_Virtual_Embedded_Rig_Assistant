@@ -12,7 +12,7 @@ export function ChangesTab({ workbenchId, sessionId }: { workbenchId: string; se
   return <ChangesView key={`${workbenchId}/${sessionId}`} workbenchId={workbenchId} sessionId={sessionId} />;
 }
 function ChangesView({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { view, error, retry } = useSessionView(sessionId);
   const [selected, setSelected] = useState<number>();
   const [revealError, setRevealError] = useState<unknown>();
@@ -88,7 +88,9 @@ function ChangesView({ workbenchId, sessionId }: { workbenchId: string; sessionI
                     <span className="diff-added">+{change.added}</span>{" "}
                     <span className="diff-removed">−{change.removed}</span>
                   </span>
-                  <time dateTime={change.createdAt}>{new Date(change.createdAt).toLocaleString()}</time>
+                  <time dateTime={change.createdAt}>
+                    {new Date(change.createdAt).toLocaleString(i18n.language)}
+                  </time>
                 </button>
               </li>
             ))}

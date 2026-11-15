@@ -89,7 +89,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     catalogs = fixture.catalogs;
     sources = fixture.sources;
   } else {
-    for (const language of ["en", "ro", "de"])
+    for (const language of ["en", "ro", "de", "fr"])
       catalogs[language] = JSON.parse(await readFile(join(renderer, "locales", `${language}.json`), "utf8"));
     sources = await sourcesAt(renderer);
   }
@@ -97,5 +97,5 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (errors.length) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
-  } else console.log("i18n: English usage and en/ro/de catalogs complete");
+  } else console.log("i18n: English usage and en/ro/de/fr catalogs complete");
 }

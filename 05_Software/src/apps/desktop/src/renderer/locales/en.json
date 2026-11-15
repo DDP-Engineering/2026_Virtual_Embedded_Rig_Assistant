@@ -75,7 +75,8 @@
     "system": "System",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch"
+    "de": "Deutsch",
+    "fr": "Français"
   },
   "layout": {
     "toggleSidebar": "Toggle sidebar",

@@ -5,7 +5,10 @@ import { defaultLayout, layoutKey, readLayout, saveLayout } from "./layout.js";
 test("system language resolves native regional locales and safely falls back to English", () => {
   expect(resolveLanguage("system", "ro-RO")).toBe("ro");
   expect(resolveLanguage("system", "DE_de")).toBe("de");
-  expect(resolveLanguage("system", "fr-FR")).toBe("en");
+  expect(resolveLanguage("system", "fr-FR")).toBe("fr");
+  expect(resolveLanguage("system", "fr_CA")).toBe("fr");
+  expect(resolveLanguage("system", "it-IT")).toBe("en");
+  expect(resolveLanguage("fr", "en-US")).toBe("fr");
   expect(resolveLanguage("en", "ro-RO")).toBe("en");
   expect(resolveLanguage("ro", "de-DE")).toBe("ro");
 });

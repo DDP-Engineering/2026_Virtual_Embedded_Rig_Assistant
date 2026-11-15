@@ -75,15 +75,15 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     expect(errors).toEqual([]);
     expect(outbound).toEqual([]);
     await page.locator('[data-i18n="nav.settings"]').click({ timeout: 2000 });
-    for (const language of ["ro", "de", "en"]) {
+    const appearance = {
+      ro: "Aspect și limbă",
+      de: "Darstellung und Sprache",
+      fr: "Apparence et langue",
+      en: "Appearance and language",
+    };
+    for (const language of ["ro", "de", "fr", "en"] as const) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
-      await expect(page.locator('[data-i18n="settings.appearance"]')).toHaveText(
-        language === "ro"
-          ? "Aspect și limbă"
-          : language === "de"
-            ? "Darstellung und Sprache"
-            : "Appearance and language",
-      );
+      await expect(page.locator('[data-i18n="settings.appearance"]')).toHaveText(appearance[language]);
     }
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await changeSetting(page, "appearance", () => page.locator('[data-theme-option="system"]').click());
@@ -180,7 +180,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       });
       expect(contrastFailures, `AA text contrast in ${theme}`).toEqual([]);
     }
-    for (const language of ["ro", "de"]) {
+    for (const language of ["ro", "de", "fr"]) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark", "system"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());

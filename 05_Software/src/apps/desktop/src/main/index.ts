@@ -420,7 +420,7 @@ const systemAppDeps = (): SystemAppDeps => {
     lang:
       language !== "system"
         ? language
-        : (["en", "ro", "de"].find((code) => app.getLocale().startsWith(code)) ?? "en"),
+        : (["en", "ro", "de", "fr"].find((code) => app.getLocale().startsWith(code)) ?? "en"),
     openers: openers(),
   };
 };

@@ -40,3 +40,10 @@ test("catalog CLI fails with a missing-key fixture", () => {
   expect(result.status).toBe(1);
   expect(result.stderr).toContain("missing source key: screen.missing");
 });
+
+test("catalog CLI audits the en, ro, de and fr catalogs of the renderer", () => {
+  const result = spawnSync(process.execPath, ["../02_Tools/build/check-i18n.mjs"], { encoding: "utf8" });
+  expect(result.stderr).toBe("");
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain("en/ro/de/fr catalogs complete");
+});

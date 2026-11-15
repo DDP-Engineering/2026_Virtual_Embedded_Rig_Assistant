@@ -325,7 +325,7 @@ function PluginCard({
   checking?: boolean;
   update?: { entry: CatalogPlugin; start: () => void; busy: boolean } | undefined;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels = useLabels(),
     client = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -437,7 +437,7 @@ function PluginCard({
                 : api.invoke("plugins.provision", request),
         });
       }
-      if (alive.current) setCheckedAt(new Date().toLocaleTimeString());
+      if (alive.current) setCheckedAt(new Date().toLocaleTimeString(i18n.language));
     });
   }
   return (

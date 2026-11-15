@@ -75,7 +75,8 @@
     "system": "Sistem",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch"
+    "de": "Deutsch",
+    "fr": "Français"
   },
   "layout": {
     "toggleSidebar": "Arată sau ascunde bara laterală",
