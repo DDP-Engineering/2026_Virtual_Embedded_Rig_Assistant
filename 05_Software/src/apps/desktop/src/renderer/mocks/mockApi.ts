@@ -490,7 +490,10 @@ export function createMockApi(
     if (!input.success) throw veraError("INVALID");
     let value: unknown;
     if (
-      (channel === "session.list" || channel === "session.search" || channel === "session.create") &&
+      (channel === "session.list" ||
+        channel === "session.sizes" ||
+        channel === "session.search" ||
+        channel === "session.create") &&
       "workbenchId" in input.data &&
       input.data.workbenchId &&
       current().snapshot.config.id !== input.data.workbenchId

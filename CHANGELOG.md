@@ -6,6 +6,19 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Added
+
+- Session sizes in the workbench overview's sessions table.
+
+### Changed
+
+- The conversation rail's preview shows only the message text, without its number.
+
+### Fixed
+
+- Disabling plugin skills was slow, left the workbench editor with false unsaved changes and reported the
+  disabled skills as unresolved names.
+
 ## [0.1.0] - 2026-11-15
 
 ### Added

@@ -177,3 +177,16 @@ it("messages and events reject nonfinite fractional negative and unsafe sequence
   expect(messages.list("ses_a").map((r) => r.seq)).toEqual([0, Number.MAX_SAFE_INTEGER]);
   expect(events.list("ses_a").map((r) => r.seq)).toEqual([0, Number.MAX_SAFE_INTEGER]);
 });
+it("sizes counts the stored bytes of every session, including tool results, diffs and artifacts", async () => {
+  const { h, sessions } = await setup();
+  sessions.create(session("ses_a"));
+  sessions.create(session("ses_b"));
+  h.db.exec(`INSERT INTO events VALUES ('ses_a',1,'event','{"text":"ă"}','now');
+    INSERT INTO messages VALUES ('ses_a',1,'user','1234','now');
+    INSERT INTO tool_calls(id,session_id,args_json,result_json) VALUES ('call','ses_a','12','123');
+    INSERT INTO tool_calls(id,session_id) VALUES ('empty','ses_a');
+    INSERT INTO changes(session_id,tool_call_id,diff,status) VALUES ('ses_a','call','12345','applied');
+    INSERT INTO artifacts(id,session_id,name,bytes) VALUES ('art','ses_a','a.md',100);`);
+  // The event is 13 bytes in UTF-8 ("ă" takes two), then 4 + 5 + 5 + 100.
+  expect(sessions.sizes()).toEqual({ ses_a: 127, ses_b: 0 });
+});

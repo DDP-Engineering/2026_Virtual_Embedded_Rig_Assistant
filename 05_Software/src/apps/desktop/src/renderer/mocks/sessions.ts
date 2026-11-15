@@ -141,6 +141,14 @@ export class MockSessions {
       archived: boolean;
       reasoning: string | null;
     };
+    if (channel === "session.sizes") {
+      this.current();
+      return Object.fromEntries(
+        [...this.sessions.entries()]
+          .filter(([key]) => key.startsWith(`${this.current().id}/`))
+          .map(([, row]) => [row.summary.id, new TextEncoder().encode(JSON.stringify(row.events)).length]),
+      );
+    }
     if (channel === "session.list" || channel === "session.search") {
       this.current();
       return [...this.sessions.entries()]

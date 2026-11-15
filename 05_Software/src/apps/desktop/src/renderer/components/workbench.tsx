@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { SessionSummary, WorkbenchSnapshot } from "@vera/shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -5,6 +6,23 @@ import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { Pager, usePaged } from "./pager.js";
 
+/** Bytes in the largest unit (binary steps) with a localized unit name: "840 kB", "2.4 MB". */
+export function formatBytes(bytes: number | undefined, language: string): string {
+  if (bytes === undefined) return "—";
+  const units = ["byte", "kilobyte", "megabyte", "gigabyte"] as const;
+  let value = bytes,
+    unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return new Intl.NumberFormat(language, {
+    style: "unit",
+    unit: units[unit],
+    unitDisplay: "short",
+    maximumFractionDigits: value < 10 && unit > 0 ? 1 : 0,
+  }).format(value);
+}
 export function Workbench({
   active,
   changed,
@@ -45,8 +63,16 @@ export function Workbench({
       off();
     };
   }, [activeId, active, changed, closed]);
-  const number = new Intl.NumberFormat(i18n.resolvedLanguage ?? i18n.language);
+  const language = i18n.resolvedLanguage ?? i18n.language;
+  const number = new Intl.NumberFormat(language);
   const { rows: sessionRows, pager: sessionPager } = usePaged(sessions ?? []);
+  // Refetched whenever a session of the list changes, so sizes follow new activity.
+  const revision = (sessions ?? []).map((session) => session.updatedAt).join();
+  const sizes = useQuery({
+    queryKey: ["session.sizes", activeId, revision],
+    queryFn: () => api.invoke("session.sizes", { workbenchId: activeId as string }),
+    enabled: !!activeId && !!sessions?.length,
+  });
   const warningLabels = {
     UNKNOWN_KEY: t("workbench.unknownKey"),
     UNKNOWN_NAME: t("workbench.unknownName"),
@@ -152,6 +178,7 @@ export function Workbench({
                     <th>{t("overview.session")}</th>
                     <th>{t("overview.created")}</th>
                     <th>{t("overview.updated")}</th>
+                    <th>{t("overview.size")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,6 +203,7 @@ export function Workbench({
                           {new Date(session.updatedAt).toLocaleString(i18n.resolvedLanguage ?? "en")}
                         </time>
                       </td>
+                      <td data-session-size>{formatBytes(sizes.data?.[session.id], language)}</td>
                     </tr>
                   ))}
                 </tbody>

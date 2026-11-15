@@ -539,6 +539,12 @@ export const channels = {
     z.strictObject({ workbenchId: workbenchIdSchema.optional() }),
     z.array(sessionSummarySchema),
   ),
+  /** Stored bytes per session of the workbench: events, messages, tool calls, diffs and artifacts. */
+  "session.sizes": defineChannel(
+    "session.sizes",
+    z.strictObject({ workbenchId: workbenchIdSchema }),
+    z.record(sessionIdSchema, z.number().int().nonnegative()),
+  ),
   "session.search": defineChannel(
     "session.search",
     z.strictObject({ query: sessionSearchQuerySchema, workbenchId: workbenchIdSchema.optional() }),

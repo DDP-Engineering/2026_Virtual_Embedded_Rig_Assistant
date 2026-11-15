@@ -721,7 +721,8 @@
     "noSessions": "No sessions yet.",
     "session": "Session",
     "created": "Created",
-    "updated": "Last activity"
+    "updated": "Last activity",
+    "size": "Size"
   },
   "keyboard": {
     "newSession": "New session",

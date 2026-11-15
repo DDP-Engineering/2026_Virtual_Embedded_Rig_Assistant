@@ -721,7 +721,8 @@
     "noSessions": "Aucune session pour l’instant.",
     "session": "Session",
     "created": "Créée",
-    "updated": "Dernière activité"
+    "updated": "Dernière activité",
+    "size": "Taille"
   },
   "keyboard": {
     "newSession": "Nouvelle session",

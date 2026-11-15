@@ -721,7 +721,8 @@
     "noSessions": "Nicio sesiune încă.",
     "session": "Sesiune",
     "created": "Creată",
-    "updated": "Ultima activitate"
+    "updated": "Ultima activitate",
+    "size": "Dimensiune"
   },
   "keyboard": {
     "newSession": "Sesiune nouă",

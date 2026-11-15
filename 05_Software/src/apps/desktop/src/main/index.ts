@@ -913,6 +913,11 @@ ipcMain.handle(
           await sessionOrder.move(workbenchId, s.list(), sessionId, offset);
           return {};
         }),
+      "session.sizes": ({ workbenchId }) =>
+        sessions.run((s) => {
+          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+          return s.sizes();
+        }),
       "session.search": ({ query, workbenchId }) =>
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");

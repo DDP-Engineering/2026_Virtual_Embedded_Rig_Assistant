@@ -28,6 +28,22 @@ export class SessionsRepository {
   list(): SessionRow[] {
     return this.db.prepare("SELECT * FROM sessions ORDER BY created_at DESC,id DESC").all() as SessionRow[];
   }
+  /** Stored bytes per session: what grows with it, never shrunk by compaction. */
+  sizes(): Record<string, number> {
+    const rows = this.db
+      .prepare(
+        `SELECT s.id AS id,
+          (SELECT coalesce(sum(length(CAST(payload_json AS BLOB))), 0) FROM events WHERE session_id = s.id)
+          + (SELECT coalesce(sum(length(CAST(content_json AS BLOB))), 0) FROM messages WHERE session_id = s.id)
+          + (SELECT coalesce(sum(length(CAST(coalesce(args_json, '') AS BLOB))
+              + length(CAST(coalesce(result_json, '') AS BLOB))), 0) FROM tool_calls WHERE session_id = s.id)
+          + (SELECT coalesce(sum(length(CAST(coalesce(diff, '') AS BLOB))), 0) FROM changes WHERE session_id = s.id)
+          + (SELECT coalesce(sum(coalesce(bytes, 0)), 0) FROM artifacts WHERE session_id = s.id) AS bytes
+        FROM sessions s`,
+      )
+      .all() as { id: string; bytes: number }[];
+    return Object.fromEntries(rows.map((row) => [row.id, row.bytes]));
+  }
   delete(id: string): boolean {
     return this.db.prepare("DELETE FROM sessions WHERE id=?").run(id).changes > 0;
   }

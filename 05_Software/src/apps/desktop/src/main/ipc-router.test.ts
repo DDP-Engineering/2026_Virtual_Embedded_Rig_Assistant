@@ -103,6 +103,7 @@ const workbenchHandlers = {
   "app.openPath": unused,
   "session.approval.decide": unused,
   "session.list": unused,
+  "session.sizes": unused,
   "session.search": unused,
   "session.export": unused,
   "session.create": unused,

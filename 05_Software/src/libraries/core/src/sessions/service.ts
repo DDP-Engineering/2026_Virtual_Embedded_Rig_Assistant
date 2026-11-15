@@ -216,6 +216,11 @@ export class SessionService {
     if (this.closed) throw veraError("CONFLICT");
     return this.sessions.list().map((row) => this.summary(row));
   }
+  /** Stored bytes per session of this workbench. */
+  sizes(): Record<string, number> {
+    if (this.closed) throw veraError("CONFLICT");
+    return this.sessions.sizes();
+  }
   /** Full durable message search; never uses the derived model request view. */
   search(query: string): SessionSummary[] {
     const parsed = sessionSearchQuerySchema.safeParse(query);

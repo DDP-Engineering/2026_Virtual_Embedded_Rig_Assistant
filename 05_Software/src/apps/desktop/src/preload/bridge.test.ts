@@ -157,6 +157,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "app.openPath"
     | "session.approval.decide"
     | "session.list"
+    | "session.sizes"
     | "session.search"
     | "session.export"
     | "session.create"
