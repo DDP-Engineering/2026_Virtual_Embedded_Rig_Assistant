@@ -63,8 +63,9 @@ export function WorkbenchEditor({
   useEffect(() => {
     if (shown) ref.current?.focus();
   }, [shown]);
-  // Edits stay unsaved until a save completes, so a failed save is never left behind unseen.
-  const comparable = (value: typeof config) => ({
+  // Edits stay unsaved until a save completes, so a failed save is never left behind unseen. Skills
+  // are saved by their own switches at once, so they are never part of this draft.
+  const comparable = ({ skills: _saved, ...value }: typeof config) => ({
     ...value,
     plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() },
   });

@@ -74,8 +74,25 @@ export class SkillCatalog {
     if (!root) throw veraError("DENIED");
     return root;
   }
+  /** Plugin roots loaded once for every read of one list(); loading verifies each plugin's files. */
+  private snapshot: { roots: Promise<SkillPluginRoot[]>; users: number } | undefined;
   private async plugins(): Promise<SkillPluginRoot[]> {
+    if (this.snapshot) return this.snapshot.roots;
     return [...((await this.options.plugins?.()) ?? [])].sort(byId);
+  }
+  private async withPlugins<T>(operation: () => Promise<T>): Promise<T> {
+    if (!this.snapshot) {
+      const roots = this.plugins();
+      roots.catch(() => {});
+      this.snapshot = { roots, users: 0 };
+    }
+    const snapshot = this.snapshot;
+    snapshot.users++;
+    try {
+      return await operation();
+    } finally {
+      if (--snapshot.users === 0 && this.snapshot === snapshot) this.snapshot = undefined;
+    }
   }
   /** The enabled plugin with the lowest id that has a skills/<name> entry. */
   private async pluginOf(name: string): Promise<SkillPluginRoot | undefined> {
@@ -129,7 +146,10 @@ export class SkillCatalog {
     }
     return target;
   }
-  async read(source: SkillSource, name: string, file = "SKILL.md", signal?: AbortSignal) {
+  read(source: SkillSource, name: string, file = "SKILL.md", signal?: AbortSignal) {
+    return this.withPlugins(() => this.readNow(source, name, file, signal));
+  }
+  private async readNow(source: SkillSource, name: string, file: string, signal?: AbortSignal) {
     this.check(signal);
     if (source === "official") {
       if (name !== createPluginSkill.name || file !== "SKILL.md") throw veraError("NOT_FOUND");
@@ -219,6 +239,9 @@ export class SkillCatalog {
     this.check();
     await this.options.refresh?.();
     this.check();
+    return this.withPlugins(() => this.summaries());
+  }
+  private async summaries(): Promise<SkillSummary[]> {
     const selected = await this.selection();
     const results: SkillSummary[] = [];
     for (const [name, { source, plugin }] of [...selected].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {

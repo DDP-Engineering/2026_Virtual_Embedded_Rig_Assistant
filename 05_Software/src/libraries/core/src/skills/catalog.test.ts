@@ -268,6 +268,37 @@ it("lists and loads skills of enabled plugins as source plugin (REQ-FUNC-6d88d2e
   expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([]);
   await expect(catalog.load("echo-guide", undefined, signal)).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
+it("loads the enabled plugins once per list, however many plugin skills it reads", async () => {
+  const f = await fixture();
+  const enabled = await Promise.all(
+    ["a-tools", "b-tools", "c-tools"].map(async (id) => ({
+      id,
+      folder: await pluginSkill(f.userData, id, `${id}-guide`, "BODY"),
+    })),
+  );
+  let loads = 0;
+  const catalog = new SkillCatalog({
+    root: f.workbench,
+    userData: f.userData,
+    disabled: () => ["b-tools-guide"],
+    plugins: async () => {
+      loads++;
+      return enabled;
+    },
+  });
+  expect((await catalog.list()).filter((s) => s.source === "plugin").map((s) => [s.name, s.enabled])).toEqual(
+    [
+      ["a-tools-guide", true],
+      ["b-tools-guide", false],
+      ["c-tools-guide", true],
+    ],
+  );
+  expect(loads).toBe(1);
+  await catalog.read("plugin", "c-tools-guide");
+  expect(loads).toBe(2);
+  enabled.pop();
+  await expect(catalog.read("plugin", "c-tools-guide")).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
 it("shadows plugin skills by workbench and user skills; the lower plugin id wins (REQ-FUNC-a5eff6c9)", async () => {
   const f = await fixture();
   const enabled = [

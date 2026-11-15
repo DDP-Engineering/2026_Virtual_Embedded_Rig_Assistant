@@ -178,6 +178,11 @@ export class WorkbenchService {
       root,
       ...(this.host.userData ? { userData: this.host.userData } : {}),
       disabled: () => config.skills.disabled,
+      plugins: async () =>
+        (await this.loadEnabled(config.plugins.enabled, root)).map((plugin) => ({
+          id: plugin.manifest.id,
+          folder: plugin.folder,
+        })),
     }).names();
     return configWarnings(config, {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
@@ -192,12 +197,11 @@ export class WorkbenchService {
    * review, in plugins.enabled order. Others never load and are skipped.
    */
   async loadPlugins(id: string): Promise<LoadedPlugin[]> {
-    const ids = this.enabledPlugins(id);
+    return this.loadEnabled(this.enabledPlugins(id), this.current().folder);
+  }
+  private async loadEnabled(ids: readonly string[], folder: string): Promise<LoadedPlugin[]> {
     if (!this.host.userData || ids.length === 0) return [];
-    const store = new PluginStore({
-      root: join(this.host.userData, "plugins"),
-      workbench: this.current().folder,
-    });
+    const store = new PluginStore({ root: join(this.host.userData, "plugins"), workbench: folder });
     const loaded: LoadedPlugin[] = [];
     for (const plugin of ids)
       try {

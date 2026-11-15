@@ -98,3 +98,40 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
   expect(channels).not.toContain("workbench.config.update");
   expect(channels).not.toContain("workbench.pinned.update");
 });
+
+it("a skill switched in its own panel leaves the editor without unsaved changes", async () => {
+  await i18n.changeLanguage("en");
+  const config = workbenchSchema.parse({
+    format: 1,
+    id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    name: "Skill bench",
+  });
+  vi.mocked(api.invoke).mockImplementation(
+    async (channel) =>
+      (channel === "skills.list" ? [] : { content: "Instructions", oversized: false }) as never,
+  );
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const render = (value: typeof config) =>
+    act(async () => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(WorkbenchEditor, {
+            workbench: { folder: "/bench", config: value, readOnly: false, warnings: [] },
+            close: vi.fn(),
+            saved: vi.fn(),
+          }),
+        ),
+      );
+    });
+  await render(config);
+  // config.changed after skills.toggle hands the editor a configuration with the skill disabled.
+  await render({ ...config, skills: { disabled: ["probe-rs-flash"] } });
+  const save = container.querySelector<HTMLButtonElement>("[data-project-save]");
+  expect(save?.disabled).toBe(true);
+  expect(container.querySelector("[data-project-actions] [role=status]")).toBeNull();
+});

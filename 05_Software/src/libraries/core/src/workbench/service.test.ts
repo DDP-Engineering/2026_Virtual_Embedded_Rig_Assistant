@@ -1126,6 +1126,16 @@ it("loads the enabled, installed plugins and lists their skills", async () => {
     expect((await h.service.listSkills(wb.config.id)).filter((s) => s.name !== "create-plugin")).toEqual([
       expect.objectContaining({ name: "echo-guide", source: "plugin", plugin: "echo-tools", enabled: true }),
     ]);
+    // A disabled skill of an enabled plugin is a known name; it becomes unknown once the plugin is off.
+    await h.service.toggleSkill(wb.config.id, "echo-guide", false);
+    const named = (warnings: { code: string; path?: string | undefined }[]) =>
+      warnings.filter((warning) => warning.code === "UNKNOWN_NAME").map((warning) => warning.path);
+    expect(named((await h.service.getConfig()).warnings)).toEqual(["plugins.enabled.ghost"]);
+    await h.service.togglePlugin(wb.config.id, "echo-tools", false);
+    expect(named((await h.service.getConfig()).warnings)).toEqual([
+      "skills.disabled.echo-guide",
+      "plugins.enabled.ghost",
+    ]);
   } finally {
     await h.service.close();
   }
