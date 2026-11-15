@@ -48,8 +48,6 @@
     "retry": "Reîncearcă",
     "notifications": "Notificări",
     "shortcuts": "Comenzi rapide",
-    "storage": "Stocare",
-    "configuration": "Configurare",
     "partsSearch": "Căutare componente",
     "mqttCredentials": "Credențiale MQTT",
     "wokwiTokens": "Tokenuri Wokwi"

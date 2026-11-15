@@ -187,6 +187,8 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
   const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
   await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
   await stageBundledPlugins(stage);
+  // VERA's license ships next to the executable (extraFiles), as its Notices section requires.
+  await cp(join(root, "../LICENSE.txt"), join(stage, "resources/LICENSE.txt"));
   await cp(
     join(root, "src/windows_runtime/windows-runtime-manifest.json"),
     join(stage, "resources/windows-runtime-manifest.json"),
@@ -265,6 +267,7 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
       {
         name: mode === "test" ? "vera-test" : "vera",
         version: desktop.version,
+        license: desktop.license,
         type: "module",
         main: desktop.main,
         productName: mode === "test" ? "VERA Test" : "VERA",

@@ -48,8 +48,6 @@
     "retry": "Retry",
     "notifications": "Notifications",
     "shortcuts": "Keyboard shortcuts",
-    "storage": "Storage",
-    "configuration": "Configuration",
     "partsSearch": "Parts search",
     "mqttCredentials": "MQTT credentials",
     "wokwiTokens": "Wokwi tokens"

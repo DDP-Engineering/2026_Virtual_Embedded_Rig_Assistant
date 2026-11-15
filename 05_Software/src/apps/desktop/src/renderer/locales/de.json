@@ -48,8 +48,6 @@
     "retry": "Erneut versuchen",
     "notifications": "Benachrichtigungen",
     "shortcuts": "Tastenkombinationen",
-    "storage": "Speicher",
-    "configuration": "Konfiguration",
     "partsSearch": "Bauteilsuche",
     "mqttCredentials": "MQTT-Zugangsdaten",
     "wokwiTokens": "Wokwi-Tokens"

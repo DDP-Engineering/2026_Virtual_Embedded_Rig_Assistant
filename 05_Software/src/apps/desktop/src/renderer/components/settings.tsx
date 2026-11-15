@@ -1,16 +1,5 @@
 import { type AppInfo, type SettingsPatch, type SettingsSnapshot, typographyDefaults } from "@vera/shared";
-import {
-  Bell,
-  Database,
-  Globe,
-  Info,
-  Keyboard,
-  Palette,
-  RefreshCw,
-  Server,
-  Shield,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Bell, Globe, Info, Keyboard, Palette, RefreshCw, Server, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { About } from "./about.js";
 import { ErrorMessage } from "./error-message.js";
@@ -30,8 +19,6 @@ export function useSettingsSections() {
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "notifications", icon: Bell, label: t("settings.notifications") },
     { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
-    { id: "storage", icon: Database, label: t("settings.storage") },
-    { id: "configuration", icon: SlidersHorizontal, label: t("settings.configuration") },
     { id: "updates", icon: RefreshCw, label: t("settings.updates") },
     { id: "data", icon: Shield, label: t("settings.data") },
     { id: "about", icon: Info, label: t("settings.about") },
