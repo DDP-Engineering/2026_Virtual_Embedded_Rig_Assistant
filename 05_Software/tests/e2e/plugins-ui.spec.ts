@@ -468,7 +468,7 @@ test("workbench plugin draft save and cancel persist independently with empty ne
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("A");
-    // New workbench shows the plugin selection in Essentials.
+    await page.locator('[data-project-section="plugins"]').click();
     await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).not.toBeChecked();
     await page.locator('[data-action="create-workbench"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("A");
@@ -539,7 +539,7 @@ test("workbench plugin draft save and cancel persist independently with empty ne
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("B");
-    // New workbench shows the plugin selection in Essentials.
+    await page.locator('[data-project-section="plugins"]').click();
     await expect(page.locator('[data-workbench-plugin="echo-tools"] input')).not.toBeChecked();
     await page.locator('[data-action="create-workbench"]').click();
     await expect(page.locator('[data-workbench="active"]')).toContainText("B");

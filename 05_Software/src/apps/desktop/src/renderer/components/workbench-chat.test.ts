@@ -122,7 +122,7 @@ it.each(["normal", "verbose"])("new workbench includes chosen/default detail %s"
   stub(snapshot());
   await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
   await click('[data-action="choose-create"]');
-  // On New workbench the detail level is in Essentials, without a section to open.
+  await click('[data-project-section="chat"]');
   expect(selector()?.value).toBe("normal");
   if (detail !== "normal") await choose(detail);
   await click('[data-action="create-workbench"]');

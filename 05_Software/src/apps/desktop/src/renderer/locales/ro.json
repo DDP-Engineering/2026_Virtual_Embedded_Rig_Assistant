@@ -783,8 +783,6 @@
   "create": {
     "folder": "Folder",
     "noFolder": "Niciun folder selectat",
-    "essentials": "Esențiale",
-    "advanced": "Opțiuni avansate",
     "existing": "Acest folder este deja un workbench.",
     "openExisting": "Deschide acest workbench",
     "instructionsKept": "Acest folder are deja .vera/WORKBENCH.md. Crearea workbench-ului îl păstrează neschimbat; îl poți edita apoi din editorul de workbench.",

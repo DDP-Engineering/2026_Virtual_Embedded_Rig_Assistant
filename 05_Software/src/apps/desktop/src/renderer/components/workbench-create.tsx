@@ -11,10 +11,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
-import { ModelSelect } from "./model-select.js";
-import { PermissionPicker } from "./permission-picker.js";
 import { WorkbenchConfigForm } from "./workbench-config-form.js";
-import { WorkbenchPlugins } from "./workbench-plugins.js";
 
 /** Defaults for the draft; the real identity is assigned when the workbench is created. */
 const draftDefaults = () => workbenchSchema.parse({ format: 1, id: `wb_0${"0".repeat(25)}`, name: "draft" });
@@ -80,212 +77,154 @@ export function WorkbenchCreate({
       await done(snapshot);
     });
   }
-  // Essentials are editable once a new (not existing) folder is chosen.
-  const essentials = disabled || !inspection || inspection.existing;
-  return (
-    <section className="surface workbench-create" data-workbench-create>
-      {error !== undefined && <ErrorMessage error={error} />}
-      {pending && <p role="status">{t("workbench.working")}</p>}
-      {/* Create submits only from its button: Enter in a draft field must not create the workbench. */}
-      <form className="workbench-form" onSubmit={(event) => event.preventDefault()}>
-        <div className="create-identity">
-          <span className="create-label">{t("create.folder")}</span>
-          <div className="create-folder">
-            {inspection ? (
-              <span className="path-text" data-selected-folder>
-                {inspection.folder}
-              </span>
-            ) : (
-              <span className="muted">{t("create.noFolder")}</span>
-            )}
-            <button
-              type="button"
-              data-action="choose-create"
-              disabled={disabled}
-              onClick={() =>
-                void perform(async () => {
-                  const result = await api.invoke("app.chooseFolder", {});
-                  if (!result.folder) return;
-                  const found = await api.invoke("workbench.inspect", { folder: result.folder });
-                  if (!found.existing) {
-                    // Detected documentation folders become the draft selection; none, or a failed scan
-                    // (shown again in the Documents section), keeps the defaults.
-                    const scan = await client
-                      .fetchQuery({
-                        queryKey: ["workbench.scanDocs", found.folder],
-                        queryFn: () => api.invoke("workbench.scanDocs", { folder: found.folder }),
-                        staleTime: 0,
-                      })
-                      .catch(() => undefined);
-                    setConfig((current) => ({
-                      ...current,
-                      docs: {
-                        ...current.docs,
-                        include: scan?.folders.length
-                          ? scan.folders.map((entry) => documentFolderPattern(entry.path))
-                          : draftDefaults().docs.include,
-                      },
-                    }));
-                  }
-                  setInspection(found);
-                  setName((current) => (current.trim() ? current : found.name.slice(0, 80)));
-                  setSkillsDisabled([]);
-                })
-              }
-            >
-              {t("workbench.chooseFolder")}
-            </button>
-          </div>
-          <label className="create-label" htmlFor="workbench-name">
-            {t("workbench.name")}
-          </label>
-          <input
-            id="workbench-name"
-            maxLength={80}
-            required
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            disabled={disabled}
-          />
-        </div>
-        {inspection?.existing && (
-          <div role="status" data-existing-workbench>
-            <p>{t("create.existing")}</p>
-            <button
-              type="button"
-              data-action="open-existing"
-              disabled={disabled}
-              onClick={() =>
-                void perform(async () => {
-                  await done(await api.invoke("workbench.open", { folder: inspection.folder }));
-                })
-              }
-            >
-              {t("create.openExisting")}
-            </button>
-          </div>
+  const generalFields = (
+    <>
+      <div className="create-folder">
+        <span className="create-label">{t("create.folder")}</span>
+        {inspection ? (
+          <span className="path-text" data-selected-folder>
+            {inspection.folder}
+          </span>
+        ) : (
+          <span className="muted">{t("create.noFolder")}</span>
         )}
-        {shown && (
-          <fieldset className="create-essentials" data-create-essentials disabled={essentials}>
-            <legend>{t("create.essentials")}</legend>
-            <div className="create-essentials-grid">
-              <label htmlFor="create-model">
-                {t("projects.model")}
-                <ModelSelect
-                  id="create-model"
-                  value={config.agent.model}
-                  disabled={essentials}
-                  change={(model) =>
-                    setConfig((current) => ({ ...current, agent: { ...current.agent, model } }))
-                  }
-                />
-              </label>
-              <label>
-                {t("chatDetail.label")}
-                <select
-                  data-chat-detail
-                  value={config.chat.detail}
-                  onChange={(event) =>
-                    setConfig((current) => ({
-                      ...current,
-                      chat: {
-                        ...current.chat,
-                        detail: event.target.value as WorkbenchConfig["chat"]["detail"],
-                      },
-                    }))
-                  }
-                >
-                  <option value="verbose">{t("chatDetail.verbose")}</option>
-                  <option value="normal">{t("chatDetail.normal")}</option>
-                  <option value="minimal">{t("chatDetail.minimal")}</option>
-                </select>
-              </label>
-              <div className="create-permissions">
-                <PermissionPicker
-                  mode={config.agent.permission_mode}
-                  disabled={essentials}
-                  label={t("projects.permissions")}
-                  change={(permission_mode) =>
-                    setConfig((current) => ({ ...current, agent: { ...current.agent, permission_mode } }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="create-plugins">
-              <span className="create-label">{t("projects.plugins")}</span>
-              <WorkbenchPlugins
-                disabled={essentials}
-                enabled={config.plugins.enabled}
-                toggle={(id, selected) =>
-                  setConfig((current) => ({
-                    ...current,
-                    plugins: {
-                      ...current.plugins,
-                      enabled: selected
-                        ? [...new Set([...current.plugins.enabled, id])]
-                        : current.plugins.enabled.filter((entry) => entry !== id),
-                    },
-                  }))
-                }
-              />
-            </div>
-          </fieldset>
-        )}
-        {shown && inspection && !inspection.existing && (
-          <details className="create-advanced" data-create-advanced>
-            <summary>{t("create.advanced")}</summary>
-            <WorkbenchConfigForm
-              label={t("projects.new")}
-              config={config}
-              setConfig={setConfig}
-              instructions={shownInstructions}
-              setInstructions={setInstructions}
-              folder={inspection.folder}
-              nameField={false}
-              disabled={disabled}
-              instructionsReadOnly={kept !== null}
-              instructionsNotice={kept !== null && <p role="status">{t("create.instructionsKept")}</p>}
-              exclude={["agent", "chat", "plugins"]}
-              skills={
-                <fieldset disabled={disabled} className="workbench-create-skills" data-create-skills>
-                  <legend>{t("projects.skills")}</legend>
-                  {inspection.skills.length === 0 && <p className="muted">{t("create.noSkills")}</p>}
-                  {inspection.skills.map((skill) => (
-                    <label key={skill.name} className="workbench-tool-option" data-create-skill={skill.name}>
-                      <input
-                        type="checkbox"
-                        disabled={!!skill.error}
-                        checked={!skill.error && !skillsDisabled.includes(skill.name)}
-                        onChange={(e) =>
-                          setSkillsDisabled((current) =>
-                            e.target.checked
-                              ? current.filter((entry) => entry !== skill.name)
-                              : [...current.filter((entry) => entry !== skill.name), skill.name],
-                          )
-                        }
-                      />
-                      <span>
-                        <strong>{skill.name}</strong>
-                        {skill.description && <span className="muted"> — {skill.description}</span>}
-                      </span>
-                    </label>
-                  ))}
-                </fieldset>
+        <button
+          type="button"
+          data-action="choose-create"
+          disabled={disabled}
+          onClick={() =>
+            void perform(async () => {
+              const result = await api.invoke("app.chooseFolder", {});
+              if (!result.folder) return;
+              const found = await api.invoke("workbench.inspect", { folder: result.folder });
+              if (!found.existing) {
+                // Detected documentation folders become the draft selection; none, or a failed scan
+                // (shown again in the Documents section), keeps the defaults.
+                const scan = await client
+                  .fetchQuery({
+                    queryKey: ["workbench.scanDocs", found.folder],
+                    queryFn: () => api.invoke("workbench.scanDocs", { folder: found.folder }),
+                    staleTime: 0,
+                  })
+                  .catch(() => undefined);
+                setConfig((current) => ({
+                  ...current,
+                  docs: {
+                    ...current.docs,
+                    include: scan?.folders.length
+                      ? scan.folders.map((entry) => documentFolderPattern(entry.path))
+                      : draftDefaults().docs.include,
+                  },
+                }));
               }
-            />
-          </details>
-        )}
-        <div className="create-actions">
+              setInspection(found);
+              setName((current) => (current.trim() ? current : found.name.slice(0, 80)));
+              setSkillsDisabled([]);
+            })
+          }
+        >
+          {t("workbench.chooseFolder")}
+        </button>
+      </div>
+      {inspection?.existing && (
+        <div role="status" data-existing-workbench>
+          <p>{t("create.existing")}</p>
           <button
             type="button"
-            className="primary"
+            data-action="open-existing"
+            disabled={disabled}
+            onClick={() =>
+              void perform(async () => {
+                await done(await api.invoke("workbench.open", { folder: inspection.folder }));
+              })
+            }
+          >
+            {t("create.openExisting")}
+          </button>
+        </div>
+      )}
+      <label htmlFor="workbench-name">
+        {t("workbench.name")}
+        <input
+          id="workbench-name"
+          maxLength={80}
+          required
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          disabled={disabled}
+        />
+      </label>
+    </>
+  );
+  // Until a new folder is chosen only General (folder and name) is available.
+  const ready = !!inspection && !inspection.existing;
+  return (
+    <section className="surface workbench-create" data-workbench-create>
+      <header>
+        <h3>{name.trim() || t("projects.new")}</h3>
+        <div className="workbench-actions">
+          <button
+            type="button"
             data-action="create-workbench"
-            disabled={disabled || !inspection || inspection.existing || !name.trim()}
+            disabled={disabled || !ready || !name.trim()}
             onClick={() => void create()}
           >
             {t("welcome.create")}
           </button>
         </div>
+      </header>
+      {/* Create submits only from its button: Enter in a draft field must not create the workbench. */}
+      <form className="workbench-form" onSubmit={(event) => event.preventDefault()}>
+        {shown && (
+          <WorkbenchConfigForm
+            label={t("projects.new")}
+            config={config}
+            setConfig={setConfig}
+            instructions={shownInstructions}
+            setInstructions={setInstructions}
+            folder={inspection?.folder ?? ""}
+            nameField={false}
+            disabled={disabled}
+            locked={!ready}
+            instructionsReadOnly={kept !== null}
+            instructionsNotice={kept !== null && <p role="status">{t("create.instructionsKept")}</p>}
+            notices={
+              <>
+                {error !== undefined && <ErrorMessage error={error} />}
+                {pending && <p role="status">{t("workbench.working")}</p>}
+              </>
+            }
+            general={generalFields}
+            skills={
+              <fieldset disabled={disabled} className="workbench-create-skills" data-create-skills>
+                <legend>{t("projects.skills")}</legend>
+                {!inspection?.skills.length && <p className="muted">{t("create.noSkills")}</p>}
+                {inspection?.skills.map((skill) => (
+                  <label key={skill.name} className="workbench-tool-option" data-create-skill={skill.name}>
+                    <input
+                      type="checkbox"
+                      disabled={!!skill.error}
+                      checked={!skill.error && !skillsDisabled.includes(skill.name)}
+                      onChange={(e) =>
+                        setSkillsDisabled((current) =>
+                          e.target.checked
+                            ? current.filter((entry) => entry !== skill.name)
+                            : [...current.filter((entry) => entry !== skill.name), skill.name],
+                        )
+                      }
+                    />
+                    <span>
+                      <strong>{skill.name}</strong>
+                      {skill.description && <span className="muted"> — {skill.description}</span>}
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            }
+          />
+        )}
+        {/* Hidden: the draft's folder and name stay, without the form's ids. */}
+        {!shown && generalFields}
       </form>
     </section>
   );

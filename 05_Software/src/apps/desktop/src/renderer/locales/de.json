@@ -783,8 +783,6 @@
   "create": {
     "folder": "Ordner",
     "noFolder": "Kein Ordner ausgewählt",
-    "essentials": "Grundeinstellungen",
-    "advanced": "Erweiterte Optionen",
     "existing": "Dieser Ordner ist bereits eine Workbench.",
     "openExisting": "Diese Workbench öffnen",
     "instructionsKept": "Dieser Ordner enthält bereits .vera/WORKBENCH.md. Beim Erstellen der Workbench bleibt die Datei unverändert; bearbeiten Sie sie anschließend im Workbench-Editor.",

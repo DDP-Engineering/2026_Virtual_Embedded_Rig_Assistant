@@ -504,15 +504,28 @@ test("New Workbench creates only and submits the configured draft with prefilled
   const page = container.querySelector<HTMLElement>("[data-workbench-create]");
   if (!page) throw Error("Missing creation page");
   expect(container.querySelector('[data-action="open-workbench"], [data-action="open-recent"]')).toBeNull();
-  expect(page.querySelector("[data-project-section]")).toBeNull();
+  // Before a folder is chosen only General is available.
+  expect(
+    [...page.querySelectorAll<HTMLButtonElement>("[data-project-section]:not(:disabled)")].map(
+      (b) => b.dataset.projectSection,
+    ),
+  ).toEqual(["general"]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
   await settle();
   expect(page.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("new-board");
   expect(
     [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual(["general", "documents", "instructions", "tools", "skills", "embeddings"]);
-  // Model, permissions, chat detail and plugins are in Essentials, not in Advanced options.
-  expect(page.querySelector("[data-create-essentials] [data-project-model]")).not.toBeNull();
+  ).toEqual([
+    "general",
+    "documents",
+    "instructions",
+    "agent",
+    "chat",
+    "plugins",
+    "tools",
+    "skills",
+    "embeddings",
+  ]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
   await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
   await act(async () =>
@@ -564,7 +577,9 @@ test("New Workbench keeps a typed name and offers Open for an existing workbench
   await settle();
   expect(name.value).toBe("Typed");
   expect(container.querySelector("[data-existing-workbench]")).toBeTruthy();
-  expect(container.querySelector("[data-workbench-create] [data-project-section]")).toBeNull();
+  expect(
+    container.querySelectorAll("[data-workbench-create] [data-project-section]:not(:disabled)"),
+  ).toHaveLength(1);
   expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(true);
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="open-existing"]')?.click());
   await settle();
@@ -590,6 +605,7 @@ test("New Workbench drafts skills, keeps existing instructions, ignores Enter an
   const instructions = page.querySelector<HTMLTextAreaElement>("#pinned-content");
   expect(instructions?.value).toBe("Existing bench notes\n");
   expect(instructions?.readOnly).toBe(true);
+  await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="agent"]')?.click());
   const model = page.querySelector<HTMLInputElement>("[data-project-model]");
   if (!model) throw Error("Missing model field");
   const user = userEvent.setup();
@@ -605,7 +621,8 @@ test("New Workbench drafts skills, keeps existing instructions, ignores Enter an
   await act(async () => button("New Workbench").click());
   const fresh = container.querySelector<HTMLElement>("[data-workbench-create]");
   expect(fresh?.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("");
-  expect(fresh?.querySelector("[data-project-section], [data-selected-folder]")).toBeNull();
+  expect(fresh?.querySelector("[data-selected-folder]")).toBeNull();
+  expect(fresh?.querySelectorAll("[data-project-section]:not(:disabled)")).toHaveLength(1);
 });
 /** Makes the mock folder picker return the given folders in order; returns the requests it got. */
 function pickFolders(...folders: string[]) {
@@ -795,10 +812,10 @@ test("workbench editor shows the creation page's sections and the open workbench
     "instructions",
     "agent",
     "chat",
+    "plugins",
     "tools",
     "skills",
     "embeddings",
-    "plugins",
   ]);
   await openDocuments(editor);
   expect(docsFolder(editor, "datasheets")?.checked).toBe(true);

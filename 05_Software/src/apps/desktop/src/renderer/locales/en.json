@@ -783,8 +783,6 @@
   "create": {
     "folder": "Folder",
     "noFolder": "No folder selected",
-    "essentials": "Essentials",
-    "advanced": "Advanced options",
     "existing": "This folder is already a workbench.",
     "openExisting": "Open this workbench",
     "instructionsKept": "This folder already has .vera/WORKBENCH.md. Creating the workbench keeps it unchanged; edit it afterwards from the workbench editor.",

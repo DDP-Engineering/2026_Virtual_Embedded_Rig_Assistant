@@ -1,6 +1,7 @@
 import type { WorkbenchConfig } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ModelSelect } from "./model-select.js";
 import { PermissionPicker } from "./permission-picker.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
@@ -12,10 +13,10 @@ export const configSections = [
   "instructions",
   "agent",
   "chat",
+  "plugins",
   "tools",
   "skills",
   "embeddings",
-  "plugins",
 ] as const;
 export type ConfigSection = (typeof configSections)[number];
 
@@ -39,7 +40,8 @@ export function WorkbenchConfigForm({
   skills,
   workbenchId,
   shown = true,
-  exclude = [],
+  general,
+  locked = false,
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -56,8 +58,10 @@ export function WorkbenchConfigForm({
   skills: ReactNode;
   workbenchId?: string | undefined;
   shown?: boolean;
-  /** Sections the caller shows elsewhere (New workbench shows agent, chat and plugins up front). */
-  exclude?: readonly ConfigSection[];
+  /** Fields shown first in General (New workbench: folder and name). */
+  general?: ReactNode;
+  /** Only General is available, e.g. until New workbench has a folder. */
+  locked?: boolean;
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -76,8 +80,7 @@ export function WorkbenchConfigForm({
     normal: t("chatDetail.normalInfo"),
     minimal: t("chatDetail.minimalInfo"),
   };
-  const sections = configSections.filter((key) => !exclude.includes(key));
-  const [section, setSection] = useState<ConfigSection>(sections[0] ?? "general");
+  const [section, setSection] = useState<ConfigSection>("general");
   const content = useRef<HTMLDivElement>(null);
   const instructionsInput = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -86,12 +89,13 @@ export function WorkbenchConfigForm({
   return (
     <div className="workbench-editor-layout">
       <nav aria-label={label}>
-        {sections.map((key) => (
+        {configSections.map((key) => (
           <button
             key={key}
             type="button"
             aria-current={section === key ? "page" : undefined}
             data-project-section={key}
+            disabled={locked && key !== "general"}
             onClick={() => {
               setSection(key);
               if (content.current) content.current.scrollTop = 0;
@@ -106,6 +110,7 @@ export function WorkbenchConfigForm({
         <fieldset disabled={(readOnly && section !== "instructions" && section !== "plugins") || disabled}>
           {section === "general" && (
             <>
+              {general}
               {nameField && (
                 <label>
                   {t("projects.name")}
@@ -124,7 +129,7 @@ export function WorkbenchConfigForm({
                   onChange={(e) => setConfig({ ...config, description: e.target.value })}
                 />
               </label>
-              <p className="path-text">{folder}</p>
+              {!general && <p className="path-text">{folder}</p>}
             </>
           )}
           {section === "documents" && (
@@ -138,13 +143,13 @@ export function WorkbenchConfigForm({
           )}
           {section === "agent" && (
             <>
-              <label>
+              <label htmlFor="project-model">
                 {t("projects.model")}
-                <input
-                  data-project-model
-                  value={config.agent.model ?? ""}
-                  onChange={(e) =>
-                    setConfig({ ...config, agent: { ...config.agent, model: e.target.value || null } })
+                <ModelSelect
+                  id="project-model"
+                  value={config.agent.model}
+                  change={(model) =>
+                    setConfig((current) => ({ ...current, agent: { ...current.agent, model } }))
                   }
                 />
               </label>
